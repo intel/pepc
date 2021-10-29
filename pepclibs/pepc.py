@@ -342,7 +342,7 @@ def check_uncore_options(args):
 def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
     """Print CPU P-states information."""
 
-    keys_decr = CPUFreq.CPUFREQ_KEYS_DESCR
+    keys_decr = CPUFreq.CPUFREQ_KEYS_DESCR | CPUFreq.UNCORE_KEYS_DESCR
 
     first = True
     with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as pstates:
@@ -352,6 +352,10 @@ def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
             first = False
             if "cpu" in info:
                 LOG.info("%s: %d", keys_decr["cpu"], info["cpu"])
+            if "pkg" in info:
+                LOG.info("%s: %d", keys_decr["pkg"], info["pkg"])
+            if "die" in info:
+                LOG.info("%s: %d", keys_decr["die"], info["die"])
             if "base" in info:
                 LOG.info("%s: %s", keys_decr["base"], khz_fmt(info["base"]))
             if "max_eff" in info:
@@ -366,6 +370,14 @@ def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
                 LOG.info("%s: %s", keys_decr["cpu_min"], khz_fmt(info["cpu_min"]))
             if "cpu_max" in info:
                 LOG.info("%s: %s", keys_decr["cpu_max"], khz_fmt(info["cpu_max"]))
+            if "uncore_min_limit" in info:
+                LOG.info("%s: %s", keys_decr["uncore_min_limit"], khz_fmt(info["uncore_min_limit"]))
+            if "uncore_max_limit" in info:
+                LOG.info("%s: %s", keys_decr["uncore_max_limit"], khz_fmt(info["uncore_max_limit"]))
+            if "uncore_min" in info:
+                LOG.info("%s: %s", keys_decr["uncore_min"], khz_fmt(info["uncore_min"]))
+            if "uncore_max" in info:
+                LOG.info("%s: %s", keys_decr["uncore_max"], khz_fmt(info["uncore_max"]))
             if "hwp_supported" in info:
                 LOG.info("%s: %s", keys_decr["hwp_supported"], bool_fmt(info["hwp_supported"]))
             if "hwp_enabled" in info and info.get("hwp_supported"):
