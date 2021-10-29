@@ -358,14 +358,14 @@ def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
                 LOG.info("%s: %s", keys_decr["max_eff"], khz_fmt(info["max_eff"]))
             if "max_turbo" in info:
                 LOG.info("%s: %s", keys_decr["max_turbo"], khz_fmt(info["max_turbo"]))
-            if "min_limit" in info:
-                LOG.info("%s: %s", keys_decr["min_limit"], khz_fmt(info["min_limit"]))
-            if "max_limit" in info:
-                LOG.info("%s: %s", keys_decr["max_limit"], khz_fmt(info["max_limit"]))
-            if "min" in info:
-                LOG.info("%s: %s", keys_decr["min"], khz_fmt(info["min"]))
-            if "max" in info:
-                LOG.info("%s: %s", keys_decr["max"], khz_fmt(info["max"]))
+            if "cpu_min_limit" in info:
+                LOG.info("%s: %s", keys_decr["cpu_min_limit"], khz_fmt(info["cpu_min_limit"]))
+            if "cpu_max_limit" in info:
+                LOG.info("%s: %s", keys_decr["cpu_max_limit"], khz_fmt(info["cpu_max_limit"]))
+            if "cpu_min" in info:
+                LOG.info("%s: %s", keys_decr["cpu_min"], khz_fmt(info["cpu_min"]))
+            if "cpu_max" in info:
+                LOG.info("%s: %s", keys_decr["cpu_max"], khz_fmt(info["cpu_max"]))
             if "hwp_supported" in info:
                 LOG.info("%s: %s", keys_decr["hwp_supported"], bool_fmt(info["hwp_supported"]))
             if "hwp_enabled" in info and info.get("hwp_supported"):
@@ -418,10 +418,10 @@ def print_uncore_info(args, proc):
 
             LOG.info("%s: %s", keys_decr["pkg"], info["pkg"])
             LOG.info("%s: %s", keys_decr["die"], info["die"])
-            LOG.info("%s: %s", keys_decr["min"], khz_fmt(info["min"]))
-            LOG.info("%s: %s", keys_decr["max"], khz_fmt(info["max"]))
-            LOG.info("%s: %s", keys_decr["min_limit"], khz_fmt(info["min_limit"]))
-            LOG.info("%s: %s", keys_decr["max_limit"], khz_fmt(info["max_limit"]))
+            LOG.info("%s: %s", keys_decr["uncore_min"], khz_fmt(info["uncore_min"]))
+            LOG.info("%s: %s", keys_decr["uncore_max"], khz_fmt(info["uncore_max"]))
+            LOG.info("%s: %s", keys_decr["uncore_min_limit"], khz_fmt(info["uncore_min_limit"]))
+            LOG.info("%s: %s", keys_decr["uncore_max_limit"], khz_fmt(info["uncore_max_limit"]))
 
 def pstates_info_command(args, proc):
     """Implements the 'pstates info' command."""

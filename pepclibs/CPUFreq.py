@@ -28,10 +28,10 @@ CPUFREQ_KEYS_DESCR = {
     "base": "Base frequency",
     "max_eff": "Max efficiency frequency",
     "max_turbo": "Max 1-core turbo frequency",
-    "min_limit": "Min supported frequency",
-    "max_limit": "Max supported frequency",
-    "min": "Min currently configured frequency",
-    "max": "Max currently configured frequency",
+    "cpu_min_limit": "Min supported CPU frequency",
+    "cpu_max_limit": "Max supported CPU frequency",
+    "cpu_min": "Min currently configured CPU frequency",
+    "cpu_max": "Max currently configured CPU frequency",
     "hwp_supported": "Hardware P-States support",
     "hwp_enabled": "Hardware P-States enabled",
     "turbo_supported": "Turbo support",
@@ -52,10 +52,10 @@ CPUFREQ_KEYS_DESCR = {
 UNCORE_KEYS_DESCR = {
     "pkg": "CPU package",
     "die": "Die within the CPU package",
-    "min": "Min currently configured uncore frequency",
-    "max": "Max currently configured uncore frequency",
-    "min_limit": "Min initially platform pre-configured uncore frequency",
-    "max_limit": "Max initially platform pre-configured uncore frequency",
+    "uncore_min": "Min currently configured uncore frequency",
+    "uncore_max": "Max currently configured uncore frequency",
+    "uncore_min_limit": "Min initially platform pre-configured uncore frequency",
+    "uncore_max_limit": "Max initially platform pre-configured uncore frequency",
 }
 
 # Policy names are from Linux kernel header file: arch/x86/include/asm/msr-index.h
@@ -309,14 +309,14 @@ class CPUFreq:
                 info["max_eff"] = platform_freqs["max_eff"]
             if "max_turbo" in keys and platform_freqs.get("max_turbo"):
                 info["max_turbo"] = platform_freqs["max_turbo"]
-            if "min_limit" in keys:
+            if "cpu_min_limit" in keys:
                 info["min_limit"] = self._read_int(basedir / "cpuinfo_min_freq")
-            if "max_limit" in keys:
+            if "cpu_max_limit" in keys:
                 info["max_limit"] = self._read_int(basedir / "cpuinfo_max_freq")
-            if "min" in keys:
-                info["min"] = self._read_int(basedir / "scaling_min_freq")
-            if "max" in keys:
-                info["max"] = self._read_int(basedir / "scaling_max_freq")
+            if "cpu_min" in keys:
+                info["cpu_min"] = self._read_int(basedir / "scaling_min_freq")
+            if "cpu_max" in keys:
+                info["cpu_max"] = self._read_int(basedir / "scaling_max_freq")
             if "driver" in keys:
                 info["driver"] = driver
             if "governor" in keys:
@@ -423,14 +423,14 @@ class CPUFreq:
                 info["pkg"] = pkg
             if "die" in keys:
                 info["die"] = die
-            if "max" in keys:
-                info["max"] = self._read_int(basedir / "max_freq_khz")
-            if "min" in keys:
-                info["min"] = self._read_int(basedir / "min_freq_khz")
-            if "max_limit" in keys:
-                info["max_limit"] = self._read_int(basedir / "initial_max_freq_khz")
-            if "min_limit" in keys:
-                info["min_limit"] = self._read_int(basedir / "initial_min_freq_khz")
+            if "uncore_max" in keys:
+                info["uncore_max"] = self._read_int(basedir / "max_freq_khz")
+            if "uncore_min" in keys:
+                info["uncore_min"] = self._read_int(basedir / "min_freq_khz")
+            if "uncore_max_limit" in keys:
+                info["uncore_max_limit"] = self._read_int(basedir / "initial_max_freq_khz")
+            if "uncore_min_limit" in keys:
+                info["uncore_min_limit"] = self._read_int(basedir / "initial_min_freq_khz")
 
             yield info
 
@@ -523,6 +523,9 @@ class CPUFreq:
         # Form the list of CPUFreq/uncore info key names that we'll need for handeling the frequency
         # change request.
         info_keys = set(["min", "max", "min_limit", "max_limit"])
+        prefixed_keys = {f"{name.lower()}_{key}" : key for key in info_keys}
+        info_keys.update(set(prefixed_keys))
+
         if not uncore:
             info_keys.update(["cpu"])
             # The below loop covers the "eff", "base", and "lfm" specifier cases.
@@ -553,6 +556,10 @@ class CPUFreq:
                 basedir = self._sysfs_base / "cpufreq" / f"policy{cpu}"
                 cpuname = f"CPU{cpu}"
                 nums.append(cpu)
+
+            for key in prefixed_keys:
+                if key in info:
+                    info[prefixed_keys[key]] = info[key]
 
             # Resolve possible frequency specifiers and somewhat validate them first.
             for key, freq in pre_parsed_freqs.items():
