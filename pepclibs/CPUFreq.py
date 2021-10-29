@@ -489,6 +489,45 @@ class CPUFreq:
             raise Error(f"invalid frequency value '{freq}', should not be negative")
         return val
 
+    def _get_cpus_to_pkgs_map(self):
+        """
+        Turn list of CPU numbers into dictionary where CPU number is key and corresponding package
+        number is the value.
+        """
+        cpus_pkg_map = {}
+
+        for pkg in self._get_cpuinfo().get_packages():
+            for cpu in self._get_cpuinfo().pkgs_to_cpus(pkgs=pkg):
+                cpus_pkg_map[cpu] = pkg
+
+        return cpus_pkg_map
+
+    def get_freq_info(self, cpus, keys, fail_on_unsupported=False):
+        """
+        A unified version of 'get_cpufreq_info()' and 'get_uncore_info()'. The 'keys' argument can
+        contain keys from either 'CPUFREQ_KEYS_DESCR' or 'UNCORE_KEYS_DESCR'. The
+        'fail_on_unsupported' argument is same as in 'get_cpufreq_info()'.
+        """
+
+        if not keys:
+            keys = CPUFREQ_KEYS_DESCR | UNCORE_KEYS_DESCR
+        keys = set(keys)
+
+        uc_infos = {}
+        if keys.intersection(set(UNCORE_KEYS_DESCR)):
+            if fail_on_unsupported:
+                self._check_uncore_freq_supported()
+            if self._ufreq_supported:
+                pkgs = self._get_cpuinfo().get_packages()
+                for pkg, uc_info in zip(pkgs, self._get_uncore_info(pkgs, keys)):
+                    uc_infos[pkg] = uc_info
+
+        cpu_pkg_map = self._get_cpus_to_pkgs_map()
+        for cpu, info in zip(cpus, self.get_cpufreq_info(cpus, keys=keys)):
+            if uc_infos:
+                info |= uc_infos[cpu_pkg_map[cpu]]
+            yield info
+
     def _set_freq(self, minfreq, maxfreq, cpus, uncore=False):
         """
         Implements 'set_freq()' and 'set_uncore_freq()'. There are so much similarity between the

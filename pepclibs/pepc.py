@@ -346,7 +346,7 @@ def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
 
     first = True
     with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as pstates:
-        for info in pstates.get_cpufreq_info(cpus, keys=keys, fail_on_unsupported=False):
+        for info in pstates.get_freq_info(cpus, keys=keys, fail_on_unsupported=False):
             if not first:
                 LOG.info("")
             first = False
