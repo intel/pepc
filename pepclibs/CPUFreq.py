@@ -502,7 +502,7 @@ class CPUFreq:
             name = "CPU"
 
         if minfreq is None and maxfreq is None:
-            raise Error(f"please provide minimum and/or maximum ${name} frequency")
+            raise Error(f"please provide minimum and/or maximum {name} frequency")
 
         # The allowed specifiers.
         specifiers = set(["min", "max"])
