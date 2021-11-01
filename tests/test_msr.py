@@ -23,7 +23,7 @@ _TEST_DATA = int.from_bytes(_TEST_DATA_BYTES, byteorder="little")
 #pylint:disable=no-self-use
 
 @patch("builtins.open", new_callable=mock_open, read_data=_TEST_DATA_BYTES)
-@patch("helperlibs.Procs.Proc", new=mock_Proc)
+@patch("pepclibs.helperlibs.Procs.Proc", new=mock_Proc)
 class TestMSR(unittest.TestCase):
     """Unittests for the 'MSR' module."""
 
