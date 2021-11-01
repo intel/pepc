@@ -446,39 +446,64 @@ def pstates_info_command(args, proc):
             print_pstates_info(proc, cpuinfo, cpus=cpus)
 
 def pstates_set_command(args, proc):
-    """Implements the 'pstates set' command."""
-
-    if not any([args.minfreq, args.maxfreq, args.maxufreq, args.minufreq]):
-        raise Error("please, specify a frequency to change")
-
-    if any((args.minfreq, args.maxfreq)) and any((args.maxufreq, args.minufreq)):
-        raise Error("CPU and uncore frequency options are mutually exclusive")
-
-    if any((args.maxufreq, args.minufreq)):
-        check_uncore_options(args)
+    """implements the 'pstates set' command."""
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
         CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as pstates:
-        cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
+        opts = {}
+        if hasattr(args, "minufreq") or hasattr(args, "maxufreq"):
+            check_uncore_options(args)
+            opts["uncore"] = {}
+            opts["uncore"]["min"] = getattr(args, "minufreq", None)
+            opts["uncore"]["max"] = getattr(args, "maxufreq", None)
+            opts["uncore"]["nums"] = args.packages
+            opts["uncore"]["method"] = getattr(pstates, "set_uncore_freq")
+            cpus = []
+            for pkg in cpuinfo.get_package_list(args.packages):
+                cpus.append(cpuinfo.pkgs_to_cpus(pkgs=pkg)[0])
+            opts["uncore"]["info_nums"] = cpus
+            opts["uncore"]["info_keys"] = ["pkg"]
+            opts["uncore"]["opt_key_map"] = (("minufreq", "uncore_min"), ("maxufreq", "uncore_max"))
 
-        if args.minfreq or args.maxfreq:
-            msg = "Set CPU "
-            nums, minfreq, maxfreq = pstates.set_freq(args.minfreq, args.maxfreq, cpus)
-            scope = pstates.get_scope("cpu-freq")
-        else:
-            msg = "Set uncore "
-            nums, minfreq, maxfreq = \
-                pstates.set_uncore_freq(args.minufreq, args.maxufreq, args.packages)
-            scope = pstates.get_scope("uncore-freq")
+        if hasattr(args, "minfreq") or hasattr(args, "maxfreq"):
+            if "uncore" in opts:
+                raise Error("cpu and uncore frequency options are mutually exclusive")
+            opts["CPU"] = {}
+            opts["CPU"]["min"] = getattr(args, "minfreq", None)
+            opts["CPU"]["max"] = getattr(args, "maxfreq", None)
+            opts["CPU"]["nums"] = get_cpus(args, proc, cpuinfo=cpuinfo)
+            opts["CPU"]["method"] = getattr(pstates, "set_freq")
+            opts["CPU"]["info_keys"] = ["cpu"]
+            opts["CPU"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
+            opts["CPU"]["opt_key_map"] = (("minfreq", "cpu_min"), ("maxfreq", "cpu_max"))
 
-        if minfreq:
-            msg += f"minimum frequency to {khz_fmt(minfreq)}"
-        if maxfreq:
-            if minfreq:
-                msg += " and "
-            msg += f"maximum frequency to {khz_fmt(maxfreq)}"
+        if not opts:
+            raise Error("please, specify a frequency to change")
 
-        LOG.info("%s%s", msg, get_scope_msg(proc, cpuinfo, nums, scope=scope))
+        for opt, opt_info in opts.items():
+            if opt_info["min"] or opt_info["max"]:
+                nums, minfreq, maxfreq = opt_info["method"](opt_info["min"], opt_info["max"],
+                                                            opt_info["nums"])
+
+                msg = f"set {opt} "
+                if minfreq:
+                    msg += f"minimum frequency to {khz_fmt(minfreq)}"
+                if maxfreq:
+                    if minfreq:
+                        msg += " and "
+                    msg += f"maximum frequency to {khz_fmt(maxfreq)}"
+
+                scope = pstates.get_scope(f"{opt.lower()}-freq")
+                LOG.info("%s%s", msg, get_scope_msg(proc, cpuinfo, nums, scope=scope))
+
+            info_keys = []
+            for info_opt, key in opt_info["opt_key_map"]:
+                if hasattr(args, info_opt) and getattr(args, info_opt, None) is None:
+                    info_keys.append(key)
+
+            if info_keys:
+                info_keys += opt_info["info_keys"]
+                print_pstates_info(proc, cpuinfo, keys=info_keys, cpus=opt_info["info_nums"])
 
 def handle_pstate_config_options(args, proc, cpuinfo):
     """Handle options related to P-state, such as getting or setting EPP or turbo value."""
@@ -791,18 +816,22 @@ def build_arguments_parser():
     text = f"""Set minimum CPU frequency. {freq_txt} Additionally, one of the following specifiers
                can be used: min,lfm - minimum supported frequency (LFM), eff - maximum effeciency
                frequency, base,hfm - base frequency (HFM), max - maximum supported frequency."""
-    subpars2.add_argument("--min-freq", dest="minfreq", help=text)
+    subpars2.add_argument("--min-freq", default=argparse.SUPPRESS, nargs="?", dest="minfreq",
+                          help=text)
 
     text = """Same as '--min-freq', but for maximum CPU frequency."""
-    subpars2.add_argument("--max-freq", dest="maxfreq", help=text)
+    subpars2.add_argument("--max-freq", default=argparse.SUPPRESS, nargs="?", dest="maxfreq",
+                          help=text)
 
     text = f"""Set minimum uncore frequency. {freq_txt} Additionally, one of the following
                specifiers can be used: 'min' - the minimum supported uncore frequency, 'max' - the
                maximum supported uncore frequency. {ucfreq_txt}"""
-    subpars2.add_argument("--min-uncore-freq", dest="minufreq", help=text)
+    subpars2.add_argument("--min-uncore-freq", default=argparse.SUPPRESS, nargs="?",
+                          dest="minufreq", help=text)
 
     text = """Same as '--min-uncore-freq', but for maximum uncore frequency."""
-    subpars2.add_argument("--max-uncore-freq", dest="maxufreq", help=text)
+    subpars2.add_argument("--max-uncore-freq", default=argparse.SUPPRESS, nargs="?",
+                          dest="maxufreq", help=text)
 
     #
     # Create parser for the 'pstates config' command.
