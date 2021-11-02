@@ -38,6 +38,9 @@ FEATURES = {}
 FEATURES.update(PowerCtl.FEATURES)
 FEATURES.update(PCStateConfigCtl.FEATURES)
 
+# Hardware C-state names supported by CPUIdle.
+_HWCSTATES = {'CC0', 'CC1', 'CC3', 'CC6', 'PC2', 'PC3', 'PC6'}
+
 class CPUIdle:
     """This class provides API to the "cpuidle" Linux sybsystem."""
 
@@ -138,6 +141,28 @@ class CPUIdle:
                 indices.append(idx)
 
         return indices
+
+    @staticmethod
+    def _normalize_hwcstates(hwcstates):
+        """
+        Some methods accept hardware C-states to operate on as a string or a list. This method
+        returns a list of normalized hardware C-state names. If 'hwcstates' is a string, it should
+        contain comma-separated hardware C-state names; if 'hwcstates' is a list then each item in
+        the list should be a hardware C-state name string.
+        """
+
+        if isinstance(hwcstates, str):
+            hwcstates = Trivial.split_csv_line(hwcstates, dedup=True)
+
+        result = []
+        hwcsts = set()
+        for hwcstate in hwcstates:
+            hwcst = hwcstate.upper()
+            if hwcst not in hwcsts:
+                result.append(hwcst)
+                hwcsts.add(hwcst)
+
+        return result
 
     def _normalize_cpus(self, cpus):
         """
@@ -413,6 +438,12 @@ class CPUIdle:
                 info["c1_undemotion"] = pcstatectl.feature_enabled("c1_undemotion", cpu)
 
             yield info
+
+    def is_hwcstate_name(self, hwcstate):
+        """Returns 'True' if 'hwcstate' is a hardware C-state name."""
+
+        hwcstate = self._normalize_hwcstates(hwcstate)[0]
+        return hwcstate in _HWCSTATES
 
     def set_feature(self, feature, val, cpus="all"):
         """Set value 'val' for feature 'feature' for CPUs 'cpus'."""
