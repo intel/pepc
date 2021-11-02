@@ -1205,14 +1205,15 @@ class SSH:
             SFTP file objects support only binary mode. This wrapper adds basic text mode support.
             """
 
+            errmsg = f"failed to write to '{fobj._orig_fpath_}': "
             if "b" not in fobj._orig_fmode_:
                 try:
                     data = data.encode("utf8")
                 except UnicodeError as err:
-                    raise Error(f"failed to encode data before writing to "
-                                f"'{fobj._orig_fpath_}':\n{err}") from None
+                    raise Error(f"{errmsg}: failed to encode data before writing:\n{err}") from None
+                except AttributeError as err:
+                    raise Error(f"{errmsg}: the data to write must be a string:\n{err}") from None
 
-            errmsg = f"failed to write to '{fobj._orig_fpath_}': "
             try:
                 return fobj._orig_fwrite_(data)
             except PermissionError as err:
