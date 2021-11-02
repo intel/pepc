@@ -15,6 +15,75 @@ from itertools import groupby
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
+_SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "EiB"]
+_LARGENUM_UNITS = ["K", "M", "G", "T", "E"]
+
+# pylint: disable=undefined-loop-variable
+def bytesize(size, precision=1):
+    """
+	Transform size in bytes into a human-readable form. The 'precision' argument can be use to
+    specify the amount of fractional digits to print.
+	"""
+
+    if size == 1:
+        return "1 byte"
+
+    if size < 512:
+        return "%d bytes" % size
+
+    for unit in _SIZE_UNITS:
+        size /= 1024.0
+        if size < 1024:
+            break
+
+    if precision <= 0:
+        return "%d %s" % (int(size), unit)
+
+    pattern = "%%.%df %%s" % int(precision)
+    return pattern % (size, unit)
+# pylint: enable=undefined-loop-variable
+
+def parse_bytesize(size):
+    """
+    This function does the opposite to what the 'bytesize()' function does - turns a
+    human-readable string describing a size in bytes into an integer amount of bytes.
+    """
+
+    size = str(size).strip()
+    orig_size = size
+    multiplier = 1
+
+    for idx, unit in enumerate(_SIZE_UNITS):
+        if size.lower().endswith(unit.lower()):
+            multiplier = pow(1024, idx + 1)
+            size = size[:-3]
+            break
+
+    try:
+        return int(float(size) * multiplier)
+    except ValueError:
+        raise Error("cannot interpret bytes count '%s', please provide a number and "
+                    "possibly the unit: %s" % (orig_size, ", ".join(_SIZE_UNITS))) from None
+
+def largenum(value):
+    """
+    Transform a supposedly large integer into a human-readable form using suffixes like "K" (Kilo),
+    "M" (Mega), etc.
+    """
+
+    unit = None
+    if value >= 500:
+        for unit in _LARGENUM_UNITS:
+            value /= 1000.0
+            if value < 1000:
+                break
+
+    result = "%.1f" % value
+    result = result.rstrip("0").rstrip(".")
+    if unit:
+        result += unit
+    return result
+
 def duration(seconds, s=True, ms=False):
     """
     Transform duration in seconds to the human-readable format. The 's' and 'ms' arguments control
@@ -46,7 +115,6 @@ def duration(seconds, s=True, ms=False):
             result += "%ds " % secs
 
     return result.strip()
-
 
 def _tokenize(htime, specs, specs_descr, default_unit, name):
     """Split human time and return the dictionary of tokens."""
