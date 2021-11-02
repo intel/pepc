@@ -14,7 +14,7 @@ import re
 import logging
 from pathlib import Path
 from pepclibs.helperlibs import FSHelpers, Procs, Trivial
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 from pepclibs.msr import PowerCtl, PCStateConfigCtl
 
@@ -40,6 +40,17 @@ FEATURES.update(PCStateConfigCtl.FEATURES)
 
 # Hardware C-state names supported by CPUIdle.
 _HWCSTATES = {'CC0', 'CC1', 'CC3', 'CC6', 'PC2', 'PC3', 'PC6'}
+
+# Maps OS C-states to the permitted hardware C-states which can be entered when each OS C-state has
+# been requested.
+# Note: C0-C6 are mostly the same for all Intel hardware. C-states deeper than C6 may have different
+# mapping for different platforms. At this point we do not check anything deeper than C6.
+_CSTATES_MAP = {
+    'C0' : {'CC0'},
+    'C1': {'CC0', 'CC1'},
+    'C3': {'CC0', 'CC1', 'CC3', 'PC2', 'PC3'},
+    'C6': {'CC0', 'CC1', 'CC3', 'CC6', 'PC2', 'PC3', 'PC6'},
+}
 
 class CPUIdle:
     """This class provides API to the "cpuidle" Linux sybsystem."""
@@ -262,6 +273,29 @@ class CPUIdle:
         as in 'get_cstates_info()'.
         """
         return self._toggle_cstates(cpus, cstates, False)
+
+    def validate_hwcstates(self, hwcstates, cstate, cpu=0):
+        """
+        Validate that all hardware C-states entered are permitted when a given OS C-state has been
+        requested. If a hardware C-state is not permitted, an error is raised.
+          * hwcstates - list of hardware C-states. This can be either a list or a string containing
+                        a comma-separated list.
+          * cstate - a single C-state in the format used in 'get_cstates_info()'.
+          * cpu - the CPU to validate the hardware C-states on.
+        """
+
+        hwcstates = self._normalize_hwcstates(hwcstates)
+        cstate = self._idx2name(self._normalize_cstates([cstate])[0], cpu)
+
+        if cstate not in _CSTATES_MAP.keys():
+            raise ErrorNotSupported(f"requestable OS C-state '{cstate}' is not supported for "
+                                    f"C-state validation, therefore the hardware C-states "
+                                    f"can not be validated")
+
+        for hwcstate in hwcstates:
+            if hwcstate not in _CSTATES_MAP[cstate]:
+                raise Error(f"hardware C-state '{hwcstate}' is not permitted when the OS C-state "
+                            f"'{cstate}' has been requested")
 
     def _get_cstates_info(self, cpus, indexes, ordered):
         """Implements 'get_cstates_info()'."""
