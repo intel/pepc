@@ -307,8 +307,26 @@ class CPUIdle:
         cpus = self._normalize_cpus(cpus)
         indexes = self._normalize_cstates(cstates)
 
-        for info in self._get_cstates_info(cpus, indexes, ordered):
-            yield info
+        for cpu in cpus:
+            if cpu in self._csinfos:
+                # We have the C-states info for this CPU cached.
+                if indexes is None:
+                    indices = self._csinfos[cpu].keys()
+                else:
+                    indices = indexes
+                for idx in indices:
+                    yield self._csinfos[cpu][idx]
+            else:
+                # The C-state info for this CPU is not available in the cache.
+                # Current implementation limitation: the C-state cache is a per-CPU dictionary. The
+                # dictionary includes all C-states available for this CPU. Therefore, even if user
+                # requested only partial information (not all C-states), we read information about
+                # all the C-states anyway. This limitation makes this function slower than
+                # necessary.
+                self._csinfos[cpu] = {}
+                for csinfo in self._get_cstates_info([cpu], None, ordered):
+                    self._csinfos[cpu][csinfo['index']] = csinfo
+                    yield csinfo
 
     def get_cstates_info_dict(self, cpu, cstates=None, ordered=True):
         """
