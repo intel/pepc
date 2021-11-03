@@ -1,3 +1,9 @@
+pepc (1.1.1) unstable; urgency=low
+
+  * pepc: start tagging new releases, otherwise only very minor changes.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 03 Nov 2021 11:53:37 +0200
+
 pepc (1.1.0) unstable; urgency=low
 
   * pepc: first release.
