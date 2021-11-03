@@ -79,6 +79,12 @@ ask_question "Did you update 'debian/changelog'"
 # Make sure the git index is up-to-date
 [ -z "$(git status --porcelain)" ] || fatal "git index is not up-to-date"
 
+# Change the tool version.
+sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" pepclibs/pepc.py
+
+# Commit the changes
+git commit -a -s -m "Release version $new_ver"
+
 outdir="."
 tag_name="v$new_ver"
 release_name="Version $new_ver"
