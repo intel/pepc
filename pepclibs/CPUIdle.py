@@ -98,6 +98,19 @@ class CPUIdle:
                         f"{self._proc.hostmsg}:\n{names}")
         return index
 
+    def _idx2name(self, index, cpu=0):
+        """Return C-state name for C-state index 'index'."""
+
+        if cpu not in self._csinfos.keys():
+            self._csinfos[cpu] = self.get_cstates_info_dict(cpu)
+
+        if index not in self._csinfos[cpu]:
+            indices = ", ".join(f"{idx} ({v['name']})" for idx, v in  self._csinfos[cpu].items())
+            raise Error(f"unkown C-state index '{index}', here are the C-state indices supported"
+                        f"{self._proc.hostmsg}:\n{indices}") from None
+
+        return self._csinfos[cpu][index]["name"]
+
     def _normalize_cstates(self, cstates):
         """
         Some methods accept the C-states to operate on as a string or a list. There may be C-state
@@ -409,6 +422,9 @@ class CPUIdle:
         self._cpuinfo = cpuinfo
         self._proc = proc
         self._sysfs_base = Path("/sys/devices/system/cpu")
+
+        # Used for caching the C-state information for each CPU.
+        self._csinfos = {}
 
     def close(self):
         """Uninitialize the class object."""
