@@ -56,7 +56,7 @@ Pepc supports the following features:
 * CPU hotplug: onlining and offlining CPUs
 * ASPM: discovering and configuring
 
-Please, refer to the [man page](docs/man1/pepc.1) for details.
+Please, refer to the [man page](docs/pepc-man.rst) for details.
 
 Some of the features are hardware-independent, but some are hardware-specific.
 
