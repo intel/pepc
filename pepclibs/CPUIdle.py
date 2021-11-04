@@ -113,9 +113,12 @@ class CPUIdle:
 
     def _normalize_cstates(self, cstates):
         """
-        Some methods accept the C-states to operate on as a string or a list. There may be C-state
-        names or indexes in the list. This method turns the user input into two lists, parsed list
-        of user input, and a list of C-state indexes. The lists are returned as a tuple.
+        Some methods accept the C-states to operate on as a string or a list. This method normalizes
+        the C-states 'cstates' and returns a list of integer C-state indices. 'cstates' can be:
+          * a C-state name
+          * a C-state index as a string or an integer
+          * a list containing one or more of the above
+          * a string containing comma-separated C-state indices or names
         """
 
         if cstates in ("all", None):
@@ -126,13 +129,15 @@ class CPUIdle:
         if isinstance(cstates, str):
             cstates = Trivial.split_csv_line(cstates, dedup=True)
 
-        indexes = []
+        indices = []
         for cstate in cstates:
             if not Trivial.is_int(cstate):
                 cstate = self._name2idx(cstate)
-            indexes.append(int(cstate))
+            idx = int(cstate)
+            if idx not in indices:
+                indices.append(idx)
 
-        return indexes
+        return indices
 
     def _normalize_cpus(self, cpus):
         """
