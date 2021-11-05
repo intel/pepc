@@ -21,6 +21,16 @@ from pepclibs.helperlibs import Procs, FSHelpers
 from pepclibs.msr import MSR, PCStateConfigCtl
 from pepclibs import pepc
 
+_TESTDATA = {
+        ("cstates", "cstates_info.txt" ),
+        ("cpufreq", "cpufreq_info.txt" ),
+        ("lscpu", "lscpu_info.txt" ),
+        ("lscpu_cpus", "lscpu_info_cpus.txt" ),
+        ("intel_uncore_frequency", "intel_uncore_frequency.txt" ),
+        ("intel_pstate", "intel_pstate.txt" ),
+        ("dev_cpu", "dev_cpu.txt" ),
+    }
+
 def _get_mocked_data():
     """
     Get mocked data for testing purposes. The files with testdata can be opened only before mocking.
@@ -33,32 +43,30 @@ def _get_mocked_data():
 
     mock_data = {}
     basepath = Path(__file__).parents[1].resolve()
-    with open(basepath / "tests" / "data" / "cstates_info.txt", "r") as fobj:
-        mock_data['cstates'] = fobj.readlines()
+    testdatapath = basepath / "tests" / "data"
 
-    with open(basepath / "tests" / "data" / "lscpu_info.txt", "r") as fobj:
-        mock_data['lscpu'] = fobj.readlines()
-
-    with open(basepath / "tests" / "data" / "lscpu_info_cpus.txt", "r") as fobj:
-        mock_data['lscpu_cpus'] = fobj.readlines()
+    for name, filename in _TESTDATA:
+        with open(testdatapath / filename, "r") as fobj:
+            mock_data[name] = fobj.readlines()
 
     return mock_data
 
-def _get_mocked_files():
+def _get_mocked_files(names):
     """
     Get mocked files for testing purposes. Returns dictionary with file path as key and file content
     as value.
     """
 
     mock_data = {}
-    for line in _MOCKED_DATA['cstates']:
-        split = line.split(":")
-        mock_data[split[0]] = split[1].strip()
+    for name in names:
+        for line in _MOCKED_DATA[name]:
+            split = line.split(":")
+            mock_data[split[0]] = split[1].strip()
 
     return mock_data
 
 _MOCKED_DATA = _get_mocked_data()
-_MOCKED_FILES = _get_mocked_files()
+_MOCKED_FILES = _get_mocked_files(("cstates", "cpufreq", "intel_uncore_frequency", "intel_pstate"))
 
 #pylint: disable=unused-argument
 #pylint: disable=unused-variable
