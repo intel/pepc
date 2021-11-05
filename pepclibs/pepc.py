@@ -871,13 +871,13 @@ def get_proc(args):
 def main():
     """Script entry point."""
 
-    args = parse_arguments()
-
-    if not getattr(args, "func", None):
-        LOG.error("please, run '%s -h' for help.", OWN_NAME)
-        raise SystemExit(1)
-
     try:
+        args = parse_arguments()
+
+        if not getattr(args, "func", None):
+            LOG.error("please, run '%s -h' for help.", OWN_NAME)
+            return -1
+
         proc = get_proc(args)
         args.func(args, proc)
     except KeyboardInterrupt:
