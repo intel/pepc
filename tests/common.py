@@ -67,6 +67,7 @@ def _get_mocked_files(names):
 
 _MOCKED_DATA = _get_mocked_data()
 _MOCKED_FILES = _get_mocked_files(("cstates", "cpufreq", "intel_uncore_frequency", "intel_pstate"))
+_MOCKED_EXISTS_FILES = _MOCKED_FILES | _get_mocked_files(("dev_cpu", ))
 
 #pylint: disable=unused-argument
 #pylint: disable=unused-variable
@@ -163,6 +164,11 @@ class mock_MSR(MSR.MSR):
         self._mocked_msr[MSR.MSR_TURBO_RATIO_LIMIT] = 0x1f1f212222232323
         self._mocked_msr[MSR.MSR_PM_ENABLE] = 1
 
+def mock_exists(path: Path, proc=None):
+    """Mock version of 'exists' function in FSHelpers module."""
+
+    return any([Path(m_path) for m_path in _MOCKED_EXISTS_FILES if str(path) in m_path])
+
 def mock_lsdir(path: Path, must_exist: bool = True, proc=None):
     """Mock version of 'lsdir' function in FSHelpers module."""
 
@@ -193,6 +199,7 @@ def get_mocked_objects():
     """
 
     with patch("pepclibs.helperlibs.FSHelpers.lsdir", new=mock_lsdir) as mock_FSHelpers_lsdir, \
+         patch("pepclibs.helperlibs.FSHelpers.exists", new=mock_exists) as mock_FSHelpers_exists, \
          patch("pepclibs.helperlibs.Procs.Proc", new=mock_Proc) as mock_proc, \
          patch("pepclibs.msr.MSR.MSR", new=mock_MSR) as mock_msr:
         yield (mock_FSHelpers_lsdir, mock_proc, mock_msr)
