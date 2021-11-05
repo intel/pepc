@@ -796,7 +796,7 @@ class CPUFreq:
         msr_pm_enable = self._get_msr().read(MSR.MSR_PM_ENABLE, cpu=0)
         hwp_enabled = msr_pm_enable & MSR.bit_mask(MSR.HWP_ENABLE)
         if not hwp_enabled:
-            raise Error(f"EPP (Energy Performance Preference) is not available{self._proc.hostmsg}"
+            raise Error(f"EPP (Energy Performance Preference) is not available{self._proc.hostmsg} "
                         f"because it has HWP (Hardware Power Management) disabled")
         self._epp_supported = True
 
