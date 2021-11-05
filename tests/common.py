@@ -147,6 +147,11 @@ class mock_MSR(MSR.MSR):
         with patch("builtins.open", new_callable=mock_open, read_data=read_data) as m_open:
             yield from super().read_iter(regaddr, regsize, cpus)
 
+    def write(self, regaddr, regval, regsize=8, cpus="all"):
+        """Mocked version of 'write()'."""
+
+        self._mocked_msr[regaddr] = regval
+
     def __init__(self, proc=None, cpuinfo=None):
         """Initialize MSR object with test data."""
 
@@ -154,6 +159,9 @@ class mock_MSR(MSR.MSR):
         self._mocked_msr = {}
         # Use known values for Package C-state limits.
         self._mocked_msr[PCStateConfigCtl.MSR_PKG_CST_CONFIG_CONTROL] = 0x14000402
+        self._mocked_msr[MSR.MSR_PLATFORM_INFO] = 0x8008082ffb811800
+        self._mocked_msr[MSR.MSR_TURBO_RATIO_LIMIT] = 0x1f1f212222232323
+        self._mocked_msr[MSR.MSR_PM_ENABLE] = 1
 
 def mock_lsdir(path: Path, must_exist: bool = True, proc=None):
     """Mock version of 'lsdir' function in FSHelpers module."""
