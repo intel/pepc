@@ -28,6 +28,7 @@ _TESTDATA = {
         ("lscpu_cpus", "lscpu_info_cpus.txt" ),
         ("intel_uncore_frequency", "intel_uncore_frequency.txt" ),
         ("intel_pstate", "intel_pstate.txt" ),
+        ("aspm_policy", "aspm_policy.txt" ),
         ("dev_cpu", "dev_cpu.txt" ),
     }
 
@@ -66,8 +67,10 @@ def _get_mocked_files(names):
     return mock_data
 
 _MOCKED_DATA = _get_mocked_data()
-_MOCKED_FILES = _get_mocked_files(("cstates", "cpufreq", "intel_uncore_frequency", "intel_pstate"))
+_MOCKED_FILES = _get_mocked_files(("cstates", "cpufreq", "intel_uncore_frequency", "intel_pstate",
+                                   "aspm_policy"))
 _MOCKED_EXISTS_FILES = _MOCKED_FILES | _get_mocked_files(("dev_cpu", ))
+_MOCKED_ASPM_POLICY_FILES = _get_mocked_files(("aspm_policy", ))
 
 #pylint: disable=unused-argument
 #pylint: disable=unused-variable
@@ -105,6 +108,11 @@ class mock_Proc(Procs.Proc):
         if path in self._mock_fobj and self._mock_fobj[path].write.call_count:
             # Get last write value.
             read_data = self._mock_fobj[path].write.call_args.args[-1].strip()
+
+            # The ASPM policy written to sysfs is expected to be in square brackets when it is read
+            # again.
+            if str(path) in _MOCKED_ASPM_POLICY_FILES:
+                read_data = f"[{read_data}]"
         else:
             read_data = _MOCKED_FILES[str(path)]
 
