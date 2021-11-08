@@ -88,6 +88,14 @@ def test_pstates_set():
     for option in good_options:
         run_pepc(f"pstates set {option}", exp_ret=0)
 
+    good_options = [
+        "--min-freq",
+        "--min-freq base",
+        "--max-uncore-freq",
+        "--max-uncore-freq max",
+    ]
+
+    for option in good_options:
         for scope in _GOOD_SCOPE_OPTIONS:
             if "uncore" in option and "package" not in scope:
                 continue
