@@ -62,6 +62,12 @@ def test_pstates_set():
 
     # Test frequency settings supported by test configuration.
     good_options = [
+        "--min-freq",
+        "--max-freq",
+        "--min-freq --max-freq",
+        "--min-uncore-freq",
+        "--max-uncore-freq",
+        "--min-uncore-freq --max-uncore-freq",
         "--min-freq min",
         "--max-freq min",
         "--max-freq lfm",
