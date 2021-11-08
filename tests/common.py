@@ -178,6 +178,11 @@ def mock_exists(path: Path, proc=None):
 
     return any([Path(m_path) for m_path in _MOCKED_EXISTS_FILES if str(path) in m_path])
 
+def mock_isfile(path: Path, proc=None):
+    """Mock version of 'isfile' function in FSHelpers module."""
+
+    return mock_exists(path, proc)
+
 def mock_lsdir(path: Path, must_exist: bool = True, proc=None):
     """Mock version of 'lsdir' function in FSHelpers module."""
 
@@ -209,6 +214,7 @@ def get_mocked_objects():
 
     with patch("pepclibs.helperlibs.FSHelpers.lsdir", new=mock_lsdir) as mock_FSHelpers_lsdir, \
          patch("pepclibs.helperlibs.FSHelpers.exists", new=mock_exists) as mock_FSHelpers_exists, \
+         patch("pepclibs.helperlibs.FSHelpers.isfile", new=mock_isfile) as mock_FSHelpers_isfile, \
          patch("pepclibs.helperlibs.Procs.Proc", new=mock_Proc) as mock_proc, \
          patch("pepclibs.msr.MSR.MSR", new=mock_MSR) as mock_msr:
         yield (mock_FSHelpers_lsdir, mock_proc, mock_msr)
