@@ -29,6 +29,7 @@ _TESTDATA = {
         ("intel_uncore_frequency", "intel_uncore_frequency.txt" ),
         ("intel_pstate", "intel_pstate.txt" ),
         ("aspm_policy", "aspm_policy.txt" ),
+        ("cpu_online", "cpu_online.txt" ),
         ("dev_cpu", "dev_cpu.txt" ),
     }
 
@@ -68,7 +69,7 @@ def _get_mocked_files(names):
 
 _MOCKED_DATA = _get_mocked_data()
 _MOCKED_FILES = _get_mocked_files(("cstates", "cpufreq", "intel_uncore_frequency", "intel_pstate",
-                                   "aspm_policy"))
+                                   "aspm_policy", "cpu_online"))
 _MOCKED_EXISTS_FILES = _MOCKED_FILES | _get_mocked_files(("dev_cpu", ))
 _MOCKED_ASPM_POLICY_FILES = _get_mocked_files(("aspm_policy", ))
 
