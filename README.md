@@ -20,7 +20,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 Pepc stands for "Power, Energy, and Performance Configurator". This is a command-line tool for
 configuring various Linux and Hardware power management features.
 
-**IMPORTANT**: this is tool is for debug and research purposes only. It requres root permissions,
+**IMPORTANT**: this is tool is for debug and research purposes only. It requires root permissions,
 and must only be used in an isolated lab environment, not in production.
 
 The project license is the 3-clause BSD license: https://opensource.org/licenses/BSD-3-Clause
@@ -32,7 +32,7 @@ explain why we created yet another one.
 
 We develop, maintain, and use another project - [wult](https://github.com/intel/wult), and when we
 measure a computer system with 'wult', we often need to configure it, for example, enable or disable
-varous C-states, limit CPU or uncore frequency, tweak hardware features like C1 demotion, and so on.
+various C-states, limit CPU or uncore frequency, tweak hardware features like C1 demotion, and so on.
 
 This required us to use many different tools and sysfs interfaces. It was difficult and error-prone,
 until we created 'pepc', which supports everything we need for our research. For example, we can
@@ -64,7 +64,7 @@ Some of the features are hardware-independent, but some are hardware-specific.
 
 ## Using 'pip'
 
-The easies way of installing 'pepc' is by using the 'pip' tool, and one way of doing this is by
+The easiest way of installing 'pepc' is by using the 'pip' tool, and one way of doing this is by
 running the following command:
 
 ```
@@ -72,7 +72,7 @@ pip install --user --upgrade git+https://github.com/intel/pepc.git@release
 ```
 
 This command will download 'pepc' from the 'release' branch of the git repository, and install it to
-the home direcory. Note, the "release" branch contains more stable code. To install the latest code,
+the home directory. Note, the "release" branch contains more stable code. To install the latest code,
 use the "master" branch instead.
 
 The other way of doing this is by first cloning the git repository, checking out the 'release'
@@ -98,3 +98,16 @@ chmod ug+x pepc.standalone
 
 This will create the 'pepc.stanalone' file, which you can rename and copy to any other place, and it
 will work as a standalone program.
+
+# FAQ
+
+## What to do if my platform is not supported?
+
+Some 'pepc' features (e.g., '--pkg-cstate-limit') are implemented only for certain Intel platforms.
+This does not necessarily mean that the feature is not supported by other platforms, it only means
+that we verified it on a limited amount of platforms. Just to be on a safe side, we refuse changing
+the underlying MSR registers on platforms we did not verify.
+
+If 'pepc' fails with a message like "this feature is not supported on this platform" for you, feel
+free to contact the authors with a request. Very often it ends up with just adding a CPU ID to the
+list of supported platforms, and may be you can do it yourself and submit a patch/pull request.
