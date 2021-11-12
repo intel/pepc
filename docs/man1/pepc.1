@@ -393,7 +393,7 @@ By default this command provides CPU (core) frequency (P\-state) information, bu
 other resources shared between the cores. Uncore frequency is per\-package, therefore, the '\-\-cpus' and '\-\-cores' options should not be used with this option.
 
 .SH OPTIONS 'pepc pstates set'
-usage: pepc pstates set [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--min-freq MINFREQ] [--max-freq MAXFREQ] [--min-uncore-freq MINUFREQ] [--max-uncore-freq MAXUFREQ]
+usage: pepc pstates set [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--min-freq [MINFREQ]] [--max-freq [MAXFREQ]] [--min-uncore-freq [MINUFREQ]] [--max-uncore-freq [MAXUFREQ]]
 
 Set CPU frequency for specified CPUs (all CPUs by default) or uncore frequency for specified packages (all packages by default).
 
@@ -425,21 +425,21 @@ List of packages to set frequencies for. The list can include individual package
 specify all packages.
 
 .TP
-\fB\-\-min\-freq\fR \fI\,MINFREQ\/\fR
+\fB\-\-min\-freq\fR [\fI\,MINFREQ\/\fR]
 Set minimum CPU frequency. The default unit is 'kHz', but 'Hz', 'MHz', and 'GHz' can also be used, for example '900MHz'. Additionally, one of the following specifiers can be used: min,lfm \- minimum supported frequency (LFM), eff \-
 maximum effeciency frequency, base,hfm \- base frequency (HFM), max \- maximum supported frequency.
 
 .TP
-\fB\-\-max\-freq\fR \fI\,MAXFREQ\/\fR
+\fB\-\-max\-freq\fR [\fI\,MAXFREQ\/\fR]
 Same as '\-\-min\-freq', but for maximum CPU frequency.
 
 .TP
-\fB\-\-min\-uncore\-freq\fR \fI\,MINUFREQ\/\fR
+\fB\-\-min\-uncore\-freq\fR [\fI\,MINUFREQ\/\fR]
 Set minimum uncore frequency. The default unit is 'kHz', but 'Hz', 'MHz', and 'GHz' can also be used, for example '900MHz'. Additionally, one of the following specifiers can be used: 'min' \- the minimum supported uncore frequency, 'max'
 \- the maximum supported uncore frequency. Uncore frequency is per\-package, therefore, the '\-\-cpus' and '\-\-cores' options should not be used with this option.
 
 .TP
-\fB\-\-max\-uncore\-freq\fR \fI\,MAXUFREQ\/\fR
+\fB\-\-max\-uncore\-freq\fR [\fI\,MAXUFREQ\/\fR]
 Same as '\-\-min\-uncore\-freq', but for maximum uncore frequency.
 
 .SH OPTIONS 'pepc pstates config'

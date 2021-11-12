@@ -447,8 +447,8 @@ OPTIONS 'pepc pstates set'
 ==========================
 
 usage: pepc pstates set [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--min-freq MINFREQ] [--max-freq MAXFREQ]
-[--min-uncore-freq MINUFREQ] [--max-uncore-freq MAXUFREQ]
+[--packages PACKAGES] [--min-freq [MINFREQ]] [--max-freq [MAXFREQ]]
+[--min-uncore-freq [MINUFREQ]] [--max-uncore-freq [MAXUFREQ]]
 
 Set CPU frequency for specified CPUs (all CPUs by default) or uncore
 frequency for specified packages (all packages by default).
@@ -480,7 +480,7 @@ frequency for specified packages (all packages by default).
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
 
-**--min-freq** *MINFREQ*
+**--min-freq** [*MINFREQ*]
    Set minimum CPU frequency. The default unit is 'kHz', but 'Hz',
    'MHz', and 'GHz' can also be used, for example '900MHz'.
    Additionally, one of the following specifiers can be used: min,lfm -
@@ -488,10 +488,10 @@ frequency for specified packages (all packages by default).
    frequency, base,hfm - base frequency (HFM), max - maximum supported
    frequency.
 
-**--max-freq** *MAXFREQ*
+**--max-freq** [*MAXFREQ*]
    Same as '--min-freq', but for maximum CPU frequency.
 
-**--min-uncore-freq** *MINUFREQ*
+**--min-uncore-freq** [*MINUFREQ*]
    Set minimum uncore frequency. The default unit is 'kHz', but 'Hz',
    'MHz', and 'GHz' can also be used, for example '900MHz'.
    Additionally, one of the following specifiers can be used: 'min' -
@@ -499,7 +499,7 @@ frequency for specified packages (all packages by default).
    uncore frequency. Uncore frequency is per-package, therefore, the
    '--cpus' and '--cores' options should not be used with this option.
 
-**--max-uncore-freq** *MAXUFREQ*
+**--max-uncore-freq** [*MAXUFREQ*]
    Same as '--min-uncore-freq', but for maximum uncore frequency.
 
 OPTIONS 'pepc pstates config'
