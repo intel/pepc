@@ -521,12 +521,16 @@ def run_verify(command, timeout=None, capture_output=True, mix_output=False, joi
 
     raise Error(_Common.cmd_failed_msg(command, *tuple(result), timeout=timeout))
 
-def rsync(src, dst, opts="rlptD", remotesrc=False, remotedst=True):
+def rsync(src, dst, opts="rlpD", remotesrc=False, remotedst=True):
     # pylint: disable=unused-argument
     """
     Copy data from path 'src' to path 'dst' using 'rsync' with options specified in 'opts'. The
     'remotesrc' and 'remotedst' arguments are ignored. They only exist for compatibility with
-    'SSH.rsync()'.
+    'SSH.rsync()'. The default options are:
+      * r - recursive
+      * l - copy symlinks as symlinks
+      * p - preserve permission
+      * s - preseve device nodes and others special files
     """
 
     cmd = "rsync -%s -- '%s' '%s'" % (opts, src, dst)

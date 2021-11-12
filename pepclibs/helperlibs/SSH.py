@@ -925,12 +925,16 @@ class SSH:
             ssh_opts += f" -o \"IdentityFile={self.privkeypath}\""
         return ssh_opts
 
-    def rsync(self, src, dst, opts="rlptD", remotesrc=True, remotedst=True):
+    def rsync(self, src, dst, opts="rlpD", remotesrc=True, remotedst=True):
         """
         Copy data from path 'src' to path 'dst' using 'rsync' with options specified in 'opts'. By
         default the 'src' and 'dst' path is assumed to be on the remote host, but the 'rmotesrc' and
         'remotedst' arguments can be set to 'False' to specify local source and/or destination
-        paths.
+        paths. The default options are:
+          * r - recursive
+          * l - copy symlinks as symlinks
+          * p - preserve permission
+          * s - preseve device nodes and others special files
         """
 
         cmd = f"rsync -{opts}"
