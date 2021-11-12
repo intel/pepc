@@ -73,7 +73,6 @@ fi
 
 # Remind the maintainer about various important things
 ask_question "Did you run tests"
-ask_question "Did you update man pages"
 ask_question "Did you update 'debian/changelog'"
 
 # Make sure the git index is up-to-date
