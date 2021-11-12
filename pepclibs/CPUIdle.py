@@ -95,22 +95,28 @@ class CPUIdle:
         if name is None:
             raise Error(f"C-states are not supported{self._proc.hostmsg}")
 
-    def _name2idx(self, name):
+    def _name2idx(self, name, cpu=0):
         """Return C-state index for C-state name 'name'."""
 
-        index = None
-        names = []
-        for index, path in self._get_cstate_indexes(0):
-            with self._proc.open(path / "name", "r") as fobj:
-                val = fobj.read().strip()
-            if val.lower() == name.lower():
-                break
-            names.append(val)
+        name = name.upper()
+        if cpu in self._name2idx_cache:
+            if name in self._name2idx_cache[cpu]:
+                return self._name2idx_cache[cpu][name]
         else:
-            names = ", ".join(names)
-            raise Error(f"unkown C-state '{name}', here are the C-states supported"
-                        f"{self._proc.hostmsg}:\n{names}")
-        return index
+            self._name2idx_cache[cpu] = {}
+
+        names = []
+        for index, path in self._get_cstate_indexes(cpu):
+            with self._proc.open(path / "name", "r") as fobj:
+                val = fobj.read().strip().upper()
+            self._name2idx_cache[cpu][val] = index
+            if val == name:
+                return index
+            names.append(val)
+
+        names = ", ".join(names)
+        raise Error(f"unkown C-state '{name}', here are the C-states supported"
+                    f"{self._proc.hostmsg}:\n{names}")
 
     def _idx2name(self, index, cpu=0):
         """Return C-state name for C-state index 'index'."""
@@ -523,6 +529,7 @@ class CPUIdle:
         self._csinfos = {}
 
         # Used for mapping C-state indices to C-state names and vice versa.
+        self._name2idx_cache = {}
         self._idx2name_cache = {}
 
     def close(self):
