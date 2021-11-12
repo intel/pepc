@@ -46,11 +46,12 @@ _HWCSTATES = {'CC0', 'CC1', 'CC3', 'CC6', 'PC2', 'PC3', 'PC6'}
 # Note: C0-C6 are mostly the same for all Intel hardware. C-states deeper than C6 may have different
 # mapping for different platforms. At this point we do not check anything deeper than C6.
 _CSTATES_MAP = {
-    'C0' : {'CC0'},
-    'C1' : {'CC0', 'CC1'},
-    'C1E': {'CC0', 'CC1'},
-    'C3' : {'CC0', 'CC1', 'CC3', 'PC2', 'PC3'},
-    'C6' : {'CC0', 'CC1', 'CC3', 'CC6', 'PC2', 'PC3', 'PC6'},
+    'POLL': {'CC0'},
+    'C0'  : {'CC0'},
+    'C1'  : {'CC0', 'CC1'},
+    'C1E' : {'CC0', 'CC1'},
+    'C3'  : {'CC0', 'CC1', 'CC3', 'PC2', 'PC3'},
+    'C6'  : {'CC0', 'CC1', 'CC3', 'CC6', 'PC2', 'PC3', 'PC6'},
 }
 
 class CPUIdle:
