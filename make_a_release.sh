@@ -75,9 +75,6 @@ fi
 ask_question "Did you run tests"
 ask_question "Did you update 'debian/changelog'"
 
-# Make sure the git index is up-to-date
-[ -z "$(git status --porcelain)" ] || fatal "git index is not up-to-date"
-
 # Change the tool version.
 sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" pepclibs/pepc.py
 
