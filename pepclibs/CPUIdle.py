@@ -115,15 +115,23 @@ class CPUIdle:
     def _idx2name(self, index, cpu=0):
         """Return C-state name for C-state index 'index'."""
 
-        if cpu not in self._csinfos.keys():
+        if cpu in self._idx2name_cache:
+            if index in self._idx2name_cache[cpu]:
+                return self._idx2name_cache[cpu][index]
+
+        if cpu not in self._csinfos:
             self._csinfos[cpu] = self.get_cstates_info_dict(cpu)
 
-        if index not in self._csinfos[cpu]:
+        self._idx2name_cache[cpu] = {}
+        for csinfo in self._csinfos[cpu].values():
+            self._idx2name_cache[cpu][csinfo['index']] = csinfo['name']
+
+        if index not in self._idx2name_cache[cpu]:
             indices = ", ".join(f"{idx} ({v['name']})" for idx, v in  self._csinfos[cpu].items())
             raise Error(f"unkown C-state index '{index}', here are the C-state indices supported"
                         f"{self._proc.hostmsg}:\n{indices}") from None
 
-        return self._csinfos[cpu][index]["name"]
+        return self._idx2name_cache[cpu][index]
 
     def _normalize_cstates(self, cstates):
         """
@@ -513,6 +521,9 @@ class CPUIdle:
 
         # Used for caching the C-state information for each CPU.
         self._csinfos = {}
+
+        # Used for mapping C-state indices to C-state names and vice versa.
+        self._idx2name_cache = {}
 
     def close(self):
         """Uninitialize the class object."""
