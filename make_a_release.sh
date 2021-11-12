@@ -61,7 +61,7 @@ format_changelog() {
 
 new_ver="$1"; shift
 
-# Validate the new version
+# Validate the new version.
 printf "%s" "$new_ver" | egrep -q -x '[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+' ||
         fatal "please, provide new version in X.Y.Z format"
 
@@ -71,7 +71,7 @@ if [ "$current_branch" != "master" -a "$current_branch" != "release" ]; then
 	fatal "current branch is '$current_branch' but must be 'master' or 'release'"
 fi
 
-# Remind the maintainer about various important things
+# Remind the maintainer about various important things.
 ask_question "Did you run tests"
 ask_question "Did you update 'debian/changelog'"
 
@@ -85,17 +85,16 @@ argparse-manpage --pyfile ./pepclibs/pepc.py --function build_arguments_parser \
                  --url 'https://github.com/intel/pepc'
 pandoc --toc -t man -s docs/man1/pepc.1 -t rst -o docs/pepc-man.rst
 
-# Commit the changes
+# Commit the changes.
 git commit -a -s -m "Release version $new_ver"
 
 outdir="."
 tag_name="v$new_ver"
 release_name="Version $new_ver"
 
-# Create new signed tag
+# Create new signed tag.
 printf "%s\n" "Signing tag $tag_name"
 git tag -m "$release_name" -s "$tag_name"
-
 
 if [ "$current_branch" = "master" ]; then
     branchnames="master and release brances"
