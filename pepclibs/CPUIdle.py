@@ -102,7 +102,6 @@ class CPUIdle:
     def _name2idx(self, name, cpu=0):
         """Return C-state index for C-state name 'name'."""
 
-        name = name.upper()
         if cpu in self._name2idx_cache:
             if name in self._name2idx_cache[cpu]:
                 return self._name2idx_cache[cpu][name]
@@ -164,7 +163,7 @@ class CPUIdle:
         indices = []
         for cstate in cstates:
             if not Trivial.is_int(cstate):
-                cstate = self._name2idx(cstate)
+                cstate = self._name2idx(cstate.upper())
             idx = int(cstate)
             if idx not in indices:
                 indices.append(idx)
