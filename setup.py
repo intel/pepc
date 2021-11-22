@@ -28,7 +28,7 @@ setup(
     description="""Power, Energy, and Performance configuration tool""",
     author="Artem Bityutskiy",
     author_email="artem.bityutskiy@linux.intel.com",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     version=get_version("pepclibs/pepc.py"),
     scripts=["pepc"],
     packages=find_packages(exclude=["test*"]),

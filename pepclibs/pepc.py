@@ -25,8 +25,8 @@ from pepclibs.helperlibs import ArgParse, Procs, Logging, SSH, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import ASPM, CPUIdle, CPUInfo, CPUOnline, CPUFreq
 
-if sys.version_info < (3,6):
-    raise SystemExit("Error: this tool requires python version 3.6 or higher")
+if sys.version_info < (3,7):
+    raise SystemExit("Error: this tool requires python version 3.7 or higher")
 
 VERSION = "1.1.4"
 OWN_NAME = "pepc"

@@ -4,16 +4,16 @@ Priority: optional
 Maintainer: Artem Bityutskiy <artem.bityutskiy@intel.com>
 Build-Depends: debhelper (>= 9),
                dh-python,
-               python3-all (>= 3.6),
+               python3-all (>= 3.7),
                python3-setuptools
 Standards-Version: 3.9.8
 Homepage: https://intelpedia.intel.com/ServerPowerLab/Pepc
-X-Python3-Version: >= 3.6
+X-Python3-Version: >= 3.7
 
 Package: pepc
 Architecture: all
 Multi-Arch: foreign
-Depends: python3:any (>= 3.6~),
+Depends: python3:any (>= 3.7~),
          python3-paramiko,
          ${misc:Depends},
          ${python3:Depends}
