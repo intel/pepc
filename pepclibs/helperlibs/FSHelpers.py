@@ -162,6 +162,10 @@ def move_copy_link(src: Path, dst: Path, action: str = "symlink", exist_ok: bool
                 dstdir = dst.parent
             else:
                 dstdir = dst
+
+            if not dst.parent.exists():
+                dst.parent.mkdir(parents=True)
+
             os.symlink(os.path.relpath(src.resolve(), dstdir.resolve()), dst)
         else:
             raise Error(f"unrecognized action '{action}'")
