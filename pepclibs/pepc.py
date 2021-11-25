@@ -305,7 +305,7 @@ def cstates_config_command(args, proc):
 
     if any([args.cpus or args.cores]):
         opts = ("cstate_prewake", "c1e_autopromote", "pkg_cstate_limit")
-        msg = " and ".join([f"--{opt}" for opt in opts if getattr(args, opt, None)])
+        msg = " and ".join([f"--{opt}" for opt in opts if hasattr(args, opt)])
         if msg:
             LOG.warning("'%s' option has package scope, '--cpus' and '--cores' options are " \
                         "ignored.", msg)
