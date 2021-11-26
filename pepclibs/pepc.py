@@ -288,7 +288,7 @@ def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
         if optval:
             cpuidle.set_feature(optname, optval, optinfo["cpus"])
 
-            scope = CPUIdle.FEATURES[optname]["scope"]
+            scope = cpuidle.get_scope(optname)
             nums = optinfo.get(f"{scope.lower()}s")
             msg = get_scope_msg(proc, cpuinfo, nums, scope=scope)
             LOG.info("Set %s to '%s'%s", CPUIdle.FEATURES[optname]["name"], optval, msg)
