@@ -157,7 +157,7 @@ def cpu_hotplug_offline_command(args, proc):
         siblings_to_offline = set(cpus) & set(siblings_to_offline)
 
         if not siblings_to_offline:
-            LOG.warning("Nothing to offline%s, no siblings among the following CPUs:%s",
+            LOG.warning("nothing to offline%s, no siblings among the following CPUs:%s",
                          proc.hostmsg, Human.rangify(cpus))
         else:
             onl.offline(cpus=siblings_to_offline)
@@ -560,7 +560,7 @@ def pstates_config_command(args, proc):
         cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
 
         if getattr(args, "turbo", None) and cpus != cpuinfo.get_cpu_list("all"):
-            LOG.warning("The turbo setting is global, will switch it %s for all CPUs", args.turbo)
+            LOG.warning("the turbo setting is global, will switch it %s for all CPUs", args.turbo)
 
         handle_pstate_config_options(args, proc, cpuinfo)
 
