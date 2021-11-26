@@ -103,7 +103,7 @@ _BCLK_100MHZ = {0x2A, # INTEL_FAM6_SANDYBRIDGE
 _BCLK_SLM = {0x37, # INTEL_FAM6_ATOM_SILVERMONT
              0x4D} # INTEL_FAM6_ATOM_SILVERMONT_D
 
-_FEATURES = {
+FEATURES = {
     "turbo" : {
         "scope" : "global",
     },
@@ -934,13 +934,13 @@ class CPUFreq:
         Helper function to make it easy to set values of multiple features. This will call the
         corresponding set method of each feature in this module, e.g. 'set_feature("turbo", val)' is
         the same as 'set_turbo(val)'. The 'feature' can be any of the features defined in
-        '_FEATURES'. Refer to the feature set method for description of 'val' and 'cpus'
+        'FEATURES'. Refer to the feature set method for description of 'val' and 'cpus'
         arguments.
         """
 
-        if feature not in _FEATURES:
+        if feature not in FEATURES:
             raise Error(f"feature '{feature}' not supported, use one of following: "
-                        f"{', '.join(set(_FEATURES))}")
+                        f"{', '.join(set(FEATURES))}")
 
         method = getattr(self, f"set_{feature}")
         if feature == "turbo":
@@ -952,11 +952,11 @@ class CPUFreq:
     def get_scope(feature):
         """Get feature scope. The 'feature' argument is same as in 'set_feature()'."""
 
-        if feature not in _FEATURES:
+        if feature not in FEATURES:
             raise Error(f"feature '{feature}' not supported, use one of following: "
-                        f"{', '.join(set(_FEATURES))}")
+                        f"{', '.join(set(FEATURES))}")
 
-        return _FEATURES[feature]["scope"]
+        return FEATURES[feature]["scope"]
 
     def __init__(self, proc=None, cpuinfo=None):
         """
