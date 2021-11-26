@@ -280,17 +280,17 @@ def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
         opts["c1_undemotion"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
         opts["c1_undemotion"]["keys"] = {"c1_undemotion", "cpu"}
 
-    for opt, opt_info in opts.items():
-        optval = getattr(args, opt)
+    for optname, optinfo in opts.items():
+        optval = getattr(args, optname)
         if optval:
-            cpuidle.set_feature(opt, optval, opt_info["cpus"])
+            cpuidle.set_feature(optname, optval, optinfo["cpus"])
 
-            scope = CPUIdle.FEATURES[opt]["scope"]
-            nums = opt_info.get(f"{scope.lower()}s")
+            scope = CPUIdle.FEATURES[optname]["scope"]
+            nums = optinfo.get(f"{scope.lower()}s")
             msg = get_scope_msg(proc, cpuinfo, nums, scope=scope)
-            LOG.info("Set %s to '%s'%s", CPUIdle.FEATURES[opt]["name"], optval, msg)
+            LOG.info("Set %s to '%s'%s", CPUIdle.FEATURES[optname]["name"], optval, msg)
         else:
-            print_cstate_config_options(proc, cpuidle, opt_info["keys"], opt_info["info_nums"])
+            print_cstate_config_options(proc, cpuidle, optinfo["keys"], optinfo["info_nums"])
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
@@ -531,15 +531,15 @@ def handle_pstate_config_options(args, proc, cpuinfo, cpufreq):
         opts["turbo"]["keys"] = {"turbo_supported", "turbo_enabled"}
         opts["turbo"]["scope"] = f"{proc.hostmsg} for all CPUs"
 
-    for opt, opt_info in opts.items():
-        optval = getattr(args, opt)
+    for optname, optinfo in opts.items():
+        optval = getattr(args, optname)
         if optval is not None:
-            cpufreq.set_feature(opt, optval, cpus=cpus)
-            LOG.info("Set %s to '%s'%s", opt, optval, opt_info["scope"])
+            cpufreq.set_feature(optname, optval, cpus=cpus)
+            LOG.info("Set %s to '%s'%s", optname, optval, optinfo["scope"])
         else:
             cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-            opt_info["keys"].add("cpu")
-            print_pstates_info(proc, cpuinfo, keys=opt_info["keys"], cpus=cpus)
+            optinfo["keys"].add("cpu")
+            print_pstates_info(proc, cpuinfo, keys=optinfo["keys"], cpus=cpus)
 
 def pstates_config_command(args, proc):
     """Implements the 'pstates config' command."""
