@@ -105,15 +105,19 @@ _BCLK_SLM = {0x37, # INTEL_FAM6_ATOM_SILVERMONT
 
 FEATURES = {
     "turbo" : {
+        "name"  : "turbo",
         "scope" : "global",
     },
     "epb" : {
+        "name"  : "EPB",
         "scope" : "CPU",
     },
     "epp" : {
+        "name"  : "EPP",
         "scope" : "CPU",
     },
     "governor" : {
+        "name"  : "CPU frequency governor",
         "scope" : "CPU",
     },
     "cpu-freq" : {
