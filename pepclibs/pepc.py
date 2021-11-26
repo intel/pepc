@@ -87,17 +87,20 @@ def get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
     listed in 'nums'.
     """
 
-    scopes = ("cpu", "core", "package")
+    scopes = ("cpu", "core", "package", "global")
     if scope.lower() not in scopes:
         raise Error(f"bad scope '{scope}' use one of following: {', '.join(scopes)}")
 
-    get_method = getattr(cpuinfo, f"get_{scope.lower()}s")
-    all_nums = get_method()
+    get_method = getattr(cpuinfo, f"get_{scope.lower()}s", None)
+    if get_method:
+        all_nums = get_method()
 
-    if nums in ("all", None) or nums == all_nums:
-        scope = f"all {scope}s"
+        if nums in ("all", None) or nums == all_nums:
+            scope = f"all {scope}s"
+        else:
+            scope = f"{scope}(s): {Human.rangify(nums)}"
     else:
-        scope = f"{scope}(s): {Human.rangify(nums)}"
+        scope = "all CPUs in all packages (globally)"
 
     return f"{proc.hostmsg} for {scope}"
 
@@ -529,7 +532,8 @@ def handle_pstate_config_options(args, proc, cpuinfo, cpufreq):
     if hasattr(args, "turbo"):
         opts["turbo"] = {}
         opts["turbo"]["keys"] = {"turbo_supported", "turbo_enabled"}
-        opts["turbo"]["scope"] = f"{proc.hostmsg} for all CPUs"
+        scope = cpufreq.get_scope("turbo")
+        opts["turbo"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
 
     for optname, optinfo in opts.items():
         optval = getattr(args, optname)
