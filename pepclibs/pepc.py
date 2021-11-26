@@ -534,7 +534,7 @@ def handle_pstate_config_options(args, proc, cpuinfo, cpufreq):
             scope = cpufreq.get_scope(optname)
             msg = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
             cpufreq.set_feature(optname, optval, cpus=cpus)
-            LOG.info("Set %s to '%s'%s", optname, optval, msg)
+            LOG.info("Set %s to '%s'%s", CPUFreq.FEATURES[optname]["name"], optval, msg)
         else:
             cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
             optinfo["keys"].add("cpu")
