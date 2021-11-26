@@ -256,14 +256,12 @@ def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
         opts["cstate_prewake"]["packages"] = pkgs
         opts["cstate_prewake"]["info_nums"] = pkg_cpus
         opts["cstate_prewake"]["keys"] = {"cstate_prewake", "cstate_prewake_supported", "package"}
-        opts["cstate_prewake"]["val"] = getattr(args, "cstate_prewake")
     if hasattr(args, "c1e_autopromote"):
         opts["c1e_autopromote"] = {}
         opts["c1e_autopromote"]["cpus"] = cpus
         opts["c1e_autopromote"]["packages"] = pkgs
         opts["c1e_autopromote"]["info_nums"] = pkg_cpus
         opts["c1e_autopromote"]["keys"] = {"c1e_autopromote", "package"}
-        opts["c1e_autopromote"]["val"] = getattr(args, "c1e_autopromote")
     if hasattr(args, "pkg_cstate_limit"):
         opts["pkg_cstate_limit"] = {}
         opts["pkg_cstate_limit"]["cpus"] = cpus
@@ -271,28 +269,26 @@ def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
         opts["pkg_cstate_limit"]["info_nums"] = pkg_cpus
         opts["pkg_cstate_limit"]["keys"] = {"pkg_cstate_limit_supported", "pkg_cstate_limit",
                                             "pkg_cstate_limits", "package"}
-        opts["pkg_cstate_limit"]["val"] = getattr(args, "pkg_cstate_limit")
     if hasattr(args, "c1_demotion"):
         opts["c1_demotion"] = {}
         opts["c1_demotion"]["cpus"] = get_cpus(args, proc, cpuinfo=cpuinfo)
         opts["c1_demotion"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
         opts["c1_demotion"]["keys"] = {"c1_demotion", "cpu"}
-        opts["c1_demotion"]["val"] = getattr(args, "c1_demotion")
     if hasattr(args, "c1_undemotion"):
         opts["c1_undemotion"] = {}
         opts["c1_undemotion"]["cpus"] = get_cpus(args, proc, cpuinfo=cpuinfo)
         opts["c1_undemotion"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
         opts["c1_undemotion"]["keys"] = {"c1_undemotion", "cpu"}
-        opts["c1_undemotion"]["val"] = getattr(args, "c1_undemotion")
 
     for opt, opt_info in opts.items():
-        if opt_info["val"]:
-            cpuidle.set_feature(opt, opt_info["val"], opt_info["cpus"])
+        optval = getattr(args, opt)
+        if optval:
+            cpuidle.set_feature(opt, optval, opt_info["cpus"])
 
             scope = CPUIdle.FEATURES[opt]["scope"]
             nums = opt_info.get(f"{scope.lower()}s")
             msg = get_scope_msg(proc, cpuinfo, nums, scope=scope)
-            LOG.info("Set %s to '%s'%s", CPUIdle.FEATURES[opt]["name"], opt_info["val"], msg)
+            LOG.info("Set %s to '%s'%s", CPUIdle.FEATURES[opt]["name"], optval, msg)
         else:
             print_cstate_config_options(proc, cpuidle, opt_info["keys"], opt_info["info_nums"])
 
@@ -517,32 +513,29 @@ def handle_pstate_config_options(args, proc, cpuinfo, cpufreq):
     if hasattr(args, "epb"):
         opts["epb"] = {}
         opts["epb"]["keys"] = {"epb_supported", "epb_policy", "epb"}
-        opts["epb"]["val"] = getattr(args, "epb", None)
         scope = cpufreq.get_scope("epb")
         opts["epb"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
     if hasattr(args, "epp"):
         opts["epp"] = {}
         opts["epp"]["keys"] = {"epp_supported", "epp_policy", "epp"}
-        opts["epp"]["val"] = getattr(args, "epp", None)
         scope = cpufreq.get_scope("epp")
         opts["epp"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
     if hasattr(args, "governor"):
         opts["governor"] = {}
         opts["governor"]["keys"] = {"governor"}
-        opts["governor"]["val"] = getattr(args, "governor", None)
         scope = cpufreq.get_scope("governor")
         opts["governor"]["scope"] = scope
         opts["governor"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
     if hasattr(args, "turbo"):
         opts["turbo"] = {}
         opts["turbo"]["keys"] = {"turbo_supported", "turbo_enabled"}
-        opts["turbo"]["val"] = getattr(args, "turbo", None)
         opts["turbo"]["scope"] = f"{proc.hostmsg} for all CPUs"
 
     for opt, opt_info in opts.items():
-        if opt_info["val"] is not None:
-            cpufreq.set_feature(opt, opt_info["val"], cpus=cpus)
-            LOG.info("Set %s to '%s'%s", opt, opt_info["val"], opt_info["scope"])
+        optval = getattr(args, opt)
+        if optval is not None:
+            cpufreq.set_feature(opt, optval, cpus=cpus)
+            LOG.info("Set %s to '%s'%s", opt, optval, opt_info["scope"])
         else:
             cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
             opt_info["keys"].add("cpu")
