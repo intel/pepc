@@ -497,7 +497,12 @@ class CPUIdle:
         return hwcstate in _HWCSTATES
 
     def set_feature(self, feature, val, cpus="all"):
-        """Set value 'val' for feature 'feature' for CPUs 'cpus'."""
+        """
+        Set value 'val' for feature 'feature' for CPUs 'cpus'. The arguments are as follows.
+          * feature - name of the feature to set (see 'FEATURES' for the full features list).
+          * val - the value to set for the feature.
+          * cpus - same as in 'get_cstates_info()'.
+        """
 
         if feature not in FEATURES:
             features_str = ", ".join(set(FEATURES))

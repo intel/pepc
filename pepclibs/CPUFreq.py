@@ -931,11 +931,12 @@ class CPUFreq:
 
     def set_feature(self, feature, val, cpus="all"):
         """
-        Helper function to make it easy to set values of multiple features. This will call the
-        corresponding set method of each feature in this module, e.g. 'set_feature("turbo", val)' is
-        the same as 'set_turbo(val)'. The 'feature' can be any of the features defined in
-        'FEATURES'. Refer to the feature set method for description of 'val' and 'cpus'
-        arguments.
+        Set value 'val' for feature 'feature' for CPUs 'cpus'. This will call the corresponding
+        "set" method, e.g. 'set_feature("turbo", val)' is the same as 'set_turbo(val)'. The
+        arguments are as follows.
+          * feature - name of the feature to set (see 'FEATURES' for the full features list).
+          * val - the value to set for the feature.
+          * cpus - same as in 'CPUIdle.get_cstates_info()'.
         """
 
         if feature not in FEATURES:
