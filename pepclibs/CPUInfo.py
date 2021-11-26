@@ -353,8 +353,6 @@ class CPUInfo:
                     continue
                 cpugeom[pfx + lvl + "s"] = {}
                 cpugeom[pfx + lvl + "s_sorted"] = []
-                cpugeom[pfx + lvl + "s_grouped"] = []
-                cpugeom[pfx + lvl + "_ranges"] = []
 
         # Count of packages, NUMA nodes, cores, etc.
         for lvl in LEVELS:
@@ -389,22 +387,6 @@ class CPUInfo:
         for lvl in LEVELS:
             cpugeom[lvl + "s_sorted"] = sorted(cpugeom[lvl + "s"])
         cpugeom["offcpus_sorted"] = sorted(cpugeom["offcpus"])
-
-        # Group consequative CPU numbers into ranges. The end result is list of lists of consequtive
-        # CPU numbers. Do the same for packages, nodes and all the other levels.
-        for lvl in LEVELS:
-            # This is the grouping function that subtracts list index from CPU number.
-            keyfunc = lambda elt: int(elt[1]) - elt[0]
-            for pfx in ("", "off"):
-                if pfx == "off" and lvl != LEVELS[-1]:
-                    continue
-                for _, grp in groupby(enumerate(cpugeom[pfx + lvl + "s_sorted"]), keyfunc):
-                    cpugeom[pfx + lvl + "s_grouped"].append([elt[1] for elt in grp])
-                for cpus in cpugeom[pfx + lvl + "s_grouped"]:
-                    if len(cpus) == 1:
-                        cpugeom[pfx + lvl + "_ranges"].append(str(cpus[0]))
-                    else:
-                        cpugeom[pfx + lvl + "_ranges"].append(f"{cpus[0]}-{cpus[-1]}")
 
         for lvl1 in LEVELS[1:]:
             for lvl2 in LEVELS[:-1]:
