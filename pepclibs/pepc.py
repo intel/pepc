@@ -559,8 +559,9 @@ def pstates_config_command(args, proc):
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
         cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
 
-        if getattr(args, "turbo", None) and cpus != cpuinfo.get_cpu_list("all"):
-            LOG.warning("the turbo setting is global, will switch it %s for all CPUs", args.turbo)
+        if hasattr(args, "turbo") and cpus != cpuinfo.get_cpu_list("all"):
+            LOG.warning("the turbo setting is global, '--cpus', '--cores', and '--packages' "
+                        "options are ignored")
 
         handle_pstate_config_options(args, proc, cpuinfo)
 
