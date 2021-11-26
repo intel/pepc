@@ -929,6 +929,15 @@ class CPUFreq:
                        "energy_performance_preference"
                 FSHelpers.write(path, epp, proc=self._proc)
 
+    @staticmethod
+    def _validate_feature_name(feature):
+        """Raise an error if feature 'feature' is not supported."""
+
+        if feature not in FEATURES:
+            features_str = ", ".join(set(FEATURES))
+            raise Error(f"feature '{feature}' not supported, use one of the following: "
+                        f"{features_str}")
+
     def set_feature(self, feature, val, cpus="all"):
         """
         Set value 'val' for feature 'feature' for CPUs 'cpus'. This will call the corresponding
@@ -939,9 +948,7 @@ class CPUFreq:
           * cpus - same as in 'CPUIdle.get_cstates_info()'.
         """
 
-        if feature not in FEATURES:
-            raise Error(f"feature '{feature}' not supported, use one of following: "
-                        f"{', '.join(set(FEATURES))}")
+        self._validate_feature_name(feature)
 
         method = getattr(self, f"set_{feature}")
         if feature == "turbo":
@@ -953,10 +960,7 @@ class CPUFreq:
     def get_scope(feature):
         """Get feature scope. The 'feature' argument is same as in 'set_feature()'."""
 
-        if feature not in FEATURES:
-            raise Error(f"feature '{feature}' not supported, use one of following: "
-                        f"{', '.join(set(FEATURES))}")
-
+        CPUFreq._validate_feature_name(feature)
         return FEATURES[feature]["scope"]
 
     def __init__(self, proc=None, cpuinfo=None):
