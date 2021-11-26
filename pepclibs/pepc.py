@@ -87,8 +87,8 @@ def get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
     listed in 'nums'.
     """
 
-    scopes = ("cpu", "core", "package", "global")
-    if scope.lower() not in scopes:
+    scopes = ("CPU", "core", "package", "global")
+    if scope not in scopes:
         raise Error(f"bad scope '{scope}' use one of following: {', '.join(scopes)}")
 
     get_method = getattr(cpuinfo, f"get_{scope.lower()}s", None)
