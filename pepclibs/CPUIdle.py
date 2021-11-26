@@ -496,6 +496,15 @@ class CPUIdle:
         hwcstate = self._normalize_hwcstates(hwcstate)[0]
         return hwcstate in _HWCSTATES
 
+    @staticmethod
+    def _validate_feature_name(feature):
+        """Raise an error if feature 'feature' is not supported."""
+
+        if feature not in FEATURES:
+            features_str = ", ".join(set(FEATURES))
+            raise Error(f"feature '{feature}' not supported, use one of the following: "
+                        f"{features_str}")
+
     def set_feature(self, feature, val, cpus="all"):
         """
         Set value 'val' for feature 'feature' for CPUs 'cpus'. The arguments are as follows.
@@ -504,10 +513,7 @@ class CPUIdle:
           * cpus - same as in 'get_cstates_info()'.
         """
 
-        if feature not in FEATURES:
-            features_str = ", ".join(set(FEATURES))
-            raise Error(f"feature '{feature}' not supported, use one of the following: "
-                        f"{features_str}")
+        self._validate_feature_name(feature)
 
         if feature in PowerCtl.FEATURES:
             powerctl = self._get_powerctl()
@@ -515,6 +521,21 @@ class CPUIdle:
         elif feature in PCStateConfigCtl.FEATURES:
             pcstatectl = self._get_pcstatectl()
             pcstatectl.set_feature(feature, val, cpus=cpus)
+        else:
+            raise Error(f"BUG: undefined feature '{feature}'")
+
+    @staticmethod
+    def get_scope(feature):
+        """Get feature scope. The 'feature' argument is same as in 'set_feature()'."""
+
+        CPUIdle._validate_feature_name(feature)
+
+        if feature in PowerCtl.FEATURES:
+            return PowerCtl.FEATURES[feature]["scope"]
+        if feature in PCStateConfigCtl.FEATURES:
+            return PCStateConfigCtl.FEATURES[feature]["scope"]
+
+        raise Error(f"BUG: undefined feature '{feature}'")
 
     def __init__(self, proc=None, cpuinfo=None):
         """
