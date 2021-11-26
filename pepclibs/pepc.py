@@ -238,7 +238,7 @@ def print_cstate_config_options(proc, cpuidle, keys, cpus):
             LOG.info("CPU %s: %s: %s", info["cpu"], keys_descr["c1_undemotion"], enabled)
         first = False
 
-def handle_cstate_config_options(args, proc, cpuinfo):
+def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
     """Handle options related to C-state, such as setting C-state prewake."""
 
     pkgs = cpuinfo.get_package_list(args.packages)
@@ -285,17 +285,16 @@ def handle_cstate_config_options(args, proc, cpuinfo):
         opts["c1_undemotion"]["keys"] = {"c1_undemotion", "cpu"}
         opts["c1_undemotion"]["val"] = getattr(args, "c1_undemotion")
 
-    with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
-        for opt, opt_info in opts.items():
-            if opt_info["val"]:
-                cpuidle.set_feature(opt, opt_info["val"], opt_info["cpus"])
+    for opt, opt_info in opts.items():
+        if opt_info["val"]:
+            cpuidle.set_feature(opt, opt_info["val"], opt_info["cpus"])
 
-                scope = CPUIdle.FEATURES[opt]["scope"]
-                nums = opt_info.get(f"{scope.lower()}s")
-                msg = get_scope_msg(proc, cpuinfo, nums, scope=scope)
-                LOG.info("Set %s to '%s'%s", CPUIdle.FEATURES[opt]["name"], opt_info["val"], msg)
-            else:
-                print_cstate_config_options(proc, cpuidle, opt_info["keys"], opt_info["info_nums"])
+            scope = CPUIdle.FEATURES[opt]["scope"]
+            nums = opt_info.get(f"{scope.lower()}s")
+            msg = get_scope_msg(proc, cpuinfo, nums, scope=scope)
+            LOG.info("Set %s to '%s'%s", CPUIdle.FEATURES[opt]["name"], opt_info["val"], msg)
+        else:
+            print_cstate_config_options(proc, cpuidle, opt_info["keys"], opt_info["info_nums"])
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
@@ -311,7 +310,8 @@ def cstates_config_command(args, proc):
                         "ignored", msg)
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-        handle_cstate_config_options(args, proc, cpuinfo)
+        with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
+            handle_cstate_config_options(args, proc, cpuinfo, cpuidle)
 
 def khz_fmt(val):
     """
@@ -508,46 +508,45 @@ def pstates_set_command(args, proc):
                 info_keys += opt_info["info_keys"]
                 print_pstates_info(proc, cpuinfo, keys=info_keys, cpus=opt_info["info_nums"])
 
-def handle_pstate_config_options(args, proc, cpuinfo):
+def handle_pstate_config_options(args, proc, cpuinfo, cpufreq):
     """Handle options related to P-state, such as getting or setting EPP or turbo value."""
 
-    with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
-        opts = {}
+    opts = {}
 
-        cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
-        if hasattr(args, "epb"):
-            opts["epb"] = {}
-            opts["epb"]["keys"] = {"epb_supported", "epb_policy", "epb"}
-            opts["epb"]["val"] = getattr(args, "epb", None)
-            scope = cpufreq.get_scope("epb")
-            opts["epb"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
-        if hasattr(args, "epp"):
-            opts["epp"] = {}
-            opts["epp"]["keys"] = {"epp_supported", "epp_policy", "epp"}
-            opts["epp"]["val"] = getattr(args, "epp", None)
-            scope = cpufreq.get_scope("epp")
-            opts["epp"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
-        if hasattr(args, "governor"):
-            opts["governor"] = {}
-            opts["governor"]["keys"] = {"governor"}
-            opts["governor"]["val"] = getattr(args, "governor", None)
-            scope = cpufreq.get_scope("governor")
-            opts["governor"]["scope"] = scope
-            opts["governor"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
-        if hasattr(args, "turbo"):
-            opts["turbo"] = {}
-            opts["turbo"]["keys"] = {"turbo_supported", "turbo_enabled"}
-            opts["turbo"]["val"] = getattr(args, "turbo", None)
-            opts["turbo"]["scope"] = f"{proc.hostmsg} for all CPUs"
+    cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
+    if hasattr(args, "epb"):
+        opts["epb"] = {}
+        opts["epb"]["keys"] = {"epb_supported", "epb_policy", "epb"}
+        opts["epb"]["val"] = getattr(args, "epb", None)
+        scope = cpufreq.get_scope("epb")
+        opts["epb"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
+    if hasattr(args, "epp"):
+        opts["epp"] = {}
+        opts["epp"]["keys"] = {"epp_supported", "epp_policy", "epp"}
+        opts["epp"]["val"] = getattr(args, "epp", None)
+        scope = cpufreq.get_scope("epp")
+        opts["epp"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
+    if hasattr(args, "governor"):
+        opts["governor"] = {}
+        opts["governor"]["keys"] = {"governor"}
+        opts["governor"]["val"] = getattr(args, "governor", None)
+        scope = cpufreq.get_scope("governor")
+        opts["governor"]["scope"] = scope
+        opts["governor"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
+    if hasattr(args, "turbo"):
+        opts["turbo"] = {}
+        opts["turbo"]["keys"] = {"turbo_supported", "turbo_enabled"}
+        opts["turbo"]["val"] = getattr(args, "turbo", None)
+        opts["turbo"]["scope"] = f"{proc.hostmsg} for all CPUs"
 
-        for opt, opt_info in opts.items():
-            if opt_info["val"] is not None:
-                cpufreq.set_feature(opt, opt_info["val"], cpus=cpus)
-                LOG.info("Set %s to '%s'%s", opt, opt_info["val"], opt_info["scope"])
-            else:
-                cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-                opt_info["keys"].add("cpu")
-                print_pstates_info(proc, cpuinfo, keys=opt_info["keys"], cpus=cpus)
+    for opt, opt_info in opts.items():
+        if opt_info["val"] is not None:
+            cpufreq.set_feature(opt, opt_info["val"], cpus=cpus)
+            LOG.info("Set %s to '%s'%s", opt, opt_info["val"], opt_info["scope"])
+        else:
+            cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
+            opt_info["keys"].add("cpu")
+            print_pstates_info(proc, cpuinfo, keys=opt_info["keys"], cpus=cpus)
 
 def pstates_config_command(args, proc):
     """Implements the 'pstates config' command."""
@@ -563,7 +562,8 @@ def pstates_config_command(args, proc):
             LOG.warning("the turbo setting is global, '--cpus', '--cores', and '--packages' "
                         "options are ignored")
 
-        handle_pstate_config_options(args, proc, cpuinfo)
+        with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
+            handle_pstate_config_options(args, proc, cpuinfo, cpufreq)
 
 def aspm_info_command(_, proc):
     """Implements the 'aspm info'. command"""
