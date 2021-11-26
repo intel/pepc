@@ -512,34 +512,29 @@ def handle_pstate_config_options(args, proc, cpuinfo, cpufreq):
 
     opts = {}
 
-    cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
     if hasattr(args, "epb"):
         opts["epb"] = {}
         opts["epb"]["keys"] = {"epb_supported", "epb_policy", "epb"}
-        scope = cpufreq.get_scope("epb")
-        opts["epb"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
     if hasattr(args, "epp"):
         opts["epp"] = {}
         opts["epp"]["keys"] = {"epp_supported", "epp_policy", "epp"}
-        scope = cpufreq.get_scope("epp")
-        opts["epp"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
     if hasattr(args, "governor"):
         opts["governor"] = {}
         opts["governor"]["keys"] = {"governor"}
-        scope = cpufreq.get_scope("governor")
-        opts["governor"]["scope"] = scope
-        opts["governor"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
     if hasattr(args, "turbo"):
         opts["turbo"] = {}
         opts["turbo"]["keys"] = {"turbo_supported", "turbo_enabled"}
-        scope = cpufreq.get_scope("turbo")
-        opts["turbo"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
+
+    cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
 
     for optname, optinfo in opts.items():
         optval = getattr(args, optname)
         if optval is not None:
+
+            scope = cpufreq.get_scope(optname)
+            msg = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
             cpufreq.set_feature(optname, optval, cpus=cpus)
-            LOG.info("Set %s to '%s'%s", optname, optval, optinfo["scope"])
+            LOG.info("Set %s to '%s'%s", optname, optval, msg)
         else:
             cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
             optinfo["keys"].add("cpu")
