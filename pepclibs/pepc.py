@@ -308,7 +308,7 @@ def cstates_config_command(args, proc):
         msg = " and ".join([f"--{opt}" for opt in opts if hasattr(args, opt)])
         if msg:
             LOG.warning("'%s' option has package scope, '--cpus' and '--cores' options are " \
-                        "ignored.", msg)
+                        "ignored", msg)
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
         handle_cstate_config_options(args, proc, cpuinfo)
@@ -920,7 +920,7 @@ def main():
         args = parse_arguments()
 
         if not getattr(args, "func", None):
-            LOG.error("please, run '%s -h' for help.", OWN_NAME)
+            LOG.error("please, run '%s -h' for help", OWN_NAME)
             return -1
 
         proc = get_proc(args)
