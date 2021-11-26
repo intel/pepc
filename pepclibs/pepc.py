@@ -346,8 +346,8 @@ def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
     keys_descr.update(CPUFreq.UNCORE_KEYS_DESCR)
 
     first = True
-    with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as pstates:
-        for info in pstates.get_freq_info(cpus, keys=keys, fail_on_unsupported=False):
+    with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
+        for info in cpufreq.get_freq_info(cpus, keys=keys, fail_on_unsupported=False):
             if not first:
                 LOG.info("")
             first = False
@@ -425,8 +425,8 @@ def print_uncore_info(args, proc):
     keys_descr = CPUFreq.UNCORE_KEYS_DESCR
 
     first = True
-    with CPUFreq.CPUFreq(proc) as pstates:
-        for info in pstates.get_uncore_info(args.packages):
+    with CPUFreq.CPUFreq(proc) as cpufreq:
+        for info in cpufreq.get_uncore_info(args.packages):
             if not first:
                 LOG.info("")
             first = False
@@ -452,7 +452,7 @@ def pstates_set_command(args, proc):
     """implements the 'pstates set' command."""
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
-        CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as pstates:
+        CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
         opts = {}
         if hasattr(args, "minufreq") or hasattr(args, "maxufreq"):
             check_uncore_options(args)
@@ -460,7 +460,7 @@ def pstates_set_command(args, proc):
             opts["uncore"]["min"] = getattr(args, "minufreq", None)
             opts["uncore"]["max"] = getattr(args, "maxufreq", None)
             opts["uncore"]["nums"] = args.packages
-            opts["uncore"]["method"] = getattr(pstates, "set_uncore_freq")
+            opts["uncore"]["method"] = getattr(cpufreq, "set_uncore_freq")
             cpus = []
             for pkg in cpuinfo.get_package_list(args.packages):
                 cpus.append(cpuinfo.pkgs_to_cpus(pkgs=pkg)[0])
@@ -475,7 +475,7 @@ def pstates_set_command(args, proc):
             opts["CPU"]["min"] = getattr(args, "minfreq", None)
             opts["CPU"]["max"] = getattr(args, "maxfreq", None)
             opts["CPU"]["nums"] = get_cpus(args, proc, cpuinfo=cpuinfo)
-            opts["CPU"]["method"] = getattr(pstates, "set_freq")
+            opts["CPU"]["method"] = getattr(cpufreq, "set_freq")
             opts["CPU"]["info_keys"] = ["cpu"]
             opts["CPU"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
             opts["CPU"]["opt_key_map"] = (("minfreq", "cpu_min"), ("maxfreq", "cpu_max"))
@@ -496,7 +496,7 @@ def pstates_set_command(args, proc):
                         msg += " and "
                     msg += f"maximum frequency to {khz_fmt(maxfreq)}"
 
-                scope = pstates.get_scope(f"{opt.lower()}-freq")
+                scope = cpufreq.get_scope(f"{opt.lower()}-freq")
                 LOG.info("%s%s", msg, get_scope_msg(proc, cpuinfo, nums, scope=scope))
 
             info_keys = []
@@ -511,7 +511,7 @@ def pstates_set_command(args, proc):
 def handle_pstate_config_options(args, proc, cpuinfo):
     """Handle options related to P-state, such as getting or setting EPP or turbo value."""
 
-    with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as pstates:
+    with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
         opts = {}
 
         cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
@@ -519,19 +519,19 @@ def handle_pstate_config_options(args, proc, cpuinfo):
             opts["epb"] = {}
             opts["epb"]["keys"] = {"epb_supported", "epb_policy", "epb"}
             opts["epb"]["val"] = getattr(args, "epb", None)
-            scope = pstates.get_scope("epb")
+            scope = cpufreq.get_scope("epb")
             opts["epb"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
         if hasattr(args, "epp"):
             opts["epp"] = {}
             opts["epp"]["keys"] = {"epp_supported", "epp_policy", "epp"}
             opts["epp"]["val"] = getattr(args, "epp", None)
-            scope = pstates.get_scope("epp")
+            scope = cpufreq.get_scope("epp")
             opts["epp"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
         if hasattr(args, "governor"):
             opts["governor"] = {}
             opts["governor"]["keys"] = {"governor"}
             opts["governor"]["val"] = getattr(args, "governor", None)
-            scope = pstates.get_scope("governor")
+            scope = cpufreq.get_scope("governor")
             opts["governor"]["scope"] = scope
             opts["governor"]["scope"] = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
         if hasattr(args, "turbo"):
@@ -542,7 +542,7 @@ def handle_pstate_config_options(args, proc, cpuinfo):
 
         for opt, opt_info in opts.items():
             if opt_info["val"] is not None:
-                pstates.set_feature(opt, opt_info["val"], cpus=cpus)
+                cpufreq.set_feature(opt, opt_info["val"], cpus=cpus)
                 LOG.info("Set %s to '%s'%s", opt, opt_info["val"], opt_info["scope"])
             else:
                 cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
