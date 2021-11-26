@@ -11,7 +11,6 @@ This module provides an API to get CPU information.
 """
 
 import re
-from itertools import groupby
 from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
 from pepclibs.helperlibs import ArgParse, Procs, Trivial
 
@@ -352,7 +351,6 @@ class CPUInfo:
                 if pfx == "off" and lvl != LEVELS[-1]:
                     continue
                 cpugeom[pfx + lvl + "s"] = {}
-                cpugeom[pfx + lvl + "s_sorted"] = []
 
         # Count of packages, NUMA nodes, cores, etc.
         for lvl in LEVELS:
@@ -382,11 +380,6 @@ class CPUInfo:
         # ('cpugom["nodes"]', etc).
         for lvlidx, lvl in enumerate(LEVELS[1:]):
             cpugeom[lvl + "s"] = self._flatten_to_level(cpugeom[LEVELS[0] + "s"], lvlidx + 1)
-
-        # Sort CPU lists by CPU number.
-        for lvl in LEVELS:
-            cpugeom[lvl + "s_sorted"] = sorted(cpugeom[lvl + "s"])
-        cpugeom["offcpus_sorted"] = sorted(cpugeom["offcpus"])
 
         for lvl1 in LEVELS[1:]:
             for lvl2 in LEVELS[:-1]:
