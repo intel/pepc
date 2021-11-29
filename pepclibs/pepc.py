@@ -21,6 +21,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
+from wultlibs.helperlibs import Systemctl
 from pepclibs.helperlibs import ArgParse, Procs, Logging, SSH, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import ASPM, CPUIdle, CPUInfo, CPUOnline, CPUFreq
@@ -67,6 +68,15 @@ class PepcArgsParser(ArgParse.ArgsParser):
         if uargs:
             raise Error(f"unrecognized option(s): {' '.join(uargs)}")
         return args
+
+def check_tuned_presence(proc):
+    """Check if the 'tuned' service is active, and if it is, print a warning message."""
+
+    with Systemctl.Systemctl(proc=proc) as systemctl:
+        if systemctl.is_active("tuned"):
+            LOG.warning("'tuned' service is active%s, and it may prevent '%s' from changing some " \
+                        "settings, or override the changes made by '%s' with 'tuned' values",
+                        proc.hostmsg, OWN_NAME, OWN_NAME)
 
 def cpu_hotplug_info_command(_, proc):
     """Implements the 'cpu-hotplug info' command."""
@@ -301,6 +311,8 @@ def cstates_config_command(args, proc):
     if not any([hasattr(args, opt) for opt in CPUIdle.FEATURES]):
         raise Error("please, provide a configuration option")
 
+    check_tuned_presence(proc)
+
     if any([args.cpus or args.cores]):
         opts = ("cstate_prewake", "c1e_autopromote", "pkg_cstate_limit")
         msg = " and ".join([f"--{opt}" for opt in opts if hasattr(args, opt)])
@@ -450,6 +462,8 @@ def pstates_info_command(args, proc):
 def pstates_set_command(args, proc):
     """implements the 'pstates set' command."""
 
+    check_tuned_presence(proc)
+
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
         CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
         opts = {}
@@ -546,6 +560,8 @@ def pstates_config_command(args, proc):
     if not any((hasattr(args, "governor"), hasattr(args, "turbo"), hasattr(args, "epb"),
                 hasattr(args, "epp"))):
         raise Error("please, provide a configuration option")
+
+    check_tuned_presence(proc)
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
         cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
