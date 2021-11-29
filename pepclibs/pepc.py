@@ -342,7 +342,8 @@ def check_uncore_options(args):
 def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
     """Print CPU P-states information."""
 
-    keys_decr = CPUFreq.CPUFREQ_KEYS_DESCR | CPUFreq.UNCORE_KEYS_DESCR
+    keys_decr = CPUFreq.CPUFREQ_KEYS_DESCR
+    keys_decr.update(CPUFreq.UNCORE_KEYS_DESCR)
 
     first = True
     with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as pstates:

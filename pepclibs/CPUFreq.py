@@ -510,7 +510,8 @@ class CPUFreq:
         """
 
         if not keys:
-            keys = CPUFREQ_KEYS_DESCR | UNCORE_KEYS_DESCR
+            keys = CPUFREQ_KEYS_DESCR
+            keys.update(UNCORE_KEYS_DESCR)
         keys = set(keys)
 
         uc_infos = {}
