@@ -76,7 +76,8 @@ CPU_DESCR = {INTEL_FAM6_SAPPHIRERAPIDS_X: "Sapphire Rapids Xeon",
              INTEL_FAM6_GOLDMONT_D:       "Goldmont Atom (Denverton)",
              INTEL_FAM6_TREMONT_D:        "Tremont Atom (Snow Ridge)"}
 
-LEVELS = ("pkg", "node", "core", "cpu")
+# The levels names have to be the same as "scope" names in 'CPUFreq', 'CPUIdle', etc.
+LEVELS = ("package", "node", "core", "CPU")
 
 def get_lscpu_info(proc=None):
     """
@@ -198,7 +199,7 @@ class CPUInfo:
 
     def get_cpus(self):
         """Returns list of online CPU numbers."""
-        return self._get_level("cpu", "cpu")
+        return self._get_level("CPU", "CPU")
 
     def get_cores(self):
         """Returns list of core numbers, where at least one online CPU."""
@@ -206,7 +207,7 @@ class CPUInfo:
 
     def get_packages(self):
         """Returns list of package numbers, where at least one online CPU."""
-        return self._get_level("pkg", "pkg")
+        return self._get_level("package", "package")
 
     def cores_to_cpus(self, cores=None):
         """
@@ -214,21 +215,21 @@ class CPUInfo:
         allowed to contain both integer and string type numbers. For example, both are OK: '(0, 2)'
         and '("0", "2")'. Returns all CPU numbers if 'cores' is None or "all".
         """
-        return self._get_level("core", "cpu", nums=cores)
+        return self._get_level("core", "CPU", nums=cores)
 
     def pkgs_to_cores(self, pkgs=None):
         """
         Returns list of cores with at least one online CPU belonging to packages 'pkgs'. The 'pkgs'
         argument is same as 'cores' in 'cores_to_cpus()'.
         """
-        return self._get_level("pkg", "core", nums=pkgs)
+        return self._get_level("package", "core", nums=pkgs)
 
     def pkgs_to_cpus(self, pkgs=None):
         """
         Returns list of online CPU numbers belonging to packages 'pkgs'. The 'pkgs' argument is same
         as 'cores' in 'cores_to_cpus()'.
         """
-        return self._get_level("pkg", "cpu", nums=pkgs)
+        return self._get_level("package", "CPU", nums=pkgs)
 
     def get_cpu_list(self, cpus):
         """Validate CPUs in 'cpus'. Returns CPU numbers as list of integers."""
@@ -358,9 +359,9 @@ class CPUInfo:
 
         # List of offline CPUs. Note, Linux does not provide topology information for offline CPUs,
         # so we only have the CPU numbers.
-        cpugeom["offcpus"] = []
+        cpugeom["offCPUs"] = []
         # Offline CPUs count.
-        cpugeom["offcpucnt"] = 0
+        cpugeom["offCPUcnt"] = 0
 
         # Parse the 'lscpu' output.
         for line in self._get_lscpu():
@@ -370,13 +371,13 @@ class CPUInfo:
             split_line = line.strip().split(",")
             nums = {key : split_line[idx] for idx, key in enumerate(LEVELS)}
             if split_line[-1] != "Y":
-                cpugeom["offcpucnt"] += 1
-                cpugeom["offcpus"].append(int(nums["cpu"]))
+                cpugeom["offCPUcnt"] += 1
+                cpugeom["offCPUs"].append(int(nums["CPU"]))
                 continue
 
             self._add_nums(nums)
 
-        # Now we have the full hierarcy (in 'cpugeom["pkgs"]'). Create partial hierarchies
+        # Now we have the full hierarcy (in 'cpugeom["packages"]'). Create partial hierarchies
         # ('cpugom["nodes"]', etc).
         for lvlidx, lvl in enumerate(LEVELS[1:]):
             cpugeom[lvl + "s"] = self._flatten_to_level(cpugeom[LEVELS[0] + "s"], lvlidx + 1)

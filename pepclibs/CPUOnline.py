@@ -59,7 +59,7 @@ class CPUOnline:
         if cpus is None or isinstance(cpus, str):
             if cpus is None:
                 if online:
-                    cpugeom_key = "offcpus"
+                    cpugeom_key = "offCPUs"
                 else:
                     cpugeom_key = "cpus"
 

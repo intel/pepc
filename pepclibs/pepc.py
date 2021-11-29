@@ -84,7 +84,7 @@ def cpu_hotplug_info_command(_, proc):
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
         cpugeom = cpuinfo.get_cpu_geometry()
 
-    for key, word in (("cpus", "online"), ("offcpus", "offline")):
+    for key, word in (("CPUs", "online"), ("offCPUs", "offline")):
         if not cpugeom[key]:
             LOG.info("No %s CPUs%s", word, proc.hostmsg)
         else:
