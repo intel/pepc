@@ -342,8 +342,8 @@ def check_uncore_options(args):
 def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
     """Print CPU P-states information."""
 
-    keys_decr = CPUFreq.CPUFREQ_KEYS_DESCR
-    keys_decr.update(CPUFreq.UNCORE_KEYS_DESCR)
+    keys_descr = CPUFreq.CPUFREQ_KEYS_DESCR
+    keys_descr.update(CPUFreq.UNCORE_KEYS_DESCR)
 
     first = True
     with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as pstates:
@@ -352,75 +352,77 @@ def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
                 LOG.info("")
             first = False
             if "cpu" in info:
-                LOG.info("%s: %d", keys_decr["cpu"], info["cpu"])
+                LOG.info("%s: %d", keys_descr["cpu"], info["cpu"])
             if "pkg" in info:
-                LOG.info("%s: %d", keys_decr["pkg"], info["pkg"])
+                LOG.info("%s: %d", keys_descr["pkg"], info["pkg"])
             if "die" in info:
-                LOG.info("%s: %d", keys_decr["die"], info["die"])
+                LOG.info("%s: %d", keys_descr["die"], info["die"])
             if "base" in info:
-                LOG.info("%s: %s", keys_decr["base"], khz_fmt(info["base"]))
+                LOG.info("%s: %s", keys_descr["base"], khz_fmt(info["base"]))
             if "max_eff" in info:
-                LOG.info("%s: %s", keys_decr["max_eff"], khz_fmt(info["max_eff"]))
+                LOG.info("%s: %s", keys_descr["max_eff"], khz_fmt(info["max_eff"]))
             if "max_turbo" in info:
-                LOG.info("%s: %s", keys_decr["max_turbo"], khz_fmt(info["max_turbo"]))
+                LOG.info("%s: %s", keys_descr["max_turbo"], khz_fmt(info["max_turbo"]))
             if "cpu_min_limit" in info:
-                LOG.info("%s: %s", keys_decr["cpu_min_limit"], khz_fmt(info["cpu_min_limit"]))
+                LOG.info("%s: %s", keys_descr["cpu_min_limit"], khz_fmt(info["cpu_min_limit"]))
             if "cpu_max_limit" in info:
-                LOG.info("%s: %s", keys_decr["cpu_max_limit"], khz_fmt(info["cpu_max_limit"]))
+                LOG.info("%s: %s", keys_descr["cpu_max_limit"], khz_fmt(info["cpu_max_limit"]))
             if "cpu_min" in info:
-                LOG.info("%s: %s", keys_decr["cpu_min"], khz_fmt(info["cpu_min"]))
+                LOG.info("%s: %s", keys_descr["cpu_min"], khz_fmt(info["cpu_min"]))
             if "cpu_max" in info:
-                LOG.info("%s: %s", keys_decr["cpu_max"], khz_fmt(info["cpu_max"]))
+                LOG.info("%s: %s", keys_descr["cpu_max"], khz_fmt(info["cpu_max"]))
             if "uncore_min_limit" in info:
-                LOG.info("%s: %s", keys_decr["uncore_min_limit"], khz_fmt(info["uncore_min_limit"]))
+                limit = khz_fmt(info["uncore_min_limit"])
+                LOG.info("%s: %s", keys_descr["uncore_min_limit"], limit)
             if "uncore_max_limit" in info:
-                LOG.info("%s: %s", keys_decr["uncore_max_limit"], khz_fmt(info["uncore_max_limit"]))
+                limit = khz_fmt(info["uncore_max_limit"])
+                LOG.info("%s: %s", keys_descr["uncore_max_limit"], limit)
             if "uncore_min" in info:
-                LOG.info("%s: %s", keys_decr["uncore_min"], khz_fmt(info["uncore_min"]))
+                LOG.info("%s: %s", keys_descr["uncore_min"], khz_fmt(info["uncore_min"]))
             if "uncore_max" in info:
-                LOG.info("%s: %s", keys_decr["uncore_max"], khz_fmt(info["uncore_max"]))
+                LOG.info("%s: %s", keys_descr["uncore_max"], khz_fmt(info["uncore_max"]))
             if "hwp_supported" in info:
-                LOG.info("%s: %s", keys_decr["hwp_supported"], bool_fmt(info["hwp_supported"]))
+                LOG.info("%s: %s", keys_descr["hwp_supported"], bool_fmt(info["hwp_supported"]))
             if "hwp_enabled" in info and info.get("hwp_supported"):
-                LOG.info("%s: %s", keys_decr["hwp_enabled"], bool_fmt(info["hwp_enabled"]))
+                LOG.info("%s: %s", keys_descr["hwp_enabled"], bool_fmt(info["hwp_enabled"]))
             if "turbo_supported" in info:
-                LOG.info("%s: %s", keys_decr["turbo_supported"], bool_fmt(info["turbo_supported"]))
+                LOG.info("%s: %s", keys_descr["turbo_supported"], bool_fmt(info["turbo_supported"]))
             if "turbo_enabled" in info and info.get("turbo_supported"):
-                LOG.info("%s: %s", keys_decr["turbo_enabled"], bool_fmt(info["turbo_enabled"]))
+                LOG.info("%s: %s", keys_descr["turbo_enabled"], bool_fmt(info["turbo_enabled"]))
             if "driver" in info:
-                LOG.info("%s: %s", keys_decr["driver"], info["driver"])
+                LOG.info("%s: %s", keys_descr["driver"], info["driver"])
             if "governor" in info:
-                LOG.info("%s: %s", keys_decr["governor"], info["governor"])
+                LOG.info("%s: %s", keys_descr["governor"], info["governor"])
             if "governors" in info:
-                LOG.info("%s: %s", keys_decr["governors"], ", ".join(info["governors"]))
+                LOG.info("%s: %s", keys_descr["governors"], ", ".join(info["governors"]))
             if "epp_supported" in info:
                 if not info.get("epp_supported"):
-                    LOG.info("%s: %s", keys_decr["epp_supported"], bool_fmt(info["epp_supported"]))
+                    LOG.info("%s: %s", keys_descr["epp_supported"], bool_fmt(info["epp_supported"]))
                 else:
                     if "epp" in info:
-                        LOG.info("%s: %d", keys_decr["epp"], info["epp"])
+                        LOG.info("%s: %d", keys_descr["epp"], info["epp"])
                     if info.get("epp_policy"):
-                        LOG.info("%s: %s", keys_decr["epp_policy"], info["epp_policy"])
+                        LOG.info("%s: %s", keys_descr["epp_policy"], info["epp_policy"])
                     if info.get("epp_policies"):
                         epp_policies_str = ", ".join(info["epp_policies"])
-                        LOG.info("%s: %s", keys_decr["epp_policies"], epp_policies_str)
+                        LOG.info("%s: %s", keys_descr["epp_policies"], epp_policies_str)
             if "epb_supported" in info:
                 if not info.get("epb_supported"):
-                    LOG.info("%s: %s", keys_decr["epb_supported"], bool_fmt(info["epb_supported"]))
+                    LOG.info("%s: %s", keys_descr["epb_supported"], bool_fmt(info["epb_supported"]))
                 else:
                     if "epb" in info:
-                        LOG.info("%s: %d", keys_decr["epb"], info["epb"])
+                        LOG.info("%s: %d", keys_descr["epb"], info["epb"])
                     if info.get("epb_policy"):
-                        LOG.info("%s: %s", keys_decr["epb_policy"], info["epb_policy"])
+                        LOG.info("%s: %s", keys_descr["epb_policy"], info["epb_policy"])
                     if info.get("epb_policies"):
                         epb_policies_str = ", ".join(info["epb_policies"])
-                        LOG.info("%s: %s", keys_decr["epb_policies"], epb_policies_str)
+                        LOG.info("%s: %s", keys_descr["epb_policies"], epb_policies_str)
 
 def print_uncore_info(args, proc):
     """Print uncore frequency information."""
 
     check_uncore_options(args)
-    keys_decr = CPUFreq.UNCORE_KEYS_DESCR
+    keys_descr = CPUFreq.UNCORE_KEYS_DESCR
 
     first = True
     with CPUFreq.CPUFreq(proc) as pstates:
@@ -429,12 +431,12 @@ def print_uncore_info(args, proc):
                 LOG.info("")
             first = False
 
-            LOG.info("%s: %s", keys_decr["pkg"], info["pkg"])
-            LOG.info("%s: %s", keys_decr["die"], info["die"])
-            LOG.info("%s: %s", keys_decr["uncore_min"], khz_fmt(info["uncore_min"]))
-            LOG.info("%s: %s", keys_decr["uncore_max"], khz_fmt(info["uncore_max"]))
-            LOG.info("%s: %s", keys_decr["uncore_min_limit"], khz_fmt(info["uncore_min_limit"]))
-            LOG.info("%s: %s", keys_decr["uncore_max_limit"], khz_fmt(info["uncore_max_limit"]))
+            LOG.info("%s: %s", keys_descr["pkg"], info["pkg"])
+            LOG.info("%s: %s", keys_descr["die"], info["die"])
+            LOG.info("%s: %s", keys_descr["uncore_min"], khz_fmt(info["uncore_min"]))
+            LOG.info("%s: %s", keys_descr["uncore_max"], khz_fmt(info["uncore_max"]))
+            LOG.info("%s: %s", keys_descr["uncore_min_limit"], khz_fmt(info["uncore_min_limit"]))
+            LOG.info("%s: %s", keys_descr["uncore_max_limit"], khz_fmt(info["uncore_max_limit"]))
 
 def pstates_info_command(args, proc):
     """Implements the 'pstates info' command."""
