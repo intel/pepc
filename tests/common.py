@@ -13,6 +13,7 @@
 import re
 import sys
 import random
+import logging
 from contextlib import contextmanager
 from unittest.mock import patch, mock_open
 from pathlib import Path
@@ -20,6 +21,9 @@ from pepclibs import CPUInfo
 from pepclibs.helperlibs import Procs, FSHelpers
 from pepclibs.msr import MSR, PCStateConfigCtl
 from pepclibs import pepc
+
+logging.basicConfig(level=logging.DEBUG)
+_LOG = logging.getLogger()
 
 _TESTDATA = {
         ("cstates", "cstates_info.txt" ),
@@ -245,7 +249,9 @@ def run_pepc(arguments, exp_ret=None):
     """
 
     with get_mocked_objects() as _:
-        sys.argv = [f"{pepc.__file__}"] + arguments.split()
+        cmd = f"{pepc.__file__} {arguments}"
+        _LOG.debug("running: {cmd}")
+        sys.argv = cmd.split()
         ret = pepc.main()
 
         if exp_ret is not None:
