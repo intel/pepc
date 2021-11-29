@@ -65,10 +65,10 @@ new_ver="$1"; shift
 printf "%s" "$new_ver" | egrep -q -x '[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+' ||
         fatal "please, provide new version in X.Y.Z format"
 
-# Make sure that the current branch is 'master'
+# Make sure that the current branch is 'master' or 'release'.
 current_branch="$(git branch | sed -n -e '/^*/ s/^* //p')"
-if [ "$current_branch" != "master" ]; then
-	fatal "current branch is '$current_branch' but must be 'master'"
+if [ "$current_branch" != "master" -a "$current_branch" != "release" ]; then
+	fatal "current branch is '$current_branch' but must be 'master' or 'release'"
 fi
 
 # Remind the maintainer about various important things
@@ -96,14 +96,36 @@ release_name="Version $new_ver"
 printf "%s\n" "Signing tag $tag_name"
 git tag -m "$release_name" -s "$tag_name"
 
+
+if [ "$current_branch" = "master" ]; then
+    branchnames="master and release brances"
+else
+    branchnames="release branch"
+fi
+
 cat <<EOF
 To finish the release:
   1. push the $tag_name tag out
-  2. push the master and release branches out
+  2. push $branchnames branches out
 
 The commands would be:
-
-git push public $tag_name
-git push public master:master
-git push public master:release
 EOF
+
+for remote in "origin" "upstream" "public"; do
+    echo "git push $remote $tag_name"
+    if [ "$current_branch" = "master" ]; then
+        echo "git push $remote master:master"
+        echo "git push $remote master:release"
+    else
+        echo "git push public release:release"
+    fi
+done
+
+if [ "$current_branch" != "master" ]; then
+    echo
+    echo "Then merge the release branch back to master, and run the following commands:"
+
+    for remote in "origin" "upstream" "public"; do
+        echo "git push $remote master:master"
+    done
+fi
