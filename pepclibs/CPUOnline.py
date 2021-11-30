@@ -66,7 +66,7 @@ class CPUOnline:
                 if not self._cpuinfo:
                     self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
                 cpugeom = self._cpuinfo.get_cpu_geometry()
-                cpus = cpugeom[cpugeom_key]
+                cpus = cpugeom["CPU"][cpugeom_key]
             else:
                 cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=True)
         else:

@@ -85,11 +85,11 @@ def cpu_hotplug_info_command(_, proc):
         cpugeom = cpuinfo.get_cpu_geometry()
 
     for key, word in (("CPUs", "online"), ("offCPUs", "offline")):
-        if not cpugeom[key]:
+        if not cpugeom["CPU"][key]:
             LOG.info("No %s CPUs%s", word, proc.hostmsg)
         else:
             LOG.info("The following CPUs are %s%s:", word, proc.hostmsg)
-            LOG.info("%s", Human.rangify(cpugeom[key]))
+            LOG.info("%s", Human.rangify(cpugeom["CPU"][key]))
 
 def get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
     """
@@ -164,7 +164,7 @@ def cpu_hotplug_offline_command(args, proc):
 
         cpugeom = cpuinfo.get_cpu_geometry()
         siblings_to_offline = []
-        for siblings in cpugeom["cores"].values():
+        for siblings in cpugeom["core"]["cores"].values():
             siblings_to_offline += siblings[1:]
 
         siblings_to_offline = set(cpus) & set(siblings_to_offline)
