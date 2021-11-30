@@ -248,10 +248,10 @@ class PCStateConfigCtl:
         cpus = set(cpuinfo.get_cpu_list(cpus))
         pkg_to_cpus = {}
         for pkg in cpuinfo.get_packages():
-            pkg_cpus = cpuinfo.pkgs_to_cpus(pkgs=[pkg])
+            pkg_cpus = cpuinfo.packages_to_cpus(packages=[pkg])
             if set(pkg_cpus) & cpus:
                 pkg_to_cpus[pkg] = []
-                for core in cpuinfo.pkgs_to_cores(pkgs=[pkg]):
+                for core in cpuinfo.packages_to_cores(packages=[pkg]):
                     core_cpus = cpuinfo.cores_to_cpus(cores=[core])
                     pkg_to_cpus[pkg].append(core_cpus[0])
 
@@ -275,9 +275,9 @@ class PCStateConfigCtl:
         # Package C-state limit has package scope, but the MSR is per-core.
         pkg_to_cpus = []
         for pkg in cpuinfo.get_packages():
-            pkg_cpus = cpuinfo.pkgs_to_cpus(pkgs=[pkg])
+            pkg_cpus = cpuinfo.packages_to_cpus(packages=[pkg])
             if set(pkg_cpus) & cpus:
-                for core in cpuinfo.pkgs_to_cores(pkgs=[pkg]):
+                for core in cpuinfo.packages_to_cores(packages=[pkg]):
                     core_cpus = cpuinfo.cores_to_cpus(cores=[core])
                     pkg_to_cpus.append(core_cpus[0])
 

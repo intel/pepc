@@ -133,7 +133,7 @@ def get_cpus(args, proc, default_cpus="all", cpuinfo=None):
         if args.cores:
             cpus += cpuinfo.cores_to_cpus(cores=args.cores)
         if args.packages:
-            cpus += cpuinfo.pkgs_to_cpus(pkgs=args.packages)
+            cpus += cpuinfo.packages_to_cpus(packages=args.packages)
 
         if not cpus and default_cpus is not None:
             cpus = cpuinfo.get_cpu_list(default_cpus)
@@ -255,12 +255,12 @@ def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
     """Handle options related to C-state, such as setting C-state prewake."""
 
     pkgs = cpuinfo.get_package_list(args.packages)
-    cpus = cpuinfo.pkgs_to_cpus(pkgs=pkgs)
+    cpus = cpuinfo.packages_to_cpus(packages=pkgs)
 
     # Get first CPU number belonging to each package 'args.packages'.
     pkg_cpus = []
     for pkg in pkgs:
-        pkg_cpus.append(cpuinfo.pkgs_to_cpus(pkgs=pkg)[0])
+        pkg_cpus.append(cpuinfo.packages_to_cpus(packages=pkg)[0])
 
     opts = {}
     if hasattr(args, "cstate_prewake"):
@@ -476,7 +476,7 @@ def pstates_set_command(args, proc):
             opts["uncore"]["method"] = getattr(cpufreq, "set_uncore_freq")
             cpus = []
             for pkg in cpuinfo.get_package_list(args.packages):
-                cpus.append(cpuinfo.pkgs_to_cpus(pkgs=pkg)[0])
+                cpus.append(cpuinfo.packages_to_cpus(packages=pkg)[0])
             opts["uncore"]["info_nums"] = cpus
             opts["uncore"]["info_keys"] = ["pkg"]
             opts["uncore"]["opt_key_map"] = (("minufreq", "uncore_min"), ("maxufreq", "uncore_max"))

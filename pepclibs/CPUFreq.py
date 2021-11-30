@@ -503,7 +503,7 @@ class CPUFreq:
         cpus_pkg_map = {}
 
         for pkg in self._get_cpuinfo().get_packages():
-            for cpu in self._get_cpuinfo().pkgs_to_cpus(pkgs=pkg):
+            for cpu in self._get_cpuinfo().packages_to_cpus(packages=pkg):
                 cpus_pkg_map[cpu] = pkg
 
         return cpus_pkg_map

@@ -217,19 +217,19 @@ class CPUInfo:
         """
         return self._get_level("core", "CPU", nums=cores)
 
-    def pkgs_to_cores(self, pkgs=None):
+    def packages_to_cores(self, packages=None):
         """
-        Returns list of cores with at least one online CPU belonging to packages 'pkgs'. The 'pkgs'
-        argument is same as 'cores' in 'cores_to_cpus()'.
+        Returns list of cores with at least one online CPU belonging to packages 'packages'. The
+        'packages' argument similar to 'cores' in 'cores_to_cpus()'.
         """
-        return self._get_level("package", "core", nums=pkgs)
+        return self._get_level("package", "core", nums=packages)
 
-    def pkgs_to_cpus(self, pkgs=None):
+    def packages_to_cpus(self, packages=None):
         """
-        Returns list of online CPU numbers belonging to packages 'pkgs'. The 'pkgs' argument is same
-        as 'cores' in 'cores_to_cpus()'.
+        Returns list of online CPU numbers belonging to packages 'packages'. The 'packages' argument
+        is similar 'cores' in 'cores_to_cpus()'.
         """
-        return self._get_level("package", "CPU", nums=pkgs)
+        return self._get_level("package", "CPU", nums=packages)
 
     def get_cpu_list(self, cpus):
         """Validate CPUs in 'cpus'. Returns CPU numbers as list of integers."""
@@ -271,7 +271,7 @@ class CPUInfo:
         """Returns integer package number for CPU number 'cpu'."""
 
         for pkg in self.get_packages():
-            if cpu in self.pkgs_to_cpus(pkgs=pkg):
+            if cpu in self.packages_to_cpus(packages=pkg):
                 return pkg
 
         allcpus = self.get_cpus()
