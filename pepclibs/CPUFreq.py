@@ -103,6 +103,8 @@ _BCLK_100MHZ = {0x2A, # INTEL_FAM6_SANDYBRIDGE
 _BCLK_SLM = {0x37, # INTEL_FAM6_ATOM_SILVERMONT
              0x4D} # INTEL_FAM6_ATOM_SILVERMONT_D
 
+# This dictionary describes various CPU features this module controls.
+# Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
 FEATURES = {
     "turbo" : {
         "name"  : "turbo",

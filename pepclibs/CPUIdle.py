@@ -34,6 +34,8 @@ CSTATE_KEYS_DESCR = {
     "c1_undemotion" : "C1 un-demotion enabled",
 }
 
+# This dictionary describes various CPU features this module controls.
+# Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
 FEATURES = {}
 FEATURES.update(PowerCtl.FEATURES)
 FEATURES.update(PCStateConfigCtl.FEATURES)

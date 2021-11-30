@@ -77,6 +77,7 @@ _PKG_CST_LIMIT_MAP = {CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _ICX_PKG_CST_LIMITS,
                       CPUInfo.INTEL_FAM6_TREMONT_D:        _SNR_PKG_CST_LIMITS}
 
 # Map of features available on various CPU models.
+# Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
 FEATURES = {
     "pkg_cstate_limit" : {
         "name" : "Package C-state limit",

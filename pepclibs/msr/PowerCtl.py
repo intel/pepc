@@ -27,6 +27,7 @@ CSTATE_PREWAKE_DISABLE = 30
 PWR_PERF_TUNING_ENABLE_DYN_SWITCHING = 33
 
 # Map of features available on various CPU models.
+# Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
 FEATURES = {
     "cstate_prewake" : {
         "name" : "C-state prewake",
