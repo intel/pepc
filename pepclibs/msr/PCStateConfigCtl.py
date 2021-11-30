@@ -12,7 +12,7 @@ model-specific register found on many Intel platforms.
 """
 
 import logging
-from pepclibs.helperlibs import Procs
+from pepclibs.helperlibs import Procs, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR
@@ -324,6 +324,16 @@ class PCStateConfigCtl:
         'CPUIdle.get_cstates_info()' function - please, refer to the 'CPUIdle' module for the exact
         format description.
         """
+
+        if _LOG.getEffectiveLevel() == logging.DEBUG:
+            if "enabled" in FEATURES[feature]:
+                enable_str = "enable" if val else "disable"
+                msg = f"{enable_str} feature '{feature}'"
+            else:
+                msg = f"set feature '{feature}' value to {val}"
+
+            cpus_range = Human.rangify(self._cpuinfo.get_cpu_list(cpus))
+            _LOG.debug("%s on CPU(s) %s%s", msg, cpus_range, self._proc.hostmsg)
 
         self._check_feature_support(feature)
         if "enabled" in FEATURES[feature]:
