@@ -251,11 +251,30 @@ def print_cstate_config_options(proc, cpuidle, keys, cpus):
             LOG.info("CPU %s: %s: %s", info["cpu"], keys_descr["c1_undemotion"], enabled)
         first = False
 
+def print_scope_warning(args, optname, scope):
+    """
+    Check that the the '--packages', '--cores', and '--cpus' options provided by the user for
+    '--optname' match the scope 'scope' of the option. E.g., if an option has package scope,
+    '--cpus' should not be used.
+    """
+
+    if scope == "package":
+        if getattr(args, "cpus") or getattr(args, "cores"):
+            LOG.warning("the '%s' option has package scope, so '--cpus' and '--cores' options "
+                        "should not be used with '%s'. It is recommended to have it be the same "
+                        "on all CPUs of a package. Otherwise the result depends on how the "
+                        "platform resolves the conflicting values.", optname, optname)
+    elif scope == "core":
+        if getattr(args, "cpus"):
+            LOG.warning("the '%s' option has core scope, so the '--cpus' option should not be "
+                        "used with '%s'.\nIt is recommended to have it be the same on all CPUs "
+                        "of a core. Otherwise the result depends on how the platform resolves "
+                        "the conflicting values.", optname, optname)
+
 def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
     """Handle options related to C-state, such as setting C-state prewake."""
 
     pkgs = cpuinfo.get_package_list(args.packages)
-    cpus = cpuinfo.packages_to_cpus(packages=pkgs)
 
     # Get first CPU number belonging to each package 'args.packages'.
     pkg_cpus = []
@@ -265,43 +284,39 @@ def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
     opts = {}
     if hasattr(args, "cstate_prewake"):
         opts["cstate_prewake"] = {}
-        opts["cstate_prewake"]["cpus"] = cpus
-        opts["cstate_prewake"]["packages"] = pkgs
         opts["cstate_prewake"]["info_nums"] = pkg_cpus
         opts["cstate_prewake"]["keys"] = {"cstate_prewake", "cstate_prewake_supported", "package"}
     if hasattr(args, "c1e_autopromote"):
         opts["c1e_autopromote"] = {}
-        opts["c1e_autopromote"]["cpus"] = cpus
-        opts["c1e_autopromote"]["packages"] = pkgs
         opts["c1e_autopromote"]["info_nums"] = pkg_cpus
         opts["c1e_autopromote"]["keys"] = {"c1e_autopromote", "package"}
     if hasattr(args, "pkg_cstate_limit"):
         opts["pkg_cstate_limit"] = {}
-        opts["pkg_cstate_limit"]["cpus"] = cpus
-        opts["pkg_cstate_limit"]["packages"] = pkgs
         opts["pkg_cstate_limit"]["info_nums"] = pkg_cpus
         opts["pkg_cstate_limit"]["keys"] = {"pkg_cstate_limit_supported", "pkg_cstate_limit",
                                             "pkg_cstate_limits", "package"}
     if hasattr(args, "c1_demotion"):
         opts["c1_demotion"] = {}
-        opts["c1_demotion"]["cpus"] = get_cpus(args, proc, cpuinfo=cpuinfo)
         opts["c1_demotion"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
         opts["c1_demotion"]["keys"] = {"c1_demotion", "cpu"}
     if hasattr(args, "c1_undemotion"):
         opts["c1_undemotion"] = {}
-        opts["c1_undemotion"]["cpus"] = get_cpus(args, proc, cpuinfo=cpuinfo)
         opts["c1_undemotion"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
         opts["c1_undemotion"]["keys"] = {"c1_undemotion", "cpu"}
 
-    for optname, optinfo in opts.items():
-        optval = getattr(args, optname)
-        if optval:
-            cpuidle.set_feature(optname, optval, optinfo["cpus"])
+    # The CPUs to apply the config changes to.
+    cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
 
-            scope = cpuidle.get_scope(optname)
-            nums = optinfo.get(f"{scope.lower()}s")
-            msg = get_scope_msg(proc, cpuinfo, nums, scope=scope)
-            LOG.info("Set %s to '%s'%s", CPUIdle.FEATURES[optname]["name"], optval, msg)
+    for feature, optinfo in opts.items():
+        value = getattr(args, feature)
+        if value:
+            scope = cpuidle.get_scope(feature)
+            optname = "--" + feature.replace("_", "-")
+            print_scope_warning(args, optname, scope)
+
+            LOG.info("Set %s to '%s' on CPUs '%s'%s",
+                     feature, value, Human.rangify(cpus), proc.hostmsg)
+            cpuidle.set_feature(feature, value, cpus)
         else:
             print_cstate_config_options(proc, cpuidle, optinfo["keys"], optinfo["info_nums"])
 
@@ -312,13 +327,6 @@ def cstates_config_command(args, proc):
         raise Error("please, provide a configuration option")
 
     check_tuned_presence(proc)
-
-    if any([args.cpus or args.cores]):
-        opts = ("cstate_prewake", "c1e_autopromote", "pkg_cstate_limit")
-        msg = " and ".join([f"--{opt}" for opt in opts if hasattr(args, opt)])
-        if msg:
-            LOG.warning("'%s' option has package scope, '--cpus' and '--cores' options are " \
-                        "ignored", msg)
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
         with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
