@@ -11,6 +11,7 @@ This module provides API for dealing with the Linux "cpuidle" subsystem.
 """
 
 import re
+import copy
 import logging
 from pathlib import Path
 from pepclibs.helperlibs import FSHelpers, Procs, Trivial
@@ -35,7 +36,9 @@ CSTATE_KEYS_DESCR = {
 }
 
 # This dictionary describes various CPU features this module controls.
-# Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
+#
+# Note 1: consider using the 'CPUIdle.features' dicionary instead of this one.
+# Note 2: the "scope" names have to be the same as "level" names in 'CPUInfo'.
 FEATURES = {}
 FEATURES.update(PowerCtl.FEATURES)
 FEATURES.update(PCStateConfigCtl.FEATURES)
@@ -539,6 +542,23 @@ class CPUIdle:
 
         raise Error(f"BUG: undefined feature '{feature}'")
 
+    @staticmethod
+    def _create_features_dict():
+        """
+        Create an extended version of the 'FEATURES' dictionary.
+        """
+
+        features = copy.deepcopy(FEATURES)
+
+        # Map each feature to the list of keys relevant to this feature.
+        features["c1_undemotion"]["keys"]    = ["c1_undemotion"]
+        features["c1e_autopromote"]["keys"]  = ["c1e_autopromote"]
+        features["c1_demotion"]["keys"]      = ["c1_demotion"]
+        features["cstate_prewake"]["keys"]   = ["cstate_prewake", "cstate_prewake_supported"]
+        features["pkg_cstate_limit"]["keys"] = ["pkg_cstate_limit_supported", "pkg_cstate_limit",
+                                                "pkg_cstate_limits"]
+        return features
+
     def __init__(self, proc=None, cpuinfo=None):
         """
         The class constructor. The arguments are as follows.
@@ -554,11 +574,12 @@ class CPUIdle:
         self._pcstatectl = None
         self._cpuinfo = cpuinfo
         self._proc = proc
+
         self._sysfs_base = Path("/sys/devices/system/cpu")
+        self.features = self._create_features_dict()
 
         # Used for caching the C-state information for each CPU.
         self._csinfos = {}
-
         # Used for mapping C-state indices to C-state names and vice versa.
         self._name2idx_cache = {}
         self._idx2name_cache = {}
