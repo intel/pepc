@@ -14,7 +14,7 @@ model-specific register found on many Intel platforms.
 import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR
-from pepclibs.helperlibs import Procs
+from pepclibs.helperlibs import Procs, Human
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 _LOG = logging.getLogger()
@@ -108,6 +108,12 @@ class PowerCtl:
         format description.
         """
 
+        if _LOG.getEffectiveLevel() == logging.DEBUG:
+            enable_str = "enable" if enable else "disable"
+            cpus_range = Human.rangify(self._cpuinfo.get_cpu_list(cpus))
+            _LOG.debug("%s feature '%s' on CPU(s) %s%s",
+                       enable_str, feature, cpus_range, self._proc.hostmsg)
+
         self._check_feature_support(feature)
         enable = FEATURES[feature]["enabled"] == enable
         self._msr.toggle_bit(MSR_POWER_CTL, FEATURES[feature]["bitnr"], enable, cpus=cpus)
@@ -125,7 +131,12 @@ class PowerCtl:
 
         self._proc = proc
         self._lscpu_info = lscpu_info
-        self._msr = MSR.MSR(proc=self._proc, cpuinfo=cpuinfo)
+        self._cpuinfo = cpuinfo
+
+        self._msr = None
+
+        if not self._cpuinfo:
+            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
 
         if self._lscpu_info is None:
             self._lscpu_info = CPUInfo.get_lscpu_info(proc=self._proc)
@@ -135,6 +146,8 @@ class PowerCtl:
                                     f"model-specific register {hex(MSR_POWER_CTL)} (MSR_POWER_CTL) "
                                     f"is not available{self._proc.hostmsg}. MSR_POWER_CTL is "
                                     f"available only on Intel platforms")
+
+        self._msr = MSR.MSR(proc=self._proc, cpuinfo=self._cpuinfo)
 
     def close(self):
         """Uninitialize the class object."""
