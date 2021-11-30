@@ -285,32 +285,27 @@ def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
     if hasattr(args, "cstate_prewake"):
         opts["cstate_prewake"] = {}
         opts["cstate_prewake"]["info_nums"] = pkg_cpus
-        opts["cstate_prewake"]["keys"] = {"cstate_prewake", "cstate_prewake_supported", "package"}
     if hasattr(args, "c1e_autopromote"):
         opts["c1e_autopromote"] = {}
         opts["c1e_autopromote"]["info_nums"] = pkg_cpus
-        opts["c1e_autopromote"]["keys"] = {"c1e_autopromote", "package"}
     if hasattr(args, "pkg_cstate_limit"):
         opts["pkg_cstate_limit"] = {}
         opts["pkg_cstate_limit"]["info_nums"] = pkg_cpus
-        opts["pkg_cstate_limit"]["keys"] = {"pkg_cstate_limit_supported", "pkg_cstate_limit",
-                                            "pkg_cstate_limits", "package"}
     if hasattr(args, "c1_demotion"):
         opts["c1_demotion"] = {}
         opts["c1_demotion"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-        opts["c1_demotion"]["keys"] = {"c1_demotion", "cpu"}
     if hasattr(args, "c1_undemotion"):
         opts["c1_undemotion"] = {}
         opts["c1_undemotion"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-        opts["c1_undemotion"]["keys"] = {"c1_undemotion", "cpu"}
 
     # The CPUs to apply the config changes to.
     cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
 
     for feature, optinfo in opts.items():
+        scope = cpuidle.get_scope(feature)
+
         value = getattr(args, feature)
         if value:
-            scope = cpuidle.get_scope(feature)
             optname = "--" + feature.replace("_", "-")
             print_scope_warning(args, optname, scope)
 
@@ -318,7 +313,8 @@ def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
                      feature, value, Human.rangify(cpus), proc.hostmsg)
             cpuidle.set_feature(feature, value, cpus)
         else:
-            print_cstate_config_options(proc, cpuidle, optinfo["keys"], optinfo["info_nums"])
+            keys = cpuidle.features[feature]["keys"] + [scope.lower()]
+            print_cstate_config_options(proc, cpuidle, keys, optinfo["info_nums"])
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
