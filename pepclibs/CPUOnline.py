@@ -59,9 +59,9 @@ class CPUOnline:
         if cpus is None or isinstance(cpus, str):
             if cpus is None:
                 if online:
-                    cpugeom_key = "offCPUs"
+                    cpugeom_key = "offline_cpus"
                 else:
-                    cpugeom_key = "cpus"
+                    cpugeom_key = "nums"
 
                 if not self._cpuinfo:
                     self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)

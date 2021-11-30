@@ -294,7 +294,7 @@ class CPUInfo:
     def _add_nums(self, nums):
         """Add numbers from 'lscpu' to the CPU geometry dictionary."""
 
-        item = self.cpugeom[LEVELS[0]][LEVELS[0] + "s"]
+        item = self.cpugeom[LEVELS[0]]["nums"]
         for idx, lvl in enumerate(LEVELS[:-1]):
             last_level = False
             if idx == len(LEVELS) - 2:
@@ -302,7 +302,7 @@ class CPUInfo:
 
             num = int(nums[lvl])
             if num not in item:
-                self.cpugeom[lvl][lvl + "cnt"] += 1
+                self.cpugeom[lvl]["cnt"] += 1
                 if last_level:
                     item[num] = []
                 else:
@@ -311,7 +311,7 @@ class CPUInfo:
             if last_level:
                 lvl = LEVELS[-1]
                 item[num].append(int(nums[lvl]))
-                self.cpugeom[lvl][lvl + "cnt"] += 1
+                self.cpugeom[lvl]["cnt"] += 1
 
             item = item[num]
 
@@ -343,26 +343,17 @@ class CPUInfo:
         if self.cpugeom:
             return self.cpugeom
 
-        # All the level we are dealing with. The resulting dictionary will include a key for evey
-        # level with a dictionary conatainging the partial hiararchy. The lowest level is always a
-        # list though.
         self.cpugeom = cpugeom = {}
         for lvl in LEVELS:
             cpugeom[lvl] = {}
-            for pfx in ("", "off"):
-                if pfx == "off" and lvl != LEVELS[-1]:
-                    continue
-                cpugeom[lvl][pfx + lvl + "s"] = {}
-
-        # Count of packages, NUMA nodes, cores, etc.
-        for lvl in LEVELS:
-            cpugeom[lvl][lvl + "cnt"] = 0
+            cpugeom[lvl]["nums"] = {}
+            cpugeom[lvl]["cnt"] = 0
 
         # List of offline CPUs. Note, Linux does not provide topology information for offline CPUs,
-        # so we only have the CPU numbers.
-        cpugeom["CPU"]["offCPUs"] = []
+        # so we have the CPU numbers, but do not know to what core/package they belong to.
+        cpugeom["CPU"]["offline_cpus"] = []
         # Offline CPUs count.
-        cpugeom["CPU"]["offCPUcnt"] = 0
+        cpugeom["CPU"]["offline_cnt"] = 0
 
         # Parse the 'lscpu' output.
         for line in self._get_lscpu():
@@ -372,8 +363,8 @@ class CPUInfo:
             split_line = line.strip().split(",")
             nums = {key : split_line[idx] for idx, key in enumerate(LEVELS)}
             if split_line[-1] != "Y":
-                cpugeom["CPU"]["offCPUcnt"] += 1
-                cpugeom["CPU"]["offCPUs"].append(int(nums["CPU"]))
+                cpugeom["CPU"]["offline_cnt"] += 1
+                cpugeom["CPU"]["offline_cpus"].append(int(nums["CPU"]))
                 continue
 
             self._add_nums(nums)
@@ -381,18 +372,15 @@ class CPUInfo:
         # Now we have the full hierarcy (in 'cpugeom["packages"]'). Create partial hierarchies
         # ('cpugom["nodes"]', etc).
         for lvlidx, lvl in enumerate(LEVELS[1:]):
-            cpugeom[lvl][lvl + "s"] = \
-                    self._flatten_to_level(cpugeom[LEVELS[0]][LEVELS[0] + "s"], lvlidx + 1)
+            cpugeom[lvl]["nums"] = self._flatten_to_level(cpugeom[LEVELS[0]]["nums"], lvlidx + 1)
 
         for lvl1 in LEVELS[1:]:
             for lvl2 in LEVELS[:-1]:
                 if lvl1 == lvl2:
                     continue
-                key = lvl1 + "s_per_" + lvl2
-                lvl1_key = lvl1 + "cnt"
-                lvl2_key = lvl2 + "cnt"
+                key = f"cnt_per_{lvl2}"
                 try:
-                    cpugeom[lvl1][key] = int(cpugeom[lvl1][lvl1_key] / cpugeom[lvl2][lvl2_key])
+                    cpugeom[lvl1][key] = int(cpugeom[lvl1]["cnt"] / cpugeom[lvl2]["cnt"])
                 except ZeroDivisionError:
                     cpugeom[lvl1][key] = 0
 
