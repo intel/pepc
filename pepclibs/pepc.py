@@ -219,26 +219,18 @@ def cstates_set_command(args, proc):
                 scope = get_scope_msg(proc, cpuinfo, cpus)
             LOG.info("%sd %s%s", name.title(), msg, scope)
 
-def print_cstate_opts(args, proc, cpuinfo, cpuidle, feature):
+def print_cstate_opts(proc, cpuidle, feature, cpus):
     """Print information about options related to C-state, such as C-state prewake."""
 
-    scope = cpuidle.get_scope(feature)
-
-    cpus = []
-    if scope == "package":
-        pkgs = cpuinfo.get_package_list(args.packages)
-        for pkg in pkgs:
-            cpus.append(cpuinfo.packages_to_cpus(packages=pkg)[0])
-    else:
-        cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-
-    keys = cpuidle.features[feature]["keys"] + [scope]
+    keys = cpuidle.features[feature]["keys"] + ["CPU"]
     keys_descr = CPUIdle.CSTATE_KEYS_DESCR
-    first = True
+    pcsinfo = None
 
     for info in cpuidle.get_cstates_config(cpus, keys=keys):
         if info.get("pkg_cstate_limit_supported"):
-            if first:
+            if not pcsinfo:
+                # Print general information about the available package C-states only once, instead
+                # of doing this for every CPU.
                 pcsinfo = info.get("pkg_cstate_limits")
                 codes_str = ", ".join(limit for limit in pcsinfo["codes"])
                 LOG.info("Package C-state limits available%s: %s", proc.hostmsg, codes_str)
@@ -246,21 +238,20 @@ def print_cstate_opts(args, proc, cpuinfo, cpuidle, feature):
                     aliases_str = ",".join(f"{al}={nm}" for al, nm in pcsinfo["aliases"].items())
                     LOG.info("Aliases: %s", aliases_str)
             locked = "locked" if info["pkg_cstate_limit"]["locked"] else "un-locked"
-            LOG.info("Package %s: %s, MSR is %s", info["package"],
+            LOG.info("CPU %s: %s, MSR is %s", info["CPU"],
                      info["pkg_cstate_limit"]["limit"], locked)
         if info.get("cstate_prewake_supported"):
             enabled =  bool_fmt(info["cstate_prewake"])
-            LOG.info("Package %s: %s: %s", info["package"], keys_descr["cstate_prewake"], enabled)
+            LOG.info("CPU %s: %s: %s", info["CPU"], keys_descr["cstate_prewake"], enabled)
         if "c1e_autopromote" in info:
             enabled =  bool_fmt(info["c1e_autopromote"])
-            LOG.info("Package %s: %s: %s", info["package"], keys_descr["c1e_autopromote"], enabled)
+            LOG.info("CPU %s: %s: %s", info["CPU"], keys_descr["c1e_autopromote"], enabled)
         if "c1_demotion" in info:
             enabled =  bool_fmt(info["c1_demotion"])
             LOG.info("CPU %s: %s: %s", info["CPU"], keys_descr["c1_demotion"], enabled)
         if "c1_undemotion" in info:
             enabled =  bool_fmt(info["c1_undemotion"])
             LOG.info("CPU %s: %s: %s", info["CPU"], keys_descr["c1_undemotion"], enabled)
-        first = False
 
 def print_scope_warning(args, optname, scope):
     """
@@ -302,7 +293,7 @@ def handle_cstate_opts(args, proc, cpuinfo, cpuidle):
                      feature, value, Human.rangify(cpus), proc.hostmsg)
             cpuidle.set_feature(feature, value, cpus)
         else:
-            print_cstate_opts(args, proc, cpuinfo, cpuidle, feature)
+            print_cstate_opts(proc, cpuidle, feature, cpus)
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
