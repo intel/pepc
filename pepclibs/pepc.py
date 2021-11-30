@@ -187,7 +187,7 @@ def cstates_info_command(args, proc):
                 LOG.info("")
             first = False
 
-            LOG.info("CPU: %d", info["cpu"])
+            LOG.info("CPU: %d", info["CPU"])
             LOG.info("Name: %s", info["name"])
             LOG.info("Index: %d", info["index"])
             LOG.info("Description: %s", info["desc"])
@@ -245,10 +245,10 @@ def print_cstate_config_options(proc, cpuidle, keys, cpus):
             LOG.info("Package %s: %s: %s", info["package"], keys_descr["c1e_autopromote"], enabled)
         if "c1_demotion" in info:
             enabled =  bool_fmt(info["c1_demotion"])
-            LOG.info("CPU %s: %s: %s", info["cpu"], keys_descr["c1_demotion"], enabled)
+            LOG.info("CPU %s: %s: %s", info["CPU"], keys_descr["c1_demotion"], enabled)
         if "c1_undemotion" in info:
             enabled =  bool_fmt(info["c1_undemotion"])
-            LOG.info("CPU %s: %s: %s", info["cpu"], keys_descr["c1_undemotion"], enabled)
+            LOG.info("CPU %s: %s: %s", info["CPU"], keys_descr["c1_undemotion"], enabled)
         first = False
 
 def print_scope_warning(args, optname, scope):
@@ -313,7 +313,7 @@ def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
                      feature, value, Human.rangify(cpus), proc.hostmsg)
             cpuidle.set_feature(feature, value, cpus)
         else:
-            keys = cpuidle.features[feature]["keys"] + [scope.lower()]
+            keys = cpuidle.features[feature]["keys"] + [scope]
             print_cstate_config_options(proc, cpuidle, keys, optinfo["info_nums"])
 
 def cstates_config_command(args, proc):
@@ -366,8 +366,8 @@ def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
             if not first:
                 LOG.info("")
             first = False
-            if "cpu" in info:
-                LOG.info("%s: %d", keys_descr["cpu"], info["cpu"])
+            if "CPU" in info:
+                LOG.info("%s: %d", keys_descr["CPU"], info["CPU"])
             if "pkg" in info:
                 LOG.info("%s: %d", keys_descr["pkg"], info["pkg"])
             if "die" in info:
@@ -493,7 +493,7 @@ def pstates_set_command(args, proc):
             opts["CPU"]["max"] = getattr(args, "maxfreq", None)
             opts["CPU"]["nums"] = get_cpus(args, proc, cpuinfo=cpuinfo)
             opts["CPU"]["method"] = getattr(cpufreq, "set_freq")
-            opts["CPU"]["info_keys"] = ["cpu"]
+            opts["CPU"]["info_keys"] = ["CPU"]
             opts["CPU"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
             opts["CPU"]["opt_key_map"] = (("minfreq", "cpu_min"), ("maxfreq", "cpu_max"))
 
@@ -555,7 +555,7 @@ def handle_pstate_config_options(args, proc, cpuinfo, cpufreq):
             LOG.info("Set %s to '%s'%s", CPUFreq.FEATURES[optname]["name"], optval, msg)
         else:
             cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-            optinfo["keys"].add("cpu")
+            optinfo["keys"].add("CPU")
             print_pstates_info(proc, cpuinfo, keys=optinfo["keys"], cpus=cpus)
 
 def pstates_config_command(args, proc):
