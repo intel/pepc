@@ -219,7 +219,7 @@ def cstates_set_command(args, proc):
                 scope = get_scope_msg(proc, cpuinfo, cpus)
             LOG.info("%sd %s%s", name.title(), msg, scope)
 
-def print_cstate_config_options(args, proc, cpuinfo, cpuidle, feature):
+def print_cstate_opts(args, proc, cpuinfo, cpuidle, feature):
     """Print information about options related to C-state, such as C-state prewake."""
 
     scope = cpuidle.get_scope(feature)
@@ -282,7 +282,7 @@ def print_scope_warning(args, optname, scope):
                         "of a core. Otherwise the result depends on how the platform resolves "
                         "the conflicting values.", optname, optname)
 
-def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
+def handle_cstate_opts(args, proc, cpuinfo, cpuidle):
     """Handle options related to C-state, such as setting C-state prewake."""
 
     # The CPUs to apply the config changes to.
@@ -302,7 +302,7 @@ def handle_cstate_config_options(args, proc, cpuinfo, cpuidle):
                      feature, value, Human.rangify(cpus), proc.hostmsg)
             cpuidle.set_feature(feature, value, cpus)
         else:
-            print_cstate_config_options(args, proc, cpuinfo, cpuidle, feature)
+            print_cstate_opts(args, proc, cpuinfo, cpuidle, feature)
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
@@ -314,7 +314,7 @@ def cstates_config_command(args, proc):
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
         with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
-            handle_cstate_config_options(args, proc, cpuinfo, cpuidle)
+            handle_cstate_opts(args, proc, cpuinfo, cpuidle)
 
 def khz_fmt(val):
     """
@@ -513,7 +513,7 @@ def pstates_set_command(args, proc):
                 info_keys += opt_info["info_keys"]
                 print_pstates_info(proc, cpuinfo, keys=info_keys, cpus=opt_info["info_nums"])
 
-def handle_pstate_config_options(args, proc, cpuinfo, cpufreq):
+def handle_pstate_opts(args, proc, cpuinfo, cpufreq):
     """Handle options related to P-state, such as getting or setting EPP or turbo value."""
 
     opts = {}
@@ -563,7 +563,7 @@ def pstates_config_command(args, proc):
                         "options are ignored")
 
         with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
-            handle_pstate_config_options(args, proc, cpuinfo, cpufreq)
+            handle_pstate_opts(args, proc, cpuinfo, cpufreq)
 
 def aspm_info_command(_, proc):
     """Implements the 'aspm info'. command"""
