@@ -102,7 +102,11 @@ def _copy_dir(src: Path, dst: Path, ignore=None):
         if src.resolve() in dst.resolve().parents:
             raise Error(f"cannot do recursive copy from '{src}' to '{dst}'")
 
-        shutil.copytree(src, dst, ignore = lambda path, content: ignore)
+        ignore_names = None
+        if ignore:
+            ignore_names = lambda path, content: ignore
+
+        shutil.copytree(src, dst, ignore=ignore_names)
     except (OSError, shutil.Error) as err:
         raise Error(f"cannot copy '{src}' to '{dst}':\n{err}") from err
 
