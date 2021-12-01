@@ -455,10 +455,13 @@ class CPUIdle:
             keys = CSTATE_KEYS_DESCR
         keys = set(keys)
 
+        cstate_prewake_supported = False
         if keys.intersection(("cstate_prewake_supported", "cstate_prewake", "c1e_autopromote")):
             powerctl = self._get_powerctl()
             if keys.intersection(("cstate_prewake_supported", "cstate_prewake")):
                 cstate_prewake_supported = powerctl.feature_supported("cstate_prewake")
+
+        pkg_cstate_limit_supported = False
         if keys.intersection(("pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_supported",
                               "c1_demotion", "c1_undemotion")):
             pcstatectl = self._get_pcstatectl()
@@ -479,18 +482,20 @@ class CPUIdle:
                 info["package"] = pkg
             if "cstate_prewake_supported" in keys:
                 info["cstate_prewake_supported"] = cstate_prewake_supported
-            if "cstate_prewake" in keys:
-                info["cstate_prewake"] = powerctl.feature_enabled("cstate_prewake", cpu)
+            if cstate_prewake_supported:
+                if "cstate_prewake" in keys:
+                    info["cstate_prewake"] = powerctl.feature_enabled("cstate_prewake", cpu)
             if "c1e_autopromote" in keys:
                 info["c1e_autopromote"] = powerctl.feature_enabled("c1e_autopromote", cpu)
             if "pkg_cstate_limit_supported" in keys:
                 info["pkg_cstate_limit_supported"] = pkg_cstate_limit_supported
-            if "pkg_cstate_limit" in keys:
-                limit_info = pcstatectl.get_pkg_cstate_limit(cpus=cpu)[pkg]
-                info["pkg_cstate_limit"] = limit_info["limit"]
-                info["pkg_cstate_limit_locked"] = limit_info["locked"]
-            if "pkg_cstate_limits" in keys:
-                info["pkg_cstate_limits"] = pkg_cstate_limits
+            if pkg_cstate_limit_supported:
+                if "pkg_cstate_limit" in keys:
+                    limit_info = pcstatectl.get_pkg_cstate_limit(cpus=cpu)[pkg]
+                    info["pkg_cstate_limit"] = limit_info["limit"]
+                    info["pkg_cstate_limit_locked"] = limit_info["locked"]
+                if "pkg_cstate_limits" in keys:
+                    info["pkg_cstate_limits"] = pkg_cstate_limits
             if "c1_demotion" in keys:
                 info["c1_demotion"] = pcstatectl.feature_enabled("c1_demotion", cpu)
             if "c1_undemotion" in keys:
