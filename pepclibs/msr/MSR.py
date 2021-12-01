@@ -101,7 +101,7 @@ class MSR:
                             f"{self._proc.hostmsg}:\n{err}") from err
 
             regval = int.from_bytes(regval, byteorder=_CPU_BYTEORDER)
-            _LOG.debug("CPU%d: MSR 0x%x: read 0x%x", cpu, regval, regaddr)
+            _LOG.debug("CPU%d: MSR 0x%x: read 0x%x", cpu, regaddr, regval)
 
             yield (cpu, regval)
 
