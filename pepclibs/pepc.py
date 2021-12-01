@@ -230,8 +230,14 @@ def print_cstate_opts(cpuidle, features, cpus):
 
     for info in cpuidle.get_cstates_config(cpus, keys=keys):
         for key, val in info.items():
-            if key == "CPU" or key.endswith("_supported"):
+            if key == "CPU":
+                # We prefix each printed line with CPU number.
                 continue
+
+            if key.endswith("_supported") and val:
+                    # Supported features will have some other key(s) in 'info', which will be
+                    # printed. So no need to print the "*_supported" key in case it is 'True'.
+                    continue
 
             descr = CPUIdle.CSTATE_KEYS_DESCR[key]
 
