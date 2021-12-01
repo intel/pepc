@@ -219,10 +219,15 @@ def cstates_set_command(args, proc):
                 scope = get_scope_msg(proc, cpuinfo, cpus)
             LOG.info("%sd %s%s", name.title(), msg, scope)
 
-def print_cstate_opts(proc, cpuidle, feature, cpus):
-    """Print information about options related to C-state, such as C-state prewake."""
+def print_cstate_opts(proc, cpuidle, features, cpus):
+    """Print information for C-state features 'features'."""
 
-    keys = cpuidle.features[feature]["keys"] + ["CPU"]
+    # Build the list of C-state information keys to print.
+    keys = []
+    for feature in features:
+        keys += cpuidle.features[feature]["keys"]
+    keys += ["CPU"]
+
     keys_descr = CPUIdle.CSTATE_KEYS_DESCR
     pcsinfo = None
 
@@ -274,26 +279,37 @@ def print_scope_warning(args, optname, scope):
                         "the conflicting values.", optname, optname)
 
 def handle_cstate_opts(args, proc, cpuinfo, cpuidle):
-    """Handle options related to C-state, such as setting C-state prewake."""
+    """
+    Handle C-state features option, such as '--c1e-autopromote'. These options can be used with and
+    without a value. In the former case, this function sets the feature to the value provided.
+    Otherwise this function reads the current value of the feature and prints it.
+    """
 
     # The CPUs to apply the config changes to.
     cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
+    # The features that should be printed instead of being set.
+    print_features = []
 
     for feature in cpuidle.features:
         if not hasattr(args, feature):
             continue
 
         value = getattr(args, feature)
-        if value:
-            optname = "--" + feature.replace("_", "-")
-            scope = cpuidle.get_scope(feature)
-            print_scope_warning(args, optname, scope)
+        if not value:
+            # An option without a value means the feature information should be printed.
+            print_features.append(feature)
+            continue
 
-            LOG.info("Set %s to '%s' on CPUs '%s'%s",
-                     feature, value, Human.rangify(cpus), proc.hostmsg)
-            cpuidle.set_feature(feature, value, cpus)
-        else:
-            print_cstate_opts(proc, cpuidle, feature, cpus)
+        optname = "--" + feature.replace("_", "-")
+        scope = cpuidle.get_scope(feature)
+        print_scope_warning(args, optname, scope)
+
+        LOG.info("Set %s to '%s' on CPUs '%s'%s",
+                 feature, value, Human.rangify(cpus), proc.hostmsg)
+        cpuidle.set_feature(feature, value, cpus)
+
+    if print_features:
+        print_cstate_opts(proc, cpuidle, print_features, cpus)
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
