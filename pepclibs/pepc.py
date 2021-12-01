@@ -219,7 +219,7 @@ def cstates_set_command(args, proc):
                 scope = get_scope_msg(proc, cpuinfo, cpus)
             LOG.info("%sd %s%s", name.title(), msg, scope)
 
-def print_cstate_opts(proc, cpuidle, features, cpus):
+def print_cstate_opts(cpuidle, features, cpus):
     """Print information for C-state features 'features'."""
 
     # Build the list of C-state information keys to print.
@@ -228,35 +228,23 @@ def print_cstate_opts(proc, cpuidle, features, cpus):
         keys += cpuidle.features[feature]["keys"]
     keys += ["CPU"]
 
-    keys_descr = CPUIdle.CSTATE_KEYS_DESCR
-    pcsinfo = None
-
     for info in cpuidle.get_cstates_config(cpus, keys=keys):
-        if info.get("pkg_cstate_limit_supported"):
-            if not pcsinfo:
-                # Print general information about the available package C-states only once, instead
-                # of doing this for every CPU.
-                pcsinfo = info.get("pkg_cstate_limits")
-                codes_str = ", ".join(limit for limit in pcsinfo["codes"])
-                LOG.info("Package C-state limits available%s: %s", proc.hostmsg, codes_str)
-                if pcsinfo["aliases"]:
-                    aliases_str = ",".join(f"{al}={nm}" for al, nm in pcsinfo["aliases"].items())
-                    LOG.info("Aliases: %s", aliases_str)
-            locked = "locked" if info["pkg_cstate_limit"]["locked"] else "un-locked"
-            LOG.info("CPU %s: %s, MSR is %s", info["CPU"],
-                     info["pkg_cstate_limit"]["limit"], locked)
-        if info.get("cstate_prewake_supported"):
-            enabled =  bool_fmt(info["cstate_prewake"])
-            LOG.info("CPU %s: %s: %s", info["CPU"], keys_descr["cstate_prewake"], enabled)
-        if "c1e_autopromote" in info:
-            enabled =  bool_fmt(info["c1e_autopromote"])
-            LOG.info("CPU %s: %s: %s", info["CPU"], keys_descr["c1e_autopromote"], enabled)
-        if "c1_demotion" in info:
-            enabled =  bool_fmt(info["c1_demotion"])
-            LOG.info("CPU %s: %s: %s", info["CPU"], keys_descr["c1_demotion"], enabled)
-        if "c1_undemotion" in info:
-            enabled =  bool_fmt(info["c1_undemotion"])
-            LOG.info("CPU %s: %s: %s", info["CPU"], keys_descr["c1_undemotion"], enabled)
+        for key, val in info.items():
+            if key == "CPU" or key.endswith("_supported"):
+                continue
+
+            descr = CPUIdle.CSTATE_KEYS_DESCR[key]
+
+            if isinstance(val, bool):
+                LOG.info("CPU %s: %s: %s", info["CPU"], descr, bool_fmt(val))
+            elif isinstance(val, dict):
+                LOG.info("CPU %s: %s: %s", info["CPU"], descr, str(val))
+            elif key == "pkg_cstate_limits":
+                codes = ", ".join(limit for limit in val["codes"])
+                if val["aliases"]:
+                    aliases = ",".join(f"{al}={nm}" for al, nm in val["aliases"].items())
+                    codes += f" (aliases: {aliases})"
+                LOG.info("CPU %s: %s: %s", info["CPU"], descr, codes)
 
 def print_scope_warning(args, optname, scope):
     """
@@ -309,7 +297,7 @@ def handle_cstate_opts(args, proc, cpuinfo, cpuidle):
         cpuidle.set_feature(feature, value, cpus)
 
     if print_features:
-        print_cstate_opts(proc, cpuidle, print_features, cpus)
+        print_cstate_opts(cpuidle, print_features, cpus)
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
