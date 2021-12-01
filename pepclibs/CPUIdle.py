@@ -30,6 +30,7 @@ CSTATE_KEYS_DESCR = {
     "c1e_autopromote" : "C1E autopromote enabled",
     "pkg_cstate_limit_supported" : "Package C-state limit support",
     "pkg_cstate_limit" : "Package C-state limit",
+    "pkg_cstate_limit_locked" : "Package C-state limit locked",
     "pkg_cstate_limits" : "Available package C-state limits",
     "c1_demotion" : "C1 demotion enabled",
     "c1_undemotion" : "C1 un-demotion enabled",
@@ -485,7 +486,9 @@ class CPUIdle:
             if "pkg_cstate_limit_supported" in keys:
                 info["pkg_cstate_limit_supported"] = pkg_cstate_limit_supported
             if "pkg_cstate_limit" in keys:
-                info["pkg_cstate_limit"] = pcstatectl.get_pkg_cstate_limit(cpus=cpu)[pkg]
+                limit_info = pcstatectl.get_pkg_cstate_limit(cpus=cpu)[pkg]
+                info["pkg_cstate_limit"] = limit_info["limit"]
+                info["pkg_cstate_limit_locked"] = limit_info["locked"]
             if "pkg_cstate_limits" in keys:
                 info["pkg_cstate_limits"] = pkg_cstate_limits
             if "c1_demotion" in keys:
