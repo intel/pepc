@@ -219,6 +219,11 @@ def cstates_set_command(args, proc):
                 scope = get_scope_msg(proc, cpuinfo, cpus)
             LOG.info("%sd %s%s", name.title(), msg, scope)
 
+def bool_fmt(val):
+    """Convert boolean value to an "on" or "off" string."""
+
+    return "on" if val else "off"
+
 def print_cstate_opts(cpuidle, features, cpus):
     """Print information for C-state features 'features'."""
 
@@ -235,9 +240,9 @@ def print_cstate_opts(cpuidle, features, cpus):
                 continue
 
             if key.endswith("_supported") and val:
-                    # Supported features will have some other key(s) in 'info', which will be
-                    # printed. So no need to print the "*_supported" key in case it is 'True'.
-                    continue
+                # Supported features will have some other key(s) in 'info', which will be
+                # printed. So no need to print the "*_supported" key in case it is 'True'.
+                continue
 
             descr = CPUIdle.CSTATE_KEYS_DESCR[key]
 
@@ -328,11 +333,6 @@ def khz_fmt(val):
             break
         val /= 1000
     return f"{val}{unit}"
-
-def bool_fmt(val):
-    """Convert boolean value to "yes" or "no" string."""
-
-    return "yes" if val else "no"
 
 def check_uncore_options(args):
     """Verify that '--cpus' and '--cores' are not used with uncore commands."""
