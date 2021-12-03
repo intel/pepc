@@ -225,7 +225,7 @@ def print_cstate_features(cpuidle, features, cpus):
 
             if isinstance(val, bool):
                 LOG.info("CPU %s: %s: %s", info["CPU"], descr, bool_fmt(val))
-            elif isinstance(val, dict):
+            elif not isinstance(val, dict):
                 LOG.info("CPU %s: %s: %s", info["CPU"], descr, str(val))
             elif key == "pkg_cstate_limits":
                 codes = ", ".join(limit for limit in val["codes"])
