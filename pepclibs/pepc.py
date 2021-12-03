@@ -196,35 +196,12 @@ def cstates_info_command(args, proc):
             LOG.info("Target residency: %d μs", info["residency"])
             LOG.info("Requested: %d times", info["usage"])
 
-def cstates_set_command(args, proc):
-    """Implements the 'cstates set' command."""
-
-    if not getattr(args, "oargs", None):
-        raise Error("please, provide the list of C-states to enable or disable")
-
-    cpus = get_cpus(args, proc)
-
-    with CPUIdle.CPUIdle(proc=proc) as cpuidle:
-        for name, cstates in args.oargs:
-            method = getattr(cpuidle, f"{name}_cstates")
-            cpus, cstates = method(cpus=cpus, cstates=cstates)
-
-            if cstates in ("all", None):
-                msg = "all C-states"
-            else:
-                msg = "C-state(s) "
-                msg += ", ".join(cstates)
-
-            with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-                scope = get_scope_msg(proc, cpuinfo, cpus)
-            LOG.info("%sd %s%s", name.title(), msg, scope)
-
 def bool_fmt(val):
     """Convert boolean value to an "on" or "off" string."""
 
     return "on" if val else "off"
 
-def print_cstate_opts(cpuidle, features, cpus):
+def print_cstate_features(cpuidle, features, cpus):
     """Print information for C-state features 'features'."""
 
     # Build the list of C-state information keys to print.
@@ -277,11 +254,15 @@ def print_scope_warning(args, optname, scope):
                         "of a core. Otherwise the result depends on how the platform resolves "
                         "the conflicting values.", optname, optname)
 
-def handle_cstate_opts(args, proc, cpuinfo, cpuidle):
+def handle_cstate_config_feature_opts(args, proc, cpuinfo, cpuidle):
     """
-    Handle C-state features option, such as '--c1e-autopromote'. These options can be used with and
-    without a value. In the former case, this function sets the feature to the value provided.
-    Otherwise this function reads the current value of the feature and prints it.
+    Handle all optins of the 'cstates config' command, other than '--enable' and '--disable' (e.g.,
+    '--c1e-autopromote'). Each of these options matches a 'CPUIdle' module "feature" (e.g.,
+    "c1e_autopromote").
+
+    These options can be used with and without a value. In the former case, this function sets the
+    feature to the value provided. Otherwise this function reads the current value of the feature
+    and prints it.
     """
 
     # The CPUs to apply the config changes to.
@@ -308,7 +289,27 @@ def handle_cstate_opts(args, proc, cpuinfo, cpuidle):
         cpuidle.set_feature(feature, value, cpus)
 
     if print_features:
-        print_cstate_opts(cpuidle, print_features, cpus)
+        print_cstate_features(cpuidle, print_features, cpus)
+
+def handle_cstate_config_toggle_opts(args, proc):
+    """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
+
+    cpus = get_cpus(args, proc)
+
+    with CPUIdle.CPUIdle(proc=proc) as cpuidle:
+        for name, cstates in args.oargs:
+            method = getattr(cpuidle, f"{name}_cstates")
+            cpus, cstates = method(cpus=cpus, cstates=cstates)
+
+            if cstates in ("all", None):
+                msg = "all C-states"
+            else:
+                msg = "C-state(s) "
+                msg += ", ".join(cstates)
+
+            with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+                scope = get_scope_msg(proc, cpuinfo, cpus)
+            LOG.info("%sd %s%s", name.title(), msg, scope)
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
@@ -325,12 +326,12 @@ def cstates_config_command(args, proc):
     check_tuned_presence(proc)
 
     if toggle_opts:
-        cstates_set_command(args, proc)
+        handle_cstate_config_toggle_opts(args, proc)
 
     if config_opts:
         with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
             with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
-                handle_cstate_opts(args, proc, cpuinfo, cpuidle)
+                handle_cstate_config_feature_opts(args, proc, cpuinfo, cpuidle)
 
 def khz_fmt(val):
     """
