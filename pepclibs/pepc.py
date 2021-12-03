@@ -313,14 +313,24 @@ def handle_cstate_opts(args, proc, cpuinfo, cpuidle):
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
 
-    if not any([hasattr(args, opt) for opt in CPUIdle.FEATURES]):
-        raise Error("please, provide a configuration option")
+    # Whether '--enable' or '--disable' options were provided. They are handled differently to other
+    # options.
+    toggle_opts = getattr(args, "oargs", False)
+    # Whether any other C-state configuration options was given.
+    config_opts = any([hasattr(args, opt) for opt in CPUIdle.FEATURES])
+
+    if not toggle_opts and not config_opts:
+        raise Error("please, provide at least one option")
 
     check_tuned_presence(proc)
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-        with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
-            handle_cstate_opts(args, proc, cpuinfo, cpuidle)
+    if toggle_opts:
+        cstates_set_command(args, proc)
+
+    if config_opts:
+        with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+            with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
+                handle_cstate_opts(args, proc, cpuinfo, cpuidle)
 
 def khz_fmt(val):
     """
@@ -707,31 +717,6 @@ def build_arguments_parser():
     subpars2.add_argument("--packages", help=text)
 
     #
-    # Create parser for the 'cstates set' command.
-    #
-    text = "Enable or disable C-states."
-    descr = """Enable or disable specified C-states on specified CPUs (all CPUs by default).
-               Note, C-states will be enabled/disabled in the same order as the '--enable' and
-               '--disable' options are specified."""
-    subpars2 = subparsers2.add_parser("set", help=text, description=descr)
-    subpars2.set_defaults(func=cstates_set_command)
-
-    text = f"""Comma-sepatated list of C-states to enable (all by default). {cst_list_text}."""
-    subpars2.add_argument("--enable", action=ArgParse.OrderedArg, help=text)
-
-    text = """Similar to '--enable', but specifies the list of C-states to disable."""
-    subpars2.add_argument("--disable", action=ArgParse.OrderedArg, help=text)
-
-    text = f"""List of CPUs to enable the specified C-states on. {cpu_list_txt}."""
-    subpars2.add_argument("--cpus", help=text)
-
-    text = f"""List of cores to enable the specified C-states on. {core_list_txt}."""
-    subpars2.add_argument("--cores", help=text)
-
-    text = f"""List of packages to enable the specified C-states on. {pkg_list_txt}."""
-    subpars2.add_argument("--packages", help=text)
-
-    #
     # Create parser for the 'cstates config' command.
     #
     text = """Configure other C-state aspects."""
@@ -746,6 +731,12 @@ def build_arguments_parser():
 
     text = f"""List of packages to configure. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
+
+    text = f"""Comma-sepatated list of C-states to enable (all by default). {cst_list_text}."""
+    subpars2.add_argument("--enable", action=ArgParse.OrderedArg, help=text)
+
+    text = """Similar to '--enable', but specifies the list of C-states to disable."""
+    subpars2.add_argument("--disable", action=ArgParse.OrderedArg, help=text)
 
     for name, info in CPUIdle.FEATURES.items():
         kwargs = {}
