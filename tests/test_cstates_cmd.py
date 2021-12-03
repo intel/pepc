@@ -40,10 +40,10 @@ def test_cstates_info():
     for option in _BAD_SCOPE_OPTIONS:
         run_pepc(f"cstates info {option}", exp_ret=-1)
 
-def test_cstates_set():
-    """Test 'pepc cstates set' command."""
+def test_cstates_config():
+    """Test 'pepc cstates config' command."""
 
-    # Test C-states supported by test configuration.
+    # Test the '--enable' and '--disable' options.
     good_options = [
         "--enable all",
         "--disable all",
@@ -59,7 +59,7 @@ def test_cstates_set():
         for scope in _BAD_SCOPE_OPTIONS:
             run_pepc(f"cstates set {option} {scope}", exp_ret=-1)
 
-    # Test unsupported C-states.
+    # Try unsupported C-states.
     bad_options = [
         "--enable CC0",
         "--disable CC0"]
@@ -67,9 +67,7 @@ def test_cstates_set():
     for option in bad_options:
         run_pepc(f"cstates set {option}", exp_ret=-1)
 
-def test_cstates_config():
-    """Test 'pepc cstates config' command."""
-
+    # Test other options.
     options = [
         "--cstate-prewake",
         "--cstate-prewake on",
