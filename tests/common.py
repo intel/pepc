@@ -250,7 +250,7 @@ def run_pepc(arguments, exp_ret=None):
 
     with get_mocked_objects() as _:
         cmd = f"{pepc.__file__} {arguments}"
-        _LOG.debug("running: {cmd}")
+        _LOG.debug("running: %s", cmd)
         sys.argv = cmd.split()
         ret = pepc.main()
 
