@@ -156,7 +156,7 @@ def cpu_hotplug_offline_command(args, proc):
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
         CPUOnline.CPUOnline(progress=logging.INFO, proc=proc, cpuinfo=cpuinfo) as onl:
-        cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
+        cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
 
         if not args.siblings:
             onl.offline(cpus=cpus)
@@ -266,7 +266,7 @@ def handle_cstate_config_feature_opts(args, proc, cpuinfo, cpuidle):
     """
 
     # The CPUs to apply the config changes to.
-    cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
+    cpus = None
     # The features that should be printed instead of being set.
     print_features = []
 
@@ -284,17 +284,21 @@ def handle_cstate_config_feature_opts(args, proc, cpuinfo, cpuidle):
         scope = cpuidle.get_scope(feature)
         print_scope_warning(args, optname, scope)
 
+        if not cpus:
+            cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
+
         LOG.info("Set %s to '%s' on CPUs '%s'%s",
                  feature, value, Human.rangify(cpus), proc.hostmsg)
         cpuidle.set_feature(feature, value, cpus)
 
     if print_features:
+        cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
         print_cstate_features(cpuidle, print_features, cpus)
 
 def handle_cstate_config_toggle_opts(args, proc):
     """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
 
-    cpus = get_cpus(args, proc)
+    cpus = get_cpus(args, proc, default_cpus="all")
 
     with CPUIdle.CPUIdle(proc=proc) as cpuidle:
         for name, cstates in args.oargs:
@@ -543,7 +547,7 @@ def handle_pstate_opts(args, proc, cpuinfo, cpufreq):
         opts["turbo"] = {}
         opts["turbo"]["keys"] = {"turbo_supported", "turbo_enabled"}
 
-    cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
+    cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
 
     for optname, optinfo in opts.items():
         optval = getattr(args, optname)
@@ -568,7 +572,7 @@ def pstates_config_command(args, proc):
     check_tuned_presence(proc)
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-        cpus = get_cpus(args, proc, cpuinfo=cpuinfo)
+        cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
 
         if hasattr(args, "turbo") and cpus != cpuinfo.get_cpu_list("all"):
             LOG.warning("the turbo setting is global, '--cpus', '--cores', and '--packages' "
