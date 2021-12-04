@@ -421,8 +421,9 @@ class CPUIdle:
                 cstate_prewake_supported = powerctl.feature_supported("cstate_prewake")
 
         pkg_cstate_limit_supported = False
-        if keys.intersection(("pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_supported",
-                              "c1_demotion", "c1_undemotion")):
+
+        if keys.intersection(("pkg_cstate_limit_supported", "pkg_cstate_limit", "pkg_cstate_limits",
+                              "pkg_cstate_limit_locked", "c1_demotion", "c1_undemotion")):
             pcstatectl = self._get_pcstatectl()
             pkg_cstate_limit_supported = pcstatectl.feature_supported("pkg_cstate_limit")
             if "pkg_cstate_limits" in keys and pkg_cstate_limit_supported:
@@ -517,7 +518,7 @@ class CPUIdle:
         features["c1_demotion"]["keys"]      = ["c1_demotion"]
         features["cstate_prewake"]["keys"]   = ["cstate_prewake", "cstate_prewake_supported"]
         features["pkg_cstate_limit"]["keys"] = ["pkg_cstate_limit_supported", "pkg_cstate_limit",
-                                                "pkg_cstate_limits"]
+                                                "pkg_cstate_limits", "pkg_cstate_limit_locked"]
         return features
 
     def __init__(self, proc=None, cpuinfo=None):
