@@ -301,7 +301,7 @@ def handle_cstate_config_toggle_opts(args, proc):
     cpus = get_cpus(args, proc, default_cpus="all")
 
     with CPUIdle.CPUIdle(proc=proc) as cpuidle:
-        for name, cstates in args.oargs:
+        for name, cstates in args.oargs.items():
             method = getattr(cpuidle, f"{name}_cstates")
             cpus, cstates = method(cpus=cpus, cstates=cstates)
 
@@ -320,7 +320,8 @@ def cstates_config_command(args, proc):
 
     # Whether '--enable' or '--disable' options were provided. They are handled differently to other
     # options.
-    toggle_opts = getattr(args, "oargs", False)
+    toggle_opts = getattr(args, "oargs", False) and \
+                  ("enable" in args.oargs or "disable" in args.oargs)
     # Whether any other C-state configuration options was given.
     config_opts = any([hasattr(args, opt) for opt in CPUIdle.FEATURES])
 

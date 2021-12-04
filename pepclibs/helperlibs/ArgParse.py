@@ -55,19 +55,20 @@ class OrderedArg(argparse.Action):
     """
     This action implements ordered arguments support. Sometimes the command line arguments order
     matter, and this action can be used to preserve the order. It simply stores all the ordered
-    arguments in the 'oargs' attribute, which is a list of '(option, value)' tuples.
+    arguments in the 'oargs' attribute, which is a dictionary with keys being option names and
+    values being the option values.
     """
 
     def __call__(self, parser, namespace, values, option_string=None):
         """Append the ordered argument to the 'oargs' attribute."""
 
         if not getattr(namespace, 'oargs', None):
-            setattr(namespace, 'oargs', [])
+            setattr(namespace, 'oargs', {})
 
         # Also add the standard attribute for compatibility.
         setattr(namespace, self.dest, values)
 
-        namespace.oargs.append((self.dest, values))
+        namespace.oargs[self.dest] = values
 
 def _add_parser(subparsers, *args, **kwargs):
     """
