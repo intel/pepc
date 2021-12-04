@@ -78,19 +78,6 @@ def check_tuned_presence(proc):
                         "settings, or override the changes made by '%s' with 'tuned' values",
                         proc.hostmsg, OWN_NAME, OWN_NAME)
 
-def cpu_hotplug_info_command(_, proc):
-    """Implements the 'cpu-hotplug info' command."""
-
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-        cpugeom = cpuinfo.get_cpu_geometry()
-
-    for key, word in (("nums", "online"), ("offline_cpus", "offline")):
-        if not cpugeom["CPU"][key]:
-            LOG.info("No %s CPUs%s", word, proc.hostmsg)
-        else:
-            LOG.info("The following CPUs are %s%s:", word, proc.hostmsg)
-            LOG.info("%s", Human.rangify(cpugeom["CPU"][key]))
-
 def get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
     """
     Helper function to return user friendly string of host information and the CPUs or packages
@@ -145,6 +132,19 @@ def get_cpus(args, proc, default_cpus="all", cpuinfo=None):
 
     return cpus
 
+def cpu_hotplug_info_command(_, proc):
+    """Implements the 'cpu-hotplug info' command."""
+
+    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+        cpugeom = cpuinfo.get_cpu_geometry()
+
+    for key, word in (("nums", "online"), ("offline_cpus", "offline")):
+        if not cpugeom["CPU"][key]:
+            LOG.info("No %s CPUs%s", word, proc.hostmsg)
+        else:
+            LOG.info("The following CPUs are %s%s:", word, proc.hostmsg)
+            LOG.info("%s", Human.rangify(cpugeom["CPU"][key]))
+
 def cpu_hotplug_online_command(args, proc):
     """Implements the 'cpu-hotplug online' command."""
 
@@ -174,27 +174,6 @@ def cpu_hotplug_offline_command(args, proc):
                          proc.hostmsg, Human.rangify(cpus))
         else:
             onl.offline(cpus=siblings_to_offline)
-
-def cstates_info_command(args, proc):
-    """Implements the 'cstates info' command."""
-
-    cpus = get_cpus(args, proc, default_cpus=0)
-
-    first = True
-    with CPUIdle.CPUIdle(proc=proc) as cpuidle:
-        for info in cpuidle.get_cstates_info(cpus=cpus, cstates=args.cstates):
-            if not first:
-                LOG.info("")
-            first = False
-
-            LOG.info("CPU: %d", info["CPU"])
-            LOG.info("Name: %s", info["name"])
-            LOG.info("Index: %d", info["index"])
-            LOG.info("Description: %s", info["desc"])
-            LOG.info("Status: %s", "disabled" if info["disable"] else "enabled")
-            LOG.info("Expected latency: %d μs", info["latency"])
-            LOG.info("Target residency: %d μs", info["residency"])
-            LOG.info("Requested: %d times", info["usage"])
 
 def bool_fmt(val):
     """Convert boolean value to an "on" or "off" string."""
@@ -314,6 +293,27 @@ def handle_cstate_config_toggle_opts(args, proc):
             with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
                 scope = get_scope_msg(proc, cpuinfo, cpus)
             LOG.info("%sd %s%s", name.title(), msg, scope)
+
+def cstates_info_command(args, proc):
+    """Implements the 'cstates info' command."""
+
+    cpus = get_cpus(args, proc, default_cpus=0)
+
+    first = True
+    with CPUIdle.CPUIdle(proc=proc) as cpuidle:
+        for info in cpuidle.get_cstates_info(cpus=cpus, cstates=args.cstates):
+            if not first:
+                LOG.info("")
+            first = False
+
+            LOG.info("CPU: %d", info["CPU"])
+            LOG.info("Name: %s", info["name"])
+            LOG.info("Index: %d", info["index"])
+            LOG.info("Description: %s", info["desc"])
+            LOG.info("Status: %s", "disabled" if info["disable"] else "enabled")
+            LOG.info("Expected latency: %d μs", info["latency"])
+            LOG.info("Target residency: %d μs", info["residency"])
+            LOG.info("Requested: %d times", info["usage"])
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
