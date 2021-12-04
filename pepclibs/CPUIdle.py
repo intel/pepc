@@ -158,28 +158,6 @@ class CPUIdle:
 
         return indices
 
-    @staticmethod
-    def _normalize_hwcstates(hwcstates):
-        """
-        Some methods accept hardware C-states to operate on as a string or a list. This method
-        returns a list of normalized hardware C-state names. If 'hwcstates' is a string, it should
-        contain comma-separated hardware C-state names; if 'hwcstates' is a list then each item in
-        the list should be a hardware C-state name string.
-        """
-
-        if isinstance(hwcstates, str):
-            hwcstates = Trivial.split_csv_line(hwcstates, dedup=True)
-
-        result = []
-        hwcsts = set()
-        for hwcstate in hwcstates:
-            hwcst = hwcstate.upper()
-            if hwcst not in hwcsts:
-                result.append(hwcst)
-                hwcsts.add(hwcst)
-
-        return result
-
     def _normalize_cpus(self, cpus):
         """
         Some methods accept CPUs as list or range of CPUs as described in 'get_cstates_info()'.
