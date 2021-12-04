@@ -78,29 +78,6 @@ def check_tuned_presence(proc):
                         "settings, or override the changes made by '%s' with 'tuned' values",
                         proc.hostmsg, OWN_NAME, OWN_NAME)
 
-def get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
-    """
-    Helper function to return user friendly string of host information and the CPUs or packages
-    listed in 'nums'.
-    """
-
-    scopes = ("CPU", "core", "package", "global")
-    if scope not in scopes:
-        raise Error(f"bad scope '{scope}' use one of following: {', '.join(scopes)}")
-
-    get_method = getattr(cpuinfo, f"get_{scope.lower()}s", None)
-    if get_method:
-        all_nums = get_method()
-
-        if nums in ("all", None) or nums == all_nums:
-            scope = f"all {scope}s"
-        else:
-            scope = f"{scope}(s): {Human.rangify(nums)}"
-    else:
-        scope = "all CPUs in all packages (globally)"
-
-    return f"{proc.hostmsg} for {scope}"
-
 def get_cpus(args, proc, default_cpus="all", cpuinfo=None):
     """
     Get list of CPUs based on requested packages, cores and CPUs. If no CPUs, cores and packages are
@@ -180,38 +157,44 @@ def bool_fmt(val):
 
     return "on" if val else "off"
 
-def print_cstate_features(cpuidle, features, cpus):
-    """Print information for C-state features 'features'."""
+def fmt_cstates(cstates):
+    """Fromats and returns the C-states list string, which can be used in messages."""
 
-    # Build the list of C-state information keys to print.
-    keys = []
-    for feature in features:
-        keys += cpuidle.features[feature]["keys"]
-    keys += ["CPU"]
+    if cstates in ("all", None):
+        msg = "all C-states"
+    else:
+        if len(cstates) == 1:
+            msg = "C-state "
+        else:
+            msg = "C-states "
+        msg += ",".join(sorted(cstates))
 
-    for info in cpuidle.get_cstates_config(cpus, keys=keys):
-        for key, val in info.items():
-            if key == "CPU":
-                # We prefix each printed line with CPU number.
-                continue
+    return msg
 
-            if key.endswith("_supported") and val:
-                # Supported features will have some other key(s) in 'info', which will be
-                # printed. So no need to print the "*_supported" key in case it is 'True'.
-                continue
+def fmt_cpus(cpus):
+    """Fromats and returns the CPU numbers string, which can be used in messages."""
 
-            descr = CPUIdle.CSTATE_KEYS_DESCR[key]
+    if len(cpus) == 1:
+        msg = "CPU "
+    else:
+        msg = "CPUs "
 
-            if isinstance(val, bool):
-                LOG.info("CPU %s: %s: %s", info["CPU"], descr, bool_fmt(val))
-            elif not isinstance(val, dict):
-                LOG.info("CPU %s: %s: %s", info["CPU"], descr, str(val))
-            elif key == "pkg_cstate_limits":
-                codes = ", ".join(limit for limit in val["codes"])
-                if val["aliases"]:
-                    aliases = ",".join(f"{al}={nm}" for al, nm in val["aliases"].items())
-                    codes += f" (aliases: {aliases})"
-                LOG.info("CPU %s: %s: %s", info["CPU"], descr, codes)
+    return msg + Human.rangify(cpus)
+
+def print_cstate_feature_message(name, action, val, cpus):
+    """Format an print a message about a C-state feature 'name'."""
+
+    if isinstance(val, bool):
+        val = bool_fmt(val)
+
+    cpus = fmt_cpus(cpus)
+
+    if action:
+        msg = f"{name}: {action} '{val}' on {cpus}"
+    else:
+        msg = f"{name}: '{val}' {cpus}"
+
+    LOG.info(msg)
 
 def print_scope_warning(args, optname, scope):
     """
@@ -220,79 +203,128 @@ def print_scope_warning(args, optname, scope):
     '--cpus' should not be used.
     """
 
+    optname = "--" + optname.replace("_", "-")
+
     if scope == "package":
         if getattr(args, "cpus") or getattr(args, "cores"):
-            LOG.warning("the '%s' option has package scope, so '--cpus' and '--cores' options "
-                        "should not be used with '%s'. It is recommended to have it be the same "
-                        "on all CPUs of a package. Otherwise the result depends on how the "
-                        "platform resolves the conflicting values.", optname, optname)
+            LOG.warning("the '%s' option has package scope, but '--cpus' or '--cores' were used.\n"
+                        "\tIt is recommended to set it on all CPUs of a package.\n"
+                        "\tOtherwise the result may depend on how the platform.", optname)
     elif scope == "core":
         if getattr(args, "cpus"):
-            LOG.warning("the '%s' option has core scope, so the '--cpus' option should not be "
-                        "used with '%s'.\nIt is recommended to have it be the same on all CPUs "
-                        "of a core. Otherwise the result depends on how the platform resolves "
-                        "the conflicting values.", optname, optname)
+            LOG.warning("the '%s' option has core scope, but '--cpus' option was used.\n"
+                        "\tIt is recommended to set it on all CPUs of a core.\n"
+                        "\tOtherwise the result may depend on how the platform.", optname)
 
-def handle_cstate_config_feature_opts(args, proc, cpuinfo, cpuidle):
+def handle_cstate_config_opt(args, optname, optval, cpus, cpuidle):
     """
-    Handle all optins of the 'cstates config' command, other than '--enable' and '--disable' (e.g.,
-    '--c1e-autopromote'). Each of these options matches a 'CPUIdle' module "feature" (e.g.,
-    "c1e_autopromote").
+    Handle a C-state configuration option 'optname'.
 
-    These options can be used with and without a value. In the former case, this function sets the
-    feature to the value provided. Otherwise this function reads the current value of the feature
-    and prints it.
+    Most options can be used with and without a value. In the former case, this function sets the
+    corresponding feature to the value provided. Otherwise this function reads the current value of
+    the feature and prints it.
     """
 
-    # The CPUs to apply the config changes to.
-    cpus = None
-    # The features that should be printed instead of being set.
+    if optname in cpuidle.features:
+        feature = optname
+        val = optval
+
+        scope = cpuidle.get_scope(feature)
+        print_scope_warning(args, feature, scope)
+
+        cpuidle.set_feature(feature, val, cpus)
+
+        name = cpuidle.features[feature]["name"]
+        print_cstate_feature_message(name, "set to", val, cpus)
+    else:
+        method = getattr(cpuidle, f"{optname}_cstates")
+        cpus, cstates = method(cpus=cpus, cstates=optval)
+
+        LOG.info("%sd %s on %s", optname.title(), fmt_cstates(cstates), fmt_cpus(cpus))
+
+def print_cstate_feature(finfo):
+    """Print C-state feature information."""
+
+    for key, kinfo in finfo.items():
+        descr = CPUIdle.CSTATE_KEYS_DESCR[key]
+
+        for val, cpus in kinfo.items():
+            if key.endswith("_supported") and val:
+                # Supported features will have some other key(s) in 'kinfo', which will be printed.
+                # So no need to print the "*_supported" key in case it is 'True'.
+                continue
+
+            print_cstate_feature_message(descr, "", val, cpus)
+
+def build_finfos(features, cpus, cpuidle):
+    """
+    Build features dictionary, describing all featrues in the 'features' list.
+    """
+
+    all_keys = []
+    finfos = {}
+    key2f = {}
+
+    for feature in features:
+        finfos[feature] = {}
+        for key in cpuidle.features[feature]["keys"]:
+            key2f[key] = feature
+            all_keys.append(key)
+
+    all_keys.append("CPU")
+
+    for csinfo in cpuidle.get_cstates_config(cpus, keys=all_keys):
+        for key, val in csinfo.items():
+            if key == "CPU":
+                continue
+
+            finfo = finfos[key2f[key]]
+            if key not in finfo:
+                finfo[key] = {}
+
+            # We are going to used values as dictionary keys, in order to aggregate all CPU numbers
+            # having the same value. But the 'pkg_cstate_limits' value is a dictionary, so turn it
+            # into a string first.
+
+            if key == "pkg_cstate_limits":
+                codes = ", ".join(limit for limit in val["codes"])
+                if val["aliases"]:
+                    aliases = ",".join(f"{al}={nm}" for al, nm in val["aliases"].items())
+                    codes += f" (aliases: {aliases})"
+                val = codes
+
+            if val not in finfo[key]:
+                finfo[key][val] = [csinfo["CPU"]]
+            else:
+                finfo[key][val].append(csinfo["CPU"])
+
+    return finfos
+
+def cstates_config_command(args, proc):
+    """Implements the 'cstates config' command."""
+
+    check_tuned_presence(proc)
+
+    # The features to print about.
     print_features = []
 
-    for feature in cpuidle.features:
-        if not hasattr(args, feature):
-            continue
+    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+        with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
+            # Find all features we'll need to print about, and get their values.
+            for optname, optval in args.oargs.items():
+                if not optval:
+                    print_features.append(optname)
 
-        value = getattr(args, feature)
-        if not value:
-            # An option without a value means the feature information should be printed.
-            print_features.append(feature)
-            continue
-
-        optname = "--" + feature.replace("_", "-")
-        scope = cpuidle.get_scope(feature)
-        print_scope_warning(args, optname, scope)
-
-        if not cpus:
+            # Build features information dictionary for all options that are going to be printed.
             cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
+            finfos = build_finfos(print_features, cpus, cpuidle)
 
-        LOG.info("Set %s to '%s' on CPUs '%s'%s",
-                 feature, value, Human.rangify(cpus), proc.hostmsg)
-        cpuidle.set_feature(feature, value, cpus)
-
-    if print_features:
-        cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-        print_cstate_features(cpuidle, print_features, cpus)
-
-def handle_cstate_config_toggle_opts(args, proc):
-    """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
-
-    cpus = get_cpus(args, proc, default_cpus="all")
-
-    with CPUIdle.CPUIdle(proc=proc) as cpuidle:
-        for name, cstates in args.oargs.items():
-            method = getattr(cpuidle, f"{name}_cstates")
-            cpus, cstates = method(cpus=cpus, cstates=cstates)
-
-            if cstates in ("all", None):
-                msg = "all C-states"
-            else:
-                msg = "C-state(s) "
-                msg += ", ".join(cstates)
-
-            with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-                scope = get_scope_msg(proc, cpuinfo, cpus)
-            LOG.info("%sd %s%s", name.title(), msg, scope)
+            # Now handle the options one by one, in the same order as they go in the command line.
+            for optname, optval in args.oargs.items():
+                if not optval:
+                    print_cstate_feature(finfos[optname])
+                else:
+                    handle_cstate_config_opt(args, optname, optval, cpus, cpuidle)
 
 def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
@@ -315,28 +347,6 @@ def cstates_info_command(args, proc):
             LOG.info("Target residency: %d μs", info["residency"])
             LOG.info("Requested: %d times", info["usage"])
 
-def cstates_config_command(args, proc):
-    """Implements the 'cstates config' command."""
-
-    # Whether '--enable' or '--disable' options were provided. They are handled differently to other
-    # options.
-    toggle_opts = getattr(args, "oargs", False) and \
-                  ("enable" in args.oargs or "disable" in args.oargs)
-    # Whether any other C-state configuration options was given.
-    config_opts = any([hasattr(args, opt) for opt in CPUIdle.FEATURES])
-
-    if not toggle_opts and not config_opts:
-        raise Error("please, provide at least one option")
-
-    check_tuned_presence(proc)
-
-    if toggle_opts:
-        handle_cstate_config_toggle_opts(args, proc)
-
-    if config_opts:
-        with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-            with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
-                handle_cstate_config_feature_opts(args, proc, cpuinfo, cpuidle)
 
 def khz_fmt(val):
     """
@@ -358,6 +368,29 @@ def check_uncore_options(args):
         if args.cores:
             opt = "--cores"
         raise Error(f"uncore options are per-package, '{opt}' cannot be used")
+
+def get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
+    """
+    Helper function to return user friendly string of host information and the CPUs or packages
+    listed in 'nums'.
+    """
+
+    scopes = ("CPU", "core", "package", "global")
+    if scope not in scopes:
+        raise Error(f"bad scope '{scope}' use one of following: {', '.join(scopes)}")
+
+    get_method = getattr(cpuinfo, f"get_{scope.lower()}s", None)
+    if get_method:
+        all_nums = get_method()
+
+        if nums in ("all", None) or nums == all_nums:
+            scope = f"all {scope}s"
+        else:
+            scope = f"{scope}(s): {Human.rangify(nums)}"
+    else:
+        scope = "all CPUs in all packages (globally)"
+
+    return f"{proc.hostmsg} for {scope}"
 
 def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
     """Print CPU P-states information."""
@@ -739,10 +772,10 @@ def build_arguments_parser():
     subpars2.add_argument("--packages", help=text)
 
     text = f"""Comma-sepatated list of C-states to enable (all by default). {cst_list_text}."""
-    subpars2.add_argument("--enable", action=ArgParse.OrderedArg, help=text)
+    subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text)
 
     text = """Similar to '--enable', but specifies the list of C-states to disable."""
-    subpars2.add_argument("--disable", action=ArgParse.OrderedArg, help=text)
+    subpars2.add_argument("--disable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text)
 
     for name, info in CPUIdle.FEATURES.items():
         kwargs = {}
@@ -766,6 +799,7 @@ def build_arguments_parser():
                     "{option}", it will print the current values."""
 
         kwargs["help"] = text
+        kwargs["action"] = ArgParse.OrderedArg
         subpars2.add_argument(option, **kwargs)
 
     #
