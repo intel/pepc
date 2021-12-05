@@ -165,7 +165,7 @@ def _print_scope_warnings(args, cpuidle):
             continue
 
         scope = cpuidle.get_scope(feature)
-        if scope == "package" and getattr(args, "cpus") or getattr(args, "cores"):
+        if scope == "package" and (getattr(args, "cpus") or getattr(args, "cores")):
             pkg_warn.append(feature)
         elif scope == "core" and getattr(args, "cpus"):
             core_warn.append(feature)
