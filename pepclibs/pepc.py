@@ -21,10 +21,9 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from wultlibs.helperlibs import Systemctl
-from pepclibs.helperlibs import ArgParse, Procs, Logging, SSH, Trivial, Human
+from pepclibs.helperlibs import ArgParse, Procs, Logging, SSH
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import ASPM, CPUIdle, CPUInfo, CPUOnline, CPUFreq
+from pepclibs import CPUIdle
 
 if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
@@ -68,602 +67,6 @@ class PepcArgsParser(ArgParse.ArgsParser):
         if uargs:
             raise Error(f"unrecognized option(s): {' '.join(uargs)}")
         return args
-
-def check_tuned_presence(proc):
-    """Check if the 'tuned' service is active, and if it is, print a warning message."""
-
-    with Systemctl.Systemctl(proc=proc) as systemctl:
-        if systemctl.is_active("tuned"):
-            LOG.warning("'tuned' service is active%s, and it may prevent '%s' from changing some " \
-                        "settings, or override the changes made by '%s' with 'tuned' values",
-                        proc.hostmsg, OWN_NAME, OWN_NAME)
-
-def get_cpus(args, proc, default_cpus="all", cpuinfo=None):
-    """
-    Get list of CPUs based on requested packages, cores and CPUs. If no CPUs, cores and packages are
-    requested, returns 'default_cpus'.
-    """
-
-    close = False
-    cpus = []
-
-    if not cpuinfo:
-        cpuinfo = CPUInfo.CPUInfo(proc=proc)
-        close = True
-
-    try:
-        if args.cpus:
-            cpus += cpuinfo.get_cpu_list(cpus=args.cpus)
-        if args.cores:
-            cpus += cpuinfo.cores_to_cpus(cores=args.cores)
-        if args.packages:
-            cpus += cpuinfo.packages_to_cpus(packages=args.packages)
-
-        if not cpus and default_cpus is not None:
-            cpus = cpuinfo.get_cpu_list(default_cpus)
-
-        cpus = Trivial.list_dedup(cpus)
-    finally:
-        if close:
-            cpuinfo.close()
-
-    return cpus
-
-def cpu_hotplug_info_command(_, proc):
-    """Implements the 'cpu-hotplug info' command."""
-
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-        cpugeom = cpuinfo.get_cpu_geometry()
-
-    for key, word in (("nums", "online"), ("offline_cpus", "offline")):
-        if not cpugeom["CPU"][key]:
-            LOG.info("No %s CPUs%s", word, proc.hostmsg)
-        else:
-            LOG.info("The following CPUs are %s%s:", word, proc.hostmsg)
-            LOG.info("%s", Human.rangify(cpugeom["CPU"][key]))
-
-def cpu_hotplug_online_command(args, proc):
-    """Implements the 'cpu-hotplug online' command."""
-
-    with CPUOnline.CPUOnline(progress=logging.INFO, proc=proc) as onl:
-        onl.online(cpus=args.cpus)
-
-def cpu_hotplug_offline_command(args, proc):
-    """Implements the 'cpu-hotplug offline' command."""
-
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
-        CPUOnline.CPUOnline(progress=logging.INFO, proc=proc, cpuinfo=cpuinfo) as onl:
-        cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
-
-        if not args.siblings:
-            onl.offline(cpus=cpus)
-            return
-
-        cpugeom = cpuinfo.get_cpu_geometry()
-        siblings_to_offline = []
-        for siblings in cpugeom["core"]["nums"].values():
-            siblings_to_offline += siblings[1:]
-
-        siblings_to_offline = set(cpus) & set(siblings_to_offline)
-
-        if not siblings_to_offline:
-            LOG.warning("nothing to offline%s, no siblings among the following CPUs:%s",
-                         proc.hostmsg, Human.rangify(cpus))
-        else:
-            onl.offline(cpus=siblings_to_offline)
-
-def bool_fmt(val):
-    """Convert boolean value to an "on" or "off" string."""
-
-    return "on" if val else "off"
-
-def fmt_cstates(cstates):
-    """Fromats and returns the C-states list string, which can be used in messages."""
-
-    if cstates in ("all", None):
-        msg = "all C-states"
-    else:
-        if len(cstates) == 1:
-            msg = "C-state "
-        else:
-            msg = "C-states "
-        msg += ",".join(cstates)
-
-    return msg
-
-def fmt_cpus(cpus):
-    """Fromats and returns the CPU numbers string, which can be used in messages."""
-
-    if len(cpus) == 1:
-        msg = "CPU "
-    else:
-        msg = "CPUs "
-
-    return msg + Human.rangify(cpus)
-
-def print_cstate_feature_message(name, action, val, cpus):
-    """Format an print a message about a C-state feature 'name'."""
-
-    if isinstance(val, bool):
-        val = bool_fmt(val)
-
-    cpus = fmt_cpus(cpus)
-
-    if action:
-        msg = f"{name}: {action} '{val}' on {cpus}"
-    else:
-        msg = f"{name}: '{val}' {cpus}"
-
-    LOG.info(msg)
-
-def handle_cstate_config_opt(optname, optval, cpus, cpuidle):
-    """
-    Handle a C-state configuration option 'optname'.
-
-    Most options can be used with and without a value. In the former case, this function sets the
-    corresponding feature to the value provided. Otherwise this function reads the current value of
-    the feature and prints it.
-    """
-
-    if optname in cpuidle.features:
-        feature = optname
-        val = optval
-
-        cpuidle.set_feature(feature, val, cpus)
-
-        name = cpuidle.features[feature]["name"]
-        print_cstate_feature_message(name, "set to", val, cpus)
-    else:
-        method = getattr(cpuidle, f"{optname}_cstates")
-        toggled = method(cpus=cpus, cstates=optval)
-
-        # The 'toggled' dictionary is indexed with CPU number. But we want to print a single line
-        # for all CPU numbers that have the same toggled C-states list (the assumption here is that
-        # the system may be hybrid and different CPUs have different C-states). Therefore, built a
-        # "revered" verion of the 'toggled' dictionary.
-        revdict = {}
-        for cpu, csinfo in toggled.items():
-            key = ",".join(csinfo["cstates"])
-            if key not in revdict:
-                revdict[key] = []
-            revdict[key].append(cpu)
-
-        for cstnames, cpunums in revdict.items():
-            cstnames = cstnames.split(",")
-            LOG.info("%sd %s on %s", optname.title(), fmt_cstates(cstnames), fmt_cpus(cpunums))
-
-def print_cstate_feature(finfo):
-    """Print C-state feature information."""
-
-    for key, kinfo in finfo.items():
-        descr = CPUIdle.CSTATE_KEYS_DESCR[key]
-
-        for val, cpus in kinfo.items():
-            if key.endswith("_supported") and val:
-                # Supported features will have some other key(s) in 'kinfo', which will be printed.
-                # So no need to print the "*_supported" key in case it is 'True'.
-                continue
-
-            print_cstate_feature_message(descr, "", val, cpus)
-
-def build_finfos(features, cpus, cpuidle):
-    """
-    Build features dictionary, describing all featrues in the 'features' list.
-    """
-
-    all_keys = []
-    finfos = {}
-    key2f = {}
-
-    for feature in features:
-        finfos[feature] = {}
-        for key in cpuidle.features[feature]["keys"]:
-            key2f[key] = feature
-            all_keys.append(key)
-
-    all_keys.append("CPU")
-
-    for csinfo in cpuidle.get_cstates_config(cpus, keys=all_keys):
-        for key, val in csinfo.items():
-            if key == "CPU":
-                continue
-
-            finfo = finfos[key2f[key]]
-            if key not in finfo:
-                finfo[key] = {}
-
-            # We are going to used values as dictionary keys, in order to aggregate all CPU numbers
-            # having the same value. But the 'pkg_cstate_limits' value is a dictionary, so turn it
-            # into a string first.
-
-            if key == "pkg_cstate_limits":
-                codes = ", ".join(limit for limit in val["codes"])
-                if val["aliases"]:
-                    aliases = ",".join(f"{al}={nm}" for al, nm in val["aliases"].items())
-                    codes += f" (aliases: {aliases})"
-                val = codes
-
-            if val not in finfo[key]:
-                finfo[key][val] = [csinfo["CPU"]]
-            else:
-                finfo[key][val].append(csinfo["CPU"])
-
-    return finfos
-
-def print_scope_warnings(args, cpuidle):
-    """
-    Check that the the '--packages', '--cores', and '--cpus' options provided by the user for match
-    the scope of all the options that change feature values.
-    """
-
-    pkg_warn, core_warn = [], []
-
-    for feature in CPUIdle.FEATURES:
-        if not getattr(args, feature, None):
-            continue
-
-        scope = cpuidle.get_scope(feature)
-        if scope == "package" and getattr(args, "cpus") or getattr(args, "cores"):
-            pkg_warn.append(feature)
-        elif scope == "core" and getattr(args, "cpus"):
-            core_warn.append(feature)
-
-    if pkg_warn:
-        opts = ", ".join([f"'--{opt.replace('_', '-')}'" for opt in pkg_warn])
-        LOG.warning("the following option(s) have package scope: %s, but '--cpus' or '--cores' "
-                    "were used.\n\tInstead, it is recommented to specify all CPUs in a package,"
-                    "totherwise the result may be undexpected and platform-dependent.", opts)
-    if core_warn:
-        opts = ", ".join([f"'--{opt.replace('_', '-')}'" for opt in core_warn])
-        LOG.warning("the following option(s) have core scope: %s, but '--cpus' was used."
-                    "\n\tInstead, it is recommented to specify all CPUs in a core,"
-                    "totherwise the result may be undexpected and platform-dependent.", opts)
-
-def cstates_config_command(args, proc):
-    """Implements the 'cstates config' command."""
-
-    check_tuned_presence(proc)
-
-    # The features to print about.
-    print_features = []
-
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-        with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
-            print_scope_warnings(args, cpuidle)
-
-            # Find all features we'll need to print about, and get their values.
-            for optname, optval in args.oargs.items():
-                if not optval:
-                    print_features.append(optname)
-
-            # Build features information dictionary for all options that are going to be printed.
-            cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
-            finfos = build_finfos(print_features, cpus, cpuidle)
-
-            # Now handle the options one by one, in the same order as they go in the command line.
-            for optname, optval in args.oargs.items():
-                if not optval:
-                    print_cstate_feature(finfos[optname])
-                else:
-                    handle_cstate_config_opt(optname, optval, cpus, cpuidle)
-
-def cstates_info_command(args, proc):
-    """Implements the 'cstates info' command."""
-
-    cpus = get_cpus(args, proc, default_cpus=0)
-
-    first = True
-    with CPUIdle.CPUIdle(proc=proc) as cpuidle:
-        for info in cpuidle.get_cstates_info(cpus=cpus, cstates=args.cstates):
-            if not first:
-                LOG.info("")
-            first = False
-
-            LOG.info("CPU: %d", info["CPU"])
-            LOG.info("Name: %s", info["name"])
-            LOG.info("Index: %d", info["index"])
-            LOG.info("Description: %s", info["desc"])
-            LOG.info("Status: %s", "disabled" if info["disable"] else "enabled")
-            LOG.info("Expected latency: %d μs", info["latency"])
-            LOG.info("Target residency: %d μs", info["residency"])
-            LOG.info("Requested: %d times", info["usage"])
-
-
-def khz_fmt(val):
-    """
-    Convert an integer value representing "kHz" into string. To make it more human-friendly, if
-    'val' is a huge number, convert it into a larger unit, like "MHz" or "GHz".
-    """
-
-    for unit in ("kHz", "MHz", "GHz"):
-        if val < 1000:
-            break
-        val /= 1000
-    return f"{val}{unit}"
-
-def check_uncore_options(args):
-    """Verify that '--cpus' and '--cores' are not used with uncore commands."""
-
-    if args.cpus or args.cores:
-        opt = "--cpus"
-        if args.cores:
-            opt = "--cores"
-        raise Error(f"uncore options are per-package, '{opt}' cannot be used")
-
-def get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
-    """
-    Helper function to return user friendly string of host information and the CPUs or packages
-    listed in 'nums'.
-    """
-
-    scopes = ("CPU", "core", "package", "global")
-    if scope not in scopes:
-        raise Error(f"bad scope '{scope}' use one of following: {', '.join(scopes)}")
-
-    get_method = getattr(cpuinfo, f"get_{scope.lower()}s", None)
-    if get_method:
-        all_nums = get_method()
-
-        if nums in ("all", None) or nums == all_nums:
-            scope = f"all {scope}s"
-        else:
-            scope = f"{scope}(s): {Human.rangify(nums)}"
-    else:
-        scope = "all CPUs in all packages (globally)"
-
-    return f"{proc.hostmsg} for {scope}"
-
-def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
-    """Print CPU P-states information."""
-
-    keys_descr = CPUFreq.CPUFREQ_KEYS_DESCR
-    keys_descr.update(CPUFreq.UNCORE_KEYS_DESCR)
-
-    first = True
-    with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
-        for info in cpufreq.get_freq_info(cpus, keys=keys, fail_on_unsupported=False):
-            if not first:
-                LOG.info("")
-            first = False
-            if "CPU" in info:
-                LOG.info("%s: %d", keys_descr["CPU"], info["CPU"])
-            if "pkg" in info:
-                LOG.info("%s: %d", keys_descr["pkg"], info["pkg"])
-            if "die" in info:
-                LOG.info("%s: %d", keys_descr["die"], info["die"])
-            if "base" in info:
-                LOG.info("%s: %s", keys_descr["base"], khz_fmt(info["base"]))
-            if "max_eff" in info:
-                LOG.info("%s: %s", keys_descr["max_eff"], khz_fmt(info["max_eff"]))
-            if "max_turbo" in info:
-                LOG.info("%s: %s", keys_descr["max_turbo"], khz_fmt(info["max_turbo"]))
-            if "cpu_min_limit" in info:
-                LOG.info("%s: %s", keys_descr["cpu_min_limit"], khz_fmt(info["cpu_min_limit"]))
-            if "cpu_max_limit" in info:
-                LOG.info("%s: %s", keys_descr["cpu_max_limit"], khz_fmt(info["cpu_max_limit"]))
-            if "cpu_min" in info:
-                LOG.info("%s: %s", keys_descr["cpu_min"], khz_fmt(info["cpu_min"]))
-            if "cpu_max" in info:
-                LOG.info("%s: %s", keys_descr["cpu_max"], khz_fmt(info["cpu_max"]))
-            if "uncore_min_limit" in info:
-                limit = khz_fmt(info["uncore_min_limit"])
-                LOG.info("%s: %s", keys_descr["uncore_min_limit"], limit)
-            if "uncore_max_limit" in info:
-                limit = khz_fmt(info["uncore_max_limit"])
-                LOG.info("%s: %s", keys_descr["uncore_max_limit"], limit)
-            if "uncore_min" in info:
-                LOG.info("%s: %s", keys_descr["uncore_min"], khz_fmt(info["uncore_min"]))
-            if "uncore_max" in info:
-                LOG.info("%s: %s", keys_descr["uncore_max"], khz_fmt(info["uncore_max"]))
-            if "hwp_supported" in info:
-                LOG.info("%s: %s", keys_descr["hwp_supported"], bool_fmt(info["hwp_supported"]))
-            if "hwp_enabled" in info and info.get("hwp_supported"):
-                LOG.info("%s: %s", keys_descr["hwp_enabled"], bool_fmt(info["hwp_enabled"]))
-            if "turbo_supported" in info:
-                LOG.info("%s: %s", keys_descr["turbo_supported"], bool_fmt(info["turbo_supported"]))
-            if "turbo_enabled" in info and info.get("turbo_supported"):
-                LOG.info("%s: %s", keys_descr["turbo_enabled"], bool_fmt(info["turbo_enabled"]))
-            if "driver" in info:
-                LOG.info("%s: %s", keys_descr["driver"], info["driver"])
-            if "governor" in info:
-                LOG.info("%s: %s", keys_descr["governor"], info["governor"])
-            if "governors" in info:
-                LOG.info("%s: %s", keys_descr["governors"], ", ".join(info["governors"]))
-            if "epp_supported" in info:
-                if not info.get("epp_supported"):
-                    LOG.info("%s: %s", keys_descr["epp_supported"], bool_fmt(info["epp_supported"]))
-                else:
-                    if "epp" in info:
-                        LOG.info("%s: %d", keys_descr["epp"], info["epp"])
-                    if info.get("epp_policy"):
-                        LOG.info("%s: %s", keys_descr["epp_policy"], info["epp_policy"])
-                    if info.get("epp_policies"):
-                        epp_policies_str = ", ".join(info["epp_policies"])
-                        LOG.info("%s: %s", keys_descr["epp_policies"], epp_policies_str)
-            if "epb_supported" in info:
-                if not info.get("epb_supported"):
-                    LOG.info("%s: %s", keys_descr["epb_supported"], bool_fmt(info["epb_supported"]))
-                else:
-                    if "epb" in info:
-                        LOG.info("%s: %d", keys_descr["epb"], info["epb"])
-                    if info.get("epb_policy"):
-                        LOG.info("%s: %s", keys_descr["epb_policy"], info["epb_policy"])
-                    if info.get("epb_policies"):
-                        epb_policies_str = ", ".join(info["epb_policies"])
-                        LOG.info("%s: %s", keys_descr["epb_policies"], epb_policies_str)
-
-def print_uncore_info(args, proc):
-    """Print uncore frequency information."""
-
-    check_uncore_options(args)
-    keys_descr = CPUFreq.UNCORE_KEYS_DESCR
-
-    first = True
-    with CPUFreq.CPUFreq(proc) as cpufreq:
-        for info in cpufreq.get_uncore_info(args.packages):
-            if not first:
-                LOG.info("")
-            first = False
-
-            LOG.info("%s: %s", keys_descr["pkg"], info["pkg"])
-            LOG.info("%s: %s", keys_descr["die"], info["die"])
-            LOG.info("%s: %s", keys_descr["uncore_min"], khz_fmt(info["uncore_min"]))
-            LOG.info("%s: %s", keys_descr["uncore_max"], khz_fmt(info["uncore_max"]))
-            LOG.info("%s: %s", keys_descr["uncore_min_limit"], khz_fmt(info["uncore_min_limit"]))
-            LOG.info("%s: %s", keys_descr["uncore_max_limit"], khz_fmt(info["uncore_max_limit"]))
-
-def pstates_info_command(args, proc):
-    """Implements the 'pstates info' command."""
-
-    if args.uncore:
-        print_uncore_info(args, proc)
-    else:
-        with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-            cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-            print_pstates_info(proc, cpuinfo, cpus=cpus)
-
-def pstates_set_command(args, proc):
-    """implements the 'pstates set' command."""
-
-    check_tuned_presence(proc)
-
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
-        CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
-        opts = {}
-        if hasattr(args, "minufreq") or hasattr(args, "maxufreq"):
-            check_uncore_options(args)
-            opts["uncore"] = {}
-            opts["uncore"]["min"] = getattr(args, "minufreq", None)
-            opts["uncore"]["max"] = getattr(args, "maxufreq", None)
-            opts["uncore"]["nums"] = args.packages
-            opts["uncore"]["method"] = getattr(cpufreq, "set_uncore_freq")
-            cpus = []
-            for pkg in cpuinfo.get_package_list(args.packages):
-                cpus.append(cpuinfo.packages_to_cpus(packages=pkg)[0])
-            opts["uncore"]["info_nums"] = cpus
-            opts["uncore"]["info_keys"] = ["pkg"]
-            opts["uncore"]["opt_key_map"] = (("minufreq", "uncore_min"), ("maxufreq", "uncore_max"))
-
-        if hasattr(args, "minfreq") or hasattr(args, "maxfreq"):
-            if "uncore" in opts:
-                raise Error("cpu and uncore frequency options are mutually exclusive")
-            opts["CPU"] = {}
-            opts["CPU"]["min"] = getattr(args, "minfreq", None)
-            opts["CPU"]["max"] = getattr(args, "maxfreq", None)
-            opts["CPU"]["nums"] = get_cpus(args, proc, cpuinfo=cpuinfo)
-            opts["CPU"]["method"] = getattr(cpufreq, "set_freq")
-            opts["CPU"]["info_keys"] = ["CPU"]
-            opts["CPU"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-            opts["CPU"]["opt_key_map"] = (("minfreq", "cpu_min"), ("maxfreq", "cpu_max"))
-
-        if not opts:
-            raise Error("please, specify a frequency to change")
-
-        for opt, opt_info in opts.items():
-            if opt_info["min"] or opt_info["max"]:
-                nums, minfreq, maxfreq = opt_info["method"](opt_info["min"], opt_info["max"],
-                                                            opt_info["nums"])
-
-                msg = f"set {opt} "
-                if minfreq:
-                    msg += f"minimum frequency to {khz_fmt(minfreq)}"
-                if maxfreq:
-                    if minfreq:
-                        msg += " and "
-                    msg += f"maximum frequency to {khz_fmt(maxfreq)}"
-
-                scope = cpufreq.get_scope(f"{opt.lower()}-freq")
-                LOG.info("%s%s", msg, get_scope_msg(proc, cpuinfo, nums, scope=scope))
-
-            info_keys = []
-            for info_opt, key in opt_info["opt_key_map"]:
-                if hasattr(args, info_opt) and getattr(args, info_opt, None) is None:
-                    info_keys.append(key)
-
-            if info_keys:
-                info_keys += opt_info["info_keys"]
-                print_pstates_info(proc, cpuinfo, keys=info_keys, cpus=opt_info["info_nums"])
-
-def handle_pstate_opts(args, proc, cpuinfo, cpufreq):
-    """Handle options related to P-state, such as getting or setting EPP or turbo value."""
-
-    opts = {}
-
-    if hasattr(args, "epb"):
-        opts["epb"] = {}
-        opts["epb"]["keys"] = {"epb_supported", "epb_policy", "epb"}
-    if hasattr(args, "epp"):
-        opts["epp"] = {}
-        opts["epp"]["keys"] = {"epp_supported", "epp_policy", "epp"}
-    if hasattr(args, "governor"):
-        opts["governor"] = {}
-        opts["governor"]["keys"] = {"governor"}
-    if hasattr(args, "turbo"):
-        opts["turbo"] = {}
-        opts["turbo"]["keys"] = {"turbo_supported", "turbo_enabled"}
-
-    cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
-
-    for optname, optinfo in opts.items():
-        optval = getattr(args, optname)
-        if optval is not None:
-
-            scope = cpufreq.get_scope(optname)
-            msg = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
-            cpufreq.set_feature(optname, optval, cpus=cpus)
-            LOG.info("Set %s to '%s'%s", CPUFreq.FEATURES[optname]["name"], optval, msg)
-        else:
-            cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-            optinfo["keys"].add("CPU")
-            print_pstates_info(proc, cpuinfo, keys=optinfo["keys"], cpus=cpus)
-
-def pstates_config_command(args, proc):
-    """Implements the 'pstates config' command."""
-
-    if not any((hasattr(args, "governor"), hasattr(args, "turbo"), hasattr(args, "epb"),
-                hasattr(args, "epp"))):
-        raise Error("please, provide a configuration option")
-
-    check_tuned_presence(proc)
-
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-        cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
-
-        if hasattr(args, "turbo") and cpus != cpuinfo.get_cpu_list("all"):
-            LOG.warning("the turbo setting is global, '--cpus', '--cores', and '--packages' "
-                        "options are ignored")
-
-        with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
-            handle_pstate_opts(args, proc, cpuinfo, cpufreq)
-
-def aspm_info_command(_, proc):
-    """Implements the 'aspm info'. command"""
-
-    with ASPM.ASPM(proc=proc) as aspm:
-        cur_policy = aspm.get_policy()
-        LOG.info("Active ASPM policy%s: %s", proc.hostmsg, cur_policy)
-        available_policies = ", ".join(aspm.get_policies())
-        LOG.info("Available policies: %s", available_policies)
-
-def aspm_set_command(args, proc):
-    """Implements the 'aspm set' command."""
-
-    with ASPM.ASPM(proc=proc) as aspm:
-        old_policy = aspm.get_policy()
-        if not args.policy:
-            LOG.info("Active ASPM policy%s: %s", proc.hostmsg, old_policy)
-            return
-
-        if args.policy == old_policy:
-            LOG.info("ASPM policy%s is already '%s', nothing to change", proc.hostmsg, args.policy)
-        else:
-            aspm.set_policy(args.policy)
-            new_policy = aspm.get_policy()
-            if args.policy != new_policy:
-                raise Error(f"ASPM policy{proc.hostmsg} was set to '{args.policy}', but it became "
-                            f"'{new_policy}' instead")
-            LOG.info("ASPM policy%s was changed from '%s' to '%s'",
-                     proc.hostmsg, old_policy, args.policy)
 
 def build_arguments_parser():
     """A helper function which parses the input arguments."""
@@ -962,6 +365,80 @@ def parse_arguments():
 
     return args
 
+# pylint: disable=import-outside-toplevel
+
+def cpu_hotplug_info_command(args, proc):
+    """Implements the 'cpu-hotplug info' command."""
+
+    from pepclibs import _PepcCPUHotplug
+
+    _PepcCPUHotplug.cpu_hotplug_info_command(args, proc)
+
+def cpu_hotplug_online_command(args, proc):
+    """Implements the 'cpu-hotplug online' command."""
+
+    from pepclibs import _PepcCPUHotplug
+
+    _PepcCPUHotplug.cpu_hotplug_info_command(args, proc)
+
+def cpu_hotplug_offline_command(args, proc):
+    """Implements the 'cpu-hotplug offline' command."""
+
+    from pepclibs import _PepcCPUHotplug
+
+    _PepcCPUHotplug.cpu_hotplug_offline_command(args, proc)
+
+def cstates_info_command(args, proc):
+    """Implements the 'cstates info' command."""
+
+    from pepclibs import _PepcCStates
+
+    _PepcCStates.cstates_info_command(args, proc)
+
+def cstates_config_command(args, proc):
+    """Implements the 'cstates config' command."""
+
+    from pepclibs import _PepcCStates
+
+    _PepcCStates.cstates_config_command(args, proc)
+
+def pstates_info_command(args, proc):
+    """Implements the 'pstates info' command."""
+
+    from pepclibs import _PepcPStates
+
+    _PepcPStates.pstates_info_command(args, proc)
+
+def pstates_set_command(args, proc):
+    """implements the 'pstates set' command."""
+
+    from pepclibs import _PepcPStates
+
+    _PepcPStates.pstates_set_command(args, proc)
+
+def pstates_config_command(args, proc):
+    """Implements the 'pstates config' command."""
+
+    from pepclibs import _PepcPStates
+
+    _PepcPStates.pstates_config_command(args, proc)
+
+def aspm_info_command(args, proc):
+    """Implements the 'aspm info'. command"""
+
+    from pepclibs import _PepcASPM
+
+    _PepcASPM.aspm_info_command(args, proc)
+
+def aspm_set_command(args, proc):
+    """Implements the 'aspm set' command."""
+
+    from pepclibs import _PepcASPM
+
+    _PepcASPM.aspm_set_command(args, proc)
+
+# pylint: enable=import-outside-toplevel
+
 def get_proc(args):
     """Returns and "SSH" object or the 'Procs' object depending on 'hostname'."""
 
@@ -971,6 +448,7 @@ def get_proc(args):
         proc = SSH.SSH(hostname=args.hostname, username=args.username, privkeypath=args.privkey,
                        timeout=args.timeout)
     return proc
+
 
 def main():
     """Script entry point."""
