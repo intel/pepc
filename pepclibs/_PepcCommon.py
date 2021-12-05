@@ -13,9 +13,8 @@ Misc. helpers shared between various 'pepc' commands.
 """
 
 import logging
-from wultlibs.helperlibs import Systemctl
 from pepclibs import CPUInfo
-from pepclibs.helperlibs import Trivial
+from pepclibs.helperlibs import Systemctl, Trivial
 
 _LOG = logging.getLogger()
 
