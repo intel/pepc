@@ -196,27 +196,7 @@ def print_cstate_feature_message(name, action, val, cpus):
 
     LOG.info(msg)
 
-def print_scope_warning(args, optname, scope):
-    """
-    Check that the the '--packages', '--cores', and '--cpus' options provided by the user for
-    '--optname' match the scope 'scope' of the option. E.g., if an option has package scope,
-    '--cpus' should not be used.
-    """
-
-    optname = "--" + optname.replace("_", "-")
-
-    if scope == "package":
-        if getattr(args, "cpus") or getattr(args, "cores"):
-            LOG.warning("the '%s' option has package scope, but '--cpus' or '--cores' were used.\n"
-                        "\tIt is recommended to set it on all CPUs of a package.\n"
-                        "\tOtherwise the result may depend on how the platform.", optname)
-    elif scope == "core":
-        if getattr(args, "cpus"):
-            LOG.warning("the '%s' option has core scope, but '--cpus' option was used.\n"
-                        "\tIt is recommended to set it on all CPUs of a core.\n"
-                        "\tOtherwise the result may depend on how the platform.", optname)
-
-def handle_cstate_config_opt(args, optname, optval, cpus, cpuidle):
+def handle_cstate_config_opt(optname, optval, cpus, cpuidle):
     """
     Handle a C-state configuration option 'optname'.
 
@@ -228,9 +208,6 @@ def handle_cstate_config_opt(args, optname, optval, cpus, cpuidle):
     if optname in cpuidle.features:
         feature = optname
         val = optval
-
-        scope = cpuidle.get_scope(feature)
-        print_scope_warning(args, feature, scope)
 
         cpuidle.set_feature(feature, val, cpus)
 
@@ -313,6 +290,35 @@ def build_finfos(features, cpus, cpuidle):
 
     return finfos
 
+def print_scope_warnings(args, cpuidle):
+    """
+    Check that the the '--packages', '--cores', and '--cpus' options provided by the user for match
+    the scope of all the options that change feature values.
+    """
+
+    pkg_warn, core_warn = [], []
+
+    for feature in CPUIdle.FEATURES:
+        if not getattr(args, feature, None):
+            continue
+
+        scope = cpuidle.get_scope(feature)
+        if scope == "package" and getattr(args, "cpus") or getattr(args, "cores"):
+            pkg_warn.append(feature)
+        elif scope == "core" and getattr(args, "cpus"):
+            core_warn.append(feature)
+
+    if pkg_warn:
+        opts = ", ".join([f"'--{opt.replace('_', '-')}'" for opt in pkg_warn])
+        LOG.warning("the following option(s) have package scope: %s, but '--cpus' or '--cores' "
+                    "were used.\n\tInstead, it is recommented to specify all CPUs in a package,"
+                    "totherwise the result may be undexpected and platform-dependent.", opts)
+    if core_warn:
+        opts = ", ".join([f"'--{opt.replace('_', '-')}'" for opt in core_warn])
+        LOG.warning("the following option(s) have core scope: %s, but '--cpus' was used."
+                    "\n\tInstead, it is recommented to specify all CPUs in a core,"
+                    "totherwise the result may be undexpected and platform-dependent.", opts)
+
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
 
@@ -323,6 +329,8 @@ def cstates_config_command(args, proc):
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
         with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
+            print_scope_warnings(args, cpuidle)
+
             # Find all features we'll need to print about, and get their values.
             for optname, optval in args.oargs.items():
                 if not optval:
@@ -337,7 +345,7 @@ def cstates_config_command(args, proc):
                 if not optval:
                     print_cstate_feature(finfos[optname])
                 else:
-                    handle_cstate_config_opt(args, optname, optval, cpus, cpuidle)
+                    handle_cstate_config_opt(optname, optval, cpus, cpuidle)
 
 def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
