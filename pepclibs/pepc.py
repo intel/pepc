@@ -182,8 +182,9 @@ def build_arguments_parser():
     #
     # Create parser for the 'cstates config' command.
     #
-    text = """Configure other C-state aspects."""
-    subpars2 = subparsers2.add_parser("config", help=text, description=text)
+    text = "Configure C-states."
+    descr = """Configure C-states on specified CPUs."""
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=cstates_config_command)
 
     text = f"""List of CPUs to configure. {cpu_list_txt}."""
