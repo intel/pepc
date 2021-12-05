@@ -20,7 +20,7 @@ from pepclibs._PepcCommon import bool_fmt, get_cpus
 
 _LOG = logging.getLogger()
 
-def khz_fmt(val):
+def _khz_fmt(val):
     """
     Convert an integer value representing "kHz" into string. To make it more human-friendly, if
     'val' is a huge number, convert it into a larger unit, like "MHz" or "GHz".
@@ -32,7 +32,7 @@ def khz_fmt(val):
         val /= 1000
     return f"{val}{unit}"
 
-def check_uncore_options(args):
+def _check_uncore_options(args):
     """Verify that '--cpus' and '--cores' are not used with uncore commands."""
 
     if args.cpus or args.cores:
@@ -41,7 +41,7 @@ def check_uncore_options(args):
             opt = "--cores"
         raise Error(f"uncore options are per-package, '{opt}' cannot be used")
 
-def get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
+def _get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
     """
     Helper function to return user friendly string of host information and the CPUs or packages
     listed in 'nums'.
@@ -64,7 +64,7 @@ def get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
 
     return f"{proc.hostmsg} for {scope}"
 
-def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
+def _print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
     """Print CPU P-states information."""
 
     keys_descr = CPUFreq.CPUFREQ_KEYS_DESCR
@@ -83,29 +83,29 @@ def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
             if "die" in info:
                 _LOG.info("%s: %d", keys_descr["die"], info["die"])
             if "base" in info:
-                _LOG.info("%s: %s", keys_descr["base"], khz_fmt(info["base"]))
+                _LOG.info("%s: %s", keys_descr["base"], _khz_fmt(info["base"]))
             if "max_eff" in info:
-                _LOG.info("%s: %s", keys_descr["max_eff"], khz_fmt(info["max_eff"]))
+                _LOG.info("%s: %s", keys_descr["max_eff"], _khz_fmt(info["max_eff"]))
             if "max_turbo" in info:
-                _LOG.info("%s: %s", keys_descr["max_turbo"], khz_fmt(info["max_turbo"]))
+                _LOG.info("%s: %s", keys_descr["max_turbo"], _khz_fmt(info["max_turbo"]))
             if "cpu_min_limit" in info:
-                _LOG.info("%s: %s", keys_descr["cpu_min_limit"], khz_fmt(info["cpu_min_limit"]))
+                _LOG.info("%s: %s", keys_descr["cpu_min_limit"], _khz_fmt(info["cpu_min_limit"]))
             if "cpu_max_limit" in info:
-                _LOG.info("%s: %s", keys_descr["cpu_max_limit"], khz_fmt(info["cpu_max_limit"]))
+                _LOG.info("%s: %s", keys_descr["cpu_max_limit"], _khz_fmt(info["cpu_max_limit"]))
             if "cpu_min" in info:
-                _LOG.info("%s: %s", keys_descr["cpu_min"], khz_fmt(info["cpu_min"]))
+                _LOG.info("%s: %s", keys_descr["cpu_min"], _khz_fmt(info["cpu_min"]))
             if "cpu_max" in info:
-                _LOG.info("%s: %s", keys_descr["cpu_max"], khz_fmt(info["cpu_max"]))
+                _LOG.info("%s: %s", keys_descr["cpu_max"], _khz_fmt(info["cpu_max"]))
             if "uncore_min_limit" in info:
-                limit = khz_fmt(info["uncore_min_limit"])
+                limit = _khz_fmt(info["uncore_min_limit"])
                 _LOG.info("%s: %s", keys_descr["uncore_min_limit"], limit)
             if "uncore_max_limit" in info:
-                limit = khz_fmt(info["uncore_max_limit"])
+                limit = _khz_fmt(info["uncore_max_limit"])
                 _LOG.info("%s: %s", keys_descr["uncore_max_limit"], limit)
             if "uncore_min" in info:
-                _LOG.info("%s: %s", keys_descr["uncore_min"], khz_fmt(info["uncore_min"]))
+                _LOG.info("%s: %s", keys_descr["uncore_min"], _khz_fmt(info["uncore_min"]))
             if "uncore_max" in info:
-                _LOG.info("%s: %s", keys_descr["uncore_max"], khz_fmt(info["uncore_max"]))
+                _LOG.info("%s: %s", keys_descr["uncore_max"], _khz_fmt(info["uncore_max"]))
             if "hwp_supported" in info:
                 _LOG.info("%s: %s", keys_descr["hwp_supported"], bool_fmt(info["hwp_supported"]))
             if "hwp_enabled" in info and info.get("hwp_supported"):
@@ -146,10 +146,10 @@ def print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
                         epb_policies_str = ", ".join(info["epb_policies"])
                         _LOG.info("%s: %s", keys_descr["epb_policies"], epb_policies_str)
 
-def print_uncore_info(args, proc):
+def _print_uncore_info(args, proc):
     """Print uncore frequency information."""
 
-    check_uncore_options(args)
+    _check_uncore_options(args)
     keys_descr = CPUFreq.UNCORE_KEYS_DESCR
 
     first = True
@@ -161,20 +161,20 @@ def print_uncore_info(args, proc):
 
             _LOG.info("%s: %s", keys_descr["pkg"], info["pkg"])
             _LOG.info("%s: %s", keys_descr["die"], info["die"])
-            _LOG.info("%s: %s", keys_descr["uncore_min"], khz_fmt(info["uncore_min"]))
-            _LOG.info("%s: %s", keys_descr["uncore_max"], khz_fmt(info["uncore_max"]))
-            _LOG.info("%s: %s", keys_descr["uncore_min_limit"], khz_fmt(info["uncore_min_limit"]))
-            _LOG.info("%s: %s", keys_descr["uncore_max_limit"], khz_fmt(info["uncore_max_limit"]))
+            _LOG.info("%s: %s", keys_descr["uncore_min"], _khz_fmt(info["uncore_min"]))
+            _LOG.info("%s: %s", keys_descr["uncore_max"], _khz_fmt(info["uncore_max"]))
+            _LOG.info("%s: %s", keys_descr["uncore_min_limit"], _khz_fmt(info["uncore_min_limit"]))
+            _LOG.info("%s: %s", keys_descr["uncore_max_limit"], _khz_fmt(info["uncore_max_limit"]))
 
 def pstates_info_command(args, proc):
     """Implements the 'pstates info' command."""
 
     if args.uncore:
-        print_uncore_info(args, proc)
+        _print_uncore_info(args, proc)
     else:
         with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
             cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
-            print_pstates_info(proc, cpuinfo, cpus=cpus)
+            _print_pstates_info(proc, cpuinfo, cpus=cpus)
 
 def pstates_set_command(args, proc):
     """implements the 'pstates set' command."""
@@ -185,7 +185,7 @@ def pstates_set_command(args, proc):
         CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
         opts = {}
         if hasattr(args, "minufreq") or hasattr(args, "maxufreq"):
-            check_uncore_options(args)
+            _check_uncore_options(args)
             opts["uncore"] = {}
             opts["uncore"]["min"] = getattr(args, "minufreq", None)
             opts["uncore"]["max"] = getattr(args, "maxufreq", None)
@@ -220,14 +220,14 @@ def pstates_set_command(args, proc):
 
                 msg = f"set {opt} "
                 if minfreq:
-                    msg += f"minimum frequency to {khz_fmt(minfreq)}"
+                    msg += f"minimum frequency to {_khz_fmt(minfreq)}"
                 if maxfreq:
                     if minfreq:
                         msg += " and "
-                    msg += f"maximum frequency to {khz_fmt(maxfreq)}"
+                    msg += f"maximum frequency to {_khz_fmt(maxfreq)}"
 
                 scope = cpufreq.get_scope(f"{opt.lower()}-freq")
-                _LOG.info("%s%s", msg, get_scope_msg(proc, cpuinfo, nums, scope=scope))
+                _LOG.info("%s%s", msg, _get_scope_msg(proc, cpuinfo, nums, scope=scope))
 
             info_keys = []
             for info_opt, key in opt_info["opt_key_map"]:
@@ -236,9 +236,9 @@ def pstates_set_command(args, proc):
 
             if info_keys:
                 info_keys += opt_info["info_keys"]
-                print_pstates_info(proc, cpuinfo, keys=info_keys, cpus=opt_info["info_nums"])
+                _print_pstates_info(proc, cpuinfo, keys=info_keys, cpus=opt_info["info_nums"])
 
-def handle_pstate_opts(args, proc, cpuinfo, cpufreq):
+def _handle_pstate_opts(args, proc, cpuinfo, cpufreq):
     """Handle options related to P-state, such as getting or setting EPP or turbo value."""
 
     opts = {}
@@ -263,13 +263,13 @@ def handle_pstate_opts(args, proc, cpuinfo, cpufreq):
         if optval is not None:
 
             scope = cpufreq.get_scope(optname)
-            msg = get_scope_msg(proc, cpuinfo, cpus, scope=scope)
+            msg = _get_scope_msg(proc, cpuinfo, cpus, scope=scope)
             cpufreq.set_feature(optname, optval, cpus=cpus)
             _LOG.info("Set %s to '%s'%s", CPUFreq.FEATURES[optname]["name"], optval, msg)
         else:
             cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
             optinfo["keys"].add("CPU")
-            print_pstates_info(proc, cpuinfo, keys=optinfo["keys"], cpus=cpus)
+            _print_pstates_info(proc, cpuinfo, keys=optinfo["keys"], cpus=cpus)
 
 def pstates_config_command(args, proc):
     """Implements the 'pstates config' command."""
@@ -288,4 +288,4 @@ def pstates_config_command(args, proc):
                          "options are ignored")
 
         with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
-            handle_pstate_opts(args, proc, cpuinfo, cpufreq)
+            _handle_pstate_opts(args, proc, cpuinfo, cpufreq)
