@@ -14,6 +14,7 @@ This module includes the "cstates" 'pepc' command implementation.
 
 import logging
 from pepclibs.helperlibs import Human
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUIdle, CPUInfo, _PepcCommon
 
 _LOG = logging.getLogger()
@@ -153,8 +154,8 @@ def build_finfos(features, cpus, cpuidle):
 
 def print_scope_warnings(args, cpuidle):
     """
-    Check that the the '--packages', '--cores', and '--cpus' options provided by the user for match
-    the scope of all the options that change feature values.
+    Check that the the '--packages', '--cores', and '--cpus' options provided by the user to match
+    the scope of all the options.
     """
 
     pkg_warn, core_warn = [], []
@@ -182,6 +183,9 @@ def print_scope_warnings(args, cpuidle):
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
+
+    if not hasattr(args, "oargs"):
+        raise Error("please, provide a configuration option")
 
     _PepcCommon.check_tuned_presence(proc)
 
