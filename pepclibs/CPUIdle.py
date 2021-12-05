@@ -197,17 +197,12 @@ class CPUIdle:
             raise Error(f"failed to {msg}:\nfile '{path}' contains '{read_val}', but should "
                         f"contain '{val}'")
 
-    def _do_toggle_cstates(self, cpus, indexes, enable, dflt_enable):
+    def _do_toggle_cstates(self, cpus, indexes, enable):
         """Implements '_toggle_cstates()'."""
 
         ret_cpus, ret_cstates = [], []
-
-        if dflt_enable is not None:
-            # Walk through all CPUs.
-            go_cpus = go_indexes = None
-        else:
-            go_cpus = cpus
-            go_indexes = indexes
+        go_cpus = cpus
+        go_indexes = indexes
 
         if cpus is not None:
             cpus = set(cpus)
@@ -219,15 +214,13 @@ class CPUIdle:
             index = info["index"]
             if (cpus is None or cpu in cpus) and (indexes is None or index in indexes):
                 self._toggle_cstate(cpu, index, enable)
-            elif dflt_enable is not None:
-                self._toggle_cstate(cpu, index, dflt_enable)
 
             ret_cpus.append(cpu)
             ret_cstates.append(self._idx2name(index))
 
         return (Trivial.list_dedup(ret_cpus), sorted(Trivial.list_dedup(ret_cstates)))
 
-    def _toggle_cstates(self, cpus=None, cstates=None, enable=True, dflt_enable=None):
+    def _toggle_cstates(self, cpus=None, cstates=None, enable=True):
         """
         Enable or disable C-states 'cstates' on CPUs 'cpus'. Returns list of CPU numbers and
         C-states as a tuple. The arguments are as follows.
@@ -235,9 +228,6 @@ class CPUIdle:
           * cpus - same as in 'get_cstates_info()'.
           * enabled - if 'True', the specified C-states should be enabled on the specified CPUS,
                       otherwise disabled.
-          * dflt_enable - if 'None', nothing is done for the CPUs and C-states that are not in the
-                          'cstates'/'cpus' lists. If 'True', those C-states are enabled on those
-                          CPUs, otherwise disabled.
         """
 
         cpus = self._normalize_cpus(cpus)
@@ -246,7 +236,7 @@ class CPUIdle:
             cstates = Trivial.split_csv_line(cstates, dedup=True)
         indexes = self._normalize_cstates(cstates)
 
-        return self._do_toggle_cstates(cpus, indexes, enable, dflt_enable)
+        return self._do_toggle_cstates(cpus, indexes, enable)
 
     def enable_cstates(self, cpus=None, cstates=None):
         """
