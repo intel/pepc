@@ -200,7 +200,7 @@ class CPUIdle:
     def _do_toggle_cstates(self, cpus, indexes, enable):
         """Implements '_toggle_cstates()'."""
 
-        ret_cpus, ret_cstates = [], []
+        toggled = {}
         go_cpus = cpus
         go_indexes = indexes
 
@@ -214,16 +214,15 @@ class CPUIdle:
             index = info["index"]
             if (cpus is None or cpu in cpus) and (indexes is None or index in indexes):
                 self._toggle_cstate(cpu, index, enable)
+                if cpu not in toggled:
+                    toggled[cpu] = {"cstates" : []}
+                toggled[cpu]["cstates"].append(self._idx2name(index, cpu=cpu))
 
-            ret_cpus.append(cpu)
-            ret_cstates.append(self._idx2name(index))
-
-        return (Trivial.list_dedup(ret_cpus), sorted(Trivial.list_dedup(ret_cstates)))
+        return toggled
 
     def _toggle_cstates(self, cpus=None, cstates=None, enable=True):
         """
-        Enable or disable C-states 'cstates' on CPUs 'cpus'. Returns list of CPU numbers and
-        C-states as a tuple. The arguments are as follows.
+        Enable or disable C-states 'cstates' on CPUs 'cpus'. The arguments are as follows.
           * cstates - same as in 'get_cstates_info()'.
           * cpus - same as in 'get_cstates_info()'.
           * enabled - if 'True', the specified C-states should be enabled on the specified CPUS,
@@ -241,14 +240,17 @@ class CPUIdle:
     def enable_cstates(self, cpus=None, cstates=None):
         """
         Enable C-states 'cstates' on CPUs 'cpus'. The 'cstates' and 'cpus' arguments are the same as
-        in 'get_cstates_info()'.
+        in 'get_cstates_info()'. Returns a dictionary of the following format:
+
+        CPU number:
+            csates:
+                list of C-state names enabled for the CPU
         """
         return self._toggle_cstates(cpus, cstates, True)
 
     def disable_cstates(self, cpus=None, cstates=None):
         """
-        Disable C-states 'cstates' on CPUs 'cpus'. The 'cstates' and 'cpus' arguments are the same
-        as in 'get_cstates_info()'.
+        Similarr to 'enable_cstates()', but disables instead of enabling.
         """
         return self._toggle_cstates(cpus, cstates, False)
 

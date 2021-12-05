@@ -167,7 +167,7 @@ def fmt_cstates(cstates):
             msg = "C-state "
         else:
             msg = "C-states "
-        msg += ",".join(sorted(cstates))
+        msg += ",".join(cstates)
 
     return msg
 
@@ -238,9 +238,22 @@ def handle_cstate_config_opt(args, optname, optval, cpus, cpuidle):
         print_cstate_feature_message(name, "set to", val, cpus)
     else:
         method = getattr(cpuidle, f"{optname}_cstates")
-        cpus, cstates = method(cpus=cpus, cstates=optval)
+        toggled = method(cpus=cpus, cstates=optval)
 
-        LOG.info("%sd %s on %s", optname.title(), fmt_cstates(cstates), fmt_cpus(cpus))
+        # The 'toggled' dictionary is indexed with CPU number. But we want to print a single line
+        # for all CPU numbers that have the same toggled C-states list (the assumption here is that
+        # the system may be hybrid and different CPUs have different C-states). Therefore, built a
+        # "revered" verion of the 'toggled' dictionary.
+        revdict = {}
+        for cpu, csinfo in toggled.items():
+            key = ",".join(csinfo["cstates"])
+            if key not in revdict:
+                revdict[key] = []
+            revdict[key].append(cpu)
+
+        for cstnames, cpunums in revdict.items():
+            cstnames = cstnames.split(",")
+            LOG.info("%sd %s on %s", optname.title(), fmt_cstates(cstnames), fmt_cpus(cpunums))
 
 def print_cstate_feature(finfo):
     """Print C-state feature information."""
