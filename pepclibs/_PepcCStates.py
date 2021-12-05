@@ -19,7 +19,7 @@ from pepclibs import CPUIdle, CPUInfo, _PepcCommon
 
 _LOG = logging.getLogger()
 
-def fmt_cstates(cstates):
+def _fmt_cstates(cstates):
     """Fromats and returns the C-states list string, which can be used in messages."""
 
     if cstates in ("all", None):
@@ -33,7 +33,7 @@ def fmt_cstates(cstates):
 
     return msg
 
-def fmt_cpus(cpus):
+def _fmt_cpus(cpus):
     """Fromats and returns the CPU numbers string, which can be used in messages."""
 
     if len(cpus) == 1:
@@ -43,13 +43,13 @@ def fmt_cpus(cpus):
 
     return msg + Human.rangify(cpus)
 
-def print_cstate_feature_message(name, action, val, cpus):
+def _print_cstate_feature_message(name, action, val, cpus):
     """Format an print a message about a C-state feature 'name'."""
 
     if isinstance(val, bool):
         val = _PepcCommon.bool_fmt(val)
 
-    cpus = fmt_cpus(cpus)
+    cpus = _fmt_cpus(cpus)
 
     if action:
         msg = f"{name}: {action} '{val}' on {cpus}"
@@ -58,7 +58,7 @@ def print_cstate_feature_message(name, action, val, cpus):
 
     _LOG.info(msg)
 
-def handle_cstate_config_opt(optname, optval, cpus, cpuidle):
+def _handle_cstate_config_opt(optname, optval, cpus, cpuidle):
     """
     Handle a C-state configuration option 'optname'.
 
@@ -74,7 +74,7 @@ def handle_cstate_config_opt(optname, optval, cpus, cpuidle):
         cpuidle.set_feature(feature, val, cpus)
 
         name = cpuidle.features[feature]["name"]
-        print_cstate_feature_message(name, "set to", val, cpus)
+        _print_cstate_feature_message(name, "set to", val, cpus)
     else:
         method = getattr(cpuidle, f"{optname}_cstates")
         toggled = method(cpus=cpus, cstates=optval)
@@ -92,9 +92,9 @@ def handle_cstate_config_opt(optname, optval, cpus, cpuidle):
 
         for cstnames, cpunums in revdict.items():
             cstnames = cstnames.split(",")
-            _LOG.info("%sd %s on %s", optname.title(), fmt_cstates(cstnames), fmt_cpus(cpunums))
+            _LOG.info("%sd %s on %s", optname.title(), _fmt_cstates(cstnames), _fmt_cpus(cpunums))
 
-def print_cstate_feature(finfo):
+def _print_cstate_feature(finfo):
     """Print C-state feature information."""
 
     for key, kinfo in finfo.items():
@@ -106,9 +106,9 @@ def print_cstate_feature(finfo):
                 # So no need to print the "*_supported" key in case it is 'True'.
                 continue
 
-            print_cstate_feature_message(descr, "", val, cpus)
+            _print_cstate_feature_message(descr, "", val, cpus)
 
-def build_finfos(features, cpus, cpuidle):
+def _build_finfos(features, cpus, cpuidle):
     """
     Build features dictionary, describing all featrues in the 'features' list.
     """
@@ -152,7 +152,7 @@ def build_finfos(features, cpus, cpuidle):
 
     return finfos
 
-def print_scope_warnings(args, cpuidle):
+def _print_scope_warnings(args, cpuidle):
     """
     Check that the the '--packages', '--cores', and '--cpus' options provided by the user to match
     the scope of all the options.
@@ -194,7 +194,7 @@ def cstates_config_command(args, proc):
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
         with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
-            print_scope_warnings(args, cpuidle)
+            _print_scope_warnings(args, cpuidle)
 
             # Find all features we'll need to print about, and get their values.
             for optname, optval in args.oargs.items():
@@ -203,14 +203,14 @@ def cstates_config_command(args, proc):
 
             # Build features information dictionary for all options that are going to be printed.
             cpus = _PepcCommon.get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
-            finfos = build_finfos(print_features, cpus, cpuidle)
+            finfos = _build_finfos(print_features, cpus, cpuidle)
 
             # Now handle the options one by one, in the same order as they go in the command line.
             for optname, optval in args.oargs.items():
                 if not optval:
-                    print_cstate_feature(finfos[optname])
+                    _print_cstate_feature(finfos[optname])
                 else:
-                    handle_cstate_config_opt(optname, optval, cpus, cpuidle)
+                    _handle_cstate_config_opt(optname, optval, cpus, cpuidle)
 
 def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
