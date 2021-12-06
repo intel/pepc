@@ -1,3 +1,11 @@
+pepc (1.2.0) unstable; urgency=low
+
+  * Merge the 'cstate set' command into 'cstate config'.
+  * Rename 'aspm set' command to 'aspm config'.
+  * Improve C-states information printing.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  ADD_DATE
+
 pepc (1.1.4) unstable; urgency=high
 
   * pepc: fix file type markers in 'lsdir()', which fixes 'wult scan'.
