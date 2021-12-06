@@ -28,7 +28,7 @@ from pepclibs import CPUIdle
 if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
 
-VERSION = "1.1.4"
+VERSION = "1.2.0"
 OWN_NAME = "pepc"
 
 LOG = logging.getLogger()
