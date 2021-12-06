@@ -253,58 +253,18 @@ def build_arguments_parser():
     subpars2.add_argument("--packages", help=text)
 
     ucfreq_txt = """Uncore frequency is per-package, therefore, the '--cpus' and '--cores' options
-                    should not be used with this option."""
+                    should not be used with this option"""
     text = f"""By default this command provides CPU (core) frequency (P-state) information, but if
                this option is used, it will provide uncore frequency information instead. The uncore
                includes the interconnect between the cores, the shared cache, and other resources
-               shared between the cores. {ucfreq_txt}"""
+               shared between the cores. {ucfreq_txt}."""
     subpars2.add_argument("--uncore", dest="uncore", action="store_true", help=text)
-
-    #
-    # Create parser for the 'pstates set' command.
-    #
-    text = """Set CPU or uncore frequency."""
-    descr = """Set CPU frequency for specified CPUs (all CPUs by default) or uncore frequency for
-               specified packages (all packages by default)."""
-    subpars2 = subparsers2.add_parser("set", help=text, description=descr)
-    subpars2.set_defaults(func=pstates_set_command)
-
-    text = f"""List of CPUs to set frequencies for. {cpu_list_txt}."""
-    subpars2.add_argument("--cpus", help=text)
-
-    text = f"""List of cores to set frequencies for. {core_list_txt}."""
-    subpars2.add_argument("--cores", help=text)
-
-    text = f"""List of packages to set frequencies for. {pkg_list_txt}."""
-    subpars2.add_argument("--packages", help=text)
-
-    freq_txt = """The default unit is 'kHz', but 'Hz', 'MHz', and 'GHz' can also be used, for
-                  example '900MHz'."""
-    text = f"""Set minimum CPU frequency. {freq_txt} Additionally, one of the following specifiers
-               can be used: min,lfm - minimum supported frequency (LFM), eff - maximum effeciency
-               frequency, base,hfm - base frequency (HFM), max - maximum supported frequency."""
-    subpars2.add_argument("--min-freq", default=argparse.SUPPRESS, nargs="?", dest="minfreq",
-                          help=text)
-
-    text = """Same as '--min-freq', but for maximum CPU frequency."""
-    subpars2.add_argument("--max-freq", default=argparse.SUPPRESS, nargs="?", dest="maxfreq",
-                          help=text)
-
-    text = f"""Set minimum uncore frequency. {freq_txt} Additionally, one of the following
-               specifiers can be used: 'min' - the minimum supported uncore frequency, 'max' - the
-               maximum supported uncore frequency. {ucfreq_txt}"""
-    subpars2.add_argument("--min-uncore-freq", default=argparse.SUPPRESS, nargs="?",
-                          dest="minufreq", help=text)
-
-    text = """Same as '--min-uncore-freq', but for maximum uncore frequency."""
-    subpars2.add_argument("--max-uncore-freq", default=argparse.SUPPRESS, nargs="?",
-                          dest="maxufreq", help=text)
 
     #
     # Create parser for the 'pstates config' command.
     #
     text = """Configure other P-state aspects."""
-    descr = """Configure P-states on specified CPUs."""
+    descr = """Configure P-states on specified CPUs"""
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=pstates_config_command)
 
@@ -317,19 +277,43 @@ def build_arguments_parser():
     text = f"""List of packages to configure P-States on. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
+    freq_txt = """The default unit is 'kHz', but 'Hz', 'MHz', and 'GHz' can also be used, for
+                  example '900MHz'"""
+    text = f"""Set minimum CPU frequency. {freq_txt}. Additionally, one of the following specifiers
+               can be used: min,lfm - minimum supported frequency (LFM), eff - maximum effeciency
+               frequency, base,hfm - base frequency (HFM), max - maximum supported frequency.
+               Applies to all CPUs by default."""
+    subpars2.add_argument("--min-freq", action=ArgParse.OrderedArg, nargs="?", dest="minfreq",
+                          help=text)
+
+    text = """Same as '--min-freq', but for maximum CPU frequency."""
+    subpars2.add_argument("--max-freq", action=ArgParse.OrderedArg, nargs="?", dest="maxfreq",
+                          help=text)
+
+    text = f"""Set minimum uncore frequency. {freq_txt}. Additionally, one of the following
+               specifiers can be used: 'min' - the minimum supported uncore frequency, 'max' - the
+               maximum supported uncore frequency. {ucfreq_txt}. Applies to all packages by
+               default."""
+    subpars2.add_argument("--min-uncore-freq", nargs="?", action=ArgParse.OrderedArg,
+                          dest="minufreq", help=text)
+
+    text = """Same as '--min-uncore-freq', but for maximum uncore frequency."""
+    subpars2.add_argument("--max-uncore-freq", nargs="?", action=ArgParse.OrderedArg,
+                          dest="maxufreq", help=text)
+
     text = """Set energy performance bias hint. Hint can be integer in range of [0,15]. By default
               this option applies to all CPUs."""
-    subpars2.add_argument("--epb", default=argparse.SUPPRESS, nargs="?", help=text)
+    subpars2.add_argument("--epb", nargs="?", action=ArgParse.OrderedArg, help=text)
 
     text = """Set energy performance preference. Preference can be integer in range of [0,255], or
               policy string. By default this option applies to all CPUs."""
-    subpars2.add_argument("--epp", default=argparse.SUPPRESS, nargs="?", help=text)
+    subpars2.add_argument("--epp", nargs="?", action=ArgParse.OrderedArg, help=text)
 
     text = """Set CPU scaling governor. By default this option applies to all CPUs."""
-    subpars2.add_argument("--governor", default=argparse.SUPPRESS, nargs="?", help=text)
+    subpars2.add_argument("--governor", nargs="?", action=ArgParse.OrderedArg, help=text)
 
     text = """Enable or disable turbo mode. Turbo on/off is global."""
-    subpars2.add_argument("--turbo", default=argparse.SUPPRESS, nargs="?", choices=["on", "off"],
+    subpars2.add_argument("--turbo", nargs="?", choices=["on", "off"], action=ArgParse.OrderedArg,
                           help=text)
 
     #
@@ -408,13 +392,6 @@ def pstates_info_command(args, proc):
     from pepctool import _PepcPStates
 
     _PepcPStates.pstates_info_command(args, proc)
-
-def pstates_set_command(args, proc):
-    """implements the 'pstates set' command."""
-
-    from pepctool import _PepcPStates
-
-    _PepcPStates.pstates_set_command(args, proc)
 
 def pstates_config_command(args, proc):
     """Implements the 'pstates config' command."""
