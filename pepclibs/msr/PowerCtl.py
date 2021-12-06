@@ -19,14 +19,14 @@ from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 _LOG = logging.getLogger()
 
-# Power control Model Specific Register.
+# The Power Control Model Specific Register.
 MSR_POWER_CTL = 0x1FC
 C1E_ENABLE = 1
 CSTATE_PREWAKE_DISABLE = 30
 # Indicates whether dynamic switching is enabled in power perf tuning algorithm. Available on ICX.
 PWR_PERF_TUNING_ENABLE_DYN_SWITCHING = 33
 
-# Map of features available on various CPU models.
+# Description of CPU features controlled by the the Power Control MSR.
 # Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
 FEATURES = {
     "cstate_prewake" : {
@@ -36,9 +36,9 @@ FEATURES = {
         "cpumodels" : [CPUInfo.INTEL_FAM6_ICELAKE_X, CPUInfo.INTEL_FAM6_ICELAKE_D],
         "choices" : ["on", "off"],
         "scope": "package",
-        "help" : f"""When enabled, exit from C-state will start prior next event. This is possible
-                     only if time of next event is known, for example in case of local APIC timers.
-                     This command toggles MSR {MSR_POWER_CTL:#x}, bit {CSTATE_PREWAKE_DISABLE}.""",
+        "help" : f"""When enabled, the CPU will start exiting the C6 idle state in advance, prior to
+                     the next local APIC timer event. This CPU feature is controlled by MSR
+                     {MSR_POWER_CTL:#x}, bit {CSTATE_PREWAKE_DISABLE}.""",
     },
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
@@ -46,8 +46,8 @@ FEATURES = {
         "bitnr" : C1E_ENABLE,
         "choices" : ["on", "off"],
         "scope": "package",
-        "help" : f"""When enabled, the CPU automatically converts all C1 requests into C1E requests.
-                     This command toggles MSR {MSR_POWER_CTL:#x}, bit {C1E_ENABLE}.""",
+        "help" : f"""When enabled, the CPU automatically converts all C1 requests to C1E requests.
+                     This CPU feature is controlled by MSR {MSR_POWER_CTL:#x}, bit {C1E_ENABLE}.""",
     },
 }
 
