@@ -36,13 +36,13 @@ CSTATE_KEYS_DESCR = {
     "c1_undemotion" : "C1 un-demotion enabled",
 }
 
-# This dictionary describes various CPU features this module controls.
+# This dictionary describes various CPU properties this module controls.
 #
-# Note 1: consider using the 'CPUIdle.features' dicionary instead of this one.
+# Note 1: consider using the 'CPUIdle.props' dicionary instead of this one.
 # Note 2: the "scope" names have to be the same as "level" names in 'CPUInfo'.
-FEATURES = {}
-FEATURES.update(PowerCtl.FEATURES)
-FEATURES.update(PCStateConfigCtl.FEATURES)
+PROPS = {}
+PROPS.update(PowerCtl.FEATURES)
+PROPS.update(PCStateConfigCtl.FEATURES)
 
 class CPUIdle:
     """This class provides API to the "cpuidle" Linux sybsystem."""
@@ -439,62 +439,60 @@ class CPUIdle:
             yield info
 
     @staticmethod
-    def _validate_feature_name(feature):
-        """Raise an error if feature 'feature' is not supported."""
+    def _check_prop(prop):
+        """Raise an error if a property 'prop' is not supported."""
 
-        if feature not in FEATURES:
-            features_str = ", ".join(set(FEATURES))
-            raise Error(f"feature '{feature}' not supported, use one of the following: "
-                        f"{features_str}")
+        if prop not in PROPS:
+            props_str = ", ".join(set(PROPS))
+            raise Error(f"property '{prop}' not supported, use one of the following: "
+                        f"{props_str}")
 
-    def set_feature(self, feature, val, cpus="all"):
+    def set_prop(self, prop, val, cpus="all"):
         """
-        Set value 'val' for feature 'feature' for CPUs 'cpus'. The arguments are as follows.
-          * feature - name of the feature to set (see 'FEATURES' for the full features list).
-          * val - the value to set for the feature.
+        Set value 'val' for property 'prop' for CPUs 'cpus'. The arguments are as follows.
+          * prop - name of the property to set (see 'PROPS' for the full list).
+          * val - the value to set for the property.
           * cpus - same as in 'get_cstates_info()'.
         """
 
-        self._validate_feature_name(feature)
+        self._check_prop(prop)
 
-        if feature in PowerCtl.FEATURES:
+        if prop in PowerCtl.FEATURES:
             powerctl = self._get_powerctl()
-            powerctl.set_feature(feature, val=="on", cpus)
-        elif feature in PCStateConfigCtl.FEATURES:
+            powerctl.set_feature(prop, val=="on", cpus)
+        elif prop in PCStateConfigCtl.FEATURES:
             pcstatectl = self._get_pcstatectl()
-            pcstatectl.set_feature(feature, val, cpus=cpus)
+            pcstatectl.set_feature(prop, val, cpus=cpus)
         else:
-            raise Error(f"BUG: undefined feature '{feature}'")
+            raise Error(f"BUG: undefined property '{prop}'")
 
     @staticmethod
-    def get_scope(feature):
-        """Get feature scope. The 'feature' argument is same as in 'set_feature()'."""
+    def get_scope(prop):
+        """Get scope of property 'prop'. The 'prop' argument is same as in 'set_prop()'."""
 
-        CPUIdle._validate_feature_name(feature)
+        CPUIdle._check_prop(prop)
 
-        if feature in PowerCtl.FEATURES:
-            return PowerCtl.FEATURES[feature]["scope"]
-        if feature in PCStateConfigCtl.FEATURES:
-            return PCStateConfigCtl.FEATURES[feature]["scope"]
+        if prop in PowerCtl.FEATURES:
+            return PowerCtl.FEATURES[prop]["scope"]
+        if prop in PCStateConfigCtl.FEATURES:
+            return PCStateConfigCtl.FEATURES[prop]["scope"]
 
-        raise Error(f"BUG: undefined feature '{feature}'")
+        raise Error(f"BUG: undefined property '{prop}'")
 
     @staticmethod
-    def _create_features_dict():
-        """
-        Create an extended version of the 'FEATURES' dictionary.
-        """
+    def _create_props_dict():
+        """Create an extended version of the 'PROPS' dictionary."""
 
-        features = copy.deepcopy(FEATURES)
+        props = copy.deepcopy(PROPS)
 
-        # Map each feature to the list of keys relevant to this feature.
-        features["c1_undemotion"]["keys"]    = ["c1_undemotion"]
-        features["c1e_autopromote"]["keys"]  = ["c1e_autopromote"]
-        features["c1_demotion"]["keys"]      = ["c1_demotion"]
-        features["cstate_prewake"]["keys"]   = ["cstate_prewake", "cstate_prewake_supported"]
-        features["pkg_cstate_limit"]["keys"] = ["pkg_cstate_limit_supported", "pkg_cstate_limit",
-                                                "pkg_cstate_limits", "pkg_cstate_limit_locked"]
-        return features
+        # Map each property to the list of keys relevant to this property.
+        props["c1_undemotion"]["keys"]    = ["c1_undemotion"]
+        props["c1e_autopromote"]["keys"]  = ["c1e_autopromote"]
+        props["c1_demotion"]["keys"]      = ["c1_demotion"]
+        props["cstate_prewake"]["keys"]   = ["cstate_prewake", "cstate_prewake_supported"]
+        props["pkg_cstate_limit"]["keys"] = ["pkg_cstate_limit_supported", "pkg_cstate_limit",
+                                             "pkg_cstate_limits", "pkg_cstate_limit_locked"]
+        return props
 
     def __init__(self, proc=None, cpuinfo=None):
         """
@@ -513,7 +511,7 @@ class CPUIdle:
         self._proc = proc
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
-        self.features = self._create_features_dict()
+        self.props = self._create_props_dict()
 
         # Used for caching the C-state information for each CPU.
         self._csinfos = {}

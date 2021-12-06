@@ -44,8 +44,8 @@ def _fmt_cpus(cpus):
 
     return msg + Human.rangify(cpus)
 
-def _print_cstate_feature_message(name, action, val, cpus):
-    """Format an print a message about a C-state feature 'name'."""
+def _print_cstate_prop_msg(prop, action, val, cpus):
+    """Format an print a message about a C-state property 'prop'."""
 
     if isinstance(val, bool):
         val = _PepcCommon.bool_fmt(val)
@@ -53,9 +53,9 @@ def _print_cstate_feature_message(name, action, val, cpus):
     cpus = _fmt_cpus(cpus)
 
     if action:
-        msg = f"{name}: {action} '{val}' on {cpus}"
+        msg = f"{prop}: {action} '{val}' on {cpus}"
     else:
-        msg = f"{name}: '{val}' {cpus}"
+        msg = f"{prop}: '{val}' {cpus}"
 
     _LOG.info(msg)
 
@@ -64,18 +64,15 @@ def _handle_cstate_config_opt(optname, optval, cpus, cpuidle):
     Handle a C-state configuration option 'optname'.
 
     Most options can be used with and without a value. In the former case, this function sets the
-    corresponding feature to the value provided. Otherwise this function reads the current value of
-    the feature and prints it.
+    corresponding C-state property to the value provided. Otherwise this function reads the current
+    value of the C-state priperty and prints it.
     """
 
-    if optname in cpuidle.features:
-        feature = optname
-        val = optval
+    if optname in cpuidle.props:
+        cpuidle.set_prop(optname, optval, cpus)
 
-        cpuidle.set_feature(feature, val, cpus)
-
-        name = cpuidle.features[feature]["name"]
-        _print_cstate_feature_message(name, "set to", val, cpus)
+        name = cpuidle.props[optname]["name"]
+        _print_cstate_prop_msg(name, "set to", optval, cpus)
     else:
         method = getattr(cpuidle, f"{optname}_cstates")
         toggled = method(cpus=cpus, cstates=optval)
@@ -95,33 +92,31 @@ def _handle_cstate_config_opt(optname, optval, cpus, cpuidle):
             cstnames = cstnames.split(",")
             _LOG.info("%sd %s on %s", optname.title(), _fmt_cstates(cstnames), _fmt_cpus(cpunums))
 
-def _print_cstate_feature(finfo):
-    """Print C-state feature information."""
+def _print_cstate_prop(pinfo):
+    """Print about C-state properties in 'pinfo'."""
 
-    for key, kinfo in finfo.items():
+    for key, kinfo in pinfo.items():
         descr = CPUIdle.CSTATE_KEYS_DESCR[key]
 
         for val, cpus in kinfo.items():
             if key.endswith("_supported") and val:
-                # Supported features will have some other key(s) in 'kinfo', which will be printed.
-                # So no need to print the "*_supported" key in case it is 'True'.
+                # Supported properties will have some other key(s) in 'kinfo', which will be
+                # printed. So no need to print the "*_supported" key in case it is 'True'.
                 continue
 
-            _print_cstate_feature_message(descr, "", val, cpus)
+            _print_cstate_prop_msg(descr, "", val, cpus)
 
-def _build_finfos(features, cpus, cpuidle):
-    """
-    Build features dictionary, describing all featrues in the 'features' list.
-    """
+def _build_pinfos(props, cpus, cpuidle):
+    """Build the properties dictionary for proparties in the 'props' list."""
 
     all_keys = []
-    finfos = {}
+    pinfos = {}
     key2f = {}
 
-    for feature in features:
-        finfos[feature] = {}
-        for key in cpuidle.features[feature]["keys"]:
-            key2f[key] = feature
+    for prop in props:
+        pinfos[prop] = {}
+        for key in cpuidle.props[prop]["keys"]:
+            key2f[key] = prop
             all_keys.append(key)
 
     all_keys.append("CPU")
@@ -131,9 +126,9 @@ def _build_finfos(features, cpus, cpuidle):
             if key == "CPU":
                 continue
 
-            finfo = finfos[key2f[key]]
-            if key not in finfo:
-                finfo[key] = {}
+            pinfo = pinfos[key2f[key]]
+            if key not in pinfo:
+                pinfo[key] = {}
 
             # We are going to used values as dictionary keys, in order to aggregate all CPU numbers
             # having the same value. But the 'pkg_cstate_limits' value is a dictionary, so turn it
@@ -146,12 +141,12 @@ def _build_finfos(features, cpus, cpuidle):
                     codes += f" (aliases: {aliases})"
                 val = codes
 
-            if val not in finfo[key]:
-                finfo[key][val] = [csinfo["CPU"]]
+            if val not in pinfo[key]:
+                pinfo[key][val] = [csinfo["CPU"]]
             else:
-                finfo[key][val].append(csinfo["CPU"])
+                pinfo[key][val].append(csinfo["CPU"])
 
-    return finfos
+    return pinfos
 
 def _print_scope_warnings(args, cpuidle):
     """
@@ -161,15 +156,15 @@ def _print_scope_warnings(args, cpuidle):
 
     pkg_warn, core_warn = [], []
 
-    for feature in CPUIdle.FEATURES:
-        if not getattr(args, feature, None):
+    for prop in cpuidle.props:
+        if not getattr(args, prop, None):
             continue
 
-        scope = cpuidle.get_scope(feature)
+        scope = cpuidle.get_scope(prop)
         if scope == "package" and (getattr(args, "cpus") or getattr(args, "cores")):
-            pkg_warn.append(feature)
+            pkg_warn.append(prop)
         elif scope == "core" and getattr(args, "cpus"):
-            core_warn.append(feature)
+            core_warn.append(prop)
 
     if pkg_warn:
         opts = ", ".join([f"'--{opt.replace('_', '-')}'" for opt in pkg_warn])
@@ -190,26 +185,26 @@ def cstates_config_command(args, proc):
 
     _PepcCommon.check_tuned_presence(proc)
 
-    # The features to print about.
-    print_features = []
+    # The C-state properties to print about.
+    print_props = []
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
         with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
             _print_scope_warnings(args, cpuidle)
 
-            # Find all features we'll need to print about, and get their values.
+            # Find all properties we'll need to print about, and get their values.
             for optname, optval in args.oargs.items():
                 if not optval:
-                    print_features.append(optname)
+                    print_props.append(optname)
 
-            # Build features information dictionary for all options that are going to be printed.
+            # Build properties information dictionary for all options that are going to be printed.
             cpus = _PepcCommon.get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
-            finfos = _build_finfos(print_features, cpus, cpuidle)
+            pinfos = _build_pinfos(print_props, cpus, cpuidle)
 
             # Now handle the options one by one, in the same order as they go in the command line.
             for optname, optval in args.oargs.items():
                 if not optval:
-                    _print_cstate_feature(finfos[optname])
+                    _print_cstate_prop(pinfos[optname])
                 else:
                     _handle_cstate_config_opt(optname, optval, cpus, cpuidle)
 

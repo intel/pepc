@@ -202,7 +202,7 @@ def build_arguments_parser():
     text = """Similar to '--enable', but specifies the list of C-states to disable."""
     subpars2.add_argument("--disable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text)
 
-    for name, info in CPUIdle.FEATURES.items():
+    for name, info in CPUIdle.PROPS.items():
         kwargs = {}
         kwargs["default"] = argparse.SUPPRESS
         kwargs["nargs"] = "?"
