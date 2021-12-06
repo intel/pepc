@@ -15,8 +15,9 @@ This module includes the "pstates" 'pepc' command implementation.
 import logging
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CPUInfo, CPUFreq, _PepcCommon
-from pepclibs._PepcCommon import bool_fmt, get_cpus
+from pepclibs import CPUInfo, CPUFreq
+from pepctool import _PepcCommon
+from pepctool._PepcCommon import bool_fmt, get_cpus
 
 _LOG = logging.getLogger()
 

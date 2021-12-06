@@ -15,7 +15,8 @@ This module includes the "cstates" 'pepc' command implementation.
 import logging
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CPUIdle, CPUInfo, _PepcCommon
+from pepclibs import CPUIdle, CPUInfo
+from pepctool import _PepcCommon
 
 _LOG = logging.getLogger()
 

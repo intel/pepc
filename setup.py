@@ -29,7 +29,7 @@ setup(
     author="Artem Bityutskiy",
     author_email="artem.bityutskiy@linux.intel.com",
     python_requires=">=3.7",
-    version=get_version("pepclibs/pepc.py"),
+    version=get_version("pepctool/_Pepc.py"),
     scripts=["pepc"],
     packages=find_packages(exclude=["test*"]),
     long_description="""A tool configuring various power and performance aspects of a Linux

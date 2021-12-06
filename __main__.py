@@ -9,7 +9,7 @@
 # Author: Antti Laakso <antti.laakso@intel.com>
 
 import sys
-from pepclibs.pepc import main
+from pepctool._Pepc import main
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -20,7 +20,7 @@ from pathlib import Path
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Procs, FSHelpers
 from pepclibs.msr import MSR, PCStateConfigCtl
-from pepclibs import pepc
+from pepctool import _Pepc
 
 logging.basicConfig(level=logging.DEBUG)
 _LOG = logging.getLogger()
@@ -249,10 +249,10 @@ def run_pepc(arguments, exp_ret=None):
     """
 
     with get_mocked_objects() as _:
-        cmd = f"{pepc.__file__} {arguments}"
+        cmd = f"{_Pepc.__file__} {arguments}"
         _LOG.debug("running: %s", cmd)
         sys.argv = cmd.split()
-        ret = pepc.main()
+        ret = _Pepc.main()
 
         if exp_ret is not None:
             assert ret == exp_ret

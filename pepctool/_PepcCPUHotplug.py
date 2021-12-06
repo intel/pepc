@@ -14,7 +14,8 @@ This module includes the "cpu-hotplug" 'pepc' command implementation.
 
 import logging
 from pepclibs.helperlibs import Human
-from pepclibs import CPUInfo, CPUOnline, _PepcCommon
+from pepclibs import CPUInfo, CPUOnline
+from pepctool import _PepcCommon
 
 _LOG = logging.getLogger()
 

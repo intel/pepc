@@ -371,70 +371,70 @@ def parse_arguments():
 def cpu_hotplug_info_command(args, proc):
     """Implements the 'cpu-hotplug info' command."""
 
-    from pepclibs import _PepcCPUHotplug
+    from pepctool import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_info_command(args, proc)
 
 def cpu_hotplug_online_command(args, proc):
     """Implements the 'cpu-hotplug online' command."""
 
-    from pepclibs import _PepcCPUHotplug
+    from pepctool import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_info_command(args, proc)
 
 def cpu_hotplug_offline_command(args, proc):
     """Implements the 'cpu-hotplug offline' command."""
 
-    from pepclibs import _PepcCPUHotplug
+    from pepctool import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_offline_command(args, proc)
 
 def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
 
-    from pepclibs import _PepcCStates
+    from pepctool import _PepcCStates
 
     _PepcCStates.cstates_info_command(args, proc)
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
 
-    from pepclibs import _PepcCStates
+    from pepctool import _PepcCStates
 
     _PepcCStates.cstates_config_command(args, proc)
 
 def pstates_info_command(args, proc):
     """Implements the 'pstates info' command."""
 
-    from pepclibs import _PepcPStates
+    from pepctool import _PepcPStates
 
     _PepcPStates.pstates_info_command(args, proc)
 
 def pstates_set_command(args, proc):
     """implements the 'pstates set' command."""
 
-    from pepclibs import _PepcPStates
+    from pepctool import _PepcPStates
 
     _PepcPStates.pstates_set_command(args, proc)
 
 def pstates_config_command(args, proc):
     """Implements the 'pstates config' command."""
 
-    from pepclibs import _PepcPStates
+    from pepctool import _PepcPStates
 
     _PepcPStates.pstates_config_command(args, proc)
 
 def aspm_info_command(args, proc):
     """Implements the 'aspm info'. command"""
 
-    from pepclibs import _PepcASPM
+    from pepctool import _PepcASPM
 
     _PepcASPM.aspm_info_command(args, proc)
 
 def aspm_set_command(args, proc):
     """Implements the 'aspm set' command."""
 
-    from pepclibs import _PepcASPM
+    from pepctool import _PepcASPM
 
     _PepcASPM.aspm_set_command(args, proc)
 
