@@ -92,19 +92,17 @@ def _handle_cstate_config_opt(optname, optval, cpus, cpuidle):
             cstnames = cstnames.split(",")
             _LOG.info("%sd %s on %s", optname.title(), _fmt_cstates(cstnames), _fmt_cpus(cpunums))
 
-def _print_cstate_prop(pinfo):
+def _print_cstate_prop(prop, pinfo, cpuidle):
     """Print about C-state properties in 'pinfo'."""
 
     for key, kinfo in pinfo.items():
-        descr = CPUIdle.CSTATE_KEYS_DESCR[key]
-
         for val, cpus in kinfo.items():
             if key.endswith("_supported") and val:
                 # Supported properties will have some other key(s) in 'kinfo', which will be
                 # printed. So no need to print the "*_supported" key in case it is 'True'.
                 continue
 
-            _print_cstate_prop_msg(descr, "", val, cpus)
+            _print_cstate_prop_msg(cpuidle.props[prop]["keys"][key], "", val, cpus)
 
 def _build_pinfos(props, cpus, cpuidle):
     """Build the properties dictionary for proparties in the 'props' list."""
@@ -204,7 +202,7 @@ def cstates_config_command(args, proc):
             # Now handle the options one by one, in the same order as they go in the command line.
             for optname, optval in args.oargs.items():
                 if not optval:
-                    _print_cstate_prop(pinfos[optname])
+                    _print_cstate_prop(optname, pinfos[optname], cpuidle)
                 else:
                     _handle_cstate_config_opt(optname, optval, cpus, cpuidle)
 
