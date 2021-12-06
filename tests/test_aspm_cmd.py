@@ -16,8 +16,8 @@ def test_aspm_info():
     """Test 'pepc aspm info' command."""
     run_pepc("aspm info", exp_ret=0)
 
-def test_aspm_set():
-    """Test 'pepc aspm set' command."""
+def test_aspm_config():
+    """Test 'pepc aspm config' command."""
 
     good_options = [
         "",
@@ -28,6 +28,6 @@ def test_aspm_set():
         "--policy powersupersave"]
 
     for option in good_options:
-        run_pepc(f"aspm set {option}", exp_ret=0)
+        run_pepc(f"aspm config {option}", exp_ret=0)
 
-    run_pepc("aspm set --policy badpolicyname", exp_ret=-1)
+    run_pepc("aspm config --policy badpolicyname", exp_ret=-1)
