@@ -23,8 +23,6 @@ _LOG = logging.getLogger()
 MSR_POWER_CTL = 0x1FC
 C1E_ENABLE = 1
 CSTATE_PREWAKE_DISABLE = 30
-# Indicates whether dynamic switching is enabled in power perf tuning algorithm. Available on ICX.
-PWR_PERF_TUNING_ENABLE_DYN_SWITCHING = 33
 
 # Description of CPU features controlled by the the Power Control MSR.
 # Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
