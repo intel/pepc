@@ -103,9 +103,9 @@ _BCLK_100MHZ = {0x2A, # INTEL_FAM6_SANDYBRIDGE
 _BCLK_SLM = {0x37, # INTEL_FAM6_ATOM_SILVERMONT
              0x4D} # INTEL_FAM6_ATOM_SILVERMONT_D
 
-# This dictionary describes various CPU features this module controls.
+# This dictionary describes various CPU properties this module controls.
 # Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
-FEATURES = {
+PROPS = {
     "turbo" : {
         "name"  : "turbo",
         "scope" : "global",
@@ -384,9 +384,9 @@ class CPUFreq:
                    contains the base frequency value. However, if only some of the keys are needed,
                    their names can be specified in 'keys'. For example, in order to ask for base
                    frequency and nothing else, use 'keys=("base",)".
-          * fail_on_unsupported - If 'True', requesting information about unsupported features will
-                                  raise an exception. If set to 'False', unsupported features are
-                                  ignored.
+          * fail_on_unsupported - If 'True', requesting information about unsupported properties
+                                  will raise an exception. If set to 'False', unsupported propeties
+                                  are ignored.
         """
 
         if not keys:
@@ -936,38 +936,38 @@ class CPUFreq:
                 FSHelpers.write(path, epp, proc=self._proc)
 
     @staticmethod
-    def _validate_feature_name(feature):
-        """Raise an error if feature 'feature' is not supported."""
+    def _check_prop(prop):
+        """Raise an error if a property 'prop' is not supported."""
 
-        if feature not in FEATURES:
-            features_str = ", ".join(set(FEATURES))
-            raise Error(f"feature '{feature}' not supported, use one of the following: "
-                        f"{features_str}")
+        if prop not in PROPS:
+            props_str = ", ".join(set(PROPS))
+            raise Error(f"property '{prop}' not supported, use one of the following: "
+                        f"{props_str}")
 
-    def set_feature(self, feature, val, cpus="all"):
+    def set_prop(self, prop, val, cpus="all"):
         """
-        Set value 'val' for feature 'feature' for CPUs 'cpus'. This will call the corresponding
-        "set" method, e.g. 'set_feature("turbo", val)' is the same as 'set_turbo(val)'. The
+        Set value 'val' for property 'prop' for CPUs 'cpus'. This will call the corresponding
+        "set" method, e.g. 'set_prop("turbo", val)' is the same as 'set_turbo(val)'. The
         arguments are as follows.
-          * feature - name of the feature to set (see 'FEATURES' for the full features list).
-          * val - the value to set for the feature.
+          * prop - name of the property to set (see 'PROPS' for the full list).
+          * val - the value to set for the property.
           * cpus - same as in 'CPUIdle.get_cstates_info()'.
         """
 
-        self._validate_feature_name(feature)
+        self._check_prop(prop)
 
-        method = getattr(self, f"set_{feature}")
-        if feature == "turbo":
+        method = getattr(self, f"set_{prop}")
+        if prop == "turbo":
             method(val == "on")
         else:
             method(val, cpus=cpus)
 
     @staticmethod
-    def get_scope(feature):
-        """Get feature scope. The 'feature' argument is same as in 'set_feature()'."""
+    def get_scope(prop):
+        """Get scope of property 'prop'. The 'prop' argument is same as in 'set_prop()'."""
 
-        CPUFreq._validate_feature_name(feature)
-        return FEATURES[feature]["scope"]
+        CPUFreq._check_prop(prop)
+        return PROPS[prop]["scope"]
 
     def __init__(self, proc=None, cpuinfo=None):
         """
