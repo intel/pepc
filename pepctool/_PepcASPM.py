@@ -27,8 +27,8 @@ def aspm_info_command(_, proc):
         available_policies = ", ".join(aspm.get_policies())
         _LOG.info("Available policies: %s", available_policies)
 
-def aspm_set_command(args, proc):
-    """Implements the 'aspm set' command."""
+def aspm_config_command(args, proc):
+    """Implements the 'aspm config' command."""
 
     with ASPM.ASPM(proc=proc) as aspm:
         old_policy = aspm.get_policy()

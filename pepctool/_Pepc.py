@@ -346,11 +346,10 @@ def build_arguments_parser():
     subpars2.set_defaults(func=aspm_info_command)
 
     text = descr = """Change PCI ASPM configuration."""
-    subpars2 = subparsers2.add_parser("set", help=text, description=descr)
-    subpars2.set_defaults(func=aspm_set_command)
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr)
+    subpars2.set_defaults(func=aspm_config_command)
 
-    text = """Specify the PCI ASPM policy to be set, use "default" to set the policy to its default
-               value."""
+    text = """the PCI ASPM policy to set, use "default" to set the Linux default policy."""
     subpars2.add_argument("--policy", nargs="?", help=text)
 
     if argcomplete:
@@ -431,12 +430,12 @@ def aspm_info_command(args, proc):
 
     _PepcASPM.aspm_info_command(args, proc)
 
-def aspm_set_command(args, proc):
-    """Implements the 'aspm set' command."""
+def aspm_config_command(args, proc):
+    """Implements the 'aspm config' command."""
 
     from pepctool import _PepcASPM
 
-    _PepcASPM.aspm_set_command(args, proc)
+    _PepcASPM.aspm_config_command(args, proc)
 
 # pylint: enable=import-outside-toplevel
 
