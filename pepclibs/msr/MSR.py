@@ -73,7 +73,7 @@ class MSR:
             regsizes_str = ",".join([str(regsz) for regsz in regsizes])
             raise Error(f"invalid register size value '{regsize}', use one of: {regsizes_str}")
 
-        cpus = self._cpuinfo.get_cpu_list(cpus)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
 
         return (regsize, cpus)
 

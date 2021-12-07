@@ -231,8 +231,12 @@ class CPUInfo:
         """
         return self._get_level("package", "CPU", nums=packages)
 
-    def get_cpu_list(self, cpus):
-        """Validate CPUs in 'cpus'. Returns CPU numbers as list of integers."""
+    def normalize_cpus(self, cpus):
+        """
+        Validate CPU numbers 'cpus' and return a normalized list. The input numbers may be integers
+        or strings containing integer numbers. The output will be list of integers, duplicate
+        numbers will be removed.
+        """
 
         allcpus = self.get_cpus()
 
@@ -240,7 +244,7 @@ class CPUInfo:
             return allcpus
 
         allcpus = set(allcpus)
-        cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=True)
+        cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=False)
         for cpu in cpus:
             if cpu not in allcpus:
                 cpus_str = ", ".join([str(cpu) for cpu in sorted(allcpus)])

@@ -166,7 +166,7 @@ class CPUIdle:
         """
 
         cpuinfo = self._get_cpuinfo()
-        return cpuinfo.get_cpu_list(cpus)
+        return cpuinfo.normalize_cpus(cpus)
 
     def _toggle_cstate(self, cpu, index, enable):
         """Enable or disable the 'index' C-state for CPU 'cpu'."""

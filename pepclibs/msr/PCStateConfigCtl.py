@@ -215,7 +215,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         # Get package C-state integer code -> name dictionary.
         pcs_rmap = {code:name for name, code in _PKG_CST_LIMIT_MAP[model]["codes"].items()}
 
-        cpus = set(cpuinfo.get_cpu_list(cpus))
+        cpus = set(cpuinfo.normalize_cpus(cpus))
         pkg_to_cpus = {}
         for pkg in cpuinfo.get_packages():
             pkg_cpus = cpuinfo.packages_to_cpus(packages=[pkg])
@@ -240,7 +240,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         limit_val = self._get_pkg_cstate_limit_value(pcs_limit)
 
         cpuinfo = self._get_cpuinfo()
-        cpus = set(cpuinfo.get_cpu_list(cpus))
+        cpus = set(cpuinfo.normalize_cpus(cpus))
 
         # Package C-state limit has package scope, but the MSR is per-core.
         pkg_to_cpus = []

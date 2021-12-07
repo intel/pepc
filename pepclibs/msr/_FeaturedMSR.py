@@ -79,7 +79,7 @@ class FeaturedMSR:
             else:
                 msg = f"set feature '{feature}' value to {val}"
 
-            cpus_range = Human.rangify(self._cpuinfo.get_cpu_list(cpus))
+            cpus_range = Human.rangify(self._cpuinfo.normalize_cpus(cpus))
             _LOG.debug("%s on CPU(s) %s%s", msg, cpus_range, self._proc.hostmsg)
 
         self._check_feature_support(feature)

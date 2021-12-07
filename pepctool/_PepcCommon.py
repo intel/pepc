@@ -46,14 +46,14 @@ def get_cpus(args, proc, default_cpus="all", cpuinfo=None):
 
     try:
         if args.cpus:
-            cpus += cpuinfo.get_cpu_list(cpus=args.cpus)
+            cpus += cpuinfo.normalize_cpus(cpus=args.cpus)
         if args.cores:
             cpus += cpuinfo.cores_to_cpus(cores=args.cores)
         if args.packages:
             cpus += cpuinfo.packages_to_cpus(packages=args.packages)
 
         if not cpus and default_cpus is not None:
-            cpus = cpuinfo.get_cpu_list(default_cpus)
+            cpus = cpuinfo.normalize_cpus(default_cpus)
 
         cpus = Trivial.list_dedup(cpus)
     finally:

@@ -394,7 +394,7 @@ class CPUFreq:
             keys = CPUFREQ_KEYS_DESCR
         keys = set(keys)
 
-        cpus = self._get_cpuinfo().get_cpu_list(cpus)
+        cpus = self._get_cpuinfo().normalize_cpus(cpus)
         return self._get_cpufreq_info(cpus, keys, fail_on_unsupported)
 
     def _check_uncore_freq_supported(self):
@@ -855,7 +855,7 @@ class CPUFreq:
         """
 
         self._check_epb_supported()
-        cpus = self._get_cpuinfo().get_cpu_list(cpus)
+        cpus = self._get_cpuinfo().normalize_cpus(cpus)
 
         return self._get_epb(cpus)
 
@@ -863,9 +863,9 @@ class CPUFreq:
         """Return EPB value for CPU number 'cpu'."""
 
         self._check_epb_supported()
-        cpu = self._get_cpuinfo().get_cpu_list(cpu)
+        cpus = self._get_cpuinfo().normalize_cpus(cpu)
 
-        for _, epb in self.get_epb(cpus=cpu):
+        for _, epb in self.get_epb(cpus=cpus):
             return epb
 
     def get_epp(self, cpus="all"):
@@ -875,7 +875,7 @@ class CPUFreq:
         """
 
         self._check_epp_supported()
-        cpus = self._get_cpuinfo().get_cpu_list(cpus)
+        cpus = self._get_cpuinfo().normalize_cpus(cpus)
 
         for cpu, epp in self._get_msr().read_iter(MSR.MSR_HWP_REQUEST, cpus=cpus):
             yield (cpu, (epp >> 24) & 0xFF)
@@ -884,9 +884,9 @@ class CPUFreq:
         """Return EPP value for CPU number 'cpu'."""
 
         self._check_epp_supported()
-        cpu = self._get_cpuinfo().get_cpu_list(cpu)
+        cpus = self._get_cpuinfo().normalize_cpus(cpu)
 
-        for _, epp in self.get_epp(cpus=cpu):
+        for _, epp in self.get_epp(cpus=cpus):
             return epp
 
     def set_epb(self, epb, cpus="all"):
@@ -897,7 +897,7 @@ class CPUFreq:
         """
 
         self._check_epb_supported()
-        cpus = self._get_cpuinfo().get_cpu_list(cpus)
+        cpus = self._get_cpuinfo().normalize_cpus(cpus)
         if Trivial.is_int(epb):
             self._validate_int_range(0, 15, epb, what="EPB")
         else:
@@ -918,7 +918,7 @@ class CPUFreq:
         """
 
         self._check_epp_supported()
-        cpus = self._get_cpuinfo().get_cpu_list(cpus)
+        cpus = self._get_cpuinfo().normalize_cpus(cpus)
 
         if Trivial.is_int(epp):
             self._validate_int_range(0, 255, epp, what="EPP")
