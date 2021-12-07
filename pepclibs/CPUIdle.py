@@ -394,14 +394,14 @@ class CPUIdle:
         if keys.intersection(("cstate_prewake_supported", "cstate_prewake", "c1e_autopromote")):
             powerctl = self._get_powerctl()
             if keys.intersection(("cstate_prewake_supported", "cstate_prewake")):
-                cstate_prewake_supported = powerctl.feature_supported("cstate_prewake")
+                cstate_prewake_supported = powerctl.features["cstate_prewake"]["supported"]
 
         pkg_cstate_limit_supported = False
 
         if keys.intersection(("pkg_cstate_limit_supported", "pkg_cstate_limit", "pkg_cstate_limits",
                               "pkg_cstate_limit_locked", "c1_demotion", "c1_undemotion")):
             pcstatectl = self._get_pcstatectl()
-            pkg_cstate_limit_supported = pcstatectl.feature_supported("pkg_cstate_limit")
+            pkg_cstate_limit_supported = pcstatectl.features["pkg_cstate_limit"]["supported"]
             if "pkg_cstate_limits" in keys and pkg_cstate_limit_supported:
                 pkg_cstate_limits = pcstatectl.get_available_pkg_cstate_limits()
 

@@ -13,7 +13,7 @@ model-specific register found on many Intel platforms.
 """
 
 import logging
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, _FeaturedMSR
 from pepclibs.CPUInfo import CPU_DESCR as _CPU_DESCR

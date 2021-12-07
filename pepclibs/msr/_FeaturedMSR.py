@@ -91,19 +91,6 @@ class FeaturedMSR:
             set_method = getattr(self, f"_set_{feature}")
             set_method(val, cpus=cpus)
 
-    def feature_supported(self, feature):
-        """
-        Returns 'True' if feature 'feature' is supported, returns 'False' otherwise. The 'feature'
-        argument is one of the keys in the 'FEATURES' dictionary.
-        """
-
-        try:
-            self._check_feature_support(feature)
-            return True
-        except ErrorNotSupported as err:
-            _LOG.debug(err)
-            return False
-
     def feature_enabled(self, feature, cpu):
         """
         Returns 'True' if the feature 'feature' is enabled for CPU 'cpu', otherwise returns 'False'.
