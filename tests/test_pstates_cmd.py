@@ -58,7 +58,11 @@ def test_pstates_info():
         run_pepc(f"pstates info --uncore {scope}", exp_ret=-1)
 
 def test_pstates_set():
-    """Test 'pepc pstates set' command."""
+    """Test 'pepc pstates config' command."""
+
+
+def test_pstates_config():
+    """Test 'pepc pstates config' command."""
 
     # Test frequency settings supported by test configuration.
     good_options = [
@@ -86,7 +90,7 @@ def test_pstates_set():
         "--max-uncore-freq min --max-uncore-freq max"]
 
     for option in good_options:
-        run_pepc(f"pstates set {option}", exp_ret=0)
+        run_pepc(f"pstates config {option}", exp_ret=0)
 
     good_options = [
         "--min-freq",
@@ -99,10 +103,10 @@ def test_pstates_set():
         for scope in _GOOD_SCOPE_OPTIONS:
             if "uncore" in option and "package" not in scope:
                 continue
-            run_pepc(f"pstates set {option} {scope}", exp_ret=0)
+            run_pepc(f"pstates config {option} {scope}", exp_ret=0)
 
         for scope in _BAD_SCOPE_OPTIONS:
-            run_pepc(f"pstates set {option} {scope}", exp_ret=-1)
+            run_pepc(f"pstates config {option} {scope}", exp_ret=-1)
 
     # Test bad frequency settings.
     bad_options = [
@@ -112,11 +116,9 @@ def test_pstates_set():
         "--min-freq max --max-freq min",
         "--min-uncore-freq max --max-uncore-freq min"]
 
+    # Test other config options.
     for option in bad_options:
-        run_pepc(f"pstates set {option}", exp_ret=-1)
-
-def test_pstates_config():
-    """Test 'pepc pstates config' command."""
+        run_pepc(f"pstates config {option}", exp_ret=-1)
 
     good_options = [
         "--epb",
