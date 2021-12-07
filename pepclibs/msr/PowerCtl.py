@@ -11,11 +11,12 @@ This module provides API for managing settings in MSR 0x1FC (MSR_POWER_CTL). Thi
 model-specific register found on many Intel platforms.
 """
 
+import copy
 import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR
 from pepclibs.helperlibs import Procs, Human
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = logging.getLogger()
 
@@ -25,7 +26,9 @@ C1E_ENABLE = 1
 CSTATE_PREWAKE_DISABLE = 30
 
 # Description of CPU features controlled by the the Power Control MSR.
-# Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
+#
+# Note 1: consider using the 'PowerCtl.features' dicionary instead of this one.
+# Note 2, the "scope" names have to be the same as "level" names in 'CPUInfo'.
 FEATURES = {
     "cstate_prewake" : {
         "name" : "C-state prewake",
@@ -62,17 +65,22 @@ class PowerCtl:
         feature is not supported.
         """
 
-        model = self._lscpu_info["model"]
-        feature = FEATURES[feature]
+        if feature not in self.features:
+            features_str = ", ".join(set(self.features))
+            raise Error(f"unknown feature '{feature}', known features are: {features_str}")
 
-        if "cpumodels" in feature and model not in feature["cpumodels"]:
-            fmt = "%s (CPU model %#x)"
-            cpus_str = "\n* ".join([fmt % (CPUInfo.CPU_DESCR[model], model) for model in \
-                                    feature["cpumodels"]])
-            raise ErrorNotSupported(f"The '{feature['name']}' feature is not supported"
-                                    f"{self._proc.hostmsg} - CPU '{self._lscpu_info['vendor']}, "
-                                    f"(CPU model {hex(model)})' is not supported.\nThe supported "
-                                    f"CPU models are:\n* {cpus_str}")
+        finfo = self.features[feature]
+        if finfo["supported"]:
+            return
+
+        model = self._lscpu_info["model"]
+        fmt = "%s (CPU model %#x)"
+        cpus_str = "\n* ".join([fmt % (CPUInfo.CPU_DESCR[model], model) for model in \
+                                finfo["cpumodels"]])
+        msg = f"The '{finfo['name']}' feature is not supported{self._proc.hostmsg} - CPU " \
+              f"'{self._lscpu_info['vendor']}, (CPU model {hex(model)})' is not supported.\n" \
+              f"The currently supported CPU models are:\n* {cpus_str}"
+        raise ErrorNotSupported(msg)
 
     def feature_supported(self, feature):
         """
@@ -95,8 +103,8 @@ class PowerCtl:
 
         self._check_feature_support(feature)
         regval = self._msr.read(MSR_POWER_CTL, cpu=cpu)
-        bitval = int(bool(MSR.bit_mask(FEATURES[feature]["bitnr"]) & regval))
-        return FEATURES[feature]["enabled"] == bitval
+        bitval = int(bool(MSR.bit_mask(self.features[feature]["bitnr"]) & regval))
+        return self.features[feature]["enabled"] == bitval
 
     def set_feature(self, feature, enable: bool, cpus="all"):
         """
@@ -113,8 +121,24 @@ class PowerCtl:
                        enable_str, feature, cpus_range, self._proc.hostmsg)
 
         self._check_feature_support(feature)
-        enable = FEATURES[feature]["enabled"] == enable
-        self._msr.toggle_bit(MSR_POWER_CTL, FEATURES[feature]["bitnr"], enable, cpus=cpus)
+        enable = self.features[feature]["enabled"] == enable
+        self._msr.toggle_bit(MSR_POWER_CTL, self.features[feature]["bitnr"], enable, cpus=cpus)
+
+    def _create_features_dict(self):
+        """Create an extended version of the 'FEATURES' dictionary."""
+
+        features = copy.deepcopy(FEATURES)
+
+        # Add the "supported" flag.
+        for finfo in features.values():
+            if not "cpumodels" in finfo:
+                # No CPU models list, which means that "all models".
+                finfo["supported"] = True
+            else:
+                cpu_model = self._lscpu_info["model"]
+                finfo["supported"] = cpu_model in finfo["cpumodels"]
+
+        return features
 
     def __init__(self, proc=None, cpuinfo=None, lscpu_info=None):
         """
@@ -131,6 +155,7 @@ class PowerCtl:
         self._lscpu_info = lscpu_info
         self._cpuinfo = cpuinfo
 
+        self.featres = None
         self._msr = None
 
         if not self._cpuinfo:
@@ -145,6 +170,7 @@ class PowerCtl:
                                     f"is not available{self._proc.hostmsg}. MSR_POWER_CTL is "
                                     f"available only on Intel platforms")
 
+        self.features = self._create_features_dict()
         self._msr = MSR.MSR(proc=self._proc, cpuinfo=self._cpuinfo)
 
     def close(self):
