@@ -11,6 +11,7 @@ This module provides API for managing settings in MSR 0xE2 (MSR_PKG_CST_CONFIG_C
 model-specific register found on many Intel platforms.
 """
 
+import copy
 import logging
 from pepclibs.helperlibs import Procs, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -77,7 +78,9 @@ _PKG_CST_LIMIT_MAP = {CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _ICX_PKG_CST_LIMITS,
                       CPUInfo.INTEL_FAM6_TREMONT_D:        _SNR_PKG_CST_LIMITS}
 
 # Map of features available on various CPU models.
-# Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
+#
+# Note 1: consider using the 'PCStateConfigCtl.features' dicionary instead of this one.
+# Note 2, the "scope" names have to be the same as "level" names in 'CPUInfo'.
 FEATURES = {
     "pkg_cstate_limit" : {
         "name" : "Package C-state limit",
@@ -124,22 +127,22 @@ class PCStateConfigCtl:
 
     def _check_feature_support(self, feature):
 
-        if feature not in FEATURES:
-            features_str = ", ".join(set(FEATURES))
-            raise Error(f"feature '{feature}' not supported, use one of the following: "
-                        f"{features_str}")
+        if feature not in self.features:
+            features_str = ", ".join(set(self.features))
+            raise Error(f"unknown feature '{feature}', known features are: {features_str}")
+
+        finfo = self.features[feature]
+        if finfo["supported"]:
+            return
 
         model = self._lscpu_info["model"]
-        feature = FEATURES[feature]
-
-        if "cpumodels" in feature and model not in feature["cpumodels"]:
-            fmt = "%s (CPU model %#x)"
-            cpus_str = "\n* ".join([fmt % (CPUInfo.CPU_DESCR[model], model) for model in \
-                                    feature["cpumodels"]])
-            msg = f"The '{feature['name']}' feature is not supported{self._proc.hostmsg} - CPU " \
-                  f"'{self._lscpu_info['vendor']}, (CPU model {hex(model)})' is not supported.\n" \
-                  f"The currently supported CPU models are:\n* {cpus_str}"
-            raise ErrorNotSupported(msg)
+        fmt = "%s (CPU model %#x)"
+        cpus_str = "\n* ".join([fmt % (CPUInfo.CPU_DESCR[model], model) for model in \
+                                finfo["cpumodels"]])
+        msg = f"The '{finfo['name']}' feature is not supported{self._proc.hostmsg} - CPU " \
+              f"'{self._lscpu_info['vendor']}, (CPU model {hex(model)})' is not supported.\n" \
+              f"The currently supported CPU models are:\n* {cpus_str}"
+        raise ErrorNotSupported(msg)
 
     def _get_pkg_cstate_limit_value(self, pcs_limit):
         """
@@ -298,12 +301,12 @@ class PCStateConfigCtl:
         """
 
         self._check_feature_support(feature)
-        if "enabled" not in FEATURES[feature]:
+        if "enabled" not in self.features[feature]:
             raise Error("feature '{feature}' doesn't support boolean enabled/disabled status")
 
         regval = self._msr.read(MSR_PKG_CST_CONFIG_CONTROL, cpu=cpu)
-        bitval = int(bool(MSR.bit_mask(FEATURES[feature]["bitnr"]) & regval))
-        return FEATURES[feature]["enabled"] == bitval
+        bitval = int(bool(MSR.bit_mask(self.features[feature]["bitnr"]) & regval))
+        return self.features[feature]["enabled"] == bitval
 
     def _set_feature_bool(self, feature, val, cpus):
         """
@@ -311,11 +314,11 @@ class PCStateConfigCtl:
         string "on" or "off".
         """
 
-        feature = FEATURES[feature]
+        finfo = self.features[feature]
         if isinstance(val, str):
             val = val == "on"
-        enable = feature["enabled"] == val
-        self._msr.toggle_bit(MSR_PKG_CST_CONFIG_CONTROL, feature["bitnr"], enable, cpus=cpus)
+        enable = finfo["enabled"] == val
+        self._msr.toggle_bit(MSR_PKG_CST_CONFIG_CONTROL, finfo["bitnr"], enable, cpus=cpus)
 
     def set_feature(self, feature, val, cpus="all"):
         """
@@ -326,7 +329,7 @@ class PCStateConfigCtl:
         """
 
         if _LOG.getEffectiveLevel() == logging.DEBUG:
-            if "enabled" in FEATURES[feature]:
+            if "enabled" in self.features[feature]:
                 enable_str = "enable" if val else "disable"
                 msg = f"{enable_str} feature '{feature}'"
             else:
@@ -336,11 +339,27 @@ class PCStateConfigCtl:
             _LOG.debug("%s on CPU(s) %s%s", msg, cpus_range, self._proc.hostmsg)
 
         self._check_feature_support(feature)
-        if "enabled" in FEATURES[feature]:
+        if "enabled" in self.features[feature]:
             self._set_feature_bool(feature, val, cpus)
         else:
             set_method = getattr(self, f"_set_{feature}")
             set_method(val, cpus=cpus)
+
+    def _create_features_dict(self):
+        """Create an extended version of the 'FEATURES' dictionary."""
+
+        features = copy.deepcopy(FEATURES)
+
+        # Add the "supported" flag.
+        for finfo in features.values():
+            if not "cpumodels" in finfo:
+                # No CPU models list, which means that "all models".
+                finfo["supported"] = True
+            else:
+                cpu_model = self._lscpu_info["model"]
+                finfo["supported"] = cpu_model in finfo["cpumodels"]
+
+        return features
 
     def __init__(self, proc=None, cpuinfo=None, lscpu_info=None):
         """
@@ -358,6 +377,8 @@ class PCStateConfigCtl:
         self._lscpu_info = lscpu_info
         self._msr = MSR.MSR(proc=self._proc)
 
+        self.featres = None
+
         if self._lscpu_info is None:
             self._lscpu_info = CPUInfo.get_lscpu_info(proc=self._proc)
 
@@ -371,6 +392,8 @@ class PCStateConfigCtl:
         if self._lscpu_info["model"] not in CPUInfo.CPU_DESCR:
             raise ErrorNotSupported(f"unsupported CPU model '{self._lscpu_info['vendor']}'"
                                     f"{self._proc.hostmsg}")
+
+        self.features = self._create_features_dict()
 
     def close(self):
         """Uninitialize the class object."""
