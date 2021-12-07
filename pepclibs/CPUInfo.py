@@ -253,8 +253,8 @@ class CPUInfo:
 
         return cpus
 
-    def get_package_list(self, pkgs):
-        """Validate packages in 'pkgs'. Returns packages as list of integers."""
+    def normalize_packages(self, pkgs):
+        """Same as 'normalize_cpus()', but for package numbers."""
 
         allpkgs = self.get_packages()
 
@@ -262,7 +262,7 @@ class CPUInfo:
             return allpkgs
 
         allpkgs = set(allpkgs)
-        pkgs = ArgParse.parse_int_list(pkgs, ints=True, dedup=True, sort=True)
+        pkgs = ArgParse.parse_int_list(pkgs, ints=True, dedup=True)
         for pkg in pkgs:
             if pkg not in allpkgs:
                 pkgs_str = ", ".join([str(pkg) for pkg in sorted(allpkgs)])

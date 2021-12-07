@@ -457,7 +457,7 @@ class CPUFreq:
         """
 
         self._check_uncore_freq_supported()
-        pkgs = set(self._get_cpuinfo().get_package_list(pkgs))
+        pkgs = set(self._get_cpuinfo().normalize_packages(pkgs))
 
         if not keys:
             keys = UNCORE_KEYS_DESCR

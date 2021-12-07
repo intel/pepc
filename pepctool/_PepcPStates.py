@@ -189,7 +189,7 @@ def _handle_freq_opts(args, proc, cpuinfo, cpufreq):
         opts["uncore"]["nums"] = args.packages
         opts["uncore"]["method"] = getattr(cpufreq, "set_uncore_freq")
         cpus = []
-        for pkg in cpuinfo.get_package_list(args.packages):
+        for pkg in cpuinfo.normalize_packages(args.packages):
             cpus.append(cpuinfo.packages_to_cpus(packages=pkg)[0])
         opts["uncore"]["info_nums"] = cpus
         opts["uncore"]["info_keys"] = ["pkg"]
