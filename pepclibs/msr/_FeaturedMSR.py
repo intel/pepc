@@ -91,23 +91,28 @@ class FeaturedMSR:
             set_method = getattr(self, f"_set_{feature}")
             set_method(val, cpus=cpus)
 
-    def feature_enabled(self, feature, cpu):
+    def get_feature(self, feature, cpu):
         """
-        Returns 'True' if the feature 'feature' is enabled for CPU 'cpu', otherwise returns 'False'.
-        The arguments are as follows.
-          * feature - name of the feature check.
-          * cpus - CPU number to set the feature for.
+        Returns value of feature 'feature for CPU 'cpu'. The arguments are as follows.
+          * feature - name of the feature to get.
+          * cpus - CPU number to get the feature for.
 
-        Raises an error if 'feature' is not a boolean, on/off type of feature.
+        In case of a boolean "on/off" type of feature, return 'True' if the feature is enabled, and
+        'False' otherwise.
         """
 
         self._check_feature_support(feature)
-        if "enabled" not in self.features[feature]:
-            raise Error("feature '{feature}' doesn't support boolean enabled/disabled status")
 
-        regval = self._msr.read(self.msr_addr, cpu=cpu)
-        bitval = int(bool(MSR.bit_mask(self.features[feature]["bitnr"]) & regval))
-        return self.features[feature]["enabled"] == bitval
+        if "enabled" in self.features[feature]:
+            regval = self._msr.read(self.msr_addr, cpu=cpu)
+            bitval = int(bool(MSR.bit_mask(self.features[feature]["bitnr"]) & regval))
+            retval = self.features[feature]["enabled"] == bitval
+        else:
+            # The sub-class is supposed to implement the special method.
+            get_method = getattr(self, f"_get_{feature}")
+            retval = get_method(feature, cpu)
+
+        return retval
 
     def _create_features_dict(self):
         """

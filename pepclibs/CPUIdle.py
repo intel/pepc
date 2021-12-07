@@ -420,9 +420,9 @@ class CPUIdle:
                 info["cstate_prewake_supported"] = cstate_prewake_supported
             if cstate_prewake_supported:
                 if "cstate_prewake" in keys:
-                    info["cstate_prewake"] = powerctl.feature_enabled("cstate_prewake", cpu)
+                    info["cstate_prewake"] = powerctl.get_feature("cstate_prewake", cpu)
             if "c1e_autopromote" in keys:
-                info["c1e_autopromote"] = powerctl.feature_enabled("c1e_autopromote", cpu)
+                info["c1e_autopromote"] = powerctl.get_feature("c1e_autopromote", cpu)
             if "pkg_cstate_limit_supported" in keys:
                 info["pkg_cstate_limit_supported"] = pkg_cstate_limit_supported
             if pkg_cstate_limit_supported:
@@ -433,9 +433,9 @@ class CPUIdle:
                 if "pkg_cstate_limits" in keys:
                     info["pkg_cstate_limits"] = pkg_cstate_limits
             if "c1_demotion" in keys:
-                info["c1_demotion"] = pcstatectl.feature_enabled("c1_demotion", cpu)
+                info["c1_demotion"] = pcstatectl.get_feature("c1_demotion", cpu)
             if "c1_undemotion" in keys:
-                info["c1_undemotion"] = pcstatectl.feature_enabled("c1_undemotion", cpu)
+                info["c1_undemotion"] = pcstatectl.get_feature("c1_undemotion", cpu)
 
             yield info
 
