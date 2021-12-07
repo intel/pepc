@@ -11,12 +11,10 @@ This module provides API for managing settings in MSR 0xE2 (MSR_PKG_CST_CONFIG_C
 model-specific register found on many Intel platforms.
 """
 
-import copy
 import logging
-from pepclibs.helperlibs import Procs, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
-from pepclibs.msr import MSR
+from pepclibs.msr import MSR, _FeaturedMSR
 from pepclibs.CPUInfo import CPU_DESCR as _CPU_DESCR
 
 _LOG = logging.getLogger()
@@ -112,7 +110,7 @@ FEATURES = {
     },
 }
 
-class PCStateConfigCtl:
+class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     """
     This class provides API for managing settings in MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL). This is
     a model-specific register found on many Intel platforms.
@@ -124,25 +122,6 @@ class PCStateConfigCtl:
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
         return self._cpuinfo
-
-    def _check_feature_support(self, feature):
-
-        if feature not in self.features:
-            features_str = ", ".join(set(self.features))
-            raise Error(f"unknown feature '{feature}', known features are: {features_str}")
-
-        finfo = self.features[feature]
-        if finfo["supported"]:
-            return
-
-        model = self._lscpu_info["model"]
-        fmt = "%s (CPU model %#x)"
-        cpus_str = "\n* ".join([fmt % (CPUInfo.CPU_DESCR[model], model) for model in \
-                                finfo["cpumodels"]])
-        msg = f"The '{finfo['name']}' feature is not supported{self._proc.hostmsg} - CPU " \
-              f"'{self._lscpu_info['vendor']}, (CPU model {hex(model)})' is not supported.\n" \
-              f"The currently supported CPU models are:\n* {cpus_str}"
-        raise ErrorNotSupported(msg)
 
     def _get_pkg_cstate_limit_value(self, pcs_limit):
         """
@@ -203,19 +182,6 @@ class PCStateConfigCtl:
                 _LOG.debug(msg)
 
         return (pcs_code, locked)
-
-    def feature_supported(self, feature):
-        """
-        Returns 'True' if feature 'feature' is supported, returns 'False' otherwise. The 'feature'
-        argument is one of the keys in the 'FEATURES' dictionary.
-        """
-
-        try:
-            self._check_feature_support(feature)
-            return True
-        except ErrorNotSupported as err:
-            _LOG.debug(err)
-            return False
 
     def get_available_pkg_cstate_limits(self):
         """
@@ -293,73 +259,12 @@ class PCStateConfigCtl:
             regval = (regval & ~0x07) | limit_val
             self._msr.write(MSR_PKG_CST_CONFIG_CONTROL, regval, cpus=cpu)
 
-    def feature_enabled(self, feature, cpu):
-        """
-        Returns 'True' if the feature 'feature' is enabled for CPU 'cpu', otherwise returns 'False'.
-        The 'feature' argument is one of the keys in 'FEATURES' dictionary. Raises an error if the
-        feature cannot be switched simply on or off.
-        """
+    def _set_attributes(self):
+        """Set the attributes the superclass requires."""
 
-        self._check_feature_support(feature)
-        if "enabled" not in self.features[feature]:
-            raise Error("feature '{feature}' doesn't support boolean enabled/disabled status")
-
-        regval = self._msr.read(MSR_PKG_CST_CONFIG_CONTROL, cpu=cpu)
-        bitval = int(bool(MSR.bit_mask(self.features[feature]["bitnr"]) & regval))
-        return self.features[feature]["enabled"] == bitval
-
-    def _set_feature_bool(self, feature, val, cpus):
-        """
-        Enable or disable feature 'feature' for CPUs 'cpus'. Value 'val' can be boolean or
-        string "on" or "off".
-        """
-
-        finfo = self.features[feature]
-        if isinstance(val, str):
-            val = val == "on"
-        enable = finfo["enabled"] == val
-        self._msr.toggle_bit(MSR_PKG_CST_CONFIG_CONTROL, finfo["bitnr"], enable, cpus=cpus)
-
-    def set_feature(self, feature, val, cpus="all"):
-        """
-        Set feature 'feature' value to 'val' for CPUs 'cpus'. The 'feature' argument is one of the
-        keys in 'FEATURES' dictionary. The 'cpus' argument is the same as the 'cpus' argument of the
-        'CPUIdle.get_cstates_info()' function - please, refer to the 'CPUIdle' module for the exact
-        format description.
-        """
-
-        if _LOG.getEffectiveLevel() == logging.DEBUG:
-            if "enabled" in self.features[feature]:
-                enable_str = "enable" if val else "disable"
-                msg = f"{enable_str} feature '{feature}'"
-            else:
-                msg = f"set feature '{feature}' value to {val}"
-
-            cpus_range = Human.rangify(self._cpuinfo.get_cpu_list(cpus))
-            _LOG.debug("%s on CPU(s) %s%s", msg, cpus_range, self._proc.hostmsg)
-
-        self._check_feature_support(feature)
-        if "enabled" in self.features[feature]:
-            self._set_feature_bool(feature, val, cpus)
-        else:
-            set_method = getattr(self, f"_set_{feature}")
-            set_method(val, cpus=cpus)
-
-    def _create_features_dict(self):
-        """Create an extended version of the 'FEATURES' dictionary."""
-
-        features = copy.deepcopy(FEATURES)
-
-        # Add the "supported" flag.
-        for finfo in features.values():
-            if not "cpumodels" in finfo:
-                # No CPU models list, which means that "all models".
-                finfo["supported"] = True
-            else:
-                cpu_model = self._lscpu_info["model"]
-                finfo["supported"] = cpu_model in finfo["cpumodels"]
-
-        return features
+        self.features = FEATURES
+        self.msr_addr = MSR_PKG_CST_CONFIG_CONTROL
+        self.msr_name = "MSR_PKG_CST_CONFIG_CONTROL"
 
     def __init__(self, proc=None, cpuinfo=None, lscpu_info=None):
         """
@@ -369,45 +274,4 @@ class PCStateConfigCtl:
           * lscpu_info - CPU information generated by 'CPUInfo.get_lscpu_info()'.
         """
 
-        if not proc:
-            proc = Procs.Proc()
-
-        self._proc = proc
-        self._cpuinfo = cpuinfo
-        self._lscpu_info = lscpu_info
-        self._msr = MSR.MSR(proc=self._proc)
-
-        self.featres = None
-
-        if self._lscpu_info is None:
-            self._lscpu_info = CPUInfo.get_lscpu_info(proc=self._proc)
-
-        if self._lscpu_info["vendor"] != "GenuineIntel":
-            msg = f"unsupported CPU model '{self._lscpu_info['vendor']}', model-specific " \
-                  f"register {hex(MSR_PKG_CST_CONFIG_CONTROL)} (MSR_PKG_CST_CONFIG_CONTROL) is " \
-                  f"not available{self._proc.hostmsg}. MSR_PKG_CST_CONFIG_CONTROL is available " \
-                  f"only on Intel platforms."
-            raise ErrorNotSupported(msg)
-
-        if self._lscpu_info["model"] not in CPUInfo.CPU_DESCR:
-            raise ErrorNotSupported(f"unsupported CPU model '{self._lscpu_info['vendor']}'"
-                                    f"{self._proc.hostmsg}")
-
-        self.features = self._create_features_dict()
-
-    def close(self):
-        """Uninitialize the class object."""
-
-        if getattr(self, "_proc", None):
-            self._proc = None
-        if getattr(self, "_msr", None):
-            self._msr.close()
-            self._msr = None
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()
+        super().__init__(proc=proc, cpuinfo=cpuinfo, lscpu_info=lscpu_info)
