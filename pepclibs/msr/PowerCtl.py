@@ -4,7 +4,8 @@
 # Copyright (C) 2020-2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Antti Laakso <antti.laakso@linux.intel.com>
+# Authors: Antti Laakso <antti.laakso@linux.intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
 This module provides API for managing settings in MSR 0x1FC (MSR_POWER_CTL). This is a

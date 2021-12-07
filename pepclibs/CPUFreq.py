@@ -4,7 +4,8 @@
 # Copyright (C) 2020-2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Antti Laakso <antti.laakso@linux.intel.com>
+# Authors: Antti Laakso <antti.laakso@linux.intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 #
 # Parts of the code was contributed by Len Brown <len.brown@intel.com>.
 
