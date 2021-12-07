@@ -66,10 +66,10 @@ class FeaturedMSR:
 
     def set_feature(self, feature, val, cpus="all"):
         """
-        Set feature 'feature' value to 'val' for CPUs 'cpus'. The 'feature' argument is one of the
-        keys in 'self.features' dictionary. The 'cpus' argument is the same as the 'cpus' argument
-        of the 'CPUIdle.get_cstates_info()' function - please, refer to the 'CPUIdle' module for the
-        exact format description.
+        Set feature 'feature' value to 'val' for CPUs 'cpus'. The arguments are as follows.
+          * feature - name of the feature to set.
+          * val - value to set the feature to.
+          * cpus - the CPUs to set the feature for (same as in 'CPUIdle.get_cstates_info()').
         """
 
         if _LOG.getEffectiveLevel() == logging.DEBUG:
@@ -94,8 +94,11 @@ class FeaturedMSR:
     def feature_enabled(self, feature, cpu):
         """
         Returns 'True' if the feature 'feature' is enabled for CPU 'cpu', otherwise returns 'False'.
-        The 'feature' argument is one of the keys in 'self.features' dictionary. Raises an error if
-        the feature cannot be switched simply on or off.
+        The arguments are as follows.
+          * feature - name of the feature check.
+          * cpus - CPU number to set the feature for.
+
+        Raises an error if 'feature' is not a boolean, on/off type of feature.
         """
 
         self._check_feature_support(feature)
