@@ -253,6 +253,12 @@ class CPUInfo:
 
         return cpus
 
+    def normalize_cpu(self, cpu):
+        """Same as 'normalize_cpus()', but for a single CPU number."""
+
+        for cpus in self.normalize_cpus([cpu]):
+            return cpus[0]
+
     def normalize_packages(self, pkgs):
         """Same as 'normalize_cpus()', but for package numbers."""
 
@@ -270,6 +276,12 @@ class CPUInfo:
                             f"packages are: {pkgs_str}")
 
         return pkgs
+
+    def normalize_package(self, package):
+        """Same as 'normalize_packages()', but for a single package number."""
+
+        for packages in self.normalize_packages([package]):
+            return packages[0]
 
     def cpu_to_package(self, cpu):
         """Returns integer package number for CPU number 'cpu'."""
