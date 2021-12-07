@@ -133,7 +133,7 @@ class FeaturedMSR:
 
         return features
 
-    def _set_attributes(self):
+    def _set_baseclass_attributes(self):
         """
         This method must be provided by the sub-class and it must initialized the following
         attributes:
@@ -157,7 +157,7 @@ class FeaturedMSR:
         self._cpuinfo = cpuinfo
         self._lscpu_info = lscpu_info
 
-        self._set_attributes()
+        self._set_baseclass_attributes()
 
         self.features = None
         self.msr_addr = None

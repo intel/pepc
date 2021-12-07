@@ -260,7 +260,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             regval = (regval & ~0x07) | limit_val
             self._msr.write(MSR_PKG_CST_CONFIG_CONTROL, regval, cpus=cpu)
 
-    def _set_attributes(self):
+    def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES

@@ -57,7 +57,7 @@ class PowerCtl(_FeaturedMSR.FeaturedMSR):
     model-specific register found on many Intel platforms.
     """
 
-    def _set_attributes(self):
+    def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
