@@ -110,7 +110,7 @@ class FeaturedMSR:
         else:
             # The sub-class is supposed to implement the special method.
             get_method = getattr(self, f"_get_{feature}")
-            retval = get_method(feature, cpu)
+            retval = get_method(cpu)
 
         return retval
 
