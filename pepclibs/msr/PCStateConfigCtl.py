@@ -117,6 +117,58 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     a model-specific register found on many Intel platforms.
     """
 
+    def _get_pkg_cstate_limit(self, cpu):
+        """
+        Get package C-state limit for CPU 'cpus'. Returns a dictionary with the following keys.
+          * CPU - the CPU number the limit was read at.
+          * limit - the package C-state limit name (small letters, e.g., pc0).
+          * locked - a boolean, 'True' if the 'MSR_PKG_CST_CONFIG_CONTROL' register has the
+            'CFG_LOCK' bit set, so it is impossible to change the package C-state limit, and 'False'
+            otherwise.
+          * limits: list of possible package C-state limits.
+          * aliases: some package C-state may have multiple names, which means the same limit. This
+            module uses one name as the primary name, and it is provided in the 'limits' list. The
+            other names are considered to be aliases, and they are provided in the 'aliases'.
+        """
+
+        self._check_feature_support("pkg_cstate_limit")
+
+        model = self._lscpu_info["model"]
+        if not self._pcs_rmap:
+            # Build the code -> name map.
+            pcs_map = _PKG_CST_LIMIT_MAP[model]["codes"]
+            self._pcs_rmap = {code:name for name, code in pcs_map.items()}
+
+        regval = self._msr.read(self.msr_addr, cpu=cpu)
+        code = regval & MAX_PKG_C_STATE_MASK
+        locked = bool(regval & MSR.bit_mask(CFG_LOCK))
+
+        if code not in self._pcs_rmap:
+            known_codes = ", ".join([str(cde) for cde in self._pcs_rmap])
+            msg = f"unexpected package C-state limit code '{code}' read from '{self.msr_name}' " \
+                  f"MSR ({self.msr_addr}){self._proc.hostmsg}, known codes are: {known_codes}"
+
+            # No exact match. The limit is the closest lower known number. For example, if the
+            # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the limit is
+            # PC6.
+            for cde in sorted(self._pcs_rmap, reverse=True):
+                if cde <= code:
+                    code = cde
+                    break
+            else:
+                raise Error(msg)
+
+            _LOG.debug(msg)
+
+        codes = _PKG_CST_LIMIT_MAP[model]["codes"]
+        aliases = _PKG_CST_LIMIT_MAP[model]["aliases"]
+
+        return {"CPU" : self._cpuinfo.normalize_cpu(cpu),
+                "limit" : self._pcs_rmap[code],
+                "locked" : locked,
+                "limits" : list(codes.keys()),
+                "aliases" : aliases}
+
     def _get_pkg_cstate_limit_value(self, pcs_limit):
         """
         Convert a package C-state name to integer package C-state limit value suitable for the
@@ -141,90 +193,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                         f"Supported package C-states are: {codes_str}.\n"
                         f"Supported package C-state alias names are: {aliases_str}")
         return limit_val
-
-    def _get_pkg_cstate_limit(self, cpus, pcs_rmap):
-        """
-        Read 'PKG_CST_CONFIG_CONTROL' MSR for all CPUs 'cpus'. The 'cpus' argument is the same as
-        in 'set_feature()' method. The 'pcs_rmap' is reversed dictionary with package C-state code
-        and name pairs. Returns a tuple of C-state limit value and locked bit boolean.
-        """
-
-        pcs_code = max(pcs_rmap)
-        locked = False
-        for _, regval in self._msr.read_iter(MSR_PKG_CST_CONFIG_CONTROL, cpus=cpus):
-            # The C-state limit value is smallest found among all CPUs and locked bit is 'True' if
-            # any of the registers has locked bit set, otherwise it is 'False'.
-            pcs_code = min(pcs_code, regval & MAX_PKG_C_STATE_MASK)
-            locked = any((locked, regval & MSR.bit_mask(CFG_LOCK)))
-
-            if pcs_code not in pcs_rmap:
-                known_codes = ", ".join([str(code) for code in pcs_rmap])
-                msg = f"unexpected package C-state limit code '{pcs_code}' read from " \
-                      f"'PKG_CST_CONFIG_CONTROL' MSR ({MSR_PKG_CST_CONFIG_CONTROL})" \
-                      f"{self._proc.hostmsg}, known codes are: {known_codes}"
-
-                # No exact match. The limit is the closest lower known number. For example, if the
-                # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'pcs_code' is 3, then the
-                # limit is PC6.
-                for code in sorted(pcs_rmap, reverse=True):
-                    if code <= pcs_code:
-                        pcs_code = code
-                        break
-                else:
-                    raise Error(msg)
-
-                _LOG.debug(msg)
-
-        return (pcs_code, locked)
-
-    def get_available_pkg_cstate_limits(self):
-        """
-        Return list of all available package C-state limits. Raises an Error if CPU model is not
-        supported.
-        """
-
-        self._check_feature_support("pkg_cstate_limit")
-        return _PKG_CST_LIMIT_MAP[self._lscpu_info["model"]]
-
-    def get_pkg_cstate_limit(self, cpus="all"):
-        """
-        Get package C-state limit for CPUs 'cpus'. Returns a dictionary with integer CPU numbers
-        as keys, and values also being dictionaries with the following 2 elements.
-          * limit - the package C-state limit name (small letters, e.g., pc0)
-          * locked - a boolean, 'True' if the 'MSR_PKG_CST_CONFIG_CONTROL' register has the
-            'CFG_LOCK' bit set, so it is impossible to change the package C-state limit, and 'False'
-            otherwise.
-
-        Note, even thought the 'MSR_PKG_CST_CONFIG_CONTROL' register is per-core, it anyway has
-        package scope. This function checks the register on all cores and returns the resulting
-        shallowest C-state limit. Returns dictionary with package C-state limit and MSR lock
-        information.
-        """
-
-        self._check_feature_support("pkg_cstate_limit")
-
-        model = self._lscpu_info["model"]
-        # Get package C-state integer code -> name dictionary.
-        pcs_rmap = {code:name for name, code in _PKG_CST_LIMIT_MAP[model]["codes"].items()}
-
-        cpus = set(self._cpuinfo.normalize_cpus(cpus))
-        pkg_to_cpus = {}
-        for pkg in self._cpuinfo.get_packages():
-            pkg_cpus = self._cpuinfo.packages_to_cpus(packages=[pkg])
-            if set(pkg_cpus) & cpus:
-                pkg_to_cpus[pkg] = []
-                for core in self._cpuinfo.packages_to_cores(packages=[pkg]):
-                    core_cpus = self._cpuinfo.cores_to_cpus(cores=[core])
-                    pkg_to_cpus[pkg].append(core_cpus[0])
-
-        limits = {}
-        for pkg in pkg_to_cpus:
-            limits[pkg] = {}
-            pcs_code, locked = self._get_pkg_cstate_limit(pkg_to_cpus[pkg], pcs_rmap)
-            limits[pkg] = {"limit" : pcs_rmap[pcs_code], "locked" : locked}
-
-        return limits
-
     def _set_pkg_cstate_limit(self, pcs_limit, cpus="all"):
         """Set package C-state limit for CPUs in 'cpus'."""
 
@@ -267,3 +235,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """
 
         super().__init__(proc=proc, cpuinfo=cpuinfo, lscpu_info=lscpu_info)
+
+        # The package C-state integer code -> package C-state name dictionary.
+        self._pcs_rmap = None
