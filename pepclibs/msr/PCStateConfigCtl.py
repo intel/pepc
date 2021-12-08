@@ -169,37 +169,39 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                 "limits" : list(codes.keys()),
                 "aliases" : aliases}
 
-    def _get_pkg_cstate_limit_value(self, pcs_limit):
+    def _normalize_pkg_cstate_limit(self, limit):
         """
-        Convert a package C-state name to integer package C-state limit value suitable for the
-        'MSR_PKG_CST_CONFIG_CONTROL' register.
+        Convert a package C-state limit name, alias, or code (whatever user provides) into an
+        integer value suitable for the 'MSR_PKG_CST_CONFIG_CONTROL' register.
         """
 
         model = self._lscpu_info["model"]
 
-        pcs_limit = str(pcs_limit).lower()
+        limit = str(limit).lower()
         codes = _PKG_CST_LIMIT_MAP[model]["codes"]
         aliases = _PKG_CST_LIMIT_MAP[model]["aliases"]
 
-        if pcs_limit in aliases:
-            pcs_limit = aliases[pcs_limit]
+        if limit in aliases:
+            limit = aliases[limit]
 
-        limit_val = codes.get(pcs_limit)
-        if limit_val is None:
+        code = codes.get(limit)
+        if code is None:
             codes_str = ", ".join(codes)
             aliases_str = ", ".join(aliases)
-            raise Error(f"cannot limit package C-state{self._proc.hostmsg}, '{pcs_limit}' is "
-                        f"not supported for CPU {_CPU_DESCR[model]} (CPU model {hex(model)}).\n"
+            raise Error(f"cannot limit package C-state{self._proc.hostmsg}, '{limit}' is not "
+                        f"supported for CPU {_CPU_DESCR[model]} (CPU model {hex(model)}).\n"
                         f"Supported package C-states are: {codes_str}.\n"
                         f"Supported package C-state alias names are: {aliases_str}")
-        return limit_val
-    def _set_pkg_cstate_limit(self, pcs_limit, cpus="all"):
+
+        return code
+
+    def _set_pkg_cstate_limit(self, limit, cpus="all"):
         """Set package C-state limit for CPUs in 'cpus'."""
 
         self._check_feature_support("pkg_cstate_limit")
-        limit_val = self._get_pkg_cstate_limit_value(pcs_limit)
 
         cpus = set(self._cpuinfo.normalize_cpus(cpus))
+        code = self._normalize_pkg_cstate_limit(limit)
 
         # Package C-state limit has package scope, but the MSR is per-core.
         pkg_to_cpus = []
@@ -216,7 +218,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                             f"'{cpu}', MSR ({MSR_PKG_CST_CONFIG_CONTROL}) is locked. Sometimes, "
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
 
-            regval = (regval & ~0x07) | limit_val
+            regval = (regval & ~0x07) | code
             self._msr.write(MSR_PKG_CST_CONFIG_CONTROL, regval, cpus=cpu)
 
     def _set_baseclass_attributes(self):
