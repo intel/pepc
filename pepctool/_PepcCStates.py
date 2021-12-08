@@ -129,15 +129,10 @@ def _build_pinfos(props, cpus, cpuidle):
                 pinfo[key] = {}
 
             # We are going to used values as dictionary keys, in order to aggregate all CPU numbers
-            # having the same value. But the 'pkg_cstate_limits' value is a dictionary, so turn it
-            # into a string first.
-
+            # having the same value. But the 'pkg_cstate_limits' value is a list, so turn it into a
+            # string first.
             if key == "pkg_cstate_limits":
-                codes = ", ".join(limit for limit in val["codes"])
-                if val["aliases"]:
-                    aliases = ",".join(f"{al}={nm}" for al, nm in val["aliases"].items())
-                    codes += f" (aliases: {aliases})"
-                val = codes
+                val = ", ".join(val)
 
             if val not in pinfo[key]:
                 pinfo[key][val] = [csinfo["CPU"]]
