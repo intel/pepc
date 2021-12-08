@@ -157,12 +157,12 @@ class FeaturedMSR:
         self._cpuinfo = cpuinfo
         self._lscpu_info = lscpu_info
 
-        self._set_baseclass_attributes()
-
         self.features = None
         self.msr_addr = None
         self.msr_name = None
         self._msr = None
+
+        self._set_baseclass_attributes()
 
         if self._lscpu_info is None:
             self._lscpu_info = CPUInfo.get_lscpu_info(proc=self._proc)
