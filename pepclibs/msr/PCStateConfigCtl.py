@@ -117,13 +117,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     a model-specific register found on many Intel platforms.
     """
 
-    def _get_cpuinfo(self):
-        """Return an instance of 'CPUInfo' class."""
-
-        if not self._cpuinfo:
-            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
-        return self._cpuinfo
-
     def _get_pkg_cstate_limit_value(self, pcs_limit):
         """
         Convert a package C-state name to integer package C-state limit value suitable for the
@@ -210,19 +203,18 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         self._check_feature_support("pkg_cstate_limit")
 
-        cpuinfo = self._get_cpuinfo()
         model = self._lscpu_info["model"]
         # Get package C-state integer code -> name dictionary.
         pcs_rmap = {code:name for name, code in _PKG_CST_LIMIT_MAP[model]["codes"].items()}
 
-        cpus = set(cpuinfo.normalize_cpus(cpus))
+        cpus = set(self._cpuinfo.normalize_cpus(cpus))
         pkg_to_cpus = {}
-        for pkg in cpuinfo.get_packages():
-            pkg_cpus = cpuinfo.packages_to_cpus(packages=[pkg])
+        for pkg in self._cpuinfo.get_packages():
+            pkg_cpus = self._cpuinfo.packages_to_cpus(packages=[pkg])
             if set(pkg_cpus) & cpus:
                 pkg_to_cpus[pkg] = []
-                for core in cpuinfo.packages_to_cores(packages=[pkg]):
-                    core_cpus = cpuinfo.cores_to_cpus(cores=[core])
+                for core in self._cpuinfo.packages_to_cores(packages=[pkg]):
+                    core_cpus = self._cpuinfo.cores_to_cpus(cores=[core])
                     pkg_to_cpus[pkg].append(core_cpus[0])
 
         limits = {}
@@ -239,16 +231,15 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         self._check_feature_support("pkg_cstate_limit")
         limit_val = self._get_pkg_cstate_limit_value(pcs_limit)
 
-        cpuinfo = self._get_cpuinfo()
-        cpus = set(cpuinfo.normalize_cpus(cpus))
+        cpus = set(self._cpuinfo.normalize_cpus(cpus))
 
         # Package C-state limit has package scope, but the MSR is per-core.
         pkg_to_cpus = []
-        for pkg in cpuinfo.get_packages():
-            pkg_cpus = cpuinfo.packages_to_cpus(packages=[pkg])
+        for pkg in self._cpuinfo.get_packages():
+            pkg_cpus = self._cpuinfo.packages_to_cpus(packages=[pkg])
             if set(pkg_cpus) & cpus:
-                for core in cpuinfo.packages_to_cores(packages=[pkg]):
-                    core_cpus = cpuinfo.cores_to_cpus(cores=[core])
+                for core in self._cpuinfo.packages_to_cores(packages=[pkg]):
+                    core_cpus = self._cpuinfo.cores_to_cpus(cores=[core])
                     pkg_to_cpus.append(core_cpus[0])
 
         for cpu, regval in self._msr.read_iter(MSR_PKG_CST_CONFIG_CONTROL, cpus=pkg_to_cpus):
