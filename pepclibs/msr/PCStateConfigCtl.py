@@ -199,20 +199,9 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """Set package C-state limit for CPUs in 'cpus'."""
 
         self._check_feature_support("pkg_cstate_limit")
-
-        cpus = set(self._cpuinfo.normalize_cpus(cpus))
         code = self._normalize_pkg_cstate_limit(limit)
 
-        # Package C-state limit has package scope, but the MSR is per-core.
-        pkg_to_cpus = []
-        for pkg in self._cpuinfo.get_packages():
-            pkg_cpus = self._cpuinfo.packages_to_cpus(packages=[pkg])
-            if set(pkg_cpus) & cpus:
-                for core in self._cpuinfo.packages_to_cores(packages=[pkg]):
-                    core_cpus = self._cpuinfo.cores_to_cpus(cores=[core])
-                    pkg_to_cpus.append(core_cpus[0])
-
-        for cpu, regval in self._msr.read_iter(MSR_PKG_CST_CONFIG_CONTROL, cpus=pkg_to_cpus):
+        for cpu, regval in self._msr.read_iter(MSR_PKG_CST_CONFIG_CONTROL, cpus=cpus):
             if MSR.is_bit_set(CFG_LOCK, regval):
                 raise Error(f"cannot set package C-state limit{self._proc.hostmsg} for CPU "
                             f"'{cpu}', MSR ({MSR_PKG_CST_CONFIG_CONTROL}) is locked. Sometimes, "
