@@ -55,7 +55,7 @@ def _print_cstate_prop_msg(prop, action, val, cpus):
     if action:
         msg = f"{prop}: {action} '{val}' on {cpus}"
     else:
-        msg = f"{prop}: '{val}' {cpus}"
+        msg = f"{prop}: '{val}' on {cpus}"
 
     _LOG.info(msg)
 
