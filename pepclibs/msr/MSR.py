@@ -65,7 +65,7 @@ def is_bit_set(bitnr, bitval):
 class MSR:
     """This class provides helpers to read and write CPU Model Specific Registers."""
 
-    def _handle_arguments(self, regsize, cpus):
+    def _validate_and_normalize_arguments(self, regsize, cpus):
         """Validate arguments, and convert 'cpus' to valid list of CPU numbers if needed."""
 
         regsizes = (4, 8)
@@ -88,7 +88,7 @@ class MSR:
                    'CPUIdle' module for the exact format description.
         """
 
-        regsize, cpus = self._handle_arguments(regsize, cpus)
+        regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
 
         for cpu in cpus:
             path = Path(f"/dev/cpu/{cpu}/msr")
@@ -124,7 +124,7 @@ class MSR:
                    'CPUIdle' module for the exact format description.
         """
 
-        regsize, cpus = self._handle_arguments(regsize, cpus)
+        regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
 
         regval_bytes = regval.to_bytes(regsize, byteorder=_CPU_BYTEORDER)
         for cpu in cpus:
@@ -141,7 +141,7 @@ class MSR:
     def set(self, regaddr, mask, regsize=8, cpus="all"):
         """Set 'mask' bits in MSR. Arguments are the same as in 'write()'."""
 
-        regsize, cpus = self._handle_arguments(regsize, cpus)
+        regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
 
         for cpunum, regval in self.read_iter(regaddr, regsize, cpus):
             new_regval = regval | mask
@@ -151,7 +151,7 @@ class MSR:
     def clear(self, regaddr, mask, regsize=8, cpus="all"):
         """Clear 'mask' bits in MSR. Arguments are the same as in 'write()'."""
 
-        regsize, cpus = self._handle_arguments(regsize, cpus)
+        regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
 
         for cpunum, regval in self.read_iter(regaddr, regsize, cpus):
             new_regval = regval & ~mask
@@ -164,7 +164,7 @@ class MSR:
         as in 'write()'.
         """
 
-        regsize, cpus = self._handle_arguments(regsize, cpus)
+        regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
         bitval = int(bool(bitval))
 
         if bitval:
