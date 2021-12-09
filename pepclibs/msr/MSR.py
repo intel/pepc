@@ -65,26 +65,14 @@ def is_bit_set(bitnr, bitval):
 class MSR:
     """This class provides helpers to read and write CPU Model Specific Registers."""
 
-    def _validate_and_normalize_arguments(self, regsize, cpus):
-        """Validate arguments, and convert 'cpus' to valid list of CPU numbers if needed."""
-
-        regsizes = (4, 8)
-        if regsize not in regsizes:
-            regsizes_str = ",".join([str(regsz) for regsz in regsizes])
-            raise Error(f"invalid register size value '{regsize}', use one of: {regsizes_str}")
-
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-
-        return (regsize, cpus)
-
-    def _read(self, regaddr, regsize, cpu):
-        """Read 'regsize' bytes wide MSR at address 'regaddr' on CPU 'cpu'."""
+    def _read(self, regaddr, cpu):
+        """Read MSR at address 'regaddr' on CPU 'cpu'."""
 
         path = Path(f"/dev/cpu/{cpu}/msr")
         try:
             with self._proc.open(path, "rb") as fobj:
                 fobj.seek(regaddr)
-                regval = fobj.read(regsize)
+                regval = fobj.read(self.regsize)
         except Error as err:
             raise Error(f"failed to read MSR '{hex(regaddr)}' from file '{path}'"
                         f"{self._proc.hostmsg}:\n{err}") from err
@@ -93,36 +81,35 @@ class MSR:
         _LOG.debug("CPU%d: MSR 0x%x: read 0x%x", cpu, regaddr, regval)
         return regval
 
-    def read_iter(self, regaddr, regsize=8, cpus="all"):
+    def read_iter(self, regaddr, cpus="all"):
         """
         Read an MSR register on one or multiple CPUs and yield tuple with CPU number and the read
         result.
           * regaddr - address of the MSR to read.
-          * regsize - size of MSR register in bytes.
           * cpus - list of CPU numbers value should be read from. It is the same as the 'cpus'
                    argument of the 'CPUIdle.get_cstates_info()' function - please, refer to the
                    'CPUIdle' module for the exact format description.
         """
 
-        regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for cpu in cpus:
-            regval = self._read(regaddr, regsize, cpu)
+            regval = self._read(regaddr, cpu)
             yield (cpu, regval)
 
-    def read(self, regaddr, regsize=8, cpu=0):
+    def read(self, regaddr, cpu=0):
         """
         Read an MSR on single CPU and return read result. Arguments are same as in read_iter().
         """
 
-        _, msr = next(self.read_iter(regaddr, regsize, cpu))
+        _, msr = next(self.read_iter(regaddr, cpu))
         return msr
 
-    def _write(self, regaddr, regval, regsize, cpu, regval_bytes=None):
-        """Write value 'regval' to a 'regsize' bytes wide MSR at 'regaddr' on CPU 'cpu."""
+    def _write(self, regaddr, regval, cpu, regval_bytes=None):
+        """Write value 'regval' to MSR at 'regaddr' on CPU 'cpu."""
 
         if regval_bytes is None:
-            regval_bytes = regval.to_bytes(regsize, byteorder=_CPU_BYTEORDER)
+            regval_bytes = regval.to_bytes(self.regsize, byteorder=_CPU_BYTEORDER)
 
         path = Path(f"/dev/cpu/{cpu}/msr")
         try:
@@ -134,56 +121,55 @@ class MSR:
             raise Error(f"failed to write MSR '{hex(regaddr)}' to file '{path}'"
                         f"{self._proc.hostmsg}:\n{err}") from err
 
-    def write(self, regaddr, regval, regsize=8, cpus="all"):
+    def write(self, regaddr, regval, cpus="all"):
         """
         Write to MSR register. The arguments are as follows.
           * regaddr - address of the MSR to write to.
           * regval - integer value to write to MSR.
-          * regsize - size of MSR register in bytes.
           * cpus - list of CPU numbers write should be done at. It is the same as the 'cpus'
                    argument of the 'CPUIdle.get_cstates_info()' function - please, refer to the
                    'CPUIdle' module for the exact format description.
         """
 
-        regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
-        regval_bytes = regval.to_bytes(regsize, byteorder=_CPU_BYTEORDER)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+        regval_bytes = regval.to_bytes(self.regsize, byteorder=_CPU_BYTEORDER)
 
         for cpu in cpus:
-            self._write(regaddr, regval, regsize, cpu, regval_bytes=regval_bytes)
+            self._write(regaddr, regval, cpu, regval_bytes=regval_bytes)
 
-    def set(self, regaddr, mask, regsize=8, cpus="all"):
+    def set(self, regaddr, mask, cpus="all"):
         """Set 'mask' bits in MSR. Arguments are the same as in 'write()'."""
 
-        regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
 
-        for cpunum, regval in self.read_iter(regaddr, regsize, cpus):
+        for cpunum, regval in self.read_iter(regaddr, cpus):
             new_regval = regval | mask
             if regval != new_regval:
-                self.write(regaddr, new_regval, regsize, cpunum)
+                self.write(regaddr, new_regval, cpunum)
 
-    def clear(self, regaddr, mask, regsize=8, cpus="all"):
+    def clear(self, regaddr, mask, cpus="all"):
         """Clear 'mask' bits in MSR. Arguments are the same as in 'write()'."""
 
-        regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
 
-        for cpunum, regval in self.read_iter(regaddr, regsize, cpus):
+        for cpunum, regval in self.read_iter(regaddr, cpus):
             new_regval = regval & ~mask
             if regval != new_regval:
-                self.write(regaddr, new_regval, regsize, cpunum)
+                self.write(regaddr, new_regval, cpunum)
 
-    def toggle_bit(self, regaddr, bitnr, bitval, regsize=8, cpus="all"):
+    def toggle_bit(self, regaddr, bitnr, bitval, cpus="all"):
         """
         Toggle bit number 'bitnr', in MSR 'regaddr' to value 'bitval'. Other arguments are the same
         as in 'write()'.
         """
 
-        regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
         bitval = int(bool(bitval))
 
         if bitval:
-            self.set(regaddr, bit_mask(bitnr), regsize=regsize, cpus=cpus)
+            self.set(regaddr, bit_mask(bitnr), cpus=cpus)
         else:
-            self.clear(regaddr, bit_mask(bitnr), regsize=regsize, cpus=cpus)
+            self.clear(regaddr, bit_mask(bitnr), cpus=cpus)
 
     def _ensure_dev_msr(self):
         """
@@ -228,6 +214,9 @@ class MSR:
         self._cpuinfo = cpuinfo
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
+
+        # MSR registers' size in bytes.
+        self.regsize = 8
 
         self._msr_drv = None
         self._loaded_by_us = False
