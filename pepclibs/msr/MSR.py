@@ -77,6 +77,22 @@ class MSR:
 
         return (regsize, cpus)
 
+    def _read(self, regaddr, regsize, cpu):
+        """Read 'regsize' bytes wide MSR at address 'regaddr' on CPU 'cpu'."""
+
+        path = Path(f"/dev/cpu/{cpu}/msr")
+        try:
+            with self._proc.open(path, "rb") as fobj:
+                fobj.seek(regaddr)
+                regval = fobj.read(regsize)
+        except Error as err:
+            raise Error(f"failed to read MSR '{hex(regaddr)}' from file '{path}'"
+                        f"{self._proc.hostmsg}:\n{err}") from err
+
+        regval = int.from_bytes(regval, byteorder=_CPU_BYTEORDER)
+        _LOG.debug("CPU%d: MSR 0x%x: read 0x%x", cpu, regaddr, regval)
+        return regval
+
     def read_iter(self, regaddr, regsize=8, cpus="all"):
         """
         Read an MSR register on one or multiple CPUs and yield tuple with CPU number and the read
@@ -91,18 +107,7 @@ class MSR:
         regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
 
         for cpu in cpus:
-            path = Path(f"/dev/cpu/{cpu}/msr")
-            try:
-                with self._proc.open(path, "rb") as fobj:
-                    fobj.seek(regaddr)
-                    regval = fobj.read(regsize)
-            except Error as err:
-                raise Error(f"failed to read MSR '{hex(regaddr)}' from file '{path}'"
-                            f"{self._proc.hostmsg}:\n{err}") from err
-
-            regval = int.from_bytes(regval, byteorder=_CPU_BYTEORDER)
-            _LOG.debug("CPU%d: MSR 0x%x: read 0x%x", cpu, regaddr, regval)
-
+            regval = self._read(regaddr, regsize, cpu)
             yield (cpu, regval)
 
     def read(self, regaddr, regsize=8, cpu=0):
