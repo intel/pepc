@@ -118,6 +118,22 @@ class MSR:
         _, msr = next(self.read_iter(regaddr, regsize, cpu))
         return msr
 
+    def _write(self, regaddr, regval, regsize, cpu, regval_bytes=None):
+        """Write value 'regval' to a 'regsize' bytes wide MSR at 'regaddr' on CPU 'cpu."""
+
+        if regval_bytes is None:
+            regval_bytes = regval.to_bytes(regsize, byteorder=_CPU_BYTEORDER)
+
+        path = Path(f"/dev/cpu/{cpu}/msr")
+        try:
+            with self._proc.open(path, "wb") as fobj:
+                fobj.seek(regaddr)
+                fobj.write(regval_bytes)
+                _LOG.debug("CPU%d: MSR 0x%x: wrote 0x%x", cpu, regaddr, regval)
+        except Error as err:
+            raise Error(f"failed to write MSR '{hex(regaddr)}' to file '{path}'"
+                        f"{self._proc.hostmsg}:\n{err}") from err
+
     def write(self, regaddr, regval, regsize=8, cpus="all"):
         """
         Write to MSR register. The arguments are as follows.
@@ -130,18 +146,10 @@ class MSR:
         """
 
         regsize, cpus = self._validate_and_normalize_arguments(regsize, cpus)
-
         regval_bytes = regval.to_bytes(regsize, byteorder=_CPU_BYTEORDER)
+
         for cpu in cpus:
-            path = Path(f"/dev/cpu/{cpu}/msr")
-            try:
-                with self._proc.open(path, "wb") as fobj:
-                    fobj.seek(regaddr)
-                    fobj.write(regval_bytes)
-                    _LOG.debug("CPU%d: MSR 0x%x: wrote 0x%x", cpu, regaddr, regval)
-            except Error as err:
-                raise Error(f"failed to write MSR '{hex(regaddr)}' to file '{path}'"
-                            f"{self._proc.hostmsg}:\n{err}") from err
+            self._write(regaddr, regval, regsize, cpu, regval_bytes=regval_bytes)
 
     def set(self, regaddr, mask, regsize=8, cpus="all"):
         """Set 'mask' bits in MSR. Arguments are the same as in 'write()'."""
