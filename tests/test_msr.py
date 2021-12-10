@@ -14,14 +14,11 @@ import random
 import unittest
 from pathlib import Path
 from unittest.mock import patch, mock_open, ANY
-from common import mock_Proc
+from common import mock_Proc, MAX64
 from pepclibs.msr import MSR
 
 _TEST_DATA_BYTES = random.randbytes(8)
 _TEST_DATA = int.from_bytes(_TEST_DATA_BYTES, byteorder="little")
-
-# Max. 64-bit integer.
-MAX64 = (1 << 64) - 1
 
 #pylint:disable=no-self-use
 

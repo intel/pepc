@@ -37,6 +37,9 @@ _TESTDATA = {
         ("dev_cpu", "dev_cpu.txt" ),
     }
 
+# Max. 64-bit integer.
+MAX64 = (1 << 64) - 1
+
 def _get_mocked_data():
     """
     Get mocked data for testing purposes. The files with testdata can be opened only before mocking.
@@ -149,19 +152,19 @@ class mock_Proc(Procs.Proc):
 class mock_MSR(MSR.MSR):
     """Mock version of MSR class in pepclibs.msr.MSR module."""
 
-    def read_iter(self, regaddr, regsize=8, cpus="all"):
+    def read_iter(self, regaddr, cpus="all"):
         """Mocked version of 'read_iter()'. Returns random data."""
 
         if regaddr in self._mocked_msr:
-            mask = (1 << 8 * regsize) - 1
-            read_data = int.to_bytes(self._mocked_msr[regaddr] & mask, regsize, byteorder="little")
+            read_data = int.to_bytes(self._mocked_msr[regaddr] & MAX64,
+                                     self.regsize, byteorder="little")
         else:
-            read_data = random.randbytes(regsize)
+            read_data = random.randbytes(8)
 
         with patch("builtins.open", new_callable=mock_open, read_data=read_data) as m_open:
-            yield from super().read_iter(regaddr, regsize, cpus)
+            yield from super().read_iter(regaddr,  cpus)
 
-    def write(self, regaddr, regval, regsize=8, cpus="all"):
+    def write(self, regaddr, regval, cpus="all"):
         """Mocked version of 'write()'."""
 
         self._mocked_msr[regaddr] = regval
