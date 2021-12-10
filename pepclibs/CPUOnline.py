@@ -166,19 +166,22 @@ class CPUOnline:
           * cpuinfo - A 'CPUInfo.CPUInfo()' object.
         """
 
-        if not proc:
-            proc = Procs.Proc()
+        self._proc = proc
+        self._cpuinfo = cpuinfo
+
+        self._close_proc = proc is None
+        self._close_cpuinfo = cpuinfo is None
+
+        self._loglevel = progress
+        self._saved_states = {}
+        self._sysfs_base = Path("/sys/devices/system/cpu")
+        self.restore_on_close = False
 
         if progress is None:
             progress = logging.DEBUG
 
-        self._proc = proc
-        self._loglevel = progress
-        self._cpuinfo = cpuinfo
-        self._saved_states = {}
-        self._sysfs_base = Path("/sys/devices/system/cpu")
-
-        self.restore_on_close = False
+        if not self._proc:
+            self._proc = Procs.Proc()
 
     def close(self):
         """Uninitialize the class object."""
@@ -187,11 +190,13 @@ class CPUOnline:
             if getattr(self, "restore_on_close", None) and \
                getattr(self, "_saved_states", None):
                 self.restore()
-            self._proc = None
 
-        if getattr(self, "_cpuinfo", None):
-            self._cpuinfo.close()
-            self._cpuinfo = None
+        for attr in ("_cpuinfo", "_proc"):
+            obj = getattr(self, attr, None)
+            if obj:
+                if getattr(self, f"_close_{attr}", False):
+                    getattr(obj, "close")()
+                setattr(self, attr, None)
 
     def __enter__(self):
         """Enter the runtime context."""
