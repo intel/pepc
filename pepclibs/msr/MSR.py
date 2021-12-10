@@ -217,11 +217,11 @@ class MSR:
         if FSHelpers.exists(dev_path, self._proc):
             return
 
-        msg = f"file '{dev_path}' is not available{self._proc.hostmsg}\nIf you are running a " \
-              f"custom kernel, ensure your kernel has the module-specific register support " \
-              f"(CONFIG_X86_MSR) enabled."
+        drvname = "msr"
+        msg = f"file '{dev_path}' is not available{self._proc.hostmsg}\nMake sure your kernel" \
+              f"has the '{drvname}' driver enabled (CONFIG_X86_MSR)."
         try:
-            self._msr_drv = KernelModule.KernelModule(self._proc, "msr")
+            self._msr_drv = KernelModule.KernelModule(self._proc, drvname)
             loaded = self._msr_drv.is_loaded()
         except Error as err:
             raise Error(f"{msg}\n{err}") from err
@@ -231,7 +231,7 @@ class MSR:
 
         try:
             self._msr_drv.load()
-            self._loaded_by_us = True
+            self._unload_msr_drv = True
             FSHelpers.wait_for_a_file(dev_path, timeout=1, proc=self._proc)
         except Error as err:
             raise Error(f"{msg}\n{err}") from err
@@ -248,11 +248,15 @@ class MSR:
                            caching.
         """
 
-        if not proc:
-            proc = Procs.Proc()
         self._proc = proc
         self._cpuinfo = cpuinfo
         self._enable_cache = enable_cache
+
+        self._close_proc = proc is None
+        self._close_cpuinfo = cpuinfo is None
+
+        if not self._proc:
+            self._proc = Procs.Proc()
 
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
@@ -261,7 +265,7 @@ class MSR:
         self.regsize = 8
 
         self._msr_drv = None
-        self._loaded_by_us = False
+        self._unload_msr_drv = False
 
         # The MSR I/O cache. Indexed by CPU number and MSR address. Contains MSR values.
         self._cache = {}
@@ -271,14 +275,17 @@ class MSR:
     def close(self):
         """Uninitialize the class object."""
 
-        if getattr(self, "_msr_drv", None) and self._loaded_by_us:
-            self._msr_drv.unload()
+        if getattr(self, "_msr_drv", None):
+            if self._unload_msr_drv:
+                self._msr_drv.unload()
             self._msr_drv = None
-        if getattr(self, "_proc", None):
-            self._proc = None
-        if getattr(self, "_cpuinfo", None):
-            self._cpuinfo.close()
-            self._cpuinfo = None
+
+        for attr in ("_cpuinfo", "_proc"):
+            obj = getattr(self, attr, None)
+            if obj:
+                if getattr(self, f"_close_{attr}", False):
+                    getattr(obj, "close")()
+                setattr(self, attr, None)
 
     def __enter__(self):
         """Enter the runtime context."""
