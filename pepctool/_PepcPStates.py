@@ -15,6 +15,7 @@ This module includes the "pstates" 'pepc' command implementation.
 import logging
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.msr import MSR
 from pepclibs import CPUInfo, CPUFreq
 from pepctool import _PepcCommon
 from pepctool._PepcCommon import bool_fmt, get_cpus
@@ -277,12 +278,19 @@ def pstates_config_command(args, proc):
 
     _PepcCommon.check_tuned_presence(proc)
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, MSR.MSR(proc=proc) as msr:
         cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
 
         if "turbo" in args.oargs and set(cpus) != set(cpuinfo.get_cpus()):
             _LOG.warning("the turbo setting is global, '--cpus', '--cores', and '--packages' "
                          "options are ignored")
 
-        with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
+        # Start a transaction, which will delay and aggregate MSR writes until the transaction
+        # is committed.
+        msr.start_transaction()
+
+        with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo, msr=msr) as cpufreq:
             _handle_pstate_opts(args, proc, cpuinfo, cpufreq)
+
+        # Commit the transaction. This will flush all the change MSRs (if there were any).
+        msr.commit_transaction()
