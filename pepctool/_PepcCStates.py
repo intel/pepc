@@ -93,10 +93,10 @@ def _handle_cstate_config_opt(optname, optval, cpus, cpuidle):
             cstnames = cstnames.split(",")
             _LOG.info("%sd %s on %s", optname.title(), _fmt_cstates(cstnames), _fmt_cpus(cpunums))
 
-def _print_cstate_prop(prop, pinfo, cpuidle):
-    """Print about C-state properties in 'pinfo'."""
+def _print_cstate_prop(aggr_pinfo, prop, cpuidle):
+    """Print about C-state properties in 'aggr_pinfo'."""
 
-    for key, kinfo in pinfo.items():
+    for key, kinfo in aggr_pinfo[prop].items():
         for val, cpus in kinfo.items():
             if key.endswith("_supported") and val:
                 # Supported properties will have some other key(s) in 'kinfo', which will be
@@ -105,42 +105,60 @@ def _print_cstate_prop(prop, pinfo, cpuidle):
 
             _print_cstate_prop_msg(cpuidle.props[prop]["keys"][key], "", val, cpus)
 
-def _build_pinfos(props, cpus, cpuidle):
-    """Build the properties dictionary for proparties in the 'props' list."""
+def _build_aggregate_pinfo(props, cpus, cpuidle):
+    """
+    Build the aggregated properties dictionary for proparties in the 'props' list. The dictionary has
+    the following format.
 
-    all_keys = []
-    pinfos = {}
-    key2f = {}
+    { property1_name: { key1_name: { key1_value1 : [ list of CPUs having key1_value1],
+                                     key1_value2 : [ list of CPUs having key1_value2],
+                                     key1_value3 : [ list of CPUs having key1_value3]},
+                        key2_name: { key2_value1 : [ list of CPUs having key2_value1],
+                                     key2_value2 : [ list of CPUs having key2_value2],
+                                    key2_value3 : [ list of CPUs having key2_value3]}},
+      property2_name: { key1_name: { key1_value1 : [ list of CPUs having key1_value1],
+      ... and so on ... }
 
-    for prop in props:
-        pinfos[prop] = {}
-        for key in cpuidle.props[prop]["keys"]:
-            key2f[key] = prop
-            all_keys.append(key)
+      * property1_name, property2_name, etc are the property names (e.g., 'pkg_cstate_limit').
+      * key1_name, key2_name, etc are key names of the corresponding property (e.g.,
+        'pkg_cstate_limit', 'pkg_cstate_limit_locked', 'pkg_cstate_limit_supported')
+      * key1_value1, key1_value2, etc are all the different values for 'key1_name' (e.g., 'False' or
+        'True')
 
-    all_keys.append("CPU")
+    In other words, for every property and every key of the property, this aggregate properties info
+    dictionary provides all values and the list of CPUs for every value. This way we can later
+    easily print something like:
+        C1 demotion enabled: 'off' on CPUs 0,1,10,11,12
+    """
 
-    for csinfo in cpuidle.get_cstates_config(cpus, keys=all_keys):
-        for key, val in csinfo.items():
-            if key == "CPU":
-                continue
+    aggr_pinfo = {}
 
-            pinfo = pinfos[key2f[key]]
-            if key not in pinfo:
-                pinfo[key] = {}
+    for all_props_info in cpuidle.get_props(props, cpus=cpus):
+        for prop, pinfo in all_props_info.items():
+            if prop not in aggr_pinfo:
+                aggr_pinfo[prop] = {}
+            for key, val in pinfo["keys"].items():
+                if key == "CPU":
+                    continue
 
-            # We are going to used values as dictionary keys, in order to aggregate all CPU numbers
-            # having the same value. But the 'pkg_cstate_limits' value is a list, so turn it into a
-            # string first.
-            if key == "pkg_cstate_limits":
-                val = ", ".join(val)
+                # Make sure 'val' is "hashable" and can be used as a dictionary key.
+                if isinstance(val, list):
+                    if not val:
+                        continue
+                    val = ", ".join(val)
+                elif isinstance(val, dict):
+                    if not val:
+                        continue
+                    val = ", ".join(f"{k}={v}" for k, v in val.items())
 
-            if val not in pinfo[key]:
-                pinfo[key][val] = [csinfo["CPU"]]
-            else:
-                pinfo[key][val].append(csinfo["CPU"])
+                if key not in aggr_pinfo[prop]:
+                    aggr_pinfo[prop][key] = {}
+                if val not in aggr_pinfo[prop][key]:
+                    aggr_pinfo[prop][key][val] = []
 
-    return pinfos
+                aggr_pinfo[prop][key][val].append(pinfo["keys"]["CPU"])
+
+    return aggr_pinfo
 
 def _print_scope_warnings(args, cpuidle):
     """
@@ -196,14 +214,15 @@ def cstates_config_command(args, proc):
                 if not optval:
                     print_props.append(optname)
 
-            # Build properties information dictionary for all options that are going to be printed.
+            # Build the aggregate properties information dictionary for all options we are going to
+            # print about.
             cpus = _PepcCommon.get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
-            pinfos = _build_pinfos(print_props, cpus, cpuidle)
+            aggr_pinfo = _build_aggregate_pinfo(print_props, cpus, cpuidle)
 
             # Now handle the options one by one, in the same order as they go in the command line.
             for optname, optval in args.oargs.items():
                 if not optval:
-                    _print_cstate_prop(optname, pinfos[optname], cpuidle)
+                    _print_cstate_prop(aggr_pinfo, optname, cpuidle)
                 else:
                     _handle_cstate_config_opt(optname, optval, cpus, cpuidle)
 
