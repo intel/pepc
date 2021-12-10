@@ -164,10 +164,10 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         aliases = _PKG_CST_LIMIT_MAP[model]["aliases"]
 
         return {"CPU" : self._cpuinfo.normalize_cpu(cpu),
-                "limit" : self._pcs_rmap[code],
-                "locked" : locked,
-                "limits" : list(codes.keys()),
-                "aliases" : aliases}
+                "pkg_cstate_limit" : self._pcs_rmap[code],
+                "pkg_cstate_limit_locked" : locked,
+                "pkg_cstate_limits" : list(codes.keys()),
+                "pkg_cstate_limit_aliases" : aliases}
 
     def _normalize_pkg_cstate_limit(self, limit):
         """

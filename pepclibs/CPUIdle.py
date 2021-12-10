@@ -447,10 +447,10 @@ class CPUIdle:
             if pcstatectl and pcstatectl.features["pkg_cstate_limit"]["supported"]:
                 if "pkg_cstate_limit" in keys:
                     limit_info = pcstatectl.get_feature("pkg_cstate_limit", cpu)
-                    info["pkg_cstate_limit"] = limit_info["limit"]
-                    info["pkg_cstate_limit_locked"] = limit_info["locked"]
+                    info["pkg_cstate_limit"] = limit_info["pkg_cstate_limit"]
+                    info["pkg_cstate_limit_locked"] = limit_info["pkg_cstate_limit_locked"]
                 if "pkg_cstate_limits" in keys:
-                    info["pkg_cstate_limits"] = limit_info["limits"]
+                    info["pkg_cstate_limits"] = limit_info["pkg_cstate_limits"]
             if "c1_demotion" in keys:
                 info["c1_demotion"] = pcstatectl.get_feature("c1_demotion", cpu)
             if "c1_undemotion" in keys:
