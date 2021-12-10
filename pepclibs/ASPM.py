@@ -71,15 +71,20 @@ class ASPM:
     def __init__(self, proc=None):
         """The class constructor."""
 
-        if not proc:
-            proc = Procs.Proc()
-
         self._proc = proc
+
+        self._close_proc = proc is None
         self._policy_path = Path("/sys/module/pcie_aspm/parameters/policy")
+
+        if not self._proc:
+            self._proc = Procs.Proc()
 
     def close(self):
         """Uninitialize the class object."""
+
         if getattr(self, "_proc", None):
+            if self._close_proc:
+                self._proc.close()
             self._proc = None
 
     def __enter__(self):
