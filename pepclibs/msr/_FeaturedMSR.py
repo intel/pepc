@@ -189,15 +189,28 @@ class FeaturedMSR:
         self._lscpu_info = lscpu_info
         self._msr = msr
 
+        self._close_proc = proc is None
+        self._close_cpuinfo = cpuinfo is None
+        self._close_lscpu_info = lscpu_info is None
+        self._close_msr = msr is None
+
         self.features = None
         self.msr_addr = None
         self.msr_name = None
-        self._msr_provided = self._msr is not None
 
         self._set_baseclass_attributes()
 
+        if not self._proc:
+            self._proc = Procs.Proc()
+
+        if not self._cpuinfo:
+            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
+
         if self._lscpu_info is None:
             self._lscpu_info = CPUInfo.get_lscpu_info(proc=self._proc)
+
+        if not self._msr:
+            self._msr = MSR.MSR(proc=self._proc)
 
         if self._lscpu_info["vendor"] != "GenuineIntel":
             msg = f"unsupported CPU model '{self._lscpu_info['vendor']}', model-specific " \
@@ -211,20 +224,16 @@ class FeaturedMSR:
                                     f"{self._proc.hostmsg}")
 
         self.features = self._create_features_dict()
-        if not self._msr:
-            self._msr = MSR.MSR(proc=self._proc)
 
     def close(self):
         """Uninitialize the class object."""
 
-        if getattr(self, "_proc", None):
-            self._proc = None
-        if getattr(self, "_msr", None):
-            if not self._msr_provided:
-                # The 'self._msr' object was created in '__init__()', as opposed to be provided by
-                # the user, so close it.
-                self._msr.close()
-            self._msr = None
+        for attr in ("_msr", "_lscpu_info", "_cpuinfo", "_proc"):
+            obj = getattr(self, attr, None)
+            if obj:
+                if getattr(self, f"_close_{attr}", False):
+                    getattr(obj, "close")()
+                setattr(self, attr, None)
 
     def __enter__(self):
         """Enter the runtime context."""
