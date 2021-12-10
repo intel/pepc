@@ -15,6 +15,7 @@ This module includes the "cstates" 'pepc' command implementation.
 import logging
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.msr import MSR
 from pepclibs import CPUIdle, CPUInfo
 from pepctool import _PepcCommon
 
@@ -181,8 +182,13 @@ def cstates_config_command(args, proc):
     # The C-state properties to print about.
     print_props = []
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-        with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo) as cpuidle:
+    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, MSR.MSR(proc=proc) as msr:
+        # Start a transaction, which will delay and aggregate MSR writes until the transaction
+        # is committed.
+        msr.start_transaction()
+
+        with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo, msr=msr) as cpuidle:
+
             _print_scope_warnings(args, cpuidle)
 
             # Find all properties we'll need to print about, and get their values.
@@ -200,6 +206,9 @@ def cstates_config_command(args, proc):
                     _print_cstate_prop(optname, pinfos[optname], cpuidle)
                 else:
                     _handle_cstate_config_opt(optname, optval, cpus, cpuidle)
+
+        # Commit the transaction. This will flush all the change MSRs (if there were any).
+        msr.commit_transaction()
 
 def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
