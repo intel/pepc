@@ -16,7 +16,7 @@ import copy
 import logging
 from pathlib import Path
 from pepclibs.helperlibs import FSHelpers, Procs, Trivial
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
 
@@ -33,6 +33,7 @@ _KEYS_DESCR = {
     "pkg_cstate_limit" : "Package C-state limit",
     "pkg_cstate_limit_locked" : "Package C-state limit locked",
     "pkg_cstate_limits" : "Available package C-state limits",
+    "pkg_cstate_limit_aliases" : "Package C-state limit aliases",
     "c1_demotion" : "C1 demotion enabled",
     "c1_undemotion" : "C1 un-demotion enabled",
 }
@@ -467,6 +468,76 @@ class CPUIdle:
             raise Error(f"property '{prop}' not supported, use one of the following: "
                         f"{props_str}")
 
+    def _get_pinfo(self, props, cpu):
+        """
+        Build and return the properties information dictionary for properties in 'props' and CPU
+        number 'cpu'.
+        """
+
+        pinfo = {}
+
+        for prop in props:
+            if prop in PowerCtl.FEATURES:
+                module = self._get_powerctl()
+            else:
+                module = self._get_pcstatectl()
+
+            pinfo[prop] = {"val" : None, "keys" : {"CPU" : cpu}}
+
+            try:
+                val = module.get_feature(prop, cpu)
+            except ErrorNotSupported:
+                pinfo[prop]["keys"][f"{prop}_supported"] = False
+                continue
+
+            if isinstance(val, dict):
+                pinfo[prop]["val"] = val[prop]
+                for fkey, fval in val.items():
+                    pinfo[prop]["keys"][fkey] = fval
+            else:
+                pinfo[prop]["val"] = val
+                pinfo[prop]["keys"][prop] = val
+
+            key = f"{prop}_supported"
+            if key in _KEYS_DESCR:
+                pinfo[prop]["keys"][key] = True
+
+        return pinfo
+
+    def get_props(self, props, cpus="all"):
+        """
+        Read all properties specified in the 'props' list for CPUs in 'cpus', and for every CPU
+        yield a dictionary containing the read values of all the properties. The arguments are as
+        follows.
+          * cpus - the CPUs to yield the properties for, same as the 'cpus' argument of the
+                   'get_cstates_info()' function.
+          * props - list or an iterable collection of properties to read and yeild the values for.
+                    These properties will be read for every CPU in 'cpus'.
+
+        The yielded dictionaries have the following format.
+
+        { property1_name: { "val"  : property1_value,
+                            "keys" : {"CPU" : CPU number,
+                                      property1_key1 : property1_key1_value,
+                                      property2_key2 : property1_key1_value,
+                                      ... etc for every key ...}},
+          property2_name: { "val"  : property2_value,
+                            "keys" : {"CPU" : CPU number,
+                                      property2_key1 : property2_key1_value,
+                                      ... etc ...}},
+          ... etc ... }
+
+        For properties that are not supported by the CPU, the "val" key will be 'None'.
+        """
+
+        for prop in props:
+            self._check_prop(prop)
+
+        cpus = self._normalize_cpus(cpus)
+
+        for cpu in cpus:
+            yield self._get_pinfo(props, cpu)
+
     def set_prop(self, prop, val, cpus="all"):
         """
         Set value 'val' for property 'prop' for CPUs 'cpus'. The arguments are as follows.
@@ -517,10 +588,11 @@ class CPUIdle:
                     "cstate_prewake_supported" : _KEYS_DESCR["cstate_prewake_supported"],
                 }
         props["pkg_cstate_limit"]["keys"] = {
-                    "pkg_cstate_limit_supported" : _KEYS_DESCR["pkg_cstate_limit_supported"],
                     "pkg_cstate_limit"           : _KEYS_DESCR["pkg_cstate_limit"],
-                    "pkg_cstate_limits"          : _KEYS_DESCR["pkg_cstate_limits"],
+                    "pkg_cstate_limit_supported" : _KEYS_DESCR["pkg_cstate_limit_supported"],
                     "pkg_cstate_limit_locked"    : _KEYS_DESCR["pkg_cstate_limit_locked"],
+                    "pkg_cstate_limits"          : _KEYS_DESCR["pkg_cstate_limits"],
+                    "pkg_cstate_limit_aliases"   : _KEYS_DESCR["pkg_cstate_limit_aliases"],
                 }
 
         return props
