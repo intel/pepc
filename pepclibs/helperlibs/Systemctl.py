@@ -111,19 +111,24 @@ class Systemctl:
         reference and use it in various methods.
        """
 
-        if not proc:
-            proc = Procs.Proc()
-
         self._proc = proc
+
+        self._close_proc = proc is None
         self._saved_timers = None
         self._saved_ntp_services = None
+
+        if not self._proc:
+            self._proc = Procs.Proc()
 
         if not FSHelpers.which("systemctl", default=None, proc=proc):
             raise ErrorNotSupported(f"the 'systemctl' tool is not installed{proc.hostmsg}")
 
     def close(self):
         """Uninitialize the class object."""
+
         if getattr(self, "_proc", None):
+            if self._close_proc:
+                self._proc.close()
             self._proc = None
 
     def __enter__(self):
