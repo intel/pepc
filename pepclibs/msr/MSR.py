@@ -65,7 +65,7 @@ def is_bit_set(bitnr, bitval):
 class MSR:
     """This class provides helpers to read and write CPU Model Specific Registers."""
 
-    def _cache_add(self, regaddr, regval, cpu):
+    def _cache_add(self, regaddr, regval, cpu, dirty=False):
         """Add CPU 'cpu' MSR at 'regaddr' with its value 'regval' to the cache."""
 
         if not self._enable_cache:
@@ -76,7 +76,7 @@ class MSR:
         if regaddr not in self._cache[cpu]:
             self._cache[cpu][regaddr] = {}
 
-        self._cache[cpu][regaddr] = regval
+        self._cache[cpu][regaddr] = { "regval" : regval, "dirty" : dirty }
 
     def _cache_get(self, regaddr, cpu):
         """
@@ -88,8 +88,56 @@ class MSR:
             return None
         if cpu not in self._cache:
             return None
+        if regaddr not in self._cache[cpu]:
+            return None
 
-        return self._cache[cpu].get(regaddr, None)
+        return self._cache[cpu][regaddr]["regval"]
+
+    def start_transaction(self):
+        """
+        Start transaction. All writes to MSR registers will be cahched, and will only be written
+        to the actual hardware on 'commit_transaction()'.
+        """
+
+        if self._in_transaction:
+            raise Error("cannot start a transaction, it has already started")
+
+        if not self._enable_cache:
+            raise Error("transactions support requires caching to be enabled (see 'enable_cache' "
+                        "argument of the 'MSR.MSR()' constructor.")
+
+        self._in_transaction = True
+
+    def commit_transaction(self):
+        """
+        Commit the transaction. Write all the MSR registers that have been modified after
+        'start_transaction()'.
+        """
+
+        if not self._in_transaction:
+            raise Error("cannot commit a transaction, it did not start")
+
+        for cpu, cdata in self._cache.items():
+            # Pick all the dirty data from the cache.
+            to_write = []
+            for regaddr in cdata:
+                if cdata[regaddr]["dirty"]:
+                    to_write.append((regaddr, cdata[regaddr]["regval"]))
+                    cdata[regaddr]["dirty"] = False
+
+            if not to_write:
+                continue
+
+            # Write all the dirty data.
+            path = Path(f"/dev/cpu/{cpu}/msr")
+            with self._proc.open(path, "wb") as fobj:
+                for regaddr, regval in to_write:
+                    fobj.seek(regaddr)
+                    regval_bytes = regval.to_bytes(self.regsize, byteorder=_CPU_BYTEORDER)
+                    fobj.write(regval_bytes)
+                    _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x", cpu, regaddr, regval)
+
+        self._in_transaction = False
 
     def _read(self, regaddr, cpu):
         """Read MSR at address 'regaddr' on CPU 'cpu'."""
@@ -126,7 +174,7 @@ class MSR:
             if regval is None:
                 # Not in the cache, read from the HW.
                 regval = self._read(regaddr, cpu)
-                self._cache_add(regaddr, regval, cpu)
+                self._cache_add(regaddr, regval, cpu, dirty=False)
 
             yield (cpu, regval)
 
@@ -165,12 +213,18 @@ class MSR:
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
-        regval_bytes = regval.to_bytes(self.regsize, byteorder=_CPU_BYTEORDER)
+        regval_bytes = None
 
         for cpu in cpus:
-            self._write(regaddr, regval, cpu, regval_bytes=regval_bytes)
-            # Save the written value in the cache.
-            self._cache_add(regaddr, regval, cpu)
+            if not self._in_transaction:
+                if regval_bytes is not None:
+                    regval_bytes = regval.to_bytes(self.regsize, byteorder=_CPU_BYTEORDER)
+                self._write(regaddr, regval, cpu, regval_bytes=regval_bytes)
+                dirty = False
+            else:
+                dirty = True
+
+            self._cache_add(regaddr, regval, cpu, dirty=dirty)
 
     def set(self, regaddr, mask, cpus="all"):
         """Set 'mask' bits in MSR. Arguments are the same as in 'write()'."""
@@ -246,6 +300,9 @@ class MSR:
                            subsequent reads will return the cached value. The writes are not cached
                            (write-through cache policy). This option can be used to disable
                            caching.
+
+        Important: current implementation is not thread-safe. Can only be used by single-threaded
+        applications (add locking to improve this).
         """
 
         self._proc = proc
@@ -269,6 +326,8 @@ class MSR:
 
         # The MSR I/O cache. Indexed by CPU number and MSR address. Contains MSR values.
         self._cache = {}
+        # Whether there is an ongoing transaction.
+        self._in_transaction = False
 
         self._ensure_dev_msr()
 
