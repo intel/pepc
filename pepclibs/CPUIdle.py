@@ -514,14 +514,14 @@ class CPUIdle:
           * msr - an 'MSR.MSR()' object which should be used for accessing MSR registers.
         """
 
-        if not proc:
-            proc = Procs.Proc()
-
         self._proc = proc
         self._cpuinfo = cpuinfo
         self._msr = msr
 
-        self._lscpu_info = None
+        self._close_proc = proc is None
+        self._close_cpuinfo = cpuinfo is None
+        self._close_msr = msr is None
+
         self._powerctl = None
         self._pcstatectl = None
 
@@ -534,6 +534,9 @@ class CPUIdle:
         self._name2idx_cache = {}
         self._idx2name_cache = {}
 
+        if not self._proc:
+            self._proc = Procs.Proc()
+
     def close(self):
         """Uninitialize the class object."""
 
@@ -545,16 +548,12 @@ class CPUIdle:
             self._powerctl.close()
             self._powerctl = None
 
-        if getattr(self, "_proc", None):
-            self._proc = None
-
-        if getattr(self, "_cpuinfo", None):
-            self._cpuinfo.close()
-            self._cpuinfo = None
-
-        if getattr(self, "_msr", None):
-            self._msr.close()
-            self._msr = None
+        for attr in ("_msr", "_cpuinfo", "_proc"):
+            obj = getattr(self, attr, None)
+            if obj:
+                if getattr(self, f"_close_{attr}", False):
+                    getattr(obj, "close")()
+                setattr(self, attr, None)
 
     def __enter__(self):
         """Enter the runtime context."""
