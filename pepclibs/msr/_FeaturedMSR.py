@@ -64,6 +64,17 @@ class FeaturedMSR:
         enable = finfo["enabled"] == val
         self._msr.toggle_bit(self.msr_addr, finfo["bitnr"], enable, cpus=cpus)
 
+    def feature_supported(self, feature):
+        """
+        Returns 'True' if feature 'feature' is supported by the platform, returns 'False' otherwise.
+        """
+
+        try:
+            self._check_feature_support(feature)
+            return True
+        except ErrorNotSupported:
+            return False
+
     def set_feature(self, feature, val, cpus="all"):
         """
         Set feature 'feature' value to 'val' for CPUs 'cpus'. The arguments are as follows.
