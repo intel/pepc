@@ -286,7 +286,7 @@ class CPUFreq:
         platform_freqs = self._get_platform_freqs(0)
         return self._get_base_freq(0) != platform_freqs["max_turbo"]
 
-    def _get_cpufreq_info(self, cpus, keys, fail_on_unsupported):
+    def _get_cpufreq_info(self, cpus, keys):
         """Implements 'get_cpufreq_info()'."""
 
         # Resolve global attributes first.
@@ -346,7 +346,7 @@ class CPUFreq:
                 info["turbo_enabled"] = turbo_enabled
             if "epp_supported" in keys:
                 info["epp_supported"] = self._is_epp_supported()
-            if self._is_epp_supported() or fail_on_unsupported:
+            if self._is_epp_supported():
                 if "epp" in keys:
                     info["epp"] = self.get_cpu_epp(cpu)
                 if "epp_policy" in keys:
@@ -359,7 +359,7 @@ class CPUFreq:
                         info["epp_policies"] = epp_policies
             if "epb_supported" in keys:
                 info["epb_supported"] = self._is_epb_supported()
-            if self._is_epb_supported() or fail_on_unsupported:
+            if self._is_epb_supported():
                 if keys.intersection(["epb", "epb_policy"]):
                     epb = self.get_cpu_epb(cpu)
                 if "epb" in keys:
@@ -375,7 +375,7 @@ class CPUFreq:
 
             yield info
 
-    def get_cpufreq_info(self, cpus, keys=None, fail_on_unsupported=True):
+    def get_cpufreq_info(self, cpus, keys=None):
         """
         Yield CPU frequency information. The arguments are as follows.
           * cpus - the CPUs to yield the information for, same as the 'cpus' argument of the
@@ -385,9 +385,6 @@ class CPUFreq:
                    contains the base frequency value. However, if only some of the keys are needed,
                    their names can be specified in 'keys'. For example, in order to ask for base
                    frequency and nothing else, use 'keys=("base",)".
-          * fail_on_unsupported - If 'True', requesting information about unsupported properties
-                                  will raise an exception. If set to 'False', unsupported propeties
-                                  are ignored.
         """
 
         if not keys:
@@ -395,7 +392,7 @@ class CPUFreq:
         keys = set(keys)
 
         cpus = self._get_cpuinfo().normalize_cpus(cpus)
-        return self._get_cpufreq_info(cpus, keys, fail_on_unsupported)
+        return self._get_cpufreq_info(cpus, keys)
 
     def _ensure_uncore_freq_support(self):
         """
@@ -542,11 +539,10 @@ class CPUFreq:
 
         return cpus_pkg_map
 
-    def get_freq_info(self, cpus, keys, fail_on_unsupported=False):
+    def get_freq_info(self, cpus, keys):
         """
         A unified version of 'get_cpufreq_info()' and 'get_uncore_info()'. The 'keys' argument can
-        contain keys from either 'CPUFREQ_KEYS_DESCR' or 'UNCORE_KEYS_DESCR'. The
-        'fail_on_unsupported' argument is same as in 'get_cpufreq_info()'.
+        contain keys from either 'CPUFREQ_KEYS_DESCR' or 'UNCORE_KEYS_DESCR'.
         """
 
         if not keys:
@@ -556,8 +552,6 @@ class CPUFreq:
 
         uc_infos = {}
         if keys.intersection(set(UNCORE_KEYS_DESCR)):
-            if fail_on_unsupported:
-                self._ensure_uncore_freq_support()
             if self._ufreq_supported:
                 pkgs = self._get_cpuinfo().get_packages()
                 for pkg, uc_info in zip(pkgs, self._get_uncore_info(pkgs, keys)):
