@@ -8,8 +8,8 @@
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API for managing settings in MSR 0x1FC (MSR_POWER_CTL). This is a
-model-specific register found on many Intel platforms.
+This module provides API to MSR 0x1FC (MSR_POWER_CTL). This is a model-specific register found on
+many Intel platforms.
 """
 
 import logging
@@ -53,8 +53,8 @@ FEATURES = {
 
 class PowerCtl(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API for managing settings in MSR 0x1FC (MSR_POWER_CTL). This is a
-    model-specific register found on many Intel platforms.
+    This class provides API to MSR 0x1FC (MSR_POWER_CTL). This is a model-specific register found on
+    many Intel platforms.
     """
 
     def _set_baseclass_attributes(self):

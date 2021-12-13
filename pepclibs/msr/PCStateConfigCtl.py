@@ -8,8 +8,8 @@
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API for managing settings in MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL). This is a
-model-specific register found on many Intel platforms.
+This module provides API to MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL). This is a model-specific register
+found on many Intel platforms.
 """
 
 import logging
@@ -113,8 +113,8 @@ FEATURES = {
 
 class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API for managing settings in MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL). This is
-    a model-specific register found on many Intel platforms.
+    This class provides API to MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL). This is a model-specific
+    register found on many Intel platforms.
     """
 
     def _get_pkg_cstate_limit(self, cpu):
