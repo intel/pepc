@@ -363,7 +363,7 @@ def cpu_hotplug_online_command(args, proc):
 
     from pepctool import _PepcCPUHotplug
 
-    _PepcCPUHotplug.cpu_hotplug_info_command(args, proc)
+    _PepcCPUHotplug.cpu_hotplug_online_command(args, proc)
 
 def cpu_hotplug_offline_command(args, proc):
     """Implements the 'cpu-hotplug offline' command."""
