@@ -64,6 +64,13 @@ class FeaturedMSR:
         enable = finfo["enabled"] == val
         self._msr.toggle_bit(self.msr_addr, finfo["bitnr"], enable, cpus=cpus)
 
+    def _get_feature_bool(self, feature, cpu):
+        """Returns value of a boolean feature 'feature'."""
+
+        regval = self._msr.read(self.msr_addr, cpu=cpu)
+        bitval = int(bool(MSR.bit_mask(self.features[feature]["bitnr"]) & regval))
+        return self.features[feature]["enabled"] == bitval
+
     def feature_supported(self, feature):
         """
         Returns 'True' if feature 'feature' is supported by the platform, returns 'False' otherwise.
@@ -102,6 +109,22 @@ class FeaturedMSR:
             set_method = getattr(self, f"_set_{feature}")
             set_method(val, cpus=cpus)
 
+    def feature_enabled(self, feature, cpu):
+        """
+        Just a limited version of 'get_feature()', accepts only boolean features, returns 'True' if
+        the feature is enabled, returns 'False' otherwise. This method exists only because for some
+        users this method name a bit more self-documenting. Indeed, compare:
+          * if msr_reg.feature_enabled(): do_something()
+          * if msr_reg.get_feature(): do_something()
+        """
+
+        self._check_feature_support(feature)
+
+        if "enabled" in self.features[feature]:
+            return self._get_feature_bool(feature, cpu)
+
+        raise Error(f"feature '{feature}' is not boolean, use 'get_feature()' instead")
+
     def get_feature(self, feature, cpu):
         """
         Returns value of feature 'feature for CPU 'cpu'. The arguments are as follows.
@@ -115,15 +138,11 @@ class FeaturedMSR:
         self._check_feature_support(feature)
 
         if "enabled" in self.features[feature]:
-            regval = self._msr.read(self.msr_addr, cpu=cpu)
-            bitval = int(bool(MSR.bit_mask(self.features[feature]["bitnr"]) & regval))
-            retval = self.features[feature]["enabled"] == bitval
-        else:
-            # The sub-class is supposed to implement the special method.
-            get_method = getattr(self, f"_get_{feature}")
-            retval = get_method(cpu)
+            return self._get_feature_bool(feature, cpu)
 
-        return retval
+        # The sub-class is supposed to implement the special method.
+        get_method = getattr(self, f"_get_{feature}")
+        return get_method(cpu)
 
     def _create_features_dict(self):
         """
