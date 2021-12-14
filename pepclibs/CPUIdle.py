@@ -348,13 +348,13 @@ class CPUIdle:
         """
 
         cpus = self._normalize_cpus(cpus)
-        indexes = self._normalize_cstates(cstates)
+        indexes = set(self._normalize_cstates(cstates))
 
         for cpu in cpus:
             if cpu in self._csinfos:
                 # We have the C-states info for this CPU cached.
                 if indexes is None:
-                    indices = self._csinfos[cpu].keys()
+                    indices = self._csinfos[cpu]
                 else:
                     indices = indexes
                 for idx in indices:
@@ -368,8 +368,9 @@ class CPUIdle:
                 # necessary.
                 self._csinfos[cpu] = {}
                 for csinfo in self._get_cstates_info([cpu], None, ordered):
-                    self._csinfos[cpu][csinfo['index']] = csinfo
-                    yield csinfo
+                    self._csinfos[cpu][csinfo["index"]] = csinfo
+                    if indexes is None or csinfo["index"] in indexes:
+                        yield csinfo
 
     def get_cstates_info_dict(self, cpu, cstates=None, ordered=True):
         """
