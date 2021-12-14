@@ -107,8 +107,8 @@ def _print_cstate_prop(aggr_pinfo, prop, cpuidle):
 
 def _build_aggregate_pinfo(props, cpus, cpuidle):
     """
-    Build the aggregated properties dictionary for proparties in the 'props' list. The dictionary has
-    the following format.
+    Build the aggregated properties dictionary for proparties in the 'props' list. The dictionary
+    has the following format.
 
     { property1_name: { key1_name: { key1_value1 : [ list of CPUs having key1_value1],
                                      key1_value2 : [ list of CPUs having key1_value2],
