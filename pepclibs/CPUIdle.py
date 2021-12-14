@@ -348,7 +348,8 @@ class CPUIdle:
         """
 
         cpus = self._normalize_cpus(cpus)
-        indexes = set(self._normalize_cstates(cstates))
+        if indexes is not None:
+            indexes = set(self._normalize_cstates(cstates))
 
         for cpu in cpus:
             if cpu in self._csinfos:
