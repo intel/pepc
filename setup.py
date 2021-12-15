@@ -34,6 +34,7 @@ setup(
     packages=find_packages(exclude=["test*"]),
     long_description="""A tool configuring various power and performance aspects of a Linux
                         system.""",
+    install_requires=["paramiko", "colorama", "argcomplete"],
     classifiers=[
         "Intended Audience :: Developers",
         "Topic :: System :: Hardware",
