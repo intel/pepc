@@ -14,6 +14,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [Installation](#installation)
   - [Using 'pip'](#using-pip)
   - [Standalone version](#standalone-version)
+  - [Tab completions](#tab-completions)
 - [FAQ](#faq)
 
 # Introduction
@@ -98,7 +99,21 @@ chmod ug+x pepc.standalone
 ```
 
 This will create the 'pepc.stanalone' file, which you can rename and copy to any other place, and it
-will work as a standalone program.
+will work as a standalone program. However, in this case you must manually take care of all the
+dependencies.
+
+
+## Tab completions
+
+The 'pepc' tool has tab completions support, but this will only work if you have certain environment
+variables defined. The following command will do it:
+
+```
+eval $(register-python-argcomplete pepc)
+```
+
+You can put this line to your '.bashrc' file in order to have 'pepc' tab completions enabled by
+default.
 
 # FAQ
 
