@@ -12,6 +12,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [Authors](#authors)
 - [What is supported](#what-is-supported)
 - [Installation](#installation)
+  - [Dependencies](#dependencies)
   - [Using 'pip'](#using-pip)
   - [Standalone version](#standalone-version)
   - [Tab completions](#tab-completions)
@@ -64,6 +65,24 @@ Some of the features are hardware-independent, but some are hardware-specific.
 
 # Installation
 
+## Dependencies
+
+Before using or installing 'pepc', we recommend to install the following OS packages.
+
+Fedora.
+
+```
+sudo dnf install -y rsync openssl-devel util-linux procps-ng
+sudo dnf install -y python3-colorama python3-paramiko python3-argcomplete
+```
+
+Ubuntu.
+
+```
+sudo apt install -y rsync libssl-dev util-linux procps
+sudo apt install -y python3 python3-colorama python3-paramiko python3-argcomplete
+```
+
 ## Using 'pip'
 
 The easiest way of installing 'pepc' is by using the 'pip' tool, and one way of doing this is by
@@ -99,9 +118,7 @@ chmod ug+x pepc.standalone
 ```
 
 This will create the 'pepc.stanalone' file, which you can rename and copy to any other place, and it
-will work as a standalone program. However, in this case you must manually take care of all the
-dependencies.
-
+will work as a standalone program.
 
 ## Tab completions
 
