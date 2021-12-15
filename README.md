@@ -12,8 +12,9 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [Authors](#authors)
 - [What is supported](#what-is-supported)
 - [Installation](#installation)
-  - [Using 'pip'](#installation-pip)
-  - [Standalone version](#installation-pip)
+  - [Using 'pip'](#using-pip)
+  - [Standalone version](#standalone-version)
+- [FAQ](#faq)
 
 # Introduction
 
