@@ -83,28 +83,32 @@ _PKG_CST_LIMIT_MAP = {CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _ICX_PKG_CST_LIMITS,
 FEATURES = {
     "pkg_cstate_limit" : {
         "name" : "Package C-state limit",
-        "cpumodels" : list(_PKG_CST_LIMIT_MAP),
         "scope": "package",
         "help" : """The deepest package C-state the platform is allowed to enter. The package
                     C-state limit is configured via MSR {hex(MSR_PKG_CST_CONFIG_CONTROL)}
                     (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
                     BIOS, in which case the package C-state limit can only be read, but cannot be
                     modified.""",
+        "cpumodels" : list(_PKG_CST_LIMIT_MAP),
+        "type" : "int",
+        "bits" : (2, 0)
     },
     "c1_demotion" : {
         "name" : "C1 demotion",
-        "enabled" : 1,
-        "bits" : (C1_AUTO_DEMOTION_ENABLE, C1_AUTO_DEMOTION_ENABLE),
         "scope": "CPU",
         "help" : """Allow/disallow the CPU to demote C6/C7 requests to C1.""",
+        "type" : "bool",
+        "vals" : { "enabled" : 1, "disabled" : 0},
+        "bits" : (C1_AUTO_DEMOTION_ENABLE, C1_AUTO_DEMOTION_ENABLE),
     },
     "c1_undemotion" : {
         "name" : "C1 undemotion",
-        "enabled" : 1,
-        "bits" : (C1_UNDEMOTION_ENABLE, C1_UNDEMOTION_ENABLE),
         "scope": "CPU",
         "help" : """Allow/disallow the CPU to un-demote previously demoted requests back from C1 to
                     C6/C7.""",
+        "type" : "bool",
+        "vals" : { "enabled" : 1, "disabled" : 0},
+        "bits" : (C1_UNDEMOTION_ENABLE, C1_UNDEMOTION_ENABLE),
     },
 }
 

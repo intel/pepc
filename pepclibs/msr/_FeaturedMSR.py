@@ -61,7 +61,7 @@ class FeaturedMSR:
         else:
             val = bool(val)
 
-        enable = finfo["enabled"] == val
+        enable = finfo["vals"]["enabled"] == val
         bitnr = finfo["bits"][0]
         self._msr.toggle_bit(self.msr_addr, bitnr, enable, cpus=cpus)
 
@@ -71,7 +71,8 @@ class FeaturedMSR:
         regval = self._msr.read(self.msr_addr, cpu=cpu)
         bitnr = self.features[feature]["bits"][0]
         bitval = int(bool(MSR.bit_mask(bitnr) & regval))
-        return self.features[feature]["enabled"] == bitval
+
+        return self.features[feature]["vals"]["enabled"] == bitval
 
     def feature_supported(self, feature):
         """
@@ -93,7 +94,7 @@ class FeaturedMSR:
         """
 
         if _LOG.getEffectiveLevel() == logging.DEBUG:
-            if "enabled" in self.features[feature]:
+            if self.features[feature]["type"] == "bool":
                 enable_str = "enable" if val else "disable"
                 msg = f"{enable_str} feature '{feature}'"
             else:
@@ -104,7 +105,7 @@ class FeaturedMSR:
 
         self._check_feature_support(feature)
 
-        if "enabled" in self.features[feature]:
+        if self.features[feature]["type"] == "bool":
             self._set_feature_bool(feature, val, cpus)
         else:
             # The sub-class is supposed to implement the special method.
@@ -122,7 +123,7 @@ class FeaturedMSR:
 
         self._check_feature_support(feature)
 
-        if "enabled" in self.features[feature]:
+        if self.features[feature]["type"] == "bool":
             return self._get_feature_bool(feature, cpu)
 
         raise Error(f"feature '{feature}' is not boolean, use 'get_feature()' instead")
@@ -139,7 +140,7 @@ class FeaturedMSR:
 
         self._check_feature_support(feature)
 
-        if "enabled" in self.features[feature]:
+        if self.features[feature]["type"] == "bool":
             return self._get_feature_bool(feature, cpu)
 
         # The sub-class is supposed to implement the special method.
