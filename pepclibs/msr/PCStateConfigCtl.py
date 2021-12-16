@@ -89,7 +89,7 @@ FEATURES = {
                     (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
                     BIOS, in which case the package C-state limit can only be read, but cannot be
                     modified.""",
-        "cpumodels" : list(_PKG_CST_LIMIT_MAP),
+        "cpumodels" : tuple(_PKG_CST_LIMIT_MAP.keys()),
         "type" : "int",
         "bits" : (2, 0)
     },

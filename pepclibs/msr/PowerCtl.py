@@ -35,7 +35,7 @@ FEATURES = {
         "help" : f"""When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                      the next local APIC timer event. This CPU feature is controlled by MSR
                      {MSR_POWER_CTL:#x}, bit {CSTATE_PREWAKE_DISABLE}.""",
-        "cpumodels" : [CPUInfo.INTEL_FAM6_ICELAKE_X, CPUInfo.INTEL_FAM6_ICELAKE_D],
+        "cpumodels" : (CPUInfo.INTEL_FAM6_ICELAKE_X, CPUInfo.INTEL_FAM6_ICELAKE_D),
         "type" : "bool",
         "vals" : { "enabled" : 0, "disabled" : 1},
         "bits" : (CSTATE_PREWAKE_DISABLE, CSTATE_PREWAKE_DISABLE),
