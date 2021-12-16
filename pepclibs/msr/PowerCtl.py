@@ -32,7 +32,7 @@ FEATURES = {
     "cstate_prewake" : {
         "name" : "C-state prewake",
         "enabled" : 0,
-        "bitnr" : CSTATE_PREWAKE_DISABLE,
+        "bits" : (CSTATE_PREWAKE_DISABLE, CSTATE_PREWAKE_DISABLE),
         "cpumodels" : [CPUInfo.INTEL_FAM6_ICELAKE_X, CPUInfo.INTEL_FAM6_ICELAKE_D],
         "choices" : ["on", "off"],
         "scope": "package",
@@ -43,7 +43,7 @@ FEATURES = {
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
         "enabled" : 1,
-        "bitnr" : C1E_ENABLE,
+        "bits" : (C1E_ENABLE, C1E_ENABLE),
         "choices" : ["on", "off"],
         "scope": "package",
         "help" : f"""When enabled, the CPU automatically converts all C1 requests to C1E requests.

@@ -95,7 +95,7 @@ FEATURES = {
     "c1_demotion" : {
         "name" : "C1 demotion",
         "enabled" : 1,
-        "bitnr" : C1_AUTO_DEMOTION_ENABLE,
+        "bits" : (C1_AUTO_DEMOTION_ENABLE, C1_AUTO_DEMOTION_ENABLE),
         "choices" : ["on", "off"],
         "scope": "CPU",
         "help" : """Allow/disallow the CPU to demote C6/C7 requests to C1.""",
@@ -103,7 +103,7 @@ FEATURES = {
     "c1_undemotion" : {
         "name" : "C1 undemotion",
         "enabled" : 1,
-        "bitnr" : C1_UNDEMOTION_ENABLE,
+        "bits" : (C1_UNDEMOTION_ENABLE, C1_UNDEMOTION_ENABLE),
         "choices" : ["on", "off"],
         "scope": "CPU",
         "help" : """Allow/disallow the CPU to un-demote previously demoted requests back from C1 to
