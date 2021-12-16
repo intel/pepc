@@ -84,7 +84,6 @@ FEATURES = {
     "pkg_cstate_limit" : {
         "name" : "Package C-state limit",
         "cpumodels" : list(_PKG_CST_LIMIT_MAP),
-        "choices" : "",
         "scope": "package",
         "help" : """The deepest package C-state the platform is allowed to enter. The package
                     C-state limit is configured via MSR {hex(MSR_PKG_CST_CONFIG_CONTROL)}
@@ -96,7 +95,6 @@ FEATURES = {
         "name" : "C1 demotion",
         "enabled" : 1,
         "bits" : (C1_AUTO_DEMOTION_ENABLE, C1_AUTO_DEMOTION_ENABLE),
-        "choices" : ["on", "off"],
         "scope": "CPU",
         "help" : """Allow/disallow the CPU to demote C6/C7 requests to C1.""",
     },
@@ -104,7 +102,6 @@ FEATURES = {
         "name" : "C1 undemotion",
         "enabled" : 1,
         "bits" : (C1_UNDEMOTION_ENABLE, C1_UNDEMOTION_ENABLE),
-        "choices" : ["on", "off"],
         "scope": "CPU",
         "help" : """Allow/disallow the CPU to un-demote previously demoted requests back from C1 to
                     C6/C7.""",

@@ -34,7 +34,6 @@ FEATURES = {
         "enabled" : 0,
         "bits" : (CSTATE_PREWAKE_DISABLE, CSTATE_PREWAKE_DISABLE),
         "cpumodels" : [CPUInfo.INTEL_FAM6_ICELAKE_X, CPUInfo.INTEL_FAM6_ICELAKE_D],
-        "choices" : ["on", "off"],
         "scope": "package",
         "help" : f"""When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                      the next local APIC timer event. This CPU feature is controlled by MSR
@@ -44,7 +43,6 @@ FEATURES = {
         "name" : "C1E autopromote",
         "enabled" : 1,
         "bits" : (C1E_ENABLE, C1E_ENABLE),
-        "choices" : ["on", "off"],
         "scope": "package",
         "help" : f"""When enabled, the CPU automatically converts all C1 requests to C1E requests.
                      This CPU feature is controlled by MSR {MSR_POWER_CTL:#x}, bit {C1E_ENABLE}.""",

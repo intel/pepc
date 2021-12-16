@@ -210,8 +210,8 @@ def build_arguments_parser():
         # Only the binary "on/off" type features have the "enabled" key.
         if "enabled" in info:
             text = "Enable or disable "
-            kwargs["choices"] = info["choices"]
-            choices = " or ".join([f"\"{val}\"" for val in info["choices"]])
+            kwargs["choices"] = ("on", "off")
+            choices = " or ".join([f"\"{val}\"" for val in kwargs["choices"]])
             choices = f" Use {choices}."
         else:
             text = "Set "
