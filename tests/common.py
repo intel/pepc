@@ -17,7 +17,7 @@ import logging
 from contextlib import contextmanager
 from unittest.mock import patch, mock_open
 from pathlib import Path
-from pepclibs import CPUInfo
+from pepclibs import CPUInfo, CPUIdle
 from pepclibs.helperlibs import Procs, FSHelpers
 from pepclibs.msr import MSR, PCStateConfigCtl
 from pepctool import _Pepc
@@ -94,7 +94,28 @@ class mock_Proc(Procs.Proc):
 
         if re.match("find '.*' -type f -regextype posix-extended -regex", command):
             # Mock the call from CPUIdle._get_cstates_info().
-            return (_MOCKED_DATA['cstates'], "")
+            cpus = []
+            match = re.search(r"cpu\((\d.*)\)/cpuidle", command)
+            if match:
+                cpus = match.group(1).split("|")
+
+            indexes = []
+            match = re.search(r"cpuidle/state\((\d.*)\)/", command)
+            if match:
+                indexes = match.group(1).split("|")
+
+            cstinfos = _MOCKED_DATA['cstates'].copy()
+            for cstinfo in  _MOCKED_DATA['cstates']:
+                cpu = re.findall(r"cpu(\d.*)/cpuidle", cstinfo)[0]
+                if cpus and cpu not in cpus:
+                    cstinfos.remove(cstinfo)
+                    continue
+
+                index = re.findall(r"cpuidle/state(\d.*)/", cstinfo)[0]
+                if indexes and index not in indexes:
+                    cstinfos.remove(cstinfo)
+
+            return (cstinfos, "")
 
         if command == "lscpu":
             # Mock the call from CPUInfo.get_lscpu_info().
@@ -232,7 +253,7 @@ def get_test_cpu_info():
     'get_mocked_objects()'. Returns information as a dictionary.
     """
 
-    with get_mocked_objects() as _, CPUInfo.CPUInfo() as cpuinfo:
+    with get_mocked_objects() as _, CPUInfo.CPUInfo() as cpuinfo, CPUIdle.CPUIdle() as cpuidle:
         result = {}
         result["cpus"] = cpuinfo.get_cpus()
         result["max_cpu"] = max(result["cpus"])
@@ -240,6 +261,9 @@ def get_test_cpu_info():
         result["max_core"] = max(result["cores"])
         result["packages"] = cpuinfo.get_packages()
         result["max_package"] = max(result["packages"])
+        result["cstates"] = []
+        for cstinfo in cpuidle.get_cstates_info(cpus=[0]):
+            result["cstates"].append(cstinfo["name"])
 
         return result
 

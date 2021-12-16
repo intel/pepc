@@ -31,8 +31,11 @@ _BAD_SCOPE_OPTIONS = [
     f"--cores {_CPUINFO['max_core'] + 1}",
     f"--packages {_CPUINFO['max_package'] + 1}"]
 
-def test_cstates_info():
-    """Test 'pepc cstates info' command."""
+def test_cstates_info(caplog):
+    """
+    Test 'pepc cstates info' command. The 'caplog' argument is standard pytest fixture allowing
+    access to the captured logs.
+    """
 
     for option in _GOOD_SCOPE_OPTIONS:
         run_pepc(f"cstates info {option}", exp_ret=0)
@@ -40,14 +43,25 @@ def test_cstates_info():
     for option in _BAD_SCOPE_OPTIONS:
         run_pepc(f"cstates info {option}", exp_ret=-1)
 
+    for cstate in _CPUINFO["cstates"]:
+        caplog.clear()
+        run_pepc(f"cstates info --cpus 0 --cstates {cstate}")
+        output = "\n".join(caplog.messages)
+
+        for filtered_cst in _CPUINFO["cstates"]:
+            if filtered_cst == cstate:
+                continue
+            assert f"Name: {filtered_cst}\n" not in output
+        assert f"Name: {cstate}\n" in output
+
 def test_cstates_config():
     """Test 'pepc cstates config' command."""
 
     good_options = [
         "--enable all",
         "--disable all",
-        "--enable C6",
-        "--disable C6",
+        f"--enable {_CPUINFO['cstates'][-1]}",
+        f"--disable {_CPUINFO['cstates'][-1]}",
         "--cstate-prewake",
         "--cstate-prewake on",
         "--cstate-prewake off",
