@@ -227,7 +227,10 @@ class MSR:
             self._cache_add(regaddr, regval, cpu, dirty=dirty)
 
     def set(self, regaddr, mask, cpus="all"):
-        """Set 'mask' bits in MSR. Arguments are the same as in 'write()'."""
+        """
+        Set 'mask' bits in MSR (<MSR value> | mask). The 'regaddr' and 'cpus' arguments are the same
+        as in 'write()'.
+        """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
@@ -237,7 +240,10 @@ class MSR:
                 self.write(regaddr, new_regval, cpunum)
 
     def clear(self, regaddr, mask, cpus="all"):
-        """Clear 'mask' bits in MSR. Arguments are the same as in 'write()'."""
+        """
+        Clear 'mask' bits in MSR (<MSR value> & mask). The 'regaddr' and 'cpus' arguments are the
+        same as in 'write()'.
+        """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
