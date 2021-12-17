@@ -147,24 +147,22 @@ class FeaturedMSR:
         get_method = getattr(self, f"_get_{feature}")
         return get_method(cpu)
 
-    def _create_features_dict(self):
+    def _init_features_dict(self):
         """
-        Create an extended version of the 'self.featrues' dictionary. Add the 'supported' flag
-        for each feature, which indicates if the platform supports the feature.
+        Intitialize the 'featrues' dictionary with the following platform-specific information.
+          * Add the 'supported' flag inidcating whether the platform supports the feature.
         """
 
-        features = copy.deepcopy(self.features)
+        self.features = features = copy.deepcopy(self.features)
 
         # Add the "supported" flag.
         for finfo in features.values():
             if not "cpumodels" in finfo:
-                # No CPU models list, which means that "all models".
+                # No CPU models list, assumed the feature is supported.
                 finfo["supported"] = True
             else:
                 cpu_model = self._lscpu_info["model"]
                 finfo["supported"] = cpu_model in finfo["cpumodels"]
-
-        return features
 
     def _set_baseclass_attributes(self):
         """
@@ -223,10 +221,10 @@ class FeaturedMSR:
             raise ErrorNotSupported(msg)
 
         if self._lscpu_info["model"] not in CPUInfo.CPU_DESCR:
-            raise ErrorNotSupported(f"unsupported CPU model '{self._lscpu_info['vendor']}'"
+            raise ErrorNotSupported(f"unknown CPU model '{self._lscpu_info['vendor']}'"
                                     f"{self._proc.hostmsg}")
 
-        self.features = self._create_features_dict()
+        self._init_features_dict()
 
     def close(self):
         """Uninitialize the class object."""
