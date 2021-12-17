@@ -16,7 +16,6 @@ import logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, _FeaturedMSR
-from pepclibs.CPUInfo import CPU_DESCR as _CPU_DESCR
 
 _LOG = logging.getLogger()
 
@@ -195,7 +194,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             codes_str = ", ".join(codes)
             aliases_str = ", ".join(aliases)
             raise Error(f"cannot limit package C-state{self._proc.hostmsg}, '{limit}' is not "
-                        f"supported for CPU {_CPU_DESCR[model]} (CPU model {hex(model)}).\n"
+                        f"supported for {self._cpuinfo.cpudescr}).\n"
                         f"Supported package C-states are: {codes_str}.\n"
                         f"Supported package C-state alias names are: {aliases_str}")
 
@@ -225,9 +224,8 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         cpumodel = self._cpuinfo.info["model"]
 
         if not pcs_feature["supported"]:
-            cpu_descr = f"{_CPU_DESCR[cpumodel]} (model {hex(cpumodel)}){self._proc.hostmsg}"
-            _LOG.notice("no package C-state limit table available for CPU %s. Try to contact "
-                        "project maintainers.", cpu_descr)
+            _LOG.notice("no package C-state limit table available for %s%s. Try to contact "
+                        "project maintainers.", self._cpuinfo.cpudescr, self._proc.hostmsg)
             return
 
         limits_info = _PKG_CST_LIMITS[cpumodel]

@@ -40,14 +40,8 @@ class FeaturedMSR:
         if finfo["supported"]:
             return
 
-        model = self._cpuinfo.info["model"]
-        fmt = "%s (CPU model %#x)"
-        cpus_str = "\n* ".join([fmt % (CPUInfo.CPU_DESCR[model], model) for model in \
-                                finfo["cpumodels"]])
-        msg = f"The '{finfo['name']}' feature is not supported{self._proc.hostmsg} - CPU " \
-              f"'{self._cpuinfo.info['vendor']}, (CPU model {hex(model)})' is not supported.\n" \
-              f"The currently supported CPU models are:\n* {cpus_str}"
-        raise ErrorNotSupported(msg)
+        raise ErrorNotSupported(f"The '{finfo['name']}' feature is not supported on "
+                                f"{self._cpuinfo.cpudescr}{self._proc.hostmsg}")
 
     def _set_feature_bool(self, feature, val, cpus):
         """
@@ -208,15 +202,9 @@ class FeaturedMSR:
             self._msr = MSR.MSR(proc=self._proc)
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
-            msg = f"unsupported CPU model '{self._cpuinfo.info['model']}', model-specific " \
-                  f"register {hex(self.msr_addr)} ({self.msr_name}) is not " \
-                  f"available{self._proc.hostmsg}. {self.msr_name} is available only on Intel " \
-                  f"platforms."
-            raise ErrorNotSupported(msg)
-
-        if self._cpuinfo.info["model"] not in CPUInfo.CPU_DESCR:
-            raise ErrorNotSupported(f"unknown CPU model '{self._cpuinfo.info['model']}'"
-                                    f"{self._proc.hostmsg}")
+            raise ErrorNotSupported(f"unsupported {self._cpuinfo.descr}{self._proc.hostmsg}, "
+                                    f"model-specific register {self.msr_addr:#x} ({self.msr_name}) "
+                                    f"is available only on Intel CPUs.")
 
         self._init_features_dict()
 
