@@ -45,36 +45,12 @@ INTEL_FAM6_IVYBRIDGE_X = 0x3E      # Ivy Town Xeon.
 INTEL_FAM6_GOLDMONT_D = 0x5F       # Goldmont Atom (Denverton).
 INTEL_FAM6_TREMONT_D = 0x86        # Tremont Atom (Snow Ridge).
 
-# CPU model description.
-CPU_DESCR = {INTEL_FAM6_SAPPHIRERAPIDS_X: "Sapphire Rapids Xeon",
-             INTEL_FAM6_ALDERLAKE:        "Alder Lake client",
-             INTEL_FAM6_ALDERLAKE_L:      "Alder Lake mobile",
-             INTEL_FAM6_ROCKETLAKE:       "Rocket lake client",
-             INTEL_FAM6_LAKEFIELD:        "Lakefield client",
-             INTEL_FAM6_TIGERLAKE:        "Tiger Lake client",
-             INTEL_FAM6_TIGERLAKE_L:      "Tiger Lake mobile",
-             INTEL_FAM6_ICELAKE_L:        "Ice Lake mobile",
-             INTEL_FAM6_ICELAKE_X:        "Ice Lake Xeon",
-             INTEL_FAM6_ICELAKE_D:        "Ice Lake Xeon D",
-             INTEL_FAM6_COMETLAKE:        "Comet Lake client",
-             INTEL_FAM6_COMETLAKE_L:      "Comet Lake mobile",
-             INTEL_FAM6_KABYLAKE:         "Kaby Lake client",
-             INTEL_FAM6_KABYLAKE_L:       "Kaby Lake mobile",
-             INTEL_FAM6_CANNONLAKE_L:     "Cannonlake mobile",
-             INTEL_FAM6_SKYLAKE:          "Skylake client",
-             INTEL_FAM6_SKYLAKE_X:        "Skylake/Cascade Lake/Cooper Lake Xeon",
-             INTEL_FAM6_SKYLAKE_L:        "Skylake mobile",
-             INTEL_FAM6_BROADWELL:        "Broadwell client",
-             INTEL_FAM6_BROADWELL_X:      "Broadwell Xeon",
-             INTEL_FAM6_BROADWELL_G:      "Broadwell Xeon with Graphics",
-             INTEL_FAM6_BROADWELL_D:      "Broadwell Xeon-D",
-             INTEL_FAM6_HASWELL:          "Haswell client",
-             INTEL_FAM6_HASWELL_X:        "Haswell Xeon",
-             INTEL_FAM6_HASWELL_L:        "Haswell mobile",
-             INTEL_FAM6_HASWELL_G:        "Haswell Xeon with Graphics",
-             INTEL_FAM6_IVYBRIDGE_X:      "Ivy Town Xeon",
-             INTEL_FAM6_GOLDMONT_D:       "Goldmont Atom (Denverton)",
-             INTEL_FAM6_TREMONT_D:        "Tremont Atom (Snow Ridge)"}
+# CPU model description. Note, we keep only relatively new CPUs here, because for released CPUs
+# model name is available from the OS.
+_CPU_DESCR = {INTEL_FAM6_SAPPHIRERAPIDS_X: "Sapphire Rapids Xeon",
+              INTEL_FAM6_ALDERLAKE:        "Alder Lake client",
+              INTEL_FAM6_ALDERLAKE_L:      "Alder Lake mobile",
+              INTEL_FAM6_TREMONT_D:        "Tremont Atom (Snow Ridge)"}
 
 # The levels names have to be the same as "scope" names in 'CPUFreq', 'CPUIdle', etc.
 LEVELS = ("package", "node", "core", "CPU")
@@ -406,11 +382,19 @@ class CPUInfo:
 
         self.info = None
         self.cpugeom = None
+        # A short CPU description string.
+        self.cpudescr = None
 
         if not self._proc:
             self._proc = Procs.Proc()
 
         self.info = self._get_cpu_info()
+
+        if "Genuine Intel" in self.info["modelname"]:
+            modelname = _CPU_DESCR.get(self.info["model"], self.info["modelname"])
+        else:
+            modelname = self.info["modelname"]
+        self.cpudescr = f"{modelname} (model {self.info['model']:#x})"
 
     def close(self):
         """Uninitialize the class object."""
