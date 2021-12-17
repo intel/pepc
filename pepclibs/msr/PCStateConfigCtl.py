@@ -123,13 +123,13 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         Get package C-state limit for CPU 'cpus'. Returns a dictionary with the following keys.
           * CPU - the CPU number the limit was read at.
           * limit - the package C-state limit name (small letters, e.g., pc0).
-          * locked - a boolean, 'True' if the 'MSR_PKG_CST_CONFIG_CONTROL' register has the
-            'CFG_LOCK' bit set, so it is impossible to change the package C-state limit, and 'False'
-            otherwise.
-          * limits: list of possible package C-state limits.
-          * aliases: some package C-state may have multiple names, which means the same limit. This
-            module uses one name as the primary name, and it is provided in the 'limits' list. The
-            other names are considered to be aliases, and they are provided in the 'aliases'.
+          * locked - a boolean, 'True' if the 'MSR_PKG_CST_CONFIG_CONTROL' register is locked, so it
+                     is impossible to change the package C-state limit, and 'False' otherwise.
+          * limits - list of possible package C-state limits.
+          * aliases - some package C-state may have multiple names, which means the same limit. This
+                      module uses one name as the primary name, and it is provided in the 'limits'
+                      list. The other names are considered to be aliases, and they are provided in
+                      the 'aliases'.
         """
 
         self._check_feature_support("pkg_cstate_limit")
