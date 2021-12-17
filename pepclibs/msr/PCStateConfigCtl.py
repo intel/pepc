@@ -29,22 +29,28 @@ MAX_PKG_C_STATE_MASK = 0xF
 
 # Ice Lake and Sapphire Rapids Xeon package C-state limits.
 _ICX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6":2, "unlimited" : 7},
-                       "aliases" : {"pc6n": "pc6"}}
+                       "aliases" : {"pc6n": "pc6"},
+                       "bits"    : (3, 0)}
 # Sky-/Cascade-/Cooper- lake Xeon package C-state limits.
 _SKX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n":2, "pc6r": 3, "unlimited": 7},
-                       "aliases" : {"pc6": "pc6r"}}
+                       "aliases" : {"pc6": "pc6r"},
+                       "bits"    : (3, 0)}
 # Haswell and many other CPUs package C-state limits.
-_HSW_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3, "unlimited": 8}}
+_HSW_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3, "unlimited": 8},
+                       "bits"    : (3, 0)}
 # Ivy Town (Ivybridge Xeon) package C-state limits.
 _IVT_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n": 2, "pc6r": 3, "unlimited": 7},
-                       "aliases" : {"pc6": "pc6r"}}
+                       "aliases" : {"pc6": "pc6r"},
+                       "bits"    : (3, 0)}
 # Denverton SoC (Goldmont Atom) package C-state limits.
-_DNV_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc6": 1}}
+_DNV_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc6": 1},
+                       "bits"    : (3, 0)}
 # Snow Ridge SoC (Tremont Atom) package C-state limits.
-_SNR_PKG_CST_LIMITS = {"codes"   : {"pc0": 0}}
+_SNR_PKG_CST_LIMITS = {"codes"   : {"pc0": 0},
+                       "bits"    : (3, 0)}
 
 # Package C-state limits are platform specific.
-_PKG_CST_LIMIT_MAP = {
+_PKG_CST_LIMITS = {
         CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_D:        _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_X:        _ICX_PKG_CST_LIMITS,
@@ -77,8 +83,8 @@ _PKG_CST_LIMIT_MAP = {
 
 # Map of features available on various CPU models.
 #
-# Note 1: consider using the 'PCStateConfigCtl.features' dicionary instead of this one.
-# Note 2, the "scope" names have to be the same as "level" names in 'CPUInfo'.
+# Note: this is only the initial, general definition. Many things are platform-depeondent, so full
+#       dictionary is available in 'PCStateConfigCtl.features'.
 FEATURES = {
     "pkg_cstate_limit" : {
         "name" : "Package C-state limit",
@@ -88,9 +94,9 @@ FEATURES = {
                     (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
                     BIOS, in which case the package C-state limit can only be read, but cannot be
                     modified.""",
-        "cpumodels" : tuple(_PKG_CST_LIMIT_MAP.keys()),
+        "cpumodels" : tuple(_PKG_CST_LIMITS.keys()),
         "type" : "int",
-        "bits" : (3, 0)
+        "bits" : None,
     },
     "c1_demotion" : {
         "name" : "C1 demotion",
@@ -141,7 +147,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         model = self._lscpu_info["model"]
         if not self._pcs_rmap:
             # Build the code -> name map.
-            pcs_map = _PKG_CST_LIMIT_MAP[model]["codes"]
+            pcs_map = _PKG_CST_LIMITS[model]["codes"]
             self._pcs_rmap = {code:name for name, code in pcs_map.items()}
 
         if code not in self._pcs_rmap:
@@ -161,8 +167,8 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
             _LOG.debug(msg)
 
-        codes = _PKG_CST_LIMIT_MAP[model]["codes"]
-        aliases = _PKG_CST_LIMIT_MAP[model].get("aliases", {})
+        codes = _PKG_CST_LIMITS[model]["codes"]
+        aliases = _PKG_CST_LIMITS[model].get("aliases", {})
 
         return {"CPU" : self._cpuinfo.normalize_cpu(cpu),
                 "pkg_cstate_limit" : self._pcs_rmap[code],
@@ -179,8 +185,8 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         model = self._lscpu_info["model"]
 
         limit = str(limit).lower()
-        codes = _PKG_CST_LIMIT_MAP[model]["codes"]
-        aliases = _PKG_CST_LIMIT_MAP[model].get("aliases", {})
+        codes = _PKG_CST_LIMITS[model]["codes"]
+        aliases = _PKG_CST_LIMITS[model].get("aliases", {})
 
         if limit in aliases:
             limit = aliases[limit]
@@ -210,6 +216,23 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
             regval = (regval & ~0x07) | code
             self._msr.write(MSR_PKG_CST_CONFIG_CONTROL, regval, cpus=cpu)
+
+    def _init_features_dict(self):
+        """Intitialize the 'features' dictionary with platform-specific information."""
+
+        super()._init_features_dict()
+
+        pcs_feature = self.features["pkg_cstate_limit"]
+        cpumodel = self._lscpu_info["model"]
+
+        if not pcs_feature["supported"]:
+            cpu_descr = f"{_CPU_DESCR[cpumodel]} (model {hex(cpumodel)}){self._proc.hostmsg}"
+            _LOG.notice("no package C-state limit table available for CPU %s. Try to contact "
+                        "project maintainers.", cpu_descr)
+            return
+
+        limits_info = _PKG_CST_LIMITS[cpumodel]
+        pcs_feature["bits"] = limits_info["bits"]
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
