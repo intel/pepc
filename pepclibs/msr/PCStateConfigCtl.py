@@ -33,18 +33,15 @@ _ICX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6":2, "unlimited" : 7
 # Sky-/Cascade-/Cooper- lake Xeon package C-state limits.
 _SKX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n":2, "pc6r": 3, "unlimited": 7},
                        "aliases" : {"pc6": "pc6r"}}
-# Haswell and many other CPUs package C-state limits
-_HSW_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3, "unlimited": 8},
-                       "aliases" : {}}
+# Haswell and many other CPUs package C-state limits.
+_HSW_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3, "unlimited": 8}}
 # Ivy Town (Ivybridge Xeon) package C-state limits.
 _IVT_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n": 2, "pc6r": 3, "unlimited": 7},
                        "aliases" : {"pc6": "pc6r"}}
 # Denverton SoC (Goldmont Atom) package C-state limits.
-_DNV_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc6": 1},
-                       "aliases" : {}}
+_DNV_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc6": 1}}
 # Snow Ridge SoC (Tremont Atom) package C-state limits.
-_SNR_PKG_CST_LIMITS = {"codes"   : {"pc0": 0},
-                       "aliases" : {}}
+_SNR_PKG_CST_LIMITS = {"codes"   : {"pc0": 0}}
 
 # Package C-state limits are platform specific.
 _PKG_CST_LIMIT_MAP = {CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _ICX_PKG_CST_LIMITS,
@@ -163,7 +160,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             _LOG.debug(msg)
 
         codes = _PKG_CST_LIMIT_MAP[model]["codes"]
-        aliases = _PKG_CST_LIMIT_MAP[model]["aliases"]
+        aliases = _PKG_CST_LIMIT_MAP[model].get("aliases", {})
 
         return {"CPU" : self._cpuinfo.normalize_cpu(cpu),
                 "pkg_cstate_limit" : self._pcs_rmap[code],
@@ -181,7 +178,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         limit = str(limit).lower()
         codes = _PKG_CST_LIMIT_MAP[model]["codes"]
-        aliases = _PKG_CST_LIMIT_MAP[model]["aliases"]
+        aliases = _PKG_CST_LIMIT_MAP[model].get("aliases", {})
 
         if limit in aliases:
             limit = aliases[limit]
