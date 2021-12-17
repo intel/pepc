@@ -13,7 +13,7 @@ Registers. This module has been designed and implemented for Intel CPUs.
 
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import Procs, Logging, FSHelpers, KernelModule
+from pepclibs.helperlibs import Procs, Logging, FSHelpers, KernelModule, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 
@@ -226,6 +226,29 @@ class MSR:
 
             self._cache_add(regaddr, regval, cpu, dirty=dirty)
 
+    def _normalize_bits(self, bits):
+        """Validate and notmalize bits range 'bits'."""
+
+        orig_bits = bits
+        try:
+            if not Trivial.is_int(orig_bits[0]) or not Trivial.is_int(orig_bits[1]):
+                raise Error("bad bits range '{bits}', must be a list or tuple of 2 integers")
+
+            bits = (int(orig_bits[0]), int(orig_bits[1]))
+
+            if bits[0] < bits[1]:
+                raise Error(f"bad bits range ({bits[0]}, {bits[1]}), the first number must be "
+                            f"greater or equal to the second number")
+
+            bits_cnt = (bits[0] - bits[1]) + 1
+            if bits_cnt > self.regbits:
+                raise Error(f"too many bits in ({bits[0]}, {bits[1]}), MSRs only have "
+                            f"{self.regbits} bits")
+        except TypeError:
+            raise Error("bad bits range '{bits}', must be a list or tuple of 2 integers") from None
+
+        return bits
+
     def set_mask(self, regaddr, mask, cpus="all"):
         """
         Set 'mask' bits in MSR (<MSR value> | mask). The 'regaddr' and 'cpus' arguments are the same
@@ -259,12 +282,14 @@ class MSR:
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
+        bitnr = self._normalize_bits((bitnr, bitnr))[0]
         bitval = int(bool(bitval))
+        mask = bit_mask(bitnr)
 
         if bitval:
-            self.set_mask(regaddr, bit_mask(bitnr), cpus=cpus)
+            self.set_mask(regaddr, mask, cpus=cpus)
         else:
-            self.clear_mask(regaddr, bit_mask(bitnr), cpus=cpus)
+            self.clear_mask(regaddr, mask, cpus=cpus)
 
     def _ensure_dev_msr(self):
         """
@@ -324,8 +349,9 @@ class MSR:
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
 
-        # MSR registers' size in bytes.
-        self.regbytes = 8
+        # MSR registers' size in bits and bytes.
+        self.regbits = 64
+        self.regbytes = self.regbits // 8
 
         self._msr_drv = None
         self._unload_msr_drv = False
