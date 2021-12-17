@@ -91,7 +91,7 @@ FEATURES = {
                     modified.""",
         "cpumodels" : tuple(_PKG_CST_LIMIT_MAP.keys()),
         "type" : "int",
-        "bits" : (2, 0)
+        "bits" : (3, 0)
     },
     "c1_demotion" : {
         "name" : "C1 demotion",
@@ -134,15 +134,16 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         self._check_feature_support("pkg_cstate_limit")
 
+        feature = self.features["pkg_cstate_limit"]
+        regval = self._msr.read(self.msr_addr, cpu=cpu)
+        code = MSR.fetch_bits(feature["bits"], regval)
+        locked = bool(regval & MSR.bit_mask(CFG_LOCK))
+
         model = self._lscpu_info["model"]
         if not self._pcs_rmap:
             # Build the code -> name map.
             pcs_map = _PKG_CST_LIMIT_MAP[model]["codes"]
             self._pcs_rmap = {code:name for name, code in pcs_map.items()}
-
-        regval = self._msr.read(self.msr_addr, cpu=cpu)
-        code = regval & MAX_PKG_C_STATE_MASK
-        locked = bool(regval & MSR.bit_mask(CFG_LOCK))
 
         if code not in self._pcs_rmap:
             known_codes = ", ".join([str(cde) for cde in self._pcs_rmap])
