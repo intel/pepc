@@ -255,8 +255,6 @@ class MSR:
         as in 'write()'.
         """
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-
         for cpunum, regval in self.read_iter(regaddr, cpus):
             new_regval = regval | mask
             if regval != new_regval:
@@ -267,8 +265,6 @@ class MSR:
         Clear 'mask' bits in MSR (<MSR value> & mask). The 'regaddr' and 'cpus' arguments are the
         same as in 'write()'.
         """
-
-        cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for cpunum, regval in self.read_iter(regaddr, cpus):
             new_regval = regval & ~mask
@@ -281,7 +277,6 @@ class MSR:
         as in 'write()'.
         """
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
         bitnr = self._normalize_bits((bitnr, bitnr))[0]
         bitval = int(bool(bitval))
         mask = bit_mask(bitnr)
