@@ -133,7 +133,7 @@ class MSR:
             with self._proc.open(path, "wb") as fobj:
                 for regaddr, regval in to_write:
                     fobj.seek(regaddr)
-                    regval_bytes = regval.to_bytes(self.regsize, byteorder=_CPU_BYTEORDER)
+                    regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                     fobj.write(regval_bytes)
                     _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x", cpu, regaddr, regval)
 
@@ -146,7 +146,7 @@ class MSR:
         try:
             with self._proc.open(path, "rb") as fobj:
                 fobj.seek(regaddr)
-                regval = fobj.read(self.regsize)
+                regval = fobj.read(self.regbytes)
         except Error as err:
             raise Error(f"failed to read MSR '{hex(regaddr)}' from file '{path}'"
                         f"{self._proc.hostmsg}:\n{err}") from err
@@ -190,7 +190,7 @@ class MSR:
         """Write value 'regval' to MSR at 'regaddr' on CPU 'cpu."""
 
         if regval_bytes is None:
-            regval_bytes = regval.to_bytes(self.regsize, byteorder=_CPU_BYTEORDER)
+            regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
 
         path = Path(f"/dev/cpu/{cpu}/msr")
         try:
@@ -218,7 +218,7 @@ class MSR:
         for cpu in cpus:
             if not self._in_transaction:
                 if regval_bytes is not None:
-                    regval_bytes = regval.to_bytes(self.regsize, byteorder=_CPU_BYTEORDER)
+                    regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                 self._write(regaddr, regval, cpu, regval_bytes=regval_bytes)
                 dirty = False
             else:
@@ -325,7 +325,7 @@ class MSR:
             self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
 
         # MSR registers' size in bytes.
-        self.regsize = 8
+        self.regbytes = 8
 
         self._msr_drv = None
         self._unload_msr_drv = False

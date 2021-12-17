@@ -178,7 +178,7 @@ class mock_MSR(MSR.MSR):
 
         if regaddr in self._mocked_msr:
             read_data = int.to_bytes(self._mocked_msr[regaddr] & MAX64,
-                                     self.regsize, byteorder="little")
+                                     self.regbytes, byteorder="little")
         else:
             read_data = random.randbytes(8)
 
