@@ -405,20 +405,24 @@ class CPUInfo:
         'proc' reference and use it in various methods.
         """
 
-        if not proc:
-            proc = Procs.Proc()
-
         self._proc = proc
+
+        self._close_proc = proc is None
+        self._lscpu_cache = None
 
         self.hostname = proc.hostname
         self.hostmsg = proc.hostmsg
         self.cpugeom = None
 
-        self._lscpu_cache = None
+        if not self._proc:
+            self._proc = Procs.Proc()
 
     def close(self):
         """Uninitialize the class object."""
+
         if getattr(self, "_proc", None):
+            if getattr(self, "_close_proc", False):
+                self._proc.close()
             self._proc = None
 
     def __enter__(self):
