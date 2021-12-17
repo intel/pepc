@@ -62,6 +62,18 @@ def is_bit_set(bitnr, bitval):
     """
     return bit_mask(bitnr) & bitval
 
+def fetch_bits(bits, val):
+    """
+    Fetch bits 'bits' from an integer 'val'. The 'bits' argument is the bits range: a tuple of a
+    list of 2 intergers: (msb, lsb), where 'msb' is the more significant bit, and 'lsb' is a less
+    significant bit. For example, (3,1) would mean bits 3-1 of the MSR. In a 64-bit number, the
+    least significant bit number would be 0, and the most significan bit number would be 63.
+    """
+
+    bits_cnt = (bits[0] - bits[1]) + 1
+    mask = (1 << bits_cnt) - 1
+    return (val >> bits[1]) & mask
+
 class MSR:
     """This class provides helpers to read and write CPU Model Specific Registers."""
 
@@ -248,6 +260,58 @@ class MSR:
             raise Error("bad bits range '{bits}', must be a list or tuple of 2 integers") from None
 
         return bits
+
+    def fetch_bits(self, bits, val):
+        """
+        Fetch bits 'bits' from an MSR. The arguments are as follows:
+          * val - an MSR value to fetch the bits from.
+          * bits - same as in 'set_bits()'.
+        """
+
+        bits = self._normalize_bits(bits)
+        return fetch_bits(bits, val)
+
+    def read_bits(self, regaddr, bits, cpu=0):
+        """
+        Read bits 'bits' from an MSR. The arguments are as follows:
+          * regaddr - same as in 'write()'.
+          * bits - same as in 'set_bits()'.
+          * cpu - CPU number to get the bits from.
+        """
+
+        bits = self._normalize_bits(bits)
+        regval = self.read(regaddr, cpu=cpu)
+        return fetch_bits(bits, regval)
+
+    def set_bits(self, regaddr, bits, val, cpus="all"):
+        """
+        Set bits 'bits' in MSR to value 'val'. The arguments are as follows.
+          * regaddr - same as in 'write()'.
+          * bits - the MSR bits range. A tuple of a list of 2 intergers: (msb, lsb), where 'msb' is
+                   the more significant bit, and 'lsb' is a less significant bit. For example, (3,1)
+                   would mean bits 3-1 of the MSR. In a 64-bit number, the least significant bit
+                   number would be 0, and the most significan bit number would be 64.
+          * val - integer value to put to MSR bits 'bits'.
+          * cpus - same as in 'write()'.
+        """
+
+        bits = self._normalize_bits(bits)
+
+        if not Trivial.is_int(val):
+            raise Error(f"bad value {val}, please provide a positive integer")
+        val = int(val)
+
+        bits_cnt = (bits[0] - bits[1]) + 1
+        max_val = (1 << bits_cnt) - 1
+        if val > max_val:
+            raise Error(f"too large value {val} for bits range ({bits[0]}, {bits[1]})")
+
+        clear_mask = max_val << bits[1]
+        set_mask = val << bits[1]
+        for cpunum, regval in self.read_iter(regaddr, cpus):
+            new_regval = (regval & ~clear_mask) | set_mask
+            if regval != new_regval:
+                self.write(regaddr, new_regval, cpunum)
 
     def set_mask(self, regaddr, mask, cpus="all"):
         """
