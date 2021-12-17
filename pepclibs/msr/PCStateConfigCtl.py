@@ -40,7 +40,7 @@ _HSW_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3, "unl
 _IVT_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n": 2, "pc6r": 3, "unlimited": 7},
                        "aliases" : {"pc6": "pc6r"}}
 # Denverton SoC (Goldmont Atom) package C-state limits.
-_DNV_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc6": 3},
+_DNV_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc6": 1},
                        "aliases" : {}}
 # Snow Ridge SoC (Tremont Atom) package C-state limits.
 _SNR_PKG_CST_LIMITS = {"codes"   : {"pc0": 0},
