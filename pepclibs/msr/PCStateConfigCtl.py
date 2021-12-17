@@ -38,10 +38,10 @@ _SKX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n":2, "pc6r": 3, "un
 # Haswell and many other CPUs package C-state limits.
 _HSW_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3, "unlimited": 8},
                        "bits"    : (3, 0)}
-# Ivy Town (Ivybridge Xeon) package C-state limits.
+# Ivy Town (Ivy Bridge Xeon) package C-state limits.
 _IVT_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n": 2, "pc6r": 3, "unlimited": 7},
                        "aliases" : {"pc6": "pc6r"},
-                       "bits"    : (3, 0)}
+                       "bits"    : (2, 0)}
 # Denverton SoC (Goldmont Atom) package C-state limits.
 _DNV_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc6": 1},
                        "bits"    : (3, 0)}
