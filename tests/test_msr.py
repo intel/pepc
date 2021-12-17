@@ -67,20 +67,20 @@ class TestMSR(unittest.TestCase):
                     ref_data = int.to_bytes(_TEST_DATA & MAX64, 8, byteorder="little")
                     m_open().write.assert_called_with(ref_data)
 
-    def test_set(self, m_open):
+    def test_set_mask(self, m_open):
         """
-        Test the 'set()' method, and verify that register write is done only if the bits are not
-        already set.
+        Test the 'set_mask()' method, and verify that register write is done only if the bits are
+        not already set.
         """
 
         with MSR.MSR() as msr:
             for addr in (MSR.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, MSR.MSR_HWP_REQUEST):
                 for cpu in (0, 1, 99):
-                    msr.set(addr, _TEST_DATA & MAX64, cpus=cpu)
+                    msr.set_mask(addr, _TEST_DATA & MAX64, cpus=cpu)
                     m_open().write.assert_not_called()
 
                     new_value = _TEST_DATA + 1
-                    msr.set(addr, new_value & MAX64, cpus=cpu)
+                    msr.set_mask(addr, new_value & MAX64, cpus=cpu)
 
                     m_open().seek.assert_called_with(addr)
                     m_open().write.assert_called_once()
@@ -89,19 +89,19 @@ class TestMSR(unittest.TestCase):
                     m_open().write.assert_called_with(ref_data)
                     m_open.reset_mock()
 
-    def test_clear(self, m_open):
+    def test_clear_mask(self, m_open):
         """
-        Test the 'clear()' method, and verify that register write is done only if the bits are not
-        already cleared.
+        Test the 'clear_mask()' method, and verify that register write is done only if the bits are
+        not already cleared.
         """
 
         with MSR.MSR() as msr:
             for addr in (MSR.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, MSR.MSR_HWP_REQUEST):
                 for cpu in (0, 1, 99):
-                    msr.clear(addr, 0 & MAX64, cpus=cpu)
+                    msr.clear_mask(addr, 0 & MAX64, cpus=cpu)
                     m_open().write.assert_not_called()
 
-                    msr.clear(addr, _TEST_DATA & MAX64, cpus=cpu)
+                    msr.clear_mask(addr, _TEST_DATA & MAX64, cpus=cpu)
                     m_open().write.assert_called_once()
 
                     ref_data = int.to_bytes(0 & MAX64, 8, byteorder="little")

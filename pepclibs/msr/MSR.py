@@ -226,7 +226,7 @@ class MSR:
 
             self._cache_add(regaddr, regval, cpu, dirty=dirty)
 
-    def set(self, regaddr, mask, cpus="all"):
+    def set_mask(self, regaddr, mask, cpus="all"):
         """
         Set 'mask' bits in MSR (<MSR value> | mask). The 'regaddr' and 'cpus' arguments are the same
         as in 'write()'.
@@ -239,7 +239,7 @@ class MSR:
             if regval != new_regval:
                 self.write(regaddr, new_regval, cpunum)
 
-    def clear(self, regaddr, mask, cpus="all"):
+    def clear_mask(self, regaddr, mask, cpus="all"):
         """
         Clear 'mask' bits in MSR (<MSR value> & mask). The 'regaddr' and 'cpus' arguments are the
         same as in 'write()'.
@@ -262,9 +262,9 @@ class MSR:
         bitval = int(bool(bitval))
 
         if bitval:
-            self.set(regaddr, bit_mask(bitnr), cpus=cpus)
+            self.set_mask(regaddr, bit_mask(bitnr), cpus=cpus)
         else:
-            self.clear(regaddr, bit_mask(bitnr), cpus=cpus)
+            self.clear_mask(regaddr, bit_mask(bitnr), cpus=cpus)
 
     def _ensure_dev_msr(self):
         """
