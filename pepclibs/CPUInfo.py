@@ -79,54 +79,6 @@ CPU_DESCR = {INTEL_FAM6_SAPPHIRERAPIDS_X: "Sapphire Rapids Xeon",
 # The levels names have to be the same as "scope" names in 'CPUFreq', 'CPUIdle', etc.
 LEVELS = ("package", "node", "core", "CPU")
 
-def get_lscpu_info(proc=None):
-    """
-    Run the 'lscpu' command on the host defined by the 'proc' argument, and return the output in
-    form of a dictionary. Thie dictionary will contain the general CPU information without the
-    topology information. By default this function returns local CPU information. However, you can
-    pass it an 'SSH' object via the 'proc' argument, in which case this function will return CPU
-    information of the host the 'SSH' object is connected to.
-    """
-
-    if not proc:
-        proc = Procs.Proc()
-
-    cpuinfo = {}
-    lscpu, _ = proc.run_verify("lscpu", join=False)
-
-    # Parse misc. information about the CPU.
-    patterns = ((r"^Architecture:\s*(.*)$", "arch"),
-                (r"^Byte Order:\s*(.*)$", "byteorder"),
-                (r"^Vendor ID:\s*(.*)$", "vendor"),
-                (r"^Socket\(s\):\s*(.*)$", "packages"),
-                (r"^CPU family:\s*(.*)$", "family"),
-                (r"^Model:\s*(.*)$", "model"),
-                (r"^Model name:\s*(.*)$", "modelname"),
-                (r"^Model name:.*@\s*(.*)GHz$", "basefreq"),
-                (r"^Stepping:\s*(.*)$", "stepping"),
-                (r"^L1d cache:\s*(.*)$", "l1d"),
-                (r"^L1i cache:\s*(.*)$", "l1i"),
-                (r"^L2 cache:\s*(.*)$", "l2"),
-                (r"^L3 cache:\s*(.*)$", "l3"),
-                (r"^Flags:\s*(.*)$", "flags"))
-
-    for line in lscpu:
-        for pattern, key in patterns:
-            match = re.match(pattern, line.strip())
-            if not match:
-                continue
-
-            val = match.group(1)
-            if Trivial.is_int(val):
-                cpuinfo[key] = int(val)
-            else:
-                cpuinfo[key] = val
-
-    if cpuinfo.get("flags"):
-        cpuinfo["flags"] = cpuinfo["flags"].split()
-
-    return cpuinfo
-
 class CPUInfo:
     """
     Provide information about the CPU of a local or remote host.
@@ -398,6 +350,48 @@ class CPUInfo:
 
         return cpugeom
 
+    def _get_cpu_info(self):
+        """Get general CPU information (model, architecture, etc)."""
+
+        if self.info:
+            return self.info
+
+        self.info = cpuinfo = {}
+        lscpu, _ = self._proc.run_verify("lscpu", join=False)
+
+        # Parse misc. information about the CPU.
+        patterns = ((r"^Architecture:\s*(.*)$", "arch"),
+                    (r"^Byte Order:\s*(.*)$", "byteorder"),
+                    (r"^Vendor ID:\s*(.*)$", "vendor"),
+                    (r"^Socket\(s\):\s*(.*)$", "packages"),
+                    (r"^CPU family:\s*(.*)$", "family"),
+                    (r"^Model:\s*(.*)$", "model"),
+                    (r"^Model name:\s*(.*)$", "modelname"),
+                    (r"^Model name:.*@\s*(.*)GHz$", "basefreq"),
+                    (r"^Stepping:\s*(.*)$", "stepping"),
+                    (r"^L1d cache:\s*(.*)$", "l1d"),
+                    (r"^L1i cache:\s*(.*)$", "l1i"),
+                    (r"^L2 cache:\s*(.*)$", "l2"),
+                    (r"^L3 cache:\s*(.*)$", "l3"),
+                    (r"^Flags:\s*(.*)$", "flags"))
+
+        for line in lscpu:
+            for pattern, key in patterns:
+                match = re.match(pattern, line.strip())
+                if not match:
+                    continue
+
+                val = match.group(1)
+                if Trivial.is_int(val):
+                    cpuinfo[key] = int(val)
+                else:
+                    cpuinfo[key] = val
+
+        if cpuinfo.get("flags"):
+            cpuinfo["flags"] = cpuinfo["flags"].split()
+
+        return cpuinfo
+
     def __init__(self, proc=None):
         """
         The class constructor. The 'proc' argument is a 'Proc' or 'SSH' object that defines the
@@ -410,10 +404,13 @@ class CPUInfo:
         self._close_proc = proc is None
         self._lscpu_cache = None
 
+        self.info = None
         self.cpugeom = None
 
         if not self._proc:
             self._proc = Procs.Proc()
+
+        self.info = self._get_cpu_info()
 
     def close(self):
         """Uninitialize the class object."""
