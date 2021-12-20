@@ -344,21 +344,6 @@ class MSR:
             if regval != new_regval:
                 self.write(regaddr, new_regval, cpunum)
 
-    def toggle_bit(self, regaddr, bitnr, bitval, cpus="all"):
-        """
-        Toggle bit number 'bitnr', in MSR 'regaddr' to value 'bitval'. Other arguments are the same
-        as in 'write()'.
-        """
-
-        bitnr = self._normalize_bits((bitnr, bitnr))[0]
-        bitval = int(bool(bitval))
-        mask = bit_mask(bitnr)
-
-        if bitval:
-            self.set_mask(regaddr, mask, cpus=cpus)
-        else:
-            self.clear_mask(regaddr, mask, cpus=cpus)
-
     def _ensure_dev_msr(self):
         """
         Make sure that device nodes for accessing MSR registers are available. Try to load the MSR

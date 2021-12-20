@@ -108,25 +108,5 @@ class TestMSR(unittest.TestCase):
                     m_open().write.assert_called_with(ref_data)
                     m_open.reset_mock()
 
-    def test_toggle_bit(self, m_open):
-        """
-        Test the 'toggle_bit()' method, and verify that register write is done only when the new bit
-        value is different to the value in the register.
-        """
-
-        with MSR.MSR() as msr:
-            for addr in (MSR.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, MSR.MSR_HWP_REQUEST):
-                for cpu in (0, 1, 99):
-                    val = int(bool(_TEST_DATA & 1))
-                    msr.toggle_bit(addr, 0, val, cpus=cpu)
-                    m_open().write.assert_not_called()
-
-                    msr.toggle_bit(addr, 0, int(not bool(val)), cpus=cpu)
-                    m_open().write.assert_called_once()
-
-                    ref_data = int.to_bytes((_TEST_DATA ^ 1) & MAX64, 8, byteorder="little")
-                    m_open().write.assert_called_with(ref_data)
-                    m_open.reset_mock()
-
 if __name__ == '__main__':
     unittest.main()
