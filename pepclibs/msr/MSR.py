@@ -19,6 +19,10 @@ from pepclibs import CPUInfo
 
 _CPU_BYTEORDER = "little"
 
+# A special value which can be used to specify that all bits have to be set to "1" in methods like
+# 'set_bits()'.
+ALL_BITS_1 = object()
+
 # Platform info MSR.
 MSR_PLATFORM_INFO = 0xCE
 
@@ -291,18 +295,23 @@ class MSR:
                    the more significant bit, and 'lsb' is a less significant bit. For example, (3,1)
                    would mean bits 3-1 of the MSR. In a 64-bit number, the least significant bit
                    number would be 0, and the most significan bit number would be 64.
-          * val - integer value to put to MSR bits 'bits'.
+          * val - integer value to put to MSR bits 'bits'. Use 'MSR.ALL_BITS_1' to set all bets to
+                  '1'.
           * cpus - same as in 'write()'.
         """
 
         bits = self._normalize_bits(bits)
 
-        if not Trivial.is_int(val):
-            raise Error(f"bad value {val}, please provide a positive integer")
-        val = int(val)
-
         bits_cnt = (bits[0] - bits[1]) + 1
         max_val = (1 << bits_cnt) - 1
+
+        if val is ALL_BITS_1:
+            val = max_val
+        else:
+            if not Trivial.is_int(val):
+                raise Error(f"bad value {val}, please provide a positive integer")
+            val = int(val)
+
         if val > max_val:
             raise Error(f"too large value {val} for bits range ({bits[0]}, {bits[1]})")
 
