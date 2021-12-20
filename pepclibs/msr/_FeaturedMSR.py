@@ -45,8 +45,8 @@ class FeaturedMSR:
 
     def _set_feature_bool(self, feature, val, cpus):
         """
-        Enable or disable feature 'feature' for CPUs 'cpus'. Value 'val' can be boolean or
-        string "on" or "off".
+        Enable or disable feature 'feature' for CPUs 'cpus'. If 'val' is a boolean 'True' or a
+        string 'on', the feature gets enabled. Otherwise it gets disabled.
         """
 
         finfo = self.features[feature]
@@ -55,9 +55,15 @@ class FeaturedMSR:
         else:
             val = bool(val)
 
-        enable = finfo["vals"]["enabled"] == val
-        bitnr = finfo["bits"][0]
-        self._msr.toggle_bit(self.msr_addr, bitnr, enable, cpus=cpus)
+        if val:
+            val = finfo["vals"]["enabled"]
+        else:
+            val = finfo["vals"]["disabled"]
+
+        if val:
+            val = MSR.ALL_BITS_1
+
+        self._msr.set_bits(self.msr_addr, finfo["bits"], val, cpus=cpus)
 
     def _get_feature_bool(self, feature, cpu):
         """Returns value of a boolean feature 'feature'."""
