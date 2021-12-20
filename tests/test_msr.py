@@ -17,7 +17,8 @@ from unittest.mock import patch, mock_open, ANY
 from pepclibs.testlibs.mockedsys import mock_Proc, MAX64
 from pepclibs.msr import MSR
 
-_TEST_DATA_BYTES = random.randbytes(8)
+_MSR_BYTES = 8
+_TEST_DATA_BYTES = random.randbytes(_MSR_BYTES)
 _TEST_DATA = int.from_bytes(_TEST_DATA_BYTES, byteorder="little")
 
 #pylint:disable=no-self-use
@@ -64,7 +65,7 @@ class TestMSR(unittest.TestCase):
                     m_open.assert_called_with(Path(f"/dev/cpu/{cpu}/msr"), ANY)
                     m_open().seek.assert_called_with(addr)
 
-                    ref_data = int.to_bytes(_TEST_DATA & MAX64, 8, byteorder="little")
+                    ref_data = int.to_bytes(_TEST_DATA & MAX64, _MSR_BYTES, byteorder="little")
                     m_open().write.assert_called_with(ref_data)
 
     def test_set_mask(self, m_open):
@@ -85,7 +86,8 @@ class TestMSR(unittest.TestCase):
                     m_open().seek.assert_called_with(addr)
                     m_open().write.assert_called_once()
 
-                    ref_data = int.to_bytes((_TEST_DATA | new_value) & MAX64, 8, byteorder="little")
+                    ref_data = int.to_bytes((_TEST_DATA | new_value) & MAX64, _MSR_BYTES,
+                                            byteorder="little")
                     m_open().write.assert_called_with(ref_data)
                     m_open.reset_mock()
 
@@ -104,7 +106,7 @@ class TestMSR(unittest.TestCase):
                     msr.clear_mask(addr, _TEST_DATA & MAX64, cpus=cpu)
                     m_open().write.assert_called_once()
 
-                    ref_data = int.to_bytes(0 & MAX64, 8, byteorder="little")
+                    ref_data = int.to_bytes(0 & MAX64, _MSR_BYTES, byteorder="little")
                     m_open().write.assert_called_with(ref_data)
                     m_open.reset_mock()
 
