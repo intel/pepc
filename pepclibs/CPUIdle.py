@@ -394,59 +394,59 @@ class CPUIdle:
         return next(self.get_cstates_info(cpu, cstate))
 
     @staticmethod
-    def _check_prop(prop):
-        """Raise an error if a property 'prop' is not supported."""
+    def _check_prop(pname):
+        """Raise an error if a property 'pname' is not supported."""
 
-        if prop not in PROPS:
-            props_str = ", ".join(set(PROPS))
-            raise Error(f"property '{prop}' not supported, use one of the following: "
-                        f"{props_str}")
+        if pname not in PROPS:
+            pnames_str = ", ".join(set(PROPS))
+            raise Error(f"property '{pname}' not supported, use one of the following: "
+                        f"{pnames_str}")
 
-    def _get_pinfo(self, props, cpu):
+    def _get_pinfo(self, pnames, cpu):
         """
-        Build and return the properties information dictionary for properties in 'props' and CPU
+        Build and return the properties information dictionary for properties in 'pnames' and CPU
         number 'cpu'.
         """
 
         pinfo = {}
 
-        for prop in props:
-            if prop in PowerCtl.FEATURES:
+        for pname in pnames:
+            if pname in PowerCtl.FEATURES:
                 module = self._get_powerctl()
             else:
                 module = self._get_pcstatectl()
 
-            pinfo[prop] = {"val" : None, "keys" : {"CPU" : cpu}}
+            pinfo[pname] = {"val" : None, "keys" : {"CPU" : cpu}}
 
             try:
-                val = module.get_feature(prop, cpu)
+                val = module.get_feature(pname, cpu)
             except ErrorNotSupported:
-                pinfo[prop]["keys"][f"{prop}_supported"] = False
+                pinfo[pname]["keys"][f"{pname}_supported"] = False
                 continue
 
             if isinstance(val, dict):
-                pinfo[prop]["val"] = val[prop]
+                pinfo[pname]["val"] = val[pname]
                 for fkey, fval in val.items():
-                    pinfo[prop]["keys"][fkey] = fval
+                    pinfo[pname]["keys"][fkey] = fval
             else:
-                pinfo[prop]["val"] = val
-                pinfo[prop]["keys"][prop] = val
+                pinfo[pname]["val"] = val
+                pinfo[pname]["keys"][pname] = val
 
-            key = f"{prop}_supported"
-            if key in self.props[prop]["keys"]:
-                pinfo[prop]["keys"][f"{prop}_supported"] = True
+            key = f"{pname}_supported"
+            if key in self.props[pname]["keys"]:
+                pinfo[pname]["keys"][f"{pname}_supported"] = True
 
         return pinfo
 
-    def get_props(self, props, cpus="all"):
+    def get_props(self, pnames, cpus="all"):
         """
-        Read all properties specified in the 'props' list for CPUs in 'cpus', and for every CPU
+        Read all properties specified in the 'pnames' list for CPUs in 'cpus', and for every CPU
         yield a dictionary containing the read values of all the properties. The arguments are as
         follows.
           * cpus - the CPUs to yield the properties for, same as the 'cpus' argument of the
                    'get_cstates_info()' function.
-          * props - list or an iterable collection of properties to read and yeild the values for.
-                    These properties will be read for every CPU in 'cpus'.
+          * pnames - list or an iterable collection of properties to read and yeild the values for.
+                     These properties will be read for every CPU in 'cpus'.
 
         The yielded dictionaries have the following format.
 
@@ -464,45 +464,45 @@ class CPUIdle:
         For properties that are not supported by the CPU, the "val" key will be 'None'.
         """
 
-        for prop in props:
-            self._check_prop(prop)
+        for pname in pnames:
+            self._check_prop(pname)
 
         cpus = self._normalize_cpus(cpus)
 
         for cpu in cpus:
-            yield self._get_pinfo(props, cpu)
+            yield self._get_pinfo(pnames, cpu)
 
-    def set_prop(self, prop, val, cpus="all"):
+    def set_prop(self, pname, val, cpus="all"):
         """
-        Set value 'val' for property 'prop' for CPUs 'cpus'. The arguments are as follows.
-          * prop - name of the property to set (see 'PROPS' for the full list).
+        Set value 'val' for property 'pname' for CPUs 'cpus'. The arguments are as follows.
+          * pname - name of the property to set (see 'PROPS' for the full list).
           * val - the value to set for the property.
           * cpus - same as in 'get_cstates_info()'.
         """
 
-        self._check_prop(prop)
+        self._check_prop(pname)
 
-        if prop in PowerCtl.FEATURES:
+        if pname in PowerCtl.FEATURES:
             powerctl = self._get_powerctl()
-            powerctl.set_feature(prop, val=="on", cpus)
-        elif prop in PCStateConfigCtl.FEATURES:
+            powerctl.set_feature(pname, val=="on", cpus)
+        elif pname in PCStateConfigCtl.FEATURES:
             pcstatectl = self._get_pcstatectl()
-            pcstatectl.set_feature(prop, val, cpus=cpus)
+            pcstatectl.set_feature(pname, val, cpus=cpus)
         else:
-            raise Error(f"BUG: undefined property '{prop}'")
+            raise Error(f"BUG: undefined property '{pname}'")
 
     @staticmethod
-    def get_scope(prop):
-        """Get scope of property 'prop'. The 'prop' argument is same as in 'set_prop()'."""
+    def get_scope(pname):
+        """Get scope of property 'pname'. The 'pname' argument is same as in 'set_prop()'."""
 
-        CPUIdle._check_prop(prop)
+        CPUIdle._check_prop(pname)
 
-        if prop in PowerCtl.FEATURES:
-            return PowerCtl.FEATURES[prop]["scope"]
-        if prop in PCStateConfigCtl.FEATURES:
-            return PCStateConfigCtl.FEATURES[prop]["scope"]
+        if pname in PowerCtl.FEATURES:
+            return PowerCtl.FEATURES[pname]["scope"]
+        if pname in PCStateConfigCtl.FEATURES:
+            return PCStateConfigCtl.FEATURES[pname]["scope"]
 
-        raise Error(f"BUG: undefined property '{prop}'")
+        raise Error(f"BUG: undefined property '{pname}'")
 
     @staticmethod
     def _create_props_dict():
