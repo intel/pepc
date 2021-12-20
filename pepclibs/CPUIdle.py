@@ -402,6 +402,16 @@ class CPUIdle:
             raise Error(f"property '{pname}' not supported, use one of the following: "
                         f"{pnames_str}")
 
+    def _find_feature(self, pname, cpu):
+        """Find an MSR feature corresponding to property 'pname'."""
+
+        if pname in PowerCtl.FEATURES:
+            module = self._get_powerctl()
+        else:
+            module = self._get_pcstatectl()
+
+        return module.get_feature(pname, cpu)
+
     def _get_pinfo(self, pnames, cpu):
         """
         Build and return the properties information dictionary for properties in 'pnames' and CPU
@@ -411,15 +421,10 @@ class CPUIdle:
         pinfo = {}
 
         for pname in pnames:
-            if pname in PowerCtl.FEATURES:
-                module = self._get_powerctl()
-            else:
-                module = self._get_pcstatectl()
-
             pinfo[pname] = {"val" : None, "keys" : {"CPU" : cpu}}
 
             try:
-                val = module.get_feature(pname, cpu)
+                val = self._find_feature(pname, cpu)
             except ErrorNotSupported:
                 pinfo[pname]["keys"][f"{pname}_supported"] = False
                 continue
