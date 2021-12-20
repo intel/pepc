@@ -24,7 +24,6 @@ MSR_PKG_CST_CONFIG_CONTROL = 0xE2
 CFG_LOCK = 15
 C1_AUTO_DEMOTION_ENABLE = 26
 C1_UNDEMOTION_ENABLE = 28
-MAX_PKG_C_STATE_MASK = 0xF
 
 #
 # Package C-state limits are documented in Intel SDM, but it describes all the possible package
