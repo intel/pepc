@@ -26,56 +26,60 @@ C1_AUTO_DEMOTION_ENABLE = 26
 C1_UNDEMOTION_ENABLE = 28
 MAX_PKG_C_STATE_MASK = 0xF
 
-# Ice Lake and Sapphire Rapids Xeon package C-state limits.
-_ICX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6":2, "unlimited" : 7},
-                       "aliases" : {"pc6n": "pc6"},
-                       "bits"    : (3, 0)}
-# Sky-/Cascade-/Cooper- lake Xeon package C-state limits.
-_SKX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n":2, "pc6r": 3, "unlimited": 7},
-                       "aliases" : {"pc6": "pc6r"},
-                       "bits"    : (3, 0)}
-# Haswell and many other CPUs package C-state limits.
-_HSW_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3, "unlimited": 8},
-                       "bits"    : (3, 0)}
-# Ivy Town (Ivy Bridge Xeon) package C-state limits.
+#
+# Package C-state limits are documented in Intel SDM, but it describes all the possible package
+# C-states for a CPU model. In practice, however, specific platforms often do not support many of
+# those package C-states. For example, Xeons typically do not support anything deeper than PC6.
+#
+# In this file we are trying to define package C-states limits for platforms that we actually
+# verified.
+#
+
+#
+# Xeons.
+#
+# Ivy Bridge Xeon (Ivy Town).
 _IVT_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n": 2, "pc6r": 3, "unlimited": 7},
                        "aliases" : {"pc6": "pc6r"},
                        "bits"    : (2, 0)}
-# Denverton SoC (Goldmont Atom) package C-state limits.
+# Haswell Xeon package C-state limits.
+_HSX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3, "unlimited": 7},
+                       "bits"    : (2, 0)}
+# Broadwell-D Xeon.
+_BDWD_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3},
+                        "bits"    : (3, 0)}
+# Sky/Cascade/Cooper Lake Xeon, Skylake-D Xeon.
+_SKX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n": 2, "pc6r": 3, "unlimited": 7},
+                       "aliases" : {"pc6": "pc6r"},
+                       "bits"    : (2, 0)}
+# Ice Lake and Sapphire Rapids Xeon.
+_ICX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6":2, "unlimited" : 7},
+                       "aliases" : {"pc6n": "pc6"},
+                       "bits"    : (2, 0)}
+
+#
+# Atom-based micro servers.
+#
+# Denverton SoC (Goldmont).
 _DNV_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc6": 1},
                        "bits"    : (3, 0)}
-# Snow Ridge SoC (Tremont Atom) package C-state limits.
+# Snow Ridge SoC (Tremont).
 _SNR_PKG_CST_LIMITS = {"codes"   : {"pc0": 0},
                        "bits"    : (3, 0)}
 
-# Package C-state limits are platform specific.
+# CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
+        # Xeons.
         CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _ICX_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_ICELAKE_D:        _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_X:        _ICX_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_ICELAKE_D:        _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_SKYLAKE_X:        _SKX_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_ICELAKE_L:        _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_ALDERLAKE:        _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_ALDERLAKE_L:      _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_ROCKETLAKE:       _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_LAKEFIELD:        _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_TIGERLAKE:        _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_TIGERLAKE_L:      _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_CANNONLAKE_L:     _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_COMETLAKE:        _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_COMETLAKE_L:      _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_KABYLAKE:         _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_KABYLAKE_L:       _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_SKYLAKE:          _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_SKYLAKE_L:        _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_BROADWELL:        _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_BROADWELL_X:      _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_BROADWELL_D:      _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_BROADWELL_G:      _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_HASWELL:          _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_HASWELL_X:        _HSW_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_HASWELL_G:        _HSW_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_IVYBRIDGE_X:      _IVT_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_HASWELL_X:        _HSX_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_BROADWELL_X:      _HSX_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_BROADWELL_D:      _BDWD_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_BROADWELL_G:      _BDWD_PKG_CST_LIMITS,
+        # Atom microservers.
         CPUInfo.INTEL_FAM6_GOLDMONT_D:       _DNV_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_TREMONT_D:        _SNR_PKG_CST_LIMITS,
 }
