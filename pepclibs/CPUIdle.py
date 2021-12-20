@@ -429,6 +429,10 @@ class CPUIdle:
                 pinfo[pname]["keys"][f"{pname}_supported"] = False
                 continue
 
+            key = f"{pname}_supported"
+            if key in self.props[pname]["keys"]:
+                pinfo[pname]["keys"][f"{pname}_supported"] = True
+
             if isinstance(val, dict):
                 pinfo[pname]["val"] = val[pname]
                 for fkey, fval in val.items():
@@ -436,10 +440,6 @@ class CPUIdle:
             else:
                 pinfo[pname]["val"] = val
                 pinfo[pname]["keys"][pname] = val
-
-            key = f"{pname}_supported"
-            if key in self.props[pname]["keys"]:
-                pinfo[pname]["keys"][f"{pname}_supported"] = True
 
         return pinfo
 
