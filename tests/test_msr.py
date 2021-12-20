@@ -14,7 +14,7 @@ import random
 import unittest
 from pathlib import Path
 from unittest.mock import patch, mock_open, ANY
-from pepclibs.testlibs.mockedsys import mock_Proc, MAX64
+from pepclibs.testlibs.mockedsys import mock_Proc
 from pepclibs.msr import MSR
 
 _MSR_BYTES = 8
@@ -37,7 +37,7 @@ class TestMSR(unittest.TestCase):
                     res = msr.read(addr, cpu=cpu)
                     m_open.assert_called_with(Path(f"/dev/cpu/{cpu}/msr"), ANY)
                     m_open().seek.assert_called_with(addr)
-                    self.assertEqual(res, _TEST_DATA & MAX64)
+                    self.assertEqual(res, _TEST_DATA)
 
     def test_read_iter(self, m_open):
         """Test the 'read_iter()' method, and verify output."""
@@ -50,7 +50,7 @@ class TestMSR(unittest.TestCase):
                     m_open.assert_called_with(Path(f"/dev/cpu/{cpu}/msr"), ANY)
                     m_open().seek.assert_called_with(addr)
                     self.assertEqual(cpu, cpus.pop(0))
-                    self.assertEqual(res, _TEST_DATA & MAX64)
+                    self.assertEqual(res, _TEST_DATA)
 
                 self.assertEqual(m_open().read.call_count, 4)
                 m_open.reset_mock()
@@ -61,11 +61,11 @@ class TestMSR(unittest.TestCase):
         with MSR.MSR() as msr:
             for addr in (MSR.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, MSR.MSR_HWP_REQUEST):
                 for cpu in (0, 1, 99):
-                    msr.write(addr, _TEST_DATA & MAX64, cpus=cpu)
+                    msr.write(addr, _TEST_DATA, cpus=cpu)
                     m_open.assert_called_with(Path(f"/dev/cpu/{cpu}/msr"), ANY)
                     m_open().seek.assert_called_with(addr)
 
-                    ref_data = int.to_bytes(_TEST_DATA & MAX64, _MSR_BYTES, byteorder="little")
+                    ref_data = int.to_bytes(_TEST_DATA, _MSR_BYTES, byteorder="little")
                     m_open().write.assert_called_with(ref_data)
 
     def test_set_mask(self, m_open):
@@ -77,17 +77,16 @@ class TestMSR(unittest.TestCase):
         with MSR.MSR() as msr:
             for addr in (MSR.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, MSR.MSR_HWP_REQUEST):
                 for cpu in (0, 1, 99):
-                    msr.set_mask(addr, _TEST_DATA & MAX64, cpus=cpu)
+                    msr.set_mask(addr, _TEST_DATA, cpus=cpu)
                     m_open().write.assert_not_called()
 
                     new_value = _TEST_DATA + 1
-                    msr.set_mask(addr, new_value & MAX64, cpus=cpu)
+                    msr.set_mask(addr, new_value, cpus=cpu)
 
                     m_open().seek.assert_called_with(addr)
                     m_open().write.assert_called_once()
 
-                    ref_data = int.to_bytes((_TEST_DATA | new_value) & MAX64, _MSR_BYTES,
-                                            byteorder="little")
+                    ref_data = int.to_bytes(_TEST_DATA | new_value, _MSR_BYTES, byteorder="little")
                     m_open().write.assert_called_with(ref_data)
                     m_open.reset_mock()
 
@@ -100,13 +99,13 @@ class TestMSR(unittest.TestCase):
         with MSR.MSR() as msr:
             for addr in (MSR.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, MSR.MSR_HWP_REQUEST):
                 for cpu in (0, 1, 99):
-                    msr.clear_mask(addr, 0 & MAX64, cpus=cpu)
+                    msr.clear_mask(addr, 0, cpus=cpu)
                     m_open().write.assert_not_called()
 
-                    msr.clear_mask(addr, _TEST_DATA & MAX64, cpus=cpu)
+                    msr.clear_mask(addr, _TEST_DATA, cpus=cpu)
                     m_open().write.assert_called_once()
 
-                    ref_data = int.to_bytes(0 & MAX64, _MSR_BYTES, byteorder="little")
+                    ref_data = int.to_bytes(0, _MSR_BYTES, byteorder="little")
                     m_open().write.assert_called_with(ref_data)
                     m_open.reset_mock()
 
