@@ -100,6 +100,17 @@ FEATURES = {
         "type" : "int",
         "bits" : None,
     },
+    "locked" :  {
+        "name" : "MSR is locked",
+        "scope": "package",
+        "help" : """Lock/unlock bits 15:0 of MSR {hex(MSR_PKG_CST_CONFIG_CONTROL)}
+                    (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
+                    is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
+                    MSR.""",
+        "type" : "bool",
+        "vals" : { "enabled" : 1, "disabled" : 0},
+        "bits" : (CFG_LOCK, CFG_LOCK),
+    },
     "c1_demotion" : {
         "name" : "C1 demotion",
         "scope": "CPU",
