@@ -219,7 +219,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         code = self._normalize_pkg_cstate_limit(limit)
 
         for cpu, regval in self._msr.read_iter(MSR_PKG_CST_CONFIG_CONTROL, cpus=cpus):
-            if MSR.fetch_bits(features["locked"]["bits"], regval):
+            if MSR.fetch_bits(self.features["locked"]["bits"], regval):
                 raise Error(f"cannot set package C-state limit{self._proc.hostmsg} for CPU "
                             f"'{cpu}', MSR ({MSR_PKG_CST_CONFIG_CONTROL}) is locked. Sometimes, "
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
