@@ -441,6 +441,25 @@ class CPUIdle:
                 pinfo["val"] = val
                 pinfo["keys"][pname] = val
 
+        # Deal with the keys that were not initialized.
+        for pname in pnames:
+            pinfo = pinfos[pname]
+            for key in self.props[pname]["keys"]:
+                if key in pinfo["keys"]:
+                    continue
+                if f"{key}_supported" in pinfo["keys"]:
+                    continue
+
+                # While most of the time an MSR feature are mapped to a property, there are some
+                # features that are mapped to a key of a property. For example, the
+                # 'PCStateConfigCtl.features["locked"]' is mapped to the 'pkg_cstate_limit'
+                # property. Take care of keys like this.
+                if key.startswith(f"{pname}_"):
+                    pinfo["keys"][key] = self._find_feature(key[len(f"{pname}_"):], cpu)
+                else:
+                    raise Error(f"unitinialized key '{key}'")
+
+
         return pinfos
 
     def get_props(self, pnames, cpus="all"):
