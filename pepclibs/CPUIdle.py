@@ -418,30 +418,30 @@ class CPUIdle:
         number 'cpu'.
         """
 
-        pinfo = {}
+        pinfos = {}
 
         for pname in pnames:
-            pinfo[pname] = {"val" : None, "keys" : {"CPU" : cpu}}
+            pinfo = pinfos[pname] = {"val" : None, "keys" : {"CPU" : cpu}}
 
             try:
                 val = self._find_feature(pname, cpu)
             except ErrorNotSupported:
-                pinfo[pname]["keys"][f"{pname}_supported"] = False
+                pinfo["keys"][f"{pname}_supported"] = False
                 continue
 
             key = f"{pname}_supported"
             if key in self.props[pname]["keys"]:
-                pinfo[pname]["keys"][f"{pname}_supported"] = True
+                pinfo["keys"][f"{pname}_supported"] = True
 
             if isinstance(val, dict):
-                pinfo[pname]["val"] = val[pname]
+                pinfo["val"] = val[pname]
                 for fkey, fval in val.items():
-                    pinfo[pname]["keys"][fkey] = fval
+                    pinfo["keys"][fkey] = fval
             else:
-                pinfo[pname]["val"] = val
-                pinfo[pname]["keys"][pname] = val
+                pinfo["val"] = val
+                pinfo["keys"][pname] = val
 
-        return pinfo
+        return pinfos
 
     def get_props(self, pnames, cpus="all"):
         """
