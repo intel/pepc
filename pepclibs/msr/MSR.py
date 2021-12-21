@@ -322,28 +322,6 @@ class MSR:
             if regval != new_regval:
                 self.write(regaddr, new_regval, cpunum)
 
-    def set_mask(self, regaddr, mask, cpus="all"):
-        """
-        Set 'mask' bits in MSR (<MSR value> | mask). The 'regaddr' and 'cpus' arguments are the same
-        as in 'write()'.
-        """
-
-        for cpunum, regval in self.read_iter(regaddr, cpus):
-            new_regval = regval | mask
-            if regval != new_regval:
-                self.write(regaddr, new_regval, cpunum)
-
-    def clear_mask(self, regaddr, mask, cpus="all"):
-        """
-        Clear 'mask' bits in MSR (<MSR value> & mask). The 'regaddr' and 'cpus' arguments are the
-        same as in 'write()'.
-        """
-
-        for cpunum, regval in self.read_iter(regaddr, cpus):
-            new_regval = regval & ~mask
-            if regval != new_regval:
-                self.write(regaddr, new_regval, cpunum)
-
     def _ensure_dev_msr(self):
         """
         Make sure that device nodes for accessing MSR registers are available. Try to load the MSR
