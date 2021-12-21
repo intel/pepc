@@ -14,7 +14,7 @@ import random
 import unittest
 from pathlib import Path
 from unittest.mock import patch, mock_open, ANY
-from common import mock_Proc, MAX64
+from pepclibs.testlibs.mockedsys import mock_Proc, MAX64
 from pepclibs.msr import MSR
 
 _TEST_DATA_BYTES = random.randbytes(8)
