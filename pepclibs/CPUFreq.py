@@ -203,6 +203,9 @@ class CPUFreq:
     def _get_bclk(self):
         """Discover bus clock speed."""
 
+        if self._bclk:
+            return self._bclk
+
         cpuinfo = self._get_cpuinfo()
         _LOG.debug("CPU model: %d", cpuinfo.info["model"])
 
@@ -228,9 +231,8 @@ class CPUFreq:
         if not self._is_intel_cpu():
             return freqs
 
-        if not self._bclk:
-            self._bclk = self._get_bclk()
-            _LOG.debug("Bus clock (self._bclk): %d", self._bclk)
+        self._bclk = self._get_bclk()
+        _LOG.debug("Bus clock (self._bclk): %d", self._bclk)
 
         msr = self._get_msr()
         msr_platform_info = msr.read(MSR.MSR_PLATFORM_INFO, cpu=cpu)
