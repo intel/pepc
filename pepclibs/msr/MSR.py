@@ -247,14 +247,14 @@ class MSR:
         return bits
 
     @staticmethod
-    def _fetch_bits(bits, val):
-        """Same as 'fetch_bits()', but without input arguments checks."""
+    def _get_bits(bits, val):
+        """Same as 'get_bits()', but without input arguments checks."""
 
         bits_cnt = (bits[0] - bits[1]) + 1
         mask = (1 << bits_cnt) - 1
         return (val >> bits[1]) & mask
 
-    def fetch_bits(self, bits, val):
+    def get_bits(self, bits, val):
         """
         Fetch bits 'bits' from an MSR. The arguments are as follows:
           * val - an MSR value to fetch the bits from.
@@ -262,7 +262,7 @@ class MSR:
         """
 
         bits = self._normalize_bits(bits)
-        return self._fetch_bits(bits, val)
+        return self._get_bits(bits, val)
 
     def read_bits(self, regaddr, bits, cpu=0):
         """
@@ -274,7 +274,7 @@ class MSR:
 
         bits = self._normalize_bits(bits)
         regval = self.read(regaddr, cpu=cpu)
-        return self._fetch_bits(bits, regval)
+        return self._get_bits(bits, regval)
 
     def write_bits(self, regaddr, bits, val, cpus="all"):
         """
