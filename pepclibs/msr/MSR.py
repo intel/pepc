@@ -59,13 +59,6 @@ def bit_mask(bitnr):
     """Return bitmask for a bit by its number."""
     return 1 << bitnr
 
-def is_bit_set(bitnr, bitval):
-    """
-    Return 'True' if bit number 'bitnr' is set in MSR value 'bitval', otherwise returns
-    'False'.
-    """
-    return bit_mask(bitnr) & bitval
-
 def fetch_bits(bits, val):
     """
     Fetch bits 'bits' from an integer 'val'. The 'bits' argument is the bits range: a tuple of a
