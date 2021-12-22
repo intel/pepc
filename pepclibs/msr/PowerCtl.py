@@ -30,6 +30,15 @@ MSR_POWER_CTL = 0x1FC
 #         on some platforms, like Ice Lake Xeon. Therefore we mark it as "supported" only for those
 #         platforms where we know it works.
 FEATURES = {
+    "c1e_autopromote" : {
+        "name" : "C1E autopromote",
+        "scope": "package",
+        "help" : f"""When enabled, the CPU automatically converts all C1 requests to C1E requests.
+                     This CPU feature is controlled by MSR {MSR_POWER_CTL:#x}, bit {1}.""",
+        "type" : "bool",
+        "vals" : { "enabled" : 1, "disabled" : 0},
+        "bits" : (1, 1),
+    },
     "cstate_prewake" : {
         "name" : "C-state prewake",
         "scope": "package",
@@ -41,15 +50,6 @@ FEATURES = {
         "type" : "bool",
         "vals" : { "enabled" : 0, "disabled" : 1},
         "bits" : (30, 30),
-    },
-    "c1e_autopromote" : {
-        "name" : "C1E autopromote",
-        "scope": "package",
-        "help" : f"""When enabled, the CPU automatically converts all C1 requests to C1E requests.
-                     This CPU feature is controlled by MSR {MSR_POWER_CTL:#x}, bit {1}.""",
-        "type" : "bool",
-        "vals" : { "enabled" : 1, "disabled" : 0},
-        "bits" : (1, 1),
     },
 }
 
