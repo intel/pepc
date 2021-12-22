@@ -246,17 +246,17 @@ class MSR:
 
         return bits
 
-    def get_bits(self, bits, val):
+    def get_bits(self, regval, bits):
         """
         Fetch bits 'bits' from an MSR. The arguments are as follows.
-          * val - an MSR value to fetch the bits from.
+          * regval - an MSR value to fetch the bits from.
           * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
         """
 
         bits = self._normalize_bits(bits)
         bits_cnt = (bits[0] - bits[1]) + 1
         mask = (1 << bits_cnt) - 1
-        return (val >> bits[1]) & mask
+        return (regval >> bits[1]) & mask
 
     def read_bits(self, regaddr, bits, cpu=0):
         """
@@ -267,7 +267,7 @@ class MSR:
         """
 
         regval = self.read(regaddr, cpu=cpu)
-        return self.get_bits(bits, regval)
+        return self.get_bits(regval, bits)
 
     def set_bits(self, regval, bits, val):
         """
