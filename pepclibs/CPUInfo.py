@@ -15,35 +15,53 @@ from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
 from pepclibs.helperlibs import ArgParse, Procs, Trivial
 
 # CPU model numbers.
-INTEL_FAM6_SAPPHIRERAPIDS_X = 0x8F # Sapphire Rapids Xeon.
-INTEL_FAM6_ALDERLAKE = 0x97        # Alder Lake client.
-INTEL_FAM6_ALDERLAKE_L = 0x9A      # Alder Lake mobile.
-INTEL_FAM6_ROCKETLAKE = 0xA7       # Rocket lake client.
-INTEL_FAM6_LAKEFIELD = 0x8A        # Lakefield client.
-INTEL_FAM6_TIGERLAKE = 0x8D        # Tiger Lake client.
-INTEL_FAM6_TIGERLAKE_L = 0x8C      # Tiger Lake mobile.
-INTEL_FAM6_ICELAKE_X = 0x6A        # Ice Lake Xeon.
-INTEL_FAM6_ICELAKE_D = 0x6C        # Ice Lake Xeon D.
-INTEL_FAM6_ICELAKE_L = 0x66        # Ice Lake mobile.
-INTEL_FAM6_COMETLAKE = 0xA5        # Comet Lake client.
-INTEL_FAM6_COMETLAKE_L = 0xA6      # Comet Lake mobile.
-INTEL_FAM6_KABYLAKE = 0x9E         # Kaby Lake client.
-INTEL_FAM6_KABYLAKE_L = 0x8E       # Kaby Lake mobile.
-INTEL_FAM6_CANNONLAKE_L = 0x66     # Cannonlake mobile.
-INTEL_FAM6_SKYLAKE = 0x5E          # Skylake client.
-INTEL_FAM6_SKYLAKE_X = 0x55        # Skylake, Cascade Lake, and Cooper Lake Xeon.
-INTEL_FAM6_SKYLAKE_L = 0x4E        # Skylake mobile.
-INTEL_FAM6_BROADWELL = 0x3D        # Broadwell client.
-INTEL_FAM6_BROADWELL_X = 0x4F      # Broadwell Xeon.
-INTEL_FAM6_BROADWELL_G = 0x47      # Broadwell Xeon with Graphics.
-INTEL_FAM6_BROADWELL_D = 0x56      # Broadwell Xeon-D.
-INTEL_FAM6_HASWELL = 0x3C          # Haswell client.
-INTEL_FAM6_HASWELL_X = 0x3F        # Haswell Xeon.
-INTEL_FAM6_HASWELL_L = 0x45        # Haswell mobile.
-INTEL_FAM6_HASWELL_G = 0x46        # Haswell Xeon with Graphics.
-INTEL_FAM6_IVYBRIDGE_X = 0x3E      # Ivy Town Xeon.
-INTEL_FAM6_GOLDMONT_D = 0x5F       # Goldmont Atom (Denverton).
-INTEL_FAM6_TREMONT_D = 0x86        # Tremont Atom (Snow Ridge).
+#
+# Xeons.
+INTEL_FAM6_SAPPHIRERAPIDS_X = 0x8F     # Sapphire Rapids Xeon.
+INTEL_FAM6_ICELAKE_X = 0x6A            # Ice Lake Xeon.
+INTEL_FAM6_ICELAKE_D = 0x6C            # Ice Lake Xeon D.
+INTEL_FAM6_SKYLAKE_X = 0x55            # Skylake, Cascade Lake, and Cooper Lake Xeon.
+INTEL_FAM6_BROADWELL_X = 0x4F          # Broadwell Xeon.
+INTEL_FAM6_BROADWELL_G = 0x47          # Broadwell Xeon with Graphics.
+INTEL_FAM6_BROADWELL_D = 0x56          # Broadwell Xeon-D.
+INTEL_FAM6_HASWELL_X = 0x3F            # Haswell Xeon.
+INTEL_FAM6_HASWELL_G = 0x46            # Haswell Xeon with Graphics.
+INTEL_FAM6_IVYBRIDGE_X = 0x3E          # Ivy Town Xeon.
+
+# Clients.
+INTEL_FAM6_ALDERLAKE = 0x97            # Alder Lake client.
+INTEL_FAM6_ALDERLAKE_L = 0x9A          # Alder Lake mobile.
+INTEL_FAM6_ROCKETLAKE = 0xA7           # Rocket lake client.
+INTEL_FAM6_LAKEFIELD = 0x8A            # Lakefield client.
+INTEL_FAM6_TIGERLAKE = 0x8D            # Tiger Lake client.
+INTEL_FAM6_TIGERLAKE_L = 0x8C          # Tiger Lake mobile.
+INTEL_FAM6_ICELAKE_L = 0x66            # Ice Lake mobile.
+INTEL_FAM6_COMETLAKE = 0xA5            # Comet Lake client.
+INTEL_FAM6_COMETLAKE_L = 0xA6          # Comet Lake mobile.
+INTEL_FAM6_KABYLAKE = 0x9E             # Kaby Lake client.
+INTEL_FAM6_KABYLAKE_L = 0x8E           # Kaby Lake mobile.
+INTEL_FAM6_CANNONLAKE_L = 0x66         # Cannonlake mobile.
+INTEL_FAM6_SKYLAKE = 0x5E              # Skylake client.
+INTEL_FAM6_SKYLAKE_L = 0x4E            # Skylake mobile.
+INTEL_FAM6_BROADWELL = 0x3D            # Broadwell client.
+INTEL_FAM6_HASWELL = 0x3C              # Haswell client.
+INTEL_FAM6_HASWELL_L = 0x45            # Haswell mobile.
+INTEL_FAM6_CORE2_MEROM = 0x0F          # Intel Core 2.
+
+# Atoms.
+INTEL_FAM6_ATOM_BONNELL_MID = 0x26     # Silverthorne, Lincroft.
+INTEL_FAM6_ATOM_BONNELL = 0x1C         # Diamondville, Pineview.
+INTEL_FAM6_ATOM_SALTWELL = 0x36        # Cedarview.
+INTEL_FAM6_ATOM_SALTWELL_MID = 0x27    # Penwell.
+INTEL_FAM6_ATOM_SALTWELL_TABLET = 0x35 # Cloverview.
+INTEL_FAM6_ATOM_SILVERMONT = 0x37      # Bay Trail, Valleyview.
+INTEL_FAM6_ATOM_SILVERMONT_MID = 0x4A  # Merriefield.
+INTEL_FAM6_ATOM_SILVERMONT_MID1 = 0x5A # Moorefield.
+INTEL_FAM6_ATOM_AIRMONT = 0x4C         # Cherry Trail, Braswell.
+
+# Atom microservers.
+INTEL_FAM6_GOLDMONT_D = 0x5F           # Goldmont Atom (Denverton).
+INTEL_FAM6_TREMONT_D = 0x86            # Tremont Atom (Snow Ridge).
 
 # CPU model description. Note, we keep only relatively new CPUs here, because for released CPUs
 # model name is available from the OS.
