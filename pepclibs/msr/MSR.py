@@ -276,21 +276,16 @@ class MSR:
         regval = self.read(regaddr, cpu=cpu)
         return self._get_bits(bits, regval)
 
-    def write_bits(self, regaddr, bits, val, cpus="all"):
+    def set_bits(self, regval, bits, val):
         """
-        Write value 'val' to bits 'bits' of an MSR at 'regaddr'. The arguments are as follows.
-          * regaddr - address of the MSR to write the bits to.
-          * bits - the MSR bits range. A tuple of a list of 2 integers: (msb, lsb), where 'msb' is
-                   the more significant bit, and 'lsb' is a less significant bit. For example, (3,1)
-                   would mean bits 3-1 of the MSR. In a 64-bit number, the least significant bit
-                   number would be 0, and the most significant bit number would be 64.
-          * val - the integer value to write to MSR bits 'bits'. Use 'MSR.ALL_BITS_1' to set all
-                  bits to '1'.
-          * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read_iter()').
+        Set bits 'bits' to value 'val' in an MSR value 'regval', and return the result. The
+        arguments are as follows.
+          * regval - an MSR register value to set the bits in.
+          * bits - the bits range to set (similar to the 'bits' argument in 'write_bits()').
+          * val - the value to set the bits to (same as in 'write_bits()')
         """
 
         bits = self._normalize_bits(bits)
-
         bits_cnt = (bits[0] - bits[1]) + 1
         max_val = (1 << bits_cnt) - 1
 
@@ -306,8 +301,23 @@ class MSR:
 
         clear_mask = max_val << bits[1]
         set_mask = val << bits[1]
+        return (regval & ~clear_mask) | set_mask
+
+    def write_bits(self, regaddr, bits, val, cpus="all"):
+        """
+        Write value 'val' to bits 'bits' of an MSR at 'regaddr'. The arguments are as follows.
+          * regaddr - address of the MSR to write the bits to.
+          * bits - the MSR bits range. A tuple of a list of 2 integers: (msb, lsb), where 'msb' is
+                   the more significant bit, and 'lsb' is a less significant bit. For example, (3,1)
+                   would mean bits 3-1 of the MSR. In a 64-bit number, the least significant bit
+                   number would be 0, and the most significant bit number would be 64.
+          * val - the integer value to write to MSR bits 'bits'. Use 'MSR.ALL_BITS_1' to set all
+                  bits to '1'.
+          * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read_iter()').
+        """
+
         for cpunum, regval in self.read_iter(regaddr, cpus):
-            new_regval = (regval & ~clear_mask) | set_mask
+            new_regval = self.set_bits(regval, bits, val)
             if regval != new_regval:
                 self.write(regaddr, new_regval, cpunum)
 
