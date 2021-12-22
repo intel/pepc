@@ -213,15 +213,16 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         self._check_feature_support("pkg_cstate_limit")
         code = self._normalize_pkg_cstate_limit(limit)
+        feature = self.features["locked"]
 
-        for cpu, regval in self._msr.read_iter(MSR_PKG_CST_CONFIG_CONTROL, cpus=cpus):
-            if self._msr.get_bits(regval, self.features["locked"]["bits"]):
+        for cpu, regval in self._msr.read_iter(self.regaddr, cpus=cpus):
+            if self._msr.get_bits(regval, feature["bits"]):
                 raise Error(f"cannot set package C-state limit{self._proc.hostmsg} for CPU "
                             f"'{cpu}', MSR ({MSR_PKG_CST_CONFIG_CONTROL}) is locked. Sometimes, "
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
 
-            regval = (regval & ~0x07) | code
-            self._msr.write(MSR_PKG_CST_CONFIG_CONTROL, regval, cpus=cpu)
+            regval = self._msr.set_bits(regval, feature["bits"], code)
+            self._msr.write(self.regaddr, regval, cpus=cpu)
 
     def _init_features_dict(self):
         """Intitialize the 'features' dictionary with platform-specific information."""
