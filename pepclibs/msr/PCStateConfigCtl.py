@@ -15,7 +15,7 @@ found on many Intel platforms.
 import logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
-from pepclibs.msr import MSR, _FeaturedMSR
+from pepclibs.msr import _FeaturedMSR
 
 _LOG = logging.getLogger()
 
@@ -153,8 +153,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         self._check_feature_support("pkg_cstate_limit")
 
         feature = self.features["pkg_cstate_limit"]
-        regval = self._msr.read(self.msr_addr, cpu=cpu)
-        code = MSR.fetch_bits(feature["bits"], regval)
+        code = self._msr.read_bits(self.msr_addr, feature["bits"], cpu=cpu)
 
         model = self._cpuinfo.info["model"]
         if not self._pcs_rmap:
@@ -219,7 +218,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         code = self._normalize_pkg_cstate_limit(limit)
 
         for cpu, regval in self._msr.read_iter(MSR_PKG_CST_CONFIG_CONTROL, cpus=cpus):
-            if MSR.fetch_bits(self.features["locked"]["bits"], regval):
+            if self._msr.fetch_bits(self.features["locked"]["bits"], regval):
                 raise Error(f"cannot set package C-state limit{self._proc.hostmsg} for CPU "
                             f"'{cpu}', MSR ({MSR_PKG_CST_CONFIG_CONTROL}) is locked. Sometimes, "
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
