@@ -114,9 +114,6 @@ _BCLK_100MHZ = {
         CPUInfo.INTEL_FAM6_XEON_PHI_KNM,
 }
 
-_BCLK_SLM = {CPUInfo.INTEL_FAM6_ATOM_SILVERMONT,
-             CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D}
-
 # This dictionary describes various CPU properties this module controls.
 # Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
 PROPS = {
@@ -220,21 +217,19 @@ class CPUFreq:
             return self._bclk
 
         cpuinfo = self._get_cpuinfo()
-        _LOG.debug("CPU model: %d", cpuinfo.info["model"])
-
         if cpuinfo.info["model"] in _BCLK_100MHZ:
-            return 100.00
+            return 100.0
 
-        if cpuinfo.info["model"] in _BCLK_SLM:
-            _slm_freq_table = [83.3, 100.0, 133.3, 116.7, 80.0]
-            try:
-                msr = self._get_msr()
-                val = msr.read(MSR.MSR_FSB_FREQ) & 0xF
-                bus_clk = _slm_freq_table[val]
-            except Error:
-                bus_clk = _slm_freq_table[3]
-            return bus_clk
+        # Some platforms provide bus clock via the FSB_FREQ MSR.
 
+        from pepclibs.msr import FSBFreq # pylint: disable=import-outside-toplevel
+
+        msr = self._get_msr()
+        fsbfreq = FSBFreq.FSBFreq(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
+        if fsbfreq.features["fsb"]["supported"]:
+            return fsbfreq.get_feature("fsb", cpu=0)
+
+        # Fall back to 133.33 clock speed.
         return 133.33
 
     def _get_platform_freqs(self, cpu):
