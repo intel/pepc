@@ -63,12 +63,12 @@ class FeaturedMSR:
         if val:
             val = MSR.ALL_BITS_1
 
-        self._msr.write_bits(self.msr_addr, finfo["bits"], val, cpus=cpus)
+        self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus)
 
     def _get_feature_bool(self, feature, cpu):
         """Returns value of a boolean feature 'feature'."""
 
-        bitval = self._msr.read_bits(self.msr_addr, self.features[feature]["bits"], cpu=cpu)
+        bitval = self._msr.read_bits(self.regaddr, self.features[feature]["bits"], cpu=cpu)
         return self.features[feature]["vals"]["enabled"] == bitval
 
     def feature_supported(self, feature):
@@ -166,8 +166,8 @@ class FeaturedMSR:
         This method must be provided by the sub-class and it must initialized the following
         attributes:
           * self.features - the features dictionary.
-          * self.msr_addr - the featured MSR address.
-          * self.msr_name = the featured MSR name.
+          * self.regaddr - the featured MSR address.
+          * self.regname = the featured MSR name.
         """
 
     def __init__(self, proc=None, cpuinfo=None, msr=None):
@@ -190,8 +190,8 @@ class FeaturedMSR:
         self._close_msr = msr is None
 
         self.features = None
-        self.msr_addr = None
-        self.msr_name = None
+        self.regaddr = None
+        self.regname = None
 
         self._set_baseclass_attributes()
 
@@ -206,7 +206,7 @@ class FeaturedMSR:
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
             raise ErrorNotSupported(f"unsupported {self._cpuinfo.descr}{self._proc.hostmsg}, "
-                                    f"model-specific register {self.msr_addr:#x} ({self.msr_name}) "
+                                    f"model-specific register {self.regaddr:#x} ({self.regname}) "
                                     f"is available only on Intel CPUs.")
 
         self._init_features_dict()

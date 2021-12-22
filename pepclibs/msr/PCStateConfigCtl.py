@@ -150,7 +150,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         self._check_feature_support("pkg_cstate_limit")
 
         feature = self.features["pkg_cstate_limit"]
-        code = self._msr.read_bits(self.msr_addr, feature["bits"], cpu=cpu)
+        code = self._msr.read_bits(self.regaddr, feature["bits"], cpu=cpu)
 
         model = self._cpuinfo.info["model"]
         if not self._pcs_rmap:
@@ -160,8 +160,8 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         if code not in self._pcs_rmap:
             known_codes = ", ".join([str(cde) for cde in self._pcs_rmap])
-            msg = f"unexpected package C-state limit code '{code}' read from '{self.msr_name}' " \
-                  f"MSR ({self.msr_addr}){self._proc.hostmsg}, known codes are: {known_codes}"
+            msg = f"unexpected package C-state limit code '{code}' read from '{self.regname}' " \
+                  f"MSR ({self.regaddr}){self._proc.hostmsg}, known codes are: {known_codes}"
 
             # No exact match. The limit is the closest lower known number. For example, if the
             # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the limit is
@@ -243,8 +243,8 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
-        self.msr_addr = MSR_PKG_CST_CONFIG_CONTROL
-        self.msr_name = "MSR_PKG_CST_CONFIG_CONTROL"
+        self.regaddr = MSR_PKG_CST_CONFIG_CONTROL
+        self.regname = "MSR_PKG_CST_CONFIG_CONTROL"
 
     def __init__(self, proc=None, cpuinfo=None, msr=None):
         """

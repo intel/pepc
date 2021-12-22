@@ -63,8 +63,8 @@ class PowerCtl(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
-        self.msr_addr = MSR_POWER_CTL
-        self.msr_name = "MSR_POWER_CTL"
+        self.regaddr = MSR_POWER_CTL
+        self.regname = "MSR_POWER_CTL"
 
     def __init__(self, proc=None, cpuinfo=None, msr=None):
         """
