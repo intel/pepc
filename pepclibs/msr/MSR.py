@@ -36,7 +36,7 @@ MLC_SPACIAL = 1
 DCU_STREAMER = 2
 DCU_IP = 3
 
-# Turbo ratio limit MSR, informs about turbo frequencies for core croups.
+# Turbo ratio limit MSR, informs about turbo frequencies for core groups.
 MSR_TURBO_RATIO_LIMIT = 0x1AD
 
 # Energy performance bias MSR.
@@ -88,7 +88,7 @@ class MSR:
 
     def start_transaction(self):
         """
-        Start transaction. All writes to MSR registers will be cahched, and will only be written
+        Start transaction. All writes to MSR registers will be cached, and will only be written
         to the actual hardware on 'commit_transaction()'.
         """
 
@@ -133,7 +133,7 @@ class MSR:
         self._in_transaction = False
 
     def _read(self, regaddr, cpu):
-        """Read MSR at address 'regaddr' on CPU 'cpu'."""
+        """Read an MSR at address 'regaddr' on CPU 'cpu'."""
 
         path = Path(f"/dev/cpu/{cpu}/msr")
         try:
@@ -151,12 +151,15 @@ class MSR:
 
     def read_iter(self, regaddr, cpus="all"):
         """
-        Read an MSR register on one or multiple CPUs and yield tuple with CPU number and the read
-        result.
+        Read an MSR on CPUs 'cpus' and yield the result. The arguments are as follows.
           * regaddr - address of the MSR to read.
-          * cpus - list of CPU numbers value should be read from. It is the same as the 'cpus'
-                   argument of the 'CPUIdle.get_cstates_info()' function - please, refer to the
-                   'CPUIdle' module for the exact format description.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+
+        The yielded tuples are '(cpunum, regval)'.
+          * cpunum - the CPU number the MSR was read at.
+          * regval - the read value.
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
@@ -173,7 +176,9 @@ class MSR:
 
     def read(self, regaddr, cpu=0):
         """
-        Read an MSR on single CPU and return read result. Arguments are same as in read_iter().
+        Read an MSR at 'regaddr' CPU 'cpu' and return read result. Arguments are as follows.
+          * regaddr - address of the MSR to read.
+          * cpu - The CPU to read the MSR at. Can be an integer or a string with an integer number.
         """
 
         _, msr = next(self.read_iter(regaddr, cpu))
@@ -197,12 +202,10 @@ class MSR:
 
     def write(self, regaddr, regval, cpus="all"):
         """
-        Write to MSR register. The arguments are as follows.
+        Write 'regval' to an MSR at 'regaddr'. The arguments are as follows.
           * regaddr - address of the MSR to write to.
-          * regval - integer value to write to MSR.
-          * cpus - list of CPU numbers write should be done at. It is the same as the 'cpus'
-                   argument of the 'CPUIdle.get_cstates_info()' function - please, refer to the
-                   'CPUIdle' module for the exact format description.
+          * regval - the value to write to the MSR.
+          * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read_iter()').
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
@@ -220,7 +223,7 @@ class MSR:
             self._cache_add(regaddr, regval, cpu, dirty=dirty)
 
     def _normalize_bits(self, bits):
-        """Validate and notmalize bits range 'bits'."""
+        """Validate and normalize bits range 'bits'."""
 
         orig_bits = bits
         try:
@@ -254,7 +257,7 @@ class MSR:
         """
         Fetch bits 'bits' from an MSR. The arguments are as follows:
           * val - an MSR value to fetch the bits from.
-          * bits - same as in 'write_bits()'.
+          * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
         """
 
         bits = self._normalize_bits(bits)
@@ -263,9 +266,9 @@ class MSR:
     def read_bits(self, regaddr, bits, cpu=0):
         """
         Read bits 'bits' from an MSR at 'regaddr'. The arguments are as follows:
-          * regaddr - same as in 'write()'.
-          * bits - same as in 'write_bits()'.
-          * cpu - CPU number to get the bits from.
+          * regaddr - address of the MSR to read the bits from.
+          * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
+          * cpu - CPU number to get the bits from (same as in 'read()').
         """
 
         bits = self._normalize_bits(bits)
@@ -275,14 +278,14 @@ class MSR:
     def write_bits(self, regaddr, bits, val, cpus="all"):
         """
         Write value 'val' to bits 'bits' of an MSR at 'regaddr'. The arguments are as follows.
-          * regaddr - same as in 'write()'.
-          * bits - the MSR bits range. A tuple of a list of 2 intergers: (msb, lsb), where 'msb' is
+          * regaddr - address of the MSR to write the bits to.
+          * bits - the MSR bits range. A tuple of a list of 2 integers: (msb, lsb), where 'msb' is
                    the more significant bit, and 'lsb' is a less significant bit. For example, (3,1)
                    would mean bits 3-1 of the MSR. In a 64-bit number, the least significant bit
-                   number would be 0, and the most significan bit number would be 64.
-          * val - integer value to put to MSR bits 'bits'. Use 'MSR.ALL_BITS_1' to set all bets to
-                  '1'.
-          * cpus - same as in 'write()'.
+                   number would be 0, and the most significant bit number would be 64.
+          * val - the integer value to write to MSR bits 'bits'. Use 'MSR.ALL_BITS_1' to set all
+                  bits to '1'.
+          * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read_iter()').
         """
 
         bits = self._normalize_bits(bits)
