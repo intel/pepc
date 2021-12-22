@@ -24,8 +24,11 @@ MSR_POWER_CTL = 0x1FC
 
 # Description of CPU features controlled by the the Power Control MSR.
 #
-# Note 1: consider using the 'PowerCtl.features' dicionary instead of this one.
-# Note 2, the "scope" names have to be the same as "level" names in 'CPUInfo'.
+# Note 1: this is only the initial, general definition. Some things are platform-dependent, so full
+#          dictionary is available in 'PCStateConfigCtl.features'.
+# Note 2: while the "C-state prewake" feature available on many CPUs, in practice it works only on
+#         on some platforms, like Ice Lake Xeon. Therefore we mark it as "supported" only for those
+#         platforms where we know it works.
 FEATURES = {
     "cstate_prewake" : {
         "name" : "C-state prewake",
@@ -33,7 +36,8 @@ FEATURES = {
         "help" : f"""When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                      the next local APIC timer event. This CPU feature is controlled by MSR
                      {MSR_POWER_CTL:#x}, bit {30}.""",
-        "cpumodels" : (CPUInfo.INTEL_FAM6_ICELAKE_X, CPUInfo.INTEL_FAM6_ICELAKE_D),
+        "cpumodels" : (CPUInfo.INTEL_FAM6_IVYBRIDGE_X, CPUInfo.INTEL_FAM6_ICELAKE_X,
+                       CPUInfo.INTEL_FAM6_ICELAKE_D),
         "type" : "bool",
         "vals" : { "enabled" : 0, "disabled" : 1},
         "bits" : (30, 30),
