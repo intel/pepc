@@ -66,43 +66,43 @@ _EPB_POLICIES = {"performance": 0, "balance_performance": 4, "normal": 6, "balan
 _LOG = logging.getLogger()
 _RAISE = object()
 
-# CPU IDs with 100Mhz bus clock.
-_BCLK_100MHZ = {0x2A, # INTEL_FAM6_SANDYBRIDGE
-                0x2D, # INTEL_FAM6_SANDYBRIDGE_X
-                0x3A, # INTEL_FAM6_IVYBRIDGE
-                0x3E, # INTEL_FAM6_IVYBRIDGE_X
-                0x3C, # INTEL_FAM6_HASWELL_CORE
-                0x3F, # INTEL_FAM6_HASWELL_X
-                0x45, # INTEL_FAM6_HASWELL_ULT
-                0x46, # INTEL_FAM6_HASWELL_GT3E
-                0x3D, # INTEL_FAM6_BROADWELL_CORE
-                0x47, # INTEL_FAM6_BROADWELL_GT3E
-                0x4F, # INTEL_FAM6_BROADWELL_X
-                0x56, # INTEL_FAM6_BROADWELL_D
-                0x4E, # INTEL_FAM6_SKYLAKE_L
-                0x5E, # INTEL_FAM6_SKYLAKE
-                0x8E, # INTEL_FAM6_KABYLAKE_L
-                0x9E, # INTEL_FAM6_KABYLAKE
-                0xA5, # INTEL_FAM6_COMETLAKE
-                0xA6, # INTEL_FAM6_COMETLAKE_L
-                0x66, # INTEL_FAM6_CANNONLAKE_L
-                0x7E, # INTEL_FAM6_ICELAKE_L
-                0x9D, # INTEL_FAM6_ICELAKE_NNPI
-                0x8C, # INTEL_FAM6_TIGERLAKE_L
-                0x8D, # INTEL_FAM6_TIGERLAKE
-                0x55, # INTEL_FAM6_SKYLAKE_X
-                0x6A, # INTEL_FAM6_ICELAKE_X
-                0x5C, # INTEL_FAM6_ATOM_GOLDMONT
-                0x5F, # INTEL_FAM6_ATOM_GOLDMONT_D
-                0x86, # INTEL_FAM6_ATOM_TREMONT_D
-                0x7A, # INTEL_FAM6_ATOM_GOLDMONT_PLUS
-                0x96, # INTEL_FAM6_ATOM_TREMONT
-                0x9C, # INTEL_FAM6_ATOM_TREMONT_L
-                0x57, # INTEL_FAM6_XEON_PHI_KNL
-                0x85} # INTEL_FAM6_XEON_PHI_KNM
+# CPUs with 100Mhz bus clock.
+_BCLK_100MHZ = {CPUInfo.INTEL_FAM6_SANDYBRIDGE,
+                CPUInfo.INTEL_FAM6_SANDYBRIDGE_X,
+                CPUInfo.INTEL_FAM6_IVYBRIDGE,
+                CPUInfo.INTEL_FAM6_IVYBRIDGE_X,
+                CPUInfo.INTEL_FAM6_HASWELL,
+                CPUInfo.INTEL_FAM6_HASWELL_X,
+                CPUInfo.INTEL_FAM6_HASWELL_L,
+                CPUInfo.INTEL_FAM6_HASWELL_G,
+                CPUInfo.INTEL_FAM6_BROADWELL,
+                CPUInfo.INTEL_FAM6_BROADWELL_G,
+                CPUInfo.INTEL_FAM6_BROADWELL_X,
+                CPUInfo.INTEL_FAM6_BROADWELL_D,
+                CPUInfo.INTEL_FAM6_SKYLAKE_X,
+                CPUInfo.INTEL_FAM6_SKYLAKE_L,
+                CPUInfo.INTEL_FAM6_SKYLAKE,
+                CPUInfo.INTEL_FAM6_KABYLAKE_L,
+                CPUInfo.INTEL_FAM6_KABYLAKE,
+                CPUInfo.INTEL_FAM6_COMETLAKE,
+                CPUInfo.INTEL_FAM6_COMETLAKE_L,
+                CPUInfo.INTEL_FAM6_CANNONLAKE_L,
+                CPUInfo.INTEL_FAM6_ICELAKE_X,
+                CPUInfo.INTEL_FAM6_ICELAKE_L,
+                CPUInfo.INTEL_FAM6_ICELAKE_NNPI,
+                CPUInfo.INTEL_FAM6_TIGERLAKE_L,
+                CPUInfo.INTEL_FAM6_TIGERLAKE,
+                CPUInfo.INTEL_FAM6_ATOM_GOLDMONT,
+                CPUInfo.INTEL_FAM6_GOLDMONT_D,
+                CPUInfo.INTEL_FAM6_ATOM_GOLDMONT_PLUS,
+                CPUInfo.INTEL_FAM6_ATOM_TREMONT,
+                CPUInfo.INTEL_FAM6_TREMONT_D,
+                CPUInfo.INTEL_FAM6_ATOM_TREMONT_L,
+                CPUInfo.INTEL_FAM6_XEON_PHI_KNL,
+                CPUInfo.INTEL_FAM6_XEON_PHI_KNM}
 
-_BCLK_SLM = {0x37, # INTEL_FAM6_ATOM_SILVERMONT
-             0x4D} # INTEL_FAM6_ATOM_SILVERMONT_D
+_BCLK_SLM = {CPUInfo.INTEL_FAM6_ATOM_SILVERMONT,
+             CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D}
 
 # This dictionary describes various CPU properties this module controls.
 # Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
