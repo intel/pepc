@@ -68,10 +68,7 @@ class FeaturedMSR:
     def _get_feature_bool(self, feature, cpu):
         """Returns value of a boolean feature 'feature'."""
 
-        regval = self._msr.read(self.msr_addr, cpu=cpu)
-        bitnr = self.features[feature]["bits"][0]
-        bitval = int(bool(MSR.bit_mask(bitnr) & regval))
-
+        bitval = self._msr.read_bits(self.msr_addr, self.features[feature]["bits"], cpu=cpu)
         return self.features[feature]["vals"]["enabled"] == bitval
 
     def feature_supported(self, feature):
