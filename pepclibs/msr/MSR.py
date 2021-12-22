@@ -55,10 +55,6 @@ OWN_NAME="MSR.py"
 _LOG = logging.getLogger()
 Logging.setup_logger(prefix=OWN_NAME)
 
-def bit_mask(bitnr):
-    """Return bitmask for a bit by its number."""
-    return 1 << bitnr
-
 def fetch_bits(bits, val):
     """
     Fetch bits 'bits' from an integer 'val'. The 'bits' argument is the bits range: a tuple of a

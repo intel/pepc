@@ -131,6 +131,10 @@ PROPS = {
     },
 }
 
+def bit_mask(bitnr):
+    """Return bitmask for a bit by its number."""
+    return 1 << bitnr
+
 class CPUFreq:
     """This class provides API for managing CPU frequency. Only Intel x86 systems are supported."""
 
@@ -822,7 +826,7 @@ class CPUFreq:
                         f"{self._proc.hostmsg}.")
 
         msr_pm_enable = self._get_msr().read(MSR.MSR_PM_ENABLE, cpu=0)
-        hwp_enabled = msr_pm_enable & MSR.bit_mask(MSR.HWP_ENABLE)
+        hwp_enabled = msr_pm_enable & bit_mask(MSR.HWP_ENABLE)
         if not hwp_enabled:
             raise Error(f"EPP (Energy Performance Preference) is not available{self._proc.hostmsg} "
                         f"because it has HWP (Hardware Power Management) disabled")
@@ -944,8 +948,8 @@ class CPUFreq:
             self._validate_int_range(0, 255, epp, what="EPP")
             for cpu in cpus:
                 msr_val = self._get_msr().read(MSR.MSR_HWP_REQUEST, cpu=cpu)
-                if msr_val & MSR.bit_mask(MSR.PKG_CONTROL):
-                    msr_val |= MSR.bit_mask(MSR.EPP_VALID)
+                if msr_val & bit_mask(MSR.PKG_CONTROL):
+                    msr_val |= bit_mask(MSR.EPP_VALID)
                 msr_val &= ~(0xFF << 24)
                 msr_val |= int(epp) << 24
                 self._get_msr().write(MSR.MSR_HWP_REQUEST, msr_val, cpus=cpu)
