@@ -21,8 +21,6 @@ _LOG = logging.getLogger()
 
 # The Power Control Model Specific Register.
 MSR_POWER_CTL = 0x1FC
-C1E_ENABLE = 1
-CSTATE_PREWAKE_DISABLE = 30
 
 # Description of CPU features controlled by the the Power Control MSR.
 #
@@ -34,20 +32,20 @@ FEATURES = {
         "scope": "package",
         "help" : f"""When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                      the next local APIC timer event. This CPU feature is controlled by MSR
-                     {MSR_POWER_CTL:#x}, bit {CSTATE_PREWAKE_DISABLE}.""",
+                     {MSR_POWER_CTL:#x}, bit {30}.""",
         "cpumodels" : (CPUInfo.INTEL_FAM6_ICELAKE_X, CPUInfo.INTEL_FAM6_ICELAKE_D),
         "type" : "bool",
         "vals" : { "enabled" : 0, "disabled" : 1},
-        "bits" : (CSTATE_PREWAKE_DISABLE, CSTATE_PREWAKE_DISABLE),
+        "bits" : (30, 30),
     },
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
         "scope": "package",
         "help" : f"""When enabled, the CPU automatically converts all C1 requests to C1E requests.
-                     This CPU feature is controlled by MSR {MSR_POWER_CTL:#x}, bit {C1E_ENABLE}.""",
+                     This CPU feature is controlled by MSR {MSR_POWER_CTL:#x}, bit {1}.""",
         "type" : "bool",
         "vals" : { "enabled" : 1, "disabled" : 0},
-        "bits" : (C1E_ENABLE, C1E_ENABLE),
+        "bits" : (1, 1),
     },
 }
 
