@@ -40,7 +40,7 @@ class FeaturedMSR:
         if finfo["supported"]:
             return
 
-        raise ErrorNotSupported(f"The '{finfo['name']}' feature is not supported on "
+        raise ErrorNotSupported(f"the '{finfo['name']}' feature is not supported on "
                                 f"{self._cpuinfo.cpudescr}{self._proc.hostmsg}")
 
     def _set_feature_bool(self, feature, val, cpus):
@@ -101,8 +101,12 @@ class FeaturedMSR:
             _LOG.debug("%s on CPU(s) %s%s", msg, cpus_range, self._proc.hostmsg)
 
         self._check_feature_support(feature)
+        finfo = self.features[feature]
 
-        if self.features[feature]["type"] == "bool":
+        if not finfo["writable"]:
+            raise Error(f"'{feature}' is can not be modified, it is read-only")
+
+        if finfo["type"] == "bool":
             self._set_feature_bool(feature, val, cpus)
         else:
             # The sub-class is supposed to implement the special method.
@@ -160,6 +164,10 @@ class FeaturedMSR:
             else:
                 cpumodel = self._cpuinfo.info["model"]
                 finfo["supported"] = cpumodel in finfo["cpumodels"]
+
+            # Assume that MSR is writable by default.
+            if "writable" not in finfo:
+                finfo["writable"] = True
 
     def _set_baseclass_attributes(self):
         """
