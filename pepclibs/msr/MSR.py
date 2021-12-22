@@ -55,18 +55,6 @@ OWN_NAME="MSR.py"
 _LOG = logging.getLogger()
 Logging.setup_logger(prefix=OWN_NAME)
 
-def fetch_bits(bits, val):
-    """
-    Fetch bits 'bits' from an integer 'val'. The 'bits' argument is the bits range: a tuple of a
-    list of 2 intergers: (msb, lsb), where 'msb' is the more significant bit, and 'lsb' is a less
-    significant bit. For example, (3,1) would mean bits 3-1 of the MSR. In a 64-bit number, the
-    least significant bit number would be 0, and the most significan bit number would be 63.
-    """
-
-    bits_cnt = (bits[0] - bits[1]) + 1
-    mask = (1 << bits_cnt) - 1
-    return (val >> bits[1]) & mask
-
 class MSR:
     """This class provides helpers to read and write CPU Model Specific Registers."""
 
@@ -254,6 +242,14 @@ class MSR:
 
         return bits
 
+    @staticmethod
+    def _fetch_bits(bits, val):
+        """Same as 'fetch_bits()', but without input arguments checks."""
+
+        bits_cnt = (bits[0] - bits[1]) + 1
+        mask = (1 << bits_cnt) - 1
+        return (val >> bits[1]) & mask
+
     def fetch_bits(self, bits, val):
         """
         Fetch bits 'bits' from an MSR. The arguments are as follows:
@@ -262,7 +258,7 @@ class MSR:
         """
 
         bits = self._normalize_bits(bits)
-        return fetch_bits(bits, val)
+        return self._fetch_bits(bits, val)
 
     def read_bits(self, regaddr, bits, cpu=0):
         """
@@ -274,7 +270,7 @@ class MSR:
 
         bits = self._normalize_bits(bits)
         regval = self.read(regaddr, cpu=cpu)
-        return fetch_bits(bits, regval)
+        return self._fetch_bits(bits, regval)
 
     def write_bits(self, regaddr, bits, val, cpus="all"):
         """
