@@ -27,6 +27,7 @@ INTEL_FAM6_BROADWELL_D = 0x56          # Broadwell Xeon-D.
 INTEL_FAM6_HASWELL_X = 0x3F            # Haswell Xeon.
 INTEL_FAM6_HASWELL_G = 0x46            # Haswell Xeon with Graphics.
 INTEL_FAM6_IVYBRIDGE_X = 0x3E          # Ivy Town Xeon.
+INTEL_FAM6_SANDYBRIDGE_X = 0x2D        # SandyBridg Xeon.
 
 # Clients.
 INTEL_FAM6_ALDERLAKE = 0x97            # Alder Lake client.
@@ -46,22 +47,35 @@ INTEL_FAM6_SKYLAKE_L = 0x4E            # Skylake mobile.
 INTEL_FAM6_BROADWELL = 0x3D            # Broadwell client.
 INTEL_FAM6_HASWELL = 0x3C              # Haswell client.
 INTEL_FAM6_HASWELL_L = 0x45            # Haswell mobile.
+INTEL_FAM6_IVYBRIDGE = 0x3A            # IvyBridge client.
+INTEL_FAM6_SANDYBRIDGE = 0x2A          # SandyBridge client.
 INTEL_FAM6_CORE2_MEROM = 0x0F          # Intel Core 2.
 
 # Atoms.
-INTEL_FAM6_ATOM_BONNELL_MID = 0x26     # Silverthorne, Lincroft.
-INTEL_FAM6_ATOM_BONNELL = 0x1C         # Diamondville, Pineview.
-INTEL_FAM6_ATOM_SALTWELL = 0x36        # Cedarview.
-INTEL_FAM6_ATOM_SALTWELL_MID = 0x27    # Penwell.
-INTEL_FAM6_ATOM_SALTWELL_TABLET = 0x35 # Cloverview.
+INTEL_FAM6_ATOM_TREMONT = 0x96         # Elkhart Lake.
+INTEL_FAM6_ATOM_TREMONT_L = 0x9C       # Jasper Lake.
+INTEL_FAM6_ATOM_GOLDMONT = 0x5C        # Apollo Lake.
+INTEL_FAM6_ATOM_GOLDMONT_PLUS = 0x7A   # Gemini Lake.
+INTEL_FAM6_ATOM_AIRMONT = 0x4C         # Cherry Trail, Braswell.
 INTEL_FAM6_ATOM_SILVERMONT = 0x37      # Bay Trail, Valleyview.
 INTEL_FAM6_ATOM_SILVERMONT_MID = 0x4A  # Merriefield.
 INTEL_FAM6_ATOM_SILVERMONT_MID1 = 0x5A # Moorefield.
-INTEL_FAM6_ATOM_AIRMONT = 0x4C         # Cherry Trail, Braswell.
+INTEL_FAM6_ATOM_SALTWELL = 0x36        # Cedarview.
+INTEL_FAM6_ATOM_SALTWELL_MID = 0x27    # Penwell.
+INTEL_FAM6_ATOM_SALTWELL_TABLET = 0x35 # Cloverview.
+INTEL_FAM6_ATOM_BONNELL_MID = 0x26     # Silverthorne, Lincroft.
+INTEL_FAM6_ATOM_BONNELL = 0x1C         # Diamondville, Pineview.
 
 # Atom microservers.
-INTEL_FAM6_GOLDMONT_D = 0x5F           # Goldmont Atom (Denverton).
-INTEL_FAM6_TREMONT_D = 0x86            # Tremont Atom (Snow Ridge).
+INTEL_FAM6_TREMONT_D = 0x86            # Snow Ridge, Jacobsville.
+INTEL_FAM6_GOLDMONT_D = 0x5F           # Denverton, Harrisonville.
+INTEL_FAM6_ATOM_SILVERMONT_D = 0x4D    # Avaton, Rangely.
+
+# Other.
+INTEL_FAM6_ICELAKE_NNPI = 0x9D         # Ice Lake Neural Network Processor.
+INTEL_FAM6_XEON_PHI_KNM = 0x85         # Knights Mill.
+INTEL_FAM6_XEON_PHI_KNL = 0x57         # Knights Landing.
+
 
 # CPU model description. Note, we keep only relatively new CPUs here, because for released CPUs
 # model name is available from the OS.
