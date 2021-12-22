@@ -21,9 +21,6 @@ _LOG = logging.getLogger()
 
 # Package C-state configuration control Model Specific Register.
 MSR_PKG_CST_CONFIG_CONTROL = 0xE2
-CFG_LOCK = 15
-C1_AUTO_DEMOTION_ENABLE = 26
-C1_UNDEMOTION_ENABLE = 28
 
 #
 # Package C-state limits are documented in Intel SDM, but it describes all the possible package
@@ -109,7 +106,7 @@ FEATURES = {
                     MSR.""",
         "type" : "bool",
         "vals" : { "enabled" : 1, "disabled" : 0},
-        "bits" : (CFG_LOCK, CFG_LOCK),
+        "bits" : (15, 15),
     },
     "c1_demotion" : {
         "name" : "C1 demotion",
@@ -117,7 +114,7 @@ FEATURES = {
         "help" : """Allow/disallow the CPU to demote C6/C7 requests to C1.""",
         "type" : "bool",
         "vals" : { "enabled" : 1, "disabled" : 0},
-        "bits" : (C1_AUTO_DEMOTION_ENABLE, C1_AUTO_DEMOTION_ENABLE),
+        "bits" : (26, 26),
     },
     "c1_undemotion" : {
         "name" : "C1 undemotion",
@@ -126,7 +123,7 @@ FEATURES = {
                     C6/C7.""",
         "type" : "bool",
         "vals" : { "enabled" : 1, "disabled" : 0},
-        "bits" : (C1_UNDEMOTION_ENABLE, C1_UNDEMOTION_ENABLE),
+        "bits" : (28, 28),
     },
 }
 
