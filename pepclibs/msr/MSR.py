@@ -142,7 +142,7 @@ class MSR:
                 fobj.seek(regaddr)
                 regval = fobj.read(self.regbytes)
         except Error as err:
-            raise Error(f"failed to read MSR '{hex(regaddr)}' from file '{path}'"
+            raise Error(f"failed to read MSR '{regaddr:#x}' from file '{path}'"
                         f"{self._proc.hostmsg}:\n{err}") from err
 
         regval = int.from_bytes(regval, byteorder=_CPU_BYTEORDER)
@@ -198,7 +198,7 @@ class MSR:
                 fobj.write(regval_bytes)
                 _LOG.debug("CPU%d: MSR 0x%x: wrote 0x%x", cpu, regaddr, regval)
         except Error as err:
-            raise Error(f"failed to write MSR '{hex(regaddr)}' to file '{path}'"
+            raise Error(f"failed to write MSR '{regaddr:#x}' to file '{path}'"
                         f"{self._proc.hostmsg}:\n{err}") from err
 
     def write(self, regaddr, regval, cpus="all"):

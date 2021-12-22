@@ -89,7 +89,7 @@ FEATURES = {
         "name" : "Package C-state limit",
         "scope": "package",
         "help" : """The deepest package C-state the platform is allowed to enter. The package
-                    C-state limit is configured via MSR {hex(MSR_PKG_CST_CONFIG_CONTROL)}
+                    C-state limit is configured via MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                     (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
                     BIOS, in which case the package C-state limit can only be read, but cannot be
                     modified.""",
@@ -100,7 +100,7 @@ FEATURES = {
     "locked" :  {
         "name" : "MSR is locked",
         "scope": "package",
-        "help" : """Lock/unlock bits 15:0 of MSR {hex(MSR_PKG_CST_CONFIG_CONTROL)}
+        "help" : """Lock/unlock bits 15:0 of MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                     (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
                     is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
                     MSR.""",
@@ -218,7 +218,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         for cpu, regval in self._msr.read_iter(self.regaddr, cpus=cpus):
             if self._msr.get_bits(regval, feature["bits"]):
                 raise Error(f"cannot set package C-state limit{self._proc.hostmsg} for CPU "
-                            f"'{cpu}', MSR ({MSR_PKG_CST_CONFIG_CONTROL}) is locked. Sometimes, "
+                            f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
 
             regval = self._msr.set_bits(regval, feature["bits"], code)
