@@ -63,7 +63,7 @@ class FeaturedMSR:
         if val:
             val = MSR.ALL_BITS_1
 
-        self._msr.set_bits(self.msr_addr, finfo["bits"], val, cpus=cpus)
+        self._msr.write_bits(self.msr_addr, finfo["bits"], val, cpus=cpus)
 
     def _get_feature_bool(self, feature, cpu):
         """Returns value of a boolean feature 'feature'."""

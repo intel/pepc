@@ -20,7 +20,7 @@ from pepclibs import CPUInfo
 _CPU_BYTEORDER = "little"
 
 # A special value which can be used to specify that all bits have to be set to "1" in methods like
-# 'set_bits()'.
+# 'write_bits()'.
 ALL_BITS_1 = object()
 
 # Platform info MSR.
@@ -269,7 +269,7 @@ class MSR:
         """
         Fetch bits 'bits' from an MSR. The arguments are as follows:
           * val - an MSR value to fetch the bits from.
-          * bits - same as in 'set_bits()'.
+          * bits - same as in 'write_bits()'.
         """
 
         bits = self._normalize_bits(bits)
@@ -277,9 +277,9 @@ class MSR:
 
     def read_bits(self, regaddr, bits, cpu=0):
         """
-        Read bits 'bits' from an MSR. The arguments are as follows:
+        Read bits 'bits' from an MSR at 'regaddr'. The arguments are as follows:
           * regaddr - same as in 'write()'.
-          * bits - same as in 'set_bits()'.
+          * bits - same as in 'write_bits()'.
           * cpu - CPU number to get the bits from.
         """
 
@@ -287,9 +287,9 @@ class MSR:
         regval = self.read(regaddr, cpu=cpu)
         return fetch_bits(bits, regval)
 
-    def set_bits(self, regaddr, bits, val, cpus="all"):
+    def write_bits(self, regaddr, bits, val, cpus="all"):
         """
-        Set bits 'bits' in MSR to value 'val'. The arguments are as follows.
+        Write value 'val' to bits 'bits' of an MSR at 'regaddr'. The arguments are as follows.
           * regaddr - same as in 'write()'.
           * bits - the MSR bits range. A tuple of a list of 2 intergers: (msb, lsb), where 'msb' is
                    the more significant bit, and 'lsb' is a less significant bit. For example, (3,1)
