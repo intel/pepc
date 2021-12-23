@@ -152,21 +152,15 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         finfo = self.features["pkg_cstate_limit"]
         code = self._msr.read_bits(self.regaddr, finfo["bits"], cpu=cpu)
 
-        model = self._cpuinfo.info["model"]
-        if not self._pcs_rmap:
-            # Build the code -> name map.
-            pcs_map = _PKG_CST_LIMITS[model]["codes"]
-            self._pcs_rmap = {code:name for name, code in pcs_map.items()}
-
-        if code not in self._pcs_rmap:
-            known_codes = ", ".join([str(cde) for cde in self._pcs_rmap])
+        if code not in finfo["rvals"]:
+            known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
             msg = f"unexpected package C-state limit code '{code}' read from '{self.regname}' " \
                   f"MSR ({self.regaddr}){self._proc.hostmsg}, known codes are: {known_codes}"
 
             # No exact match. The limit is the closest lower known number. For example, if the
             # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the limit is
             # PC6.
-            for cde in sorted(self._pcs_rmap, reverse=True):
+            for cde in sorted(finfo["rvals"], reverse=True):
                 if cde <= code:
                     code = cde
                     break
@@ -175,13 +169,10 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
             _LOG.debug(msg)
 
-        codes = _PKG_CST_LIMITS[model]["codes"]
-        aliases = _PKG_CST_LIMITS[model].get("aliases", {})
-
         return {"CPU" : self._cpuinfo.normalize_cpu(cpu),
-                "pkg_cstate_limit" : self._pcs_rmap[code],
-                "pkg_cstate_limits" : list(codes.keys()),
-                "pkg_cstate_limit_aliases" : aliases}
+                "pkg_cstate_limit" : finfo["rvals"][code],
+                "pkg_cstate_limits" : list(finfo["vals"].keys()),
+                "pkg_cstate_limit_aliases" : finfo["aliases"]}
 
     def _normalize_pkg_cstate_limit(self, limit):
         """
@@ -189,24 +180,21 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         integer value suitable for the 'MSR_PKG_CST_CONFIG_CONTROL' register.
         """
 
-        model = self._cpuinfo.info["model"]
+        finfo = self.features["pkg_cstate_limit"]
         limit = str(limit).lower()
-        codes = _PKG_CST_LIMITS[model]["codes"]
-        aliases = _PKG_CST_LIMITS[model].get("aliases", {})
 
-        if limit in aliases:
-            limit = aliases[limit]
+        if limit in finfo["aliases"]:
+            limit = finfo["aliases"][limit]
 
-        code = codes.get(limit)
-        if code is None:
-            codes_str = ", ".join(codes)
-            aliases_str = ", ".join(aliases)
-            raise Error(f"cannot limit package C-state{self._proc.hostmsg}, '{limit}' is not "
-                        f"supported for {self._cpuinfo.cpudescr}).\n"
-                        f"Supported package C-states are: {codes_str}.\n"
-                        f"Supported package C-state alias names are: {aliases_str}")
+        if limit in finfo["vals"]:
+            return finfo["vals"]
 
-        return code
+        vals_str = ", ".join(finfo["vals"])
+        aliases_str = ", ".join(finfo["aliases"])
+        raise Error(f"cannot limit package C-state{self._proc.hostmsg}, '{limit}' is not "
+                    f"supported for {self._cpuinfo.cpudescr}).\n"
+                    f"Supported package C-states are: {vals_str}.\n"
+                    f"Supported package C-state alias names are: {aliases_str}")
 
     def _set_pkg_cstate_limit(self, limit, cpus="all"):
         """Set package C-state limit for CPUs in 'cpus'."""
@@ -262,6 +250,3 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """
 
         super().__init__(proc=proc, cpuinfo=cpuinfo, msr=msr)
-
-        # The package C-state integer code -> package C-state name dictionary.
-        self._pcs_rmap = None
