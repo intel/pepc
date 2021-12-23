@@ -45,8 +45,8 @@ class FeaturedMSR:
 
     def _set_feature_bool(self, fname, val, cpus):
         """
-        Enable or disable feature 'fname' for CPUs 'cpus'. If 'val' is a boolean 'True' or a string
-        'on', the feature gets enabled. Otherwise it gets disabled.
+        Enable or disable feature 'fname' for CPUs 'cpus'. If 'val' is 'True' or 'on', the feature
+        gets enabled. If 'val' is 'False' or 'off', the feature gets disabled.
         """
 
         finfo = self.features[fname]
@@ -90,15 +90,8 @@ class FeaturedMSR:
           * cpus - the CPUs to set the feature for (same as in 'CPUIdle.get_cstates_info()').
         """
 
-        if _LOG.getEffectiveLevel() == logging.DEBUG:
-            if self.features[fname]["type"] == "bool":
-                enable_str = "enable" if val else "disable"
-                msg = f"{enable_str} feature '{fname}'"
-            else:
-                msg = f"set feature '{fname}' value to {val}"
-
-            cpus_range = Human.rangify(self._cpuinfo.normalize_cpus(cpus))
-            _LOG.debug("%s on CPU(s) %s%s", msg, cpus_range, self._proc.hostmsg)
+        _LOG.debug("set feature '%s' to value %s on CPU(s) %s%s", fname, val,
+                   Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._proc.hostmsg)
 
         self._check_feature_support(fname)
         finfo = self.features[fname]
