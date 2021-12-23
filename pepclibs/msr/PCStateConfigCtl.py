@@ -94,8 +94,10 @@ FEATURES = {
                     BIOS, in which case the package C-state limit can only be read, but cannot be
                     modified.""",
         "cpumodels" : tuple(_PKG_CST_LIMITS.keys()),
-        "type" : "int",
-        "bits" : None,
+        "type"    : "int",
+        "vals"    : None,
+        "aliases" : None,
+        "bits"    : None,
     },
     "locked" :  {
         "name" : "MSR is locked",
@@ -232,7 +234,10 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         cpumodel = self._cpuinfo.info["model"]
         cpumodel_info = _PKG_CST_LIMITS[cpumodel]
+
         finfo["bits"] = cpumodel_info["bits"]
+        finfo["vals"] = cpumodel_info["codes"]
+        finfo["aliases"] = cpumodel_info["aliases"]
 
     def _init_features_dict(self):
         """Intitialize the 'features' dictionary with platform-specific information."""
