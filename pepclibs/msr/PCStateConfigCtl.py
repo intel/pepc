@@ -147,8 +147,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                       the 'aliases'.
         """
 
-        self._check_feature_support("pkg_cstate_limit")
-
         feature = self.features["pkg_cstate_limit"]
         code = self._msr.read_bits(self.regaddr, feature["bits"], cpu=cpu)
 
@@ -211,7 +209,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     def _set_pkg_cstate_limit(self, limit, cpus="all"):
         """Set package C-state limit for CPUs in 'cpus'."""
 
-        self._check_feature_support("pkg_cstate_limit")
         code = self._normalize_pkg_cstate_limit(limit)
         feature = self.features["locked"]
 
