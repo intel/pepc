@@ -174,32 +174,9 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                 "pkg_cstate_limits" : list(finfo["vals"].keys()),
                 "pkg_cstate_limit_aliases" : finfo["aliases"]}
 
-    def _normalize_pkg_cstate_limit(self, limit):
-        """
-        Convert a package C-state limit name, alias, or code (whatever user provides) into an
-        integer value suitable for the 'MSR_PKG_CST_CONFIG_CONTROL' register.
-        """
-
-        finfo = self.features["pkg_cstate_limit"]
-        limit = str(limit).lower()
-
-        if limit in finfo["aliases"]:
-            limit = finfo["aliases"][limit]
-
-        if limit in finfo["vals"]:
-            return finfo["vals"]
-
-        vals_str = ", ".join(finfo["vals"])
-        aliases_str = ", ".join(finfo["aliases"])
-        raise Error(f"cannot limit package C-state{self._proc.hostmsg}, '{limit}' is not "
-                    f"supported for {self._cpuinfo.cpudescr}).\n"
-                    f"Supported package C-states are: {vals_str}.\n"
-                    f"Supported package C-state alias names are: {aliases_str}")
-
     def _set_pkg_cstate_limit(self, limit, cpus="all"):
         """Set package C-state limit for CPUs in 'cpus'."""
 
-        code = self._normalize_pkg_cstate_limit(limit)
         finfo = self.features["locked"]
 
         for cpu, regval in self._msr.read_iter(self.regaddr, cpus=cpus):
@@ -208,7 +185,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                             f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
 
-            regval = self._msr.set_bits(regval, finfo["bits"], code)
+            regval = self._msr.set_bits(regval, finfo["bits"], limit)
             self._msr.write(self.regaddr, regval, cpus=cpu)
 
     def _init_features_dict_pkg_cstate_limit(self):
