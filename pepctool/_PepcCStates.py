@@ -48,9 +48,6 @@ def _fmt_cpus(cpus):
 def _print_cstate_prop_msg(prop, action, val, cpus):
     """Format an print a message about a C-state property 'prop'."""
 
-    if isinstance(val, bool):
-        val = _PepcCommon.bool_fmt(val)
-
     cpus = _fmt_cpus(cpus)
 
     if action:

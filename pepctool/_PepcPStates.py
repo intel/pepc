@@ -18,9 +18,14 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
 from pepclibs import CPUInfo, CPUFreq
 from pepctool import _PepcCommon
-from pepctool._PepcCommon import bool_fmt, get_cpus
+from pepctool._PepcCommon import get_cpus
 
 _LOG = logging.getLogger()
+
+def bool_fmt(val):
+    """Convert boolean value to an "on" or "off" string."""
+
+    return "on" if val else "off"
 
 def _khz_fmt(val):
     """

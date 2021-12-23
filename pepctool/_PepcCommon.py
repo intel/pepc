@@ -18,11 +18,6 @@ from pepclibs.helperlibs import Systemctl, Trivial
 
 _LOG = logging.getLogger()
 
-def bool_fmt(val):
-    """Convert boolean value to an "on" or "off" string."""
-
-    return "on" if val else "off"
-
 def check_tuned_presence(proc):
     """Check if the 'tuned' service is active, and if it is, print a warning message."""
 
