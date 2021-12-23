@@ -508,7 +508,7 @@ class CPUIdle:
 
         if pname in PowerCtl.FEATURES:
             powerctl = self._get_powerctl()
-            powerctl.set_feature(pname, val=="on", cpus)
+            powerctl.set_feature(pname, val, cpus)
         elif pname in PCStateConfigCtl.FEATURES:
             pcstatectl = self._get_pcstatectl()
             pcstatectl.set_feature(pname, val, cpus=cpus)
