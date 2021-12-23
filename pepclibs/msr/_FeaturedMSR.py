@@ -178,8 +178,15 @@ class FeaturedMSR:
         for finfo in self.features.values():
             if not finfo["supported"]:
                 continue
+
             if "writable" not in finfo:
                 finfo["writable"] = True
+
+            if "vals" in finfo:
+                # Build the reverse dictionary for 'vals'.
+                finfo["rvals"] = {}
+                for name, code in finfo["vals"].items():
+                    finfo["rvals"][code] = name
 
     def _init_features_dict(self):
         """
