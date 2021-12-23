@@ -94,7 +94,7 @@ FEATURES = {
                     BIOS, in which case the package C-state limit can only be read, but cannot be
                     modified.""",
         "cpumodels" : tuple(_PKG_CST_LIMITS.keys()),
-        "type"    : "int",
+        "type"    : "choice",
         "vals"    : None,
         "aliases" : None,
         "bits"    : None,
