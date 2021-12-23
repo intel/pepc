@@ -73,19 +73,6 @@ class FeaturedMSR:
         """
 
         finfo = self.features[fname]
-        if isinstance(val, str):
-            val = val == "on"
-        else:
-            val = bool(val)
-
-        if val:
-            val = finfo["vals"]["on"]
-        else:
-            val = finfo["vals"]["off"]
-
-        if val:
-            val = MSR.ALL_BITS_1
-
         self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus)
 
     def _get_feature_bool(self, fname, cpu):
