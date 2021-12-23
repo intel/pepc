@@ -110,7 +110,10 @@ class FeaturedMSR:
             self._set_feature_bool(feature, val, cpus)
         else:
             # The sub-class is supposed to implement the special method.
-            set_method = getattr(self, f"_set_{feature}")
+            set_method = getattr(self, f"_set_{feature}", None)
+            if not set_method:
+                raise Error(f"the 'set_{feature}()' method is not implemented, please contact "
+                            f"project maintainers")
             set_method(val, cpus=cpus)
 
     def feature_enabled(self, feature, cpu):
@@ -145,7 +148,10 @@ class FeaturedMSR:
             return self._get_feature_bool(feature, cpu)
 
         # The sub-class is supposed to implement the special method.
-        get_method = getattr(self, f"_get_{feature}")
+        get_method = getattr(self, f"_get_{feature}", None)
+        if not get_method:
+            raise Error(f"the 'get_{feature}()' method is not implemented, please contact "
+                        f"project maintainers")
         return get_method(cpu)
 
     def _init_features_dict(self):
