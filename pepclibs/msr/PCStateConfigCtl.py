@@ -227,15 +227,15 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         super()._init_features_dict()
 
         finfo = self.features["pkg_cstate_limit"]
-        cpumodel = self._cpuinfo.info["model"]
-
         if not finfo["supported"]:
             _LOG.notice("no package C-state limit table available for %s%s. Try to contact "
                         "project maintainers.", self._cpuinfo.cpudescr, self._proc.hostmsg)
             return
 
-        limits_info = _PKG_CST_LIMITS[cpumodel]
-        finfo["bits"] = limits_info["bits"]
+        cpumodel = self._cpuinfo.info["model"]
+        cpumodel_info = _PKG_CST_LIMITS[cpumodel]
+
+        finfo["bits"] = cpumodel_info["bits"]
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
