@@ -66,12 +66,6 @@ class FeaturedMSR:
         vals_str = ", ".join(vals)
         raise Error(f"bad value '{val}' for the '{finfo['name']}' feature.\nUse one of: {vals_str}")
 
-    def _get_feature_bool(self, fname, cpu):
-        """Returns value of a boolean feature 'fname'."""
-
-        bitval = self._msr.read_bits(self.regaddr, self.features[fname]["bits"], cpu=cpu)
-        return self.features[fname]["vals"]["on"] == bitval
-
     def feature_supported(self, fname):
         """
         Returns 'True' if feature 'fname' is supported by the platform, returns 'False' otherwise.
@@ -108,22 +102,6 @@ class FeaturedMSR:
         else:
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus)
 
-    def feature_enabled(self, fname, cpu):
-        """
-        Just a limited version of 'get_feature()', accepts only boolean features, returns 'True' if
-        the feature is enabled, returns 'False' otherwise. This method exists only because for some
-        users this method name a bit more self-documenting. Indeed, compare:
-          * if msr_reg.feature_enabled(): do_something()
-          * if msr_reg.get_feature(): do_something()
-        """
-
-        self._check_feature_support(fname)
-
-        if self.features[fname]["type"] == "bool":
-            return self._get_feature_bool(fname, cpu)
-
-        raise Error(f"feature '{fname}' is not boolean, use 'get_feature()' instead")
-
     def get_feature(self, fname, cpu):
         """
         Returns value of feature 'fname' for CPU 'cpu'. The arguments are as follows.
@@ -136,15 +114,29 @@ class FeaturedMSR:
 
         self._check_feature_support(fname)
 
-        if self.features[fname]["type"] == "bool":
-            return self._get_feature_bool(fname, cpu)
-
-        # The sub-class is supposed to implement the special method.
         get_method = getattr(self, f"_get_{fname}", None)
-        if not get_method:
-            raise Error(f"the 'get_{fname}()' method is not implemented, please contact "
-                        f"project maintainers")
-        return get_method(cpu)
+        if get_method:
+            return get_method(cpu)
+
+        val = self._msr.read_bits(self.regaddr, self.features[fname]["bits"], cpu=cpu)
+        if "rvals" in self.features[fname]:
+            val = self.features[fname]["rvals"][val]
+        return val
+
+    def feature_enabled(self, fname, cpu):
+        """
+        Just a limited version of 'get_feature()', accepts only boolean features, returns 'True' if
+        the feature is enabled, returns 'False' otherwise. This method exists only because for some
+        users this method name a bit more self-documenting. Indeed, compare:
+          * if msr_reg.feature_enabled(): do_something()
+          * if msr_reg.get_feature(): do_something()
+        """
+
+        if self.features[fname]["type"] == "bool":
+            val = self.get_feature(fname, cpu)
+            return val in {"on", "enabled"}
+
+        raise Error(f"feature '{fname}' is not boolean, use 'get_feature()' instead")
 
     def _init_features_dict_supported(self):
         """
