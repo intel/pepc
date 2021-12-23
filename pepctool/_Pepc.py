@@ -183,7 +183,8 @@ def build_arguments_parser():
     # Create parser for the 'cstates config' command.
     #
     text = "Configure C-states."
-    descr = """Configure C-states on specified CPUs."""
+    descr = """Configure C-states on specified CPUs. Many options can be used without a parameter,
+               in which case the currently configured value will be printed."""
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=cstates_config_command)
 
@@ -218,10 +219,8 @@ def build_arguments_parser():
             choices = ""
 
         option = f"--{name.replace('_', '-')}"
-        text += f"""{info["name"]} (applicaple only to Intel CPU). {info["help"]}{choices}
-                    {info["name"]} setting has {info["scope"]} scope. By default this option
-                    applies to all {info["scope"]}s. If you do not pass any argument to
-                    "{option}", it will print the current values."""
+        text += f"""{info["name"]}. {info["help"]}{choices} {info["name"]} has {info["scope"]}
+                    scope."""
 
         kwargs["help"] = text
         kwargs["action"] = ArgParse.OrderedArg
