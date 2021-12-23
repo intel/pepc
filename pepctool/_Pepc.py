@@ -211,8 +211,7 @@ def build_arguments_parser():
         if info["type"] == "bool":
             # This is a binary "on/off" type of features.
             text = "Enable or disable "
-            kwargs["choices"] = ("on", "off")
-            choices = " or ".join([f"\"{val}\"" for val in kwargs["choices"]])
+            choices = " or ".join([f"\"{val}\"" for val in info["vals"]])
             choices = f" Use {choices}."
         else:
             text = "Set "
