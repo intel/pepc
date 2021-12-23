@@ -56,9 +56,9 @@ class FeaturedMSR:
             val = bool(val)
 
         if val:
-            val = finfo["vals"]["enabled"]
+            val = finfo["vals"]["on"]
         else:
-            val = finfo["vals"]["disabled"]
+            val = finfo["vals"]["off"]
 
         if val:
             val = MSR.ALL_BITS_1
@@ -69,7 +69,7 @@ class FeaturedMSR:
         """Returns value of a boolean feature 'fname'."""
 
         bitval = self._msr.read_bits(self.regaddr, self.features[fname]["bits"], cpu=cpu)
-        return self.features[fname]["vals"]["enabled"] == bitval
+        return self.features[fname]["vals"]["on"] == bitval
 
     def feature_supported(self, fname):
         """

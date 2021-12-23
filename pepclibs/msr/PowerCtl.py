@@ -36,7 +36,7 @@ FEATURES = {
         "help" : f"""When enabled, the CPU automatically converts all C1 requests to C1E requests.
                      This CPU feature is controlled by MSR {MSR_POWER_CTL:#x}, bit 1.""",
         "type" : "bool",
-        "vals" : { "enabled" : 1, "disabled" : 0},
+        "vals" : { "on" : 1, "off" : 0},
         "bits" : (1, 1),
     },
     "cstate_prewake" : {
@@ -48,7 +48,7 @@ FEATURES = {
         "cpumodels" : (CPUInfo.INTEL_FAM6_IVYBRIDGE_X, CPUInfo.INTEL_FAM6_ICELAKE_X,
                        CPUInfo.INTEL_FAM6_ICELAKE_D),
         "type" : "bool",
-        "vals" : { "enabled" : 0, "disabled" : 1},
+        "vals" : { "on" : 0, "off" : 1},
         "bits" : (30, 30),
     },
 }
