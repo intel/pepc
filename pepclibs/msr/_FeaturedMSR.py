@@ -176,6 +176,8 @@ class FeaturedMSR:
         """
 
         for finfo in self.features.values():
+            if not finfo["supported"]:
+                continue
             if "writable" not in finfo:
                 finfo["writable"] = True
 
