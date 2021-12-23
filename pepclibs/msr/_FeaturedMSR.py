@@ -66,15 +66,6 @@ class FeaturedMSR:
         vals_str = ", ".join(vals)
         raise Error(f"bad value '{val}' for the '{finfo['name']}' feature.\nUse one of: {vals_str}")
 
-    def _set_feature_bool(self, fname, val, cpus):
-        """
-        Enable or disable feature 'fname' for CPUs 'cpus'. If 'val' is 'True' or 'on', the feature
-        gets enabled. If 'val' is 'False' or 'off', the feature gets disabled.
-        """
-
-        finfo = self.features[fname]
-        self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus)
-
     def _get_feature_bool(self, fname, cpu):
         """Returns value of a boolean feature 'fname'."""
 
@@ -111,15 +102,11 @@ class FeaturedMSR:
         if not finfo["writable"]:
             raise Error(f"'{fname}' is can not be modified, it is read-only")
 
-        if finfo["type"] == "bool":
-            self._set_feature_bool(fname, val, cpus)
-        else:
-            # The sub-class is supposed to implement the special method.
-            set_method = getattr(self, f"_set_{fname}", None)
-            if not set_method:
-                raise Error(f"the 'set_{fname}()' method is not implemented, please contact "
-                            f"project maintainers")
+        set_method = getattr(self, f"_set_{fname}", None)
+        if set_method:
             set_method(val, cpus=cpus)
+        else:
+            self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus)
 
     def feature_enabled(self, fname, cpu):
         """
