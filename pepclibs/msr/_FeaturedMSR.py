@@ -43,6 +43,29 @@ class FeaturedMSR:
         raise ErrorNotSupported(f"the '{finfo['name']}' feature is not supported on "
                                 f"{self._cpuinfo.cpudescr}{self._proc.hostmsg}")
 
+    def _normalize_feature_value(self, feature, val):
+        """
+        Check that 'val' is a valid value fore feature 'feature' and converts it to a value suitable
+        for writing the MSR register.
+        """
+
+        finfo = self.features[feature]
+
+        if not finfo.get("vals"):
+            return val
+
+        val = str(val).lower()
+
+        if "aliases" in finfo and val in finfo["aliases"]:
+            val = finfo["aliases"][val]
+
+        if val in finfo["vals"]:
+            return finfo["vals"][val]
+
+        vals = list(finfo["vals"]) + list(finfo.get("aliases", {}))
+        vals_str = ", ".join(vals)
+        raise Error(f"bad value '{val}' for the '{finfo['name']}' feature.\nUse one of: {vals_str}")
+
     def _set_feature_bool(self, fname, val, cpus):
         """
         Enable or disable feature 'fname' for CPUs 'cpus'. If 'val' is 'True' or 'on', the feature
@@ -94,6 +117,8 @@ class FeaturedMSR:
                    Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._proc.hostmsg)
 
         self._check_feature_support(fname)
+        val = self._normalize_feature_value(fname, val)
+
         finfo = self.features[fname]
 
         if not finfo["writable"]:
