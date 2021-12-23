@@ -154,15 +154,12 @@ class FeaturedMSR:
                         f"project maintainers")
         return get_method(cpu)
 
-    def _init_features_dict(self):
+    def _init_features_dict_supported(self):
         """
-        Intitialize the 'featrues' dictionary with the following platform-specific information.
-          * Add the 'supported' flag inidcating whether the platform supports the feature.
+        Intitialize the 'supported' flag for all features in the 'self.featrues' dictionary by
+        comparing current CPU model against the list of CPU models that support the feature.
         """
 
-        self.features = copy.deepcopy(self.features)
-
-        # Add the "supported" flag.
         for finfo in self.features.values():
             if not "cpumodels" in finfo:
                 # No CPU models list, assumed the feature is supported.
@@ -171,9 +168,25 @@ class FeaturedMSR:
                 cpumodel = self._cpuinfo.info["model"]
                 finfo["supported"] = cpumodel in finfo["cpumodels"]
 
-            # Assume that MSR is writable by default.
+    def _init_features_dict_defaults(self):
+        """
+        Walk through each feature in the 'self.featrues' dictionary and make sure that all the
+        necessary keys are presint. Set the missing keys to their default values.
+          * writable - a flag inidcating whether this feature can be modified. Default is 'True'.
+        """
+
+        for finfo in self.features.values():
             if "writable" not in finfo:
                 finfo["writable"] = True
+
+    def _init_features_dict(self):
+        """
+        Intitialize the 'features' dictionary with platform-specific information. The sub-classes
+        can re-define this method and call inidividual '_init_features_dict_*()' methods.
+       """
+
+        self._init_features_dict_supported()
+        self._init_features_dict_defaults()
 
     def _set_baseclass_attributes(self):
         """
@@ -223,6 +236,7 @@ class FeaturedMSR:
                                     f"model-specific register {self.regaddr:#x} ({self.regname}) "
                                     f"is available only on Intel CPUs.")
 
+        self.features = copy.deepcopy(self.features)
         self._init_features_dict()
 
     def close(self):
