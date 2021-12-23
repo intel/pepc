@@ -221,21 +221,24 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             regval = self._msr.set_bits(regval, finfo["bits"], code)
             self._msr.write(self.regaddr, regval, cpus=cpu)
 
+    def _init_features_dict_pkg_cstate_limit(self):
+        """Initialize the 'pkg_cstate_limit' information in the 'self.features' dictionary."""
+
+        finfo = self.features["pkg_cstate_limit"]
+        if not finfo["supported"]:
+            _LOG.notice("no package C-state limit table available for %s%s. Try to contact "
+                        "project maintainers.", self._cpuinfo.cpudescr, self._proc.hostmsg)
+            return
+
+        cpumodel = self._cpuinfo.info["model"]
+        cpumodel_info = _PKG_CST_LIMITS[cpumodel]
+        finfo["bits"] = cpumodel_info["bits"]
+
     def _init_features_dict(self):
         """Intitialize the 'features' dictionary with platform-specific information."""
 
         self._init_features_dict_supported()
-
-        finfo = self.features["pkg_cstate_limit"]
-        if finfo["supported"]:
-            cpumodel = self._cpuinfo.info["model"]
-            cpumodel_info = _PKG_CST_LIMITS[cpumodel]
-
-            finfo["bits"] = cpumodel_info["bits"]
-        else:
-            _LOG.notice("no package C-state limit table available for %s%s. Try to contact "
-                        "project maintainers.", self._cpuinfo.cpudescr, self._proc.hostmsg)
-
+        self._init_features_dict_pkg_cstate_limit()
         self._init_features_dict_defaults()
 
     def _set_baseclass_attributes(self):
