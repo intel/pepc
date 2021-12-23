@@ -147,8 +147,8 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                       the 'aliases'.
         """
 
-        feature = self.features["pkg_cstate_limit"]
-        code = self._msr.read_bits(self.regaddr, feature["bits"], cpu=cpu)
+        finfo = self.features["pkg_cstate_limit"]
+        code = self._msr.read_bits(self.regaddr, finfo["bits"], cpu=cpu)
 
         model = self._cpuinfo.info["model"]
         if not self._pcs_rmap:
@@ -210,15 +210,15 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """Set package C-state limit for CPUs in 'cpus'."""
 
         code = self._normalize_pkg_cstate_limit(limit)
-        feature = self.features["locked"]
+        finfo = self.features["locked"]
 
         for cpu, regval in self._msr.read_iter(self.regaddr, cpus=cpus):
-            if self._msr.get_bits(regval, feature["bits"]):
+            if self._msr.get_bits(regval, finfo["bits"]):
                 raise Error(f"cannot set package C-state limit{self._proc.hostmsg} for CPU "
                             f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
 
-            regval = self._msr.set_bits(regval, feature["bits"], code)
+            regval = self._msr.set_bits(regval, finfo["bits"], code)
             self._msr.write(self.regaddr, regval, cpus=cpu)
 
     def _init_features_dict(self):
@@ -226,16 +226,16 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         super()._init_features_dict()
 
-        pcs_feature = self.features["pkg_cstate_limit"]
+        finfo = self.features["pkg_cstate_limit"]
         cpumodel = self._cpuinfo.info["model"]
 
-        if not pcs_feature["supported"]:
+        if not finfo["supported"]:
             _LOG.notice("no package C-state limit table available for %s%s. Try to contact "
                         "project maintainers.", self._cpuinfo.cpudescr, self._proc.hostmsg)
             return
 
         limits_info = _PKG_CST_LIMITS[cpumodel]
-        pcs_feature["bits"] = limits_info["bits"]
+        finfo["bits"] = limits_info["bits"]
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
