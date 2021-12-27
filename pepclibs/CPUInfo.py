@@ -27,16 +27,21 @@ INTEL_FAM6_BROADWELL_D = 0x56          # Broadwell Xeon-D.
 INTEL_FAM6_HASWELL_X = 0x3F            # Haswell Xeon.
 INTEL_FAM6_HASWELL_G = 0x46            # Haswell Xeon with Graphics.
 INTEL_FAM6_IVYBRIDGE_X = 0x3E          # Ivy Town Xeon.
-INTEL_FAM6_SANDYBRIDGE_X = 0x2D        # SandyBridg Xeon.
+INTEL_FAM6_SANDYBRIDGE_X = 0x2D        # SandyBridge Xeon.
+INTEL_FAM6_WESTMERE_EP = 0x2C          # Westmere 2S Xeon.
+INTEL_FAM6_WESTMERE_EX = 0x2F          # Westmere 4S Xeon.
+INTEL_FAM6_NEHALEM_EP = 0x1A           # Nehalem 2S Xeon.
+INTEL_FAM6_NEHALEM_EX = 0x2E           # Nehalem 4S Xeon.
 
 # Clients.
+INTEL_FAM6_ROCKETLAKE = 0xA7           # Rocket lake client.
 INTEL_FAM6_ALDERLAKE = 0x97            # Alder Lake client.
 INTEL_FAM6_ALDERLAKE_L = 0x9A          # Alder Lake mobile.
-INTEL_FAM6_ROCKETLAKE = 0xA7           # Rocket lake client.
-INTEL_FAM6_LAKEFIELD = 0x8A            # Lakefield client.
 INTEL_FAM6_TIGERLAKE = 0x8D            # Tiger Lake client.
 INTEL_FAM6_TIGERLAKE_L = 0x8C          # Tiger Lake mobile.
-INTEL_FAM6_ICELAKE_L = 0x66            # Ice Lake mobile.
+INTEL_FAM6_LAKEFIELD = 0x8A            # Lakefield client.
+INTEL_FAM6_ICELAKE = 0x7D              # IceLake client.
+INTEL_FAM6_ICELAKE_L = 0x7E            # Ice Lake mobile.
 INTEL_FAM6_COMETLAKE = 0xA5            # Comet Lake client.
 INTEL_FAM6_COMETLAKE_L = 0xA6          # Comet Lake mobile.
 INTEL_FAM6_KABYLAKE = 0x9E             # Kaby Lake client.
@@ -49,6 +54,9 @@ INTEL_FAM6_HASWELL = 0x3C              # Haswell client.
 INTEL_FAM6_HASWELL_L = 0x45            # Haswell mobile.
 INTEL_FAM6_IVYBRIDGE = 0x3A            # IvyBridge client.
 INTEL_FAM6_SANDYBRIDGE = 0x2A          # SandyBridge client.
+INTEL_FAM6_WESTMERE = 0x25             # Westmere client.
+INTEL_FAM6_NEHALEM_G = 0x1F            # Nehalem client with graphics (Auburndale, Havendale).
+INTEL_FAM6_NEHALEM = 0x1E              # Nehalem client.
 INTEL_FAM6_CORE2_MEROM = 0x0F          # Intel Core 2.
 
 # Atoms.
@@ -76,6 +84,62 @@ INTEL_FAM6_ICELAKE_NNPI = 0x9D         # Ice Lake Neural Network Processor.
 INTEL_FAM6_XEON_PHI_KNM = 0x85         # Knights Mill.
 INTEL_FAM6_XEON_PHI_KNL = 0x57         # Knights Landing.
 
+#
+# Various handy combinations of CPU models.
+#
+SPR =          (INTEL_FAM6_SAPPHIRERAPIDS_X,)
+ROCKETLAKE =   (INTEL_FAM6_ROCKETLAKE,)
+ALDERLAKES =   (INTEL_FAM6_ALDERLAKE,
+                 INTEL_FAM6_ALDERLAKE_L,)
+TIGERLAKES =   (INTEL_FAM6_TIGERLAKE,
+                INTEL_FAM6_TIGERLAKE_L,)
+LAKEFIELD =    (INTEL_FAM6_LAKEFIELD,)
+ICELAKES =     (INTEL_FAM6_ICELAKE,
+                INTEL_FAM6_ICELAKE_L,
+                INTEL_FAM6_ICELAKE_D,
+                INTEL_FAM6_ICELAKE_X,)
+COMETLAKES =   (INTEL_FAM6_COMETLAKE,
+                INTEL_FAM6_COMETLAKE_L,)
+KABYLAKES =    (INTEL_FAM6_KABYLAKE,
+                INTEL_FAM6_KABYLAKE_L,)
+CANNONLAKE =   (INTEL_FAM6_CANNONLAKE_L,)
+SKYLAKES =     (INTEL_FAM6_SKYLAKE,
+                INTEL_FAM6_SKYLAKE_L,
+                INTEL_FAM6_SKYLAKE_X,)
+BROADWELLS =   (INTEL_FAM6_BROADWELL,
+                INTEL_FAM6_BROADWELL_G,
+                INTEL_FAM6_BROADWELL_D,
+                INTEL_FAM6_BROADWELL_X,)
+HASWELLS =     (INTEL_FAM6_HASWELL,
+                INTEL_FAM6_HASWELL_L,
+                INTEL_FAM6_HASWELL_G,
+                INTEL_FAM6_HASWELL_X,)
+IVYBRIDGES =   (INTEL_FAM6_IVYBRIDGE,
+                INTEL_FAM6_IVYBRIDGE_X,)
+SANDYBRIDGES = (INTEL_FAM6_SANDYBRIDGE,
+                INTEL_FAM6_SANDYBRIDGE_X,)
+WESTMERES =    (INTEL_FAM6_WESTMERE,
+                INTEL_FAM6_WESTMERE_EP,
+                INTEL_FAM6_WESTMERE_EX,)
+NEHALEMS =     (INTEL_FAM6_NEHALEM,
+                INTEL_FAM6_NEHALEM_G,
+                INTEL_FAM6_NEHALEM_EP,
+                INTEL_FAM6_NEHALEM_EX)
+
+TREMONTS =     (INTEL_FAM6_ATOM_TREMONT,
+                INTEL_FAM6_ATOM_TREMONT_L,
+                INTEL_FAM6_TREMONT_D,)
+GOLDMONTS =    (INTEL_FAM6_ATOM_GOLDMONT,
+                INTEL_FAM6_GOLDMONT_D,
+                INTEL_FAM6_ATOM_GOLDMONT_PLUS,)
+AIRMONT =      (INTEL_FAM6_ATOM_AIRMONT,)
+SILVERMONTS =  (INTEL_FAM6_ATOM_SILVERMONT,
+                INTEL_FAM6_ATOM_SILVERMONT_MID,
+                INTEL_FAM6_ATOM_SILVERMONT_MID1,
+                INTEL_FAM6_ATOM_SILVERMONT_D,)
+
+PHIS =         (INTEL_FAM6_XEON_PHI_KNL,
+                INTEL_FAM6_XEON_PHI_KNM,)
 
 # CPU model description. Note, we keep only relatively new CPUs here, because for released CPUs
 # model name is available from the OS.
