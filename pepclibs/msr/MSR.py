@@ -27,9 +27,6 @@ ALL_BITS_1 = object()
 # Platform info MSR.
 MSR_PLATFORM_INFO = 0xCE
 
-# Scalable bus speed MSR.
-MSR_FSB_FREQ = 0xCD
-
 # Feature control MSR.
 MSR_MISC_FEATURE_CONTROL = 0x1A4
 MLC_STREAMER = 0
