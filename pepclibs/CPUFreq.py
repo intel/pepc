@@ -239,15 +239,24 @@ class CPUFreq:
         if not self._is_intel_cpu():
             return freqs
 
+        cpuinfo = self._get_cpuinfo()
+
         self._bclk = self._get_bclk()
-        _LOG.debug("Bus clock (self._bclk): %d", self._bclk)
+        _LOG.debug("bus clock speed: %fMHz", self._bclk)
 
         msr = self._get_msr()
-        msr_platform_info = msr.read(MSR.MSR_PLATFORM_INFO, cpu=cpu)
-        ratio = (msr_platform_info >> 8) & 0xFF
+
+        from pepclibs.msr import PlatformInfo # pylint: disable=import-outside-toplevel
+
+        platinfo = PlatformInfo.PlatformInfo(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
+
+        ratio = platinfo.get_feature("max_non_turbo_ratio", cpu=0)
         freqs["base"] = int(ratio * self._bclk * 1000)
-        ratio = (msr_platform_info >> 40) & 0xFF
-        freqs["max_eff"] = int(ratio * self._bclk * 1000)
+
+        if platinfo.features["max_eff_ratio"]["supported"]:
+            ratio = platinfo.get_feature("max_eff_ratio", cpu=0)
+            freqs["max_eff"] = int(ratio * self._bclk * 1000)
+
         msr_turbo_ratio_limit = msr.read(MSR.MSR_TURBO_RATIO_LIMIT, cpu=cpu)
         ratio = msr_turbo_ratio_limit & 0xFF
         freqs["max_turbo"] = int(ratio * self._bclk * 1000)
