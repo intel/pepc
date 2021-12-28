@@ -33,7 +33,7 @@ _TESTDATA = {
     }
 
 # Max. 64-bit integer.
-MAX64 = (1 << 64) - 1
+_MAX64 = (1 << 64) - 1
 
 def _get_mocked_data():
     """
@@ -172,7 +172,7 @@ class mock_MSR(MSR.MSR):
         """Mocked version of 'read_iter()'. Returns random data."""
 
         if regaddr in self._mocked_msr:
-            read_data = int.to_bytes(self._mocked_msr[regaddr] & MAX64,
+            read_data = int.to_bytes(self._mocked_msr[regaddr] & _MAX64,
                                      self.regbytes, byteorder="little")
         else:
             read_data = random.randbytes(8)
