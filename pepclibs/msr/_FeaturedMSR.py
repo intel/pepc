@@ -8,8 +8,7 @@
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides implements the base class for "featured" MSRs, such as
-'MSR_PKG_CST_CONFIG_CONTROL'.
+This module provides the base class for "featured" MSRs, such as 'MSR_PKG_CST_CONFIG_CONTROL'.
 """
 
 import copy
@@ -21,9 +20,18 @@ from pepclibs.msr import MSR
 
 _LOG = logging.getLogger()
 
+# Map of features available on various CPU models. Must be defined by sub-classes and descrive every
+# supported feature.
+#
+# * This is only the initial, general definition. Many things are platform-depeondent, so full
+#   dictionary is available the 'features' attribute of the featured MSR classes (e.g.,
+#   'PCStateConfigCtl.features').
+# * Sub-classes do not necessary implemlement all features available in the MSR register.
+FEATURES = {}
+
 class FeaturedMSR:
     """
-    This is the base class for featured MSRs, such as 'MSR_PKG_CST_CONFIG_CONTROL'.
+    This is the base class for "featured" MSRs, such as 'MSR_PKG_CST_CONFIG_CONTROL'.
     """
 
     def _check_feature_support(self, fname):

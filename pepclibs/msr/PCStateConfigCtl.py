@@ -80,10 +80,8 @@ _PKG_CST_LIMITS = {
         CPUInfo.INTEL_FAM6_TREMONT_D:        _SNR_PKG_CST_LIMITS,
 }
 
-# Map of features available on various CPU models.
-#
-# Note: this is only the initial, general definition. Many things are platform-depeondent, so full
-#       dictionary is available in 'PCStateConfigCtl.features'.
+# Map of features available on various CPU models. Please, refer to the notes for
+# '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
     "pkg_cstate_limit" : {
         "name" : "Package C-state limit",

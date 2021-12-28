@@ -43,10 +43,8 @@ _EFREQ_CPUS = CPUInfo.GOLDMONTS +    \
 # CPU models supporting the "maximum non-turbo ratio" feature.
 _BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.SILVERMONTS + CPUInfo.AIRMONT
 
-# Description of CPU features controlled by the the Platform Information MSR.
-#
-# Note: this is only the initial, general definition. Some things are platform-dependent, so full
-#       dictionary is available in 'PCStateConfigCtl.features'.
+# Description of CPU features controlled by the the Platform Information MSR. Please, refer to the
+# notes for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
     "max_non_turbo_ratio" : {
         "name" : "Maximum Non-Turbo Ratio",
@@ -73,7 +71,7 @@ FEATURES = {
 
 class PlatformInfo(_FeaturedMSR.FeaturedMSR):
     """
-    This module provides API to MSR 0xCE (MSR_PLATFORM_INFO). This MSR provides power and thermal
+    This class provides API to MSR 0xCE (MSR_PLATFORM_INFO). This MSR provides power and thermal
     information on Intel platforms.
     """
 

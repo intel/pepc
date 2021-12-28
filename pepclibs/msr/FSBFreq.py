@@ -68,10 +68,8 @@ _FSB_CODES = {
     CPUInfo.INTEL_FAM6_ATOM_AIRMONT:         _AIRMONT_FSB_CODES,
 }
 
-# Description of CPU features controlled by the the Power Control MSR.
-#
-# Note: this is only the initial, general definition, fulldictionary is available in
-# 'FSBFreq.features'.
+# Description of CPU features controlled by the the Power Control MSR. Please, refer to the # notes
+# for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
     "fsb" : {
         "name" : "Bus clock speed (megahertz)",
@@ -86,7 +84,7 @@ FEATURES = {
 
 class FSBFreq(_FeaturedMSR.FeaturedMSR):
     """
-    This module provides API to MSR 0xCD (MSR_FSB_FREQ). This MSR provides bus clock speed
+    This class provides API to MSR 0xCD (MSR_FSB_FREQ). This MSR provides bus clock speed
     information on some Intel platforms.
     """
 

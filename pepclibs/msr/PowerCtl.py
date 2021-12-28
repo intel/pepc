@@ -22,13 +22,12 @@ _LOG = logging.getLogger()
 # The Power Control Model Specific Register.
 MSR_POWER_CTL = 0x1FC
 
-# Description of CPU features controlled by the the Power Control MSR.
+# Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
+# for '_FeaturedMSR.FEATURES' for more comments.
 #
-# Note 1: this is only the initial, general definition. Some things are platform-dependent, so full
-#          dictionary is available in 'PCStateConfigCtl.features'.
-# Note 2: while the "C-state prewake" feature available on many CPUs, in practice it works only on
-#         on some platforms, like Ice Lake Xeon. Therefore we mark it as "supported" only for those
-#         platforms where we know it works.
+# Note: while the "C-state prewake" feature available on many CPUs, in practice it works only on
+#       some platforms, like Ice Lake Xeon. Therefore we mark it as "supported" only for those
+#       platforms where we know it works.
 FEATURES = {
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
