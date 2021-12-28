@@ -18,7 +18,7 @@ from unittest.mock import patch, mock_open
 from pathlib import Path
 from pepclibs import CPUInfo, CPUIdle
 from pepclibs.helperlibs import Procs, FSHelpers
-from pepclibs.msr import MSR, PCStateConfigCtl
+from pepclibs.msr import MSR, PCStateConfigCtl, PlatformInfo
 
 _TESTDATA = {
         ("cstates", "cstates_info.txt" ),
@@ -192,7 +192,7 @@ class mock_MSR(MSR.MSR):
         self._mocked_msr = {}
         # Use known values for Package C-state limits.
         self._mocked_msr[PCStateConfigCtl.MSR_PKG_CST_CONFIG_CONTROL] = 0x14000402
-        self._mocked_msr[MSR.MSR_PLATFORM_INFO] = 0x8008082ffb811800
+        self._mocked_msr[PlatformInfo.MSR_PLATFORM_INFO] = 0x8008082ffb811800
         self._mocked_msr[MSR.MSR_TURBO_RATIO_LIMIT] = 0x1f1f212222232323
         self._mocked_msr[MSR.MSR_PM_ENABLE] = 1
 

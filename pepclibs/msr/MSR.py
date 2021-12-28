@@ -24,9 +24,6 @@ _CPU_BYTEORDER = "little"
 # 'write_bits()'.
 ALL_BITS_1 = object()
 
-# Platform info MSR.
-MSR_PLATFORM_INFO = 0xCE
-
 # Feature control MSR.
 MSR_MISC_FEATURE_CONTROL = 0x1A4
 MLC_STREAMER = 0
