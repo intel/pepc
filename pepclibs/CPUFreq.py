@@ -240,13 +240,16 @@ class CPUFreq:
             return freqs
 
         cpuinfo = self._get_cpuinfo()
-
         self._bclk = self._get_bclk()
-        _LOG.debug("bus clock speed: %fMHz", self._bclk)
-
         msr = self._get_msr()
 
-        from pepclibs.msr import PlatformInfo # pylint: disable=import-outside-toplevel
+        _LOG.debug("bus clock speed: %fMHz", self._bclk)
+
+        #
+        # Get base frequency and effeciency frequency from 'MSR_PLATFORM_INFO'.
+        #
+        # pylint: disable=import-outside-toplevel
+        from pepclibs.msr import PlatformInfo
 
         platinfo = PlatformInfo.PlatformInfo(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
 
@@ -257,10 +260,30 @@ class CPUFreq:
             ratio = platinfo.get_feature("max_eff_ratio", cpu=cpu)
             freqs["max_eff"] = int(ratio * self._bclk * 1000)
 
-        msr_turbo_ratio_limit = msr.read(MSR.MSR_TURBO_RATIO_LIMIT, cpu=cpu)
-        ratio = msr_turbo_ratio_limit & 0xFF
-        freqs["max_turbo"] = int(ratio * self._bclk * 1000)
+        #
+        # Get max 1 core turbo frequency from 'MSR_TURBO_RATIO_LIMIT'.
+        #
+        from pepclibs.msr import TurboRatioLimit
 
+        trl = TurboRatioLimit.TurboRatioLimit(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
+        ratio = None
+
+        if trl.features["max_1c_turbo_ratio"]["supported"]:
+            ratio = trl.get_feature("max_1c_turbo_ratio", 0)
+        elif trl.features["max_g0_turbo_ratio"]["supported"]:
+            # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores. We
+            # can safely assume that group 0 will correspond to max. 1-core turbo, so we do not need
+            # to look at 'MSR_TURBO_RATIO_LIMIT1'.
+            ratio = trl.get_feature("max_g0_turbo_ratio", 0)
+        else:
+            _LOG.warning("module 'TurboRatioLimit' does not support 'MSR_TURBO_RATIO_LIMIT' for "
+                         "CPU '%s'%s\nPlease, contact project maintainers.",
+                         cpuinfo.cpudescr, self._proc.hostmsg)
+
+        if ratio is not None:
+            freqs["max_turbo"] = int(ratio * self._bclk * 1000)
+
+        # pylint: enable=import-outside-toplevel
         return freqs
 
     def _is_turbo_enabled(self):
