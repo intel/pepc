@@ -227,7 +227,7 @@ class CPUFreq:
         msr = self._get_msr()
         fsbfreq = FSBFreq.FSBFreq(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
         if fsbfreq.features["fsb"]["supported"]:
-            return fsbfreq.get_feature("fsb", cpu=0)
+            return fsbfreq.get_feature("fsb", 0)
 
         # Fall back to 133.33 clock speed.
         return 133.33
@@ -250,11 +250,11 @@ class CPUFreq:
 
         platinfo = PlatformInfo.PlatformInfo(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
 
-        ratio = platinfo.get_feature("max_non_turbo_ratio", cpu=0)
+        ratio = platinfo.get_feature("max_non_turbo_ratio", cpu=cpu)
         freqs["base"] = int(ratio * self._bclk * 1000)
 
         if platinfo.features["max_eff_ratio"]["supported"]:
-            ratio = platinfo.get_feature("max_eff_ratio", cpu=0)
+            ratio = platinfo.get_feature("max_eff_ratio", cpu=cpu)
             freqs["max_eff"] = int(ratio * self._bclk * 1000)
 
         msr_turbo_ratio_limit = msr.read(MSR.MSR_TURBO_RATIO_LIMIT, cpu=cpu)
