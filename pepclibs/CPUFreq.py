@@ -253,11 +253,11 @@ class CPUFreq:
 
         platinfo = PlatformInfo.PlatformInfo(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
 
-        ratio = platinfo.get_feature("max_non_turbo_ratio", cpu=cpu)
+        ratio = platinfo.get_feature("max_non_turbo_ratio", cpu)
         freqs["base"] = int(ratio * self._bclk * 1000)
 
         if platinfo.features["max_eff_ratio"]["supported"]:
-            ratio = platinfo.get_feature("max_eff_ratio", cpu=cpu)
+            ratio = platinfo.get_feature("max_eff_ratio", cpu)
             freqs["max_eff"] = int(ratio * self._bclk * 1000)
 
         #

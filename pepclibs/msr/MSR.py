@@ -164,7 +164,7 @@ class MSR:
 
             yield (cpu, regval)
 
-    def read_cpu(self, regaddr, cpu=0):
+    def read_cpu(self, regaddr, cpu):
         """
         Read an MSR at 'regaddr' CPU 'cpu' and return read result. Arguments are as follows.
           * regaddr - address of the MSR to read.
@@ -212,7 +212,7 @@ class MSR:
 
             self._cache_add(regaddr, regval, cpu, dirty=dirty)
 
-    def write_cpu(self, regaddr, regval, cpu=0):
+    def write_cpu(self, regaddr, regval, cpu):
         """Same as 'write()', but accepts a single CPU number 'cpu'."""
 
         self.write(regaddr, regval, cpus=(cpu,))
@@ -252,7 +252,7 @@ class MSR:
         mask = (1 << bits_cnt) - 1
         return (regval >> bits[1]) & mask
 
-    def read_cpu_bits(self, regaddr, bits, cpu=0):
+    def read_cpu_bits(self, regaddr, bits, cpu):
         """
         Read bits 'bits' from an MSR at 'regaddr'. The arguments are as follows.
           * regaddr - address of the MSR to read the bits from.
@@ -260,7 +260,7 @@ class MSR:
           * cpu - CPU number to get the bits from (same as in 'read_cpu()').
         """
 
-        regval = self.read_cpu(regaddr, cpu=cpu)
+        regval = self.read_cpu(regaddr, cpu)
         return self.get_bits(regval, bits)
 
     def set_bits(self, regval, bits, val):
@@ -308,7 +308,7 @@ class MSR:
             if regval != new_regval:
                 self.write(regaddr, new_regval, cpunum)
 
-    def write_cpu_bits(self, regaddr, bits, val, cpu=0):
+    def write_cpu_bits(self, regaddr, bits, val, cpu):
         """Same as 'write_bits()', but accepts a single CPU number 'cpu'."""
 
         self.write_bits(regaddr, bits, val, cpus=(cpu,))

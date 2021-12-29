@@ -148,7 +148,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """
 
         finfo = self.features["pkg_cstate_limit"]
-        code = self._msr.read_cpu_bits(self.regaddr, finfo["bits"], cpu=cpu)
+        code = self._msr.read_cpu_bits(self.regaddr, finfo["bits"], cpu)
 
         if code not in finfo["rvals"]:
             known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
@@ -184,7 +184,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
 
             regval = self._msr.set_bits(regval, finfo["bits"], limit)
-            self._msr.write(self.regaddr, regval, cpus=cpu)
+            self._msr.write_cpu(self.regaddr, regval, cpu)
 
     def _init_features_dict_pkg_cstate_limit(self):
         """Initialize the 'pkg_cstate_limit' information in the 'self.features' dictionary."""
