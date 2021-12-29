@@ -41,6 +41,7 @@ class MSR:
       1. Read MSRs from multiple CPU: 'read()'.
       2. Read an MSR from a single CPU: 'read_cpu()', 'read_cpu_bits()'.
       3. Write to MSRs on multiple CPUs: 'write()', 'write_bits()'.
+      4. Write an MSRs on a single CPU: 'write_cpu()', 'write_cpu_bits()'.
 
     Additionally, the following helper methods are available.
       1. Set bits in an MSR value (a variable): 'set_bits()'.
@@ -170,7 +171,7 @@ class MSR:
           * cpu - The CPU to read the MSR at. Can be an integer or a string with an integer number.
         """
 
-        _, msr = next(self.read(regaddr, cpu))
+        _, msr = next(self.read(regaddr, cpus=(cpu,)))
         return msr
 
     def _write(self, regaddr, regval, cpu, regval_bytes=None):
@@ -191,7 +192,7 @@ class MSR:
 
     def write(self, regaddr, regval, cpus="all"):
         """
-        Write 'regval' to an MSR at 'regaddr'. The arguments are as follows.
+        Write 'regval' to an MSR at 'regaddr' on CPUs in 'cpus'. The arguments are as follows.
           * regaddr - address of the MSR to write to.
           * regval - the value to write to the MSR.
           * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read()').
@@ -210,6 +211,11 @@ class MSR:
                 dirty = True
 
             self._cache_add(regaddr, regval, cpu, dirty=dirty)
+
+    def write_cpu(self, regaddr, regval, cpu=0):
+        """Same as 'write()', but accepts a single CPU number 'cpu'."""
+
+        self.write(regaddr, regval, cpus=(cpu,))
 
     def _normalize_bits(self, bits):
         """Validate and normalize bits range 'bits'."""
@@ -301,6 +307,11 @@ class MSR:
             new_regval = self.set_bits(regval, bits, val)
             if regval != new_regval:
                 self.write(regaddr, new_regval, cpunum)
+
+    def write_cpu_bits(self, regaddr, bits, val, cpu=0):
+        """Same as 'write_bits()', but accepts a single CPU number 'cpu'."""
+
+        self.write_bits(regaddr, bits, val, cpus=(cpu,))
 
     def _ensure_dev_msr(self):
         """
