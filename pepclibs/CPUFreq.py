@@ -325,6 +325,23 @@ class CPUFreq:
         platform_freqs = self._get_platform_freqs(0)
         return self._get_base_freq(0) != platform_freqs["max_turbo"]
 
+    def _get_hwp_enabled(self, cpu):
+        """
+        Returnd 'True' if hardware power management is enabled, 'False' if it is disabled, and
+        'None' if it is not supported by the CPU (and hence, not enabled).
+        """
+
+        from pepclibs.msr import PMEnable # pylint: disable=import-outside-toplevel
+
+        msr = self._get_msr()
+        cpuinfo = self._get_cpuinfo()
+        pmenable = PMEnable.PMEnable(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
+
+        if not pmenable.features["hwp_enabled"]["supported"]:
+            return None
+
+        return pmenable.feature_enabled("hwp_enabled", cpu)
+
     def _get_cpufreq_info(self, cpus, keys):
         """Implements 'get_cpufreq_info()'."""
 
@@ -373,12 +390,7 @@ class CPUFreq:
                 cpuinfo = self._get_cpuinfo()
                 info["hwp_supported"] = "hwp" in cpuinfo.info["flags"]
             if "hwp_enabled" in keys:
-                if info["hwp_supported"]:
-                    msr = self._get_msr()
-                    msr_pm_enable = msr.read(MSR.MSR_PM_ENABLE, cpu=cpu)
-                    info["hwp_enabled"] = msr_pm_enable & (1 << MSR.HWP_ENABLE)
-                else:
-                    info["hwp_enabled"] = False
+                info["hwp_enabled"] = self._get_hwp_enabled(cpu) is True
             if "turbo_supported" in keys:
                 info["turbo_supported"] = turbo_supported
             if "turbo_enabled" in keys:
@@ -867,9 +879,7 @@ class CPUFreq:
             raise Error(f"EPP (Energy Performance Preference) is not supported"
                         f"{self._proc.hostmsg}.")
 
-        msr_pm_enable = self._get_msr().read(MSR.MSR_PM_ENABLE, cpu=cpu)
-        hwp_enabled = msr_pm_enable & bit_mask(MSR.HWP_ENABLE)
-        if not hwp_enabled:
+        if not self._get_hwp_enabled(cpu):
             raise Error(f"EPP (Energy Performance Preference) is not available{self._proc.hostmsg} "
                         f"because it has HWP (Hardware Power Management) disabled")
         self._epp_supported = True
