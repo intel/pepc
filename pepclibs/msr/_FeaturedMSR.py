@@ -147,16 +147,21 @@ class FeaturedMSR:
         raise Error(f"feature '{fname}' is not boolean, use 'get_feature()' instead")
 
     def _init_features_dict_supported(self):
-        """
-        Intitialize the 'supported' flag for all features in the 'self.featrues' dictionary by
-        comparing current CPU model against the list of CPU models that support the feature.
-        """
+        """Intitialize the 'supported' flag for all features in the 'self.features' dictionary."""
 
         for finfo in self.features.values():
-            if not "cpumodels" in finfo:
-                # No CPU models list, assumed the feature is supported.
-                finfo["supported"] = True
-            else:
+            # By default let's assume the feature is supported by this CPU.
+            finfo["supported"] = True
+
+            if "cpuflags" in finfo:
+                # Make sure that current CPU has all the required CPU flags.
+                available_cpuflags = set(self._cpuinfo.info["flags"])
+                for cpuflag in finfo["cpuflags"]:
+                    if cpuflag not in available_cpuflags:
+                        finfo["supported"] = False
+
+            if "cpumodels" in finfo:
+                # Check if current CPU model is supported by the feature.
                 cpumodel = self._cpuinfo.info["model"]
                 finfo["supported"] = cpumodel in finfo["cpumodels"]
 
