@@ -31,9 +31,6 @@ MLC_SPACIAL = 1
 DCU_STREAMER = 2
 DCU_IP = 3
 
-# Turbo ratio limit MSR, informs about turbo frequencies for core groups.
-MSR_TURBO_RATIO_LIMIT = 0x1AD
-
 # Energy performance bias MSR.
 MSR_ENERGY_PERF_BIAS = 0x1B0
 
