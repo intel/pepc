@@ -18,7 +18,7 @@ from unittest.mock import patch, mock_open
 from pathlib import Path
 from pepclibs import CPUInfo, CPUIdle
 from pepclibs.helperlibs import Procs, FSHelpers
-from pepclibs.msr import MSR, PCStateConfigCtl, PlatformInfo, TurboRatioLimit
+from pepclibs.msr import MSR, PCStateConfigCtl, PlatformInfo, TurboRatioLimit, PMEnable
 
 _TESTDATA = {
         ("cstates", "cstates_info.txt" ),
@@ -189,12 +189,14 @@ class mock_MSR(MSR.MSR):
         """Initialize MSR object with test data."""
 
         super().__init__(proc=proc, cpuinfo=cpuinfo)
+
         self._mocked_msr = {}
-        # Use known values for Package C-state limits.
+
+        # Use realistice values for few MSRs.
         self._mocked_msr[PCStateConfigCtl.MSR_PKG_CST_CONFIG_CONTROL] = 0x14000402
         self._mocked_msr[PlatformInfo.MSR_PLATFORM_INFO] = 0x8008082ffb811800
         self._mocked_msr[TurboRatioLimit.MSR_TURBO_RATIO_LIMIT] = 0x1f1f212222232323
-        self._mocked_msr[MSR.MSR_PM_ENABLE] = 1
+        self._mocked_msr[PMEnable.MSR_PM_ENABLE] = 1
 
 def mock_exists(path: Path, proc=None):
     """Mock version of 'exists' function in FSHelpers module."""

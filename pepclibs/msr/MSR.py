@@ -34,10 +34,6 @@ DCU_IP = 3
 # Energy performance bias MSR.
 MSR_ENERGY_PERF_BIAS = 0x1B0
 
-# PM enable MSR.
-MSR_PM_ENABLE = 0x770
-HWP_ENABLE = 0
-
 # HWP Request MSR. Includes hardware power management control bits.
 MSR_HWP_REQUEST = 0x774
 PKG_CONTROL = 42

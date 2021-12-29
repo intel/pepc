@@ -15,7 +15,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch, mock_open, ANY
 from pepclibs.testlibs.mockedsys import mock_Proc
-from pepclibs.msr import MSR
+from pepclibs.msr import MSR, PMEnable
 
 _MSR_BYTES = 8
 _TEST_DATA_BYTES = random.randbytes(_MSR_BYTES)
@@ -28,11 +28,14 @@ _TEST_DATA = int.from_bytes(_TEST_DATA_BYTES, byteorder="little")
 class TestMSR(unittest.TestCase):
     """Unittests for the 'MSR' module."""
 
+    # The MSR addresses that will be tested.
+    _addrs = (PMEnable.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, MSR.MSR_HWP_REQUEST)
+
     def test_read(self, m_open):
         """Test the 'read()' method, and verify output data."""
 
         with MSR.MSR() as msr:
-            for addr in (MSR.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, MSR.MSR_HWP_REQUEST):
+            for addr in self._addrs:
                 for cpu in (0, 1, 99):
                     res = msr.read(addr, cpu=cpu)
                     m_open.assert_called_with(Path(f"/dev/cpu/{cpu}/msr"), ANY)
@@ -43,7 +46,7 @@ class TestMSR(unittest.TestCase):
         """Test the 'read_iter()' method, and verify output."""
 
         with MSR.MSR() as msr:
-            for addr in (MSR.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, MSR.MSR_HWP_REQUEST):
+            for addr in self._addrs:
                 cpus = [0, 1, 3, 4]
 
                 for cpu, res in msr.read_iter(addr, cpus=cpus):
@@ -59,7 +62,7 @@ class TestMSR(unittest.TestCase):
         """Test the 'write()' method, and verify call arguments."""
 
         with MSR.MSR() as msr:
-            for addr in (MSR.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, MSR.MSR_HWP_REQUEST):
+            for addr in self._addrs:
                 for cpu in (0, 1, 99):
                     msr.write(addr, _TEST_DATA, cpus=cpu)
                     m_open.assert_called_with(Path(f"/dev/cpu/{cpu}/msr"), ANY)
