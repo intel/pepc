@@ -34,7 +34,18 @@ DCU_IP = 3
 _LOG = logging.getLogger()
 
 class MSR:
-    """This class provides helpers to read and write CPU Model Specific Registers."""
+    """
+    This class provides helpers to read and write CPU Model Specific Registers.
+
+    The following are public methods for reading and writing MSRs.
+      1. Read MSRs from multiple CPU: 'read_iter()'.
+      2. Read an MSR from a single CPU: 'read()', 'read_bits()'.
+      3. Write to MSRs on multiple CPUs: 'write()', 'write_bits()'.
+
+    Additionally, the following helper methods are available.
+      1. Set bits in an MSR value (a variable): 'set_bits()'.
+      2. Get bits from an MSR value (a variable): 'get_bits()'.
+    """
 
     def _cache_add(self, regaddr, regval, cpu, dirty=False):
         """Add CPU 'cpu' MSR at 'regaddr' with its value 'regval' to the cache."""
