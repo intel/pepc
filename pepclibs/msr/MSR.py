@@ -31,11 +31,6 @@ MLC_SPACIAL = 1
 DCU_STREAMER = 2
 DCU_IP = 3
 
-# HWP Request MSR. Includes hardware power management control bits.
-MSR_HWP_REQUEST = 0x774
-PKG_CONTROL = 42
-EPP_VALID = 60
-
 OWN_NAME="MSR.py"
 _LOG = logging.getLogger()
 Logging.setup_logger(prefix=OWN_NAME)
