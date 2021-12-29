@@ -31,17 +31,17 @@ _EFREQ_CPUS = CPUInfo.GOLDMONTS +    \
               CPUInfo.HASWELLS +     \
               CPUInfo.BROADWELLS +   \
               CPUInfo.SKYLAKES +     \
-              CPUInfo.CANNONLAKE+    \
+              CPUInfo.CANNONLAKES +  \
               CPUInfo.KABYLAKES +    \
               CPUInfo.COMETLAKES +   \
               CPUInfo.ICELAKES +     \
               CPUInfo.TIGERLAKES +   \
-              CPUInfo.SPR +          \
+              CPUInfo.SPRS +         \
               CPUInfo.ALDERLAKES +   \
-              CPUInfo.ROCKETLAKE
+              CPUInfo.ROCKETLAKES
 
 # CPU models supporting the "maximum non-turbo ratio" feature.
-_BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.SILVERMONTS + CPUInfo.AIRMONT
+_BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS
 
 # Description of CPU features controlled by the the Platform Information MSR. Please, refer to the
 # notes for '_FeaturedMSR.FEATURES' for more comments.
