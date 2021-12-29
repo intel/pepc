@@ -921,8 +921,15 @@ class CPUFreq:
     def _get_epb(self, cpus="all"):
         """Implements get_epb()."""
 
-        for cpu, epb in self._get_msr().read_iter(MSR.MSR_ENERGY_PERF_BIAS, cpus=cpus):
-            yield (cpu, (epb & 0xF))
+        from pepclibs.msr import EnergyPerfBias # pylint: disable=import-outside-toplevel
+
+        msr = self._get_msr()
+        cpuinfo = self._get_cpuinfo()
+        epb_msr = EnergyPerfBias.EnergyPerfBias(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
+
+        cpus = self._get_cpuinfo().normalize_cpus(cpus)
+        for cpu in cpus:
+            yield (cpu, epb_msr.get_feature("epb", cpu))
 
     def get_epb(self, cpus="all"):
         """
@@ -970,8 +977,10 @@ class CPUFreq:
         format description.
         """
 
+        from pepclibs.msr import EnergyPerfBias # pylint: disable=import-outside-toplevel
+
         self._check_epb_supported()
-        cpus = self._get_cpuinfo().normalize_cpus(cpus)
+
         if Trivial.is_int(epb):
             self._validate_int_range(0, 15, epb, what="EPB")
         else:
@@ -982,7 +991,11 @@ class CPUFreq:
                             f"one of the following EPB policy names: {policy_names}")
             epb = _EPB_POLICIES[epb_policy]
 
-        self._get_msr().write(MSR.MSR_ENERGY_PERF_BIAS, int(epb), cpus=cpus)
+        msr = self._get_msr()
+        cpuinfo = self._get_cpuinfo()
+        epb_msr = EnergyPerfBias.EnergyPerfBias(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
+
+        epb_msr.set_feature("epb", int(epb), cpus=cpus)
 
     def set_epp(self, epp, cpus="all"):
         """
