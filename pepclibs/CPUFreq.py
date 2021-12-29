@@ -384,8 +384,8 @@ class CPUFreq:
             if "turbo_enabled" in keys:
                 info["turbo_enabled"] = turbo_enabled
             if "epp_supported" in keys:
-                info["epp_supported"] = self._is_epp_supported()
-            if self._is_epp_supported():
+                info["epp_supported"] = self._is_epp_supported(cpu)
+            if self._is_epp_supported(cpu):
                 if "epp" in keys:
                     info["epp"] = self.get_cpu_epp(cpu)
                 if "epp_policy" in keys:
@@ -855,7 +855,7 @@ class CPUFreq:
             return True
         return False
 
-    def _check_epp_supported(self):
+    def _check_epp_supported(self, cpu):
         """Raise an error if Energy Performance Preference is not supported or it is not enabled."""
 
         if self._epp_supported:
@@ -867,21 +867,21 @@ class CPUFreq:
             raise Error(f"EPP (Energy Performance Preference) is not supported"
                         f"{self._proc.hostmsg}.")
 
-        msr_pm_enable = self._get_msr().read(MSR.MSR_PM_ENABLE, cpu=0)
+        msr_pm_enable = self._get_msr().read(MSR.MSR_PM_ENABLE, cpu=cpu)
         hwp_enabled = msr_pm_enable & bit_mask(MSR.HWP_ENABLE)
         if not hwp_enabled:
             raise Error(f"EPP (Energy Performance Preference) is not available{self._proc.hostmsg} "
                         f"because it has HWP (Hardware Power Management) disabled")
         self._epp_supported = True
 
-    def _is_epp_supported(self):
+    def _is_epp_supported(self, cpu):
         """Returns 'True' if Energy Performance Preference is supported, otherwise 'False'."""
 
         if self._epp_supported is not None:
             return self._epp_supported
 
         with contextlib.suppress(Error):
-            self._check_epp_supported()
+            self._check_epp_supported(cpu)
             return True
         return False
 
@@ -940,18 +940,16 @@ class CPUFreq:
         argument is the same as in 'set_epb()'
         """
 
-        self._check_epp_supported()
         cpus = self._get_cpuinfo().normalize_cpus(cpus)
 
         for cpu, epp in self._get_msr().read_iter(MSR.MSR_HWP_REQUEST, cpus=cpus):
+            self._check_epp_supported(cpu)
             yield (cpu, (epp >> 24) & 0xFF)
 
     def get_cpu_epp(self, cpu):
         """Return EPP value for CPU number 'cpu'."""
 
-        self._check_epp_supported()
         cpus = self._get_cpuinfo().normalize_cpus(cpu)
-
         for _, epp in self.get_epp(cpus=cpus):
             return epp
 
@@ -983,12 +981,12 @@ class CPUFreq:
         'CPUIdle' module for the exact format description.
         """
 
-        self._check_epp_supported()
         cpus = self._get_cpuinfo().normalize_cpus(cpus)
 
         if Trivial.is_int(epp):
             self._validate_int_range(0, 255, epp, what="EPP")
             for cpu in cpus:
+                self._check_epp_supported(cpu)
                 msr_val = self._get_msr().read(MSR.MSR_HWP_REQUEST, cpu=cpu)
                 if msr_val & bit_mask(MSR.PKG_CONTROL):
                     msr_val |= bit_mask(MSR.EPP_VALID)
