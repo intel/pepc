@@ -15,7 +15,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch, mock_open, ANY
 from pepclibs.testlibs.mockedsys import mock_Proc
-from pepclibs.msr import MSR, PMEnable, HWPRequest
+from pepclibs.msr import MSR, PMEnable, HWPRequest, MiscFeatureControl
 
 _MSR_BYTES = 8
 _TEST_DATA_BYTES = random.randbytes(_MSR_BYTES)
@@ -29,7 +29,8 @@ class TestMSR(unittest.TestCase):
     """Unittests for the 'MSR' module."""
 
     # The MSR addresses that will be tested.
-    _addrs = (PMEnable.MSR_PM_ENABLE, MSR.MSR_MISC_FEATURE_CONTROL, HWPRequest.MSR_HWP_REQUEST)
+    _addrs = (PMEnable.MSR_PM_ENABLE, MiscFeatureControl.MSR_MISC_FEATURE_CONTROL,
+              HWPRequest.MSR_HWP_REQUEST)
 
     def test_read(self, m_open):
         """Test the 'read()' method, and verify output data."""
