@@ -957,11 +957,30 @@ class CPUFreq:
         argument is the same as in 'set_epb()'
         """
 
+        from pepclibs.msr import HWPRequest, HWPRequestPkg # pylint: disable=import-outside-toplevel
+
+        msr = self._get_msr()
+        cpuinfo = self._get_cpuinfo()
+        hwpreq = HWPRequest.HWPRequest(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
+
+        hwpreq_pkg = None
         cpus = self._get_cpuinfo().normalize_cpus(cpus)
 
-        for cpu, epp in self._get_msr().read_iter(MSR.MSR_HWP_REQUEST, cpus=cpus):
+        for cpu in cpus:
             self._check_epp_supported(cpu)
-            yield (cpu, (epp >> 24) & 0xFF)
+
+            # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
+            pkg_control = hwpreq.feature_enabled("pkg_control", cpu)
+            epp_valid = hwpreq.feature_enabled("epp_valid", cpu)
+            if pkg_control and not epp_valid:
+                if not hwpreq_pkg:
+                    hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(proc=self._proc, cpuinfo=cpuinfo,
+                                                             msr=msr)
+                hwpreq_msr = hwpreq_pkg
+            else:
+                hwpreq_msr = hwpreq
+
+            yield (cpu, hwpreq_msr.get_feature("epp", cpu))
 
     def get_cpu_epp(self, cpu):
         """Return EPP value for CPU number 'cpu'."""
@@ -1004,19 +1023,19 @@ class CPUFreq:
         'CPUIdle' module for the exact format description.
         """
 
-        cpus = self._get_cpuinfo().normalize_cpus(cpus)
+        from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
+
+        msr = self._get_msr()
+        cpuinfo = self._get_cpuinfo()
+        hwpreq = HWPRequest.HWPRequest(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
 
         if Trivial.is_int(epp):
             self._validate_int_range(0, 255, epp, what="EPP")
-            for cpu in cpus:
-                self._check_epp_supported(cpu)
-                msr_val = self._get_msr().read(MSR.MSR_HWP_REQUEST, cpu=cpu)
-                if msr_val & bit_mask(MSR.PKG_CONTROL):
-                    msr_val |= bit_mask(MSR.EPP_VALID)
-                msr_val &= ~(0xFF << 24)
-                msr_val |= int(epp) << 24
-                self._get_msr().write(MSR.MSR_HWP_REQUEST, msr_val, cpus=cpu)
+
+            hwpreq.set_feature("epp_valid", "on", cpus=cpus)
+            hwpreq.set_feature("epp", epp, cpus=cpus)
         else:
+            cpus = self._get_cpuinfo().normalize_cpus(cpus)
             for cpu in cpus:
                 self._validate_epp_policy(epp)
                 path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / \
