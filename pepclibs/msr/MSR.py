@@ -14,7 +14,7 @@ Registers. This module has been designed and implemented for Intel CPUs.
 
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import Procs, Logging, FSHelpers, KernelModule, Trivial
+from pepclibs.helperlibs import Procs, FSHelpers, KernelModule, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 
@@ -31,9 +31,7 @@ MLC_SPACIAL = 1
 DCU_STREAMER = 2
 DCU_IP = 3
 
-OWN_NAME="MSR.py"
 _LOG = logging.getLogger()
-Logging.setup_logger(prefix=OWN_NAME)
 
 class MSR:
     """This class provides helpers to read and write CPU Model Specific Registers."""
