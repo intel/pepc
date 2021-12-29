@@ -38,8 +38,8 @@ class MSR:
     This class provides helpers to read and write CPU Model Specific Registers.
 
     The following are public methods for reading and writing MSRs.
-      1. Read MSRs from multiple CPU: 'read_iter()'.
-      2. Read an MSR from a single CPU: 'read()', 'read_bits()'.
+      1. Read MSRs from multiple CPU: 'read()'.
+      2. Read an MSR from a single CPU: 'read_cpu()', 'read_cpu_bits()'.
       3. Write to MSRs on multiple CPUs: 'write()', 'write_bits()'.
 
     Additionally, the following helper methods are available.
@@ -121,7 +121,7 @@ class MSR:
 
         self._in_transaction = False
 
-    def _read(self, regaddr, cpu):
+    def _read_cpu(self, regaddr, cpu):
         """Read an MSR at address 'regaddr' on CPU 'cpu'."""
 
         path = Path(f"/dev/cpu/{cpu}/msr")
@@ -138,7 +138,7 @@ class MSR:
 
         return regval
 
-    def read_iter(self, regaddr, cpus="all"):
+    def read(self, regaddr, cpus="all"):
         """
         Read an MSR on CPUs 'cpus' and yield the result. The arguments are as follows.
           * regaddr - address of the MSR to read.
@@ -158,19 +158,19 @@ class MSR:
             regval = self._cache_get(regaddr, cpu)
             if regval is None:
                 # Not in the cache, read from the HW.
-                regval = self._read(regaddr, cpu)
+                regval = self._read_cpu(regaddr, cpu)
                 self._cache_add(regaddr, regval, cpu, dirty=False)
 
             yield (cpu, regval)
 
-    def read(self, regaddr, cpu=0):
+    def read_cpu(self, regaddr, cpu=0):
         """
         Read an MSR at 'regaddr' CPU 'cpu' and return read result. Arguments are as follows.
           * regaddr - address of the MSR to read.
           * cpu - The CPU to read the MSR at. Can be an integer or a string with an integer number.
         """
 
-        _, msr = next(self.read_iter(regaddr, cpu))
+        _, msr = next(self.read(regaddr, cpu))
         return msr
 
     def _write(self, regaddr, regval, cpu, regval_bytes=None):
@@ -194,7 +194,7 @@ class MSR:
         Write 'regval' to an MSR at 'regaddr'. The arguments are as follows.
           * regaddr - address of the MSR to write to.
           * regval - the value to write to the MSR.
-          * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read_iter()').
+          * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read()').
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
@@ -246,15 +246,15 @@ class MSR:
         mask = (1 << bits_cnt) - 1
         return (regval >> bits[1]) & mask
 
-    def read_bits(self, regaddr, bits, cpu=0):
+    def read_cpu_bits(self, regaddr, bits, cpu=0):
         """
         Read bits 'bits' from an MSR at 'regaddr'. The arguments are as follows.
           * regaddr - address of the MSR to read the bits from.
           * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
-          * cpu - CPU number to get the bits from (same as in 'read()').
+          * cpu - CPU number to get the bits from (same as in 'read_cpu()').
         """
 
-        regval = self.read(regaddr, cpu=cpu)
+        regval = self.read_cpu(regaddr, cpu=cpu)
         return self.get_bits(regval, bits)
 
     def set_bits(self, regval, bits, val):
@@ -294,10 +294,10 @@ class MSR:
                    number would be 0, and the most significant bit number would be 64.
           * val - the integer value to write to MSR bits 'bits'. Use 'MSR.ALL_BITS_1' to set all
                   bits to '1'.
-          * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read_iter()').
+          * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read()').
         """
 
-        for cpunum, regval in self.read_iter(regaddr, cpus):
+        for cpunum, regval in self.read(regaddr, cpus):
             new_regval = self.set_bits(regval, bits, val)
             if regval != new_regval:
                 self.write(regaddr, new_regval, cpunum)

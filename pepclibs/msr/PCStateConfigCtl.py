@@ -148,7 +148,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """
 
         finfo = self.features["pkg_cstate_limit"]
-        code = self._msr.read_bits(self.regaddr, finfo["bits"], cpu=cpu)
+        code = self._msr.read_cpu_bits(self.regaddr, finfo["bits"], cpu=cpu)
 
         if code not in finfo["rvals"]:
             known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
@@ -177,7 +177,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         finfo = self.features["locked"]
 
-        for cpu, regval in self._msr.read_iter(self.regaddr, cpus=cpus):
+        for cpu, regval in self._msr.read(self.regaddr, cpus=cpus):
             if self._msr.get_bits(regval, finfo["bits"]):
                 raise Error(f"cannot set package C-state limit{self._proc.hostmsg} for CPU "
                             f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "

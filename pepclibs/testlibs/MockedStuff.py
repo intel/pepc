@@ -165,8 +165,8 @@ class MockedProc(Procs.Proc):
 class MockedMSR(MSR.MSR):
     """Mock version of MSR class in pepclibs.msr.MSR module."""
 
-    def read_iter(self, regaddr, cpus="all"):
-        """Mocked version of 'read_iter()'. Returns random data."""
+    def read(self, regaddr, cpus="all"):
+        """Mocked version of 'read()'. Returns random data."""
 
         if regaddr in self._mocked_msr:
             read_data = int.to_bytes(self._mocked_msr[regaddr] & _MAX64,
@@ -175,7 +175,7 @@ class MockedMSR(MSR.MSR):
             read_data = random.randbytes(8)
 
         with patch("builtins.open", new_callable=mock_open, read_data=read_data):
-            yield from super().read_iter(regaddr, cpus)
+            yield from super().read(regaddr, cpus)
 
     def write(self, regaddr, regval, cpus="all"):
         """Mocked version of 'write()'."""

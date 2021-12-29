@@ -32,25 +32,25 @@ class TestMSR(unittest.TestCase):
     _addrs = (PMEnable.MSR_PM_ENABLE, MiscFeatureControl.MSR_MISC_FEATURE_CONTROL,
               HWPRequest.MSR_HWP_REQUEST)
 
-    def test_read(self, m_open):
+    def test_read_cpu(self, m_open):
         """Test the 'read()' method, and verify output data."""
 
         with MSR.MSR() as msr:
             for addr in self._addrs:
                 for cpu in (0, 1, 99):
-                    res = msr.read(addr, cpu=cpu)
+                    res = msr.read_cpu(addr, cpu=cpu)
                     m_open.assert_called_with(Path(f"/dev/cpu/{cpu}/msr"), ANY)
                     m_open().seek.assert_called_with(addr)
                     self.assertEqual(res, _TEST_DATA)
 
-    def test_read_iter(self, m_open):
-        """Test the 'read_iter()' method, and verify output."""
+    def test_read(self, m_open):
+        """Test the 'read()' method, and verify output."""
 
         with MSR.MSR() as msr:
             for addr in self._addrs:
                 cpus = [0, 1, 3, 4]
 
-                for cpu, res in msr.read_iter(addr, cpus=cpus):
+                for cpu, res in msr.read(addr, cpus=cpus):
                     m_open.assert_called_with(Path(f"/dev/cpu/{cpu}/msr"), ANY)
                     m_open().seek.assert_called_with(addr)
                     self.assertEqual(cpu, cpus.pop(0))

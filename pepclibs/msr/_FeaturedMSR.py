@@ -126,7 +126,7 @@ class FeaturedMSR:
         if get_method:
             return get_method(cpu)
 
-        val = self._msr.read_bits(self.regaddr, self.features[fname]["bits"], cpu=cpu)
+        val = self._msr.read_cpu_bits(self.regaddr, self.features[fname]["bits"], cpu=cpu)
         if "rvals" in self.features[fname]:
             val = self.features[fname]["rvals"][val]
         return val
