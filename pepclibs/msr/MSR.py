@@ -148,9 +148,12 @@ class MSR:
 
     def get_bits(self, regval, bits):
         """
-        Fetch bits 'bits' from an MSR. The arguments are as follows.
+        Fetch bits 'bits' from an MSR value 'regval'. The arguments are as follows.
           * regval - an MSR value to fetch the bits from.
-          * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
+          * bits - the MSR bits range. A tuple or a list of 2 integers: (msb, lsb), where 'msb' is
+                   the more significant bit, and 'lsb' is a less significant bit. For example, (3,1)
+                   would mean bits 3-1 of the MSR. In a 64-bit number, the least significant bit
+                   number would be 0, and the most significant bit number would be 63.
         """
 
         bits = self._normalize_bits(bits)
@@ -183,9 +186,9 @@ class MSR:
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
                    7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
 
-        The yielded tuples are '(cpunum, regval)'.
-          * cpunum - the CPU number the MSR was read at.
-          * regval - the read value.
+        Yields tuples of '(cpunum, regval)'.
+          * cpunum - the CPU number the MSR was read from.
+          * regval - the read MSR value.
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
@@ -202,9 +205,9 @@ class MSR:
 
     def read_cpu(self, regaddr, cpu):
         """
-        Read an MSR at 'regaddr' CPU 'cpu' and return read result. Arguments are as follows.
+        Read an MSR at 'regaddr' on CPU 'cpu' and return read result. The arguments are as follows.
           * regaddr - address of the MSR to read.
-          * cpu - The CPU to read the MSR at. Can be an integer or a string with an integer number.
+          * cpu - the CPU to read the MSR at. Can be an integer or a string with an integer number.
         """
 
         _, regval = next(self.read(regaddr, cpus=(cpu,)))
@@ -215,12 +218,12 @@ class MSR:
         Read bits 'bits' from an MSR at 'regaddr' from CPUs in 'cpus' and yield the results. The
         arguments are as follows.
           * regaddr - address of the MSR to read the bits from.
-          * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
+          * bits - the MSR bits range (similar to the 'bits' argument in 'get_bits()').
           * cpus - the CPUs to read from (similar to the 'cpus' argument in 'read()').
 
-        The yielded tuples are '(cpunum, val)'.
+        Yields tuples of '(cpunum, regval)'.
           * cpunum - the CPU number the MSR was read from.
-          * val - the value in bits 'bits'.
+          * val - the value in MSR bits 'bits'.
         """
 
         for cpunum, regval in self.read(regaddr, cpus):
@@ -228,10 +231,10 @@ class MSR:
 
     def read_cpu_bits(self, regaddr, bits, cpu):
         """
-        Read bits 'bits' from an MSR at 'regaddr'. The arguments are as follows.
+        Read bits 'bits' from an MSR at 'regaddr' on CPU 'cpu'. The arguments are as follows.
           * regaddr - address of the MSR to read the bits from.
-          * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
-          * cpu - CPU number to get the bits from (same as in 'read_cpu()').
+          * bits - the MSR bits range (similar to the 'bits' argument in 'get_bits()').
+          * cpu - the CPU to read the MSR at. Can be an integer or a string with an integer number.
         """
 
         regval = self.read_cpu(regaddr, cpu)
@@ -242,8 +245,8 @@ class MSR:
         Set bits 'bits' to value 'val' in an MSR value 'regval', and return the result. The
         arguments are as follows.
           * regval - an MSR register value to set the bits in.
-          * bits - the bits range to set (similar to the 'bits' argument in 'write_bits()').
-          * val - the value to set the bits to (same as in 'write_bits()')
+          * bits - the bits range to set (similar to the 'bits' argument in 'get_bits()').
+          * val - the value to set the bits to.
         """
 
         bits = self._normalize_bits(bits)
@@ -303,18 +306,21 @@ class MSR:
             self._cache_add(regaddr, regval, cpu, dirty=dirty)
 
     def write_cpu(self, regaddr, regval, cpu):
-        """Same as 'write()', but accepts a single CPU number 'cpu'."""
+        """
+        Write 'regval' to an MSR at 'regaddr' on CPU 'cpu'. The arguments are as follows.
+          * regaddr - address of the MSR to write to.
+          * regval - the value to write to the MSR.
+          * cpu - the CPU to write the MSR on. Can be an integer or a string with an integer number.
+        """
 
         self.write(regaddr, regval, cpus=(cpu,))
 
     def write_bits(self, regaddr, bits, val, cpus="all"):
         """
-        Write value 'val' to bits 'bits' of an MSR at 'regaddr'. The arguments are as follows.
+        Write value 'val' to bits 'bits' of an MSR at 'regaddr' on CPUs in 'cpus'. The arguments are
+        as follows.
           * regaddr - address of the MSR to write the bits to.
-          * bits - the MSR bits range. A tuple of a list of 2 integers: (msb, lsb), where 'msb' is
-                   the more significant bit, and 'lsb' is a less significant bit. For example, (3,1)
-                   would mean bits 3-1 of the MSR. In a 64-bit number, the least significant bit
-                   number would be 0, and the most significant bit number would be 64.
+          * bits - the MSR bits range (similar to the 'bits' argument in 'get_bits()').
           * val - the integer value to write to MSR bits 'bits'. Use 'MSR.ALL_BITS_1' to set all
                   bits to '1'.
           * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read()').
@@ -326,7 +332,15 @@ class MSR:
                 self.write(regaddr, new_regval, cpunum)
 
     def write_cpu_bits(self, regaddr, bits, val, cpu):
-        """Same as 'write_bits()', but accepts a single CPU number 'cpu'."""
+        """
+        Write value 'val' to bits 'bits' of an MSR at 'regaddr' on CPU 'cpu'. The arguments are
+        as follows.
+          * regaddr - address of the MSR to write the bits to.
+          * bits - the MSR bits range (similar to the 'bits' argument in 'get_bits()').
+          * val - the integer value to write to MSR bits 'bits'. Use 'MSR.ALL_BITS_1' to set all
+                  bits to '1'.
+          * cpu - the CPU to write the MSR on. Can be an integer or a string with an integer number.
+        """
 
         self.write_bits(regaddr, bits, val, cpus=(cpu,))
 
