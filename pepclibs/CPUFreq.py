@@ -226,7 +226,7 @@ class CPUFreq:
 
         msr = self._get_msr()
         fsbfreq = FSBFreq.FSBFreq(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
-        if fsbfreq.feature_supported("fsb", cpu):
+        if fsbfreq.cpu_feature_supported("fsb", cpu):
             return fsbfreq.read_cpu_feature("fsb", cpu)
 
         # Fall back to 133.33 clock speed.
@@ -256,7 +256,7 @@ class CPUFreq:
         ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
         freqs["base"] = int(ratio * self._bclk * 1000)
 
-        if platinfo.feature_supported("max_eff_ratio", cpu):
+        if platinfo.cpu_feature_supported("max_eff_ratio", cpu):
             ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
             freqs["max_eff"] = int(ratio * self._bclk * 1000)
 
@@ -268,9 +268,9 @@ class CPUFreq:
         trl = TurboRatioLimit.TurboRatioLimit(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
         ratio = None
 
-        if trl.feature_supported("max_1c_turbo_ratio", cpu):
+        if trl.cpu_feature_supported("max_1c_turbo_ratio", cpu):
             ratio = trl.read_cpu_feature("max_1c_turbo_ratio", 0)
-        elif trl.feature_supported("max_g0_turbo_ratio", cpu):
+        elif trl.cpu_feature_supported("max_g0_turbo_ratio", cpu):
             # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores. We
             # can safely assume that group 0 will correspond to max. 1-core turbo, so we do not need
             # to look at 'MSR_TURBO_RATIO_LIMIT1'.
@@ -337,7 +337,7 @@ class CPUFreq:
         cpuinfo = self._get_cpuinfo()
         pmenable = PMEnable.PMEnable(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
 
-        if not pmenable.feature_supported("hwp_enabled", cpu):
+        if not pmenable.cpu_feature_supported("hwp_enabled", cpu):
             return None
 
         return pmenable.cpu_feature_enabled("hwp_enabled", cpu)
