@@ -200,7 +200,8 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         finfo["bits"] = cpumodel_info["bits"]
         finfo["vals"] = cpumodel_info["codes"]
-        finfo["aliases"] = cpumodel_info["aliases"]
+        if "aliases" in cpumodel_info:
+            finfo["aliases"] = cpumodel_info["aliases"]
 
     def _init_features_dict(self):
         """Intitialize the 'features' dictionary with platform-specific information."""
