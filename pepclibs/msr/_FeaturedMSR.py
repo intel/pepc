@@ -34,8 +34,8 @@ class FeaturedMSR:
     This is the base class for "featured" MSRs, such as 'MSR_PKG_CST_CONFIG_CONTROL'.
 
     The following are public methods for getting and setting features.
-      1. read the MSR and return feature value for a single CPU: 'get_feature()'.
-      2. write feature value to the MSR on multiple CPUs: 'set_feature()'.
+      1. read the MSR and return feature value for a single CPU: 'read_feature()'.
+      2. write feature value to the MSR on multiple CPUs: 'write_feature()'.
 
     Additional helpful methods.
       1. Check if a feature is supported: 'feature_supported()'.
@@ -98,12 +98,13 @@ class FeaturedMSR:
         except ErrorNotSupported:
             return False
 
-    def set_feature(self, fname, val, cpus="all"):
+    def write_feature(self, fname, val, cpus="all"):
         """
-        Set feature 'fname' value to 'val' for CPUs 'cpus'. The arguments are as follows.
+        For every CPU in 'cpus', modify the MSR by reading it, changing the 'fname' feature bits to
+        the value corresponding to 'val', and writing it back. The arguments are as follows.
           * fname - name of the feature to set.
           * val - value to set the feature to.
-          * cpus - the CPUs to set the feature for (same as in 'CPUIdle.get_cstates_info()').
+          * cpus - the CPUs to write the feature to (same as in 'CPUIdle.get_cstates_info()').
         """
 
         _LOG.debug("set feature '%s' to value %s on CPU(s) %s%s", fname, val,
@@ -123,11 +124,12 @@ class FeaturedMSR:
         else:
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus)
 
-    def get_feature(self, fname, cpu):
+    def read_feature(self, fname, cpu):
         """
-        Returns value of feature 'fname' for CPU 'cpu'. The arguments are as follows.
-          * fname - name of the feature to get.
-          * cpus - CPU number to get the feature for.
+        Reads the MSR for CPU 'cpu', extracts the 'fname' feature from the read MSR and returns the
+        result. The arguments are as follows.
+          * fname - name of the feature to read.
+          * cpus - CPU number to read the feature from.
         """
 
         self._check_feature_support(fname)
@@ -143,18 +145,18 @@ class FeaturedMSR:
 
     def feature_enabled(self, fname, cpu):
         """
-        Just a limited version of 'get_feature()', accepts only boolean features, returns 'True' if
+        Just a limited version of 'read_feature()', accepts only boolean features, returns 'True' if
         the feature is enabled, returns 'False' otherwise. This method exists only because for some
         users this method name a bit more self-documenting. Indeed, compare:
           * if msr_reg.feature_enabled(): do_something()
-          * if msr_reg.get_feature(): do_something()
+          * if msr_reg.read_feature(): do_something()
         """
 
         if self.features[fname]["type"] == "bool":
-            val = self.get_feature(fname, cpu)
+            val = self.read_feature(fname, cpu)
             return val in {"on", "enabled"}
 
-        raise Error(f"feature '{fname}' is not boolean, use 'get_feature()' instead")
+        raise Error(f"feature '{fname}' is not boolean, use 'read_feature()' instead")
 
     def _init_supported_flag(self):
         """Initialize the 'supported' flag for all features in the 'self._features' dictionary."""

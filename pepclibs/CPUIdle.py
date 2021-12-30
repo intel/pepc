@@ -410,7 +410,7 @@ class CPUIdle:
         else:
             module = self._get_pcstatectl()
 
-        return module.get_feature(pname, cpu)
+        return module.read_feature(pname, cpu)
 
     def _get_pinfo(self, pnames, cpu):
         """
@@ -508,10 +508,10 @@ class CPUIdle:
 
         if pname in PowerCtl.FEATURES:
             powerctl = self._get_powerctl()
-            powerctl.set_feature(pname, val, cpus)
+            powerctl.write_feature(pname, val, cpus)
         elif pname in PCStateConfigCtl.FEATURES:
             pcstatectl = self._get_pcstatectl()
-            pcstatectl.set_feature(pname, val, cpus=cpus)
+            pcstatectl.write_feature(pname, val, cpus=cpus)
         else:
             raise Error(f"BUG: undefined property '{pname}'")
 
