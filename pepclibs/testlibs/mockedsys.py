@@ -198,7 +198,7 @@ class mock_MSR(MSR.MSR):
 def mock_exists(path: Path, proc=None): # pylint: disable=unused-argument
     """Mock version of 'exists' function in FSHelpers module."""
 
-    return any([Path(m_path) for m_path in _MOCKED_EXISTS_FILES if str(path) in m_path])
+    return any(Path(m_path) for m_path in _MOCKED_EXISTS_FILES if str(path) in m_path)
 
 def mock_isfile(path: Path, proc=None):
     """Mock version of 'isfile' function in FSHelpers module."""
