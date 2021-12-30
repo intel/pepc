@@ -41,6 +41,7 @@ class MSR:
 
     1. Multiple CPUs.
         * Read/write entire MSR: 'read()', 'write()'.
+        * Read/write MSR bits range: 'read_bits()', 'write_bits()'.
     2. Single CPU.
         * Read/write entire MSR: 'read_cpu()', 'write_cpu()'.
         * Read/write MSR bits range: 'read_cpu_bits()', 'write_cpu_bits()'.
@@ -208,6 +209,22 @@ class MSR:
 
         _, regval = next(self.read(regaddr, cpus=(cpu,)))
         return regval
+
+    def read_bits(self, regaddr, bits, cpus="all"):
+        """
+        Read bits 'bits' from an MSR at 'regaddr' from CPUs in 'cpus' and yield the results. The
+        arguments are as follows.
+          * regaddr - address of the MSR to read the bits from.
+          * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
+          * cpus - the CPUs to read from (similar to the 'cpus' argument in 'read()').
+
+        The yielded tuples are '(cpunum, val)'.
+          * cpunum - the CPU number the MSR was read from.
+          * val - the value in bits 'bits'.
+        """
+
+        for cpunum, regval in self.read(regaddr, cpus):
+            yield (cpunum, self.get_bits(regval, bits))
 
     def read_cpu_bits(self, regaddr, bits, cpu):
         """
