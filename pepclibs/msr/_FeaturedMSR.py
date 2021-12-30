@@ -34,8 +34,9 @@ class FeaturedMSR:
     This is the base class for "featured" MSRs, such as 'MSR_PKG_CST_CONFIG_CONTROL'.
 
     The following are public methods for getting and setting features.
-      1. read the MSR and return feature value for a single CPU: 'read_feature()'.
+      1. read the MSR and return feature value for a multiple CPUs: 'read_feature()'.
       2. write feature value to the MSR on multiple CPUs: 'write_feature()'.
+      3. read the MSR and return feature value for a single CPU: 'read_cpu_feature()'.
 
     Additional helpful methods.
       1. Check if a feature is supported: 'feature_supported()'.
@@ -124,24 +125,43 @@ class FeaturedMSR:
         else:
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus)
 
-    def read_feature(self, fname, cpu):
+    def read_feature(self, fname, cpus="all"):
         """
-        Reads the MSR for CPU 'cpu', extracts the 'fname' feature from the read MSR and returns the
-        result. The arguments are as follows.
+        Reads the MSR for CPUs in 'cpus', extracts the 'fname' feature from the read MSR values and
+        yields the result. The arguments are as follows.
           * fname - name of the feature to read.
           * cpus - CPU number to read the feature from.
+
+        The yielded tuples are '(cpunum, val)'.
+          * cpunum - the CPU number the MSR was read from.
+          * val - the feature value.
         """
+
+        _LOG.debug("read feature '%s' from CPU(s) %s%s",
+                   fname, Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._proc.hostmsg)
 
         self._check_feature_support(fname)
 
         get_method = getattr(self, f"_get_{fname}", None)
         if get_method:
-            return get_method(cpus=(cpu,))
+            yield from get_method(cpus=cpus)
 
-        val = self._msr.read_cpu_bits(self.regaddr, self.features[fname]["bits"], cpu)
-        if "rvals" in self.features[fname]:
-            val = self.features[fname]["rvals"][val]
-        return val
+        for cpu, val in self._msr.read_bits(self.regaddr, self.features[fname]["bits"], cpus=cpus):
+            if "rvals" in self.features[fname]:
+                val = self.features[fname]["rvals"][val]
+            yield (cpu, val)
+
+    def read_cpu_feature(self, fname, cpu):
+        """
+        Reads the MSR for CPU 'cpu', extracts the 'fname' feature from the read MSR and returns the
+        result. The arguments are as follows.
+          * fname - name of the feature to read.
+          * cpu - CPU number to read the feature from. Can be an integer or a string with an integer
+                  number.
+        """
+
+        for _, val in self.read_feature(fname, cpus=(cpu,)):
+            return val
 
     def feature_enabled(self, fname, cpu):
         """

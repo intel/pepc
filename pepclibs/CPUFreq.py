@@ -227,7 +227,7 @@ class CPUFreq:
         msr = self._get_msr()
         fsbfreq = FSBFreq.FSBFreq(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
         if fsbfreq.feature_supported("fsb", cpu):
-            return fsbfreq.read_feature("fsb", cpu)
+            return fsbfreq.read_cpu_feature("fsb", cpu)
 
         # Fall back to 133.33 clock speed.
         return 133.33
@@ -253,11 +253,11 @@ class CPUFreq:
 
         platinfo = PlatformInfo.PlatformInfo(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
 
-        ratio = platinfo.read_feature("max_non_turbo_ratio", cpu)
+        ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
         freqs["base"] = int(ratio * self._bclk * 1000)
 
         if platinfo.feature_supported("max_eff_ratio", cpu):
-            ratio = platinfo.read_feature("max_eff_ratio", cpu)
+            ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
             freqs["max_eff"] = int(ratio * self._bclk * 1000)
 
         #
@@ -269,12 +269,12 @@ class CPUFreq:
         ratio = None
 
         if trl.feature_supported("max_1c_turbo_ratio", cpu):
-            ratio = trl.read_feature("max_1c_turbo_ratio", 0)
+            ratio = trl.read_cpu_feature("max_1c_turbo_ratio", 0)
         elif trl.feature_supported("max_g0_turbo_ratio", cpu):
             # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores. We
             # can safely assume that group 0 will correspond to max. 1-core turbo, so we do not need
             # to look at 'MSR_TURBO_RATIO_LIMIT1'.
-            ratio = trl.read_feature("max_g0_turbo_ratio", cpu)
+            ratio = trl.read_cpu_feature("max_g0_turbo_ratio", cpu)
         else:
             _LOG.warning("module 'TurboRatioLimit' does not support 'MSR_TURBO_RATIO_LIMIT' for "
                          "CPU '%s'%s\nPlease, contact project maintainers.",
@@ -927,9 +927,7 @@ class CPUFreq:
         cpuinfo = self._get_cpuinfo()
         epb_msr = EnergyPerfBias.EnergyPerfBias(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
 
-        cpus = self._get_cpuinfo().normalize_cpus(cpus)
-        for cpu in cpus:
-            yield (cpu, epb_msr.read_feature("epb", cpu))
+        yield from epb_msr.read_feature("epb", cpus=cpus)
 
     def get_epb(self, cpus="all"):
         """
@@ -980,7 +978,7 @@ class CPUFreq:
             else:
                 hwpreq_msr = hwpreq
 
-            yield (cpu, hwpreq_msr.read_feature("epp", cpu))
+            yield (cpu, hwpreq_msr.read_cpu_feature("epp", cpu))
 
     def get_cpu_epp(self, cpu):
         """Return EPP value for CPU number 'cpu'."""

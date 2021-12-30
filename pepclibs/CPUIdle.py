@@ -410,7 +410,7 @@ class CPUIdle:
         else:
             module = self._get_pcstatectl()
 
-        return module.read_feature(pname, cpu)
+        return module.read_cpu_feature(pname, cpu)
 
     def _get_pinfo(self, pnames, cpu):
         """
