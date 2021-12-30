@@ -62,32 +62,6 @@ class CPUIdle:
             self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
         return self._cpuinfo
 
-    def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
-
-        if not self._msr:
-            self._msr = MSR.MSR(self._proc, cpuinfo=self._cpuinfo)
-        return self._msr
-
-    def _get_powerctl(self):
-        """Return an instance of 'PowerCtl' class."""
-
-        if self._powerctl is None:
-            cpuinfo = self._get_cpuinfo()
-            msr = self._get_msr()
-            self._powerctl = PowerCtl.PowerCtl(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
-        return self._powerctl
-
-    def _get_pcstatectl(self):
-        """Return an instance of 'PCStateConfigCtl' class."""
-
-        if self._pcstatectl is None:
-            cpuinfo = self._get_cpuinfo()
-            msr = self._get_msr()
-            self._pcstatectl = PCStateConfigCtl.PCStateConfigCtl(proc=self._proc, cpuinfo=cpuinfo,
-                                                                 msr=msr)
-        return self._pcstatectl
-
     def _get_cstate_indexes(self, cpu):
         """Yield tuples of of C-state indexes and sysfs paths for cpu number 'cpu'."""
 
@@ -392,6 +366,32 @@ class CPUIdle:
         """
 
         return next(self.get_cstates_info(cpu, cstate))
+
+    def _get_msr(self):
+        """Returns an 'MSR.MSR()' object."""
+
+        if not self._msr:
+            self._msr = MSR.MSR(self._proc, cpuinfo=self._cpuinfo)
+        return self._msr
+
+    def _get_powerctl(self):
+        """Return an instance of 'PowerCtl' class."""
+
+        if self._powerctl is None:
+            cpuinfo = self._get_cpuinfo()
+            msr = self._get_msr()
+            self._powerctl = PowerCtl.PowerCtl(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
+        return self._powerctl
+
+    def _get_pcstatectl(self):
+        """Return an instance of 'PCStateConfigCtl' class."""
+
+        if self._pcstatectl is None:
+            cpuinfo = self._get_cpuinfo()
+            msr = self._get_msr()
+            self._pcstatectl = PCStateConfigCtl.PCStateConfigCtl(proc=self._proc, cpuinfo=cpuinfo,
+                                                                 msr=msr)
+        return self._pcstatectl
 
     @staticmethod
     def _check_prop(pname):
