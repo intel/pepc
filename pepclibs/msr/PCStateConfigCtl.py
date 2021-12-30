@@ -189,8 +189,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     def _init_features_dict_pkg_cstate_limit(self):
         """Initialize the 'pkg_cstate_limit' information in the 'self.features' dictionary."""
 
-        finfo = self.features["pkg_cstate_limit"]
-        if not finfo["supported"]:
+        if not self._features["pkg_cstate_limit"]["supported"]:
             _LOG.notice("no package C-state limit table available for %s%s. Try to contact "
                         "project maintainers.", self._cpuinfo.cpudescr, self._proc.hostmsg)
             return
@@ -198,6 +197,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         cpumodel = self._cpuinfo.info["model"]
         cpumodel_info = _PKG_CST_LIMITS[cpumodel]
 
+        finfo = self.features["pkg_cstate_limit"]
         finfo["bits"] = cpumodel_info["bits"]
         finfo["vals"] = cpumodel_info["codes"]
         if "aliases" in cpumodel_info:

@@ -52,10 +52,10 @@ class FeaturedMSR:
             features_str = ", ".join(set(self.features))
             raise Error(f"unknown feature '{fname}', known features are: {features_str}")
 
-        finfo = self.features[fname]
-        if finfo["supported"]:
+        if self._features[fname]["supported"]:
             return
 
+        finfo = self.features[fname]
         raise ErrorNotSupported(f"the '{finfo['name']}' feature is not supported on "
                                 f"{self._cpuinfo.cpudescr}{self._proc.hostmsg}")
 
@@ -160,23 +160,23 @@ class FeaturedMSR:
         raise Error(f"feature '{fname}' is not boolean, use 'get_feature()' instead")
 
     def _init_supported_flag(self):
-        """Initialize the 'supported' flag for all features in the 'self.features' dictionary."""
+        """Initialize the 'supported' flag for all features in the 'self._features' dictionary."""
 
-        for finfo in self.features.values():
+        for fname, finfo in self.features.items():
             # By default let's assume the feature is supported by this CPU.
-            finfo["supported"] = True
+            self._features[fname]["supported"] = True
 
             if "cpuflags" in finfo:
                 # Make sure that current CPU has all the required CPU flags.
                 available_cpuflags = set(self._cpuinfo.info["flags"])
                 for cpuflag in finfo["cpuflags"]:
                     if cpuflag not in available_cpuflags:
-                        finfo["supported"] = False
+                        self._features[fname]["supported"] = False
 
             if "cpumodels" in finfo:
                 # Check if current CPU model is supported by the feature.
                 cpumodel = self._cpuinfo.info["model"]
-                finfo["supported"] = cpumodel in finfo["cpumodels"]
+                self._features[fname]["supported"] = cpumodel in finfo["cpumodels"]
 
     def _init_features_dict_defaults(self):
         """
@@ -185,8 +185,8 @@ class FeaturedMSR:
           * writable - a flag indicating whether this feature can be modified. Default is 'True'.
         """
 
-        for finfo in self.features.values():
-            if not finfo["supported"]:
+        for fname, finfo in self.features.items():
+            if not self._features[fname]["supported"]:
                 continue
 
             if "writable" not in finfo:
@@ -236,6 +236,7 @@ class FeaturedMSR:
         self._close_msr = msr is None
 
         self.features = None
+        self._features = {}
         self.regaddr = None
         self.regname = None
 
@@ -256,6 +257,14 @@ class FeaturedMSR:
                                     f"is available only on Intel CPUs.")
 
         self.features = copy.deepcopy(self.features)
+
+        # The '_features' dictionary is an additional per-feature storage of various "private"
+        # peices of information, which we do not want users to access directly. For example, we
+        # store the 'supported' flag in '_features'. It may become per-CPU at some point, and we
+        # want users to call 'feature_supported()' to check if the feature is supported.
+        for fname in self.features:
+            self._features[fname] = {}
+
         self._init_features_dict()
 
     def close(self):
