@@ -37,15 +37,15 @@ class MSR:
     """
     This class provides helpers to read and write CPU Model Specific Registers.
 
-    The following are public methods for reading and writing MSRs.
-      1. Read MSRs from multiple CPU: 'read()'.
-      2. Read an MSR from a single CPU: 'read_cpu()', 'read_cpu_bits()'.
-      3. Write to MSRs on multiple CPUs: 'write()', 'write_bits()'.
-      4. Write an MSRs on a single CPU: 'write_cpu()', 'write_cpu_bits()'.
+    Public methods overview.
 
-    Additionally, the following helper methods are available.
-      1. Set bits in an MSR value (a variable): 'set_bits()'.
-      2. Get bits from an MSR value (a variable): 'get_bits()'.
+    1. Multiple CPUs.
+        * Read/write entire MSR: 'read()', 'write()'.
+    2. Single CPU.
+        * Read/write entire MSR: 'read_cpu()', 'write_cpu()'.
+        * Read/write MSR bits range: 'read_cpu_bits()', 'write_cpu_bits()'.
+    3. CPU-independent, involve no MSR read/write.
+        * Get/set bits from/in a user-provided MSR value: 'get_bits()', 'set_bits()'.
     """
 
     def _cache_add(self, regaddr, regval, cpu, dirty=False):
