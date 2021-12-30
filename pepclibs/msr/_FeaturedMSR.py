@@ -37,9 +37,11 @@ class FeaturedMSR:
 
     1. Multiple CPUs.
        * Read/write feature: 'read_feature()', 'write_feature()'.
+       * Enable/disable a feature: 'enable_feature()'.
        * Check if feature is enabled: 'feature_enabled()'.
     2. Single CPU.
        * Read/write feature: 'read_cpu_feature()', 'write_cpu_feature()'.
+       * Enable/disable a feature: 'cpu_enable_feature()'.
        * Check if feature is enabled: 'cpu_feature_enabled()'.
        * Check if feature is supported: 'cpu_feature_supported()'.
     """
@@ -193,6 +195,36 @@ class FeaturedMSR:
 
         self.write_feature(fname, val, cpus=(cpu,))
 
+    def enable_feature(self, fname, enable, cpus="all"):
+        """
+        Modify the MSR by enabling or disabling feature 'fname' on CPUs in 'cpus'. The arguments
+        are as follows.
+          * fname - name of the feature to enable or disable.
+          * enable - enable the feature if 'True', disable otherwise.
+          * cpus - the CPUs to enable or disable the feature on (same as in
+                   'CPUIdle.get_cstates_info()').
+        """
+
+        self._check_feature_support(fname)
+
+        if self.features[fname]["type"] != "bool":
+            raise Error(f"feature '{fname}' is not boolean, use 'write_feature()' instead")
+
+        val = "on" if enable else "off"
+        self.write_feature(fname, val, cpus=cpus)
+
+    def enable_cpu_feature(self, fname, enable, cpu):
+        """
+        Modify the MSR by enabling or disabling feature 'fname' on CPU 'cpu'. The arguments are as
+        follows.
+          * fname - name of the feature to enable or disable.
+          * enable - enable the feature if 'True', disable otherwise.
+          * cpu - CPU number to enable or disable the feature on. Can be an integer or a string with
+                  an integer number.
+        """
+
+        self.enable_feature(fname, enable, cpus=(cpu,))
+
     def cpu_feature_supported(self, fname, cpu): # pylint: disable=unused-argument
         """
         Returns 'True' if feature 'fname' is supported by the platform and CPU 'cpu, returns 'False'
@@ -230,7 +262,7 @@ class FeaturedMSR:
 
     def _init_features_dict_defaults(self):
         """
-        Walk through each feature in the 'self.featrues' dictionary and make sure that all the
+        Walk through each feature in the 'self.features' dictionary and make sure that all the
         necessary keys are present. Set the missing keys to their default values.
           * writable - a flag indicating whether this feature can be modified. Default is 'True'.
         """
@@ -309,7 +341,7 @@ class FeaturedMSR:
         self.features = copy.deepcopy(self.features)
 
         # The '_features' dictionary is an additional per-feature storage of various "private"
-        # peices of information, which we do not want users to access directly. For example, we
+        # pieces of information, which we do not want users to access directly. For example, we
         # store the 'supported' flag in '_features'. It may become per-CPU at some point, and we
         # want users to call 'cpu_feature_supported()' to check if the feature is supported.
         for fname in self.features:
