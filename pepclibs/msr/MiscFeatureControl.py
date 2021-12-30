@@ -90,7 +90,7 @@ FEATURES = {
     },
 }
 
-class HWPRequest(_FeaturedMSR.FeaturedMSR):
+class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
     """
     This module provides API to MSR 0x1A4 (MSR_MISC_FEATURE_CONTROL). This MSR provides knobs for
     various CPU prefetchers on many Intel platforms.
