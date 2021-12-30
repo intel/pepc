@@ -159,7 +159,7 @@ class FeaturedMSR:
 
         raise Error(f"feature '{fname}' is not boolean, use 'get_feature()' instead")
 
-    def _init_features_dict_supported(self):
+    def _init_supported_flag(self):
         """Initialize the 'supported' flag for all features in the 'self.features' dictionary."""
 
         for finfo in self.features.values():
@@ -204,7 +204,7 @@ class FeaturedMSR:
         can re-define this method and call individual '_init_features_dict_*()' methods.
         """
 
-        self._init_features_dict_supported()
+        self._init_supported_flag()
         self._init_features_dict_defaults()
 
     def _set_baseclass_attributes(self):

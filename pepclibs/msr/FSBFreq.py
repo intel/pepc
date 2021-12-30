@@ -104,7 +104,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
     def _init_features_dict(self):
         """Intitialize the 'features' dictionary with platform-specific information."""
 
-        self._init_features_dict_supported()
+        self._init_supported_flag()
         self._init_features_dict_fsb()
         self._init_features_dict_defaults()
 
