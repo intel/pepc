@@ -122,6 +122,41 @@ class MSR:
 
         self._in_transaction = False
 
+    def _normalize_bits(self, bits):
+        """Validate and normalize bits range 'bits'."""
+
+        orig_bits = bits
+        try:
+            if not Trivial.is_int(orig_bits[0]) or not Trivial.is_int(orig_bits[1]):
+                raise Error("bad bits range '{bits}', must be a list or tuple of 2 integers")
+
+            bits = (int(orig_bits[0]), int(orig_bits[1]))
+
+            if bits[0] < bits[1]:
+                raise Error(f"bad bits range ({bits[0]}, {bits[1]}), the first number must be "
+                            f"greater or equal to the second number")
+
+            bits_cnt = (bits[0] - bits[1]) + 1
+            if bits_cnt > self.regbits:
+                raise Error(f"too many bits in ({bits[0]}, {bits[1]}), MSRs only have "
+                            f"{self.regbits} bits")
+        except TypeError:
+            raise Error("bad bits range '{bits}', must be a list or tuple of 2 integers") from None
+
+        return bits
+
+    def get_bits(self, regval, bits):
+        """
+        Fetch bits 'bits' from an MSR. The arguments are as follows.
+          * regval - an MSR value to fetch the bits from.
+          * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
+        """
+
+        bits = self._normalize_bits(bits)
+        bits_cnt = (bits[0] - bits[1]) + 1
+        mask = (1 << bits_cnt) - 1
+        return (regval >> bits[1]) & mask
+
     def _read_cpu(self, regaddr, cpu):
         """Read an MSR at address 'regaddr' on CPU 'cpu'."""
 
@@ -174,6 +209,44 @@ class MSR:
         _, regval = next(self.read(regaddr, cpus=(cpu,)))
         return regval
 
+    def read_cpu_bits(self, regaddr, bits, cpu):
+        """
+        Read bits 'bits' from an MSR at 'regaddr'. The arguments are as follows.
+          * regaddr - address of the MSR to read the bits from.
+          * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
+          * cpu - CPU number to get the bits from (same as in 'read_cpu()').
+        """
+
+        regval = self.read_cpu(regaddr, cpu)
+        return self.get_bits(regval, bits)
+
+    def set_bits(self, regval, bits, val):
+        """
+        Set bits 'bits' to value 'val' in an MSR value 'regval', and return the result. The
+        arguments are as follows.
+          * regval - an MSR register value to set the bits in.
+          * bits - the bits range to set (similar to the 'bits' argument in 'write_bits()').
+          * val - the value to set the bits to (same as in 'write_bits()')
+        """
+
+        bits = self._normalize_bits(bits)
+        bits_cnt = (bits[0] - bits[1]) + 1
+        max_val = (1 << bits_cnt) - 1
+
+        if val is ALL_BITS_1:
+            val = max_val
+        else:
+            if not Trivial.is_int(val):
+                raise Error(f"bad value {val}, please provide a positive integer")
+            val = int(val)
+
+        if val > max_val:
+            raise Error(f"too large value {val} for bits range ({bits[0]}, {bits[1]})")
+
+        clear_mask = max_val << bits[1]
+        set_mask = val << bits[1]
+        return (regval & ~clear_mask) | set_mask
+
     def _write(self, regaddr, regval, cpu, regval_bytes=None):
         """Write value 'regval' to MSR at 'regaddr' on CPU 'cpu."""
 
@@ -216,79 +289,6 @@ class MSR:
         """Same as 'write()', but accepts a single CPU number 'cpu'."""
 
         self.write(regaddr, regval, cpus=(cpu,))
-
-    def _normalize_bits(self, bits):
-        """Validate and normalize bits range 'bits'."""
-
-        orig_bits = bits
-        try:
-            if not Trivial.is_int(orig_bits[0]) or not Trivial.is_int(orig_bits[1]):
-                raise Error("bad bits range '{bits}', must be a list or tuple of 2 integers")
-
-            bits = (int(orig_bits[0]), int(orig_bits[1]))
-
-            if bits[0] < bits[1]:
-                raise Error(f"bad bits range ({bits[0]}, {bits[1]}), the first number must be "
-                            f"greater or equal to the second number")
-
-            bits_cnt = (bits[0] - bits[1]) + 1
-            if bits_cnt > self.regbits:
-                raise Error(f"too many bits in ({bits[0]}, {bits[1]}), MSRs only have "
-                            f"{self.regbits} bits")
-        except TypeError:
-            raise Error("bad bits range '{bits}', must be a list or tuple of 2 integers") from None
-
-        return bits
-
-    def get_bits(self, regval, bits):
-        """
-        Fetch bits 'bits' from an MSR. The arguments are as follows.
-          * regval - an MSR value to fetch the bits from.
-          * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
-        """
-
-        bits = self._normalize_bits(bits)
-        bits_cnt = (bits[0] - bits[1]) + 1
-        mask = (1 << bits_cnt) - 1
-        return (regval >> bits[1]) & mask
-
-    def read_cpu_bits(self, regaddr, bits, cpu):
-        """
-        Read bits 'bits' from an MSR at 'regaddr'. The arguments are as follows.
-          * regaddr - address of the MSR to read the bits from.
-          * bits - the bits range to fetch (similar to the 'bits' argument in 'write_bits()').
-          * cpu - CPU number to get the bits from (same as in 'read_cpu()').
-        """
-
-        regval = self.read_cpu(regaddr, cpu)
-        return self.get_bits(regval, bits)
-
-    def set_bits(self, regval, bits, val):
-        """
-        Set bits 'bits' to value 'val' in an MSR value 'regval', and return the result. The
-        arguments are as follows.
-          * regval - an MSR register value to set the bits in.
-          * bits - the bits range to set (similar to the 'bits' argument in 'write_bits()').
-          * val - the value to set the bits to (same as in 'write_bits()')
-        """
-
-        bits = self._normalize_bits(bits)
-        bits_cnt = (bits[0] - bits[1]) + 1
-        max_val = (1 << bits_cnt) - 1
-
-        if val is ALL_BITS_1:
-            val = max_val
-        else:
-            if not Trivial.is_int(val):
-                raise Error(f"bad value {val}, please provide a positive integer")
-            val = int(val)
-
-        if val > max_val:
-            raise Error(f"too large value {val} for bits range ({bits[0]}, {bits[1]})")
-
-        clear_mask = max_val << bits[1]
-        set_mask = val << bits[1]
-        return (regval & ~clear_mask) | set_mask
 
     def write_bits(self, regaddr, bits, val, cpus="all"):
         """
