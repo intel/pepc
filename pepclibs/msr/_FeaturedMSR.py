@@ -83,48 +83,6 @@ class FeaturedMSR:
         vals_str = ", ".join(vals)
         raise Error(f"bad value '{val}' for the '{finfo['name']}' feature.\nUse one of: {vals_str}")
 
-    def feature_supported(self, fname, cpu): # pylint: disable=unused-argument
-        """
-        Returns 'True' if feature 'fname' is supported by the platform and CPU 'cpu, returns 'False'
-        otherwise.
-        """
-
-        # In current implementation we assume that all CPUs are the same and whether the feature is
-        # supported is per-platform. But in the future this may not be the case (e.g., on hybrid
-        # platforms).
-
-        try:
-            self._check_feature_support(fname)
-            return True
-        except ErrorNotSupported:
-            return False
-
-    def write_feature(self, fname, val, cpus="all"):
-        """
-        For every CPU in 'cpus', modify the MSR by reading it, changing the 'fname' feature bits to
-        the value corresponding to 'val', and writing it back. The arguments are as follows.
-          * fname - name of the feature to set.
-          * val - value to set the feature to.
-          * cpus - the CPUs to write the feature to (same as in 'CPUIdle.get_cstates_info()').
-        """
-
-        _LOG.debug("set feature '%s' to value %s on CPU(s) %s%s", fname, val,
-                   Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._proc.hostmsg)
-
-        self._check_feature_support(fname)
-        val = self._normalize_feature_value(fname, val)
-
-        finfo = self.features[fname]
-
-        if not finfo["writable"]:
-            raise Error(f"'{fname}' is can not be modified, it is read-only")
-
-        set_method = getattr(self, f"_set_{fname}", None)
-        if set_method:
-            set_method(val, cpus=cpus)
-        else:
-            self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus)
-
     def read_feature(self, fname, cpus="all"):
         """
         Reads the MSR for CPUs in 'cpus', extracts the 'fname' feature from the read MSR values and
@@ -163,6 +121,32 @@ class FeaturedMSR:
         for _, val in self.read_feature(fname, cpus=(cpu,)):
             return val
 
+    def write_feature(self, fname, val, cpus="all"):
+        """
+        For every CPU in 'cpus', modify the MSR by reading it, changing the 'fname' feature bits to
+        the value corresponding to 'val', and writing it back. The arguments are as follows.
+          * fname - name of the feature to set.
+          * val - value to set the feature to.
+          * cpus - the CPUs to write the feature to (same as in 'CPUIdle.get_cstates_info()').
+        """
+
+        _LOG.debug("set feature '%s' to value %s on CPU(s) %s%s", fname, val,
+                   Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._proc.hostmsg)
+
+        self._check_feature_support(fname)
+        val = self._normalize_feature_value(fname, val)
+
+        finfo = self.features[fname]
+
+        if not finfo["writable"]:
+            raise Error(f"'{fname}' is can not be modified, it is read-only")
+
+        set_method = getattr(self, f"_set_{fname}", None)
+        if set_method:
+            set_method(val, cpus=cpus)
+        else:
+            self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus)
+
     def feature_enabled(self, fname, cpu):
         """
         Just a limited version of 'read_feature()', accepts only boolean features, returns 'True' if
@@ -177,6 +161,22 @@ class FeaturedMSR:
             return val in {"on", "enabled"}
 
         raise Error(f"feature '{fname}' is not boolean, use 'read_feature()' instead")
+
+    def feature_supported(self, fname, cpu): # pylint: disable=unused-argument
+        """
+        Returns 'True' if feature 'fname' is supported by the platform and CPU 'cpu, returns 'False'
+        otherwise.
+        """
+
+        # In current implementation we assume that all CPUs are the same and whether the feature is
+        # supported is per-platform. But in the future this may not be the case (e.g., on hybrid
+        # platforms).
+
+        try:
+            self._check_feature_support(fname)
+            return True
+        except ErrorNotSupported:
+            return False
 
     def _init_supported_flag(self):
         """Initialize the 'supported' flag for all features in the 'self._features' dictionary."""
