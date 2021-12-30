@@ -75,8 +75,6 @@ _MOCKED_FILES = _get_mocked_files(("cstates", "cpufreq", "intel_uncore_frequency
 _MOCKED_EXISTS_FILES = _MOCKED_FILES | _get_mocked_files(("dev_cpu", ))
 _MOCKED_ASPM_POLICY_FILES = _get_mocked_files(("aspm_policy", ))
 
-#pylint: disable=unused-argument
-
 class mock_Proc(Procs.Proc):
     """Mocked version of 'Proc' class in pepclibs.helperlibs.Procs module."""
 
@@ -197,7 +195,7 @@ class mock_MSR(MSR.MSR):
         self._mocked_msr[TurboRatioLimit.MSR_TURBO_RATIO_LIMIT] = 0x1f1f212222232323
         self._mocked_msr[PMEnable.MSR_PM_ENABLE] = 1
 
-def mock_exists(path: Path, proc=None):
+def mock_exists(path: Path, proc=None): # pylint: disable=unused-argument
     """Mock version of 'exists' function in FSHelpers module."""
 
     return any([Path(m_path) for m_path in _MOCKED_EXISTS_FILES if str(path) in m_path])
