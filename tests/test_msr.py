@@ -14,7 +14,7 @@ import random
 import unittest
 from pathlib import Path
 from unittest.mock import patch, mock_open, ANY
-from pepclibs.testlibs.mockedsys import mock_Proc
+from pepclibs.testlibs.MockedStuff import mock_Proc
 from pepclibs.msr import MSR, PMEnable, HWPRequest, MiscFeatureControl
 
 _MSR_BYTES = 8
