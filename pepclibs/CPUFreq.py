@@ -340,7 +340,7 @@ class CPUFreq:
         if not pmenable.feature_supported("hwp_enabled", cpu):
             return None
 
-        return pmenable.feature_enabled("hwp_enabled", cpu)
+        return pmenable.cpu_feature_enabled("hwp_enabled", cpu)
 
     def _get_cpufreq_info(self, cpus, keys):
         """Implements 'get_cpufreq_info()'."""
@@ -968,8 +968,8 @@ class CPUFreq:
             self._check_epp_supported(cpu)
 
             # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
-            pkg_control = hwpreq.feature_enabled("pkg_control", cpu)
-            epp_valid = hwpreq.feature_enabled("epp_valid", cpu)
+            pkg_control = hwpreq.cpu_feature_enabled("pkg_control", cpu)
+            epp_valid = hwpreq.cpu_feature_enabled("epp_valid", cpu)
             if pkg_control and not epp_valid:
                 if not hwpreq_pkg:
                     hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(proc=self._proc, cpuinfo=cpuinfo,
