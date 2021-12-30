@@ -133,10 +133,11 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     register found on many Intel platforms.
     """
 
-    def _get_pkg_cstate_limit(self, cpu):
+    def _get_pkg_cstate_limit(self, cpus="all"):
         """
-        Get package C-state limit for CPU 'cpus'. Returns a dictionary with the following keys.
-          * CPU - the CPU number the limit was read at.
+        Get package C-state limit for CPUs in 'cpus'. For every CPU in 'cpus', yields a tuple of
+        '(cpunum, info)', where 'cpunum' is the CPU number the limits were read from, and 'info' is
+        the package C-state information dictionary. Here are the 'info' dictionary keys.
           * limit - the package C-state limit name (small letters, e.g., pc0).
           * locked - a boolean, 'True' if the 'MSR_PKG_CST_CONFIG_CONTROL' register is locked, so it
                      is impossible to change the package C-state limit, and 'False' otherwise.
@@ -148,29 +149,30 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """
 
         finfo = self.features["pkg_cstate_limit"]
-        code = self._msr.read_cpu_bits(self.regaddr, finfo["bits"], cpu)
 
-        if code not in finfo["rvals"]:
-            known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
-            msg = f"unexpected package C-state limit code '{code}' read from '{self.regname}' " \
-                  f"MSR ({self.regaddr}){self._proc.hostmsg}, known codes are: {known_codes}"
+        for cpu, code in self._msr.read_bits(self.regaddr, finfo["bits"], cpus=cpus):
+            if code not in finfo["rvals"]:
+                known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
+                msg = f"unexpected package C-state limit code '{code}' read from " \
+                      f"'{self.regname}' MSR ({self.regaddr}){self._proc.hostmsg}, known codes " \
+                      f"are: {known_codes}"
 
-            # No exact match. The limit is the closest lower known number. For example, if the
-            # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the limit is
-            # PC6.
-            for cde in sorted(finfo["rvals"], reverse=True):
-                if cde <= code:
-                    code = cde
-                    break
-            else:
-                raise Error(msg)
+                # No exact match. The limit is the closest lower known number. For example, if the
+                # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the
+                # limit is PC6.
+                for cde in sorted(finfo["rvals"], reverse=True):
+                    if cde <= code:
+                        code = cde
+                        break
+                else:
+                    raise Error(msg)
 
-            _LOG.debug(msg)
+                _LOG.debug(msg)
 
-        return {"CPU" : self._cpuinfo.normalize_cpu(cpu),
-                "pkg_cstate_limit" : finfo["rvals"][code],
-                "pkg_cstate_limits" : list(finfo["vals"].keys()),
-                "pkg_cstate_limit_aliases" : finfo["aliases"]}
+            res = {"pkg_cstate_limit" : finfo["rvals"][code],
+                   "pkg_cstate_limits" : list(finfo["vals"].keys()),
+                   "pkg_cstate_limit_aliases" : finfo["aliases"]}
+            yield (cpu, res)
 
     def _set_pkg_cstate_limit(self, limit, cpus="all"):
         """Set package C-state limit for CPUs in 'cpus'."""
