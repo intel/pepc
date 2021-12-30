@@ -171,8 +171,8 @@ class MSR:
           * cpu - The CPU to read the MSR at. Can be an integer or a string with an integer number.
         """
 
-        _, msr = next(self.read(regaddr, cpus=(cpu,)))
-        return msr
+        _, regval = next(self.read(regaddr, cpus=(cpu,)))
+        return regval
 
     def _write(self, regaddr, regval, cpu, regval_bytes=None):
         """Write value 'regval' to MSR at 'regaddr' on CPU 'cpu."""
