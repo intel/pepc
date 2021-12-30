@@ -128,9 +128,6 @@ class FeaturedMSR:
         Returns value of feature 'fname' for CPU 'cpu'. The arguments are as follows.
           * fname - name of the feature to get.
           * cpus - CPU number to get the feature for.
-
-        In case of a boolean "on/off" type of feature, return 'True' if the feature is enabled, and
-        'False' otherwise.
         """
 
         self._check_feature_support(fname)
