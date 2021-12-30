@@ -82,10 +82,15 @@ class FeaturedMSR:
         vals_str = ", ".join(vals)
         raise Error(f"bad value '{val}' for the '{finfo['name']}' feature.\nUse one of: {vals_str}")
 
-    def feature_supported(self, fname):
+    def feature_supported(self, fname, cpu): # pylint: disable=unused-argument
         """
-        Returns 'True' if feature 'fname' is supported by the platform, returns 'False' otherwise.
+        Returns 'True' if feature 'fname' is supported by the platform and CPU 'cpu, returns 'False'
+        otherwise.
         """
+
+        # In current implementation we assume that all CPUs are the same and whether the feature is
+        # supported is per-platform. But in the future this may not be the case (e.g., on hybrid
+        # platforms).
 
         try:
             self._check_feature_support(fname)
