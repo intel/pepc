@@ -14,7 +14,7 @@ import random
 import unittest
 from pathlib import Path
 from unittest.mock import patch, mock_open, ANY
-from pepclibs.testlibs.MockedStuff import mock_Proc
+from pepclibs.testlibs.MockedStuff import MockedProc
 from pepclibs.msr import MSR, PMEnable, HWPRequest, MiscFeatureControl
 
 _MSR_BYTES = 8
@@ -24,7 +24,7 @@ _TEST_DATA = int.from_bytes(_TEST_DATA_BYTES, byteorder="little")
 #pylint:disable=no-self-use
 
 @patch("builtins.open", new_callable=mock_open, read_data=_TEST_DATA_BYTES)
-@patch("pepclibs.helperlibs.Procs.Proc", new=mock_Proc)
+@patch("pepclibs.helperlibs.Procs.Proc", new=MockedProc)
 class TestMSR(unittest.TestCase):
     """Unittests for the 'MSR' module."""
 

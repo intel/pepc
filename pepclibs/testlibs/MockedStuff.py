@@ -75,7 +75,7 @@ _MOCKED_FILES = _get_mocked_files(("cstates", "cpufreq", "intel_uncore_frequency
 _MOCKED_EXISTS_FILES = _MOCKED_FILES | _get_mocked_files(("dev_cpu", ))
 _MOCKED_ASPM_POLICY_FILES = _get_mocked_files(("aspm_policy", ))
 
-class mock_Proc(Procs.Proc):
+class MockedProc(Procs.Proc):
     """Mocked version of 'Proc' class in pepclibs.helperlibs.Procs module."""
 
     def run_verify(self, command, **kwargs):
@@ -162,7 +162,7 @@ class mock_Proc(Procs.Proc):
             if hasattr(module, name):
                 self._parent_methods[name] = getattr(module, name)
 
-class mock_MSR(MSR.MSR):
+class MockedMSR(MSR.MSR):
     """Mock version of MSR class in pepclibs.msr.MSR module."""
 
     def read_iter(self, regaddr, cpus="all"):
@@ -237,8 +237,8 @@ def get_mocked_objects():
     with patch("pepclibs.helperlibs.FSHelpers.lsdir", new=mock_lsdir) as mock_FSHelpers_lsdir, \
          patch("pepclibs.helperlibs.FSHelpers.exists", new=mock_exists),  \
          patch("pepclibs.helperlibs.FSHelpers.isfile", new=mock_isfile), \
-         patch("pepclibs.helperlibs.Procs.Proc", new=mock_Proc) as mock_proc, \
-         patch("pepclibs.msr.MSR.MSR", new=mock_MSR) as mock_msr:
+         patch("pepclibs.helperlibs.Procs.Proc", new=MockedProc) as mock_proc, \
+         patch("pepclibs.msr.MSR.MSR", new=MockedMSR) as mock_msr:
         yield (mock_FSHelpers_lsdir, mock_proc, mock_msr)
 
 def get_test_cpu_info():
