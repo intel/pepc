@@ -20,18 +20,26 @@ from pepclibs.msr import MSR
 
 _LOG = logging.getLogger()
 
-# Map of features available on various CPU models. Must be defined by sub-classes and descrive every
+# Map of features available on various CPU models. Must be defined by sub-classes and describe every
 # supported feature.
 #
-# * This is only the initial, general definition. Many things are platform-depeondent, so full
+# * This is only the initial, general definition. Many things are platform-dependent, so full
 #   dictionary is available the 'features' attribute of the featured MSR classes (e.g.,
 #   'PCStateConfigCtl.features').
-# * Sub-classes do not necessary implemlement all features available in the MSR register.
+# * Sub-classes do not necessary implement all features available in the MSR register.
 FEATURES = {}
 
 class FeaturedMSR:
     """
     This is the base class for "featured" MSRs, such as 'MSR_PKG_CST_CONFIG_CONTROL'.
+
+    The following are public methods for getting and setting features.
+      1. read the MSR and return feature value for a single CPU: 'get_feature()'.
+      2. write feature value to the MSR on multiple CPUs: 'set_feature()'.
+
+    Additional helpful methods.
+      1. Check if a feature is supported: 'feature_supported()'.
+      2. Check if a boolean feature is enabled: 'feature_enabled()'.
     """
 
     def _check_feature_support(self, fname):
@@ -147,7 +155,7 @@ class FeaturedMSR:
         raise Error(f"feature '{fname}' is not boolean, use 'get_feature()' instead")
 
     def _init_features_dict_supported(self):
-        """Intitialize the 'supported' flag for all features in the 'self.features' dictionary."""
+        """Initialize the 'supported' flag for all features in the 'self.features' dictionary."""
 
         for finfo in self.features.values():
             # By default let's assume the feature is supported by this CPU.
@@ -168,8 +176,8 @@ class FeaturedMSR:
     def _init_features_dict_defaults(self):
         """
         Walk through each feature in the 'self.featrues' dictionary and make sure that all the
-        necessary keys are presint. Set the missing keys to their default values.
-          * writable - a flag inidcating whether this feature can be modified. Default is 'True'.
+        necessary keys are present. Set the missing keys to their default values.
+          * writable - a flag indicating whether this feature can be modified. Default is 'True'.
         """
 
         for finfo in self.features.values():
@@ -187,9 +195,9 @@ class FeaturedMSR:
 
     def _init_features_dict(self):
         """
-        Intitialize the 'features' dictionary with platform-specific information. The sub-classes
-        can re-define this method and call inidividual '_init_features_dict_*()' methods.
-       """
+        Initialize the 'features' dictionary with platform-specific information. The sub-classes
+        can re-define this method and call individual '_init_features_dict_*()' methods.
+        """
 
         self._init_features_dict_supported()
         self._init_features_dict_defaults()
