@@ -33,14 +33,15 @@ class FeaturedMSR:
     """
     This is the base class for "featured" MSRs, such as 'MSR_PKG_CST_CONFIG_CONTROL'.
 
-    The following are public methods for getting and setting features.
-      1. read the MSR and return feature value for a multiple CPUs: 'read_feature()'.
-      2. write feature value to the MSR on multiple CPUs: 'write_feature()'.
-      3. read the MSR and return feature value for a single CPU: 'read_cpu_feature()'.
+    Public methods overview.
 
-    Additional helpful methods.
-      1. Check if a feature is supported: 'feature_supported()'.
-      2. Check if a boolean feature is enabled: 'feature_enabled()'.
+    1. Multiple CPUs.
+       * Read/write feature: 'read_feature()', 'write_feature()'.
+    2. Single CPU.
+       * Read/write feature: 'read_cpu_feature()', 'write_cpu_feature()'.
+    3. Misc. methods.
+       * Check if a feature is supported: 'feature_supported()'.
+       * Check if a boolean feature is enabled: 'feature_enabled()'.
     """
 
     def _check_feature_support(self, fname):
@@ -85,10 +86,10 @@ class FeaturedMSR:
 
     def read_feature(self, fname, cpus="all"):
         """
-        Reads the MSR for CPUs in 'cpus', extracts the 'fname' feature from the read MSR values and
-        yields the result. The arguments are as follows.
+        Read the MSR on CPUs in 'cpus', extract the values of the 'fname' feature, and yield the
+        result. The arguments are as follows.
           * fname - name of the feature to read.
-          * cpus - CPU number to read the feature from.
+          * cpus - the CPUs to read the feature from (same as in 'CPUIdle.get_cstates_info()').
 
         The yielded tuples are '(cpunum, val)'.
           * cpunum - the CPU number the MSR was read from.
@@ -111,8 +112,8 @@ class FeaturedMSR:
 
     def read_cpu_feature(self, fname, cpu):
         """
-        Reads the MSR for CPU 'cpu', extracts the 'fname' feature from the read MSR and returns the
-        result. The arguments are as follows.
+        Read the MSR for CPU 'cpu', extract the value of the 'fname' feature, and return the result.
+        The arguments are as follows.
           * fname - name of the feature to read.
           * cpu - CPU number to read the feature from. Can be an integer or a string with an integer
                   number.
@@ -146,6 +147,18 @@ class FeaturedMSR:
             set_method(val, cpus=cpus)
         else:
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus)
+
+    def write_cpu_feature(self, fname, val, cpu):
+        """
+        Modify the MSR on CPU 'cpu' by reading it, changing the 'fname' feature bits to the value
+        corresponding to 'val', and writing it back. The arguments are as follows.
+          * fname - name of the feature to set.
+          * val - value to set the feature to.
+          * cpu - CPU number to write the feature to. Can be an integer or a string with an integer
+                  number.
+        """
+
+        self.write_feature(fname, val, cpus=(cpu,))
 
     def feature_enabled(self, fname, cpu):
         """
