@@ -76,7 +76,6 @@ _MOCKED_EXISTS_FILES = _MOCKED_FILES | _get_mocked_files(("dev_cpu", ))
 _MOCKED_ASPM_POLICY_FILES = _get_mocked_files(("aspm_policy", ))
 
 #pylint: disable=unused-argument
-#pylint: disable=unused-variable
 
 class mock_Proc(Procs.Proc):
     """Mocked version of 'Proc' class in pepclibs.helperlibs.Procs module."""
@@ -140,7 +139,7 @@ class mock_Proc(Procs.Proc):
         else:
             read_data = _MOCKED_FILES[str(path)]
 
-        with patch("builtins.open", new_callable=mock_open, read_data=read_data) as m:
+        with patch("builtins.open", new_callable=mock_open, read_data=read_data):
             self._mock_fobj[path] = open(path, mode)
         return self._mock_fobj[path]
 
@@ -177,8 +176,8 @@ class mock_MSR(MSR.MSR):
         else:
             read_data = random.randbytes(8)
 
-        with patch("builtins.open", new_callable=mock_open, read_data=read_data) as m_open:
-            yield from super().read_iter(regaddr,  cpus)
+        with patch("builtins.open", new_callable=mock_open, read_data=read_data):
+            yield from super().read_iter(regaddr, cpus)
 
     def write(self, regaddr, regval, cpus="all"):
         """Mocked version of 'write()'."""
@@ -238,8 +237,8 @@ def get_mocked_objects():
     """
 
     with patch("pepclibs.helperlibs.FSHelpers.lsdir", new=mock_lsdir) as mock_FSHelpers_lsdir, \
-         patch("pepclibs.helperlibs.FSHelpers.exists", new=mock_exists) as mock_FSHelpers_exists, \
-         patch("pepclibs.helperlibs.FSHelpers.isfile", new=mock_isfile) as mock_FSHelpers_isfile, \
+         patch("pepclibs.helperlibs.FSHelpers.exists", new=mock_exists),  \
+         patch("pepclibs.helperlibs.FSHelpers.isfile", new=mock_isfile), \
          patch("pepclibs.helperlibs.Procs.Proc", new=mock_Proc) as mock_proc, \
          patch("pepclibs.msr.MSR.MSR", new=mock_MSR) as mock_msr:
         yield (mock_FSHelpers_lsdir, mock_proc, mock_msr)
