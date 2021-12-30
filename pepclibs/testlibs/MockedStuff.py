@@ -166,7 +166,11 @@ class MockedMSR(MSR.MSR):
     """Mock version of MSR class in pepclibs.msr.MSR module."""
 
     def read(self, regaddr, cpus="all"):
-        """Mocked version of 'read()'. Returns random data."""
+        """
+        Mocked version of the 'MSR.read()' method. If MSR at 'regaddr' has not been written to yet,
+        this method returns realistic data for MSRs in 'self._mocked_msr' dictionary, and random
+        data for all other MSRs.
+        """
 
         if regaddr in self._mocked_msr:
             read_data = int.to_bytes(self._mocked_msr[regaddr] & _MAX64,
@@ -178,7 +182,7 @@ class MockedMSR(MSR.MSR):
             yield from super().read(regaddr, cpus)
 
     def write(self, regaddr, regval, cpus="all"):
-        """Mocked version of 'write()'."""
+        """Mocked version of the 'MSR.write()' method."""
 
         self._mocked_msr[regaddr] = regval
 
