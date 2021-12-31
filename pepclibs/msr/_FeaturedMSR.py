@@ -227,12 +227,12 @@ class FeaturedMSR:
 
     def cpu_feature_supported(self, fname, cpu): # pylint: disable=unused-argument
         """
-        Returns 'True' if feature 'fname' is supported by the platform and CPU 'cpu, returns 'False'
+        Returns 'True' if feature 'fname' is supported by the platform on CPU 'cpu', returns 'False'
         otherwise.
         """
 
         # In current implementation we assume that all CPUs are the same and whether the feature is
-        # supported is per-platform. But in the future this may not be the case (e.g., on hybrid
+        # supported per-platform. But in the future this may not be the case (e.g., on hybrid
         # platforms).
 
         try:
