@@ -30,12 +30,12 @@ _BAD_SCOPE_OPTIONS = [
     f"--cores {_CPUINFO['max_core'] + 1}",
     f"--packages {_CPUINFO['max_package'] + 1}"]
 
-def test_cpuhotplug_info():
+def test_v1_cpuhotplug_info():
     """Test 'pepc cpu-hotplug info' command."""
 
     run_pepc("cpu-hotplug info", exp_ret=0)
 
-def test_cpuhotplug_online():
+def test_v1_cpuhotplug_online():
     """Test 'pepc cpu-hotplug online' command."""
 
     good_options = [
@@ -47,7 +47,7 @@ def test_cpuhotplug_online():
     for option in good_options:
         run_pepc(f"cpu-hotplug online {option}", exp_ret=0)
 
-def test_cpuhotplug_offline():
+def test_v1_cpuhotplug_offline():
     """Test 'pepc cpu-hotplug offline' command."""
 
     good_options = [

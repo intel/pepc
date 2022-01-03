@@ -39,7 +39,7 @@ _BAD_SCOPE_OPTIONS = [
     f"--cores {_CPUINFO['max_core'] + 1}",
     f"--packages {_CPUINFO['max_package'] + 1}"]
 
-def test_pstates_info():
+def test_v1_pstates_info():
     """Test 'pepc pstates info' command."""
 
     for scope in _GOOD_SCOPE_OPTIONS:
@@ -58,11 +58,11 @@ def test_pstates_info():
             continue
         run_pepc(f"pstates info --uncore {scope}", exp_ret=-1)
 
-def test_pstates_set():
+def test_v1_pstates_set():
     """Test 'pepc pstates config' command."""
 
 
-def test_pstates_config():
+def test_v1_pstates_config():
     """Test 'pepc pstates config' command."""
 
     # Test frequency settings supported by test configuration.

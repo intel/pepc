@@ -25,14 +25,14 @@ _TEST_DATA = int.from_bytes(_TEST_DATA_BYTES, byteorder="little")
 
 @patch("builtins.open", new_callable=mock_open, read_data=_TEST_DATA_BYTES)
 @patch("pepclibs.helperlibs.Procs.Proc", new=MockedProc)
-class TestMSR(unittest.TestCase):
+class Test_v1_MSR(unittest.TestCase):
     """Unittests for the 'MSR' module."""
 
     # The MSR addresses that will be tested.
     _addrs = (PMEnable.MSR_PM_ENABLE, MiscFeatureControl.MSR_MISC_FEATURE_CONTROL,
               HWPRequest.MSR_HWP_REQUEST)
 
-    def test_read_cpu(self, m_open):
+    def test_v1_read_cpu(self, m_open):
         """Test the 'read()' method, and verify output data."""
 
         with MSR.MSR() as msr:
@@ -43,7 +43,7 @@ class TestMSR(unittest.TestCase):
                     m_open().seek.assert_called_with(addr)
                     self.assertEqual(res, _TEST_DATA)
 
-    def test_read(self, m_open):
+    def test_v1_read(self, m_open):
         """Test the 'read()' method, and verify output."""
 
         with MSR.MSR() as msr:
@@ -59,7 +59,7 @@ class TestMSR(unittest.TestCase):
                 self.assertEqual(m_open().read.call_count, 4)
                 m_open.reset_mock()
 
-    def test_write(self, m_open):
+    def test_v1_write(self, m_open):
         """Test the 'write()' method, and verify call arguments."""
 
         with MSR.MSR() as msr:

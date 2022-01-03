@@ -12,11 +12,11 @@
 
 from common import run_pepc
 
-def test_aspm_info():
+def test_v1_aspm_info():
     """Test 'pepc aspm info' command."""
     run_pepc("aspm info", exp_ret=0)
 
-def test_aspm_config():
+def test_v1_aspm_config():
     """Test 'pepc aspm config' command."""
 
     good_options = [

@@ -32,7 +32,7 @@ _BAD_SCOPE_OPTIONS = [
     f"--cores {_CPUINFO['max_core'] + 1}",
     f"--packages {_CPUINFO['max_package'] + 1}"]
 
-def test_cstates_info(caplog):
+def test_v1_cstates_info(caplog):
     """
     Test 'pepc cstates info' command. The 'caplog' argument is standard pytest fixture allowing
     access to the captured logs.
@@ -55,7 +55,7 @@ def test_cstates_info(caplog):
             assert f"Name: {filtered_cst}\n" not in output
         assert f"Name: {cstate}\n" in output
 
-def test_cstates_config():
+def test_v1_cstates_config():
     """Test 'pepc cstates config' command."""
 
     good_options = [
