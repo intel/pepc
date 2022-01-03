@@ -210,7 +210,10 @@ class MSR:
           * cpu - the CPU to read the MSR at. Can be an integer or a string with an integer number.
         """
 
-        _, regval = next(self.read(regaddr, cpus=(cpu,)))
+        regval = None
+        for _, regval in self.read(regaddr, cpus=(cpu,)):
+            pass
+
         return regval
 
     def read_bits(self, regaddr, bits, cpus="all"):

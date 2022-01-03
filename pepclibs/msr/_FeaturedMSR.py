@@ -121,8 +121,11 @@ class FeaturedMSR:
                   number.
         """
 
+        val = None
         for _, val in self.read_feature(fname, cpus=(cpu,)):
-            return val
+            pass
+
+        return val
 
     def feature_enabled(self, fname, cpus="all"):
         """
