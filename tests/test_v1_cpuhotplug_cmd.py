@@ -11,7 +11,7 @@
 """Test module for 'pepc' project 'cpu-hotplug' command."""
 
 from common import run_pepc
-from pepclibs.testlibs.MockedStuff import get_test_cpu_info
+from MockedStuff import get_test_cpu_info
 
 _CPUINFO = get_test_cpu_info()
 

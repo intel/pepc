@@ -13,7 +13,7 @@
 import sys
 import logging
 from pepctool import _Pepc
-from pepclibs.testlibs.MockedStuff import get_mocked_objects
+from MockedStuff import get_mocked_objects
 
 logging.basicConfig(level=logging.DEBUG)
 _LOG = logging.getLogger()

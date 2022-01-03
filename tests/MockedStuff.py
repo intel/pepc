@@ -46,7 +46,7 @@ def _get_mocked_data():
     """
 
     mock_data = {}
-    basepath = Path(__file__).parents[2].resolve()
+    basepath = Path(__file__).parents[1].resolve()
     testdatapath = basepath / "tests" / "data"
 
     for name, filename in _TESTDATA:
