@@ -106,11 +106,12 @@ class FeaturedMSR:
         get_method = getattr(self, f"_get_{fname}", None)
         if get_method:
             yield from get_method(cpus=cpus)
-
-        for cpu, val in self._msr.read_bits(self.regaddr, self.features[fname]["bits"], cpus=cpus):
-            if "rvals" in self.features[fname]:
-                val = self.features[fname]["rvals"][val]
-            yield (cpu, val)
+        else:
+            bits = self.features[fname]["bits"]
+            for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus):
+                if "rvals" in self.features[fname]:
+                    val = self.features[fname]["rvals"][val]
+                yield (cpu, val)
 
     def read_cpu_feature(self, fname, cpu):
         """
