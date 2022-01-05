@@ -10,7 +10,7 @@
 
 """Test module for 'pepc' project 'cstates' command."""
 
-from common import run_pepc
+from common_v1 import run_pepc
 from MockedStuff import get_test_cpu_info
 
 _CPUINFO = get_test_cpu_info()
