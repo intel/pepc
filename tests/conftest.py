@@ -13,15 +13,16 @@
 from collections import namedtuple
 
 _PytestOptions = namedtuple("PytestOptions", ["short", "long", "dest", "default", "help"])
-_PYTEST_OPTS = (_PytestOptions("-H", "--host", "hostname", "emulhost",
-                               "Name of the host to run the test on."), )
+_PYTEST_OPTS = (_PytestOptions("-H", "--host", "hostname", "emulation",
+                               """Name of the host to run the test on, or "emulation" (default) to
+                                  run locally and emulate real hardware."""), )
 
 def pytest_addoption(parser):
     """Add custom pytest options."""
 
     for opt in _PYTEST_OPTS:
-        kwargs = { "dest" : opt.dest, "default" : [opt.default], "help" : opt.help,
-                   "action" : "append" }
+        kwargs = {"dest" : opt.dest, "default" : [opt.default], "help" : opt.help,
+                  "action" : "append"}
         parser.addoption(opt.short, opt.long, **kwargs)
 
 def pytest_generate_tests(metafunc):
