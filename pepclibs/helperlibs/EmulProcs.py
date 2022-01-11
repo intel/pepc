@@ -57,6 +57,7 @@ class EmulProc():
     def __init__(self):
         """Initialize the emulated 'Proc' class instance."""
 
+        self.is_remote = False
         # Opened files.
         self._files = {}
 
