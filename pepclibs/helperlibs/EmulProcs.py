@@ -11,6 +11,7 @@
 """Emulated version or the 'Procs' module for testing purposes."""
 
 import io
+import contextlib
 from pepclibs.helperlibs._Common import ProcResult
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
@@ -54,12 +55,23 @@ class EmulProc():
 
         return self._files[path]
 
+    def init_testdata(self, datapath):
+        """Initialize emulated commands and the output the commands will produce."""
+
+        self._cmds = {}
+        for cmd, datafile in (("lscpu --all -p=socket,node,core,cpu,online", "lscpu_info_cpus.txt"),
+                              ("lscpu", "lscpu_info.txt"), ):
+            with contextlib.suppress(Exception), open(datapath / datafile) as fobj:
+                self._cmds[cmd] = fobj.readlines()
+
+        for cmd, value in (("test -e '/dev/cpu/0/msr'", ""), ):
+            self._cmds[cmd] = value
+
     def __init__(self):
         """Initialize the emulated 'Proc' class instance."""
 
-        self.is_remote = False
         # Opened files.
         self._files = {}
-
-        # Supported commands for 'run()' and 'run_verify()'.
         self._cmds = {}
+
+        self.is_remote = False

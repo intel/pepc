@@ -10,13 +10,19 @@
 
 """Common bits for the 'pepc' tests."""
 
+from pathlib import Path
 from pepclibs.helperlibs import EmulProcs, Procs, SSH
+
+_DATAPATH = Path(__file__).parent.resolve() / "data"
 
 def get_proc(hostname):
     """Depending on the 'hostname' argument, return emulated 'Proc', real 'Proc' or 'SSH' object."""
 
     if hostname == "emulation":
-        return EmulProcs.EmulProc()
+        proc = EmulProcs.EmulProc()
+        proc.init_testdata(_DATAPATH)
+        return proc
+
     if hostname == "localhost":
         return Procs.Proc()
 

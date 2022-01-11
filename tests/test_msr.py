@@ -10,7 +10,6 @@
 
 """Unittests for the public methods of the 'MSR' module."""
 
-from pathlib import Path
 from common import get_proc
 from pepclibs.msr import MSR, PMEnable, HWPRequest, MiscFeatureControl
 
@@ -22,16 +21,6 @@ def test_read_cpu(hostname):
     """Test the 'read_cpu()' method."""
 
     proc = get_proc(hostname)
-
-    testdatapath = Path(__file__).parent.resolve() / "data"
-
-    for cmd, datafile in (("lscpu --all -p=socket,node,core,cpu,online", "lscpu_info_cpus.txt"),
-                              ("lscpu", "lscpu_info.txt"), ):
-        with open(testdatapath / datafile) as fobj:
-            proc._cmds[cmd] = fobj.readlines()
-
-    for cmd, value in (("test -e '/dev/cpu/0/msr'", ""), ):
-        proc._cmds[cmd] = value
 
     with MSR.MSR(proc=proc) as msr:
         for addr in _ADDRS:
