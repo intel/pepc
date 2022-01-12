@@ -15,7 +15,6 @@ many Intel platforms.
 import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 _LOG = logging.getLogger()
 
