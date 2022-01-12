@@ -91,10 +91,6 @@ PROPS = {
     },
 }
 
-def bit_mask(bitnr):
-    """Return bitmask for a bit by its number."""
-    return 1 << bitnr
-
 class CPUFreq:
     """This class provides API for managing CPU frequency. Only Intel x86 systems are supported."""
 
