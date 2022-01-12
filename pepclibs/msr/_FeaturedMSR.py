@@ -130,12 +130,11 @@ class FeaturedMSR:
 
     def is_feature_enabled(self, fname, cpus="all"):
         """
-        Read the MSR and check if feature 'fname' is enabled on all CPUs in 'cpus'. The arguments
-        are as follows.
+        Check if feature 'fname' is enabled on all CPUs in 'cpus'. The arguments are as follows.
           * fname - name of the feature to read and check.
           * cpus - the CPUs to read the feature from (same as in 'CPUIdle.get_cstates_info()').
 
-        Returns 'True' if the feature is supported on all CPUs in 'cpus', returns 'False' otherwise.
+        Returns 'True' if the feature is enabled on all CPUs in 'cpus', returns 'False' otherwise.
         """
 
         self._check_feature_support(fname)
@@ -151,11 +150,12 @@ class FeaturedMSR:
 
     def is_cpu_feature_enabled(self, fname, cpu):
         """
-        Read the MSR and check if feature 'fname' is enabled on CPU 'cpu'. Returns 'True' if the
-        feature is enabled, and 'False' otherwise. The arguments are as follows.
+        Check if CPU 'cpu' has feature 'fname' enabled. The arguments are as follows.
           * fname - name of the feature to read and check.
           * cpu - CPU number to read the feature from. Can be an integer or a string with an integer
                   number.
+
+        Returns 'True' if the feature is enabled, and 'False' otherwise.
         """
 
         return self.is_feature_enabled(fname, cpus=(cpu,))
@@ -230,8 +230,10 @@ class FeaturedMSR:
 
     def is_cpu_feature_supported(self, fname, cpu): # pylint: disable=unused-argument
         """
-        Returns 'True' if feature 'fname' is supported by the platform on CPU 'cpu', returns 'False'
-        otherwise.
+        Check a feature is supported by CPU 'cpu'.
+          * fname - name of the feature to check.
+
+        Returns 'True' if the feature is supported by all CPUs in 'cpus', returns 'False' otherwise.
         """
 
         # In current implementation we assume that all CPUs are the same and whether the feature is
