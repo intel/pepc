@@ -98,6 +98,30 @@ def bit_mask(bitnr):
 class CPUFreq:
     """This class provides API for managing CPU frequency. Only Intel x86 systems are supported."""
 
+    def _get_cpuinfo(self):
+        """Returns a 'CPUInfo.CPUInfo()' object."""
+
+        if not self._cpuinfo:
+            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
+        return self._cpuinfo
+
+    def _get_msr(self):
+        """Returns an 'MSR.MSR()' object."""
+
+        if not self._msr:
+            self._msr = MSR.MSR(self._proc, cpuinfo=self._cpuinfo)
+        return self._msr
+
+    def _get_bclk(self, cpu):
+        """Discover bus clock speed."""
+
+        if not self._bclk:
+            from pepclibs.hwlibs import BClock #pylint: disable=import-outside-toplevel
+
+            self._bclk = BClock.get_bclk(self._proc, cpu=cpu, cpuinfo=self._cpuinfo, msr=self._msr)
+
+        return self._bclk
+
     def _read(self, path):
         """Read cpufreq sysfs file."""
 
@@ -115,25 +139,11 @@ class CPUFreq:
 
         FSHelpers.write(path, data, proc=self._proc)
 
-    def _get_cpuinfo(self):
-        """Returns a 'CPUInfo.CPUInfo()' object."""
-
-        if not self._cpuinfo:
-            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
-        return self._cpuinfo
-
     def _is_intel_cpu(self):
         """Check if we are dealing with an Intel CPU."""
 
         cpuinfo = self._get_cpuinfo()
         return cpuinfo.info["vendor"] == "GenuineIntel"
-
-    def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
-
-        if not self._msr:
-            self._msr = MSR.MSR(self._proc, cpuinfo=self._cpuinfo)
-        return self._msr
 
     def _get_cpu_epp_policy(self, cpu):
         """Get current EPP policy. Returns 'None' if read fails."""
@@ -159,16 +169,6 @@ class CPUFreq:
             self._epp_policies = []
 
         return self._epp_policies
-
-    def _get_bclk(self, cpu):
-        """Discover bus clock speed."""
-
-        if not self._bclk:
-            from pepclibs.hwlibs import BClock #pylint: disable=import-outside-toplevel
-
-            self._bclk = BClock.get_bclk(self._proc, cpu=cpu, cpuinfo=self._cpuinfo, msr=self._msr)
-
-        return self._bclk
 
     def _get_platform_freqs(self, cpu):
         """Read various platform frequencies from MSRs for CPU 'cpu'."""
