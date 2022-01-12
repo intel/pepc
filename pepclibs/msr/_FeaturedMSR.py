@@ -39,30 +39,14 @@ class FeaturedMSR:
        * Read/write feature: 'read_feature()', 'write_feature()'.
        * Enable/disable a feature: 'enable_feature()'.
        * Check if feature is enabled: 'is_feature_enabled()'.
-       * Check if feature is supported: 'is_feature_supported()'.
+       * Check if feature is supported: 'is_feature_supported()', check_feature_supported()'.
     2. Single CPU.
        * Read/write feature: 'read_cpu_feature()', 'write_cpu_feature()'.
        * Enable/disable a feature: 'cpu_enable_feature()'.
        * Check if feature is enabled: 'is_cpu_feature_enabled()'.
-       * Check if feature is supported: 'is_cpu_feature_supported()'.
+       * Check if feature is supported: 'is_cpu_feature_supported()',
+                                        'check_cpu_feature_supported()'.
     """
-
-    def _check_feature_support(self, fname):
-        """
-        Check if CPU model of host 'self._proc' supports the feature 'fname'. Raises
-        'ErrorNotSupported' if the feature is not supported.
-        """
-
-        if fname not in self.features:
-            features_str = ", ".join(set(self.features))
-            raise Error(f"unknown feature '{fname}', known features are: {features_str}")
-
-        if self._features[fname]["supported"]:
-            return
-
-        finfo = self.features[fname]
-        raise ErrorNotSupported(f"the '{finfo['name']}' feature is not supported on "
-                                f"{self._cpuinfo.cpudescr}{self._proc.hostmsg}")
 
     def _normalize_feature_value(self, feature, val):
         """
@@ -102,7 +86,7 @@ class FeaturedMSR:
         _LOG.debug("read feature '%s' from CPU(s) %s%s",
                    fname, Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._proc.hostmsg)
 
-        self._check_feature_support(fname)
+        self.check_feature_supported(fname, cpus=cpus)
 
         get_method = getattr(self, f"_get_{fname}", None)
         if get_method:
@@ -138,7 +122,7 @@ class FeaturedMSR:
         Returns 'True' if the feature is enabled on all CPUs in 'cpus', returns 'False' otherwise.
         """
 
-        self._check_feature_support(fname)
+        self.check_feature_supported(fname, cpus=cpus)
 
         if self.features[fname]["type"] != "bool":
             raise Error(f"feature '{fname}' is not boolean, use 'read_feature()' instead")
@@ -173,11 +157,11 @@ class FeaturedMSR:
         _LOG.debug("set feature '%s' to value %s on CPU(s) %s%s", fname, val,
                    Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._proc.hostmsg)
 
-        self._check_feature_support(fname)
+        self.check_feature_supported(fname, cpus=cpus)
+
         val = self._normalize_feature_value(fname, val)
 
         finfo = self.features[fname]
-
         if not finfo["writable"]:
             raise Error(f"'{fname}' is can not be modified, it is read-only")
 
@@ -209,7 +193,7 @@ class FeaturedMSR:
                    'CPUIdle.get_cstates_info()').
         """
 
-        self._check_feature_support(fname)
+        self.check_feature_supported(fname, cpus=cpus)
 
         if self.features[fname]["type"] != "bool":
             raise Error(f"feature '{fname}' is not boolean, use 'write_feature()' instead")
@@ -256,6 +240,27 @@ class FeaturedMSR:
         """
 
         return self.is_feature_supported(fname, cpus=(cpu, ))
+
+    def check_feature_supported(self, fname, cpus="all"): # pylint: disable=unused-argument
+        """
+        Same as 'is_feature_supported()', but if the feature is not supported by any CPU in 'cpus',
+        raises the 'ErrorNotSupported' exception.
+        """
+
+        if self.is_feature_supported(fname, cpus=cpus):
+            return
+
+        finfo = self.features[fname]
+        raise ErrorNotSupported(f"the '{finfo['name']}' feature is not supported on "
+                                f"{self._cpuinfo.cpudescr}{self._proc.hostmsg}")
+
+    def check_cpu_feature_supported(self, fname, cpu):
+        """
+        Same as 'is_cpu_feature_supported()', but if the feature is not supported by CPU 'cpu',
+        raises the 'ErrorNotSupported' exception.
+        """
+
+        self.check_feature_supported(fname, cpus=(cpu, ))
 
     def _init_supported_flag(self):
         """Initialize the 'supported' flag for all features in the 'self._features' dictionary."""
