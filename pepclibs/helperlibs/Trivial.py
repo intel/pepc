@@ -75,6 +75,13 @@ def is_int(value, base=10):
             return False
     return True
 
+def validate_int_range(value, minval, maxval, what="value"):
+    """Validate integer value against range ['minval', 'maxval']."""
+
+    if not is_int(value) or int(value) < minval or int(value) > maxval:
+        raise Error(f"{what} '{value}' is not supported, please provide integer number between "
+                    f"[{minval},{maxval}]")
+
 def is_iterable(value):
     """Return 'True' if 'value' is iterable collection (not string) and 'False' otherwise."""
     try:
