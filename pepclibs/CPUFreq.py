@@ -190,7 +190,7 @@ class CPUFreq:
         ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
         freqs["base"] = int(ratio * self._bclk * 1000)
 
-        if platinfo.cpu_feature_supported("max_eff_ratio", cpu):
+        if platinfo.is_cpu_feature_supported("max_eff_ratio", cpu):
             ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
             freqs["max_eff"] = int(ratio * self._bclk * 1000)
 
@@ -202,9 +202,9 @@ class CPUFreq:
         trl = TurboRatioLimit.TurboRatioLimit(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
         ratio = None
 
-        if trl.cpu_feature_supported("max_1c_turbo_ratio", cpu):
+        if trl.is_cpu_feature_supported("max_1c_turbo_ratio", cpu):
             ratio = trl.read_cpu_feature("max_1c_turbo_ratio", 0)
-        elif trl.cpu_feature_supported("max_g0_turbo_ratio", cpu):
+        elif trl.is_cpu_feature_supported("max_g0_turbo_ratio", cpu):
             # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores. We
             # can safely assume that group 0 will correspond to max. 1-core turbo, so we do not need
             # to look at 'MSR_TURBO_RATIO_LIMIT1'.
@@ -271,10 +271,10 @@ class CPUFreq:
         cpuinfo = self._get_cpuinfo()
         pmenable = PMEnable.PMEnable(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
 
-        if not pmenable.cpu_feature_supported("hwp_enabled", cpu):
+        if not pmenable.is_cpu_feature_supported("hwp_enabled", cpu):
             return None
 
-        return pmenable.cpu_feature_enabled("hwp_enabled", cpu)
+        return pmenable.is_cpu_feature_enabled("hwp_enabled", cpu)
 
     def _get_cpufreq_info(self, cpus, keys):
         """Implements 'get_cpufreq_info()'."""
@@ -894,8 +894,8 @@ class CPUFreq:
             self._check_epp_supported(cpu)
 
             # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
-            pkg_control = hwpreq.cpu_feature_enabled("pkg_control", cpu)
-            epp_valid = hwpreq.cpu_feature_enabled("epp_valid", cpu)
+            pkg_control = hwpreq.is_cpu_feature_enabled("pkg_control", cpu)
+            epp_valid = hwpreq.is_cpu_feature_enabled("epp_valid", cpu)
             if pkg_control and not epp_valid:
                 if not hwpreq_pkg:
                     hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(proc=self._proc, cpuinfo=cpuinfo,

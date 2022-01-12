@@ -38,12 +38,12 @@ class FeaturedMSR:
     1. Multiple CPUs.
        * Read/write feature: 'read_feature()', 'write_feature()'.
        * Enable/disable a feature: 'enable_feature()'.
-       * Check if feature is enabled: 'feature_enabled()'.
+       * Check if feature is enabled: 'is_feature_enabled()'.
     2. Single CPU.
        * Read/write feature: 'read_cpu_feature()', 'write_cpu_feature()'.
        * Enable/disable a feature: 'cpu_enable_feature()'.
-       * Check if feature is enabled: 'cpu_feature_enabled()'.
-       * Check if feature is supported: 'cpu_feature_supported()'.
+       * Check if feature is enabled: 'is_cpu_feature_enabled()'.
+       * Check if feature is supported: 'is_cpu_feature_supported()'.
     """
 
     def _check_feature_support(self, fname):
@@ -128,7 +128,7 @@ class FeaturedMSR:
 
         return val
 
-    def feature_enabled(self, fname, cpus="all"):
+    def is_feature_enabled(self, fname, cpus="all"):
         """
         Read the MSR and check if feature 'fname' is enabled on CPUs in 'cpus'. The arguments are as
         follows.
@@ -149,7 +149,7 @@ class FeaturedMSR:
             enabled = val in {"on", "enabled"}
             yield (cpu, enabled)
 
-    def cpu_feature_enabled(self, fname, cpu):
+    def is_cpu_feature_enabled(self, fname, cpu):
         """
         Read the MSR and check if feature 'fname' is enabled on CPU 'cpu'. Returns 'True' if the
         feature is enabled, and 'False' otherwise. The arguments are as follows.
@@ -158,7 +158,7 @@ class FeaturedMSR:
                   number.
         """
 
-        for _, enabled in self.feature_enabled(fname, cpus=(cpu,)):
+        for _, enabled in self.is_feature_enabled(fname, cpus=(cpu,)):
             return enabled
 
     def write_feature(self, fname, val, cpus="all"):
@@ -229,7 +229,7 @@ class FeaturedMSR:
 
         self.enable_feature(fname, enable, cpus=(cpu,))
 
-    def cpu_feature_supported(self, fname, cpu): # pylint: disable=unused-argument
+    def is_cpu_feature_supported(self, fname, cpu): # pylint: disable=unused-argument
         """
         Returns 'True' if feature 'fname' is supported by the platform on CPU 'cpu', returns 'False'
         otherwise.
@@ -347,7 +347,7 @@ class FeaturedMSR:
         # The '_features' dictionary is an additional per-feature storage of various "private"
         # pieces of information, which we do not want users to access directly. For example, we
         # store the 'supported' flag in '_features'. It may become per-CPU at some point, and we
-        # want users to call 'cpu_feature_supported()' to check if the feature is supported.
+        # want users to call 'is_cpu_feature_supported()' to check if the feature is supported.
         for fname in self.features:
             self._features[fname] = {}
 

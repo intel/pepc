@@ -99,7 +99,7 @@ def get_bclk(proc, cpu=0, cpuinfo=None, msr=None):
             from pepclibs.msr import FSBFreq # pylint: disable=import-outside-toplevel
 
             fsbfreq = FSBFreq.FSBFreq(proc=proc, cpuinfo=cpuinfo, msr=msr)
-            if fsbfreq.cpu_feature_supported("fsb", cpu):
+            if fsbfreq.is_cpu_feature_supported("fsb", cpu):
                 bclk = fsbfreq.read_cpu_feature("fsb", cpu)
             else:
                 # Fall back to 133.33 clock speed.
