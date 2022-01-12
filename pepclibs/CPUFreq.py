@@ -6,8 +6,6 @@
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
-#
-# Parts of the code was contributed by Len Brown <len.brown@intel.com>.
 
 """
 This module provides API for managing CPU frequency. Was used and tested only on Intel CPUs.
@@ -65,54 +63,6 @@ _EPB_POLICIES = {"performance": 0, "balance_performance": 4, "normal": 6, "balan
 
 _LOG = logging.getLogger()
 _RAISE = object()
-
-# CPUs with 100Mhz bus clock.
-_BCLK_100MHZ = {
-        # Xeons.
-        CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X,
-        CPUInfo.INTEL_FAM6_ICELAKE_X,
-        CPUInfo.INTEL_FAM6_ICELAKE_D,
-        CPUInfo.INTEL_FAM6_SKYLAKE_X,
-        CPUInfo.INTEL_FAM6_BROADWELL_X,
-        CPUInfo.INTEL_FAM6_BROADWELL_D,
-        CPUInfo.INTEL_FAM6_BROADWELL_G,
-        CPUInfo.INTEL_FAM6_HASWELL_X,
-        CPUInfo.INTEL_FAM6_HASWELL_G,
-        CPUInfo.INTEL_FAM6_IVYBRIDGE_X,
-        CPUInfo.INTEL_FAM6_SANDYBRIDGE_X,
-        # Clients.
-        CPUInfo.INTEL_FAM6_ALDERLAKE,
-        CPUInfo.INTEL_FAM6_ALDERLAKE_L,
-        CPUInfo.INTEL_FAM6_ROCKETLAKE,
-        CPUInfo.INTEL_FAM6_LAKEFIELD,
-        CPUInfo.INTEL_FAM6_TIGERLAKE,
-        CPUInfo.INTEL_FAM6_TIGERLAKE_L,
-        CPUInfo.INTEL_FAM6_ICELAKE_L,
-        CPUInfo.INTEL_FAM6_COMETLAKE,
-        CPUInfo.INTEL_FAM6_COMETLAKE_L,
-        CPUInfo.INTEL_FAM6_KABYLAKE_L,
-        CPUInfo.INTEL_FAM6_KABYLAKE,
-        CPUInfo.INTEL_FAM6_CANNONLAKE_L,
-        CPUInfo.INTEL_FAM6_SKYLAKE,
-        CPUInfo.INTEL_FAM6_SKYLAKE_L,
-        CPUInfo.INTEL_FAM6_BROADWELL,
-        CPUInfo.INTEL_FAM6_HASWELL,
-        CPUInfo.INTEL_FAM6_HASWELL_L,
-        CPUInfo.INTEL_FAM6_IVYBRIDGE,
-        CPUInfo.INTEL_FAM6_SANDYBRIDGE,
-		# Atoms.
-        CPUInfo.INTEL_FAM6_ATOM_TREMONT,
-        CPUInfo.INTEL_FAM6_ATOM_TREMONT_L,
-        CPUInfo.INTEL_FAM6_ATOM_GOLDMONT,
-        CPUInfo.INTEL_FAM6_ATOM_GOLDMONT_PLUS,
-		# Atom microservers.
-        CPUInfo.INTEL_FAM6_TREMONT_D,
-        CPUInfo.INTEL_FAM6_GOLDMONT_D,
-		# Other.
-        CPUInfo.INTEL_FAM6_ICELAKE_NNPI,
-        CPUInfo.INTEL_FAM6_XEON_PHI_KNL,
-        CPUInfo.INTEL_FAM6_XEON_PHI_KNM,
-}
 
 # This dictionary describes various CPU properties this module controls.
 # Note, the "scope" names have to be the same as "level" names in 'CPUInfo'.
@@ -213,24 +163,12 @@ class CPUFreq:
     def _get_bclk(self, cpu):
         """Discover bus clock speed."""
 
-        if self._bclk:
-            return self._bclk
+        if not self._bclk:
+            from pepclibs.hwlibs import BClock #pylint: disable=import-outside-toplevel
 
-        cpuinfo = self._get_cpuinfo()
-        if cpuinfo.info["model"] in _BCLK_100MHZ:
-            return 100.0
+            self._bclk = BClock.get_bclk(self._proc, cpu=cpu, cpuinfo=self._cpuinfo, msr=self._msr)
 
-        # Some platforms provide bus clock via the FSB_FREQ MSR.
-
-        from pepclibs.msr import FSBFreq # pylint: disable=import-outside-toplevel
-
-        msr = self._get_msr()
-        fsbfreq = FSBFreq.FSBFreq(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
-        if fsbfreq.cpu_feature_supported("fsb", cpu):
-            return fsbfreq.read_cpu_feature("fsb", cpu)
-
-        # Fall back to 133.33 clock speed.
-        return 133.33
+        return self._bclk
 
     def _get_platform_freqs(self, cpu):
         """Read various platform frequencies from MSRs for CPU 'cpu'."""
@@ -1085,12 +1023,12 @@ class CPUFreq:
         self._proc = proc
         self._cpuinfo = cpuinfo
         self._msr = msr
+        self._bclk = None
 
         self._close_proc = proc is None
         self._close_cpuinfo = cpuinfo is None
         self._close_msr = msr is None
 
-        self._bclk = None
         self._ufreq_supported = None
         self._epb_supported = None
         self._epp_supported = None
