@@ -829,14 +829,6 @@ class CPUFreq:
             return True
         return False
 
-    @staticmethod
-    def _validate_int_range(minval, maxval, value, what="value"):
-        """Validate integer value against range ['minval','maxval']."""
-
-        if not Trivial.is_int(value) or int(value) < minval or int(value) > maxval:
-            raise Error(f"{what} '{value}' is not supported, please provide integer number between "
-                        f"[{minval},{maxval}]")
-
     def _validate_epp_policy(self, policy):
         """Validate EPP (Energy Performance Preference) policy string."""
 
@@ -933,7 +925,7 @@ class CPUFreq:
         self._check_epb_supported()
 
         if Trivial.is_int(epb):
-            self._validate_int_range(0, 15, epb, what="EPB")
+            Trivial.validate_int_range(epb, 0, 15, what="EPB")
         else:
             epb_policy = epb.lower()
             if epb_policy not in _EPB_POLICIES:
@@ -962,7 +954,7 @@ class CPUFreq:
         hwpreq = HWPRequest.HWPRequest(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
 
         if Trivial.is_int(epp):
-            self._validate_int_range(0, 255, epp, what="EPP")
+            Trivial.validate_int_range(epp, 0, 255, what="EPP")
 
             hwpreq.write_feature("epp_valid", "on", cpus=cpus)
             hwpreq.write_feature("epp", epp, cpus=cpus)
