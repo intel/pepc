@@ -57,10 +57,6 @@ UNCORE_KEYS_DESCR = {
     "uncore_max_limit": "Max initially platform pre-configured uncore frequency",
 }
 
-# Policy names are from Linux kernel header file: arch/x86/include/asm/msr-index.h
-_EPB_POLICIES = {"performance": 0, "balance_performance": 4, "normal": 6, "balance_powersave": 8,
-                 "powersave": 15}
-
 _LOG = logging.getLogger()
 _RAISE = object()
 
@@ -112,11 +108,23 @@ class CPUFreq:
         """Discover bus clock speed."""
 
         if not self._bclk:
-            from pepclibs.hwlibs import BClock #pylint: disable=import-outside-toplevel
+            from pepclibs import BClock #pylint: disable=import-outside-toplevel
 
             self._bclk = BClock.get_bclk(self._proc, cpu=cpu, cpuinfo=self._cpuinfo, msr=self._msr)
 
         return self._bclk
+
+    def _get_epbobj(self):
+        """Returns an 'EPB.EPB()' object."""
+
+        if not self._epbobj:
+            from pepclibs import EPB #pylint: disable=import-outside-toplevel
+
+            cpuinfo = self._get_cpuinfo()
+            msr = self._get_msr()
+            self._epbobj = EPB.EPB(self._proc, cpuinfo=cpuinfo, msr=msr)
+
+        return self._epbobj
 
     def _read(self, path):
         """Read cpufreq sysfs file."""
@@ -342,21 +350,23 @@ class CPUFreq:
                     epp_policies = self._get_epp_policies()
                     if epp_policies:
                         info["epp_policies"] = epp_policies
-            if "epb_supported" in keys:
-                info["epb_supported"] = self._is_epb_supported()
-            if self._is_epb_supported():
-                if keys.intersection(["epb", "epb_policy"]):
-                    epb = self.get_cpu_epb(cpu)
-                if "epb" in keys:
-                    info["epb"] = epb
-                if "epb_policy" in keys:
-                    epb_rmap = {code:name for name, code in _EPB_POLICIES.items()}
-                    if epb in epb_rmap:
-                        info["epb_policy"] = epb_rmap[epb]
-                    else:
-                        info["epb_policy"] = epb
-                if "epb_policies" in keys:
-                    info["epb_policies"] = list(_EPB_POLICIES)
+
+            if keys.intersection(["epb_supported", "epb", "epb_policy", "epb_policies"]):
+                epbobj = self._get_epbobj()
+
+                if "epb_supported" in keys:
+                    info["epb_supported"] = epbobj.is_epb_supported(cpu)
+
+                if epbobj.is_epb_supported(cpu):
+                    if keys.intersection(["epb", "epb_policy"]):
+                        epb = epbobj.get_cpu_epb(cpu)
+
+                    if "epb" in keys:
+                        info["epb"] = epb
+                    if "epb_policy" in keys:
+                        info["epb_policy"] = epbobj.get_cpu_epb_policy(cpu, epb=epb)
+                    if "epb_policies" in keys:
+                        info["epb_policies"] = epbobj.get_cpu_epb_policies(cpu)
 
             yield info
 
@@ -778,29 +788,6 @@ class CPUFreq:
             raise Error(f"failed to {status} turbo mode{self._proc.hostmsg}.\nWrote '{value}' "
                         f"to file '{turbo_path}', but read '{value_verify}' back")
 
-    def _check_epb_supported(self):
-        """Raise an error if Energy Performance Bias is not supported."""
-
-        if self._epb_supported:
-            return
-
-        self._epb_supported = False
-        cpuinfo = self._get_cpuinfo()
-        if "epb" not in cpuinfo.info["flags"]:
-            raise Error(f"EPB (Energy Performance Bias) is not supported{self._proc.hostmsg}.")
-        self._epb_supported = True
-
-    def _is_epb_supported(self):
-        """Returns 'True' if Energy Performance Bias is supported, otherwise 'False'."""
-
-        if self._epb_supported is not None:
-            return self._epb_supported
-
-        with contextlib.suppress(Error):
-            self._check_epb_supported()
-            return True
-        return False
-
     def _check_epp_supported(self, cpu):
         """Raise an error if Energy Performance Preference is not supported or it is not enabled."""
 
@@ -844,42 +831,8 @@ class CPUFreq:
                       f"or lists no policies."
             raise Error(f"EPP policy '{policy}' is not supported{self._proc.hostmsg}, {msg}")
 
-    def _get_epb(self, cpus="all"):
-        """Implements get_epb()."""
-
-        from pepclibs.msr import EnergyPerfBias # pylint: disable=import-outside-toplevel
-
-        msr = self._get_msr()
-        cpuinfo = self._get_cpuinfo()
-        epb_msr = EnergyPerfBias.EnergyPerfBias(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
-
-        yield from epb_msr.read_feature("epb", cpus=cpus)
-
-    def get_epb(self, cpus="all"):
-        """
-        Yield (CPU number, EPB) pairs for CPUs in 'cpus'. The 'cpus' argument is the same as in
-        'set_epb()'
-        """
-
-        self._check_epb_supported()
-        cpus = self._get_cpuinfo().normalize_cpus(cpus)
-
-        return self._get_epb(cpus)
-
-    def get_cpu_epb(self, cpu):
-        """Return EPB value for CPU number 'cpu'."""
-
-        self._check_epb_supported()
-        cpus = self._get_cpuinfo().normalize_cpus(cpu)
-
-        for _, epb in self.get_epb(cpus=cpus):
-            return epb
-
     def get_epp(self, cpus="all"):
-        """
-        Yield (CPU number, Energy Performance Preference value) pairs for CPUs in 'cpus'. The 'cpus'
-        argument is the same as in 'set_epb()'
-        """
+        """Yield (CPU number, Energy Performance Preference value) pairs for CPUs in 'cpus'."""
 
         from pepclibs.msr import HWPRequest, HWPRequestPkg # pylint: disable=import-outside-toplevel
 
@@ -913,33 +866,6 @@ class CPUFreq:
         for _, epp in self.get_epp(cpus=cpus):
             return epp
 
-    def set_epb(self, epb, cpus="all"):
-        """
-        Set EPB for CPUs in 'cpus'. The 'cpus' argument is the same as the 'cpus' argument of the
-        'CPUIdle.get_cstates_info()' function - please, refer to the 'CPUIdle' module for the exact
-        format description.
-        """
-
-        from pepclibs.msr import EnergyPerfBias # pylint: disable=import-outside-toplevel
-
-        self._check_epb_supported()
-
-        if Trivial.is_int(epb):
-            Trivial.validate_int_range(epb, 0, 15, what="EPB")
-        else:
-            epb_policy = epb.lower()
-            if epb_policy not in _EPB_POLICIES:
-                policy_names = ", ".join(_EPB_POLICIES)
-                raise Error(f"policy '{epb}' is not supported{self._proc.hostmsg}, please provide "
-                            f"one of the following EPB policy names: {policy_names}")
-            epb = _EPB_POLICIES[epb_policy]
-
-        msr = self._get_msr()
-        cpuinfo = self._get_cpuinfo()
-        epb_msr = EnergyPerfBias.EnergyPerfBias(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
-
-        epb_msr.write_feature("epb", int(epb), cpus=cpus)
-
     def set_epp(self, epp, cpus="all"):
         """
         Set Energy Performance Preference for CPUs in 'cpus'. The 'cpus' argument is the same as the
@@ -965,6 +891,14 @@ class CPUFreq:
                 path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / \
                        "energy_performance_preference"
                 FSHelpers.write(path, epp, proc=self._proc)
+
+    def set_epb(self, epb, cpus="all"):
+        """
+        Set EPB to value in 'epb' for CPUs in 'cpus'. The arguments are the same as in
+        'EPB.set_epb()'.
+        """
+
+        self._get_epbobj().set_epb(epb, cpus=cpus)
 
     @staticmethod
     def _check_prop(prop):
@@ -1011,14 +945,13 @@ class CPUFreq:
         self._proc = proc
         self._cpuinfo = cpuinfo
         self._msr = msr
-        self._bclk = None
-
         self._close_proc = proc is None
         self._close_cpuinfo = cpuinfo is None
         self._close_msr = msr is None
 
+        self._bclk = None
+        self._epbobj = None
         self._ufreq_supported = None
-        self._epb_supported = None
         self._epp_supported = None
         self._epp_policies = None
 
@@ -1040,11 +973,15 @@ class CPUFreq:
                 self._ufreq_drv.unload()
             self._ufreq_drv = None
 
-        for attr in ("_msr", "_cpuinfo", "_proc"):
+        for attr in ("_epbobj", "_msr", "_cpuinfo", "_proc"):
             obj = getattr(self, attr, None)
             if obj:
-                if getattr(self, f"_close{attr}", False):
+                if hasattr(self, f"_close{attr}"):
+                    if getattr(self, f"_close{attr}", False):
+                        getattr(obj, "close")()
+                else:
                     getattr(obj, "close")()
+
                 setattr(self, attr, None)
 
     def __enter__(self):
