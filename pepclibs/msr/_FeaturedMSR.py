@@ -39,6 +39,7 @@ class FeaturedMSR:
        * Read/write feature: 'read_feature()', 'write_feature()'.
        * Enable/disable a feature: 'enable_feature()'.
        * Check if feature is enabled: 'is_feature_enabled()'.
+       * Check if feature is supported: 'is_feature_supported()'.
     2. Single CPU.
        * Read/write feature: 'read_cpu_feature()', 'write_cpu_feature()'.
        * Enable/disable a feature: 'cpu_enable_feature()'.
@@ -228,23 +229,33 @@ class FeaturedMSR:
 
         self.enable_feature(fname, enable, cpus=(cpu,))
 
-    def is_cpu_feature_supported(self, fname, cpu): # pylint: disable=unused-argument
+    def is_feature_supported(self, fname, cpus="all"): # pylint: disable=unused-argument
         """
-        Check a feature is supported by CPU 'cpu'.
+        Check if a feature is supported by all CPUs in 'cpus'.
           * fname - name of the feature to check.
+          * cpus - the CPUs to check the feature for (same as in 'CPUIdle.get_cstates_info()').
 
         Returns 'True' if the feature is supported by all CPUs in 'cpus', returns 'False' otherwise.
         """
 
+        if fname not in self.features:
+            features_str = ", ".join(set(self.features))
+            raise Error(f"unknown feature '{fname}', known features are: {features_str}")
+
         # In current implementation we assume that all CPUs are the same and whether the feature is
         # supported per-platform. But in the future this may not be the case (e.g., on hybrid
         # platforms).
+        return self._features[fname]["supported"]
 
-        try:
-            self._check_feature_support(fname)
-            return True
-        except ErrorNotSupported:
-            return False
+    def is_cpu_feature_supported(self, fname, cpu):
+        """
+        Check if a feature is supported by CPU 'cpu'.
+          * fname - name of the feature to check.
+
+        Returns 'True' if the feature is supported by CPU in 'cpu', returns 'False' otherwise.
+        """
+
+        return self.is_feature_supported(fname, cpus=(cpu, ))
 
     def _init_supported_flag(self):
         """Initialize the 'supported' flag for all features in the 'self._features' dictionary."""
