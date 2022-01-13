@@ -13,7 +13,6 @@ This module provides API for managing CPU frequency. Was used and tested only on
 
 import time
 import logging
-import contextlib
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import FSHelpers, KernelModule, Procs, Trivial
@@ -114,6 +113,18 @@ class CPUFreq:
 
         return self._bclk
 
+    def _get_eppobj(self):
+        """Returns an 'EPP.EPP()' object."""
+
+        if not self._eppobj:
+            from pepclibs import EPP #pylint: disable=import-outside-toplevel
+
+            cpuinfo = self._get_cpuinfo()
+            msr = self._get_msr()
+            self._eppobj = EPP.EPP(self._proc, cpuinfo=cpuinfo, msr=msr)
+
+        return self._eppobj
+
     def _get_epbobj(self):
         """Returns an 'EPB.EPB()' object."""
 
@@ -148,31 +159,6 @@ class CPUFreq:
 
         cpuinfo = self._get_cpuinfo()
         return cpuinfo.info["vendor"] == "GenuineIntel"
-
-    def _get_cpu_epp_policy(self, cpu):
-        """Get current EPP policy. Returns 'None' if read fails."""
-
-        path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "energy_performance_preference"
-        with contextlib.suppress(Error):
-            return FSHelpers.read(path, proc=self._proc)
-        return None
-
-    def _get_epp_policies(self):
-        """Returns a list of available EPP policies."""
-
-        if self._epp_policies is not None:
-            return self._epp_policies
-
-        # EPP policies are per-CPU, but we get the list of policies for CPU0 and assume it is the
-        # same for other CPUs.
-        path = self._sysfs_epp_policies
-        with contextlib.suppress(Error):
-            self._epp_policies = FSHelpers.read(path, proc=self._proc).split()
-
-        if not self._epp_policies:
-            self._epp_policies = []
-
-        return self._epp_policies
 
     def _get_platform_freqs(self, cpu):
         """Read various platform frequencies from MSRs for CPU 'cpu'."""
@@ -337,19 +323,20 @@ class CPUFreq:
                 info["turbo_supported"] = turbo_supported
             if "turbo_enabled" in keys:
                 info["turbo_enabled"] = turbo_enabled
-            if "epp_supported" in keys:
-                info["epp_supported"] = self._is_epp_supported(cpu)
-            if self._is_epp_supported(cpu):
-                if "epp" in keys:
-                    info["epp"] = self.get_cpu_epp(cpu)
-                if "epp_policy" in keys:
-                    epp_policy = self._get_cpu_epp_policy(cpu)
-                    if epp_policy:
-                        info["epp_policy"] = epp_policy
-                if "epp_policies" in keys:
-                    epp_policies = self._get_epp_policies()
-                    if epp_policies:
-                        info["epp_policies"] = epp_policies
+
+            if keys.intersection(["epp_supported", "epp", "epp_policy", "epp_policies"]):
+                eppobj = self._get_eppobj()
+
+                if "epp_supported" in keys:
+                    info["epp_supported"] = eppobj.is_epp_supported(cpu)
+
+                if eppobj.is_epp_supported(cpu):
+                    if "epp" in keys:
+                        info["epp"] = eppobj.get_cpu_epp(cpu)
+                    if "epp_policy" in keys:
+                        info["epp_policy"] = eppobj.get_cpu_epp_policy(cpu)
+                    if "epp_policies" in keys:
+                        info["epp_policies"] = eppobj.get_cpu_epp_policies(cpu)
 
             if keys.intersection(["epb_supported", "epb", "epb_policy", "epb_policies"]):
                 epbobj = self._get_epbobj()
@@ -789,109 +776,13 @@ class CPUFreq:
             raise Error(f"failed to {status} turbo mode{self._proc.hostmsg}.\nWrote '{value}' "
                         f"to file '{turbo_path}', but read '{value_verify}' back")
 
-    def _check_epp_supported(self, cpu):
-        """Raise an error if Energy Performance Preference is not supported or it is not enabled."""
-
-        if self._epp_supported:
-            return
-
-        self._epp_supported = False
-        cpuinfo = self._get_cpuinfo()
-        if "hwp_epp" not in cpuinfo.info["flags"]:
-            raise Error(f"EPP (Energy Performance Preference) is not supported"
-                        f"{self._proc.hostmsg}.")
-
-        if not self._get_hwp_enabled(cpu):
-            raise Error(f"EPP (Energy Performance Preference) is not available{self._proc.hostmsg} "
-                        f"because it has HWP (Hardware Power Management) disabled")
-        self._epp_supported = True
-
-    def _is_epp_supported(self, cpu):
-        """Returns 'True' if Energy Performance Preference is supported, otherwise 'False'."""
-
-        if self._epp_supported is not None:
-            return self._epp_supported
-
-        with contextlib.suppress(Error):
-            self._check_epp_supported(cpu)
-            return True
-        return False
-
-    def _validate_epp_policy(self, policy):
-        """Validate EPP (Energy Performance Preference) policy string."""
-
-        policies = self._get_epp_policies()
-
-        if policy not in policies:
-            if policies:
-                policy_names = ", ".join(policies)
-                msg = f"please provide one of the following EPP policy names: '{policy_names}'"
-            else:
-                path = self._sysfs_epp_policies
-                msg = f"the system does not support EPP policies,\nfile '{path}' does not exist " \
-                      f"or lists no policies."
-            raise Error(f"EPP policy '{policy}' is not supported{self._proc.hostmsg}, {msg}")
-
-    def get_epp(self, cpus="all"):
-        """Yield (CPU number, Energy Performance Preference value) pairs for CPUs in 'cpus'."""
-
-        from pepclibs.msr import HWPRequest, HWPRequestPkg # pylint: disable=import-outside-toplevel
-
-        msr = self._get_msr()
-        cpuinfo = self._get_cpuinfo()
-        hwpreq = HWPRequest.HWPRequest(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
-
-        hwpreq_pkg = None
-        cpus = self._get_cpuinfo().normalize_cpus(cpus)
-
-        for cpu in cpus:
-            self._check_epp_supported(cpu)
-
-            # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
-            pkg_control = hwpreq.is_cpu_feature_enabled("pkg_control", cpu)
-            epp_valid = hwpreq.is_cpu_feature_enabled("epp_valid", cpu)
-            if pkg_control and not epp_valid:
-                if not hwpreq_pkg:
-                    hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(proc=self._proc, cpuinfo=cpuinfo,
-                                                             msr=msr)
-                hwpreq_msr = hwpreq_pkg
-            else:
-                hwpreq_msr = hwpreq
-
-            yield (cpu, hwpreq_msr.read_cpu_feature("epp", cpu))
-
-    def get_cpu_epp(self, cpu):
-        """Return EPP value for CPU number 'cpu'."""
-
-        cpus = self._get_cpuinfo().normalize_cpus(cpu)
-        for _, epp in self.get_epp(cpus=cpus):
-            return epp
-
     def set_epp(self, epp, cpus="all"):
         """
-        Set Energy Performance Preference for CPUs in 'cpus'. The 'cpus' argument is the same as the
-        'cpus' argument of the 'CPUIdle.get_cstates_info()' function - please, refer to the
-        'CPUIdle' module for the exact format description.
+        Set EPP to value in 'epp' for CPUs in 'cpus'. The arguments are the same as in
+        'EPP.set_epp()'.
         """
 
-        from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
-
-        msr = self._get_msr()
-        cpuinfo = self._get_cpuinfo()
-        hwpreq = HWPRequest.HWPRequest(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
-
-        if Trivial.is_int(epp):
-            Trivial.validate_int_range(epp, 0, 255, what="EPP")
-
-            hwpreq.write_feature("epp_valid", "on", cpus=cpus)
-            hwpreq.write_feature("epp", epp, cpus=cpus)
-        else:
-            cpus = self._get_cpuinfo().normalize_cpus(cpus)
-            for cpu in cpus:
-                self._validate_epp_policy(epp)
-                path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / \
-                       "energy_performance_preference"
-                FSHelpers.write(path, epp, proc=self._proc)
+        self._get_eppobj().set_epp(epp, cpus=cpus)
 
     def set_epb(self, epb, cpus="all"):
         """
@@ -951,14 +842,11 @@ class CPUFreq:
         self._close_msr = msr is None
 
         self._bclk = None
+        self._eppobj = None
         self._epbobj = None
         self._ufreq_supported = None
-        self._epp_supported = None
-        self._epp_policies = None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
-        self._sysfs_epp_policies = self._sysfs_base / "cpufreq" / "policy0" / \
-                                   "energy_performance_available_preferences"
 
         self._ufreq_drv = None
         self._unload_ufreq_drv = False
@@ -974,7 +862,7 @@ class CPUFreq:
                 self._ufreq_drv.unload()
             self._ufreq_drv = None
 
-        for attr in ("_epbobj", "_msr", "_cpuinfo", "_proc"):
+        for attr in ("_eppobj", "_epbobj", "_msr", "_cpuinfo", "_proc"):
             obj = getattr(self, attr, None)
             if obj:
                 if hasattr(self, f"_close{attr}"):
