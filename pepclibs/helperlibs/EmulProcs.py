@@ -10,8 +10,8 @@
 
 """Emulated version or the 'Procs' module for testing purposes."""
 
-import io
 import contextlib
+from pepclibs.helperlibs import FSHelpers, Trivial
 from pepclibs.helperlibs._Common import ProcResult
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
@@ -43,15 +43,11 @@ class EmulProc():
         return ProcResult(stdout=self._get_cmd_result(cmd), stderr="", exitcode=0)
 
     def open(self, path, mode):
-        """Create and return emulated file object."""
+        """Create file in temporary directory and return the file object."""
 
-        if path in self._files and not self._files[path].closed:
-            return self._files[path]
+        tmppath = self._basepath / str(path).strip("/")
 
-        if "b" in mode:
-            self._files[path] = io.BytesIO()
-        else:
-            self._files[path] = io.StringIO()
+        self._files[path] = open(tmppath, mode, buffering=0)  # pylint: disable=consider-using-with
 
         return self._files[path]
 
@@ -76,5 +72,27 @@ class EmulProc():
         # Opened files.
         self._files = {}
         self._cmds = {}
+        pid = Trivial.get_pid()
+        self._basepath = FSHelpers.mktemp(prefix=f"emulprocs_{pid}_")
 
         self.is_remote = False
+
+    def close(self):
+        """Stop emulation."""
+
+        if getattr(self, "_files", None):
+            for _, fobj in self._files.items():
+                fobj.close()
+            self._files = None
+
+        if getattr(self, "_basepath", None):
+            with contextlib.suppress(OSError):
+                FSHelpers.rm_minus_rf(self._basepath)
+
+    def __enter__(self):
+        """Enter the runtime context."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the turntime context."""
+        self.close()
