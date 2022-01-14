@@ -11,19 +11,32 @@
 """Common bits for the 'pepc' tests."""
 
 from pathlib import Path
+import pytest
 from pepclibs.helperlibs import EmulProcs, Procs, SSH
-
-_DATAPATH = Path(__file__).parent.resolve() / "data"
 
 def get_proc(hostname):
     """Depending on the 'hostname' argument, return emulated 'Proc', real 'Proc' or 'SSH' object."""
 
     if hostname == "emulation":
         proc = EmulProcs.EmulProc()
-        proc.init_testdata(_DATAPATH)
+
+        datapath = Path(__file__).parent.resolve() / "data"
+        proc.init_testdata(datapath)
+
         return proc
 
     if hostname == "localhost":
         return Procs.Proc()
 
     return SSH.SSH(hostname=hostname, username='root', timeout=10)
+
+@pytest.fixture(name="proc")
+def fixture_proc(hostname):
+    """
+    The test fixture is called before each test function. Yields the 'Proc' object, and closes it
+    after the test function returns.
+    """
+
+    proc = get_proc(hostname)
+    yield proc
+    proc.close()
