@@ -15,7 +15,9 @@ from collections import namedtuple
 _PytestOptions = namedtuple("PytestOptions", ["short", "long", "dest", "default", "help"])
 _PYTEST_OPTS = (_PytestOptions("-H", "--host", "hostname", "emulation",
                                """Name of the host to run the test on, or "emulation" (default) to
-                                  run locally and emulate real hardware."""), )
+                                  run locally and emulate real hardware."""),
+                _PytestOptions("-D", "--dataset", "dataset", "icx2s0",
+                               """Name of the dataset used to emulate the real hardware."""), )
 
 def pytest_addoption(parser):
     """Add custom pytest options."""

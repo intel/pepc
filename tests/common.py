@@ -31,7 +31,7 @@ def get_proc(hostname):
     return SSH.SSH(hostname=hostname, username='root', timeout=10)
 
 @pytest.fixture(name="proc")
-def fixture_proc(hostname):
+def fixture_proc(hostname, dataset): # pylint: disable=unused-argument
     """
     The test fixture is called before each test function. Yields the 'Proc' object, and closes it
     after the test function returns.
