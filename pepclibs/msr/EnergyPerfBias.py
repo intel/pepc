@@ -17,7 +17,7 @@ from pepclibs.msr import _FeaturedMSR
 _LOG = logging.getLogger()
 
 # The Energy Performance Bias Model Specific Register.
-MSR_ENERGY_PERF_BIAS = 0x1B1
+MSR_ENERGY_PERF_BIAS = 0x1B0
 
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
