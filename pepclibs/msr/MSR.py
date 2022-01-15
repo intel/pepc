@@ -119,7 +119,8 @@ class MSR:
                     fobj.seek(regaddr)
                     regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                     fobj.write(regval_bytes)
-                    _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x", cpu, regaddr, regval)
+                    _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x%s",
+                               cpu, regaddr, regval, self._proc.hostmsg)
 
         self._in_transaction = False
 
@@ -174,7 +175,7 @@ class MSR:
                         f"{self._proc.hostmsg}:\n{err}") from err
 
         regval = int.from_bytes(regval, byteorder=_CPU_BYTEORDER)
-        _LOG.debug("CPU%d: MSR 0x%x: read 0x%x", cpu, regaddr, regval)
+        _LOG.debug("CPU%d: MSR 0x%x: read 0x%x%s", cpu, regaddr, regval, self._proc.hostmsg)
 
         return regval
 
