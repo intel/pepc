@@ -597,7 +597,7 @@ class CPUIdle:
         for attr in ("_msr", "_cpuinfo", "_proc"):
             obj = getattr(self, attr, None)
             if obj:
-                if getattr(self, f"_close_{attr}", False):
+                if getattr(self, f"_close{attr}", False):
                     getattr(obj, "close")()
                 setattr(self, attr, None)
 
