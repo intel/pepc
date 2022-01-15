@@ -116,11 +116,16 @@ class MSR:
             path = Path(f"/dev/cpu/{cpu}/msr")
             with self._proc.open(path, "wb") as fobj:
                 for regaddr, regval in to_write:
-                    fobj.seek(regaddr)
-                    regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
-                    fobj.write(regval_bytes)
-                    _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x%s",
-                               cpu, regaddr, regval, self._proc.hostmsg)
+                    try:
+                        fobj.seek(regaddr)
+                        regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
+                        fobj.write(regval_bytes)
+                        _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x%s",
+                                   cpu, regaddr, regval, self._proc.hostmsg)
+                    except Error as err:
+                        raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
+                                    f"{cpu}:\nfailed to write to file '{path}'"
+                                    f"{self._proc.hostmsg}:\n{err}") from err
 
         self._in_transaction = False
 
@@ -278,14 +283,15 @@ class MSR:
             regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
 
         path = Path(f"/dev/cpu/{cpu}/msr")
-        try:
-            with self._proc.open(path, "wb") as fobj:
+        with self._proc.open(path, "wb") as fobj:
+            try:
                 fobj.seek(regaddr)
                 fobj.write(regval_bytes)
                 _LOG.debug("CPU%d: MSR 0x%x: wrote 0x%x", cpu, regaddr, regval)
-        except Error as err:
-            raise Error(f"failed to write MSR '{regaddr:#x}' to file '{path}'"
-                        f"{self._proc.hostmsg}:\n{err}") from err
+            except Error as err:
+                raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU {cpu}:\n"
+                            f"failed to write to file '{path}'{self._proc.hostmsg}:\n"
+                            f"{err}") from err
 
     def write(self, regaddr, regval, cpus="all"):
         """
