@@ -162,7 +162,7 @@ class CPUInfo:
         if self._lscpu_cache:
             return self._lscpu_cache
 
-        # Note, we could just walk sysfs, but 'lscpu' seems a bit more convenient.
+        # Note, we could just walk sysfs, but 'lscpu' is faster.
         cmd = "lscpu --all -p=socket,node,core,cpu,online"
         lines, _ = self._proc.run_verify(cmd, join=False)
 
@@ -404,36 +404,8 @@ class CPUInfo:
         Here is an example cpugeom dictionary for a 2-core single socket system with 2 logical CPUs
         per core and one node per package, and no off-lined CPUs.
 
-        { 'CPU':     {
-                       'cnt': 4,
-                       'cnt_per_core': 2,
-                       'cnt_per_node': 4,
-                       'cnt_per_package': 4,
-                       'nums': [ 0, 2, 1, 3 ],
-                       'offline_cnt': 0,
-                       'offline_cpus': []
-                     },
-          'core':    {
-                       'cnt': 2,
-                       'cnt_per_node': 2,
-                       'cnt_per_package': 2,
-                       'nums': {
-                                 0: [0, 2],
-                                 1: [1, 3],
-                               },
-                     },
-          'node':    {
-                       'cnt': 1,
-                       'cnt_per_package': 1,
-                       'nums': {
-                                 0: {
-                                      0: [0, 2],
-                                      1: [1, 3]
-                                    },
-                               },
-                     },
+        cpugeom = {
           'package': {
-                       'cnt': 1,
                        'nums': {
                                  0: {
                                       0: {
@@ -442,7 +414,37 @@ class CPUInfo:
                                          },
                                     },
                                 },
+                       'cnt': 1,
                      },
+          'node':    {
+                       'nums': {
+                                 0: {
+                                      0: [0, 2],
+                                      1: [1, 3]
+                                    },
+                               },
+                       'cnt': 1,
+                       'cnt_per_package': 1,
+                     },
+          'core':    {
+                       'nums': {
+                                 0: [0, 2],
+                                 1: [1, 3],
+                               },
+                       'cnt': 2,
+                       'cnt_per_package': 2,
+                       'cnt_per_node': 2,
+                     },
+          'CPU':     {
+                       'nums': [ 0, 2, 1, 3 ],
+                       'cnt': 4,
+                       'offline_cpus': []
+                       'offline_cnt': 0,
+                       'cnt_per_package': 4,
+                       'cnt_per_node': 4,
+                       'cnt_per_core': 2,
+                     },
+        }
 
         In this examples, 'nums' in the 'node' info dictionary says that there is node number 0,
         which includes core number 0 and 1, which include CPUs numbers 0,2 and 1,3 respectively.
