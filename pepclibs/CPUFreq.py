@@ -137,19 +137,19 @@ class CPUFreq:
 
         return self._epbobj
 
-    def _read(self, path):
+    def _sysfs_read(self, path):
         """Read cpufreq sysfs file."""
 
         return FSHelpers.read(path, proc=self._proc)
 
-    def _read_int(self, path, default=_RAISE):
+    def _sysfs_read_int(self, path, default=_RAISE):
         """Read an integer from cpufreq sysfs file."""
 
         if default is _RAISE:
             return FSHelpers.read_int(path, proc=self._proc)
         return FSHelpers.read_int(path, default=default, proc=self._proc)
 
-    def _write(self, path, data):
+    def _sysfs_write(self, path, data):
         """Write into cpufreq sysfs file."""
 
         FSHelpers.write(path, data, proc=self._proc)
@@ -218,10 +218,10 @@ class CPUFreq:
         """Read turbo enabled status from sysfs."""
 
         path = self._sysfs_base / "intel_pstate" / "no_turbo"
-        disabled = self._read_int(path, default=None)
+        disabled = self._sysfs_read_int(path, default=None)
         if disabled is None:
             path = self._sysfs_base / "cpufreq" / "boost"
-            return bool(self._read_int(path, default=None))
+            return bool(self._sysfs_read_int(path, default=None))
         return not disabled
 
     def _get_base_freq(self, cpu):
@@ -232,11 +232,11 @@ class CPUFreq:
         if not self._is_intel_cpu():
             # Assume that on non-Intel CPUs the base frequency is the max. frequency of CPU0.
             try:
-                return self._read_int(cpu0_path / "scaling_max_freq")
+                return self._sysfs_read_int(cpu0_path / "scaling_max_freq")
             except Error as err:
                 raise Error("can't detect max. CPU frequency: {err}") from err
 
-        base_freq = self._read_int(cpu0_path / "base_frequency", default=None)
+        base_freq = self._sysfs_read_int(cpu0_path / "base_frequency", default=None)
         if not base_freq:
             # Only the 'intel_pstate' driver provides the base frequency attribute.
             platform_freqs = self._get_platform_freqs(cpu)
@@ -282,7 +282,7 @@ class CPUFreq:
                 turbo_supported = self._is_turbo_supported()
 
         if "driver" in keys:
-            driver = self._read(self._sysfs_base / "cpufreq" / "policy0" / "scaling_driver")
+            driver = self._sysfs_read(self._sysfs_base / "cpufreq" / "policy0" / "scaling_driver")
 
         for cpu in cpus:
             if keys.intersection(["max_eff", "max_turbo"]):
@@ -301,19 +301,20 @@ class CPUFreq:
             if "max_turbo" in keys and platform_freqs.get("max_turbo"):
                 info["max_turbo"] = platform_freqs["max_turbo"]
             if "cpu_min_limit" in keys:
-                info["min_limit"] = self._read_int(basedir / "cpuinfo_min_freq")
+                info["min_limit"] = self._sysfs_read_int(basedir / "cpuinfo_min_freq")
             if "cpu_max_limit" in keys:
-                info["max_limit"] = self._read_int(basedir / "cpuinfo_max_freq")
+                info["max_limit"] = self._sysfs_read_int(basedir / "cpuinfo_max_freq")
             if "cpu_min" in keys:
-                info["cpu_min"] = self._read_int(basedir / "scaling_min_freq")
+                info["cpu_min"] = self._sysfs_read_int(basedir / "scaling_min_freq")
             if "cpu_max" in keys:
-                info["cpu_max"] = self._read_int(basedir / "scaling_max_freq")
+                info["cpu_max"] = self._sysfs_read_int(basedir / "scaling_max_freq")
             if "driver" in keys:
                 info["driver"] = driver
             if "governor" in keys:
-                info["governor"] = self._read(basedir / "scaling_governor")
+                info["governor"] = self._sysfs_read(basedir / "scaling_governor")
             if "governors" in keys:
-                info["governors"] = self._read(basedir / "scaling_available_governors").split()
+                info["governors"] = self._sysfs_read(basedir / "scaling_available_governors")
+                info["governors"] = info["governors"].split()
             if "hwp_supported" in keys:
                 cpuinfo = self._get_cpuinfo()
                 info["hwp_supported"] = "hwp" in cpuinfo.info["flags"]
@@ -443,13 +444,13 @@ class CPUFreq:
             if "die" in keys:
                 info["die"] = die
             if "uncore_max" in keys:
-                info["uncore_max"] = self._read_int(basedir / "max_freq_khz")
+                info["uncore_max"] = self._sysfs_read_int(basedir / "max_freq_khz")
             if "uncore_min" in keys:
-                info["uncore_min"] = self._read_int(basedir / "min_freq_khz")
+                info["uncore_min"] = self._sysfs_read_int(basedir / "min_freq_khz")
             if "uncore_max_limit" in keys:
-                info["uncore_max_limit"] = self._read_int(basedir / "initial_max_freq_khz")
+                info["uncore_max_limit"] = self._sysfs_read_int(basedir / "initial_max_freq_khz")
             if "uncore_min_limit" in keys:
-                info["uncore_min_limit"] = self._read_int(basedir / "initial_min_freq_khz")
+                info["uncore_min_limit"] = self._sysfs_read_int(basedir / "initial_min_freq_khz")
 
             yield info
 
@@ -675,15 +676,15 @@ class CPUFreq:
                     path = basedir / f"scaling_{key}_freq"
 
                 verify_list.append((freq, path))
-                self._write(path, freq)
+                self._sysfs_write(path, freq)
 
             for freq, path in verify_list:
-                freq_verify = self._read_int(path)
+                freq_verify = self._sysfs_read_int(path)
                 if freq != freq_verify:
                     # Sometimes the frequency update does not happen immediately. We observed this
                     # on systems with HWP enabled, for example. Wait a little bit and try again.
                     time.sleep(0.1)
-                    freq_verify = self._read_int(path)
+                    freq_verify = self._sysfs_read_int(path)
                     if freq != freq_verify:
                         raise Error(f"failed to set {cpuname} frequency to {freq} kHz"
                                     f"{self._proc.hostmsg}.\nWrote '{freq}' to file '{path}', but "
@@ -744,8 +745,8 @@ class CPUFreq:
                             f"{self._proc.hostmsg}, use one of: {governors_str}")
 
             gov_path = basedir / "scaling_governor"
-            self._write(gov_path, governor)
-            gov_verify = self._read(gov_path)
+            self._sysfs_write(gov_path, governor)
+            gov_verify = self._sysfs_read(gov_path)
             if governor != gov_verify:
                 raise Error(f"failed to set CPU{cpu} governor to '{governor}'{self._proc.hostmsg}."
                             f"\nWrote '{governor}' to file '{gov_path}', but read '{gov_verify}' "
@@ -769,8 +770,8 @@ class CPUFreq:
             turbo_path = self._sysfs_base / "cpufreq" / "boost"
             value = int(enable)
 
-        self._write(turbo_path, value)
-        value_verify = self._read_int(turbo_path)
+        self._sysfs_write(turbo_path, value)
+        value_verify = self._sysfs_read_int(turbo_path)
         if value_verify != value:
             status = "enable" if enable else "disable"
             raise Error(f"failed to {status} turbo mode{self._proc.hostmsg}.\nWrote '{value}' "
