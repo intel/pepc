@@ -172,9 +172,18 @@ class CPUInfo:
                 continue
 
             # Each line has comma-separated integers for socket, node, core and cpu. For example:
-            # 1,1,9,61,Y. In case of offline CPU, the final element is going to be "N".
-            line = line.strip().split(",")
-            self._lscpu_cache.append(line)
+            # 1,1,9,61,Y. In case of offline CPU, the final element is going to be "N". For example:
+            # ,,,61,N. Note, only the "CPU" level is known for offline CPUs.
+            vals = line.strip().split(",")
+
+            tline = {}
+            for key, val in zip(LEVELS, vals):
+                # For offline CPUs all levels except for the "CPU" level will have empty strings.
+                tline[key] = int(val) if val != "" else None
+
+            tline["online"] = vals[-1] == "Y"
+
+            self._lscpu_cache.append(tline)
 
         return self._lscpu_cache
 
@@ -195,9 +204,9 @@ class CPUInfo:
 
         items = {}
         for line in self._get_lscpu():
-            if line[-1] != "Y":
-                # Skip non-online CPUs.
+            if not line["online"]:
                 continue
+
             line = [int(val) for val in line[0:-1]]
             if line[start_idx] in items.keys():
                 items[line[start_idx]].append(line[end_idx])
@@ -342,7 +351,7 @@ class CPUInfo:
             if idx == len(LEVELS) - 2:
                 last_level = True
 
-            num = int(nums[lvl])
+            num = nums[lvl]
             if num not in item:
                 self.cpugeom[lvl]["cnt"] += 1
                 if last_level:
@@ -352,7 +361,7 @@ class CPUInfo:
 
             if last_level:
                 lvl = LEVELS[-1]
-                item[num].append(int(nums[lvl]))
+                item[num].append(nums[lvl])
                 self.cpugeom[lvl]["cnt"] += 1
 
             item = item[num]
@@ -467,13 +476,12 @@ class CPUInfo:
 
         # Parse the 'lscpu' output.
         for line in self._get_lscpu():
-            nums = {key : line[idx] for idx, key in enumerate(LEVELS)}
-            if line[-1] != "Y":
+            if not line["online"]:
                 cpugeom["CPU"]["offline_cnt"] += 1
-                cpugeom["CPU"]["offline_cpus"].append(int(nums["CPU"]))
+                cpugeom["CPU"]["offline_cpus"].append(line["CPU"])
                 continue
 
-            self._add_nums(nums)
+            self._add_nums(line)
 
         # Now we have the full hierarchy (in 'cpugeom["packages"]'). Create partial hierarchies
         # ('cpugeom["nodes"]', etc).
