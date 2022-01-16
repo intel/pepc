@@ -70,6 +70,9 @@ class EmulProc():
     def __init__(self):
         """Initialize the emulated 'Proc' class instance."""
 
+        self.hostname = "emulated local host"
+        self.hostmsg = f" on '{self.hostname}'"
+
         # Opened files.
         self._files = {}
         self._cmds = {}
