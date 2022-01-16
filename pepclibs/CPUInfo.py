@@ -156,17 +156,33 @@ class CPUInfo:
     Provide information about the CPU of a local or remote host.
     """
 
-    def _get_lscpu(self):
-        """Return the 'lscpu' output."""
+    def _get_topology(self):
+        """
+        Build and return the topology list. Here is an example topology list for a 2-core single
+        socket system with 2 logical CPUs per core and one node per package, and CPU 3 off-lined.
 
-        if self._lscpu_cache:
-            return self._lscpu_cache
+        [ {'package': 0, 'node': 0, 'core': 0, 'CPU': 0, 'online': True},
+          {'package': 0, 'node': 0, 'core': 1, 'CPU': 1, 'online': True},
+          {'package': 0, 'node': 0, 'core': 0, 'CPU': 2, 'online': True},
+          {'package': None, 'node': None, 'core': None, 'CPU': 3, 'online': False} ]
+
+        In other words, this is basically a table like this:
+
+        package node core CPU online
+        0       0    0    0   True
+        0       0    1    1   True
+        0       0    0    2   True
+        None    None None 3   False
+        """
+
+        if self._topology:
+            return self._topology
 
         # Note, we could just walk sysfs, but 'lscpu' is faster.
         cmd = "lscpu --all -p=socket,node,core,cpu,online"
         lines, _ = self._proc.run_verify(cmd, join=False)
 
-        self._lscpu_cache = []
+        self._topology = []
         for line in lines:
             if line.startswith("#"):
                 continue
@@ -183,9 +199,9 @@ class CPUInfo:
 
             tline["online"] = vals[-1] == "Y"
 
-            self._lscpu_cache.append(tline)
+            self._topology.append(tline)
 
-        return self._lscpu_cache
+        return self._topology
 
     def _get_level(self, start, end, nums=None):
         """
@@ -203,15 +219,14 @@ class CPUInfo:
             raise Error(f"bad level order, cannot get {end}s from level '{start}'")
 
         items = {}
-        for line in self._get_lscpu():
-            if not line["online"]:
+        for tline in self._get_topology():
+            if not tline["online"]:
                 continue
 
-            line = [int(val) for val in line[0:-1]]
-            if line[start_idx] in items.keys():
-                items[line[start_idx]].append(line[end_idx])
+            if tline[start] in items.keys():
+                items[tline[start]].append(tline[end])
             else:
-                items[line[start_idx]] = [line[end_idx]]
+                items[tline[start]] = [tline[end]]
 
         # So now 'items' is a dictionary with keys being the 'start' level elements and values being
         # lists of the 'end' level elements.
@@ -342,29 +357,29 @@ class CPUInfo:
         raise Error(f"CPU{cpu} is not available{self._proc.hostmsg}, available CPUs are:\n"
                     f"{cpus_str}")
 
-    def _add_nums(self, nums):
+    def _build_cpugeom_top_level(self, tline):
         """Add numbers from 'lscpu' to the CPU geometry dictionary."""
 
-        item = self.cpugeom[LEVELS[0]]["nums"]
+        nums = self.cpugeom[LEVELS[0]]["nums"]
         for idx, lvl in enumerate(LEVELS[:-1]):
             last_level = False
             if idx == len(LEVELS) - 2:
                 last_level = True
 
-            num = nums[lvl]
-            if num not in item:
+            num = tline[lvl]
+            if num not in nums:
                 self.cpugeom[lvl]["cnt"] += 1
                 if last_level:
-                    item[num] = []
+                    nums[num] = []
                 else:
-                    item[num] = {}
+                    nums[num] = {}
 
             if last_level:
                 lvl = LEVELS[-1]
-                item[num].append(nums[lvl])
+                nums[num].append(tline[lvl])
                 self.cpugeom[lvl]["cnt"] += 1
 
-            item = item[num]
+            nums = nums[num]
 
     def _flatten_to_level(self, items, idx):
         """Flatten the multi-level 'items' dictionary down to level 'idx'."""
@@ -474,14 +489,14 @@ class CPUInfo:
         # Offline CPUs count.
         cpugeom["CPU"]["offline_cnt"] = 0
 
-        # Parse the 'lscpu' output.
-        for line in self._get_lscpu():
-            if not line["online"]:
+        # Parse the the topology and build the top level (package).
+        for tline in self._get_topology():
+            if not tline["online"]:
                 cpugeom["CPU"]["offline_cnt"] += 1
-                cpugeom["CPU"]["offline_cpus"].append(line["CPU"])
+                cpugeom["CPU"]["offline_cpus"].append(tline["CPU"])
                 continue
 
-            self._add_nums(line)
+            self._build_cpugeom_top_level(tline)
 
         # Now we have the full hierarchy (in 'cpugeom["packages"]'). Create partial hierarchies
         # ('cpugeom["nodes"]', etc).
@@ -558,7 +573,7 @@ class CPUInfo:
         self._close_proc = proc is None
 
         self._levels_set = set(LEVELS)
-        self._lscpu_cache = None
+        self._topology = None
 
         self.info = None
         self.cpugeom = None
