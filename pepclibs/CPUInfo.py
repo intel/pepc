@@ -424,7 +424,6 @@ class CPUInfo:
                      },
           'node':    {
                        'cnt': 1,
-                       'cnt_per_core': 0,
                        'cnt_per_package': 1,
                        'nums': {
                                  0: {
@@ -476,12 +475,17 @@ class CPUInfo:
 
         # Now we have the full hierarchy (in 'cpugeom["packages"]'). Create partial hierarchies
         # ('cpugeom["nodes"]', etc).
+        #
+        # Start with filling the 'nums'.
         for lvlidx, lvl in enumerate(LEVELS[1:]):
             cpugeom[lvl]["nums"] = self._flatten_to_level(cpugeom[LEVELS[0]]["nums"], lvlidx + 1)
 
-        for lvl1 in LEVELS[1:]:
-            for lvl2 in LEVELS[:-1]:
-                if lvl1 == lvl2:
+        # Fill 'cnt_per_*' keys.
+        for lvl1idx, lvl1 in enumerate(LEVELS[1:]):
+            for lvl2idx, lvl2 in enumerate(LEVELS):
+                # We need to iterate over all levels higher than 'lvl1'. Larger index corresponds to
+                # lower level.
+                if lvl2idx > lvl1idx:
                     continue
                 key = f"cnt_per_{lvl2}"
                 try:
