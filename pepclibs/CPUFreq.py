@@ -547,6 +547,7 @@ class CPUFreq:
 
         uc_infos = {}
         if keys.intersection(set(UNCORE_KEYS_DESCR)):
+            self._ensure_uncore_freq_support()
             if self._ufreq_supported:
                 pkgs = self._get_cpuinfo().get_packages()
                 for pkg, uc_info in zip(pkgs, self._get_uncore_info(pkgs, keys)):
