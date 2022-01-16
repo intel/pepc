@@ -184,7 +184,7 @@ class CPUInfo:
         all values if 'nums' is None or "all". Offline CPUs are ignored.
         """
 
-        if start not in LEVELS or end not in LEVELS:
+        if start not in self._levels_set or end not in self._levels_set:
             levels = ", ".join(LEVELS)
             raise Error(f"bad levels '{start}','{end}', use: {levels}")
 
@@ -545,8 +545,9 @@ class CPUInfo:
         """
 
         self._proc = proc
-
         self._close_proc = proc is None
+
+        self._levels_set = set(LEVELS)
         self._lscpu_cache = None
 
         self.info = None
