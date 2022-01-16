@@ -478,23 +478,28 @@ class CPUIdle:
         Read all properties specified in the 'pnames' list for CPUs in 'cpus', and for every CPU
         yield a dictionary containing the read values of all the properties. The arguments are as
         follows.
-          * cpus - the CPUs to yield the properties for, same as the 'cpus' argument of the
-                   'get_cstates_info()' function.
           * pnames - list or an iterable collection of properties to read and yeild the values for.
                      These properties will be read for every CPU in 'cpus'.
+          * cpus - the CPUs to yield the properties for, same as the 'cpus' argument of the
+                   'get_cstates_info()' function.
 
         The yielded dictionaries have the following format.
 
         { property1_name: { "val"  : property1_value,
-                            "keys" : {"CPU" : CPU number,
+                            "keys" : {"CPU" : <CPU number>,
                                       property1_key1 : property1_key1_value,
                                       property2_key2 : property1_key1_value,
                                       ... etc for every key ...}},
           property2_name: { "val"  : property2_value,
-                            "keys" : {"CPU" : CPU number,
+                            "keys" : {"CPU" : <CPU number>,
                                       property2_key1 : property2_key1_value,
                                       ... etc ...}},
           ... etc ... }
+
+        So each property has the (main) value, but it also comes with a number of "keys", which
+        include the CPU number and may also include additional information related to the property.
+        For example, the 'pkg_cstate_limit' property comes with additional keys like
+        'pkg_cstate_limit_locked'.
 
         For properties that are not supported by the CPU, the "val" key will be 'None'.
         """
