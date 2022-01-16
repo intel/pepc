@@ -377,9 +377,76 @@ class CPUInfo:
 
     def get_cpu_geometry(self):
         """
-        Get CPU geometry information. The resulting geometry dictionary is returnd and also saved in
-        'self.cpugeom'. Note, if this method was already called before, it will return the cached
-        geometry dircionary ('self.cpugeom').
+        Get CPU geometry information. The returned geometry dictionary is returned and also saved in
+        'self.cpugeom'. Note, if this method was already called before, it will just return
+        'self.cpugeom'.
+
+        The geometry dictionary structure.
+
+        1. The top level geometry dictionary keys are the level names ("CPU", "core", etc). There
+           are no other top level keys, so the top level structure is as follows.
+
+           cpugeom = {
+             "CPU"  : {<CPU level info>},
+             "core" : {<core level info>},
+             ... and so on for each level, see 'LEVELS' ...
+             "package" : {<package level info>}
+           }
+
+        2. Every level info is a dictionary too. Each level info will contain the following keys.
+           * cnt - count of elements (CPUs, cores, etc).
+           * cnt_per_<level> - count of elements in upper levels.
+           * nums - element numbers dictionary.
+
+        3. There are some keys unique to the specific level. For example, the "CPU" level includes
+           the 'offline_cnt' key, which provides the offline CPUs count.
+
+        Here is an example cpugeom dictionary for a 2-core single socket system with 2 logical CPUs
+        per core and one node per package, and no off-lined CPUs.
+
+        { 'CPU':     {
+                       'cnt': 4,
+                       'cnt_per_core': 2,
+                       'cnt_per_node': 4,
+                       'cnt_per_package': 4,
+                       'nums': [ 0, 2, 1, 3 ],
+                       'offline_cnt': 0,
+                       'offline_cpus': []
+                     },
+          'core':    {
+                       'cnt': 2,
+                       'cnt_per_node': 2,
+                       'cnt_per_package': 2,
+                       'nums': {
+                                 0: [0, 2],
+                                 1: [1, 3],
+                               },
+                     },
+          'node':    {
+                       'cnt': 1,
+                       'cnt_per_core': 0,
+                       'cnt_per_package': 1,
+                       'nums': {
+                                 0: {
+                                      0: [0, 2],
+                                      1: [1, 3]
+                                    },
+                               },
+                     },
+          'package': {
+                       'cnt': 1,
+                       'nums': {
+                                 0: {
+                                      0: {
+                                           0: [0, 2],
+                                           1: [1, 3],
+                                         },
+                                    },
+                                },
+                     },
+
+        In this examples, 'nums' in the 'node' info dictionary says that there is node number 0,
+        which includes core number 0 and 1, which include CPUs numbers 0,2 and 1,3 respectively.
         """
 
         if self.cpugeom:
@@ -407,8 +474,8 @@ class CPUInfo:
 
             self._add_nums(nums)
 
-        # Now we have the full hierarcy (in 'cpugeom["packages"]'). Create partial hierarchies
-        # ('cpugom["nodes"]', etc).
+        # Now we have the full hierarchy (in 'cpugeom["packages"]'). Create partial hierarchies
+        # ('cpugeom["nodes"]', etc).
         for lvlidx, lvl in enumerate(LEVELS[1:]):
             cpugeom[lvl]["nums"] = self._flatten_to_level(cpugeom[LEVELS[0]]["nums"], lvlidx + 1)
 
