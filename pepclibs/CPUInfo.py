@@ -164,7 +164,18 @@ class CPUInfo:
 
         # Note, we could just walk sysfs, but 'lscpu' seems a bit more convenient.
         cmd = "lscpu --all -p=socket,node,core,cpu,online"
-        self._lscpu_cache, _ = self._proc.run_verify(cmd, join=False)
+        lines, _ = self._proc.run_verify(cmd, join=False)
+
+        self._lscpu_cache = []
+        for line in lines:
+            if line.startswith("#"):
+                continue
+
+            # Each line has comma-separated integers for socket, node, core and cpu. For example:
+            # 1,1,9,61,Y. In case of offline CPU, the final element is going to be "N".
+            line = line.strip().split(",")
+            self._lscpu_cache.append(line)
+
         return self._lscpu_cache
 
     def _get_level(self, start, end, nums=None):
@@ -184,11 +195,6 @@ class CPUInfo:
 
         items = {}
         for line in self._get_lscpu():
-            if line.startswith("#"):
-                continue
-            # Each line has comma-separated integers for socket, node, core and cpu. For example:
-            # 1,1,9,61,Y. In case of offline CPU, the final element is going to be "N".
-            line = line.strip().split(",")
             if line[-1] != "Y":
                 # Skip non-online CPUs.
                 continue
@@ -393,12 +399,8 @@ class CPUInfo:
 
         # Parse the 'lscpu' output.
         for line in self._get_lscpu():
-            if line.startswith("#"):
-                continue
-
-            split_line = line.strip().split(",")
-            nums = {key : split_line[idx] for idx, key in enumerate(LEVELS)}
-            if split_line[-1] != "Y":
+            nums = {key : line[idx] for idx, key in enumerate(LEVELS)}
+            if line[-1] != "Y":
                 cpugeom["CPU"]["offline_cnt"] += 1
                 cpugeom["CPU"]["offline_cpus"].append(int(nums["CPU"]))
                 continue
