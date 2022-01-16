@@ -59,9 +59,9 @@ class CPUIdle:
     1. Enable multiple disable C-states for multiple CPUs via Linux sysfs interfaces:
        'enable_cstates()', 'disable_cstates()'.
     2. Get C-state(s) information.
-       * For a single CPU and a single C-state:  'get_cstate_info()'.
-       * For a single CPU and multiple C-states: 'get_cstates_info_dict()'.
        * For multiple CPUs and multiple C-states: get_cstates_info().
+       * For a single CPU and multiple C-states: 'get_cpu_cstates_info()'.
+       * For a single CPU and a single C-state:  'get_cpu_cstate_info()'.
     3. Get/set a C-state property for multiple CPUs: 'get_props()', 'set_prop()'.
     4. Get a C-state property scope: 'get_scope()'.
     """
@@ -120,7 +120,7 @@ class CPUIdle:
                 return self._idx2name_cache[cpu][index]
 
         if cpu not in self._csinfos:
-            self._csinfos[cpu] = self.get_cstates_info_dict(cpu)
+            self._csinfos[cpu] = self.get_cpu_cstates_info(cpu)
 
         self._idx2name_cache[cpu] = {}
         for csinfo in self._csinfos[cpu].values():
@@ -355,7 +355,7 @@ class CPUIdle:
                     if indexes is None or csinfo["index"] in indexes:
                         yield csinfo
 
-    def get_cstates_info_dict(self, cpu, cstates=None, ordered=True):
+    def get_cpu_cstates_info(self, cpu, cstates=None, ordered=True):
         """
         Returns a dictionary describing all C-states of CPU 'cpu'. C-state index is used as
         dictionary key. The 'cstates' and 'ordered' arguments are the same as in
@@ -370,7 +370,7 @@ class CPUIdle:
             info_dict[info["index"]] = info
         return info_dict
 
-    def get_cstate_info(self, cpu, cstate):
+    def get_cpu_cstate_info(self, cpu, cstate):
         """
         Returns information about C-state 'cstate' on CPU number 'cpu'. The C-state can be specified
         both by its index and name.
