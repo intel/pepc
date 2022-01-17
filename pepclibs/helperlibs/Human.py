@@ -151,8 +151,10 @@ def _tokenize(hval, specs, default_unit, name):
     if rest.strip():
         raise Error(f"failed to parse{name} value '{hval}'")
 
-    for spec, val in tokens.items():
-        if not Trivial.is_int(val):
+    # In case of multiple units, all values except for the last one must be integers.
+    # For example, this is allowed: 1d3m1.6s, and this is not: 1.5d3m4s.
+    for spec in list(tokens)[:-1]:
+        if not Trivial.is_int(tokens[spec]):
             raise Error(f"failed to parse{name} value '{hval}': non-integer amount of "
                         f"{specs[spec]}")
 
