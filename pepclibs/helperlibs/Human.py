@@ -131,10 +131,6 @@ def _tokenize(htime, specs, specs_descr, default_unit, name):
     if htime.isdigit():
         htime += default_unit
 
-    htime = htime.strip()
-    if htime.isdigit():
-        htime += default_unit
-
     tokens = {}
     rest = htime.lower()
     for spec in specs:
