@@ -275,25 +275,17 @@ class CPUInfo:
 
         return Trivial.list_dedup(result)
 
-    def get_cpus(self):
-        """Returns list of online CPU numbers."""
-        return self._get_level("CPU", "CPU")
+    def get_packages(self):
+        """Returns list of package numbers, where at least one online CPU."""
+        return self._get_level("package", "package")
 
     def get_cores(self):
         """Returns list of core numbers, where at least one online CPU."""
         return self._get_level("core", "core")
 
-    def get_packages(self):
-        """Returns list of package numbers, where at least one online CPU."""
-        return self._get_level("package", "package")
-
-    def cores_to_cpus(self, cores=None):
-        """
-        Returns list of online CPU numbers belonging to cores 'cores'. The 'cores' argument is
-        allowed to contain both integer and string type numbers. For example, both are OK: '(0, 2)'
-        and '("0", "2")'. Returns all CPU numbers if 'cores' is None or "all".
-        """
-        return self._get_level("core", "CPU", nums=cores)
+    def get_cpus(self):
+        """Returns list of online CPU numbers."""
+        return self._get_level("CPU", "CPU")
 
     def packages_to_cores(self, packages=None):
         """
@@ -309,53 +301,13 @@ class CPUInfo:
         """
         return self._get_level("package", "CPU", nums=packages)
 
-    def normalize_cpus(self, cpus):
+    def cores_to_cpus(self, cores=None):
         """
-        Validate CPU numbers 'cpus' and return a normalized list. The input numbers may be integers
-        or strings containing integer numbers. The output will be list of integers, duplicate
-        numbers will be removed.
+        Returns list of online CPU numbers belonging to cores 'cores'. The 'cores' argument is
+        allowed to contain both integer and string type numbers. For example, both are OK: '(0, 2)'
+        and '("0", "2")'. Returns all CPU numbers if 'cores' is None or "all".
         """
-
-        allcpus = self.get_cpus()
-
-        if cpus is None or cpus == "all":
-            return allcpus
-
-        allcpus = set(allcpus)
-        cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=False)
-        for cpu in cpus:
-            if cpu not in allcpus:
-                cpus_str = ", ".join([str(cpu) for cpu in sorted(allcpus)])
-                raise Error(f"CPU{cpu} is not available{self._proc.hostmsg}, available CPUs are: "
-                            f"{cpus_str}")
-
-        return cpus
-
-    def normalize_cpu(self, cpu):
-        """Same as 'normalize_cpus()', but for a single CPU number."""
-        return  self.normalize_cpus([cpu])[0]
-
-    def normalize_packages(self, pkgs):
-        """Same as 'normalize_cpus()', but for package numbers."""
-
-        allpkgs = self.get_packages()
-
-        if pkgs is None or pkgs == "all":
-            return allpkgs
-
-        allpkgs = set(allpkgs)
-        pkgs = ArgParse.parse_int_list(pkgs, ints=True, dedup=True)
-        for pkg in pkgs:
-            if pkg not in allpkgs:
-                pkgs_str = ", ".join([str(pkg) for pkg in sorted(allpkgs)])
-                raise Error(f"package '{pkg}' not available{self._proc.hostmsg}, available "
-                            f"packages are: {pkgs_str}")
-
-        return pkgs
-
-    def normalize_package(self, package):
-        """Same as 'normalize_packages()', but for a single package number."""
-        return self.normalize_packages([package])[0]
+        return self._get_level("core", "CPU", nums=cores)
 
     def cpu_to_package(self, cpu):
         """Returns integer package number for CPU number 'cpu'."""
@@ -380,6 +332,56 @@ class CPUInfo:
         cpus_str = ", ".join([str(cpu) for cpu in sorted(allcpus)])
         raise Error(f"CPU{cpu} is not available{self._proc.hostmsg}, available CPUs are:\n"
                     f"{cpus_str}")
+
+    def normalize_packages(self, pkgs):
+        """
+        Validate package numbers in 'pkgs' and return the normalized list. The input package numbers
+        may be integers or strings containing integer numbers. It may also be a string with
+        comma-separated package numbers and ranges.
+
+        Returns a list of integer package numbers.
+        """
+
+        allpkgs = self.get_packages()
+
+        if pkgs is None or pkgs == "all":
+            return allpkgs
+
+        allpkgs = set(allpkgs)
+        pkgs = ArgParse.parse_int_list(pkgs, ints=True, dedup=True)
+        for pkg in pkgs:
+            if pkg not in allpkgs:
+                pkgs_str = ", ".join([str(pkg) for pkg in sorted(allpkgs)])
+                raise Error(f"package '{pkg}' not available{self._proc.hostmsg}, available "
+                            f"packages are: {pkgs_str}")
+
+        return pkgs
+
+    def normalize_package(self, package):
+        """Same as 'normalize_packages()', but for a single package number."""
+        return self.normalize_packages([package])[0]
+
+    def normalize_cpus(self, cpus):
+        """Same as 'normalize_packages()', but for CPU numbers."""
+
+        allcpus = self.get_cpus()
+
+        if cpus is None or cpus == "all":
+            return allcpus
+
+        allcpus = set(allcpus)
+        cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=False)
+        for cpu in cpus:
+            if cpu not in allcpus:
+                cpus_str = ", ".join([str(cpu) for cpu in sorted(allcpus)])
+                raise Error(f"CPU{cpu} is not available{self._proc.hostmsg}, available CPUs are: "
+                            f"{cpus_str}")
+
+        return cpus
+
+    def normalize_cpu(self, cpu):
+        """Same as 'normalize_cpus()', but for a single CPU number."""
+        return  self.normalize_cpus([cpu])[0]
 
     def _build_cpugeom_top_level(self, tline):
         """Add numbers from 'lscpu' to the CPU geometry dictionary."""
