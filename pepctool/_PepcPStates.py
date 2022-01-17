@@ -85,8 +85,8 @@ def _print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
             first = False
             if "CPU" in info:
                 _LOG.info("%s: %d", keys_descr["CPU"], info["CPU"])
-            if "pkg" in info:
-                _LOG.info("%s: %d", keys_descr["pkg"], info["pkg"])
+            if "package" in info:
+                _LOG.info("%s: %d", keys_descr["package"], info["package"])
             if "die" in info:
                 _LOG.info("%s: %d", keys_descr["die"], info["die"])
             if "base" in info:
@@ -166,7 +166,7 @@ def _print_uncore_info(args, proc):
                 _LOG.info("")
             first = False
 
-            _LOG.info("%s: %s", keys_descr["pkg"], info["pkg"])
+            _LOG.info("%s: %s", keys_descr["package"], info["package"])
             _LOG.info("%s: %s", keys_descr["die"], info["die"])
             _LOG.info("%s: %s", keys_descr["uncore_min"], _khz_fmt(info["uncore_min"]))
             _LOG.info("%s: %s", keys_descr["uncore_max"], _khz_fmt(info["uncore_max"]))
@@ -198,7 +198,7 @@ def _handle_freq_opts(args, proc, cpuinfo, cpufreq):
         for pkg in cpuinfo.normalize_packages(args.packages):
             cpus.append(cpuinfo.packages_to_cpus(packages=pkg)[0])
         opts["uncore"]["info_nums"] = cpus
-        opts["uncore"]["info_keys"] = ["pkg"]
+        opts["uncore"]["info_keys"] = ["package"]
         opts["uncore"]["opt_key_map"] = (("minufreq", "uncore_min"), ("maxufreq", "uncore_max"))
 
     if "minfreq" in args.oargs or "maxfreq" in args.oargs:

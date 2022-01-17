@@ -48,7 +48,7 @@ CPUFREQ_KEYS_DESCR = {
 }
 
 UNCORE_KEYS_DESCR = {
-    "pkg": "CPU package",
+    "package": "CPU package",
     "die": "Die within the CPU package",
     "uncore_min": "Min currently configured uncore frequency",
     "uncore_max": "Max currently configured uncore frequency",
@@ -439,8 +439,8 @@ class CPUFreq:
                 continue
 
             info = {}
-            if "pkg" in keys:
-                info["pkg"] = pkg
+            if "package" in keys:
+                info["package"] = pkg
             if "die" in keys:
                 info["die"] = die
             if "uncore_max" in keys:
@@ -591,7 +591,7 @@ class CPUFreq:
                 if freq in specifiers:
                     info_keys.update((specifiers_map[freq], ))
         else:
-            info_keys.update(("pkg", "die"))
+            info_keys.update(("package", "die"))
 
         # Initialize the CPUFreq/uncore generator, which will yield CPU or package information.
         if uncore:
@@ -604,7 +604,7 @@ class CPUFreq:
         freqs = {}
         for info in infos:
             if uncore:
-                pkg, die = info["pkg"], info["die"]
+                pkg, die = info["package"], info["die"]
                 basedir = self._sysfs_base / "intel_uncore_frequency"
                 basedir /= "package_%02d_die_%02d" % (pkg, die)
                 cpuname = f"package {pkg} die {die}"
