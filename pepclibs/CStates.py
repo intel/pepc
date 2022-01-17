@@ -515,9 +515,9 @@ class CStates:
     def set_prop(self, pname, val, cpus="all"):
         """
         Set value 'val' for property 'pname' for CPUs 'cpus'. The arguments are as follows.
-          * pname - name of the property to set (see 'PROPS' for the full list).
-          * val - the value to set for the property.
-          * cpus - same as in 'get_cstates_info()'.
+          * pname - name of the property to set (see 'self.props' for the full list).
+          * val - the value to set the property to.
+          * cpus - same as in 'get_props()'.
         """
 
         self._check_prop(pname)
