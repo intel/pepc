@@ -166,6 +166,8 @@ def parse_duration(htime, default_unit="s", name=None):
     argument can be used to pass a name that will be used in error message.
     """
 
+    if name is None:
+        name = "time"
     specs = {"d" : "days", "h" : "hours", "m" : "minutes", "s" : "seconds"}
     tokens = _tokenize(htime, specs, default_unit, name)
 
@@ -184,6 +186,8 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
       * ns - nanoseconds
     """
 
+    if name is None:
+        name = "time"
     specs = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
     tokens = _tokenize(htime, specs, default_unit, name)
 
