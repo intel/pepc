@@ -116,7 +116,7 @@ def duration(seconds, s=True, ms=False):
 
     return result.strip()
 
-def _tokenize(hval, specs, default_unit, name):
+def _tokenize(hval, specs, default_unit, name, multiple=True):
     """
     Split human-provided value 'hval' according unit names in the 'specs' dictionary. Returns the
     dictionary of tokens.
@@ -125,6 +125,9 @@ def _tokenize(hval, specs, default_unit, name):
         * hval = "1d 4m 1s"
         * specs = {"d" : "days", "m" : "minutes", "s" : "seconds"}
         * Result: {'d': '1', 'm': '4', 's': '1'}
+
+    The 'multiple' argument can be used to limit the input value to just a single number and unit.
+    In the above example, if 'multiple' is 'False', this function would riese an error.
     """
 
     if name:
@@ -151,12 +154,21 @@ def _tokenize(hval, specs, default_unit, name):
     if rest.strip():
         raise Error(f"failed to parse{name} value '{hval}'")
 
-    # In case of multiple units, all values except for the last one must be integers.
-    # For example, this is allowed: 1d3m1.6s, and this is not: 1.5d3m4s.
-    for spec in list(tokens)[:-1]:
-        if not Trivial.is_int(tokens[spec]):
-            raise Error(f"failed to parse{name} value '{hval}': non-integer amount of "
-                        f"{specs[spec]}")
+    if not multiple and len(tokens) > 1:
+        raise Error(f"failed to parse{name} value '{hval}': should be one value")
+
+    if multiple:
+        # In case of multiple units, all values except for the last one must be integers.
+        # For example, this is allowed: 1d3m1.6s, and this is not: 1.5d3m4s.
+        for spec in list(tokens)[:-1]:
+            if not Trivial.is_int(tokens[spec]):
+                raise Error(f"failed to parse{name} value '{hval}': non-integer amount of "
+                            f"{specs[spec]}")
+
+    val = tokens[list(tokens)[-1]]
+    if not Trivial.is_float(val):
+        raise Error(f"failed to parse{name} value '{hval}': non-numeric amount of "
+                    f"{specs[spec]}")
 
     return tokens
 
