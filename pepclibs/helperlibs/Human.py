@@ -218,6 +218,28 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
     ns = int(tokens.get("ns", 0))
     return ms * 1000 * 1000 + us * 1000 + ns
 
+def parse_freq(hfreq, default_unit="Hz", name=None):
+    """
+    Turn a user-provided frequency string into 'int' or 'float' amoun of hertz and return the
+    result. The 'hfreq' string is allowed to include the unit, for example 'GHz' or 'megaherz'.
+
+    Optional 'name' argument may include a short description of the 'hfreq' value, which will be
+    used in error messages.
+    """
+
+    if name is None:
+        name = "frequency"
+    specs = {"GHz" : "gigahertz", "MHz" : "megahertz", "kHz" : "kilohertz", "Hz" : "Hertz"}
+    tokens = _tokenize(hfreq, specs, default_unit, name, multiple=False)
+
+    scalers = {"Hz" : 1, "kHz" : 1000, "MHz" : 1000000, "GHz" : 1000000000}
+
+    result = 0
+    for unit, val in tokens.items():
+        result += val * scalers[unit]
+
+    return result
+
 def rangify(numbers):
     """
     Turn list of numbers in 'numbers' to a string of comma-separated ranges. Numbers can be integers
