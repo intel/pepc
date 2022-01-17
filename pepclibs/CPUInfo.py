@@ -573,9 +573,12 @@ class CPUInfo:
         self._close_proc = proc is None
 
         self._levels_set = set(LEVELS)
+        # The topology cache.
         self._topology = None
 
+        # General CPU information.
         self.info = None
+        # The CPU geometry dictionary.
         self.cpugeom = None
         # A short CPU description string.
         self.cpudescr = None
