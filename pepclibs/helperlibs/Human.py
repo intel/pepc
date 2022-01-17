@@ -161,6 +161,8 @@ def parse_duration(htime, default_unit="s", name=None):
       * m - minutes
       * s - seconds.
 
+    Valid 'htime' value examples: 5, 1d, 3s, 5h 3s, 6m1s
+
     If 'htime' is just a number without a specifier, it is assumed to be in seconds. But the
     'default_unit' argument can be used to specify a different default unit. The optional 'what'
     argument can be used to pass a name that will be used in error message.
