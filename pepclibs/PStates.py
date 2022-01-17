@@ -15,7 +15,7 @@ import time
 import logging
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import FSHelpers, KernelModule, Procs, Trivial
+from pepclibs.helperlibs import FSHelpers, KernelModule, Procs, Human
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR
 
@@ -478,37 +478,6 @@ class PStates:
 
         return self._get_uncore_info(pkgs, keys)
 
-    @staticmethod
-    def _pre_parse_freq(freq, specifiers):
-        """
-        Parse a user-provided frequency value 'freq'. If possible, return the frequency as and
-        integer amount of kHz. In case the convertion depends on the CPU number (e.g., 'freq'
-        isspecified as 'hfm'), this function just returns 'freq' value as is. In other words, this
-        is function implements partial parsing, and only handles CPU-independent situations.
-        """
-
-        if not freq or freq in specifiers:
-            return freq
-
-        val = freq
-        if not Trivial.is_int(val):
-            val = val.lower()
-            for unit, mult in [("ghz", 1000000), ("mhz", 1000), ("khz", 1), ("hz", 0.001)]:
-                split = val.split(unit, 1)
-                if len(split) == 2 and not split[1].strip() and Trivial.is_float(split[0]):
-                    val = float(split[0]) * mult
-                    break
-
-            if not Trivial.is_int(val):
-                specifiers_str = ", ".join(specifiers)
-                raise Error(f"invalid frequency value '{freq}', should be an integer amount of kHz"
-                            f" or one of: {specifiers_str}")
-
-        val = int(val)
-        if val < 0:
-            raise Error(f"invalid frequency value '{freq}', should not be negative")
-        return val
-
     def _get_cpus_to_pkgs_map(self):
         """
         Turn list of CPU numbers into dictionary where CPU number is key and corresponding package
@@ -567,10 +536,14 @@ class PStates:
         if not uncore:
             specifiers.update(["lfm", "eff", "base", "hfm"])
 
-        # Pre-parsed frequencies.
-        pre_parsed_freqs = {}
-        pre_parsed_freqs["min"] = self._pre_parse_freq(minfreq, specifiers)
-        pre_parsed_freqs["max"] = self._pre_parse_freq(maxfreq, specifiers)
+        # Parse frequency values so that they do not include unit names, like 'GHz'.
+        parsed_freqs = {"min" : minfreq, "max" : maxfreq}
+        if minfreq and minfreq not in specifiers:
+            parsed_freqs["min"] = Human.parse_freq(minfreq, name=f"min. {name} frequency)")
+            parsed_freqs["min"] //= 1000
+        if maxfreq and maxfreq not in specifiers:
+            parsed_freqs["max"] = Human.parse_freq(maxfreq, name=f"max. {name} frequency)")
+            parsed_freqs["max"] //= 1000
 
         # Mapping from specifiers to PStates/uncore info key names.
         specifiers_map = {"min" : "min_limit", "max" : "max_limit"}
@@ -587,7 +560,7 @@ class PStates:
         if not uncore:
             info_keys.update(["CPU"])
             # The below loop covers the "eff", "base", and "lfm" specifier cases.
-            for freq in pre_parsed_freqs.values():
+            for freq in parsed_freqs.values():
                 if freq in specifiers:
                     info_keys.update((specifiers_map[freq], ))
         else:
@@ -620,7 +593,7 @@ class PStates:
                     info[prefixed_keys[key]] = info[key]
 
             # Resolve possible frequency specifiers and somewhat validate them first.
-            for key, freq in pre_parsed_freqs.items():
+            for key, freq in parsed_freqs.items():
                 if freq is None:
                     continue
 
