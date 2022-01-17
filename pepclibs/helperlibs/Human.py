@@ -116,7 +116,7 @@ def duration(seconds, s=True, ms=False):
 
     return result.strip()
 
-def _tokenize(htime, specs, specs_descr, default_unit, name):
+def _tokenize(htime, specs, default_unit, name):
     """Split human time and return the dictionary of tokens."""
 
     if name:
@@ -125,6 +125,7 @@ def _tokenize(htime, specs, specs_descr, default_unit, name):
         name = ""
 
     if default_unit not in specs:
+        specs_descr = ", ".join([f"{spec} - {key}" for spec, key in specs.items()])
         raise Error(f"bad unit '{default_unit}{name}', supported units are: {specs_descr}")
 
     htime = htime.strip()
@@ -153,8 +154,6 @@ def _tokenize(htime, specs, specs_descr, default_unit, name):
 
 # The specifiers that 'parse_duration()' accepts.
 DURATION_SPECS = {"d" : "days", "h" : "hours", "m" : "minutes", "s" : "seconds"}
-# A short 'parse_duration()' specifiers description string.
-DURATION_SPECS_DESCR = ", ".join([f"{spec} - {key}" for spec, key in DURATION_SPECS.items()])
 
 def parse_duration(htime, default_unit="s", name=None):
     """
@@ -170,7 +169,7 @@ def parse_duration(htime, default_unit="s", name=None):
     argument can be used to pass a name that will be used in error message.
     """
 
-    tokens = _tokenize(htime, DURATION_SPECS, DURATION_SPECS_DESCR, default_unit, name)
+    tokens = _tokenize(htime, DURATION_SPECS, default_unit, name)
 
     days = int(tokens.get("d", 0))
     hours = int(tokens.get("h", 0))
@@ -180,8 +179,6 @@ def parse_duration(htime, default_unit="s", name=None):
 
 # The specifiers that 'parse_duration_ns()' accepts.
 DURATION_NS_SPECS = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
-# A short 'parse_duration_ns()' specifiers description string.
-DURATION_NS_SPECS_DESCR = ", ".join([f"{spec} - {key}" for spec, key in DURATION_NS_SPECS.items()])
 
 def parse_duration_ns(htime, default_unit="ns", name=None):
     """
@@ -192,7 +189,7 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
       * ns - nanoseconds
     """
 
-    tokens = _tokenize(htime, DURATION_NS_SPECS, DURATION_NS_SPECS_DESCR, default_unit, name)
+    tokens = _tokenize(htime, DURATION_NS_SPECS, default_unit, name)
 
     ms = int(tokens.get("ms", 0))
     us = int(tokens.get("us", 0))
