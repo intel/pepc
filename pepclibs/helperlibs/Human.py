@@ -116,26 +116,32 @@ def duration(seconds, s=True, ms=False):
 
     return result.strip()
 
-def _tokenize(htime, specs, default_unit, name):
-    """Split human time and return the dictionary of tokens."""
+def _tokenize(hval, specs, default_unit, name):
+    """
+    Split human-provided value 'hval' according unit names in the 'specs' dictionary. Returns the
+    dictionary of tokens.
+
+    Example.
+        * hval = "1d 4m 1s"
+        * specs = {"d" : "days", "m" : "minutes", "s" : "seconds"}
+        * Result: {'d': '1', 'm': '4', 's': '1'}
+    """
 
     if name:
-        name = f" for {name}"
-    else:
-        name = ""
+        name = f" {name}"
 
     if default_unit not in specs:
         specs_descr = ", ".join([f"{spec} - {key}" for spec, key in specs.items()])
-        raise Error(f"bad unit '{default_unit}{name}', supported units are: {specs_descr}")
+        raise Error(f"bad unit '{default_unit}' for{name}, use: {specs_descr}")
 
-    htime = htime.strip()
-    if htime.isdigit():
-        htime += default_unit
+    hval = hval.strip()
+    if hval.isdigit():
+        hval += default_unit
 
     tokens = {}
-    rest = htime.lower()
+    rest = hval.lower()
     for spec in specs:
-        split = rest.split(spec, 1)
+        split = rest.split(spec.lower(), 1)
         if len(split) > 1:
             tokens[spec] = split[0]
             rest = split[1]
@@ -143,11 +149,11 @@ def _tokenize(htime, specs, default_unit, name):
             rest = split[0]
 
     if rest.strip():
-        raise Error(f"failed to parse duration '{htime}'{name}")
+        raise Error(f"failed to parse{name} value '{hval}'")
 
     for spec, val in tokens.items():
         if not Trivial.is_int(val):
-            raise Error(f"failed to parse duration '{htime}'{name}: non-integer amount of "
+            raise Error(f"failed to parse{name} value '{hval}': non-integer amount of "
                         f"{specs[spec]}")
 
     return tokens
