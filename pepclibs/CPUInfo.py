@@ -154,6 +154,30 @@ LEVELS = ("package", "node", "core", "CPU")
 class CPUInfo:
     """
     Provide information about the CPU of a local or remote host.
+
+    Public methods overview.
+
+    1. Get list of packages/cores/etc.
+        * 'get_packages()'
+        * 'get_cores()'
+        * 'get_cpus()'
+    2. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
+        A. Multiple packages/CPUs/etc numbers:
+            * 'packages_to_cores()'
+            * 'packages_to_cpus()'
+            * 'cores_to_cpus()'
+        B. Single package/CPU/etc.
+            * 'cpu_to_package()'
+            * 'cpu_to_core()'
+    3. Normalize a list of packages/cores/etc.
+        A. Multiple packages/CPUs/etc numbers:
+            * 'normalize_packages()'
+            * 'normalize_cpus()'
+        B. Single package/CPU/etc.
+            * 'normalize_package()'
+            * 'normalize_cpu()'
+    4. Build and get the geometry dictionary.
+        * 'get_cpu_geometry()'
     """
 
     def _get_topology(self):
