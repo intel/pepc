@@ -152,9 +152,6 @@ def _tokenize(htime, specs, default_unit, name):
 
     return tokens
 
-# The specifiers that 'parse_duration()' accepts.
-DURATION_SPECS = {"d" : "days", "h" : "hours", "m" : "minutes", "s" : "seconds"}
-
 def parse_duration(htime, default_unit="s", name=None):
     """
     This function does the opposite to what 'duration()' does - parses the human time string and
@@ -169,16 +166,14 @@ def parse_duration(htime, default_unit="s", name=None):
     argument can be used to pass a name that will be used in error message.
     """
 
-    tokens = _tokenize(htime, DURATION_SPECS, default_unit, name)
+    specs = {"d" : "days", "h" : "hours", "m" : "minutes", "s" : "seconds"}
+    tokens = _tokenize(htime, specs, default_unit, name)
 
     days = int(tokens.get("d", 0))
     hours = int(tokens.get("h", 0))
     mins = int(tokens.get("m", 0))
     secs = int(tokens.get("s", 0))
     return days * 24 * 60 * 60 + hours * 60 * 60 + mins * 60 + secs
-
-# The specifiers that 'parse_duration_ns()' accepts.
-DURATION_NS_SPECS = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
 
 def parse_duration_ns(htime, default_unit="ns", name=None):
     """
@@ -189,7 +184,8 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
       * ns - nanoseconds
     """
 
-    tokens = _tokenize(htime, DURATION_NS_SPECS, default_unit, name)
+    specs = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
+    tokens = _tokenize(htime, specs, default_unit, name)
 
     ms = int(tokens.get("ms", 0))
     us = int(tokens.get("us", 0))
