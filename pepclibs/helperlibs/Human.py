@@ -203,7 +203,11 @@ def parse_duration(htime, default_unit="s", name=None):
     hours = tokens.get("h", 0)
     mins  = tokens.get("m", 0)
     secs  = tokens.get("s", 0)
-    return days * 24 * 60 * 60 + hours * 60 * 60 + mins * 60 + secs
+    result = days * 24 * 60 * 60 + hours * 60 * 60 + mins * 60 + secs
+
+    if Trivial.is_int(result):
+        result = int(result)
+    return result
 
 def parse_duration_ns(htime, default_unit="ns", name=None):
     """
@@ -222,7 +226,11 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
     ms = tokens.get("ms", 0)
     us = tokens.get("us", 0)
     ns = tokens.get("ns", 0)
-    return ms * 1000 * 1000 + us * 1000 + ns
+    result = ms * 1000 * 1000 + us * 1000 + ns
+
+    if Trivial.is_int(result):
+        result = int(result)
+    return result
 
 def parse_freq(hfreq, default_unit="Hz", name=None):
     """
@@ -240,11 +248,13 @@ def parse_freq(hfreq, default_unit="Hz", name=None):
 
     scalers = {"Hz" : 1, "kHz" : 1000, "MHz" : 1000000, "GHz" : 1000000000}
 
-    result = 0
+    freq = 0
     for unit, val in tokens.items():
-        result += val * scalers[unit]
+        freq += val * scalers[unit]
 
-    return result
+    if Trivial.is_int(freq):
+        freq = int(freq)
+    return freq
 
 def rangify(numbers):
     """
