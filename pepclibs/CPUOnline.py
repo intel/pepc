@@ -53,11 +53,8 @@ class CPUOnline:
         it into a list of integer CPU numbers.
         """
 
-        if cpus == "all":
-            cpus = None
-
-        if cpus is None or isinstance(cpus, str):
-            if cpus is None:
+        if isinstance(cpus, str):
+            if cpus == "all":
                 if online:
                     cpugeom_key = "offline_cpus"
                 else:
@@ -79,9 +76,6 @@ class CPUOnline:
     def _toggle(self, cpus, online):
         """Implements onlining and offlining."""
 
-        if cpus == "all":
-            cpus = None
-
         if online:
             data = "1"
             state_str = "online"
@@ -91,7 +85,7 @@ class CPUOnline:
             state_str = "offline"
             action_str = "Offlining"
 
-        skip_cpu0 = cpus is None
+        skip_cpu0 = cpus == "all"
         cpus = self._normalize_cpus(cpus, online)
 
         _LOG.debug("CPUs to %s: %s", state_str, ", ".join([str(cpu) for cpu in cpus]))
@@ -122,17 +116,17 @@ class CPUOnline:
 
             self._save([cpu], state == "1")
 
-    def online(self, cpus=None):
+    def online(self, cpus="all"):
         """
         Bring CPUs in 'cpus' online. The 'cpus' argument may be a list of CPUs or a string
         containing a comma-separated list of CPUs and CPU ranges. For example, '0-4,7,8,10-12' would
-        mean CPUs 0 to 4, CPUs 7, 8, and 10 to 12. If 'cpus' is 'all' or 'None', then all CPUs are
-        onlined (default).
+        mean CPUs 0 to 4, CPUs 7, 8, and 10 to 12. If 'cpus' is 'all', then all CPUs are onlined
+        (default).
         """
 
         self._toggle(cpus, True)
 
-    def offline(self, cpus=None):
+    def offline(self, cpus="all"):
         """
         The opposite to 'online()'.
         """

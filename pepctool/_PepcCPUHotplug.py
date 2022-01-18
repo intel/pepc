@@ -35,6 +35,9 @@ def cpu_hotplug_info_command(_, proc):
 def cpu_hotplug_online_command(args, proc):
     """Implements the 'cpu-hotplug online' command."""
 
+    if not args.cpus:
+        args.cpus = "all"
+
     with CPUOnline.CPUOnline(progress=logging.INFO, proc=proc) as onl:
         onl.online(cpus=args.cpus)
 
