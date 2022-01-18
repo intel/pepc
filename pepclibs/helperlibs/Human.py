@@ -137,9 +137,12 @@ def _tokenize(hval, specs, default_unit, name, multiple=True):
         specs_descr = ", ".join([f"{spec} - {key}" for spec, key in specs.items()])
         raise Error(f"bad unit '{default_unit}' for{name}, use: {specs_descr}")
 
-    hval = hval.strip()
-    if hval.isdigit():
-        hval += default_unit
+    try:
+        hval = hval.strip()
+        if hval.isdigit():
+            hval += default_unit
+    except AttributeError:
+        raise Error(f"bad{name} value {hval}: has to be a string") from None
 
     tokens = {}
     rest = hval.lower()
