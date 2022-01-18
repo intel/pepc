@@ -16,7 +16,7 @@ import logging
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
-from pepclibs import CPUInfo, CPUFreq
+from pepclibs import CPUInfo, PStates
 from pepctool import _PepcCommon
 from pepctool._PepcCommon import get_cpus
 
@@ -74,11 +74,11 @@ def _get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
 def _print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
     """Print CPU P-states information."""
 
-    keys_descr = CPUFreq.CPUFREQ_KEYS_DESCR
-    keys_descr.update(CPUFreq.UNCORE_KEYS_DESCR)
+    keys_descr = PStates.CPUFREQ_KEYS_DESCR
+    keys_descr.update(PStates.UNCORE_KEYS_DESCR)
 
     first = True
-    with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo) as cpufreq:
+    with PStates.PStates(proc=proc, cpuinfo=cpuinfo) as cpufreq:
         for info in cpufreq.get_freq_info(cpus, keys=keys):
             if not first:
                 _LOG.info("")
@@ -157,10 +157,10 @@ def _print_uncore_info(args, proc):
     """Print uncore frequency information."""
 
     _check_uncore_options(args)
-    keys_descr = CPUFreq.UNCORE_KEYS_DESCR
+    keys_descr = PStates.UNCORE_KEYS_DESCR
 
     first = True
-    with CPUFreq.CPUFreq(proc) as cpufreq:
+    with PStates.PStates(proc) as cpufreq:
         for info in cpufreq.get_uncore_info(args.packages):
             if not first:
                 _LOG.info("")
@@ -269,7 +269,7 @@ def _handle_pstate_opts(args, proc, cpuinfo, cpufreq):
             scope = cpufreq.get_scope(optname)
             msg = _get_scope_msg(proc, cpuinfo, cpus, scope=scope)
             cpufreq.set_prop(optname, optval, cpus=cpus)
-            _LOG.info("Set %s to '%s'%s", CPUFreq.PROPS[optname]["name"], optval, msg)
+            _LOG.info("Set %s to '%s'%s", PStates.PROPS[optname]["name"], optval, msg)
         else:
             cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
             optinfo["keys"].add("CPU")
@@ -294,7 +294,7 @@ def pstates_config_command(args, proc):
         # is committed.
         msr.start_transaction()
 
-        with CPUFreq.CPUFreq(proc=proc, cpuinfo=cpuinfo, msr=msr) as cpufreq:
+        with PStates.PStates(proc=proc, cpuinfo=cpuinfo, msr=msr) as cpufreq:
             _handle_pstate_opts(args, proc, cpuinfo, cpufreq)
 
         # Commit the transaction. This will flush all the change MSRs (if there were any).

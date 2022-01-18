@@ -86,7 +86,7 @@ PROPS = {
     },
 }
 
-class CPUFreq:
+class PStates:
     """This class provides API for managing CPU frequency. Only Intel x86 systems are supported."""
 
     def _get_cpuinfo(self):
@@ -572,13 +572,13 @@ class CPUFreq:
         pre_parsed_freqs["min"] = self._pre_parse_freq(minfreq, specifiers)
         pre_parsed_freqs["max"] = self._pre_parse_freq(maxfreq, specifiers)
 
-        # Mapping from specifiers to CPUFreq/uncore info key names.
+        # Mapping from specifiers to PStates/uncore info key names.
         specifiers_map = {"min" : "min_limit", "max" : "max_limit"}
         if not uncore:
             specifiers_map.update({"lfm" : "min_limit", "eff" : "max_eff",
                                    "base" : "base", "hfm" : "base"})
 
-        # Form the list of CPUFreq/uncore info key names that we'll need for handeling the frequency
+        # Form the list of PStates/uncore info key names that we'll need for handeling the frequency
         # change request.
         info_keys = set(["min", "max", "min_limit", "max_limit"])
         prefixed_keys = {f"{name.lower()}_{key}" : key for key in info_keys}
@@ -593,7 +593,7 @@ class CPUFreq:
         else:
             info_keys.update(("package", "die"))
 
-        # Initialize the CPUFreq/uncore generator, which will yield CPU or package information.
+        # Initialize the PStates/uncore generator, which will yield CPU or package information.
         if uncore:
             # Note, 'cpus' is actually the list of packages in this case.
             infos = self.get_uncore_info(cpus, keys=info_keys)
@@ -824,7 +824,7 @@ class CPUFreq:
     def get_scope(prop):
         """Get scope of property 'prop'. The 'prop' argument is same as in 'set_prop()'."""
 
-        CPUFreq._check_prop(prop)
+        PStates._check_prop(prop)
         return PROPS[prop]["scope"]
 
     def __init__(self, proc=None, cpuinfo=None, msr=None):

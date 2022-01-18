@@ -148,7 +148,7 @@ _CPU_DESCR = {INTEL_FAM6_SAPPHIRERAPIDS_X: "Sapphire Rapids Xeon",
               INTEL_FAM6_ALDERLAKE_L:      "Alder Lake mobile",
               INTEL_FAM6_TREMONT_D:        "Tremont Atom (Snow Ridge)"}
 
-# The levels names have to be the same as "scope" names in 'CPUFreq', 'CStates', etc.
+# The levels names have to be the same as "scope" names in 'PStates', 'CStates', etc.
 LEVELS = ("package", "node", "core", "CPU")
 
 class CPUInfo:
