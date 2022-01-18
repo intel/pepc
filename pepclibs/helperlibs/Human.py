@@ -157,18 +157,24 @@ def _tokenize(hval, specs, default_unit, name, multiple=True):
     if not multiple and len(tokens) > 1:
         raise Error(f"failed to parse{name} value '{hval}': should be one value")
 
-    if multiple:
-        # In case of multiple units, all values except for the last one must be integers.
-        # For example, this is allowed: 1d3m1.6s, and this is not: 1.5d3m4s.
-        for spec in list(tokens)[:-1]:
-            if not Trivial.is_int(tokens[spec]):
+    for idx, (spec, val) in enumerate(tokens.items()):
+        if idx < len(tokens) - 1:
+            # This is not the last element, it must be an integer.
+            try:
+                tokens[spec] = int(val)
+            except:
                 raise Error(f"failed to parse{name} value '{hval}': non-integer amount of "
-                            f"{specs[spec]}")
+                            f"{specs[spec]}") from None
+        else:
+            # This is the last element. It can be a floating point or integer.
+            try:
+                tokens[spec] = float(val)
+            except:
+                raise Error(f"failed to parse{name} value '{hval}': non-numeric amount of "
+                            f"{specs[spec]}") from None
 
-    val = tokens[list(tokens)[-1]]
-    if not Trivial.is_float(val):
-        raise Error(f"failed to parse{name} value '{hval}': non-numeric amount of "
-                    f"{specs[spec]}")
+            if Trivial.is_int(val):
+                tokens[spec] = int(val)
 
     return tokens
 
@@ -193,10 +199,10 @@ def parse_duration(htime, default_unit="s", name=None):
     specs = {"d" : "days", "h" : "hours", "m" : "minutes", "s" : "seconds"}
     tokens = _tokenize(htime, specs, default_unit, name)
 
-    days = int(tokens.get("d", 0))
-    hours = int(tokens.get("h", 0))
-    mins = int(tokens.get("m", 0))
-    secs = int(tokens.get("s", 0))
+    days  = tokens.get("d", 0)
+    hours = tokens.get("h", 0)
+    mins  = tokens.get("m", 0)
+    secs  = tokens.get("s", 0)
     return days * 24 * 60 * 60 + hours * 60 * 60 + mins * 60 + secs
 
 def parse_duration_ns(htime, default_unit="ns", name=None):
@@ -213,9 +219,9 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
     specs = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
     tokens = _tokenize(htime, specs, default_unit, name)
 
-    ms = int(tokens.get("ms", 0))
-    us = int(tokens.get("us", 0))
-    ns = int(tokens.get("ns", 0))
+    ms = tokens.get("ms", 0)
+    us = tokens.get("us", 0)
+    ns = tokens.get("ns", 0)
     return ms * 1000 * 1000 + us * 1000 + ns
 
 def parse_freq(hfreq, default_unit="Hz", name=None):
