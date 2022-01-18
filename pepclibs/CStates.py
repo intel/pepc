@@ -26,7 +26,7 @@ _LOG = logging.getLogger()
 # just features controlled by an MSR, such as "c1e_autopromote" from 'PowerCtl.FEATURES'.
 #
 # Define the global 'PROPS' dictionary, and then refine update it later. Full dictionary is
-# available via 'CPUIdle.props'.
+# available via 'CStates.props'.
 PROPS = {}
 PROPS.update(copy.deepcopy(PowerCtl.FEATURES))
 PROPS.update(copy.deepcopy(PCStateConfigCtl.FEATURES))
@@ -50,7 +50,7 @@ _KEYS_DESCR = {
     "c1_undemotion" : "C1 un-demotion enabled",
 }
 
-class CPUIdle:
+class CStates:
     """
     This class provides API to the "cpuidle" Linux sybsystem.
 
@@ -535,7 +535,7 @@ class CPUIdle:
     def get_scope(pname):
         """Get scope of property 'pname'. The 'pname' argument is same as in 'set_prop()'."""
 
-        CPUIdle._check_prop(pname)
+        CStates._check_prop(pname)
 
         if pname in PowerCtl.FEATURES:
             return PowerCtl.FEATURES[pname]["scope"]

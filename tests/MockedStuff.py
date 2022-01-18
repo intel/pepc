@@ -16,7 +16,7 @@ import random
 from contextlib import contextmanager
 from unittest.mock import patch, mock_open
 from pathlib import Path
-from pepclibs import CPUInfo, CPUIdle
+from pepclibs import CPUInfo, CStates
 from pepclibs.helperlibs import Procs, FSHelpers
 from pepclibs.msr import MSR, PCStateConfigCtl, PlatformInfo, TurboRatioLimit, PMEnable
 
@@ -40,7 +40,7 @@ def _get_mocked_data():
     Get mocked data for testing purposes. The files with testdata can be opened only before mocking.
     Returns dictionary with following keys:
       * cstates - C-state info, similar to output of 'run_verify()' call from
-                  'CPUIdle.get_cstates_info()'.
+                  'CStates.get_cstates_info()'.
       * files - dictionary of file paths relevant to testing.
       * lscpu - output of 'lscpu' command used for testing.
     """
@@ -85,7 +85,7 @@ class MockedProc(Procs.Proc):
         """
 
         if re.match("find '.*' -type f -regextype posix-extended -regex", command):
-            # Mock the call from CPUIdle._get_cstates_info().
+            # Mock the call from CStates._get_cstates_info().
             cpus = []
             match = re.search(r"cpu\((\d.*)\)/cpuidle", command)
             if match:
@@ -251,7 +251,7 @@ def get_test_cpu_info():
     'get_mocked_objects()'. Returns information as a dictionary.
     """
 
-    with get_mocked_objects() as _, CPUInfo.CPUInfo() as cpuinfo, CPUIdle.CPUIdle() as cpuidle:
+    with get_mocked_objects() as _, CPUInfo.CPUInfo() as cpuinfo, CStates.CStates() as cpuidle:
         result = {}
         result["cpus"] = cpuinfo.get_cpus()
         result["max_cpu"] = max(result["cpus"])

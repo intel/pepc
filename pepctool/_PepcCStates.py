@@ -16,7 +16,7 @@ import logging
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
-from pepclibs import CPUIdle, CPUInfo
+from pepclibs import CStates, CPUInfo
 from pepctool import _PepcCommon
 
 _LOG = logging.getLogger()
@@ -202,7 +202,7 @@ def cstates_config_command(args, proc):
         # is committed.
         msr.start_transaction()
 
-        with CPUIdle.CPUIdle(proc=proc, cpuinfo=cpuinfo, msr=msr) as cpuidle:
+        with CStates.CStates(proc=proc, cpuinfo=cpuinfo, msr=msr) as cpuidle:
 
             _print_scope_warnings(args, cpuidle)
 
@@ -232,7 +232,7 @@ def cstates_info_command(args, proc):
     cpus = _PepcCommon.get_cpus(args, proc, default_cpus=0)
 
     first = True
-    with CPUIdle.CPUIdle(proc=proc) as cpuidle:
+    with CStates.CStates(proc=proc) as cpuidle:
         for info in cpuidle.get_cstates_info(cpus=cpus, cstates=args.cstates):
             if not first:
                 _LOG.info("")

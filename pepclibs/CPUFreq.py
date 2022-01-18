@@ -362,7 +362,7 @@ class CPUFreq:
         """
         Yield CPU frequency information. The arguments are as follows.
           * cpus - the CPUs to yield the information for, same as the 'cpus' argument of the
-                   'CPUIdle.get_cstates_info()' function.
+                   'CStates.get_cstates_info()' function.
           * keys - By default this generator yields all the information in form of a dictionary,
                    where each key represents a piece of information. For example, the "base" key
                    contains the base frequency value. However, if only some of the keys are needed,
@@ -809,7 +809,7 @@ class CPUFreq:
         arguments are as follows.
           * prop - name of the property to set (see 'PROPS' for the full list).
           * val - the value to set for the property.
-          * cpus - same as in 'CPUIdle.get_cstates_info()'.
+          * cpus - same as in 'CStates.get_cstates_info()'.
         """
 
         self._check_prop(prop)

@@ -43,7 +43,7 @@ limit C-states for a specific CPU, or core, or package with just one simple comm
 or disable HW features without a need to remember MSR registers and bit numbers, and so on.
 
 This project provides the tool and various modules that other projects like 'wult' can use. For
-example, the 'CPUIdle' module provides methods for discovering and manipulating C-states of a Linux
+example, the 'CStates' module provides methods for discovering and manipulating C-states of a Linux
 computer system.
 
 # Authors and contributors
