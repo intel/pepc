@@ -76,7 +76,9 @@ class FeaturedMSR:
         Read the MSR on CPUs in 'cpus', extract the values of the 'fname' feature, and yield the
         result. The arguments are as follows.
           * fname - name of the feature to read.
-          * cpus - the CPUs to read the feature from (same as in 'CPUIdle.get_cstates_info()').
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
 
         The yielded tuples are '(cpunum, val)'.
           * cpunum - the CPU number the MSR was read from.
@@ -117,7 +119,7 @@ class FeaturedMSR:
         """
         Check if feature 'fname' is enabled on all CPUs in 'cpus'. The arguments are as follows.
           * fname - name of the feature to read and check.
-          * cpus - the CPUs to read the feature from (same as in 'CPUIdle.get_cstates_info()').
+          * cpus - the CPUs to read the feature from (same as in 'read_feature()').
 
         Returns 'True' if the feature is enabled on all CPUs in 'cpus', returns 'False' otherwise.
         """
@@ -151,7 +153,7 @@ class FeaturedMSR:
         the value corresponding to 'val', and writing it back. The arguments are as follows.
           * fname - name of the feature to set.
           * val - value to set the feature to.
-          * cpus - the CPUs to write the feature to (same as in 'CPUIdle.get_cstates_info()').
+          * cpus - the CPUs to write the feature to (same as in 'read_feature()').
         """
 
         _LOG.debug("set feature '%s' to value %s on CPU(s) %s%s", fname, val,
@@ -190,7 +192,7 @@ class FeaturedMSR:
           * fname - name of the feature to enable or disable.
           * enable - enable the feature if 'True', disable otherwise.
           * cpus - the CPUs to enable or disable the feature on (same as in
-                   'CPUIdle.get_cstates_info()').
+                   'read_feature()').
         """
 
         self.check_feature_supported(fname, cpus=cpus)
@@ -217,7 +219,7 @@ class FeaturedMSR:
         """
         Check if a feature is supported by all CPUs in 'cpus'.
           * fname - name of the feature to check.
-          * cpus - the CPUs to check the feature for (same as in 'CPUIdle.get_cstates_info()').
+          * cpus - the CPUs to check the feature for (same as in 'read_feature()').
 
         Returns 'True' if the feature is supported by all CPUs in 'cpus', returns 'False' otherwise.
         """
