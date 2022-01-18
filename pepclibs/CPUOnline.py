@@ -21,6 +21,13 @@ _LOG = logging.getLogger()
 class CPUOnline:
     """This class provides API for onlining and offlining CPUs."""
 
+    def _get_cpuinfo(self):
+        """Returns a 'CPUInfo.CPUInfo()' object."""
+
+        if not self._cpuinfo:
+            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
+        return self._cpuinfo
+
     def _verify_path(self, cpu, path):
         """Verify if path 'path' exists."""
 
@@ -60,9 +67,8 @@ class CPUOnline:
                 else:
                     cpugeom_key = "nums"
 
-                if not self._cpuinfo:
-                    self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
-                cpugeom = self._cpuinfo.get_cpu_geometry()
+                cpuinfo = self._get_cpuinfo()
+                cpugeom = cpuinfo.get_cpu_geometry()
                 cpus = cpugeom["CPU"][cpugeom_key]
             else:
                 cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=True)
