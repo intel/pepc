@@ -113,7 +113,7 @@ class MockedProc(Procs.Proc):
             # Mock the call from CPUInfo._get_cpu_info().
             return (_MOCKED_DATA['lscpu'], "")
 
-        if command == "lscpu --all -p=socket,node,core,cpu,online":
+        if command == "lscpu --physical --all -p=socket,node,core,cpu,online":
             # Mock the call from CPUInfo.CPUInfo._get_lscpu().
             return (_MOCKED_DATA['lscpu_cpus'], "")
 

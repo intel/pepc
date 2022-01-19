@@ -55,8 +55,9 @@ class EmulProc():
         """Initialize emulated commands and the output the commands will produce."""
 
         self._cmds = {}
-        for cmd, datafile in (("lscpu --all -p=socket,node,core,cpu,online", "lscpu_info_cpus.txt"),
-                              ("lscpu", "lscpu_info.txt"), ):
+        cmdinfo = (("lscpu --physical --all -p=socket,node,core,cpu,online", "lscpu_info_cpus.txt"),
+                   ("lscpu", "lscpu_info.txt"),)
+        for cmd, datafile in cmdinfo:
             with contextlib.suppress(Exception), open(datapath / datafile) as fobj:
                 self._cmds[cmd] = fobj.readlines()
 
