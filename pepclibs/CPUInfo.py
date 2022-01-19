@@ -382,10 +382,20 @@ class CPUInfo:
         """Same as 'normalize_packages()', but for a single package number."""
         return self.normalize_packages([package])[0]
 
-    def normalize_cpus(self, cpus):
-        """Same as 'normalize_packages()', but for CPU numbers."""
+    def normalize_cpus(self, cpus, offlined_ok=False):
+        """
+        Validate CPU numbers in 'cpus' and return a normalized list. The arguments are as follows.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. Value 'all' mean "all CPUs".
+          * offlined - by default, offlined CPUs are considered as not available and are not allowed
+                       to be in 'cpus' (will cause an exception). Use 'offlined_ok=True' to allow
+                       for offlined CPUs.
+        """
 
         allcpus = self.get_cpus()
+        if offlined_ok:
+            allcpus += self.get_offline_cpus()
 
         if cpus == "all":
             return allcpus
