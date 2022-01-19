@@ -227,33 +227,43 @@ class CPUInfo:
 
         return self._topology
 
-    def _get_level(self, start, end, nums="all"):
+    def _get_level_nums(self, sublvl, lvl, nums):
         """
-        Returns list of level 'end' values belonging to level 'start' for each ID in 'nums'. Returns
-        all values if 'nums' is "all". Offline CPUs are ignored.
+        Returns all sub-level 'sublvl' numbers in level 'lvl' elements with numbers 'nums'.
+
+        Examples.
+
+        1. Get CPU numbers in cores 2 and 10.
+            _get_level_nums("CPU", "core", (2, 10))
+        2. Get node numbers in package 1.
+            _get_level_nums("node", "package", (1,))
+        3. Get all core numbers.
+            _get_level_nums("core", "package", "all")
+            _get_level_nums("core", "node", "all")
+            _get_level_nums("core", "core", "all")
         """
 
-        if start not in self._levels_set or end not in self._levels_set:
+        if lvl not in self._levels_set or sublvl not in self._levels_set:
             levels = ", ".join(LEVELS)
-            raise Error(f"bad levels '{start}','{end}', use: {levels}")
+            raise Error(f"bad levels '{lvl}','{sublvl}', use: {levels}")
 
-        start_idx = LEVELS.index(start)
-        end_idx = LEVELS.index(end)
+        start_idx = LEVELS.index(lvl)
+        end_idx = LEVELS.index(sublvl)
         if start_idx > end_idx:
-            raise Error(f"bad level order, cannot get {end}s from level '{start}'")
+            raise Error(f"bad level order, cannot get {sublvl}s from level '{lvl}'")
 
         items = {}
         for tline in self._get_topology():
             if not tline["online"]:
                 continue
 
-            if tline[start] in items.keys():
-                items[tline[start]].append(tline[end])
+            if tline[lvl] in items.keys():
+                items[tline[lvl]].append(tline[sublvl])
             else:
-                items[tline[start]] = [tline[end]]
+                items[tline[lvl]] = [tline[sublvl]]
 
-        # So now 'items' is a dictionary with keys being the 'start' level elements and values being
-        # lists of the 'end' level elements.
+        # So now 'items' is a dictionary with keys being the 'lvl' level elements and values being
+        # lists of the 'sublvl' level elements.
         # For example, suppose we are looking for CPUs in packages, and the system has 2 packages,
         # each containing 8 CPUs. The 'items' dictionary will look like this:
         # items[0] = {0, 2, 4, 6, 8, 10, 12, 14}
@@ -270,36 +280,36 @@ class CPUInfo:
         for num in nums:
             if num not in items:
                 items_str = ", ".join(str(key) for key in items)
-                raise Error(f"{start} {num} does not exist{self._proc.hostmsg}, use: {items_str}")
+                raise Error(f"{lvl} {num} does not exist{self._proc.hostmsg}, use: {items_str}")
             result += items[num]
 
         return Trivial.list_dedup(result)
 
     def get_packages(self):
         """Returns list of package numbers, where at least one online CPU."""
-        return self._get_level("package", "package")
+        return self._get_level_nums("package", "package", "all")
 
     def get_cores(self):
         """Returns list of core numbers, where at least one online CPU."""
-        return self._get_level("core", "core")
+        return self._get_level_nums("core", "core", "all")
 
     def get_cpus(self):
         """Returns list of online CPU numbers."""
-        return self._get_level("CPU", "CPU")
+        return self._get_level_nums("CPU", "CPU", "all")
 
     def packages_to_cores(self, packages="all"):
         """
         Returns list of cores with at least one online CPU belonging to packages 'packages'. The
         'packages' argument similar to 'cores' in 'cores_to_cpus()'.
         """
-        return self._get_level("package", "core", nums=packages)
+        return self._get_level_nums("core", "package", packages)
 
     def packages_to_cpus(self, packages="all"):
         """
         Returns list of online CPU numbers belonging to packages 'packages'. The 'packages' argument
         is similar 'cores' in 'cores_to_cpus()'.
         """
-        return self._get_level("package", "CPU", nums=packages)
+        return self._get_level_nums("CPU", "package", packages)
 
     def cores_to_cpus(self, cores="all"):
         """
@@ -307,7 +317,7 @@ class CPUInfo:
         allowed to contain both integer and string type numbers. For example, both are OK: '(0, 2)'
         and '("0", "2")'. Returns all CPU numbers if 'cores' is "all".
         """
-        return self._get_level("core", "CPU", nums=cores)
+        return self._get_level_nums("CPU", "core", cores)
 
     def cpu_to_package(self, cpu):
         """Returns integer package number for CPU number 'cpu'."""
