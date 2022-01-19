@@ -39,7 +39,6 @@ def test_v1_cpuhotplug_online():
     """Test 'pepc cpu-hotplug online' command."""
 
     good_options = [
-        "",
         "--cpus all",
         "--cpus 1",
         "--cpus 1-2"]
@@ -47,10 +46,15 @@ def test_v1_cpuhotplug_online():
     for option in good_options:
         run_pepc(f"cpu-hotplug online {option}", exp_ret=0)
 
+    bad_options = [""]
+    for option in bad_options:
+        run_pepc(f"cpu-hotplug online {option}", exp_ret=-1)
+
 def test_v1_cpuhotplug_offline():
     """Test 'pepc cpu-hotplug offline' command."""
 
     good_options = [
+        "--cpus all",
         "--cpus 1",
         "--cpus 1-2",
         f"--cpus {_CPUINFO['max_cpu']}",
@@ -64,8 +68,7 @@ def test_v1_cpuhotplug_offline():
         run_pepc(f"cpu-hotplug offline {option} --siblings", exp_ret=0)
 
     bad_options = [
-        "",
-        "--cpus all",
+        "--cpus all --cores 0",
         "--cpus 0",
         "--cores 0",
         "--cores all",
@@ -75,4 +78,5 @@ def test_v1_cpuhotplug_offline():
         run_pepc(f"cpu-hotplug offline {option}", exp_ret=-1)
 
     for option in bad_options:
+        # With '--siblings' CPU 0 will be excluded and all these "bad" options become OK.
         run_pepc(f"cpu-hotplug offline {option} --siblings", exp_ret=0)
