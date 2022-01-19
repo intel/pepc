@@ -161,6 +161,7 @@ class CPUInfo:
         * 'get_packages()'
         * 'get_cores()'
         * 'get_cpus()'
+        * 'get_offline_cpus()'
     2. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
             * 'packages_to_cores()'
@@ -296,6 +297,16 @@ class CPUInfo:
     def get_cpus(self):
         """Returns list of online CPU numbers."""
         return self._get_level_nums("CPU", "CPU", "all")
+
+    def get_offline_cpus(self):
+        """Returns list of offline CPU numbers."""
+
+        cpus = []
+        for tline in self._get_topology():
+            if not tline["online"]:
+                cpus.append(tline["CPU"])
+
+        return cpus
 
     def packages_to_cores(self, packages="all"):
         """
