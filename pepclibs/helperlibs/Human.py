@@ -181,6 +181,8 @@ def _tokenize(hval, specs, default_unit, name, multiple=True):
 
     return tokens
 
+DURATION_SPECS_DESCR = {"d" : "days", "h" : "hours", "m" : "minutes", "s" : "seconds"}
+
 def parse_duration(htime, default_unit="s", name=None):
     """
     This function does the opposite to what 'duration()' does - parses the human time string and
@@ -212,6 +214,8 @@ def parse_duration(htime, default_unit="s", name=None):
         result = int(result)
     return result
 
+DURATION_NS_SPECS_DESCR = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
+
 def parse_duration_ns(htime, default_unit="ns", name=None):
     """
     Similar to 'parse_duration()', but supports different specifiers and returns integer amount of
@@ -234,6 +238,8 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
     if Trivial.is_int(result):
         result = int(result)
     return result
+
+FREQ_SPECS_DESCR = {"GHz" : "gigahertz", "MHz" : "megahertz", "kHz" : "kilohertz", "Hz" : "Hertz"}
 
 def parse_freq(hfreq, default_unit="Hz", name=None):
     """
