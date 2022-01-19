@@ -3,6 +3,7 @@ pepc (1.2.0) unstable; urgency=low
   * Merge the 'cstate set' command into 'cstate config'.
   * Rename 'aspm set' command to 'aspm config'.
   * Improve C-states information printing.
+  * Fix and improve CPU onlining/offlining.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  ADD_DATE
 
