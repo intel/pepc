@@ -24,14 +24,13 @@ def cpu_hotplug_info_command(_, proc):
     """Implements the 'cpu-hotplug info' command."""
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
-        cpugeom = cpuinfo.get_cpu_geometry()
-
-    for key, word in (("nums", "online"), ("offline_cpus", "offline")):
-        if not cpugeom["CPU"][key]:
-            _LOG.info("No %s CPUs%s", word, proc.hostmsg)
-        else:
-            _LOG.info("The following CPUs are %s%s: %s",
-                      word, proc.hostmsg, Human.rangify(cpugeom["CPU"][key]))
+        for func, word in (("get_cpus", "online"), ("get_offline_cpus", "offline")):
+            cpus = getattr(cpuinfo, func)()
+            if cpus:
+                _LOG.info("The following CPUs are %s%s: %s",
+                          word, proc.hostmsg, Human.rangify(cpus))
+            else:
+                _LOG.info("No %s CPUs%s", word, proc.hostmsg)
 
 def cpu_hotplug_online_command(args, proc):
     """Implements the 'cpu-hotplug online' command."""
@@ -64,12 +63,13 @@ def cpu_hotplug_offline_command(args, proc):
             onl.offline(cpus=cpus, skip_unsupported=skip_unsupported)
             return
 
-        cpugeom = cpuinfo.get_cpu_geometry()
-        siblings_to_offline = []
-        for siblings in cpugeom["core"]["nums"].values():
-            siblings_to_offline += siblings[1:]
+        siblings_to_offline = set()
+        for cpu in cpus:
+            core = cpuinfo.cpu_to_core(cpu)
+            siblings = cpuinfo.cores_to_cpus(cores=(core,))
+            siblings_to_offline.update(siblings[1:])
 
-        siblings_to_offline = set(cpus) & set(siblings_to_offline)
+        siblings_to_offline = set(cpus).intersection(siblings_to_offline)
 
         if not siblings_to_offline:
             _LOG.warning("nothing to offline%s, no siblings among the following CPUs:%s",
