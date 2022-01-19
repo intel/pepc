@@ -12,6 +12,7 @@
 
 from pathlib import Path
 import pytest
+from pepclibs import CPUInfo
 from pepclibs.helperlibs import EmulProcs, Procs, SSH
 
 def get_proc(hostname):
@@ -40,3 +41,10 @@ def fixture_proc(hostname, dataset): # pylint: disable=unused-argument
     proc = get_proc(hostname)
     yield proc
     proc.close()
+
+@pytest.fixture(name="cpuinfo")
+def fixture_cpuinfo(proc):
+    """Same as the 'fixture_proc()', but yields the 'CPUInfo' object."""
+
+    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+        yield cpuinfo
