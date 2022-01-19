@@ -30,8 +30,8 @@ def cpu_hotplug_info_command(_, proc):
         if not cpugeom["CPU"][key]:
             _LOG.info("No %s CPUs%s", word, proc.hostmsg)
         else:
-            _LOG.info("The following CPUs are %s%s:", word, proc.hostmsg)
-            _LOG.info("%s", Human.rangify(cpugeom["CPU"][key]))
+            _LOG.info("The following CPUs are %s%s: %s",
+                      word, proc.hostmsg, Human.rangify(cpugeom["CPU"][key]))
 
 def cpu_hotplug_online_command(args, proc):
     """Implements the 'cpu-hotplug online' command."""
