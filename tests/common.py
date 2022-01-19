@@ -23,7 +23,8 @@ def get_proc(hostname):
         proc = EmulProcs.EmulProc()
 
         datapath = Path(__file__).parent.resolve() / "data"
-        proc.init_testdata(datapath)
+        proc.init_cpuinfo_testdata(datapath)
+        proc.init_msr_testdata()
 
         return proc
 
