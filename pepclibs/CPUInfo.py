@@ -253,36 +253,39 @@ class CPUInfo:
         if start_idx > end_idx:
             raise Error(f"bad level order, cannot get {sublvl}s from level '{lvl}'")
 
-        items = {}
+        elts = {}
         for tline in self._get_topology():
             if not tline["online"]:
                 continue
 
-            if tline[lvl] in items.keys():
-                items[tline[lvl]].append(tline[sublvl])
-            else:
-                items[tline[lvl]] = [tline[sublvl]]
+            lvl_num = tline[lvl]
+            sublvl_num = tline[sublvl]
 
-        # So now 'items' is a dictionary with keys being the 'lvl' level elements and values being
-        # lists of the 'sublvl' level elements.
-        # For example, suppose we are looking for CPUs in packages, and the system has 2 packages,
-        # each containing 8 CPUs. The 'items' dictionary will look like this:
-        # items[0] = {0, 2, 4, 6, 8, 10, 12, 14}
-        # items[1] = {1, 3, 6, 7, 9, 11, 13, 15}
+            if lvl_num not in elts:
+                elts[lvl_num] = {}
+
+            elts[lvl_num][sublvl_num] = None
+
+        # 'elts' is a dictionary with keys being the 'lvl' level elements and values being the
+        # 'sublvl' level elements.
+        # For example, suppose we are looking for CPUs in all packages, the system has 2 packages,
+        # each containing 8 CPUs. The 'elts' dictionary will look like this:
+        # elts[0] = {0, 2, 4, 6, 8, 10, 12, 14}
+        # elts[1] = {1, 3, 6, 7, 9, 11, 13, 15}
         # In this example, package 0 includes CPUs with even numbers, and package 1 includes CPUs
         # with odd numbers.
 
         if nums == "all":
-            nums = list(items.keys())
+            nums = list(elts.keys())
         else:
             nums = ArgParse.parse_int_list(nums, ints=True, dedup=True, sort=True)
 
         result = []
         for num in nums:
-            if num not in items:
-                items_str = ", ".join(str(key) for key in items)
-                raise Error(f"{lvl} {num} does not exist{self._proc.hostmsg}, use: {items_str}")
-            result += items[num]
+            if num not in elts:
+                elts_str = ", ".join(str(key) for key in elts)
+                raise Error(f"{lvl} {num} does not exist{self._proc.hostmsg}, use: {elts_str}")
+            result += list(elts[num])
 
         return Trivial.list_dedup(result)
 
