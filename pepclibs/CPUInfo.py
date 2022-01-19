@@ -204,7 +204,7 @@ class CPUInfo:
             return self._topology
 
         # Note, we could just walk sysfs, but 'lscpu' is faster.
-        cmd = "lscpu --all -p=socket,node,core,cpu,online"
+        cmd = "lscpu --physical --all -p=socket,node,core,cpu,online"
         lines, _ = self._proc.run_verify(cmd, join=False)
 
         self._topology = []
@@ -213,14 +213,17 @@ class CPUInfo:
                 continue
 
             # Each line has comma-separated integers for socket, node, core and cpu. For example:
-            # 1,1,9,61,Y. In case of offline CPU, the final element is going to be "N". For example:
-            # ,,,61,N. Note, only the "CPU" level is known for offline CPUs.
+            # 1,1,9,61,Y. In case of offline CPU, the final element is going to be "N", for example:
+            # ,-,,61,N. Note, only the "CPU" level is known for offline CPUs.
             vals = line.strip().split(",")
 
             tline = {}
             for key, val in zip(LEVELS, vals):
                 # For offline CPUs all levels except for the "CPU" level will have empty strings.
-                tline[key] = int(val) if val != "" else None
+                if key == "CPU" or vals[-1] == "Y":
+                    tline[key] = int(val)
+                else:
+                    tline[key] = None
 
             tline["online"] = vals[-1] == "Y"
 
