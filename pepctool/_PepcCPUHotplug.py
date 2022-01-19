@@ -47,13 +47,21 @@ def cpu_hotplug_offline_command(args, proc):
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
         CPUOnline.CPUOnline(progress=logging.INFO, proc=proc, cpuinfo=cpuinfo) as onl:
+
+        # Some CPUs may not support offlining. Suppose it is CPU 0. If CPU 0 is in the 'cpus' list,
+        # the 'onl.offline()' method will error out. This is OK in a situation when the user
+        # explicitely specified CPU 0 (e.g., via '--cpus 0'). However, this is not OK if the user
+        # indirectly specified CPU 0 it via '--cpus all'. Let's recognize the latter as a special
+        # case and just skip all CPUs that do not support offlining.
+        skip_unsupported = args.cpus == "all" and args.cores is None and args.packages is None
+
         cpus = _PepcCommon.get_cpus(args, proc, default_cpus=None, cpuinfo=cpuinfo)
 
         if not cpus:
             raise Error("please, specify the CPUs to offline")
 
         if not args.siblings:
-            onl.offline(cpus=cpus)
+            onl.offline(cpus=cpus, skip_unsupported=skip_unsupported)
             return
 
         cpugeom = cpuinfo.get_cpu_geometry()
