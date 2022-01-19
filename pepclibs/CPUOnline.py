@@ -12,7 +12,7 @@ This module provides an API for onlining and offlining CPUs.
 
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import ArgParse, FSHelpers, Procs, Trivial
+from pepclibs.helperlibs import FSHelpers, Procs
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 
@@ -53,34 +53,11 @@ class CPUOnline:
 
         return self._sysfs_base / f"cpu{cpu}" / "online"
 
-    def _normalize_cpus(self, cpus, online):
-        """
-        Some methods accept the list of CPUs on input. The list may be a string of comma-separated
-        numbers, or a list. It may contain CPU ranges. This function normalizes user input and turns
-        it into a list of integer CPU numbers.
-        """
-
-        if isinstance(cpus, str):
-            if cpus == "all":
-                if online:
-                    cpugeom_key = "offline_cpus"
-                else:
-                    cpugeom_key = "nums"
-
-                cpuinfo = self._get_cpuinfo()
-                cpugeom = cpuinfo.get_cpu_geometry()
-                cpus = cpugeom["CPU"][cpugeom_key]
-            else:
-                cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=True)
-        else:
-            for cpu in cpus:
-                if not Trivial.is_int(cpu):
-                    raise Error(f"bad CPU number '{cpu}'")
-
-        return cpus
-
     def _toggle(self, cpus, online):
         """Implements onlining and offlining."""
+
+        skip_cpu0 = cpus == "all"
+        cpuinfo = self._get_cpuinfo()
 
         if online:
             data = "1"
@@ -91,8 +68,13 @@ class CPUOnline:
             state_str = "offline"
             action_str = "Offlining"
 
-        skip_cpu0 = cpus == "all"
-        cpus = self._normalize_cpus(cpus, online)
+        if cpus == "all":
+            if online:
+                cpus = cpuinfo.get_offline_cpus()
+            else:
+                cpus = cpuinfo.get_cpus()
+        else:
+            cpus = cpuinfo.normalize_cpus(cpus, offlined_ok=True)
 
         _LOG.debug("CPUs to %s: %s", state_str, ", ".join([str(cpu) for cpu in cpus]))
 
