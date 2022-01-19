@@ -33,4 +33,4 @@ def run_pepc(arguments, exp_ret=None):
         ret = _Pepc.main()
 
         if exp_ret is not None:
-            assert ret == exp_ret
+            assert ret == exp_ret, f"{ret} != {exp_ret}, command: {cmd}"
