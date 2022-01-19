@@ -13,6 +13,7 @@ This module includes the "cpu-hotplug" 'pepc' command implementation.
 """
 
 import logging
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human
 from pepclibs import CPUInfo, CPUOnline
 from pepctool import _PepcCommon
@@ -36,7 +37,7 @@ def cpu_hotplug_online_command(args, proc):
     """Implements the 'cpu-hotplug online' command."""
 
     if not args.cpus:
-        args.cpus = "all"
+        raise Error("please, specify the CPUs to online")
 
     with CPUOnline.CPUOnline(progress=logging.INFO, proc=proc) as onl:
         onl.online(cpus=args.cpus)
@@ -46,7 +47,10 @@ def cpu_hotplug_offline_command(args, proc):
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
         CPUOnline.CPUOnline(progress=logging.INFO, proc=proc, cpuinfo=cpuinfo) as onl:
-        cpus = _PepcCommon.get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
+        cpus = _PepcCommon.get_cpus(args, proc, default_cpus=None, cpuinfo=cpuinfo)
+
+        if not cpus:
+            raise Error("please, specify the CPUs to offline")
 
         if not args.siblings:
             onl.offline(cpus=cpus)

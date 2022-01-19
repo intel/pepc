@@ -113,7 +113,7 @@ def build_arguments_parser():
     #
     # Create parser for the 'cpu-hotplug online' command.
     #
-    text = """Bring CPUs online (all CPUs by default)."""
+    text = """Bring CPUs online."""
     subpars2 = subparsers2.add_parser("online", help=text, description=text)
     subpars2.set_defaults(func=cpu_hotplug_online_command)
 
@@ -123,7 +123,7 @@ def build_arguments_parser():
     #
     # Create parser for the 'cpu-hotplug offline' command.
     #
-    text = """Bring CPUs offline (all CPUs by default)."""
+    text = """Bring CPUs offline."""
     subpars2 = subparsers2.add_parser("offline", help=text, description=text)
     subpars2.set_defaults(func=cpu_hotplug_offline_command)
 
@@ -133,11 +133,10 @@ def build_arguments_parser():
     subpars2.add_argument("--cores", help=text)
     text = """Same as '--cpus', but specifies list of packages."""
     subpars2.add_argument("--packages", help=text)
-    text = """Offline all sibling CPUs, making sure there is only one logical CPU per core left
-              online. If none of '--cpus', '--cores', '--package' options were specified, this option
-              effectively disables hyper-threading. Otherwise, this option will find all sibling
-              CPUs among the selected CPUs, and disable all siblings except for the first sibling in
-              each group of CPUs belonging to the same core."""
+    text = """Offline only "sibling CPUs",  making sure there is only one logical CPU per core is
+              left online. The sibling CPUs will be searched for among the CPUs selected with
+              '--cpus', '--cores', and '--packages'. Therefore, specifying '--cpus all --siblings'
+              will effectively disable hyper-threading on Intel CPUs."""
     subpars2.add_argument("--siblings", action="store_true", help=text)
 
     #
@@ -278,7 +277,7 @@ def build_arguments_parser():
     freq_txt = """The default unit is 'kHz', but 'Hz', 'MHz', and 'GHz' can also be used, for
                   example '900MHz'"""
     text = f"""Set minimum CPU frequency. {freq_txt}. Additionally, one of the following specifiers
-               can be used: min,lfm - minimum supported frequency (LFM), eff - maximum effeciency
+               can be used: min,lfm - minimum supported frequency (LFM), eff - maximum efficiency
                frequency, base,hfm - base frequency (HFM), max - maximum supported frequency.
                Applies to all CPUs by default."""
     subpars2.add_argument("--min-freq", action=ArgParse.OrderedArg, nargs="?", dest="minfreq",
@@ -323,7 +322,7 @@ def build_arguments_parser():
     subparsers2 = subpars.add_subparsers(title="further sub-commands", metavar="")
 
     text = "Get PCI ASPM information."
-    descr = """Get information about currrent PCI ASPM configuration."""
+    descr = """Get information about current PCI ASPM configuration."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=aspm_info_command)
 
