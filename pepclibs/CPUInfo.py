@@ -227,10 +227,10 @@ class CPUInfo:
 
         return self._topology
 
-    def _get_level(self, start, end, nums=None):
+    def _get_level(self, start, end, nums="all"):
         """
         Returns list of level 'end' values belonging to level 'start' for each ID in 'nums'. Returns
-        all values if 'nums' is None or "all". Offline CPUs are ignored.
+        all values if 'nums' is "all". Offline CPUs are ignored.
         """
 
         if start not in self._levels_set or end not in self._levels_set:
@@ -261,7 +261,7 @@ class CPUInfo:
         # In this example, package 0 includes CPUs with even numbers, and package 1 includes CPUs
         # with odd numbers.
 
-        if nums is None or nums == "all":
+        if nums == "all":
             nums = list(items.keys())
         else:
             nums = ArgParse.parse_int_list(nums, ints=True, dedup=True, sort=True)
@@ -287,25 +287,25 @@ class CPUInfo:
         """Returns list of online CPU numbers."""
         return self._get_level("CPU", "CPU")
 
-    def packages_to_cores(self, packages=None):
+    def packages_to_cores(self, packages="all"):
         """
         Returns list of cores with at least one online CPU belonging to packages 'packages'. The
         'packages' argument similar to 'cores' in 'cores_to_cpus()'.
         """
         return self._get_level("package", "core", nums=packages)
 
-    def packages_to_cpus(self, packages=None):
+    def packages_to_cpus(self, packages="all"):
         """
         Returns list of online CPU numbers belonging to packages 'packages'. The 'packages' argument
         is similar 'cores' in 'cores_to_cpus()'.
         """
         return self._get_level("package", "CPU", nums=packages)
 
-    def cores_to_cpus(self, cores=None):
+    def cores_to_cpus(self, cores="all"):
         """
         Returns list of online CPU numbers belonging to cores 'cores'. The 'cores' argument is
         allowed to contain both integer and string type numbers. For example, both are OK: '(0, 2)'
-        and '("0", "2")'. Returns all CPU numbers if 'cores' is None or "all".
+        and '("0", "2")'. Returns all CPU numbers if 'cores' is "all".
         """
         return self._get_level("core", "CPU", nums=cores)
 
@@ -344,7 +344,7 @@ class CPUInfo:
 
         allpkgs = self.get_packages()
 
-        if pkgs is None or pkgs == "all":
+        if pkgs == "all":
             return allpkgs
 
         allpkgs = set(allpkgs)
@@ -366,7 +366,7 @@ class CPUInfo:
 
         allcpus = self.get_cpus()
 
-        if cpus is None or cpus == "all":
+        if cpus == "all":
             return allcpus
 
         allcpus = set(allcpus)
