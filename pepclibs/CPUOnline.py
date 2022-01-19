@@ -13,7 +13,7 @@ This module provides an API for onlining and offlining CPUs.
 import logging
 from pathlib import Path
 from pepclibs.helperlibs import FSHelpers, Procs
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 
 _LOG = logging.getLogger()
@@ -33,11 +33,9 @@ class CPUOnline:
 
         if not FSHelpers.isfile(path, proc=self._proc):
             if FSHelpers.isdir(path.parent, proc=self._proc):
-                msg = f"CPU '{cpu}' on host {self._proc.hostname}' does not support " \
-                      f"onlining/offlining"
-            else:
-                msg = f"CPU '{cpu}' does not exist on host '{self._proc.hostname}'"
-            raise Error(msg)
+                raise ErrorNotSupported(f"CPU '{cpu}' on host {self._proc.hostname}' does not "
+                                        f"support onlining/offlining")
+            raise Error(f"CPU '{cpu}' does not exist on host '{self._proc.hostname}'")
 
     def _get_online(self, path):
         """Read the 'online' sysfs file at 'path'."""
