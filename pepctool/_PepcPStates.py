@@ -39,15 +39,6 @@ def _khz_fmt(val):
         val /= 1000
     return f"{val}{unit}"
 
-def _check_uncore_options(args):
-    """Verify that '--cpus' and '--cores' are not used with uncore commands."""
-
-    if args.cpus or args.cores:
-        opt = "--cpus"
-        if args.cores:
-            opt = "--cores"
-        raise Error(f"uncore options are per-package, '{opt}' cannot be used")
-
 def _get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
     """
     Helper function to return user friendly string of host information and the CPUs or packages
@@ -153,15 +144,33 @@ def _print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
                         epb_policies_str = ", ".join(info["epb_policies"])
                         _LOG.info("%s: %s", keys_descr["epb_policies"], epb_policies_str)
 
-def _print_uncore_info(args, proc):
+def _get_uncore_cmd_packages(args, cpuinfo):
+    """
+    This helper function is used for uncore operations, which have package scope. It verifies that
+    '--cpus' and '--cores' are not used with uncore commands. Returns the packages list.
+    """
+
+    if args.cpus or args.cores:
+        opt = "--cpus"
+        if args.cores:
+            opt = "--cores"
+        raise Error(f"uncore options are per-package, '{opt}' cannot be used")
+
+    packages = args.packages
+    if args.packages is None:
+        packages = "all"
+
+    return cpuinfo.normalize_packages(packages)
+
+def _print_uncore_info(args, proc, cpuinfo):
     """Print uncore frequency information."""
 
-    _check_uncore_options(args)
+    packages = _get_uncore_cmd_packages(args, cpuinfo)
     keys_descr = PStates.UNCORE_KEYS_DESCR
 
     first = True
-    with PStates.PStates(proc) as cpufreq:
-        for info in cpufreq.get_uncore_info(args.packages):
+    with PStates.PStates(proc=proc, cpuinfo=cpuinfo) as cpufreq:
+        for info in cpufreq.get_uncore_info(packages):
             if not first:
                 _LOG.info("")
             first = False
@@ -176,10 +185,10 @@ def _print_uncore_info(args, proc):
 def pstates_info_command(args, proc):
     """Implements the 'pstates info' command."""
 
-    if args.uncore:
-        _print_uncore_info(args, proc)
-    else:
-        with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+        if args.uncore:
+            _print_uncore_info(args, proc, cpuinfo)
+        else:
             cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
             _print_pstates_info(proc, cpuinfo, cpus=cpus)
 
@@ -188,14 +197,15 @@ def _handle_freq_opts(args, proc, cpuinfo, cpufreq):
 
     opts = {}
     if "minufreq" in args.oargs or "maxufreq" in args.oargs:
-        _check_uncore_options(args)
+        packages = _get_uncore_cmd_packages(args, cpuinfo)
+
         opts["uncore"] = {}
         opts["uncore"]["min"] = args.oargs.get("minufreq", None)
         opts["uncore"]["max"] = args.oargs.get("maxufreq", None)
-        opts["uncore"]["nums"] = args.packages
+        opts["uncore"]["nums"] = packages
         opts["uncore"]["method"] = getattr(cpufreq, "set_uncore_freq")
         cpus = []
-        for pkg in cpuinfo.normalize_packages(args.packages):
+        for pkg in packages:
             cpus.append(cpuinfo.packages_to_cpus(packages=pkg)[0])
         opts["uncore"]["info_nums"] = cpus
         opts["uncore"]["info_keys"] = ["package"]
