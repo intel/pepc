@@ -51,10 +51,9 @@ class CPUOnline:
 
         return self._sysfs_base / f"cpu{cpu}" / "online"
 
-    def _toggle(self, cpus, online):
+    def _toggle(self, cpus, online, skip_unsupported):
         """Implements onlining and offlining."""
 
-        skip_cpu0 = cpus == "all"
         cpuinfo = self._get_cpuinfo()
 
         if online:
@@ -67,6 +66,7 @@ class CPUOnline:
             action_str = "Offlining"
 
         if cpus == "all":
+            skip_unsupported = True
             if online:
                 cpus = cpuinfo.get_offline_cpus()
             else:
@@ -77,13 +77,16 @@ class CPUOnline:
         _LOG.debug("CPUs to %s: %s", state_str, ", ".join([str(cpu) for cpu in cpus]))
 
         for cpu in cpus:
-            if cpu == 0:
-                if skip_cpu0:
-                    continue
-                raise Error("CPU0 is special in Linux and does not support onlining/offlining")
-
             path = self._get_path(cpu)
-            self._verify_path(cpu, path)
+
+            try:
+                self._verify_path(cpu, path)
+            except ErrorNotSupported as err:
+                if not skip_unsupported:
+                    raise
+                _LOG.info(err)
+                continue
+
             state = self._get_online(path)
             if data == state:
                 msg = f"CPU{cpu} is already {state_str}, skipping"
@@ -102,22 +105,23 @@ class CPUOnline:
 
             self._save([cpu], state == "1")
 
-    def online(self, cpus="all"):
+    def online(self, cpus="all", skip_unsupported=False):
         """
-        Bring CPUs in 'cpus' online. The 'cpus' argument may be a list of CPUs or a string
-        containing a comma-separated list of CPUs and CPU ranges. For example, '0-4,7,8,10-12' would
-        mean CPUs 0 to 4, CPUs 7, 8, and 10 to 12. If 'cpus' is 'all', then all CPUs are onlined
-        (default).
-        """
-
-        self._toggle(cpus, True)
-
-    def offline(self, cpus="all"):
-        """
-        The opposite to 'online()'.
+        Bring CPUs in 'cpus' online. The arguments are as follows.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. Value 'all' mean "all CPUs".
+          * skip_unsupported - by default, if a CPU in 'cpus' does not support onlining/offlining,
+                               this method raises 'ErrorNotSupported()'. If 'skip_unsupported' is
+                               'True', the CPU is just skipped without raising an exception.
         """
 
-        self._toggle(cpus, False)
+        self._toggle(cpus, True, skip_unsupported)
+
+    def offline(self, cpus="all", skip_unsupported=False):
+        """The opposite to 'online()'."""
+
+        self._toggle(cpus, False, skip_unsupported)
 
     def is_online(self, cpu):
         """Returns 'True' if CPU number 'cpu' is online and 'False' otherwise."""
@@ -135,7 +139,7 @@ class CPUOnline:
         """Restore the original CPU states."""
 
         for cpu, state in reversed(self._saved_states.items()):
-            self._toggle([cpu], state)
+            self._toggle([cpu], state, False)
 
     def __init__(self, progress=None, proc=None, cpuinfo=None):
         """
