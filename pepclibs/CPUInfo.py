@@ -164,12 +164,9 @@ class CPUInfo:
         * 'get_offline_cpus()'
         * 'get_cpu_siblings()'
     2. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
-        A. Multiple packages/CPUs/etc numbers:
-            * 'package_to_cores()'
-            * 'packages_to_cpus()'
-            * 'cores_to_cpus()'
-        B. Single package/CPU/etc.
-            * 'cpu_to_package()'
+        * 'packages_to_cpus()'
+        * 'package_to_cores()'
+        * 'cores_to_cpus()'
     3. Get packages/core/etc counts.
         * 'get_packages_count()'
         * 'get_cpus_count()'
@@ -386,18 +383,6 @@ class CPUInfo:
         Returns list of cores numbers belonging to package 'package'.
         """
         return self._get_level_nums("core", "package", (package,))
-
-    def cpu_to_package(self, cpu):
-        """Returns integer package number for CPU number 'cpu'."""
-
-        for pkg in self.get_packages():
-            if cpu in self.packages_to_cpus(packages=pkg):
-                return pkg
-
-        allcpus = self.get_cpus()
-        cpus_str = ", ".join([str(cpu) for cpu in sorted(allcpus)])
-        raise Error(f"CPU{cpu} is not available{self._proc.hostmsg}, available CPUs are:\n"
-                    f"{cpus_str}")
 
     def get_packages_count(self):
         """Returns packages count."""
