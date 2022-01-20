@@ -162,6 +162,7 @@ class CPUInfo:
         * 'get_cores()'
         * 'get_cpus()'
         * 'get_offline_cpus()'
+        * 'get_cpu_siblings()'
     2. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
             * 'packages_to_cores()'
@@ -335,6 +336,32 @@ class CPUInfo:
                 cpus.append(tline["CPU"])
 
         return sorted(cpus)
+
+    def get_cpu_siblings(self, cpu):
+        """
+        Returns list of online CPUs belonging to the same core as CPU 'cpu' (including CPU 'cpu').
+        """
+
+        cpu = self.normalize_cpu(cpu)
+
+        tline = None
+        for tline in self._get_topology():
+            if not tline["online"]:
+                continue
+            if cpu == tline["CPU"]:
+                break
+        else:
+            raise Error("CPU {cpu} is not available{self._proc.hostmsg}")
+
+        siblings = []
+        for tline1 in self._get_topology():
+            if not tline1["online"]:
+                continue
+
+            if tline["package"] == tline1["package"] and tline["core"] == tline1["core"]:
+                siblings.append(tline1["CPU"])
+
+        return siblings
 
     def packages_to_cores(self, packages="all"):
         """
