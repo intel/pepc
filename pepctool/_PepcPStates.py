@@ -69,8 +69,8 @@ def _print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
     keys_descr.update(PStates.UNCORE_KEYS_DESCR)
 
     first = True
-    with PStates.PStates(proc=proc, cpuinfo=cpuinfo) as cpufreq:
-        for info in cpufreq.get_freq_info(cpus, keys=keys):
+    with PStates.PStates(proc=proc, cpuinfo=cpuinfo) as pstates:
+        for info in pstates.get_freq_info(cpus, keys=keys):
             if not first:
                 _LOG.info("")
             first = False
@@ -169,8 +169,8 @@ def _print_uncore_info(args, proc, cpuinfo):
     keys_descr = PStates.UNCORE_KEYS_DESCR
 
     first = True
-    with PStates.PStates(proc=proc, cpuinfo=cpuinfo) as cpufreq:
-        for info in cpufreq.get_uncore_info(packages):
+    with PStates.PStates(proc=proc, cpuinfo=cpuinfo) as pstates:
+        for info in pstates.get_uncore_info(packages):
             if not first:
                 _LOG.info("")
             first = False
@@ -192,7 +192,7 @@ def pstates_info_command(args, proc):
             cpus = get_cpus(args, cpuinfo, default_cpus=0)
             _print_pstates_info(proc, cpuinfo, cpus=cpus)
 
-def _handle_freq_opts(args, proc, cpuinfo, cpufreq):
+def _handle_freq_opts(args, proc, cpuinfo, pstates):
     """implements the 'pstates set' command."""
 
     opts = {}
@@ -203,7 +203,7 @@ def _handle_freq_opts(args, proc, cpuinfo, cpufreq):
         opts["uncore"]["min"] = args.oargs.get("minufreq", None)
         opts["uncore"]["max"] = args.oargs.get("maxufreq", None)
         opts["uncore"]["nums"] = packages
-        opts["uncore"]["method"] = getattr(cpufreq, "set_uncore_freq")
+        opts["uncore"]["method"] = getattr(pstates, "set_uncore_freq")
         cpus = []
         for pkg in packages:
             cpus.append(cpuinfo.packages_to_cpus(packages=pkg)[0])
@@ -218,7 +218,7 @@ def _handle_freq_opts(args, proc, cpuinfo, cpufreq):
         opts["CPU"]["min"] = args.oargs.get("minfreq", None)
         opts["CPU"]["max"] = args.oargs.get("maxfreq", None)
         opts["CPU"]["nums"] = get_cpus(args, cpuinfo)
-        opts["CPU"]["method"] = getattr(cpufreq, "set_freq")
+        opts["CPU"]["method"] = getattr(pstates, "set_freq")
         opts["CPU"]["info_keys"] = ["CPU"]
         opts["CPU"]["info_nums"] = get_cpus(args, cpuinfo, default_cpus=0)
         opts["CPU"]["opt_key_map"] = (("minfreq", "cpu_min"), ("maxfreq", "cpu_max"))
@@ -239,7 +239,7 @@ def _handle_freq_opts(args, proc, cpuinfo, cpufreq):
                     msg += " and "
                 msg += f"maximum frequency to {_khz_fmt(maxfreq)}"
 
-            scope = cpufreq.get_scope(f"{opt.lower()}-freq")
+            scope = pstates.get_scope(f"{opt.lower()}-freq")
             _LOG.info("%s%s", msg, _get_scope_msg(proc, cpuinfo, nums, scope=scope))
 
         info_keys = []
@@ -251,10 +251,10 @@ def _handle_freq_opts(args, proc, cpuinfo, cpufreq):
             info_keys += opt_info["info_keys"]
             _print_pstates_info(proc, cpuinfo, keys=info_keys, cpus=opt_info["info_nums"])
 
-def _handle_pstate_opts(args, proc, cpuinfo, cpufreq):
+def _handle_pstate_opts(args, proc, cpuinfo, pstates):
     """Handle options related to P-state, such as getting or setting EPP or turbo value."""
 
-    _handle_freq_opts(args, proc, cpuinfo, cpufreq)
+    _handle_freq_opts(args, proc, cpuinfo, pstates)
 
     opts = {}
     if "epb" in args.oargs:
@@ -276,9 +276,9 @@ def _handle_pstate_opts(args, proc, cpuinfo, cpufreq):
         optval = getattr(args, optname)
         if optval is not None:
 
-            scope = cpufreq.get_scope(optname)
+            scope = pstates.get_scope(optname)
             msg = _get_scope_msg(proc, cpuinfo, cpus, scope=scope)
-            cpufreq.set_prop(optname, optval, cpus=cpus)
+            pstates.set_prop(optname, optval, cpus=cpus)
             _LOG.info("Set %s to '%s'%s", PStates.PROPS[optname]["name"], optval, msg)
         else:
             cpus = get_cpus(args, cpuinfo, default_cpus=0)
@@ -304,8 +304,8 @@ def pstates_config_command(args, proc):
         # is committed.
         msr.start_transaction()
 
-        with PStates.PStates(proc=proc, cpuinfo=cpuinfo, msr=msr) as cpufreq:
-            _handle_pstate_opts(args, proc, cpuinfo, cpufreq)
+        with PStates.PStates(proc=proc, cpuinfo=cpuinfo, msr=msr) as pstates:
+            _handle_pstate_opts(args, proc, cpuinfo, pstates)
 
         # Commit the transaction. This will flush all the change MSRs (if there were any).
         msr.commit_transaction()
