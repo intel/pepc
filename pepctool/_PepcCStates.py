@@ -229,10 +229,11 @@ def cstates_config_command(args, proc):
 def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
 
-    cpus = _PepcCommon.get_cpus(args, proc, default_cpus=0)
+    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
+         CStates.CStates(proc=proc, cpuinfo=cpuinfo) as cpuidle:
+        cpus = _PepcCommon.get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
 
-    first = True
-    with CStates.CStates(proc=proc) as cpuidle:
+        first = True
         for info in cpuidle.get_cstates_info(cpus=cpus, cstates=args.cstates):
             if not first:
                 _LOG.info("")
