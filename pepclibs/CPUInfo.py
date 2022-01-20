@@ -165,6 +165,7 @@ class CPUInfo:
     2. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
             * 'packages_to_cores()'
+            * 'package_to_cores()'
             * 'packages_to_cpus()'
             * 'cores_to_cpus()'
         B. Single package/CPU/etc.
@@ -337,8 +338,8 @@ class CPUInfo:
 
     def packages_to_cores(self, packages="all"):
         """
-        Returns list of cores with at least one online CPU belonging to packages 'packages'. The
-        'packages' argument similar to 'cores' in 'cores_to_cpus()'.
+        Returns list of cores numbers belonging to packages 'packages'. The 'packages' argument is
+        similar to the one in 'normalize_packages()'.
         """
         return self._get_level_nums("core", "package", packages)
 
@@ -349,13 +350,28 @@ class CPUInfo:
         """
         return self._get_level_nums("CPU", "package", packages)
 
-    def cores_to_cpus(self, cores="all"):
+    def cores_to_cpus(self, cores="all", packages="all"):
         """
-        Returns list of online CPU numbers belonging to cores 'cores'. The 'cores' argument is
-        allowed to contain both integer and string type numbers. For example, both are OK: '(0, 2)'
-        and '("0", "2")'. Returns all CPU numbers if 'cores' is "all".
+        Returns list of online CPU numbers belonging to cores 'cores' in packages 'packages'. The
+        'cores' and 'packages' arguments are similar to the 'packages' argument in
+        'normalize_packages()'.
         """
-        return self._get_level_nums("CPU", "core", cores)
+
+        by_core = self._get_level_nums("CPU", "core", cores)
+        by_package = set(self._get_level_nums("CPU", "package", packages))
+
+        cpus = []
+        for cpu in by_core:
+            if cpu in by_package:
+                cpus.append(cpu)
+
+        return cpus
+
+    def package_to_cores(self, package):
+        """
+        Returns list of cores numbers belonging to package 'package'.
+        """
+        return self._get_level_nums("core", "package", (package,))
 
     def cpu_to_package(self, cpu):
         """Returns integer package number for CPU number 'cpu'."""
@@ -373,7 +389,7 @@ class CPUInfo:
         """Returns integer core number for CPU number 'cpu'."""
 
         for core in self.get_cores():
-            if cpu in self.cores_to_cpus(cores=core):
+            if cpu in self.cores_to_cpus(cores=core, packages="all"):
                 return core
 
         allcpus = self.get_cpus()

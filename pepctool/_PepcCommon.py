@@ -13,6 +13,7 @@ Misc. helpers shared between various 'pepc' commands.
 """
 
 import logging
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Systemctl, Trivial
 
 _LOG = logging.getLogger()
@@ -35,9 +36,16 @@ def get_cpus(args, cpuinfo, default_cpus="all"):
 
     if args.cpus:
         cpus += cpuinfo.normalize_cpus(cpus=args.cpus)
+
     if args.cores:
-        cpus += cpuinfo.cores_to_cpus(cores=args.cores)
-    if args.packages:
+        packages = args.packages
+        if not packages:
+            if cpuinfo.get_packages_count() != 1:
+                raise Error("'--cores' must be used with '--packages'")
+            packages = (0,)
+        cpus += cpuinfo.cores_to_cpus(cores=args.cores, packages=packages)
+
+    if args.packages and not args.cores:
         cpus += cpuinfo.packages_to_cpus(packages=args.packages)
 
     if not cpus and default_cpus is not None:
