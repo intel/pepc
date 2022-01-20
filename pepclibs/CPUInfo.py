@@ -234,7 +234,7 @@ class CPUInfo:
     def _check_level(self, lvl, name="level"):
         """Validate that 'lvl' is a valid level name."""
 
-        if lvl not in self._levels_set:
+        if lvl not in self._lvl2idx:
             levels = ", ".join(LEVELS)
             raise Error(f"bad {name} name '{lvl}', use: {levels}")
 
@@ -258,9 +258,7 @@ class CPUInfo:
         self._check_level(sublvl)
         self._check_level(lvl)
 
-        start_idx = LEVELS.index(lvl)
-        end_idx = LEVELS.index(sublvl)
-        if start_idx > end_idx:
+        if self._lvl2idx[lvl] > self._lvl2idx[sublvl]:
             raise Error(f"bad level order, cannot get {sublvl}s from level '{lvl}'")
 
         elts = {}
@@ -654,9 +652,9 @@ class CPUInfo:
         self._proc = proc
         self._close_proc = proc is None
 
-        self._levels_set = set(LEVELS)
         # The topology cache.
         self._topology = None
+        self._lvl2idx = {lvl : idx for idx, lvl in enumerate(LEVELS)}
 
         # General CPU information.
         self.info = None
