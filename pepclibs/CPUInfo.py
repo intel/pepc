@@ -231,9 +231,10 @@ class CPUInfo:
 
         return self._topology
 
-    def _get_level_nums(self, sublvl, lvl, nums):
+    def _get_level_nums(self, sublvl, lvl, nums, sort=True):
         """
-        Returns all sub-level 'sublvl' numbers in level 'lvl' elements with numbers 'nums'.
+        Returns a list containing all sub-level 'sublvl' numbers in level 'lvl' elements with
+        numbers 'nums'.
 
         Examples.
 
@@ -290,33 +291,41 @@ class CPUInfo:
                 raise Error(f"{lvl} {num} does not exist{self._proc.hostmsg}, use: {elts_str}")
             result += list(elts[num])
 
-        return Trivial.list_dedup(result)
+        result = Trivial.list_dedup(result)
+        if not sort:
+            return result
+        return sorted(result)
 
     def get_packages(self):
-        """Returns list of package numbers, where at least one online CPU."""
+        """
+        Returns list of package numbers sorted in ascending order.
+
+        Important: if a package has all CPUs offline, the package number will not be included in the
+        returned list.
+        """
         return self._get_level_nums("package", "package", "all")
 
     def get_nodes(self):
-        """Returns list of node numbers, where at least one online CPU."""
+        """Same as 'get_packages()', but for NUMA node numbers."""
         return self._get_level_nums("node", "node", "all")
 
     def get_cores(self):
-        """Returns list of core numbers, where at least one online CPU."""
+        """Same as 'get_packages()', but for core numbers."""
         return self._get_level_nums("core", "core", "all")
 
     def get_cpus(self):
-        """Returns list of online CPU numbers."""
+        """Returns list of online CPU numbers sorted in ascending order."""
         return self._get_level_nums("CPU", "CPU", "all")
 
     def get_offline_cpus(self):
-        """Returns list of offline CPU numbers."""
+        """Returns list of offline CPU numbers sorted in ascending order."""
 
         cpus = []
         for tline in self._get_topology():
             if not tline["online"]:
                 cpus.append(tline["CPU"])
 
-        return cpus
+        return sorted(cpus)
 
     def packages_to_cores(self, packages="all"):
         """
