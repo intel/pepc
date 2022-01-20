@@ -181,38 +181,92 @@ class CPUInfo:
         * 'get_cpu_geometry()'
     """
 
-    def _get_topology(self):
+    def _get_topology(self, order="CPU"):
         """
-        Build and return the topology list. Here is an example topology list for a 2-core single
-        socket system with 2 logical CPUs per core and one node per package, and CPU 3 off-lined.
+        Build and return the topology list. Here is an example topology list for the following
+        hypothetical system:
+          * 2 packages, numbers 0, 1 (global numbering).
+          * 1 node per package, numbers 0, 1 (global numbering)
+          * 4 cores per package, numbers 0, 1, 5, 6 (cores 2, 3, 4 do not exist). Non-global
+          *   numbering.
+          * 2 CPUs per core. Total 16 CPUs, numbers 0-16 (global numbering).
 
-        [ {'package': 0, 'node': 0, 'core': 0, 'CPU': 0, 'online': True},
-          {'package': 0, 'node': 0, 'core': 1, 'CPU': 1, 'online': True},
-          {'package': 0, 'node': 0, 'core': 0, 'CPU': 2, 'online': True},
-          {'package': None, 'node': None, 'core': None, 'CPU': 3, 'online': False} ]
+        Here is the topology table in package order. It is sorted by package and CPU.
 
-        In other words, this is basically a table like this:
+		  {'package': 0, 'node': 0, 'core': 0, 'CPU': 0,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 6, 'CPU': 2,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 1, 'CPU': 4,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 5, 'CPU': 6,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 0, 'CPU': 8,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 6, 'CPU': 10, 'online': True},
+		  {'package': 0, 'node': 0, 'core': 1, 'CPU': 12, 'online': True},
+		  {'package': 0, 'node': 0, 'core': 5, 'CPU': 14, 'online': True},
+		  {'package': 1, 'node': 1, 'core': 0, 'CPU': 1,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 6, 'CPU': 3,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 1, 'CPU': 5,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 5, 'CPU': 7,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 0, 'CPU': 9,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 6, 'CPU': 11, 'online': True},
+		  {'package': 1, 'node': 1, 'core': 1, 'CPU': 13, 'online': True},
+		  {'package': 1, 'node': 1, 'core': 5, 'CPU': 15, 'online': True},
 
-        package node core CPU online
-        0       0    0    0   True
-        0       0    1    1   True
-        0       0    0    2   True
-        None    None None 3   False
+        The topology table in node order will look the same (in this particular example). It is
+        sorted by package number,  then node number, then CPU number.
+
+        Here is the topology table in core order. It'll be sorted by package number, and then core
+        number, then CPU number.
+
+		  {'package': 0, 'node': 0, 'core': 0, 'CPU': 0,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 0, 'CPU': 8,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 1, 'CPU': 4,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 1, 'CPU': 12, 'online': True},
+		  {'package': 0, 'node': 0, 'core': 5, 'CPU': 6,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 5, 'CPU': 14, 'online': True},
+		  {'package': 0, 'node': 0, 'core': 6, 'CPU': 2,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 6, 'CPU': 10, 'online': True},
+		  {'package': 1, 'node': 1, 'core': 0, 'CPU': 1,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 0, 'CPU': 9,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 1, 'CPU': 5,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 1, 'CPU': 13, 'online': True},
+		  {'package': 1, 'node': 1, 'core': 5, 'CPU': 7,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 5, 'CPU': 15, 'online': True},
+		  {'package': 1, 'node': 1, 'core': 6, 'CPU': 3,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 6, 'CPU': 11, 'online': True},
+
+        Here is the topology table in CPU order. It'll be sorted by CPU number and then package
+        number.
+
+		  {'package': 0, 'node': 0, 'core': 0, 'CPU': 0,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 0, 'CPU': 1,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 6, 'CPU': 2,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 6, 'CPU': 3,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 1, 'CPU': 4,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 1, 'CPU': 5,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 5, 'CPU': 6,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 5, 'CPU': 7,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 0, 'CPU': 8,  'online': True},
+		  {'package': 1, 'node': 1, 'core': 0, 'CPU': 9,  'online': True},
+		  {'package': 0, 'node': 0, 'core': 6, 'CPU': 10, 'online': True},
+		  {'package': 1, 'node': 1, 'core': 6, 'CPU': 11, 'online': True},
+		  {'package': 0, 'node': 0, 'core': 1, 'CPU': 12, 'online': True},
+		  {'package': 1, 'node': 1, 'core': 1, 'CPU': 13, 'online': True},
+		  {'package': 0, 'node': 0, 'core': 5, 'CPU': 14, 'online': True},
+		  {'package': 1, 'node': 1, 'core': 5, 'CPU': 15, 'online': True},
         """
 
         if self._topology:
-            return self._topology
+            return self._topology[order]
 
         # Note, we could just walk sysfs, but 'lscpu' is faster.
         cmd = "lscpu --physical --all -p=socket,node,core,cpu,online"
         lines, _ = self._proc.run_verify(cmd, join=False)
 
-        self._topology = []
+        topology = []
         for line in lines:
             if line.startswith("#"):
                 continue
 
-            # Each line has comma-separated integers for socket, node, core and cpu. For example:
+            # Each line has comma-separated integers for socket, node, core and CPU. For example:
             # 1,1,9,61,Y. In case of offline CPU, the final element is going to be "N", for example:
             # ,-,,61,N. Note, only the "CPU" level is known for offline CPUs.
             vals = line.strip().split(",")
@@ -227,9 +281,35 @@ class CPUInfo:
 
             tline["online"] = vals[-1] == "Y"
 
-            self._topology.append(tline)
+            topology.append(tline)
 
-        return self._topology
+        # We are going to store 4 versions of the table, sorted in different order. The package and
+        # CPU orders are obvious. Package and CPU numbers are global, so this is the easy case.
+        # Note and core numbers are not necessarily global, therefore we always first sort by
+        # package.
+        sorting_map = {"package" : ("package", "CPU"),
+                       "node"    : ("package", "node", "CPU"),
+                       "core"    : ("package", "core", "CPU"),
+                       "CPU"     : ("CPU", "package")}
+
+        def sort_func(tline):
+            """
+            The sorting function. It receives a topology line and returns the sorting key for
+            'sorted()'. The returned key is a tuple with numbers, and 'sorted()' method will sort by
+            the these returned tuples.
+
+            The first element of the returned tuples is a bit tricky. For online CPUs, it'll be
+            'True', and for offline CPUs it'll be 'False'. This will make sure that topology lines
+            corresponding to offline CPUs will always go last.
+            """
+
+            vals = (tline[skey] for skey in skeys) # pylint: disable=undefined-loop-variable
+            return (not tline["online"], *vals)
+
+        for lvl, skeys in sorting_map.items():
+            self._topology[lvl] = sorted(topology, key=sort_func)
+
+        return self._topology[order]
 
     def _check_level(self, lvl, name="level"):
         """Validate that 'lvl' is a valid level name."""
@@ -238,86 +318,108 @@ class CPUInfo:
             levels = ", ".join(LEVELS)
             raise Error(f"bad {name} name '{lvl}', use: {levels}")
 
-    def _get_level_nums(self, sublvl, lvl, nums, sort=True):
+    def _get_level_nums(self, sublvl, lvl, nums, order=None):
         """
         Returns a list containing all sub-level 'sublvl' numbers in level 'lvl' elements with
         numbers 'nums'.
 
         Examples.
 
-        1. Get CPU numbers in cores 2 and 10.
-            _get_level_nums("CPU", "core", (2, 10))
+        1. Get CPU numbers in cores 1 and 3.
+            _get_level_nums("CPU", "core", (1, 3))
         2. Get node numbers in package 1.
             _get_level_nums("node", "package", (1,))
         3. Get all core numbers.
             _get_level_nums("core", "package", "all")
             _get_level_nums("core", "node", "all")
             _get_level_nums("core", "core", "all")
+
+        The 'order' argument defines the the order of the result (just ascending order by default).
+        If 'order' contains a level name, the returned numbers will be sorted in order of that
+        level.
+
+        Assume a system with 2 packages, 2 cores per package, and 2 CPUs per core:
+            * Package 0 includes cores 1 and 2.
+            * Package 1 includes cores 2 and 3.
+            * Core 0 includes CPUs 0 and 4
+            * Core 1 includes CPUs 1 and 5
+            * Core 3 includes CPUs 2 and 6
+            * Core 4 includes CPUs 3 and 7
+
+        Examples.
+
+        1. _get_level_nums("CPU", "core", "all") returns:
+            * [0, 1, 2, 3, 4, 5, 6, 7]
+        2. _get_level_nums("CPU", "core", "all", order="core") returns:
+            * [0, 4, 1, 5, 2, 6, 3, 7]
+        3. _get_level_nums("CPU", "core", (1,3), order="core") returns:
+            * [1, 5, 2, 6]
         """
+
+        if order is None:
+            order = sublvl
 
         self._check_level(sublvl)
         self._check_level(lvl)
+        self._check_level(order, name="order")
 
         if self._lvl2idx[lvl] > self._lvl2idx[sublvl]:
             raise Error(f"bad level order, cannot get {sublvl}s from level '{lvl}'")
 
-        elts = {}
-        for tline in self._get_topology():
+        if nums != "all":
+            nums = set(ArgParse.parse_int_list(nums, ints=True, dedup=True, sort=True))
+
+        result = {}
+        valid_nums = set()
+
+        for tline in self._get_topology(order=order):
             if not tline["online"]:
                 continue
 
-            lvl_num = tline[lvl]
-            sublvl_num = tline[sublvl]
+            valid_nums.add(tline[lvl])
+            if nums == "all" or tline[lvl] in nums:
+                result[tline[sublvl]] = None
 
-            if lvl_num not in elts:
-                elts[lvl_num] = {}
-
-            elts[lvl_num][sublvl_num] = None
-
-        # 'elts' is a dictionary with keys being the 'lvl' level elements and values being the
-        # 'sublvl' level elements.
-        # For example, suppose we are looking for CPUs in all packages, the system has 2 packages,
-        # each containing 8 CPUs. The 'elts' dictionary will look like this:
-        # elts[0] = {0, 2, 4, 6, 8, 10, 12, 14}
-        # elts[1] = {1, 3, 6, 7, 9, 11, 13, 15}
-        # In this example, package 0 includes CPUs with even numbers, and package 1 includes CPUs
-        # with odd numbers.
-
+        # Validate the input numbers in 'nums'.
         if nums == "all":
-            nums = list(elts.keys())
-        else:
-            nums = ArgParse.parse_int_list(nums, ints=True, dedup=True, sort=True)
+            return list(result)
 
-        result = []
         for num in nums:
-            if num not in elts:
-                elts_str = ", ".join(str(key) for key in elts)
-                raise Error(f"{lvl} {num} does not exist{self._proc.hostmsg}, use: {elts_str}")
-            result += list(elts[num])
+            if num not in valid_nums:
+                valid_nums_str = ", ".join([str(num) for num in valid_nums])
+                raise Error(f"{lvl} {num} does not exist{self._proc.hostmsg}.\n"
+                            f"Valid {lvl} numbers are:: {valid_nums_str}")
 
-        result = Trivial.list_dedup(result)
-        if not sort:
-            return result
-        return sorted(result)
+        return list(result)
 
-    def get_packages(self):
+    def get_packages(self, order="package"):
         """
-        Returns list of package numbers sorted in ascending order.
+        Returns list of package numbers sorted in ascending order. The 'order' argument must always
+        be "package". It exists only for consistency with 'get_cpus()'.
 
         Important: if a package has all CPUs offline, the package number will not be included in the
         returned list.
         """
-        return self._get_level_nums("package", "package", "all")
 
-    def get_cpus(self):
-        """Returns list of online CPU numbers sorted in ascending order."""
-        return self._get_level_nums("CPU", "CPU", "all")
+        return self._get_level_nums("package", "package", "all", order=order)
+
+    def get_cpus(self, order="CPU"):
+        """
+        Returns list of online CPU numbers. The numbers are sored in ascending order by default. The
+        'order' argument can be one of:
+          * "package" - sort in ascending package order.
+          * "node" - sort in ascending node order.
+          * "core" - sort in ascending core order.
+          * "CPU" - sort in ascending CPU order (same as default).
+        """
+
+        return self._get_level_nums("CPU", "CPU", "all", order=order)
 
     def get_offline_cpus(self):
         """Returns list of offline CPU numbers sorted in ascending order."""
 
         cpus = []
-        for tline in self._get_topology():
+        for tline in self._get_topology(order="CPU"):
             if not tline["online"]:
                 cpus.append(tline["CPU"])
 
@@ -326,12 +428,13 @@ class CPUInfo:
     def get_cpu_siblings(self, cpu):
         """
         Returns list of online CPUs belonging to the same core as CPU 'cpu' (including CPU 'cpu').
+        The list is sorted in ascending order.
         """
 
         cpu = self.normalize_cpu(cpu)
 
         tline = None
-        for tline in self._get_topology():
+        for tline in self._get_topology(order="CPU"):
             if not tline["online"]:
                 continue
             if cpu == tline["CPU"]:
@@ -340,7 +443,7 @@ class CPUInfo:
             raise Error("CPU {cpu} is not available{self._proc.hostmsg}")
 
         siblings = []
-        for tline1 in self._get_topology():
+        for tline1 in self._get_topology(order="CPU"):
             if not tline1["online"]:
                 continue
 
@@ -349,21 +452,23 @@ class CPUInfo:
 
         return siblings
 
-    def packages_to_cpus(self, packages="all"):
+    def packages_to_cpus(self, packages="all", order="CPU"):
         """
         Returns list of online CPU numbers belonging to packages 'packages'. The 'packages' argument
-        is similar to the one in 'normalize_packages()'.
+        is similar to the one in 'normalize_packages()'. The 'order' argument is the same as in
+        'get_cpus()'. By default, the result sorted in ascending order.
         """
-        return self._get_level_nums("CPU", "package", packages)
+        return self._get_level_nums("CPU", "package", packages, order=order)
 
-    def cores_to_cpus(self, cores="all", packages="all"):
+    def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
         """
         Returns list of online CPU numbers belonging to cores 'cores' in packages 'packages'. The
         'cores' and 'packages' arguments are similar to the 'packages' argument in
-        'normalize_packages()'.
+        'normalize_packages()'. The 'order' argument is the same as in 'get_cpus()'. By default, the
+        result sorted in ascending order.
         """
 
-        by_core = self._get_level_nums("CPU", "core", cores)
+        by_core = self._get_level_nums("CPU", "core", cores, order=order)
         by_package = set(self._get_level_nums("CPU", "package", packages))
 
         cpus = []
@@ -373,11 +478,14 @@ class CPUInfo:
 
         return cpus
 
-    def package_to_cores(self, package):
+    def package_to_cores(self, package, order="core"):
         """
-        Returns list of cores numbers belonging to package 'package'.
+        Returns list of cores numbers belonging to package 'package'. The 'order' argument can be
+        one of:
+           * "node" - sort in ascending node order.
+           * "core" - sort in ascending core order (same as default).
         """
-        return self._get_level_nums("core", "package", (package,))
+        return self._get_level_nums("core", "package", (package,), order=order)
 
     def get_packages_count(self):
         """Returns packages count."""
@@ -395,7 +503,8 @@ class CPUInfo:
         """
         Validate package numbers in 'pkgs' and return the normalized list. The input package numbers
         may be integers or strings containing integer numbers. It may also be a string with
-        comma-separated package numbers and ranges.
+        comma-separated package numbers and ranges. This is similar to the 'cpus' argument in
+        'normalize_cpus()'.
 
         Returns a list of integer package numbers.
         """
@@ -667,8 +776,9 @@ class CPUInfo:
         self._close_proc = proc is None
 
         # The topology cache.
-        self._topology = None
+        self._topology = {}
         self._lvl2idx = {lvl : idx for idx, lvl in enumerate(LEVELS)}
+        self._idx2lvl = dict(enumerate(LEVELS))
 
         # General CPU information.
         self.info = None
