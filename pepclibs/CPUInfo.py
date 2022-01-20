@@ -170,14 +170,18 @@ class CPUInfo:
         B. Single package/CPU/etc.
             * 'cpu_to_package()'
             * 'cpu_to_core()'
-    3. Normalize a list of packages/cores/etc.
+    3. Get packages/core/etc counts.
+        * 'get_packages_count()'
+        * 'get_cpus_count()'
+        * 'get_offline_cpus_count()'
+    4. Normalize a list of packages/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
             * 'normalize_packages()'
             * 'normalize_cpus()'
         B. Single package/CPU/etc.
             * 'normalize_package()'
             * 'normalize_cpu()'
-    4. Build and get the geometry dictionary.
+    5. Build and get the geometry dictionary.
         * 'get_cpu_geometry()'
     """
 
@@ -376,6 +380,18 @@ class CPUInfo:
         cpus_str = ", ".join([str(cpu) for cpu in sorted(allcpus)])
         raise Error(f"CPU{cpu} is not available{self._proc.hostmsg}, available CPUs are:\n"
                     f"{cpus_str}")
+
+    def get_packages_count(self):
+        """Returns packages count."""
+        return len(self.get_packages())
+
+    def get_cpus_count(self):
+        """Returns count of online CPUs."""
+        return len(self.get_cpus())
+
+    def get_offline_cpus_count(self):
+        """Returns count of offline CPUs."""
+        return len(self.get_offline_cpus())
 
     def normalize_packages(self, pkgs):
         """
