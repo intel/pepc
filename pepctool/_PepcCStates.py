@@ -197,7 +197,7 @@ def cstates_config_command(args, proc):
     # The C-state properties to print about.
     print_props = []
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, MSR.MSR(proc=proc) as msr:
+    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, MSR.MSR(proc=proc, cpuinfo=cpuinfo) as msr:
         # Start a transaction, which will delay and aggregate MSR writes until the transaction
         # is committed.
         msr.start_transaction()
