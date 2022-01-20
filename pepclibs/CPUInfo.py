@@ -11,7 +11,7 @@ This module provides an API to get CPU information.
 """
 
 import re
-from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import ArgParse, Procs, Trivial
 
 # CPU model numbers.
