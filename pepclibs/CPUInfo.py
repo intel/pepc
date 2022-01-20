@@ -231,6 +231,13 @@ class CPUInfo:
 
         return self._topology
 
+    def _check_level(self, lvl, name="level"):
+        """Validate that 'lvl' is a valid level name."""
+
+        if lvl not in self._levels_set:
+            levels = ", ".join(LEVELS)
+            raise Error(f"bad {name} name '{lvl}', use: {levels}")
+
     def _get_level_nums(self, sublvl, lvl, nums, sort=True):
         """
         Returns a list containing all sub-level 'sublvl' numbers in level 'lvl' elements with
@@ -248,9 +255,8 @@ class CPUInfo:
             _get_level_nums("core", "core", "all")
         """
 
-        if lvl not in self._levels_set or sublvl not in self._levels_set:
-            levels = ", ".join(LEVELS)
-            raise Error(f"bad levels '{lvl}','{sublvl}', use: {levels}")
+        self._check_level(sublvl)
+        self._check_level(lvl)
 
         start_idx = LEVELS.index(lvl)
         end_idx = LEVELS.index(sublvl)
