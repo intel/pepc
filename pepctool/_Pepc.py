@@ -81,10 +81,6 @@ def build_arguments_parser():
                       example, '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
                       3. Use the special keyword 'all' to specify all packages"""
 
-    # We rename destination variables for the '--package', '--core', and '--cpu' options in some
-    # cases in order to make them match level names used in the 'CPUInfo' module. See
-    # 'CPUInfo.LEVELS'.
-
     text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
     parser = PepcArgsParser(description=text, prog=OWN_NAME, ver=VERSION)
 
