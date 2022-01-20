@@ -54,7 +54,7 @@ def cpu_hotplug_offline_command(args, proc):
         # case and just skip all CPUs that do not support offlining.
         skip_unsupported = args.cpus == "all" and args.cores is None and args.packages is None
 
-        cpus = _PepcCommon.get_cpus(args, proc, default_cpus=None, cpuinfo=cpuinfo)
+        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=None)
 
         if not cpus:
             raise Error("please, specify the CPUs to offline")

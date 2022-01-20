@@ -189,7 +189,7 @@ def pstates_info_command(args, proc):
         if args.uncore:
             _print_uncore_info(args, proc, cpuinfo)
         else:
-            cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
+            cpus = get_cpus(args, cpuinfo, default_cpus=0)
             _print_pstates_info(proc, cpuinfo, cpus=cpus)
 
 def _handle_freq_opts(args, proc, cpuinfo, cpufreq):
@@ -217,10 +217,10 @@ def _handle_freq_opts(args, proc, cpuinfo, cpufreq):
         opts["CPU"] = {}
         opts["CPU"]["min"] = args.oargs.get("minfreq", None)
         opts["CPU"]["max"] = args.oargs.get("maxfreq", None)
-        opts["CPU"]["nums"] = get_cpus(args, proc, cpuinfo=cpuinfo)
+        opts["CPU"]["nums"] = get_cpus(args, cpuinfo)
         opts["CPU"]["method"] = getattr(cpufreq, "set_freq")
         opts["CPU"]["info_keys"] = ["CPU"]
-        opts["CPU"]["info_nums"] = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
+        opts["CPU"]["info_nums"] = get_cpus(args, cpuinfo, default_cpus=0)
         opts["CPU"]["opt_key_map"] = (("minfreq", "cpu_min"), ("maxfreq", "cpu_max"))
 
     if not opts:
@@ -270,7 +270,7 @@ def _handle_pstate_opts(args, proc, cpuinfo, cpufreq):
         opts["turbo"] = {}
         opts["turbo"]["keys"] = {"turbo_supported", "turbo_enabled"}
 
-    cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
+    cpus = get_cpus(args, cpuinfo, default_cpus="all")
 
     for optname, optinfo in opts.items():
         optval = getattr(args, optname)
@@ -281,7 +281,7 @@ def _handle_pstate_opts(args, proc, cpuinfo, cpufreq):
             cpufreq.set_prop(optname, optval, cpus=cpus)
             _LOG.info("Set %s to '%s'%s", PStates.PROPS[optname]["name"], optval, msg)
         else:
-            cpus = get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
+            cpus = get_cpus(args, cpuinfo, default_cpus=0)
             optinfo["keys"].add("CPU")
             _print_pstates_info(proc, cpuinfo, keys=optinfo["keys"], cpus=cpus)
 
@@ -294,7 +294,7 @@ def pstates_config_command(args, proc):
     _PepcCommon.check_tuned_presence(proc)
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, MSR.MSR(proc=proc) as msr:
-        cpus = get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
+        cpus = get_cpus(args, cpuinfo, default_cpus="all")
 
         if "turbo" in args.oargs and set(cpus) != set(cpuinfo.get_cpus()):
             _LOG.warning("the turbo setting is global, '--cpus', '--cores', and '--packages' "

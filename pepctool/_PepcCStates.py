@@ -213,7 +213,7 @@ def cstates_config_command(args, proc):
 
             # Build the aggregate properties information dictionary for all options we are going to
             # print about.
-            cpus = _PepcCommon.get_cpus(args, proc, default_cpus="all", cpuinfo=cpuinfo)
+            cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
             aggr_pinfo = _build_aggregate_pinfo(print_props, cpus, cpuidle)
 
             # Now handle the options one by one, in the same order as they go in the command line.
@@ -231,7 +231,7 @@ def cstates_info_command(args, proc):
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
          CStates.CStates(proc=proc, cpuinfo=cpuinfo) as cpuidle:
-        cpus = _PepcCommon.get_cpus(args, proc, default_cpus=0, cpuinfo=cpuinfo)
+        cpus = get_cpus(args, cpuinfo, default_cpus="all")
 
         first = True
         for info in cpuidle.get_cstates_info(cpus=cpus, cstates=args.cstates):
