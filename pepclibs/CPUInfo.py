@@ -296,6 +296,10 @@ class CPUInfo:
         """Returns list of package numbers, where at least one online CPU."""
         return self._get_level_nums("package", "package", "all")
 
+    def get_nodes(self):
+        """Returns list of node numbers, where at least one online CPU."""
+        return self._get_level_nums("node", "node", "all")
+
     def get_cores(self):
         """Returns list of core numbers, where at least one online CPU."""
         return self._get_level_nums("core", "core", "all")
