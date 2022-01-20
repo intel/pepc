@@ -165,13 +165,11 @@ class CPUInfo:
         * 'get_cpu_siblings()'
     2. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
-            * 'packages_to_cores()'
             * 'package_to_cores()'
             * 'packages_to_cpus()'
             * 'cores_to_cpus()'
         B. Single package/CPU/etc.
             * 'cpu_to_package()'
-            * 'cpu_to_core()'
     3. Get packages/core/etc counts.
         * 'get_packages_count()'
         * 'get_cpus_count()'
@@ -315,10 +313,6 @@ class CPUInfo:
         """
         return self._get_level_nums("package", "package", "all")
 
-    def get_nodes(self):
-        """Same as 'get_packages()', but for NUMA node numbers."""
-        return self._get_level_nums("node", "node", "all")
-
     def get_cores(self):
         """Same as 'get_packages()', but for core numbers."""
         return self._get_level_nums("core", "core", "all")
@@ -363,17 +357,10 @@ class CPUInfo:
 
         return siblings
 
-    def packages_to_cores(self, packages="all"):
-        """
-        Returns list of cores numbers belonging to packages 'packages'. The 'packages' argument is
-        similar to the one in 'normalize_packages()'.
-        """
-        return self._get_level_nums("core", "package", packages)
-
     def packages_to_cpus(self, packages="all"):
         """
         Returns list of online CPU numbers belonging to packages 'packages'. The 'packages' argument
-        is similar 'cores' in 'cores_to_cpus()'.
+        is similar to the one in 'normalize_packages()'.
         """
         return self._get_level_nums("CPU", "package", packages)
 
@@ -406,18 +393,6 @@ class CPUInfo:
         for pkg in self.get_packages():
             if cpu in self.packages_to_cpus(packages=pkg):
                 return pkg
-
-        allcpus = self.get_cpus()
-        cpus_str = ", ".join([str(cpu) for cpu in sorted(allcpus)])
-        raise Error(f"CPU{cpu} is not available{self._proc.hostmsg}, available CPUs are:\n"
-                    f"{cpus_str}")
-
-    def cpu_to_core(self, cpu):
-        """Returns integer core number for CPU number 'cpu'."""
-
-        for core in self.get_cores():
-            if cpu in self.cores_to_cpus(cores=core, packages="all"):
-                return core
 
         allcpus = self.get_cpus()
         cpus_str = ", ".join([str(cpu) for cpu in sorted(allcpus)])
