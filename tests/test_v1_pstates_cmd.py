@@ -24,9 +24,9 @@ _GOOD_SCOPE_OPTIONS = [
     "",
     "--cpus all",
     f"--cpus 0-{_CPUINFO['max_cpu']}",
-    "--cores all",
-    "--cores 0-50",
-    f"--cores 0-{_CPUINFO['max_core']}",
+    "--packages 0 --cores all",
+    "--packages 0 --cores 0-50",
+    f"--packages 0 --cores 0-{_CPUINFO['max_core']}",
     "--packages all",
     f"--packages 0-{_CPUINFO['max_package']}"]
 
@@ -36,7 +36,7 @@ _BAD_PKG_SCOPE_OPTIONS = [
 
 _BAD_SCOPE_OPTIONS = [
     f"--cpus {_CPUINFO['max_cpu'] + 1}",
-    f"--cores {_CPUINFO['max_core'] + 1}",
+    f"--packages 0 --cores {_CPUINFO['max_core'] + 100}",
     f"--packages {_CPUINFO['max_package'] + 1}"]
 
 def test_v1_pstates_info():
@@ -46,7 +46,7 @@ def test_v1_pstates_info():
         run_pepc(f"pstates info {scope}", exp_ret=0)
 
     for scope in _GOOD_SCOPE_OPTIONS:
-        if "packages" not in scope:
+        if "packages" not in scope or "cores" in scope:
             continue
         run_pepc(f"pstates info --uncore {scope}", exp_ret=0)
 
@@ -102,7 +102,7 @@ def test_v1_pstates_config():
 
     for option in good_options:
         for scope in _GOOD_SCOPE_OPTIONS:
-            if "uncore" in option and "package" not in scope:
+            if "uncore" in option and ("package" not in scope or "core" in scope):
                 continue
             run_pepc(f"pstates config {option} {scope}", exp_ret=0)
 

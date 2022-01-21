@@ -18,18 +18,18 @@ _CPUINFO = get_test_cpu_info()
 # Good command scope options.
 _GOOD_SCOPE_OPTIONS = [
     "",
-    "--cpus all",
+    "--packages 0 --cpus all",
     f"--cpus 0-{_CPUINFO['max_cpu']}",
-    "--cores all",
-    "--cores 0-50",
-    f"--cores 0-{_CPUINFO['max_core']}",
+    "--packages 0 --cores all",
+    "--packages 0 --cores 0-50",
+    f"--packages 0 --cores 0-{_CPUINFO['max_core']}",
     "--packages all",
     f"--packages 0-{_CPUINFO['max_package']}"]
 
 # Bad command scope options.
 _BAD_SCOPE_OPTIONS = [
     f"--cpus {_CPUINFO['max_cpu'] + 1}",
-    f"--cores {_CPUINFO['max_core'] + 1}",
+    f"--packages 0 --cores {_CPUINFO['max_core'] + 100}",
     f"--packages {_CPUINFO['max_package'] + 1}"]
 
 def test_v1_cstates_info(caplog):
