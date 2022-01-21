@@ -13,6 +13,7 @@
 from pathlib import Path
 import pytest
 from pepclibs import CPUInfo
+from pepclibs.msr import MSR
 from pepclibs.helperlibs import EmulProcs, Procs, SSH
 
 def get_proc(hostname):
@@ -48,3 +49,10 @@ def fixture_cpuinfo(proc):
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
         yield cpuinfo
+
+@pytest.fixture(name="msr", params=[True, False], ids=["cache_enabled", "cache_disabled"])
+def fixture_msr(request, proc): # pylint: disable=unused-argument
+    """Same as the 'fixture_proc()', but yields the 'MSR' object."""
+
+    with MSR.MSR(proc=proc, enable_cache=request.param) as msr:
+        yield msr

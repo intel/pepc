@@ -10,17 +10,16 @@
 
 """Unittests for the public methods of the 'MSR' module."""
 
-from common import fixture_proc # pylint: disable=unused-import
-from pepclibs.msr import MSR, PMEnable, HWPRequest, MiscFeatureControl
+from common import fixture_proc, fixture_msr # pylint: disable=unused-import
+from pepclibs.msr import PMEnable, HWPRequest, MiscFeatureControl
 
 # The MSR addresses that will be tested.
 _ADDRS = (PMEnable.MSR_PM_ENABLE, MiscFeatureControl.MSR_MISC_FEATURE_CONTROL,
           HWPRequest.MSR_HWP_REQUEST)
 
-def test_read_cpu(proc):
+def test_read_cpu(msr):
     """Test the 'read_cpu()' method."""
 
-    with MSR.MSR(proc=proc) as msr:
-        for addr in _ADDRS:
-            for cpu in (0, 1, 99):
-                msr.read_cpu(addr, cpu=cpu)
+    for addr in _ADDRS:
+        for cpu in (0, 1, 99):
+            msr.read_cpu(addr, cpu=cpu)
