@@ -178,8 +178,6 @@ class CPUInfo:
         B. Single package/CPU/etc.
             * 'normalize_package()'
             * 'normalize_cpu()'
-    5. Build and get the geometry dictionary.
-        * 'get_cpu_geometry()'
     """
 
     def _get_topology(self, order="CPU"):
@@ -569,169 +567,6 @@ class CPUInfo:
         """Same as 'normalize_cpus()', but for a single CPU number."""
         return  self.normalize_cpus([cpu])[0]
 
-    def _build_cpugeom_top_level(self, tline):
-        """Add numbers from 'lscpu' to the CPU geometry dictionary."""
-
-        nums = self.cpugeom[LEVELS[0]]["nums"]
-        for idx, lvl in enumerate(LEVELS[:-1]):
-            last_level = False
-            if idx == len(LEVELS) - 2:
-                last_level = True
-
-            num = tline[lvl]
-            if num not in nums:
-                self.cpugeom[lvl]["cnt"] += 1
-                if last_level:
-                    nums[num] = []
-                else:
-                    nums[num] = {}
-
-            if last_level:
-                lvl = LEVELS[-1]
-                nums[num].append(tline[lvl])
-                self.cpugeom[lvl]["cnt"] += 1
-
-            nums = nums[num]
-
-    def _flatten_to_level(self, items, idx):
-        """Flatten the multi-level 'items' dictionary down to level 'idx'."""
-
-        if idx == 0:
-            return items
-
-        result = {}
-        for item in items.values():
-            add_items = self._flatten_to_level(item, idx - 1)
-            if isinstance(add_items, list):
-                if not result:
-                    result = []
-                result += add_items
-            else:
-                result.update(add_items)
-
-        return result
-
-    def get_cpu_geometry(self):
-        """
-        Get CPU geometry information. The returned geometry dictionary is returned and also saved in
-        'self.cpugeom'. Note, if this method was already called before, it will just return
-        'self.cpugeom'.
-
-        The geometry dictionary structure.
-
-        1. The top level geometry dictionary keys are the level names ("CPU", "core", etc). There
-           are no other top level keys, so the top level structure is as follows.
-
-           cpugeom = {
-             "CPU"  : {<CPU level info>},
-             "core" : {<core level info>},
-             ... and so on for each level, see 'LEVELS' ...
-             "package" : {<package level info>}
-           }
-
-        2. Every level info is a dictionary too. Each level info will contain the following keys.
-           * cnt - count of elements (CPUs, cores, etc).
-           * cnt_per_<level> - count of elements in upper levels.
-           * nums - element numbers dictionary.
-
-        3. There are some keys unique to the specific level. For example, the "CPU" level includes
-           the 'offline_cnt' key, which provides the offline CPUs count.
-
-        Here is an example cpugeom dictionary for a 2-core single socket system with 2 logical CPUs
-        per core and one node per package, and no off-lined CPUs.
-
-        cpugeom = {
-          'package': {
-                       'nums': {
-                                 0: {
-                                      0: {
-                                           0: [0, 2],
-                                           1: [1, 3],
-                                         },
-                                    },
-                                },
-                       'cnt': 1,
-                     },
-          'node':    {
-                       'nums': {
-                                 0: {
-                                      0: [0, 2],
-                                      1: [1, 3]
-                                    },
-                               },
-                       'cnt': 1,
-                       'cnt_per_package': 1,
-                     },
-          'core':    {
-                       'nums': {
-                                 0: [0, 2],
-                                 1: [1, 3],
-                               },
-                       'cnt': 2,
-                       'cnt_per_package': 2,
-                       'cnt_per_node': 2,
-                     },
-          'CPU':     {
-                       'nums': [ 0, 2, 1, 3 ],
-                       'cnt': 4,
-                       'offline_cpus': []
-                       'offline_cnt': 0,
-                       'cnt_per_package': 4,
-                       'cnt_per_node': 4,
-                       'cnt_per_core': 2,
-                     },
-        }
-
-        In this examples, 'nums' in the 'node' info dictionary says that there is node number 0,
-        which includes core number 0 and 1, which include CPUs numbers 0,2 and 1,3 respectively.
-        """
-
-        if self.cpugeom:
-            return self.cpugeom
-
-        self.cpugeom = cpugeom = {}
-        for lvl in LEVELS:
-            cpugeom[lvl] = {}
-            cpugeom[lvl]["nums"] = {}
-            cpugeom[lvl]["cnt"] = 0
-
-        # List of offline CPUs. Note, Linux does not provide topology information for offline CPUs,
-        # so we have the CPU numbers, but do not know to what core/package they belong to.
-        cpugeom["CPU"]["offline_cpus"] = []
-        # Offline CPUs count.
-        cpugeom["CPU"]["offline_cnt"] = 0
-
-        # Parse the the topology and build the top level (package).
-        for tline in self._get_topology():
-            if not tline["online"]:
-                cpugeom["CPU"]["offline_cnt"] += 1
-                cpugeom["CPU"]["offline_cpus"].append(tline["CPU"])
-                continue
-
-            self._build_cpugeom_top_level(tline)
-
-        # Now we have the full hierarchy (in 'cpugeom["packages"]'). Create partial hierarchies
-        # ('cpugeom["nodes"]', etc).
-        #
-        # Start with filling the 'nums'.
-        for lvlidx, lvl in enumerate(LEVELS[1:]):
-            cpugeom[lvl]["nums"] = self._flatten_to_level(cpugeom[LEVELS[0]]["nums"], lvlidx + 1)
-
-        # Fill 'cnt_per_*' keys.
-        for lvl1idx, lvl1 in enumerate(LEVELS[1:]):
-            for lvl2idx, lvl2 in enumerate(LEVELS):
-                # We need to iterate over all levels higher than 'lvl1'. Larger index corresponds to
-                # lower level.
-                if lvl2idx > lvl1idx:
-                    continue
-                key = f"cnt_per_{lvl2}"
-                try:
-                    cpugeom[lvl1][key] = int(cpugeom[lvl1]["cnt"] / cpugeom[lvl2]["cnt"])
-                except ZeroDivisionError:
-                    cpugeom[lvl1][key] = 0
-
-        return cpugeom
-
     def _get_cpu_info(self):
         """Get general CPU information (model, architecture, etc)."""
 
@@ -791,8 +626,6 @@ class CPUInfo:
 
         # General CPU information.
         self.info = None
-        # The CPU geometry dictionary.
-        self.cpugeom = None
         # A short CPU description string.
         self.cpudescr = None
 
