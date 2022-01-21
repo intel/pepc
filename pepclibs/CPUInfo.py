@@ -159,7 +159,6 @@ class CPUInfo:
 
     1. Get list of packages/cores/etc.
         * 'get_packages()'
-        * 'get_cores()'
         * 'get_cpus()'
         * 'get_offline_cpus()'
         * 'get_cpu_siblings()'
@@ -309,10 +308,6 @@ class CPUInfo:
         returned list.
         """
         return self._get_level_nums("package", "package", "all")
-
-    def get_cores(self):
-        """Same as 'get_packages()', but for core numbers."""
-        return self._get_level_nums("core", "core", "all")
 
     def get_cpus(self):
         """Returns list of online CPU numbers sorted in ascending order."""

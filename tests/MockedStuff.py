@@ -255,7 +255,7 @@ def get_test_cpu_info():
         result = {}
         result["cpus"] = cpuinfo.get_cpus()
         result["max_cpu"] = max(result["cpus"])
-        result["cores"] = cpuinfo.get_cores()
+        result["cores"] = cpuinfo.package_to_cores(0)
         result["max_core"] = max(result["cores"])
         result["packages"] = cpuinfo.get_packages()
         result["max_package"] = max(result["packages"])
