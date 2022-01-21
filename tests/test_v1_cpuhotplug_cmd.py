@@ -55,6 +55,9 @@ def test_v1_cpuhotplug_offline():
 
     good_options = [
         "--cpus all",
+        "--cpus all --cores 0 --packages 0",
+        "--packages 0 --cores 0",
+        "--packages 0 --cores all",
         "--cpus 1",
         "--cpus 1-2",
         f"--cpus {_CPUINFO['max_cpu']}",
@@ -68,11 +71,8 @@ def test_v1_cpuhotplug_offline():
         run_pepc(f"cpu-hotplug offline {option} --siblings", exp_ret=0)
 
     bad_options = [
-        "--cpus all --cores 0 --packages 0",
         "--cpus 0",
-        "--packages 0 --cores 0",
-        "--packages 0 --cores all",
-        "--packages 0"]
+        "--cpus 0-4"]
 
     for option in bad_options:
         run_pepc(f"cpu-hotplug offline {option}", exp_ret=-1)
