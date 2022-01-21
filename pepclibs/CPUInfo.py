@@ -164,6 +164,7 @@ class CPUInfo:
         * 'get_cpu_siblings()'
     2. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
         * 'packages_to_cpus()'
+        * 'package_to_nodes()'
         * 'package_to_cores()'
         * 'cores_to_cpus()'
     3. Get packages/core/etc counts.
@@ -477,6 +478,14 @@ class CPUInfo:
                 cpus.append(cpu)
 
         return cpus
+
+    def package_to_nodes(self, package, order="node"):
+        """
+        Returns list of NUMA node numbers belonging to package 'package'. The 'order' argument can
+        only be "node", and it exists for compatibility with other methods, such as
+        'package_to_cores()'.
+        """
+        return self._get_level_nums("node", "package", (package,), order=order)
 
     def package_to_cores(self, package, order="core"):
         """
