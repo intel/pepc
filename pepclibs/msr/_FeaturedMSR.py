@@ -117,11 +117,13 @@ class FeaturedMSR:
 
     def is_feature_enabled(self, fname, cpus="all"):
         """
-        Check if feature 'fname' is enabled on all CPUs in 'cpus'. The arguments are as follows.
+        Check if feature 'fname' is enabled on CPUs in 'cpus'. The arguments are as follows.
           * fname - name of the feature to read and check.
           * cpus - the CPUs to read the feature from (same as in 'read_feature()').
 
-        Returns 'True' if the feature is enabled on all CPUs in 'cpus', returns 'False' otherwise.
+        The yielded tuples are '(cpunum, enabled)'.
+          * cpunum - the CPU number the MSR was read from.
+          * enabled - 'True' if the feature is enabled, 'False' otherwise.
         """
 
         self.check_feature_supported(fname, cpus=cpus)
@@ -129,11 +131,9 @@ class FeaturedMSR:
         if self.features[fname]["type"] != "bool":
             raise Error(f"feature '{fname}' is not boolean, use 'read_feature()' instead")
 
-        for _, val in self.read_feature(fname, cpus=cpus):
-            if val not in {"on", "enabled"}:
-                return False
-
-        return True
+        for cpu, val in self.read_feature(fname, cpus=cpus):
+            enabled = val in {"on", "enabled"}
+            yield (cpu, enabled)
 
     def is_cpu_feature_enabled(self, fname, cpu):
         """
@@ -145,7 +145,10 @@ class FeaturedMSR:
         Returns 'True' if the feature is enabled, and 'False' otherwise.
         """
 
-        return self.is_feature_enabled(fname, cpus=(cpu,))
+        enabled = None
+        for _, enabled in self.is_feature_enabled(fname, cpus=(cpu,)):
+            pass
+        return enabled
 
     def write_feature(self, fname, val, cpus="all"):
         """
