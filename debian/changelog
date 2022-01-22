@@ -4,6 +4,7 @@ pepc (1.2.0) unstable; urgency=low
   * Rename 'aspm set' command to 'aspm config'.
   * Improve C-states information printing.
   * Fix and improve CPU onlining/offlining.
+  * Fixed '--cores' and '--packages' dependency
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  ADD_DATE
 
