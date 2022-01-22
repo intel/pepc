@@ -13,8 +13,7 @@ Intel CPUs.
 """
 
 import logging
-import contextlib
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 from pepclibs.helperlibs import Procs, Trivial, FSHelpers
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, HWPRequest, HWPRequestPkg
@@ -121,11 +120,8 @@ class EPP:
         try:
             policy = FSHelpers.read(path, proc=self._proc)
             return policy.strip()
-        except Error as err:
-            with contextlib.suppress(Error):
-                exists = FSHelpers.exists(path, proc=self._proc)
-            if exists:
-                raise err
+        except ErrorNotFound:
+            pass
 
         # The kernel does not support the EPP policies. Try to figure the policy out.
         epp = self._get_cpu_epp(cpu)
