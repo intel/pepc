@@ -41,19 +41,19 @@ def get_sha512(path, default=_RAISE, proc=None, skip_lines=0):
     if not proc:
         proc = Procs.Proc()
 
-    try:
-        with proc.open(path, "rb") as fobj:
+    with proc.open(path, "rb") as fobj:
+        try:
             while skip_lines:
                 skip_lines -= 1
                 fobj.readline()
 
             data = fobj.read()
             checksum = sha512(data).hexdigest()
-    except Error as err:
-        if default is _RAISE:
-            raise Error(f"cannot calculate sha512 checksum for the file '{path}'{proc.hostmsg}:\n"
-                        f"{err}") from err
-        return default
+        except Error as err:
+            if default is _RAISE:
+                raise Error(f"cannot calculate sha512 checksum for the file "
+                            f"'{path}'{proc.hostmsg}:\n{err}") from err
+            return default
 
     return checksum
 
@@ -275,11 +275,11 @@ def mount_points(proc=None):
     if not proc:
         proc = Procs.Proc()
 
-    try:
-        with proc.open(mounts_file, "r") as fobj:
+    with proc.open(mounts_file, "r") as fobj:
+        try:
             contents = fobj.read()
-    except OSError as err:
-        raise Error(f"cannot read '{mounts_file}': {err}") from err
+        except OSError as err:
+            raise Error(f"cannot read '{mounts_file}': {err}") from err
 
     for line in contents.splitlines():
         if not line:
@@ -653,13 +653,13 @@ def read(path, default=_RAISE, proc=None):
     if not proc:
         proc = Procs.Proc()
 
-    try:
-        with proc.open(path, "r") as fobj:
+    with proc.open(path, "r") as fobj:
+        try:
             val = fobj.read().strip()
-    except Error as err:
-        if default is _RAISE:
-            raise Error(f"failed to read file '{path}'{proc.hostmsg}:\n{err}") from err
-        return default
+        except Error as err:
+            if default is _RAISE:
+                raise Error(f"failed to read file '{path}'{proc.hostmsg}:\n{err}") from err
+            return default
 
     return val
 
@@ -684,11 +684,11 @@ def write(path, data, proc=None):
     if not proc:
         proc = Procs.Proc()
 
-    try:
-        with proc.open(path, "w") as fobj:
+    with proc.open(path, "w") as fobj:
+        try:
             fobj.write(str(data))
-    except Error as err:
-        raise Error(f"failed to write into file '{path}'{proc.hostmsg}:\n{err}") from err
+        except Error as err:
+            raise Error(f"failed to write into file '{path}'{proc.hostmsg}:\n{err}") from err
 
 def wait_for_a_file(path: Path, interval: int = 1, timeout: int = 60, proc=None):
     """
