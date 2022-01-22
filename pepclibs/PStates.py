@@ -265,10 +265,10 @@ class PStates:
         cpuinfo = self._get_cpuinfo()
         pmenable = PMEnable.PMEnable(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
 
-        if not pmenable.is_cpu_feature_supported("hwp_enabled", cpu):
+        if not pmenable.is_cpu_feature_supported("hwp", cpu):
             return None
 
-        return pmenable.is_cpu_feature_enabled("hwp_enabled", cpu)
+        return pmenable.is_cpu_feature_enabled("hwp", cpu)
 
     def _get_cpufreq_info(self, cpus, keys):
         """Implements 'get_cpufreq_info()'."""
