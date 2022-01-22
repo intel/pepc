@@ -168,7 +168,8 @@ class FeaturedMSR:
 
         finfo = self.features[fname]
         if not finfo["writable"]:
-            raise Error(f"'{fname}' is can not be modified, it is read-only")
+            fullname = finfo["name"]
+            raise Error(f"feature '{fullname}' is can not be modified, it is read-only")
 
         set_method = getattr(self, f"_set_{fname}", None)
         if set_method:
@@ -201,7 +202,8 @@ class FeaturedMSR:
         self.check_feature_supported(fname, cpus=cpus)
 
         if self.features[fname]["type"] != "bool":
-            raise Error(f"feature '{fname}' is not boolean, use 'write_feature()' instead")
+            fullname = self.features[fname]["name"]
+            raise Error(f"feature '{fullname}' is not boolean, use 'write_feature()' instead")
 
         val = "on" if enable else "off"
         self.write_feature(fname, val, cpus=cpus)
