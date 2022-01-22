@@ -26,7 +26,7 @@ import subprocess
 from pepclibs.helperlibs import _Common, WrapExceptions, Trivial
 from pepclibs.helperlibs._Common import ProcResult, cmd_failed_msg # pylint: disable=unused-import
 from pepclibs.helperlibs._Common import TIMEOUT
-from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied
+from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied, ErrorNotFound
 
 _LOG = logging.getLogger()
 
@@ -565,6 +565,8 @@ class Proc:
             fobj = open(path, mode)
         except PermissionError as err:
             raise ErrorPermissionDenied(f"{errmsg}{err}") from None
+        except FileNotFoundError as err:
+            raise ErrorNotFound(f"{errmsg}{err}") from None
         except OSError as err:
             raise Error(f"{errmsg}{err}") from None
 

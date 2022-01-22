@@ -52,6 +52,7 @@ from pepclibs.helperlibs import _Common, Procs, WrapExceptions, Trivial
 from pepclibs.helperlibs._Common import ProcResult, cmd_failed_msg # pylint: disable=unused-import
 from pepclibs.helperlibs._Common import TIMEOUT
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
+from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
 _LOG = logging.getLogger()
 
@@ -1232,11 +1233,15 @@ class SSH:
         path = str(path) # In case it is a pathlib.Path() object.
         sftp = self._get_sftp()
 
+        errmsg = f"failed to open file '{path}' on {self.hostname} via SFTP: "
         try:
             fobj = sftp.file(path, mode)
+        except PermissionError as err:
+            raise ErrorPermissionDenied(f"{errmsg}{err}") from None
+        except FileNotFoundError as err:
+            raise ErrorNotFound(f"{errmsg}{err}") from None
         except _PARAMIKO_EXCEPTIONS as err:
-            raise Error(f"failed to open file '{path}' on {self.hostname} via SFTP:\n{err}") \
-                  from err
+            raise Error(f"{errmsg}{err}") from err
 
         # Save the path and the mode in the object.
         fobj._orig_fpath_ = path
