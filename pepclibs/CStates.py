@@ -27,12 +27,38 @@ _LOG = logging.getLogger()
 #
 # Define the global 'PROPS' dictionary, and then refine update it later. Full dictionary is
 # available via 'CStates.props'.
-PROPS = {}
-PROPS.update(copy.deepcopy(PowerCtl.FEATURES))
-PROPS.update(copy.deepcopy(PCStateConfigCtl.FEATURES))
-# Remove the "locked" property that came from 'PCStateConfigCtl'. It'll be just a key of the
-# 'pkg_cstate_limit' property.
-del PROPS["locked"]
+PROPS = {
+    "pkg_cstate_limit" : {
+        "name" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["name"],
+        "help" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["help"],
+        "type" : "str",
+        "scope": "package",
+    },
+    "c1_demotion" : {
+        "name" : PCStateConfigCtl.FEATURES["c1_demotion"]["name"],
+        "help" : PCStateConfigCtl.FEATURES["c1_demotion"]["help"],
+        "type" : "bool",
+        "scope": "CPU",
+    },
+    "c1_undemotion" : {
+        "name" : PCStateConfigCtl.FEATURES["c1_undemotion"]["name"],
+        "help" : PCStateConfigCtl.FEATURES["c1_undemotion"]["help"],
+        "type" : "bool",
+        "scope": "CPU",
+    },
+    "c1e_autopromote" : {
+        "name" : PowerCtl.FEATURES["c1e_autopromote"]["name"],
+        "help" : PowerCtl.FEATURES["c1e_autopromote"]["help"],
+        "type" : "bool",
+        "scope": "package",
+    },
+    "cstate_prewake" : {
+        "name" : PowerCtl.FEATURES["cstate_prewake"]["name"],
+        "help" : PowerCtl.FEATURES["cstate_prewake"]["help"],
+        "type" : "bool",
+        "scope": "package",
+    },
+}
 
 class CStates:
     """

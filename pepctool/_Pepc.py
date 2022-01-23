@@ -206,8 +206,7 @@ def build_arguments_parser():
         if info["type"] == "bool":
             # This is a binary "on/off" type of features.
             text = "Enable or disable "
-            choices = " or ".join([f"\"{val}\"" for val in info["vals"]])
-            choices = f" Use {choices}."
+            choices = " Use \"on\" or \"off\"."
         else:
             text = "Set "
             choices = ""
