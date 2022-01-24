@@ -491,19 +491,19 @@ class CStates:
 
         { property1_name: { property1_name : property1_value,
                             "CPU" : <CPU number>,
-                            property1_key1 : property1_key1_value,
-                            property2_key2 : property1_key1_value,
+                            subprop1_key : subprop1_value,
+                            subprop2_key : subprop2_value,
                             ... etc for every key ...},
           property2_name: { property2_name : property2_value,
                             "CPU" : <CPU number>,
-                            property2_key1 : property2_key1_value,
+                            subprop1_key : subprop2_value,
                             ... etc ...},
           ... etc ... }
 
-        So each property has the (main) value, but it also comes with a number "keys", which include
-        the CPU number and may also include "sub-properties", which provide additional read-only
-        information related to the property. For example, the 'pkg_cstate_limit' property comes with
-        'pkg_cstate_limit_locked' and other sub-properties.
+        So each property has the (main) value, but it also comes with the "CPU" and possibly
+        sub-properties, which provide additional read-only information related to the property. For
+        example, the 'pkg_cstate_limit' property comes with 'pkg_cstate_limit_locked' and other
+        sub-properties. Most properties have no sub-properties.
 
         If a property is not supported, its value will be 'None'.
         """
@@ -548,6 +548,16 @@ class CStates:
 
         raise Error(f"BUG: undefined property '{pname}'")
 
+    def _init_props_dict(self):
+        """Initialize the 'props' dictionary."""
+
+        self.props = copy.deepcopy(PROPS)
+
+        for prop in self.props:
+            # Every features should include the 'subprops' sub-dictionary.
+            if "subprops" not in prop:
+                prop["subprops"] = {}
+
     def __init__(self, proc=None, cpuinfo=None, msr=None):
         """
         The class constructor. The arguments are as follows.
@@ -568,7 +578,7 @@ class CStates:
         self._pcstatectl = None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
-        self.props = copy.deepcopy(PROPS)
+        self.props = None
 
         # Used for caching the C-state information for each CPU.
         self._csinfos = {}
@@ -578,6 +588,8 @@ class CStates:
 
         if not self._proc:
             self._proc = Procs.Proc()
+
+        self._init_props_dict()
 
     def close(self):
         """Uninitialize the class object."""

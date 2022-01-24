@@ -97,7 +97,16 @@ def _print_cstate_prop(aggr_pinfo, pname, cstates):
 
     for key, kinfo in aggr_pinfo[pname].items():
         for val, cpus in kinfo.items():
-            _print_cstate_prop_msg(cstates.props[pname][key], "", val, cpus)
+            # Distinguish between properties and sub-properties.
+            if key in cstates.props:
+                name = cstates.props[pname]["name"]
+            else:
+                name = cstates.props[pname]["subprops"][key]["name"]
+                if val is None:
+                    # Just skip unsupported sub-property instead of printing something like
+                    # "Package C-state limit aliases: not supported on CPUs 0-11".
+                    continue
+            _print_cstate_prop_msg(name, "", val, cpus)
 
 def _build_aggregate_pinfo(props, cpus, cstates):
     """
