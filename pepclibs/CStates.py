@@ -459,10 +459,10 @@ class CStates:
         number 'cpu'.
         """
 
-        pinfos = {}
+        pinfo = {}
 
         for pname in pnames:
-            pinfo = pinfos[pname] = {pname : None, "CPU" : cpu}
+            pinfo[pname] = {pname : None, "CPU" : cpu}
 
             try:
                 val = self._find_feature(pname, cpu)
@@ -471,11 +471,11 @@ class CStates:
 
             if isinstance(val, dict):
                 for fkey, fval in val.items():
-                    pinfo[fkey] = fval
+                    pinfo[pname][fkey] = fval
             else:
-                pinfo[pname] = val
+                pinfo[pname][pname] = val
 
-        return pinfos
+        return pinfo
 
     def get_props(self, pnames, cpus="all"):
         """
