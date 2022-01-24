@@ -442,7 +442,7 @@ class CStates:
         pinfos = {}
 
         for pname in pnames:
-            pinfo = pinfos[pname] = {"val" : None, "keys" : {"CPU" : cpu}}
+            pinfo = pinfos[pname] = {"keys" : {pname : None, "CPU" : cpu}}
 
             try:
                 val = self._find_feature(pname, cpu)
@@ -455,11 +455,9 @@ class CStates:
                 pinfo["keys"][f"{pname}_supported"] = True
 
             if isinstance(val, dict):
-                pinfo["val"] = val[pname]
                 for fkey, fval in val.items():
                     pinfo["keys"][fkey] = fval
             else:
-                pinfo["val"] = val
                 pinfo["keys"][pname] = val
 
         # Deal with the keys that were not initialized.
@@ -495,23 +493,21 @@ class CStates:
 
         The yielded dictionaries have the following format.
 
-        { property1_name: { "val"  : property1_value,
-                            "keys" : {"CPU" : <CPU number>,
-                                      property1_key1 : property1_key1_value,
-                                      property2_key2 : property1_key1_value,
-                                      ... etc for every key ...}},
-          property2_name: { "val"  : property2_value,
-                            "keys" : {"CPU" : <CPU number>,
-                                      property2_key1 : property2_key1_value,
-                                      ... etc ...}},
+        { property1_name: { "keys" : { property1_name : property1_value,
+                                       "CPU" : <CPU number>,
+                                       property1_key1 : property1_key1_value,
+                                       property2_key2 : property1_key1_value,
+                                       ... etc for every key ...}},
+          property2_name: { "keys" : { property2_name : property2_value,
+                                       "CPU" : <CPU number>,
+                                       property2_key1 : property2_key1_value,
+                                       ... etc ...}},
           ... etc ... }
 
         So each property has the (main) value, but it also comes with a number of "keys", which
         include the CPU number and may also include additional information related to the property.
         For example, the 'pkg_cstate_limit' property comes with additional keys like
         'pkg_cstate_limit_locked'.
-
-        For properties that are not supported by the CPU, the "val" key will be 'None'.
         """
 
         for pname in pnames:
