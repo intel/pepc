@@ -45,15 +45,15 @@ def _fmt_cpus(cpus):
 
     return msg + Human.rangify(cpus)
 
-def _print_cstate_prop_msg(prop, action, val, cpus):
-    """Format an print a message about a C-state property 'prop'."""
+def _print_cstate_prop_msg(pname, action, val, cpus):
+    """Format an print a message about a C-state property 'pname'."""
 
     cpus = _fmt_cpus(cpus)
 
     if action:
-        msg = f"{prop}: {action} '{val}' on {cpus}"
+        msg = f"{pname}: {action} '{val}' on {cpus}"
     else:
-        msg = f"{prop}: '{val}' on {cpus}"
+        msg = f"{pname}: '{val}' on {cpus}"
 
     _LOG.info(msg)
 
@@ -90,17 +90,17 @@ def _handle_cstate_config_opt(optname, optval, cpus, cstates):
             cstnames = cstnames.split(",")
             _LOG.info("%sd %s on %s", optname.title(), _fmt_cstates(cstnames), _fmt_cpus(cpunums))
 
-def _print_cstate_prop(aggr_pinfo, prop, cstates):
+def _print_cstate_prop(aggr_pinfo, pname, cstates):
     """Print about C-state properties in 'aggr_pinfo'."""
 
-    for key, kinfo in aggr_pinfo[prop].items():
+    for key, kinfo in aggr_pinfo[pname].items():
         for val, cpus in kinfo.items():
             if key.endswith("_supported") and val:
                 # Supported properties will have some other key(s) in 'kinfo', which will be
                 # printed. So no need to print the "*_supported" key in case it is 'True'.
                 continue
 
-            _print_cstate_prop_msg(cstates.props[prop]["keys"][key], "", val, cpus)
+            _print_cstate_prop_msg(cstates.props[pname]["keys"][key], "", val, cpus)
 
 def _build_aggregate_pinfo(props, cpus, cstates):
     """
@@ -131,9 +131,9 @@ def _build_aggregate_pinfo(props, cpus, cstates):
     aggr_pinfo = {}
 
     for all_props_info in cstates.get_props(props, cpus=cpus):
-        for prop, pinfo in all_props_info.items():
-            if prop not in aggr_pinfo:
-                aggr_pinfo[prop] = {}
+        for pname, pinfo in all_props_info.items():
+            if pname not in aggr_pinfo:
+                aggr_pinfo[pname] = {}
             for key, val in pinfo["keys"].items():
                 if key == "CPU":
                     continue
@@ -148,12 +148,12 @@ def _build_aggregate_pinfo(props, cpus, cstates):
                         continue
                     val = ", ".join(f"{k}={v}" for k, v in val.items())
 
-                if key not in aggr_pinfo[prop]:
-                    aggr_pinfo[prop][key] = {}
-                if val not in aggr_pinfo[prop][key]:
-                    aggr_pinfo[prop][key][val] = []
+                if key not in aggr_pinfo[pname]:
+                    aggr_pinfo[pname][key] = {}
+                if val not in aggr_pinfo[pname][key]:
+                    aggr_pinfo[pname][key][val] = []
 
-                aggr_pinfo[prop][key][val].append(pinfo["keys"]["CPU"])
+                aggr_pinfo[pname][key][val].append(pinfo["keys"]["CPU"])
 
     return aggr_pinfo
 
@@ -165,15 +165,15 @@ def _print_scope_warnings(args, cstates):
 
     pkg_warn, core_warn = [], []
 
-    for prop in cstates.props:
-        if not getattr(args, prop, None):
+    for pname in cstates.props:
+        if not getattr(args, pname, None):
             continue
 
-        scope = cstates.get_scope(prop)
+        scope = cstates.get_scope(pname)
         if scope == "package" and (getattr(args, "cpus") or getattr(args, "cores")):
-            pkg_warn.append(prop)
+            pkg_warn.append(pname)
         elif scope == "core" and getattr(args, "cpus"):
-            core_warn.append(prop)
+            core_warn.append(pname)
 
     if pkg_warn:
         opts = ", ".join([f"'--{opt.replace('_', '-')}'" for opt in pkg_warn])
