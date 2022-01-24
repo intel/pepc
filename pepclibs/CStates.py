@@ -450,34 +450,13 @@ class CStates:
                 pinfo["keys"][f"{pname}_supported"] = False
                 continue
 
-            key = f"{pname}_supported"
-            if key in self.props[pname]["keys"]:
-                pinfo["keys"][f"{pname}_supported"] = True
+            pinfo["keys"][f"{pname}_supported"] = True
 
             if isinstance(val, dict):
                 for fkey, fval in val.items():
                     pinfo["keys"][fkey] = fval
             else:
                 pinfo["keys"][pname] = val
-
-        # Deal with the keys that were not initialized.
-        for pname in pnames:
-            pinfo = pinfos[pname]
-            for key in self.props[pname]["keys"]:
-                if key in pinfo["keys"]:
-                    continue
-                if f"{key}_supported" in pinfo["keys"]:
-                    continue
-
-                # While most of the time an MSR feature are mapped to a property, there are some
-                # features that are mapped to a key of a property. For example, the
-                # 'PCStateConfigCtl.features["locked"]' is mapped to the 'pkg_cstate_limit'
-                # property. Take care of keys like this.
-                if key.startswith(f"{pname}_"):
-                    pinfo["keys"][key] = self._find_feature(key[len(f"{pname}_"):], cpu)
-                else:
-                    raise Error(f"unitinialized key '{key}'")
-
 
         return pinfos
 
@@ -555,9 +534,6 @@ class CStates:
         """Create an extended version of the 'PROPS' dictionary."""
 
         props = copy.deepcopy(PROPS)
-
-        for prop in props.values():
-            prop["keys"] = {}
 
         # Add property keys.
         for pname, prop in props.items():
