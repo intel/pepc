@@ -107,6 +107,7 @@ FEATURES = {
         "type" : "bool",
         "vals" : { "on" : 1, "off" : 0},
         "bits" : (15, 15),
+        "writable" : False,
     },
     "c1_demotion" : {
         "name" : "C1 demotion",
