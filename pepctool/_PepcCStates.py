@@ -46,7 +46,7 @@ def _fmt_cpus(cpus):
     return msg + Human.rangify(cpus)
 
 def _print_cstate_prop_msg(pname, action, val, cpus):
-    """Format an print a message about a C-state property 'pname'."""
+    """Format and print a message about a C-state property 'pname'."""
 
     cpus = _fmt_cpus(cpus)
 
