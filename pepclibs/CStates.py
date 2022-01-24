@@ -33,6 +33,26 @@ PROPS = {
         "help" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["help"],
         "type" : "str",
         "scope": "package",
+        "subprops" : {
+            "pkg_cstate_limit_locked" : {
+                "name" : "Package C-state limit locked",
+                "help" : """Whether the package C-state limit in MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
+                            (MSR_PKG_CST_CONFIG_CONTROL) is locked and cannot be modified.""",
+                "scope": "package",
+            },
+            "pkg_cstate_limits" : {
+                "name" : "Available package C-state limits",
+                "help" : """List of package C-state names which can be used for limiting the deepest
+                            package C-state the platform is allowed to enter.""",
+                "type" : "list[str]",
+            },
+            "pkg_cstate_limit_aliases" : {
+                "name" : "Package C-state limit aliases",
+                "help" : """Some package C-states have multiple names, and this is a dictionary
+                            mapping aliases to the name.""",
+                "type" : "dict[str,str]",
+            },
+        },
     },
     "c1_demotion" : {
         "name" : PCStateConfigCtl.FEATURES["c1_demotion"]["name"],
@@ -528,25 +548,6 @@ class CStates:
 
         raise Error(f"BUG: undefined property '{pname}'")
 
-    @staticmethod
-    def _create_props_dict():
-        """Create an extended version of the 'PROPS' dictionary."""
-
-        props = copy.deepcopy(PROPS)
-
-        # Add property keys.
-        for pname, prop in props.items():
-            # Each propery has at least one key with the same name.
-            prop[pname] = prop["name"]
-
-        # The 'pkg_cstate_limits' property has sub-properties.
-        prop = props["pkg_cstate_limit"]
-        prop["pkg_cstate_limits"]        = "Available package C-state limits"
-        prop["pkg_cstate_limit_locked"]  = "Package C-state limit locked"
-        prop["pkg_cstate_limit_aliases"] = "Package C-state limit aliases"
-
-        return props
-
     def __init__(self, proc=None, cpuinfo=None, msr=None):
         """
         The class constructor. The arguments are as follows.
@@ -567,7 +568,7 @@ class CStates:
         self._pcstatectl = None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
-        self.props = self._create_props_dict()
+        self.props = copy.deepcopy(PROPS)
 
         # Used for caching the C-state information for each CPU.
         self._csinfos = {}
