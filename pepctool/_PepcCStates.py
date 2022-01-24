@@ -50,7 +50,9 @@ def _print_cstate_prop_msg(pname, action, val, cpus):
 
     cpus = _fmt_cpus(cpus)
 
-    if action:
+    if val is None:
+        msg = f"{pname}: not supported on {cpus}"
+    elif action:
         msg = f"{pname}: {action} '{val}' on {cpus}"
     else:
         msg = f"{pname}: '{val}' on {cpus}"
@@ -95,11 +97,6 @@ def _print_cstate_prop(aggr_pinfo, pname, cstates):
 
     for key, kinfo in aggr_pinfo[pname].items():
         for val, cpus in kinfo.items():
-            if key.endswith("_supported") and val:
-                # Supported properties will have some other key(s) in 'kinfo', which will be
-                # printed. So no need to print the "*_supported" key in case it is 'True'.
-                continue
-
             _print_cstate_prop_msg(cstates.props[pname][key], "", val, cpus)
 
 def _build_aggregate_pinfo(props, cpus, cstates):
@@ -118,7 +115,7 @@ def _build_aggregate_pinfo(props, cpus, cstates):
 
       * property1_name, property2_name, etc are the property names (e.g., 'pkg_cstate_limit').
       * key1_name, key2_name, etc are key names of the corresponding property (e.g.,
-        'pkg_cstate_limit', 'pkg_cstate_limit_locked', 'pkg_cstate_limit_supported')
+        'pkg_cstate_limit', 'pkg_cstate_limit_locked').
       * key1_value1, key1_value2, etc are all the different values for 'key1_name' (e.g., 'False' or
         'True')
 

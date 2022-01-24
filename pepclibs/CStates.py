@@ -447,10 +447,7 @@ class CStates:
             try:
                 val = self._find_feature(pname, cpu)
             except ErrorNotSupported:
-                pinfo[f"{pname}_supported"] = False
                 continue
-
-            pinfo[f"{pname}_supported"] = True
 
             if isinstance(val, dict):
                 for fkey, fval in val.items():
@@ -483,10 +480,12 @@ class CStates:
                             ... etc ...},
           ... etc ... }
 
-        So each property has the (main) value, but it also comes with a number "kwys", which include
+        So each property has the (main) value, but it also comes with a number "keys", which include
         the CPU number and may also include "sub-properties", which provide additional read-only
         information related to the property. For example, the 'pkg_cstate_limit' property comes with
         'pkg_cstate_limit_locked' and other sub-properties.
+
+        If a property is not supported, its value will be 'None'.
         """
 
         for pname in pnames:
@@ -539,7 +538,6 @@ class CStates:
         for pname, prop in props.items():
             # Each propery has at least one key with the same name.
             prop[pname] = prop["name"]
-            prop[f"{pname}_supported"] = f"{prop['name']} supported"
 
         # The 'pkg_cstate_limits' property has sub-properties.
         prop = props["pkg_cstate_limit"]
