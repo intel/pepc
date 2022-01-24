@@ -442,21 +442,21 @@ class CStates:
         pinfos = {}
 
         for pname in pnames:
-            pinfo = pinfos[pname] = {"keys" : {pname : None, "CPU" : cpu}}
+            pinfo = pinfos[pname] = {pname : None, "CPU" : cpu}
 
             try:
                 val = self._find_feature(pname, cpu)
             except ErrorNotSupported:
-                pinfo["keys"][f"{pname}_supported"] = False
+                pinfo[f"{pname}_supported"] = False
                 continue
 
-            pinfo["keys"][f"{pname}_supported"] = True
+            pinfo[f"{pname}_supported"] = True
 
             if isinstance(val, dict):
                 for fkey, fval in val.items():
-                    pinfo["keys"][fkey] = fval
+                    pinfo[fkey] = fval
             else:
-                pinfo["keys"][pname] = val
+                pinfo[pname] = val
 
         return pinfos
 
@@ -472,21 +472,21 @@ class CStates:
 
         The yielded dictionaries have the following format.
 
-        { property1_name: { "keys" : { property1_name : property1_value,
-                                       "CPU" : <CPU number>,
-                                       property1_key1 : property1_key1_value,
-                                       property2_key2 : property1_key1_value,
-                                       ... etc for every key ...}},
-          property2_name: { "keys" : { property2_name : property2_value,
-                                       "CPU" : <CPU number>,
-                                       property2_key1 : property2_key1_value,
-                                       ... etc ...}},
+        { property1_name: { property1_name : property1_value,
+                            "CPU" : <CPU number>,
+                            property1_key1 : property1_key1_value,
+                            property2_key2 : property1_key1_value,
+                            ... etc for every key ...},
+          property2_name: { property2_name : property2_value,
+                            "CPU" : <CPU number>,
+                            property2_key1 : property2_key1_value,
+                            ... etc ...},
           ... etc ... }
 
-        So each property has the (main) value, but it also comes with a number of "keys", which
-        include the CPU number and may also include additional information related to the property.
-        For example, the 'pkg_cstate_limit' property comes with additional keys like
-        'pkg_cstate_limit_locked'.
+        So each property has the (main) value, but it also comes with a number "kwys", which include
+        the CPU number and may also include "sub-properties", which provide additional read-only
+        information related to the property. For example, the 'pkg_cstate_limit' property comes with
+        'pkg_cstate_limit_locked' and other sub-properties.
         """
 
         for pname in pnames:
@@ -538,15 +538,14 @@ class CStates:
         # Add property keys.
         for pname, prop in props.items():
             # Each propery has at least one key with the same name.
-            prop["keys"] = {}
-            prop["keys"][pname] = prop["name"]
-            prop["keys"][f"{pname}_supported"] = f"{prop['name']} supported"
+            prop[pname] = prop["name"]
+            prop[f"{pname}_supported"] = f"{prop['name']} supported"
 
-        # The 'pkg_cstate_limits' property has additional keys.
+        # The 'pkg_cstate_limits' property has sub-properties.
         prop = props["pkg_cstate_limit"]
-        prop["keys"]["pkg_cstate_limits"]        = "Available package C-state limits"
-        prop["keys"]["pkg_cstate_limit_locked"]  = "Package C-state limit locked"
-        prop["keys"]["pkg_cstate_limit_aliases"] = "Package C-state limit aliases"
+        prop["pkg_cstate_limits"]        = "Available package C-state limits"
+        prop["pkg_cstate_limit_locked"]  = "Package C-state limit locked"
+        prop["pkg_cstate_limit_aliases"] = "Package C-state limit aliases"
 
         return props
 

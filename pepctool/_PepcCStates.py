@@ -100,7 +100,7 @@ def _print_cstate_prop(aggr_pinfo, pname, cstates):
                 # printed. So no need to print the "*_supported" key in case it is 'True'.
                 continue
 
-            _print_cstate_prop_msg(cstates.props[pname]["keys"][key], "", val, cpus)
+            _print_cstate_prop_msg(cstates.props[pname][key], "", val, cpus)
 
 def _build_aggregate_pinfo(props, cpus, cstates):
     """
@@ -134,7 +134,7 @@ def _build_aggregate_pinfo(props, cpus, cstates):
         for pname, pinfo in all_props_info.items():
             if pname not in aggr_pinfo:
                 aggr_pinfo[pname] = {}
-            for key, val in pinfo["keys"].items():
+            for key, val in pinfo.items():
                 if key == "CPU":
                     continue
 
@@ -153,7 +153,7 @@ def _build_aggregate_pinfo(props, cpus, cstates):
                 if val not in aggr_pinfo[pname][key]:
                     aggr_pinfo[pname][key][val] = []
 
-                aggr_pinfo[pname][key][val].append(pinfo["keys"]["CPU"])
+                aggr_pinfo[pname][key][val].append(pinfo["CPU"])
 
     return aggr_pinfo
 
