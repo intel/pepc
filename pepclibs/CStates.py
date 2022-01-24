@@ -526,6 +526,10 @@ class CStates:
 
         self._check_prop(pname)
 
+        if not self.props[pname]["writable"]:
+            name = self.props[pname][pname]
+            raise Error(f"failed to change read-only property '{pname}' ({name})")
+
         if pname in PowerCtl.FEATURES:
             powerctl = self._get_powerctl()
             powerctl.write_feature(pname, val, cpus)
@@ -553,7 +557,9 @@ class CStates:
 
         self.props = copy.deepcopy(PROPS)
 
-        for prop in self.props:
+        for prop in self.props.values():
+            if "writable" not in prop:
+                prop["writable"] = True
             # Every features should include the 'subprops' sub-dictionary.
             if "subprops" not in prop:
                 prop["subprops"] = {}
