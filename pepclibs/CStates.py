@@ -92,7 +92,10 @@ class CStates:
        * For multiple CPUs and multiple C-states: get_cstates_info().
        * For a single CPU and multiple C-states: 'get_cpu_cstates_info()'.
        * For a single CPU and a single C-state:  'get_cpu_cstate_info()'.
-    3. Get/set a C-state property for multiple CPUs: 'get_props()', 'set_prop()'.
+    3. Get/set C-state properties.
+       * For multiple properties and multiple CPUs: 'get_props()', 'set_props()'.
+       * For multiple properties and single CPU: 'get_cpu_props()', 'set_cpu_props()'.
+       * For single property and single CPU: 'get_cpu_prop()', 'set_cpu_prop()'.
     4. Get a C-state property scope: 'get_scope()'.
     """
 
@@ -516,28 +519,69 @@ class CStates:
         for cpu in cpus:
             yield self._get_pinfo(pnames, cpu)
 
-    def set_prop(self, pname, val, cpus="all"):
+    def get_cpu_props(self, pnames, cpu):
+        """Same as 'get_props()', but for a single CPU."""
+
+        pinfo = None
+        for pinfo in self.get_props(pnames, cpus=(cpu,)):
+            pass
+        return pinfo
+
+    def get_cpu_prop(self, pname, cpu):
+        """Same as 'get_props()', but for a single CPU and a single property."""
+
+        pinfo = None
+        for pinfo in self.get_props((pname,), cpus=(cpu,)):
+            pass
+        return pinfo
+
+    def set_props(self, pinfo, cpus="all"):
         """
-        Set value 'val' for property 'pname' for CPUs 'cpus'. The arguments are as follows.
-          * pname - name of the property to set (see 'self.props' for the full list).
-          * val - the value to set the property to.
+        Set multiple properties described by 'pinfo' to values also provided in 'pinfo'.
+          * pinfo - an iterable collection of property names and values.
           * cpus - same as in 'get_props()'.
+
+        This method accepts two 'pinfo' formats.
+
+        1. An iterable collection (e.g., list or a tuple) of ('pname', 'val') pairs. For example:
+           * [("c1_demotion", "on"), ("c1_undemotion", "off")]
+        2. A dictionary with property names as keys. For example:
+           * {"c1_demotion" : "on", "c1_undemotion" : "off"}
         """
 
-        self._check_prop(pname)
-
-        if not self.props[pname]["writable"]:
-            name = self.props[pname][pname]
-            raise Error(f"failed to change read-only property '{pname}' ({name})")
-
-        if pname in PowerCtl.FEATURES:
-            powerctl = self._get_powerctl()
-            powerctl.write_feature(pname, val, cpus)
-        elif pname in PCStateConfigCtl.FEATURES:
-            pcstatectl = self._get_pcstatectl()
-            pcstatectl.write_feature(pname, val, cpus=cpus)
+        inprops = {}
+        if hasattr(pinfo, "items"):
+            for pname, val in pinfo.items():
+                inprops[pname] = val
         else:
-            raise Error(f"BUG: undefined property '{pname}'")
+            for pname, val in pinfo:
+                inprops[pname] = val
+
+        for pname, val in inprops.items():
+            self._check_prop(pname)
+
+            if not self.props[pname]["writable"]:
+                name = self.props[pname][pname]
+                raise Error(f"failed to change read-only property '{pname}' ({name})")
+
+            if pname in PowerCtl.FEATURES:
+                powerctl = self._get_powerctl()
+                powerctl.write_feature(pname, val, cpus)
+            elif pname in PCStateConfigCtl.FEATURES:
+                pcstatectl = self._get_pcstatectl()
+                pcstatectl.write_feature(pname, val, cpus=cpus)
+            else:
+                raise Error(f"BUG: undefined property '{pname}'")
+
+    def set_cpu_props(self, pinfo, cpu):
+        """Same as 'set_props()', but for a single CPU."""
+
+        self.set_props(pinfo, cpus=(cpu,))
+
+    def set_cpu_prop(self, pname, val, cpu):
+        """Same as 'set_props()', but for a single CPU and a single property."""
+
+        self.set_props(((pname, val),), cpus=(cpu,))
 
     @staticmethod
     def get_scope(pname):

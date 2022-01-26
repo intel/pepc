@@ -69,7 +69,7 @@ def _handle_cstate_config_opt(optname, optval, cpus, cstates):
     """
 
     if optname in cstates.props:
-        cstates.set_prop(optname, optval, cpus)
+        cstates.set_props({optname : optval}, cpus)
 
         name = cstates.props[optname]["name"]
         _print_cstate_prop_msg(name, "set to", optval, cpus)
