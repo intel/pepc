@@ -10,8 +10,10 @@
 
 """Tests for the public methods of the 'CPUInfo' module."""
 
+import pytest
 from common import fixture_proc, fixture_cpuinfo # pylint: disable=unused-import
 from pepclibs import CPUInfo
+from pepclibs.helperlibs.Exceptions import Error
 
 def _get_levels():
     """Yield 'CPUInfo.LEVEL' values as a lowercase strings."""
@@ -43,6 +45,12 @@ def _get_level_nums(lvl, cpuinfo, order=None, default=None):
 
     return nums
 
+def _get_bad_orders():
+    """Yield bad 'order' argument values."""
+
+    for order in "CPUS", "CORE", "nodes", "pkg":
+        yield order
+
 def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=None, ignore_res=False):
     """
     Run the '<name>()' method of the 'CPUInfo' class. The arguments are as follows:
@@ -72,6 +80,40 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=None, ignore_res=
 
         assert res == exp_res, f"'{name}()' is expected to return '{exp_res}', got '{res}'"
 
+def _test_get_good(cpuinfo):
+    """Test 'get' methods for bad option values."""
+
+    for lvl in _get_levels():
+        nums = _get_level_nums(lvl, cpuinfo)
+        assert nums, f"'get_{lvl}s()' is expected to return list of {lvl}s, got: '{nums}'"
+        ref_nums = sorted(nums)
+
+        for order in _get_levels():
+            nums = _get_level_nums(lvl, cpuinfo, order=order)
+            assert nums, f"'get_{lvl}s()' is expected to return list of {lvl}s, got: '{nums}'"
+            nums = sorted(nums)
+            assert nums == ref_nums, f"'get_{lvl}s()' was expected to return '{ref_nums}', " \
+                                     f"got '{nums}'"
+
+    _run_method("get_offline_cpus", cpuinfo, ignore_res=True)
+    _run_method("get_cpu_siblings", cpuinfo, args=0, ignore_res=True)
+
+def _test_get_bad(cpuinfo):
+    """Test 'get' methods with bad 'order' values and expect methods to fail."""
+
+    for lvl in _get_levels():
+        if not getattr(cpuinfo, f"get_{lvl}s", None):
+            continue
+
+        for order in _get_bad_orders():
+            with pytest.raises(Error):
+                _get_level_nums(lvl, cpuinfo, order=order)
+
+    cpus = _get_level_nums("cpu", cpuinfo)
+    bad_cpu = cpus[-1] + 1
+    with pytest.raises(Error):
+        _run_method("get_cpu_siblings", cpuinfo, args=bad_cpu, ignore_res=True)
+
 def test_get(cpuinfo):
     """
     Test following 'get' methods of the 'CPUInfo' class:
@@ -81,20 +123,8 @@ def test_get(cpuinfo):
         * get_cpu_siblings()
     """
 
-    for lvl in _get_levels():
-        nums = _get_level_nums(lvl, cpuinfo)
-        assert nums, f"'get_{lvl}s()' is expected to return list of {lvl}s, got: '{nums}'"
-
-        for order in _get_levels():
-            prev_nums = nums
-            nums = _get_level_nums(lvl, cpuinfo, order=order)
-            assert nums, f"'get_{lvl}s()' is expected to return list of {lvl}s, got: '{nums}'"
-            nums = sorted(nums)
-            assert nums == prev_nums, f"'get_{lvl}s()' was expected to return '{prev_nums}', got " \
-                                      f"'{nums}'"
-
-    _run_method("get_offline_cpus", cpuinfo, ignore_res=True)
-    _run_method("get_cpu_siblings", cpuinfo, args=0, ignore_res=True)
+    _test_get_good(cpuinfo)
+    _test_get_bad(cpuinfo)
 
 def test_get_count(cpuinfo):
     """
@@ -111,18 +141,18 @@ def test_get_count(cpuinfo):
     offline_cpus = cpuinfo.get_offline_cpus()
     _run_method("get_offline_cpus_count", cpuinfo, exp_res=len(offline_cpus))
 
-def test_convert(cpuinfo):
-    """
-    Test following conversion methods of the 'CPUInfo' class:
-        * packages_to_cpus()
-        * package_to_nodes()
-        * package_to_cores()
-        * cores_to_cpus()
-    """
+def _test_convert_good(cpuinfo):
+    """Test public convert methods of the 'CPUInfo' class with good option values."""
 
     for from_lvl in _get_levels():
         nums = _get_level_nums(from_lvl, cpuinfo, default=[0])
 
+        # We have two types of conversion methods to convert values between different "levels"
+        # defined in 'CPUInfo.LEVELS'. We have methods for converting single value to other level,
+        # e.g. 'package_to_cpus()'. And we have methods for converting multiple values to other
+        # level, e.g. 'packages_to_cpus()'.
+        # Methods to convert single value accept single integer in different forms, and methods
+        # converting multiple values accept also ingeters in lists.
         single_args = []
         for idx in 0, -1:
             single_args += [nums[idx], f"{nums[idx]}", f" {nums[idx]} ", [nums[idx]]]
@@ -152,14 +182,61 @@ def test_convert(cpuinfo):
             for args in multi_args:
                 _run_method(method_name, cpuinfo, args=args, ignore_res=True)
 
-def test_normalize(cpuinfo):
+def _test_convert_bad(cpuinfo):
+    """Same as '_test_converrt_good()', but use bad option values."""
+
+    for from_lvl in _get_levels():
+        from_nums = _get_level_nums(from_lvl, cpuinfo, default="NA")
+        if "NA" in from_nums:
+            continue
+
+        bad_num = from_nums[-1] + 1
+
+        for to_lvl in _get_levels():
+            method_name = f"{from_lvl}_to_{to_lvl}s"
+
+            if getattr(cpuinfo, method_name, None):
+                bad_args = (bad_num, f"{bad_num}", f"{from_nums[0]}, ", (bad_num,))
+
+                for args in bad_args:
+                    with pytest.raises(Error):
+                        _run_method(method_name, cpuinfo, args=args, ignore_res=True)
+
+                args = from_nums[0]
+                for order in _get_bad_orders():
+                    kwargs = {"order": order}
+                    with pytest.raises(Error):
+                        _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, ignore_res=True)
+
+            method_name = f"{from_lvl}s_to_{to_lvl}s"
+
+            if getattr(cpuinfo, method_name, None):
+                bad_args = (-1, bad_num, (-1, bad_num), "-1", (bad_num,))
+
+                for args in bad_args:
+                    with pytest.raises(Error):
+                        _run_method(method_name, cpuinfo, args=args, ignore_res=True)
+
+                args = from_nums[0]
+                for order in _get_bad_orders():
+                    kwargs = {"order": order}
+                    with pytest.raises(Error):
+                        _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, ignore_res=True)
+
+def test_convert(cpuinfo):
     """
-    Test following 'normalize' methods of the 'CPUInfo' class:
-        * normalize_packages()
-        * normalize_package()
-        * normalize_cpus()
-        * normalize_cpu()
+    Test following conversion methods of the 'CPUInfo' class:
+        * packages_to_cpus()
+        * package_to_nodes()
+        * package_to_cores()
+        * cores_to_cpus()
     """
+
+    _test_convert_good(cpuinfo)
+    _test_convert_bad(cpuinfo)
+
+def _test_normalize_good(cpuinfo):
+    """Test public 'normalize' methods of the 'CPUInfo' class with good option values."""
 
     for lvl in _get_levels():
         nums = _get_level_nums(lvl, cpuinfo)
@@ -197,3 +274,45 @@ def test_normalize(cpuinfo):
         method_name  = f"normalize_{lvl}s"
         for args, exp_res in testcase:
             _run_method(method_name, cpuinfo, args=args, exp_res=exp_res)
+
+def _test_normalize_bad(cpuinfo):
+    """Same as '_test_normalize_good()', but use bad option values."""
+
+    for lvl in _get_levels():
+        nums = _get_level_nums(lvl, cpuinfo, default="NA")
+        if "NA" in nums:
+            continue
+
+        bad_num = nums[-1] + 1
+
+        method_name  = f"normalize_{lvl}"
+        if getattr(cpuinfo, method_name, None):
+            bad_args = (-1, "-1", f"{nums[0]},", bad_num, [bad_num])
+
+            for args in bad_args:
+                with pytest.raises(Error):
+                    _run_method(method_name, cpuinfo, args=args, ignore_res=True)
+
+        method_name  = f"normalize_{lvl}s"
+        if getattr(cpuinfo, method_name, None):
+            bad_args = (f"{nums[0]}, {nums[-1]}, ",
+                        f", {nums[0]}, {nums[-1]}, ",
+                        f" {nums[0]}-{nums[-1]}, ",
+                        f" {nums[0]}, {nums[-1]}, ,",
+                        [[nums[0], bad_num]])
+
+            for args in bad_args:
+                with pytest.raises(Error):
+                    _run_method(method_name, cpuinfo, args=args, ignore_res=True)
+
+def test_normalize(cpuinfo):
+    """
+    Test following 'normalize' methods of the 'CPUInfo' class:
+        * normalize_packages()
+        * normalize_package()
+        * normalize_cpus()
+        * normalize_cpu()
+    """
+
+    _test_normalize_good(cpuinfo)
+    _test_normalize_bad(cpuinfo)
