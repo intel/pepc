@@ -169,7 +169,8 @@ class FeaturedMSR:
         finfo = self.features[fname]
         if not finfo["writable"]:
             fullname = finfo["name"]
-            raise Error(f"feature '{fullname}' is can not be modified, it is read-only")
+            raise Error(f"feature '{fullname}' is can not be modified{self._proc.hostmsg}, it is "
+                        f"read-only")
 
         set_method = getattr(self, f"_set_{fname}", None)
         if set_method:
