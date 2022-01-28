@@ -18,6 +18,7 @@ from unittest.mock import patch, mock_open
 from pathlib import Path
 from pepclibs import CPUInfo, CStates
 from pepclibs.helperlibs import Procs, FSHelpers
+from pepclibs.helperlibs.Exceptions import ErrorNotFound
 from pepclibs.msr import MSR, PCStateConfigCtl, PlatformInfo, TurboRatioLimit, PMEnable
 
 _TESTDATA = {
@@ -143,6 +144,11 @@ class MockedProc(Procs.Proc):
 
     def open(self, path, mode):
         """Mocked 'open()'."""
+
+        if str(path).endswith("die_id"):
+            # Pretend the "die_id" files do not exist, so that 'CPUInfo' will assume there is one
+            # die per package.
+            raise ErrorNotFound(f"'{path}' not found")
 
         if str(path) in _MOCKED_FILES:
             return self._get_mock_fobj(path, mode)
