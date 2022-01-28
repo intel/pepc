@@ -11,9 +11,17 @@
 """Emulated version or the 'Procs' module for testing purposes."""
 
 import contextlib
-from pepclibs.helperlibs import FSHelpers, Trivial
+from pepclibs.helperlibs import FSHelpers, Trivial, WrapExceptions
 from pepclibs.helperlibs._Common import ProcResult
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
+from pepclibs.helperlibs.Exceptions import ErrorNotFound
+
+# The exceptions to handle when dealing with file I/O.
+_EXCEPTIONS = (OSError, IOError, BrokenPipeError)
+
+def _get_err_prefix(fobj, method):
+    """Return the error message prefix."""
+    return "method '%s()' failed for %s" % (method, fobj.name)
 
 class EmulProc():
     """
@@ -47,9 +55,21 @@ class EmulProc():
 
         tmppath = self._basepath / str(path).strip("/")
 
-        self._files[path] = open(tmppath, mode, buffering=0)  # pylint: disable=consider-using-with
+        errmsg = f"cannot open file '{path}' with mode '{mode}': "
+        try:
+            fobj = open(tmppath, mode, buffering=0)  # pylint: disable=consider-using-with
+        except PermissionError as err:
+            raise ErrorPermissionDenied(f"{errmsg}{err}") from None
+        except FileNotFoundError as err:
+            raise ErrorNotFound(f"{errmsg}{err}") from None
+        except OSError as err:
+            raise Error(f"{errmsg}{err}") from None
 
-        return self._files[path]
+        # Make sure methods of 'fobj' always raise the 'Error' exceptions.
+        fobj = WrapExceptions.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
+                                             get_err_prefix=_get_err_prefix)
+        self._files[path] = fobj
+        return fobj
 
     def init_cpuinfo_testdata(self, datapath):
         """
@@ -74,14 +94,13 @@ class EmulProc():
 
         self.hostname = "emulated local host"
         self.hostmsg = f" on '{self.hostname}'"
+        self.is_remote = False
 
         # Opened files.
         self._files = {}
         self._cmds = {}
         pid = Trivial.get_pid()
         self._basepath = FSHelpers.mktemp(prefix=f"emulprocs_{pid}_")
-
-        self.is_remote = False
 
     def close(self):
         """Stop emulation."""
