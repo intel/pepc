@@ -13,13 +13,13 @@
 from common import fixture_proc, fixture_cpuinfo # pylint: disable=unused-import
 from pepclibs import CPUInfo
 
-def get_levels():
+def _get_levels():
     """Yield 'CPUInfo.LEVEL' values as a lowercase strings."""
 
     for lvl in CPUInfo.LEVELS:
         yield lvl.lower()
 
-def get_level_nums(lvl, cpuinfo, order=None, default=None):
+def _get_level_nums(lvl, cpuinfo, order=None, default=None):
     """
     Return numbers of level 'lvl', where the 'lvl' is one of the levels in CPUInfo.LEVELS (e.g.
     number of packages). The 'order' argument can be used to control the order of returned numbers.
@@ -43,7 +43,7 @@ def get_level_nums(lvl, cpuinfo, order=None, default=None):
 
     return nums
 
-def run_method(name, cpuinfo, args=None, kwargs=None, exp_res=None, ignore_res=False):
+def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=None, ignore_res=False):
     """
     Run the '<name>()' method of the 'CPUInfo' class. The arguments are as follows:
         * name - The name of the method.
@@ -81,20 +81,20 @@ def test_get(cpuinfo):
         * get_cpu_siblings()
     """
 
-    for lvl in get_levels():
-        nums = get_level_nums(lvl, cpuinfo)
+    for lvl in _get_levels():
+        nums = _get_level_nums(lvl, cpuinfo)
         assert nums, f"'get_{lvl}s()' is expected to return list of {lvl}s, got: '{nums}'"
 
-        for order in get_levels():
+        for order in _get_levels():
             prev_nums = nums
-            nums = get_level_nums(lvl, cpuinfo, order=order)
+            nums = _get_level_nums(lvl, cpuinfo, order=order)
             assert nums, f"'get_{lvl}s()' is expected to return list of {lvl}s, got: '{nums}'"
             nums = sorted(nums)
             assert nums == prev_nums, f"'get_{lvl}s()' was expected to return '{prev_nums}', got " \
                                       f"'{nums}'"
 
-    run_method("get_offline_cpus", cpuinfo, ignore_res=True)
-    run_method("get_cpu_siblings", cpuinfo, args=0, ignore_res=True)
+    _run_method("get_offline_cpus", cpuinfo, ignore_res=True)
+    _run_method("get_cpu_siblings", cpuinfo, args=0, ignore_res=True)
 
 def test_get_count(cpuinfo):
     """
@@ -104,12 +104,12 @@ def test_get_count(cpuinfo):
         * get_offline_cpus_count()
     """
 
-    for lvl in get_levels():
-        nums = get_level_nums(lvl, cpuinfo)
-        run_method(f"get_{lvl}s_count", cpuinfo, exp_res=len(nums))
+    for lvl in _get_levels():
+        nums = _get_level_nums(lvl, cpuinfo)
+        _run_method(f"get_{lvl}s_count", cpuinfo, exp_res=len(nums))
 
     offline_cpus = cpuinfo.get_offline_cpus()
-    run_method("get_offline_cpus_count", cpuinfo, exp_res=len(offline_cpus))
+    _run_method("get_offline_cpus_count", cpuinfo, exp_res=len(offline_cpus))
 
 def test_convert(cpuinfo):
     """
@@ -120,8 +120,8 @@ def test_convert(cpuinfo):
         * cores_to_cpus()
     """
 
-    for from_lvl in get_levels():
-        nums = get_level_nums(from_lvl, cpuinfo, default=[0])
+    for from_lvl in _get_levels():
+        nums = _get_level_nums(from_lvl, cpuinfo, default=[0])
 
         single_args = []
         for idx in 0, -1:
@@ -137,20 +137,20 @@ def test_convert(cpuinfo):
                                f"{nums[0]}, {nums[-1]},",
                                f" {nums[0]}, {nums[-1]} ",]
 
-        for to_lvl in get_levels():
-            nums = get_level_nums(to_lvl, cpuinfo, default=[0])
+        for to_lvl in _get_levels():
+            nums = _get_level_nums(to_lvl, cpuinfo, default=[0])
 
             # Test normalize method of single value.
             method_name = f"{from_lvl}_to_{to_lvl}s"
             for args in single_args:
-                run_method(method_name, cpuinfo, args=args, ignore_res=True)
+                _run_method(method_name, cpuinfo, args=args, ignore_res=True)
 
             # Test convert method for multiple values.
             method_name = f"{from_lvl}s_to_{to_lvl}s"
-            run_method(method_name, cpuinfo, exp_res=nums)
+            _run_method(method_name, cpuinfo, exp_res=nums)
 
             for args in multi_args:
-                run_method(method_name, cpuinfo, args=args, ignore_res=True)
+                _run_method(method_name, cpuinfo, args=args, ignore_res=True)
 
 def test_normalize(cpuinfo):
     """
@@ -161,8 +161,8 @@ def test_normalize(cpuinfo):
         * normalize_cpu()
     """
 
-    for lvl in get_levels():
-        nums = get_level_nums(lvl, cpuinfo)
+    for lvl in _get_levels():
+        nums = _get_level_nums(lvl, cpuinfo)
 
         # We have two types of normalize methods, normalize methods for single value
         # (e.g. normalize_package()), and multiple values (e.g. normalize_packages()). Methods for
@@ -180,7 +180,7 @@ def test_normalize(cpuinfo):
 
         method_name  = f"normalize_{lvl}"
         for args, exp_res in testcase:
-            run_method(method_name, cpuinfo, args=args, exp_res=exp_res[0])
+            _run_method(method_name, cpuinfo, args=args, exp_res=exp_res[0])
 
         # The methods for normalizing multiple values accept input as single integers, and multiple
         # integers in different forms. Add more input and expected values to test normalize methods
@@ -196,4 +196,4 @@ def test_normalize(cpuinfo):
 
         method_name  = f"normalize_{lvl}s"
         for args, exp_res in testcase:
-            run_method(method_name, cpuinfo, args=args, exp_res=exp_res)
+            _run_method(method_name, cpuinfo, args=args, exp_res=exp_res)
