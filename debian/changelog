@@ -1,12 +1,18 @@
+pepc (1.1.4) unstable; urgency=high
+
+  * pepc: fix file type markers in 'lsdir()', which fixes 'wult scan'.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 28 Jan 2022 13:41:53 +0200
+
 pepc (1.1.3) unstable; urgency=high
 
-  * pepc: python 3.8 crash fixe
+  * pepc: python 3.8 crash fix.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 12 Nov 2021 15:45:28 +0200
 
 pepc (1.1.2) unstable; urgency=low
 
-  * pepc: speed-up the C-state validation, required for wult tool
+  * pepc: speed-up the C-state validation, required for wult tool.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 12 Nov 2021 15:45:28 +0200
 
