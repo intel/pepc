@@ -11,8 +11,9 @@ This module provides an API to get CPU information.
 """
 
 import re
-from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import ArgParse, Procs, Trivial
+from pathlib import Path
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs import ArgParse, Procs, Trivial, FSHelpers
 
 # CPU model numbers.
 #
@@ -180,10 +181,38 @@ class CPUInfo:
             * 'normalize_cpu()'
     """
 
-    def _get_cpu_die(self, cpu): # pylint: disable=unused-argument,no-self-use
+    def _get_cpu_die(self, cpu):
         """Returns the die number for CPU number in 'cpu'."""
 
-        return 0
+        if self._no_die_info:
+            # Just assume there is one die per package.
+            return 0
+
+        if cpu in self._die_cache:
+            return self._die_cache[cpu]
+
+        sysfs_base = Path(self._topology_sysfs_base % cpu)
+
+        # Get the CPU die number.
+        die_id_path = sysfs_base / "die_id"
+        try:
+            die = FSHelpers.read(die_id_path, proc=self._proc)
+        except ErrorNotFound:
+            # The file does not exist.
+            self._no_die_info = True
+            return 0
+
+        die = int(die)
+
+        # Get the list of CPUs belonging to the same die.
+        cpus = FSHelpers.read(sysfs_base / "die_cpus_list", proc=self._proc)
+        cpus = ArgParse.parse_int_list(cpus, ints=True)
+
+        # Save the list of CPUs in the case.
+        for cpunum in cpus:
+            self._die_cache[cpunum] = die
+
+        return die
 
     def _get_topology(self, order="CPU"):
         """
@@ -639,6 +668,14 @@ class CPUInfo:
         self._lvl2idx = {lvl : idx for idx, lvl in enumerate(LEVELS)}
         # Level index number to its name.
         self._idx2lvl = dict(enumerate(LEVELS))
+
+        # The CPU topology sysfs directory path pattern.
+        self._topology_sysfs_base = "/sys/devices/system/cpu/cpu%d/topology/"
+        # A CPU number -> die number cache. Used only when building the topology dictionary, helps
+        # reading less sysfs files.
+        self._die_cache = {}
+        # Will be 'True' if the system does not provide die information (e.g., the kernel is old).
+        self._no_die_info = False
 
         # General CPU information.
         self.info = None
