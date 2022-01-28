@@ -126,7 +126,7 @@ def copy_dir(src: Path, dst: Path, exist_ok: bool = False, ignore=None):
 
     _copy_dir(src, dst, ignore)
 
-def move_copy_link(src: Path, dst: Path, action: str = "symlink", exist_ok: bool = False):
+def move_copy_link(src, dst, action="symlink", exist_ok=False):
     """
     Moves, copy. or link the 'src' file or directory to 'dst' depending on the 'action' contents
     ('move', 'copy', 'symlink').
@@ -175,7 +175,7 @@ def move_copy_link(src: Path, dst: Path, action: str = "symlink", exist_ok: bool
     except (OSError, shutil.Error) as err:
         raise Error(f"cannot {action} '{src}' to '{dst}':\n{err}") from err
 
-def get_mtime(path: Path, proc=None):
+def get_mtime(path, proc=None):
     """Returns file or directory mtime."""
 
     if not proc:
@@ -231,7 +231,7 @@ def mount_points(proc=None):
         device, mntpoint, fstype, options, _ = line.split(maxsplit=4)
         yield mntinfo(device, mntpoint, fstype, options.split(","))
 
-def mount_debugfs(mnt: Path = None, proc=None):
+def mount_debugfs(mnt=None, proc=None):
     """
     Mount the debugfs file-system to 'mnt' on the host. By default it is mounted to
     'DEBUGFS_MOUNT_POINT'. The 'proc' argument defines the host to mount debugfs on (default is the
@@ -254,7 +254,7 @@ def mount_debugfs(mnt: Path = None, proc=None):
     proc.run_verify(f"mount -t debugfs none '{mnt}'")
     return mnt
 
-def mktemp(prefix: str = None, tmpdir: Path = None, proc=None):
+def mktemp(prefix=None, tmpdir=None, proc=None):
     """
     Create a temporary directory by running the 'mktemp' tool. The 'prefix' argument can be used to
     specify the temporary directory name prefix. The 'tmpdir' argument path to the base directory
@@ -290,7 +290,7 @@ def mktemp(prefix: str = None, tmpdir: Path = None, proc=None):
     _LOG.debug("created a temporary directory '%s'%s", path, proc.hostmsg)
     return Path(path)
 
-def shell_test(path: Path, opt: str, proc=None):
+def shell_test(path, opt, proc=None):
     """
     Run a shell test against path 'path'. The 'opt' argument specifies the the 'test' command
     options. For example, pass '-f' to run 'test -f' which returns 0 if 'path' exists and is a
@@ -317,7 +317,7 @@ def shell_test(path: Path, opt: str, proc=None):
 
     return exitcode == 0
 
-def mkdir(dirpath: Path, parents: bool = False, exist_ok: bool = False, proc=None):
+def mkdir(dirpath, parents=False, exist_ok=False, proc=None):
     """
     Create a directory. If 'parents' is 'True', the parent directories are created as well. If the
     directory already exists, this function raises an exception if 'exist_ok' is 'True', and it
@@ -351,7 +351,7 @@ def mkdir(dirpath: Path, parents: bool = False, exist_ok: bool = False, proc=Non
         except OSError as err:
             raise Error(f"failed to create directory '{dirpath}':\n{err}") from None
 
-def rm_minus_rf(path: Path, proc=None):
+def rm_minus_rf(path, proc=None):
     """
     Remove 'path' using 'rm -rf' on the host definec by 'Proc' (local host by default). If 'path' is
     a symlink, the link is removed, but the target of the link is not removed.
@@ -371,7 +371,7 @@ def rm_minus_rf(path: Path, proc=None):
     except (OSError, shutil.Error) as err:
         raise Error(f"failed to remove {path}: {err}") from err
 
-def exists(path: Path, proc=None):
+def exists(path, proc=None):
     """
     Return 'True' if path 'path' exists on the host defined by 'proc' (local host by default).
     """
@@ -384,7 +384,7 @@ def exists(path: Path, proc=None):
     except OSError as err:
         raise Error(f"failed to check if '{path}' exists on the local host: {err}") from None
 
-def isfile(path: Path, proc=None):
+def isfile(path, proc=None):
     """
     Return 'True' if path 'path' exists an it is a regular file. The check is done on the host
     defined by 'proc' (local host by default).
@@ -399,7 +399,7 @@ def isfile(path: Path, proc=None):
         raise Error(f"failed to check if '{path}' exists and it is a regular file on the local "
                     f"host: {err}") from None
 
-def isdir(path: Path, proc=None):
+def isdir(path, proc=None):
     """
     Return 'True' if path 'path' exists an it is a directory. The check is done on the host
     defined by 'proc' (local host by default).
@@ -414,7 +414,7 @@ def isdir(path: Path, proc=None):
         raise Error(f"failed to check if '{path}' exists and it is a directory on local host: "
                     f"{err}") from None
 
-def isexe(path: Path, proc=None):
+def isexe(path, proc=None):
     """
     Return 'True' if path 'path' exists an it is an executable file. The check is done on the host
     defined by 'proc' (local host by default).
@@ -429,7 +429,7 @@ def isexe(path: Path, proc=None):
         raise Error(f"failed to check if '{path}' exists and it is an executable file on the local "
                     f"host: {err}") from None
 
-def issocket(path: Path, proc=None):
+def issocket(path, proc=None):
     """
     Return 'True' if path 'path' exists an it is a Unix socket file. The check is done on the host
     defined by 'proc' (local host by default).
@@ -444,7 +444,7 @@ def issocket(path: Path, proc=None):
         raise Error(f"failed to check if '{path}' exists and it is a Unix socket file on the local "
                     f"host: {err}") from None
 
-def which(program: str, default=_RAISE, proc=None):
+def which(program, default=_RAISE, proc=None):
     """
     Find full path of a program by searching it in '$PATH'. Return the full path if the program was
     found, otherwise retruns 'default' or rises an exception if the 'default' value was not
@@ -492,7 +492,7 @@ def which(program: str, default=_RAISE, proc=None):
         raise ErrorNotFound(f"program '{program}' was not found in $PATH ({envpaths})")
     return default
 
-def lsdir(path: Path, must_exist: bool = True, proc=None):
+def lsdir(path, must_exist=True, proc=None):
     """
     For each directory entry in 'path', yield the ('name', 'path', 'type') tuple, where 'name' is
     the direntry name, 'path' is full directory entry path, and 'type' is the file type indicator
@@ -558,7 +558,7 @@ def lsdir(path: Path, must_exist: bool = True, proc=None):
         for einfo in sorted(entries.values(), key=itemgetter("ctime"), reverse=True):
             yield (einfo["name"], Path(path / einfo["name"]), einfo["ftype"])
 
-def abspath(path: Path, must_exist: bool = True, proc=None):
+def abspath(path, must_exist=True, proc=None):
     """
     Returns absolute real path for 'path' on the host define by 'proc'. All the components of the
     path should exist by default, otherwise this function raises and exception. But if 'must_exist'
@@ -633,7 +633,7 @@ def write(path, data, proc=None):
         except Error as err:
             raise Error(f"failed to write into file '{path}'{proc.hostmsg}:\n{err}") from err
 
-def wait_for_a_file(path: Path, interval: int = 1, timeout: int = 60, proc=None):
+def wait_for_a_file(path, interval=1, timeout=60, proc=None):
     """
     Wait for a file or directory defined by path 'path' to get created. This function just
     periodically polls for the file every 'interval' seconds. If the file does not get created
