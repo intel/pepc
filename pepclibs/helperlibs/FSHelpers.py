@@ -594,9 +594,9 @@ def lsdir(path: Path, must_exist: bool = True, proc=None):
             if stat.S_ISDIR(stinfo.st_mode):
                 ftype = "/"
             elif stat.S_ISLNK(stinfo.st_mode):
-                ftype = "="
-            elif stat.S_ISSOCK(stinfo.st_mode):
                 ftype = "@"
+            elif stat.S_ISSOCK(stinfo.st_mode):
+                ftype = "="
             elif stat.S_ISFIFO(stinfo.st_mode):
                 ftype = "|"
             else:
