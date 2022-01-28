@@ -28,7 +28,7 @@ from pepclibs import ASPM, CPUIdle, CPUInfo, CPUOnline, CPUFreq
 if sys.version_info < (3,6):
     raise SystemExit("Error: this tool requires python version 3.6 or higher")
 
-VERSION = "1.1.3"
+VERSION = "1.1.4"
 OWN_NAME = "pepc"
 
 LOG = logging.getLogger()
