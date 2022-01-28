@@ -11,7 +11,6 @@ This module contains misc. helper functions related to file-system operations.
 """
 
 import os
-import sys
 import stat
 import time
 import shutil
@@ -175,62 +174,6 @@ def move_copy_link(src: Path, dst: Path, action: str = "symlink", exist_ok: bool
             raise Error(f"unrecognized action '{action}'")
     except (OSError, shutil.Error) as err:
         raise Error(f"cannot {action} '{src}' to '{dst}':\n{err}") from err
-
-def find_app_data(appname, subpath: Path, pre: str = None, descr: str = None, default=_RAISE):
-    """
-    Search for application 'appname' data. The data are searched for
-    in 'subpath' sub-path of the following directories (and in the following order):
-      * in the directory the of the running process (sys.argv[0])
-      * the the directories in the 'pre' list, if it was specified
-      * in the directory specified by the f'{appname}_DATA_PATH' environment variable
-      * $HOME/.local/share/<appname>/, if it exists
-      * /usr/local/share/<appname>/, if it exists
-      * /usr/share/<appname>/, if it exists
-
-    By default this function raises an exception if 'subpath' was not found. The'default' argument
-    can be used as an return value instead of raising an error.
-    The 'descr' argument is a human-readable description of 'subpath', which will be used in the
-    error message if error is raised.
-    """
-
-    searched = []
-    paths = pre
-    if not paths:
-        paths = []
-
-    paths.append(Path(sys.argv[0]).parent)
-
-    path = os.environ.get(f"{appname}_DATA_PATH".upper())
-    if path:
-        paths.append(Path(path))
-
-    for path in paths:
-        path /= subpath
-        if path.exists():
-            return path
-        searched.append(path)
-
-    path = Path("~").expanduser() / Path(f".local/share/{appname}/{subpath}")
-    if path.exists():
-        return path
-
-    searched.append(path)
-
-    for path in (Path(f"/usr/local/share/{appname}"), Path(f"/usr/share/{appname}")):
-        path /= subpath
-        if path.exists():
-            return path
-        searched.append(path)
-
-    if default is _RAISE:
-        if not descr:
-            descr = f"'{subpath}'"
-        searched = [str(s) for s in searched]
-        dirs = " * " + "\n * ".join(searched)
-
-        raise Error(f"cannot find {descr}, searched in the following directories on local host:\n"
-                    f"{dirs}")
-    return default
 
 def get_mtime(path: Path, proc=None):
     """Returns file or directory mtime."""
