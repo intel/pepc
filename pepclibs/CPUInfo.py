@@ -436,8 +436,7 @@ class CPUInfo:
 
     def get_packages(self, order="package"):
         """
-        Returns list of package numbers sorted in ascending order. The 'order' argument must always
-        be "package". It exists only for consistency with 'get_cpus()'.
+        Returns list of package numbers sorted in ascending order.
 
         Important: if a package has all CPUs offline, the package number will not be included in the
         returned list.
@@ -448,10 +447,9 @@ class CPUInfo:
     def get_dies(self, package=0, order="die"):
         """
         Returns list of dies numbers in package 'package'. The returned list is sorted in ascending
-        order. The 'order' argument must always be "dies". It exists only for consistency with
-        'get_cpus()'.
+        order.
 
-        Important: if a 'die' has all CPUs offline, the die number will not be included in the
+        Important: if a die has all CPUs offline, the die number will not be included in the
         returned list.
         """
 
