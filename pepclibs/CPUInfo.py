@@ -557,10 +557,10 @@ class CPUInfo:
         """Returns count of offline CPUs."""
         return len(self.get_offline_cpus())
 
-    def normalize_packages(self, pkgs):
+    def normalize_packages(self, packages):
         """
-        Validate package numbers in 'pkgs' and return the normalized list. The input package numbers
-        may be integers or strings containing integer numbers. It may also be a string with
+        Validate package numbers in 'packages' and return the normalized list. The input package
+        numbers may be integers or strings containing integer numbers. It may also be a string with
         comma-separated package numbers and ranges. This is similar to the 'cpus' argument in
         'normalize_cpus()'.
 
@@ -569,18 +569,18 @@ class CPUInfo:
 
         allpkgs = self.get_packages()
 
-        if pkgs == "all":
+        if packages == "all":
             return allpkgs
 
         allpkgs = set(allpkgs)
-        pkgs = ArgParse.parse_int_list(pkgs, ints=True, dedup=True)
-        for pkg in pkgs:
+        packages = ArgParse.parse_int_list(packages, ints=True, dedup=True)
+        for pkg in packages:
             if pkg not in allpkgs:
                 pkgs_str = ", ".join([str(pkg) for pkg in sorted(allpkgs)])
                 raise Error(f"package '{pkg}' not available{self._proc.hostmsg}, available "
                             f"packages are: {pkgs_str}")
 
-        return pkgs
+        return packages
 
     def normalize_package(self, package):
         """Same as 'normalize_packages()', but for a single package number."""
