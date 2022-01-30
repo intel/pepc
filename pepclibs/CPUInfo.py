@@ -586,6 +586,32 @@ class CPUInfo:
         """Same as 'normalize_packages()', but for a single package number."""
         return self.normalize_packages([package])[0]
 
+    def normalize_dies(self, dies, package=0):
+        """
+        Validate die numbers in 'dies' for package 'package' and return the normalized list. The
+        arguments are as follows.
+          * dies - similar to 'packages' in 'normalize_packages()', but contains die numbers.
+          * package - package number to validate the 'dies' against: all numbers in 'dies' should be
+            valid die numbers in package number 'package'.
+
+        Returns a list of integer die numbers.
+        """
+
+        pkg_dies = self.package_to_dies(package)
+
+        if dies == "all":
+            return pkg_dies
+
+        pkg_dies = set(pkg_dies)
+        dies = ArgParse.parse_int_list(dies, ints=True, dedup=True)
+        for die in dies:
+            if die not in pkg_dies:
+                dies_str = ", ".join([str(pkg) for pkg in sorted(pkg_dies)])
+                raise Error(f"die '{die}' is not available in package "
+                            f"'{package}'{self._proc.hostmsg}, available dies are: {dies_str}")
+
+        return dies
+
     def normalize_cpus(self, cpus, offlined_ok=False):
         """
         Validate CPU numbers in 'cpus' and return a normalized list. The arguments are as follows.
