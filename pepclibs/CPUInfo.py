@@ -445,6 +445,18 @@ class CPUInfo:
 
         return self._get_level_nums("package", "package", "all", order=order)
 
+    def get_dies(self, package=0, order="die"):
+        """
+        Returns list of dies numbers in package 'package'. The returned list is sorted in ascending
+        order. The 'order' argument must always be "dies". It exists only for consistency with
+        'get_cpus()'.
+
+        Important: if a 'die' has all CPUs offline, the die number will not be included in the
+        returned list.
+        """
+
+        return self._get_level_nums("die", "package", package, order=order)
+
     def get_cpus(self, order="CPU"):
         """
         Returns list of online CPU numbers. The numbers are sored in ascending order by default. The
