@@ -166,6 +166,7 @@ class CPUInfo:
         * 'get_cpu_siblings()'
     2. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
         * 'packages_to_cpus()'
+        * 'package_to_cpus()'
         * 'package_to_dies()'
         * 'package_to_nodes()'
         * 'package_to_cores()'
@@ -182,6 +183,7 @@ class CPUInfo:
         B. Single package/CPU/etc.
             * 'normalize_package()'
             * 'normalize_cpu()'
+    5. "Divide" list of CPUs by packages: 'cpus_div_packages()'.
     """
 
     def _get_cpu_die(self, cpu):
@@ -532,6 +534,12 @@ class CPUInfo:
 
         return cpus
 
+    def package_to_cpus(self, package, order="CPU"):
+        """
+        Same as 'packages_to_cpus()', but for a single package 'package'.
+        """
+        return self._get_level_nums("CPU", "package", (package,), order=order)
+
     def package_to_dies(self, package, order="die"):
         """
         Returns list of die numbers belonging to package 'package'. The 'order' argument can
@@ -593,6 +601,47 @@ class CPUInfo:
                             f"packages are: {pkgs_str}")
 
         return packages
+
+    def cpus_div_packages(self, cpus, packages="all"):
+        """
+        Check which CPU numbers in 'cpus' cover entire package(s). In other words, this method is
+        inverse to 'packages_to_cpus()' and turns list of CPUs into a list of packages. The
+        arguments are as follows.
+          * cpus - same as in 'normalize_cpus()'.
+          * packages - the packages to check for CPU numbers in.
+
+        Returns a tuple of two lists: ('packages', 'rem_cpus').
+          * packages - list of packages with all CPUs present in 'cpus'.
+          * rem_cpus - list of CPUs that cannot be converted to a package number.
+
+        Consider an example of a system with 2 packages and 2 CPUs per package.
+          * package 0 includes CPUs 0 and 1
+          * package 1 includes CPUs 2 and 3
+
+        1. cpus_div_packages("0-3") would return ([0,1], []).
+        2. cpus_div_packages("2,3") would return ([1],   []).
+        3. cpus_div_packages("0,3") would return ([],    [0,3]).
+        """
+
+        pkgs = []
+        rem_cpus = []
+
+        cpus = self.normalize_cpus(cpus)
+        cpus_set = set(cpus)
+
+        for pkg in self.normalize_packages(packages):
+            pkg_cpus_set = set(self.package_to_cpus(pkg))
+
+            if pkg_cpus_set.issubset(cpus_set):
+                pkgs.append(pkg)
+                cpus_set -= pkg_cpus_set
+
+        # Return the remaining CPUs in the order of the input 'cpus'.
+        for cpu in cpus:
+            if cpu in cpus_set:
+                rem_cpus.append(cpu)
+
+        return (pkgs, rem_cpus)
 
     def normalize_package(self, package):
         """Same as 'normalize_packages()', but for a single package number."""
