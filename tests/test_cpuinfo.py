@@ -54,12 +54,12 @@ def _get_bad_orders():
 def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=None, ignore_res=False):
     """
     Run the '<name>()' method of the 'CPUInfo' class. The arguments are as follows:
-        * name - The name of the method.
-        * cpuinfo - The 'CPUInfo' object.
-        * args - The ordered arguments to pass down to the method.
-        * kwargs - Keyword arguments to pass down to the method.
-        * exp_res - The expected result.
-        * ignore_res - If 'True', the method result is not compared against 'exp_res'.
+      * name - The name of the method.
+      * cpuinfo - The 'CPUInfo' object.
+      * args - The ordered arguments to pass down to the method.
+      * kwargs - Keyword arguments to pass down to the method.
+      * exp_res - The expected result.
+      * ignore_res - If 'True', the method result is not compared against 'exp_res'.
     The method is called and tested only if it exists in the 'CPUInfo' object.
     """
 
@@ -116,11 +116,11 @@ def _test_get_bad(cpuinfo):
 
 def test_get(cpuinfo):
     """
-    Test following 'get' methods of the 'CPUInfo' class:
-        * get_packages()
-        * get_cpus()
-        * get_offline_cpus()
-        * get_cpu_siblings()
+    Test the following 'CPUInfo' class methods:
+      * 'get_packages()'
+      * 'get_cpus()'
+      * 'get_offline_cpus()'
+      * 'get_cpu_siblings()'
     """
 
     _test_get_good(cpuinfo)
@@ -128,10 +128,10 @@ def test_get(cpuinfo):
 
 def test_get_count(cpuinfo):
     """
-    Test following 'get_count' methods of the 'CPUInfo' class:
-        * get_packages_count()
-        * get_cpus_count()
-        * get_offline_cpus_count()
+    Test the following 'CPUInfo' class methods:
+      * 'get_packages_count()'
+      * 'get_cpus_count()'
+      * 'get_offline_cpus_count()'
     """
 
     for lvl in _get_levels():
@@ -225,11 +225,11 @@ def _test_convert_bad(cpuinfo):
 
 def test_convert(cpuinfo):
     """
-    Test following conversion methods of the 'CPUInfo' class:
-        * packages_to_cpus()
-        * package_to_nodes()
-        * package_to_cores()
-        * cores_to_cpus()
+    Test the following 'CPUInfo' class methods:
+      * 'packages_to_cpus()'
+      * 'package_to_nodes()'
+      * 'package_to_cores()'
+      * 'cores_to_cpus()'
     """
 
     _test_convert_good(cpuinfo)
@@ -307,11 +307,11 @@ def _test_normalize_bad(cpuinfo):
 
 def test_normalize(cpuinfo):
     """
-    Test following 'normalize' methods of the 'CPUInfo' class:
-        * normalize_packages()
-        * normalize_package()
-        * normalize_cpus()
-        * normalize_cpu()
+    Test the following 'CPUInfo' class methods:
+      * 'normalize_packages()'
+      * 'normalize_package()'
+      * 'normalize_cpus()'
+      * 'normalize_cpu()'
     """
 
     _test_normalize_good(cpuinfo)
