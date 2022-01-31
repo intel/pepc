@@ -160,6 +160,7 @@ class CPUInfo:
 
     1. Get list of packages/cores/etc.
         * 'get_packages()'
+        * 'get_dies()'
         * 'get_cpus()'
         * 'get_offline_cpus()'
         * 'get_cpu_siblings()'
@@ -176,6 +177,7 @@ class CPUInfo:
     4. Normalize a list of packages/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
             * 'normalize_packages()'
+            * 'normalize_dies()'
             * 'normalize_cpus()'
         B. Single package/CPU/etc.
             * 'normalize_package()'
