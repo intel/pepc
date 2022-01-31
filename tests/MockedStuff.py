@@ -48,7 +48,7 @@ def _get_mocked_data():
 
     mock_data = {}
     basepath = Path(__file__).parents[1].resolve()
-    testdatapath = basepath / "tests" / "data"
+    testdatapath = basepath / "tests" / "data_v1"
 
     for name, filename in _TESTDATA:
         with open(testdatapath / filename, "r") as fobj:
