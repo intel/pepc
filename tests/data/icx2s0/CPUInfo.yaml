@@ -1,0 +1,5 @@
+commands:
+- command: lscpu --physical --all -p=socket,node,core,cpu,online
+  dirname: lscpu-topology
+- command: lscpu
+  dirname: lscpu
