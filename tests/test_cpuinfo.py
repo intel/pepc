@@ -31,7 +31,7 @@ def _get_level_nums(lvl, cpuinfo, order=None, default=None):
 
     if not isinstance(default, list):
         default = [default]
-    nums=default
+    nums = default
 
     if order is None:
         order = lvl
