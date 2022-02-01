@@ -158,7 +158,7 @@ def test_get_count(cpuinfo):
 def _test_convert_good(cpuinfo):
     """Test public convert methods of the 'CPUInfo' class with good option values."""
 
-    for from_lvl, nums in _get_levels_and_nums(cpuinfo):
+    for from_lvl, from_nums in _get_levels_and_nums(cpuinfo):
         # We have two types of conversion methods to convert values between different "levels"
         # defined in 'CPUInfo.LEVELS'. We have methods for converting single value to other level,
         # e.g. 'package_to_cpus()'. And we have methods for converting multiple values to other
@@ -167,19 +167,21 @@ def _test_convert_good(cpuinfo):
         # converting multiple values accept also ingeters in lists.
         single_args = []
         for idx in 0, -1:
-            single_args += [nums[idx], f"{nums[idx]}", f" {nums[idx]} ", [nums[idx]]]
+            num = from_nums[idx]
+            single_args += [num, f"{num}", f" {num} ", [num]]
 
         multi_args = []
         for idx in 0, -1:
-            multi_args += [f"{nums[idx]},", [nums[idx]]]
+            num = from_nums[idx]
+            multi_args += [f"{num},", [num]]
 
-            if len(nums) > 1:
-                multi_args += [(nums[-1], nums[0]),
-                               f"{nums[0]}, {nums[-1]}",
-                               f"{nums[0]}, {nums[-1]},",
-                               f" {nums[0]}, {nums[-1]} ",]
+            if len(from_nums) > 1:
+                multi_args += [(from_nums[-1], from_nums[0]),
+                               f"{from_nums[0]}, {from_nums[-1]}",
+                               f"{from_nums[0]}, {from_nums[-1]},",
+                               f" {from_nums[0]}, {from_nums[-1]} ",]
 
-        for to_lvl, nums in _get_levels_and_nums(cpuinfo):
+        for to_lvl, to_nums in _get_levels_and_nums(cpuinfo):
             # Test normalize method of single value.
             method_name = f"{from_lvl}_to_{to_lvl}s"
             for args in single_args:
@@ -187,7 +189,7 @@ def _test_convert_good(cpuinfo):
 
             # Test convert method for multiple values.
             method_name = f"{from_lvl}s_to_{to_lvl}s"
-            _run_method(method_name, cpuinfo, exp_res=nums)
+            _run_method(method_name, cpuinfo, exp_res=to_nums)
 
             for args in multi_args:
                 _run_method(method_name, cpuinfo, args=args)
