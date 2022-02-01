@@ -24,19 +24,14 @@ def _get_levels():
     for lvl in CPUInfo.LEVELS:
         yield lvl.lower()
 
-def _get_level_nums(lvl, cpuinfo, order=None, default=None):
+def _get_level_nums(lvl, cpuinfo, order=None):
     """
     Run the 'get_<lvl>(order=<order>)' method of 'cpuinfo' and return the result (e.g., runs
     'get_packages()' if 'lvl' is "packages").
       * cpuinfo - the 'CPUInfo' object.
       * order - value for the 'order' keyword argument of the executed "get" method. Set to 'lvl' by
                 default.
-      * default - the value to return if the 'get_<lvl>()' method does not exist in 'cpuinfo.
     """
-
-    if not isinstance(default, list):
-        default = [default]
-    nums = default
 
     if order is None:
         order = lvl
@@ -45,10 +40,10 @@ def _get_level_nums(lvl, cpuinfo, order=None, default=None):
     order = order.replace("cpu", "CPU")
 
     get_method = getattr(cpuinfo, f"get_{lvl}s", None)
-    if get_method:
-        nums = get_method(order=order)
 
-    return nums
+    assert get_method, f"BUG: 'get_{lvl}s()' does not exist"
+
+    return get_method(order=order)
 
 def _get_bad_orders():
     """Yield bad 'order' argument values."""
@@ -91,6 +86,9 @@ def _test_get_good(cpuinfo):
     """Test 'get' methods for bad option values."""
 
     for lvl in _get_levels():
+        if not getattr(cpuinfo, f"get_{lvl}s", None):
+            continue
+
         nums = _get_level_nums(lvl, cpuinfo)
         assert nums, f"'get_{lvl}s()' is expected to return list of {lvl}s, got: '{nums}'"
         ref_nums = sorted(nums)
@@ -142,6 +140,9 @@ def test_get_count(cpuinfo):
     """
 
     for lvl in _get_levels():
+        if not getattr(cpuinfo, f"get_{lvl}s", None):
+            continue
+
         nums = _get_level_nums(lvl, cpuinfo)
         _run_method(f"get_{lvl}s_count", cpuinfo, exp_res=len(nums))
 
@@ -152,7 +153,10 @@ def _test_convert_good(cpuinfo):
     """Test public convert methods of the 'CPUInfo' class with good option values."""
 
     for from_lvl in _get_levels():
-        nums = _get_level_nums(from_lvl, cpuinfo, default=[0])
+        if not getattr(cpuinfo, f"get_{from_lvl}s", None):
+            continue
+
+        nums = _get_level_nums(from_lvl, cpuinfo)
 
         # We have two types of conversion methods to convert values between different "levels"
         # defined in 'CPUInfo.LEVELS'. We have methods for converting single value to other level,
@@ -175,7 +179,10 @@ def _test_convert_good(cpuinfo):
                                f" {nums[0]}, {nums[-1]} ",]
 
         for to_lvl in _get_levels():
-            nums = _get_level_nums(to_lvl, cpuinfo, default=[0])
+            if not getattr(cpuinfo, f"get_{to_lvl}s", None):
+                continue
+
+            nums = _get_level_nums(to_lvl, cpuinfo)
 
             # Test normalize method of single value.
             method_name = f"{from_lvl}_to_{to_lvl}s"
@@ -193,10 +200,10 @@ def _test_convert_bad(cpuinfo):
     """Same as '_test_converrt_good()', but use bad option values."""
 
     for from_lvl in _get_levels():
-        from_nums = _get_level_nums(from_lvl, cpuinfo, default="NA")
-        if "NA" in from_nums:
+        if not getattr(cpuinfo, f"get_{from_lvl}s", None):
             continue
 
+        from_nums = _get_level_nums(from_lvl, cpuinfo)
         bad_num = from_nums[-1] + 1
 
         for to_lvl in _get_levels():
@@ -246,6 +253,9 @@ def _test_normalize_good(cpuinfo):
     """Test public 'normalize' methods of the 'CPUInfo' class with good option values."""
 
     for lvl in _get_levels():
+        if not getattr(cpuinfo, f"get_{lvl}s", None):
+            continue
+
         nums = _get_level_nums(lvl, cpuinfo)
 
         # We have two types of normalize methods, normalize methods for single value
@@ -286,10 +296,10 @@ def _test_normalize_bad(cpuinfo):
     """Same as '_test_normalize_good()', but use bad option values."""
 
     for lvl in _get_levels():
-        nums = _get_level_nums(lvl, cpuinfo, default="NA")
-        if "NA" in nums:
+        if not getattr(cpuinfo, f"get_{lvl}s", None):
             continue
 
+        nums = _get_level_nums(lvl, cpuinfo)
         bad_num = nums[-1] + 1
 
         method_name  = f"normalize_{lvl}"
