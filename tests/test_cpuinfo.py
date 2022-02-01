@@ -81,9 +81,6 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE):
     if args is None:
         args = []
 
-    if not isinstance(args, list):
-        args = [args]
-
     if kwargs is None:
         kwargs = {}
 
@@ -111,7 +108,7 @@ def _test_get_good(cpuinfo):
                                      f"got '{nums}'"
 
     _run_method("get_offline_cpus", cpuinfo)
-    _run_method("get_cpu_siblings", cpuinfo, args=0)
+    _run_method("get_cpu_siblings", cpuinfo, args=(0,))
 
 def _test_get_bad(cpuinfo):
     """Test 'get' methods with bad 'order' values and expect methods to fail."""
@@ -127,7 +124,7 @@ def _test_get_bad(cpuinfo):
     cpus = _get_level_nums("cpu", cpuinfo)
     bad_cpu = cpus[-1] + 1
     with pytest.raises(Error):
-        _run_method("get_cpu_siblings", cpuinfo, args=bad_cpu)
+        _run_method("get_cpu_siblings", cpuinfo, args=(bad_cpu,))
 
 def test_get(cpuinfo):
     """
@@ -168,7 +165,7 @@ def _test_convert_good(cpuinfo):
         single_args = []
         for idx in 0, -1:
             num = from_nums[idx]
-            single_args += [num, f"{num}", f" {num} ", [num]]
+            single_args += [num, f"{num}", f" {num} "]
 
         multi_args = []
         for idx in 0, -1:
@@ -185,14 +182,14 @@ def _test_convert_good(cpuinfo):
             # Test normalize method of single value.
             method_name = f"{from_lvl}_to_{to_lvl}s"
             for args in single_args:
-                _run_method(method_name, cpuinfo, args=args)
+                _run_method(method_name, cpuinfo, args=(args,))
 
             # Test convert method for multiple values.
             method_name = f"{from_lvl}s_to_{to_lvl}s"
             _run_method(method_name, cpuinfo, exp_res=to_nums)
 
             for args in multi_args:
-                _run_method(method_name, cpuinfo, args=args)
+                _run_method(method_name, cpuinfo, args=(args,))
 
 def _test_convert_bad(cpuinfo):
     """Same as '_test_converrt_good()', but use bad option values."""
@@ -208,13 +205,13 @@ def _test_convert_bad(cpuinfo):
 
                 for args in bad_args:
                     with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=args)
+                        _run_method(method_name, cpuinfo, args=(args,))
 
                 args = from_nums[0]
                 for order in _get_bad_orders():
                     kwargs = {"order": order}
                     with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=args, kwargs=kwargs)
+                        _run_method(method_name, cpuinfo, args=(args,), kwargs=kwargs)
 
             method_name = f"{from_lvl}s_to_{to_lvl}s"
 
@@ -223,13 +220,13 @@ def _test_convert_bad(cpuinfo):
 
                 for args in bad_args:
                     with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=args)
+                        _run_method(method_name, cpuinfo, args=(args,))
 
                 args = from_nums[0]
                 for order in _get_bad_orders():
                     kwargs = {"order": order}
                     with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=args, kwargs=kwargs)
+                        _run_method(method_name, cpuinfo, args=(args,), kwargs=kwargs)
 
 def test_convert(cpuinfo):
     """
@@ -263,7 +260,7 @@ def _test_normalize_good(cpuinfo):
 
         method_name  = f"normalize_{lvl}"
         for args, exp_res in testcase:
-            _run_method(method_name, cpuinfo, args=args, exp_res=exp_res[0])
+            _run_method(method_name, cpuinfo, args=(args,), exp_res=exp_res[0])
 
         # The methods for normalizing multiple values accept input as single integers, and multiple
         # integers in different forms. Add more input and expected values to test normalize methods
@@ -279,7 +276,7 @@ def _test_normalize_good(cpuinfo):
 
         method_name  = f"normalize_{lvl}s"
         for args, exp_res in testcase:
-            _run_method(method_name, cpuinfo, args=args, exp_res=exp_res)
+            _run_method(method_name, cpuinfo, args=(args,), exp_res=exp_res)
 
 def _test_normalize_bad(cpuinfo):
     """Same as '_test_normalize_good()', but use bad option values."""
@@ -293,7 +290,7 @@ def _test_normalize_bad(cpuinfo):
 
             for args in bad_args:
                 with pytest.raises(Error):
-                    _run_method(method_name, cpuinfo, args=args)
+                    _run_method(method_name, cpuinfo, args=(args,))
 
         method_name  = f"normalize_{lvl}s"
         if getattr(cpuinfo, method_name, None):
@@ -305,7 +302,7 @@ def _test_normalize_bad(cpuinfo):
 
             for args in bad_args:
                 with pytest.raises(Error):
-                    _run_method(method_name, cpuinfo, args=args)
+                    _run_method(method_name, cpuinfo, args=(args,))
 
 def test_normalize(cpuinfo):
     """
