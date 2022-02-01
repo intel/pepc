@@ -15,6 +15,9 @@ from common import fixture_proc, fixture_cpuinfo # pylint: disable=unused-import
 from pepclibs import CPUInfo
 from pepclibs.helperlibs.Exceptions import Error
 
+# A unique object used in '_run_method()' for ignoring method's return value by default.
+_IGNORE = object()
+
 def _get_levels():
     """Yield 'CPUInfo.LEVEL' values as a lowercase strings."""
 
@@ -51,16 +54,16 @@ def _get_bad_orders():
     for order in "CPUS", "CORE", "nodes", "pkg":
         yield order
 
-def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=None, ignore_res=False):
+def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE):
     """
-    Run the '<name>()' method of the 'CPUInfo' class. The arguments are as follows:
-      * name - The name of the method.
-      * cpuinfo - The 'CPUInfo' object.
-      * args - The ordered arguments to pass down to the method.
-      * kwargs - Keyword arguments to pass down to the method.
-      * exp_res - The expected result.
-      * ignore_res - If 'True', the method result is not compared against 'exp_res'.
-    The method is called and tested only if it exists in the 'CPUInfo' object.
+    Run the 'name' method of the 'cpuinfo' object. The arguments are as follows.
+      * name - the name of the method.
+      * cpuinfo - the 'CPUInfo' object.
+      * args - the ordered arguments to pass down to the method.
+      * kwargs - keyword arguments to pass down to the method.
+      * exp_res - the expected result (not checked by default).
+
+    The 'name' method is called and tested only if it exists in 'cpuinfo'.
     """
 
     if args is None:
@@ -75,7 +78,7 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=None, ignore_res=
     method = getattr(cpuinfo, name, None)
     if method:
         res = method(*args, **kwargs)
-        if ignore_res:
+        if exp_res is _IGNORE:
             return
 
         assert res == exp_res, f"'{name}()' is expected to return '{exp_res}', got '{res}'"
@@ -95,8 +98,8 @@ def _test_get_good(cpuinfo):
             assert nums == ref_nums, f"'get_{lvl}s()' was expected to return '{ref_nums}', " \
                                      f"got '{nums}'"
 
-    _run_method("get_offline_cpus", cpuinfo, ignore_res=True)
-    _run_method("get_cpu_siblings", cpuinfo, args=0, ignore_res=True)
+    _run_method("get_offline_cpus", cpuinfo)
+    _run_method("get_cpu_siblings", cpuinfo, args=0)
 
 def _test_get_bad(cpuinfo):
     """Test 'get' methods with bad 'order' values and expect methods to fail."""
@@ -112,7 +115,7 @@ def _test_get_bad(cpuinfo):
     cpus = _get_level_nums("cpu", cpuinfo)
     bad_cpu = cpus[-1] + 1
     with pytest.raises(Error):
-        _run_method("get_cpu_siblings", cpuinfo, args=bad_cpu, ignore_res=True)
+        _run_method("get_cpu_siblings", cpuinfo, args=bad_cpu)
 
 def test_get(cpuinfo):
     """
@@ -173,14 +176,14 @@ def _test_convert_good(cpuinfo):
             # Test normalize method of single value.
             method_name = f"{from_lvl}_to_{to_lvl}s"
             for args in single_args:
-                _run_method(method_name, cpuinfo, args=args, ignore_res=True)
+                _run_method(method_name, cpuinfo, args=args)
 
             # Test convert method for multiple values.
             method_name = f"{from_lvl}s_to_{to_lvl}s"
             _run_method(method_name, cpuinfo, exp_res=nums)
 
             for args in multi_args:
-                _run_method(method_name, cpuinfo, args=args, ignore_res=True)
+                _run_method(method_name, cpuinfo, args=args)
 
 def _test_convert_bad(cpuinfo):
     """Same as '_test_converrt_good()', but use bad option values."""
@@ -200,13 +203,13 @@ def _test_convert_bad(cpuinfo):
 
                 for args in bad_args:
                     with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=args, ignore_res=True)
+                        _run_method(method_name, cpuinfo, args=args)
 
                 args = from_nums[0]
                 for order in _get_bad_orders():
                     kwargs = {"order": order}
                     with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, ignore_res=True)
+                        _run_method(method_name, cpuinfo, args=args, kwargs=kwargs)
 
             method_name = f"{from_lvl}s_to_{to_lvl}s"
 
@@ -215,13 +218,13 @@ def _test_convert_bad(cpuinfo):
 
                 for args in bad_args:
                     with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=args, ignore_res=True)
+                        _run_method(method_name, cpuinfo, args=args)
 
                 args = from_nums[0]
                 for order in _get_bad_orders():
                     kwargs = {"order": order}
                     with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, ignore_res=True)
+                        _run_method(method_name, cpuinfo, args=args, kwargs=kwargs)
 
 def test_convert(cpuinfo):
     """
@@ -291,7 +294,7 @@ def _test_normalize_bad(cpuinfo):
 
             for args in bad_args:
                 with pytest.raises(Error):
-                    _run_method(method_name, cpuinfo, args=args, ignore_res=True)
+                    _run_method(method_name, cpuinfo, args=args)
 
         method_name  = f"normalize_{lvl}s"
         if getattr(cpuinfo, method_name, None):
@@ -303,7 +306,7 @@ def _test_normalize_bad(cpuinfo):
 
             for args in bad_args:
                 with pytest.raises(Error):
-                    _run_method(method_name, cpuinfo, args=args, ignore_res=True)
+                    _run_method(method_name, cpuinfo, args=args)
 
 def test_normalize(cpuinfo):
     """
