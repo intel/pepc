@@ -26,10 +26,12 @@ def _get_levels():
 
 def _get_level_nums(lvl, cpuinfo, order=None, default=None):
     """
-    Return numbers of level 'lvl', where the 'lvl' is one of the levels in CPUInfo.LEVELS (e.g.
-    number of packages). The 'order' argument can be used to control the order of returned numbers.
-    By default, the 'order' is the same as the level 'lvl'. The numbers are returned as a list of
-    integers. If the 'lvl' does not have 'get' method, returns the 'default'.
+    Run the 'get_<lvl>(order=<order>)' method of 'cpuinfo' and return the result (e.g., runs
+    'get_packages()' if 'lvl' is "packages").
+      * cpuinfo - the 'CPUInfo' object.
+      * order - value for the 'order' keyword argument of the executed "get" method. Set to 'lvl' by
+                default.
+      * default - the value to return if the 'get_<lvl>()' method does not exist in 'cpuinfo.
     """
 
     if not isinstance(default, list):
