@@ -63,7 +63,8 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE):
       * kwargs - keyword arguments to pass down to the method.
       * exp_res - the expected result (not checked by default).
 
-    The 'name' method is called and tested only if it exists in 'cpuinfo'.
+    The 'name' method is called and tested only if it exists in 'cpuinfo'. Returns the result of the
+    'name' method and 'None' if it does not exist.
     """
 
     if args is None:
@@ -75,13 +76,14 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE):
     if kwargs is None:
         kwargs = {}
 
+    res = None
     method = getattr(cpuinfo, name, None)
     if method:
         res = method(*args, **kwargs)
-        if exp_res is _IGNORE:
-            return
+        if exp_res is not _IGNORE:
+            assert res == exp_res, f"'{name}()' is expected to return '{exp_res}', got '{res}'"
 
-        assert res == exp_res, f"'{name}()' is expected to return '{exp_res}', got '{res}'"
+    return res
 
 def _test_get_good(cpuinfo):
     """Test 'get' methods for bad option values."""
