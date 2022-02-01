@@ -71,24 +71,6 @@ class EmulProc():
         self._files[path] = fobj
         return fobj
 
-    def init_cpuinfo_testdata(self, datapath):
-        """
-        Initialize the 'CPUInfo' module specific testdata, and ensure the methods of 'CPUInfo'
-        module return emulated output.
-        """
-
-        cmdinfo = (("lscpu --physical --all -p=socket,node,core,cpu,online", "lscpu_info_cpus.txt"),
-                   ("lscpu", "lscpu_info.txt"),)
-        for cmd, datafile in cmdinfo:
-            with contextlib.suppress(Exception), open(datapath / datafile) as fobj:
-                self._cmds[cmd] = (fobj.readlines(), "")
-
-    def init_msr_testdata(self):
-        """Same as 'init_cpuinfo_testdata()', but initialize the 'MSR' module specific testdata."""
-
-        for cmd, value in (("test -e '/dev/cpu/0/msr'", ""), ):
-            self._cmds[cmd] = (value, "")
-
     def init_testdata(self, module, datapath):
         """Initialize the testdata for module 'module' from directory 'datapath'."""
 
