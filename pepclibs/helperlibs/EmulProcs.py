@@ -11,7 +11,7 @@
 """Emulated version or the 'Procs' module for testing purposes."""
 
 import contextlib
-from pepclibs.helperlibs import FSHelpers, Trivial, WrapExceptions
+from pepclibs.helperlibs import FSHelpers, Trivial, WrapExceptions, YAML
 from pepclibs.helperlibs._Common import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
@@ -43,7 +43,7 @@ class EmulProc():
         raises an 'ErrorNotSupported' exception.
         """
 
-        return (self._get_cmd_result(cmd), "")
+        return self._get_cmd_result(cmd)
 
     def run(self, cmd, **kwargs): # pylint: disable=unused-argument
         """Same as 'run_verify()', but emulates the 'Proc.run()' command."""
@@ -81,13 +81,32 @@ class EmulProc():
                    ("lscpu", "lscpu_info.txt"),)
         for cmd, datafile in cmdinfo:
             with contextlib.suppress(Exception), open(datapath / datafile) as fobj:
-                self._cmds[cmd] = fobj.readlines()
+                self._cmds[cmd] = (fobj.readlines(), "")
 
     def init_msr_testdata(self):
         """Same as 'init_cpuinfo_testdata()', but initialize the 'MSR' module specific testdata."""
 
         for cmd, value in (("test -e '/dev/cpu/0/msr'", ""), ):
-            self._cmds[cmd] = value
+            self._cmds[cmd] = (value, "")
+
+    def init_testdata(self, module, datapath):
+        """Initialize the testdata for module 'module' from directory 'datapath'."""
+
+        confpath = datapath / f"{module}.yaml"
+        if not confpath.exists():
+            raise ErrorNotSupported(f"testdata configuration for module '{module}' not found " \
+                                    f"({confpath}).")
+
+        config = YAML.load(confpath)
+        for command in config["commands"]:
+            commandpath = datapath / command["dirname"]
+
+            with open(commandpath / "stdout.txt") as fobj:
+                stdout = fobj.readlines()
+            with open(commandpath / "stderr.txt") as fobj:
+                stderr = fobj.readlines()
+
+            self._cmds[command["command"]] = (stdout, stderr)
 
     def __init__(self):
         """Initialize the emulated 'Proc' class instance."""
