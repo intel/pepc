@@ -89,7 +89,8 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE):
     if method:
         res = method(*args, **kwargs)
         if exp_res is not _IGNORE:
-            assert res == exp_res, f"'{name}()' is expected to return '{exp_res}', got '{res}'"
+            assert res == exp_res, f"method '{name}()' returned:\n\t{res}\n" \
+                                   f"But it was expected to return:\n\t'{exp_res}'"
 
     return res
 
