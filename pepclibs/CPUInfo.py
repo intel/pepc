@@ -439,7 +439,7 @@ class CPUInfo:
             if num not in valid_nums:
                 valid_nums_str = ", ".join([str(num) for num in valid_nums])
                 raise Error(f"{lvl} {num} does not exist{self._proc.hostmsg}.\n"
-                            f"Valid {lvl} numbers are:: {valid_nums_str}")
+                            f"Valid {lvl} numbers are: {valid_nums_str}")
 
         return list(result)
 
