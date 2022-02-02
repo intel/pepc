@@ -54,11 +54,11 @@ def _get_levels_and_nums(cpuinfo):
     """
 
     for lvl in CPUInfo.LEVELS:
+        lvl = lvl.lower()
         if not getattr(cpuinfo, f"get_{lvl}s", None):
             continue
 
-        yield (lvl.lower(), _get_level_nums(lvl, cpuinfo))
-
+        yield (lvl, _get_level_nums(lvl, cpuinfo))
 
 def _get_bad_orders():
     """Yield bad 'order' argument values."""
