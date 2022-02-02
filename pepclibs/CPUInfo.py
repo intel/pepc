@@ -542,24 +542,6 @@ class CPUInfo:
         """
         return self._get_level_nums("CPU", "package", packages, order=order)
 
-    def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
-        """
-        Returns list of online CPU numbers belonging to cores 'cores' in packages 'packages'. The
-        'cores' and 'packages' arguments are similar to the 'packages' argument in
-        'normalize_packages()'. The 'order' argument is the same as in 'get_cpus()'. By default, the
-        result sorted in ascending order.
-        """
-
-        by_core = self._get_level_nums("CPU", "core", cores, order=order)
-        by_package = set(self._get_level_nums("CPU", "package", packages))
-
-        cpus = []
-        for cpu in by_core:
-            if cpu in by_package:
-                cpus.append(cpu)
-
-        return cpus
-
     def package_to_cpus(self, package, order="CPU"):
         """
         Same as 'packages_to_cpus()', but for a single package 'package'.
@@ -590,6 +572,24 @@ class CPUInfo:
            * "core" - sort in ascending core order (same as default).
         """
         return self._get_level_nums("core", "package", (package,), order=order)
+
+    def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
+        """
+        Returns list of online CPU numbers belonging to cores 'cores' in packages 'packages'. The
+        'cores' and 'packages' arguments are similar to the 'packages' argument in
+        'normalize_packages()'. The 'order' argument is the same as in 'get_cpus()'. By default, the
+        result sorted in ascending order.
+        """
+
+        by_core = self._get_level_nums("CPU", "core", cores, order=order)
+        by_package = set(self._get_level_nums("CPU", "package", packages))
+
+        cpus = []
+        for cpu in by_core:
+            if cpu in by_package:
+                cpus.append(cpu)
+
+        return cpus
 
     def get_packages_count(self):
         """Returns packages count."""
