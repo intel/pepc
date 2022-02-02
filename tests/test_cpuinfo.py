@@ -174,16 +174,50 @@ def test_get_count(cpuinfo):
     offline_cpus = cpuinfo.get_offline_cpus()
     _run_method("get_offline_cpus_count", cpuinfo, exp_res=len(offline_cpus))
 
+def _test_convert_get_nums(cpuinfo, lvl):
+    """
+    This is a helper function for '_test_convert_good()' and '_test_convert_bad()' which returns
+    level 'lvl' numbers.
+
+    Levels like "package" have global numbering, and this method just returns the result of
+    'get_packages()' in this case.
+
+    Some levels like "die" have per-package numbering, in which case this method returns all die
+    numbers in the first package.
+
+    Returns 'None' level numbers could not be found out, because there are no 'CPUInfo' methods for
+    getting them.
+    """
+
+    nums = None
+    if getattr(cpuinfo, f"get_{lvl}s", None):
+        nums = _get_level_nums(lvl, cpuinfo)
+    else:
+        # Some levels do not have 'get_<lvl>()' method (e.g., "core"). In this case, we have to
+        # fall back for getting level numbers for the first package.
+        method_name = f"package_to_{lvl}s"
+        if getattr(cpuinfo, method_name, None):
+            allpkgs = cpuinfo.get_packages()
+            nums = _run_method(method_name, cpuinfo, args=(allpkgs[0],))
+
+    return nums
+
 def _test_convert_good(cpuinfo):
     """Test public convert methods of the 'CPUInfo' class with good option values."""
 
-    for from_lvl, from_nums in _get_levels_and_nums(cpuinfo):
+    for from_lvl in _get_levels():
+        from_nums = _test_convert_get_nums(cpuinfo, from_lvl)
+        if from_nums is None:
+            continue
+
         # We have two types of conversion methods to convert values between different "levels"
         # defined in 'CPUInfo.LEVELS'. We have methods for converting single value to other level,
         # e.g. 'package_to_cpus()'. And we have methods for converting multiple values to other
         # level, e.g. 'packages_to_cpus()'.
         # Methods to convert single value accept single integer in different forms, and methods
         # converting multiple values accept also ingeters in lists.
+
+
         single_args = []
         for idx in 0, -1:
             num = from_nums[idx]
@@ -216,7 +250,11 @@ def _test_convert_good(cpuinfo):
 def _test_convert_bad(cpuinfo):
     """Same as '_test_converrt_good()', but use bad option values."""
 
-    for from_lvl, from_nums in _get_levels_and_nums(cpuinfo):
+    for from_lvl in _get_levels():
+        from_nums = _test_convert_get_nums(cpuinfo, from_lvl)
+        if from_nums is None:
+            continue
+
         bad_num = from_nums[-1] + 1
 
         for to_lvl in _get_levels():
