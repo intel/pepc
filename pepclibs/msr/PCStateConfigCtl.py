@@ -111,7 +111,7 @@ FEATURES = {
     },
     "c1_demotion" : {
         "name" : "C1 demotion",
-        "scope": "CPU",
+        "scope": "core",
         "help" : """Allow/disallow the CPU to demote C6/C7 requests to C1.""",
         "type" : "bool",
         "vals" : { "on" : 1, "off" : 0},
@@ -119,7 +119,7 @@ FEATURES = {
     },
     "c1_undemotion" : {
         "name" : "C1 undemotion",
-        "scope": "CPU",
+        "scope": "core",
         "help" : """Allow/disallow the CPU to un-demote previously demoted requests back from C1 to
                     C6/C7.""",
         "type" : "bool",
