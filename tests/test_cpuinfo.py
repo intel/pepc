@@ -66,7 +66,7 @@ def _get_bad_orders():
     for order in "CPUS", "CORE", "nodes", "pkg":
         yield order
 
-def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE):
+def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE, exp_exc=None):
     """
     Run the 'name' method of the 'cpuinfo' object. The arguments are as follows.
       * name - the name of the method.
@@ -74,10 +74,15 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE):
       * args - the ordered arguments to pass down to the method.
       * kwargs - keyword arguments to pass down to the method.
       * exp_res - the expected result (not checked by default).
+      * exp_exc - the expected exception type. By default, any exception is considered to be a
+                  failure. Use '_IGNORE' to ignore exceptions.
 
     The 'name' method is called and tested only if it exists in 'cpuinfo'. Returns the result of the
     'name' method and 'None' if it does not exist.
     """
+
+    # The 'exp_res' and 'exp_exc' arguments are mutually exclusive.
+    assert exp_res is _IGNORE or exp_exc in (None, _IGNORE)
 
     if args is None:
         args = []
@@ -88,10 +93,26 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE):
     res = None
     method = getattr(cpuinfo, name, None)
     if method:
-        res = method(*args, **kwargs)
-        if exp_res is not _IGNORE:
-            assert res == exp_res, f"method '{name}()' returned:\n\t{res}\n" \
-                                   f"But it was expected to return:\n\t'{exp_res}'"
+        try:
+            res = method(*args, **kwargs)
+            if exp_res is not _IGNORE:
+                assert res == exp_res, f"method '{name}()' returned:\n\t{res}\n" \
+                                       f"But it was expected to return:\n\t'{exp_res}'"
+        except Exception as err: # pylint: disable=broad-except
+            if exp_exc is _IGNORE:
+                return None
+
+            if exp_exc is None:
+                assert False, f"method '{name}()' raised the following exception:\n\t" \
+                              f"type: {type(err)}\n\tmessage: {err}"
+
+            if isinstance(err, exp_exc):
+                return None
+
+            assert False, f"method '{name}()' raised the following exception:\n\t" \
+                          f"type: {type(err)}\n\tmessage: {err}\n" \
+                          f"but it was expected to raise the following exception type: " \
+                          f"{type(exp_exc)}"
 
     return res
 
@@ -125,8 +146,7 @@ def _test_get_bad(cpuinfo):
 
     cpus = _get_level_nums("cpu", cpuinfo)
     bad_cpu = cpus[-1] + 1
-    with pytest.raises(Error):
-        _run_method("get_cpu_siblings", cpuinfo, args=(bad_cpu,))
+    _run_method("get_cpu_siblings", cpuinfo, args=(bad_cpu,), exp_exc=Error)
 
 def test_get(cpuinfo):
     """
@@ -206,14 +226,12 @@ def _test_convert_bad(cpuinfo):
                 bad_args = (bad_num, f"{bad_num}", f"{from_nums[0]}, ", (bad_num,))
 
                 for args in bad_args:
-                    with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=(args,))
+                    _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
 
                 args = from_nums[0]
                 for order in _get_bad_orders():
                     kwargs = {"order": order}
-                    with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=(args,), kwargs=kwargs)
+                    _run_method(method_name, cpuinfo, args=(args,), kwargs=kwargs, exp_exc=Error)
 
             method_name = f"{from_lvl}s_to_{to_lvl}s"
 
@@ -221,14 +239,12 @@ def _test_convert_bad(cpuinfo):
                 bad_args = (-1, bad_num, (-1, bad_num), "-1", (bad_num,))
 
                 for args in bad_args:
-                    with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=(args,))
+                    _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
 
                 args = from_nums[0]
                 for order in _get_bad_orders():
                     kwargs = {"order": order}
-                    with pytest.raises(Error):
-                        _run_method(method_name, cpuinfo, args=(args,), kwargs=kwargs)
+                    _run_method(method_name, cpuinfo, args=(args,), kwargs=kwargs, exp_exc=Error)
 
 def test_convert(cpuinfo):
     """
@@ -291,8 +307,7 @@ def _test_normalize_bad(cpuinfo):
             bad_args = (-1, "-1", f"{nums[0]},", bad_num, [bad_num])
 
             for args in bad_args:
-                with pytest.raises(Error):
-                    _run_method(method_name, cpuinfo, args=(args,))
+                _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
 
         method_name  = f"normalize_{lvl}s"
         if getattr(cpuinfo, method_name, None):
@@ -303,8 +318,7 @@ def _test_normalize_bad(cpuinfo):
                         [[nums[0], bad_num]])
 
             for args in bad_args:
-                with pytest.raises(Error):
-                    _run_method(method_name, cpuinfo, args=(args,))
+                _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
 
 def test_normalize(cpuinfo):
     """
