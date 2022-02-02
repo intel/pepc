@@ -13,6 +13,7 @@
 import pytest
 from common import fixture_proc, fixture_cpuinfo # pylint: disable=unused-import
 from pepclibs import CPUInfo
+from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
 
 # A unique object used in '_run_method()' for ignoring method's return value by default.
@@ -316,3 +317,80 @@ def test_normalize(cpuinfo):
 
     _test_normalize_good(cpuinfo)
     _test_normalize_bad(cpuinfo)
+
+def test_div(cpuinfo):
+    """
+    Test the following 'CPUInfo' class methods:
+      * 'cpus_div_packages()'
+    """
+
+    for lvl, nums in _get_levels_and_nums(cpuinfo):
+        method_name  = f"cpus_div_{lvl}s"
+        if not getattr(cpuinfo, method_name, None):
+            continue
+
+        # Note! In the comments below we'll assume that 'lvl' is packages, for simplicity. However,
+        # it may be anythine else, like 'cores'.
+
+        # Resolving an empty CPUs list.
+        exp_res = ([], [])
+        _run_method(method_name, cpuinfo, args=([],), exp_res=exp_res)
+
+        # Resolving all CPUs in all packages.
+        allcpus = cpuinfo.get_cpus()
+        exp_res = (nums, [])
+        _run_method(method_name, cpuinfo, args=(allcpus,), exp_res=exp_res)
+
+        # And do the same, but with string inputs.
+        allcpus_str = Human.rangify(allcpus)
+        _run_method(method_name, cpuinfo, args=(allcpus_str,), exp_res=exp_res)
+        allcpus_str = ",".join(str(cpu) for cpu in allcpus)
+        _run_method(method_name, cpuinfo, args=(allcpus_str,), exp_res=exp_res)
+
+        if len(allcpus) < 2:
+            # The rest of the test-cases require more than one CPU per package.
+            continue
+
+        # Resolving all CPUs except for the very first one.
+        rnums, rcpus = _run_method(method_name, cpuinfo, args=(allcpus[1:],))
+        assert len(rnums) == len(nums) - 1 and len(rcpus) > 0, \
+               f"bad result from '{method_name}({allcpus[1:]})':\n\t(rnums, rcpus)\n"
+
+        # Resolving a single CPU - the first and the last.
+        exp_res = ([], allcpus[0:1])
+        _run_method(method_name, cpuinfo, args=(allcpus[0:1],), exp_res=exp_res)
+        exp_res = ([], allcpus[-1:])
+        _run_method(method_name, cpuinfo, args=(allcpus[-1:],), exp_res=exp_res)
+
+        if len(nums) < 2:
+            # The rest of the test-cases requre more than one package.
+            continue
+
+        # Get the list of CPUs in the first package.
+        num0_cpus = _run_method(f"{lvl}_to_cpus", cpuinfo, args=(nums[0],))
+        if num0_cpus is None:
+            # The '<lvl>_to_cpus()' method does not exist.
+            continue
+
+        # Resolving all CPUs in the first package.
+        exp_res = (nums[0:1], [])
+        _run_method(method_name, cpuinfo, args=(num0_cpus,), exp_res=exp_res)
+
+        # Same, but without the first CPU in the first package.
+        exp_res = ([], num0_cpus[1:])
+        _run_method(method_name, cpuinfo, args=(num0_cpus[1:],), exp_res=exp_res)
+
+        # Resolving first package CPUs but for the second package.
+        args = (num0_cpus,)
+        kwargs = {"packages" : nums[1]}
+        exp_res = ([], num0_cpus)
+        _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
+
+        # Get the list of CPUs in the second package.
+        num1_cpus = _run_method(f"{lvl}_to_cpus", cpuinfo, args=(nums[1],))
+
+        # Resolving all CPUs but for only for the first package.
+        args = (allcpus,)
+        kwargs = {"packages" : nums[0]}
+        exp_res = (nums[0:1], num1_cpus)
+        _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
