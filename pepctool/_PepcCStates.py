@@ -46,17 +46,17 @@ def _fmt_cpus(cpus, cpuinfo):
 
     return msg
 
-def _print_cstate_prop_msg(pname, action, val, cpus):
-    """Format and print a message about a C-state property 'pname'."""
+def _print_cstate_prop_msg(name, action, val, cpus):
+    """Format and print a message about a C-state property 'name'."""
 
     cpus = _fmt_cpus(cpus)
 
     if val is None:
-        msg = f"{pname}: not supported on {cpus}"
+        msg = f"{name}: not supported on {cpus}"
     elif action:
-        msg = f"{pname}: {action} '{val}' on {cpus}"
+        msg = f"{name}: {action} '{val}' on {cpus}"
     else:
-        msg = f"{pname}: '{val}' on {cpus}"
+        msg = f"{name}: '{val}' on {cpus}"
 
     _LOG.info(msg)
 
