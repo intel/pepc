@@ -31,8 +31,8 @@ PROPS = {
     "pkg_cstate_limit" : {
         "name" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["name"],
         "help" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["help"],
-        "type" : "str",
-        "scope": "package",
+        "type" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["type"],
+        "scope": PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["scope"],
         "subprops" : {
             "pkg_cstate_limit_locked" : {
                 "name" : "Package C-state limit locked",
@@ -57,26 +57,26 @@ PROPS = {
     "c1_demotion" : {
         "name" : PCStateConfigCtl.FEATURES["c1_demotion"]["name"],
         "help" : PCStateConfigCtl.FEATURES["c1_demotion"]["help"],
-        "type" : "bool",
-        "scope": "CPU",
+        "type" : PCStateConfigCtl.FEATURES["c1_demotion"]["type"],
+        "scope": PCStateConfigCtl.FEATURES["c1_demotion"]["scope"]
     },
     "c1_undemotion" : {
         "name" : PCStateConfigCtl.FEATURES["c1_undemotion"]["name"],
         "help" : PCStateConfigCtl.FEATURES["c1_undemotion"]["help"],
-        "type" : "bool",
-        "scope": "CPU",
+        "type" : PCStateConfigCtl.FEATURES["c1_undemotion"]["type"],
+        "scope": PCStateConfigCtl.FEATURES["c1_undemotion"]["scope"]
     },
     "c1e_autopromote" : {
         "name" : PowerCtl.FEATURES["c1e_autopromote"]["name"],
         "help" : PowerCtl.FEATURES["c1e_autopromote"]["help"],
-        "type" : "bool",
-        "scope": "package",
+        "type" : PowerCtl.FEATURES["c1e_autopromote"]["type"],
+        "scope": PowerCtl.FEATURES["c1e_autopromote"]["scope"]
     },
     "cstate_prewake" : {
         "name" : PowerCtl.FEATURES["cstate_prewake"]["name"],
         "help" : PowerCtl.FEATURES["cstate_prewake"]["help"],
-        "type" : "bool",
-        "scope": "package",
+        "type" : PowerCtl.FEATURES["cstate_prewake"]["type"],
+        "scope": PowerCtl.FEATURES["cstate_prewake"]["scope"]
     },
 }
 
