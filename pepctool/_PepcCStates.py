@@ -59,7 +59,7 @@ def _print_cstate_prop_msg(pname, action, val, cpus):
 
     _LOG.info(msg)
 
-def _handle_cstate_config_opt(optname, optval, cpus, cstates):
+def _handle_cstate_config_opt(optname, optval, cpus, csobj):
     """
     Handle a C-state configuration option 'optname'.
 
@@ -68,13 +68,13 @@ def _handle_cstate_config_opt(optname, optval, cpus, cstates):
     value of the C-state priperty and prints it.
     """
 
-    if optname in cstates.props:
-        cstates.set_props({optname : optval}, cpus)
+    if optname in csobj.props:
+        csobj.set_props({optname : optval}, cpus)
 
-        name = cstates.props[optname]["name"]
+        name = csobj.props[optname]["name"]
         _print_cstate_prop_msg(name, "set to", optval, cpus)
     else:
-        method = getattr(cstates, f"{optname}_cstates")
+        method = getattr(csobj, f"{optname}_cstates")
         toggled = method(cpus=cpus, cstates=optval)
 
         # The 'toggled' dictionary is indexed with CPU number. But we want to print a single line
@@ -92,23 +92,23 @@ def _handle_cstate_config_opt(optname, optval, cpus, cstates):
             cstnames = cstnames.split(",")
             _LOG.info("%sd %s on %s", optname.title(), _fmt_cstates(cstnames), _fmt_cpus(cpunums))
 
-def _print_cstate_prop(aggr_pinfo, pname, cstates):
+def _print_cstate_prop(aggr_pinfo, pname, csobj):
     """Print about C-state properties in 'aggr_pinfo'."""
 
     for key, kinfo in aggr_pinfo[pname].items():
         for val, cpus in kinfo.items():
             # Distinguish between properties and sub-properties.
-            if key in cstates.props:
-                name = cstates.props[pname]["name"]
+            if key in csobj.props:
+                name = csobj.props[pname]["name"]
             else:
-                name = cstates.props[pname]["subprops"][key]["name"]
+                name = csobj.props[pname]["subprops"][key]["name"]
                 if val is None:
                     # Just skip unsupported sub-property instead of printing something like
                     # "Package C-state limit aliases: not supported on CPUs 0-11".
                     continue
             _print_cstate_prop_msg(name, "", val, cpus)
 
-def _build_aggregate_pinfo(props, cpus, cstates):
+def _build_aggregate_pinfo(props, cpus, csobj):
     """
     Build the aggregated properties dictionary for proparties in the 'props' list. The dictionary
     has the following format.
@@ -136,7 +136,7 @@ def _build_aggregate_pinfo(props, cpus, cstates):
 
     aggr_pinfo = {}
 
-    for all_props_info in cstates.get_props(props, cpus=cpus):
+    for all_props_info in csobj.get_props(props, cpus=cpus):
         for pname, pinfo in all_props_info.items():
             if pname not in aggr_pinfo:
                 aggr_pinfo[pname] = {}
@@ -163,7 +163,7 @@ def _build_aggregate_pinfo(props, cpus, cstates):
 
     return aggr_pinfo
 
-def _print_scope_warnings(args, cstates):
+def _print_scope_warnings(args, csobj):
     """
     Check that the the '--packages', '--cores', and '--cpus' options provided by the user to match
     the scope of all the options.
@@ -171,11 +171,11 @@ def _print_scope_warnings(args, cstates):
 
     pkg_warn, core_warn = [], []
 
-    for pname in cstates.props:
+    for pname in csobj.props:
         if not getattr(args, pname, None):
             continue
 
-        scope = cstates.get_scope(pname)
+        scope = csobj.get_scope(pname)
         if scope == "package" and (getattr(args, "cpus") or getattr(args, "cores")):
             pkg_warn.append(pname)
         elif scope == "core" and getattr(args, "cpus"):
@@ -208,9 +208,9 @@ def cstates_config_command(args, proc):
         # is committed.
         msr.start_transaction()
 
-        with CStates.CStates(proc=proc, cpuinfo=cpuinfo, msr=msr) as cstates:
+        with CStates.CStates(proc=proc, cpuinfo=cpuinfo, msr=msr) as csobj:
 
-            _print_scope_warnings(args, cstates)
+            _print_scope_warnings(args, csobj)
 
             # Find all properties we'll need to print about, and get their values.
             for optname, optval in args.oargs.items():
@@ -220,14 +220,14 @@ def cstates_config_command(args, proc):
             # Build the aggregate properties information dictionary for all options we are going to
             # print about.
             cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
-            aggr_pinfo = _build_aggregate_pinfo(print_props, cpus, cstates)
+            aggr_pinfo = _build_aggregate_pinfo(print_props, cpus, csobj)
 
             # Now handle the options one by one, in the same order as they go in the command line.
             for optname, optval in args.oargs.items():
                 if not optval:
-                    _print_cstate_prop(aggr_pinfo, optname, cstates)
+                    _print_cstate_prop(aggr_pinfo, optname, csobj)
                 else:
-                    _handle_cstate_config_opt(optname, optval, cpus, cstates)
+                    _handle_cstate_config_opt(optname, optval, cpus, csobj)
 
         # Commit the transaction. This will flush all the change MSRs (if there were any).
         msr.commit_transaction()
@@ -236,11 +236,11 @@ def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
-         CStates.CStates(proc=proc, cpuinfo=cpuinfo) as cstates:
+         CStates.CStates(proc=proc, cpuinfo=cpuinfo) as csobj:
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0,)
 
         first = True
-        for info in cstates.get_cstates_info(cpus=cpus, cstates=args.cstates):
+        for info in csobj.get_cstates_info(cpus=cpus, cstates=args.cstates):
             if not first:
                 _LOG.info("")
             first = False
