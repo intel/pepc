@@ -93,7 +93,7 @@ def _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo):
 
         # The 'toggled' dictionary is indexed with CPU number. But we want to print a single line
         # for all CPU numbers that have the same toggled C-states list (the assumption here is that
-        # the system may be hybrid and different CPUs have different C-states). Therefore, built a
+        # the system may be hybrid and different CPUs have different C-states). Therefore, build a
         # "revered" verion of the 'toggled' dictionary.
         revdict = {}
         for cpu, csinfo in toggled.items():
