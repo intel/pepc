@@ -22,7 +22,7 @@ from pepctool import _PepcCommon
 _LOG = logging.getLogger()
 
 def _fmt_cstates(cstates):
-    """Fromats and returns the C-states list string, which can be used in messages."""
+    """Formats and returns the C-states list string, which can be used in messages."""
 
     if cstates in ("all", None):
         msg = "all C-states"
@@ -35,15 +35,16 @@ def _fmt_cstates(cstates):
 
     return msg
 
-def _fmt_cpus(cpus):
-    """Fromats and returns the CPU numbers string, which can be used in messages."""
+def _fmt_cpus(cpus, cpuinfo):
+    """Formats and returns a string describing CPU numbers in the 'cpus' list."""
 
+    cpus_range = Human.rangify(cpus)
     if len(cpus) == 1:
-        msg = "CPU "
+        msg = f"CPU {cpus_range}"
     else:
-        msg = "CPUs "
+        msg = f"CPUs {cpus_range}"
 
-    return msg + Human.rangify(cpus)
+    return msg
 
 def _print_cstate_prop_msg(pname, action, val, cpus):
     """Format and print a message about a C-state property 'pname'."""
