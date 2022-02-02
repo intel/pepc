@@ -36,7 +36,7 @@ def _fmt_cstates(cstates):
     return msg
 
 def _fmt_cpus(cpus, cpuinfo):
-    """Formats and returns a string describing CPU numbers in the 'cpus' list."""
+    """Foomats and returns a string describing CPU numbers in the 'cpus' list."""
 
     cpus_range = Human.rangify(cpus)
     if len(cpus) == 1:
@@ -44,12 +44,25 @@ def _fmt_cpus(cpus, cpuinfo):
     else:
         msg = f"CPUs {cpus_range}"
 
+    allcpus = cpuinfo.get_cpus()
+    if set(cpus) == set(allcpus):
+        msg += " (all CPUs)"
+    else:
+        pkgs, rem_cpus = cpuinfo.cpus_div_packages(cpus)
+        if pkgs and not rem_cpus:
+            # CPUs in 'cpus' are actually the packages in 'pkgs'.
+            pkgs_range = Human.rangify(pkgs)
+            if len(pkgs) == 1:
+                msg += f" (package {pkgs_range})"
+            else:
+                msg += f" (packages {pkgs_range})"
+
     return msg
 
-def _print_cstate_prop_msg(name, action, val, cpus):
+def _print_cstate_prop_msg(name, action, val, cpus, cpuinfo):
     """Format and print a message about a C-state property 'name'."""
 
-    cpus = _fmt_cpus(cpus)
+    cpus = _fmt_cpus(cpus, cpuinfo)
 
     if val is None:
         msg = f"{name}: not supported on {cpus}"
@@ -60,7 +73,7 @@ def _print_cstate_prop_msg(name, action, val, cpus):
 
     _LOG.info(msg)
 
-def _handle_cstate_config_opt(optname, optval, cpus, csobj):
+def _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo):
     """
     Handle a C-state configuration option 'optname'.
 
@@ -73,7 +86,7 @@ def _handle_cstate_config_opt(optname, optval, cpus, csobj):
         csobj.set_props({optname : optval}, cpus)
 
         name = csobj.props[optname]["name"]
-        _print_cstate_prop_msg(name, "set to", optval, cpus)
+        _print_cstate_prop_msg(name, "set to", optval, cpus, cpuinfo)
     else:
         method = getattr(csobj, f"{optname}_cstates")
         toggled = method(cpus=cpus, cstates=optval)
@@ -91,9 +104,10 @@ def _handle_cstate_config_opt(optname, optval, cpus, csobj):
 
         for cstnames, cpunums in revdict.items():
             cstnames = cstnames.split(",")
-            _LOG.info("%sd %s on %s", optname.title(), _fmt_cstates(cstnames), _fmt_cpus(cpunums))
+            _LOG.info("%sd %s on %s",
+                      optname.title(), _fmt_cstates(cstnames), _fmt_cpus(cpunums, cpuinfo))
 
-def _print_cstate_prop(aggr_pinfo, pname, csobj):
+def _print_cstate_prop(aggr_pinfo, pname, csobj, cpuinfo):
     """Print about C-state properties in 'aggr_pinfo'."""
 
     for key, kinfo in aggr_pinfo[pname].items():
@@ -107,7 +121,7 @@ def _print_cstate_prop(aggr_pinfo, pname, csobj):
                     # Just skip unsupported sub-property instead of printing something like
                     # "Package C-state limit aliases: not supported on CPUs 0-11".
                     continue
-            _print_cstate_prop_msg(name, "", val, cpus)
+            _print_cstate_prop_msg(name, "", val, cpus, cpuinfo)
 
 def _build_aggregate_pinfo(props, cpus, csobj):
     """
@@ -226,9 +240,9 @@ def cstates_config_command(args, proc):
             # Now handle the options one by one, in the same order as they go in the command line.
             for optname, optval in args.oargs.items():
                 if not optval:
-                    _print_cstate_prop(aggr_pinfo, optname, csobj)
+                    _print_cstate_prop(aggr_pinfo, optname, csobj, cpuinfo)
                 else:
-                    _handle_cstate_config_opt(optname, optval, cpus, csobj)
+                    _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo)
 
         # Commit the transaction. This will flush all the change MSRs (if there were any).
         msr.commit_transaction()
