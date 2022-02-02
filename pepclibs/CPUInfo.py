@@ -161,6 +161,8 @@ class CPUInfo:
     1. Get list of packages/cores/etc.
         * 'get_packages()'
         * 'get_dies()'
+        * 'get_nodes()'
+        * 'get_cores()'
         * 'get_cpus()'
         * 'get_offline_cpus()'
         * 'get_cpu_siblings()'
@@ -458,6 +460,27 @@ class CPUInfo:
         """
 
         return self._get_level_nums("die", "package", package, order=order)
+
+    def get_nodes(self, order="node"):
+        """
+        Returns list of package numbers sorted in ascending order.
+
+        Important: if a node has all CPUs offline, the node number will not be included in the
+        returned list.
+        """
+
+        return self._get_level_nums("node", "package", "all", order=order)
+
+    def get_cores(self, package=0, order="core"):
+        """
+        Returns list of cores numbers in package 'package'. The returned list is sorted in ascending
+        order.
+
+        Important: if a core has all CPUs offline, the core number will not be included in the
+        returned list.
+        """
+
+        return self._get_level_nums("core", "package", package, order=order)
 
     def get_cpus(self, order="CPU"):
         """
