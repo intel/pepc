@@ -32,6 +32,9 @@ def _get_level_nums(lvl, cpuinfo, order=None):
       * cpuinfo - the 'CPUInfo' object.
       * order - value for the 'order' keyword argument of the executed "get" method. Set to 'lvl' by
                 default.
+
+    Notice! If 'lvl' is a non-globally numbered level ("core" or "die"), this method returns level
+    numbers for the first package.
     """
 
     if order is None:
