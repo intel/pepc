@@ -95,9 +95,6 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE, exp_exc=
     if method:
         try:
             res = method(*args, **kwargs)
-            if exp_res is not _IGNORE:
-                assert res == exp_res, f"method '{name}()' returned:\n\t{res}\n" \
-                                       f"But it was expected to return:\n\t'{exp_res}'"
         except Exception as err: # pylint: disable=broad-except
             if exp_exc is _IGNORE:
                 return None
@@ -113,6 +110,10 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE, exp_exc=
                           f"type: {type(err)}\n\tmessage: {err}\n" \
                           f"but it was expected to raise the following exception type: " \
                           f"{type(exp_exc)}"
+
+        if exp_res is not _IGNORE:
+            assert res == exp_res, f"method '{name}()' returned:\n\t{res}\n" \
+                                   f"But it was expected to return:\n\t'{exp_res}'"
 
     return res
 
