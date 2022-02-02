@@ -187,7 +187,7 @@ def _test_convert_good(cpuinfo):
         # e.g. 'package_to_cpus()'. And we have methods for converting multiple values to other
         # level, e.g. 'packages_to_cpus()'.
         # Methods to convert single value accept single integer in different forms, and methods
-        # converting multiple values accept also ingeters in lists.
+        # converting multiple values accept also integers in lists.
         single_args = []
         for idx in 0, -1:
             num = from_nums[idx]
@@ -218,7 +218,7 @@ def _test_convert_good(cpuinfo):
                 _run_method(method_name, cpuinfo, args=(args,))
 
 def _test_convert_bad(cpuinfo):
-    """Same as '_test_converrt_good()', but use bad option values."""
+    """Same as '_test_convert_good()', but use bad option values."""
 
     for from_lvl, from_nums in _get_levels_and_nums(cpuinfo):
         bad_num = from_nums[-1] + 1
@@ -336,6 +336,41 @@ def test_normalize(cpuinfo):
     _test_normalize_good(cpuinfo)
     _test_normalize_bad(cpuinfo)
 
+def _is_globally_numbered(lvl):
+    """
+    There are 2 types of 'CPUInfo' levels: globally numbered and non-globally (per-package)
+    numbered. This helper returns 'True' if 'lvl' is globally-numbered, and 'False' otherwise.
+    """
+
+    if lvl.lower() in {"package", "node", "cpu"}:
+        return True
+    return False
+
+def _test_div_create_exp_res(lvl, nums, cpus):
+    """
+    This is a helper for 'test_div()' and it exists because of inconsistency between some "div"
+    method of "CPUInfo".
+       * 'cpus_div_packages()' returns a tuple with first element being a list of integers. For
+          example: ([0,1], []).
+       * 'cpus_div_cores()' returns a tuple with first element being a list of tuples of 2 integers.
+          For example ([(0,0), (1,0)], []).
+
+    The difference is that 'cpus_div_cores()' returns the list of (core, package) pairs, while
+    'cpus_div_packages()' returns the list of package numbers. And the reason for this is that core
+    numbers are not global.
+
+    For globally-numbered levels, such as "package", this function does nothing and just returns the
+    ('nums', 'cpus') tuple.
+
+    For non-globally numbered levels this function  the list of core numbers in 'nums' into '(core,
+    package)' pairs. It uses the fact that '_get_level_nums()' returns only package 0 numbers.
+    """
+
+    if _is_globally_numbered(lvl):
+        return (nums, cpus)
+
+    return ([(num, 0) for num in nums], cpus)
+
 def test_div(cpuinfo):
     """
     Test the following 'CPUInfo' class methods:
@@ -348,15 +383,19 @@ def test_div(cpuinfo):
             continue
 
         # Note! In the comments below we'll assume that 'lvl' is packages, for simplicity. However,
-        # it may be anythine else, like 'cores'.
+        # it may be anything else, like 'cores'.
 
         # Resolving an empty CPUs list.
-        exp_res = ([], [])
+        exp_res = _test_div_create_exp_res(lvl, [], [])
         _run_method(method_name, cpuinfo, args=([],), exp_res=exp_res)
 
-        # Resolving all CPUs in all packages.
-        allcpus = cpuinfo.get_cpus()
-        exp_res = (nums, [])
+        if _is_globally_numbered(lvl):
+            # Resolving all CPUs in all packages.
+            allcpus = cpuinfo.get_cpus()
+        else:
+            # In case of a non-globally numbered level, we'll operate only with package 0 numbers.
+            allcpus = cpuinfo.package_to_cpus(0)
+        exp_res = _test_div_create_exp_res(lvl, nums, [])
         _run_method(method_name, cpuinfo, args=(allcpus,), exp_res=exp_res)
 
         # And do the same, but with string inputs.
@@ -375,13 +414,13 @@ def test_div(cpuinfo):
                f"bad result from '{method_name}({allcpus[1:]})':\n\t(rnums, rcpus)\n"
 
         # Resolving a single CPU - the first and the last.
-        exp_res = ([], allcpus[0:1])
+        exp_res = _test_div_create_exp_res(lvl, [], allcpus[0:1])
         _run_method(method_name, cpuinfo, args=(allcpus[0:1],), exp_res=exp_res)
-        exp_res = ([], allcpus[-1:])
+        exp_res = _test_div_create_exp_res(lvl, [], allcpus[-1:])
         _run_method(method_name, cpuinfo, args=(allcpus[-1:],), exp_res=exp_res)
 
         if len(nums) < 2:
-            # The rest of the test-cases requre more than one package.
+            # The rest of the test-cases require more than one package.
             continue
 
         # Get the list of CPUs in the first package.
@@ -391,17 +430,17 @@ def test_div(cpuinfo):
             continue
 
         # Resolving all CPUs in the first package.
-        exp_res = (nums[0:1], [])
+        exp_res = _test_div_create_exp_res(lvl, nums[0:1], [])
         _run_method(method_name, cpuinfo, args=(num0_cpus,), exp_res=exp_res)
 
         # Same, but without the first CPU in the first package.
-        exp_res = ([], num0_cpus[1:])
+        exp_res = _test_div_create_exp_res(lvl, [], num0_cpus[1:])
         _run_method(method_name, cpuinfo, args=(num0_cpus[1:],), exp_res=exp_res)
 
         # Resolving first package CPUs but for the second package.
         args = (num0_cpus,)
         kwargs = {"packages" : nums[1]}
-        exp_res = ([], num0_cpus)
+        exp_res = _test_div_create_exp_res(lvl, [], num0_cpus)
         _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
 
         # Get the list of CPUs in the second package.
@@ -410,5 +449,5 @@ def test_div(cpuinfo):
         # Resolving all CPUs but for only for the first package.
         args = (allcpus,)
         kwargs = {"packages" : nums[0]}
-        exp_res = (nums[0:1], num1_cpus)
+        exp_res = _test_div_create_exp_res(lvl, nums[0:1], num1_cpus)
         _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
