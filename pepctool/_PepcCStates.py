@@ -190,7 +190,7 @@ def _print_scope_warnings(args, csobj):
         if not getattr(args, pname, None):
             continue
 
-        scope = csobj.get_scope(pname)
+        scope = csobj.props[pname]["scope"]
         if scope == "package" and (getattr(args, "cpus") or getattr(args, "cores")):
             pkg_warn.append(pname)
         elif scope == "core" and getattr(args, "cpus"):

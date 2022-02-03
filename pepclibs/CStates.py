@@ -96,7 +96,6 @@ class CStates:
        * For multiple properties and multiple CPUs: 'get_props()', 'set_props()'.
        * For multiple properties and single CPU: 'get_cpu_props()', 'set_cpu_props()'.
        * For single property and single CPU: 'get_cpu_prop()', 'set_cpu_prop()'.
-    4. Get a C-state property scope: 'get_scope()'.
     """
 
     def _get_cpuinfo(self):
@@ -582,19 +581,6 @@ class CStates:
         """Same as 'set_props()', but for a single CPU and a single property."""
 
         self.set_props(((pname, val),), cpus=(cpu,))
-
-    @staticmethod
-    def get_scope(pname):
-        """Get scope of property 'pname'. The 'pname' argument is same as in 'set_prop()'."""
-
-        CStates._check_prop(pname)
-
-        if pname in PowerCtl.FEATURES:
-            return PowerCtl.FEATURES[pname]["scope"]
-        if pname in PCStateConfigCtl.FEATURES:
-            return PCStateConfigCtl.FEATURES[pname]["scope"]
-
-        raise Error(f"BUG: undefined property '{pname}'")
 
     def _init_props_dict(self):
         """Initialize the 'props' dictionary."""
