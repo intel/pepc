@@ -199,6 +199,9 @@ def parse_duration(htime, default_unit="s", name=None):
     argument can be used to pass a name that will be used in error message.
     """
 
+    if isinstance(htime, (int, float)):
+        return htime
+
     if name is None:
         name = "time"
     specs = {"d" : "days", "h" : "hours", "m" : "minutes", "s" : "seconds"}
@@ -225,6 +228,9 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
       * ns - nanoseconds
     """
 
+    if isinstance(htime, (int, float)):
+        return htime
+
     if name is None:
         name = "time"
     specs = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
@@ -249,6 +255,9 @@ def parse_freq(hfreq, default_unit="Hz", name=None):
     Optional 'name' argument may include a short description of the 'hfreq' value, which will be
     used in error messages.
     """
+
+    if isinstance(hfreq, (int, float)):
+        return hfreq
 
     if name is None:
         name = "frequency"
