@@ -38,7 +38,7 @@ PROPS = {
                 "name" : "Package C-state limit locked",
                 "help" : """Whether the package C-state limit in MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                             (MSR_PKG_CST_CONFIG_CONTROL) is locked and cannot be modified.""",
-                "scope": "package",
+                "type" : "bool",
             },
             "pkg_cstate_limits" : {
                 "name" : "Available package C-state limits",
