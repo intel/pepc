@@ -15,7 +15,7 @@ import re
 import copy
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import FSHelpers, Procs, Trivial
+from pepclibs.helperlibs import FSHelpers, Procs, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
@@ -526,6 +526,68 @@ class CStates:
             pass
         return pinfo
 
+    def _validate_prop_scope(self, pname, cpus):
+        """
+        Make sure that CPUs in 'cpus' match the scope of the 'pname' feature. For example, if the
+        feature has "package" scope, 'cpus' should include all CPUs in one or more packages.
+        """
+
+        scope = self.props[pname]["scope"]
+        if scope == "CPU":
+            return
+
+        if scope not in {"package", "core"}:
+            raise Error("BUG: unsupported {scope}")
+
+        _, rem_cpus = getattr(self._cpuinfo, f"cpus_div_{scope}s")(cpus)
+        if not rem_cpus:
+            return
+
+        mapping = ""
+        for pkg in self._cpuinfo.get_packages():
+            pkg_cpus = self._cpuinfo.package_to_cpus(pkg)
+            pkg_cpus_str = Human.rangify(pkg_cpus)
+            mapping += f"\n  * package {pkg}: CPUs: {pkg_cpus_str}"
+
+            if scope == "core":
+                # Add cores information in case of "core" scope.
+                pkg_cores = self._cpuinfo.package_to_cores(pkg)
+                pkg_cores_str = Human.rangify(pkg_cores)
+                mapping += f"\n               cores: {pkg_cores_str}"
+
+                # Build the cores to CPUs mapping string.
+                clist = []
+                for core in pkg_cores:
+                    cpus = self._cpuinfo.cores_to_cpus(packages=(pkg,), cores=(core,))
+                    cpus_str = Human.rangify(cpus)
+                    clist.append(f"{core}:{cpus_str}")
+
+                # The core->CPU numbers mapping may be very long, wrap it to 100 symbols.
+                import textwrap # pylint: disable=import-outside-toplevel
+
+                prefix = "               cores to CPUs: "
+                indent = " " * len(prefix)
+                clist_wrapped = textwrap.wrap(", ".join(clist), width=100,
+                                              initial_indent=prefix, subsequent_indent=indent)
+                clist_str = "\n".join(clist_wrapped)
+
+                mapping += f"\n{clist_str}"
+
+        name =  self.props[pname]["name"]
+        rem_cpus_str = Human.rangify(rem_cpus)
+
+        if scope == "core":
+            mapping_name = "relation between CPUs, cores, and packages"
+        else:
+            mapping_name = "relation between CPUs and packages"
+
+        errmsg = f"{name} has {scope} scope, so the list of CPUs must include all CPUs" \
+                 f"in one or multiple {scope}s.\n" \
+                 f"However, the following CPUs do not comprise full {scope}(s): {rem_cpus_str}\n" \
+                 f"Here is the {mapping_name}{self._proc.hostmsg}:{mapping}"
+
+        raise Error(errmsg)
+
     def get_cpu_prop(self, pname, cpu):
         """Same as 'get_props()', but for a single CPU and a single property."""
 
@@ -558,6 +620,7 @@ class CStates:
 
         for pname, val in inprops.items():
             self._check_prop(pname)
+            self._validate_prop_scope(pname, cpus)
 
             if not self.props[pname]["writable"]:
                 name = self.props[pname][pname]

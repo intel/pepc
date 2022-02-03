@@ -178,35 +178,6 @@ def _build_aggregate_pinfo(props, cpus, csobj):
 
     return aggr_pinfo
 
-def _print_scope_warnings(args, csobj):
-    """
-    Check that the the '--packages', '--cores', and '--cpus' options provided by the user to match
-    the scope of all the options.
-    """
-
-    pkg_warn, core_warn = [], []
-
-    for pname in csobj.props:
-        if not getattr(args, pname, None):
-            continue
-
-        scope = csobj.props[pname]["scope"]
-        if scope == "package" and (getattr(args, "cpus") or getattr(args, "cores")):
-            pkg_warn.append(pname)
-        elif scope == "core" and getattr(args, "cpus"):
-            core_warn.append(pname)
-
-    if pkg_warn:
-        opts = ", ".join([f"'--{opt.replace('_', '-')}'" for opt in pkg_warn])
-        _LOG.warning("the following option(s) have package scope: %s, but '--cpus' or '--cores' "
-                     "were used.\n\tInstead, it is recommented to specify all CPUs in a package,"
-                     "totherwise the result may be undexpected and platform-dependent.", opts)
-    if core_warn:
-        opts = ", ".join([f"'--{opt.replace('_', '-')}'" for opt in core_warn])
-        _LOG.warning("the following option(s) have core scope: %s, but '--cpus' was used."
-                     "\n\tInstead, it is recommented to specify all CPUs in a core,"
-                     "totherwise the result may be undexpected and platform-dependent.", opts)
-
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
 
@@ -224,9 +195,6 @@ def cstates_config_command(args, proc):
         msr.start_transaction()
 
         with CStates.CStates(proc=proc, cpuinfo=cpuinfo, msr=msr) as csobj:
-
-            _print_scope_warnings(args, csobj)
-
             # Find all properties we'll need to print about, and get their values.
             for optname, optval in args.oargs.items():
                 if not optval:
