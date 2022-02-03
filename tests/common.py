@@ -16,15 +16,14 @@ from pepclibs import CPUInfo
 from pepclibs.msr import MSR
 from pepclibs.helperlibs import EmulProcs, Procs, SSH
 
-def get_proc(hostname):
+def get_proc(hostname, dataset):
     """Depending on the 'hostname' argument, return emulated 'Proc', real 'Proc' or 'SSH' object."""
 
     if hostname == "emulation":
         proc = EmulProcs.EmulProc()
 
-        datapath = Path(__file__).parent.resolve() / "data"
-        proc.init_cpuinfo_testdata(datapath)
-        proc.init_msr_testdata()
+        datapath = Path(__file__).parent.resolve() / "data" / dataset
+        proc.init_testdata("CPUInfo", datapath)
 
         return proc
 
@@ -34,13 +33,13 @@ def get_proc(hostname):
     return SSH.SSH(hostname=hostname, username='root', timeout=10)
 
 @pytest.fixture(name="proc")
-def fixture_proc(hostname, dataset): # pylint: disable=unused-argument
+def fixture_proc(hostname, dataset):
     """
     The test fixture is called before each test function. Yields the 'Proc' object, and closes it
     after the test function returns.
     """
 
-    proc = get_proc(hostname)
+    proc = get_proc(hostname, dataset)
     yield proc
     proc.close()
 
