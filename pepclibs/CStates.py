@@ -94,6 +94,7 @@ class CStates:
        * For a single CPU and a single C-state:  'get_cpu_cstate_info()'.
     3. Get/set C-state properties.
        * For multiple properties and multiple CPUs: 'get_props()', 'set_props()'.
+       * For single properties and multiple CPUs: 'set_prop()'.
        * For multiple properties and single CPU: 'get_cpu_props()', 'set_cpu_props()'.
        * For single property and single CPU: 'get_cpu_prop()', 'set_cpu_prop()'.
     """
@@ -436,14 +437,13 @@ class CStates:
                                                                  msr=msr)
         return self._pcstatectl
 
-    @staticmethod
-    def _check_prop(pname):
+    def _check_prop(self, pname):
         """Raise an error if a property 'pname' is not supported."""
 
         if pname not in PROPS:
             pnames_str = ", ".join(set(PROPS))
-            raise Error(f"property '{pname}' not supported, use one of the following: "
-                        f"{pnames_str}")
+            raise ErrorNotSupported(f"property '{pname}' is not supported{self._proc.hostmsg}, "
+                                    f"use one of the following: {pnames_str}")
 
     def _find_feature(self, pname, cpu):
         """Find an MSR feature corresponding to property 'pname'."""
@@ -634,6 +634,11 @@ class CStates:
                 pcstatectl.write_feature(pname, val, cpus=cpus)
             else:
                 raise Error(f"BUG: undefined property '{pname}'")
+
+    def set_prop(self, pname, val, cpus="all"):
+        """Same as 'set_props()', but for a single property."""
+
+        self.set_props(((pname, val),), cpus=cpus)
 
     def set_cpu_props(self, pinfo, cpu):
         """Same as 'set_props()', but for a single CPU."""
