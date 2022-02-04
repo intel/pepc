@@ -220,7 +220,7 @@ def cstates_info_command(args, proc):
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
          CStates.CStates(proc=proc, cpuinfo=cpuinfo) as csobj:
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0,)
+        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
         first = True
         for info in csobj.get_cstates_info(cpus=cpus, cstates=args.cstates):
