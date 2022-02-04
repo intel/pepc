@@ -296,19 +296,19 @@ class _LinuxCStates:
             indexes = set(indexes)
 
         for cpu in cpus:
-            if cpu in self._cscache:
+            if cpu in self._cache:
                 # We have the C-states info for this CPU cached.
                 if indexes == "all":
-                    indices = self._cscache[cpu]
+                    indices = self._cache[cpu]
                 else:
                     indices = indexes
                 for idx in indices:
-                    yield self._cscache[cpu][idx]
+                    yield self._cache[cpu][idx]
             else:
                 # The C-state info for this CPU is not available in the cache.
-                self._cscache[cpu] = {}
+                self._cache[cpu] = {}
                 for csinfo in self._read_cstates_info([cpu], ordered):
-                    self._cscache[cpu][csinfo["index"]] = csinfo
+                    self._cache[cpu][csinfo["index"]] = csinfo
                     if indexes == "all" or csinfo["index"] in indexes:
                         yield csinfo
 
@@ -343,8 +343,8 @@ class _LinuxCStates:
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
 
-        # Used for caching the C-state information for each CPU.
-        self._cscache = {}
+        # Write-through, per-CPU C-states information cache.
+        self._cache = {}
         # Used for mapping C-state names to C-state indices.
         self._name2idx_cache = {}
 
