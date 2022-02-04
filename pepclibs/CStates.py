@@ -15,7 +15,7 @@ import re
 import copy
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import FSHelpers, Procs, Trivial, Human
+from pepclibs.helperlibs import Procs, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
@@ -85,44 +85,12 @@ class _LinuxCStates:
     This class provides API for managing Linux C-states via sysfs.
     """
 
-    def _get_cstate_indexes(self, cpu):
-        """Yield tuples of of C-state indexes and sysfs paths for cpu number 'cpu'."""
+    def _add_to_cache(self, csname, csinfo, cpu):
+        """Add 'csname' C-state informaton to the cache."""
 
-        basedir = self._sysfs_base / f"cpu{cpu}" / "cpuidle"
-        name = None
-        for name, path, typ in FSHelpers.lsdir(basedir, proc=self._proc):
-            errmsg = f"unexpected entry '{name}' in '{basedir}'{self._proc.hostmsg}"
-            if typ != "/" or not name.startswith("state"):
-                raise Error(errmsg)
-            index = name[len("state"):]
-            if not Trivial.is_int(index):
-                raise Error(errmsg)
-            yield int(index), Path(path)
-
-        if name is None:
-            raise Error(f"C-states are not supported{self._proc.hostmsg}")
-
-    def _name2idx(self, name, cpu=0):
-        """Return C-state index for C-state name 'name'."""
-
-        if cpu in self._name2idx_cache:
-            if name in self._name2idx_cache[cpu]:
-                return self._name2idx_cache[cpu][name]
-        else:
-            self._name2idx_cache[cpu] = {}
-
-        names = []
-        for index, path in self._get_cstate_indexes(cpu):
-            with self._proc.open(path / "name", "r") as fobj:
-                val = fobj.read().strip().upper()
-            self._name2idx_cache[cpu][val] = index
-            if val == name:
-                return index
-            names.append(val)
-
-        names = ", ".join(names)
-        raise Error(f"unkown C-state '{name}', here are the C-states supported"
-                    f"{self._proc.hostmsg}:\n{names}")
+        if cpu not in self._cache:
+            self._cache[cpu] = {}
+        self._cache[cpu][csname] = csinfo
 
     def _read_cstates_info(self, cpus, ordered):
         """
@@ -181,33 +149,28 @@ class _LinuxCStates:
         csinfo["index"] = prev_index
         yield csinfo
 
-    def _normalize_cstates(self, cstates):
+    @staticmethod
+    def _normalize_cstates(cstates):
         """
-        Some methods accept the C-states to operate on as a string or a list. This method normalizes
-        the C-states 'cstates' and returns a list of integer C-state indices. 'cstates' can be:
-          * a C-state name
-          * a C-state index as a string or an integer
-          * a list containing one or more of the above
-          * a string containing comma-separated C-state indices or names
+        Normalize the the C-states list in 'cstates'. The arguments are as follows.
+          * cstates - same as in 'get_cstates_info()'.
+
+        Returns a list of normalized C-state names or "all". The names will be upper-cased,
+        duplicate names will be removed. The names are not validated.
         """
 
         if cstates == "all":
             return cstates
 
-        if isinstance(cstates, int):
-            cstates = str(cstates)
         if isinstance(cstates, str):
-            cstates = Trivial.split_csv_line(cstates, dedup=True)
+            cstates = Trivial.split_csv_line(cstates)
 
-        indices = []
-        for cstate in cstates:
-            if not Trivial.is_int(cstate):
-                cstate = self._name2idx(cstate.upper())
-            idx = int(cstate)
-            if idx not in indices:
-                indices.append(idx)
+        if not Trivial.is_iterable(cstates):
+            raise Error("bad C-states list. Should either be a string or an iterable collection")
 
-        return indices
+        cstates = Trivial.list_dedup(cstates)
+
+        return [cstate.upper() for cstate in cstates]
 
     def _toggle_cstate(self, cpu, index, enable):
         """Enable or disable the 'index' C-state for CPU 'cpu'."""
@@ -239,27 +202,6 @@ class _LinuxCStates:
             raise Error(f"failed to {msg}:\nfile '{path}' contains '{read_val}', but should "
                         f"contain '{val}'")
 
-    def _do_toggle_cstates(self, cpus, indexes, enable):
-        """Implements '_toggle_cstates()'."""
-
-        toggled = {}
-        go_cpus = cpus
-
-        cpus = set(cpus)
-        if indexes != "all":
-            indexes = set(indexes)
-
-        for csinfo in self._read_cstates_info(go_cpus, False):
-            cpu = csinfo["CPU"]
-            index = csinfo["index"]
-            if cpu in cpus and (indexes == "all" or index in indexes):
-                self._toggle_cstate(cpu, index, enable)
-                if cpu not in toggled:
-                    toggled[cpu] = {"cstates" : []}
-                toggled[cpu]["cstates"].append(csinfo["name"])
-
-        return toggled
-
     def _toggle_cstates(self, cpus="all", cstates="all", enable=True):
         """
         Enable or disable C-states 'cstates' on CPUs 'cpus'. The arguments are as follows.
@@ -269,13 +211,22 @@ class _LinuxCStates:
                       otherwise disabled.
         """
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
+        toggled = {}
 
-        if isinstance(cstates, str) and cstates != "all":
-            cstates = Trivial.split_csv_line(cstates, dedup=True)
-        indexes = self._normalize_cstates(cstates)
+        for csinfo in self.get_cstates_info(cpus, cstates, ordered=False):
+            cpu = csinfo["CPU"]
+            name = csinfo["name"]
 
-        return self._do_toggle_cstates(cpus, indexes, enable)
+            self._toggle_cstate(cpu, csinfo["index"], enable)
+
+            if cpu not in toggled:
+                toggled[cpu] = {"cstates" : []}
+            toggled[cpu]["cstates"].append(name)
+
+            # Update the cached data.
+            self._cache[cpu][name]["disable"] = not enable
+
+        return toggled
 
     def enable_cstates(self, cpus="all", cstates="all"):
         """Same as 'CStates.enable_cstates()'."""
@@ -291,26 +242,29 @@ class _LinuxCStates:
         """Same as 'CStates.get_cstates_info()'."""
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
-        indexes = self._normalize_cstates(cstates)
-        if indexes != "all":
-            indexes = set(indexes)
+        cstates = self._normalize_cstates(cstates)
 
+        # Form list of CPUs that do not have their C-states information cached.
+        read_cpus = [cpu for cpu in cpus if cpu not in self._cache]
+        if read_cpus:
+            # Load their information into the cache.
+            for csinfo in self._read_cstates_info(read_cpus, ordered):
+                self._add_to_cache(csinfo["name"], csinfo, csinfo["CPU"])
+
+        # Yield the requested C-states information.
         for cpu in cpus:
-            if cpu in self._cache:
-                # We have the C-states info for this CPU cached.
-                if indexes == "all":
-                    indices = self._cache[cpu]
-                else:
-                    indices = indexes
-                for idx in indices:
-                    yield self._cache[cpu][idx]
+            if cstates == "all":
+                names = self._cache[cpu].keys()
             else:
-                # The C-state info for this CPU is not available in the cache.
-                self._cache[cpu] = {}
-                for csinfo in self._read_cstates_info([cpu], ordered):
-                    self._cache[cpu][csinfo["index"]] = csinfo
-                    if indexes == "all" or csinfo["index"] in indexes:
-                        yield csinfo
+                names = cstates
+
+            for name in names:
+                if name not in self._cache[cpu]:
+                    csnames = ", ".join(name for name in self._cache[cpu])
+                    raise Error(f"bad C-state name '{name}' for CPU {cpu}\n"
+                                f"Valid names are: {csnames}")
+
+                yield self._cache[cpu][name]
 
     def get_cpu_cstates_info(self, cpu, cstates="all", ordered=True):
         """Same as 'CStates.get_cpu_cstates_info()'."""
@@ -342,11 +296,8 @@ class _LinuxCStates:
         self._close_cpuinfo = cpuinfo is None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
-
         # Write-through, per-CPU C-states information cache.
         self._cache = {}
-        # Used for mapping C-state names to C-state indices.
-        self._name2idx_cache = {}
 
         if not self._proc:
             self._proc = Procs.Proc()
@@ -396,10 +347,9 @@ class CStates:
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
                    7, 8, and 10 to 12. Value 'all' mean "all CPUs" (default).
-          * cstates - the list of C-states to get information about. The list can contain both
-                      C-state names and C-state indexes. It can be both a list or a string
-                      containing a comma-separated list. Value 'all' mean "all C-states"
-                      (default).
+          * cstates - list of C-states names to get information about. It can be both a list of
+                      names or a string containing a comma-separated list of names. Value 'all' mean
+                      "all C-states" (default).
           * ordered - if 'True', the yielded C-states will be ordered so that smaller CPU numbers
                       will go first, and for each CPU number shallower C-states will go first.
         """
