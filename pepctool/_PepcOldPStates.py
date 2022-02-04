@@ -16,7 +16,7 @@ import logging
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
-from pepclibs import CPUInfo, PStates
+from pepclibs import CPUInfo, OldPStates
 from pepctool import _PepcCommon
 from pepctool._PepcCommon import get_cpus
 
@@ -65,11 +65,11 @@ def _get_scope_msg(proc, cpuinfo, nums, scope="CPU"):
 def _print_pstates_info(proc, cpuinfo, keys=None, cpus="all"):
     """Print CPU P-states information."""
 
-    keys_descr = PStates.CPUFREQ_KEYS_DESCR
-    keys_descr.update(PStates.UNCORE_KEYS_DESCR)
+    keys_descr = OldPStates.CPUFREQ_KEYS_DESCR
+    keys_descr.update(OldPStates.UNCORE_KEYS_DESCR)
 
     first = True
-    with PStates.PStates(proc=proc, cpuinfo=cpuinfo) as pstates:
+    with OldPStates.OldPStates(proc=proc, cpuinfo=cpuinfo) as pstates:
         for info in pstates.get_freq_info(cpus, keys=keys):
             if not first:
                 _LOG.info("")
@@ -166,10 +166,10 @@ def _print_uncore_info(args, proc, cpuinfo):
     """Print uncore frequency information."""
 
     packages = _get_uncore_cmd_packages(args, cpuinfo)
-    keys_descr = PStates.UNCORE_KEYS_DESCR
+    keys_descr = OldPStates.UNCORE_KEYS_DESCR
 
     first = True
-    with PStates.PStates(proc=proc, cpuinfo=cpuinfo) as pstates:
+    with OldPStates.OldPStates(proc=proc, cpuinfo=cpuinfo) as pstates:
         for info in pstates.get_uncore_info(packages):
             if not first:
                 _LOG.info("")
@@ -279,7 +279,7 @@ def _handle_pstate_opts(args, proc, cpuinfo, pstates):
             scope = pstates.get_scope(optname)
             msg = _get_scope_msg(proc, cpuinfo, cpus, scope=scope)
             pstates.set_prop(optname, optval, cpus=cpus)
-            _LOG.info("Set %s to '%s'%s", PStates.PROPS[optname]["name"], optval, msg)
+            _LOG.info("Set %s to '%s'%s", OldPStates.PROPS[optname]["name"], optval, msg)
         else:
             cpus = get_cpus(args, cpuinfo, default_cpus=0)
             optinfo["keys"].add("CPU")
@@ -304,7 +304,7 @@ def pstates_config_command(args, proc):
         # is committed.
         msr.start_transaction()
 
-        with PStates.PStates(proc=proc, cpuinfo=cpuinfo, msr=msr) as pstates:
+        with OldPStates.OldPStates(proc=proc, cpuinfo=cpuinfo, msr=msr) as pstates:
             _handle_pstate_opts(args, proc, cpuinfo, pstates)
 
         # Commit the transaction. This will flush all the change MSRs (if there were any).

@@ -381,16 +381,16 @@ def cstates_config_command(args, proc):
 def pstates_info_command(args, proc):
     """Implements the 'pstates info' command."""
 
-    from pepctool import _PepcPStates
+    from pepctool import _PepcOldPStates
 
-    _PepcPStates.pstates_info_command(args, proc)
+    _PepcOldPStates.pstates_info_command(args, proc)
 
 def pstates_config_command(args, proc):
     """Implements the 'pstates config' command."""
 
-    from pepctool import _PepcPStates
+    from pepctool import _PepcOldPStates
 
-    _PepcPStates.pstates_config_command(args, proc)
+    _PepcOldPStates.pstates_config_command(args, proc)
 
 def aspm_info_command(args, proc):
     """Implements the 'aspm info'. command"""

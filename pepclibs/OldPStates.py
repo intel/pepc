@@ -86,7 +86,7 @@ PROPS = {
     },
 }
 
-class PStates:
+class OldPStates:
     """This class provides API for managing CPU frequency. Only Intel x86 systems are supported."""
 
     def _get_cpuinfo(self):
@@ -797,7 +797,7 @@ class PStates:
     def get_scope(prop):
         """Get scope of property 'prop'. The 'prop' argument is same as in 'set_prop()'."""
 
-        PStates._check_prop(prop)
+        OldPStates._check_prop(prop)
         return PROPS[prop]["scope"]
 
     def __init__(self, proc=None, cpuinfo=None, msr=None):
