@@ -245,9 +245,9 @@ class CStates:
         if indexes is not None:
             indexes = set(indexes)
 
-        for info in self._get_cstates_info(go_cpus, go_indexes, False):
-            cpu = info["CPU"]
-            index = info["index"]
+        for csinfo in self._get_cstates_info(go_cpus, go_indexes, False):
+            cpu = csinfo["CPU"]
+            index = csinfo["index"]
             if (cpus is None or cpu in cpus) and (indexes is None or index in indexes):
                 self._toggle_cstate(cpu, index, enable)
                 if cpu not in toggled:
@@ -312,7 +312,7 @@ class CStates:
             stdout = sorted(stdout)
 
         regex = re.compile(r".+/cpu([0-9]+)/cpuidle/state([0-9]+)/(.+):([^\n]+)")
-        info = {}
+        csinfo = {}
         index = prev_index = cpu = prev_cpu = None
 
         for line in stdout:
@@ -334,18 +334,18 @@ class CStates:
                 prev_index = index
 
             if cpu != prev_cpu or index != prev_index:
-                info["CPU"] = prev_cpu
-                info["index"] = prev_index
-                yield info
+                csinfo["CPU"] = prev_cpu
+                csinfo["index"] = prev_index
+                yield csinfo
                 prev_cpu = cpu
                 prev_index = index
-                info = {}
+                csinfo = {}
 
-            info[key] = val
+            csinfo[key] = val
 
-        info["CPU"] = prev_cpu
-        info["index"] = prev_index
-        yield info
+        csinfo["CPU"] = prev_cpu
+        csinfo["index"] = prev_index
+        yield csinfo
 
     def get_cstates_info(self, cpus=None, cstates=None, ordered=True):
         """
@@ -391,13 +391,10 @@ class CStates:
     def get_cpu_cstates_info(self, cpu, cstates=None, ordered=True):
         """Same as 'get_cstates_info()', but for a single CPU."""
 
-        if not Trivial.is_int(cpu):
-            raise Error(f"bad CPU number '{cpu}', should be an integer")
-
-        info_dict = {}
-        for info in self.get_cstates_info(cpus=(cpu,), cstates=cstates, ordered=ordered):
-            info_dict[info["index"]] = info
-        return info_dict
+        csinfo_dict = {}
+        for csinfo in self.get_cstates_info(cpus=(cpu,), cstates=cstates, ordered=ordered):
+            csinfo_dict[csinfo["index"]] = csinfo
+        return csinfo_dict
 
     def get_cpu_cstate_info(self, cpu, cstate):
         """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
