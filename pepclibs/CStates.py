@@ -92,7 +92,7 @@ class _LinuxCStates:
             self._cache[cpu] = {}
         self._cache[cpu][csname] = csinfo
 
-    def _read_cstates_info(self, cpus, ordered):
+    def _read_cstates_info(self, cpus):
         """
         Read information about all C-states of CPUs in 'cpus' and yield a C-state information
         dictionary for every CPU in 'cpus'.
@@ -110,8 +110,8 @@ class _LinuxCStates:
             raise Error(f"failed to find C-states information in '{self._sysfs_base}'"
                         f"{self._proc.hostmsg}")
 
-        if ordered:
-            stdout = sorted(stdout)
+        # This will make sure everything is ordered by CPU number and C-state index number.
+        stdout = sorted(stdout)
 
         regex = re.compile(r".+/cpu([0-9]+)/cpuidle/state([0-9]+)/(.+):([^\n]+)")
         csinfo = {}
@@ -213,7 +213,7 @@ class _LinuxCStates:
 
         toggled = {}
 
-        for csinfo in self.get_cstates_info(cpus, cstates, ordered=False):
+        for csinfo in self.get_cstates_info(cpus, cstates):
             cpu = csinfo["CPU"]
             name = csinfo["name"]
 
@@ -238,7 +238,7 @@ class _LinuxCStates:
 
         return self._toggle_cstates(cpus, cstates, False)
 
-    def get_cstates_info(self, cpus="all", cstates="all", ordered=True):
+    def get_cstates_info(self, cpus="all", cstates="all"):
         """Same as 'CStates.get_cstates_info()'."""
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
@@ -246,9 +246,9 @@ class _LinuxCStates:
 
         # Form list of CPUs that do not have their C-states information cached.
         read_cpus = [cpu for cpu in cpus if cpu not in self._cache]
+        # Load their information into the cache.
         if read_cpus:
-            # Load their information into the cache.
-            for csinfo in self._read_cstates_info(read_cpus, ordered):
+            for csinfo in self._read_cstates_info(read_cpus):
                 self._add_to_cache(csinfo["name"], csinfo, csinfo["CPU"])
 
         # Yield the requested C-states information.
@@ -266,11 +266,11 @@ class _LinuxCStates:
 
                 yield self._cache[cpu][name]
 
-    def get_cpu_cstates_info(self, cpu, cstates="all", ordered=True):
+    def get_cpu_cstates_info(self, cpu, cstates="all"):
         """Same as 'CStates.get_cpu_cstates_info()'."""
 
         csinfo_dict = {}
-        for csinfo in self.get_cstates_info(cpus=(cpu,), cstates=cstates, ordered=ordered):
+        for csinfo in self.get_cstates_info(cpus=(cpu,), cstates=cstates):
             csinfo_dict[csinfo["index"]] = csinfo
         return csinfo_dict
 
@@ -341,7 +341,7 @@ class CStates:
             self._lcsobj = _LinuxCStates(self._proc, cpuinfo=self._cpuinfo)
         return self._lcsobj
 
-    def get_cstates_info(self, cpus="all", cstates="all", ordered=True):
+    def get_cstates_info(self, cpus="all", cstates="all"):
         """
         Yield information about C-states specified in 'cstate' for CPUs specified in 'cpus'.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
@@ -350,16 +350,14 @@ class CStates:
           * cstates - list of C-states names to get information about. It can be both a list of
                       names or a string containing a comma-separated list of names. Value 'all' mean
                       "all C-states" (default).
-          * ordered - if 'True', the yielded C-states will be ordered so that smaller CPU numbers
-                      will go first, and for each CPU number shallower C-states will go first.
         """
 
-        return self._get_lcsobj().get_cstates_info(cpus=cpus, cstates=cstates, ordered=ordered)
+        return self._get_lcsobj().get_cstates_info(cpus=cpus, cstates=cstates)
 
-    def get_cpu_cstates_info(self, cpu, cstates="all", ordered=True):
+    def get_cpu_cstates_info(self, cpu, cstates="all"):
         """Same as 'get_cstates_info()', but for a single CPU."""
 
-        return self._get_lcsobj().get_cpu_cstates_info(cpu, cstates=cstates, ordered=ordered)
+        return self._get_lcsobj().get_cpu_cstates_info(cpu, cstates=cstates)
 
     def get_cpu_cstate_info(self, cpu, cstate):
         """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
