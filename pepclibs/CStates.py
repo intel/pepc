@@ -80,31 +80,10 @@ PROPS = {
     },
 }
 
-class CStates:
+class _LinuxCStates:
     """
-    This class provides C-state management API.
-
-    Public methods overview.
-
-    1. Enable multiple disable C-states for multiple CPUs via Linux sysfs interfaces:
-       'enable_cstates()', 'disable_cstates()'.
-    2. Get C-state(s) information.
-       * For multiple CPUs and multiple C-states: get_cstates_info().
-       * For a single CPU and multiple C-states: 'get_cpu_cstates_info()'.
-       * For a single CPU and a single C-state:  'get_cpu_cstate_info()'.
-    3. Get/set C-state properties.
-       * For multiple properties and multiple CPUs: 'get_props()', 'set_props()'.
-       * For single properties and multiple CPUs: 'set_prop()'.
-       * For multiple properties and single CPU: 'get_cpu_props()', 'set_cpu_props()'.
-       * For single property and single CPU: 'get_cpu_prop()', 'set_cpu_prop()'.
+    This class provides API for managing Linux C-states via sysfs.
     """
-
-    def _get_cpuinfo(self):
-        """Return an instance of 'CPUInfo' class."""
-
-        if not self._cpuinfo:
-            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
-        return self._cpuinfo
 
     def _get_cstate_indexes(self, cpu):
         """Yield tuples of of C-state indexes and sysfs paths for cpu number 'cpu'."""
@@ -194,15 +173,6 @@ class CStates:
 
         return indices
 
-    def _normalize_cpus(self, cpus):
-        """
-        Some methods accept CPUs as list or range of CPUs as described in 'get_cstates_info()'.
-        Turn this userinput in 'cpus' as list of integers and return it.
-        """
-
-        cpuinfo = self._get_cpuinfo()
-        return cpuinfo.normalize_cpus(cpus)
-
     def _toggle_cstate(self, cpu, index, enable):
         """Enable or disable the 'index' C-state for CPU 'cpu'."""
 
@@ -265,7 +235,7 @@ class CStates:
                       otherwise disabled.
         """
 
-        cpus = self._normalize_cpus(cpus)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
 
         if isinstance(cstates, str) and cstates != "all":
             cstates = Trivial.split_csv_line(cstates, dedup=True)
@@ -274,20 +244,13 @@ class CStates:
         return self._do_toggle_cstates(cpus, indexes, enable)
 
     def enable_cstates(self, cpus=None, cstates=None):
-        """
-        Enable C-states 'cstates' on CPUs 'cpus'. The 'cstates' and 'cpus' arguments are the same as
-        in 'get_cstates_info()'. Returns a dictionary of the following format:
+        """Same as 'CStates.enable_cstates()'."""
 
-        CPU number:
-            csates:
-                list of C-state names enabled for the CPU
-        """
         return self._toggle_cstates(cpus, cstates, True)
 
     def disable_cstates(self, cpus=None, cstates=None):
-        """
-        Similarr to 'enable_cstates()', but disables instead of enabling.
-        """
+        """Same as 'CStates.disable_cstates()'."""
+
         return self._toggle_cstates(cpus, cstates, False)
 
     def _get_cstates_info(self, cpus, indexes, ordered):
@@ -348,20 +311,9 @@ class CStates:
         yield csinfo
 
     def get_cstates_info(self, cpus=None, cstates=None, ordered=True):
-        """
-        Yield information about C-states specified in 'cstate' for CPUs specified in 'cpus'.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
-          * cstates - the list of C-states to get information about. The list can contain both
-                      C-state names and C-state indexes. It can be both a list or a string
-                      containing a comma-separated list. 'None' and 'all' mean "all C-states"
-                      (default).
-          * ordered - if 'True', the yielded C-states will be ordered so that smaller CPU numbers
-                      will go first, and for each CPU number shallower C-states will go first.
-        """
+        """Same as 'CStates.get_cstates_info()'."""
 
-        cpus = self._normalize_cpus(cpus)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
         indexes = self._normalize_cstates(cstates)
         if indexes:
             indexes = set(indexes)
@@ -389,7 +341,7 @@ class CStates:
                         yield csinfo
 
     def get_cpu_cstates_info(self, cpu, cstates=None, ordered=True):
-        """Same as 'get_cstates_info()', but for a single CPU."""
+        """Same as 'CStates.get_cpu_cstates_info()'."""
 
         csinfo_dict = {}
         for csinfo in self.get_cstates_info(cpus=(cpu,), cstates=cstates, ordered=ordered):
@@ -397,12 +349,120 @@ class CStates:
         return csinfo_dict
 
     def get_cpu_cstate_info(self, cpu, cstate):
-        """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
+        """Same as 'CStates.get_cpu_cstate_info()'."""
 
         csinfo = None
         for csinfo in self.get_cstates_info(cpus=(cpu,), cstates=(cstate,)):
             pass
         return csinfo
+
+    def __init__(self, proc=None, cpuinfo=None):
+        """
+        The class constructor. The arguments are as follows.
+          * proc - the 'Proc' or 'SSH' object that defines the host to run the measurements on.
+          * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
+        """
+
+        self._proc = proc
+        self._cpuinfo = cpuinfo
+
+        self._close_proc = proc is None
+        self._close_cpuinfo = cpuinfo is None
+
+        self._sysfs_base = Path("/sys/devices/system/cpu")
+
+        # Used for caching the C-state information for each CPU.
+        self._cscache = {}
+        # Used for mapping C-state indices to C-state names and vice versa.
+        self._name2idx_cache = {}
+        self._idx2name_cache = {}
+
+        if not self._proc:
+            self._proc = Procs.Proc()
+        if not self._cpuinfo:
+            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        for attr in ("_cpuinfo", "_proc"):
+            obj = getattr(self, attr, None)
+            if obj:
+                if getattr(self, f"_close{attr}", False):
+                    getattr(obj, "close")()
+                setattr(self, attr, None)
+
+
+class CStates:
+    """
+    This class provides C-state management API.
+
+    Public methods overview.
+
+    1. Enable multiple disable C-states for multiple CPUs via Linux sysfs interfaces:
+       'enable_cstates()', 'disable_cstates()'.
+    2. Get C-state(s) information.
+       * For multiple CPUs and multiple C-states: get_cstates_info().
+       * For a single CPU and multiple C-states: 'get_cpu_cstates_info()'.
+       * For a single CPU and a single C-state:  'get_cpu_cstate_info()'.
+    3. Get/set C-state properties.
+       * For multiple properties and multiple CPUs: 'get_props()', 'set_props()'.
+       * For single properties and multiple CPUs: 'set_prop()'.
+       * For multiple properties and single CPU: 'get_cpu_props()', 'set_cpu_props()'.
+       * For single property and single CPU: 'get_cpu_prop()', 'set_cpu_prop()'.
+    """
+
+    def _get_lcsobj(self):
+        """Returns a '_LinuxCStates()' object."""
+
+        if not self._lcsobj:
+            self._lcsobj = _LinuxCStates(self._proc, cpuinfo=self._cpuinfo)
+        return self._lcsobj
+
+    def enable_cstates(self, cpus=None, cstates=None):
+        """
+        Enable C-states 'cstates' on CPUs 'cpus'. The 'cstates' and 'cpus' arguments are the same as
+        in 'get_cstates_info()'. Returns a dictionary of the following format:
+
+        CPU number:
+            csates:
+                list of C-state names enabled for the CPU
+        """
+
+        return self._get_lcsobj().enable_cstates(cpus=cpus, cstates=cstates)
+
+    def disable_cstates(self, cpus=None, cstates=None):
+        """
+        Similar to 'enable_cstates()', but disables instead of enabling.
+        """
+
+        return self._get_lcsobj().disable_cstates(cpus=cpus, cstates=cstates)
+
+    def get_cstates_info(self, cpus=None, cstates=None, ordered=True):
+        """
+        Yield information about C-states specified in 'cstate' for CPUs specified in 'cpus'.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+          * cstates - the list of C-states to get information about. The list can contain both
+                      C-state names and C-state indexes. It can be both a list or a string
+                      containing a comma-separated list. 'None' and 'all' mean "all C-states"
+                      (default).
+          * ordered - if 'True', the yielded C-states will be ordered so that smaller CPU numbers
+                      will go first, and for each CPU number shallower C-states will go first.
+        """
+
+        return self._get_lcsobj().get_cstates_info(cpus=cpus, cstates=cstates, ordered=ordered)
+
+    def get_cpu_cstates_info(self, cpu, cstates=None, ordered=True):
+        """Same as 'get_cstates_info()', but for a single CPU."""
+
+        return self._get_lcsobj().get_cpu_cstates_info(cpu, cstates=cstates, ordered=ordered)
+
+    def get_cpu_cstate_info(self, cpu, cstate):
+        """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
+
+        return self._get_lcsobj().get_cpu_cstate_info(cpu, cstate)
 
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
@@ -415,19 +475,17 @@ class CStates:
         """Return an instance of 'PowerCtl' class."""
 
         if self._powerctl is None:
-            cpuinfo = self._get_cpuinfo()
             msr = self._get_msr()
-            self._powerctl = PowerCtl.PowerCtl(proc=self._proc, cpuinfo=cpuinfo, msr=msr)
+            self._powerctl = PowerCtl.PowerCtl(proc=self._proc, cpuinfo=self._cpuinfo, msr=msr)
         return self._powerctl
 
     def _get_pcstatectl(self):
         """Return an instance of 'PCStateConfigCtl' class."""
 
         if self._pcstatectl is None:
-            cpuinfo = self._get_cpuinfo()
             msr = self._get_msr()
-            self._pcstatectl = PCStateConfigCtl.PCStateConfigCtl(proc=self._proc, cpuinfo=cpuinfo,
-                                                                 msr=msr)
+            self._pcstatectl = PCStateConfigCtl.PCStateConfigCtl(proc=self._proc,
+                                                                 cpuinfo=self._cpuinfo, msr=msr)
         return self._pcstatectl
 
     def _check_prop(self, pname):
@@ -506,7 +564,7 @@ class CStates:
         for pname in pnames:
             self._check_prop(pname)
 
-        cpus = self._normalize_cpus(cpus)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for cpu in cpus:
             yield self._get_pinfo(pnames, cpu)
@@ -671,33 +729,27 @@ class CStates:
         self._close_cpuinfo = cpuinfo is None
         self._close_msr = msr is None
 
+        self._lcsobj = None
         self._powerctl = None
         self._pcstatectl = None
 
-        self._sysfs_base = Path("/sys/devices/system/cpu")
         self.props = None
-
-        # Used for caching the C-state information for each CPU.
-        self._cscache = {}
-        # Used for mapping C-state indices to C-state names and vice versa.
-        self._name2idx_cache = {}
-        self._idx2name_cache = {}
 
         if not self._proc:
             self._proc = Procs.Proc()
+        if not self._cpuinfo:
+            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
 
         self._init_props_dict()
 
     def close(self):
         """Uninitialize the class object."""
 
-        if getattr(self, "_pcstatectl", None):
-            self._pcstatectl.close()
-            self._pcstatectl = None
-
-        if getattr(self, "_powerctl", None):
-            self._powerctl.close()
-            self._powerctl = None
+        for attr in ("_lcsobj", "_pcstatectl", "_powerctl"):
+            obj = getattr(self, attr, None)
+            if obj:
+                obj.close()
+                setattr(self, attr, None)
 
         for attr in ("_msr", "_cpuinfo", "_proc"):
             obj = getattr(self, attr, None)
