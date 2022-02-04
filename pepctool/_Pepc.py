@@ -143,13 +143,13 @@ def build_arguments_parser():
     subpars = subparsers.add_parser("cstates", help=text, description=descr)
     subparsers2 = subpars.add_subparsers(title="further sub-commands", metavar="")
 
-    cst_list_text = """You can specify Linux C-states either by name (e.g., 'C1') or by the index.
-                       Use 'all' to specify all the available Linux C-states (this is the default).
-                       Note, there is a difference between Linux C-states (e.g., 'C6') and hardware
-                       C-states (e.g., Core C6 or Package C6 on many Intel platforms). The former is
-                       what Linux can request, and on Intel hardware this is usually about various
-                       'mwait' instruction hints. The latter are platform-specific hardware state,
-                       entered upon a Linux request."""
+    cst_list_text = """C-states should be specified by name (e.g., 'C1'). Use 'all' to specify all
+                       the available Linux C-states (this is the default). Note, there is a
+                       difference between Linux C-states (e.g., 'C6') and hardware C-states (e.g.,
+                       Core C6 or Package C6 on many Intel platforms). The former is what Linux can
+                       request, and on Intel hardware this is usually about various 'mwait'
+                       instruction hints. The latter are platform-specific hardware state, entered
+                       upon a Linux request."""
 
     #
     # Create parser for the 'cstates info' command.
