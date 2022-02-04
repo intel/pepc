@@ -155,8 +155,8 @@ class _LinuxCStates:
           * a string containing comma-separated C-state indices or names
         """
 
-        if cstates in ("all", None):
-            return None
+        if cstates == "all":
+            return cstates
 
         if isinstance(cstates, int):
             cstates = str(cstates)
@@ -210,15 +210,14 @@ class _LinuxCStates:
         go_cpus = cpus
         go_indexes = indexes
 
-        if cpus is not None:
-            cpus = set(cpus)
-        if indexes is not None:
+        cpus = set(cpus)
+        if indexes != "all":
             indexes = set(indexes)
 
         for csinfo in self._get_cstates_info(go_cpus, go_indexes, False):
             cpu = csinfo["CPU"]
             index = csinfo["index"]
-            if (cpus is None or cpu in cpus) and (indexes is None or index in indexes):
+            if cpu in cpus and (indexes == "all" or index in indexes):
                 self._toggle_cstate(cpu, index, enable)
                 if cpu not in toggled:
                     toggled[cpu] = {"cstates" : []}
@@ -226,7 +225,7 @@ class _LinuxCStates:
 
         return toggled
 
-    def _toggle_cstates(self, cpus=None, cstates=None, enable=True):
+    def _toggle_cstates(self, cpus="all", cstates="all", enable=True):
         """
         Enable or disable C-states 'cstates' on CPUs 'cpus'. The arguments are as follows.
           * cstates - same as in 'get_cstates_info()'.
@@ -243,12 +242,12 @@ class _LinuxCStates:
 
         return self._do_toggle_cstates(cpus, indexes, enable)
 
-    def enable_cstates(self, cpus=None, cstates=None):
+    def enable_cstates(self, cpus="all", cstates="all"):
         """Same as 'CStates.enable_cstates()'."""
 
         return self._toggle_cstates(cpus, cstates, True)
 
-    def disable_cstates(self, cpus=None, cstates=None):
+    def disable_cstates(self, cpus="all", cstates="all"):
         """Same as 'CStates.disable_cstates()'."""
 
         return self._toggle_cstates(cpus, cstates, False)
@@ -257,9 +256,8 @@ class _LinuxCStates:
         """Implements 'get_cstates_info()'."""
 
         indexes_regex = cpus_regex = "[[:digit:]]+"
-        if cpus is not None:
-            cpus_regex = "|".join([str(cpu) for cpu in cpus])
-        if indexes is not None:
+        cpus_regex = "|".join([str(cpu) for cpu in cpus])
+        if indexes != "all":
             indexes_regex = "|".join([str(index) for index in indexes])
 
         cmd = fr"find '{self._sysfs_base}' -type f -regextype posix-extended " \
@@ -310,18 +308,18 @@ class _LinuxCStates:
         csinfo["index"] = prev_index
         yield csinfo
 
-    def get_cstates_info(self, cpus=None, cstates=None, ordered=True):
+    def get_cstates_info(self, cpus="all", cstates="all", ordered=True):
         """Same as 'CStates.get_cstates_info()'."""
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
         indexes = self._normalize_cstates(cstates)
-        if indexes:
+        if indexes != "all":
             indexes = set(indexes)
 
         for cpu in cpus:
             if cpu in self._cscache:
                 # We have the C-states info for this CPU cached.
-                if indexes is None:
+                if indexes == "all":
                     indices = self._cscache[cpu]
                 else:
                     indices = indexes
@@ -335,12 +333,12 @@ class _LinuxCStates:
                 # all the C-states anyway. This limitation makes this function slower than
                 # necessary.
                 self._cscache[cpu] = {}
-                for csinfo in self._get_cstates_info([cpu], None, ordered):
+                for csinfo in self._get_cstates_info([cpu], "all", ordered):
                     self._cscache[cpu][csinfo["index"]] = csinfo
-                    if indexes is None or csinfo["index"] in indexes:
+                    if indexes == "all" or csinfo["index"] in indexes:
                         yield csinfo
 
-    def get_cpu_cstates_info(self, cpu, cstates=None, ordered=True):
+    def get_cpu_cstates_info(self, cpu, cstates="all", ordered=True):
         """Same as 'CStates.get_cpu_cstates_info()'."""
 
         csinfo_dict = {}
@@ -419,7 +417,7 @@ class CStates:
             self._lcsobj = _LinuxCStates(self._proc, cpuinfo=self._cpuinfo)
         return self._lcsobj
 
-    def enable_cstates(self, cpus=None, cstates=None):
+    def enable_cstates(self, cpus="all", cstates="all"):
         """
         Enable C-states 'cstates' on CPUs 'cpus'. The 'cstates' and 'cpus' arguments are the same as
         in 'get_cstates_info()'. Returns a dictionary of the following format:
@@ -431,22 +429,22 @@ class CStates:
 
         return self._get_lcsobj().enable_cstates(cpus=cpus, cstates=cstates)
 
-    def disable_cstates(self, cpus=None, cstates=None):
+    def disable_cstates(self, cpus="all", cstates="all"):
         """
         Similar to 'enable_cstates()', but disables instead of enabling.
         """
 
         return self._get_lcsobj().disable_cstates(cpus=cpus, cstates=cstates)
 
-    def get_cstates_info(self, cpus=None, cstates=None, ordered=True):
+    def get_cstates_info(self, cpus="all", cstates="all", ordered=True):
         """
         Yield information about C-states specified in 'cstate' for CPUs specified in 'cpus'.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+                   7, 8, and 10 to 12. Value 'all' mean "all CPUs" (default).
           * cstates - the list of C-states to get information about. The list can contain both
                       C-state names and C-state indexes. It can be both a list or a string
-                      containing a comma-separated list. 'None' and 'all' mean "all C-states"
+                      containing a comma-separated list. Value 'all' mean "all C-states"
                       (default).
           * ordered - if 'True', the yielded C-states will be ordered so that smaller CPU numbers
                       will go first, and for each CPU number shallower C-states will go first.
@@ -454,7 +452,7 @@ class CStates:
 
         return self._get_lcsobj().get_cstates_info(cpus=cpus, cstates=cstates, ordered=ordered)
 
-    def get_cpu_cstates_info(self, cpu, cstates=None, ordered=True):
+    def get_cpu_cstates_info(self, cpu, cstates="all", ordered=True):
         """Same as 'get_cstates_info()', but for a single CPU."""
 
         return self._get_lcsobj().get_cpu_cstates_info(cpu, cstates=cstates, ordered=ordered)

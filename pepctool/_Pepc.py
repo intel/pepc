@@ -163,7 +163,7 @@ def build_arguments_parser():
 
     text = f"""Comma-sepatated list of C-states to get information about (all C-states by default).
                {cst_list_text}."""
-    subpars2.add_argument("--cstates", help=text)
+    subpars2.add_argument("--cstates", help=text, default="all")
 
     text = f"""List of CPUs to get information about. {cpu_list_txt}."""
     subpars2.add_argument("--cpus", help=text)
@@ -193,10 +193,12 @@ def build_arguments_parser():
     subpars2.add_argument("--packages", help=text)
 
     text = f"""Comma-sepatated list of C-states to enable (all by default). {cst_list_text}."""
-    subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text)
+    subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, default="all",
+                          help=text)
 
     text = """Similar to '--enable', but specifies the list of C-states to disable."""
-    subpars2.add_argument("--disable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text)
+    subpars2.add_argument("--disable", metavar="CSTATES", action=ArgParse.OrderedArg, default="all",
+                          help=text)
 
     for name, info in CStates.PROPS.items():
         kwargs = {}

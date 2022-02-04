@@ -24,7 +24,7 @@ _LOG = logging.getLogger()
 def _fmt_cstates(cstates):
     """Formats and returns the C-states list string, which can be used in messages."""
 
-    if cstates in ("all", None):
+    if cstates == "all":
         msg = "all C-states"
     else:
         if len(cstates) == 1:
