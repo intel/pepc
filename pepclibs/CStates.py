@@ -145,16 +145,14 @@ class _LinuxCStates:
 
         return self._idx2name_cache[cpu][index]
 
-    def _read_cstates_info(self, cpus, indexes, ordered):
+    def _read_cstates_info(self, cpus, ordered):
         """
-        Read information about C-states in 'indexes' of CPUs in 'cpus' and yield C-state information
+        Read information about all C-states of CPUs in 'cpus' and yield a C-state information
         dictionary for every CPU in 'cpus'.
         """
 
         indexes_regex = cpus_regex = "[[:digit:]]+"
         cpus_regex = "|".join([str(cpu) for cpu in cpus])
-        if indexes != "all":
-            indexes_regex = "|".join([str(index) for index in indexes])
 
         cmd = fr"find '{self._sysfs_base}' -type f -regextype posix-extended " \
               fr"-regex '.*cpu({cpus_regex})/cpuidle/state({indexes_regex})/[^/]+' " \
@@ -267,13 +265,12 @@ class _LinuxCStates:
 
         toggled = {}
         go_cpus = cpus
-        go_indexes = indexes
 
         cpus = set(cpus)
         if indexes != "all":
             indexes = set(indexes)
 
-        for csinfo in self._read_cstates_info(go_cpus, go_indexes, False):
+        for csinfo in self._read_cstates_info(go_cpus, False):
             cpu = csinfo["CPU"]
             index = csinfo["index"]
             if cpu in cpus and (indexes == "all" or index in indexes):
@@ -330,13 +327,8 @@ class _LinuxCStates:
                     yield self._cscache[cpu][idx]
             else:
                 # The C-state info for this CPU is not available in the cache.
-                # Current implementation limitation: the C-state cache is a per-CPU dictionary. The
-                # dictionary includes all C-states available for this CPU. Therefore, even if user
-                # requested only partial information (not all C-states), we read information about
-                # all the C-states anyway. This limitation makes this function slower than
-                # necessary.
                 self._cscache[cpu] = {}
-                for csinfo in self._read_cstates_info([cpu], "all", ordered):
+                for csinfo in self._read_cstates_info([cpu], ordered):
                     self._cscache[cpu][csinfo["index"]] = csinfo
                     if indexes == "all" or csinfo["index"] in indexes:
                         yield csinfo
