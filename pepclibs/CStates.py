@@ -145,6 +145,65 @@ class _LinuxCStates:
 
         return self._idx2name_cache[cpu][index]
 
+    def _read_cstates_info(self, cpus, indexes, ordered):
+        """
+        Read information about C-states in 'indexes' of CPUs in 'cpus' and yield C-state information
+        dictionary for every CPU in 'cpus'.
+        """
+
+        indexes_regex = cpus_regex = "[[:digit:]]+"
+        cpus_regex = "|".join([str(cpu) for cpu in cpus])
+        if indexes != "all":
+            indexes_regex = "|".join([str(index) for index in indexes])
+
+        cmd = fr"find '{self._sysfs_base}' -type f -regextype posix-extended " \
+              fr"-regex '.*cpu({cpus_regex})/cpuidle/state({indexes_regex})/[^/]+' " \
+              fr"-exec printf '%s' {{}}: \; -exec grep . {{}} \;"
+
+        stdout, _ = self._proc.run_verify(cmd, join=False)
+        if not stdout:
+            raise Error(f"failed to find C-states information in '{self._sysfs_base}'"
+                        f"{self._proc.hostmsg}")
+
+        if ordered:
+            stdout = sorted(stdout)
+
+        regex = re.compile(r".+/cpu([0-9]+)/cpuidle/state([0-9]+)/(.+):([^\n]+)")
+        csinfo = {}
+        index = prev_index = cpu = prev_cpu = None
+
+        for line in stdout:
+            matchobj = re.match(regex, line)
+            if not matchobj:
+                raise Error(f"failed to parse the follwoing line from file in '{self._sysfs_base}'"
+                            f"{self._proc.hostmsg}:\n{line.strip()}")
+
+            cpu = int(matchobj.group(1))
+            index = int(matchobj.group(2))
+            key = matchobj.group(3)
+            val = matchobj.group(4)
+            if Trivial.is_int(val):
+                val = int(val)
+
+            if prev_cpu is None:
+                prev_cpu = cpu
+            if prev_index is None:
+                prev_index = index
+
+            if cpu != prev_cpu or index != prev_index:
+                csinfo["CPU"] = prev_cpu
+                csinfo["index"] = prev_index
+                yield csinfo
+                prev_cpu = cpu
+                prev_index = index
+                csinfo = {}
+
+            csinfo[key] = val
+
+        csinfo["CPU"] = prev_cpu
+        csinfo["index"] = prev_index
+        yield csinfo
+
     def _normalize_cstates(self, cstates):
         """
         Some methods accept the C-states to operate on as a string or a list. This method normalizes
@@ -214,7 +273,7 @@ class _LinuxCStates:
         if indexes != "all":
             indexes = set(indexes)
 
-        for csinfo in self._get_cstates_info(go_cpus, go_indexes, False):
+        for csinfo in self._read_cstates_info(go_cpus, go_indexes, False):
             cpu = csinfo["CPU"]
             index = csinfo["index"]
             if cpu in cpus and (indexes == "all" or index in indexes):
@@ -252,62 +311,6 @@ class _LinuxCStates:
 
         return self._toggle_cstates(cpus, cstates, False)
 
-    def _get_cstates_info(self, cpus, indexes, ordered):
-        """Implements 'get_cstates_info()'."""
-
-        indexes_regex = cpus_regex = "[[:digit:]]+"
-        cpus_regex = "|".join([str(cpu) for cpu in cpus])
-        if indexes != "all":
-            indexes_regex = "|".join([str(index) for index in indexes])
-
-        cmd = fr"find '{self._sysfs_base}' -type f -regextype posix-extended " \
-              fr"-regex '.*cpu({cpus_regex})/cpuidle/state({indexes_regex})/[^/]+' " \
-              fr"-exec printf '%s' {{}}: \; -exec grep . {{}} \;"
-
-        stdout, _ = self._proc.run_verify(cmd, join=False)
-        if not stdout:
-            raise Error(f"failed to find C-states information in '{self._sysfs_base}'"
-                        f"{self._proc.hostmsg}")
-
-        if ordered:
-            stdout = sorted(stdout)
-
-        regex = re.compile(r".+/cpu([0-9]+)/cpuidle/state([0-9]+)/(.+):([^\n]+)")
-        csinfo = {}
-        index = prev_index = cpu = prev_cpu = None
-
-        for line in stdout:
-            matchobj = re.match(regex, line)
-            if not matchobj:
-                raise Error(f"failed to parse the follwoing line from file in '{self._sysfs_base}'"
-                            f"{self._proc.hostmsg}:\n{line.strip()}")
-
-            cpu = int(matchobj.group(1))
-            index = int(matchobj.group(2))
-            key = matchobj.group(3)
-            val = matchobj.group(4)
-            if Trivial.is_int(val):
-                val = int(val)
-
-            if prev_cpu is None:
-                prev_cpu = cpu
-            if prev_index is None:
-                prev_index = index
-
-            if cpu != prev_cpu or index != prev_index:
-                csinfo["CPU"] = prev_cpu
-                csinfo["index"] = prev_index
-                yield csinfo
-                prev_cpu = cpu
-                prev_index = index
-                csinfo = {}
-
-            csinfo[key] = val
-
-        csinfo["CPU"] = prev_cpu
-        csinfo["index"] = prev_index
-        yield csinfo
-
     def get_cstates_info(self, cpus="all", cstates="all", ordered=True):
         """Same as 'CStates.get_cstates_info()'."""
 
@@ -333,7 +336,7 @@ class _LinuxCStates:
                 # all the C-states anyway. This limitation makes this function slower than
                 # necessary.
                 self._cscache[cpu] = {}
-                for csinfo in self._get_cstates_info([cpu], "all", ordered):
+                for csinfo in self._read_cstates_info([cpu], "all", ordered):
                     self._cscache[cpu][csinfo["index"]] = csinfo
                     if indexes == "all" or csinfo["index"] in indexes:
                         yield csinfo
