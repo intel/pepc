@@ -277,7 +277,7 @@ class _LinuxCStates:
                 self._toggle_cstate(cpu, index, enable)
                 if cpu not in toggled:
                     toggled[cpu] = {"cstates" : []}
-                toggled[cpu]["cstates"].append(self._idx2name(index, cpu=cpu))
+                toggled[cpu]["cstates"].append(csinfo["name"])
 
         return toggled
 
