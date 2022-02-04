@@ -8,7 +8,7 @@
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API for dealing with the Linux "cpuidle" subsystem.
+This module provides C-state management API.
 """
 
 import re
@@ -82,7 +82,7 @@ PROPS = {
 
 class CStates:
     """
-    This class provides API to the "cpuidle" Linux sybsystem.
+    This class provides C-state management API.
 
     Public methods overview.
 
