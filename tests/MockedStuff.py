@@ -257,7 +257,7 @@ def get_test_cpu_info():
     'get_mocked_objects()'. Returns information as a dictionary.
     """
 
-    with get_mocked_objects() as _, CPUInfo.CPUInfo() as cpuinfo, CStates.CStates() as cpuidle:
+    with get_mocked_objects() as _, CPUInfo.CPUInfo() as cpuinfo, CStates.CStates() as csobj:
         result = {}
         result["cpus"] = cpuinfo.get_cpus()
         result["max_cpu"] = max(result["cpus"])
@@ -266,7 +266,7 @@ def get_test_cpu_info():
         result["packages"] = cpuinfo.get_packages()
         result["max_package"] = max(result["packages"])
         result["cstates"] = []
-        for cstinfo in cpuidle.get_cstates_info(cpus=[0]):
+        for cstinfo in csobj.get_cstates_info(cpus=[0]):
             result["cstates"].append(cstinfo["name"])
 
         return result
