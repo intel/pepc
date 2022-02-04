@@ -417,25 +417,6 @@ class CStates:
             self._lcsobj = _LinuxCStates(self._proc, cpuinfo=self._cpuinfo)
         return self._lcsobj
 
-    def enable_cstates(self, cpus="all", cstates="all"):
-        """
-        Enable C-states 'cstates' on CPUs 'cpus'. The 'cstates' and 'cpus' arguments are the same as
-        in 'get_cstates_info()'. Returns a dictionary of the following format:
-
-        CPU number:
-            csates:
-                list of C-state names enabled for the CPU
-        """
-
-        return self._get_lcsobj().enable_cstates(cpus=cpus, cstates=cstates)
-
-    def disable_cstates(self, cpus="all", cstates="all"):
-        """
-        Similar to 'enable_cstates()', but disables instead of enabling.
-        """
-
-        return self._get_lcsobj().disable_cstates(cpus=cpus, cstates=cstates)
-
     def get_cstates_info(self, cpus="all", cstates="all", ordered=True):
         """
         Yield information about C-states specified in 'cstate' for CPUs specified in 'cpus'.
@@ -461,6 +442,28 @@ class CStates:
         """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
 
         return self._get_lcsobj().get_cpu_cstate_info(cpu, cstate)
+
+    def enable_cstates(self, cpus="all", cstates="all"):
+        """
+        Enable C-states 'cstates' on CPUs 'cpus'. The arguments are as follows.
+          * cpus - same as in 'get_cstates_info()'.
+          * cstates - same as in 'get_cstates_info()'.
+
+        Returns a dictionary of the following structure.
+
+          { cpunum: { "cstates" : [ cstate1, cstate2, ...]}}
+
+          * cpunum - integer CPU number.
+          * [cstate1, cstate2, ...] - list of C-ststate names enabled for CPU 'cpunum'.
+
+        """
+
+        return self._get_lcsobj().enable_cstates(cpus=cpus, cstates=cstates)
+
+    def disable_cstates(self, cpus="all", cstates="all"):
+        """Similar to 'enable_cstates()', but disables instead of enabling."""
+
+        return self._get_lcsobj().disable_cstates(cpus=cpus, cstates=cstates)
 
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
@@ -535,8 +538,9 @@ class CStates:
         follows.
           * pnames - list or an iterable collection of properties to read and yeild the values for.
                      These properties will be read for every CPU in 'cpus'.
-          * cpus - the CPUs to yield the properties for, same as the 'cpus' argument of the
-                   'get_cstates_info()' function.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. Value 'all' mean "all CPUs" (default).
 
         The yielded dictionaries have the following format.
 
