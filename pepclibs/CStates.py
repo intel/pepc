@@ -124,27 +124,6 @@ class _LinuxCStates:
         raise Error(f"unkown C-state '{name}', here are the C-states supported"
                     f"{self._proc.hostmsg}:\n{names}")
 
-    def _idx2name(self, index, cpu=0):
-        """Return C-state name for C-state index 'index'."""
-
-        if cpu in self._idx2name_cache:
-            if index in self._idx2name_cache[cpu]:
-                return self._idx2name_cache[cpu][index]
-
-        if cpu not in self._cscache:
-            self._cscache[cpu] = self.get_cpu_cstates_info(cpu)
-
-        self._idx2name_cache[cpu] = {}
-        for csinfo in self._cscache[cpu].values():
-            self._idx2name_cache[cpu][csinfo['index']] = csinfo['name']
-
-        if index not in self._idx2name_cache[cpu]:
-            indices = ", ".join(f"{idx} ({v['name']})" for idx, v in  self._cscache[cpu].items())
-            raise Error(f"unkown C-state index '{index}', here are the C-state indices supported"
-                        f"{self._proc.hostmsg}:\n{indices}") from None
-
-        return self._idx2name_cache[cpu][index]
-
     def _read_cstates_info(self, cpus, ordered):
         """
         Read information about all C-states of CPUs in 'cpus' and yield a C-state information
@@ -366,9 +345,8 @@ class _LinuxCStates:
 
         # Used for caching the C-state information for each CPU.
         self._cscache = {}
-        # Used for mapping C-state indices to C-state names and vice versa.
+        # Used for mapping C-state names to C-state indices.
         self._name2idx_cache = {}
-        self._idx2name_cache = {}
 
         if not self._proc:
             self._proc = Procs.Proc()
