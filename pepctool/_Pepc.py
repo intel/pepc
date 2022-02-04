@@ -23,7 +23,7 @@ except ImportError:
 
 from pepclibs.helperlibs import ArgParse, Human, Procs, Logging, SSH
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CStates
+from pepclibs import CStates, PStates
 
 if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
@@ -249,19 +249,12 @@ def build_arguments_parser():
     text = f"""List of packages to get information about. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
-    ucfreq_txt = """Uncore frequency is per-package, therefore, the '--cpus' and '--cores' options
-                    should not be used with this option"""
-    text = f"""By default this command provides CPU (core) frequency (P-state) information, but if
-               this option is used, it will provide uncore frequency information instead. The uncore
-               includes the interconnect between the cores, the shared cache, and other resources
-               shared between the cores. {ucfreq_txt}."""
-    subpars2.add_argument("--uncore", dest="uncore", action="store_true", help=text)
-
     #
     # Create parser for the 'pstates config' command.
     #
-    text = """Configure other P-state aspects."""
-    descr = """Configure P-states on specified CPUs"""
+    text = """Configure P-states."""
+    descr = """Configure P-states on specified CPUs. All options can be used without a parameter,
+               in which case the currently configured value(s) will be printed."""
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=pstates_config_command)
 
@@ -274,44 +267,37 @@ def build_arguments_parser():
     text = f"""List of packages to configure P-States on. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
-    freq_txt = """The default unit is 'kHz', but 'Hz', 'MHz', and 'GHz' can also be used, for
-                  example '900MHz'"""
-    text = f"""Set minimum CPU frequency. {freq_txt}. Additionally, one of the following specifiers
-               can be used: min,lfm - minimum supported frequency (LFM), eff - maximum efficiency
-               frequency, base,hfm - base frequency (HFM), max - maximum supported frequency.
-               Applies to all CPUs by default."""
-    subpars2.add_argument("--min-freq", action=ArgParse.OrderedArg, nargs="?", dest="minfreq",
-                          help=text)
+    freq_unit = """ The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used, for
+                   example '900MHz'."""
+    for name, pinfo in PStates.PROPS.items():
+        if not pinfo.get("writable"):
+            continue
 
-    text = """Same as '--min-freq', but for maximum CPU frequency."""
-    subpars2.add_argument("--max-freq", action=ArgParse.OrderedArg, nargs="?", dest="maxfreq",
-                          help=text)
+        kwargs = {}
+        kwargs["default"] = argparse.SUPPRESS
+        kwargs["nargs"] = "?"
 
-    text = f"""Set minimum uncore frequency. {freq_txt}. Additionally, one of the following
-               specifiers can be used: 'min' - the minimum supported uncore frequency, 'max' - the
-               maximum supported uncore frequency. {ucfreq_txt}. Applies to all packages by
-               default."""
-    subpars2.add_argument("--min-uncore-freq", nargs="?", action=ArgParse.OrderedArg,
-                          dest="minufreq", help=text)
+        if pinfo["type"] == "bool":
+            # This is a binary "on/off" type of features.
+            text = "Enable or disable "
+            choices = " Use \"on\" or \"off\"."
+        else:
+            text = "Set "
+            choices = ""
 
-    text = """Same as '--min-uncore-freq', but for maximum uncore frequency."""
-    subpars2.add_argument("--max-uncore-freq", nargs="?", action=ArgParse.OrderedArg,
-                          dest="maxufreq", help=text)
+        if pinfo.get("unit") == "Hz":
+            unit = freq_unit
+        else:
+            unit = ""
 
-    text = """Set energy performance bias hint. Hint can be integer in range of [0,15]. By default
-              this option applies to all CPUs."""
-    subpars2.add_argument("--epb", nargs="?", action=ArgParse.OrderedArg, help=text)
+        option = f"--{name.replace('_', '-')}"
+        name = Human.untitle(pinfo["name"])
+        text += f"""{name}. {pinfo["help"]}{choices}{unit} This option has {pinfo["scope"]}
+                    scope."""
 
-    text = """Set energy performance preference. Preference can be integer in range of [0,255], or
-              policy string. By default this option applies to all CPUs."""
-    subpars2.add_argument("--epp", nargs="?", action=ArgParse.OrderedArg, help=text)
-
-    text = """Set CPU scaling governor. By default this option applies to all CPUs."""
-    subpars2.add_argument("--governor", nargs="?", action=ArgParse.OrderedArg, help=text)
-
-    text = """Enable or disable turbo mode. Turbo on/off is global."""
-    subpars2.add_argument("--turbo", nargs="?", choices=["on", "off"], action=ArgParse.OrderedArg,
-                          help=text)
+        kwargs["help"] = text
+        kwargs["action"] = ArgParse.OrderedArg
+        subpars2.add_argument(option, **kwargs)
 
     #
     # Create parser for the 'aspm' command.
@@ -386,16 +372,16 @@ def cstates_config_command(args, proc):
 def pstates_info_command(args, proc):
     """Implements the 'pstates info' command."""
 
-    from pepctool import _PepcOldPStates
+    from pepctool import _PepcPStates
 
-    _PepcOldPStates.pstates_info_command(args, proc)
+    _PepcPStates.pstates_info_command(args, proc)
 
 def pstates_config_command(args, proc):
-    """Implements the 'pstates config' command."""
+    """Implements the 'pstates info' command."""
 
-    from pepctool import _PepcOldPStates
+    from pepctool import _PepcPStates
 
-    _PepcOldPStates.pstates_config_command(args, proc)
+    _PepcPStates.pstates_config_command(args, proc)
 
 def aspm_info_command(args, proc):
     """Implements the 'aspm info'. command"""
