@@ -133,7 +133,7 @@ def _build_aggregate_pinfo(props, cpus, csobj):
                                      key1_value3 : [ list of CPUs having key1_value3]},
                         key2_name: { key2_value1 : [ list of CPUs having key2_value1],
                                      key2_value2 : [ list of CPUs having key2_value2],
-                                    key2_value3 : [ list of CPUs having key2_value3]}},
+                                     key2_value3 : [ list of CPUs having key2_value3]}},
       property2_name: { key1_name: { key1_value1 : [ list of CPUs having key1_value1],
       ... and so on ... }
 
