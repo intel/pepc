@@ -152,15 +152,15 @@ class CStates:
             if index in self._idx2name_cache[cpu]:
                 return self._idx2name_cache[cpu][index]
 
-        if cpu not in self._csinfos:
-            self._csinfos[cpu] = self.get_cpu_cstates_info(cpu)
+        if cpu not in self._cscache:
+            self._cscache[cpu] = self.get_cpu_cstates_info(cpu)
 
         self._idx2name_cache[cpu] = {}
-        for csinfo in self._csinfos[cpu].values():
+        for csinfo in self._cscache[cpu].values():
             self._idx2name_cache[cpu][csinfo['index']] = csinfo['name']
 
         if index not in self._idx2name_cache[cpu]:
-            indices = ", ".join(f"{idx} ({v['name']})" for idx, v in  self._csinfos[cpu].items())
+            indices = ", ".join(f"{idx} ({v['name']})" for idx, v in  self._cscache[cpu].items())
             raise Error(f"unkown C-state index '{index}', here are the C-state indices supported"
                         f"{self._proc.hostmsg}:\n{indices}") from None
 
@@ -367,14 +367,14 @@ class CStates:
             indexes = set(indexes)
 
         for cpu in cpus:
-            if cpu in self._csinfos:
+            if cpu in self._cscache:
                 # We have the C-states info for this CPU cached.
                 if indexes is None:
-                    indices = self._csinfos[cpu]
+                    indices = self._cscache[cpu]
                 else:
                     indices = indexes
                 for idx in indices:
-                    yield self._csinfos[cpu][idx]
+                    yield self._cscache[cpu][idx]
             else:
                 # The C-state info for this CPU is not available in the cache.
                 # Current implementation limitation: the C-state cache is a per-CPU dictionary. The
@@ -382,9 +382,9 @@ class CStates:
                 # requested only partial information (not all C-states), we read information about
                 # all the C-states anyway. This limitation makes this function slower than
                 # necessary.
-                self._csinfos[cpu] = {}
+                self._cscache[cpu] = {}
                 for csinfo in self._get_cstates_info([cpu], None, ordered):
-                    self._csinfos[cpu][csinfo["index"]] = csinfo
+                    self._cscache[cpu][csinfo["index"]] = csinfo
                     if indexes is None or csinfo["index"] in indexes:
                         yield csinfo
 
@@ -685,7 +685,7 @@ class CStates:
         self.props = None
 
         # Used for caching the C-state information for each CPU.
-        self._csinfos = {}
+        self._cscache = {}
         # Used for mapping C-state indices to C-state names and vice versa.
         self._name2idx_cache = {}
         self._idx2name_cache = {}
