@@ -389,27 +389,23 @@ class CStates:
                         yield csinfo
 
     def get_cpu_cstates_info(self, cpu, cstates=None, ordered=True):
-        """
-        Returns a dictionary describing all C-states of CPU 'cpu'. C-state index is used as
-        dictionary key. The 'cstates' and 'ordered' arguments are the same as in
-        'get_cstates_info()'.
-        """
+        """Same as 'get_cstates_info()', but for a single CPU."""
 
         if not Trivial.is_int(cpu):
             raise Error(f"bad CPU number '{cpu}', should be an integer")
 
         info_dict = {}
-        for info in self.get_cstates_info(cpus=cpu, cstates=cstates, ordered=ordered):
+        for info in self.get_cstates_info(cpus=(cpu,), cstates=cstates, ordered=ordered):
             info_dict[info["index"]] = info
         return info_dict
 
     def get_cpu_cstate_info(self, cpu, cstate):
-        """
-        Returns information about C-state 'cstate' on CPU number 'cpu'. The C-state can be specified
-        both by its index and name.
-        """
+        """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
 
-        return next(self.get_cstates_info(cpu, cstate))
+        csinfo = None
+        for csinfo in self.get_cstates_info(cpus=(cpu,), cstates=(cstate,)):
+            pass
+        return csinfo
 
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
