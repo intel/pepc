@@ -15,7 +15,7 @@ import re
 import copy
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import Procs, Trivial, Human
+from pepclibs.helperlibs import Procs, Trivial, Human, FSHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
@@ -80,17 +80,85 @@ PROPS = {
     },
 }
 
+# The C-state sysfs file names which are read by 'get_cstates_info()'. The C-state
+# information dicitonary returned by 'get_cstates_info()' uses these file names as keys as well.
+CST_SYSFS_FNAMES = ["name", "desc", "disable", "latency", "residency", "time", "usage"]
+
 class _LinuxCStates:
     """
     This class provides API for managing Linux C-states via sysfs.
     """
 
     def _add_to_cache(self, csname, csinfo, cpu):
-        """Add 'csname' C-state informaton to the cache."""
+        """Add 'csname' C-state information to the cache."""
 
         if cpu not in self._cache:
             self._cache[cpu] = {}
         self._cache[cpu][csname] = csinfo
+
+    def _read_fpaths_and_values(self, cpus):
+        """
+        This is a helper for '_read_cstates_info()' which extracts all the required sysfs data from
+        the target system for CPUs in 'cpus'. Returns a the following tuple: ('fpaths', 'values').
+          * fpaths - sorted list of sysfs file paths for every necessary attribute of all C-states
+                      of CPUs in 'cpus'. The paths are not stripped.
+          * values - values for every file in 'fpaths' (not stripped either).
+        """
+
+        # We will use shell commands to read C-states information from sysfs files, because it is a
+        # lot faster on systems with large amounts of CPUs in case of a remote host.
+        #
+        # Start with forming the file paths to read by running the 'find' program.
+        indexes_regex = "[[:digit:]]+"
+        cpus_regex = "|".join([str(cpu) for cpu in cpus])
+        cmd = fr"find '{self._sysfs_base}' -type f -regextype posix-extended " \
+              fr"-regex '.*cpu({cpus_regex})/cpuidle/state({indexes_regex})/[^/]+'"
+        files, _ = self._proc.run_verify(cmd, join=False)
+        if not files:
+            raise Error(f"failed to find C-state files in '{self._sysfs_base}'{self._proc.hostmsg}")
+
+        # At this point 'files' contains the list of files we'll have to read. Something like this:
+        # [
+        #   '/sys/devices/system/cpu/cpu0/cpuidle/state0/disable\n',
+        #   '/sys/devices/system/cpu/cpu0/cpuidle/state0/name\n',
+        #   '/sys/devices/system/cpu/cpu0/cpuidle/state0/residency\n',
+        #      ... and so on for CPU 0 state 0 ...
+        #   '/sys/devices/system/cpu/cpu0/cpuidle/state1/disable\n',
+        #   '/sys/devices/system/cpu/cpu0/cpuidle/state1/name\n',
+        #      ... and so on for CPU 0 state 1 ...
+        #   '/sys/devices/system/cpu/cpu1/cpuidle/state1/disable\n',
+        #   '/sys/devices/system/cpu/cpu1/cpuidle/state1/name\n',
+        #      ... and so on for CPU 1 and other CPUs ...
+        # ]
+        #
+        # Sorting will make sure everything is ordered by CPU number and C-state index number.
+        files = sorted(files)
+
+        # We are only interested in some of the files.
+        keep_fnames = set(CST_SYSFS_FNAMES)
+        fpaths = []
+        for fpath in files:
+            if fpath.split("/")[-1].strip() in keep_fnames:
+                fpaths.append(fpath)
+
+        # Write the names to a temporary file and then read them all in an efficient way.
+        tmpdir = FSHelpers.mktemp(prefix="_linuxcstates_", proc=self._proc)
+        tmpfile = tmpdir / "fpaths.txt"
+
+        try:
+            with self._proc.open(tmpfile, "w") as fobj:
+                fobj.write("".join(fpaths))
+
+            # The 'xargs' tool will make sure 'cat' is invoked once on all the files. It may be
+            # invoked few times, but only if the list of files is too long.
+            cmd = f"xargs -a '{tmpfile}' cat"
+            values, _ = self._proc.run_verify(cmd, join=False, shell=True)
+        finally:
+            FSHelpers.rm_minus_rf(tmpdir, proc=self._proc)
+
+        # At this point 'values' will contain the value for every file in 'fpaths'.
+
+        return fpaths, values
 
     def _read_cstates_info(self, cpus):
         """
@@ -98,35 +166,26 @@ class _LinuxCStates:
         dictionary for every CPU in 'cpus'.
         """
 
-        indexes_regex = cpus_regex = "[[:digit:]]+"
-        cpus_regex = "|".join([str(cpu) for cpu in cpus])
+        fpaths, values = self._read_fpaths_and_values(cpus)
 
-        cmd = fr"find '{self._sysfs_base}' -type f -regextype posix-extended " \
-              fr"-regex '.*cpu({cpus_regex})/cpuidle/state({indexes_regex})/[^/]+' " \
-              fr"-exec printf '%s' {{}}: \; -exec grep . {{}} \;"
-
-        stdout, _ = self._proc.run_verify(cmd, join=False)
-        if not stdout:
-            raise Error(f"failed to find C-states information in '{self._sysfs_base}'"
-                        f"{self._proc.hostmsg}")
-
-        # This will make sure everything is ordered by CPU number and C-state index number.
-        stdout = sorted(stdout)
-
-        regex = re.compile(r".+/cpu([0-9]+)/cpuidle/state([0-9]+)/(.+):([^\n]+)")
         csinfo = {}
         index = prev_index = cpu = prev_cpu = None
+        fpath_regex = re.compile(r".+/cpu([0-9]+)/cpuidle/state([0-9]+)/(.+)")
 
-        for line in stdout:
-            matchobj = re.match(regex, line)
+        # Build the C-states information dictionary out of sysfs file names and and values.
+        for fpath, val in zip(fpaths, values):
+            fpath = fpath.strip()
+            val = val.strip()
+
+            matchobj = re.match(fpath_regex, fpath)
             if not matchobj:
-                raise Error(f"failed to parse the follwoing line from file in '{self._sysfs_base}'"
-                            f"{self._proc.hostmsg}:\n{line.strip()}")
+                raise Error(f"failed to parse the following file name from '{self._sysfs_base}'"
+                            f"{self._proc.hostmsg}:\n{fpath}")
 
             cpu = int(matchobj.group(1))
             index = int(matchobj.group(2))
             key = matchobj.group(3)
-            val = matchobj.group(4)
+
             if Trivial.is_int(val):
                 val = int(val)
 
@@ -375,7 +434,7 @@ class CStates:
           { cpunum: { "cstates" : [ cstate1, cstate2, ...]}}
 
           * cpunum - integer CPU number.
-          * [cstate1, cstate2, ...] - list of C-ststate names enabled for CPU 'cpunum'.
+          * [cstate1, cstate2, ...] - list of C-states names enabled for CPU 'cpunum'.
 
         """
 
@@ -457,7 +516,7 @@ class CStates:
         Read all properties specified in the 'pnames' list for CPUs in 'cpus', and for every CPU
         yield a dictionary containing the read values of all the properties. The arguments are as
         follows.
-          * pnames - list or an iterable collection of properties to read and yeild the values for.
+          * pnames - list or an iterable collection of properties to read and yield the values for.
                      These properties will be read for every CPU in 'cpus'.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
