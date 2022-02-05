@@ -261,6 +261,31 @@ class _LinuxCStates:
             raise Error(f"failed to {msg}:\nfile '{path}' contains '{read_val}', but should "
                         f"contain '{val}'")
 
+    def _get_cstates_info(self, cpus, csnames):
+        """Implements 'get_cstates_info()'. Yields ('cpu', 'csinfo') tuples."""
+
+        # Form list of CPUs that do not have their C-states information cached.
+        read_cpus = [cpu for cpu in cpus if cpu not in self._cache]
+        if read_cpus:
+            # Load their information into the cache.
+            for csinfo in self._read_cstates_info(read_cpus):
+                self._add_to_cache(csinfo["name"], csinfo, csinfo["CPU"])
+
+        # Yield the requested C-states information.
+        for cpu in cpus:
+            if csnames == "all":
+                names = self._cache[cpu].keys()
+            else:
+                names = csnames
+
+            for name in names:
+                if name not in self._cache[cpu]:
+                    csnames = ", ".join(name for name in self._cache[cpu])
+                    raise Error(f"bad C-state name '{name}' for CPU {cpu}\n"
+                                f"Valid names are: {csnames}")
+
+                yield cpu, self._cache[cpu][name]
+
     def _toggle_cstates(self, cpus="all", csnames="all", enable=True):
         """
         Enable or disable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
@@ -270,10 +295,11 @@ class _LinuxCStates:
                       otherwise disabled.
         """
 
-        toggled = {}
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+        csnames = self._normalize_csnames(csnames)
 
-        for csinfo in self.get_cstates_info(cpus, csnames):
-            cpu = csinfo["CPU"]
+        toggled = {}
+        for cpu, csinfo in self._get_cstates_info(cpus, csnames):
             name = csinfo["name"]
 
             self._toggle_cstate(cpu, csinfo["index"], enable)
@@ -303,27 +329,8 @@ class _LinuxCStates:
         cpus = self._cpuinfo.normalize_cpus(cpus)
         csnames = self._normalize_csnames(csnames)
 
-        # Form list of CPUs that do not have their C-states information cached.
-        read_cpus = [cpu for cpu in cpus if cpu not in self._cache]
-        # Load their information into the cache.
-        if read_cpus:
-            for csinfo in self._read_cstates_info(read_cpus):
-                self._add_to_cache(csinfo["name"], csinfo, csinfo["CPU"])
-
-        # Yield the requested C-states information.
-        for cpu in cpus:
-            if csnames == "all":
-                names = self._cache[cpu].keys()
-            else:
-                names = csnames
-
-            for name in names:
-                if name not in self._cache[cpu]:
-                    csnames = ", ".join(name for name in self._cache[cpu])
-                    raise Error(f"bad C-state name '{name}' for CPU {cpu}\n"
-                                f"Valid names are: {csnames}")
-
-                yield self._cache[cpu][name]
+        for _, csinfo in self._get_cstates_info(cpus, csnames):
+            yield csinfo
 
     def get_cpu_cstates_info(self, cpu, csnames="all"):
         """Same as 'CStates.get_cpu_cstates_info()'."""
