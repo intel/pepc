@@ -209,27 +209,27 @@ class _LinuxCStates:
         yield csinfo
 
     @staticmethod
-    def _normalize_cstates(cstates):
+    def _normalize_csnames(csnames):
         """
-        Normalize the the C-states list in 'cstates'. The arguments are as follows.
-          * cstates - same as in 'get_cstates_info()'.
+        Normalize the the C-states list in 'csnames'. The arguments are as follows.
+          * csnames - same as in 'get_cstates_info()'.
 
         Returns a list of normalized C-state names or "all". The names will be upper-cased,
         duplicate names will be removed. The names are not validated.
         """
 
-        if cstates == "all":
-            return cstates
+        if csnames == "all":
+            return csnames
 
-        if isinstance(cstates, str):
-            cstates = Trivial.split_csv_line(cstates)
+        if isinstance(csnames, str):
+            csnames = Trivial.split_csv_line(csnames)
 
-        if not Trivial.is_iterable(cstates):
+        if not Trivial.is_iterable(csnames):
             raise Error("bad C-states list. Should either be a string or an iterable collection")
 
-        cstates = Trivial.list_dedup(cstates)
+        csnames = Trivial.list_dedup(csnames)
 
-        return [cstate.upper() for cstate in cstates]
+        return [csname.upper() for csname in csnames]
 
     def _toggle_cstate(self, cpu, index, enable):
         """Enable or disable the 'index' C-state for CPU 'cpu'."""
@@ -261,10 +261,10 @@ class _LinuxCStates:
             raise Error(f"failed to {msg}:\nfile '{path}' contains '{read_val}', but should "
                         f"contain '{val}'")
 
-    def _toggle_cstates(self, cpus="all", cstates="all", enable=True):
+    def _toggle_cstates(self, cpus="all", csnames="all", enable=True):
         """
-        Enable or disable C-states 'cstates' on CPUs 'cpus'. The arguments are as follows.
-          * cstates - same as in 'get_cstates_info()'.
+        Enable or disable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
+          * csnames - same as in 'get_cstates_info()'.
           * cpus - same as in 'get_cstates_info()'.
           * enabled - if 'True', the specified C-states should be enabled on the specified CPUS,
                       otherwise disabled.
@@ -272,36 +272,36 @@ class _LinuxCStates:
 
         toggled = {}
 
-        for csinfo in self.get_cstates_info(cpus, cstates):
+        for csinfo in self.get_cstates_info(cpus, csnames):
             cpu = csinfo["CPU"]
             name = csinfo["name"]
 
             self._toggle_cstate(cpu, csinfo["index"], enable)
 
             if cpu not in toggled:
-                toggled[cpu] = {"cstates" : []}
-            toggled[cpu]["cstates"].append(name)
+                toggled[cpu] = {"csnames" : []}
+            toggled[cpu]["csnames"].append(name)
 
             # Update the cached data.
             self._cache[cpu][name]["disable"] = not enable
 
         return toggled
 
-    def enable_cstates(self, cpus="all", cstates="all"):
+    def enable_cstates(self, cpus="all", csnames="all"):
         """Same as 'CStates.enable_cstates()'."""
 
-        return self._toggle_cstates(cpus, cstates, True)
+        return self._toggle_cstates(cpus, csnames, True)
 
-    def disable_cstates(self, cpus="all", cstates="all"):
+    def disable_cstates(self, cpus="all", csnames="all"):
         """Same as 'CStates.disable_cstates()'."""
 
-        return self._toggle_cstates(cpus, cstates, False)
+        return self._toggle_cstates(cpus, csnames, False)
 
-    def get_cstates_info(self, cpus="all", cstates="all"):
+    def get_cstates_info(self, cpus="all", csnames="all"):
         """Same as 'CStates.get_cstates_info()'."""
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
-        cstates = self._normalize_cstates(cstates)
+        csnames = self._normalize_csnames(csnames)
 
         # Form list of CPUs that do not have their C-states information cached.
         read_cpus = [cpu for cpu in cpus if cpu not in self._cache]
@@ -312,10 +312,10 @@ class _LinuxCStates:
 
         # Yield the requested C-states information.
         for cpu in cpus:
-            if cstates == "all":
+            if csnames == "all":
                 names = self._cache[cpu].keys()
             else:
-                names = cstates
+                names = csnames
 
             for name in names:
                 if name not in self._cache[cpu]:
@@ -325,19 +325,19 @@ class _LinuxCStates:
 
                 yield self._cache[cpu][name]
 
-    def get_cpu_cstates_info(self, cpu, cstates="all"):
+    def get_cpu_cstates_info(self, cpu, csnames="all"):
         """Same as 'CStates.get_cpu_cstates_info()'."""
 
         csinfo_dict = {}
-        for csinfo in self.get_cstates_info(cpus=(cpu,), cstates=cstates):
+        for csinfo in self.get_cstates_info(cpus=(cpu,), csnames=csnames):
             csinfo_dict[csinfo["index"]] = csinfo
         return csinfo_dict
 
-    def get_cpu_cstate_info(self, cpu, cstate):
+    def get_cpu_cstate_info(self, cpu, csname):
         """Same as 'CStates.get_cpu_cstate_info()'."""
 
         csinfo = None
-        for csinfo in self.get_cstates_info(cpus=(cpu,), cstates=(cstate,)):
+        for csinfo in self.get_cstates_info(cpus=(cpu,), csnames=(csname,)):
             pass
         return csinfo
 
@@ -400,50 +400,50 @@ class CStates:
             self._lcsobj = _LinuxCStates(self._proc, cpuinfo=self._cpuinfo)
         return self._lcsobj
 
-    def get_cstates_info(self, cpus="all", cstates="all"):
+    def get_cstates_info(self, cpus="all", csnames="all"):
         """
-        Yield information about C-states specified in 'cstate' for CPUs specified in 'cpus'.
+        Yield information about C-states specified in 'csnames' for CPUs specified in 'cpus'.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
                    7, 8, and 10 to 12. Value 'all' mean "all CPUs" (default).
-          * cstates - list of C-states names to get information about. It can be both a list of
+          * csnames - list of C-states names to get information about. It can be both a list of
                       names or a string containing a comma-separated list of names. Value 'all' mean
                       "all C-states" (default).
         """
 
-        return self._get_lcsobj().get_cstates_info(cpus=cpus, cstates=cstates)
+        return self._get_lcsobj().get_cstates_info(cpus=cpus, csnames=csnames)
 
-    def get_cpu_cstates_info(self, cpu, cstates="all"):
+    def get_cpu_cstates_info(self, cpu, csnames="all"):
         """Same as 'get_cstates_info()', but for a single CPU."""
 
-        return self._get_lcsobj().get_cpu_cstates_info(cpu, cstates=cstates)
+        return self._get_lcsobj().get_cpu_cstates_info(cpu, csnames=csnames)
 
-    def get_cpu_cstate_info(self, cpu, cstate):
+    def get_cpu_cstate_info(self, cpu, csname):
         """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
 
-        return self._get_lcsobj().get_cpu_cstate_info(cpu, cstate)
+        return self._get_lcsobj().get_cpu_cstate_info(cpu, csname)
 
-    def enable_cstates(self, cpus="all", cstates="all"):
+    def enable_cstates(self, cpus="all", csnames="all"):
         """
-        Enable C-states 'cstates' on CPUs 'cpus'. The arguments are as follows.
+        Enable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
           * cpus - same as in 'get_cstates_info()'.
-          * cstates - same as in 'get_cstates_info()'.
+          * csnames - same as in 'get_cstates_info()'.
 
         Returns a dictionary of the following structure.
 
-          { cpunum: { "cstates" : [ cstate1, cstate2, ...]}}
+          { cpunum: { "csnames" : [ cstate1, cstate2, ...]}}
 
           * cpunum - integer CPU number.
           * [cstate1, cstate2, ...] - list of C-states names enabled for CPU 'cpunum'.
 
         """
 
-        return self._get_lcsobj().enable_cstates(cpus=cpus, cstates=cstates)
+        return self._get_lcsobj().enable_cstates(cpus=cpus, csnames=csnames)
 
-    def disable_cstates(self, cpus="all", cstates="all"):
+    def disable_cstates(self, cpus="all", csnames="all"):
         """Similar to 'enable_cstates()', but disables instead of enabling."""
 
-        return self._get_lcsobj().disable_cstates(cpus=cpus, cstates=cstates)
+        return self._get_lcsobj().disable_cstates(cpus=cpus, csnames=csnames)
 
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""

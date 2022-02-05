@@ -163,7 +163,7 @@ def build_arguments_parser():
 
     text = f"""Comma-sepatated list of C-states to get information about (all C-states by default).
                {cst_list_text}."""
-    subpars2.add_argument("--cstates", help=text, default="all")
+    subpars2.add_argument("--cstates", dest="csnames", help=text, default="all")
 
     text = f"""List of CPUs to get information about. {cpu_list_txt}."""
     subpars2.add_argument("--cpus", help=text)

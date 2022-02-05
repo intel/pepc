@@ -21,17 +21,17 @@ from pepctool import _PepcCommon
 
 _LOG = logging.getLogger()
 
-def _fmt_cstates(cstates):
+def _fmt_csnames(csnames):
     """Formats and returns the C-states list string, which can be used in messages."""
 
-    if cstates == "all":
+    if csnames == "all":
         msg = "all C-states"
     else:
-        if len(cstates) == 1:
+        if len(csnames) == 1:
             msg = "C-state "
         else:
             msg = "C-states "
-        msg += ",".join(cstates)
+        msg += ",".join(csnames)
 
     return msg
 
@@ -89,7 +89,7 @@ def _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo):
         _print_cstate_prop_msg(name, "set to", optval, cpus, cpuinfo)
     else:
         method = getattr(csobj, f"{optname}_cstates")
-        toggled = method(cpus=cpus, cstates=optval)
+        toggled = method(cpus=cpus, csnames=optval)
 
         # The 'toggled' dictionary is indexed with CPU number. But we want to print a single line
         # for all CPU numbers that have the same toggled C-states list (the assumption here is that
@@ -97,7 +97,7 @@ def _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo):
         # "revered" verion of the 'toggled' dictionary.
         revdict = {}
         for cpu, csinfo in toggled.items():
-            key = ",".join(csinfo["cstates"])
+            key = ",".join(csinfo["csnames"])
             if key not in revdict:
                 revdict[key] = []
             revdict[key].append(cpu)
@@ -105,7 +105,7 @@ def _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo):
         for cstnames, cpunums in revdict.items():
             cstnames = cstnames.split(",")
             _LOG.info("%sd %s on %s",
-                      optname.title(), _fmt_cstates(cstnames), _fmt_cpus(cpunums, cpuinfo))
+                      optname.title(), _fmt_csnames(cstnames), _fmt_cpus(cpunums, cpuinfo))
 
 def _print_cstate_prop(aggr_pinfo, pname, csobj, cpuinfo):
     """Print about C-state properties in 'aggr_pinfo'."""
@@ -223,7 +223,7 @@ def cstates_info_command(args, proc):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
         first = True
-        for info in csobj.get_cstates_info(cpus=cpus, cstates=args.cstates):
+        for info in csobj.get_cstates_info(cpus=cpus, csnames=args.csnames):
             if not first:
                 _LOG.info("")
             first = False
