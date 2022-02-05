@@ -108,7 +108,21 @@ class MockedProc(Procs.Proc):
                 if indexes and index not in indexes:
                     cstinfos.remove(cstinfo)
 
-            return (cstinfos, "")
+            fpaths = []
+            self._cstvals = []
+            keep_fnames = set(CStates.CST_SYSFS_FNAMES)
+
+            for cstinfo in sorted(cstinfos):
+                fpath, val = cstinfo.split(":")
+                # Skip the unneeded files.
+                if fpath.split("/")[-1] in keep_fnames:
+                    fpaths.append(f"{fpath}\n")
+                    self._cstvals.append(val)
+
+            return (fpaths, "")
+
+        if command.startswith("xargs -a "):
+            return (self._cstvals, "")
 
         if command == "lscpu":
             # Mock the call from CPUInfo._get_cpu_info().
@@ -161,6 +175,7 @@ class MockedProc(Procs.Proc):
         super().__init__()
 
         self._mock_fobj = {}
+        self._cstvals = None
 
         self._parent_methods = {}
         module = sys.modules[Procs.__name__]
