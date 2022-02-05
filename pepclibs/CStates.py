@@ -89,12 +89,12 @@ class _LinuxCStates:
     This class provides API for managing Linux C-states via sysfs.
     """
 
-    def _add_to_cache(self, csname, csinfo, cpu):
-        """Add 'csname' C-state information to the cache."""
+    def _add_to_cache(self, csinfo, cpu):
+        """Add C-state information to the cache."""
 
         if cpu not in self._cache:
             self._cache[cpu] = {}
-        self._cache[cpu][csname] = csinfo
+        self._cache[cpu] = csinfo
 
     def _read_fpaths_and_values(self, cpus):
         """
@@ -158,17 +158,44 @@ class _LinuxCStates:
 
         # At this point 'values' will contain the value for every file in 'fpaths'.
 
+        if len(fpaths) != len(values):
+            raise Error("BUG: mismatch bwetween syfs C-state paths and values")
+
         return fpaths, values
 
     def _read_cstates_info(self, cpus):
         """
-        Read information about all C-states of CPUs in 'cpus' and yield a C-state information
+        Yield information about all C-states of CPUs in 'cpus' and yield a C-state information
         dictionary for every CPU in 'cpus'.
         """
 
+        def _add_cstate(csinfo, cstate):
+            """Add C-state dictionary 'cstate' to the CPU C-states dictionary 'cstates'."""
+
+            if "name" not in cstate:
+                cstate_info = ""
+                for key, val in cstate.items():
+                    cstate_info += f"\n{key} - {val}"
+                raise Error(f"unexpected Linux sysfs C-states file structure: the 'name' file "
+                            f"is missing.\nHere is all the collected information about the\n"
+                            f"C-state:{cstate_info}")
+
+            name = cstate["name"]
+            # Ensure the desired keys order.
+            csinfo[name] = {}
+            csinfo[name]["CPU"] = cstate["CPU"]
+            csinfo[name]["index"] = cstate["index"]
+            for key in CST_SYSFS_FNAMES:
+                csinfo[name][key] = cstate[key]
+
         fpaths, values = self._read_fpaths_and_values(cpus)
 
+        # This is the dictionary that we'll yield out. It'll contain information for every C-state
+        # of a CPU.
         csinfo = {}
+        # This is a temporary dictionary where we'll collect all data for a single C-state.
+        cstate = {}
+
         index = prev_index = cpu = prev_cpu = None
         fpath_regex = re.compile(r".+/cpu([0-9]+)/cpuidle/state([0-9]+)/(.+)")
 
@@ -189,24 +216,24 @@ class _LinuxCStates:
             if Trivial.is_int(val):
                 val = int(val)
 
-            if prev_cpu is None:
-                prev_cpu = cpu
-            if prev_index is None:
-                prev_index = index
+            if prev_index is not None and index != prev_index:
+                # A C-state has been processed. Add it to 'csinfo'.
+                _add_cstate(csinfo, cstate)
+                cstate = {}
 
-            if cpu != prev_cpu or index != prev_index:
-                csinfo["CPU"] = prev_cpu
-                csinfo["index"] = prev_index
-                yield csinfo
-                prev_cpu = cpu
-                prev_index = index
+            if prev_cpu is not None and cpu != prev_cpu:
+                yield prev_cpu, csinfo
                 csinfo = {}
 
-            csinfo[key] = val
+            prev_cpu = cpu
+            prev_index = index
 
-        csinfo["CPU"] = prev_cpu
-        csinfo["index"] = prev_index
-        yield csinfo
+            cstate["CPU"] = cpu
+            cstate["index"] = index
+            cstate[key] = val
+
+        _add_cstate(csinfo, cstate)
+        yield cpu, csinfo
 
     @staticmethod
     def _normalize_csnames(csnames):
@@ -268,8 +295,8 @@ class _LinuxCStates:
         read_cpus = [cpu for cpu in cpus if cpu not in self._cache]
         if read_cpus:
             # Load their information into the cache.
-            for csinfo in self._read_cstates_info(read_cpus):
-                self._add_to_cache(csinfo["name"], csinfo, csinfo["CPU"])
+            for cpu, csinfo in self._read_cstates_info(read_cpus):
+                self._add_to_cache(csinfo, cpu)
 
         # Yield the requested C-states information.
         for cpu in cpus:
@@ -278,13 +305,16 @@ class _LinuxCStates:
             else:
                 names = csnames
 
+            csinfo = {}
             for name in names:
-                if name not in self._cache[cpu]:
+                if name in self._cache[cpu]:
+                    csinfo[name] = self._cache[cpu][name]
+                else:
                     csnames = ", ".join(name for name in self._cache[cpu])
                     raise Error(f"bad C-state name '{name}' for CPU {cpu}\n"
                                 f"Valid names are: {csnames}")
 
-                yield cpu, self._cache[cpu][name]
+            yield cpu, csinfo
 
     def _toggle_cstates(self, cpus="all", csnames="all", enable=True):
         """
@@ -300,16 +330,15 @@ class _LinuxCStates:
 
         toggled = {}
         for cpu, csinfo in self._get_cstates_info(cpus, csnames):
-            name = csinfo["name"]
+            for csname, cstate in csinfo.items():
+                self._toggle_cstate(cpu, cstate["index"], enable)
 
-            self._toggle_cstate(cpu, csinfo["index"], enable)
+                if cpu not in toggled:
+                    toggled[cpu] = {"csnames" : []}
+                toggled[cpu]["csnames"].append(csname)
 
-            if cpu not in toggled:
-                toggled[cpu] = {"csnames" : []}
-            toggled[cpu]["csnames"].append(name)
-
-            # Update the cached data.
-            self._cache[cpu][name]["disable"] = not enable
+                # Update the cached data.
+                self._cache[cpu][csname]["disable"] = not enable
 
         return toggled
 
@@ -335,10 +364,10 @@ class _LinuxCStates:
     def get_cpu_cstates_info(self, cpu, csnames="all"):
         """Same as 'CStates.get_cpu_cstates_info()'."""
 
-        csinfo_dict = {}
+        csinfo = None
         for csinfo in self.get_cstates_info(cpus=(cpu,), csnames=csnames):
-            csinfo_dict[csinfo["index"]] = csinfo
-        return csinfo_dict
+            pass
+        return csinfo
 
     def get_cpu_cstate_info(self, cpu, csname):
         """Same as 'CStates.get_cpu_cstate_info()'."""

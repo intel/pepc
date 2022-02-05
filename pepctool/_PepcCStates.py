@@ -223,16 +223,17 @@ def cstates_info_command(args, proc):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
         first = True
-        for info in csobj.get_cstates_info(cpus=cpus, csnames=args.csnames):
-            if not first:
-                _LOG.info("")
-            first = False
+        for csinfo in csobj.get_cstates_info(cpus=cpus, csnames=args.csnames):
+            for cstate in csinfo.values():
+                if not first:
+                    _LOG.info("")
+                first = False
 
-            _LOG.info("CPU: %d", info["CPU"])
-            _LOG.info("Name: %s", info["name"])
-            _LOG.info("Index: %d", info["index"])
-            _LOG.info("Description: %s", info["desc"])
-            _LOG.info("Status: %s", "disabled" if info["disable"] else "enabled")
-            _LOG.info("Expected latency: %d μs", info["latency"])
-            _LOG.info("Target residency: %d μs", info["residency"])
-            _LOG.info("Requested: %d times", info["usage"])
+                _LOG.info("CPU: %d", cstate["CPU"])
+                _LOG.info("Name: %s", cstate["name"])
+                _LOG.info("Index: %d", cstate["index"])
+                _LOG.info("Description: %s", cstate["desc"])
+                _LOG.info("Status: %s", "disabled" if cstate["disable"] else "enabled")
+                _LOG.info("Expected latency: %d μs", cstate["latency"])
+                _LOG.info("Target residency: %d μs", cstate["residency"])
+                _LOG.info("Requested: %d times", cstate["usage"])
