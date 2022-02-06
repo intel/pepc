@@ -445,6 +445,24 @@ class CStates:
           * csnames - list of C-states names to get information about. It can be both a list of
                       names or a string containing a comma-separated list of names. Value 'all' mean
                       "all C-states" (default).
+
+        This method yields a dictionary for every CPU in 'cpus'. The yielded dictionaries describe
+        all C-states in 'csnames' for the CPU. Here is the format of the yielded dictionaries.
+
+        { csname1: { "CPU": <cpu number>,
+                     "index":     C-State index,
+                     "name":      C-state name,
+                     "desc":      C-state description,
+                     "disable":   'True' if the C-state is disabled,
+                     "latency":   C-state latency in microseconds,
+                     "residency": C-state target residency in microseconds,
+                     "time":      time spent in the C-state in microseconds,
+                     "usage":     how many times the C-state was requested },
+          csname2: { "CPU": <cpu number>, ... etc ... },
+           ... and so on for all C-states ... }
+
+        The C-state keys come from Linux sysfs. Please, refer to Linux kernel documentation for more
+        details.
         """
 
         return self._get_rcsobj().get_cstates_info(cpus=cpus, csnames=csnames)
