@@ -601,7 +601,7 @@ class CStates:
         feature has "package" scope, 'cpus' should include all CPUs in one or more packages.
         """
 
-        scope = self.props[pname]["scope"]
+        scope = self._props[pname]["scope"]
         if scope == "CPU":
             return
 
@@ -642,7 +642,7 @@ class CStates:
 
                 mapping += f"\n{clist_str}"
 
-        name =  self.props[pname]["name"]
+        name =  self._props[pname]["name"]
         rem_cpus_str = Human.rangify(rem_cpus)
 
         if scope == "core":
@@ -691,8 +691,8 @@ class CStates:
             self._check_prop(pname)
             self._validate_prop_scope(pname, cpus)
 
-            if not self.props[pname]["writable"]:
-                name = self.props[pname][pname]
+            if not self._props[pname]["writable"]:
+                name = self._props[pname][pname]
                 raise Error(f"failed to change read-only property '{pname}' ({name})")
 
             if pname in PowerCtl.FEATURES:
@@ -731,6 +731,8 @@ class CStates:
             if "subprops" not in prop:
                 prop["subprops"] = {}
 
+        self._props = copy.deepcopy(self.props)
+
     def __init__(self, proc=None, cpuinfo=None, msr=None):
         """
         The class constructor. The arguments are as follows.
@@ -752,6 +754,9 @@ class CStates:
         self._pcstatectl = None
 
         self.props = None
+        # Internal version of 'self.props'. Contains some data which we don't want to expose to the
+        # user.
+        self._props = None
 
         if not self._proc:
             self._proc = Procs.Proc()
