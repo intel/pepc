@@ -151,7 +151,7 @@ def _build_aggregate_pinfo(props, cpus, csobj):
 
     aggr_pinfo = {}
 
-    for all_props_info in csobj.get_props(props, cpus=cpus):
+    for _, all_props_info in csobj.get_props(props, cpus=cpus):
         for pname, pinfo in all_props_info.items():
             if pname not in aggr_pinfo:
                 aggr_pinfo[pname] = {}
@@ -223,7 +223,7 @@ def cstates_info_command(args, proc):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
         first = True
-        for csinfo in csobj.get_cstates_info(cpus=cpus, csnames=args.csnames):
+        for _, csinfo in csobj.get_cstates_info(cpus=cpus, csnames=args.csnames):
             for cstate in csinfo.values():
                 if not first:
                     _LOG.info("")

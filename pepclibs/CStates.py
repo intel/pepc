@@ -357,15 +357,13 @@ class _ReqCStates:
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
         csnames = self._normalize_csnames(csnames)
-
-        for _, csinfo in self._get_cstates_info(cpus, csnames):
-            yield csinfo
+        yield from self._get_cstates_info(cpus, csnames)
 
     def get_cpu_cstates_info(self, cpu, csnames="all"):
         """Same as 'CStates.get_cpu_cstates_info()'."""
 
         csinfo = None
-        for csinfo in self.get_cstates_info(cpus=(cpu,), csnames=csnames):
+        for _, csinfo in self.get_cstates_info(cpus=(cpu,), csnames=csnames):
             pass
         return csinfo
 
@@ -373,7 +371,7 @@ class _ReqCStates:
         """Same as 'CStates.get_cpu_cstate_info()'."""
 
         csinfo = None
-        for csinfo in self.get_cstates_info(cpus=(cpu,), csnames=(csname,)):
+        for _, csinfo in self.get_cstates_info(cpus=(cpu,), csnames=(csname,)):
             pass
         return csinfo
 
@@ -465,7 +463,7 @@ class CStates:
         details.
         """
 
-        return self._get_rcsobj().get_cstates_info(cpus=cpus, csnames=csnames)
+        yield from self._get_rcsobj().get_cstates_info(cpus=cpus, csnames=csnames)
 
     def get_cpu_cstates_info(self, cpu, csnames="all"):
         """Same as 'get_cstates_info()', but for a single CPU."""
@@ -568,15 +566,15 @@ class CStates:
     def get_props(self, pnames, cpus="all"):
         """
         Read all properties specified in the 'pnames' list for CPUs in 'cpus', and for every CPU
-        yield a dictionary containing the read values of all the properties. The arguments are as
-        follows.
+        yield a ('cpu', 'pinfo') tuple, where 'pinfo' is dictionary containing the read values of
+        all the properties. The arguments are as follows.
           * pnames - list or an iterable collection of properties to read and yield the values for.
                      These properties will be read for every CPU in 'cpus'.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
                    7, 8, and 10 to 12. Value 'all' mean "all CPUs" (default).
 
-        The yielded dictionaries have the following format.
+        The yielded 'pinfo' dictionaries have the following format.
 
         { property1_name: { property1_name : property1_value,
                             "CPU" : <CPU number>,
@@ -603,13 +601,21 @@ class CStates:
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for cpu in cpus:
-            yield self._get_pinfo(pnames, cpu)
+            yield cpu, self._get_pinfo(pnames, cpu)
 
     def get_cpu_props(self, pnames, cpu):
         """Same as 'get_props()', but for a single CPU."""
 
         pinfo = None
-        for pinfo in self.get_props(pnames, cpus=(cpu,)):
+        for _, pinfo in self.get_props(pnames, cpus=(cpu,)):
+            pass
+        return pinfo
+
+    def get_cpu_prop(self, pname, cpu):
+        """Same as 'get_props()', but for a single CPU and a single property."""
+
+        pinfo = None
+        for _, pinfo in self.get_props((pname,), cpus=(cpu,)):
             pass
         return pinfo
 
@@ -674,14 +680,6 @@ class CStates:
                  f"Here is the {mapping_name}{self._proc.hostmsg}:{mapping}"
 
         raise Error(errmsg)
-
-    def get_cpu_prop(self, pname, cpu):
-        """Same as 'get_props()', but for a single CPU and a single property."""
-
-        pinfo = None
-        for pinfo in self.get_props((pname,), cpus=(cpu,)):
-            pass
-        return pinfo
 
     def set_props(self, pinfo, cpus="all"):
         """

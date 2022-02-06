@@ -281,7 +281,7 @@ def get_test_cpu_info():
         result["packages"] = cpuinfo.get_packages()
         result["max_package"] = max(result["packages"])
         result["cstates"] = []
-        for cstinfo in csobj.get_cstates_info(cpus=[0]):
+        for _, cstinfo in csobj.get_cstates_info(cpus=[0]):
             for csname in cstinfo:
                 result["cstates"].append(csname)
 
