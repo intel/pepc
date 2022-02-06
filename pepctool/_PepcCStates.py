@@ -151,14 +151,11 @@ def _build_aggregate_pinfo(props, cpus, csobj):
 
     aggr_pinfo = {}
 
-    for _, all_props_info in csobj.get_props(props, cpus=cpus):
+    for cpu, all_props_info in csobj.get_props(props, cpus=cpus):
         for pname, pinfo in all_props_info.items():
             if pname not in aggr_pinfo:
                 aggr_pinfo[pname] = {}
             for key, val in pinfo.items():
-                if key == "CPU":
-                    continue
-
                 # Make sure 'val' is "hashable" and can be used as a dictionary key.
                 if isinstance(val, list):
                     if not val:
@@ -174,7 +171,7 @@ def _build_aggregate_pinfo(props, cpus, csobj):
                 if val not in aggr_pinfo[pname][key]:
                     aggr_pinfo[pname][key][val] = []
 
-                aggr_pinfo[pname][key][val].append(pinfo["CPU"])
+                aggr_pinfo[pname][key][val].append(cpu)
 
     return aggr_pinfo
 
@@ -223,13 +220,13 @@ def cstates_info_command(args, proc):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
         first = True
-        for _, csinfo in csobj.get_cstates_info(cpus=cpus, csnames=args.csnames):
+        for cpu, csinfo in csobj.get_cstates_info(cpus=cpus, csnames=args.csnames):
             for cstate in csinfo.values():
                 if not first:
                     _LOG.info("")
                 first = False
 
-                _LOG.info("CPU: %d", cstate["CPU"])
+                _LOG.info("CPU: %d", cpu)
                 _LOG.info("Name: %s", cstate["name"])
                 _LOG.info("Index: %d", cstate["index"])
                 _LOG.info("Description: %s", cstate["desc"])

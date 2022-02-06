@@ -183,7 +183,6 @@ class _ReqCStates:
             name = cstate["name"]
             # Ensure the desired keys order.
             csinfo[name] = {}
-            csinfo[name]["CPU"] = cstate["CPU"]
             csinfo[name]["index"] = cstate["index"]
             for key in CST_SYSFS_FNAMES:
                 csinfo[name][key] = cstate[key]
@@ -228,7 +227,6 @@ class _ReqCStates:
             prev_cpu = cpu
             prev_index = index
 
-            cstate["CPU"] = cpu
             cstate["index"] = index
             cstate[key] = val
 
@@ -447,8 +445,7 @@ class CStates:
         This method yields a dictionary for every CPU in 'cpus'. The yielded dictionaries describe
         all C-states in 'csnames' for the CPU. Here is the format of the yielded dictionaries.
 
-        { csname1: { "CPU": <cpu number>,
-                     "index":     C-State index,
+        { csname1: { "index":     C-State index,
                      "name":      C-state name,
                      "desc":      C-state description,
                      "disable":   'True' if the C-state is disabled,
@@ -456,7 +453,7 @@ class CStates:
                      "residency": C-state target residency in microseconds,
                      "time":      time spent in the C-state in microseconds,
                      "usage":     how many times the C-state was requested },
-          csname2: { "CPU": <cpu number>, ... etc ... },
+          csname2: { ... etc ... },
            ... and so on for all C-states ... }
 
         The C-state keys come from Linux sysfs. Please, refer to Linux kernel documentation for more
@@ -548,7 +545,7 @@ class CStates:
         pinfo = {}
 
         for pname in pnames:
-            pinfo[pname] = {pname : None, "CPU" : cpu}
+            pinfo[pname] = {pname : None}
 
             if pname == "pkg_cstate_limit":
                 # Add the "locked" bit as a sub-property.
@@ -583,20 +580,18 @@ class CStates:
         The yielded 'pinfo' dictionaries have the following format.
 
         { property1_name: { property1_name : property1_value,
-                            "CPU" : <CPU number>,
                             subprop1_key : subprop1_value,
                             subprop2_key : subprop2_value,
                             ... etc for every key ...},
           property2_name: { property2_name : property2_value,
-                            "CPU" : <CPU number>,
                             subprop1_key : subprop2_value,
                             ... etc ...},
           ... etc ... }
 
-        So each property has the (main) value, but it also comes with the "CPU" and possibly
-        sub-properties, which provide additional read-only information related to the property. For
-        example, the 'pkg_cstate_limit' property comes with 'pkg_cstate_limit_locked' and other
-        sub-properties. Most properties have no sub-properties.
+        So each property has the (main) value, and possibly sub-properties, which provide additional
+        read-only information related to the property. For example, the 'pkg_cstate_limit' property
+        comes with 'pkg_cstate_limit_locked' and other sub-properties. Most properties have no
+        sub-properties.
 
         If a property is not supported, its value will be 'None'.
         """
