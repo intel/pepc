@@ -84,9 +84,9 @@ PROPS = {
 # information dicitonary returned by 'get_cstates_info()' uses these file names as keys as well.
 CST_SYSFS_FNAMES = ["name", "desc", "disable", "latency", "residency", "time", "usage"]
 
-class _LinuxCStates:
+class _ReqCStates:
     """
-    This class provides API for managing Linux C-states via sysfs.
+    This class provides API for managing requestable C-states via Linux sysfs API.
     """
 
     def _add_to_cache(self, csinfo, cpu):
@@ -429,12 +429,12 @@ class CStates:
        * For single property and single CPU: 'get_cpu_prop()', 'set_cpu_prop()'.
     """
 
-    def _get_lcsobj(self):
-        """Returns a '_LinuxCStates()' object."""
+    def _get_rcsobj(self):
+        """Returns a '_ReqCStates()' object."""
 
-        if not self._lcsobj:
-            self._lcsobj = _LinuxCStates(self._proc, cpuinfo=self._cpuinfo)
-        return self._lcsobj
+        if not self._rcsobj:
+            self._rcsobj = _ReqCStates(self._proc, cpuinfo=self._cpuinfo)
+        return self._rcsobj
 
     def get_cstates_info(self, cpus="all", csnames="all"):
         """
@@ -447,17 +447,17 @@ class CStates:
                       "all C-states" (default).
         """
 
-        return self._get_lcsobj().get_cstates_info(cpus=cpus, csnames=csnames)
+        return self._get_rcsobj().get_cstates_info(cpus=cpus, csnames=csnames)
 
     def get_cpu_cstates_info(self, cpu, csnames="all"):
         """Same as 'get_cstates_info()', but for a single CPU."""
 
-        return self._get_lcsobj().get_cpu_cstates_info(cpu, csnames=csnames)
+        return self._get_rcsobj().get_cpu_cstates_info(cpu, csnames=csnames)
 
     def get_cpu_cstate_info(self, cpu, csname):
         """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
 
-        return self._get_lcsobj().get_cpu_cstate_info(cpu, csname)
+        return self._get_rcsobj().get_cpu_cstate_info(cpu, csname)
 
     def enable_cstates(self, cpus="all", csnames="all"):
         """
@@ -474,12 +474,12 @@ class CStates:
 
         """
 
-        return self._get_lcsobj().enable_cstates(cpus=cpus, csnames=csnames)
+        return self._get_rcsobj().enable_cstates(cpus=cpus, csnames=csnames)
 
     def disable_cstates(self, cpus="all", csnames="all"):
         """Similar to 'enable_cstates()', but disables instead of enabling."""
 
-        return self._get_lcsobj().disable_cstates(cpus=cpus, csnames=csnames)
+        return self._get_rcsobj().disable_cstates(cpus=cpus, csnames=csnames)
 
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
@@ -749,7 +749,7 @@ class CStates:
         self._close_cpuinfo = cpuinfo is None
         self._close_msr = msr is None
 
-        self._lcsobj = None
+        self._rcsobj = None
         self._powerctl = None
         self._pcstatectl = None
 
@@ -768,7 +768,7 @@ class CStates:
     def close(self):
         """Uninitialize the class object."""
 
-        for attr in ("_lcsobj", "_pcstatectl", "_powerctl"):
+        for attr in ("_rcsobj", "_pcstatectl", "_powerctl"):
             obj = getattr(self, attr, None)
             if obj:
                 obj.close()
