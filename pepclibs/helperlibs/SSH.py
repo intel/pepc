@@ -822,7 +822,8 @@ class SSH:
         should be a string.
 
         The 'timeout' parameter specifies the longest time for this method to block. If the command
-        takes longer, this function will raise the 'ErrorTimeOut' exception. The default is 1h.
+        takes longer, this function will raise the 'ErrorTimeOut' exception. The default is 4h (see
+        'TIMEOUT').
 
         If the 'capture_output' argument is 'True', this function intercept the output of the
         executed program, otherwise it doesn't and the output is dropped (default) or printed to
