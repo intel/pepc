@@ -21,12 +21,15 @@ VERSION = "0.1"
 LOG = logging.getLogger()
 Logging.setup_logger(prefix=OWN_NAME)
 
-MODULE_COMMANDS = {
-    "CPUInfo": [
+
+CPUInfoData = {
+    "commands" : [
         {"command": "lscpu --physical --all -p=socket,node,core,cpu,online",
          "dirname": "lscpu-topology"},
         {"command": "lscpu",
          "dirname": "lscpu"}]}
+
+MODULE_TESTDATA = {"CPUInfo" : CPUInfoData}
 
 def build_arguments_parser():
     """A helper function which parses the input arguments."""
@@ -94,10 +97,10 @@ def main():
         if not outdir:
             outdir = Path(proc.hostname)
 
-        for module, commands in MODULE_COMMANDS.items():
-            for command in commands:
+        for modname, testdata in MODULE_TESTDATA.items():
+            for command in testdata["commands"]:
                 collect_cmd_output(command, proc, outdir)
-            YAML.dump({"commands" : commands}, outdir / f"{module}.yaml")
+            YAML.dump(testdata, outdir / f"{modname}.yaml")
 
     except KeyboardInterrupt:
         LOG.info("\nInterrupted, exiting")
