@@ -257,8 +257,8 @@ class EPP:
         for attr in ("_hwpreq", "_hwpreq_pkg", "_msr", "_cpuinfo", "_proc"):
             obj = getattr(self, attr, None)
             if obj:
-                if hasattr(self, f"_close_{attr}"):
-                    if getattr(self, f"_close_{attr}"):
+                if hasattr(self, f"_close{attr}"):
+                    if getattr(self, f"_close{attr}"):
                         getattr(obj, "close")()
                 else:
                     getattr(obj, "close")()
