@@ -140,8 +140,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         '(cpunum, info)', where 'cpunum' is the CPU number the limits were read from, and 'info' is
         the package C-state information dictionary. Here are the 'info' dictionary keys.
           * limit - the package C-state limit name (small letters, e.g., pc0).
-          * locked - a boolean, 'True' if the 'MSR_PKG_CST_CONFIG_CONTROL' register is locked, so it
-                     is impossible to change the package C-state limit, and 'False' otherwise.
           * limits - list of possible package C-state limits.
           * aliases - some package C-state may have multiple names, which means the same limit. This
                       module uses one name as the primary name, and it is provided in the 'limits'

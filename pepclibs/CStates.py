@@ -529,8 +529,8 @@ class CStates:
             raise ErrorNotSupported(f"property '{pname}' is not supported{self._proc.hostmsg}, "
                                     f"use one of the following: {pnames_str}")
 
-    def _find_feature(self, pname, cpu):
-        """Find an MSR feature corresponding to property 'pname'."""
+    def _read_prop_from_msr(self, pname, cpu):
+        """Read property 'pname' from the corresponding MSR register on CPU 'cpu'."""
 
         if pname in PowerCtl.FEATURES:
             module = self._get_powerctl()
@@ -550,8 +550,13 @@ class CStates:
         for pname in pnames:
             pinfo[pname] = {pname : None, "CPU" : cpu}
 
+            if pname == "pkg_cstate_limit":
+                # Add the "locked" bit as a sub-property.
+                val = self._read_prop_from_msr("locked", cpu)
+                pinfo[pname]["pkg_cstate_limit_locked"] = val
+
             try:
-                val = self._find_feature(pname, cpu)
+                val = self._read_prop_from_msr(pname, cpu)
             except ErrorNotSupported:
                 continue
 
@@ -560,6 +565,7 @@ class CStates:
                     pinfo[pname][fkey] = fval
             else:
                 pinfo[pname][pname] = val
+
 
         return pinfo
 
