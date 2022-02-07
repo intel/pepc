@@ -10,11 +10,14 @@
 
 """Emulated version or the 'Procs' module for testing purposes."""
 
+import logging
 import contextlib
 from pepclibs.helperlibs import FSHelpers, Trivial, WrapExceptions, YAML
 from pepclibs.helperlibs._Common import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
+
+_LOG = logging.getLogger()
 
 # The exceptions to handle when dealing with file I/O.
 _EXCEPTIONS = (OSError, IOError, BrokenPipeError)
@@ -43,10 +46,14 @@ class EmulProc():
         raises an 'ErrorNotSupported' exception.
         """
 
+        _LOG.debug("running the following emulated command:\n%s", cmd)
+
         return self._get_cmd_result(cmd)
 
     def run(self, cmd, **kwargs): # pylint: disable=unused-argument
         """Same as 'run_verify()', but emulates the 'Proc.run()' command."""
+
+        _LOG.debug("running the following emulated command:\n%s", cmd)
 
         stdout, stderr = self._get_cmd_result(cmd)
         return ProcResult(stdout=stdout, stderr=stderr, exitcode=0)
