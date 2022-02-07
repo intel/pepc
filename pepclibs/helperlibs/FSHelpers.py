@@ -478,14 +478,14 @@ def which(program, default=_RAISE, proc=None):
         return default
 
     program = Path(program)
-    if Path(program).is_file() and os.access(program, os.X_OK):
+    if os.access(program, os.F_OK | os.X_OK) and Path(program).is_file():
         return program
 
     envpaths = os.environ["PATH"]
     for path in envpaths.split(os.pathsep):
         path = path.strip('"')
         candidate = Path(f"{path}/{program}")
-        if candidate.is_file() and os.access(candidate, os.X_OK):
+        if os.access(candidate, os.F_OK | os.X_OK) and candidate.is_file():
             return candidate
 
     if default is _RAISE:
