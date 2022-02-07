@@ -153,11 +153,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         for cpu, code in self._msr.read_bits(self.regaddr, finfo["bits"], cpus=cpus):
             if code not in finfo["rvals"]:
-                known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
-                msg = f"unexpected package C-state limit code '{code}' read from " \
-                      f"'{self.regname}' MSR ({self.regaddr}){self._proc.hostmsg}, known codes " \
-                      f"are: {known_codes}"
-
                 # No exact match. The limit is the closest lower known number. For example, if the
                 # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the
                 # limit is PC6.
@@ -165,10 +160,11 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                     if cde <= code:
                         code = cde
                         break
-                else:
-                    raise Error(msg)
 
-                _LOG.debug(msg)
+                known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
+                raise Error(f"unexpected package C-state limit code '{code}' read from "
+                            f"'{self.regname}' MSR ({self.regaddr}){self._proc.hostmsg}, known "
+                            f"codes are: {known_codes}")
 
             res = {"pkg_cstate_limit" : finfo["rvals"][code],
                    "pkg_cstate_limits" : list(finfo["vals"].keys()),
