@@ -101,6 +101,37 @@ class EmulProc():
 
             self._cmds[command["command"]] = (stdout, stderr)
 
+    def _init_inline_files(self, finfos, datapath):
+        """
+        Inline files are defined in text file where single line defines path and content for single
+        emulated file. Initialize predefined data for emulated files defined by dictionary 'finfos'.
+        """
+
+        for finfo in finfos:
+            filepath = datapath / finfo["dirname"] / finfo["filename"]
+
+            with open(filepath, "r") as fobj:
+                lines = fobj.readlines()
+
+            for line in lines:
+                sep = finfo["separator"]
+                split = line.split(sep)
+
+                if len(split) != 2:
+                    raise Error(f"unexpected line format, expected <path>{sep}<value>, received\n" \
+                                f"{line}")
+
+                # Create file in temporary directory. For example:
+                # Emulated path: /sys/devices/system/cpu/cpu0/
+                # Real path: /tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0/
+
+                tmppath = self._basepath / split[0].lstrip("/")
+                if not tmppath.parent.exists():
+                    tmppath.parent.mkdir(parents=True)
+
+                with open(tmppath, "w") as fobj:
+                    fobj.write(split[1].strip())
+
     def init_testdata(self, module, datapath):
         """Initialize the testdata for module 'module' from directory 'datapath'."""
 
@@ -112,6 +143,8 @@ class EmulProc():
         config = YAML.load(confpath)
         if "commands" in config:
             self._init_commands(config["commands"], datapath)
+        if "inlinefiles" in config:
+            self._init_inline_files(config["inlinefiles"], datapath)
 
     def __init__(self):
         """Initialize the emulated 'Proc' class instance."""
