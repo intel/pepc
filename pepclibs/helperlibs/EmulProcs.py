@@ -71,6 +71,22 @@ class EmulProc():
         self._files[path] = fobj
         return fobj
 
+    def _init_commands(self, commands, datapath):
+        """
+        Initialize commands in 'commands' dictionary. Read commands' output from 'datapath' and save
+        them in 'self._cmds'.
+        """
+
+        for command in commands:
+            commandpath = datapath / command["dirname"]
+
+            with open(commandpath / "stdout.txt") as fobj:
+                stdout = fobj.readlines()
+            with open(commandpath / "stderr.txt") as fobj:
+                stderr = fobj.readlines()
+
+            self._cmds[command["command"]] = (stdout, stderr)
+
     def init_testdata(self, module, datapath):
         """Initialize the testdata for module 'module' from directory 'datapath'."""
 
@@ -80,15 +96,8 @@ class EmulProc():
                                     f"({confpath}).")
 
         config = YAML.load(confpath)
-        for command in config["commands"]:
-            commandpath = datapath / command["dirname"]
-
-            with open(commandpath / "stdout.txt") as fobj:
-                stdout = fobj.readlines()
-            with open(commandpath / "stderr.txt") as fobj:
-                stderr = fobj.readlines()
-
-            self._cmds[command["command"]] = (stdout, stderr)
+        if "commands" in config:
+            self._init_commands(config["commands"], datapath)
 
     def __init__(self):
         """Initialize the emulated 'Proc' class instance."""
