@@ -55,9 +55,15 @@ class EmulProc():
 
         tmppath = self._basepath / str(path).strip("/")
 
+        # Disabling buffering is only allowed in binary mode.
+        if "b" in mode:
+            buffering = 0
+        else:
+            buffering = -1
+
         errmsg = f"cannot open file '{path}' with mode '{mode}': "
         try:
-            fobj = open(tmppath, mode, buffering=0)  # pylint: disable=consider-using-with
+            fobj = open(tmppath, mode, buffering=buffering)  # pylint: disable=consider-using-with
         except PermissionError as err:
             raise ErrorPermissionDenied(f"{errmsg}{err}") from None
         except FileNotFoundError as err:
