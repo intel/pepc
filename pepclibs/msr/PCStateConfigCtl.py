@@ -178,7 +178,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     def _set_pkg_cstate_limit(self, limit, cpus="all"):
         """Set package C-state limit for CPUs in 'cpus'."""
 
-        finfo = self.features["locked"]
+        finfo = self.features["pkg_cstate_limit"]
 
         for cpu, regval in self._msr.read(self.regaddr, cpus=cpus):
             if self._msr.get_bits(regval, finfo["bits"]):
