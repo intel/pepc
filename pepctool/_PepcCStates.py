@@ -216,11 +216,11 @@ def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
 
     with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
-         CStates.CStates(proc=proc, cpuinfo=cpuinfo) as csobj:
+         CStates.ReqCStates(proc=proc, cpuinfo=cpuinfo) as rcsobj:
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
         first = True
-        for cpu, csinfo in csobj.get_cstates_info(cpus=cpus, csnames=args.csnames):
+        for cpu, csinfo in rcsobj.get_cstates_info(cpus=cpus, csnames=args.csnames):
             for cstate in csinfo.values():
                 if not first:
                     _LOG.info("")
