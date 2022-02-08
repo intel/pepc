@@ -89,7 +89,7 @@ def _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo):
         _print_cstate_prop_msg(name, "set to", optval, cpus, cpuinfo)
     else:
         method = getattr(csobj, f"{optname}_cstates")
-        toggled = method(cpus=cpus, csnames=optval)
+        toggled = method(csnames=optval, cpus=cpus)
 
         # The 'toggled' dictionary is indexed with CPU number. But we want to print a single line
         # for all CPU numbers that have the same toggled C-states list (the assumption here is that
@@ -220,7 +220,7 @@ def cstates_info_command(args, proc):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
         first = True
-        for cpu, csinfo in rcsobj.get_cstates_info(cpus=cpus, csnames=args.csnames):
+        for cpu, csinfo in rcsobj.get_cstates_info(csnames=args.csnames, cpus=cpus):
             for cstate in csinfo.values():
                 if not first:
                     _LOG.info("")

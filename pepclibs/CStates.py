@@ -295,7 +295,7 @@ class ReqCStates:
             raise Error(f"failed to {msg}:\nfile '{path}' contains '{read_val}', but should "
                         f"contain '{val}'")
 
-    def _get_cstates_info(self, cpus, csnames):
+    def _get_cstates_info(self, csnames, cpus):
         """Implements 'get_cstates_info()'. Yields ('cpu', 'csinfo') tuples."""
 
         # Form list of CPUs that do not have their C-states information cached.
@@ -323,7 +323,7 @@ class ReqCStates:
 
             yield cpu, csinfo
 
-    def _toggle_cstates(self, cpus="all", csnames="all", enable=True):
+    def _toggle_cstates(self, csnames="all", cpus="all", enable=True):
         """
         Enable or disable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
           * csnames - same as in 'get_cstates_info()'.
@@ -336,7 +336,7 @@ class ReqCStates:
         csnames = self._normalize_csnames(csnames)
 
         toggled = {}
-        for cpu, csinfo in self._get_cstates_info(cpus, csnames):
+        for cpu, csinfo in self._get_cstates_info(csnames, cpus):
             for csname, cstate in csinfo.items():
                 self._toggle_cstate(cpu, cstate["index"], enable)
 
@@ -349,7 +349,7 @@ class ReqCStates:
 
         return toggled
 
-    def enable_cstates(self, cpus="all", csnames="all"):
+    def enable_cstates(self, csnames="all", cpus="all"):
         """
         Enable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
           * cpus - same as in 'get_cstates_info()'.
@@ -361,12 +361,12 @@ class ReqCStates:
             * [cstate1, cstate2, ...] - list of C-states names enabled for CPU 'cpunum'.
         """
 
-        return self._toggle_cstates(cpus, csnames, True)
+        return self._toggle_cstates(csnames, cpus, True)
 
-    def disable_cstates(self, cpus="all", csnames="all"):
+    def disable_cstates(self, csnames="all", cpus="all"):
         """Similar to 'enable_cstates()', but disables instead of enabling."""
 
-        return self._toggle_cstates(cpus, csnames, False)
+        return self._toggle_cstates(csnames, cpus, False)
 
     def get_cstates_info(self, cpus="all", csnames="all"):
         """
@@ -398,7 +398,7 @@ class ReqCStates:
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
         csnames = self._normalize_csnames(csnames)
-        yield from self._get_cstates_info(cpus, csnames)
+        yield from self._get_cstates_info(csnames, cpus)
 
     def get_cpu_cstates_info(self, cpu, csnames="all"):
         """Same as 'get_cstates_info()', but for a single CPU."""
@@ -498,15 +498,15 @@ class CStates:
 
         return self._get_rcsobj().get_cpu_cstate_info(cpu, csname)
 
-    def enable_cstates(self, cpus="all", csnames="all"):
+    def enable_cstates(self, csnames="all", cpus="all"):
         """Same as 'ReqCStates.enable_cstates()'."""
 
-        return self._get_rcsobj().enable_cstates(cpus=cpus, csnames=csnames)
+        return self._get_rcsobj().enable_cstates(csnames=csnames, cpus=cpus)
 
-    def disable_cstates(self, cpus="all", csnames="all"):
+    def disable_cstates(self, csnames="all", cpus="all"):
         """Same as 'ReqCStates.disable_cstates()'."""
 
-        return self._get_rcsobj().disable_cstates(cpus=cpus, csnames=csnames)
+        return self._get_rcsobj().disable_cstates(csnames=csnames, cpus=cpus)
 
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
