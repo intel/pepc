@@ -84,9 +84,18 @@ PROPS = {
 # information dicitonary returned by 'get_cstates_info()' uses these file names as keys as well.
 CST_SYSFS_FNAMES = ["name", "desc", "disable", "latency", "residency", "time", "usage"]
 
-class _ReqCStates:
+class ReqCStates:
     """
     This class provides API for managing requestable C-states via Linux sysfs API.
+
+    Public methods overview.
+
+    1. Enable/disable multiple C-states for multiple CPUs via Linux sysfs interfaces:
+       'enable_cstates()', 'disable_cstates()'.
+    2. Get C-state(s) information.
+       * For multiple CPUs and multiple C-states: get_cstates_info().
+       * For a single CPU and multiple C-states: 'get_cpu_cstates_info()'.
+       * For a single CPU and a single C-state:  'get_cpu_cstate_info()'.
     """
 
     def _add_to_cache(self, csinfo, cpu):
@@ -341,24 +350,58 @@ class _ReqCStates:
         return toggled
 
     def enable_cstates(self, cpus="all", csnames="all"):
-        """Same as 'CStates.enable_cstates()'."""
+        """
+        Enable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
+          * cpus - same as in 'get_cstates_info()'.
+          * csnames - same as in 'get_cstates_info()'.
+
+        Returns a dictionary of the following structure:
+          { cpunum: { "csnames" : [ cstate1, cstate2, ...]}}
+            * cpunum - integer CPU number.
+            * [cstate1, cstate2, ...] - list of C-states names enabled for CPU 'cpunum'.
+        """
 
         return self._toggle_cstates(cpus, csnames, True)
 
     def disable_cstates(self, cpus="all", csnames="all"):
-        """Same as 'CStates.disable_cstates()'."""
+        """Similar to 'enable_cstates()', but disables instead of enabling."""
 
         return self._toggle_cstates(cpus, csnames, False)
 
     def get_cstates_info(self, cpus="all", csnames="all"):
-        """Same as 'CStates.get_cstates_info()'."""
+        """
+        Yield information about C-states specified in 'csnames' for CPUs specified in 'cpus'.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. Value 'all' mean "all CPUs" (default).
+          * csnames - list of C-states names to get information about. It can be both a list of
+                      names or a string containing a comma-separated list of names. Value 'all' mean
+                      "all C-states" (default).
+
+        This method yields a dictionary for every CPU in 'cpus'. The yielded dictionaries describe
+        all C-states in 'csnames' for the CPU. Here is the format of the yielded dictionaries.
+
+        { csname1: { "index":     C-State index,
+                     "name":      C-state name,
+                     "desc":      C-state description,
+                     "disable":   'True' if the C-state is disabled,
+                     "latency":   C-state latency in microseconds,
+                     "residency": C-state target residency in microseconds,
+                     "time":      time spent in the C-state in microseconds,
+                     "usage":     how many times the C-state was requested },
+          csname2: { ... etc ... },
+           ... and so on for all C-states ... }
+
+        The C-state keys come from Linux sysfs. Please, refer to Linux kernel documentation for more
+        details.
+        """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
         csnames = self._normalize_csnames(csnames)
         yield from self._get_cstates_info(cpus, csnames)
 
     def get_cpu_cstates_info(self, cpu, csnames="all"):
-        """Same as 'CStates.get_cpu_cstates_info()'."""
+        """Same as 'get_cstates_info()', but for a single CPU."""
 
         csinfo = None
         for _, csinfo in self.get_cstates_info(cpus=(cpu,), csnames=csnames):
@@ -366,7 +409,7 @@ class _ReqCStates:
         return csinfo
 
     def get_cpu_cstate_info(self, cpu, csname):
-        """Same as 'CStates.get_cpu_cstate_info()'."""
+        """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
 
         csinfo = None
         for _, csinfo in self.get_cstates_info(cpus=(cpu,), csnames=(csname,)):
@@ -405,6 +448,14 @@ class _ReqCStates:
                     getattr(obj, "close")()
                 setattr(self, attr, None)
 
+    def __enter__(self):
+        """Enter the runtime context."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the runtime context."""
+        self.close()
+
 
 class CStates:
     """
@@ -426,71 +477,34 @@ class CStates:
     """
 
     def _get_rcsobj(self):
-        """Returns a '_ReqCStates()' object."""
+        """Returns a 'ReqCStates()' object."""
 
         if not self._rcsobj:
-            self._rcsobj = _ReqCStates(self._proc, cpuinfo=self._cpuinfo)
+            self._rcsobj = ReqCStates(self._proc, cpuinfo=self._cpuinfo)
         return self._rcsobj
 
     def get_cstates_info(self, cpus="all", csnames="all"):
-        """
-        Yield information about C-states specified in 'csnames' for CPUs specified in 'cpus'.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. Value 'all' mean "all CPUs" (default).
-          * csnames - list of C-states names to get information about. It can be both a list of
-                      names or a string containing a comma-separated list of names. Value 'all' mean
-                      "all C-states" (default).
-
-        This method yields a dictionary for every CPU in 'cpus'. The yielded dictionaries describe
-        all C-states in 'csnames' for the CPU. Here is the format of the yielded dictionaries.
-
-        { csname1: { "index":     C-State index,
-                     "name":      C-state name,
-                     "desc":      C-state description,
-                     "disable":   'True' if the C-state is disabled,
-                     "latency":   C-state latency in microseconds,
-                     "residency": C-state target residency in microseconds,
-                     "time":      time spent in the C-state in microseconds,
-                     "usage":     how many times the C-state was requested },
-          csname2: { ... etc ... },
-           ... and so on for all C-states ... }
-
-        The C-state keys come from Linux sysfs. Please, refer to Linux kernel documentation for more
-        details.
-        """
+        """Same as 'ReqCStates.get_cstates_info()'."""
 
         yield from self._get_rcsobj().get_cstates_info(cpus=cpus, csnames=csnames)
 
     def get_cpu_cstates_info(self, cpu, csnames="all"):
-        """Same as 'get_cstates_info()', but for a single CPU."""
+        """Same as 'ReqCStates.get_cpu_cstates_info()'."""
 
         return self._get_rcsobj().get_cpu_cstates_info(cpu, csnames=csnames)
 
     def get_cpu_cstate_info(self, cpu, csname):
-        """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
+        """Same as 'ReqCStates.get_cpu_cstate_info()'."""
 
         return self._get_rcsobj().get_cpu_cstate_info(cpu, csname)
 
     def enable_cstates(self, cpus="all", csnames="all"):
-        """
-        Enable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
-          * cpus - same as in 'get_cstates_info()'.
-          * csnames - same as in 'get_cstates_info()'.
-
-        Returns a dictionary of the following structure.
-
-          { cpunum: { "csnames" : [ cstate1, cstate2, ...]}}
-
-          * cpunum - integer CPU number.
-          * [cstate1, cstate2, ...] - list of C-states names enabled for CPU 'cpunum'.
-
-        """
+        """Same as 'ReqCStates.enable_cstates()'."""
 
         return self._get_rcsobj().enable_cstates(cpus=cpus, csnames=csnames)
 
     def disable_cstates(self, cpus="all", csnames="all"):
-        """Similar to 'enable_cstates()', but disables instead of enabling."""
+        """Same as 'ReqCStates.disable_cstates()'."""
 
         return self._get_rcsobj().disable_cstates(cpus=cpus, csnames=csnames)
 
