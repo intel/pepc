@@ -82,7 +82,7 @@ class EmulProc():
         # Make sure methods of 'fobj' always raise the 'Error' exceptions.
         fobj = WrapExceptions.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
                                              get_err_prefix=_get_err_prefix)
-        self._files[path] = fobj
+        self._ofiles[path] = fobj
         return fobj
 
     def _init_commands(self, commands, datapath):
@@ -121,7 +121,7 @@ class EmulProc():
         self.is_remote = False
 
         # Opened files.
-        self._files = {}
+        self._ofiles = {}
         self._cmds = {}
         pid = Trivial.get_pid()
         self._basepath = FSHelpers.mktemp(prefix=f"emulprocs_{pid}_")
@@ -130,9 +130,9 @@ class EmulProc():
         """Stop emulation."""
 
         if getattr(self, "_files", None):
-            for _, fobj in self._files.items():
+            for _, fobj in self._ofiles.items():
                 fobj.close()
-            self._files = None
+            self._ofiles = None
 
         if getattr(self, "_basepath", None):
             with contextlib.suppress(OSError):
