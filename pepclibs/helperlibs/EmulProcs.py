@@ -48,7 +48,8 @@ class EmulProc():
     def run(self, cmd, **kwargs): # pylint: disable=unused-argument
         """Same as 'run_verify()', but emulates the 'Proc.run()' command."""
 
-        return ProcResult(stdout=self._get_cmd_result(cmd), stderr="", exitcode=0)
+        stdout, stderr = self._get_cmd_result(cmd)
+        return ProcResult(stdout=stdout, stderr=stderr, exitcode=0)
 
     def open(self, path, mode):
         """Create file in temporary directory and return the file object."""
