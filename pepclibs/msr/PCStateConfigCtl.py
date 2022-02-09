@@ -35,32 +35,32 @@ MSR_PKG_CST_CONFIG_CONTROL = 0xE2
 # Xeons.
 #
 # Ivy Bridge Xeon (Ivy Town).
-_IVT_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n": 2, "pc6r": 3, "unlimited": 7},
-                       "aliases" : {"pc6": "pc6r"},
+_IVT_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
+                       "aliases" : {"PC6": "PC6R"},
                        "bits"    : (2, 0)}
 # Haswell Xeon package C-state limits.
-_HSX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3, "unlimited": 7},
+_HSX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unlimited": 7},
                        "bits"    : (2, 0)}
 # Broadwell-D Xeon.
-_BDWD_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc3": 2, "pc6": 3},
+_BDWD_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
                         "bits"    : (3, 0)}
 # Sky/Cascade/Cooper Lake Xeon, Skylake-D Xeon.
-_SKX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6n": 2, "pc6r": 3, "unlimited": 7},
-                       "aliases" : {"pc6": "pc6r"},
+_SKX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
+                       "aliases" : {"PC6": "PC6R"},
                        "bits"    : (2, 0)}
 # Ice Lake and Sapphire Rapids Xeon.
-_ICX_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc2": 1, "pc6":2, "unlimited" : 7},
-                       "aliases" : {"pc6n": "pc6"},
+_ICX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6":2, "unlimited" : 7},
+                       "aliases" : {"PC6N": "PC6"},
                        "bits"    : (2, 0)}
 
 #
 # Atom-based micro servers.
 #
 # Denverton SoC (Goldmont).
-_DNV_PKG_CST_LIMITS = {"codes"   : {"pc0": 0, "pc6": 1},
+_DNV_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC6": 1},
                        "bits"    : (3, 0)}
 # Snow Ridge SoC (Tremont).
-_SNR_PKG_CST_LIMITS = {"codes"   : {"pc0": 0},
+_SNR_PKG_CST_LIMITS = {"codes"   : {"PC0": 0},
                        "bits"    : (3, 0)}
 
 # CPU ID -> Package C-state limit map.
@@ -93,6 +93,7 @@ FEATURES = {
                     modified.""",
         "cpumodels" : tuple(_PKG_CST_LIMITS.keys()),
         "type"    : "choice",
+        "case"    : "upper",
         "vals"    : None,
         "aliases" : None,
         "bits"    : None,
@@ -139,7 +140,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         Get package C-state limit for CPUs in 'cpus'. For every CPU in 'cpus', yields a tuple of
         '(cpunum, info)', where 'cpunum' is the CPU number the limits were read from, and 'info' is
         the package C-state information dictionary. Here are the 'info' dictionary keys.
-          * limit - the package C-state limit name (small letters, e.g., pc0).
+          * limit - the package C-state limit name (small letters, e.g., PC0).
           * limits - list of possible package C-state limits.
           * aliases - some package C-state may have multiple names, which means the same limit. This
                       module uses one name as the primary name, and it is provided in the 'limits'

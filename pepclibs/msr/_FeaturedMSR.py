@@ -59,7 +59,9 @@ class FeaturedMSR:
         if not finfo.get("vals"):
             return val
 
-        val = str(val).lower()
+        if "case" in finfo:
+            # Convert to the upper or lower case.
+            val = getattr(val, finfo["case"])()
 
         if "aliases" in finfo and val in finfo["aliases"]:
             val = finfo["aliases"][val]
