@@ -59,7 +59,7 @@ def _fmt_cpus(cpus, cpuinfo):
 
     return msg
 
-def _print_cstate_prop_msg(name, action, val, cpuinfo, cpus=None, prefix=None):
+def _print_cstate_prop_msg(name, val, cpuinfo, action=None, cpus=None, prefix=None):
     """Format and print a message about a C-state property 'name'."""
 
     if cpus is None:
@@ -75,27 +75,12 @@ def _print_cstate_prop_msg(name, action, val, cpuinfo, cpus=None, prefix=None):
 
     if val is None:
         msg = f"{pfx}: not supported{sfx}"
-    elif action:
+    elif action is not None:
         msg = f"{pfx}: {action} '{val}'{sfx}"
     else:
         msg = f"{pfx}: '{val}'{sfx}"
 
     _LOG.info(msg)
-
-def _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo):
-    """
-    Handle a C-state configuration option 'optname'.
-
-    Most options can be used with and without a value. In the former case, this function sets the
-    corresponding C-state property to the value provided. Otherwise this function reads the current
-    value of the C-state property and prints it.
-    """
-
-    if optname in csobj.props:
-        csobj.set_props({optname : optval}, cpus)
-
-        name = csobj.props[optname]["name"]
-        _print_cstate_prop_msg(name, "set to", optval, cpuinfo, cpus=cpus)
 
 def _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo):
     """Print the aggregate C-state properties information."""
@@ -106,7 +91,7 @@ def _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo):
                 # Distinguish between properties and sub-properties.
                 if key in csobj.props:
                     name = csobj.props[pname]["name"]
-                    _print_cstate_prop_msg(name, "", val, cpuinfo, cpus=cpus)
+                    _print_cstate_prop_msg(name, val, cpuinfo, cpus=cpus)
                 else:
                     if val is None:
                         # Just skip unsupported sub-property instead of printing something like
@@ -116,7 +101,7 @@ def _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo):
                     # Print sub-properties with a prefix and exclude CPU information, because it is
                     # the same as in the (parent) property, which has already been printed.
                     name = csobj.props[pname]["subprops"][key]["name"]
-                    _print_cstate_prop_msg(name, "", val, cpuinfo, cpus=None, prefix="  - ")
+                    _print_cstate_prop_msg(name, val, cpuinfo, cpus=None, prefix="  - ")
 
 def _build_aggregate_pinfo(pinfo_iter, sprops=None):
     """
@@ -206,7 +191,7 @@ def handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
     csobj.set_props(opts, cpus)
     for pname, val in opts.items():
         name = csobj.props[pname]["name"]
-        _print_cstate_prop_msg(name, "set to", val, cpuinfo, cpus=cpus)
+        _print_cstate_prop_msg(name, val, cpuinfo, action="set to", cpus=cpus)
 
     # Commit the transaction. This will flush all the change MSRs (if there were any).
     msr.commit_transaction()
@@ -248,7 +233,7 @@ def handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
             for key, kinfo in csinfo.items():
                 for val, val_cpus in kinfo.items():
                     val = "on" if val else "off"
-                    _print_cstate_prop_msg(csname, "", val, cpuinfo, cpus=val_cpus)
+                    _print_cstate_prop_msg(csname, val, cpuinfo, cpus=val_cpus)
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
