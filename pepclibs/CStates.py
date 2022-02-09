@@ -608,6 +608,10 @@ class CStates:
         sub-properties.
 
         If a property is not supported, its value will be 'None'.
+
+        Properties of "bool" type use the following values:
+           * "on" if the feature is enabled.
+           * "off" if the feature is disabled.
         """
 
         for pname in pnames:
@@ -708,6 +712,10 @@ class CStates:
            * [("c1_demotion", "on"), ("c1_undemotion", "off")]
         2. A dictionary with property names as keys. For example:
            * {"c1_demotion" : "on", "c1_undemotion" : "off"}
+
+        Properties of "bool" type accept the following values:
+           * True, "on", "enable" for enabling the feature.
+           * False, "off", "disable" for disabling the feature.
         """
 
         inprops = {}
