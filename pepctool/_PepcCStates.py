@@ -97,26 +97,26 @@ def _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo):
         name = csobj.props[optname]["name"]
         _print_cstate_prop_msg(name, "set to", optval, cpuinfo, cpus=cpus)
 
-def _print_cstate_prop(aggr_pinfo, pname, csobj, cpuinfo):
-    """Print about C-state properties in 'aggr_pinfo'."""
+def _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo):
+    """Print the aggregate C-state properties information."""
 
-    for key, kinfo in aggr_pinfo[pname].items():
-        for val, cpus in kinfo.items():
-            # Distinguish between properties and sub-properties.
-            if key in csobj.props:
-                name = csobj.props[pname]["name"]
-                _print_cstate_prop_msg(name, "", val, cpuinfo, cpus=cpus)
-            else:
-                if val is None:
-                    # Just skip unsupported sub-property instead of printing something like
-                    # "Package C-state limit aliases: not supported on CPUs 0-11".
-                    continue
+    for pname in aggr_pinfo:
+        for key, kinfo in aggr_pinfo[pname].items():
+            for val, cpus in kinfo.items():
+                # Distinguish between properties and sub-properties.
+                if key in csobj.props:
+                    name = csobj.props[pname]["name"]
+                    _print_cstate_prop_msg(name, "", val, cpuinfo, cpus=cpus)
+                else:
+                    if val is None:
+                        # Just skip unsupported sub-property instead of printing something like
+                        # "Package C-state limit aliases: not supported on CPUs 0-11".
+                        continue
 
-                # Print sub-properties with a prefix and exclude CPU information, because it is the
-                # same as in the (parent) property, which has already been printed.
-                name = csobj.props[pname]["subprops"][key]["name"]
-                _print_cstate_prop_msg(name, "", val, cpuinfo, cpus=None, prefix="  - ")
-
+                    # Print sub-properties with a prefix and exclude CPU information, because it is
+                    # the same as in the (parent) property, which has already been printed.
+                    name = csobj.props[pname]["subprops"][key]["name"]
+                    _print_cstate_prop_msg(name, "", val, cpuinfo, cpus=None, prefix="  - ")
 
 def _build_aggregate_pinfo(pinfo_iter):
     """
@@ -184,8 +184,7 @@ def handle_print_opts(opts, cpus, csobj, cpuinfo):
     pinfo_iter = csobj.get_props(opts, cpus=cpus)
     aggr_pinfo = _build_aggregate_pinfo(pinfo_iter)
 
-    for pname in opts:
-        _print_cstate_prop(aggr_pinfo, pname, csobj, cpuinfo)
+    _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo)
 
 def handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
     """
