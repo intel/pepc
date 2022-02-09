@@ -126,7 +126,7 @@ The 'pepc' tool has tab completions support, but this will only work if you have
 variables defined. The following command will do it:
 
 ```
-eval $(register-python-argcomplete pepc)
+eval "$(register-python-argcomplete pepc)"
 ```
 
 You can put this line to your '.bashrc' file in order to have 'pepc' tab completions enabled by
