@@ -87,25 +87,6 @@ def _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo):
 
         name = csobj.props[optname]["name"]
         _print_cstate_prop_msg(name, "set to", optval, cpus, cpuinfo)
-    else:
-        method = getattr(csobj, f"{optname}_cstates")
-        toggled = method(csnames=optval, cpus=cpus)
-
-        # The 'toggled' dictionary is indexed with CPU number. But we want to print a single line
-        # for all CPU numbers that have the same toggled C-states list (the assumption here is that
-        # the system may be hybrid and different CPUs have different C-states). Therefore, build a
-        # "revered" verion of the 'toggled' dictionary.
-        revdict = {}
-        for cpu, csinfo in toggled.items():
-            key = ",".join(csinfo["csnames"])
-            if key not in revdict:
-                revdict[key] = []
-            revdict[key].append(cpu)
-
-        for cstnames, cpunums in revdict.items():
-            cstnames = cstnames.split(",")
-            _LOG.info("%sd %s on %s",
-                      optname.title(), _fmt_csnames(cstnames), _fmt_cpus(cpunums, cpuinfo))
 
 def _print_cstate_prop(aggr_pinfo, pname, csobj, cpuinfo):
     """Print about C-state properties in 'aggr_pinfo'."""
@@ -175,6 +156,65 @@ def _build_aggregate_pinfo(props, cpus, csobj):
 
     return aggr_pinfo
 
+def handle_print_opts(opts, cpus, csobj, cpuinfo):
+    """
+    Handle C-state configuration options other than '--enable' and '--disable' which have to be
+    printed.
+    """
+
+    if not opts:
+        return
+
+    # Build the aggregate properties information dictionary for all options we are going to
+    # print about.
+    aggr_pinfo = _build_aggregate_pinfo(opts, cpus, csobj)
+
+    for pname in opts:
+        _print_cstate_prop(aggr_pinfo, pname, csobj, cpuinfo)
+
+def handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
+    """
+    Handle C-state configuration options other than '--enable' and '--disable' which have to be
+    set.
+    """
+
+    if not opts:
+        return
+
+    # Start a transaction, which will delay and aggregate MSR writes until the transaction
+    # is committed.
+    msr.start_transaction()
+
+    csobj.set_props(opts, cpus)
+    for pname, val in opts.items():
+        name = csobj.props[pname]["name"]
+        _print_cstate_prop_msg(name, "set to", val, cpus, cpuinfo)
+
+    # Commit the transaction. This will flush all the change MSRs (if there were any).
+    msr.commit_transaction()
+
+def handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
+    """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
+
+    for optname, optval in opts.items():
+        method = getattr(rcsobj, f"{optname}_cstates")
+        toggled = method(csnames=optval, cpus=cpus)
+
+        # The 'toggled' dictionary is indexed with CPU number. But we want to print a single line
+        # for all CPU numbers that have the same toggled C-states list. Build a "revered" verion of
+        # the 'toggled' dictionary for these purposes.
+        revdict = {}
+        for cpu, csinfo in toggled.items():
+            key = ",".join(csinfo["csnames"])
+            if key not in revdict:
+                revdict[key] = []
+            revdict[key].append(cpu)
+
+        for cstnames, cpunums in revdict.items():
+            cstnames = cstnames.split(",")
+            _LOG.info("%sd %s on %s",
+                      optname.title(), _fmt_csnames(cstnames), _fmt_cpus(cpunums, cpuinfo))
+
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
 
@@ -183,34 +223,36 @@ def cstates_config_command(args, proc):
 
     _PepcCommon.check_tuned_presence(proc)
 
-    # The C-state properties to print about.
-    print_props = []
+    # The '--enable' and '--disable' optoins.
+    enable_opts = {}
+    # Options to set (excluding '--enable' and '--disable').
+    set_opts = {}
+    # Options to print (excluding '--enable' and '--disable').
+    print_opts = []
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, MSR.MSR(proc=proc, cpuinfo=cpuinfo) as msr:
-        # Start a transaction, which will delay and aggregate MSR writes until the transaction
-        # is committed.
-        msr.start_transaction()
+    for optname, optval in args.oargs.items():
+        if optname in {"enable", "disable"}:
+            enable_opts[optname] = optval
+        elif optval is None:
+            print_opts.append(optname)
+        else:
+            set_opts[optname] = optval
 
-        with CStates.CStates(proc=proc, cpuinfo=cpuinfo, msr=msr) as csobj:
-            # Find all properties we'll need to print about, and get their values.
-            for optname, optval in args.oargs.items():
-                if not optval:
-                    print_props.append(optname)
+    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
+         CStates.ReqCStates(proc=proc, cpuinfo=cpuinfo) as rcsobj:
 
-            # Build the aggregate properties information dictionary for all options we are going to
-            # print about.
-            cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
-            aggr_pinfo = _build_aggregate_pinfo(print_props, cpus, csobj)
+        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-            # Now handle the options one by one, in the same order as they go in the command line.
-            for optname, optval in args.oargs.items():
-                if not optval:
-                    _print_cstate_prop(aggr_pinfo, optname, csobj, cpuinfo)
-                else:
-                    _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo)
+        handle_enable_disable_opts(enable_opts, cpus, cpuinfo, rcsobj)
 
-        # Commit the transaction. This will flush all the change MSRs (if there were any).
-        msr.commit_transaction()
+        if not set_opts and not print_opts:
+            return
+
+        with MSR.MSR(proc=proc, cpuinfo=cpuinfo) as msr, \
+            CStates.CStates(proc=proc, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
+
+            handle_set_opts(set_opts, cpus, csobj, msr, cpuinfo)
+            handle_print_opts(print_opts, cpus, csobj, cpuinfo)
 
 def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
