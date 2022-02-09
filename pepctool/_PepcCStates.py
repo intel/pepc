@@ -59,7 +59,7 @@ def _fmt_cpus(cpus, cpuinfo):
 
     return msg
 
-def _print_cstate_prop_msg(name, val, cpuinfo, action=None, cpus=None, prefix=None):
+def _print_cstate_prop_msg(val, cpuinfo, name=None, action=None, cpus=None, prefix=None):
     """Format and print a message about a C-state property 'name'."""
 
     if cpus is None:
@@ -68,10 +68,13 @@ def _print_cstate_prop_msg(name, val, cpuinfo, action=None, cpus=None, prefix=No
         cpus = _fmt_cpus(cpus, cpuinfo)
         sfx = f" for {cpus}"
 
-    if prefix is None:
-        pfx = f"{name}"
+    if name is None:
+        pfx = ""
     else:
-        pfx = f"{prefix}{name}"
+        pfx = f"{name}"
+
+    if prefix is not None:
+        pfx = f"{prefix}{pfx}"
 
     if val is None:
         msg = f"{pfx}: not supported{sfx}"
@@ -91,7 +94,7 @@ def _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo):
                 # Distinguish between properties and sub-properties.
                 if key in csobj.props:
                     name = csobj.props[pname]["name"]
-                    _print_cstate_prop_msg(name, val, cpuinfo, cpus=cpus)
+                    _print_cstate_prop_msg(val, cpuinfo, name=name, cpus=cpus)
                 else:
                     if val is None:
                         # Just skip unsupported sub-property instead of printing something like
@@ -101,7 +104,7 @@ def _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo):
                     # Print sub-properties with a prefix and exclude CPU information, because it is
                     # the same as in the (parent) property, which has already been printed.
                     name = csobj.props[pname]["subprops"][key]["name"]
-                    _print_cstate_prop_msg(name, val, cpuinfo, cpus=None, prefix="  - ")
+                    _print_cstate_prop_msg(val, cpuinfo, name=name, cpus=None, prefix="  - ")
 
 def _build_aggregate_pinfo(pinfo_iter, sprops=None):
     """
@@ -191,7 +194,7 @@ def _handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
     csobj.set_props(opts, cpus)
     for pname, val in opts.items():
         name = csobj.props[pname]["name"]
-        _print_cstate_prop_msg(name, val, cpuinfo, action="set to", cpus=cpus)
+        _print_cstate_prop_msg(val, cpuinfo, name=name, action="set to", cpus=cpus)
 
     # Commit the transaction. This will flush all the change MSRs (if there were any).
     msr.commit_transaction()
@@ -206,7 +209,7 @@ def _print_cstates_status(cpus, cpuinfo, rcsobj):
         for kinfo in csinfo.values():
             for val, val_cpus in kinfo.items():
                 val = "on" if val else "off"
-                _print_cstate_prop_msg(csname, val, cpuinfo, cpus=val_cpus)
+                _print_cstate_prop_msg(val, cpuinfo, name=csname, cpus=val_cpus)
 
 def _handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
     """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
