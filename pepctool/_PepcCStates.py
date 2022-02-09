@@ -118,10 +118,13 @@ def _print_cstate_prop(aggr_pinfo, pname, csobj, cpuinfo):
                 _print_cstate_prop_msg(name, "", val, cpuinfo, cpus=None, prefix="  - ")
 
 
-def _build_aggregate_pinfo(pnames, cpus, csobj):
+def _build_aggregate_pinfo(pinfo_iter):
     """
-    Build aggregate properties dictionary for properties in the 'pnames' list. The dictionary
-    has the following format.
+    Build the aggregated properties dictionary for properties in the 'pinfo_iter' iterator. The
+    iterator must provide the (cpu, pinfo) tuples, just like 'CStates.get_props()' or
+    'ReqCState.get_cstates_info()' do.
+
+    The dictionary has the following format.
 
     { property1_name: { property1_name: { value1 : [ list of CPUs having value1],
                                           value2 : [ list of CPUs having value2],
@@ -143,7 +146,7 @@ def _build_aggregate_pinfo(pnames, cpus, csobj):
 
     aggr_pinfo = {}
 
-    for cpu, pinfo in csobj.get_props(pnames, cpus=cpus):
+    for cpu, pinfo in pinfo_iter:
         for pname in pinfo:
             if pname not in aggr_pinfo:
                 aggr_pinfo[pname] = {}
@@ -178,7 +181,8 @@ def handle_print_opts(opts, cpus, csobj, cpuinfo):
 
     # Build the aggregate properties information dictionary for all options we are going to
     # print about.
-    aggr_pinfo = _build_aggregate_pinfo(opts, cpus, csobj)
+    pinfo_iter = csobj.get_props(opts, cpus=cpus)
+    aggr_pinfo = _build_aggregate_pinfo(pinfo_iter)
 
     for pname in opts:
         _print_cstate_prop(aggr_pinfo, pname, csobj, cpuinfo)
