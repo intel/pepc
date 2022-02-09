@@ -59,17 +59,22 @@ def _fmt_cpus(cpus, cpuinfo):
 
     return msg
 
-def _print_cstate_prop_msg(name, action, val, cpus, cpuinfo):
+def _print_cstate_prop_msg(name, action, val, cpus, cpuinfo, prefix=None):
     """Format and print a message about a C-state property 'name'."""
 
     cpus = _fmt_cpus(cpus, cpuinfo)
 
-    if val is None:
-        msg = f"{name}: not supported on {cpus}"
-    elif action:
-        msg = f"{name}: {action} '{val}' on {cpus}"
+    if prefix is None:
+        pfx = f"{name}"
     else:
-        msg = f"{name}: '{val}' on {cpus}"
+        pfx = f"{prefix}{name}"
+
+    if val is None:
+        msg = f"{pfx}: not supported on {cpus}"
+    elif action:
+        msg = f"{pfx}: {action} '{val}' on {cpus}"
+    else:
+        msg = f"{pfx}: '{val}' on {cpus}"
 
     _LOG.info(msg)
 
@@ -96,13 +101,15 @@ def _print_cstate_prop(aggr_pinfo, pname, csobj, cpuinfo):
             # Distinguish between properties and sub-properties.
             if key in csobj.props:
                 name = csobj.props[pname]["name"]
+                prefix = None
             else:
-                name = csobj.props[pname]["subprops"][key]["name"]
                 if val is None:
                     # Just skip unsupported sub-property instead of printing something like
                     # "Package C-state limit aliases: not supported on CPUs 0-11".
                     continue
-            _print_cstate_prop_msg(name, "", val, cpus, cpuinfo)
+                name = csobj.props[pname]["subprops"][key]["name"]
+                prefix = "  - "
+            _print_cstate_prop_msg(name, "", val, cpus, cpuinfo, prefix=prefix)
 
 def _build_aggregate_pinfo(props, cpus, csobj):
     """
