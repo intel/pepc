@@ -178,8 +178,8 @@ def build_arguments_parser():
     # Create parser for the 'cstates config' command.
     #
     text = "Configure C-states."
-    descr = """Configure C-states on specified CPUs. Many options can be used without a parameter,
-               in which case the currently configured value will be printed."""
+    descr = """Configure C-states on specified CPUs. All options can be used without a parameter,
+               in which case the currently configured value(s) will be printed."""
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=cstates_config_command)
 
@@ -192,13 +192,13 @@ def build_arguments_parser():
     text = f"""List of packages to configure. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
-    text = f"""Comma-sepatated list of C-states to enable (all by default). {cst_list_text}."""
-    subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, default="all",
-                          help=text)
+    text = f"""Comma-sepatated list of C-states to enable. {cst_list_text}."""
+    subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
+                          nargs="?")
 
     text = """Similar to '--enable', but specifies the list of C-states to disable."""
-    subpars2.add_argument("--disable", metavar="CSTATES", action=ArgParse.OrderedArg, default="all",
-                          help=text)
+    subpars2.add_argument("--disable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
+                          nargs="?")
 
     for name, info in CStates.PROPS.items():
         kwargs = {}

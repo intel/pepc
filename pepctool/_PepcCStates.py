@@ -66,7 +66,7 @@ def _print_cstate_prop_msg(name, action, val, cpuinfo, cpus=None, prefix=None):
         sfx = ""
     else:
         cpus = _fmt_cpus(cpus, cpuinfo)
-        sfx = f" on {cpus}"
+        sfx = f" for {cpus}"
 
     if prefix is None:
         pfx = f"{name}"
@@ -118,7 +118,7 @@ def _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo):
                     name = csobj.props[pname]["subprops"][key]["name"]
                     _print_cstate_prop_msg(name, "", val, cpuinfo, cpus=None, prefix="  - ")
 
-def _build_aggregate_pinfo(pinfo_iter):
+def _build_aggregate_pinfo(pinfo_iter, sprops=None):
     """
     Build the aggregated properties dictionary for properties in the 'pinfo_iter' iterator. The
     iterator must provide the (cpu, pinfo) tuples, just like 'CStates.get_props()' or
@@ -142,6 +142,8 @@ def _build_aggregate_pinfo(pinfo_iter):
 
     In other words, the aggregate dictionary mapping of property/sub-property values to the list of
     CPUs having these values.
+
+    The 'sprops' argument can be used to limit the sub-properties to only the names in 'sprops'.
     """
 
     aggr_pinfo = {}
@@ -151,6 +153,8 @@ def _build_aggregate_pinfo(pinfo_iter):
             if pname not in aggr_pinfo:
                 aggr_pinfo[pname] = {}
             for key, val in pinfo[pname].items():
+                if sprops is not None and key not in sprops:
+                    continue
                 # Make sure 'val' is "hashable" and can be used as a dictionary key.
                 if isinstance(val, list):
                     if not val:
@@ -210,7 +214,14 @@ def handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
 def handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
     """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
 
+    print_cstates = False
+
     for optname, optval in opts.items():
+        if not optval:
+            # No value means that we should print the C-states information.
+            print_cstates = True
+            continue
+
         method = getattr(rcsobj, f"{optname}_cstates")
         toggled = method(csnames=optval, cpus=cpus)
 
@@ -228,6 +239,16 @@ def handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
             cstnames = cstnames.split(",")
             _LOG.info("%sd %s on %s",
                       optname.title(), _fmt_csnames(cstnames), _fmt_cpus(cpunums, cpuinfo))
+
+    if print_cstates:
+        csinfo_iter = rcsobj.get_cstates_info(csnames="all", cpus=cpus)
+        aggr_csinfo = _build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
+
+        for csname, csinfo in aggr_csinfo.items():
+            for key, kinfo in csinfo.items():
+                for val, val_cpus in kinfo.items():
+                    val = "on" if val else "off"
+                    _print_cstate_prop_msg(csname, "", val, cpuinfo, cpus=val_cpus)
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
