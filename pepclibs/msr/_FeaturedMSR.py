@@ -203,10 +203,18 @@ class FeaturedMSR:
         self.check_feature_supported(fname, cpus=cpus)
 
         if self.features[fname]["type"] != "bool":
-            fullname = self.features[fname]["name"]
-            raise Error(f"feature '{fullname}' is not boolean, use 'write_feature()' instead")
+            name = self.features[fname]["name"]
+            raise Error(f"feature '{name}' is not boolean, use 'write_feature()' instead")
 
-        val = "on" if enable else "off"
+        if enable in {True, "on", "enable"}:
+            val = "on"
+        elif enable in {False, "off", "disable"}:
+            val = "off"
+        else:
+            name = self.features[fname]["name"]
+            good_vals = "True/False, 'on'/'off', 'enable'/'disable'"
+            raise Error(f"bad value '{enable}' for a boolean feature '{name}', use: {good_vals}")
+
         self.write_feature(fname, val, cpus=cpus)
 
     def enable_cpu_feature(self, fname, enable, cpu):
