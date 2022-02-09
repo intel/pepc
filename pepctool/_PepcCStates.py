@@ -36,7 +36,7 @@ def _fmt_csnames(csnames):
     return msg
 
 def _fmt_cpus(cpus, cpuinfo):
-    """Foomats and returns a string describing CPU numbers in the 'cpus' list."""
+    """Formats and returns a string describing CPU numbers in the 'cpus' list."""
 
     cpus_range = Human.rangify(cpus)
     if len(cpus) == 1:
@@ -88,7 +88,7 @@ def _handle_cstate_config_opt(optname, optval, cpus, csobj, cpuinfo):
 
     Most options can be used with and without a value. In the former case, this function sets the
     corresponding C-state property to the value provided. Otherwise this function reads the current
-    value of the C-state priperty and prints it.
+    value of the C-state property and prints it.
     """
 
     if optname in csobj.props:
@@ -118,39 +118,36 @@ def _print_cstate_prop(aggr_pinfo, pname, csobj, cpuinfo):
                 _print_cstate_prop_msg(name, "", val, cpuinfo, cpus=None, prefix="  - ")
 
 
-def _build_aggregate_pinfo(props, cpus, csobj):
+def _build_aggregate_pinfo(pnames, cpus, csobj):
     """
-    Build the aggregated properties dictionary for proparties in the 'props' list. The dictionary
+    Build aggregate properties dictionary for properties in the 'pnames' list. The dictionary
     has the following format.
 
-    { property1_name: { key1_name: { key1_value1 : [ list of CPUs having key1_value1],
-                                     key1_value2 : [ list of CPUs having key1_value2],
-                                     key1_value3 : [ list of CPUs having key1_value3]},
-                        key2_name: { key2_value1 : [ list of CPUs having key2_value1],
-                                     key2_value2 : [ list of CPUs having key2_value2],
-                                     key2_value3 : [ list of CPUs having key2_value3]}},
-      property2_name: { key1_name: { key1_value1 : [ list of CPUs having key1_value1],
-      ... and so on ... }
+    { property1_name: { property1_name: { value1 : [ list of CPUs having value1],
+                                          value2 : [ list of CPUs having value2],
+                                          ... and so on of all values ...},
+                        subprop1_name:  { value1 : [ list of CPUs having value1],
+                                          value2 : [ list of CPUs having value2]
+                                          ... and so on of all values ...},
+                        ... and so on for all sub-properties ...},
+      ... and so on for all properties ... }
 
-      * property1_name, property2_name, etc are the property names (e.g., 'pkg_cstate_limit').
-      * key1_name, key2_name, etc are key names of the corresponding property (e.g.,
-        'pkg_cstate_limit', 'pkg_cstate_limit_locked').
-      * key1_value1, key1_value2, etc are all the different values for 'key1_name' (e.g., 'False' or
-        'True')
+      * property1_name - the first property name (e.g., 'pkg_cstate_limit').
+      * subprop1_name - the first sub-property name (e.g., 'pkg_cstate_limit_locked').
+      * value1, value2, etc - are all the different values for the property/sub-property (e.g.,
+                              'True' or 'True')
 
-    In other words, for every property and every key of the property, this aggregate properties info
-    dictionary provides all values and the list of CPUs for every value. This way we can later
-    easily print something like:
-        C1 demotion enabled: 'off' on CPUs 0,1,10,11,12
+    In other words, the aggregate dictionary mapping of property/sub-property values to the list of
+    CPUs having these values.
     """
 
     aggr_pinfo = {}
 
-    for cpu, all_props_info in csobj.get_props(props, cpus=cpus):
-        for pname, pinfo in all_props_info.items():
+    for cpu, pinfo in csobj.get_props(pnames, cpus=cpus):
+        for pname in pinfo:
             if pname not in aggr_pinfo:
                 aggr_pinfo[pname] = {}
-            for key, val in pinfo.items():
+            for key, val in pinfo[pname].items():
                 # Make sure 'val' is "hashable" and can be used as a dictionary key.
                 if isinstance(val, list):
                     if not val:
@@ -215,8 +212,8 @@ def handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
         toggled = method(csnames=optval, cpus=cpus)
 
         # The 'toggled' dictionary is indexed with CPU number. But we want to print a single line
-        # for all CPU numbers that have the same toggled C-states list. Build a "revered" verion of
-        # the 'toggled' dictionary for these purposes.
+        # for all CPU numbers that have the same toggled C-states list. Build a "reversed" version
+        # of the 'toggled' dictionary for these purposes.
         revdict = {}
         for cpu, csinfo in toggled.items():
             key = ",".join(csinfo["csnames"])
