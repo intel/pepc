@@ -10,10 +10,11 @@
 
 """Test data generator, for collecting and creating data used for testing."""
 
+import os
 import sys
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import ArgParse, Logging, Procs, SSH, FSHelpers, YAML
+from pepclibs.helperlibs import ArgParse, Logging, Procs, SSH, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
 OWN_NAME = "tdgen"
@@ -63,25 +64,21 @@ def get_proc(args):
                        timeout=args.timeout)
     return proc
 
-def collect_cmd_output(cmd, proc, outdir):
+def collect_cmd_output(cmdinfo, proc, outdir):
     """
     Run the command 'cmd' on the remote host. The arguments are as follows.
-      * cmd - a dictionary of a command to run, see 'MODULE_COMMANDS'.
-      * proc - a 'Proc' or 'SSH' objetc that defines the remote host to run the 'cmd' on.
+      * cmdinfo - a dictionary of a command to run, see 'MODULE_TESTDATA'.
+      * proc - a 'Proc' or 'SSH' objetc that defines the remote host to run the 'cmdinfo' on.
       * outdir - the directory to save the command output to.
     """
 
-    cmdpath = outdir / cmd["dirname"]
+    datapath = outdir / cmdinfo["dirname"]
+    os.makedirs(datapath, exist_ok=True)
 
-    if FSHelpers.exists(cmdpath) and not FSHelpers.isdir(cmdpath):
-        raise Error(f"command output path '{cmdpath}' exists and is not a directory")
-
-    FSHelpers.mkdir(cmdpath, parents=True, exist_ok=True)
-
-    stdout, stderr = proc.run_verify(cmd["command"])
+    stdout, stderr = proc.run_verify(cmdinfo["command"])
 
     for fname, data in ("stdout", stdout), ("stderr", stderr):
-        path = cmdpath / f"{fname}.txt"
+        path = datapath / f"{fname}.txt"
 
         with open(path, "w") as fobj:
             fobj.write(data)
@@ -98,8 +95,10 @@ def main():
             outdir = Path(proc.hostname)
 
         for modname, testdata in MODULE_TESTDATA.items():
-            for command in testdata["commands"]:
-                collect_cmd_output(command, proc, outdir)
+            for cmdinfo in testdata["commands"]:
+                collect_cmd_output(cmdinfo, proc, outdir / modname)
+                cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
+
             YAML.dump(testdata, outdir / f"{modname}.yaml")
 
     except KeyboardInterrupt:
