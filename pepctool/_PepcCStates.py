@@ -196,6 +196,18 @@ def handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
     # Commit the transaction. This will flush all the change MSRs (if there were any).
     msr.commit_transaction()
 
+def _print_cstates_status(cpus, cpuinfo, rcsobj):
+    """Print brief C-state enabled/disabled status."""
+
+    csinfo_iter = rcsobj.get_cstates_info(csnames="all", cpus=cpus)
+    aggr_csinfo = _build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
+
+    for csname, csinfo in aggr_csinfo.items():
+        for kinfo in csinfo.values():
+            for val, val_cpus in kinfo.items():
+                val = "on" if val else "off"
+                _print_cstate_prop_msg(csname, val, cpuinfo, cpus=val_cpus)
+
 def handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
     """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
 
@@ -226,14 +238,7 @@ def handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
                       optname.title(), _fmt_csnames(cstnames), _fmt_cpus(cpunums, cpuinfo))
 
     if print_cstates:
-        csinfo_iter = rcsobj.get_cstates_info(csnames="all", cpus=cpus)
-        aggr_csinfo = _build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
-
-        for csname, csinfo in aggr_csinfo.items():
-            for key, kinfo in csinfo.items():
-                for val, val_cpus in kinfo.items():
-                    val = "on" if val else "off"
-                    _print_cstate_prop_msg(csname, val, cpuinfo, cpus=val_cpus)
+        _print_cstates_status(cpus, cpuinfo, rcsobj)
 
 def cstates_config_command(args, proc):
     """Implements the 'cstates config' command."""
