@@ -10,6 +10,8 @@
 
 """Emulated version or the 'Procs' module for testing purposes."""
 
+import io
+import types
 import logging
 import contextlib
 from pepclibs.helperlibs import FSHelpers, Trivial, WrapExceptions, YAML
@@ -70,7 +72,7 @@ class EmulProc():
         stdout, stderr = self._get_cmd_result(cmd)
         return ProcResult(stdout=stdout, stderr=stderr, exitcode=0)
 
-    def open(self, path, mode):
+    def _open_rw(self, path, mode):
         """Create file in temporary directory and return the file object."""
 
         tmppath = self._basepath / str(path).strip("/")
@@ -94,6 +96,29 @@ class EmulProc():
         # Make sure methods of 'fobj' always raise the 'Error' exceptions.
         fobj = WrapExceptions.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
                                              get_err_prefix=_get_err_prefix)
+        self._ofiles[path] = fobj
+        return fobj
+
+    def _open_ro(self, path, mode): # pylint: disable=unused-argument
+        """Emulate read-only file object by returning StringIO object."""
+
+        def _ro_write(self, data):
+            """Write method for emulating RO file."""
+            raise Error("not writable")
+
+        fobj = io.StringIO(self._ro_files[path])
+        fobj.write = types.MethodType(_ro_write, fobj)
+        return fobj
+
+    def open(self, path, mode):
+        """Create file in temporary directory and return the file object."""
+
+        path = str(path)
+        if path in self._ro_files:
+            fobj = self._open_ro(path, mode)
+        else:
+            fobj = self._open_rw(path, mode)
+
         self._ofiles[path] = fobj
         return fobj
 
@@ -136,9 +161,14 @@ class EmulProc():
                 # Create file in temporary directory. For example:
                 # Emulated path: /sys/devices/system/cpu/cpu0/
                 # Real path: /tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0/
-                path = self._basepath / split[0].lstrip("/")
+                path = split[0]
                 data = split[1].strip()
-                populate_rw_file(path, data)
+
+                if finfo.get("readonly"):
+                    self._ro_files[path] = data
+                else:
+                    path = self._basepath / path.lstrip("/")
+                    populate_rw_file(path, data)
 
     def init_testdata(self, module, datapath):
         """Initialize the testdata for module 'module' from directory 'datapath'."""
@@ -163,6 +193,8 @@ class EmulProc():
 
         # Opened files.
         self._ofiles = {}
+        # Data for emulated read-only files.
+        self._ro_files = {}
         self._cmds = {}
         pid = Trivial.get_pid()
         self._basepath = FSHelpers.mktemp(prefix=f"emulprocs_{pid}_")
