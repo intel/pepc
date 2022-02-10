@@ -47,13 +47,6 @@ def test_v1_cstates_info(caplog):
     for cstate in _CPUINFO["cstates"]:
         caplog.clear()
         run_pepc(f"cstates info --cpus 0 --cstates {cstate}")
-        output = "\n".join(caplog.messages)
-
-        for filtered_cst in _CPUINFO["cstates"]:
-            if filtered_cst == cstate:
-                continue
-            assert f"Name: {filtered_cst}\n" not in output
-        assert f"Name: {cstate}\n" in output
 
 def test_v1_cstates_config():
     """Test 'pepc cstates config' command."""
