@@ -159,7 +159,7 @@ def _build_aggregate_pinfo(pinfo_iter, sprops=None):
 
     return aggr_pinfo
 
-def handle_print_opts(opts, cpus, csobj, cpuinfo):
+def _handle_print_opts(opts, cpus, csobj, cpuinfo):
     """
     Handle C-state configuration options other than '--enable' and '--disable' which have to be
     printed.
@@ -175,7 +175,7 @@ def handle_print_opts(opts, cpus, csobj, cpuinfo):
 
     _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo)
 
-def handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
+def _handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
     """
     Handle C-state configuration options other than '--enable' and '--disable' which have to be
     set.
@@ -208,7 +208,7 @@ def _print_cstates_status(cpus, cpuinfo, rcsobj):
                 val = "on" if val else "off"
                 _print_cstate_prop_msg(csname, val, cpuinfo, cpus=val_cpus)
 
-def handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
+def _handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
     """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
 
     print_cstates = False
@@ -268,7 +268,7 @@ def cstates_config_command(args, proc):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        handle_enable_disable_opts(enable_opts, cpus, cpuinfo, rcsobj)
+        _handle_enable_disable_opts(enable_opts, cpus, cpuinfo, rcsobj)
 
         if not set_opts and not print_opts:
             return
@@ -276,8 +276,8 @@ def cstates_config_command(args, proc):
         with MSR.MSR(proc=proc, cpuinfo=cpuinfo) as msr, \
             CStates.CStates(proc=proc, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
 
-            handle_set_opts(set_opts, cpus, csobj, msr, cpuinfo)
-            handle_print_opts(print_opts, cpus, csobj, cpuinfo)
+            _handle_set_opts(set_opts, cpus, csobj, msr, cpuinfo)
+            _handle_print_opts(print_opts, cpus, csobj, cpuinfo)
 
 def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
