@@ -26,6 +26,18 @@ def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
     return "method '%s()' failed for %s" % (method, fobj.name)
 
+def populate_rw_file(path, data):
+    """Create text file 'path' and write 'data' into it."""
+
+    if not path.parent.exists():
+        path.parent.mkdir(parents=True)
+
+    with open(path, "w") as fobj:
+        try:
+            fobj.write(data)
+        except OSError as err:
+            raise Error(f"failed to write into file '{path}':\n{err}") from err
+
 class EmulProc():
     """
     Emulated version of the 'Proc' class in the 'pepclibs.helperlibs.Procs' module. The class is
@@ -124,13 +136,9 @@ class EmulProc():
                 # Create file in temporary directory. For example:
                 # Emulated path: /sys/devices/system/cpu/cpu0/
                 # Real path: /tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0/
-
-                tmppath = self._basepath / split[0].lstrip("/")
-                if not tmppath.parent.exists():
-                    tmppath.parent.mkdir(parents=True)
-
-                with open(tmppath, "w") as fobj:
-                    fobj.write(split[1].strip())
+                path = self._basepath / split[0].lstrip("/")
+                data = split[1].strip()
+                populate_rw_file(path, data)
 
     def init_testdata(self, module, datapath):
         """Initialize the testdata for module 'module' from directory 'datapath'."""
