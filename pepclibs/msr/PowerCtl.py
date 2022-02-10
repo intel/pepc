@@ -21,6 +21,15 @@ _LOG = logging.getLogger()
 # The Power Control Model Specific Register.
 MSR_POWER_CTL = 0x1FC
 
+# CPU models supporting the C-state pre-wake feature.
+_CSTATE_PREWAKE_CPUS = (CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X,
+                        CPUInfo.INTEL_FAM6_ICELAKE_X,
+                        CPUInfo.INTEL_FAM6_ICELAKE_D,
+                        CPUInfo.INTEL_FAM6_BROADWELL_X,
+                        CPUInfo.INTEL_FAM6_SKYLAKE_X,
+                        CPUInfo.INTEL_FAM6_HASWELL_X,
+                        CPUInfo.INTEL_FAM6_IVYBRIDGE_X)
+
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 #
@@ -43,8 +52,7 @@ FEATURES = {
         "help" : f"""When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                      the next local APIC timer event. This CPU feature is controlled by MSR
                      {MSR_POWER_CTL:#x}, bit 30.""",
-        "cpumodels" : (CPUInfo.INTEL_FAM6_IVYBRIDGE_X, CPUInfo.INTEL_FAM6_ICELAKE_X,
-                       CPUInfo.INTEL_FAM6_ICELAKE_D),
+        "cpumodels" : _CSTATE_PREWAKE_CPUS,
         "type" : "bool",
         "vals" : { "on" : 0, "off" : 1},
         "bits" : (30, 30),
