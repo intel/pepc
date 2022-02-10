@@ -4,7 +4,8 @@ commands:
   dirname: CPUInfo/lscpu-topology
 - command: lscpu
   dirname: CPUInfo/lscpu
-files:
+inlinefiles:
 - dirname: CPUInfo/die-info
   filename: die.txt
+  readonly: true
   separator: ':'
