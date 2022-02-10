@@ -289,6 +289,9 @@ def cstates_info_command(args, proc):
          CStates.ReqCStates(proc=proc, cpuinfo=cpuinfo) as rcsobj:
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
+        #
+        # Print requestable C-states info.
+        #
         csinfo_iter = rcsobj.get_cstates_info(csnames="all", cpus=cpus)
         sprops = {"disable", "latency", "residency"}
         aggr_csinfo = _build_aggregate_pinfo(csinfo_iter, sprops=sprops)
@@ -323,3 +326,11 @@ def cstates_info_command(args, proc):
                         #       - expected latency: '0'
                         prefix = " " * (len(csname) + 2) + " - "
                         _print_cstate_prop_msg(val, cpuinfo, name=name, prefix=prefix)
+
+        #
+        # Print platform configuration info.
+        #
+        with CStates.CStates(proc=proc, cpuinfo=cpuinfo, rcsobj=rcsobj) as csobj:
+            pinfo_iter = csobj.get_props(csobj.props, cpus=cpus)
+            aggr_pinfo = _build_aggregate_pinfo(pinfo_iter)
+            _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo)
