@@ -71,17 +71,17 @@ def _print_cstate_prop_msg(val, cpuinfo, name=None, action=None, cpus=None, pref
     if name is None:
         pfx = ""
     else:
-        pfx = f"{name}"
+        pfx = f"{name}: "
 
     if prefix is not None:
         pfx = f"{prefix}{pfx}"
 
     if val is None:
-        msg = f"{pfx}: not supported{sfx}"
+        msg = f"{pfx}not supported{sfx}"
     elif action is not None:
-        msg = f"{pfx}: {action} '{val}'{sfx}"
+        msg = f"{pfx}{action} '{val}'{sfx}"
     else:
-        msg = f"{pfx}: '{val}'{sfx}"
+        msg = f"{pfx}'{val}'{sfx}"
 
     _LOG.info(msg)
 
@@ -208,7 +208,7 @@ def _print_cstates_status(cpus, cpuinfo, rcsobj):
     for csname, csinfo in aggr_csinfo.items():
         for kinfo in csinfo.values():
             for val, val_cpus in kinfo.items():
-                val = "on" if val else "off"
+                val = "off" if val else "on"
                 _print_cstate_prop_msg(val, cpuinfo, name=csname, cpus=val_cpus)
 
 def _handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
@@ -289,18 +289,37 @@ def cstates_info_command(args, proc):
          CStates.ReqCStates(proc=proc, cpuinfo=cpuinfo) as rcsobj:
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
-        first = True
-        for cpu, csinfo in rcsobj.get_cstates_info(csnames=args.csnames, cpus=cpus):
-            for cstate in csinfo.values():
-                if not first:
-                    _LOG.info("")
-                first = False
+        csinfo_iter = rcsobj.get_cstates_info(csnames="all", cpus=cpus)
+        sprops = {"disable", "latency", "residency"}
+        aggr_csinfo = _build_aggregate_pinfo(csinfo_iter, sprops=sprops)
 
-                _LOG.info("CPU: %d", cpu)
-                _LOG.info("Name: %s", cstate["name"])
-                _LOG.info("Index: %d", cstate["index"])
-                _LOG.info("Description: %s", cstate["desc"])
-                _LOG.info("Status: %s", "disabled" if cstate["disable"] else "enabled")
-                _LOG.info("Expected latency: %d μs", cstate["latency"])
-                _LOG.info("Target residency: %d μs", cstate["residency"])
-                _LOG.info("Requested: %d times", cstate["usage"])
+        for csname, csinfo in aggr_csinfo.items():
+            first = True
+            for key, kinfo in csinfo.items():
+                for val, val_cpus in kinfo.items():
+                    if key == "disable":
+                        val = "off" if val else "on"
+                        if first:
+                            _print_cstate_prop_msg(val, cpuinfo, name=csname, cpus=val_cpus)
+                            first = False
+                        else:
+                            # The first line starts with C-state name, aling the second line nicely
+                            # using the prefix. The end result is expected to be like this:
+                            # POLL: 'on' for CPUs 0-15
+                            #       'off' for CPUs 16-31
+                            prefix = " " * (len(csname) + 2)
+                            _print_cstate_prop_msg(val, cpuinfo, cpus=val_cpus, prefix=prefix)
+                    else:
+                        if key == "latency":
+                            name = "expected latency"
+                        elif key == "residency":
+                            name = "target residency"
+
+                        # The first line starts with C-state name, aling the second line nicely
+                        # using the prefix. The end result is expected to be like this:
+                        #
+                        # POLL: 'on' for CPUs 0-15
+                        #       'off' for CPUs 16-31
+                        #       - expected latency: '0'
+                        prefix = " " * (len(csname) + 2) + " - "
+                        _print_cstate_prop_msg(val, cpuinfo, name=name, prefix=prefix)
