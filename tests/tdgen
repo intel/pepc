@@ -36,6 +36,7 @@ CPUInfoData = {
                     r"'.*cpu([[:digit:]]+)/topology/die_(id|cpus_list)' -type f -exec printf " \
                     r"'%s' {}: \; -exec grep . {} \;",
          "separator": ":",
+         "readonly":  True,
          "dirname":   "die-info",
          "filename":  "die.txt"}]}
 
