@@ -76,10 +76,10 @@ ask_question "Did you run tests"
 ask_question "Did you update 'debian/changelog'"
 
 # Change the tool version.
-sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" pepclibs/pepc.py
+sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" pepctool/_Pepc.py
 
 # Update the man page.
-argparse-manpage --pyfile ./pepclibs/pepc.py --function build_arguments_parser \
+argparse-manpage --pyfile pepctool/_Pepc.py --function build_arguments_parser \
                  --project-name 'pepc' --author 'Artem Bityutskiy' \
                  --author-email 'dedekind1@gmail.com' --output docs/man1/pepc.1 \
                  --url 'https://github.com/intel/pepc'
