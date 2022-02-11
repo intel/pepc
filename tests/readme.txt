@@ -1,3 +1,5 @@
+The "v1" tests in this directory will be removed at some point.
+
 Quick quide for using 'pytest'
 
 # List all tests
