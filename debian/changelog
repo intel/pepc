@@ -6,7 +6,7 @@ pepc (1.2.0) unstable; urgency=low
   * Fixed '--cores' and '--packages' dependency for C-state commands.
   * Fix and improve CPU onlining/offlining.
 
- -- Artem Bityutskiy <artem.bityutskiy@intel.com>  ADD_DATE
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 11 Feb 2022 13:10:24 +0200
 
 pepc (1.1.4) unstable; urgency=high
 
