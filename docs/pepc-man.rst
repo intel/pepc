@@ -98,10 +98,10 @@ FURTHER SUB-COMMANDS *'pepc cpu-hotplug'*
    List online and offline CPUs.
 
 **pepc cpu-hotplug** *online*
-   Bring CPUs online (all CPUs by default).
+   Bring CPUs online.
 
 **pepc cpu-hotplug** *offline*
-   Bring CPUs offline (all CPUs by default).
+   Bring CPUs offline.
 
 COMMAND *'pepc* cpu-hotplug info'
 =================================
@@ -127,7 +127,7 @@ COMMAND *'pepc* cpu-hotplug online'
 
 usage: pepc cpu-hotplug online [-h] [-q] [-d] [--cpus CPUS]
 
-Bring CPUs online (all CPUs by default).
+Bring CPUs online.
 
 OPTIONS *'pepc* cpu-hotplug online'
 ===================================
@@ -153,7 +153,7 @@ COMMAND *'pepc* cpu-hotplug offline'
 usage: pepc cpu-hotplug offline [-h] [-q] [-d] [--cpus CPUS] [--cores
 CORES] [--packages PACKAGES] [--siblings]
 
-Bring CPUs offline (all CPUs by default).
+Bring CPUs offline.
 
 OPTIONS *'pepc* cpu-hotplug offline'
 ====================================
@@ -180,12 +180,11 @@ OPTIONS *'pepc* cpu-hotplug offline'
    Same as '--cpus', but specifies list of packages.
 
 **--siblings**
-   Offline all sibling CPUs, making sure there is only one logical CPU
-   per core left online. If none of '--cpus', '--cores', '--package'
-   options were specified, this option effectively disables
-   hyper-threading. Otherwise, this option will find all sibling CPUs
-   among the selected CPUs, and disable all siblings except for the
-   first sibling in each group of CPUs belonging to the same core.
+   Offline only "sibling CPUs", making sure there is only one logical
+   CPU per core is left online. The sibling CPUs will be searched for
+   among the CPUs selected with '--cpus', '--cores', and '--packages'.
+   Therefore, specifying '--cpus all --siblings' will effectively
+   disable hyper-threading on Intel CPUs.
 
 COMMAND *'pepc* cstates'
 ========================
@@ -212,16 +211,13 @@ FURTHER SUB-COMMANDS *'pepc cstates'*
 **pepc cstates** *info*
    Get CPU C-states information.
 
-**pepc cstates** *set*
-   Enable or disable C-states.
-
 **pepc cstates** *config*
-   Configure other C-state aspects.
+   Configure C-states.
 
 COMMAND *'pepc* cstates info'
 =============================
 
-usage: pepc cstates info [-h] [-q] [-d] [--cstates CSTATES] [--cpus
+usage: pepc cstates info [-h] [-q] [-d] [--cstates CSNAMES] [--cpus
 CPUS] [--cores CORES] [--packages PACKAGES]
 
 Get information about C-states on specified CPUs (CPU0 by default).
@@ -241,11 +237,16 @@ OPTIONS *'pepc* cstates info'
 **-d**
    Print debugging information.
 
-**--cstates** *CSTATES*
+**--cstates** *CSNAMES*
    Comma-sepatated list of C-states to get information about (all
-   C-states by default). You can specify C-states either by name (e.g.,
-   'C1') or by the index. Use 'all' to specify all the available
-   C-states (this is the default).
+   C-states by default). C-states should be specified by name (e.g.,
+   'C1'). Use 'all' to specify all the available Linux C-states (this is
+   the default). Note, there is a difference between Linux C-states
+   (e.g., 'C6') and hardware C-states (e.g., Core C6 or Package C6 on
+   many Intel platforms). The former is what Linux can request, and on
+   Intel hardware this is usually about various 'mwait' instruction
+   hints. The latter are platform-specific hardware state, entered upon
+   a Linux request..
 
 **--cpus** *CPUS*
    List of CPUs to get information about. The list can include
@@ -265,64 +266,18 @@ OPTIONS *'pepc* cstates info'
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
 
-COMMAND *'pepc* cstates set'
-============================
-
-usage: pepc cstates set [-h] [-q] [-d] [--enable ENABLE] [--disable
-DISABLE] [--cpus CPUS] [--cores CORES] [--packages PACKAGES]
-
-Enable or disable specified C-states on specified CPUs (all CPUs by
-default). Note, C-states will be enabled/disabled in the same order as
-the '--enable' and '--disable' options are specified.
-
-OPTIONS *'pepc* cstates set'
-============================
-
-**-h**
-   Show this help message and exit.
-
-**-q**
-   Be quiet.
-
-**-d**
-   Print debugging information.
-
-**--enable** *ENABLE*
-   Comma-sepatated list of C-states to enable (all by default). You can
-   specify C-states either by name (e.g., 'C1') or by the index. Use
-   'all' to specify all the available C-states (this is the default).
-
-**--disable** *DISABLE*
-   Similar to '--enable', but specifies the list of C-states to disable.
-
-**--cpus** *CPUS*
-   List of CPUs to enable the specified C-states on. The list can
-   include individual CPU numbers and CPU number ranges. For example,
-   '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use
-   the special keyword 'all' to specify all CPUs.
-
-**--cores** *CORES*
-   List of cores to enable the specified C-states on. The list can
-   include individual core numbers and core number ranges. For example,
-   '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all cores.
-
-**--packages** *PACKAGES*
-   List of packages to enable the specified C-states on. The list can
-   include individual package numbers and package number ranges. For
-   example, '1-3' would mean packages 1 to 3, and '1,3' would mean
-   packages 1 and 3. Use the special keyword 'all' to specify all
-   packages.
-
 COMMAND *'pepc* cstates config'
 ===============================
 
 usage: pepc cstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--cstate-prewake [{on,off}]] [--c1e-autopromote
-[{on,off}]] [--pkg-cstate-limit [PKG_CSTATE_LIMIT]] [--c1-demotion
-[{on,off}]] [--c1-undemotion [{on,off}]]
+[--packages PACKAGES] [--enable [CSTATES]] [--disable [CSTATES]]
+[--pkg-cstate-limit [PKG_CSTATE_LIMIT]] [--c1-demotion [C1_DEMOTION]]
+[--c1-undemotion [C1_UNDEMOTION]] [--c1e-autopromote [C1E_AUTOPROMOTE]]
+[--cstate-prewake [CSTATE_PREWAKE]]
 
-Configure other C-state aspects.
+Configure C-states on specified CPUs. All options can be used without a
+parameter, in which case the currently configured value(s) will be
+printed.
 
 OPTIONS *'pepc* cstates config'
 ===============================
@@ -354,47 +309,47 @@ OPTIONS *'pepc* cstates config'
    mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the
    special keyword 'all' to specify all packages.
 
-**--cstate-prewake** *[{on,off}]*
-   Enable or disable C-state prewake (applicaple only to Intel CPU).
-   When enabled, exit from C-state will start prior next event. This is
-   possible only if time of next event is known, for example in case of
-   local APIC timers. This command toggles MSR 0x1fc, bit 30. Use "on"
-   or "off". C-state prewake setting has package scope. By default this
-   option applies to all packages. If you do not pass any argument to
-   "--cstate-prewake", it will print the current values.
+**--enable** *[CSTATES]*
+   Comma-sepatated list of C-states to enable. C-states should be
+   specified by name (e.g., 'C1'). Use 'all' to specify all the
+   available Linux C-states (this is the default). Note, there is a
+   difference between Linux C-states (e.g., 'C6') and hardware C-states
+   (e.g., Core C6 or Package C6 on many Intel platforms). The former is
+   what Linux can request, and on Intel hardware this is usually about
+   various 'mwait' instruction hints. The latter are platform-specific
+   hardware state, entered upon a Linux request..
 
-**--c1e-autopromote** *[{on,off}]*
-   Enable or disable C1E autopromote (applicaple only to Intel CPU).
-   When enabled, the CPU automatically converts all C1 requests into C1E
-   requests. This command toggles MSR 0x1fc, bit 1. Use "on" or "off".
-   C1E autopromote setting has package scope. By default this option
-   applies to all packages. If you do not pass any argument to
-   "--c1e-autopromote", it will print the current values.
+**--disable** *[CSTATES]*
+   Similar to '--enable', but specifies the list of C-states to disable.
 
 **--pkg-cstate-limit** *[PKG_CSTATE_LIMIT]*
-   Set Package C-state limit (applicaple only to Intel CPU). The deepest
-   package C-state the platform is allowed to enter. The package C-state
-   limit is configured via MSR {hex(MSR_PKG_CST_CONFIG_CONTROL)}
-   (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be
-   locked by the BIOS, in which case the package C-state limit can only
-   be read, but cannot be modified. Package C-state limit setting has
-   package scope. By default this option applies to all packages. If you
-   do not pass any argument to "--pkg-cstate-limit", it will print the
-   current values.
+   Set Package C-state limit. The deepest package C-state the platform
+   is allowed to enter. The package C-state limit is configured via MSR
+   {MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This
+   model-specific register can be locked by the BIOS, in which case the
+   package C-state limit can only be read, but cannot be modified.
+   Package C-state limit has package scope.
 
-**--c1-demotion** *[{on,off}]*
-   Enable or disable C1 demotion (applicaple only to Intel CPU).
-   Allow/disallow the CPU to demote C6/C7 requests to C1. Use "on" or
-   "off". C1 demotion setting has CPU scope. By default this option
-   applies to all CPUs. If you do not pass any argument to
-   "--c1-demotion", it will print the current values.
+**--c1-demotion** *[C1_DEMOTION]*
+   Enable or disable C1 demotion. Allow/disallow the CPU to demote C6/C7
+   requests to C1. Use "on" or "off". C1 demotion has core scope.
 
-**--c1-undemotion** *[{on,off}]*
-   Enable or disable C1 undemotion (applicaple only to Intel CPU).
-   Allow/disallow the CPU to un-demote previously demoted requests back
-   from C1 to C6/C7. Use "on" or "off". C1 undemotion setting has CPU
-   scope. By default this option applies to all CPUs. If you do not pass
-   any argument to "--c1-undemotion", it will print the current values.
+**--c1-undemotion** *[C1_UNDEMOTION]*
+   Enable or disable C1 undemotion. Allow/disallow the CPU to un-demote
+   previously demoted requests back from C1 to C6/C7. Use "on" or "off".
+   C1 undemotion has core scope.
+
+**--c1e-autopromote** *[C1E_AUTOPROMOTE]*
+   Enable or disable C1E autopromote. When enabled, the CPU
+   automatically converts all C1 requests to C1E requests. This CPU
+   feature is controlled by MSR 0x1fc, bit 1. Use "on" or "off". C1E
+   autopromote has package scope.
+
+**--cstate-prewake** *[CSTATE_PREWAKE]*
+   Enable or disable C-state prewake. When enabled, the CPU will start
+   exiting the C6 idle state in advance, prior to the next local APIC
+   timer event. This CPU feature is controlled by MSR 0x1fc, bit 30. Use
+   "on" or "off". C-state prewake has package scope.
 
 COMMAND *'pepc* pstates'
 ========================
@@ -420,9 +375,6 @@ FURTHER SUB-COMMANDS *'pepc pstates'*
 
 **pepc pstates** *info*
    Get P-states information.
-
-**pepc pstates** *set*
-   Set CPU or uncore frequency.
 
 **pepc pstates** *config*
    Configure other P-state aspects.
@@ -473,76 +425,15 @@ OPTIONS *'pepc* pstates info'
    between the cores. Uncore frequency is per-package, therefore, the
    '--cpus' and '--cores' options should not be used with this option.
 
-COMMAND *'pepc* pstates set'
-============================
-
-usage: pepc pstates set [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--min-freq [MINFREQ]] [--max-freq [MAXFREQ]]
-[--min-uncore-freq [MINUFREQ]] [--max-uncore-freq [MAXUFREQ]]
-
-Set CPU frequency for specified CPUs (all CPUs by default) or uncore
-frequency for specified packages (all packages by default).
-
-OPTIONS *'pepc* pstates set'
-============================
-
-**-h**
-   Show this help message and exit.
-
-**-q**
-   Be quiet.
-
-**-d**
-   Print debugging information.
-
-**--cpus** *CPUS*
-   List of CPUs to set frequencies for. The list can include individual
-   CPU numbers and CPU number ranges. For example, '1-4,7,8,10-12' would
-   mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword
-   'all' to specify all CPUs.
-
-**--cores** *CORES*
-   List of cores to set frequencies for. The list can include individual
-   core numbers and core number ranges. For example, '1-4,7,8,10-12'
-   would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special
-   keyword 'all' to specify all cores.
-
-**--packages** *PACKAGES*
-   List of packages to set frequencies for. The list can include
-   individual package numbers and package number ranges. For example,
-   '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
-   3. Use the special keyword 'all' to specify all packages.
-
-**--min-freq** *[MINFREQ]*
-   Set minimum CPU frequency. The default unit is 'kHz', but 'Hz',
-   'MHz', and 'GHz' can also be used, for example '900MHz'.
-   Additionally, one of the following specifiers can be used: min,lfm -
-   minimum supported frequency (LFM), eff - maximum effeciency
-   frequency, base,hfm - base frequency (HFM), max - maximum supported
-   frequency.
-
-**--max-freq** *[MAXFREQ]*
-   Same as '--min-freq', but for maximum CPU frequency.
-
-**--min-uncore-freq** *[MINUFREQ]*
-   Set minimum uncore frequency. The default unit is 'kHz', but 'Hz',
-   'MHz', and 'GHz' can also be used, for example '900MHz'.
-   Additionally, one of the following specifiers can be used: 'min' -
-   the minimum supported uncore frequency, 'max' - the maximum supported
-   uncore frequency. Uncore frequency is per-package, therefore, the
-   '--cpus' and '--cores' options should not be used with this option.
-
-**--max-uncore-freq** *[MAXUFREQ]*
-   Same as '--min-uncore-freq', but for maximum uncore frequency.
-
 COMMAND *'pepc* pstates config'
 ===============================
 
 usage: pepc pstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--epb [EPB]] [--epp [EPP]] [--governor
-[GOVERNOR]] [--turbo [{on,off}]]
+[--packages PACKAGES] [--min-freq [MINFREQ]] [--max-freq [MAXFREQ]]
+[--min-uncore-freq [MINUFREQ]] [--max-uncore-freq [MAXUFREQ]] [--epb
+[EPB]] [--epp [EPP]] [--governor [GOVERNOR]] [--turbo [{on,off}]]
 
-Configure P-states on specified CPUs.
+Configure P-states on specified CPUs
 
 OPTIONS *'pepc* pstates config'
 ===============================
@@ -573,6 +464,29 @@ OPTIONS *'pepc* pstates config'
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
+
+**--min-freq** *[MINFREQ]*
+   Set minimum CPU frequency. The default unit is 'kHz', but 'Hz',
+   'MHz', and 'GHz' can also be used, for example '900MHz'.
+   Additionally, one of the following specifiers can be used: min,lfm -
+   minimum supported frequency (LFM), eff - maximum efficiency
+   frequency, base,hfm - base frequency (HFM), max - maximum supported
+   frequency. Applies to all CPUs by default.
+
+**--max-freq** *[MAXFREQ]*
+   Same as '--min-freq', but for maximum CPU frequency.
+
+**--min-uncore-freq** *[MINUFREQ]*
+   Set minimum uncore frequency. The default unit is 'kHz', but 'Hz',
+   'MHz', and 'GHz' can also be used, for example '900MHz'.
+   Additionally, one of the following specifiers can be used: 'min' -
+   the minimum supported uncore frequency, 'max' - the maximum supported
+   uncore frequency. Uncore frequency is per-package, therefore, the
+   '--cpus' and '--cores' options should not be used with this option.
+   Applies to all packages by default.
+
+**--max-uncore-freq** *[MAXUFREQ]*
+   Same as '--min-uncore-freq', but for maximum uncore frequency.
 
 **--epb** *[EPB]*
    Set energy performance bias hint. Hint can be integer in range of
@@ -614,7 +528,7 @@ FURTHER SUB-COMMANDS *'pepc aspm'*
 **pepc aspm** *info*
    Get PCI ASPM information.
 
-**pepc aspm** *set*
+**pepc aspm** *config*
    Change PCI ASPM configuration.
 
 COMMAND *'pepc* aspm info'
@@ -622,7 +536,7 @@ COMMAND *'pepc* aspm info'
 
 usage: pepc aspm info [-h] [-q] [-d]
 
-Get information about currrent PCI ASPM configuration.
+Get information about current PCI ASPM configuration.
 
 OPTIONS *'pepc* aspm info'
 ==========================
@@ -636,15 +550,15 @@ OPTIONS *'pepc* aspm info'
 **-d**
    Print debugging information.
 
-COMMAND *'pepc* aspm set'
-=========================
+COMMAND *'pepc* aspm config'
+============================
 
-usage: pepc aspm set [-h] [-q] [-d] [--policy [POLICY]]
+usage: pepc aspm config [-h] [-q] [-d] [--policy [POLICY]]
 
 Change PCI ASPM configuration.
 
-OPTIONS *'pepc* aspm set'
-=========================
+OPTIONS *'pepc* aspm config'
+============================
 
 **-h**
    Show this help message and exit.
@@ -656,8 +570,8 @@ OPTIONS *'pepc* aspm set'
    Print debugging information.
 
 **--policy** *[POLICY]*
-   Specify the PCI ASPM policy to be set, use "default" to set the
-   policy to its default value.
+   the PCI ASPM policy to set, use "default" to set the Linux default
+   policy.
 
 AUTHORS
 =======
