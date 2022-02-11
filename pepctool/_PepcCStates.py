@@ -292,7 +292,7 @@ def cstates_info_command(args, proc):
         #
         # Print requestable C-states info.
         #
-        csinfo_iter = rcsobj.get_cstates_info(csnames="all", cpus=cpus)
+        csinfo_iter = rcsobj.get_cstates_info(csnames=args.csnames, cpus=cpus)
         sprops = {"disable", "latency", "residency"}
         aggr_csinfo = _build_aggregate_pinfo(csinfo_iter, sprops=sprops)
 
