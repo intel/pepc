@@ -78,7 +78,7 @@ class PlatformInfo(_FeaturedMSR.FeaturedMSR):
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
-        self.features = FEATURES
+        self._features = FEATURES
         self.regaddr = MSR_PLATFORM_INFO
         self.regname = "MSR_PLATFORM_INFO"
 

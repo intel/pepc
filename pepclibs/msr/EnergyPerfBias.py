@@ -43,7 +43,7 @@ class EnergyPerfBias(_FeaturedMSR.FeaturedMSR):
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
-        self.features = FEATURES
+        self._features = FEATURES
         self.regaddr = MSR_ENERGY_PERF_BIAS
         self.regname = "MSR_ENERGY_PERF_BIAS"
 

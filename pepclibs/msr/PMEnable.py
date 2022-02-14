@@ -43,7 +43,7 @@ class PMEnable(_FeaturedMSR.FeaturedMSR):
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
-        self.features = FEATURES
+        self._features = FEATURES
         self.regaddr = MSR_PM_ENABLE
         self.regname = "MSR_PM_ENABLE"
 
