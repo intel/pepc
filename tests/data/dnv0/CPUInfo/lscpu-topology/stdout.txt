@@ -1,0 +1,16 @@
+# The following is the parsable format, which can be fed to other
+# programs. Each different item in every column has an unique ID
+# starting from zero.
+# Socket,Node,Core,CPU,Online
+0,0,2,0,Y
+0,0,3,1,Y
+0,0,4,2,Y
+0,0,5,3,Y
+0,0,6,4,Y
+0,0,7,5,Y
+0,0,8,6,Y
+0,0,9,7,Y
+0,0,12,8,Y
+0,0,13,9,Y
+0,0,14,10,Y
+0,0,15,11,Y
