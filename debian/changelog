@@ -1,3 +1,9 @@
+pepc (1.2.1) unstable; urgency=low
+
+  * pepc: fix case-sensitivity bugs.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Mon, 14 Feb 2022 11:17:11 +0200
+
 pepc (1.2.0) unstable; urgency=low
 
   * Merge the 'cstate set' command into 'cstate config'.

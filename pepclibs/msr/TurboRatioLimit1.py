@@ -49,7 +49,7 @@ class TurboRatioLimit1(_FeaturedMSR.FeaturedMSR):
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
-        self.features = FEATURES
+        self._features = FEATURES
         self.regaddr = MSR_TURBO_RATIO_LIMIT1
         self.regname = "MSR_TURBO_RATIO_LIMIT1"
 

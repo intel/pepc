@@ -54,20 +54,22 @@ class FeaturedMSR:
         for writing the MSR register.
         """
 
-        finfo = self.features[feature]
+        finfo = self._features[feature]
 
         if not finfo.get("vals"):
             return val
 
-        if "case" in finfo:
-            # Convert to the upper or lower case.
-            val = getattr(val, finfo["case"])()
-
-        if "aliases" in finfo and val in finfo["aliases"]:
-            val = finfo["aliases"][val]
+        if "aliases" in finfo:
+            if val in finfo["aliases"]:
+                val = finfo["aliases"][val]
+            elif val.lower() in finfo["aliases_nocase"]:
+                val = finfo["aliases_nocase"][val.lower()]
 
         if val in finfo["vals"]:
             return finfo["vals"][val]
+
+        if "vals_nocase" in finfo and val.lower() in finfo["vals_nocase"]:
+            return finfo["vals_nocase"][val.lower()]
 
         vals = list(finfo["vals"]) + list(finfo.get("aliases", {}))
         vals_str = ", ".join(vals)
@@ -96,10 +98,10 @@ class FeaturedMSR:
         if get_method:
             yield from get_method(cpus=cpus)
         else:
-            bits = self.features[fname]["bits"]
+            bits = self._features[fname]["bits"]
             for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus):
-                if "rvals" in self.features[fname]:
-                    val = self.features[fname]["rvals"][val]
+                if "rvals" in self._features[fname]:
+                    val = self._features[fname]["rvals"][val]
                 yield (cpu, val)
 
     def read_cpu_feature(self, fname, cpu):
@@ -130,7 +132,7 @@ class FeaturedMSR:
 
         self.check_feature_supported(fname, cpus=cpus)
 
-        if self.features[fname]["type"] != "bool":
+        if self._features[fname]["type"] != "bool":
             raise Error(f"feature '{fname}' is not boolean, use 'read_feature()' instead")
 
         for cpu, val in self.read_feature(fname, cpus=cpus):
@@ -168,7 +170,7 @@ class FeaturedMSR:
 
         val = self._normalize_feature_value(fname, val)
 
-        finfo = self.features[fname]
+        finfo = self._features[fname]
         if not finfo["writable"]:
             fullname = finfo["name"]
             raise Error(f"feature '{fullname}' is can not be modified{self._proc.hostmsg}, it is "
@@ -204,8 +206,8 @@ class FeaturedMSR:
 
         self.check_feature_supported(fname, cpus=cpus)
 
-        if self.features[fname]["type"] != "bool":
-            name = self.features[fname]["name"]
+        if self._features[fname]["type"] != "bool":
+            name = self._features[fname]["name"]
             raise Error(f"feature '{name}' is not boolean, use 'write_feature()' instead")
 
         if enable in {True, "on", "enable"}:
@@ -213,7 +215,7 @@ class FeaturedMSR:
         elif enable in {False, "off", "disable"}:
             val = "off"
         else:
-            name = self.features[fname]["name"]
+            name = self._features[fname]["name"]
             good_vals = "True/False, 'on'/'off', 'enable'/'disable'"
             raise Error(f"bad value '{enable}' for a boolean feature '{name}', use: {good_vals}")
 
@@ -240,8 +242,8 @@ class FeaturedMSR:
         Returns 'True' if the feature is supported by all CPUs in 'cpus', returns 'False' otherwise.
         """
 
-        if fname not in self.features:
-            features_str = ", ".join(set(self.features))
+        if fname not in self._features:
+            features_str = ", ".join(set(self._features))
             raise Error(f"unknown feature '{fname}', known features are: {features_str}")
 
         # In current implementation we assume that all CPUs are the same and whether the feature is
@@ -268,7 +270,7 @@ class FeaturedMSR:
         if self.is_feature_supported(fname, cpus=cpus):
             return
 
-        finfo = self.features[fname]
+        finfo = self._features[fname]
         raise ErrorNotSupported(f"the '{finfo['name']}' feature is not supported on "
                                 f"{self._cpuinfo.cpudescr}{self._proc.hostmsg}")
 
@@ -281,33 +283,34 @@ class FeaturedMSR:
         self.check_feature_supported(fname, cpus=(cpu, ))
 
     def _init_supported_flag(self):
-        """Initialize the 'supported' flag for all features in the 'self._features' dictionary."""
+        """Initialize the 'supported' flag for all features."""
 
-        for fname, finfo in self.features.items():
+        for finfo in self._features.values():
             # By default let's assume the feature is supported by this CPU.
-            self._features[fname]["supported"] = True
+            finfo["supported"] = True
 
             if "cpuflags" in finfo:
                 # Make sure that current CPU has all the required CPU flags.
                 available_cpuflags = set(self._cpuinfo.info["flags"])
                 for cpuflag in finfo["cpuflags"]:
                     if cpuflag not in available_cpuflags:
-                        self._features[fname]["supported"] = False
+                        finfo["supported"] = False
 
             if "cpumodels" in finfo:
                 # Check if current CPU model is supported by the feature.
                 cpumodel = self._cpuinfo.info["model"]
-                self._features[fname]["supported"] = cpumodel in finfo["cpumodels"]
+                finfo["supported"] = cpumodel in finfo["cpumodels"]
 
     def _init_features_dict_defaults(self):
         """
-        Walk through each feature in the 'self.features' dictionary and make sure that all the
+        Walk through each feature in the 'self._features' dictionary and make sure that all the
         necessary keys are present. Set the missing keys to their default values.
           * writable - a flag indicating whether this feature can be modified. Default is 'True'.
+          * rvals - the reverse values map.
         """
 
-        for fname, finfo in self.features.items():
-            if not self._features[fname]["supported"]:
+        for finfo in self._features.values():
+            if not finfo["supported"]:
                 continue
 
             if "writable" not in finfo:
@@ -319,6 +322,36 @@ class FeaturedMSR:
                 for name, code in finfo["vals"].items():
                     finfo["rvals"][code] = name
 
+                if finfo["type"] in ("bool", "choice"):
+                    # Build a lowercase version of 'vals' and 'rvals' for case-insensitive matching.
+                    finfo["vals_nocase"] = {}
+                    finfo["rvals_nocase"] = {}
+                    for name, code in finfo["vals"].items():
+                        name = name.lower()
+                        finfo["vals_nocase"][name] = code
+                        finfo["rvals_nocase"][code] = name
+
+            if "aliases" in finfo:
+                finfo["aliases_nocase"] = {}
+                for alias, name in finfo["aliases"].items():
+                    finfo["aliases_nocase"][alias.lower()] = name
+
+    def _init_public_features_dict(self):
+        """Create the public version of the features dictionary ('self.features')."""
+
+        self.features = copy.deepcopy(self._features)
+
+        # Remove flags we do not want the user to access from 'self.features'.
+        for finfo in self.features.values():
+            del finfo["supported"]
+            if "rvals" in finfo:
+                del finfo["rvals"]
+            if "vals_nocase" in finfo:
+                del finfo["vals_nocase"]
+                del finfo["rvals_nocase"]
+            if "aliases_nocase" in finfo:
+                del finfo["aliases_nocase"]
+
     def _init_features_dict(self):
         """
         Initialize the 'features' dictionary with platform-specific information. The sub-classes
@@ -327,12 +360,13 @@ class FeaturedMSR:
 
         self._init_supported_flag()
         self._init_features_dict_defaults()
+        self._init_public_features_dict()
 
     def _set_baseclass_attributes(self):
         """
         This method must be provided by the sub-class and it must initialized the following
         attributes:
-          * self.features - the features dictionary.
+          * self._features - the private features dictionary.
           * self.regaddr - the featured MSR address.
           * self.regname = the featured MSR name.
         """
@@ -356,7 +390,9 @@ class FeaturedMSR:
         self._close_cpuinfo = cpuinfo is None
         self._close_msr = msr is None
 
-        self.features = None
+        # The user-visible features dictionary.
+        self.features = {}
+        # The private version of the 'self.features' dictionary.
         self._features = {}
         self.regaddr = None
         self.regname = None
@@ -376,15 +412,6 @@ class FeaturedMSR:
             raise ErrorNotSupported(f"unsupported {self._cpuinfo.descr}{self._proc.hostmsg}, "
                                     f"model-specific register {self.regaddr:#x} ({self.regname}) "
                                     f"is available only on Intel CPUs.")
-
-        self.features = copy.deepcopy(self.features)
-
-        # The '_features' dictionary is an additional per-feature storage of various "private"
-        # pieces of information, which we do not want users to access directly. For example, we
-        # store the 'supported' flag in '_features'. It may become per-CPU at some point, and we
-        # want users to call 'is_cpu_feature_supported()' to check if the feature is supported.
-        for fname in self.features:
-            self._features[fname] = {}
 
         self._init_features_dict()
 

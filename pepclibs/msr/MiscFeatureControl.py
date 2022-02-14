@@ -97,18 +97,18 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
     """
 
     def _init_features_dict_bits(self):
-        """Initialize the 'bits' key in the 'self.features' dictionary."""
+        """Initialize the 'bits' key in the 'self._features' dictionary."""
 
         cpumodel = self._cpuinfo.info["model"]
         if cpumodel in CPUInfo.PHIS:
             # Xeon Phi platforms have different bit numbers comparing to all other platforms.
-            self.features["l2_hw_prefetcher"]["bits"]  = (1, 1)
-            self.features["dcu_hw_prefetcher"]["bits"] = (0, 0)
+            self._features["l2_hw_prefetcher"]["bits"]  = (1, 1)
+            self._features["dcu_hw_prefetcher"]["bits"] = (0, 0)
         else:
-            self.features["l2_hw_prefetcher"]["bits"]  = (0, 0)
-            self.features["l1_adj_prefetcher"]["bits"] = (1, 1)
-            self.features["dcu_hw_prefetcher"]["bits"] = (2, 2)
-            self.features["dcu_ip_prefetcher"]["bits"] = (3, 3)
+            self._features["l2_hw_prefetcher"]["bits"]  = (0, 0)
+            self._features["l1_adj_prefetcher"]["bits"] = (1, 1)
+            self._features["dcu_hw_prefetcher"]["bits"] = (2, 2)
+            self._features["dcu_ip_prefetcher"]["bits"] = (3, 3)
 
     def _init_features_dict(self):
         """Intitialize the 'features' dictionary with platform-specific information."""
@@ -116,11 +116,12 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
         self._init_supported_flag()
         self._init_features_dict_bits()
         self._init_features_dict_defaults()
+        self._init_public_features_dict()
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
-        self.features = FEATURES
+        self._features = FEATURES
         self.regaddr = MSR_MISC_FEATURE_CONTROL
         self.regname = "MSR_MISC_FEATURE_CONTROL"
 

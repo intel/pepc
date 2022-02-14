@@ -89,7 +89,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
     """
 
     def _init_features_dict_fsb(self):
-        """Initialize the 'fsb' feature information in the 'self.features' dictionary."""
+        """Initialize the 'fsb' feature information in the 'self._features' dictionary."""
 
         if not self._features["fsb"]["supported"]:
             return
@@ -97,7 +97,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         cpumodel = self._cpuinfo.info["model"]
         cpumodel_info = _FSB_CODES[cpumodel]
 
-        finfo = self.features["fsb"]
+        finfo = self._features["fsb"]
         finfo["bits"] = cpumodel_info["bits"]
         finfo["vals"] = cpumodel_info["codes"]
 
@@ -111,7 +111,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
-        self.features = FEATURES
+        self._features = FEATURES
         self.regaddr = MSR_FSB_FREQ
         self.regname = "MSR_FSB_FREQ"
 

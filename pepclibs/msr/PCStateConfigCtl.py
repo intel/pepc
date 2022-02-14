@@ -93,7 +93,6 @@ FEATURES = {
                     modified.""",
         "cpumodels" : tuple(_PKG_CST_LIMITS.keys()),
         "type"    : "choice",
-        "case"    : "upper",
         "vals"    : None,
         "aliases" : None,
         "bits"    : None,
@@ -148,7 +147,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                       the 'aliases'.
         """
 
-        finfo = self.features["pkg_cstate_limit"]
+        finfo = self._features["pkg_cstate_limit"]
 
         for cpu, code in self._msr.read_bits(self.regaddr, finfo["bits"], cpus=cpus):
             if code not in finfo["rvals"]:
@@ -173,10 +172,10 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     def _set_pkg_cstate_limit(self, limit, cpus="all"):
         """Set package C-state limit for CPUs in 'cpus'."""
 
-        finfo = self.features["pkg_cstate_limit"]
+        finfo = self._features["pkg_cstate_limit"]
 
         for cpu, regval in self._msr.read(self.regaddr, cpus=cpus):
-            if self._msr.get_bits(regval, self.features["locked"]["bits"]):
+            if self._msr.get_bits(regval, self._features["locked"]["bits"]):
                 raise Error(f"cannot set package C-state limit{self._proc.hostmsg} for CPU "
                             f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
@@ -185,7 +184,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             self._msr.write_cpu(self.regaddr, regval, cpu)
 
     def _init_features_dict_pkg_cstate_limit(self):
-        """Initialize the 'pkg_cstate_limit' information in the 'self.features' dictionary."""
+        """Initialize the 'pkg_cstate_limit' information in the 'self._features' dictionary."""
 
         if not self._features["pkg_cstate_limit"]["supported"]:
             _LOG.notice("no package C-state limit table available for %s%s. Try to contact "
@@ -195,7 +194,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         cpumodel = self._cpuinfo.info["model"]
         cpumodel_info = _PKG_CST_LIMITS[cpumodel]
 
-        finfo = self.features["pkg_cstate_limit"]
+        finfo = self._features["pkg_cstate_limit"]
         finfo["bits"] = cpumodel_info["bits"]
         finfo["vals"] = cpumodel_info["codes"]
         if "aliases" in cpumodel_info:
@@ -207,11 +206,12 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         self._init_supported_flag()
         self._init_features_dict_pkg_cstate_limit()
         self._init_features_dict_defaults()
+        self._init_public_features_dict()
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
-        self.features = FEATURES
+        self._features = FEATURES
         self.regaddr = MSR_PKG_CST_CONFIG_CONTROL
         self.regname = "MSR_PKG_CST_CONFIG_CONTROL"
 
