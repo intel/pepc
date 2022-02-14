@@ -59,15 +59,17 @@ class FeaturedMSR:
         if not finfo.get("vals"):
             return val
 
-        if "case" in finfo:
-            # Convert to the upper or lower case.
-            val = getattr(val, finfo["case"])()
-
-        if "aliases" in finfo and val in finfo["aliases"]:
-            val = finfo["aliases"][val]
+        if "aliases" in finfo:
+            if val in finfo["aliases"]:
+                val = finfo["aliases"][val]
+            elif val.lower() in finfo["aliases_nocase"]:
+                val = finfo["aliases_nocase"][val.lower()]
 
         if val in finfo["vals"]:
             return finfo["vals"][val]
+
+        if "vals_nocase" in finfo and val.lower() in finfo["vals_nocase"]:
+            return finfo["vals_nocase"][val.lower()]
 
         vals = list(finfo["vals"]) + list(finfo.get("aliases", {}))
         vals_str = ", ".join(vals)
@@ -320,6 +322,20 @@ class FeaturedMSR:
                 for name, code in finfo["vals"].items():
                     finfo["rvals"][code] = name
 
+                if finfo["type"] in ("bool", "choice"):
+                    # Build a lowercase version of 'vals' and 'rvals' for case-insensitive matching.
+                    finfo["vals_nocase"] = {}
+                    finfo["rvals_nocase"] = {}
+                    for name, code in finfo["vals"].items():
+                        name = name.lower()
+                        finfo["vals_nocase"][name] = code
+                        finfo["rvals_nocase"][code] = name
+
+            if "aliases" in finfo:
+                finfo["aliases_nocase"] = {}
+                for alias, name in finfo["aliases"].items():
+                    finfo["aliases_nocase"][alias.lower()] = name
+
     def _init_public_features_dict(self):
         """Create the public version of the features dictionary ('self.features')."""
 
@@ -330,6 +346,11 @@ class FeaturedMSR:
             del finfo["supported"]
             if "rvals" in finfo:
                 del finfo["rvals"]
+            if "vals_nocase" in finfo:
+                del finfo["vals_nocase"]
+                del finfo["rvals_nocase"]
+            if "aliases_nocase" in finfo:
+                del finfo["aliases_nocase"]
 
     def _init_features_dict(self):
         """

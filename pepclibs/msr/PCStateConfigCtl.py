@@ -93,7 +93,6 @@ FEATURES = {
                     modified.""",
         "cpumodels" : tuple(_PKG_CST_LIMITS.keys()),
         "type"    : "choice",
-        "case"    : "upper",
         "vals"    : None,
         "aliases" : None,
         "bits"    : None,
