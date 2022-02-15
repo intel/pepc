@@ -16,7 +16,7 @@ _PytestOption = namedtuple("PytestOptions", ["short", "long", "dest", "default",
 _PYTEST_OPTS = (_PytestOption("-H", "--host", "hostname", "emulation",
                                """Name of the host to run the test on, or "emulation" (default) to
                                   run locally and emulate real hardware.""", False),
-                _PytestOption("-D", "--dataset", "dataset", "icx2s0",
+                _PytestOption("-D", "--dataset", "dataset", "all",
                               """Name of the dataset used to emulate the real hardware.""", True), )
 
 def pytest_addoption(parser):
@@ -26,6 +26,24 @@ def pytest_addoption(parser):
         kwargs = {"dest" : opt.dest, "default" : [opt.default], "help" : opt.help,
                   "action" : "append"}
         parser.addoption(opt.short, opt.long, **kwargs)
+
+def pytest_collection_modifyitems(session, config, items): # pylint: disable=unused-argument
+    """Inspect and modify list of collected tests."""
+
+    dataset = config.getoption("dataset")[-1]
+    hostname = config.getoption("hostname")[-1]
+    opt_str = f"[{dataset}-{hostname}]"
+
+    deselect = []
+    select = []
+    for item in items:
+        if item.name.startswith("test_v1_") or dataset == "all" or opt_str in item.name:
+            select.append(item)
+        else:
+            deselect.append(item)
+
+    config.hook.pytest_deselected(items=deselect)
+    items[:] = select
 
 def pytest_generate_tests(metafunc):
     """Generate tests with custom options."""
