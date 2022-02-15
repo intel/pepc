@@ -12,12 +12,12 @@
 
 from collections import namedtuple
 
-_PytestOptions = namedtuple("PytestOptions", ["short", "long", "dest", "default", "help"])
-_PYTEST_OPTS = (_PytestOptions("-H", "--host", "hostname", "emulation",
+_PytestOption = namedtuple("PytestOptions", ["short", "long", "dest", "default", "help", "private"])
+_PYTEST_OPTS = (_PytestOption("-H", "--host", "hostname", "emulation",
                                """Name of the host to run the test on, or "emulation" (default) to
-                                  run locally and emulate real hardware."""),
-                _PytestOptions("-D", "--dataset", "dataset", "icx2s0",
-                               """Name of the dataset used to emulate the real hardware."""), )
+                                  run locally and emulate real hardware.""", False),
+                _PytestOption("-D", "--dataset", "dataset", "icx2s0",
+                              """Name of the dataset used to emulate the real hardware.""", True), )
 
 def pytest_addoption(parser):
     """Add custom pytest options."""
@@ -35,6 +35,9 @@ def pytest_generate_tests(metafunc):
         return
 
     for opt in _PYTEST_OPTS:
+        if opt.private:
+            continue
+
         optval = metafunc.config.getoption(opt.dest, default=None)
         # Option value is a list, remove default (first element) if option provided in commandline.
         if optval:

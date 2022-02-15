@@ -32,13 +32,14 @@ def get_proc(hostname, dataset):
 
     return SSH.SSH(hostname=hostname, username='root', timeout=10)
 
-@pytest.fixture(name="proc")
-def fixture_proc(hostname, dataset):
+@pytest.fixture(name="proc", params=["icx2s0"])
+def fixture_proc(request, hostname):
     """
     The test fixture is called before each test function. Yields the 'Proc' object, and closes it
     after the test function returns.
     """
 
+    dataset = request.param
     proc = get_proc(hostname, dataset)
     yield proc
     proc.close()
