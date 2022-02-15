@@ -22,11 +22,12 @@ from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
 
 _LOG = logging.getLogger()
 
-# This dictionary describes various CPU properties this module supports. Many of the properties are
+# This dictionary describes the C-state properties this module supports. Many of the properties are
 # just features controlled by an MSR, such as "c1e_autopromote" from 'PowerCtl.FEATURES'.
 #
-# Define the global 'PROPS' dictionary, and then refine update it later. Full dictionary is
-# available via 'CStates.props'.
+# While this dictionary is user-visible and can be used, it is not recommended, because it is not
+# complete. This dictionary is extended by 'CStates' objects. Use the full dictionary via
+# 'CStates.props'.
 PROPS = {
     "pkg_cstate_limit" : {
         "name" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["name"],
@@ -81,7 +82,7 @@ PROPS = {
 }
 
 # The C-state sysfs file names which are read by 'get_cstates_info()'. The C-state
-# information dicitonary returned by 'get_cstates_info()' uses these file names as keys as well.
+# information dictionary returned by 'get_cstates_info()' uses these file names as keys as well.
 CST_SYSFS_FNAMES = ["name", "desc", "disable", "latency", "residency", "time", "usage"]
 
 class ReqCStates:
@@ -168,7 +169,7 @@ class ReqCStates:
         # At this point 'values' will contain the value for every file in 'fpaths'.
 
         if len(fpaths) != len(values):
-            raise Error("BUG: mismatch bwetween syfs C-state paths and values")
+            raise Error("BUG: mismatch between sysfs C-state paths and values")
 
         return fpaths, values
 
