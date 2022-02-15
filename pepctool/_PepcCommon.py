@@ -23,8 +23,9 @@ def check_tuned_presence(proc):
 
     with Systemctl.Systemctl(proc=proc) as systemctl:
         if systemctl.is_active("tuned"):
-            _LOG.warning("'tuned' service is active%s, and it may override the changes made by "
-                         "this tool", proc.hostmsg)
+            _LOG.warning("the 'tuned' service is active%s! It may override the changes made by "
+                         "'pepc'.\nConsider having 'tuned' disabled while experimenting with power "
+                         "mangement settings.", proc.hostmsg)
 
 def get_cpus(args, cpuinfo, default_cpus="all"):
     """
