@@ -10,6 +10,7 @@
 
 """Common bits for the 'pepc' tests."""
 
+import os
 from pathlib import Path
 import pytest
 from pepclibs import CPUInfo
@@ -32,7 +33,16 @@ def get_proc(hostname, dataset):
 
     return SSH.SSH(hostname=hostname, username='root', timeout=10)
 
-@pytest.fixture(name="proc", params=["icx2s0"])
+def get_datasets():
+    """Find all directories in 'tests/data' directory and yield the directory name."""
+
+    basepath = Path(__file__).parent.resolve() / "data"
+    for dirname in os.listdir(basepath):
+        if not Path(f"{basepath}/{dirname}").is_dir():
+            continue
+        yield dirname
+
+@pytest.fixture(name="proc", params=get_datasets())
 def fixture_proc(request, hostname):
     """
     The test fixture is called before each test function. Yields the 'Proc' object, and closes it
