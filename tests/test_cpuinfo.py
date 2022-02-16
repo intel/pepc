@@ -404,8 +404,11 @@ def test_div(cpuinfo):
         allcpus_str = ",".join(str(cpu) for cpu in allcpus)
         _run_method(method_name, cpuinfo, args=(allcpus_str,), exp_res=exp_res)
 
-        if len(allcpus) < 2:
-            # The rest of the test-cases require more than one CPU per package.
+        # Get the list of CPUs in the first package.
+        num0_cpus = _run_method(f"{lvl}_to_cpus", cpuinfo, args=(nums[0],))
+        if num0_cpus is None or len(num0_cpus) < 2:
+            # The rest of the test-cases require the '<lvl>_to_cpus()' method and more than one CPU
+            # per package.
             continue
 
         # Resolving all CPUs except for the very first one.
@@ -421,12 +424,6 @@ def test_div(cpuinfo):
 
         if len(nums) < 2:
             # The rest of the test-cases require more than one package.
-            continue
-
-        # Get the list of CPUs in the first package.
-        num0_cpus = _run_method(f"{lvl}_to_cpus", cpuinfo, args=(nums[0],))
-        if num0_cpus is None:
-            # The '<lvl>_to_cpus()' method does not exist.
             continue
 
         # Resolving all CPUs in the first package.
