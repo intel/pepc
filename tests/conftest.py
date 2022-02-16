@@ -10,6 +10,7 @@
 
 """This configuration file adds the custom '--host' option for the tests."""
 
+import re
 from collections import namedtuple
 
 _PytestOption = namedtuple("PytestOptions", ["short", "long", "dest", "default", "help", "private"])
@@ -30,17 +31,42 @@ def pytest_addoption(parser):
 def pytest_collection_modifyitems(session, config, items): # pylint: disable=unused-argument
     """Inspect and modify list of collected tests."""
 
-    dataset = config.getoption("dataset")[-1]
     hostname = config.getoption("hostname")[-1]
-    opt_str = f"[{dataset}-{hostname}]"
 
     deselect = []
     select = []
-    for item in items:
-        if item.name.startswith("test_v1_") or dataset == "all" or opt_str in item.name:
-            select.append(item)
-        else:
-            deselect.append(item)
+    if hostname != "emulation":
+        # The 'dataset' option is relevant only with 'emulated' host. Remove dublicate function
+        # calls from the list, and rename tests only according to hostname. E.g. with 'sklep1' as
+        # hotname, the list of tests would be modified as follows.
+        # test_get[bdwup0-sklep1]
+        # test_get[icx2s0-sklep1]
+        # test_get[ivbep0-sklep1]
+        # test_div[bdwup0-sklep1]
+        # test_div[icx2s0-sklep1]
+        # test_div[ivbep0-sklep1]
+        #
+        # Would be become to:
+        # test_get[sklep1]
+        # test_div[sklep1]
+
+        seen = set()
+        for item in items:
+            if item.function not in seen:
+                item.name = re.sub(r'\[.*\]', f'[{hostname}]', item.name)
+                select.append(item)
+                seen.add(item.function)
+            else:
+                deselect.append(item)
+    else:
+        dataset = config.getoption("dataset")[-1]
+        opt_str = f"[{dataset}-{hostname}]"
+
+        for item in items:
+            if item.name.startswith("test_v1_") or dataset == "all" or opt_str in item.name:
+                select.append(item)
+            else:
+                deselect.append(item)
 
     config.hook.pytest_deselected(items=deselect)
     items[:] = select
