@@ -440,11 +440,13 @@ def test_div(cpuinfo):
         exp_res = _test_div_create_exp_res(lvl, [], num0_cpus)
         _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
 
-        # Get the list of CPUs in the second package.
-        num1_cpus = _run_method(f"{lvl}_to_cpus", cpuinfo, args=(nums[1],))
+        exp_cpus = []
+        for cpu in allcpus:
+            if cpu not in num0_cpus:
+                exp_cpus.append(cpu)
 
         # Resolving all CPUs but for only for the first package.
         args = (allcpus,)
         kwargs = {"packages" : nums[0]}
-        exp_res = _test_div_create_exp_res(lvl, nums[0:1], num1_cpus)
+        exp_res = _test_div_create_exp_res(lvl, nums[0:1], exp_cpus)
         _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
