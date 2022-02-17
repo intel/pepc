@@ -122,21 +122,21 @@ class EmulProc():
         self._ofiles[path] = fobj
         return fobj
 
-    def _init_commands(self, commands, datapath):
+    def _init_commands(self, cmdinfos, datapath):
         """
-        Initialize commands in 'commands' dictionary. Read commands' output from 'datapath' and save
+        Initialize commands in 'cmdinfos' dictionary. Read commands' output from 'datapath' and save
         them in 'self._cmds'.
         """
 
-        for command in commands:
-            commandpath = datapath / command["dirname"]
+        for cmdinfo in cmdinfos:
+            commandpath = datapath / cmdinfo["dirname"]
 
             with open(commandpath / "stdout.txt") as fobj:
                 stdout = fobj.readlines()
             with open(commandpath / "stderr.txt") as fobj:
                 stderr = fobj.readlines()
 
-            self._cmds[command["command"]] = (stdout, stderr)
+            self._cmds[cmdinfo["command"]] = (stdout, stderr)
 
     def _init_inline_files(self, finfos, datapath):
         """
