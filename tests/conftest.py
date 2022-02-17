@@ -36,7 +36,7 @@ def pytest_collection_modifyitems(session, config, items): # pylint: disable=unu
     deselect = []
     select = []
     if hostname != "emulation":
-        # The 'dataset' option is relevant only with 'emulated' host. Remove dublicate function
+        # The 'dataset' option is relevant only with 'emulation' host. Remove dublicate function
         # calls from the list, and rename tests only according to hostname. E.g. with 'sklep1' as
         # hotname, the list of tests would be modified as follows.
         # test_get[bdwup0-sklep1]
@@ -46,7 +46,7 @@ def pytest_collection_modifyitems(session, config, items): # pylint: disable=unu
         # test_div[icx2s0-sklep1]
         # test_div[ivbep0-sklep1]
         #
-        # Would be become to:
+        # Would become to:
         # test_get[sklep1]
         # test_div[sklep1]
 
@@ -60,7 +60,7 @@ def pytest_collection_modifyitems(session, config, items): # pylint: disable=unu
                 deselect.append(item)
     else:
         dataset = config.getoption("dataset")[-1]
-        opt_str = f"[{dataset}-{hostname}]"
+        opt_str = f"{dataset}-{hostname}]"
 
         for item in items:
             if item.name.startswith("test_v1_") or dataset == "all" or opt_str in item.name:
