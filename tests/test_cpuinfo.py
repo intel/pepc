@@ -174,7 +174,7 @@ def _test_get_bad(cpuinfo):
     bad_cpu = cpus[-1] + 1
     _run_method("get_cpu_siblings", cpuinfo, args=(bad_cpu,), exp_exc=Error)
 
-def test_get(cpuinfo):
+def test_cpuinfo_get(cpuinfo):
     """
     Test the following 'CPUInfo' class methods:
       * 'get_packages()'
@@ -187,7 +187,7 @@ def test_get(cpuinfo):
         _test_get_good(cpuinfo_obj)
         _test_get_bad(cpuinfo_obj)
 
-def test_get_count(cpuinfo):
+def test_cpuinfo_get_count(cpuinfo):
     """
     Test the following 'CPUInfo' class methods:
       * 'get_packages_count()'
@@ -274,7 +274,7 @@ def _test_convert_bad(cpuinfo):
                     kwargs = {"order": order}
                     _run_method(method_name, cpuinfo, args=(args,), kwargs=kwargs, exp_exc=Error)
 
-def test_convert(cpuinfo):
+def test_cpuinfo_convert(cpuinfo):
     """
     Test the following 'CPUInfo' class methods:
       * 'packages_to_cpus()'
@@ -349,7 +349,7 @@ def _test_normalize_bad(cpuinfo):
             for args in bad_args:
                 _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
 
-def test_normalize(cpuinfo):
+def test_cpuinfo_normalize(cpuinfo):
     """
     Test the following 'CPUInfo' class methods:
       * 'normalize_packages()'
@@ -397,8 +397,8 @@ def _test_div_create_exp_res(lvl, nums, cpus):
 
     return ([(num, 0) for num in nums], cpus)
 
-def _test_div(cpuinfo):
-    """Implements the 'test_div()'."""
+def _test_cpuinfo_div(cpuinfo):
+    """Implements the 'test_cpuinfo_div()'."""
 
     for lvl, nums in _get_levels_and_nums(cpuinfo):
         method_name  = f"cpus_div_{lvl}s"
@@ -474,11 +474,11 @@ def _test_div(cpuinfo):
         exp_res = _test_div_create_exp_res(lvl, nums[0:1], exp_cpus)
         _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
 
-def test_div(cpuinfo):
+def test_cpuinfo_div(cpuinfo):
     """
     Test the following 'CPUInfo' class methods:
       * 'cpus_div_packages()'
     """
 
     for cpuinfo_obj in _get_test_cpuinfos(cpuinfo):
-        _test_div(cpuinfo_obj)
+        _test_cpuinfo_div(cpuinfo_obj)
