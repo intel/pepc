@@ -69,6 +69,28 @@ def _get_bad_orders():
     for order in "CPUS", "CORE", "nodes", "pkg":
         yield order
 
+def _get_test_cpuinfos(cpuinfo):
+    """Yield the 'CPUInfo' object with different patterns of offlined CPUs."""
+
+    # Offline CPUs with following patterns.
+    # 1. All CPUs online.
+    # 2. Odd CPUs offline.
+    # 3. All but first CPU offline.
+    for pattern in (lambda x: True, lambda x: not(x % 2), lambda x: x == 0):
+        online_cpus = set()
+        offline_cpus = set()
+
+        for cpu in cpuinfo.get_cpus():
+            if pattern(cpu):
+                online_cpus.add(cpu)
+            else:
+                offline_cpus.add(cpu)
+
+        cpuinfo.mark_cpus_online(online_cpus)
+        cpuinfo.mark_cpus_offline(offline_cpus)
+
+        yield cpuinfo
+
 def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE, exp_exc=None):
     """
     Run the 'name' method of the 'cpuinfo' object. The arguments are as follows.
@@ -161,8 +183,9 @@ def test_get(cpuinfo):
       * 'get_cpu_siblings()'
     """
 
-    _test_get_good(cpuinfo)
-    _test_get_bad(cpuinfo)
+    for cpuinfo_obj in _get_test_cpuinfos(cpuinfo):
+        _test_get_good(cpuinfo_obj)
+        _test_get_bad(cpuinfo_obj)
 
 def test_get_count(cpuinfo):
     """
@@ -172,11 +195,12 @@ def test_get_count(cpuinfo):
       * 'get_offline_cpus_count()'
     """
 
-    for lvl, nums in _get_levels_and_nums(cpuinfo):
-        _run_method(f"get_{lvl}s_count", cpuinfo, exp_res=len(nums))
+    for cpuinfo_obj in _get_test_cpuinfos(cpuinfo):
+        for lvl, nums in _get_levels_and_nums(cpuinfo_obj):
+            _run_method(f"get_{lvl}s_count", cpuinfo_obj, exp_res=len(nums))
 
-    offline_cpus = cpuinfo.get_offline_cpus()
-    _run_method("get_offline_cpus_count", cpuinfo, exp_res=len(offline_cpus))
+        offline_cpus = cpuinfo_obj.get_offline_cpus()
+        _run_method("get_offline_cpus_count", cpuinfo_obj, exp_res=len(offline_cpus))
 
 def _test_convert_good(cpuinfo):
     """Test public convert methods of the 'CPUInfo' class with good option values."""
@@ -259,8 +283,9 @@ def test_convert(cpuinfo):
       * 'cores_to_cpus()'
     """
 
-    _test_convert_good(cpuinfo)
-    _test_convert_bad(cpuinfo)
+    for cpuinfo_obj in _get_test_cpuinfos(cpuinfo):
+        _test_convert_good(cpuinfo_obj)
+        _test_convert_bad(cpuinfo_obj)
 
 def _test_normalize_good(cpuinfo):
     """Test public 'normalize' methods of the 'CPUInfo' class with good option values."""
@@ -333,8 +358,9 @@ def test_normalize(cpuinfo):
       * 'normalize_cpu()'
     """
 
-    _test_normalize_good(cpuinfo)
-    _test_normalize_bad(cpuinfo)
+    for cpuinfo_obj in _get_test_cpuinfos(cpuinfo):
+        _test_normalize_good(cpuinfo_obj)
+        _test_normalize_bad(cpuinfo_obj)
 
 def _is_globally_numbered(lvl):
     """
@@ -371,11 +397,8 @@ def _test_div_create_exp_res(lvl, nums, cpus):
 
     return ([(num, 0) for num in nums], cpus)
 
-def test_div(cpuinfo):
-    """
-    Test the following 'CPUInfo' class methods:
-      * 'cpus_div_packages()'
-    """
+def _test_div(cpuinfo):
+    """Implements the 'test_div()'."""
 
     for lvl, nums in _get_levels_and_nums(cpuinfo):
         method_name  = f"cpus_div_{lvl}s"
@@ -450,3 +473,12 @@ def test_div(cpuinfo):
         kwargs = {"packages" : nums[0]}
         exp_res = _test_div_create_exp_res(lvl, nums[0:1], exp_cpus)
         _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
+
+def test_div(cpuinfo):
+    """
+    Test the following 'CPUInfo' class methods:
+      * 'cpus_div_packages()'
+    """
+
+    for cpuinfo_obj in _get_test_cpuinfos(cpuinfo):
+        _test_div(cpuinfo_obj)
