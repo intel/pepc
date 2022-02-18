@@ -1,3 +1,9 @@
+pepc (1.2.2) unstable; urgency=low
+
+  * pepc: fix crash on systems for which there are no package C-states aliases.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 18 Feb 2022 10:45:28 +0200
+
 pepc (1.2.1) unstable; urgency=low
 
   * pepc: fix case-sensitivity bugs.
