@@ -94,7 +94,7 @@ FEATURES = {
         "cpumodels" : tuple(_PKG_CST_LIMITS.keys()),
         "type"    : "choice",
         "vals"    : None,
-        "aliases" : None,
+        "aliases" : {},
         "bits"    : None,
     },
     "locked" :  {
