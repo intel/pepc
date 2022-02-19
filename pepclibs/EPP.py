@@ -41,6 +41,7 @@ class EPP:
 
     1. Multiple CPUs.
         * Get/set EPP: 'get_epp()', 'set_epp()'.
+        * Get EPP policy name: 'get_epp_policy()'.
     2. Single CPU.
         * Get/set EPP: 'get_cpu_epp()', 'set_cpu_epp()'.
         * Check if the CPU supports EPP: 'is_epp_supported()'
@@ -104,17 +105,9 @@ class EPP:
 
         return self._get_hwpreq().is_cpu_feature_supported("epp", cpu)
 
-    def get_cpu_epp_policy(self, cpu, unknown_ok=True):
-        """
-        Return EPP policy name for CPU 'cpu'. The arguments are as follows.
-          * cpu - CPU number to get EPP policy for. Can be an integer or a string with an integer
-                  number.
-          * unknown_ok - if the EPP value does not match any policy name, this method returns the
-                         "unknown (EPP <value>)" string by default. However, if 'unknown_ok' is
-                         'False', an exception is raised instead.
-        """
+    def _get_cpu_epp_policy(self, cpu, unknown_ok):
+        """Returns EPP policy for CPU 'cpu'."""
 
-        cpu = self._cpuinfo.normalize_cpu(cpu)
         path = self._sysfs_epp_policy_path % cpu
 
         try:
@@ -132,6 +125,26 @@ class EPP:
             return f"unknown (EPP {epp})"
 
         raise Error(f"unknown policy name for EPP value {epp} on CPU {cpu}{self._proc.hostmsg}")
+
+    def get_epp_policy(self, cpus="all", unknown_ok=True):
+        """
+        Yield (CPU number, EPP policy name) pairs for CPUs in 'cpus'.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+          * unknown_ok - if the EPP value does not match any policy name, this method returns the
+                         "unknown (EPP <value>)" string by default. However, if 'unknown_ok' is
+                         'False', an exception is raised instead.
+        """
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            yield (cpu, self._get_cpu_epp_policy(cpu, unknown_ok))
+
+    def get_cpu_epp_policy(self, cpu, unknown_ok=True):
+        """Similar to 'get_epp_policy()', but for a single CPU 'cpu'."""
+
+        cpu = self._cpuinfo.normalize_cpu(cpu)
+        return self._get_cpu_epp_policy(cpu, unknown_ok)
 
     def _get_cpu_epp(self, cpu):
         """Implements 'get_cpu_epp()'."""
