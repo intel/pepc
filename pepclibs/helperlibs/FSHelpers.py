@@ -50,8 +50,8 @@ def get_sha512(path, default=_RAISE, proc=None, skip_lines=0):
             checksum = sha512(data).hexdigest()
         except Error as err:
             if default is _RAISE:
-                raise Error(f"cannot calculate sha512 checksum for the file "
-                            f"'{path}'{proc.hostmsg}:\n{err}") from err
+                raise type(err)(f"cannot calculate sha512 checksum for the file "
+                                f"'{path}'{proc.hostmsg}:\n{err}") from err
             return default
 
     return checksum
@@ -596,13 +596,13 @@ def read(path, default=_RAISE, proc=None):
     if not proc:
         proc = Procs.Proc()
 
-    with proc.open(path, "r") as fobj:
-        try:
+    try:
+        with proc.open(path, "r") as fobj:
             val = fobj.read().strip()
-        except Error as err:
-            if default is _RAISE:
-                raise Error(f"failed to read file '{path}'{proc.hostmsg}:\n{err}") from err
-            return default
+    except Error as err:
+        if default is _RAISE:
+            raise type(err)(f"failed to read file '{path}'{proc.hostmsg}:\n{err}") from err
+        return default
 
     return val
 
@@ -627,11 +627,11 @@ def write(path, data, proc=None):
     if not proc:
         proc = Procs.Proc()
 
-    with proc.open(path, "w") as fobj:
-        try:
+    try:
+        with proc.open(path, "w") as fobj:
             fobj.write(str(data))
-        except Error as err:
-            raise Error(f"failed to write into file '{path}'{proc.hostmsg}:\n{err}") from err
+    except Error as err:
+        raise type(err)(f"failed to write into file '{path}'{proc.hostmsg}:\n{err}") from err
 
 def wait_for_a_file(path, interval=1, timeout=60, proc=None):
     """
