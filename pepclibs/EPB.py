@@ -96,9 +96,7 @@ class EPB:
         yield from self._epb_msr.read_feature("epb", cpus=cpus)
 
     def get_cpu_epb(self, cpu):
-        """
-        Return EPB value for CPU 'cpu', which can be an integer or a string with an integer number.
-        """
+        """Similar to 'get_epb()', but for a single CPU 'cpu'."""
 
         epb = None
         for _, epb in self.get_epb(cpus=(cpu, )):
@@ -128,7 +126,7 @@ class EPB:
         self._epb_msr.write_feature("epb", int(epb), cpus=cpus)
 
     def set_cpu_epb(self, epb, cpu):
-        """Set EPB for CPU 'cpu'."""
+        """Similar to 'set_epb()', but for a single CPU 'cpu'."""
 
         self.set_epb(epb, cpus=(cpu,))
 

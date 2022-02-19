@@ -155,9 +155,7 @@ class EPP:
             yield (cpu, self._get_cpu_epp(cpu))
 
     def get_cpu_epp(self, cpu):
-        """
-        Return EPP value for CPU 'cpu', which can be an integer or a string with an integer number.
-        """
+        """Similar to 'get_epp()', but for a single CPU 'cpu'."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._get_cpu_epp(cpu)
@@ -211,7 +209,7 @@ class EPP:
             self._set_cpu_epp(epp, cpu)
 
     def set_cpu_epp(self, epp, cpu):
-        """Set EPP for CPU 'cpu'."""
+        """Similar to 'set_epp()', but for a single CPU 'cpu'."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         self._set_cpu_epp(epp, cpu)
