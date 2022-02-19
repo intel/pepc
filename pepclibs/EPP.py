@@ -133,15 +133,6 @@ class EPP:
 
         raise Error(f"unknown policy name for EPP value {epp} on CPU {cpu}{self._proc.hostmsg}")
 
-    def get_epp(self, cpus="all"):
-        """
-        Yield (CPU number, EPP) pairs for CPUs in 'cpus'. The 'cpus' argument is the same as in
-        'set_epp()'.
-        """
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._get_cpu_epp(cpu))
-
     def _get_cpu_epp(self, cpu):
         """Implements 'get_cpu_epp()'."""
 
@@ -154,6 +145,15 @@ class EPP:
 
         return hwpreq.read_cpu_feature("epp", cpu)
 
+    def get_epp(self, cpus="all"):
+        """
+        Yield (CPU number, EPP) pairs for CPUs in 'cpus'. The 'cpus' argument is the same as in
+        'set_epp()'.
+        """
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            yield (cpu, self._get_cpu_epp(cpu))
+
     def get_cpu_epp(self, cpu):
         """
         Return EPP value for CPU 'cpu', which can be an integer or a string with an integer number.
@@ -161,19 +161,6 @@ class EPP:
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._get_cpu_epp(cpu)
-
-    def set_epp(self, epp, cpus="all"):
-        """
-        Set EPP for CPUs in 'cpus'. The arguments are as follows.
-          * epp - the EPP value to set. Can be an integer, a string representing an integer, or one
-                  of the EPP policy names.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
-        """
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            self._set_cpu_epp(epp, cpu)
 
     def _set_cpu_epp(self, epp, cpu):
         """Implements 'set_cpu_epp()'."""
@@ -209,6 +196,19 @@ class EPP:
                         f"provide one of the following EPP policy names: {policy_names}")
 
         FSHelpers.write(self._sysfs_epp_policy_path % cpu, policy, proc=self._proc)
+
+    def set_epp(self, epp, cpus="all"):
+        """
+        Set EPP for CPUs in 'cpus'. The arguments are as follows.
+          * epp - the EPP value to set. Can be an integer, a string representing an integer, or one
+                  of the EPP policy names.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+        """
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            self._set_cpu_epp(epp, cpu)
 
     def set_cpu_epp(self, epp, cpu):
         """Set EPP for CPU 'cpu'."""
