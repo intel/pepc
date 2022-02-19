@@ -1,3 +1,9 @@
+pepc (1.2.3) unstable; urgency=low
+
+  * pepc: fix errors on remote systems not using 'intel_pstate' driver.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Sat, 19 Feb 2022 09:16:00 +0200
+
 pepc (1.2.2) unstable; urgency=low
 
   * pepc: fix crash on systems for which there are no package C-states aliases.
