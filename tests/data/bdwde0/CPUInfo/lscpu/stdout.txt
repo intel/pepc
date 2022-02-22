@@ -13,7 +13,7 @@ CPU family:                      6
 Model:                           86
 Model name:                      Intel(R) Xeon(R) CPU D-1541 @ 2.10GHz
 Stepping:                        3
-CPU MHz:                         1700.000
+CPU MHz:                         2000.000
 CPU max MHz:                     2700.0000
 CPU min MHz:                     800.0000
 BogoMIPS:                        4200.31

@@ -13,7 +13,7 @@ CPU family:                      6
 Model:                           85
 Model name:                      Intel(R) Xeon(R) Platinum 8170 CPU @ 2.10GHz
 Stepping:                        4
-CPU MHz:                         1184.908
+CPU MHz:                         2100.000
 BogoMIPS:                        4200.00
 Virtualization:                  VT-x
 L1d cache:                       1.6 MiB

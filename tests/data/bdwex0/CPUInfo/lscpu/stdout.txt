@@ -16,7 +16,7 @@ Stepping:                        1
 CPU MHz:                         1200.000
 CPU max MHz:                     3400.0000
 CPU min MHz:                     1200.0000
-BogoMIPS:                        4389.42
+BogoMIPS:                        4389.43
 L1d cache:                       3 MiB
 L1i cache:                       3 MiB
 L2 cache:                        24 MiB

@@ -13,10 +13,10 @@ CPU family:                      6
 Model:                           71
 Model name:                      Intel(R) Xeon(R) CPU E3-1285L v4 @ 3.40GHz
 Stepping:                        1
-CPU MHz:                         800.000
+CPU MHz:                         3379.933
 CPU max MHz:                     3800.0000
 CPU min MHz:                     800.0000
-BogoMIPS:                        6784.09
+BogoMIPS:                        6784.41
 L1d cache:                       128 KiB
 L1i cache:                       128 KiB
 L2 cache:                        1 MiB
