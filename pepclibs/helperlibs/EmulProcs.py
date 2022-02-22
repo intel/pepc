@@ -40,6 +40,20 @@ def populate_rw_file(path, data):
         except OSError as err:
             raise Error(f"failed to write into file '{path}':\n{err}") from err
 
+def _populate_sparse_file(path, data):
+    """Create sparse file 'path' and write sparse data 'data' into it."""
+
+    if not path.parent.exists():
+        path.parent.mkdir(parents=True)
+
+    try:
+        with open(path, "wb") as fobj:
+            for offset, value in data.items():
+                fobj.seek(offset)
+                fobj.write(value)
+    except OSError as err:
+        raise Error(f"failed to prepare sparse file '{path}':\n{err}") from err
+
 class EmulProc():
     """
     Emulated version of the 'Proc' class in the 'pepclibs.helperlibs.Procs' module. The class is
@@ -170,6 +184,48 @@ class EmulProc():
                     path = self._basepath / path.lstrip("/")
                     populate_rw_file(path, data)
 
+    def _init_msrs(self, msrinfo, datapath):
+        """
+        MSR values are defined in text file where single line defines path used to access MSR values
+        and address value pairs. Initialize predefined data for emulated MSR files defined by
+        dictionary 'msrinfo'.
+        """
+
+        datapath = datapath / msrinfo["dirname"] / msrinfo["filename"]
+
+        try:
+            with open(datapath, "r") as fobj:
+                lines = fobj.readlines()
+        except OSError as err:
+            raise Error(f"failed to read emulated MSR data from file '{datapath}':\n{err}") from err
+
+        sep = msrinfo["separator1"]
+        for line in lines:
+            split = line.split(sep)
+
+            if len(split) != 2:
+                raise Error(f"unexpected line format in file '{datapath}', expected <path>{sep}" \
+                            f"<reg_value_pairs>, received\n{line}")
+
+            path = split[0].strip()
+            reg_val_pairs = split[1].split()
+
+            data = {}
+            for reg_val_pair in reg_val_pairs:
+                regaddr, regval = reg_val_pair.split(msrinfo["separator2"])
+
+                if len(split) != 2:
+                    raise Error(f"unexpected register-value format in file '{datapath}', " \
+                                f"expected <path>{msrinfo['separator2']}<value>, received\n{line}")
+
+                regaddr = int(regaddr)
+                regval = int(regval, 16)
+
+                data[regaddr] = int.to_bytes(regval, 8, byteorder="little")
+
+            path = self._basepath / path.lstrip("/")
+            _populate_sparse_file(path, data)
+
     def init_testdata(self, module, datapath):
         """Initialize the testdata for module 'module' from directory 'datapath'."""
 
@@ -179,10 +235,15 @@ class EmulProc():
                                     f"({confpath}).")
 
         config = YAML.load(confpath)
+
         if "commands" in config:
             self._init_commands(config["commands"], datapath)
+
         if "inlinefiles" in config:
             self._init_inline_files(config["inlinefiles"], datapath)
+
+        if "msrs" in config:
+            self._init_msrs(config["msrs"], datapath)
 
     def __init__(self):
         """Initialize the emulated 'Proc' class instance."""
