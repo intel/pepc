@@ -14,6 +14,9 @@ import os
 import sys
 import logging
 from pathlib import Path
+from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg, MiscFeatureControl
+from pepclibs.msr import PlatformInfo, PowerCtl, PCStateConfigCtl, PMEnable, TurboRatioLimit
+from pepclibs.msr import TurboRatioLimit1
 from pepclibs.helperlibs import ArgParse, Logging, Procs, SSH, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -38,7 +41,26 @@ CPUInfoData = {
          "separator": ":",
          "readonly":  True,
          "dirname":   "die-info",
-         "filename":  "die.txt"}]}
+         "filename":  "die.txt"}],
+    "msrs" :
+        {"addresses": [
+            EnergyPerfBias.MSR_ENERGY_PERF_BIAS,
+            FSBFreq.MSR_FSB_FREQ,
+            HWPRequest.MSR_HWP_REQUEST,
+            HWPRequestPkg.MSR_HWP_REQUEST_PKG,
+            MiscFeatureControl.MSR_MISC_FEATURE_CONTROL,
+            PlatformInfo.MSR_PLATFORM_INFO,
+            PowerCtl.MSR_POWER_CTL,
+            PCStateConfigCtl.MSR_PKG_CST_CONFIG_CONTROL,
+            PMEnable.MSR_PM_ENABLE,
+            TurboRatioLimit.MSR_TURBO_RATIO_LIMIT,
+            TurboRatioLimit1.MSR_TURBO_RATIO_LIMIT1,
+            TurboRatioLimit1.MSR_TURBO_GROUP_CORECNT,
+            TurboRatioLimit1.MSR_TURBO_RATIO_LIMIT_CORES],
+         "separator1": ":",
+         "separator2": "|",
+         "dirname":   "msr",
+         "filename":  "msr.txt"}}
 
 MODULE_TESTDATA = {"CPUInfo" : CPUInfoData}
 
@@ -76,7 +98,8 @@ def get_proc(args):
 
 def collect_cmd_output(cmdinfo, proc, outdir):
     """
-    Run the command 'cmd' on the remote host. The arguments are as follows.
+    Run the command defined in 'cmdinfo' and save the output to a file. The arguments are as
+    follows.
       * cmdinfo - a dictionary of a command to run, see 'MODULE_TESTDATA'.
       * proc - a 'Proc' or 'SSH' objetc that defines the remote host to run the 'cmdinfo' on.
       * outdir - the directory to save the command output to.
@@ -95,10 +118,12 @@ def collect_cmd_output(cmdinfo, proc, outdir):
 
 def collect_files(cmdinfo, proc, outdir):
     """
-    Run the command 'cmd' on the remote host. The arguments are as follows.
-      * cmdinfo - a dictionary of a command to run, see 'MODULE_TESTDATA'.
-      * proc - a 'Proc' or 'SSH' objetc that defines the remote host to run the 'cmd' on.
-      * outdir - the directory to save the command output to.
+    Read the content of files by running the command defined in 'cmdinfo' and save the output to a
+    file. The arguments are as follows.
+      * cmdinfo - a dictionary of a command to run to collect the file contents, see
+                  'MODULE_TESTDATA'.
+      * proc - a 'Proc' or 'SSH' objetc that defines the remote host to read the files from.
+      * outdir - the directory to save the output to.
     """
 
     cmdpath = outdir / cmdinfo["dirname"]
@@ -109,6 +134,43 @@ def collect_files(cmdinfo, proc, outdir):
     path = cmdpath / cmdinfo["filename"]
     with open(path, "w") as fobj:
         fobj.write(stdout)
+
+def collect_msrs(msrinfo, proc, outdir):
+    """
+    Read the values of the MSR registers defined in 'msrinfo' and save the output to a file. The
+    arguments are as follows.
+      * msrinfo - a dictionary of a MSR registers to read, see 'MODULE_TESTDATA'.
+      * proc - a 'Proc' or 'SSH' object that defines the remote host to read the MSR values from.
+      * outdir - the directory to save the command output to.
+    """
+
+    lines, _ = proc.run_verify("lscpu -p=cpu", join=False)
+
+    cpus = []
+    for line in lines:
+        if line.startswith("#"):
+            continue
+
+        cpu = int(line.strip())
+        cpus.append(cpu)
+
+    cmdpath = outdir / msrinfo["dirname"]
+    os.makedirs(cmdpath, exist_ok=True)
+
+    path = cmdpath / msrinfo["filename"]
+    with open(path, "w+") as fobj:
+        for cpu in cpus:
+            line = f"/dev/cpu/{cpu}/msr{msrinfo['separator1']}"
+
+            for addr in msrinfo["addresses"]:
+                result = proc.run(f"rdmsr {addr} -p {cpu}")
+                if result.exitcode != 0:
+                    continue
+
+                value = result.stdout.strip()
+                line += f"{addr}{msrinfo['separator2']}{value} "
+
+            fobj.write(line + "\n")
 
 def generate_config_file(modname, testdata, outdir):
     """Generate configuration file for python module name 'modname' from testdata 'testdata'."""
@@ -140,6 +202,9 @@ def main():
                 cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
                 # We do not need command used to collect file contents, remove it.
                 del cmdinfo["command"]
+
+            collect_msrs(testdata["msrs"], proc, datapath)
+            testdata["msrs"]["dirname"] = f"{modname}/{testdata['msrs']['dirname']}"
 
             generate_config_file(modname, testdata, outdir)
 
