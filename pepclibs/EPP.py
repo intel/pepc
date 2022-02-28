@@ -13,7 +13,7 @@ Intel CPUs.
 """
 
 import logging
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import Procs, Trivial, FSHelpers
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, HWPRequest, HWPRequestPkg
@@ -259,8 +259,8 @@ class EPP:
             self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
-            raise Error(f"unsupported vendor {cpuinfo.info['vendor']}{proc.hostmsg}. Only Intel "
-                        f"CPUs are supported.")
+            raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{proc.hostmsg}. "
+                                    f"Only Intel CPUs are supported.")
 
     def close(self):
         """Uninitialize the class object."""

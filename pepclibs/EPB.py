@@ -175,8 +175,8 @@ class EPB:
             self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
-            raise Error(f"unsupported vendor {cpuinfo.info['vendor']}{proc.hostmsg}. Only Intel "
-                        f"CPUs are supported.")
+            raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{proc.hostmsg}. "
+                                    f"Only Intel CPUs are supported.")
 
         if not self._msr:
             self._msr = MSR.MSR(self._proc, cpuinfo=self._cpuinfo)
