@@ -578,7 +578,6 @@ class CStates:
             else:
                 pinfo[pname][pname] = val
 
-
         return pinfo
 
     def get_props(self, pnames, cpus="all"):
