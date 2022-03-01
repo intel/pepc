@@ -55,7 +55,7 @@ class EPB:
         """Return a tuple of all EPB policy names for CPU 'cpu."""
 
         # In theory, EPB policies may be different for different CPU.
-        return tuple(_EPB_POLICIES)
+        return list(_EPB_POLICIES)
 
     def is_epb_supported(self, cpu):
         """Returns 'True' if EPB is supported, on CPU 'cpu', otherwise returns 'False'."""
