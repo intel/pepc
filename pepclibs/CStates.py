@@ -617,9 +617,7 @@ class CStates:
         for pname in pnames:
             self._check_prop(pname)
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-
-        for cpu in cpus:
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield cpu, self._get_pinfo(pnames, cpu)
 
     def get_cpu_props(self, pnames, cpu):
