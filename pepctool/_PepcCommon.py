@@ -92,16 +92,17 @@ def print_prop_msg(val, cpuinfo, name=None, action=None, cpus=None, prefix=None)
     else:
         pfx = f"{name}: "
 
+    msg = pfx
     if prefix is not None:
-        pfx = f"{prefix}{pfx}"
+        msg = prefix + msg
 
     if val is None:
-        msg = f"{pfx}not supported{sfx}"
-    elif action is not None:
-        msg = f"{pfx}{action} '{val}'{sfx}"
-    else:
-        msg = f"{pfx}'{val}'{sfx}"
+        val = "not supported"
 
+    if action is not None:
+        msg += f"{action} "
+
+    msg += f"{val}{sfx}"
     _LOG.info(msg)
 
 def print_aggr_props(aggr_pinfo, sobj, cpuinfo):
