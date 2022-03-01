@@ -13,7 +13,6 @@ This module includes the "cstates" 'pepc' command implementation.
 """
 
 import logging
-from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
 from pepclibs import CStates, CPUInfo
@@ -35,133 +34,6 @@ def _fmt_csnames(csnames):
 
     return msg
 
-def _fmt_cpus(cpus, cpuinfo):
-    """Formats and returns a string describing CPU numbers in the 'cpus' list."""
-
-    cpus_range = Human.rangify(cpus)
-    if len(cpus) == 1:
-        msg = f"CPU {cpus_range}"
-    else:
-        msg = f"CPUs {cpus_range}"
-
-    allcpus = cpuinfo.get_cpus()
-    if set(cpus) == set(allcpus):
-        msg += " (all CPUs)"
-    else:
-        pkgs, rem_cpus = cpuinfo.cpus_div_packages(cpus)
-        if pkgs and not rem_cpus:
-            # CPUs in 'cpus' are actually the packages in 'pkgs'.
-            pkgs_range = Human.rangify(pkgs)
-            if len(pkgs) == 1:
-                msg += f" (package {pkgs_range})"
-            else:
-                msg += f" (packages {pkgs_range})"
-
-    return msg
-
-def _print_cstate_prop_msg(val, cpuinfo, name=None, action=None, cpus=None, prefix=None):
-    """Format and print a message about a C-state property 'name'."""
-
-    if cpus is None:
-        sfx = ""
-    else:
-        cpus = _fmt_cpus(cpus, cpuinfo)
-        sfx = f" for {cpus}"
-
-    if name is None:
-        pfx = ""
-    else:
-        pfx = f"{name}: "
-
-    if prefix is not None:
-        pfx = f"{prefix}{pfx}"
-
-    if val is None:
-        msg = f"{pfx}not supported{sfx}"
-    elif action is not None:
-        msg = f"{pfx}{action} '{val}'{sfx}"
-    else:
-        msg = f"{pfx}'{val}'{sfx}"
-
-    _LOG.info(msg)
-
-def _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo):
-    """Print the aggregate C-state properties information."""
-
-    for pname in aggr_pinfo:
-        for key, kinfo in aggr_pinfo[pname].items():
-            for val, cpus in kinfo.items():
-                # Distinguish between properties and sub-properties.
-                if key in csobj.props:
-                    name = csobj.props[pname]["name"]
-                    _print_cstate_prop_msg(val, cpuinfo, name=name, cpus=cpus)
-                else:
-                    if val is None:
-                        # Just skip unsupported sub-property instead of printing something like
-                        # "Package C-state limit aliases: not supported on CPUs 0-11".
-                        continue
-
-                    # Print sub-properties with a prefix and exclude CPU information, because it is
-                    # the same as in the (parent) property, which has already been printed.
-                    name = csobj.props[pname]["subprops"][key]["name"]
-                    _print_cstate_prop_msg(val, cpuinfo, name=name, cpus=None, prefix="  - ")
-
-def _build_aggregate_pinfo(pinfo_iter, sprops=None):
-    """
-    Build the aggregated properties dictionary for properties in the 'pinfo_iter' iterator. The
-    iterator must provide the (cpu, pinfo) tuples, just like 'CStates.get_props()' or
-    'ReqCState.get_cstates_info()' do.
-
-    The dictionary has the following format.
-
-    { property1_name: { property1_name: { value1 : [ list of CPUs having value1],
-                                          value2 : [ list of CPUs having value2],
-                                          ... and so on of all values ...},
-                        subprop1_name:  { value1 : [ list of CPUs having value1],
-                                          value2 : [ list of CPUs having value2]
-                                          ... and so on of all values ...},
-                        ... and so on for all sub-properties ...},
-      ... and so on for all properties ... }
-
-      * property1_name - the first property name (e.g., 'pkg_cstate_limit').
-      * subprop1_name - the first sub-property name (e.g., 'pkg_cstate_limit_locked').
-      * value1, value2, etc - are all the different values for the property/sub-property (e.g.,
-                              'True' or 'True')
-
-    In other words, the aggregate dictionary mapping of property/sub-property values to the list of
-    CPUs having these values.
-
-    The 'sprops' argument can be used to limit the sub-properties to only the names in 'sprops'.
-    """
-
-    aggr_pinfo = {}
-
-    for cpu, pinfo in pinfo_iter:
-        for pname in pinfo:
-            if pname not in aggr_pinfo:
-                aggr_pinfo[pname] = {}
-            for key, val in pinfo[pname].items():
-                if sprops is not None and key not in sprops:
-                    continue
-                # Make sure 'val' is "hashable" and can be used as a dictionary key.
-                if isinstance(val, list):
-                    if not val:
-                        continue
-                    val = ", ".join(val)
-                elif isinstance(val, dict):
-                    if not val:
-                        continue
-                    val = ", ".join(f"{k}={v}" for k, v in val.items())
-
-                if key not in aggr_pinfo[pname]:
-                    aggr_pinfo[pname][key] = {}
-                if val not in aggr_pinfo[pname][key]:
-                    aggr_pinfo[pname][key][val] = []
-
-                aggr_pinfo[pname][key][val].append(cpu)
-
-    return aggr_pinfo
-
 def _handle_print_opts(opts, cpus, csobj, cpuinfo):
     """
     Handle C-state configuration options other than '--enable' and '--disable' which have to be
@@ -174,9 +46,9 @@ def _handle_print_opts(opts, cpus, csobj, cpuinfo):
     # Build the aggregate properties information dictionary for all options we are going to
     # print about.
     pinfo_iter = csobj.get_props(opts, cpus=cpus)
-    aggr_pinfo = _build_aggregate_pinfo(pinfo_iter)
+    aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
 
-    _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo)
+    _PepcCommon.print_aggr_props(aggr_pinfo, csobj, cpuinfo)
 
 def _handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
     """
@@ -194,7 +66,7 @@ def _handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
     csobj.set_props(opts, cpus)
     for pname, val in opts.items():
         name = csobj.props[pname]["name"]
-        _print_cstate_prop_msg(val, cpuinfo, name=name, action="set to", cpus=cpus)
+        _PepcCommon.print_prop_msg(val, cpuinfo, name=name, action="set to", cpus=cpus)
 
     # Commit the transaction. This will flush all the change MSRs (if there were any).
     msr.commit_transaction()
@@ -203,13 +75,13 @@ def _print_cstates_status(cpus, cpuinfo, rcsobj):
     """Print brief C-state enabled/disabled status."""
 
     csinfo_iter = rcsobj.get_cstates_info(csnames="all", cpus=cpus)
-    aggr_csinfo = _build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
+    aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
 
     for csname, csinfo in aggr_csinfo.items():
         for kinfo in csinfo.values():
             for val, val_cpus in kinfo.items():
                 val = "off" if val else "on"
-                _print_cstate_prop_msg(val, cpuinfo, name=csname, cpus=val_cpus)
+                _PepcCommon.print_prop_msg(val, cpuinfo, name=csname, cpus=val_cpus)
 
 def _handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
     """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
@@ -237,8 +109,8 @@ def _handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
 
         for cstnames, cpunums in revdict.items():
             cstnames = cstnames.split(",")
-            _LOG.info("%sd %s on %s",
-                      optname.title(), _fmt_csnames(cstnames), _fmt_cpus(cpunums, cpuinfo))
+            _LOG.info("%sd %s on %s", optname.title(), _fmt_csnames(cstnames),
+                                      _PepcCommon.fmt_cpus(cpunums, cpuinfo))
 
     if print_cstates:
         _print_cstates_status(cpus, cpuinfo, rcsobj)
@@ -294,7 +166,7 @@ def cstates_info_command(args, proc):
         #
         csinfo_iter = rcsobj.get_cstates_info(csnames=args.csnames, cpus=cpus)
         sprops = {"disable", "latency", "residency"}
-        aggr_csinfo = _build_aggregate_pinfo(csinfo_iter, sprops=sprops)
+        aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops=sprops)
 
         for csname, csinfo in aggr_csinfo.items():
             first = True
@@ -303,7 +175,7 @@ def cstates_info_command(args, proc):
                     if key == "disable":
                         val = "off" if val else "on"
                         if first:
-                            _print_cstate_prop_msg(val, cpuinfo, name=csname, cpus=val_cpus)
+                            _PepcCommon.print_prop_msg(val, cpuinfo, name=csname, cpus=val_cpus)
                             first = False
                         else:
                             # The first line starts with C-state name, aling the second line nicely
@@ -311,7 +183,7 @@ def cstates_info_command(args, proc):
                             # POLL: 'on' for CPUs 0-15
                             #       'off' for CPUs 16-31
                             prefix = " " * (len(csname) + 2)
-                            _print_cstate_prop_msg(val, cpuinfo, cpus=val_cpus, prefix=prefix)
+                            _PepcCommon.print_prop_msg(val, cpuinfo, cpus=val_cpus, prefix=prefix)
                     else:
                         if key == "latency":
                             name = "expected latency"
@@ -325,12 +197,12 @@ def cstates_info_command(args, proc):
                         #       'off' for CPUs 16-31
                         #       - expected latency: '0'
                         prefix = " " * (len(csname) + 2) + " - "
-                        _print_cstate_prop_msg(val, cpuinfo, name=name, prefix=prefix)
+                        _PepcCommon.print_prop_msg(val, cpuinfo, name=name, prefix=prefix)
 
         #
         # Print platform configuration info.
         #
         with CStates.CStates(proc=proc, cpuinfo=cpuinfo, rcsobj=rcsobj) as csobj:
             pinfo_iter = csobj.get_props(csobj.props, cpus=cpus)
-            aggr_pinfo = _build_aggregate_pinfo(pinfo_iter)
-            _print_aggr_cstate_props(aggr_pinfo, csobj, cpuinfo)
+            aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
+            _PepcCommon.print_aggr_props(aggr_pinfo, csobj, cpuinfo)
