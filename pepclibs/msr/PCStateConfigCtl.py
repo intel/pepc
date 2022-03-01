@@ -98,7 +98,7 @@ FEATURES = {
         "bits"    : None,
     },
     "locked" :  {
-        "name" : "MSR is locked",
+        "name" : "MSR lock",
         "scope": "package",
         "help" : """Lock/unlock bits 15:0 of MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                     (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
