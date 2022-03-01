@@ -1,3 +1,9 @@
+pepc (1.2.4) unstable; urgency=low
+
+  * pepc: fix 'pepc cstates config' crash in Ubuntu 20.04.3 LTS.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Tue, 01 Mar 2022 17:26:59 +0200
+
 pepc (1.2.3) unstable; urgency=low
 
   * pepc: fix errors on remote systems not using 'intel_pstate' driver.
