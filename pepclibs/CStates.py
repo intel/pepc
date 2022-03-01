@@ -161,7 +161,7 @@ class ReqCStates:
             # The 'xargs' tool will make sure 'cat' is invoked once on all the files. It may be
             # invoked few times, but only if the list of files is too long.
             cmd = f"xargs -a '{tmpfile}' cat"
-            values, _ = self._proc.run_verify(cmd, join=False, shell=True)
+            values, _ = self._proc.run_verify(cmd, join=False)
         finally:
             FSHelpers.rm_minus_rf(tmpdir, proc=self._proc)
 
