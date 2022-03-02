@@ -42,6 +42,7 @@ class EPP:
     1. Multiple CPUs.
         * Get/set EPP: 'get_epp()', 'set_epp()'.
         * Get EPP policy name: 'get_epp_policy()'.
+        * Get the list of available EPP policies: 'get_epp_policies()'.
     2. Single CPU.
         * Get/set EPP: 'get_cpu_epp()', 'set_cpu_epp()'.
         * Check if the CPU supports EPP: 'is_epp_supported()'
@@ -84,67 +85,78 @@ class EPP:
         path = self._sysfs_epp_policies_path % cpu
         line = FSHelpers.read(path, default=None, proc=self._proc)
         if line is None:
-            self._policies[cpu] = None
+            self._policies[cpu] = list(_EPP_POLICIES)
         else:
             self._policies[cpu] = Trivial.split_csv_line(line, sep=" ")
 
         return self._policies[cpu]
 
+    def get_epp_policies(self, cpus="all"):
+        """Yield (CPU number, List of supported EPP policy names) pairs for CPUs in 'cpus'."""
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            yield cpu, self._get_cpu_epp_policies(cpu)
+
     def get_cpu_epp_policies(self, cpu):
         """Return a list of all EPP policy names for CPU 'cpu."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
-
-        policies = self._get_cpu_epp_policies(cpu)
-        if policies is None:
-            return list(_EPP_POLICIES)
-        return policies
+        return self._get_cpu_epp_policies(cpu)
 
     def is_epp_supported(self, cpu):
         """Returns 'True' if EPP is supported, on CPU 'cpu', otherwise returns 'False'."""
 
         return self._get_hwpreq().is_cpu_feature_supported("epp", cpu)
 
-    def _get_cpu_epp_policy(self, cpu, unknown_ok):
-        """Returns EPP policy for CPU 'cpu'."""
-
-        path = self._sysfs_epp_policy_path % cpu
+    def _get_cpu_epp_policy_from_sysfs(self, cpu):
+        """
+        Returns EPP policy name for CPU 'cpu' by reading it from sysfs. Returns 'None' if the kernel
+        does not support EPP policy.
+        """
 
         try:
-            policy = FSHelpers.read(path, proc=self._proc)
-            return policy.strip()
+            policy = FSHelpers.read(self._sysfs_epp_path % cpu, proc=self._proc)
         except ErrorNotFound:
-            pass
+            return None
 
-        # The kernel does not support the EPP policies. Try to figure the policy out.
+        return policy.strip()
+
+    def _get_cpu_epp_policy(self, cpu):
+        """Returns EPP policy for CPU 'cpu'."""
+
+        policy = self._get_cpu_epp_policy_from_sysfs(cpu)
+        policies = self._get_cpu_epp_policies(cpu)
+
+        if policy in policies:
+            return policy
+
+        if policy is not None:
+            # We got a direct EPP value instead.
+            return f"unknown EPP={policy}"
+
+        # The kernel does not support EPP sysfs knobs. Try to figure the policy out.
         epp = self._get_cpu_epp(cpu)
         if epp in self._epp_rmap:
             return self._epp_rmap[epp]
 
-        if unknown_ok:
-            return f"unknown (EPP {epp})"
-
         raise Error(f"unknown policy name for EPP value {epp} on CPU {cpu}{self._proc.hostmsg}")
 
-    def get_epp_policy(self, cpus="all", unknown_ok=True):
+    def get_epp_policy(self, cpus="all"):
         """
         Yield (CPU number, EPP policy name) pairs for CPUs in 'cpus'.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
                    7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
-          * unknown_ok - if the EPP value does not match any policy name, this method returns the
-                         "unknown (EPP <value>)" string by default. However, if 'unknown_ok' is
-                         'False', an exception is raised instead.
         """
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._get_cpu_epp_policy(cpu, unknown_ok))
+            yield (cpu, self._get_cpu_epp_policy(cpu))
 
-    def get_cpu_epp_policy(self, cpu, unknown_ok=True):
+    def get_cpu_epp_policy(self, cpu):
         """Similar to 'get_epp_policy()', but for a single CPU 'cpu'."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._get_cpu_epp_policy(cpu, unknown_ok)
+        return self._get_cpu_epp_policy(cpu)
 
     def _get_cpu_epp(self, cpu):
         """Implements 'get_cpu_epp()'."""
@@ -173,40 +185,53 @@ class EPP:
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._get_cpu_epp(cpu)
 
+    def _set_cpu_epp_via_sysfs(self, epp, cpu):
+        """Set EPP to 'epp' for CPU 'cpu' via the sysfs file."""
+
+        try:
+            FSHelpers.write(self._sysfs_epp_path % cpu, epp, proc=self._proc)
+        except ErrorNotFound:
+            return None
+        except Error as err:
+            # Writing to the sysfs file failed, provide a meaningful error message.
+            msg = f"failed to set EPP to {epp}{self._proc.hostmsg}: {err}"
+
+            try:
+                policies = self._get_cpu_epp_policies(cpu)
+                policies = ", ".join(policies)
+                msg += f"\nEPP must be an integer from 0 to 255 or one of: {policies}"
+            except Error:
+                pass
+
+            raise Error(msg) from err
+
+        return epp
+
     def _set_cpu_epp(self, epp, cpu):
         """Implements 'set_cpu_epp()'."""
 
-        policies = self._get_cpu_epp_policies(cpu)
-
         if Trivial.is_int(epp):
             Trivial.validate_int_range(epp, _EPP_MIN, _EPP_MAX, what="EPP")
+        else:
+            policies = self._get_cpu_epp_policies(cpu)
+            policy = epp.lower()
+            if policy not in policies:
+                policy_names = ", ".join(self.get_cpu_epp_policies(cpu))
+                raise Error(f"EPP policy '{epp}' is not supported{self._proc.hostmsg}, please "
+                            f"provide one of the following EPP policy names: {policy_names}")
+            epp = policies[epp]
 
-            if policies:
-                path = self._sysfs_epp_policy_path % cpu
-                _LOG.warning("overriding Linux CPU %d EPP policy%s by a direct MSR write.\n"
-                             "The recommended way of changing EPP%s is is via the '%s' file.",
-                             cpu, self._proc.hostmsg, self._proc.hostmsg, path)
-
-            hwpreq = self._get_hwpreq()
-            if hwpreq.is_cpu_feature_enabled("pkg_control", cpu):
-                # Override package control by setting the "EPP valid" bit.
-                hwpreq.write_cpu_feature("epp_valid", "on", cpu)
-            hwpreq.write_cpu_feature("epp", epp, cpu)
+        if self._set_cpu_epp_via_sysfs(epp, cpu) == epp:
+            # EPP was successfully set via syfs.
             return
 
-        policy = epp.lower()
-
-        if not policies:
-            policies = _EPP_POLICIES
-        else:
-            policies = set(policies)
-
-        if policy not in policies:
-            policy_names = ", ".join(self.get_cpu_epp_policies(cpu))
-            raise Error(f"EPP policy '{epp}' is not supported{self._proc.hostmsg}, please "
-                        f"provide one of the following EPP policy names: {policy_names}")
-
-        FSHelpers.write(self._sysfs_epp_policy_path % cpu, policy, proc=self._proc)
+        # Could not set EPP via sysfs because the running Linux kernel does not support it. Try to
+        # set it via the MSR.
+        hwpreq = self._get_hwpreq()
+        if hwpreq.is_cpu_feature_enabled("pkg_control", cpu):
+            # Override package control by setting the "EPP valid" bit.
+            hwpreq.write_cpu_feature("epp_valid", "on", cpu)
+        hwpreq.write_cpu_feature("epp", epp, cpu)
 
     def set_epp(self, epp, cpus="all"):
         """
@@ -249,7 +274,7 @@ class EPP:
         self._epp_rmap = {code:name for name, code in _EPP_POLICIES.items()}
 
         sysfs_base = "/sys/devices/system/cpu/cpufreq/policy%d"
-        self._sysfs_epp_policy_path = sysfs_base + "/energy_performance_preference"
+        self._sysfs_epp_path = sysfs_base + "/energy_performance_preference"
         self._sysfs_epp_policies_path = sysfs_base + "/energy_performance_available_preferences"
 
         if not self._proc:
