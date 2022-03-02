@@ -34,24 +34,28 @@ PROPS = {
         "help" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["help"],
         "type" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["type"],
         "scope": PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["scope"],
+        "writable" : True,
         "subprops" : {
             "pkg_cstate_limit_locked" : {
                 "name" : "Package C-state limit locked",
                 "help" : """Whether the package C-state limit in MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                             (MSR_PKG_CST_CONFIG_CONTROL) is locked and cannot be modified.""",
                 "type" : "bool",
+                "writable" : False,
             },
             "pkg_cstate_limits" : {
                 "name" : "Available package C-state limits",
                 "help" : """List of package C-state names which can be used for limiting the deepest
                             package C-state the platform is allowed to enter.""",
                 "type" : "list[str]",
+                "writable" : False,
             },
             "pkg_cstate_limit_aliases" : {
                 "name" : "Package C-state limit aliases",
                 "help" : """Some package C-states have multiple names, and this is a dictionary
                             mapping aliases to the name.""",
                 "type" : "dict[str,str]",
+                "writable" : False,
             },
         },
     },
@@ -59,25 +63,29 @@ PROPS = {
         "name" : PCStateConfigCtl.FEATURES["c1_demotion"]["name"],
         "help" : PCStateConfigCtl.FEATURES["c1_demotion"]["help"],
         "type" : PCStateConfigCtl.FEATURES["c1_demotion"]["type"],
-        "scope": PCStateConfigCtl.FEATURES["c1_demotion"]["scope"]
+        "scope": PCStateConfigCtl.FEATURES["c1_demotion"]["scope"],
+        "writable" : True,
     },
     "c1_undemotion" : {
         "name" : PCStateConfigCtl.FEATURES["c1_undemotion"]["name"],
         "help" : PCStateConfigCtl.FEATURES["c1_undemotion"]["help"],
         "type" : PCStateConfigCtl.FEATURES["c1_undemotion"]["type"],
-        "scope": PCStateConfigCtl.FEATURES["c1_undemotion"]["scope"]
+        "scope": PCStateConfigCtl.FEATURES["c1_undemotion"]["scope"],
+        "writable" : True,
     },
     "c1e_autopromote" : {
         "name" : PowerCtl.FEATURES["c1e_autopromote"]["name"],
         "help" : PowerCtl.FEATURES["c1e_autopromote"]["help"],
         "type" : PowerCtl.FEATURES["c1e_autopromote"]["type"],
-        "scope": PowerCtl.FEATURES["c1e_autopromote"]["scope"]
+        "scope": PowerCtl.FEATURES["c1e_autopromote"]["scope"],
+        "writable" : True,
     },
     "cstate_prewake" : {
         "name" : PowerCtl.FEATURES["cstate_prewake"]["name"],
         "help" : PowerCtl.FEATURES["cstate_prewake"]["help"],
         "type" : PowerCtl.FEATURES["cstate_prewake"]["type"],
-        "scope": PowerCtl.FEATURES["cstate_prewake"]["scope"]
+        "scope": PowerCtl.FEATURES["cstate_prewake"]["scope"],
+        "writable" : True,
     },
 }
 
@@ -762,8 +770,6 @@ class CStates:
         self.props = copy.deepcopy(PROPS)
 
         for prop in self.props.values():
-            if "writable" not in prop:
-                prop["writable"] = True
             # Every features should include the 'subprops' sub-dictionary.
             if "subprops" not in prop:
                 prop["subprops"] = {}
