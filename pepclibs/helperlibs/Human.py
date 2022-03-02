@@ -19,7 +19,7 @@ _SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "EiB"]
 _LARGENUM_UNITS = ["k", "M", "G", "T", "E"]
 
 # pylint: disable=undefined-loop-variable
-def bytesize(size, precision=1):
+def bytesize(size, precision=1, sep=""):
     """
 	Transform size in bytes into a human-readable form. The 'precision' argument can be use to
     specify the amount of fractional digits to print.
@@ -37,7 +37,7 @@ def bytesize(size, precision=1):
             break
 
     if precision <= 0:
-        return "%d %s" % (int(size), unit)
+        return "%d%s%s" % (int(size), sep, unit)
 
     pattern = "%%.%df %%s" % int(precision)
     return pattern % (size, unit)
@@ -65,7 +65,7 @@ def parse_bytesize(size):
         raise Error("cannot interpret bytes count '%s', please provide a number and "
                     "possibly the unit: %s" % (orig_size, ", ".join(_SIZE_UNITS))) from None
 
-def largenum(value):
+def largenum(value, sep=""):
     """
     Transform a supposedly large integer into a human-readable form using suffixes like "K" (Kilo),
     "M" (Mega), etc.
@@ -81,7 +81,7 @@ def largenum(value):
     result = "%.1f" % value
     result = result.rstrip("0").rstrip(".")
     if unit:
-        result += unit
+        result += sep + unit
     return result
 
 def duration(seconds, s=True, ms=False):
