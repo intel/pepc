@@ -200,12 +200,15 @@ def build_arguments_parser():
     subpars2.add_argument("--disable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
                           nargs="?")
 
-    for name, info in CStates.PROPS.items():
+    for name, pinfo in CStates.PROPS.items():
+        if not pinfo["writable"]:
+            continue
+
         kwargs = {}
         kwargs["default"] = argparse.SUPPRESS
         kwargs["nargs"] = "?"
 
-        if info["type"] == "bool":
+        if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
             text = "Enable or disable "
             choices = " Use \"on\" or \"off\"."
@@ -214,7 +217,7 @@ def build_arguments_parser():
             choices = ""
 
         option = f"--{name.replace('_', '-')}"
-        text += f"""{info["name"]}. {info["help"]}{choices} {info["name"]} has {info["scope"]}
+        text += f"""{pinfo["name"]}. {pinfo["help"]}{choices} {pinfo["name"]} has {pinfo["scope"]}
                     scope."""
 
         kwargs["help"] = text
