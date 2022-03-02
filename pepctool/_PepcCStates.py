@@ -65,8 +65,7 @@ def _handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
 
     csobj.set_props(opts, cpus)
     for pname, val in opts.items():
-        name = csobj.props[pname]["name"]
-        _PepcCommon.print_prop_msg(val, cpuinfo, name=name, action="set to", cpus=cpus)
+        _PepcCommon.print_prop_msg(csobj.props[pname], val, cpuinfo, action="set to", cpus=cpus)
 
     # Commit the transaction. This will flush all the change MSRs (if there were any).
     msr.commit_transaction()
@@ -81,7 +80,7 @@ def _print_cstates_status(cpus, cpuinfo, rcsobj):
         for kinfo in csinfo.values():
             for val, val_cpus in kinfo.items():
                 val = "off" if val else "on"
-                _PepcCommon.print_prop_msg(val, cpuinfo, name=csname, cpus=val_cpus)
+                _PepcCommon.print_val_msg(val, cpuinfo, name=csname, cpus=val_cpus)
 
 def _handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
     """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
@@ -175,7 +174,7 @@ def cstates_info_command(args, proc):
                     if key == "disable":
                         val = "off" if val else "on"
                         if first:
-                            _PepcCommon.print_prop_msg(val, cpuinfo, name=csname, cpus=val_cpus)
+                            _PepcCommon.print_val_msg(val, cpuinfo, name=csname, cpus=val_cpus)
                             first = False
                         else:
                             # The first line starts with C-state name, aling the second line nicely
@@ -183,7 +182,7 @@ def cstates_info_command(args, proc):
                             # POLL: 'on' for CPUs 0-15
                             #       'off' for CPUs 16-31
                             prefix = " " * (len(csname) + 2)
-                            _PepcCommon.print_prop_msg(val, cpuinfo, cpus=val_cpus, prefix=prefix)
+                            _PepcCommon.print_val_msg(val, cpuinfo, cpus=val_cpus, prefix=prefix)
                     else:
                         if key == "latency":
                             name = "expected latency"
@@ -197,7 +196,7 @@ def cstates_info_command(args, proc):
                         #       'off' for CPUs 16-31
                         #       - expected latency: '0'
                         prefix = " " * (len(csname) + 2) + " - "
-                        _PepcCommon.print_prop_msg(val, cpuinfo, name=name, prefix=prefix)
+                        _PepcCommon.print_val_msg(val, cpuinfo, name=name, prefix=prefix)
 
         #
         # Print platform configuration info.

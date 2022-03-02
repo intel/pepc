@@ -78,8 +78,8 @@ def fmt_cpus(cpus, cpuinfo):
 
     return msg
 
-def print_prop_msg(val, cpuinfo, name=None, action=None, cpus=None, prefix=None):
-    """Format and print a message about a C-state property 'name'."""
+def print_prop_msg(prop, val, cpuinfo, action=None, cpus=None, prefix=None):
+    """Format and print a message about a property 'prop'."""
 
     if cpus is None:
         sfx = ""
@@ -87,12 +87,8 @@ def print_prop_msg(val, cpuinfo, name=None, action=None, cpus=None, prefix=None)
         cpus = fmt_cpus(cpus, cpuinfo)
         sfx = f" for {cpus}"
 
-    if name is None:
-        pfx = ""
-    else:
-        pfx = f"{name}: "
+    msg = f"{prop['name']}: "
 
-    msg = pfx
     if prefix is not None:
         msg = prefix + msg
 
@@ -105,6 +101,30 @@ def print_prop_msg(val, cpuinfo, name=None, action=None, cpus=None, prefix=None)
     msg += f"{val}{sfx}"
     _LOG.info(msg)
 
+def print_val_msg(val, cpuinfo, name=None, cpus=None, prefix=None):
+    """Format and print a message about 'name' and its value 'val'."""
+
+    if cpus is None:
+        sfx = ""
+    else:
+        cpus = fmt_cpus(cpus, cpuinfo)
+        sfx = f" for {cpus}"
+
+    if name is not None:
+        pfx = f"{name}: "
+    else:
+        pfx = ""
+
+    msg = pfx
+    if prefix is not None:
+        msg = prefix + msg
+
+    if val is None:
+        val = "not supported"
+
+    msg += f"{val}{sfx}"
+    _LOG.info(msg)
+
 def print_aggr_props(aggr_pinfo, sobj, cpuinfo):
     """Print the aggregate C-state or P-state properties information."""
 
@@ -113,8 +133,7 @@ def print_aggr_props(aggr_pinfo, sobj, cpuinfo):
             for val, cpus in kinfo.items():
                 # Distinguish between properties and sub-properties.
                 if key in sobj.props:
-                    name = sobj.props[pname]["name"]
-                    print_prop_msg(val, cpuinfo, name=name, cpus=cpus)
+                    print_prop_msg(sobj.props[pname], val, cpuinfo, cpus=cpus)
                 else:
                     if val is None:
                         # Just skip unsupported sub-property instead of printing something like
@@ -123,8 +142,8 @@ def print_aggr_props(aggr_pinfo, sobj, cpuinfo):
 
                     # Print sub-properties with a prefix and exclude CPU information, because it is
                     # the same as in the (parent) property, which has already been printed.
-                    name = sobj.props[pname]["subprops"][key]["name"]
-                    print_prop_msg(val, cpuinfo, name=name, cpus=None, prefix="  - ")
+                    prop = sobj.props[pname]["subprops"][key]
+                    print_prop_msg(prop, val, cpuinfo, cpus=None, prefix="  - ")
 
 def build_aggregate_pinfo(pinfo_iter, sprops=None):
     """
