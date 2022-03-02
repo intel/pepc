@@ -43,12 +43,19 @@ class EPB:
     1. Multiple CPUs.
         * Get/set EPB: 'get_epb()', 'set_epb()'.
         * Get EPB policy name: 'get_epb_policy()'.
+        * Get the list of available EPB policies: 'get_epb_policies()'.
     2. Single CPU.
         * Get/set EPB: 'get_cpu_epb()', 'set_cpu_epb()'.
         * Check if the CPU supports EPB: 'is_epb_supported()'
         * Get EPB policy name: 'get_cpu_epb_policy()'.
         * Get the list of available EPB policies: 'get_cpu_epb_policies()'.
     """
+
+    def get_epb_policies(self, cpus="all"):
+        """Yield (CPU number, List of supported EPB policy names) pairs for CPUs in 'cpus'."""
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            yield cpu, list(_EPB_POLICIES)
 
     @staticmethod
     def get_cpu_epb_policies(cpu): # pylint: disable=unused-argument
@@ -63,31 +70,26 @@ class EPB:
         return self._epb_msr.is_cpu_feature_supported("epb", cpu)
 
 
-    def _cpu_epb_to_policy(self, cpu, epb, unknown_ok):
+    def _cpu_epb_to_policy(self, cpu, epb): # pylint: disable=unused-argument
         """Return policy name for EPB value 'epb' on CPU 'cpu'."""
 
         if epb in self._epb_rmap:
             return self._epb_rmap[epb]
-        if unknown_ok:
-            return f"unknown (EPB {epb})"
 
-        raise Error(f"unknown policy name for EPB value {epb} on CPU {cpu}{self._proc.hostmsg}")
+        return f"unknown EPB={epb}"
 
-    def get_epb_policy(self, cpus="all", unknown_ok=True):
+    def get_epb_policy(self, cpus="all"):
         """
         Yield (CPU number, EPB policy name) pairs for CPUs in 'cpus'.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
                    7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
-          * unknown_ok - if the EPB value does not match any policy name, this method returns the
-                         "unknown (EPB <value>)" string by default. However, if 'unknown_ok' is
-                         'False', an exception is raised instead.
         """
 
         for cpu, epb in self._epb_msr.read_feature("epb", cpus=cpus):
-            yield cpu, self._cpu_epb_to_policy(cpu, epb, unknown_ok)
+            yield cpu, self._cpu_epb_to_policy(cpu, epb)
 
-    def get_cpu_epb_policy(self, cpu, epb=None, unknown_ok=True):
+    def get_cpu_epb_policy(self, cpu, epb=None):
         """
         Similar to 'get_epb_policy()', but for a single CPU 'cpu'. Return EPB policy name for CPU
         'cpu'. The arguments are as follows.
@@ -96,7 +98,6 @@ class EPB:
           * epb - by default, this method reads the EPB value for CPU 'cpu' from the MSR. But if the
                   'epb' argument is provided, this method skips the reading part and just translates
                   the EPB value in 'epb' to the policy name.
-          * unknown_ok - same as in 'get_epb_policy()'.
         """
 
         if epb is None:
@@ -104,7 +105,7 @@ class EPB:
         else:
             self._epb_msr.check_cpu_feature_supported("epb", cpu)
 
-        return self._cpu_epb_to_policy(cpu, epb, unknown_ok)
+        return self._cpu_epb_to_policy(cpu, epb)
 
     def get_epb(self, cpus="all"):
         """
