@@ -37,7 +37,7 @@ PROPS = {
         "writable" : True,
         "subprops" : {
             "pkg_cstate_limit_locked" : {
-                "name" : "Package C-state limit locked",
+                "name" : "Package C-state limit lock",
                 "help" : """Whether the package C-state limit in MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                             (MSR_PKG_CST_CONFIG_CONTROL) is locked and cannot be modified.""",
                 "type" : "bool",
