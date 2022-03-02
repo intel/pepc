@@ -301,3 +301,12 @@ def rangify(numbers):
                 range_strs.append(str(num))
 
     return ",".join(range_strs)
+
+def untitle(word):
+    """Does the opposit to the 'title()' method of python strings."""
+
+    # Do nothing if the first character is lowercase or if both first and second characters are
+    # upper case, which would mean this 'word' is an abbreviation, such as "DNA".
+    if word[0].islower() or word[1].isupper():
+        return word
+    return word[0].lower() + word[1:]
