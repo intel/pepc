@@ -94,8 +94,14 @@ def print_prop_msg(prop, val, cpuinfo, action=None, cpus=None, prefix=None):
 
     if val is None:
         val = "not supported"
-    elif cpus is not None:
-        val = f"'{val}'"
+    else:
+        unit = prop.get("unit")
+        if unit:
+            if val > 9999:
+                val = Human.largenum(val)
+            val = f"{val}{unit}"
+        if cpus is not None:
+            val = f"'{val}'"
 
     if action is not None:
         msg += f"{action} "
