@@ -21,7 +21,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from pepclibs.helperlibs import ArgParse, Procs, Logging, SSH
+from pepclibs.helperlibs import ArgParse, Human, Procs, Logging, SSH
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates
 
@@ -217,8 +217,8 @@ def build_arguments_parser():
             choices = ""
 
         option = f"--{name.replace('_', '-')}"
-        text += f"""{pinfo["name"]}. {pinfo["help"]}{choices} {pinfo["name"]} has {pinfo["scope"]}
-                    scope."""
+        name = Human.untitle(pinfo["name"])
+        text += f"""{name}. {pinfo["help"]}{choices} This option has {pinfo["scope"]} scope."""
 
         kwargs["help"] = text
         kwargs["action"] = ArgParse.OrderedArg
