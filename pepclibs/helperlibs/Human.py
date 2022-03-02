@@ -16,7 +16,7 @@ from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
 _SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "EiB"]
-_LARGENUM_UNITS = ["K", "M", "G", "T", "E"]
+_LARGENUM_UNITS = ["k", "M", "G", "T", "E"]
 
 # pylint: disable=undefined-loop-variable
 def bytesize(size, precision=1):
