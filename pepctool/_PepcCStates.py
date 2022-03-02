@@ -195,7 +195,7 @@ def cstates_info_command(args, proc):
                         # POLL: 'on' for CPUs 0-15
                         #       'off' for CPUs 16-31
                         #       - expected latency: '0'
-                        prefix = " " * (len(csname) + 2) + " - "
+                        prefix = " " * (len(csname) + 2) + "- "
                         _PepcCommon.print_val_msg(val, cpuinfo, name=name, prefix=prefix)
 
         #
