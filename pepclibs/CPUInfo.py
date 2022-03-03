@@ -166,6 +166,7 @@ class CPUInfo:
         * 'get_cpus()'
         * 'get_offline_cpus()'
         * 'get_cpu_siblings()'
+        * 'get_cpu_levels()'
     2. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
         * 'packages_to_cpus()'
         * 'package_to_cpus()'
@@ -554,6 +555,27 @@ class CPUInfo:
                 siblings.append(tline1["CPU"])
 
         return siblings
+
+    def get_cpu_levels(self, cpu):
+        """
+        Returns a dictionary of levels an onlin CPU 'cpu' belongs to. Exemple for CPU 16:
+            {"package": 0, "die": 1, "node": 1, "core" : 5, "CPU": 16}
+        """
+
+        tline = None
+        for tline in self._get_topology(order="CPU"):
+            if cpu == tline["CPU"]:
+                break
+        else:
+            raise Error("CPU {cpu} is not available{self._proc.hostmsg}")
+
+        if not tline["online"]:
+            raise Error("CPU {cpu} is offline{self._proc.hostmsg}, cannot get its topology")
+
+        result = {}
+        for lvl in LEVELS:
+            result[lvl] = tline[lvl]
+        return result
 
     def packages_to_cpus(self, packages="all", order="CPU"):
         """
