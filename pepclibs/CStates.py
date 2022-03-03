@@ -476,11 +476,11 @@ class CStates:
        'enable_cstates()', 'disable_cstates()'.
     2. Get C-state(s) information.
        * For multiple CPUs and multiple C-states: get_cstates_info().
-       * For a single CPU and multiple C-states: 'get_cpu_cstates_info()'.
-       * For a single CPU and a single C-state:  'get_cpu_cstate_info()'.
+       * For single CPU and multiple C-states: 'get_cpu_cstates_info()'.
+       * For single CPU and a single C-state:  'get_cpu_cstate_info()'.
     3. Get/set C-state properties.
        * For multiple properties and multiple CPUs: 'get_props()', 'set_props()'.
-       * For single properties and multiple CPUs: 'set_prop()'.
+       * For single property and multiple CPUs: 'set_prop()'.
        * For multiple properties and single CPU: 'get_cpu_props()', 'set_cpu_props()'.
        * For single property and single CPU: 'get_cpu_prop()', 'set_cpu_prop()'.
     """
@@ -691,7 +691,7 @@ class CStates:
 
                 mapping += f"\n{clist_str}"
 
-        name =  self._props[pname]["name"]
+        name = Human.untitle(self._props[pname]["name"])
         rem_cpus_str = Human.rangify(rem_cpus)
 
         if scope == "core":
