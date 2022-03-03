@@ -168,21 +168,11 @@ def cstates_info_command(args, proc):
         aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops=sprops)
 
         for csname, csinfo in aggr_csinfo.items():
-            first = True
             for key, kinfo in csinfo.items():
                 for val, val_cpus in kinfo.items():
                     if key == "disable":
                         val = "off" if val else "on"
-                        if first:
-                            _PepcCommon.print_val_msg(val, cpuinfo, name=csname, cpus=val_cpus)
-                            first = False
-                        else:
-                            # The first line starts with C-state name, aling the second line nicely
-                            # using the prefix. The end result is expected to be like this:
-                            # POLL: 'on' for CPUs 0-15
-                            #       'off' for CPUs 16-31
-                            prefix = " " * (len(csname) + 2)
-                            _PepcCommon.print_val_msg(val, cpuinfo, cpus=val_cpus, prefix=prefix)
+                        _PepcCommon.print_val_msg(val, cpuinfo, name=csname, cpus=val_cpus)
                     else:
                         if key == "latency":
                             name = "expected latency"
@@ -193,7 +183,7 @@ def cstates_info_command(args, proc):
                         # using the prefix. The end result is expected to be like this:
                         #
                         # POLL: 'on' for CPUs 0-15
-                        #       'off' for CPUs 16-31
+                        # POLL: 'off' for CPUs 16-31
                         #       - expected latency: '0'
                         prefix = " " * (len(csname) + 2) + "- "
                         _PepcCommon.print_val_msg(val, cpuinfo, name=name, prefix=prefix)

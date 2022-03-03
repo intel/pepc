@@ -81,7 +81,7 @@ def fmt_cpus(cpus, cpuinfo):
 def print_prop_msg(prop, val, cpuinfo, action=None, cpus=None, prefix=None):
     """Format and print a message about a property 'prop'."""
 
-    if cpus is None:
+    if cpus is None or (prop["scope"] == "global" and not prop["writable"]):
         sfx = ""
     else:
         cpus = fmt_cpus(cpus, cpuinfo)
@@ -100,7 +100,7 @@ def print_prop_msg(prop, val, cpuinfo, action=None, cpus=None, prefix=None):
             if val > 9999:
                 val = Human.largenum(val)
             val = f"{val}{unit}"
-        if cpus is not None:
+        if sfx:
             val = f"'{val}'"
 
     if action is not None:
@@ -153,7 +153,7 @@ def print_aggr_props(aggr_pinfo, sobj, cpuinfo):
                     # Print sub-properties with a prefix and exclude CPU information, because it is
                     # the same as in the (parent) property, which has already been printed.
                     prop = sobj.props[pname]["subprops"][key]
-                    print_prop_msg(prop, val, cpuinfo, cpus=None, prefix="  - ")
+                    print_prop_msg(prop, val, cpuinfo, cpus=cpus)
 
 def build_aggregate_pinfo(pinfo_iter, sprops=None):
     """
