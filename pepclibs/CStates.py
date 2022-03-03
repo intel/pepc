@@ -773,6 +773,11 @@ class CStates:
             # Every features should include the 'subprops' sub-dictionary.
             if "subprops" not in prop:
                 prop["subprops"] = {}
+            else:
+                # Propagate the "scope" key to sub-properties.
+                for subprop in prop["subprops"].values():
+                    if "scope" not in subprop:
+                        subprop["scope"] = prop["scope"]
 
         self._props = copy.deepcopy(self.props)
 
