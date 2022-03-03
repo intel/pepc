@@ -172,6 +172,7 @@ class CPUInfo:
         * 'package_to_dies()'
         * 'package_to_nodes()'
         * 'package_to_cores()'
+        * 'dies_to_cpus()'
         * 'cores_to_cpus()'
     3. Get packages/core/etc counts.
         * 'get_packages_count()'
@@ -187,6 +188,7 @@ class CPUInfo:
             * 'normalize_cpu()'
     5. "Divide" list of CPUs.
         A. By packages: 'cpus_div_packages()'.
+        B. By dies: 'cpus_div_dies()'.
         B. By cores: 'cpus_div_cores()'.
     6. Mark CPUs online/offline.
         * 'mark_cpus_online()'
@@ -592,6 +594,24 @@ class CPUInfo:
         """
         return self._get_level_nums("core", "package", (package,), order=order)
 
+    def dies_to_cpus(self, dies="all", packages="all", order="CPU"):
+        """
+        Returns list of online CPU numbers belonging to dies 'dies' in packages 'packages'. The
+        'dies' and 'packages' arguments are similar to the 'packages' argument in
+        'normalize_packages()'. The 'order' argument is the same as in 'get_cpus()'. By default, the
+        result sorted in ascending order.
+        """
+
+        by_die = self._get_level_nums("CPU", "die", dies, order=order)
+        by_package = set(self._get_level_nums("CPU", "package", packages))
+
+        cpus = []
+        for cpu in by_die:
+            if cpu in by_package:
+                cpus.append(cpu)
+
+        return cpus
+
     def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
         """
         Returns list of online CPU numbers belonging to cores 'cores' in packages 'packages'. The
@@ -688,9 +708,59 @@ class CPUInfo:
 
         return (pkgs, rem_cpus)
 
+    def cpus_div_dies(self, cpus):
+        """
+        This method is similar to 'cpus_div_packages()', but it checks which CPU numbers in 'cpus'
+        cover entire dies(s). The arguments are as follows.
+          * cpus - same as in 'normalize_cpus()'.
+
+        Returns a tuple of two lists: ('dies', 'rem_cpus').
+          * dies - list of ('die', 'package') tuples with all CPUs present in 'cpus'.
+              o die - die number.
+              o package - packae number 'die' belongs to
+          * rem_cpus - list of remaining CPUs that cannot be converted to a die number.
+
+        The return value is inconsistent with 'cpus_div_packages()' because die numbers are not
+        global, so they must go with package numbers.
+
+        Consider an example of a system with 2 packages, 2 dies per package, 1 core per die, 2 CPUs
+        per core.
+          * package 0 includes dies 0 and 1, cores 0 and 1, and CPUs 0, 1, 2, and 3
+            - die 0 includes CPUs 0 and 1
+            - die 1 includes CPUs 2 and 3
+          * package 1 includes dies 0 and 1, cores 0 and 1, and CPUs 4, 5, 6, and 7
+            - die 0 includes CPUs 4 and 5
+            - die 1 includes CPUs 6 and 7
+
+        1. cpus_div_dies("0-3") would return   ([(0,0), (1,0)], []).
+        2. cpus_div_dies("4,5,6") would return ([(1,1)],        [6]).
+        3. cpus_div_dies("0,3") would return   ([],             [0,3]).
+        """
+
+        dies = []
+        rem_cpus = []
+
+        cpus = self.normalize_cpus(cpus)
+        cpus_set = set(cpus)
+
+        for pkg in self.get_packages():
+            for die in self.package_to_dies(pkg):
+                siblings_set = set(self.dies_to_cpus(dies=(die,), packages=(pkg,)))
+
+                if siblings_set.issubset(cpus_set):
+                    dies.append((die, pkg))
+                    cpus_set -= siblings_set
+
+        # Return the remaining CPUs in the order of the input 'cpus'.
+        for cpu in cpus:
+            if cpu in cpus_set:
+                rem_cpus.append(cpu)
+
+        return (dies, rem_cpus)
+
     def cpus_div_cores(self, cpus):
         """
-        This method is similar to 'cpus_div_packages()', but it checks which CPU numbers in CPUs
+        This method is similar to 'cpus_div_packages()', but it checks which CPU numbers in 'cpus'
         cover entire core(s). So it is inverse to the 'cores_to_cpus()' method. The arguments are as
         follows.
           * cpus - same as in 'normalize_cpus()'.
