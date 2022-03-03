@@ -22,7 +22,7 @@ def validate_prop_scope(prop, cpus, cpuinfo, hostmsg):
 
     scope = prop["scope"]
 
-    if scope not in {"global", "package", "core", "CPU"}:
+    if scope not in {"global", "package", "die", "core", "CPU"}:
         raise Error(f"BUG: unsupported scope \"{scope}\"")
 
     if scope == "CPU":
@@ -49,23 +49,29 @@ def validate_prop_scope(prop, cpus, cpuinfo, hostmsg):
         pkg_cpus_str = Human.rangify(pkg_cpus)
         mapping += f"\n  * package {pkg}: CPUs: {pkg_cpus_str}"
 
-        if scope == "core":
-            # Add cores information in case of "core" scope.
-            pkg_cores = cpuinfo.package_to_cores(pkg)
+        if scope in {"core", "die"}:
+            # Build the cores or dies to packages map, in order to make the error message more
+            # helpful. We use "core" in variable names, but in case of the "die" scope, they
+            # actually mean "die".
+
+            pkg_cores = getattr(cpuinfo, f"package_to_{scope}s")(pkg)
             pkg_cores_str = Human.rangify(pkg_cores)
-            mapping += f"\n               cores: {pkg_cores_str}"
+            mapping += f"\n               {scope}s: {pkg_cores_str}"
 
             # Build the cores to CPUs mapping string.
             clist = []
             for core in pkg_cores:
-                cpus = cpuinfo.cores_to_cpus(packages=(pkg,), cores=(core,))
+                if scope == "core":
+                    cpus = cpuinfo.cores_to_cpus(cores=(core,), packages=(pkg,))
+                else:
+                    cpus = cpuinfo.dies_to_cpus(dies=(core,), packages=(pkg,))
                 cpus_str = Human.rangify(cpus)
                 clist.append(f"{core}:{cpus_str}")
 
-            # The core->CPU numbers mapping may be very long, wrap it to 100 symbols.
+            # The core/die->CPU mapping may be very long, wrap it to 100 symbols.
             import textwrap # pylint: disable=import-outside-toplevel
 
-            prefix = "               cores to CPUs: "
+            prefix = f"               {scope}s to CPUs: "
             indent = " " * len(prefix)
             clist_wrapped = textwrap.wrap(", ".join(clist), width=100,
                                           initial_indent=prefix, subsequent_indent=indent)
@@ -78,10 +84,12 @@ def validate_prop_scope(prop, cpus, cpuinfo, hostmsg):
 
     if scope == "core":
         mapping_name = "relation between CPUs, cores, and packages"
+    elif scope == "die":
+        mapping_name = "relation between CPUs, dies, and packages"
     else:
         mapping_name = "relation between CPUs and packages"
 
-    errmsg = f"{name} has {scope} scope, so the list of CPUs must include all CPUs" \
+    errmsg = f"{name} has {scope} scope, so the list of CPUs must include all CPUs " \
              f"in one or multiple {scope}s.\n" \
              f"However, the following CPUs do not comprise full {scope}(s): {rem_cpus_str}\n" \
              f"Here is the {mapping_name}{hostmsg}:{mapping}"
