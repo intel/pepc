@@ -45,18 +45,8 @@ def test_v1_pstates_info():
     for scope in _GOOD_SCOPE_OPTIONS:
         run_pepc(f"pstates info {scope}", exp_ret=0)
 
-    for scope in _GOOD_SCOPE_OPTIONS:
-        if "packages" not in scope or "cores" in scope:
-            continue
-        run_pepc(f"pstates info --uncore {scope}", exp_ret=0)
-
     for scope in _BAD_SCOPE_OPTIONS:
         run_pepc(f"pstates info {scope}", exp_ret=-1)
-
-    for scope in _BAD_SCOPE_OPTIONS:
-        if "packages" not in scope:
-            continue
-        run_pepc(f"pstates info --uncore {scope}", exp_ret=-1)
 
 def test_v1_pstates_set():
     """Test 'pepc pstates config' command."""
