@@ -65,23 +65,25 @@ def parse_bytesize(size):
         raise Error("cannot interpret bytes count '%s', please provide a number and "
                     "possibly the unit: %s" % (orig_size, ", ".join(_SIZE_UNITS))) from None
 
-def largenum(value, sep=""):
+def largenum(value, sep="", unit=None):
     """
     Transform a supposedly large integer into a human-readable form using suffixes like "K" (Kilo),
     "M" (Mega), etc.
     """
 
-    unit = None
+    scaler = None
     if value >= 500:
-        for unit in _LARGENUM_UNITS:
+        for scaler in _LARGENUM_UNITS:
             value /= 1000.0
             if value < 1000:
                 break
 
     result = "%.1f" % value
     result = result.rstrip("0").rstrip(".")
+    if scaler:
+        result += sep + scaler
     if unit:
-        result += sep + unit
+        result += unit
     return result
 
 def duration(seconds, s=True, ms=False):
