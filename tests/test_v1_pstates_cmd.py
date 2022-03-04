@@ -16,6 +16,12 @@ from MockedStuff import get_test_cpu_info
 _CPUINFO = get_test_cpu_info()
 
 # Good command scope options.
+_GOOD_GLOBAL_SCOPE_OPTIONS = [
+    "",
+    "--cpus all",
+    "--packages all",
+    f"--cpus  0-{_CPUINFO['max_cpu']}"]
+
 _GOOD_PKG_SCOPE_OPTIONS = [
     "--packages all",
     f"--packages 0-{_CPUINFO['max_package']}"]
@@ -118,10 +124,7 @@ def test_v1_pstates_config():
         "--epp",
         "--epp 0",
         "--epp 128",
-        "--governor powersave",
-        "--turbo",
-        "--turbo on",
-        "--turbo off"]
+        "--governor powersave"]
 
     for option in good_options:
         run_pepc(f"pstates config {option}", exp_ret=0)
@@ -131,6 +134,17 @@ def test_v1_pstates_config():
 
         for scope in _BAD_SCOPE_OPTIONS:
             run_pepc(f"pstates config {option} {scope}", exp_ret=-1)
+
+    good_options = [
+        "--turbo",
+        "--turbo on",
+        "--turbo off"]
+
+    for option in good_options:
+        run_pepc(f"pstates config {option}", exp_ret=0)
+
+        for scope in _GOOD_GLOBAL_SCOPE_OPTIONS:
+            run_pepc(f"pstates config {option} {scope}", exp_ret=0)
 
     bad_options = [
         "--epb 16",
