@@ -14,7 +14,7 @@ This module provides a capability of reading and changing EPB (Energy Performanc
 CPUs.
 """
 
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs import Procs, Trivial
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, EnergyPerfBias
