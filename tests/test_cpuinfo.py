@@ -278,8 +278,11 @@ def test_cpuinfo_convert(cpuinfo):
     """
     Test the following 'CPUInfo' class methods:
       * 'packages_to_cpus()'
+      * 'package_to_cpus()'
       * 'package_to_nodes()'
+      * 'package_to_dies()'
       * 'package_to_cores()'
+      * 'dies_to_cpus()'
       * 'cores_to_cpus()'
     """
 
@@ -478,6 +481,8 @@ def test_cpuinfo_div(cpuinfo):
     """
     Test the following 'CPUInfo' class methods:
       * 'cpus_div_packages()'
+      * 'cpus_div_dies()'
+      * 'cpus_div_cores()'
     """
 
     for cpuinfo_obj in _get_test_cpuinfos(cpuinfo):
