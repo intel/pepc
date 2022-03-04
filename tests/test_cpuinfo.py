@@ -115,30 +115,30 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE, exp_exc=
     if kwargs is None:
         kwargs = {}
 
-    res = None
     method = getattr(cpuinfo, name, None)
-    if method:
-        try:
-            res = method(*args, **kwargs)
-        except Exception as err: # pylint: disable=broad-except
-            if exp_exc is _IGNORE:
-                return None
+    if not method:
+        return None
 
-            if exp_exc is None:
-                assert False, f"method '{name}()' raised the following exception:\n\t" \
-                              f"type: {type(err)}\n\tmessage: {err}"
+    try:
+        res = method(*args, **kwargs)
+    except Exception as err: # pylint: disable=broad-except
+        if exp_exc is _IGNORE:
+            return None
 
-            if isinstance(err, exp_exc):
-                return None
-
+        if exp_exc is None:
             assert False, f"method '{name}()' raised the following exception:\n\t" \
-                          f"type: {type(err)}\n\tmessage: {err}\n" \
-                          f"but it was expected to raise the following exception type: " \
-                          f"{type(exp_exc)}"
+                          f"type: {type(err)}\n\tmessage: {err}"
 
-        if exp_res is not _IGNORE:
-            assert res == exp_res, f"method '{name}()' returned:\n\t{res}\n" \
-                                   f"But it was expected to return:\n\t'{exp_res}'"
+        if isinstance(err, exp_exc):
+            return None
+
+        assert False, f"method '{name}()' raised the following exception:\n\t" \
+                      f"type: {type(err)}\n\tmessage: {err}\n" \
+                      f"but it was expected to raise the following exception type: {type(exp_exc)}"
+
+    if exp_res is not _IGNORE:
+        assert res == exp_res, f"method '{name}()' returned:\n\t{res}\n" \
+                               f"But it was expected to return:\n\t'{exp_res}'"
 
     return res
 
