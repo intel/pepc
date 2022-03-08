@@ -16,7 +16,7 @@ import time
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import Procs, FSHelpers, Human
+from pepclibs.helperlibs import Procs, KernelModule, FSHelpers, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs import CPUInfo, _Common
 
@@ -499,6 +499,10 @@ class PStates:
             return self._cache[cpu][pname]
 
         if "fname" in prop:
+            if not self._uncore_freq_supported and _is_uncore_prop(prop):
+                _LOG.debug(self._uncore_errmsg)
+                return None
+
             try:
                 val = self._get_prop_from_sysfs(prop, cpu)
                 self._add_to_cache(pname, prop, val, cpu)
@@ -557,6 +561,9 @@ class PStates:
 
             # Get the 'pname' property.
             pinfo[pname][pname] = self._get_cpu_prop(pname, cpu)
+            if pinfo[pname][pname] is None:
+                _LOG.debug("CPU %d: %s is not supported", cpu, pname)
+                continue
             _LOG.debug("CPU %d: %s = %s", cpu, pname, pinfo[pname][pname])
 
             # Get all the sub-properties.
@@ -887,6 +894,8 @@ class PStates:
         inprops = self._validate_and_order_freq(inprops, cpu, uncore=True)
 
         for pname, val in inprops.items():
+            prop = self._props[pname]
+
             # Invalidate the cache record for this CPU/property.
             self._remove_from_cache(pname, cpu)
 
@@ -905,6 +914,10 @@ class PStates:
             else:
                 if "fname" not in prop:
                     raise Error(f"BUG: unsupported property '{pname}'")
+
+                if not self._uncore_freq_supported and _is_uncore_prop(prop):
+                    raise Error(self._uncore_errmsg)
+
                 self._set_prop_in_sysfs(pname, val, cpu)
 
     def _normalize_inprops(self, inprops):
@@ -976,6 +989,49 @@ class PStates:
 
         self.set_props(((pname, val),), cpus=(cpu,))
 
+    def _ensure_uncore_freq_support(self):
+        """
+        Make sure that the uncore frequency control is supported. Load the uncore frequency
+        control driver if necessary.
+        """
+
+        if FSHelpers.exists(self._sysfs_base_uncore, self._proc):
+            self._uncore_freq_supported = True
+            return
+
+        drvname = "intel_uncore_frequency"
+        msg = f"Uncore frequency operations are not supported{self._proc.hostmsg}. Here are the " \
+              f"possible reasons:\n" \
+              f" 1. the hardware does not support uncore frequency management.\n" \
+              f" 2. the '{drvname}' driver does not support this hardware.\n" \
+              f" 3. the '{drvname}' driver is not enabled. Try to compile the kernel with " \
+              f"the 'CONFIG_INTEL_UNCORE_FREQ_CONTROL' option."
+
+        try:
+            self._ufreq_drv = KernelModule.KernelModule(self._proc, drvname)
+            loaded = self._ufreq_drv.is_loaded()
+        except Error as err:
+            _LOG.debug("%s\n%s", err, msg)
+            self._uncore_errmsg = msg
+            return
+
+        if loaded:
+            # The sysfs directories do not exist, but the driver is loaded.
+            _LOG.debug("The uncore frequency driver '%s' is loaded, but the sysfs directory '%s' "
+                       "does not exist.\n%s", drvname, self._sysfs_base_uncore, msg)
+            self._uncore_errmsg = msg
+
+        try:
+            self._ufreq_drv.load()
+            self._unload_ufreq_drv = True
+            FSHelpers.wait_for_a_file(self._sysfs_base_uncore, timeout=1, proc=self._proc)
+        except Error as err:
+            _LOG.debug("%s\n%s", err, msg)
+            self._uncore_errmsg = msg
+            return
+
+        self._uncore_freq_supported = True
+
     def _init_props_dict(self):
         """Initialize the 'props' dictionary."""
 
@@ -1037,6 +1093,12 @@ class PStates:
         # The write-through per-CPU properties cache.
         self._cache = {}
 
+        # Will be 'True' if uncore frequency operations are supported.
+        self._uncore_freq_supported = False
+        self._uncore_errmsg = None
+        self._ufreq_drv = None
+        self._unload_ufreq_drv = False
+
         self._sysfs_base = Path("/sys/devices/system/cpu")
         self._sysfs_base_uncore = Path("/sys/devices/system/cpu/intel_uncore_frequency")
 
@@ -1046,9 +1108,16 @@ class PStates:
             self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
 
         self._init_props_dict()
+        self._ensure_uncore_freq_support()
 
     def close(self):
         """Uninitialize the class object."""
+
+        if getattr(self, "_ufreq_drv", None):
+            if getattr(self, "_unload_ufreq_drv", None):
+                self._ufreq_drv.unload()
+                self._unload_ufreq_drv = None
+            self._ufreq_drv = None
 
         for attr in ("_eppobj", "_epbobj", "_pmenable", "_platinfo", "_trl"):
             obj = getattr(self, attr, None)
