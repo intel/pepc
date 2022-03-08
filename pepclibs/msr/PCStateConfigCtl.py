@@ -49,10 +49,9 @@ _SKX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "u
                        "aliases" : {"PC6": "PC6R"},
                        "bits"    : (2, 0)}
 # Ice Lake and Sapphire Rapids Xeon.
-_ICX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6":2, "unlimited" : 7},
+_ICX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
                        "aliases" : {"PC6N": "PC6"},
                        "bits"    : (2, 0)}
-
 #
 # Atom-based micro servers.
 #
@@ -62,6 +61,14 @@ _DNV_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC6": 1},
 # Snow Ridge SoC (Tremont).
 _SNR_PKG_CST_LIMITS = {"codes"   : {"PC0": 0},
                        "bits"    : (3, 0)}
+
+#
+# Clients.
+#
+# Alder Lake.
+_ADL_PKG_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5,
+                                  "PC8": 6, "PC9": 7, "PC10": 8},
+                        "bits" : (3, 0)}
 
 # CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
@@ -78,6 +85,9 @@ _PKG_CST_LIMITS = {
         # Atom microservers.
         CPUInfo.INTEL_FAM6_GOLDMONT_D:       _DNV_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_TREMONT_D:        _SNR_PKG_CST_LIMITS,
+        # Clients.
+        CPUInfo.INTEL_FAM6_ALDERLAKE:        _ADL_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_ALDERLAKE_L:      _ADL_PKG_CST_LIMITS,
 }
 
 # Map of features available on various CPU models. Please, refer to the notes for
