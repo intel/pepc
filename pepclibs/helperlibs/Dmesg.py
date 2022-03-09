@@ -16,7 +16,7 @@ import itertools
 import difflib
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import Procs
+from pepclibs.helperlibs import Procs, ToolChecker
 
 _LOG = logging.getLogger()
 
@@ -90,23 +90,33 @@ class Dmesg:
             return [line.strip() for line in new_lines]
         return new_lines
 
-    def __init__(self, proc=None):
+    def __init__(self, proc=None, tchk=None):
         """
         The class constructor. The arguments are as follows.
           * proc - the 'Proc' or 'SSH' object that defines the host to run 'dmesg' on.
+          * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
+                   the required tools like 'dmesg' are present on the target host.
         """
 
         self._proc = proc
+        self._tchk = tchk
+
         self._close_proc = proc is None
+        self._close_tchk = tchk is None
+
         self.captured = []
 
         if not self._proc:
             self._proc = Procs.Proc()
+        if not self._tchk:
+            self._tchk = ToolChecker.ToolChecker(proc=self._proc)
+
+        self._tchk.check_tool("dmesg")
 
     def close(self):
         """Stop the measurements."""
 
-        for attr in ("_proc",):
+        for attr in ("_tchk", "_proc"):
             obj = getattr(self, attr, None)
             if obj:
                 if getattr(self, f"_close{attr}", False):
