@@ -12,7 +12,7 @@ This module provides API for loading and unloading Linux kernel modules (drivers
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import Procs, Dmesg
+from pepclibs.helperlibs import Procs, Dmesg, ToolChecker
 
 _LOG = logging.getLogger()
 
@@ -100,7 +100,7 @@ class KernelModule:
             opts += " dyndbg=+pf"
         self._run_mod_cmd(f"modprobe {self.name} {opts}")
 
-    def __init__(self, name, proc=None, dmesg=None):
+    def __init__(self, name, proc=None, dmesg=None, tchk=None):
         """
         The class constructor. The arguments are as follows.
           * name - kernel module name.
@@ -108,6 +108,8 @@ class KernelModule:
                    various methods.
           * dmesg - 'True' to enable 'dmesg' output checks (default), 'False' to disable them. Can
                     also be a 'Dmesg' object.
+          * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
+                   the required tools like 'modprobe' are present on the target host.
 
         By default, objects of this class capture 'dmesg' output on the host defined by 'proc'. The
         first 'dmesg' snapshot is taken before loading/unloading the driver. The second snapsot is
@@ -126,9 +128,11 @@ class KernelModule:
         self._proc = proc
         self.name = name
         self._dmesg_obj = None
+        self._tchk = tchk
 
         self._close_proc = proc is None
         self._close_dmesg_obj = False
+        self._close_tchk = tchk is None
 
         if not self._proc:
             self._proc = Procs.Proc()
@@ -137,11 +141,16 @@ class KernelModule:
         elif dmesg:
             self._dmesg_obj = Dmesg.Dmesg(proc=self._proc)
             self._close_dmesg = True
+        if not self._tchk:
+            self._tchk = ToolChecker.ToolChecker(proc=self._proc)
+
+        self._tchk.check_tool("modprobe")
+        self._tchk.check_tool("rmmod")
 
     def close(self):
         """Stop the measurements."""
 
-        for attr in ("_dmesg_obj", "_proc",):
+        for attr in ("_tchk", "_dmesg_obj", "_proc"):
             obj = getattr(self, attr, None)
             if obj:
                 if getattr(self, f"_close{attr}", False):
