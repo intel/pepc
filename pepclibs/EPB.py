@@ -69,7 +69,6 @@ class EPB:
 
         return self._epb_msr.is_cpu_feature_supported("epb", cpu)
 
-
     def _cpu_epb_to_policy(self, cpu, epb): # pylint: disable=unused-argument
         """Return policy name for EPB value 'epb' on CPU 'cpu'."""
 
