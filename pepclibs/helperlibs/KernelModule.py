@@ -12,7 +12,7 @@ This module provides API for loading and unloading Linux kernel modules (drivers
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import Dmesg
+from pepclibs.helperlibs import Procs, Dmesg
 
 _LOG = logging.getLogger()
 
@@ -100,12 +100,12 @@ class KernelModule:
             opts += " dyndbg=+pf"
         self._run_mod_cmd(f"modprobe {self.name} {opts}")
 
-    def __init__(self, proc, name, dmesg=None):
+    def __init__(self, name, proc=None, dmesg=None):
         """
         The class constructor. The arguments are as follows.
+          * name - kernel module name.
           * proc - the host to operate on. This object will keep a 'proc' reference and use it in
                    various methods.
-          * name - kernel module name.
           * dmesg - 'True' to enable 'dmesg' output checks (default), 'False' to disable them. Can
                     also be a 'Dmesg' object.
 
@@ -127,15 +127,26 @@ class KernelModule:
         self.name = name
         self._dmesg_obj = None
 
+        self._close_proc = proc is None
+        self._close_dmesg_obj = False
+
+        if not self._proc:
+            self._proc = Procs.Proc()
         if isinstance(dmesg, Dmesg.Dmesg):
             self._dmesg_obj = dmesg
         elif dmesg:
             self._dmesg_obj = Dmesg.Dmesg(self._proc)
+            self._close_dmesg = True
 
     def close(self):
         """Stop the measurements."""
-        if getattr(self, "_proc", None):
-            self._proc = None
+
+        for attr in ("_dmesg_obj", "_proc",):
+            obj = getattr(self, attr, None)
+            if obj:
+                if getattr(self, f"_close{attr}", False):
+                    getattr(obj, "close")()
+                setattr(self, attr, None)
 
     def __enter__(self):
         """Enter the run-time context."""

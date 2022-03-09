@@ -1012,7 +1012,7 @@ class PStates:
               f"the 'CONFIG_INTEL_UNCORE_FREQ_CONTROL' option."
 
         try:
-            self._ufreq_drv = KernelModule.KernelModule(self._proc, drvname)
+            self._ufreq_drv = KernelModule.KernelModule(drvname, proc=self._proc)
             loaded = self._ufreq_drv.is_loaded()
         except Error as err:
             _LOG.debug("%s\n%s", err, msg)

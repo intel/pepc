@@ -369,7 +369,7 @@ class MSR:
         msg = f"file '{dev_path}' is not available{self._proc.hostmsg}\nMake sure your kernel" \
               f"has the '{drvname}' driver enabled (CONFIG_X86_MSR)."
         try:
-            self._msr_drv = KernelModule.KernelModule(self._proc, drvname)
+            self._msr_drv = KernelModule.KernelModule(drvname, proc=self._proc)
             loaded = self._msr_drv.is_loaded()
         except Error as err:
             raise Error(f"{msg}\n{err}") from err
