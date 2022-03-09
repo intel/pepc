@@ -16,6 +16,7 @@ import itertools
 import difflib
 import logging
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs import Procs
 
 _LOG = logging.getLogger()
 
@@ -89,18 +90,28 @@ class Dmesg:
             return [line.strip() for line in new_lines]
         return new_lines
 
-    def __init__(self, proc):
+    def __init__(self, proc=None):
         """
         The class constructor. The arguments are as follows.
           * proc - the 'Proc' or 'SSH' object that defines the host to run 'dmesg' on.
         """
 
         self._proc = proc
+        self._close_proc = proc is None
         self.captured = []
+
+        if not self._proc:
+            self._proc = Procs.Proc()
 
     def close(self):
         """Stop the measurements."""
-        self._proc = None
+
+        for attr in ("_proc",):
+            obj = getattr(self, attr, None)
+            if obj:
+                if getattr(self, f"_close{attr}", False):
+                    getattr(obj, "close")()
+                setattr(self, attr, None)
 
     def __enter__(self):
         """Enter the run-time context."""

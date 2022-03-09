@@ -135,7 +135,7 @@ class KernelModule:
         if isinstance(dmesg, Dmesg.Dmesg):
             self._dmesg_obj = dmesg
         elif dmesg:
-            self._dmesg_obj = Dmesg.Dmesg(self._proc)
+            self._dmesg_obj = Dmesg.Dmesg(proc=self._proc)
             self._close_dmesg = True
 
     def close(self):
