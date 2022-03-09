@@ -75,21 +75,42 @@ class EPP:
                                                            msr=msr)
         return self._hwpreq_pkg
 
+    def _is_cached(self, key, cpu):
+        """Returns 'True' if there is a cached value for 'key' and CPU 'cpu'."""
+
+        if cpu in self._cache and key in self._cache[cpu]:
+            return True
+        return False
+
+    def _remove_from_cache(self, key, cpu):
+        """Remove key 'key' of CPU 'cpu' from the cache."""
+
+        if cpu in self._cache and key in self._cache[cpu]:
+            del self._cache[cpu][key]
+
+    def _add_to_cache(self, key, val, cpu):
+        """Add key 'key' of CPU 'cpu' to the cache."""
+
+        if cpu not in self._cache:
+            self._cache[cpu] = {}
+        self._cache[cpu][key] = val
+
     def _get_cpu_epp_policies(self, cpu):
         """Implements 'get_cpu_epp_policies()'."""
 
-        if cpu in self._policies:
-            return self._policies[cpu]
+        if self._is_cached("policies", cpu):
+            return self._cache[cpu]["policies"]
 
         # Prefer using the names from the Linux kernel.
         path = self._sysfs_epp_policies_path % cpu
         line = FSHelpers.read(path, default=None, proc=self._proc)
         if line is None:
-            self._policies[cpu] = list(_EPP_POLICIES)
+            policies = list(_EPP_POLICIES)
         else:
-            self._policies[cpu] = Trivial.split_csv_line(line, sep=" ")
+            policies = Trivial.split_csv_line(line, sep=" ")
 
-        return self._policies[cpu]
+        self._add_to_cache("policies", policies, cpu)
+        return policies
 
     def get_epp_policies(self, cpus="all"):
         """Yield (CPU number, List of supported EPP policy names) pairs for CPUs in 'cpus'."""
@@ -106,9 +127,16 @@ class EPP:
     def is_epp_supported(self, cpu):
         """Returns 'True' if EPP is supported, on CPU 'cpu', otherwise returns 'False'."""
 
+        if self._is_cached("supported", cpu):
+            return self._cache[cpu]["supported"]
+
         if FSHelpers.exists(self._sysfs_epp_path % cpu, proc=self._proc):
-            return True
-        return self._get_hwpreq().is_cpu_feature_supported("epp", cpu)
+            self._add_to_cache("supported", True, cpu)
+        else:
+            val = self._get_hwpreq().is_cpu_feature_supported("epp", cpu)
+            self._add_to_cache("supported", val, cpu)
+
+        return self._cache[cpu]["supported"]
 
     def _get_cpu_epp_policy_from_sysfs(self, cpu):
         """
@@ -272,8 +300,10 @@ class EPP:
 
         self._hwpreq = None
         self._hwpreq_pkg = None
-        self._policies = {}
         self._epp_rmap = {code:name for name, code in _EPP_POLICIES.items()}
+
+        # The per-CPU cache for read-only data, such as policies list.
+        self._cache = {}
 
         sysfs_base = "/sys/devices/system/cpu/cpufreq/policy%d"
         self._sysfs_epp_path = sysfs_base + "/energy_performance_preference"
