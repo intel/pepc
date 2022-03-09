@@ -14,6 +14,7 @@ This module includes the "cstates" 'pepc' command implementation.
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs import ToolChecker
 from pepclibs.msr import MSR
 from pepclibs import CStates, CPUInfo
 from pepctool import _PepcCommon
@@ -120,8 +121,6 @@ def cstates_config_command(args, proc):
     if not hasattr(args, "oargs"):
         raise Error("please, provide a configuration option")
 
-    _PepcCommon.check_tuned_presence(proc)
-
     # The '--enable' and '--disable' optoins.
     enable_opts = {}
     # Options to set (excluding '--enable' and '--disable').
@@ -137,21 +136,25 @@ def cstates_config_command(args, proc):
         else:
             set_opts[optname] = optval
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
-         CStates.ReqCStates(proc=proc, cpuinfo=cpuinfo) as rcsobj:
+    with ToolChecker.ToolChecker(proc=proc) as tchk:
+        if enable_opts or set_opts:
+            _PepcCommon.check_tuned_presence(proc, tchk=tchk)
 
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
+        with CPUInfo.CPUInfo(proc=proc, tchk=tchk) as cpuinfo, \
+             CStates.ReqCStates(proc=proc, cpuinfo=cpuinfo, tchk=tchk) as rcsobj:
 
-        _handle_enable_disable_opts(enable_opts, cpus, cpuinfo, rcsobj)
+            cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        if not set_opts and not print_opts:
-            return
+            _handle_enable_disable_opts(enable_opts, cpus, cpuinfo, rcsobj)
 
-        with MSR.MSR(proc=proc, cpuinfo=cpuinfo) as msr, \
-            CStates.CStates(proc=proc, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
+            if not set_opts and not print_opts:
+                return
 
-            _handle_set_opts(set_opts, cpus, csobj, msr, cpuinfo)
-            _handle_print_opts(print_opts, cpus, csobj, cpuinfo)
+            with MSR.MSR(proc=proc, cpuinfo=cpuinfo) as msr, \
+                CStates.CStates(proc=proc, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
+
+                _handle_set_opts(set_opts, cpus, csobj, msr, cpuinfo)
+                _handle_print_opts(print_opts, cpus, csobj, cpuinfo)
 
 def cstates_info_command(args, proc):
     """Implements the 'cstates info' command."""
