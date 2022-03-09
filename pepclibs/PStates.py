@@ -603,11 +603,15 @@ class PStates:
                     feature = pname
 
                 obj = getattr(self, f"_get_{feature}obj")()
-                for cpu, val in getattr(obj, f"get_{pname}")(cpus=uncached_cpus):
+                kwargs = {"cpus" : uncached_cpus}
+                if pname.startswith("epp"):
+                    kwargs["not_supported_ok"] = True
+
+                for cpu, val in getattr(obj, f"get_{pname}")(**kwargs):
                     self._add_to_cache(pname, self._props[pname], val, cpu)
 
                 for subpname, subprop in self._props[pname]["subprops"].items():
-                    for cpu, val in getattr(obj, f"get_{subpname}")(cpus=uncached_cpus):
+                    for cpu, val in getattr(obj, f"get_{subpname}")(**kwargs):
                         self._add_to_cache(subpname, subprop, val, cpu)
 
     def get_props(self, pnames, cpus="all"):
