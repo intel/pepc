@@ -106,6 +106,8 @@ class EPP:
     def is_epp_supported(self, cpu):
         """Returns 'True' if EPP is supported, on CPU 'cpu', otherwise returns 'False'."""
 
+        if FSHelpers.exists(self._sysfs_epp_path % cpu, proc=self._proc):
+            return True
         return self._get_hwpreq().is_cpu_feature_supported("epp", cpu)
 
     def _get_cpu_epp_policy_from_sysfs(self, cpu):
