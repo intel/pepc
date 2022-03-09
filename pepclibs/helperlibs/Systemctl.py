@@ -10,8 +10,8 @@
 This module provides python API to the systemctl tool.
 """
 
-from pepclibs.helperlibs import FSHelpers, Procs, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs import ToolChecker, Procs, Trivial
+from pepclibs.helperlibs.Exceptions import Error
 
 class Systemctl:
     """This module provides python API to the systemctl tool."""
@@ -88,7 +88,7 @@ class Systemctl:
         the list of timers that were stopped.
         """
 
-        cmd = "systemctl list-timers"
+        cmd = "systemctl} list-timers"
         timers = [part for part in self._proc.run_verify(cmd)[0].split() if part.endswith(".timer")]
         if timers:
             self._start(timers, False)
@@ -103,33 +103,39 @@ class Systemctl:
             self._start(self._saved_timers, True)
         self._saved_timers = None
 
-    def __init__(self, proc=None):
+    def __init__(self, proc=None, tchk=None):
         """
-        Initialize a class instance for the host associated with the 'proc' object. By default it is
-        going to be the local host, but 'proc' can be used to pass a connected 'SSH' object, in
-        which case all operation will be done on the remote host. This object will keep a 'proc'
-        reference and use it in various methods.
+        The class constructor. The arguments are as follows.
+          * proc - the 'Proc' or 'SSH' object that defines the target host.
+          * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
+                   the 'systemctl' tool is present on the target host.
        """
 
         self._proc = proc
+        self._tchk = tchk
 
         self._close_proc = proc is None
+        self._close_tchk = tchk is None
+
         self._saved_timers = None
         self._saved_ntp_services = None
 
         if not self._proc:
             self._proc = Procs.Proc()
+        if not self._tchk:
+            self._tchk = ToolChecker.ToolChecker(proc=self._proc)
 
-        if not FSHelpers.which("systemctl", default=None, proc=proc):
-            raise ErrorNotSupported(f"the 'systemctl' tool is not installed{proc.hostmsg}")
+        self._systemctl = self._tchk.check_tool("systemctl")
 
     def close(self):
         """Uninitialize the class object."""
 
-        if getattr(self, "_proc", None):
-            if self._close_proc:
-                self._proc.close()
-            self._proc = None
+        for attr in ("_tchk", "_proc"):
+            obj = getattr(self, attr, None)
+            if obj:
+                if getattr(self, f"_close{attr}", False):
+                    getattr(obj, "close")()
+                setattr(self, attr, None)
 
     def __enter__(self):
         """Enter the runtime context."""
