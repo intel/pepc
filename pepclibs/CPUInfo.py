@@ -13,7 +13,7 @@ This module provides an API to get CPU information.
 import re
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
-from pepclibs.helperlibs import ArgParse, Procs, Trivial, FSHelpers
+from pepclibs.helperlibs import ArgParse, Procs, Trivial, FSHelpers, ToolChecker
 
 # CPU model numbers.
 #
@@ -930,15 +930,19 @@ class CPUInfo:
 
         return cpuinfo
 
-    def __init__(self, proc=None):
+    def __init__(self, proc=None, tchk=None):
         """
-        The class constructor. The 'proc' argument is a 'Proc' or 'SSH' object that defines the
-        host to create a class instance for (default is the local host). This object will keep a
-        'proc' reference and use it in various methods.
+        The class constructor. The arguments are as follows.
+          * proc - the 'Proc' or 'SSH' object that defines the target host.
+          * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
+                   the required tools like 'lscpu' are present on the target host.
         """
 
         self._proc = proc
+        self._tchk = tchk
+
         self._close_proc = proc is None
+        self._close_tchk = tchk is None
 
         # The topology dictionary. See '_get_topology()' for more information.
         self._topology = {}
@@ -963,6 +967,10 @@ class CPUInfo:
 
         if not self._proc:
             self._proc = Procs.Proc()
+        if not self._tchk:
+            self._tchk = ToolChecker.ToolChecker(proc=self._proc)
+
+        self._tchk.check_tool("lscpu")
 
         self.info = self._get_cpu_info()
 
@@ -970,15 +978,18 @@ class CPUInfo:
             modelname = _CPU_DESCR.get(self.info["model"], self.info["modelname"])
         else:
             modelname = self.info["modelname"]
+
         self.cpudescr = f"{modelname} (model {self.info['model']:#x})"
 
     def close(self):
         """Uninitialize the class object."""
 
-        if getattr(self, "_proc", None):
-            if getattr(self, "_close_proc", False):
-                self._proc.close()
-            self._proc = None
+        for attr in ("_tchk", "_proc"):
+            obj = getattr(self, attr, None)
+            if obj:
+                if getattr(self, f"_close{attr}", False):
+                    getattr(obj, "close")()
+                setattr(self, attr, None)
 
     def __enter__(self):
         """Enter the runtime context."""
