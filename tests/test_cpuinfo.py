@@ -100,6 +100,11 @@ def _get_emulated_cpuinfos(proc):
         with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
             yield _get_cpuinfos_cpus_offlined(cpuinfo, pattern)
 
+            if cpuinfo.info["model"] == CPUInfo.INTEL_FAM6_ICELAKE_X:
+                # Yield CPUInfo object with unknown CPU model number.
+                cpuinfo.info["model"] = 255
+                yield cpuinfo
+
 def _get_cpuinfos(proc):
     """
     Yield the 'CPUInfo' objects to test with. If 'proc' object is for emulated host, then attributes
