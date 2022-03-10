@@ -11,7 +11,7 @@
 """Tests for the public methods of the 'CPUInfo' module."""
 
 import pytest
-from common import fixture_proc, fixture_cpuinfo # pylint: disable=unused-import
+from common import fixture_proc # pylint: disable=unused-import
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
