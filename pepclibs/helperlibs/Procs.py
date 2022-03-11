@@ -13,7 +13,6 @@ This module contains helper function to run and manage external processes.
 # pylint: disable=no-member
 # pylint: disable=protected-access
 
-import sys
 import time
 import shlex
 import types
@@ -301,6 +300,8 @@ class _ProcessPrivateData:
     def __init__(self):
         """The constructor."""
 
+        # The 'Proc' object corresponding to process.
+        self.pobj = None
         # The 2 output streams of the command's process (stdout, stderr).
         self.streams = []
         # The queue which is used for passing commands output from stream fetcher threads.
@@ -327,7 +328,7 @@ class _ProcessPrivateData:
         # message related to different processes.
         self.debug_id = None
 
-def _add_custom_fields(proc, cmd):
+def _add_custom_fields(pobj, proc, cmd):
     """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
 
     for name in ("stdin", "stdout", "stderr"):
@@ -339,12 +340,13 @@ def _add_custom_fields(proc, cmd):
 
     pd = proc._pd_ = _ProcessPrivateData()
 
+    pd.pobj = pobj
     pd.streams = [proc.stdout, proc.stderr]
     pd.orig_del = proc.__del__
 
     # The below attributes are added to the Popen object look similar to the channel object which
     # the 'SSH' module uses.
-    proc.hostname = "localhost"
+    proc.hostname = pobj.hostname
     proc.cmd = cmd
     proc.timeout = TIMEOUT
     proc.close = types.MethodType(_close, proc)
@@ -354,199 +356,203 @@ def _add_custom_fields(proc, cmd):
     proc.__del__ = types.MethodType(_del, proc)
     return proc
 
-def _do_run_async(command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None, env=None,
-                  shell=False, newgrp=False):
-    """Implements 'run_async()'."""
-
-    # pylint: disable=consider-using-with
-    try:
-        if stdin and isinstance(stdin, str):
-            fname = stdin
-            stdin = open(fname, "r")
-
-        if stdout and isinstance(stdout, str):
-            fname = stdout
-            stdout = open(fname, "w+")
-
-        if stderr and isinstance(stderr, str):
-            fname = stderr
-            stderr = open(fname, "w+")
-    except OSError as err:
-        raise Error("cannot open file '%s': %s" % (fname, err)) from None
-
-    if not stdin:
-        stdin = subprocess.PIPE
-    if not stdout:
-        stdout = subprocess.PIPE
-    if not stderr:
-        stderr = subprocess.PIPE
-
-    if shell:
-        cmd = command = " exec -- " + command
-    elif isinstance(command, str):
-        cmd = shlex.split(command)
-    else:
-        cmd = command
-
-    try:
-        proc = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
-                                cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
-    except OSError as err:
-        raise Error("the following command failed with error '%s':\n%s" % (err, command)) from err
-
-    return _add_custom_fields(proc, cmd)
-
-def run_async(command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None, env=None,
-              shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument
-    """
-    A helper function to run an external command asynchronously. The 'command' argument should be a
-    string containing the command to run. The 'stdin', 'stdout', and 'stderr' parameters can be one
-    of:
-        * an open file descriptor (a positive integer)
-        * a file object
-        * file path (in case of stdout and stderr the file will be created if it does not exist)
-
-    The 'bufsize', 'cwd','env' and 'shell' arguments are the same as in 'Popen()'.
-
-    If the 'newgrp' argument is 'True', then new process gets new session ID.
-
-    The 'intsh' argument is not used. It is present only for API compatibility between 'Procs' and
-    'SSH'.
-
-    Returns the 'Popen' object of the executed process.
-    """
-
-    if cwd:
-        cwd_msg = "\nWorking directory: %s" % cwd
-    else:
-        cwd_msg = ""
-    _LOG.debug("running the following local command asynchronously (shell %s, newgrp %s):\n%s%s",
-               str(shell), str(newgrp), command, cwd_msg)
-
-    return _do_run_async(command, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
-                         cwd=cwd, env=env, shell=shell, newgrp=newgrp)
-
-def run(command, timeout=None, capture_output=True, mix_output=False, join=True,
-        output_fobjs=(None, None), bufsize=0, cwd=None, env=None, shell=False, newgrp=False,
-        intsh=True): # pylint: disable=unused-argument
-    """
-    Run command 'command' on the remote host and block until it finishes. The 'command' argument
-    should be a string.
-
-    The 'timeout' parameter specifies the longest time for this method to block. If the command
-    takes longer, this function will raise the 'ErrorTimeOut' exception. The default is 1h.
-
-    If the 'capture_output' argument is 'True', this function intercept the output of the executed
-    program, otherwise it doesn't and the output is dropped (default) or printed to 'output_fobjs'.
-
-    If the 'mix_output' argument is 'True', the standard output and error streams will be mixed
-    together.
-
-    The 'join' argument controls whether the captured output is returned as a single string or a
-    list of lines (trailing newline is not stripped).
-
-    The 'bufsize', 'cwd','env' and 'shell' arguments are the same as in 'Popen()'.
-
-    If the 'newgrp' argument is 'True', then new process gets new session ID.
-
-    The 'output_fobjs' is a tuple which may provide 2 file-like objects where the standard output
-    and error streams of the executed program should be echoed to. If 'mix_output' is 'True', the
-    'output_fobjs[1]' file-like object, which corresponds to the standard error stream, will be
-    ignored and all the output will be echoed to 'output_fobjs[0]'. By default the command output is
-    not echoed anywhere.
-
-    Note, 'capture_output' and 'output_fobjs' arguments can be used at the same time. It is OK to
-    echo the output to some files and capture it at the same time.
-
-    This function returns an named tuple of (stdout, stderr, exitcode), where
-      o 'stdout' is the output of the executed command to stdout
-      o 'stderr' is the output of the executed command to stderr
-      o 'exitcode' is the integer exit code of the executed command
-
-    If the 'mix_output' argument is 'True', the 'stderr' part of the returned tuple will be an
-    empty string.
-
-    If the 'capture_output' argument is not 'True', the 'stdout' and 'stderr' parts of the returned
-    tuple will be an empty string.
-
-    The 'intsh' argument is not used. It is present only for API compatibility between 'Procs' and
-    'SSH'.
-    """
-
-    if cwd:
-        cwd_msg = "\nWorking directory: %s" % cwd
-    else:
-        cwd_msg = ""
-    _LOG.debug("running the following local command (shell %s, newgrp %s):\n%s%s",
-               str(shell), str(newgrp), command, cwd_msg)
-
-    stdout = subprocess.PIPE
-    if mix_output:
-        stderr = subprocess.STDOUT
-    else:
-        stderr = subprocess.PIPE
-
-    proc = _do_run_async(command, stdout=stdout, stderr=stderr, bufsize=bufsize, cwd=cwd, env=env,
-                         shell=shell, newgrp=newgrp)
-
-    if join:
-        by_line = False
-    else:
-        by_line = True
-    result = proc.wait_for_cmd(capture_output=capture_output, output_fobjs=output_fobjs,
-                               timeout=timeout, by_line=by_line, join=join)
-
-    if result.exitcode is None:
-        msg = _Common.cmd_failed_msg(command, *tuple(result), timeout=timeout)
-        raise ErrorTimeOut(msg)
-
-    if output_fobjs[0]:
-        output_fobjs[0].flush()
-    if output_fobjs[1]:
-        output_fobjs[1].flush()
-
-    return result
-
-def run_verify(command, timeout=None, capture_output=True, mix_output=False, join=True,
-               output_fobjs=(None, None), bufsize=0, cwd=None, env=None, shell=False,
-               newgrp=False, intsh=True):
-    """
-    Same as 'run()' but verifies the command's exit code and raises an exception if it is not 0.
-    """
-
-    result = run(command, timeout=timeout, capture_output=capture_output, mix_output=mix_output,
-                 join=join, output_fobjs=output_fobjs, bufsize=bufsize, cwd=cwd, env=env,
-                 shell=shell, newgrp=newgrp, intsh=intsh)
-    if result.exitcode == 0:
-        return (result.stdout, result.stderr)
-
-    raise Error(_Common.cmd_failed_msg(command, *tuple(result), timeout=timeout))
-
-def rsync(src, dst, opts="rlpD", remotesrc=False, remotedst=True):
-    # pylint: disable=unused-argument
-    """
-    Copy data from path 'src' to path 'dst' using 'rsync' with options specified in 'opts'. The
-    'remotesrc' and 'remotedst' arguments are ignored. They only exist for compatibility with
-    'SSH.rsync()'. The default options are:
-      * r - recursive
-      * l - copy symlinks as symlinks
-      * p - preserve permission
-      * s - preseve device nodes and others special files
-    """
-
-    cmd = "rsync -%s -- '%s' '%s'" % (opts, src, dst)
-    try:
-        run_verify(cmd)
-    except Error as err:
-        raise Error("failed to copy files '%s' to '%s':\n%s" % (src, dst, err)) from err
-
 class Proc:
     """This class provides API similar to the 'SSH' class API."""
+
+    def _do_run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
+                      env=None, shell=False, newgrp=False):
+        """Implements 'run_async()'."""
+
+        # pylint: disable=consider-using-with
+        try:
+            if stdin and isinstance(stdin, str):
+                fname = stdin
+                stdin = open(fname, "r")
+
+            if stdout and isinstance(stdout, str):
+                fname = stdout
+                stdout = open(fname, "w+")
+
+            if stderr and isinstance(stderr, str):
+                fname = stderr
+                stderr = open(fname, "w+")
+        except OSError as err:
+            raise Error("cannot open file '%s': %s" % (fname, err)) from None
+
+        if not stdin:
+            stdin = subprocess.PIPE
+        if not stdout:
+            stdout = subprocess.PIPE
+        if not stderr:
+            stderr = subprocess.PIPE
+
+        if shell:
+            cmd = command = " exec -- " + command
+        elif isinstance(command, str):
+            cmd = shlex.split(command)
+        else:
+            cmd = command
+
+        try:
+            proc = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
+                                    cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
+        except OSError as err:
+            raise Error("the following command failed with error '%s':\n%s" % \
+                        (err, command)) from err
+
+        return _add_custom_fields(self, proc, cmd)
+
+    def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
+                  env=None, shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument
+        """
+        A helper function to run an external command asynchronously. The 'command' argument should
+        be a string containing the command to run. The 'stdin', 'stdout', and 'stderr' parameters
+        can be one of:
+            * an open file descriptor (a positive integer)
+            * a file object
+            * file path (in case of stdout and stderr the file will be created if it does not exist)
+
+        The 'bufsize', 'cwd','env' and 'shell' arguments are the same as in 'Popen()'.
+
+        If the 'newgrp' argument is 'True', then new process gets new session ID.
+
+        The 'intsh' argument is not used. It is present only for API compatibility between 'Procs'
+        and 'SSH'.
+
+        Returns the 'Popen' object of the executed process.
+        """
+
+        if cwd:
+            cwd_msg = "\nWorking directory: %s" % cwd
+        else:
+            cwd_msg = ""
+        _LOG.debug("running the following local command asynchronously (shell %s, newgrp %s):\n"
+                   "%s%s", str(shell), str(newgrp), command, cwd_msg)
+
+        return self._do_run_async(command, stdin=stdin, stdout=stdout, stderr=stderr,
+                                  bufsize=bufsize, cwd=cwd, env=env, shell=shell, newgrp=newgrp)
+
+    def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
+            output_fobjs=(None, None), bufsize=0, cwd=None, env=None, shell=False, newgrp=False,
+            intsh=True): # pylint: disable=unused-argument
+        """
+        Run command 'command' on the remote host and block until it finishes. The 'command' argument
+        should be a string.
+
+        The 'timeout' parameter specifies the longest time for this method to block. If the command
+        takes longer, this function will raise the 'ErrorTimeOut' exception. The default is 1h.
+
+        If the 'capture_output' argument is 'True', this function intercept the output of the
+        executed program, otherwise it doesn't and the output is dropped (default) or printed to
+        'output_fobjs'.
+
+        If the 'mix_output' argument is 'True', the standard output and error streams will be mixed
+        together.
+
+        The 'join' argument controls whether the captured output is returned as a single string or a
+        list of lines (trailing newline is not stripped).
+
+        The 'bufsize', 'cwd','env' and 'shell' arguments are the same as in 'Popen()'.
+
+        If the 'newgrp' argument is 'True', then new process gets new session ID.
+
+        The 'output_fobjs' is a tuple which may provide 2 file-like objects where the standard
+        output and error streams of the executed program should be echoed to. If 'mix_output' is
+        'True', the 'output_fobjs[1]' file-like object, which corresponds to the standard error
+        stream, will be ignored and all the output will be echoed to 'output_fobjs[0]'. By default
+        the command output is not echoed anywhere.
+
+        Note, 'capture_output' and 'output_fobjs' arguments can be used at the same time. It is OK
+        to echo the output to some files and capture it at the same time.
+
+        This function returns an named tuple of (stdout, stderr, exitcode), where
+          o 'stdout' is the output of the executed command to stdout
+          o 'stderr' is the output of the executed command to stderr
+          o 'exitcode' is the integer exit code of the executed command
+
+        If the 'mix_output' argument is 'True', the 'stderr' part of the returned tuple will be an
+        empty string.
+
+        If the 'capture_output' argument is not 'True', the 'stdout' and 'stderr' parts of the
+        returned tuple will be an empty string.
+
+        The 'intsh' argument is not used. It is present only for API compatibility between 'Procs'
+        and 'SSH'.
+        """
+
+        if cwd:
+            cwd_msg = "\nWorking directory: %s" % cwd
+        else:
+            cwd_msg = ""
+        _LOG.debug("running the following local command (shell %s, newgrp %s):\n%s%s",
+                   str(shell), str(newgrp), command, cwd_msg)
+
+        stdout = subprocess.PIPE
+        if mix_output:
+            stderr = subprocess.STDOUT
+        else:
+            stderr = subprocess.PIPE
+
+        proc = self._do_run_async(command, stdout=stdout, stderr=stderr, bufsize=bufsize, cwd=cwd,
+                                  env=env, shell=shell, newgrp=newgrp)
+
+        if join:
+            by_line = False
+        else:
+            by_line = True
+        result = proc.wait_for_cmd(capture_output=capture_output, output_fobjs=output_fobjs,
+                                   timeout=timeout, by_line=by_line, join=join)
+
+        if result.exitcode is None:
+            msg = _Common.cmd_failed_msg(command, *tuple(result), timeout=timeout)
+            raise ErrorTimeOut(msg)
+
+        if output_fobjs[0]:
+            output_fobjs[0].flush()
+        if output_fobjs[1]:
+            output_fobjs[1].flush()
+
+        return result
+
+    def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
+                   output_fobjs=(None, None), bufsize=0, cwd=None, env=None, shell=False,
+                   newgrp=False, intsh=True):
+        """
+        Same as 'run()' but verifies the command's exit code and raises an exception if it is not 0.
+        """
+
+        result = self.run(command, timeout=timeout, capture_output=capture_output,
+                          mix_output=mix_output, join=join, output_fobjs=output_fobjs,
+                          bufsize=bufsize, cwd=cwd, env=env, shell=shell, newgrp=newgrp,
+                          intsh=intsh)
+        if result.exitcode == 0:
+            return (result.stdout, result.stderr)
+
+        raise Error(_Common.cmd_failed_msg(command, *tuple(result), timeout=timeout))
+
+    def rsync(self, src, dst, opts="rlpD", remotesrc=False, remotedst=True):
+        # pylint: disable=unused-argument
+        """
+        Copy data from path 'src' to path 'dst' using 'rsync' with options specified in 'opts'. The
+        'remotesrc' and 'remotedst' arguments are ignored. They only exist for compatibility with
+        'SSH.rsync()'. The default options are:
+          * r - recursive
+          * l - copy symlinks as symlinks
+          * p - preserve permission
+          * s - preseve device nodes and others special files
+        """
+
+        cmd = "rsync -%s -- '%s' '%s'" % (opts, src, dst)
+        try:
+            self.run_verify(cmd)
+        except Error as err:
+            raise Error("failed to copy files '%s' to '%s':\n%s" % (src, dst, err)) from err
 
     Error = Error
 
     def __init__(self):
         """Initialize a class instance."""
+
         self.is_remote = False
         self.hostname = "localhost"
         self.hostmsg = ""
@@ -583,11 +589,3 @@ class Proc:
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit the runtime context."""
         self.close()
-
-    def __getattr__(self, name):
-        """Map unknown attribute to the module symbol if possible."""
-
-        module = sys.modules[__name__]
-        if hasattr(module, name):
-            return getattr(module, name)
-        raise AttributeError("class 'Proc' has no attribute '%s'" % name)
