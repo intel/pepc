@@ -134,7 +134,7 @@ def _do_wait_for_cmd(proc, timeout=None, capture_output=True, output_fobjs=(None
         if not timeout:
             proc._dbg_(f"_do_wait_for_cmd: timeout is {timeout}, exit immediately")
             break
-        if not None and time.time() - start_time >= timeout:
+        if time.time() - start_time >= timeout:
             proc._dbg_("_do_wait_for_cmd: stop waiting for the command - timeout")
             break
 
