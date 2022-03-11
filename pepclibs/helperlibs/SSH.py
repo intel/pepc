@@ -716,7 +716,7 @@ class SSH:
         """
 
         timeout = 5
-        acquired = self._intsh_lock.acquire(timeout=timeout)
+        acquired = self._intsh_lock.acquire(timeout=timeout) # pylint: disable=consider-using-with
         if not acquired:
             msg = "failed to acquire the interactive shell lock"
             if command:
