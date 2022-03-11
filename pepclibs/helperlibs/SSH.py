@@ -530,7 +530,7 @@ class _ChannelPrivateData:
         # message related to different processes.
         self.debug_id = None
 
-def _add_custom_fields(chan, ssh, cmd, real_cmd):
+def _add_custom_fields(ssh, chan, cmd, real_cmd):
     """Add a couple of custom fields to the paramiko channel object."""
 
     pd = chan._pd_ = _ChannelPrivateData()
@@ -679,7 +679,7 @@ class SSH:
             raise Error(f"cannot execute the following command in new SSH session{self.hostmsg}:\n"
                         f"{cmd}\nReason: {err}") from err
 
-        _add_custom_fields(chan, self, command, cmd)
+        _add_custom_fields(self, chan, command, cmd)
 
         if shell:
             # The first line of the output should contain the PID - extract it.
