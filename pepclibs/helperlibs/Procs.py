@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module contains helper function to run and manage external processes.
+This module contains helper function to run and manage operating system processes (tasks).
 """
 
 # pylint: disable=no-member
@@ -35,19 +35,19 @@ hostname = "localhost"
 # The exceptions to handle when dealing with file I/O.
 _EXCEPTIONS = (OSError, IOError, BrokenPipeError)
 
-def _stream_fetcher(streamid, proc):
+def _stream_fetcher(streamid, task):
     """
     This function runs in a separate thread. All it does is it fetches one of the output streams
     of the executed program (either stdout or stderr) and puts the result into the queue.
     """
 
-    pd = proc._pd_
+    pd = task._pd_
     stream = pd.streams[streamid]
     try:
         decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
         while not pd.threads_exit:
             if not stream:
-                proc._dbg_("stream %d: stream is closed", streamid)
+                task._dbg_("stream %d: stream is closed", streamid)
                 break
 
             data = None
@@ -59,33 +59,33 @@ def _stream_fetcher(streamid, proc):
                 raise
 
             if not data:
-                proc._dbg_("stream %d: no more data", streamid)
+                task._dbg_("stream %d: no more data", streamid)
                 break
 
             data = decoder.decode(data)
             if not data:
-                proc._dbg_("stream %d: read more data", streamid)
+                task._dbg_("stream %d: read more data", streamid)
                 continue
 
-            proc._dbg_("stream %d: read data:\n%s", streamid, data)
+            task._dbg_("stream %d: read data:\n%s", streamid, data)
             pd.queue.put((streamid, data))
     except BaseException as err: # pylint: disable=broad-except
         _LOG.error(err)
 
     pd.queue.put((streamid, None))
-    proc._dbg_("stream %d: thread exists", streamid)
+    task._dbg_("stream %d: thread exists", streamid)
 
-def _wait_timeout(proc, timeout):
-    """Wait for the process to finish with a timeout."""
+def _wait_timeout(task, timeout):
+    """Wait for task 'task' to finish with a timeout."""
 
-    proc._dbg_("_wait_timeout: waiting for exit status, timeout %s sec", timeout)
+    task._dbg_("_wait_timeout: waiting for exit status, timeout %s sec", timeout)
     try:
-        exitcode = proc.wait(timeout=timeout)
+        exitcode = task.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
-        proc._dbg_("_wait_timeout: exit status not ready for %s seconds", timeout)
+        task._dbg_("_wait_timeout: exit status not ready for %s seconds", timeout)
         return None
 
-    proc._dbg_("_wait_timeout: exit status %d", exitcode)
+    task._dbg_("_wait_timeout: exit status %d", exitcode)
     return exitcode
 
 def _have_enough_lines(output, lines=(None, None)):
@@ -96,50 +96,50 @@ def _have_enough_lines(output, lines=(None, None)):
             return True
     return False
 
-def _do_wait_for_cmd(proc, timeout=None, capture_output=True, output_fobjs=(None, None),
+def _do_wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, None),
                      lines=(None, None), by_line=True):
     """Implements '_wait_for_cmd()'."""
 
-    pd = proc._pd_
+    pd = task._pd_
     output = pd.output
     partial = pd.partial
     start_time = time.time()
 
-    proc._dbg_("_do_wait_for_cmd: starting with partial: %s, output:\n%s", partial, str(output))
+    task._dbg_("_do_wait_for_cmd: starting with partial: %s, output:\n%s", partial, str(output))
 
     while not _have_enough_lines(output, lines=lines):
         if pd.exitcode is not None:
-            proc._dbg_("_do_wait_for_cmd: process exited with status %d", pd.exitcode)
+            task._dbg_("_do_wait_for_cmd: process exited with status %d", pd.exitcode)
             break
 
         streamid, data = _Common.get_next_queue_item(pd.queue, timeout)
         if streamid == -1:
-            proc._dbg_("_do_wait_for_cmd: nothing in the queue for %d seconds", timeout)
+            task._dbg_("_do_wait_for_cmd: nothing in the queue for %d seconds", timeout)
             break
         if data is not None:
-            _Common.capture_data(proc, streamid, data, capture_output=capture_output,
+            _Common.capture_data(task, streamid, data, capture_output=capture_output,
                                  output_fobjs=output_fobjs, by_line=by_line)
         else:
-            proc._dbg_("_do_wait_for_cmd: stream %d closed", streamid)
+            task._dbg_("_do_wait_for_cmd: stream %d closed", streamid)
             # One of the output streams closed.
             pd.threads[streamid].join()
             pd.threads[streamid] = pd.streams[streamid] = None
 
             if not pd.streams[0] and not pd.streams[1]:
-                proc._dbg_("_do_wait_for_cmd: both streams closed")
-                pd.exitcode = _wait_timeout(proc, timeout)
+                task._dbg_("_do_wait_for_cmd: both streams closed")
+                pd.exitcode = _wait_timeout(task, timeout)
                 break
 
         if not timeout:
-            proc._dbg_(f"_do_wait_for_cmd: timeout is {timeout}, exit immediately")
+            task._dbg_(f"_do_wait_for_cmd: timeout is {timeout}, exit immediately")
             break
         if time.time() - start_time >= timeout:
-            proc._dbg_("_do_wait_for_cmd: stop waiting for the command - timeout")
+            task._dbg_("_do_wait_for_cmd: stop waiting for the command - timeout")
             break
 
-    return _Common.get_lines_to_return(proc, lines=lines)
+    return _Common.get_lines_to_return(task, lines=lines)
 
-def _wait_for_cmd(proc, timeout=None, capture_output=True, output_fobjs=(None, None),
+def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, None),
                   lines=(None, None), by_line=True, join=True):
     """
     This function waits for a command executed with the run_async()' function to finish or print
@@ -151,7 +151,7 @@ def _wait_for_cmd(proc, timeout=None, capture_output=True, output_fobjs=(None, N
     default it is 1 hour. If 'timeout' is '0', then this function will just check process status,
     grab its output, if any, and return immediately.
 
-    Note, this function saves the used timeout in 'proc.timeout' attribute upon exit.
+    Note, this function saves the used timeout in 'task.timeout' attribute upon exit.
 
     The 'capture_output' parameter controls whether the output of the command should be collected or
     not. If it is not 'True', the output will simply be discarded and this function will return
@@ -183,7 +183,7 @@ def _wait_for_cmd(proc, timeout=None, capture_output=True, output_fobjs=(None, N
         timeout = TIMEOUT
     if timeout < 0:
         raise Error(f"bad timeout value {timeout}, must be > 0")
-    proc.timeout = timeout
+    task.timeout = timeout
 
     if not by_line and lines != (None, None):
         raise Error("'by_line' must be 'True' when 'lines' is used (reading limited amount of "
@@ -200,16 +200,16 @@ def _wait_for_cmd(proc, timeout=None, capture_output=True, output_fobjs=(None, N
     if lines[0] == 0 and lines[1] == 0:
         raise Error("the 'lines' argument cannot be (0, 0)")
 
-    proc._dbg_("_wait_for_cmd: timeout %s, capture_output %s, lines %s, by_line %s, join: %s, "
-               "command: %s", timeout, capture_output, str(lines), by_line, join, proc.cmd)
+    task._dbg_("_wait_for_cmd: timeout %s, capture_output %s, lines %s, by_line %s, join: %s, "
+               "command: %s", timeout, capture_output, str(lines), by_line, join, task.cmd)
 
-    pd = proc._pd_
-    if _Common.all_output_consumed(proc):
+    pd = task._pd_
+    if _Common.all_output_consumed(task):
         # This command has already exited.
         return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
 
-    if not proc.stdout and not proc.stderr:
-        pd.exitcode = _wait_timeout(proc, timeout)
+    if not task.stdout and not task.stderr:
+        pd.exitcode = _wait_timeout(task, timeout)
         return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
 
     if not pd.queue:
@@ -219,12 +219,12 @@ def _wait_for_cmd(proc, timeout=None, capture_output=True, output_fobjs=(None, N
                 assert pd.threads[streamid] is None
                 pd.threads[streamid] = threading.Thread(target=_stream_fetcher,
                                                          name='Procs-stream-fetcher',
-                                                         args=(streamid, proc), daemon=True)
+                                                         args=(streamid, task), daemon=True)
                 pd.threads[streamid].start()
     else:
-        proc._dbg_("_wait_for_cmd: queue is empty: %s", pd.queue.empty())
+        task._dbg_("_wait_for_cmd: queue is empty: %s", pd.queue.empty())
 
-    output = _do_wait_for_cmd(proc, timeout=timeout, capture_output=capture_output,
+    output = _do_wait_for_cmd(task, timeout=timeout, capture_output=capture_output,
                               output_fobjs=output_fobjs, lines=lines, by_line=by_line)
 
     stdout = stderr = ""
@@ -237,43 +237,43 @@ def _wait_for_cmd(proc, timeout=None, capture_output=True, output_fobjs=(None, N
         if join:
             stderr = "".join(stderr)
 
-    if _Common.all_output_consumed(proc):
+    if _Common.all_output_consumed(task):
         exitcode = pd.exitcode
     else:
         exitcode = None
 
-    if proc._pd_.debug:
+    if task._pd_.debug:
         sout = "".join(output[0])
         serr = "".join(output[1])
-        proc._dbg_("_wait_for_cmd: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
+        task._dbg_("_wait_for_cmd: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
                    exitcode, sout.rstrip(), serr.rstrip())
 
     return ProcResult(stdout=stdout, stderr=stderr, exitcode=exitcode)
 
-def _cmd_failed_msg(proc, stdout, stderr, exitcode, startmsg=None, timeout=None):
+def _cmd_failed_msg(task, stdout, stderr, exitcode, startmsg=None, timeout=None):
     """
     A wrapper over '_Common.cmd_failed_msg()'. The optional 'timeout' argument specifies the
     timeout that was used for the command.
     """
 
     if timeout is None:
-        timeout = proc.timeout
-    return _Common.cmd_failed_msg(proc.cmd, stdout, stderr, exitcode, hostname=proc.hostname,
+        timeout = task.timeout
+    return _Common.cmd_failed_msg(task.cmd, stdout, stderr, exitcode, hostname=task.hostname,
                                   startmsg=startmsg, timeout=timeout)
 
-def _close(proc):
-    """The process close method that will signal the threads to exit."""
+def _close(task):
+    """Task's 'close()' method that will signal the threads to exit."""
 
-    if hasattr(proc, "_pd_"):
-        proc._dbg_("_close_()")
-        proc._pd_.threads_exit = True
+    if hasattr(task, "_pd_"):
+        task._dbg_("_close_()")
+        task._pd_.threads_exit = True
 
-def _del(proc):
-    """The process object destructor which makes all threads to exit."""
+def _del(task):
+    """Task object destructor which makes all threads to exit."""
 
-    if hasattr(proc, "_pd_"):
-        proc._dbg_("_del_()")
-        pd = proc._pd_
+    if hasattr(task, "_pd_"):
+        task._dbg_("_del_()")
+        pd = task._pd_
         pd.threads_exit = True
         pd.orig_del()
 
@@ -281,14 +281,15 @@ def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
     return "method '%s()' failed for %s" % (method, fobj.name)
 
-def _dbg(proc, fmt, *args):
-    """Print a debugging message related to the 'proc' process handling."""
-    if proc._pd_.debug:
+def _dbg(task, fmt, *args):
+    """Print a debugging message related to process 'task'."""
+
+    if task._pd_.debug:
         pfx = ""
-        if proc._pd_.debug_id:
-            pfx += f"{proc._pd_.debug_id}: "
-        if hasattr(proc, "pid"):
-            pfx += f"PID {proc.pid}: "
+        if task._pd_.debug_id:
+            pfx += f"{task._pd_.debug_id}: "
+        if hasattr(task, "pid"):
+            pfx += f"PID {task.pid}: "
 
         _LOG.debug(pfx + fmt, *args)
 
@@ -301,7 +302,7 @@ class _ProcessPrivateData:
         """The constructor."""
 
         # The 'Proc' object corresponding to process.
-        self.pobj = None
+        self.proc = None
         # The 2 output streams of the command's process (stdout, stderr).
         self.streams = []
         # The queue which is used for passing commands output from stream fetcher threads.
@@ -328,33 +329,33 @@ class _ProcessPrivateData:
         # message related to different processes.
         self.debug_id = None
 
-def _add_custom_fields(pobj, proc, cmd):
+def _add_custom_fields(proc, task, cmd):
     """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
 
     for name in ("stdin", "stdout", "stderr"):
-        if getattr(proc, name):
-            wrapped_fobj = WrapExceptions.WrapExceptions(getattr(proc, name),
+        if getattr(task, name):
+            wrapped_fobj = WrapExceptions.WrapExceptions(getattr(task, name),
                                                          exceptions=_EXCEPTIONS,
                                                          get_err_prefix=_get_err_prefix)
-            setattr(proc, name, wrapped_fobj)
+            setattr(task, name, wrapped_fobj)
 
-    pd = proc._pd_ = _ProcessPrivateData()
+    pd = task._pd_ = _ProcessPrivateData()
 
-    pd.pobj = pobj
-    pd.streams = [proc.stdout, proc.stderr]
-    pd.orig_del = proc.__del__
+    pd.proc = proc
+    pd.streams = [task.stdout, task.stderr]
+    pd.orig_del = task.__del__
 
     # The below attributes are added to the Popen object look similar to the channel object which
     # the 'SSH' module uses.
-    proc.hostname = pobj.hostname
-    proc.cmd = cmd
-    proc.timeout = TIMEOUT
-    proc.close = types.MethodType(_close, proc)
-    proc._dbg_ = types.MethodType(_dbg, proc)
-    proc.cmd_failed_msg = types.MethodType(_cmd_failed_msg, proc)
-    proc.wait_for_cmd = types.MethodType(_wait_for_cmd, proc)
-    proc.__del__ = types.MethodType(_del, proc)
-    return proc
+    task.hostname = proc.hostname
+    task.cmd = cmd
+    task.timeout = TIMEOUT
+    task.close = types.MethodType(_close, task)
+    task._dbg_ = types.MethodType(_dbg, task)
+    task.cmd_failed_msg = types.MethodType(_cmd_failed_msg, task)
+    task.wait_for_cmd = types.MethodType(_wait_for_cmd, task)
+    task.__del__ = types.MethodType(_del, task)
+    return task
 
 class Proc:
     """This class provides API similar to the 'SSH' class API."""
@@ -394,13 +395,13 @@ class Proc:
             cmd = command
 
         try:
-            proc = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
+            task = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
                                     cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
         except OSError as err:
             raise Error("the following command failed with error '%s':\n%s" % \
                         (err, command)) from err
 
-        return _add_custom_fields(self, proc, cmd)
+        return _add_custom_fields(self, task, cmd)
 
     def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
                   env=None, shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument
@@ -493,14 +494,14 @@ class Proc:
         else:
             stderr = subprocess.PIPE
 
-        proc = self._do_run_async(command, stdout=stdout, stderr=stderr, bufsize=bufsize, cwd=cwd,
+        task = self._do_run_async(command, stdout=stdout, stderr=stderr, bufsize=bufsize, cwd=cwd,
                                   env=env, shell=shell, newgrp=newgrp)
 
         if join:
             by_line = False
         else:
             by_line = True
-        result = proc.wait_for_cmd(capture_output=capture_output, output_fobjs=output_fobjs,
+        result = task.wait_for_cmd(capture_output=capture_output, output_fobjs=output_fobjs,
                                    timeout=timeout, by_line=by_line, join=join)
 
         if result.exitcode is None:

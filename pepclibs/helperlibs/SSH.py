@@ -674,6 +674,11 @@ class SSH:
 
         try:
             chan = self.ssh.get_transport().open_session(timeout=self.connection_timeout)
+        except _PARAMIKO_EXCEPTIONS as err:
+            raise Error(f"cannot create a new SSH session for running the following "
+                        f"command{self.hostmsg}:\n{cmd}\nThe error is: {err}") from err
+
+        try:
             chan.exec_command(cmd)
         except _PARAMIKO_EXCEPTIONS as err:
             raise Error(f"cannot execute the following command in new SSH session{self.hostmsg}:\n"
