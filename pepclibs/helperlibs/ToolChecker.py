@@ -23,16 +23,20 @@ from pepclibs.helperlibs import Procs, FSHelpers
 
 # Common for CentOS, Fedora, Debian, and Ubuntu.
 _COMMON_PKGINFO = {
-    "cat" :       "coreutils",
-    "find" :      "findutils",
-    "dmesg" :     "util-linux",
-    "lscpu" :     "util-linux",
-    "modprobe" :  "kmod",
-    "phc2sys" :   "linuxptp",
-    "rmmod" :     "kmod",
+    "cat"       : "coreutils",
+    "find"      : "findutils",
+    "depmod"    : "kmod",
+    "dmesg"     : "util-linux",
+    "lscpu"     : "util-linux",
+    "make"      : "make",
+    "modprobe"  : "kmod",
+    "phc2sys"   : "linuxptp",
+    "rmmod"     : "kmod",
+    "rsync"     : "rsync",
+    "sync"      : "coreutils",
     "systemctl" : "systemd",
-    "tc" :        "iproute2",
-    "xargs" :     "findutils",
+    "tc"        : "iproute2",
+    "xargs"     : "findutils",
 }
 
 # CentOS and Fedora.
