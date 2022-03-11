@@ -358,6 +358,7 @@ def _do_run_async(command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=
                   shell=False, newgrp=False):
     """Implements 'run_async()'."""
 
+    # pylint: disable=consider-using-with
     try:
         if stdin and isinstance(stdin, str):
             fname = stdin
@@ -562,7 +563,7 @@ class Proc:
 
         errmsg = f"cannot open file '{path}' with mode '{mode}': "
         try:
-            fobj = open(path, mode)
+            fobj = open(path, mode) # pylint: disable=consider-using-with
         except PermissionError as err:
             raise ErrorPermissionDenied(f"{errmsg}{err}") from None
         except FileNotFoundError as err:
