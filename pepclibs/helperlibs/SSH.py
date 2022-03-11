@@ -995,16 +995,98 @@ class SSH:
         return _Common.cmd_failed_msg(command, stdout, stderr, exitcode, hostname=self.hostname,
                                       startmsg=startmsg, timeout=timeout)
 
-    def __new__(cls, *_, **kwargs):
+    def _get_sftp(self):
+        """Get an SFTP server object."""
+
+        if self._sftp:
+            return self._sftp
+
+        try:
+            self._sftp = self.ssh.open_sftp()
+        except _PARAMIKO_EXCEPTIONS as err:
+            raise Error(f"failed to establish SFTP session with {self.hostname}:\n{err}") from err
+
+        return self._sftp
+
+    def open(self, path, mode):
         """
-        This method makes sure that when users creates an 'SSH' object with 'None' 'hostname', we
-        create an instance of 'Proc' class instead of an instance of 'SSH' class. The two classes
-        have similar API.
+        Open a file on the remote host at 'path' using mode 'mode' (the arguments are the same as in
+        the builtin Python 'open()' function).
         """
 
-        if "hostname" not in kwargs or kwargs["hostname"] is None:
-            return Procs.Proc()
-        return super().__new__(cls)
+        def _read_(fobj, size=None):
+            """
+            SFTP file objects support only binary mode. This wrapper adds basic text mode support.
+            """
+
+            try:
+                data = fobj._orig_fread_(size=size)
+            except BaseException as err:
+                raise Error(f"failed to read from '{fobj._orig_fpath_}': {err}") from err
+
+            if "b" not in fobj._orig_fmode_:
+                try:
+                    data = data.decode("utf8")
+                except UnicodeError as err:
+                    raise Error(f"failed to decode data read from '{fobj._orig_fpath_}':\n{err}") \
+                          from None
+
+            return data
+
+        def _write_(fobj, data):
+            """
+            SFTP file objects support only binary mode. This wrapper adds basic text mode support.
+            """
+
+            errmsg = f"failed to write to '{fobj._orig_fpath_}': "
+            if "b" not in fobj._orig_fmode_:
+                try:
+                    data = data.encode("utf8")
+                except UnicodeError as err:
+                    raise Error(f"{errmsg}: failed to encode data before writing:\n{err}") from None
+                except AttributeError as err:
+                    raise Error(f"{errmsg}: the data to write must be a string:\n{err}") from None
+
+            try:
+                return fobj._orig_fwrite_(data)
+            except PermissionError as err:
+                raise ErrorPermissionDenied(f"{errmsg}{err}") from None
+            except BaseException as err:
+                raise Error(f"{errmsg}{err}") from err
+
+        def get_err_prefix(fobj, method):
+            """Return the error message prefix."""
+            return f"method '{method}()' failed for file '{fobj._orig_fpath_}'"
+
+        path = str(path) # In case it is a pathlib.Path() object.
+        sftp = self._get_sftp()
+
+        errmsg = f"failed to open file '{path}' on {self.hostname} via SFTP: "
+        try:
+            fobj = sftp.file(path, mode)
+        except PermissionError as err:
+            raise ErrorPermissionDenied(f"{errmsg}{err}") from None
+        except FileNotFoundError as err:
+            raise ErrorNotFound(f"{errmsg}{err}") from None
+        except _PARAMIKO_EXCEPTIONS as err:
+            raise Error(f"{errmsg}{err}") from err
+
+        # Save the path and the mode in the object.
+        fobj._orig_fpath_ = path
+        fobj._orig_fmode_ = mode
+
+        # Redefine the 'read()' and 'write()' methods to do decoding on the fly, because all files
+        # are binary in case of SFTP.
+        if "b" not in mode:
+            fobj._orig_fread_ = fobj.read
+            fobj.read = types.MethodType(_read_, fobj)
+            fobj._orig_fwrite_ = fobj.write
+            fobj.write = types.MethodType(_write_, fobj)
+
+        # Make sure methods of 'fobj' always raise the 'Error' exception.
+        fobj = WrapExceptions.WrapExceptions(fobj, exceptions=_PARAMIKO_EXCEPTIONS,
+                                             get_err_prefix=get_err_prefix)
+        return fobj
 
     def _cfg_lookup(self, optname, hostname, username, cfgfiles=None):
         """
@@ -1168,99 +1250,6 @@ class SSH:
             self.ssh = None
             ssh.close()
 
-    def _get_sftp(self):
-        """Get an SFTP server object."""
-
-        if self._sftp:
-            return self._sftp
-
-        try:
-            self._sftp = self.ssh.open_sftp()
-        except _PARAMIKO_EXCEPTIONS as err:
-            raise Error(f"failed to establish SFTP session with {self.hostname}:\n{err}") from err
-
-        return self._sftp
-
-    def open(self, path, mode):
-        """
-        Open a file on the remote host at 'path' using mode 'mode' (the arguments are the same as in
-        the builtin Python 'open()' function).
-        """
-
-        def _read_(fobj, size=None):
-            """
-            SFTP file objects support only binary mode. This wrapper adds basic text mode support.
-            """
-
-            try:
-                data = fobj._orig_fread_(size=size)
-            except BaseException as err:
-                raise Error(f"failed to read from '{fobj._orig_fpath_}': {err}") from err
-
-            if "b" not in fobj._orig_fmode_:
-                try:
-                    data = data.decode("utf8")
-                except UnicodeError as err:
-                    raise Error(f"failed to decode data read from '{fobj._orig_fpath_}':\n{err}") \
-                          from None
-
-            return data
-
-        def _write_(fobj, data):
-            """
-            SFTP file objects support only binary mode. This wrapper adds basic text mode support.
-            """
-
-            errmsg = f"failed to write to '{fobj._orig_fpath_}': "
-            if "b" not in fobj._orig_fmode_:
-                try:
-                    data = data.encode("utf8")
-                except UnicodeError as err:
-                    raise Error(f"{errmsg}: failed to encode data before writing:\n{err}") from None
-                except AttributeError as err:
-                    raise Error(f"{errmsg}: the data to write must be a string:\n{err}") from None
-
-            try:
-                return fobj._orig_fwrite_(data)
-            except PermissionError as err:
-                raise ErrorPermissionDenied(f"{errmsg}{err}") from None
-            except BaseException as err:
-                raise Error(f"{errmsg}{err}") from err
-
-        def get_err_prefix(fobj, method):
-            """Return the error message prefix."""
-            return f"method '{method}()' failed for file '{fobj._orig_fpath_}'"
-
-        path = str(path) # In case it is a pathlib.Path() object.
-        sftp = self._get_sftp()
-
-        errmsg = f"failed to open file '{path}' on {self.hostname} via SFTP: "
-        try:
-            fobj = sftp.file(path, mode)
-        except PermissionError as err:
-            raise ErrorPermissionDenied(f"{errmsg}{err}") from None
-        except FileNotFoundError as err:
-            raise ErrorNotFound(f"{errmsg}{err}") from None
-        except _PARAMIKO_EXCEPTIONS as err:
-            raise Error(f"{errmsg}{err}") from err
-
-        # Save the path and the mode in the object.
-        fobj._orig_fpath_ = path
-        fobj._orig_fmode_ = mode
-
-        # Redefine the 'read()' and 'write()' methods to do decoding on the fly, because all files
-        # are binary in case of SFTP.
-        if "b" not in mode:
-            fobj._orig_fread_ = fobj.read
-            fobj.read = types.MethodType(_read_, fobj)
-            fobj._orig_fwrite_ = fobj.write
-            fobj.write = types.MethodType(_write_, fobj)
-
-        # Make sure methods of 'fobj' always raise the 'Error' exception.
-        fobj = WrapExceptions.WrapExceptions(fobj, exceptions=_PARAMIKO_EXCEPTIONS,
-                                             get_err_prefix=get_err_prefix)
-        return fobj
-
     def __enter__(self):
         """Enter the runtime context."""
         return self
@@ -1268,3 +1257,14 @@ class SSH:
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit the runtime context."""
         self.close()
+
+    def __new__(cls, *_, **kwargs):
+        """
+        This method makes sure that when users creates an 'SSH' object with 'hostname == None', we
+        create an instance of 'Proc' class instead of an instance of 'SSH' class. The two classes
+        have similar API.
+        """
+
+        if "hostname" not in kwargs or kwargs["hostname"] is None:
+            return Procs.Proc()
+        return super().__new__(cls)
