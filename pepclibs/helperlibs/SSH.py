@@ -970,7 +970,7 @@ class SSH:
         cmd = f"scp -r {opts}"
 
         try:
-            Procs.run_verify(f"{cmd} -- {src} {dst}")
+            Procs.Proc().run_verify(f"{cmd} -- {src} {dst}")
         except Procs.Error as err:
             raise Error(f"failed to copy files '{src}' to '{dst}':\n{err}") from err
 
