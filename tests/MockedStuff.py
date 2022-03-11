@@ -11,7 +11,6 @@
 """Common mocked bits for the tests."""
 
 import re
-import sys
 import random
 from contextlib import contextmanager
 from unittest.mock import patch, mock_open
@@ -35,6 +34,8 @@ _TESTDATA = {
 
 # Max. 64-bit integer.
 _MAX64 = (1 << 64) - 1
+
+_ORIG_PROC = Procs.Proc()
 
 def _get_mocked_data():
     """
@@ -132,7 +133,7 @@ class MockedProc(Procs.Proc):
             # Mock the call from CPUInfo.CPUInfo._get_lscpu().
             return (_MOCKED_DATA['lscpu_cpus'], "")
 
-        return self._parent_methods["run_verify"](command, **kwargs)
+        return _ORIG_PROC.run_verify(command, **kwargs)
 
     def _get_mock_fobj(self, path, mode):
         """Prepare new file object."""
@@ -176,12 +177,6 @@ class MockedProc(Procs.Proc):
 
         self._mock_fobj = {}
         self._cstvals = None
-
-        self._parent_methods = {}
-        module = sys.modules[Procs.__name__]
-        for name in ("run_verify",):
-            if hasattr(module, name):
-                self._parent_methods[name] = getattr(module, name)
 
 class MockedMSR(MSR.MSR):
     """Mock version of MSR class in pepclibs.msr.MSR module."""
