@@ -88,7 +88,7 @@ class Systemctl:
         the list of timers that were stopped.
         """
 
-        cmd = "systemctl} list-timers"
+        cmd = "systemctl list-timers"
         timers = [part for part in self._proc.run_verify(cmd)[0].split() if part.endswith(".timer")]
         if timers:
             self._start(timers, False)
@@ -125,7 +125,7 @@ class Systemctl:
         if not self._tchk:
             self._tchk = ToolChecker.ToolChecker(proc=self._proc)
 
-        self._systemctl = self._tchk.check_tool("systemctl")
+        self._tchk.check_tool("systemctl")
 
     def close(self):
         """Uninitialize the class object."""
