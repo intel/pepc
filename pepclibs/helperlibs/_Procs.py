@@ -15,6 +15,7 @@ import queue
 import logging
 from collections import namedtuple
 from pepclibs.helperlibs import Human
+from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
 
@@ -23,6 +24,31 @@ TIMEOUT = 4 * 60 * 60
 
 # Results of a the process execution.
 ProcResult = namedtuple("proc_result", ["stdout", "stderr", "exitcode"])
+
+class ProcBase:
+    """
+    The base class for local or remote process management classes.
+    """
+
+    Error = Error
+
+    def __init__(self):
+        """Initialize a class instance."""
+
+        self.is_remote = None
+        self.hostname = None
+        self.hostmsg = None
+
+    def close(self):
+        """Free allocated resources."""
+
+    def __enter__(self):
+        """Enter the runtime context."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the runtime context."""
+        self.close()
 
 def get_next_queue_item(qobj, timeout):
     """

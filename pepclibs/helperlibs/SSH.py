@@ -631,15 +631,13 @@ def _format_command_for_pid(command, cwd=None):
 
     return prefix + " exec -- " + command
 
-class SSH:
+class SSH(_Procs.ProcBase):
     """
     This class provides API for communicating with remote hosts over SSH.
 
     SECURITY NOTICE: this class and any part of it should only be used for debugging and development
     purposes. No security audit had been done. Not for production use.
     """
-
-    Error = Error
 
     def _read_pid(self, chan):
         """Return PID of just executed command."""
@@ -1157,6 +1155,8 @@ class SSH:
         development purposes. No security audit had been done. Not for production use.
         """
 
+        super().__init__()
+
         self.ssh = None
         self.is_remote = True
         self.hostname = hostname
@@ -1256,14 +1256,6 @@ class SSH:
             ssh = self.ssh
             self.ssh = None
             ssh.close()
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()
 
     def __new__(cls, *_, **kwargs):
         """

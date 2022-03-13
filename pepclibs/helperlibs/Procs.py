@@ -356,7 +356,7 @@ def _add_custom_fields(proc, task, cmd):
     task.__del__ = types.MethodType(_del, task)
     return task
 
-class Proc:
+class Proc(_Procs.ProcBase):
     """This class provides API similar to the 'SSH' class API."""
 
     def _do_run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
@@ -548,18 +548,6 @@ class Proc:
         except Error as err:
             raise Error("failed to copy files '%s' to '%s':\n%s" % (src, dst, err)) from err
 
-    Error = Error
-
-    def __init__(self):
-        """Initialize a class instance."""
-
-        self.is_remote = False
-        self.hostname = "localhost"
-        self.hostmsg = ""
-
-    def close(self):
-        """Fake version of 'SSH.close()'."""
-
     @staticmethod
     def open(path, mode):
         """
@@ -578,14 +566,14 @@ class Proc:
             raise Error(f"{errmsg}{err}") from None
 
         # Make sure methods of 'fobj' always raise the 'Error' exceptions.
-        fobj = WrapExceptions.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
+        return WrapExceptions.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
                                              get_err_prefix=_get_err_prefix)
-        return fobj
 
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
+    def __init__(self):
+        """Initialize a class instance."""
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()
+        super().__init__()
+
+        self.is_remote = False
+        self.hostname = "localhost"
+        self.hostmsg = ""

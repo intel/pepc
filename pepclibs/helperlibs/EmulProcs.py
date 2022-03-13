@@ -14,7 +14,7 @@ import io
 import types
 import logging
 import contextlib
-from pepclibs.helperlibs import FSHelpers, Trivial, WrapExceptions, YAML
+from pepclibs.helperlibs import _Procs, FSHelpers, Trivial, WrapExceptions, YAML
 from pepclibs.helperlibs._Procs import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
@@ -54,7 +54,7 @@ def _populate_sparse_file(path, data):
     except OSError as err:
         raise Error(f"failed to prepare sparse file '{path}':\n{err}") from err
 
-class EmulProc():
+class EmulProc(_Procs.ProcBase):
     """
     Emulated version of the 'Proc' class in the 'pepclibs.helperlibs.Procs' module. The class is
     used for testing purposes.
@@ -248,6 +248,8 @@ class EmulProc():
     def __init__(self):
         """Initialize the emulated 'Proc' class instance."""
 
+        super().__init__()
+
         self.hostname = "emulated local host"
         self.hostmsg = f" on '{self.hostname}'"
         self.is_remote = False
@@ -271,11 +273,3 @@ class EmulProc():
         if getattr(self, "_basepath", None):
             with contextlib.suppress(OSError):
                 FSHelpers.rm_minus_rf(self._basepath)
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the turntime context."""
-        self.close()
