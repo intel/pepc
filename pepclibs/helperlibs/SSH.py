@@ -48,7 +48,7 @@ import threading
 from pathlib import Path
 import contextlib
 import paramiko
-from pepclibs.helperlibs import _Common, Procs, WrapExceptions, Trivial
+from pepclibs.helperlibs import _Common, WrapExceptions, Trivial
 from pepclibs.helperlibs._Common import ProcResult, cmd_failed_msg # pylint: disable=unused-import
 from pepclibs.helperlibs._Common import TIMEOUT
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
@@ -948,10 +948,10 @@ class SSH:
         if remotesrc and remotedst:
             proc = self
         else:
+            from pepclibs.helperlibs import Procs # pylint: disable=import-outside-toplevel
+
             proc = Procs.Proc()
-
             cmd += f" -e 'ssh {self.get_ssh_opts()}'"
-
             if remotesrc:
                 src = f"{self.hostname}:{src}"
             if remotedst:
@@ -969,13 +969,16 @@ class SSH:
         ')'.
         """
 
+        from pepclibs.helperlibs import Procs # pylint: disable=import-outside-toplevel
+        proc = Procs.Proc()
+
         opts = f"-o \"Port={self.port}\" -o \"User={self.username}\""
         if self.privkeypath:
             opts += f" -o \"IdentityFile={self.privkeypath}\""
         cmd = f"scp -r {opts}"
 
         try:
-            Procs.Proc().run_verify(f"{cmd} -- {src} {dst}")
+            proc.run_verify(f"{cmd} -- {src} {dst}")
         except Procs.Error as err:
             raise Error(f"failed to copy files '{src}' to '{dst}':\n{err}") from err
 
@@ -1271,5 +1274,6 @@ class SSH:
         """
 
         if "hostname" not in kwargs or kwargs["hostname"] is None:
+            from pepclibs.helperlibs import Procs # pylint: disable=import-outside-toplevel
             return Procs.Proc()
         return super().__new__(cls)
