@@ -48,9 +48,8 @@ import threading
 from pathlib import Path
 import contextlib
 import paramiko
-from pepclibs.helperlibs import _Common, WrapExceptions, Trivial
-from pepclibs.helperlibs._Common import ProcResult, cmd_failed_msg # pylint: disable=unused-import
-from pepclibs.helperlibs._Common import TIMEOUT
+from pepclibs.helperlibs import _Procs, WrapExceptions, Trivial
+from pepclibs.helperlibs._Procs import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
@@ -234,7 +233,7 @@ def _do_wait_for_cmd_intsh(chan, timeout=None, capture_output=True, output_fobjs
             chan._dbg_("_do_wait_for_cmd_intsh: process exited with status %d", pd.exitcode)
             break
 
-        streamid, data = _Common.get_next_queue_item(pd.queue, timeout)
+        streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
         if streamid == -1:
             chan._dbg_("_do_wait_for_cmd_intsh: nothing in the queue for %d seconds", timeout)
         elif data is None:
@@ -247,8 +246,8 @@ def _do_wait_for_cmd_intsh(chan, timeout=None, capture_output=True, output_fobjs
             # output of the command. The marker always starts at the beginning of line.
             data, pd.exitcode = _watch_for_marker(chan, data)
 
-        _Common.capture_data(chan, streamid, data, capture_output=capture_output,
-                             output_fobjs=output_fobjs, by_line=by_line)
+        _Procs.capture_data(chan, streamid, data, capture_output=capture_output,
+                            output_fobjs=output_fobjs, by_line=by_line)
 
         if not timeout:
             chan._dbg_(f"_do_wait_for_cmd_intsh: timeout is {timeout}, exit immediately")
@@ -257,9 +256,9 @@ def _do_wait_for_cmd_intsh(chan, timeout=None, capture_output=True, output_fobjs
             chan._dbg_("_do_wait_for_cmd_intsh: stop waiting for the command - timeout")
             break
 
-    result = _Common.get_lines_to_return(chan, lines=lines)
+    result = _Procs.get_lines_to_return(chan, lines=lines)
 
-    if _Common.all_output_consumed(chan):
+    if _Procs.all_output_consumed(chan):
         # Mark the interactive shell process as vacant.
         acquired = pd.ssh._acquire_intsh_lock(chan.cmd)
         if not acquired:
@@ -289,12 +288,12 @@ def _do_wait_for_cmd(chan, timeout=None, capture_output=True, output_fobjs=(None
             chan._dbg_("_do_wait_for_cmd: process exited with status %d", pd.exitcode)
             break
 
-        streamid, data = _Common.get_next_queue_item(pd.queue, timeout)
+        streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
         if streamid == -1:
             chan._dbg_("_do_wait_for_cmd_intsh: nothing in the queue for %d seconds", timeout)
         elif data is not None:
-            _Common.capture_data(chan, streamid, data, capture_output=capture_output,
-                                 output_fobjs=output_fobjs, by_line=by_line)
+            _Procs.capture_data(chan, streamid, data, capture_output=capture_output,
+                                output_fobjs=output_fobjs, by_line=by_line)
         else:
             chan._dbg_("_do_wait_for_cmd: stream %d closed", streamid)
             # One of the output streams closed.
@@ -313,7 +312,7 @@ def _do_wait_for_cmd(chan, timeout=None, capture_output=True, output_fobjs=(None
             chan._dbg_("_do_wait_for_cmd: stop waiting for the command - timeout")
             break
 
-    return _Common.get_lines_to_return(chan, lines=lines)
+    return _Procs.get_lines_to_return(chan, lines=lines)
 
 def _wait_for_cmd(chan, timeout=None, capture_output=True, output_fobjs=(None, None),
                   lines=(None, None), by_line=True, join=True):
@@ -356,7 +355,7 @@ def _wait_for_cmd(chan, timeout=None, capture_output=True, output_fobjs=(None, N
     """
 
     if timeout is None:
-        timeout = TIMEOUT
+        timeout = _Procs.TIMEOUT
     if timeout < 0:
         raise Error(f"bad timeout value {timeout}, must be > 0")
 
@@ -385,7 +384,7 @@ def _wait_for_cmd(chan, timeout=None, capture_output=True, output_fobjs=(None, N
     if pd.threads_exit:
         raise Error("this SSH channel has '_threads_exit_ flag set and it cannot be used")
 
-    if _Common.all_output_consumed(chan):
+    if _Procs.all_output_consumed(chan):
         return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
 
     if not pd.queue:
@@ -418,7 +417,7 @@ def _wait_for_cmd(chan, timeout=None, capture_output=True, output_fobjs=(None, N
         if join:
             stderr = "".join(stderr)
 
-    if _Common.all_output_consumed(chan):
+    if _Procs.all_output_consumed(chan):
         exitcode = pd.exitcode
     else:
         exitcode = None
@@ -442,7 +441,7 @@ def _poll(chan):
 
 def _cmd_failed_msg(chan, stdout, stderr, exitcode, startmsg=None, timeout=None):
     """
-    A wrapper over '_Common.cmd_failed_msg()'. The optional 'timeout' argument specifies the
+    A wrapper over '_Procs.cmd_failed_msg()'. The optional 'timeout' argument specifies the
     timeout that was used for the command.
     """
 
@@ -454,8 +453,8 @@ def _cmd_failed_msg(chan, stdout, stderr, exitcode, startmsg=None, timeout=None)
         if chan.cmd != chan._pd_.real_cmd:
             cmd = f"{cmd}\nReal command: {chan._pd_.real_cmd}"
 
-    return _Common.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=chan.hostname,
-                                  startmsg=startmsg, timeout=timeout)
+    return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=chan.hostname,
+                                 startmsg=startmsg, timeout=timeout)
 
 def _close(chan):
     """The channel close method that will signal the threads to exit."""
@@ -565,7 +564,7 @@ def _add_custom_fields(ssh, chan, cmd, real_cmd):
     # which the 'Procs' module uses.
     chan.hostname = ssh.hostname
     chan.cmd = cmd
-    chan.timeout = TIMEOUT
+    chan.timeout = _Procs.TIMEOUT
     chan.close = types.MethodType(_close, chan)
 
     chan._dbg_ = types.MethodType(_dbg, chan)
@@ -828,7 +827,7 @@ class SSH:
 
         The 'timeout' parameter specifies the longest time for this method to block. If the command
         takes longer, this function will raise the 'ErrorTimeOut' exception. The default is 4h (see
-        'TIMEOUT').
+        '_Procs.TIMEOUT').
 
         If the 'capture_output' argument is 'True', this function intercept the output of the
         executed program, otherwise it doesn't and the output is dropped (default) or printed to
@@ -998,10 +997,10 @@ class SSH:
         self._scp(f"\"{local_path}\"", f"{self.hostname}:'\"{remote_path}\"'")
 
     def cmd_failed_msg(self, command, stdout, stderr, exitcode, startmsg=None, timeout=None):
-        """A simple wrapper around '_Common.cmd_failed_msg()'."""
+        """A simple wrapper around '_Procs.cmd_failed_msg()'."""
 
-        return _Common.cmd_failed_msg(command, stdout, stderr, exitcode, hostname=self.hostname,
-                                      startmsg=startmsg, timeout=timeout)
+        return _Procs.cmd_failed_msg(command, stdout, stderr, exitcode, hostname=self.hostname,
+                                     startmsg=startmsg, timeout=timeout)
 
     def _get_sftp(self):
         """Get an SFTP server object."""

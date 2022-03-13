@@ -15,7 +15,7 @@ import types
 import logging
 import contextlib
 from pepclibs.helperlibs import FSHelpers, Trivial, WrapExceptions, YAML
-from pepclibs.helperlibs._Common import ProcResult
+from pepclibs.helperlibs._Procs import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 

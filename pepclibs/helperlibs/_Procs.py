@@ -7,8 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module contains common bits and pieces shared between different modules in this package. Not
-supposed to be imported directly by users.
+This module contains common bits and pieces shared between the 'Procs' and 'SSH' modules.
 """
 
 import re

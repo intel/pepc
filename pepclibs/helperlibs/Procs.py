@@ -22,9 +22,8 @@ import codecs
 import logging
 import threading
 import subprocess
-from pepclibs.helperlibs import _Common, WrapExceptions, Trivial
-from pepclibs.helperlibs._Common import ProcResult, cmd_failed_msg # pylint: disable=unused-import
-from pepclibs.helperlibs._Common import TIMEOUT
+from pepclibs.helperlibs import _Procs, WrapExceptions, Trivial
+from pepclibs.helperlibs._Procs import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied, ErrorNotFound
 
 _LOG = logging.getLogger()
@@ -112,13 +111,13 @@ def _do_wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None
             task._dbg_("_do_wait_for_cmd: process exited with status %d", pd.exitcode)
             break
 
-        streamid, data = _Common.get_next_queue_item(pd.queue, timeout)
+        streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
         if streamid == -1:
             task._dbg_("_do_wait_for_cmd: nothing in the queue for %d seconds", timeout)
             break
         if data is not None:
-            _Common.capture_data(task, streamid, data, capture_output=capture_output,
-                                 output_fobjs=output_fobjs, by_line=by_line)
+            _Procs.capture_data(task, streamid, data, capture_output=capture_output,
+                                output_fobjs=output_fobjs, by_line=by_line)
         else:
             task._dbg_("_do_wait_for_cmd: stream %d closed", streamid)
             # One of the output streams closed.
@@ -137,7 +136,7 @@ def _do_wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None
             task._dbg_("_do_wait_for_cmd: stop waiting for the command - timeout")
             break
 
-    return _Common.get_lines_to_return(task, lines=lines)
+    return _Procs.get_lines_to_return(task, lines=lines)
 
 def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, None),
                   lines=(None, None), by_line=True, join=True):
@@ -180,7 +179,7 @@ def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, N
     """
 
     if timeout is None:
-        timeout = TIMEOUT
+        timeout = _Procs.TIMEOUT
     if timeout < 0:
         raise Error(f"bad timeout value {timeout}, must be > 0")
     task.timeout = timeout
@@ -204,7 +203,7 @@ def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, N
                "command: %s", timeout, capture_output, str(lines), by_line, join, task.cmd)
 
     pd = task._pd_
-    if _Common.all_output_consumed(task):
+    if _Procs.all_output_consumed(task):
         # This command has already exited.
         return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
 
@@ -237,7 +236,7 @@ def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, N
         if join:
             stderr = "".join(stderr)
 
-    if _Common.all_output_consumed(task):
+    if _Procs.all_output_consumed(task):
         exitcode = pd.exitcode
     else:
         exitcode = None
@@ -252,14 +251,14 @@ def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, N
 
 def _cmd_failed_msg(task, stdout, stderr, exitcode, startmsg=None, timeout=None):
     """
-    A wrapper over '_Common.cmd_failed_msg()'. The optional 'timeout' argument specifies the
+    A wrapper over '_Procs.cmd_failed_msg()'. The optional 'timeout' argument specifies the
     timeout that was used for the command.
     """
 
     if timeout is None:
         timeout = task.timeout
-    return _Common.cmd_failed_msg(task.cmd, stdout, stderr, exitcode, hostname=task.hostname,
-                                  startmsg=startmsg, timeout=timeout)
+    return _Procs.cmd_failed_msg(task.cmd, stdout, stderr, exitcode, hostname=task.hostname,
+                                 startmsg=startmsg, timeout=timeout)
 
 def _close(task):
     """Task's 'close()' method that will signal the threads to exit."""
@@ -349,7 +348,7 @@ def _add_custom_fields(proc, task, cmd):
     # the 'SSH' module uses.
     task.hostname = proc.hostname
     task.cmd = cmd
-    task.timeout = TIMEOUT
+    task.timeout = _Procs.TIMEOUT
     task.close = types.MethodType(_close, task)
     task._dbg_ = types.MethodType(_dbg, task)
     task.cmd_failed_msg = types.MethodType(_cmd_failed_msg, task)
@@ -505,7 +504,7 @@ class Proc:
                                    timeout=timeout, by_line=by_line, join=join)
 
         if result.exitcode is None:
-            msg = _Common.cmd_failed_msg(command, *tuple(result), timeout=timeout)
+            msg = _Procs.cmd_failed_msg(command, *tuple(result), timeout=timeout)
             raise ErrorTimeOut(msg)
 
         if output_fobjs[0]:
@@ -529,7 +528,7 @@ class Proc:
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
-        raise Error(_Common.cmd_failed_msg(command, *tuple(result), timeout=timeout))
+        raise Error(_Procs.cmd_failed_msg(command, *tuple(result), timeout=timeout))
 
     def rsync(self, src, dst, opts="rlpD", remotesrc=False, remotedst=True):
         # pylint: disable=unused-argument
