@@ -190,10 +190,11 @@ def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, N
     if lines[0] == 0 and lines[1] == 0:
         raise Error("the 'lines' argument cannot be (0, 0)")
 
-    task._dbg_("_wait_for_cmd: timeout %s, capture_output %s, lines %s, join: %s, "
-               "command: %s", timeout, capture_output, str(lines), join, task.cmd)
-
     pd = task._pd_
+
+    task._dbg_("_wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
+               "real command: %s", timeout, capture_output, str(lines), join, task.cmd, pd.real_cmd)
+
     if _Procs.all_output_consumed(task):
         # This command has already exited.
         return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
@@ -248,6 +249,12 @@ def _cmd_failed_msg(task, stdout, stderr, exitcode, startmsg=None, timeout=None)
 
     if timeout is None:
         timeout = task.timeout
+
+    cmd = task.cmd
+    if _LOG.getEffectiveLevel() == logging.DEBUG:
+        if task.cmd != task._pd_.real_cmd:
+            cmd = f"{cmd}\nReal command: {task._pd_.real_cmd}"
+
     return _Procs.cmd_failed_msg(task.cmd, stdout, stderr, exitcode, hostname=task.hostname,
                                  startmsg=startmsg, timeout=timeout)
 
@@ -312,6 +319,8 @@ class _ProcessPrivateData:
         # Whether the command was executed via the shell.
         self.shell = None
 
+        # Real command (user command and all the prefixes/suffixes).
+        self.real_cmd = None
         # The original '__del__()' methods of the Popen object.
         self.orig_del = None
         # Print debugging messages if 'True'.
@@ -320,7 +329,7 @@ class _ProcessPrivateData:
         # message related to different processes.
         self.debug_id = None
 
-def _add_custom_fields(proc, task, cmd, shell):
+def _add_custom_fields(proc, task, cmd, real_cmd, shell):
     """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
 
     for name in ("stdin", "stdout", "stderr"):
@@ -333,6 +342,7 @@ def _add_custom_fields(proc, task, cmd, shell):
     pd = task._pd_ = _ProcessPrivateData()
 
     pd.proc = proc
+    pd.real_cmd = real_cmd
     pd.shell = shell
     pd.streams = [task.stdout, task.stderr]
     pd.orig_del = task.__del__
@@ -381,11 +391,13 @@ class Proc(_Procs.ProcBase):
 
         if shell:
             if shell:
-                cmd = _Procs.format_command_for_pid(command, cwd=cwd)
+                real_cmd = cmd = _Procs.format_command_for_pid(command, cwd=cwd)
         elif isinstance(command, str):
+            real_cmd = command
             cmd = shlex.split(command)
         else:
             cmd = command
+            real_cmd = command = " ".join(command)
 
         try:
             task = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
@@ -397,7 +409,7 @@ class Proc(_Procs.ProcBase):
             # The first line of the output should contain the PID - extract it.
             task.pid = _Procs.read_pid(task)
 
-        return _add_custom_fields(self, task, cmd, shell)
+        return _add_custom_fields(self, task, command, real_cmd, shell)
 
     def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
                   env=None, shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument
