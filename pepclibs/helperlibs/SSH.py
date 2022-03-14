@@ -190,7 +190,7 @@ def _watch_for_marker(chan, data):
         assert len(split) == 2
         exitcode = split[1].rstrip(" ---")
         if not Trivial.is_int(exitcode):
-            raise Error(f"the command was running{pd.ssh.hostmsg} under the interactive "
+            raise Error(f"the command was running{pd.proc.hostmsg} under the interactive "
                         f"shell and finished with a correct marker, but unexpected exit "
                         f"code '{exitcode}'.\nThe command was: {chan.cmd}")
 
@@ -237,7 +237,7 @@ def _do_wait_for_cmd_intsh(chan, timeout=None, capture_output=True, output_fobjs
         if streamid == -1:
             chan._dbg_("_do_wait_for_cmd_intsh: nothing in the queue for %d seconds", timeout)
         elif data is None:
-            raise Error(f"the interactive shell process{pd.ssh.hostmsg} closed stream "
+            raise Error(f"the interactive shell process{pd.proc.hostmsg} closed stream "
                         f"'{pd.streams[streamid]._stream_name}' while running the following "
                         f"command:\n{chan.cmd}")
         elif streamid == 0:
@@ -260,12 +260,12 @@ def _do_wait_for_cmd_intsh(chan, timeout=None, capture_output=True, output_fobjs
 
     if _Procs.all_output_consumed(chan):
         # Mark the interactive shell process as vacant.
-        acquired = pd.ssh._acquire_intsh_lock(chan.cmd)
+        acquired = pd.proc._acquire_intsh_lock(chan.cmd)
         if not acquired:
             _LOG.warning("failed to mark the interactive shell process as free")
         else:
-            pd.ssh._intsh_busy = False
-            pd.ssh._intsh_lock.release()
+            pd.proc._intsh_busy = False
+            pd.proc._intsh_lock.release()
 
     return result
 
@@ -399,7 +399,7 @@ def _wait_for_cmd(chan, timeout=None, capture_output=True, output_fobjs=(None, N
     else:
         chan._dbg_("_wait_for_cmd: queue is empty: %s", pd.queue.empty())
 
-    if chan == pd.ssh._intsh:
+    if chan == pd.proc._intsh:
         func = _do_wait_for_cmd_intsh
     else:
         func = _do_wait_for_cmd
@@ -463,7 +463,7 @@ def _close(chan):
         chan._dbg_("_close()")
         pd = chan._pd_
         pd.threads_exit = True
-        pd.ssh = None
+        pd.proc = None
         pd.orig_close()
 
 def _del(chan):
@@ -499,7 +499,7 @@ class _ChannelPrivateData:
         """The constructor."""
 
         # The 'SSH' object corresponding to the channel.
-        self.ssh = None
+        self.proc = None
         # The 2 output streams of the command's process (stdout, stderr).
         self.streams = []
         # The queue which is used for passing commands output from stream fetcher threads.
@@ -554,7 +554,7 @@ def _add_custom_fields(ssh, chan, cmd, real_cmd):
         wrapped_fobj.name = name
         setattr(chan, name, wrapped_fobj)
 
-    pd.ssh = ssh
+    pd.proc = ssh
     pd.real_cmd = real_cmd
     pd.streams = [chan.recv, chan.recv_stderr]
     pd.orig_close = chan.close
