@@ -96,7 +96,7 @@ def get_next_queue_item(qobj, timeout):
     except queue.Empty:
         return (-1, None)
 
-def capture_data(proc, streamid, data, capture_output=True, output_fobjs=(None, None),
+def capture_data(task, streamid, data, capture_output=True, output_fobjs=(None, None),
                   by_line=True):
     """
     A helper for 'Procs' and 'SSH' that captures data 'data' from the 'streamid' stream fetcher
@@ -116,31 +116,31 @@ def capture_data(proc, streamid, data, capture_output=True, output_fobjs=(None, 
         return
 
     # pylint: disable=protected-access
-    pd = proc._pd_
-    proc._dbg_("capture_data: got data from stream %d:\n%s", streamid, data)
+    pd = task._pd_
+    task._dbg_("capture_data: got data from stream %d:\n%s", streamid, data)
 
     if by_line:
         data, pd.partial[streamid] = extract_full_lines(pd.partial[streamid] + data)
         if data and pd.partial[streamid]:
-            proc._dbg_("capture_data: stream %d: full lines:\n%s",
+            task._dbg_("capture_data: stream %d: full lines:\n%s",
                        streamid, "".join(data))
-            proc._dbg_("capture_data: stream %d: pd.partial line: %s",
+            task._dbg_("capture_data: stream %d: pd.partial line: %s",
                        streamid, pd.partial[streamid])
         for line in data:
             _save_output(line, streamid)
     else:
         _save_output(data, streamid)
 
-def get_lines_to_return(proc, lines=(None, None)):
+def get_lines_to_return(task, lines=(None, None)):
     """
     A helper for 'Procs' and 'SSH' that figures out what part of the captured command output should
-    be returned to the user, and what part should stay in 'proc._pd_.output', depending on the lines
+    be returned to the user, and what part should stay in 'task._pd_.output', depending on the lines
     limit 'lines'. The keyword arguments are the same as in '_do_wait_for_cmd()'.
     """
 
     # pylint: disable=protected-access
-    pd = proc._pd_
-    proc._dbg_("get_lines_to_return: starting with lines %s, pd.partial: %s, pd.output:\n%s",
+    pd = task._pd_
+    task._dbg_("get_lines_to_return: starting with lines %s, pd.partial: %s, pd.output:\n%s",
                str(lines), pd.partial, pd.output)
 
     output = [[], []]
@@ -154,19 +154,19 @@ def get_lines_to_return(proc, lines=(None, None)):
             output[streamid] = pd.output[streamid][:limit]
             pd.output[streamid] = pd.output[streamid][limit:]
 
-    proc._dbg_("get_lines_to_return: starting with  pd.partial: %s, pd.output:\n%s\nreturning:\n%s",
+    task._dbg_("get_lines_to_return: starting with  pd.partial: %s, pd.output:\n%s\nreturning:\n%s",
                pd.partial, pd.output, output)
     return output
 
-def all_output_consumed(proc):
+def all_output_consumed(task):
     """
-    Returns 'True' if all the output of the process in 'proc' was returned to the user and the
+    Returns 'True' if all the output of the process in 'task' was returned to the user and the
     process exited. Returns 'False' if there is some output still in the queue or "cached" in
-    'proc._pd_.output' or if the process did not exit yet.
+    'task._pd_.output' or if the process did not exit yet.
     """
 
     # pylint: disable=protected-access
-    pd = proc._pd_
+    pd = task._pd_
     return pd.exitcode is not None and \
            not pd.output[0] and \
            not pd.output[1] and \
