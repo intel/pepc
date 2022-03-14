@@ -108,7 +108,7 @@ def read_pid(task):
     task._dbg_("_read_pid: reading PID for command: %s", task.cmd)
 
     timeout = 10
-    stdout, stderr, _ = task.wait_for_cmd(timeout=timeout, lines=(1, 0), by_line=True, join=False)
+    stdout, stderr, _ = task.wait_for_cmd(timeout=timeout, lines=(1, 0), join=False)
     assert len(stdout) == 1
     assert not stderr
 
@@ -137,21 +137,11 @@ def get_next_queue_item(qobj, timeout):
     except queue.Empty:
         return (-1, None)
 
-def capture_data(task, streamid, data, capture_output=True, output_fobjs=(None, None),
-                  by_line=True):
+def capture_data(task, streamid, data, capture_output=True, output_fobjs=(None, None)):
     """
     A helper for 'Procs' and 'SSH' that captures data 'data' from the 'streamid' stream fetcher
     thread. The keyword arguments are the same as in '_do_wait_for_cmd()'.
     """
-
-    def _save_output(data, streamid):
-        """Save a piece of 'pd.output' data 'data' from the 'streamid' stream fetcher."""
-
-        if data:
-            if capture_output:
-                pd.output[streamid].append(data)
-            if output_fobjs[streamid]:
-                output_fobjs[streamid].write(data)
 
     if not data:
         return
@@ -160,20 +150,20 @@ def capture_data(task, streamid, data, capture_output=True, output_fobjs=(None, 
     pd = task._pd_
     task._dbg_("capture_data: got data from stream %d:\n%s", streamid, data)
 
-    if by_line:
-        data, pd.partial[streamid] = extract_full_lines(pd.partial[streamid] + data)
-        if data and pd.partial[streamid]:
-            task._dbg_("capture_data: stream %d: full lines:\n%s",
-                       streamid, "".join(data))
-            task._dbg_("capture_data: stream %d: pd.partial line: %s",
-                       streamid, pd.partial[streamid])
-        for line in data:
-            _save_output(line, streamid)
-    else:
-        if pd.partial[streamid]:
-            data = pd.partial[streamid] + data
-            pd.partial[streamid] = ""
-        _save_output(data, streamid)
+    data, pd.partial[streamid] = extract_full_lines(pd.partial[streamid] + data)
+    if data and pd.partial[streamid]:
+        task._dbg_("capture_data: stream %d: full lines:\n%s",
+                   streamid, "".join(data))
+        task._dbg_("capture_data: stream %d: pd.partial line: %s",
+                   streamid, pd.partial[streamid])
+    for line in data:
+        if not line:
+            continue
+
+        if capture_output:
+            pd.output[streamid].append(line)
+        if output_fobjs[streamid]:
+            output_fobjs[streamid].write(line)
 
 def get_lines_to_return(task, lines=(None, None)):
     """

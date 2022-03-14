@@ -96,7 +96,7 @@ def _have_enough_lines(output, lines=(None, None)):
     return False
 
 def _do_wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, None),
-                     lines=(None, None), by_line=True):
+                     lines=(None, None)):
     """Implements '_wait_for_cmd()'."""
 
     pd = task._pd_
@@ -117,7 +117,7 @@ def _do_wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None
             break
         if data is not None:
             _Procs.capture_data(task, streamid, data, capture_output=capture_output,
-                                output_fobjs=output_fobjs, by_line=by_line)
+                                output_fobjs=output_fobjs)
         else:
             task._dbg_("_do_wait_for_cmd: stream %d closed", streamid)
             # One of the output streams closed.
@@ -139,7 +139,7 @@ def _do_wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None
     return _Procs.get_lines_to_return(task, lines=lines)
 
 def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, None),
-                  lines=(None, None), by_line=True, join=True):
+                  lines=(None, None), join=True):
     """
     This function waits for a command executed with the run_async()' function to finish or print
     something to stdout or stderr.
@@ -167,13 +167,8 @@ def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, N
     for one full line in 'stdout' or five full lines in 'stderr'. And 'lines=(1, None)' would mean
     to wait for one line in 'stdout' and any amount of lines in 'stderr'.
 
-    The 'by_line' parameter controls whether this function should capture output on a line-by-line
-    basis, or if it does not need to care about lines.
-
     The 'join' argument controls whether the captured output lines should be joined and returned as
     a single string, or no joining is needed and the output should be returned as a list of strings.
-    In the latter case if if 'by_line' is 'True', the output will be a list of full lines, otherwise
-    it may be a list of partial lines. Newlines are not stripped in any case.
 
     This function returns a named tuple similar to what the 'run()' function returns.
     """
@@ -183,10 +178,6 @@ def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, N
     if timeout < 0:
         raise Error(f"bad timeout value {timeout}, must be > 0")
     task.timeout = timeout
-
-    if not by_line and lines != (None, None):
-        raise Error("'by_line' must be 'True' when 'lines' is used (reading limited amount of "
-                    "output lines)")
 
     for streamid in (0, 1):
         if not lines[streamid]:
@@ -199,8 +190,8 @@ def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, N
     if lines[0] == 0 and lines[1] == 0:
         raise Error("the 'lines' argument cannot be (0, 0)")
 
-    task._dbg_("_wait_for_cmd: timeout %s, capture_output %s, lines %s, by_line %s, join: %s, "
-               "command: %s", timeout, capture_output, str(lines), by_line, join, task.cmd)
+    task._dbg_("_wait_for_cmd: timeout %s, capture_output %s, lines %s, join: %s, "
+               "command: %s", timeout, capture_output, str(lines), join, task.cmd)
 
     pd = task._pd_
     if _Procs.all_output_consumed(task):
@@ -224,7 +215,7 @@ def _wait_for_cmd(task, timeout=None, capture_output=True, output_fobjs=(None, N
         task._dbg_("_wait_for_cmd: queue is empty: %s", pd.queue.empty())
 
     output = _do_wait_for_cmd(task, timeout=timeout, capture_output=capture_output,
-                              output_fobjs=output_fobjs, lines=lines, by_line=by_line)
+                              output_fobjs=output_fobjs, lines=lines)
 
     stdout = stderr = ""
     if output[0]:
@@ -315,9 +306,8 @@ class _ProcessPrivateData:
         # The output for the command that was read from 'queue', but not yet sent to the user
         # (separate for 'stdout' and 'stderr').
         self.output = [[], []]
-        # In case user specified 'by_line', this tuple contains the last partial lines of the
-        # 'stdout' and 'stderr' output of the command. In case 'by_line' was 'False', the partial
-        # lines will be in 'output'.
+        # This tuple contains the last partial lines of the # 'stdout' and 'stderr' output of the
+        # command.
         self.partial = ["", ""]
 
         # The original '__del__()' methods of the Popen object.
@@ -500,12 +490,9 @@ class Proc(_Procs.ProcBase):
         task = self._do_run_async(command, stdout=stdout, stderr=stderr, bufsize=bufsize, cwd=cwd,
                                   env=env, shell=shell, newgrp=newgrp)
 
-        if join:
-            by_line = False
-        else:
-            by_line = True
+        # Wait for the command to finish and handle the time-out situation.
         result = task.wait_for_cmd(capture_output=capture_output, output_fobjs=output_fobjs,
-                                   timeout=timeout, by_line=by_line, join=join)
+                                   timeout=timeout, join=join)
 
         if result.exitcode is None:
             msg = _Procs.cmd_failed_msg(command, *tuple(result), timeout=timeout)
