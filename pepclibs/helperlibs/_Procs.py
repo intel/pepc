@@ -129,6 +129,9 @@ def capture_data(task, streamid, data, capture_output=True, output_fobjs=(None, 
         for line in data:
             _save_output(line, streamid)
     else:
+        if pd.partial[streamid]:
+            data = pd.partial[streamid] + data
+            pd.partial[streamid] = ""
         _save_output(data, streamid)
 
 def get_lines_to_return(task, lines=(None, None)):
