@@ -678,8 +678,7 @@ class SSH(_Procs.ProcBase):
         try:
             chan.exec_command(cmd)
         except _PARAMIKO_EXCEPTIONS as err:
-            raise Error(f"cannot execute the following command in new SSH session{self.hostmsg}:\n"
-                        f"{cmd}\nReason: {err}") from err
+            raise self._cmd_start_failure(cmd, err) from err
 
         _add_custom_fields(self, chan, command, cmd)
 

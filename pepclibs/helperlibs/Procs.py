@@ -397,8 +397,7 @@ class Proc(_Procs.ProcBase):
             task = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
                                     cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
         except OSError as err:
-            raise Error("the following command failed with error '%s':\n%s" % \
-                        (err, command)) from err
+            raise self._cmd_start_failure(cmd, err) from err
 
         return _add_custom_fields(self, task, cmd)
 

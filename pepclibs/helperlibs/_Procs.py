@@ -13,8 +13,9 @@ This module contains common bits and pieces shared between the 'Procs' and 'SSH'
 import re
 import queue
 import logging
+import contextlib
 from collections import namedtuple
-from pepclibs.helperlibs import Human
+from pepclibs.helperlibs import Human, ToolChecker
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
@@ -32,15 +33,47 @@ class ProcBase:
 
     Error = Error
 
+    def _get_tchk(self):
+        """Returns an instance of the 'ToolChecker' class."""
+
+        if not self._tchk:
+            with contextlib.suppress(Error):
+                self._tchk = ToolChecker.ToolChecker(proc=self)
+        return self._tchk
+
+    def _cmd_start_failure(self, cmd, err, intsh=False):
+        """
+        Form and return the exception object for a situation when command 'cmd' has failed to start.
+        """
+
+        if self.is_remote:
+            if intsh:
+                session = " in an interactive shell over SSH"
+            else:
+                session = " in a new SSH session"
+        else:
+            session = ""
+
+        return Error(f"cannot execute the following command{session}{self.hostmsg}:\n"
+                     f"{cmd}\nReason: {err}")
+
     def __init__(self):
         """Initialize a class instance."""
 
         self.is_remote = None
         self.hostname = None
         self.hostmsg = None
+        self._tchk = None
 
     def close(self):
         """Free allocated resources."""
+
+        for attr in ("_tchk",):
+            obj = getattr(self, attr, None)
+            if obj:
+                if getattr(self, f"_close{attr}", False):
+                    getattr(obj, "close")()
+                setattr(self, attr, None)
 
     def __enter__(self):
         """Enter the runtime context."""
