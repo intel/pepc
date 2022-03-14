@@ -387,7 +387,8 @@ class Proc(_Procs.ProcBase):
             stderr = subprocess.PIPE
 
         if shell:
-            cmd = command = " exec -- " + command
+            if shell:
+                cmd = _Procs.format_command_for_pid(command, cwd=cwd)
         elif isinstance(command, str):
             cmd = shlex.split(command)
         else:
@@ -398,6 +399,10 @@ class Proc(_Procs.ProcBase):
                                     cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
         except OSError as err:
             raise self._cmd_start_failure(cmd, err) from err
+
+        if shell:
+            # The first line of the output should contain the PID - extract it.
+            task.pid = _Procs.read_pid(task)
 
         return _add_custom_fields(self, task, cmd)
 
