@@ -506,6 +506,8 @@ class _ChannelPrivateData:
         # This tuple contains the last partial lines of the # 'stdout' and 'stderr' output of the
         # command.
         self.partial = ["", ""]
+        # Whether the command was executed via the shell.
+        self.shell = None
 
         # Real command (user command and all the prefixes/suffixes).
         self.real_cmd = None
@@ -518,7 +520,7 @@ class _ChannelPrivateData:
         # message related to different processes.
         self.debug_id = None
 
-def _add_custom_fields(ssh, chan, cmd, real_cmd):
+def _add_custom_fields(ssh, chan, cmd, real_cmd, shell):
     """Add a couple of custom fields to the paramiko channel object."""
 
     pd = chan._pd_ = _ChannelPrivateData()
@@ -545,6 +547,7 @@ def _add_custom_fields(ssh, chan, cmd, real_cmd):
 
     pd.proc = ssh
     pd.real_cmd = real_cmd
+    pd.shell = shell
     pd.streams = [chan.recv, chan.recv_stderr]
     pd.orig_close = chan.close
     pd.orig_del = chan.__del__
@@ -572,6 +575,7 @@ def _init_intsh_custom_fields(chan, cmd, real_cmd, marker):
 
     pd = chan._pd_
 
+    pd.shell = True
     # The marker indicating that the command has finished.
     pd.marker = marker
     # The regular expression the last line of command output should match.
@@ -630,7 +634,7 @@ class SSH(_Procs.ProcBase):
         except _PARAMIKO_EXCEPTIONS as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        _add_custom_fields(self, chan, command, cmd)
+        _add_custom_fields(self, chan, command, cmd, shell)
 
         if shell:
             # The first line of the output should contain the PID - extract it.

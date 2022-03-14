@@ -309,6 +309,8 @@ class _ProcessPrivateData:
         # This tuple contains the last partial lines of the # 'stdout' and 'stderr' output of the
         # command.
         self.partial = ["", ""]
+        # Whether the command was executed via the shell.
+        self.shell = None
 
         # The original '__del__()' methods of the Popen object.
         self.orig_del = None
@@ -318,7 +320,7 @@ class _ProcessPrivateData:
         # message related to different processes.
         self.debug_id = None
 
-def _add_custom_fields(proc, task, cmd):
+def _add_custom_fields(proc, task, cmd, shell):
     """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
 
     for name in ("stdin", "stdout", "stderr"):
@@ -331,6 +333,7 @@ def _add_custom_fields(proc, task, cmd):
     pd = task._pd_ = _ProcessPrivateData()
 
     pd.proc = proc
+    pd.shell = shell
     pd.streams = [task.stdout, task.stderr]
     pd.orig_del = task.__del__
 
@@ -394,7 +397,7 @@ class Proc(_Procs.ProcBase):
             # The first line of the output should contain the PID - extract it.
             task.pid = _Procs.read_pid(task)
 
-        return _add_custom_fields(self, task, cmd)
+        return _add_custom_fields(self, task, cmd, shell)
 
     def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
                   env=None, shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument
