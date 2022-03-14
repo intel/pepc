@@ -10,12 +10,14 @@
 This module contains common bits and pieces shared between the 'Procs' and 'SSH' modules.
 """
 
+# pylint: disable=protected-access
+
 import re
 import queue
 import logging
 import contextlib
 from collections import namedtuple
-from pepclibs.helperlibs import Human, ToolChecker
+from pepclibs.helperlibs import Human, ToolChecker, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
@@ -82,6 +84,45 @@ class ProcBase:
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit the runtime context."""
         self.close()
+
+def format_command_for_pid(command, cwd=None):
+    """
+    When we run a command via the shell, we do not know it's PID. This function modifies the
+    original user 'command' command so that it prints the PID as the first line of its output to the
+    'stdout' stream. This requires a shell.
+    """
+
+    # Prepend the command with a shell statement which prints the PID of the shell where the
+    # command will be run. Then use 'exec' to make sure that the command inherits the PID.
+    prefix = r'printf "%s\n" "$$";'
+    if cwd:
+        prefix += f""" cd "{cwd}" &&"""
+    return prefix + " exec -- " + command
+
+def read_pid(task):
+    """
+    Return PID of a just executed command that was previously fromatted with
+    'format_command_for_pid()'.
+    """
+
+    task._dbg_("_read_pid: reading PID for command: %s", task.cmd)
+
+    timeout = 10
+    stdout, stderr, _ = task.wait_for_cmd(timeout=timeout, lines=(1, 0), by_line=True, join=False)
+    assert len(stdout) == 1
+    assert not stderr
+
+    pid = stdout[0].strip()
+
+    if len(pid) > 128:
+        raise Error(f"received too long and probably bogus PID: {pid}\n"
+                    f"The command{task._pd_.proc.hostmsg} was:\n{task.cmd}")
+    if not Trivial.is_int(pid):
+        raise Error(f"received a bogus non-integer PID: {pid}\n"
+                    f"The command{task._pd_.proc.hostmsg} was:\n{task.cmd}")
+
+    task._dbg_("_read_pid: PID is %s for command: %s", pid, task.cmd)
+    return int(pid)
 
 def get_next_queue_item(qobj, timeout):
     """

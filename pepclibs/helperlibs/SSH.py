@@ -615,22 +615,6 @@ def _get_username(uid=None):
     except KeyError as err:
         raise Error("failed to get user name for UID %d:\n%s" % (uid, err)) from None
 
-def _format_command_for_pid(command, cwd=None):
-    """
-    When we run a command over SSH, we do not know it's PID. But users do need it in many
-    cases in order to be able finding and, for example, killing the processes they run. This
-    function modifies the original user 'command' command so that it prints the PID as the first
-    line of its output to the 'stdout' stream. This requires a shell.
-    """
-
-    # Prepend the command with a shell statement which prints the PID of the shell where the
-    # command will be run. Then use 'exec' to make sure that the command inherits the PID.
-    prefix = r'printf "%s\n" "$$";'
-    if cwd:
-        prefix += f""" cd "{cwd}" &&"""
-
-    return prefix + " exec -- " + command
-
 class SSH(_Procs.ProcBase):
     """
     This class provides API for communicating with remote hosts over SSH.
@@ -639,35 +623,12 @@ class SSH(_Procs.ProcBase):
     purposes. No security audit had been done. Not for production use.
     """
 
-    def _read_pid(self, chan):
-        """Return PID of just executed command."""
-
-        chan._dbg_("_read_pid: reading PID for command: %s", chan.cmd)
-
-        timeout = 10
-        stdout, stderr, _ = _wait_for_cmd(chan, timeout=timeout, lines=(1, 0), by_line=True,
-                                          join=False)
-        assert len(stdout) == 1
-        assert not stderr
-
-        pid = stdout[0].strip()
-
-        if len(pid) > 128:
-            raise Error(f"received too long and probably bogus PID: {pid}\n"
-                        f"The command{self.hostmsg} was:\n{chan.cmd}")
-        if not Trivial.is_int(pid):
-            raise Error(f"received a bogus non-integer PID: {pid}\n"
-                        f"The command{self.hostmsg} was:\n{chan.cmd}")
-
-        chan._dbg_("_read_pid: PID is %s for command: %s", pid, chan.cmd)
-        return int(pid)
-
     def _run_in_new_session(self, command, cwd=None, shell=True):
         """Run command 'command' in a new session."""
 
         cmd = command
         if shell:
-            cmd = _format_command_for_pid(command, cwd=cwd)
+            cmd = _Procs.format_command_for_pid(command, cwd=cwd)
 
         try:
             chan = self.ssh.get_transport().open_session(timeout=self.connection_timeout)
@@ -684,7 +645,7 @@ class SSH(_Procs.ProcBase):
 
         if shell:
             # The first line of the output should contain the PID - extract it.
-            chan.pid = self._read_pid(chan)
+            chan.pid = _Procs.read_pid(chan)
 
         return chan
 
@@ -696,7 +657,7 @@ class SSH(_Procs.ProcBase):
             _LOG.debug("starting interactive shell%s: %s", self.hostmsg, cmd)
             self._intsh = self._run_in_new_session(cmd, shell=False)
 
-        cmd = _format_command_for_pid(command, cwd=cwd)
+        cmd = _Procs.format_command_for_pid(command, cwd=cwd)
 
         # Run the command in a shell. Keep in mind, the command starts with 'exec', so it'll use the
         # shell process at the end. Once the command finishes, print its exit status and a random
@@ -708,7 +669,7 @@ class SSH(_Procs.ProcBase):
         _init_intsh_custom_fields(self._intsh, command, cmd, marker)
         self._intsh.send(cmd)
 
-        self._intsh.pid = self._read_pid(self._intsh)
+        self._intsh.pid = _Procs.read_pid(self._intsh)
         return self._intsh
 
     def _acquire_intsh_lock(self, command=None):
