@@ -405,11 +405,13 @@ class Proc(_Procs.ProcBase):
         except OSError as err:
             raise self._cmd_start_failure(cmd, err) from err
 
+        task = _add_custom_fields(self, task, command, real_cmd, shell)
+
         if shell:
             # The first line of the output should contain the PID - extract it.
             task.pid = _Procs.read_pid(task)
 
-        return _add_custom_fields(self, task, command, real_cmd, shell)
+        return task
 
     def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
                   env=None, shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument
