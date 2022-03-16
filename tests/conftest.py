@@ -87,4 +87,4 @@ def pytest_generate_tests(metafunc):
         if optval:
             if len(optval) > 1:
                 optval = optval[1:]
-            metafunc.parametrize(opt.dest, optval)
+            metafunc.parametrize(opt.dest, optval, scope="module")

@@ -11,13 +11,28 @@
 """Tests for the public methods of the 'CPUInfo' module."""
 
 import pytest
-from common import fixture_proc # pylint: disable=unused-import
+from common import get_datasets, get_proc
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
 
 # A unique object used in '_run_method()' for ignoring method's return value by default.
 _IGNORE = object()
+
+@pytest.fixture(name="params", scope="module", params=get_datasets())
+def get_params(hostname, request):
+    """
+    Return a dictionary with information we need for testing. The dictionary has following keys:
+      * hostname - Name of the host to run the tests on or "emulation" to run locally and emulate
+                   real hardware.
+      * dataset - Name of the dataset used to emulate the real hardware.
+    """
+
+    params = {}
+    params["hostname"] = hostname
+    params["dataset"] = request.param
+
+    return params
 
 def _get_levels():
     """Yield 'CPUInfo.LEVEL' values as a lowercase strings."""
@@ -105,12 +120,14 @@ def _get_emulated_cpuinfos(proc):
                 cpuinfo.info["model"] = 255
                 yield cpuinfo
 
-def _get_cpuinfos(proc):
+def _get_cpuinfos(params):
     """
     Yield the 'CPUInfo' objects to test with. If 'proc' object is for emulated host, then attributes
     of the 'CPUInfo' object is modified with different permutations that we want to test with. If
     the 'proc' object is for real host, yield single 'CPUInfo' object.
     """
+
+    proc = get_proc(params["hostname"], params["dataset"])
 
     if "emulated" in proc.hostname:
         yield from _get_emulated_cpuinfos(proc)
@@ -201,7 +218,7 @@ def _test_get_bad(cpuinfo):
     bad_cpu = cpus[-1] + 1
     _run_method("get_cpu_siblings", cpuinfo, args=(bad_cpu,), exp_exc=Error)
 
-def test_cpuinfo_get(proc):
+def test_cpuinfo_get(params):
     """
     Test the following 'CPUInfo' class methods:
       * 'get_packages()'
@@ -210,11 +227,11 @@ def test_cpuinfo_get(proc):
       * 'get_cpu_siblings()'
     """
 
-    for cpuinfo in _get_cpuinfos(proc):
+    for cpuinfo in _get_cpuinfos(params):
         _test_get_good(cpuinfo)
         _test_get_bad(cpuinfo)
 
-def test_cpuinfo_get_count(proc):
+def test_cpuinfo_get_count(params):
     """
     Test the following 'CPUInfo' class methods:
       * 'get_packages_count()'
@@ -222,7 +239,7 @@ def test_cpuinfo_get_count(proc):
       * 'get_offline_cpus_count()'
     """
 
-    for cpuinfo in _get_cpuinfos(proc):
+    for cpuinfo in _get_cpuinfos(params):
         for lvl, nums in _get_levels_and_nums(cpuinfo):
             _run_method(f"get_{lvl}s_count", cpuinfo, exp_res=len(nums))
 
@@ -301,7 +318,7 @@ def _test_convert_bad(cpuinfo):
                     kwargs = {"order": order}
                     _run_method(method_name, cpuinfo, args=(args,), kwargs=kwargs, exp_exc=Error)
 
-def test_cpuinfo_convert(proc):
+def test_cpuinfo_convert(params):
     """
     Test the following 'CPUInfo' class methods:
       * 'packages_to_cpus()'
@@ -313,7 +330,7 @@ def test_cpuinfo_convert(proc):
       * 'cores_to_cpus()'
     """
 
-    for cpuinfo in _get_cpuinfos(proc):
+    for cpuinfo in _get_cpuinfos(params):
         _test_convert_good(cpuinfo)
         _test_convert_bad(cpuinfo)
 
@@ -379,7 +396,7 @@ def _test_normalize_bad(cpuinfo):
             for args in bad_args:
                 _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
 
-def test_cpuinfo_normalize(proc):
+def test_cpuinfo_normalize(params):
     """
     Test the following 'CPUInfo' class methods:
       * 'normalize_packages()'
@@ -388,7 +405,7 @@ def test_cpuinfo_normalize(proc):
       * 'normalize_cpu()'
     """
 
-    for cpuinfo in _get_cpuinfos(proc):
+    for cpuinfo in _get_cpuinfos(params):
         _test_normalize_good(cpuinfo)
         _test_normalize_bad(cpuinfo)
 
@@ -504,7 +521,7 @@ def _test_cpuinfo_div(cpuinfo):
         exp_res = _test_div_create_exp_res(lvl, nums[0:1], exp_cpus)
         _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
 
-def test_cpuinfo_div(proc):
+def test_cpuinfo_div(params):
     """
     Test the following 'CPUInfo' class methods:
       * 'cpus_div_packages()'
@@ -512,5 +529,5 @@ def test_cpuinfo_div(proc):
       * 'cpus_div_cores()'
     """
 
-    for cpuinfo in _get_cpuinfos(proc):
+    for cpuinfo in _get_cpuinfos(params):
         _test_cpuinfo_div(cpuinfo)
