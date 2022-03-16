@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides helpers for dealing with YAML files.
+This module provides helpers for loading and saving YAML files.
 """
 
 import logging
 from pathlib import Path, PosixPath
 import yaml
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import Jinja2
 
 _LOG = logging.getLogger()
 
@@ -68,7 +67,7 @@ def dump(data, path, float_format=None, skip_none=False):
             yaml.dump(data, fobj, default_flow_style=False)
         _LOG.debug("wrote YAML file at '%s'", path)
 
-def _load(path, jenv, included):
+def _load(path, included, render=None):
     """
     Implements the 'load()' function. The additional 'included' argument is a dictionary containing
     information on what files have already been included before, this is used as a countermeasure
@@ -101,11 +100,13 @@ def _load(path, jenv, included):
     yaml.SafeLoader.add_constructor("!path", path_constructor)
 
     fobj = None
-    if jenv:
-        contents = Jinja2.render_template(jenv, path.resolve())
+    if render:
+        func = render["func"]
+        args = render["args"]
+        contents = func(path.resolve(), *args)
     else:
         try:
-            fobj = contents = open(path, "r")
+            fobj = contents = open(path, "r") # pylint: disable=consider-using-with
         except OSError as err:
             raise Error(f"failed to open file '{path}':\n{err}") from None
 
@@ -141,7 +142,7 @@ def _load(path, jenv, included):
 
             if value not in included:
                 included[value] = path
-                result.update(_load(value, jenv, included))
+                result.update(_load(value, included, render=render))
             else:
                 raise Error(f"can't include path '{value}' in YAML file '{path}' - it is already "
                             f"included in '{included[value]}'")
@@ -149,14 +150,22 @@ def _load(path, jenv, included):
     _LOG.debug("loaded YAML file at '%s'", path)
     return result
 
-def load(path, jenv=None):
+def load(path, render=None):
     """
-    Load a YAML file at 'path' while preserving its order. This function also implements including
-    other YAML files, which is implemented using the "include" key. The optional 'jenv' argument
-    indicates that the YAML file requires a Jinja2 pass.
-
-    Note, the order of Yaml file keys is preserved because in Python 3.6+ dictinaries preserve
-    insertion order.
+    Load a YAML file at 'path' while preserving its order. This method extends the standard YAML
+    loader and adds support for the 'include' statement, which allows for including other YAML
+    files. The arguments are as follows.
+      * path - path to the YAML file to load.
+      * render - and optional argument which can be used for rendering the file at 'path' before
+                 loading it. This can be useful if the file at 'path' requires a jinja2 pass before
+                 being loaded a YAML file. The 'render' argument should be a dictionary with the
+                 following keys:
+                   o func - the function to call to render the file at 'path'. This function should
+                             return the rendered contents which will then be treated as the YAML
+                             file contents and will be passed to the YAML loader.
+                   o args - the arguments to pass to the 'func' function. So the function will be
+                            called as 'func(path, *args)', where 'path' is path to the file to
+                            render.
     """
 
-    return _load(path, jenv, False)
+    return _load(path, False, render=render)
