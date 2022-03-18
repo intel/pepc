@@ -270,7 +270,7 @@ def mktemp(prefix=None, tmpdir=None, proc=None):
         try:
             path = tempfile.mkdtemp(prefix=prefix, dir=tmpdir)
         except OSError as err:
-            raise Error("failed to create temporary directory: {err}") from err
+            raise Error(f"failed to create temporary directory: {err}") from err
 
         _LOG.debug("created local temporary directory '%s'", path)
         return Path(path)
