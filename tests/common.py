@@ -12,7 +12,6 @@
 
 import os
 from pathlib import Path
-import pytest
 from pepclibs.helperlibs import EmulProcs, Procs, SSH
 
 def get_proc(hostname, dataset):
@@ -39,15 +38,3 @@ def get_datasets():
         if not Path(f"{basepath}/{dirname}").is_dir():
             continue
         yield dirname
-
-@pytest.fixture(name="proc", params=get_datasets())
-def fixture_proc(request, hostname):
-    """
-    The test fixture is called before each test function. Yields the 'Proc' object, and closes it
-    after the test function returns.
-    """
-
-    dataset = request.param
-    proc = get_proc(hostname, dataset)
-    yield proc
-    proc.close()
