@@ -323,33 +323,33 @@ OPTIONS *'pepc* cstates config'
    Similar to '--enable', but specifies the list of C-states to disable.
 
 **--pkg-cstate-limit** *[PKG_CSTATE_LIMIT]*
-   Set Package C-state limit. The deepest package C-state the platform
+   Set package C-state limit. The deepest package C-state the platform
    is allowed to enter. The package C-state limit is configured via MSR
    {MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This
    model-specific register can be locked by the BIOS, in which case the
-   package C-state limit can only be read, but cannot be modified.
-   Package C-state limit has package scope.
+   package C-state limit can only be read, but cannot be modified. This
+   option has package scope.
 
 **--c1-demotion** *[C1_DEMOTION]*
-   Enable or disable C1 demotion. Allow/disallow the CPU to demote C6/C7
-   requests to C1. Use "on" or "off". C1 demotion has core scope.
+   Enable or disable c1 demotion. Allow/disallow the CPU to demote C6/C7
+   requests to C1. Use "on" or "off". This option has core scope.
 
 **--c1-undemotion** *[C1_UNDEMOTION]*
-   Enable or disable C1 undemotion. Allow/disallow the CPU to un-demote
+   Enable or disable c1 undemotion. Allow/disallow the CPU to un-demote
    previously demoted requests back from C1 to C6/C7. Use "on" or "off".
-   C1 undemotion has core scope.
+   This option has core scope.
 
 **--c1e-autopromote** *[C1E_AUTOPROMOTE]*
-   Enable or disable C1E autopromote. When enabled, the CPU
+   Enable or disable c1E autopromote. When enabled, the CPU
    automatically converts all C1 requests to C1E requests. This CPU
-   feature is controlled by MSR 0x1fc, bit 1. Use "on" or "off". C1E
-   autopromote has package scope.
+   feature is controlled by MSR 0x1fc, bit 1. Use "on" or "off". This
+   option has package scope.
 
 **--cstate-prewake** *[CSTATE_PREWAKE]*
-   Enable or disable C-state prewake. When enabled, the CPU will start
+   Enable or disable c-state prewake. When enabled, the CPU will start
    exiting the C6 idle state in advance, prior to the next local APIC
    timer event. This CPU feature is controlled by MSR 0x1fc, bit 30. Use
-   "on" or "off". C-state prewake has package scope.
+   "on" or "off". This option has package scope.
 
 COMMAND *'pepc* pstates'
 ========================
@@ -377,13 +377,13 @@ FURTHER SUB-COMMANDS *'pepc pstates'*
    Get P-states information.
 
 **pepc pstates** *config*
-   Configure other P-state aspects.
+   Configure P-states.
 
 COMMAND *'pepc* pstates info'
 =============================
 
 usage: pepc pstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--uncore]
+[--packages PACKAGES]
 
 Get P-states information for specified CPUs (CPU0 by default).
 
@@ -417,23 +417,19 @@ OPTIONS *'pepc* pstates info'
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
 
-**--uncore**
-   By default this command provides CPU (core) frequency (P-state)
-   information, but if this option is used, it will provide uncore
-   frequency information instead. The uncore includes the interconnect
-   between the cores, the shared cache, and other resources shared
-   between the cores. Uncore frequency is per-package, therefore, the
-   '--cpus' and '--cores' options should not be used with this option.
-
 COMMAND *'pepc* pstates config'
 ===============================
 
 usage: pepc pstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--min-freq [MINFREQ]] [--max-freq [MAXFREQ]]
-[--min-uncore-freq [MINUFREQ]] [--max-uncore-freq [MAXUFREQ]] [--epb
-[EPB]] [--epp [EPP]] [--governor [GOVERNOR]] [--turbo [{on,off}]]
+[--packages PACKAGES] [--min-freq [MIN_FREQ]] [--max-freq [MAX_FREQ]]
+[--turbo [TURBO]] [--min-uncore-freq [MIN_UNCORE_FREQ]]
+[--max-uncore-freq [MAX_UNCORE_FREQ]] [--epp [EPP]] [--epp-policy
+[EPP_POLICY]] [--epb [EPB]] [--epb-policy [EPB_POLICY]] [--governor
+[GOVERNOR]]
 
-Configure P-states on specified CPUs
+Configure P-states on specified CPUs. All options can be used without a
+parameter, in which case the currently configured value(s) will be
+printed.
 
 OPTIONS *'pepc* pstates config'
 ===============================
@@ -465,43 +461,61 @@ OPTIONS *'pepc* pstates config'
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
 
-**--min-freq** *[MINFREQ]*
-   Set minimum CPU frequency. The default unit is 'kHz', but 'Hz',
-   'MHz', and 'GHz' can also be used, for example '900MHz'.
-   Additionally, one of the following specifiers can be used: min,lfm -
-   minimum supported frequency (LFM), eff - maximum efficiency
-   frequency, base,hfm - base frequency (HFM), max - maximum supported
-   frequency. Applies to all CPUs by default.
+**--min-freq** *[MIN_FREQ]*
+   Set minimum CPU frequency. Minimum frequency the operating system
+   will configure the CPU to run at. The default unit is 'Hz', but
+   'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This
+   option has CPU scope.
 
-**--max-freq** *[MAXFREQ]*
-   Same as '--min-freq', but for maximum CPU frequency.
+**--max-freq** *[MAX_FREQ]*
+   Set maximum CPU frequency. Maximum frequency the operating system
+   will configure the CPU to run at. The default unit is 'Hz', but
+   'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This
+   option has CPU scope.
 
-**--min-uncore-freq** *[MINUFREQ]*
-   Set minimum uncore frequency. The default unit is 'kHz', but 'Hz',
-   'MHz', and 'GHz' can also be used, for example '900MHz'.
-   Additionally, one of the following specifiers can be used: 'min' -
-   the minimum supported uncore frequency, 'max' - the maximum supported
-   uncore frequency. Uncore frequency is per-package, therefore, the
-   '--cpus' and '--cores' options should not be used with this option.
-   Applies to all packages by default.
+**--turbo** *[TURBO]*
+   Enable or disable turbo. When turbo is enabled, the CPUs can
+   automatically run at a frequency greater than base frequency. Use
+   "on" or "off". This option has global scope.
 
-**--max-uncore-freq** *[MAXUFREQ]*
-   Same as '--min-uncore-freq', but for maximum uncore frequency.
+**--min-uncore-freq** *[MIN_UNCORE_FREQ]*
+   Set minimum uncore frequency. Minimum frequency the operating system
+   will configure the uncore to run at. The default unit is 'Hz', but
+   'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This
+   option has die scope.
 
-**--epb** *[EPB]*
-   Set energy performance bias hint. Hint can be integer in range of
-   [0,15]. By default this option applies to all CPUs.
+**--max-uncore-freq** *[MAX_UNCORE_FREQ]*
+   Set maximum uncore frequency. Maximum frequency the operating system
+   will configure the uncore to run at. The default unit is 'Hz', but
+   'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This
+   option has die scope.
 
 **--epp** *[EPP]*
-   Set energy performance preference. Preference can be integer in range
-   of [0,255], or policy string. By default this option applies to all
-   CPUs.
+   Set energy Performance Preference. Energy Performance Preference
+   (EPP) is a hint to the CPU on energy efficiency vs performance. EPP
+   has an effect only when the CPU is in the hardware power management
+   (HWP) mode. This option has CPU scope.
+
+**--epp-policy** *[EPP_POLICY]*
+   Set EPP policy. EPP policy is a name, such as 'performance', which
+   Linux maps to an EPP value, which may depend on the platform. This
+   option has CPU scope.
+
+**--epb** *[EPB]*
+   Set energy Performance Bias. Energy Performance Bias (EPB) is a hint
+   to the CPU on energy efficiency vs performance. Value 0 means maximum
+   performance, value 15 means maximum energy efficiency. EPP may have
+   an effect in both HWP enabled and disabled modes (HWP stands for
+   Hardware Power Management). This option has CPU scope.
+
+**--epb-policy** *[EPB_POLICY]*
+   Set EPB policy. EPB policy is a name, such as 'performance', which
+   Linux maps to an EPB value, which may depend on the platform. This
+   option has CPU scope.
 
 **--governor** *[GOVERNOR]*
-   Set CPU scaling governor. By default this option applies to all CPUs.
-
-**--turbo** *[{on,off}]*
-   Enable or disable turbo mode. Turbo on/off is global.
+   Set CPU frequency governor. Linux CPU frequency governor name. This
+   option has CPU scope.
 
 COMMAND *'pepc* aspm'
 =====================
