@@ -61,12 +61,13 @@ logging.getLogger("paramiko").setLevel(logging.WARNING)
 # The exceptions to handle when dealing with paramiko.
 _PARAMIKO_EXCEPTIONS = (OSError, IOError, paramiko.SSHException, socket.error)
 
-def _stream_fetcher(streamid, chan):
+def _stream_fetcher(streamid, task):
     """
     This function runs in a separate thread. All it does is it fetches one of the output streams
     of the executed program (either stdout or stderr) and puts the result into the queue.
     """
 
+    chan = task.tobj
     pd = chan._pd_
     read_func = pd.streams[streamid]
     decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
@@ -74,134 +75,33 @@ def _stream_fetcher(streamid, chan):
     try:
         while not pd.threads_exit:
             if not read_func:
-                chan._dbg_("stream %d: stream is closed", streamid)
+                task._dbg("stream %d: stream is closed", streamid)
                 break
 
             data = None
             try:
                 data = read_func(4096)
             except _PARAMIKO_EXCEPTIONS as err:
-                chan._dbg_("stream %d: read timeout", streamid)
+                task._dbg("stream %d: read timeout", streamid)
                 continue
 
             if not data:
-                chan._dbg_("stream %d: no more data", streamid)
+                task._dbg("stream %d: no more data", streamid)
                 break
 
             data = decoder.decode(data)
             if not data:
-                chan._dbg_("stream %d: read more data", streamid)
+                task._dbg("stream %d: read more data", streamid)
                 continue
 
-            chan._dbg_("stream %d: read data:\n%s", streamid, data)
+            task._dbg("stream %d: read data:\n%s", streamid, data)
             pd.queue.put((streamid, data))
     except BaseException as err: # pylint: disable=broad-except
         _LOG.error(err)
 
     # The end of stream indicator.
     pd.queue.put((streamid, None))
-    chan._dbg_("stream %d: thread exists", streamid)
-
-def _recv_exit_status_timeout(chan, timeout):
-    """
-    This is a version of paramiko channel's 'recv_exit_status()' which supports a timeout.
-    Returns the exit status or 'None' in case of 'timeout'.
-    """
-
-    chan._dbg_("_recv_exit_status_timeout: waiting for exit status, timeout %s sec", timeout)
-
-#    This is non-hacky, but polling implementation.
-#    if timeout:
-#        start_time = time.time()
-#        while not chan.exit_status_ready():
-#            if time.time() - start_time > timeout:
-#                chan._dbg_("exit status not ready for %s seconds", timeout)
-#                return None
-#            time.sleep(1)
-#    exitcode = chan.recv_exit_status()
-
-    # This is hacky, but non-polling implementation.
-    if not chan.status_event.wait(timeout=timeout):
-        chan._dbg_("_recv_exit_status_timeout: exit status not ready for %s seconds", timeout)
-        return None
-
-    exitcode = chan.exit_status
-    chan._dbg_("_recv_exit_status_timeout: exit status %d", exitcode)
-    return exitcode
-
-def _watch_for_marker(chan, data):
-    """
-    When we run a command in the interactive shell (as opposed to running in a dedicated SSH
-    session), the way we can detect that the command has ended is by watching for a special marker
-    in 'stdout' of the interactive shell process.
-
-    This is a helper for '_do_wait_for_cmd_intsh()' which takes a piece of 'stdout' data that came
-    from the stream fetcher and checks for the marker in it. Returns a tuple of '(cdata, exitcode)',
-    where 'cdata' is the stdout data that has to be captured, and exitcode is the exit code of the
-    command.
-
-    In other words, if no marker was not found, this function returns '(cdata, None)', and 'cdata'
-    may not be the same as 'data', because part of it may be saved in 'pd.ll', because it looks
-    like the beginning of the marker. I marker was found, this function returns '(cdata, exitcode)'.
-    Again, 'cdata' does not have to be the same as 'data', because 'data' could contain the marker,
-    which will not be present in 'cdata'. The 'exitcode' will contain an integer exit code of the
-    command.
-    """
-
-    pd = chan._pd_
-    exitcode = None
-    cdata = None
-
-    chan._dbg_("_watch_for_marker: starting with pd.check_ll %s, pd.ll: %s, data:\n%s",
-               str(pd.check_ll), str(pd.ll), data)
-
-    split = data.rsplit("\n", 1)
-    if len(split) > 1:
-        # We have got a new line. This is our new marker suspect. Keep it in 'pd.ll', while old
-        # 'pd.ll' and the rest of 'data' can be returned up for capturing. Set 'pd.check_ll' to
-        # 'True' to indicate that 'pd.ll' has to be checked for the marker.
-        cdata = pd.ll + split[0] + "\n"
-        pd.check_ll = True
-        pd.ll = split[1]
-    else:
-        # We have got a continuation of the previous line. The 'check_ll' flag is 'True' when
-        # 'pd.ll' being a marker is a real possibility. If we already checked 'pd.ll' and it
-        # starts with data that is different to the marker, there is not reason to check it again,
-        # and we can send it up for capturing.
-        if not pd.ll:
-            pd.check_ll = True
-        if pd.check_ll:
-            pd.ll += split[0]
-            cdata = ""
-        else:
-            cdata = pd.ll + data
-            pd.ll = ""
-
-    if pd.check_ll:
-        # 'pd.ll' is a real suspect, check if it looks like the marker.
-        pd.check_ll = pd.ll.startswith(pd.marker) or pd.marker.startswith(pd.ll)
-
-    # OK, if 'pd.ll' is still a real suspect, do a full check using the regex: full marker line
-    # should contain not only the hash, but also the exit status.
-    if pd.check_ll and re.match(pd.marker_regex, pd.ll):
-        # Extract the exit code from the 'pd.ll' string that has the following form:
-        # --- hash, <exitcode> ---
-        split = pd.ll.rsplit(", ", 1)
-        assert len(split) == 2
-        exitcode = split[1].rstrip(" ---")
-        if not Trivial.is_int(exitcode):
-            raise Error(f"the command was running{pd.proc.hostmsg} under the interactive "
-                        f"shell and finished with a correct marker, but unexpected exit "
-                        f"code '{exitcode}'.\nThe command was: {chan.cmd}")
-
-        pd.ll = ""
-        pd.check_ll = False
-        exitcode = int(exitcode)
-
-    chan._dbg_("_watch_for_marker: ending with pd.check_ll %s, pd.ll %s, exitcode %s, cdata:\n%s",
-               str(pd.check_ll), pd.ll, str(exitcode), cdata)
-
-    return (cdata, exitcode)
+    task._dbg("stream %d: thread exists", streamid)
 
 def _have_enough_lines(output, lines=(None, None)):
     """Returns 'True' if there are enough lines in the output buffer."""
@@ -211,273 +111,9 @@ def _have_enough_lines(output, lines=(None, None)):
             return True
     return False
 
-def _do_wait_for_cmd_intsh(chan, timeout=None, capture_output=True, output_fobjs=(None, None),
-                           lines=(None, None)):
-    """
-    Implements '_wait_for_cmd()' for the optimized case when the command was executed in the
-    interactive shell process. This case allows us to save time on creating a separate session for
-    commands.
-    """
-
-    pd = chan._pd_
-    output = pd.output
-    partial = pd.partial
-    start_time = time.time()
-
-    chan._dbg_("_do_wait_for_cmd_intsh: starting with pd.check_ll %s, pd.ll: %s, "
-               "pd.partial: %s, pd.output:\n%s",
-               str(pd.check_ll), str(pd.ll), partial, str(output))
-
-    while not _have_enough_lines(output, lines=lines):
-        if pd.exitcode is not None and pd.queue.empty():
-            chan._dbg_("_do_wait_for_cmd_intsh: process exited with status %d", pd.exitcode)
-            break
-
-        streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
-        if streamid == -1:
-            chan._dbg_("_do_wait_for_cmd_intsh: nothing in the queue for %d seconds", timeout)
-        elif data is None:
-            raise Error(f"the interactive shell process{pd.proc.hostmsg} closed stream "
-                        f"'{pd.streams[streamid]._stream_name}' while running the following "
-                        f"command:\n{chan.cmd}")
-        elif streamid == 0:
-            # The indication that the command has ended is our marker in stdout (stream 0). Our goal
-            # is to watch for this marker, hide it from the user, because it does not belong to the
-            # output of the command. The marker always starts at the beginning of line.
-            data, pd.exitcode = _watch_for_marker(chan, data)
-
-        _Procs.capture_data(chan, streamid, data, capture_output=capture_output,
-                            output_fobjs=output_fobjs)
-
-        if not timeout:
-            chan._dbg_(f"_do_wait_for_cmd_intsh: timeout is {timeout}, exit immediately")
-            break
-        if time.time() - start_time > timeout:
-            chan._dbg_("_do_wait_for_cmd_intsh: stop waiting for the command - timeout")
-            break
-
-    result = _Procs.get_lines_to_return(chan, lines=lines)
-
-    if _Procs.all_output_consumed(chan):
-        # Mark the interactive shell process as vacant.
-        acquired = pd.proc._acquire_intsh_lock(chan.cmd)
-        if not acquired:
-            _LOG.warning("failed to mark the interactive shell process as free")
-        else:
-            pd.proc._intsh_busy = False
-            pd.proc._intsh_lock.release()
-
-    return result
-
-def _do_wait_for_cmd(chan, timeout=None, capture_output=True, output_fobjs=(None, None),
-                     lines=(None, None)):
-    """
-    Implements '_wait_for_cmd()' for the non-optimized case when the command was executed in its own
-    separate SSH session.
-    """
-
-    pd = chan._pd_
-    output = pd.output
-    partial = pd.partial
-    start_time = time.time()
-
-    chan._dbg_("_do_wait_for_cmd: starting with partial: %s, output:\n%s", partial, str(output))
-
-    while not _have_enough_lines(output, lines=lines):
-        if pd.exitcode is not None:
-            chan._dbg_("_do_wait_for_cmd: process exited with status %d", pd.exitcode)
-            break
-
-        streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
-        if streamid == -1:
-            chan._dbg_("_do_wait_for_cmd_intsh: nothing in the queue for %d seconds", timeout)
-        elif data is not None:
-            _Procs.capture_data(chan, streamid, data, capture_output=capture_output,
-                                output_fobjs=output_fobjs)
-        else:
-            chan._dbg_("_do_wait_for_cmd: stream %d closed", streamid)
-            # One of the output streams closed.
-            pd.threads[streamid].join()
-            pd.threads[streamid] = pd.streams[streamid] = None
-
-            if not pd.streams[0] and not pd.streams[1]:
-                chan._dbg_("_do_wait_for_cmd: both streams closed")
-                pd.exitcode = _recv_exit_status_timeout(chan, timeout)
-                break
-
-        if not timeout:
-            chan._dbg_(f"_do_wait_for_cmd: timeout is {timeout}, exit immediately")
-            break
-        if time.time() - start_time > timeout:
-            chan._dbg_("_do_wait_for_cmd: stop waiting for the command - timeout")
-            break
-
-    return _Procs.get_lines_to_return(chan, lines=lines)
-
-def _wait_for_cmd(chan, timeout=None, capture_output=True, output_fobjs=(None, None),
-                  lines=(None, None), join=True):
-    """
-    This function waits for a command executed with the 'SSH.run_async()' function to finish or
-    print something to stdout or stderr.
-
-    The optional 'timeout' argument specifies the longest time in seconds this function will wait
-    for the command to finish. If the command does not finish, this function exits and returns
-    'None' as the exit code of the command. The timeout must be a positive floating point number. By
-    default it is 1 hour. If 'timeout' is '0', then this function will just check process status,
-    grab its output, if any, and return immediately.
-
-    Note, this function saves the used timeout in 'chan.timeout' attribute upon exit.
-
-    The 'capture_output' parameter controls whether the output of the command should be collected or
-    not. If it is not 'True', the output will simply be discarded and this function will return
-    empty strings instead of command's stdout and stderr.
-
-    The 'output_fobjs' parameter is a tuple with two file-like objects where the stdout and stderr
-    of the command will be echoed, in addition to being captured and returned. If not specified,
-    then the the command output will not be echoed anywhere.
-
-    The 'lines' argument provides a capability to wait for the command to output certain amount of
-    lines. By default, there is no limit, and this function will wait either for timeout or until
-    the command exits. The 'line' argument is a tuple, the first element of the tuple is the
-    'stdout' limit, the second is the 'stderr' limit. For example, 'lines=(1, 5)' would mean to wait
-    for one full line in 'stdout' or five full lines in 'stderr'. And 'lines=(1, None)' would mean
-    to wait for one line in 'stdout' and any amount of lines in 'stderr'.
-
-    The 'join' argument controls whether the captured output lines should be joined and returned as
-    a single string, or no joining is needed and the output should be returned as a list of strings.
-
-    This function returns a named tuple similar to what the 'run()' function returns.
-    """
-
-    if timeout is None:
-        timeout = _Procs.TIMEOUT
-    if timeout < 0:
-        raise Error(f"bad timeout value {timeout}, must be > 0")
-
-    for streamid in (0, 1):
-        if not lines[streamid]:
-            continue
-        if not Trivial.is_int(lines[streamid]):
-            raise Error("the 'lines' argument can only include integers and 'None'")
-        if lines[streamid] < 0:
-            raise Error("the 'lines' argument cannot include negative values")
-
-    if lines[0] == 0 and lines[1] == 0:
-        raise Error("the 'lines' argument cannot be (0, 0)")
-
-    pd = chan._pd_
-    chan.timeout = timeout
-
-    chan._dbg_("_wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
-               "real command: %s", timeout, capture_output, str(lines), join, chan.cmd, pd.real_cmd)
-
-    if pd.threads_exit:
-        raise Error("this SSH channel has '_threads_exit_ flag set and it cannot be used")
-
-    if _Procs.all_output_consumed(chan):
-        return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
-
-    if not pd.queue:
-        pd.queue = queue.Queue()
-        for streamid in (0, 1):
-            if pd.streams[streamid]:
-                assert pd.threads[streamid] is None
-                pd.threads[streamid] = threading.Thread(target=_stream_fetcher,
-                                                         name='SSH-stream-fetcher',
-                                                         args=(streamid, chan), daemon=True)
-                pd.threads[streamid].start()
-    else:
-        chan._dbg_("_wait_for_cmd: queue is empty: %s", pd.queue.empty())
-
-    if chan == pd.proc._intsh:
-        func = _do_wait_for_cmd_intsh
-    else:
-        func = _do_wait_for_cmd
-
-    output = func(chan, timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
-                  lines=lines)
-
-    stdout = stderr = ""
-    if output[0]:
-        stdout = output[0]
-        if join:
-            stdout = "".join(stdout)
-    if output[1]:
-        stderr = output[1]
-        if join:
-            stderr = "".join(stderr)
-
-    if _Procs.all_output_consumed(chan):
-        exitcode = pd.exitcode
-    else:
-        exitcode = None
-
-    if chan._pd_.debug:
-        sout = "".join(output[0])
-        serr = "".join(output[1])
-        chan._dbg_("_wait_for_cmd: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
-                   exitcode, sout.rstrip(), serr.rstrip())
-
-    return ProcResult(stdout=stdout, stderr=stderr, exitcode=exitcode)
-
-def _poll(chan):
-    """
-    Check if the process is still running. If it is, return 'None', else return exit status.
-    """
-
-    if chan.exit_status_ready():
-        return chan.recv_exit_status()
-    return None
-
-def _cmd_failed_msg(chan, stdout, stderr, exitcode, startmsg=None, timeout=None):
-    """
-    A wrapper over '_Procs.cmd_failed_msg()'. The optional 'timeout' argument specifies the
-    timeout that was used for the command.
-    """
-
-    if timeout is None:
-        timeout = chan.timeout
-
-    cmd = chan.cmd
-    if _LOG.getEffectiveLevel() == logging.DEBUG:
-        if chan.cmd != chan._pd_.real_cmd:
-            cmd = f"{cmd}\nReal command: {chan._pd_.real_cmd}"
-
-    return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=chan.hostname,
-                                 startmsg=startmsg, timeout=timeout)
-
-def _close(chan):
-    """The channel close method that will signal the threads to exit."""
-
-    if hasattr(chan, "_pd_"):
-        chan._dbg_("_close()")
-        pd = chan._pd_
-        pd.threads_exit = True
-        pd.proc = None
-        pd.orig_close()
-
-def _del(chan):
-    """The channel object destructor which makes all threads to exit."""
-
-    if hasattr(chan, "_pd_"):
-        chan._dbg_("_del_()")
-        chan._close()
-        chan._pd_.orig_del()
-
 def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
     return f"method '{method}()' failed for {fobj._stream_name_}"
-
-def _dbg(chan, fmt, *args):
-    """Print a debugging message related to the 'chan' channel handling."""
-    if chan._pd_.debug:
-        pfx = ""
-        if chan._pd_.debug_id:
-            pfx += f"{chan._pd_.debug_id}: "
-        if hasattr(chan, "pid"):
-            pfx += f"PID {chan.pid}: "
-
-        _LOG.debug(pfx + fmt, *args)
 
 class _ChannelPrivateData:
     """
@@ -557,13 +193,6 @@ def _add_custom_fields(ssh, chan, cmd, real_cmd, shell):
     chan.hostname = ssh.hostname
     chan.cmd = cmd
     chan.timeout = _Procs.TIMEOUT
-    chan.close = types.MethodType(_close, chan)
-
-    chan._dbg_ = types.MethodType(_dbg, chan)
-    chan.poll = types.MethodType(_poll, chan)
-    chan.cmd_failed_msg = types.MethodType(_cmd_failed_msg, chan)
-    chan.wait_for_cmd = types.MethodType(_wait_for_cmd, chan)
-    chan.__del__ = types.MethodType(_del, chan)
 
     return chan
 
@@ -608,6 +237,395 @@ def _get_username(uid=None):
     except KeyError as err:
         raise Error("failed to get user name for UID %d:\n%s" % (uid, err)) from None
 
+class Task(_Procs.TaskBase):
+    """
+    This class represents a remote task (process) that was executed by an 'SSH' object.
+    """
+
+    def _recv_exit_status_timeout(self, timeout):
+        """
+        This is a version of paramiko channel's 'recv_exit_status()' which supports a timeout.
+        Returns the exit status or 'None' in case of 'timeout'.
+        """
+
+        chan = self.tobj
+        self._dbg("_recv_exit_status_timeout: waiting for exit status, timeout %s sec", timeout)
+
+#        This is non-hacky, but polling implementation.
+#        if timeout:
+#            start_time = time.time()
+#            while not chan.exit_status_ready():
+#                if time.time() - start_time > timeout:
+#                    self._dbg("exit status not ready for %s seconds", timeout)
+#                    return None
+#                time.sleep(1)
+#        exitcode = chan.recv_exit_status()
+
+        # This is hacky, but non-polling implementation.
+        if not chan.status_event.wait(timeout=timeout):
+            self._dbg("_recv_exit_status_timeout: exit status not ready for %s seconds", timeout)
+            return None
+
+        exitcode = chan.exit_status
+        self._dbg("_recv_exit_status_timeout: exit status %d", exitcode)
+        return exitcode
+
+    def _watch_for_marker(self, data):
+        """
+        When we run a command in the interactive shell (as opposed to running in a dedicated SSH
+        session), the way we can detect that the command has ended is by watching for a special
+        marker in 'stdout' of the interactive shell process.
+
+        This is a helper for '_do_wait_for_cmd_intsh()' which takes a piece of 'stdout' data that
+        came from the stream fetcher and checks for the marker in it. Returns a tuple of '(cdata,
+        exitcode)', where 'cdata' is the stdout data that has to be captured, and exitcode is the
+        exit code of the command.
+
+        In other words, if no marker was not found, this function returns '(cdata, None)', and
+        'cdata' may not be the same as 'data', because part of it may be saved in 'pd.ll', because
+        it looks like the beginning of the marker. I marker was found, this function returns
+        '(cdata, exitcode)'.  Again, 'cdata' does not have to be the same as 'data', because 'data'
+        could contain the marker, which will not be present in 'cdata'. The 'exitcode' will contain
+        an integer exit code of the command.
+        """
+
+        chan = self.tobj
+        pd = chan._pd_
+        exitcode = None
+        cdata = None
+
+        self._dbg("_watch_for_marker: starting with pd.check_ll %s, pd.ll: %s, data:\n%s",
+                  str(pd.check_ll), str(pd.ll), data)
+
+        split = data.rsplit("\n", 1)
+        if len(split) > 1:
+            # We have got a new line. This is our new marker suspect. Keep it in 'pd.ll', while old
+            # 'pd.ll' and the rest of 'data' can be returned up for capturing. Set 'pd.check_ll' to
+            # 'True' to indicate that 'pd.ll' has to be checked for the marker.
+            cdata = pd.ll + split[0] + "\n"
+            pd.check_ll = True
+            pd.ll = split[1]
+        else:
+            # We have got a continuation of the previous line. The 'check_ll' flag is 'True' when
+            # 'pd.ll' being a marker is a real possibility. If we already checked 'pd.ll' and it
+            # starts with data that is different to the marker, there is not reason to check it
+            # again, and we can send it up for capturing.
+            if not pd.ll:
+                pd.check_ll = True
+            if pd.check_ll:
+                pd.ll += split[0]
+                cdata = ""
+            else:
+                cdata = pd.ll + data
+                pd.ll = ""
+
+        if pd.check_ll:
+            # 'pd.ll' is a real suspect, check if it looks like the marker.
+            pd.check_ll = pd.ll.startswith(pd.marker) or pd.marker.startswith(pd.ll)
+
+        # OK, if 'pd.ll' is still a real suspect, do a full check using the regex: full marker line
+        # should contain not only the hash, but also the exit status.
+        if pd.check_ll and re.match(pd.marker_regex, pd.ll):
+            # Extract the exit code from the 'pd.ll' string that has the following form:
+            # --- hash, <exitcode> ---
+            split = pd.ll.rsplit(", ", 1)
+            assert len(split) == 2
+            exitcode = split[1].rstrip(" ---")
+            if not Trivial.is_int(exitcode):
+                raise Error(f"the command was running{pd.proc.hostmsg} under the interactive "
+                            f"shell and finished with a correct marker, but unexpected exit "
+                            f"code '{exitcode}'.\nThe command was: {chan.cmd}")
+
+            pd.ll = ""
+            pd.check_ll = False
+            exitcode = int(exitcode)
+
+        self._dbg("_watch_for_marker: ending with pd.check_ll %s, pd.ll %s, exitcode %s, cdata:\n"
+                  "%s", str(pd.check_ll), pd.ll, str(exitcode), cdata)
+
+        return (cdata, exitcode)
+
+    def _do_wait_for_cmd_intsh(self, timeout=None, capture_output=True, output_fobjs=(None, None),
+                               lines=(None, None)):
+        """
+        Implements '_wait_for_cmd()' for the optimized case when the command was executed in the
+        interactive shell process. This case allows us to save time on creating a separate session
+        for commands.
+        """
+
+        chan = self.tobj
+        pd = chan._pd_
+        output = pd.output
+        partial = pd.partial
+        start_time = time.time()
+
+        self._dbg("_do_wait_for_cmd_intsh: starting with pd.check_ll %s, pd.ll: %s, "
+                  "pd.partial: %s, pd.output:\n%s",
+                   str(pd.check_ll), str(pd.ll), partial, str(output))
+
+        while not _have_enough_lines(output, lines=lines):
+            if pd.exitcode is not None and pd.queue.empty():
+                self._dbg("_do_wait_for_cmd_intsh: process exited with status %d", pd.exitcode)
+                break
+
+            streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
+            if streamid == -1:
+                self._dbg("_do_wait_for_cmd_intsh: nothing in the queue for %d seconds", timeout)
+            elif data is None:
+                raise Error(f"the interactive shell process{pd.proc.hostmsg} closed stream "
+                            f"'{pd.streams[streamid]._stream_name}' while running the following "
+                            f"command:\n{chan.cmd}")
+            elif streamid == 0:
+                # The indication that the command has ended is our marker in stdout (stream 0). Our
+                # goal is to watch for this marker, hide it from the user, because it does not
+                # belong to the output of the command. The marker always starts at the beginning of
+                # line.
+                data, pd.exitcode = self._watch_for_marker(data)
+
+            _Procs.capture_data(self, streamid, data, capture_output=capture_output,
+                                output_fobjs=output_fobjs)
+
+            if not timeout:
+                self._dbg(f"_do_wait_for_cmd_intsh: timeout is {timeout}, exit immediately")
+                break
+            if time.time() - start_time > timeout:
+                self._dbg("_do_wait_for_cmd_intsh: stop waiting for the command - timeout")
+                break
+
+        result = _Procs.get_lines_to_return(self, lines=lines)
+
+        if _Procs.all_output_consumed(self):
+            # Mark the interactive shell process as vacant.
+            acquired = pd.proc._acquire_intsh_lock(chan.cmd)
+            if not acquired:
+                _LOG.warning("failed to mark the interactive shell process as free")
+            else:
+                pd.proc._intsh_busy = False
+                pd.proc._intsh_lock.release()
+
+        return result
+
+    def _do_wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
+                         lines=(None, None)):
+        """
+        Implements '_wait_for_cmd()' for the non-optimized case when the command was executed in its
+        own separate SSH session.
+        """
+
+        chan = self.tobj
+        pd = chan._pd_
+        output = pd.output
+        partial = pd.partial
+        start_time = time.time()
+
+        self._dbg("_do_wait_for_cmd: starting with partial: %s, output:\n%s", partial, str(output))
+
+        while not _have_enough_lines(output, lines=lines):
+            if pd.exitcode is not None:
+                self._dbg("_do_wait_for_cmd: process exited with status %d", pd.exitcode)
+                break
+
+            streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
+            self._dbg("get_next_queue_item(): returned: %d, %s", streamid, data)
+            if streamid == -1:
+                self._dbg("_do_wait_for_cmd: nothing in the queue for %d seconds", timeout)
+            elif data is not None:
+                _Procs.capture_data(self, streamid, data, capture_output=capture_output,
+                                    output_fobjs=output_fobjs)
+            else:
+                self._dbg("_do_wait_for_cmd: stream %d closed", streamid)
+                # One of the output streams closed.
+                pd.threads[streamid].join()
+                pd.threads[streamid] = pd.streams[streamid] = None
+
+                if not pd.streams[0] and not pd.streams[1]:
+                    self._dbg("_do_wait_for_cmd: both streams closed")
+                    pd.exitcode = self._recv_exit_status_timeout(timeout)
+                    break
+
+            if not timeout:
+                self._dbg(f"_do_wait_for_cmd: timeout is {timeout}, exit immediately")
+                break
+            if time.time() - start_time > timeout:
+                self._dbg("_do_wait_for_cmd: stop waiting for the command - timeout")
+                break
+
+        return _Procs.get_lines_to_return(self, lines=lines)
+
+    def _wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
+                      lines=(None, None), join=True):
+        """
+        This function waits for a command executed with the 'SSH.run_async()' function to finish or
+        print something to stdout or stderr.
+
+        The optional 'timeout' argument specifies the longest time in seconds this function will
+        wait for the command to finish. If the command does not finish, this function exits and
+        returns 'None' as the exit code of the command. The timeout must be a positive floating
+        point number. By default it is 1 hour. If 'timeout' is '0', then this function will just
+        check process status, grab its output, if any, and return immediately.
+
+        Note, this function saves the used timeout in 'chan.timeout' attribute upon exit.
+
+        The 'capture_output' parameter controls whether the output of the command should be
+        collected or not. If it is not 'True', the output will simply be discarded and this function
+        will return empty strings instead of command's stdout and stderr.
+
+        The 'output_fobjs' parameter is a tuple with two file-like objects where the stdout and
+        stderr of the command will be echoed, in addition to being captured and returned. If not
+        specified, then the the command output will not be echoed anywhere.
+
+        The 'lines' argument provides a capability to wait for the command to output certain amount
+        of lines. By default, there is no limit, and this function will wait either for timeout or
+        until the command exits. The 'line' argument is a tuple, the first element of the tuple is
+        the 'stdout' limit, the second is the 'stderr' limit. For example, 'lines=(1, 5)' would mean
+        to wait for one full line in 'stdout' or five full lines in 'stderr'. And 'lines=(1, None)'
+        would mean to wait for one line in 'stdout' and any amount of lines in 'stderr'.
+
+        The 'join' argument controls whether the captured output lines should be joined and returned
+        as a single string, or no joining is needed and the output should be returned as a list of
+        strings.
+
+        This function returns a named tuple similar to what the 'run()' function returns.
+        """
+
+        if timeout is None:
+            timeout = _Procs.TIMEOUT
+        if timeout < 0:
+            raise Error(f"bad timeout value {timeout}, must be > 0")
+
+        for streamid in (0, 1):
+            if not lines[streamid]:
+                continue
+            if not Trivial.is_int(lines[streamid]):
+                raise Error("the 'lines' argument can only include integers and 'None'")
+            if lines[streamid] < 0:
+                raise Error("the 'lines' argument cannot include negative values")
+
+        if lines[0] == 0 and lines[1] == 0:
+            raise Error("the 'lines' argument cannot be (0, 0)")
+
+        chan = self.tobj
+        pd = chan._pd_
+        chan.timeout = timeout
+
+        self._dbg("_wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: "
+                  "%s\nreal command: %s", timeout, capture_output, str(lines), join, chan.cmd,
+                  pd.real_cmd)
+
+        if pd.threads_exit:
+            raise Error("this SSH channel has '_threads_exit_ flag set and it cannot be used")
+
+        if _Procs.all_output_consumed(self):
+            return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
+
+        if not pd.queue:
+            pd.queue = queue.Queue()
+            for streamid in (0, 1):
+                if pd.streams[streamid]:
+                    assert pd.threads[streamid] is None
+                    pd.threads[streamid] = threading.Thread(target=_stream_fetcher,
+                                                            name='SSH-stream-fetcher',
+                                                            args=(streamid, self), daemon=True)
+                    pd.threads[streamid].start()
+        else:
+            self._dbg("_wait_for_cmd: queue is empty: %s", pd.queue.empty())
+
+        if pd.proc._intsh and chan == pd.proc._intsh.tobj:
+            func = self._do_wait_for_cmd_intsh
+        else:
+            func = self._do_wait_for_cmd
+
+        output = func(timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
+                      lines=lines)
+
+        stdout = stderr = ""
+        if output[0]:
+            stdout = output[0]
+            if join:
+                stdout = "".join(stdout)
+        if output[1]:
+            stderr = output[1]
+            if join:
+                stderr = "".join(stderr)
+
+        if _Procs.all_output_consumed(self):
+            exitcode = pd.exitcode
+        else:
+            exitcode = None
+
+        if chan._pd_.debug:
+            sout = "".join(output[0])
+            serr = "".join(output[1])
+            self._dbg("_wait_for_cmd: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
+                      exitcode, sout.rstrip(), serr.rstrip())
+
+        return ProcResult(stdout=stdout, stderr=stderr, exitcode=exitcode)
+
+    def cmd_failed_msg(self, stdout, stderr, exitcode, startmsg=None, timeout=None):
+        """
+        A wrapper over '_Procs.cmd_failed_msg()'. The optional 'timeout' argument specifies the
+        timeout that was used for the command.
+        """
+
+        chan = self.tobj
+        if timeout is None:
+            timeout = chan.timeout
+
+        cmd = chan.cmd
+        if _LOG.getEffectiveLevel() == logging.DEBUG:
+            if chan.cmd != chan._pd_.real_cmd:
+                cmd = f"{cmd}\nReal command: {chan._pd_.real_cmd}"
+
+        return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=chan.hostname,
+                                     startmsg=startmsg, timeout=timeout)
+
+    def poll(self):
+        """
+        Check if the process is still running. If it is, return 'None', else return exit status.
+        """
+
+        chan = self.tobj
+        if chan.exit_status_ready():
+            return chan.recv_exit_status()
+        return None
+
+    def _dbg(self, fmt, *args):
+        """Print a debugging message related to the 'chan' channel handling."""
+
+        chan = self.tobj
+        if chan._pd_.debug:
+            pfx = ""
+            if chan._pd_.debug_id:
+                pfx += f"{chan._pd_.debug_id}: "
+            if hasattr(chan, "pid"):
+                pfx += f"PID {chan.pid}: "
+
+            _LOG.debug(pfx + fmt, *args)
+
+    def close(self):
+        """The channel close method that will signal the threads to exit."""
+
+        chan = self.tobj
+        if hasattr(chan, "_pd_"):
+            self._dbg("_close()")
+            pd = chan._pd_
+            pd.threads_exit = True
+            pd.proc = None
+            pd.orig_close()
+
+        super().close()
+
+    def __del__(self):
+        """The channel object destructor which makes all threads to exit."""
+
+        chan = self.tobj
+        if hasattr(chan, "_pd_"):
+            self._dbg("__del__()")
+            self.close()
+            chan._pd_.orig_del()
+
+        super().__del__()
+
 class SSH(_Procs.ProcBase):
     """
     This class provides API for communicating with remote hosts over SSH.
@@ -636,11 +654,13 @@ class SSH(_Procs.ProcBase):
 
         _add_custom_fields(self, chan, command, cmd, shell)
 
+        task = Task(self, chan)
+
         if shell:
             # The first line of the output should contain the PID - extract it.
-            chan.pid = _Procs.read_pid(chan)
+            chan.pid = _Procs.read_pid(task)
 
-        return chan
+        return task
 
     def _run_in_intsh(self, command, cwd=None):
         """Run command 'command' in the interactive shell."""
@@ -659,10 +679,12 @@ class SSH(_Procs.ProcBase):
         marker = random.getrandbits(256)
         marker = f"--- {marker:064x}"
         cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{marker}" "$?"\n'
-        _init_intsh_custom_fields(self._intsh, command, cmd, marker)
-        self._intsh.send(cmd)
+        chan = self._intsh.tobj
 
-        self._intsh.pid = _Procs.read_pid(self._intsh)
+        _init_intsh_custom_fields(chan, command, cmd, marker)
+        chan.send(cmd)
+        chan.pid = _Procs.read_pid(self._intsh)
+
         return self._intsh
 
     def _acquire_intsh_lock(self, command=None):
@@ -832,13 +854,14 @@ class SSH(_Procs.ProcBase):
             intsh = shell
 
         # Execute the command on the remote host.
-        chan = self._run_async(command, cwd=cwd, shell=shell, intsh=intsh)
+        task = self._run_async(command, cwd=cwd, shell=shell, intsh=intsh)
+        chan = task.tobj
         if mix_output:
             chan.set_combine_stderr(True)
 
         # Wait for the command to finish and handle the time-out situation.
-        result = chan.wait_for_cmd(timeout=timeout, capture_output=capture_output,
-                                   output_fobjs=output_fobjs, join=join)
+        result = task._wait_for_cmd(timeout=timeout, capture_output=capture_output,
+                                    output_fobjs=output_fobjs, join=join)
 
         if result.exitcode is None:
             msg = self.cmd_failed_msg(command, *tuple(result), timeout=timeout)

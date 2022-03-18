@@ -15,6 +15,7 @@ This module contains common bits and pieces shared between the 'Procs' and 'SSH'
 import re
 import queue
 import logging
+import contextlib
 from collections import namedtuple
 from pepclibs.helperlibs import Human, Trivial
 from pepclibs.helperlibs.Exceptions import Error
@@ -26,6 +27,46 @@ TIMEOUT = 4 * 60 * 60
 
 # Results of a the process execution.
 ProcResult = namedtuple("proc_result", ["stdout", "stderr", "exitcode"])
+
+class TaskBase:
+    """
+    The base class for local and remote tasks (processes).
+    """
+
+    def __init__(self, proc, tobj):
+        """
+        Initialize a class instance. The arguments are as follows.
+          * proc - the process management object that was used for creating this task (e.g.,
+                   'Procs.Proc()' or 'SSH.SSH()'.
+          * tobj - the low-level object representing the local or remote process corresponding to
+                   this task object. E.g., this is a 'Popen()' object in case of a local process.
+        """
+
+        self.proc = proc
+        self.tobj = tobj
+
+    def close(self):
+        """Free allocated resources."""
+
+        if getattr(self, "tobj", None):
+            self.tobj = None
+
+        if getattr(self, "proc", None):
+            self.proc = None
+
+    def __del__(self):
+        """Class destructor."""
+
+        with contextlib.suppress(Exception):
+            self.close()
+
+    def __enter__(self):
+        """Enter the runtime context."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the runtime context."""
+        self.close()
 
 class ProcBase:
     """
@@ -88,10 +129,11 @@ def read_pid(task):
     'format_command_for_pid()'.
     """
 
-    task._dbg_("_read_pid: reading PID for command: %s", task.cmd)
+    tobj = task.tobj
+    task._dbg("_read_pid: reading PID for command: %s", tobj.cmd)
 
     timeout = 10
-    stdout, stderr, _ = task.wait_for_cmd(timeout=timeout, lines=(1, 0), join=False)
+    stdout, stderr, _ = task._wait_for_cmd(timeout=timeout, lines=(1, 0), join=False)
     assert len(stdout) == 1
     assert not stderr
 
@@ -99,12 +141,12 @@ def read_pid(task):
 
     if len(pid) > 128:
         raise Error(f"received too long and probably bogus PID: {pid}\n"
-                    f"The command{task._pd_.proc.hostmsg} was:\n{task.cmd}")
+                    f"The command{tobj._pd_.proc.hostmsg} was:\n{tobj.cmd}")
     if not Trivial.is_int(pid):
         raise Error(f"received a bogus non-integer PID: {pid}\n"
-                    f"The command{task._pd_.proc.hostmsg} was:\n{task.cmd}")
+                    f"The command{tobj._pd_.proc.hostmsg} was:\n{tobj.cmd}")
 
-    task._dbg_("_read_pid: PID is %s for command: %s", pid, task.cmd)
+    task._dbg("_read_pid: PID is %s for command: %s", pid, tobj.cmd)
     return int(pid)
 
 def get_next_queue_item(qobj, timeout):
@@ -123,22 +165,23 @@ def get_next_queue_item(qobj, timeout):
 def capture_data(task, streamid, data, capture_output=True, output_fobjs=(None, None)):
     """
     A helper for 'Procs' and 'SSH' that captures data 'data' from the 'streamid' stream fetcher
-    thread. The keyword arguments are the same as in '_do_wait_for_cmd()'.
+    thread. The keyword arguments are the same as in 'Task()._wait_for_cmd()'.
     """
 
     if not data:
         return
 
     # pylint: disable=protected-access
-    pd = task._pd_
-    task._dbg_("capture_data: got data from stream %d:\n%s", streamid, data)
+    tobj = task.tobj
+    pd = tobj._pd_
+    task._dbg("capture_data: got data from stream %d:\n%s", streamid, data)
 
     data, pd.partial[streamid] = extract_full_lines(pd.partial[streamid] + data)
     if data and pd.partial[streamid]:
-        task._dbg_("capture_data: stream %d: full lines:\n%s",
-                   streamid, "".join(data))
-        task._dbg_("capture_data: stream %d: pd.partial line: %s",
-                   streamid, pd.partial[streamid])
+        task._dbg("capture_data: stream %d: full lines:\n%s",
+                  streamid, "".join(data))
+        task._dbg("capture_data: stream %d: pd.partial line: %s",
+                  streamid, pd.partial[streamid])
     for line in data:
         if not line:
             continue
@@ -152,13 +195,14 @@ def get_lines_to_return(task, lines=(None, None)):
     """
     A helper for 'Procs' and 'SSH' that figures out what part of the captured command output should
     be returned to the user, and what part should stay in 'task._pd_.output', depending on the lines
-    limit 'lines'. The keyword arguments are the same as in '_do_wait_for_cmd()'.
+    limit 'lines'. The keyword arguments are the same as in 'Task()._wait_for_cmd()'.
     """
 
     # pylint: disable=protected-access
-    pd = task._pd_
-    task._dbg_("get_lines_to_return: starting with lines %s, pd.partial: %s, pd.output:\n%s",
-               str(lines), pd.partial, pd.output)
+    tobj = task.tobj
+    pd = tobj._pd_
+    task._dbg("get_lines_to_return: starting with lines %s, pd.partial: %s, pd.output:\n%s",
+              str(lines), pd.partial, pd.output)
 
     output = [[], []]
 
@@ -171,8 +215,8 @@ def get_lines_to_return(task, lines=(None, None)):
             output[streamid] = pd.output[streamid][:limit]
             pd.output[streamid] = pd.output[streamid][limit:]
 
-    task._dbg_("get_lines_to_return: starting with  pd.partial: %s, pd.output:\n%s\nreturning:\n%s",
-               pd.partial, pd.output, output)
+    task._dbg("get_lines_to_return: starting with  pd.partial: %s, pd.output:\n%s\nreturning:\n%s",
+              pd.partial, pd.output, output)
     return output
 
 def all_output_consumed(task):
@@ -183,7 +227,7 @@ def all_output_consumed(task):
     """
 
     # pylint: disable=protected-access
-    pd = task._pd_
+    pd = task.tobj._pd_
     return pd.exitcode is not None and \
            not pd.output[0] and \
            not pd.output[1] and \
