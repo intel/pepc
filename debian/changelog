@@ -1,6 +1,7 @@
 pepc (1.3.0) unstable; urgency=low
 
-  * pepc: re-implemented the 'pstates' command, made consistent 'pepc cstates'.
+  * pepc pstates: re-implemented.
+  * pepc pstates: command-line options made consistent with 'pepc cstates'.
   * pepc cstates: added Alder Lake package C-state limits support.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  ___ADD_DATE_HERE___
