@@ -45,12 +45,14 @@ class TaskBase:
         self.proc = proc
         self.tobj = tobj
 
+        self.hostname = proc.hostname
+        self.hostmsg = proc.hostmsg
+
     def close(self):
         """Free allocated resources."""
 
         if getattr(self, "tobj", None):
             self.tobj = None
-
         if getattr(self, "proc", None):
             self.proc = None
 

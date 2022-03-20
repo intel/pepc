@@ -145,7 +145,6 @@ def _add_custom_fields(proc, tobj, cmd, real_cmd, shell):
 
     # The below attributes are added to the Popen object look similar to the channel object which
     # the 'SSH' module uses.
-    tobj.hostname = proc.hostname
     tobj.cmd = cmd
     tobj.timeout = _Procs.TIMEOUT
     return tobj
@@ -334,7 +333,7 @@ class Task(_Procs.TaskBase):
             if tobj.cmd != tobj._pd_.real_cmd:
                 cmd = f"{cmd}\nReal command: {tobj._pd_.real_cmd}"
 
-        return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=tobj.hostname,
+        return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=self.hostname,
                                      startmsg=startmsg, timeout=timeout)
 
     def _dbg(self, fmt, *args):

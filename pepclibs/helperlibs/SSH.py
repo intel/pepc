@@ -190,7 +190,6 @@ def _add_custom_fields(ssh, chan, cmd, real_cmd, shell):
 
     # The below attributes are added to make the channel object look similar to the Popen object
     # which the 'Procs' module uses.
-    chan.hostname = ssh.hostname
     chan.cmd = cmd
     chan.timeout = _Procs.TIMEOUT
 
@@ -332,7 +331,7 @@ class Task(_Procs.TaskBase):
             assert len(split) == 2
             exitcode = split[1].rstrip(" ---")
             if not Trivial.is_int(exitcode):
-                raise Error(f"the command was running{pd.proc.hostmsg} under the interactive "
+                raise Error(f"the command was running{self.hostmsg} under the interactive "
                             f"shell and finished with a correct marker, but unexpected exit "
                             f"code '{exitcode}'.\nThe command was: {chan.cmd}")
 
@@ -372,7 +371,7 @@ class Task(_Procs.TaskBase):
             if streamid == -1:
                 self._dbg("_do_wait_for_cmd_intsh: nothing in the queue for %d seconds", timeout)
             elif data is None:
-                raise Error(f"the interactive shell process{pd.proc.hostmsg} closed stream "
+                raise Error(f"the interactive shell process{self.hostmsg} closed stream "
                             f"'{pd.streams[streamid]._stream_name}' while running the following "
                             f"command:\n{chan.cmd}")
             elif streamid == 0:
@@ -576,7 +575,7 @@ class Task(_Procs.TaskBase):
             if chan.cmd != chan._pd_.real_cmd:
                 cmd = f"{cmd}\nReal command: {chan._pd_.real_cmd}"
 
-        return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=chan.hostname,
+        return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=self.hostname,
                                      startmsg=startmsg, timeout=timeout)
 
     def poll(self):
