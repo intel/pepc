@@ -94,8 +94,6 @@ class _ProcessPrivateData:
     def __init__(self):
         """The constructor."""
 
-        # The 'Proc' object corresponding to process.
-        self.proc = None
         # The 2 output streams of the command's process (stdout, stderr).
         self.streams = []
         # The queue which is used for passing commands output from stream fetcher threads.
@@ -125,7 +123,7 @@ class _ProcessPrivateData:
         # message related to different processes.
         self.debug_id = None
 
-def _add_custom_fields(proc, tobj, cmd, real_cmd, shell):
+def _add_custom_fields(tobj, cmd, real_cmd, shell):
     """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
 
     for name in ("stdin", "stdout", "stderr"):
@@ -137,7 +135,6 @@ def _add_custom_fields(proc, tobj, cmd, real_cmd, shell):
 
     pd = tobj._pd_ = _ProcessPrivateData()
 
-    pd.proc = proc
     pd.real_cmd = real_cmd
     pd.shell = shell
     pd.streams = [tobj.stdout, tobj.stderr]
@@ -357,7 +354,6 @@ class Task(_Procs.TaskBase):
             self._dbg("_close()")
             pd = tobj._pd_
             pd.threads_exit = True
-            pd.proc = None
             pd.orig_close()
 
         super().close()
@@ -419,7 +415,7 @@ class Proc(_Procs.ProcBase):
         except OSError as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        _add_custom_fields(self, tobj, command, real_cmd, shell)
+        _add_custom_fields(tobj, command, real_cmd, shell)
         task = Task(self, tobj)
 
         if shell:

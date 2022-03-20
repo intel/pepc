@@ -124,8 +124,6 @@ class _ChannelPrivateData:
     def __init__(self):
         """The constructor."""
 
-        # The 'SSH' object corresponding to the channel.
-        self.proc = None
         # The 2 output streams of the command's process (stdout, stderr).
         self.streams = []
         # The queue which is used for passing commands output from stream fetcher threads.
@@ -156,7 +154,7 @@ class _ChannelPrivateData:
         # message related to different processes.
         self.debug_id = None
 
-def _add_custom_fields(ssh, chan, cmd, real_cmd, shell):
+def _add_custom_fields(chan, cmd, real_cmd, shell):
     """Add a couple of custom fields to the paramiko channel object."""
 
     pd = chan._pd_ = _ChannelPrivateData()
@@ -181,7 +179,6 @@ def _add_custom_fields(ssh, chan, cmd, real_cmd, shell):
         wrapped_fobj.name = name
         setattr(chan, name, wrapped_fobj)
 
-    pd.proc = ssh
     pd.real_cmd = real_cmd
     pd.shell = shell
     pd.streams = [chan.recv, chan.recv_stderr]
@@ -395,12 +392,12 @@ class Task(_Procs.TaskBase):
 
         if _Procs.all_output_consumed(self):
             # Mark the interactive shell process as vacant.
-            acquired = pd.proc._acquire_intsh_lock(chan.cmd)
+            acquired = self.proc._acquire_intsh_lock(chan.cmd)
             if not acquired:
                 _LOG.warning("failed to mark the interactive shell process as free")
             else:
-                pd.proc._intsh_busy = False
-                pd.proc._intsh_lock.release()
+                self.proc._intsh_busy = False
+                self.proc._intsh_lock.release()
 
         return result
 
@@ -529,7 +526,7 @@ class Task(_Procs.TaskBase):
         else:
             self._dbg("_wait_for_cmd: queue is empty: %s", pd.queue.empty())
 
-        if pd.proc._intsh and chan == pd.proc._intsh.tobj:
+        if self.proc._intsh and chan == self.proc._intsh.tobj:
             func = self._do_wait_for_cmd_intsh
         else:
             func = self._do_wait_for_cmd
@@ -609,7 +606,6 @@ class Task(_Procs.TaskBase):
             self._dbg("_close()")
             pd = chan._pd_
             pd.threads_exit = True
-            pd.proc = None
             pd.orig_close()
 
         super().close()
@@ -651,7 +647,7 @@ class SSH(_Procs.ProcBase):
         except _PARAMIKO_EXCEPTIONS as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        _add_custom_fields(self, chan, command, cmd, shell)
+        _add_custom_fields(chan, command, cmd, shell)
 
         task = Task(self, chan)
 
