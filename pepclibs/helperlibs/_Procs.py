@@ -51,8 +51,12 @@ class TaskBase:
     def close(self):
         """Free allocated resources."""
 
-        if getattr(self, "tobj", None):
+        tobj = getattr(self, "tobj", None)
+        if tobj:
+            if hasattr(tobj, "close", None):
+                tobj.close()
             self.tobj = None
+
         if getattr(self, "proc", None):
             self.proc = None
 

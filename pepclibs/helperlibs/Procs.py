@@ -115,8 +115,6 @@ class _ProcessPrivateData:
 
         # Real command (user command and all the prefixes/suffixes).
         self.real_cmd = None
-        # The original '__del__()' methods of the Popen object.
-        self.orig_del = None
         # Print debugging messages if 'True'.
         self.debug = False
         # Prefix debugging messages with this string. Can be useful to distinguish between debugging
@@ -138,7 +136,6 @@ def _add_custom_fields(tobj, cmd, real_cmd, shell):
     pd.real_cmd = real_cmd
     pd.shell = shell
     pd.streams = [tobj.stdout, tobj.stderr]
-    pd.orig_del = tobj.__del__
 
     # The below attributes are added to the Popen object look similar to the channel object which
     # the 'SSH' module uses.
@@ -354,7 +351,6 @@ class Task(_Procs.TaskBase):
             self._dbg("_close()")
             pd = tobj._pd_
             pd.threads_exit = True
-            pd.orig_close()
 
         super().close()
 
@@ -365,7 +361,6 @@ class Task(_Procs.TaskBase):
         if hasattr(tobj, "_pd_"):
             self._dbg("__del__()")
             self.close()
-            tobj._pd_.orig_del()
 
         super().__del__()
 

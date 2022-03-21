@@ -145,9 +145,6 @@ class _ChannelPrivateData:
 
         # Real command (user command and all the prefixes/suffixes).
         self.real_cmd = None
-        # The original 'close()' and '__del__()' methods of the paramiko channel object.
-        self.orig_close = None
-        self.orig_del = None
         # Print debugging messages if 'True'.
         self.debug = False
         # Prefix debugging messages with this string. Can be useful to distinguish between debugging
@@ -182,8 +179,6 @@ def _add_custom_fields(chan, cmd, real_cmd, shell):
     pd.real_cmd = real_cmd
     pd.shell = shell
     pd.streams = [chan.recv, chan.recv_stderr]
-    pd.orig_close = chan.close
-    pd.orig_del = chan.__del__
 
     # The below attributes are added to make the channel object look similar to the Popen object
     # which the 'Procs' module uses.
@@ -606,7 +601,6 @@ class Task(_Procs.TaskBase):
             self._dbg("_close()")
             pd = chan._pd_
             pd.threads_exit = True
-            pd.orig_close()
 
         super().close()
 
@@ -617,7 +611,6 @@ class Task(_Procs.TaskBase):
         if hasattr(chan, "_pd_"):
             self._dbg("__del__()")
             self.close()
-            chan._pd_.orig_del()
 
         super().__del__()
 
