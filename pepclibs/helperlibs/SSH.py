@@ -168,7 +168,7 @@ class Task(_Procs.TaskBase):
     This class represents a remote task (process) that was executed by an 'SSH' object.
     """
 
-    def _stream_fetcher(self, streamid):
+    def _stream_fetcher(self, streamid, read_func):
         """
         This methos runs in a separate thread. All it does is it fetches one of the output streams
         of the executed program (either stdout or stderr) and puts the result into the queue.
@@ -176,7 +176,6 @@ class Task(_Procs.TaskBase):
 
         chan = self.tobj
         pd = chan._pd_
-        read_func = pd.streams[streamid]
         try:
             decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
             while not self.threads_exit:
@@ -339,9 +338,8 @@ class Task(_Procs.TaskBase):
             if streamid == -1:
                 self._dbg("_do_wait_for_cmd_intsh: nothing in the queue for %d seconds", timeout)
             elif data is None:
-                raise Error(f"the interactive shell process{self.hostmsg} closed stream "
-                            f"'{pd.streams[streamid]._stream_name}' while running the following "
-                            f"command:\n{self.cmd}")
+                raise Error(f"the interactive shell process{self.hostmsg} closed stream {streamid} "
+                            f"while running the following command:\n{self.cmd}")
             elif streamid == 0:
                 # The indication that the command has ended is our marker in stdout (stream 0). Our
                 # goal is to watch for this marker, hide it from the user, because it does not
@@ -458,9 +456,10 @@ class Task(_Procs.TaskBase):
             for streamid in (0, 1):
                 if pd.streams[streamid]:
                     assert pd.threads[streamid] is None
+                    args = (streamid, pd.streams[streamid])
                     pd.threads[streamid] = threading.Thread(target=self._stream_fetcher,
-                                                            name='SSH-stream-fetcher',
-                                                            args=(streamid,), daemon=True)
+                                                            name='SSH-stream-fetcher', args=args,
+                                                            daemon=True)
                     pd.threads[streamid].start()
         else:
             self._dbg("wait_for_cmd: queue is empty: %s", pd.queue.empty())

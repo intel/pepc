@@ -90,7 +90,7 @@ class Task(_Procs.TaskBase):
     This class represents a local tobj (process) that was executed by a 'Proc' object.
     """
 
-    def _stream_fetcher(self, streamid):
+    def _stream_fetcher(self, streamid, read_func):
         """
         This methos runs in a separate thread. All it does is it fetches one of the output streams
         of the executed program (either stdout or stderr) and puts the result into the queue.
@@ -98,17 +98,16 @@ class Task(_Procs.TaskBase):
 
         tobj = self.tobj
         pd = tobj._pd_
-        stream = pd.streams[streamid]
         try:
             decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
             while not self.threads_exit:
-                if not stream:
+                if not read_func:
                     self._dbg("stream %d: stream is closed", streamid)
                     break
 
                 data = None
                 try:
-                    data = stream.read(4096)
+                    data = read_func(4096)
                 except Error as err:
                     if err.errno == errno.EAGAIN:
                         continue
@@ -233,9 +232,10 @@ class Task(_Procs.TaskBase):
             for streamid in (0, 1):
                 if pd.streams[streamid]:
                     assert pd.threads[streamid] is None
+                    args = (streamid, pd.streams[streamid].read)
                     pd.threads[streamid] = threading.Thread(target=self._stream_fetcher,
-                                                            name='Procs-stream-fetcher',
-                                                            args=(streamid,), daemon=True)
+                                                            name='Procs-stream-fetcher', args=args,
+                                                            daemon=True)
                     pd.threads[streamid].start()
         else:
             self._dbg("wait_for_cmd: queue is empty: %s", pd.queue.empty())
