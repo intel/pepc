@@ -59,12 +59,6 @@ class _ProcessPrivateData:
         self.queue = None
         # The threads fetching data from the output streams and placing them to the queue.
         self.threads = [None, None]
-        # The output for the command that was read from 'queue', but not yet sent to the user
-        # (separate for 'stdout' and 'stderr').
-        self.output = [[], []]
-        # This tuple contains the last partial lines of the # 'stdout' and 'stderr' output of the
-        # command.
-        self.partial = ["", ""]
 
 def _add_custom_fields(tobj):
     """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
@@ -150,13 +144,12 @@ class Task(_Procs.TaskBase):
 
         tobj = self.tobj
         pd = tobj._pd_
-        output = pd.output
-        partial = pd.partial
         start_time = time.time()
 
-        self._dbg("_do_wait_for_cmd: starting with partial: %s, output:\n%s", partial, str(output))
+        self._dbg("_do_wait_for_cmd: starting with partial: %s, output:\n%s",
+                  self._partial, str(self._output))
 
-        while not _have_enough_lines(output, lines=lines):
+        while not _have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None:
                 self._dbg("_do_wait_for_cmd: process exited with status %d", self.exitcode)
                 break

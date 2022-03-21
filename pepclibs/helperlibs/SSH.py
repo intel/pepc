@@ -88,12 +88,6 @@ class _ChannelPrivateData:
         self.queue = None
         # The threads fetching data from the output streams and placing them to the queue.
         self.threads = [None, None]
-        # The output for the command that was read from 'queue', but not yet sent to the user
-        # (separate for 'stdout' and 'stderr').
-        self.output = [[], []]
-        # This tuple contains the last partial lines of the # 'stdout' and 'stderr' output of the
-        # command.
-        self.partial = ["", ""]
 
 def _add_custom_fields(chan):
     """Add a couple of custom fields to the paramiko channel object."""
@@ -145,9 +139,6 @@ def _init_intsh_custom_fields(chan, marker):
     # Whether the last line ('ll') should be checked against the marker. Used as an optimization in
     # order to avoid matching the 'll' against the marker too often.
     pd.check_ll = True
-
-    pd.output = [[], []]
-    pd.partial = ["", ""]
 
 def _get_username(uid=None):
     """Return username of the current process or UID 'uid'."""
@@ -321,15 +312,13 @@ class Task(_Procs.TaskBase):
 
         chan = self.tobj
         pd = chan._pd_
-        output = pd.output
-        partial = pd.partial
         start_time = time.time()
 
         self._dbg("_do_wait_for_cmd_intsh: starting with pd.check_ll %s, pd.ll: %s, "
-                  "pd.partial: %s, pd.output:\n%s",
-                   str(pd.check_ll), str(pd.ll), partial, str(output))
+                  "partial: %s, output:\n%s",
+                   str(pd.check_ll), str(pd.ll), self._partial, str(self._output))
 
-        while not _have_enough_lines(output, lines=lines):
+        while not _have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None and pd.queue.empty():
                 self._dbg("_do_wait_for_cmd_intsh: process exited with status %d", self.exitcode)
                 break
@@ -379,13 +368,12 @@ class Task(_Procs.TaskBase):
 
         chan = self.tobj
         pd = chan._pd_
-        output = pd.output
-        partial = pd.partial
         start_time = time.time()
 
-        self._dbg("_do_wait_for_cmd: starting with partial: %s, output:\n%s", partial, str(output))
+        self._dbg("_do_wait_for_cmd: starting with partial: %s, output:\n%s",
+                  self._partial, str(self._output))
 
-        while not _have_enough_lines(output, lines=lines):
+        while not _have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None:
                 self._dbg("_do_wait_for_cmd: process exited with status %d", self.exitcode)
                 break

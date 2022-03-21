@@ -127,6 +127,8 @@ class TaskBase:
         self.exitcode = None
 
         self._threads_exit = False
+        self._output = [[], []]
+        self._partial = ["", ""]
 
         if self.shell:
             self._read_pid()
@@ -168,6 +170,11 @@ class TaskBase:
 
         # The stream fetcher threads have to exit if the '_threads_exit' flag becomes 'True'.
         self._threads_exit = False
+        # The output for the task that was read from 'queue', but not yet sent to the user
+        # (separate for 'stdout' and 'stderr').
+        self._output = [[], []]
+        # The last partial lines of the stdout and stderr streams of the task.
+        self._partial = ["", ""]
 
         if self.shell:
             self._read_pid()
@@ -284,51 +291,47 @@ def capture_data(task, streamid, data, capture_output=True, output_fobjs=(None, 
         return
 
     # pylint: disable=protected-access
-    tobj = task.tobj
-    pd = tobj._pd_
     task._dbg("capture_data: got data from stream %d:\n%s", streamid, data)
 
-    data, pd.partial[streamid] = extract_full_lines(pd.partial[streamid] + data)
-    if data and pd.partial[streamid]:
+    data, task._partial[streamid] = extract_full_lines(task._partial[streamid] + data)
+    if data and task._partial[streamid]:
         task._dbg("capture_data: stream %d: full lines:\n%s",
                   streamid, "".join(data))
-        task._dbg("capture_data: stream %d: pd.partial line: %s",
-                  streamid, pd.partial[streamid])
+        task._dbg("capture_data: stream %d: partial line: %s",
+                  streamid, task._partial[streamid])
     for line in data:
         if not line:
             continue
 
         if capture_output:
-            pd.output[streamid].append(line)
+            task._output[streamid].append(line)
         if output_fobjs[streamid]:
             output_fobjs[streamid].write(line)
 
 def get_lines_to_return(task, lines=(None, None)):
     """
     A helper for 'Procs' and 'SSH' that figures out what part of the captured command output should
-    be returned to the user, and what part should stay in 'task._pd_.output', depending on the lines
+    be returned to the user, and what part should stay in 'task._output', depending on the lines
     limit 'lines'. The keyword arguments are the same as in 'Task()._wait_for_cmd()'.
     """
 
     # pylint: disable=protected-access
-    tobj = task.tobj
-    pd = tobj._pd_
-    task._dbg("get_lines_to_return: starting with lines %s, pd.partial: %s, pd.output:\n%s",
-              str(lines), pd.partial, pd.output)
+    task._dbg("get_lines_to_return: starting with lines %s, partial: %s, output:\n%s",
+              str(lines), task._partial, task._output)
 
     output = [[], []]
 
     for streamid in (0, 1):
         limit = lines[streamid]
-        if limit is None or len(pd.output[streamid]) <= limit:
-            output[streamid] = pd.output[streamid]
-            pd.output[streamid] = []
+        if limit is None or len(task._output[streamid]) <= limit:
+            output[streamid] = task._output[streamid]
+            task._output[streamid] = []
         else:
-            output[streamid] = pd.output[streamid][:limit]
-            pd.output[streamid] = pd.output[streamid][limit:]
+            output[streamid] = task._output[streamid][:limit]
+            task._output[streamid] = task._output[streamid][limit:]
 
-    task._dbg("get_lines_to_return: starting with  pd.partial: %s, pd.output:\n%s\nreturning:\n%s",
-              pd.partial, pd.output, output)
+    task._dbg("get_lines_to_return: starting with partial: %s, output:\n"
+              "%s\nreturning:\n%s", task._partial, task._output, output)
     return output
 
 def all_output_consumed(task):
@@ -341,8 +344,8 @@ def all_output_consumed(task):
     # pylint: disable=protected-access
     pd = task.tobj._pd_
     return task.exitcode is not None and \
-           not pd.output[0] and \
-           not pd.output[1] and \
+           not task._output[0] and \
+           not task._output[1] and \
            not getattr(pd, "ll", None) and \
            pd.queue.empty()
 
