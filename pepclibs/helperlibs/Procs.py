@@ -326,19 +326,6 @@ class Task(_Procs.TaskBase):
         return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=self.hostname,
                                      startmsg=startmsg, timeout=timeout)
 
-    def _dbg(self, fmt, *args):
-        """Print a debugging message related to process 'tobj'."""
-
-        tobj = self.tobj
-        if self.debug:
-            pfx = ""
-            if self.debug_id:
-                pfx += f"{self.debug_id}: "
-            if hasattr(tobj, "pid"):
-                pfx += f"PID {self.pid}: "
-
-            _LOG.debug(pfx + fmt, *args)
-
     def _close(self):
         """Task's 'close()' method that will signal the threads to exit."""
 

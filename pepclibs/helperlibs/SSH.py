@@ -573,19 +573,6 @@ class Task(_Procs.TaskBase):
             return chan.recv_exit_status()
         return None
 
-    def _dbg(self, fmt, *args):
-        """Print a debugging message related to the 'chan' channel handling."""
-
-        chan = self.tobj
-        if self.debug:
-            pfx = ""
-            if self.debug_id:
-                pfx += f"{self.debug_id}: "
-            if hasattr(chan, "pid"):
-                pfx += f"PID {self.pid}: "
-
-            _LOG.debug(pfx + fmt, *args)
-
     def close(self):
         """The channel close method that will signal the threads to exit."""
 

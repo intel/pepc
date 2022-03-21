@@ -33,6 +33,17 @@ class TaskBase:
     The base class for local and remote tasks (processes).
     """
 
+    def _dbg(self, fmt, *args):
+        """Print a debugging message."""
+
+        if self.debug:
+            pfx = ""
+            if self.debug_id:
+                pfx += f"{self.debug_id}: "
+            if self.tobj.pid is not None:
+                pfx += f"PID {self.pid}: "
+            _LOG.debug(pfx + fmt, *args)
+
     def __init__(self, proc, tobj):
         """
         Initialize a class instance. The arguments are as follows.
