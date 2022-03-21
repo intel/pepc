@@ -326,18 +326,6 @@ class Task(_Procs.TaskBase):
         return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=self.hostname,
                                      startmsg=startmsg, timeout=timeout)
 
-    def _close(self):
-        """Task's 'close()' method that will signal the threads to exit."""
-
-        self._dbg("_close()")
-        super().close()
-
-    def __del__(self):
-        """Task object destructor which makes all threads to exit."""
-
-        self._dbg("__del__()")
-        super().__del__()
-
 class Proc(_Procs.ProcBase):
     """This class provides API similar to the 'SSH' class API."""
 

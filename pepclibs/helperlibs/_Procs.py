@@ -74,6 +74,8 @@ class TaskBase:
     def close(self):
         """Free allocated resources."""
 
+        self._dbg("close()")
+
         if hasattr(self, "threads_exit"):
             self.threads_exit = True
 
@@ -88,6 +90,9 @@ class TaskBase:
 
     def __del__(self):
         """Class destructor."""
+
+        with contextlib.suppress(Exception):
+            self._dbg("__del__()")
 
         with contextlib.suppress(Exception):
             self.close()

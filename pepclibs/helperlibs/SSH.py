@@ -573,18 +573,6 @@ class Task(_Procs.TaskBase):
             return chan.recv_exit_status()
         return None
 
-    def close(self):
-        """The channel close method that will signal the threads to exit."""
-
-        self._dbg("_close()")
-        super().close()
-
-    def __del__(self):
-        """The channel object destructor which makes all threads to exit."""
-
-        self._dbg("__del__()")
-        super().__del__()
-
 class SSH(_Procs.ProcBase):
     """
     This class provides API for communicating with remote hosts over SSH.
