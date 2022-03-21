@@ -113,6 +113,24 @@ class TaskBase:
         # pylint: disable=no-self-use
         raise Error("'poll()' was not defined by the child class")
 
+    def _reinit(self, cmd, real_cmd, shell):
+        """
+        Re-initialize the task object in case its process is re-used for running a different
+        command.
+        """
+
+        self.cmd = cmd
+        self.real_cmd = real_cmd
+        self.shell = shell
+
+        self.pid = None
+        self.exitcode = None
+
+        self._threads_exit = False
+
+        if self.shell:
+            self._read_pid()
+
     def __init__(self, proc, tobj, cmd, real_cmd, shell):
         """
         Initialize a class instance. The arguments are as follows.
@@ -141,6 +159,7 @@ class TaskBase:
         self.pid = None
         # Exit code of the command ('None' if it is still running).
         self.exitcode = None
+
         # Print debugging messages if 'True'.
         self.debug = False
         # Prefix debugging messages with this string. Can be useful to distinguish between debugging

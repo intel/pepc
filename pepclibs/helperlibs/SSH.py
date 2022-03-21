@@ -521,20 +521,6 @@ class Task(_Procs.TaskBase):
             return chan.recv_exit_status()
         return None
 
-    def _intsh_init(self, cmd, real_cmd):
-        """
-        This method is called when a new command is executed in the interactive shell task. It
-        re-sets all the required fields to match the new command.
-        """
-
-        self.shell = True
-        self.cmd = cmd
-        self.real_cmd = real_cmd
-
-        self.exitcode = None
-
-        self._read_pid()
-
 class SSH(_Procs.ProcBase):
     """
     This class provides API for communicating with remote hosts over SSH.
@@ -586,9 +572,9 @@ class SSH(_Procs.ProcBase):
         cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{marker}" "$?"\n'
         task.tobj.send(cmd)
 
-        # Partially re-initialize the internal shell 'Task' object to match the new command that
-        # we've just executed.
-        task._intsh_init(command, cmd)
+        # Re-initialize the interactive shell task object to match the new command that we've just
+        # executed.
+        task._reinit(command, cmd, True)
 
         return task
 
