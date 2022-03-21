@@ -564,6 +564,7 @@ class SSH(_Procs.ProcBase):
             self._intsh = self._run_in_new_session(cmd, shell=False)
             self._intsh.shell = True
 
+        task = self._intsh
         cmd = _Procs.format_command_for_pid(command, cwd=cwd)
 
         # Run the command in a shell. Keep in mind, the command starts with 'exec', so it'll use the
@@ -575,17 +576,16 @@ class SSH(_Procs.ProcBase):
         cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{marker}" "$?"\n'
 
         # Re-initialize various attributes to match the new command that is about to be executed.
-        self._intsh.cmd = command
-        self._intsh.real_cmd = cmd
-        self._intsh.exitcode = None
+        task.cmd = command
+        task.real_cmd = cmd
+        task.exitcode = None
 
-        chan = self._intsh.tobj
-        _init_intsh_custom_fields(chan, marker)
-        chan.send(cmd)
+        _init_intsh_custom_fields(task.tobj, marker)
+        task.tobj.send(cmd)
 
         # Update the PID of the interactive shell task with PID of the just executed command.
-        self._intsh.read_pid()
-        return self._intsh
+        task.read_pid()
+        return task
 
     def _acquire_intsh_lock(self, command=None):
         """
