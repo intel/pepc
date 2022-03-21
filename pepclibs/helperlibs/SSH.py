@@ -93,27 +93,6 @@ def _add_custom_fields(chan):
     """Add a couple of custom fields to the paramiko channel object."""
 
     pd = chan._pd_ = _ChannelPrivateData()
-
-    # File objects for the 3 standard streams of the command's process.
-    chan.stdin = None
-    chan.stdout = None
-    chan.stderr = None
-
-    for name, mode in (("stdin", "wb"), ("stdout", "rb"), ("stderr", "rb")):
-        try:
-            if name != "stderr":
-                fobj = chan.makefile(mode, 0)
-            else:
-                fobj = chan.makefile_stderr(mode, 0)
-        except _PARAMIKO_EXCEPTIONS as err:
-            raise Error(f"failed to create a file for '{name}': {err}") from err
-
-        setattr(fobj, "_stream_name_", name)
-        wrapped_fobj = WrapExceptions.WrapExceptions(fobj, exceptions=_PARAMIKO_EXCEPTIONS,
-                                                     get_err_prefix=_get_err_prefix)
-        wrapped_fobj.name = name
-        setattr(chan, name, wrapped_fobj)
-
     pd.streams = [chan.recv, chan.recv_stderr]
 
     # The below attributes are added to make the channel object look similar to the Popen object
