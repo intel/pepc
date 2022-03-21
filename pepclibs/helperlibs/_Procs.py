@@ -48,6 +48,10 @@ class TaskBase:
         self.hostname = proc.hostname
         self.hostmsg = proc.hostmsg
 
+        # Process ID of the runnint task. In some cases may be set to 'None', which should be
+        # interpreted as "not known".
+        self.pid = None
+
         # The stream fetcher threads have to exit if the 'threads_exit' flag becomes 'True'.
         self.threads_exit = False
         # Print debugging messages if 'True'.

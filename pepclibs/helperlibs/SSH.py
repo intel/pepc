@@ -582,7 +582,7 @@ class Task(_Procs.TaskBase):
             if self.debug_id:
                 pfx += f"{self.debug_id}: "
             if hasattr(chan, "pid"):
-                pfx += f"PID {chan.pid}: "
+                pfx += f"PID {self.pid}: "
 
             _LOG.debug(pfx + fmt, *args)
 
@@ -630,7 +630,7 @@ class SSH(_Procs.ProcBase):
 
         if shell:
             # The first line of the output should contain the PID - extract it.
-            chan.pid = _Procs.read_pid(task)
+            task.pid = _Procs.read_pid(task)
 
         return task
 
@@ -655,7 +655,7 @@ class SSH(_Procs.ProcBase):
 
         _init_intsh_custom_fields(chan, command, cmd, marker)
         chan.send(cmd)
-        chan.pid = _Procs.read_pid(self._intsh)
+        self._intsh.pid = _Procs.read_pid(self._intsh)
 
         return self._intsh
 
