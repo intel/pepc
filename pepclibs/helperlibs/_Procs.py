@@ -133,6 +133,8 @@ class TaskBase:
         # Process ID of the running task. In some cases may be set to 'None', which should be
         # interpreted as "not known".
         self.pid = None
+        # Exit code of the command ('None' if it is still running).
+        self.exitcode = None
 
         # The stream fetcher threads have to exit if the 'threads_exit' flag becomes 'True'.
         self.threads_exit = False
@@ -313,7 +315,7 @@ def all_output_consumed(task):
 
     # pylint: disable=protected-access
     pd = task.tobj._pd_
-    return pd.exitcode is not None and \
+    return task.exitcode is not None and \
            not pd.output[0] and \
            not pd.output[1] and \
            not getattr(pd, "ll", None) and \

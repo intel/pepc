@@ -100,8 +100,6 @@ class _ProcessPrivateData:
         self.queue = None
         # The threads fetching data from the output streams and placing them to the queue.
         self.threads = [None, None]
-        # Exit code of the command ('None' if it is still running).
-        self.exitcode = None
         # The output for the command that was read from 'queue', but not yet sent to the user
         # (separate for 'stdout' and 'stderr').
         self.output = [[], []]
@@ -160,8 +158,8 @@ class Task(_Procs.TaskBase):
         self._dbg("_do_wait_for_cmd: starting with partial: %s, output:\n%s", partial, str(output))
 
         while not _have_enough_lines(output, lines=lines):
-            if pd.exitcode is not None:
-                self._dbg("_do_wait_for_cmd: process exited with status %d", pd.exitcode)
+            if self.exitcode is not None:
+                self._dbg("_do_wait_for_cmd: process exited with status %d", self.exitcode)
                 break
 
             streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
@@ -179,7 +177,7 @@ class Task(_Procs.TaskBase):
 
                 if not pd.streams[0] and not pd.streams[1]:
                     self._dbg("_do_wait_for_cmd: both streams closed")
-                    pd.exitcode = self._wait_timeout(timeout)
+                    self.exitcode = self._wait_timeout(timeout)
                     break
 
             if not timeout:
@@ -224,11 +222,11 @@ class Task(_Procs.TaskBase):
 
         if _Procs.all_output_consumed(self):
             # This command has already exited.
-            return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
+            return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
 
         if not tobj.stdout and not tobj.stderr:
-            pd.exitcode = self._wait_timeout(timeout)
-            return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
+            self.exitcode = self._wait_timeout(timeout)
+            return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
 
         if not pd.queue:
             pd.queue = queue.Queue()
@@ -256,7 +254,7 @@ class Task(_Procs.TaskBase):
                 stderr = "".join(stderr)
 
         if _Procs.all_output_consumed(self):
-            exitcode = pd.exitcode
+            exitcode = self.exitcode
         else:
             exitcode = None
 

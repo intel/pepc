@@ -130,8 +130,6 @@ class _ChannelPrivateData:
         self.queue = None
         # The threads fetching data from the output streams and placing them to the queue.
         self.threads = [None, None]
-        # Exit code of the command ('None' if it is still running).
-        self.exitcode = None
         # The output for the command that was read from 'queue', but not yet sent to the user
         # (separate for 'stdout' and 'stderr').
         self.output = [[], []]
@@ -190,7 +188,6 @@ def _init_intsh_custom_fields(chan, marker):
     # order to avoid matching the 'll' against the marker too often.
     pd.check_ll = True
 
-    pd.exitcode = None
     pd.output = [[], []]
     pd.partial = ["", ""]
 
@@ -335,8 +332,8 @@ class Task(_Procs.TaskBase):
                    str(pd.check_ll), str(pd.ll), partial, str(output))
 
         while not _have_enough_lines(output, lines=lines):
-            if pd.exitcode is not None and pd.queue.empty():
-                self._dbg("_do_wait_for_cmd_intsh: process exited with status %d", pd.exitcode)
+            if self.exitcode is not None and pd.queue.empty():
+                self._dbg("_do_wait_for_cmd_intsh: process exited with status %d", self.exitcode)
                 break
 
             streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
@@ -351,7 +348,7 @@ class Task(_Procs.TaskBase):
                 # goal is to watch for this marker, hide it from the user, because it does not
                 # belong to the output of the command. The marker always starts at the beginning of
                 # line.
-                data, pd.exitcode = self._watch_for_marker(data)
+                data, self.exitcode = self._watch_for_marker(data)
 
             _Procs.capture_data(self, streamid, data, capture_output=capture_output,
                                 output_fobjs=output_fobjs)
@@ -392,8 +389,8 @@ class Task(_Procs.TaskBase):
         self._dbg("_do_wait_for_cmd: starting with partial: %s, output:\n%s", partial, str(output))
 
         while not _have_enough_lines(output, lines=lines):
-            if pd.exitcode is not None:
-                self._dbg("_do_wait_for_cmd: process exited with status %d", pd.exitcode)
+            if self.exitcode is not None:
+                self._dbg("_do_wait_for_cmd: process exited with status %d", self.exitcode)
                 break
 
             streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
@@ -411,7 +408,7 @@ class Task(_Procs.TaskBase):
 
                 if not pd.streams[0] and not pd.streams[1]:
                     self._dbg("_do_wait_for_cmd: both streams closed")
-                    pd.exitcode = self._recv_exit_status_timeout(timeout)
+                    self.exitcode = self._recv_exit_status_timeout(timeout)
                     break
 
             if not timeout:
@@ -455,7 +452,7 @@ class Task(_Procs.TaskBase):
             raise Error("this SSH channel has 'threads_exit' flag set and it cannot be used")
 
         if _Procs.all_output_consumed(self):
-            return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
+            return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
 
         if not pd.queue:
             pd.queue = queue.Queue()
@@ -488,7 +485,7 @@ class Task(_Procs.TaskBase):
                 stderr = "".join(stderr)
 
         if _Procs.all_output_consumed(self):
-            exitcode = pd.exitcode
+            exitcode = self.exitcode
         else:
             exitcode = None
 
@@ -577,9 +574,10 @@ class SSH(_Procs.ProcBase):
         marker = f"--- {marker:064x}"
         cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{marker}" "$?"\n'
 
-        # Set the command attributes of the interactive shell task to new values.
+        # Re-initialize various attributes to match the new command that is about to be executed.
         self._intsh.cmd = command
         self._intsh.real_cmd = cmd
+        self._intsh.exitcode = None
 
         chan = self._intsh.tobj
         _init_intsh_custom_fields(chan, marker)
