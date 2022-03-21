@@ -138,10 +138,8 @@ class _ChannelPrivateData:
         # This tuple contains the last partial lines of the # 'stdout' and 'stderr' output of the
         # command.
         self.partial = ["", ""]
-        # Whether the command was executed via the shell.
-        self.shell = None
 
-def _add_custom_fields(chan, shell):
+def _add_custom_fields(chan):
     """Add a couple of custom fields to the paramiko channel object."""
 
     pd = chan._pd_ = _ChannelPrivateData()
@@ -166,7 +164,6 @@ def _add_custom_fields(chan, shell):
         wrapped_fobj.name = name
         setattr(chan, name, wrapped_fobj)
 
-    pd.shell = shell
     pd.streams = [chan.recv, chan.recv_stderr]
 
     # The below attributes are added to make the channel object look similar to the Popen object
@@ -183,7 +180,6 @@ def _init_intsh_custom_fields(chan, marker):
 
     pd = chan._pd_
 
-    pd.shell = True
     # The marker indicating that the command has finished.
     pd.marker = marker
     # The regular expression the last line of command output should match.
@@ -590,9 +586,9 @@ class SSH(_Procs.ProcBase):
         except _PARAMIKO_EXCEPTIONS as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        _add_custom_fields(chan, shell)
+        _add_custom_fields(chan)
 
-        task = Task(self, chan, command, cmd)
+        task = Task(self, chan, command, cmd, shell)
 
         if shell:
             # The first line of the output should contain the PID - extract it.

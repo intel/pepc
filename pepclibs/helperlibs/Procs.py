@@ -108,10 +108,8 @@ class _ProcessPrivateData:
         # This tuple contains the last partial lines of the # 'stdout' and 'stderr' output of the
         # command.
         self.partial = ["", ""]
-        # Whether the command was executed via the shell.
-        self.shell = None
 
-def _add_custom_fields(tobj, shell):
+def _add_custom_fields(tobj):
     """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
 
     for name in ("stdin", "stdout", "stderr"):
@@ -123,7 +121,6 @@ def _add_custom_fields(tobj, shell):
 
     pd = tobj._pd_ = _ProcessPrivateData()
 
-    pd.shell = shell
     pd.streams = [tobj.stdout, tobj.stderr]
 
     # The below attributes are added to the Popen object look similar to the channel object which
@@ -352,8 +349,7 @@ class Proc(_Procs.ProcBase):
             stderr = subprocess.PIPE
 
         if shell:
-            if shell:
-                real_cmd = cmd = _Procs.format_command_for_pid(command, cwd=cwd)
+            real_cmd = cmd = _Procs.format_command_for_pid(command, cwd=cwd)
         elif isinstance(command, str):
             real_cmd = command
             cmd = shlex.split(command)
@@ -367,8 +363,8 @@ class Proc(_Procs.ProcBase):
         except OSError as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        _add_custom_fields(tobj, shell)
-        task = Task(self, tobj, command, real_cmd)
+        _add_custom_fields(tobj)
+        task = Task(self, tobj, command, real_cmd, shell)
 
         if shell:
             # The first line of the output should contain the PID - extract it.

@@ -44,7 +44,7 @@ class TaskBase:
                 pfx += f"PID {self.pid}: "
             _LOG.debug(pfx + fmt, *args)
 
-    def __init__(self, proc, tobj, cmd, real_cmd):
+    def __init__(self, proc, tobj, cmd, real_cmd, shell):
         """
         Initialize a class instance. The arguments are as follows.
           * proc - the process management object that was used for creating this task (e.g.,
@@ -55,12 +55,14 @@ class TaskBase:
           * real_cmd - sometimes the original command gets slightly amended, e.g., it is sometimes
                        prefixed with a PID print command. This argument should provide the actual
                        executed command.
+          * shell - whether the command was executed via shell.
         """
 
         self.proc = proc
         self.tobj = tobj
         self.cmd = cmd
         self.real_cmd = real_cmd
+        self.shell = shell
 
         self.hostname = proc.hostname
         self.hostmsg = proc.hostmsg
@@ -172,7 +174,6 @@ def read_pid(task):
     'format_command_for_pid()'.
     """
 
-    tobj = task.tobj
     task._dbg("_read_pid: reading PID for command: %s", task.cmd)
 
     timeout = 10
