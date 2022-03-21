@@ -284,6 +284,10 @@ class Task(_Procs.TaskBase):
         return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=self.hostname,
                                      startmsg=startmsg, timeout=timeout)
 
+    def poll(self):
+        """Check if the task is still running. If it is, return 'None', else return exit status."""
+        return self.tobj.poll()
+
 class Proc(_Procs.ProcBase):
     """This class provides API similar to the 'SSH' class API."""
 

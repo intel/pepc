@@ -107,6 +107,12 @@ class TaskBase:
                 pfx += f"PID {self.pid}: "
             _LOG.debug(pfx + fmt, *args)
 
+    def poll(self):
+        """Check if the task is still running. If it is, return 'None', else return exit status."""
+
+        # pylint: disable=no-self-use
+        raise Error("'poll()' was not defined by the child class")
+
     def __init__(self, proc, tobj, cmd, real_cmd, shell):
         """
         Initialize a class instance. The arguments are as follows.

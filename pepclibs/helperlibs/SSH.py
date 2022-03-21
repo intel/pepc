@@ -514,9 +514,7 @@ class Task(_Procs.TaskBase):
                                      startmsg=startmsg, timeout=timeout)
 
     def poll(self):
-        """
-        Check if the process is still running. If it is, return 'None', else return exit status.
-        """
+        """Check if the task is still running. If it is, return 'None', else return exit status."""
 
         chan = self.tobj
         if chan.exit_status_ready():
