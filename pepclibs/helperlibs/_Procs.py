@@ -50,6 +50,11 @@ class TaskBase:
 
         # The stream fetcher threads have to exit if the 'threads_exit' flag becomes 'True'.
         self.threads_exit = False
+        # Print debugging messages if 'True'.
+        self.debug = False
+        # Prefix debugging messages with this string. Can be useful to distinguish between debugging
+        # message related to different tasks.
+        self.debug_id = None
 
     def close(self):
         """Free allocated resources."""

@@ -113,11 +113,6 @@ class _ProcessPrivateData:
 
         # Real command (user command and all the prefixes/suffixes).
         self.real_cmd = None
-        # Print debugging messages if 'True'.
-        self.debug = False
-        # Prefix debugging messages with this string. Can be useful to distinguish between debugging
-        # message related to different processes.
-        self.debug_id = None
 
 def _add_custom_fields(tobj, cmd, real_cmd, shell):
     """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
@@ -305,7 +300,7 @@ class Task(_Procs.TaskBase):
         else:
             exitcode = None
 
-        if tobj._pd_.debug:
+        if self.debug:
             sout = "".join(output[0])
             serr = "".join(output[1])
             self._dbg("_wait_for_cmd: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
@@ -335,10 +330,10 @@ class Task(_Procs.TaskBase):
         """Print a debugging message related to process 'tobj'."""
 
         tobj = self.tobj
-        if tobj._pd_.debug:
+        if self.debug:
             pfx = ""
-            if tobj._pd_.debug_id:
-                pfx += f"{tobj._pd_.debug_id}: "
+            if self.debug_id:
+                pfx += f"{self.debug_id}: "
             if hasattr(tobj, "pid"):
                 pfx += f"PID {tobj.pid}: "
 

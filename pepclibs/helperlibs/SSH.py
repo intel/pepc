@@ -143,11 +143,6 @@ class _ChannelPrivateData:
 
         # Real command (user command and all the prefixes/suffixes).
         self.real_cmd = None
-        # Print debugging messages if 'True'.
-        self.debug = False
-        # Prefix debugging messages with this string. Can be useful to distinguish between debugging
-        # message related to different processes.
-        self.debug_id = None
 
 def _add_custom_fields(chan, cmd, real_cmd, shell):
     """Add a couple of custom fields to the paramiko channel object."""
@@ -542,7 +537,7 @@ class Task(_Procs.TaskBase):
         else:
             exitcode = None
 
-        if chan._pd_.debug:
+        if self.debug:
             sout = "".join(output[0])
             serr = "".join(output[1])
             self._dbg("_wait_for_cmd: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
@@ -582,10 +577,10 @@ class Task(_Procs.TaskBase):
         """Print a debugging message related to the 'chan' channel handling."""
 
         chan = self.tobj
-        if chan._pd_.debug:
+        if self.debug:
             pfx = ""
-            if chan._pd_.debug_id:
-                pfx += f"{chan._pd_.debug_id}: "
+            if self.debug_id:
+                pfx += f"{self.debug_id}: "
             if hasattr(chan, "pid"):
                 pfx += f"PID {chan.pid}: "
 
