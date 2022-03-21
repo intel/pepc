@@ -332,13 +332,7 @@ class Proc(_Procs.ProcBase):
             raise self._cmd_start_failure(cmd, err) from err
 
         _add_custom_fields(tobj)
-        task = Task(self, tobj, command, real_cmd, shell)
-
-        if shell:
-            # The first line of the output should contain the PID - extract it.
-            task.pid = _Procs.read_pid(task)
-
-        return task
+        return Task(self, tobj, command, real_cmd, shell)
 
     def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
                   env=None, shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument

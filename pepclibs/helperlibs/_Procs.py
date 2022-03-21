@@ -68,6 +68,34 @@ class TaskBase:
         # pylint: disable=no-self-use
         raise Error("'wait_for_cmd()' was not defined by the child class")
 
+    def read_pid(self):
+        """Read 'PID' for the just executed command and store it in 'self.pid'."""
+
+        self._dbg("read_pid: reading PID for command: %s", self.cmd)
+        assert self.shell
+
+        stdout, stderr, _ = self.wait_for_cmd(timeout=10, lines=(1, 0), join=False)
+
+        msg = f"\nThe command{self.hostmsg} was:\n{self.cmd}" \
+              f"\nThe actual (real) command was:\n{self.real_cmd}"
+
+        if len(stdout) != 1:
+            raise Error(f"expected only one line with PID in stdout, got {len(stdout)} lines "
+                        "instead.{msg}")
+        if stderr:
+            raise Error(f"expected only one line with PID in stdout and no lines in stderr, got "
+                        f"{len(stderr)} lines in stderr instead.{msg}")
+
+        pid = stdout[0].strip()
+
+        if len(pid) > 128:
+            raise Error(f"received too long and probably bogus PID: {pid}{msg}")
+        if not Trivial.is_int(pid):
+            raise Error(f"received a bogus non-integer PID: {pid}{msg}")
+
+        self._dbg("read_pid: PID is %s for command: %s", pid, self.cmd)
+        self.pid = int(pid)
+
     def _dbg(self, fmt, *args):
         """Print a debugging message."""
 
@@ -75,7 +103,7 @@ class TaskBase:
             pfx = ""
             if self.debug_id:
                 pfx += f"{self.debug_id}: "
-            if self.tobj.pid is not None:
+            if self.pid is not None:
                 pfx += f"PID {self.pid}: "
             _LOG.debug(pfx + fmt, *args)
 
@@ -113,6 +141,9 @@ class TaskBase:
         # Prefix debugging messages with this string. Can be useful to distinguish between debugging
         # message related to different tasks.
         self.debug_id = None
+
+        if self.shell:
+            self.read_pid()
 
     def close(self):
         """Free allocated resources."""
@@ -202,31 +233,6 @@ def format_command_for_pid(command, cwd=None):
     if cwd:
         prefix += f""" cd "{cwd}" &&"""
     return prefix + " exec " + command
-
-def read_pid(task):
-    """
-    Return PID of a just executed command that was previously formatted with
-    'format_command_for_pid()'.
-    """
-
-    task._dbg("_read_pid: reading PID for command: %s", task.cmd)
-
-    timeout = 10
-    stdout, stderr, _ = task._wait_for_cmd(timeout=timeout, lines=(1, 0), join=False)
-    assert len(stdout) == 1
-    assert not stderr
-
-    pid = stdout[0].strip()
-
-    if len(pid) > 128:
-        raise Error(f"received too long and probably bogus PID: {pid}\n"
-                    f"The command{task.hostmsg} was:\n{task.cmd}")
-    if not Trivial.is_int(pid):
-        raise Error(f"received a bogus non-integer PID: {pid}\n"
-                    f"The command{task.hostmsg} was:\n{task.cmd}")
-
-    task._dbg("_read_pid: PID is %s for command: %s", pid, task.cmd)
-    return int(pid)
 
 def get_next_queue_item(qobj, timeout):
     """

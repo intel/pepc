@@ -556,13 +556,7 @@ class SSH(_Procs.ProcBase):
 
         _add_custom_fields(chan)
 
-        task = Task(self, chan, command, cmd, shell)
-
-        if shell:
-            # The first line of the output should contain the PID - extract it.
-            task.pid = _Procs.read_pid(task)
-
-        return task
+        return Task(self, chan, command, cmd, shell)
 
     def _run_in_intsh(self, command, cwd=None):
         """Run command 'command' in the interactive shell."""
@@ -571,6 +565,7 @@ class SSH(_Procs.ProcBase):
             cmd = "sh -s"
             _LOG.debug("starting interactive shell%s: %s", self.hostmsg, cmd)
             self._intsh = self._run_in_new_session(cmd, shell=False)
+            self._intsh.shell = True
 
         cmd = _Procs.format_command_for_pid(command, cwd=cwd)
 
@@ -582,15 +577,16 @@ class SSH(_Procs.ProcBase):
         marker = f"--- {marker:064x}"
         cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{marker}" "$?"\n'
 
-        # Set the commands for the interactive shell tasks for the new command.
+        # Set the command attributes of the interactive shell task to new values.
         self._intsh.cmd = command
         self._intsh.real_cmd = cmd
 
         chan = self._intsh.tobj
         _init_intsh_custom_fields(chan, marker)
         chan.send(cmd)
-        self._intsh.pid = _Procs.read_pid(self._intsh)
 
+        # Update the PID of the interactive shell task with PID of the just executed command.
+        self._intsh.read_pid()
         return self._intsh
 
     def _acquire_intsh_lock(self, command=None):
