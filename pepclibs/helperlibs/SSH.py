@@ -533,7 +533,7 @@ class Task(_Procs.TaskBase):
 
         self.exitcode = None
 
-        self.read_pid()
+        self._read_pid()
 
 class SSH(_Procs.ProcBase):
     """

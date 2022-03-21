@@ -68,10 +68,10 @@ class TaskBase:
         # pylint: disable=no-self-use
         raise Error("'wait_for_cmd()' was not defined by the child class")
 
-    def read_pid(self):
+    def _read_pid(self):
         """Read 'PID' for the just executed command and store it in 'self.pid'."""
 
-        self._dbg("read_pid: reading PID for command: %s", self.cmd)
+        self._dbg("_read_pid: reading PID for command: %s", self.cmd)
         assert self.shell
 
         stdout, stderr, _ = self.wait_for_cmd(timeout=10, lines=(1, 0), join=False)
@@ -93,7 +93,7 @@ class TaskBase:
         if not Trivial.is_int(pid):
             raise Error(f"received a bogus non-integer PID: {pid}{msg}")
 
-        self._dbg("read_pid: PID is %s for command: %s", pid, self.cmd)
+        self._dbg("_read_pid: PID is %s for command: %s", pid, self.cmd)
         self.pid = int(pid)
 
     def _dbg(self, fmt, *args):
@@ -151,7 +151,7 @@ class TaskBase:
         self.debug_id = None
 
         if self.shell:
-            self.read_pid()
+            self._read_pid()
 
     def close(self):
         """Free allocated resources."""
