@@ -94,11 +94,6 @@ def _add_custom_fields(chan):
 
     pd = chan._pd_ = _ChannelPrivateData()
     pd.streams = [chan.recv, chan.recv_stderr]
-
-    # The below attributes are added to make the channel object look similar to the Popen object
-    # which the 'Procs' module uses.
-    chan.timeout = _Procs.TIMEOUT
-
     return chan
 
 def _init_intsh_custom_fields(chan, marker):
@@ -406,7 +401,7 @@ class Task(_Procs.TaskBase):
 
         chan = self.tobj
         pd = chan._pd_
-        chan.timeout = timeout
+        self.timeout = timeout
 
         self._dbg("wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: "
                   "%s\nreal command: %s", timeout, capture_output, str(lines), join, self.cmd,
@@ -468,9 +463,8 @@ class Task(_Procs.TaskBase):
         timeout that was used for the command.
         """
 
-        chan = self.tobj
         if timeout is None:
-            timeout = chan.timeout
+            timeout = self.timeout
 
         cmd = self.cmd
         if _LOG.getEffectiveLevel() == logging.DEBUG:

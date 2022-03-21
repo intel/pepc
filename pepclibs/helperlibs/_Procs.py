@@ -152,6 +152,7 @@ class TaskBase:
         self.cmd = cmd
         self.real_cmd = real_cmd
         self.shell = shell
+        self.timeout = TIMEOUT
 
         self.hostname = proc.hostname
         self.hostmsg = proc.hostmsg

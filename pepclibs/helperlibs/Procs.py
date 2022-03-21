@@ -71,12 +71,7 @@ def _add_custom_fields(tobj):
             setattr(tobj, name, wrapped_fobj)
 
     pd = tobj._pd_ = _ProcessPrivateData()
-
     pd.streams = [tobj.stdout, tobj.stderr]
-
-    # The below attributes are added to the Popen object look similar to the channel object which
-    # the 'SSH' module uses.
-    tobj.timeout = _Procs.TIMEOUT
     return tobj
 
 class Task(_Procs.TaskBase):
@@ -203,7 +198,7 @@ class Task(_Procs.TaskBase):
 
         tobj = self.tobj
         pd = tobj._pd_
-        tobj.timeout = timeout
+        self.timeout = timeout
 
         self._dbg("wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
                   "real command: %s", timeout, capture_output, str(lines), join, self.cmd,
@@ -265,9 +260,8 @@ class Task(_Procs.TaskBase):
         timeout that was used for the command.
         """
 
-        tobj = self.tobj
         if timeout is None:
-            timeout = tobj.timeout
+            timeout = self.timeout
 
         cmd = self.cmd
         if _LOG.getEffectiveLevel() == logging.DEBUG:
