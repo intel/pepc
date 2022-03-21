@@ -191,41 +191,9 @@ class Task(_Procs.TaskBase):
 
         return _Procs.get_lines_to_return(self, lines=lines)
 
-    def _wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                      lines=(None, None), join=True):
-        """
-        This function waits for a command executed with the run_async()' function to finish or print
-        something to stdout or stderr.
-
-        The optional 'timeout' argument specifies the longest time in seconds this function will
-        wait for the command to finish. If the command does not finish, this function exits and
-        returns 'None' as the exit code of the command. The timeout must be a positive floating
-        point number. By default it is 1 hour. If 'timeout' is '0', then this function will just
-        check process status, grab its output, if any, and return immediately.
-
-        Note, this function saves the used timeout in 'tobj.timeout' attribute upon exit.
-
-        The 'capture_output' parameter controls whether the output of the command should be
-        collected or not. If it is not 'True', the output will simply be discarded and this function
-        will return empty strings instead of command's stdout and stderr.
-
-        The 'output_fobjs' parameter is a tuple with two file-like objects where the stdout and
-        stderr of the command will be echoed, in addition to being captured and returned. If not
-        specified, then the the command output will not be echoed anywhere.
-
-        The 'lines' argument provides a capability to wait for the command to output certain amount
-        of lines. By default, there is no limit, and this function will wait either for timeout or
-        until the command exits. The 'line' argument is a tuple, the first element of the tuple is
-        the 'stdout' limit, the second is the 'stderr' limit. For example, 'lines=(1, 5)' would mean
-        to wait for one full line in 'stdout' or five full lines in 'stderr'. And 'lines=(1, None)'
-        would mean to wait for one line in 'stdout' and any amount of lines in 'stderr'.
-
-        The 'join' argument controls whether the captured output lines should be joined and returned
-        as a single string, or no joining is needed and the output should be returned as a list of
-        strings.
-
-        This function returns a named tuple similar to what the 'run()' function returns.
-        """
+    def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
+                     lines=(None, None), join=True):
+        """Refer to '_Procs().TaskBase().wait_for_cmd()'."""
 
         if timeout is None:
             timeout = _Procs.TIMEOUT
@@ -247,7 +215,7 @@ class Task(_Procs.TaskBase):
         pd = tobj._pd_
         tobj.timeout = timeout
 
-        self._dbg("_wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
+        self._dbg("wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
                   "real command: %s", timeout, capture_output, str(lines), join, self.cmd,
                   self.real_cmd)
 
@@ -272,7 +240,7 @@ class Task(_Procs.TaskBase):
                                                             args=(streamid, self), daemon=True)
                     pd.threads[streamid].start()
         else:
-            self._dbg("_wait_for_cmd: queue is empty: %s", pd.queue.empty())
+            self._dbg("wait_for_cmd: queue is empty: %s", pd.queue.empty())
 
         output = self._do_wait_for_cmd(timeout=timeout, capture_output=capture_output,
                                        output_fobjs=output_fobjs, lines=lines)
@@ -295,7 +263,7 @@ class Task(_Procs.TaskBase):
         if self.debug:
             sout = "".join(output[0])
             serr = "".join(output[1])
-            self._dbg("_wait_for_cmd: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
+            self._dbg("wait_for_cmd: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
                       exitcode, sout.rstrip(), serr.rstrip())
 
         return ProcResult(stdout=stdout, stderr=stderr, exitcode=exitcode)
@@ -467,8 +435,8 @@ class Proc(_Procs.ProcBase):
                                   env=env, shell=shell, newgrp=newgrp)
 
         # Wait for the command to finish and handle the time-out situation.
-        result = task._wait_for_cmd(capture_output=capture_output, output_fobjs=output_fobjs,
-                                    timeout=timeout, join=join)
+        result = task.wait_for_cmd(capture_output=capture_output, output_fobjs=output_fobjs,
+                                   timeout=timeout, join=join)
 
         if result.exitcode is None:
             msg = _Procs.cmd_failed_msg(command, *tuple(result), timeout=timeout)

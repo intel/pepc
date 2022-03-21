@@ -33,6 +33,41 @@ class TaskBase:
     The base class for local and remote tasks (processes).
     """
 
+    def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
+                     lines=(None, None), join=True):
+        """
+        This method waits for the task to finish or print something to stdout or stderr. The
+        arguments are as follows.
+          * timeout - the maximum time in seconds to wait for the task to finish. If it does not
+                      finish, this function exits and returns 'None' as the exit code. The 'timeout'
+                      argument must be a positive floating point number. By default it is 1 hour. If
+                      'timeout' is '0', then this method will just check task status, grab its
+                      output, if any, and return immediately. Note, this method saves the used
+                      timeout in 'self.timeout'.
+          * capture_output - whether the output of the task should be captured. If it is 'False',
+                             the output will simply be discarded and this method will return empty
+                             strings instead of command's stdout and stderr.
+          * output_fobjs - a tuple with two file-like objects where stdout and stderr output of the
+                             task will be echoed. If not specified, then the the command output will
+                             not be echoed anywhere. Note, this argument is independent on the
+                             'capture_output' argument.
+          * lines - provides a capability to wait for the command to output certain amount of lines.
+                    By default, there is no limit, and this function will wait either for timeout or
+                    until the command exits. The 'line' argument is a tuple, the first element of
+                    the tuple is the 'stdout' limit, the second is the 'stderr' limit. For example,
+                    'lines=(1, 5)' would mean to wait for one full line in 'stdout' or five full
+                    lines in 'stderr'. And 'lines=(1, None)' would mean to wait for one line in
+                    'stdout' and any amount of lines in 'stderr'.
+          * join - controls whether the captured output lines should be joined and returned as a
+                   single string, or no joining is needed and the output should be returned as a
+                   list of strings.
+
+        This function returns the 'ProcResult' named tuple.
+        """
+
+        # pylint: disable=no-self-use
+        raise Error("'wait_for_cmd()' was not defined by the child class")
+
     def _dbg(self, fmt, *args):
         """Print a debugging message."""
 
