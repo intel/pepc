@@ -61,48 +61,6 @@ logging.getLogger("paramiko").setLevel(logging.WARNING)
 # The exceptions to handle when dealing with paramiko.
 _PARAMIKO_EXCEPTIONS = (OSError, IOError, paramiko.SSHException, socket.error)
 
-def _stream_fetcher(streamid, task):
-    """
-    This function runs in a separate thread. All it does is it fetches one of the output streams
-    of the executed program (either stdout or stderr) and puts the result into the queue.
-    """
-
-    chan = task.tobj
-    pd = chan._pd_
-    read_func = pd.streams[streamid]
-    decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
-
-    try:
-        while not task.threads_exit:
-            if not read_func:
-                task._dbg("stream %d: stream is closed", streamid)
-                break
-
-            data = None
-            try:
-                data = read_func(4096)
-            except _PARAMIKO_EXCEPTIONS as err:
-                task._dbg("stream %d: read timeout", streamid)
-                continue
-
-            if not data:
-                task._dbg("stream %d: no more data", streamid)
-                break
-
-            data = decoder.decode(data)
-            if not data:
-                task._dbg("stream %d: read more data", streamid)
-                continue
-
-            task._dbg("stream %d: read data:\n%s", streamid, data)
-            pd.queue.put((streamid, data))
-    except BaseException as err: # pylint: disable=broad-except
-        _LOG.error(err)
-
-    # The end of stream indicator.
-    pd.queue.put((streamid, None))
-    task._dbg("stream %d: thread exists", streamid)
-
 def _have_enough_lines(output, lines=(None, None)):
     """Returns 'True' if there are enough lines in the output buffer."""
 
@@ -209,6 +167,47 @@ class Task(_Procs.TaskBase):
     """
     This class represents a remote task (process) that was executed by an 'SSH' object.
     """
+
+    def _stream_fetcher(self, streamid):
+        """
+        This methos runs in a separate thread. All it does is it fetches one of the output streams
+        of the executed program (either stdout or stderr) and puts the result into the queue.
+        """
+
+        chan = self.tobj
+        pd = chan._pd_
+        read_func = pd.streams[streamid]
+        try:
+            decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
+            while not self.threads_exit:
+                if not read_func:
+                    self._dbg("stream %d: stream is closed", streamid)
+                    break
+
+                data = None
+                try:
+                    data = read_func(4096)
+                except _PARAMIKO_EXCEPTIONS as err:
+                    self._dbg("stream %d: read timeout", streamid)
+                    continue
+
+                if not data:
+                    self._dbg("stream %d: no more data", streamid)
+                    break
+
+                data = decoder.decode(data)
+                if not data:
+                    self._dbg("stream %d: read more data", streamid)
+                    continue
+
+                self._dbg("stream %d: read data:\n%s", streamid, data)
+                pd.queue.put((streamid, data))
+        except BaseException as err: # pylint: disable=broad-except
+            _LOG.error(err)
+
+        # The end of stream indicator.
+        pd.queue.put((streamid, None))
+        self._dbg("stream %d: thread exists", streamid)
 
     def _recv_exit_status_timeout(self, timeout):
         """
@@ -459,9 +458,9 @@ class Task(_Procs.TaskBase):
             for streamid in (0, 1):
                 if pd.streams[streamid]:
                     assert pd.threads[streamid] is None
-                    pd.threads[streamid] = threading.Thread(target=_stream_fetcher,
+                    pd.threads[streamid] = threading.Thread(target=self._stream_fetcher,
                                                             name='SSH-stream-fetcher',
-                                                            args=(streamid, self), daemon=True)
+                                                            args=(streamid,), daemon=True)
                     pd.threads[streamid].start()
         else:
             self._dbg("wait_for_cmd: queue is empty: %s", pd.queue.empty())
