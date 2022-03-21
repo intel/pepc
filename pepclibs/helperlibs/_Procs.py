@@ -141,14 +141,14 @@ class TaskBase:
         self.pid = None
         # Exit code of the command ('None' if it is still running).
         self.exitcode = None
-
-        # The stream fetcher threads have to exit if the 'threads_exit' flag becomes 'True'.
-        self.threads_exit = False
         # Print debugging messages if 'True'.
         self.debug = False
         # Prefix debugging messages with this string. Can be useful to distinguish between debugging
         # message related to different tasks.
         self.debug_id = None
+
+        # The stream fetcher threads have to exit if the '_threads_exit' flag becomes 'True'.
+        self._threads_exit = False
 
         if self.shell:
             self._read_pid()
@@ -158,8 +158,8 @@ class TaskBase:
 
         self._dbg("close()")
 
-        if hasattr(self, "threads_exit"):
-            self.threads_exit = True
+        if hasattr(self, "_threads_exit"):
+            self._threads_exit = True
 
         tobj = getattr(self, "tobj", None)
         if tobj:

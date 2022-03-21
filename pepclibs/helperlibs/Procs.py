@@ -100,7 +100,7 @@ class Task(_Procs.TaskBase):
         pd = tobj._pd_
         try:
             decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
-            while not self.threads_exit:
+            while not self._threads_exit:
                 if not read_func:
                     self._dbg("stream %d: stream is closed", streamid)
                     break
@@ -216,8 +216,8 @@ class Task(_Procs.TaskBase):
                   "real command: %s", timeout, capture_output, str(lines), join, self.cmd,
                   self.real_cmd)
 
-        if self.threads_exit:
-            raise Error("this process has 'threads_exit' flag set and it cannot be used")
+        if self._threads_exit:
+            raise Error("this process has '_threads_exit' flag set and it cannot be used")
 
         if _Procs.all_output_consumed(self):
             # This command has already exited.

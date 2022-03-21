@@ -178,7 +178,7 @@ class Task(_Procs.TaskBase):
         pd = chan._pd_
         try:
             decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
-            while not self.threads_exit:
+            while not self._threads_exit:
                 if not read_func:
                     self._dbg("stream %d: stream is closed", streamid)
                     break
@@ -445,7 +445,7 @@ class Task(_Procs.TaskBase):
                   "%s\nreal command: %s", timeout, capture_output, str(lines), join, self.cmd,
                   self.real_cmd)
 
-        if self.threads_exit:
+        if self._threads_exit:
             raise Error("this SSH channel has 'threads_exit' flag set and it cannot be used")
 
         if _Procs.all_output_consumed(self):
