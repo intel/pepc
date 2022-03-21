@@ -523,6 +523,20 @@ class Task(_Procs.TaskBase):
             return chan.recv_exit_status()
         return None
 
+    def _intsh_init(self, cmd, real_cmd):
+        """
+        This method is called when a new command is executed in the interactive shell task. It
+        re-sets all the required fields to match the new command.
+        """
+
+        self.shell = True
+        self.cmd = cmd
+        self.real_cmd = real_cmd
+
+        self.exitcode = None
+
+        self.read_pid()
+
 class SSH(_Procs.ProcBase):
     """
     This class provides API for communicating with remote hosts over SSH.
@@ -560,29 +574,24 @@ class SSH(_Procs.ProcBase):
             cmd = "sh -s"
             _LOG.debug("starting interactive shell%s: %s", self.hostmsg, cmd)
             self._intsh = self._run_in_new_session(cmd, shell=False)
-            self._intsh.shell = True
 
         task = self._intsh
         cmd = _Procs.format_command_for_pid(command, cwd=cwd)
 
-        # Run the command in a shell. Keep in mind, the command starts with 'exec', so it'll use the
-        # shell process at the end. Once the command finishes, print its exit status and a random
-        # marker specifying the end of output. This marker will be used to detect that the command
-        # has finishes.
+        # Run the command in the interactive shell. Once the command finishes, print its exit status
+        # and a random marker specifying the end of output. This marker will be used to detect that
+        # the command has finishes.
         marker = random.getrandbits(256)
         marker = f"--- {marker:064x}"
-        cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{marker}" "$?"\n'
-
-        # Re-initialize various attributes to match the new command that is about to be executed.
-        task.cmd = command
-        task.real_cmd = cmd
-        task.exitcode = None
-
         _init_intsh_custom_fields(task.tobj, marker)
+
+        cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{marker}" "$?"\n'
         task.tobj.send(cmd)
 
-        # Update the PID of the interactive shell task with PID of the just executed command.
-        task.read_pid()
+        # Partially re-initialize the internal shell 'Task' object to match the new command that
+        # we've just executed.
+        task._intsh_init(command, cmd)
+
         return task
 
     def _acquire_intsh_lock(self, command=None):
