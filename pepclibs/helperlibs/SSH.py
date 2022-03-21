@@ -73,7 +73,7 @@ def _stream_fetcher(streamid, task):
     decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
 
     try:
-        while not pd.threads_exit:
+        while not task.threads_exit:
             if not read_func:
                 task._dbg("stream %d: stream is closed", streamid)
                 break
@@ -130,8 +130,6 @@ class _ChannelPrivateData:
         self.queue = None
         # The threads fetching data from the output streams and placing them to the queue.
         self.threads = [None, None]
-        # The threads have to exit if the 'threads_exit' flag becomes 'True'.
-        self.threads_exit = False
         # Exit code of the command ('None' if it is still running).
         self.exitcode = None
         # The output for the command that was read from 'queue', but not yet sent to the user
@@ -503,8 +501,8 @@ class Task(_Procs.TaskBase):
                   "%s\nreal command: %s", timeout, capture_output, str(lines), join, chan.cmd,
                   pd.real_cmd)
 
-        if pd.threads_exit:
-            raise Error("this SSH channel has '_threads_exit_ flag set and it cannot be used")
+        if self.threads_exit:
+            raise Error("this SSH channel has 'threads_exit' flag set and it cannot be used")
 
         if _Procs.all_output_consumed(self):
             return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
@@ -596,22 +594,13 @@ class Task(_Procs.TaskBase):
     def close(self):
         """The channel close method that will signal the threads to exit."""
 
-        chan = self.tobj
-        if hasattr(chan, "_pd_"):
-            self._dbg("_close()")
-            pd = chan._pd_
-            pd.threads_exit = True
-
+        self._dbg("_close()")
         super().close()
 
     def __del__(self):
         """The channel object destructor which makes all threads to exit."""
 
-        chan = self.tobj
-        if hasattr(chan, "_pd_"):
-            self._dbg("__del__()")
-            self.close()
-
+        self._dbg("__del__()")
         super().__del__()
 
 class SSH(_Procs.ProcBase):

@@ -44,7 +44,7 @@ def _stream_fetcher(streamid, task):
     stream = pd.streams[streamid]
     try:
         decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
-        while not pd.threads_exit:
+        while not task.threads_exit:
             if not stream:
                 task._dbg("stream %d: stream is closed", streamid)
                 break
@@ -100,8 +100,6 @@ class _ProcessPrivateData:
         self.queue = None
         # The threads fetching data from the output streams and placing them to the queue.
         self.threads = [None, None]
-        # The threads have to exit if the 'threads_exit' flag becomes 'True'.
-        self.threads_exit = False
         # Exit code of the command ('None' if it is still running).
         self.exitcode = None
         # The output for the command that was read from 'queue', but not yet sent to the user
@@ -266,6 +264,9 @@ class Task(_Procs.TaskBase):
                   "real command: %s", timeout, capture_output, str(lines), join, tobj.cmd,
                   pd.real_cmd)
 
+        if self.threads_exit:
+            raise Error("this process has 'threads_exit' flag set and it cannot be used")
+
         if _Procs.all_output_consumed(self):
             # This command has already exited.
             return ProcResult(stdout="", stderr="", exitcode=pd.exitcode)
@@ -346,22 +347,13 @@ class Task(_Procs.TaskBase):
     def _close(self):
         """Task's 'close()' method that will signal the threads to exit."""
 
-        tobj = self.tobj
-        if hasattr(tobj, "_pd_"):
-            self._dbg("_close()")
-            pd = tobj._pd_
-            pd.threads_exit = True
-
+        self._dbg("_close()")
         super().close()
 
     def __del__(self):
         """Task object destructor which makes all threads to exit."""
 
-        tobj = self.tobj
-        if hasattr(tobj, "_pd_"):
-            self._dbg("__del__()")
-            self.close()
-
+        self._dbg("__del__()")
         super().__del__()
 
 class Proc(_Procs.ProcBase):

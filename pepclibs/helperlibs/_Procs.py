@@ -48,16 +48,22 @@ class TaskBase:
         self.hostname = proc.hostname
         self.hostmsg = proc.hostmsg
 
+        # The stream fetcher threads have to exit if the 'threads_exit' flag becomes 'True'.
+        self.threads_exit = False
+
     def close(self):
         """Free allocated resources."""
 
+        if hasattr(self, "threads_exit"):
+            self.threads_exit = True
+
         tobj = getattr(self, "tobj", None)
         if tobj:
-            if hasattr(tobj, "close", None):
+            if hasattr(tobj, "close"):
                 tobj.close()
             self.tobj = None
 
-        if getattr(self, "proc", None):
+        if hasattr(self, "proc"):
             self.proc = None
 
     def __del__(self):
