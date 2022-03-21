@@ -111,10 +111,7 @@ class _ProcessPrivateData:
         # Whether the command was executed via the shell.
         self.shell = None
 
-        # Real command (user command and all the prefixes/suffixes).
-        self.real_cmd = None
-
-def _add_custom_fields(tobj, cmd, real_cmd, shell):
+def _add_custom_fields(tobj, shell):
     """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
 
     for name in ("stdin", "stdout", "stderr"):
@@ -126,13 +123,11 @@ def _add_custom_fields(tobj, cmd, real_cmd, shell):
 
     pd = tobj._pd_ = _ProcessPrivateData()
 
-    pd.real_cmd = real_cmd
     pd.shell = shell
     pd.streams = [tobj.stdout, tobj.stderr]
 
     # The below attributes are added to the Popen object look similar to the channel object which
     # the 'SSH' module uses.
-    tobj.cmd = cmd
     tobj.timeout = _Procs.TIMEOUT
     return tobj
 
@@ -256,8 +251,8 @@ class Task(_Procs.TaskBase):
         tobj.timeout = timeout
 
         self._dbg("_wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
-                  "real command: %s", timeout, capture_output, str(lines), join, tobj.cmd,
-                  pd.real_cmd)
+                  "real command: %s", timeout, capture_output, str(lines), join, self.cmd,
+                  self.real_cmd)
 
         if self.threads_exit:
             raise Error("this process has 'threads_exit' flag set and it cannot be used")
@@ -318,10 +313,10 @@ class Task(_Procs.TaskBase):
         if timeout is None:
             timeout = tobj.timeout
 
-        cmd = tobj.cmd
+        cmd = self.cmd
         if _LOG.getEffectiveLevel() == logging.DEBUG:
-            if tobj.cmd != tobj._pd_.real_cmd:
-                cmd = f"{cmd}\nReal command: {tobj._pd_.real_cmd}"
+            if self.cmd != self.real_cmd:
+                cmd += f"\nReal command: {self.real_cmd}"
 
         return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=self.hostname,
                                      startmsg=startmsg, timeout=timeout)
@@ -372,8 +367,8 @@ class Proc(_Procs.ProcBase):
         except OSError as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        _add_custom_fields(tobj, command, real_cmd, shell)
-        task = Task(self, tobj)
+        _add_custom_fields(tobj, shell)
+        task = Task(self, tobj, command, real_cmd)
 
         if shell:
             # The first line of the output should contain the PID - extract it.

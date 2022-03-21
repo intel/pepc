@@ -44,22 +44,28 @@ class TaskBase:
                 pfx += f"PID {self.pid}: "
             _LOG.debug(pfx + fmt, *args)
 
-    def __init__(self, proc, tobj):
+    def __init__(self, proc, tobj, cmd, real_cmd):
         """
         Initialize a class instance. The arguments are as follows.
           * proc - the process management object that was used for creating this task (e.g.,
                    'Procs.Proc()' or 'SSH.SSH()'.
           * tobj - the low-level object representing the local or remote process corresponding to
                    this task object. E.g., this is a 'Popen()' object in case of a local process.
+          * cmd - the executed command.
+          * real_cmd - sometimes the original command gets slightly amended, e.g., it is sometimes
+                       prefixed with a PID print command. This argument should provide the actual
+                       executed command.
         """
 
         self.proc = proc
         self.tobj = tobj
+        self.cmd = cmd
+        self.real_cmd = real_cmd
 
         self.hostname = proc.hostname
         self.hostmsg = proc.hostmsg
 
-        # Process ID of the runnint task. In some cases may be set to 'None', which should be
+        # Process ID of the running task. In some cases may be set to 'None', which should be
         # interpreted as "not known".
         self.pid = None
 
@@ -162,12 +168,12 @@ def format_command_for_pid(command, cwd=None):
 
 def read_pid(task):
     """
-    Return PID of a just executed command that was previously fromatted with
+    Return PID of a just executed command that was previously formatted with
     'format_command_for_pid()'.
     """
 
     tobj = task.tobj
-    task._dbg("_read_pid: reading PID for command: %s", tobj.cmd)
+    task._dbg("_read_pid: reading PID for command: %s", task.cmd)
 
     timeout = 10
     stdout, stderr, _ = task._wait_for_cmd(timeout=timeout, lines=(1, 0), join=False)
@@ -178,12 +184,12 @@ def read_pid(task):
 
     if len(pid) > 128:
         raise Error(f"received too long and probably bogus PID: {pid}\n"
-                    f"The command{tobj._pd_.proc.hostmsg} was:\n{tobj.cmd}")
+                    f"The command{task.hostmsg} was:\n{task.cmd}")
     if not Trivial.is_int(pid):
         raise Error(f"received a bogus non-integer PID: {pid}\n"
-                    f"The command{tobj._pd_.proc.hostmsg} was:\n{tobj.cmd}")
+                    f"The command{task.hostmsg} was:\n{task.cmd}")
 
-    task._dbg("_read_pid: PID is %s for command: %s", pid, tobj.cmd)
+    task._dbg("_read_pid: PID is %s for command: %s", pid, task.cmd)
     return int(pid)
 
 def get_next_queue_item(qobj, timeout):

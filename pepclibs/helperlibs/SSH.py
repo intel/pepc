@@ -141,10 +141,7 @@ class _ChannelPrivateData:
         # Whether the command was executed via the shell.
         self.shell = None
 
-        # Real command (user command and all the prefixes/suffixes).
-        self.real_cmd = None
-
-def _add_custom_fields(chan, cmd, real_cmd, shell):
+def _add_custom_fields(chan, shell):
     """Add a couple of custom fields to the paramiko channel object."""
 
     pd = chan._pd_ = _ChannelPrivateData()
@@ -169,18 +166,16 @@ def _add_custom_fields(chan, cmd, real_cmd, shell):
         wrapped_fobj.name = name
         setattr(chan, name, wrapped_fobj)
 
-    pd.real_cmd = real_cmd
     pd.shell = shell
     pd.streams = [chan.recv, chan.recv_stderr]
 
     # The below attributes are added to make the channel object look similar to the Popen object
     # which the 'Procs' module uses.
-    chan.cmd = cmd
     chan.timeout = _Procs.TIMEOUT
 
     return chan
 
-def _init_intsh_custom_fields(chan, cmd, real_cmd, marker):
+def _init_intsh_custom_fields(chan, marker):
     """
     In case of interactive shell we carry more private data in the paramiko channel. And for every
     new command that we run in the interactive shell, we have to re-initialize some of the fields.
@@ -193,10 +188,6 @@ def _init_intsh_custom_fields(chan, cmd, real_cmd, marker):
     pd.marker = marker
     # The regular expression the last line of command output should match.
     pd.marker_regex = re.compile(f"^{marker}, \\d+ ---$")
-    # The command executed under the interactive shell.
-    chan.cmd = cmd
-    # Re real command ('pd.cmd' and all the prefixes/suffixes).
-    pd.real_cmd = real_cmd
     # The last line printed by the command to stdout observed so far.
     pd.ll = ""
     # Whether the last line ('ll') should be checked against the marker. Used as an optimization in
@@ -318,7 +309,7 @@ class Task(_Procs.TaskBase):
             if not Trivial.is_int(exitcode):
                 raise Error(f"the command was running{self.hostmsg} under the interactive "
                             f"shell and finished with a correct marker, but unexpected exit "
-                            f"code '{exitcode}'.\nThe command was: {chan.cmd}")
+                            f"code '{exitcode}'.\nThe command was: {self.cmd}")
 
             pd.ll = ""
             pd.check_ll = False
@@ -358,7 +349,7 @@ class Task(_Procs.TaskBase):
             elif data is None:
                 raise Error(f"the interactive shell process{self.hostmsg} closed stream "
                             f"'{pd.streams[streamid]._stream_name}' while running the following "
-                            f"command:\n{chan.cmd}")
+                            f"command:\n{self.cmd}")
             elif streamid == 0:
                 # The indication that the command has ended is our marker in stdout (stream 0). Our
                 # goal is to watch for this marker, hide it from the user, because it does not
@@ -380,7 +371,7 @@ class Task(_Procs.TaskBase):
 
         if _Procs.all_output_consumed(self):
             # Mark the interactive shell process as vacant.
-            acquired = self.proc._acquire_intsh_lock(chan.cmd)
+            acquired = self.proc._acquire_intsh_lock(self.cmd)
             if not acquired:
                 _LOG.warning("failed to mark the interactive shell process as free")
             else:
@@ -493,8 +484,8 @@ class Task(_Procs.TaskBase):
         chan.timeout = timeout
 
         self._dbg("_wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: "
-                  "%s\nreal command: %s", timeout, capture_output, str(lines), join, chan.cmd,
-                  pd.real_cmd)
+                  "%s\nreal command: %s", timeout, capture_output, str(lines), join, self.cmd,
+                  self.real_cmd)
 
         if self.threads_exit:
             raise Error("this SSH channel has 'threads_exit' flag set and it cannot be used")
@@ -555,10 +546,10 @@ class Task(_Procs.TaskBase):
         if timeout is None:
             timeout = chan.timeout
 
-        cmd = chan.cmd
+        cmd = self.cmd
         if _LOG.getEffectiveLevel() == logging.DEBUG:
-            if chan.cmd != chan._pd_.real_cmd:
-                cmd = f"{cmd}\nReal command: {chan._pd_.real_cmd}"
+            if self.cmd != self.real_cmd:
+                cmd += f"\nReal command: {self.real_cmd}"
 
         return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=self.hostname,
                                      startmsg=startmsg, timeout=timeout)
@@ -599,9 +590,9 @@ class SSH(_Procs.ProcBase):
         except _PARAMIKO_EXCEPTIONS as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        _add_custom_fields(chan, command, cmd, shell)
+        _add_custom_fields(chan, shell)
 
-        task = Task(self, chan)
+        task = Task(self, chan, command, cmd)
 
         if shell:
             # The first line of the output should contain the PID - extract it.
@@ -626,9 +617,13 @@ class SSH(_Procs.ProcBase):
         marker = random.getrandbits(256)
         marker = f"--- {marker:064x}"
         cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{marker}" "$?"\n'
-        chan = self._intsh.tobj
 
-        _init_intsh_custom_fields(chan, command, cmd, marker)
+        # Set the commands for the interactive shell tasks for the new command.
+        self._intsh.cmd = command
+        self._intsh.real_cmd = cmd
+
+        chan = self._intsh.tobj
+        _init_intsh_custom_fields(chan, marker)
         chan.send(cmd)
         self._intsh.pid = _Procs.read_pid(self._intsh)
 
