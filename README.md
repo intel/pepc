@@ -89,7 +89,7 @@ The easiest way of installing 'pepc' is by using the 'pip' tool, and one way of 
 running the following command:
 
 ```
-pip install --user --upgrade git+https://github.com/intel/pepc.git@release
+pip3 install --user --upgrade git+https://github.com/intel/pepc.git@release
 ```
 
 This command will download 'pepc' from the 'release' branch of the git repository, and install it to
@@ -100,7 +100,7 @@ The other way of doing this is by first cloning the git repository, checking out
 branch, and running the following command:
 
 ```
-pip install --user --upgrade .
+pip3 install --user --upgrade .
 ```
 
 ## Standalone version
