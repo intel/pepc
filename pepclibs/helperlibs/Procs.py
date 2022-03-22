@@ -556,6 +556,12 @@ class Proc(_Procs.ProcBase):
         except Error as err:
             raise Error("failed to copy files '%s' to '%s':\n%s" % (src, dst, err)) from err
 
+    def cmd_failed_msg(self, command, stdout, stderr, exitcode, startmsg=None, timeout=None):
+        """A simple wrapper around '_Procs.cmd_failed_msg()'."""
+
+        return _Procs.cmd_failed_msg(command, stdout, stderr, exitcode, hostname=self.hostname,
+                                     startmsg=startmsg, timeout=timeout)
+
     @staticmethod
     def open(path, mode):
         """
