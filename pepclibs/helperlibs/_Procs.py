@@ -80,7 +80,7 @@ def format_command_for_pid(command, cwd=None):
     prefix = r'printf "%s\n" "$$";'
     if cwd:
         prefix += f""" cd "{cwd}" &&"""
-    return prefix + " exec -- " + command
+    return prefix + " exec " + command
 
 def read_pid(task):
     """
