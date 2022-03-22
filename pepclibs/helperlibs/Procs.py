@@ -53,13 +53,6 @@ class _ProcessPrivateData:
     def __init__(self):
         """The constructor."""
 
-        # The 2 output streams of the command's process (stdout, stderr).
-        self.streams = []
-        # The queue which is used for passing commands output from stream fetcher threads.
-        self.queue = None
-        # The threads fetching data from the output streams and placing them to the queue.
-        self.threads = [None, None]
-
 def _add_custom_fields(tobj):
     """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
 
@@ -70,8 +63,7 @@ def _add_custom_fields(tobj):
                                                          get_err_prefix=_get_err_prefix)
             setattr(tobj, name, wrapped_fobj)
 
-    pd = tobj._pd_ = _ProcessPrivateData()
-    pd.streams = [tobj.stdout, tobj.stderr]
+    tobj._pd_ = _ProcessPrivateData()
     return tobj
 
 class Task(_Procs.TaskBase):
@@ -85,8 +77,6 @@ class Task(_Procs.TaskBase):
         of the executed program (either stdout or stderr) and puts the result into the queue.
         """
 
-        tobj = self.tobj
-        pd = tobj._pd_
         try:
             decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
             while not self._threads_exit:
@@ -112,11 +102,11 @@ class Task(_Procs.TaskBase):
                     continue
 
                 self._dbg("stream %d: read data:\n%s", streamid, data)
-                pd.queue.put((streamid, data))
+                self._queue.put((streamid, data))
         except BaseException as err: # pylint: disable=broad-except
             _LOG.error(err)
 
-        pd.queue.put((streamid, None))
+        self._queue.put((streamid, None))
         self._dbg("stream %d: thread exists", streamid)
 
     def _wait_timeout(self, timeout):
@@ -137,8 +127,6 @@ class Task(_Procs.TaskBase):
                          lines=(None, None)):
         """Implements '_wait_for_cmd()'."""
 
-        tobj = self.tobj
-        pd = tobj._pd_
         start_time = time.time()
 
         self._dbg("_do_wait_for_cmd: starting with partial: %s, output:\n%s",
@@ -149,7 +137,7 @@ class Task(_Procs.TaskBase):
                 self._dbg("_do_wait_for_cmd: process exited with status %d", self.exitcode)
                 break
 
-            streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
+            streamid, data = _Procs.get_next_queue_item(self._queue, timeout)
             if streamid == -1:
                 self._dbg("_do_wait_for_cmd: nothing in the queue for %d seconds", timeout)
                 break
@@ -159,10 +147,10 @@ class Task(_Procs.TaskBase):
             else:
                 self._dbg("_do_wait_for_cmd: stream %d closed", streamid)
                 # One of the output streams closed.
-                pd.threads[streamid].join()
-                pd.threads[streamid] = pd.streams[streamid] = None
+                self._threads[streamid].join()
+                self._threads[streamid] = self._streams[streamid] = None
 
-                if not pd.streams[0] and not pd.streams[1]:
+                if not self._streams[0] and not self._streams[1]:
                     self._dbg("_do_wait_for_cmd: both streams closed")
                     self.exitcode = self._wait_timeout(timeout)
                     break
@@ -196,8 +184,6 @@ class Task(_Procs.TaskBase):
         if lines[0] == 0 and lines[1] == 0:
             raise Error("the 'lines' argument cannot be (0, 0)")
 
-        tobj = self.tobj
-        pd = tobj._pd_
         self.timeout = timeout
 
         self._dbg("wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
@@ -211,22 +197,22 @@ class Task(_Procs.TaskBase):
             # This command has already exited.
             return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
 
-        if not tobj.stdout and not tobj.stderr:
+        if not self.tobj.stdout and not self.tobj.stderr:
             self.exitcode = self._wait_timeout(timeout)
             return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
 
-        if not pd.queue:
-            pd.queue = queue.Queue()
+        if not self._queue:
+            self._queue = queue.Queue()
             for streamid in (0, 1):
-                if pd.streams[streamid]:
-                    assert pd.threads[streamid] is None
-                    args = (streamid, pd.streams[streamid].read)
-                    pd.threads[streamid] = threading.Thread(target=self._stream_fetcher,
-                                                            name='Procs-stream-fetcher', args=args,
-                                                            daemon=True)
-                    pd.threads[streamid].start()
+                if self._streams[streamid]:
+                    assert self._threads[streamid] is None
+                    args = (streamid, self._streams[streamid].read)
+                    self._threads[streamid] = threading.Thread(target=self._stream_fetcher,
+                                                               name='Procs-stream-fetcher',
+                                                               args=args, daemon=True)
+                    self._threads[streamid].start()
         else:
-            self._dbg("wait_for_cmd: queue is empty: %s", pd.queue.empty())
+            self._dbg("wait_for_cmd: queue is empty: %s", self._queue.empty())
 
         output = self._do_wait_for_cmd(timeout=timeout, capture_output=capture_output,
                                        output_fobjs=output_fobjs, lines=lines)
@@ -321,7 +307,7 @@ class Proc(_Procs.ProcBase):
             raise self._cmd_start_failure(cmd, err) from err
 
         _add_custom_fields(tobj)
-        return Task(self, tobj, command, real_cmd, shell)
+        return Task(self, tobj, command, real_cmd, shell, (tobj.stdout, tobj.stderr))
 
     def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
                   env=None, shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument

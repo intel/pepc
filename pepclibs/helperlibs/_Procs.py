@@ -133,7 +133,7 @@ class TaskBase:
         if self.shell:
             self._read_pid()
 
-    def __init__(self, proc, tobj, cmd, real_cmd, shell):
+    def __init__(self, proc, tobj, cmd, real_cmd, shell, streams):
         """
         Initialize a class instance. The arguments are as follows.
           * proc - the process management object that was used for creating this task (e.g.,
@@ -145,6 +145,9 @@ class TaskBase:
                        prefixed with a PID print command. This argument should provide the actual
                        executed command.
           * shell - whether the command was executed via shell.
+          * streams - the stderr and stdout stream objects of the task. These are not necessarily
+                      file-like objects, just some objects representing the streams (defined by
+                      sub-classes).
         """
 
         self.proc = proc
@@ -152,8 +155,9 @@ class TaskBase:
         self.cmd = cmd
         self.real_cmd = real_cmd
         self.shell = shell
-        self.timeout = TIMEOUT
+        self._streams = list(streams)
 
+        self.timeout = TIMEOUT
         self.hostname = proc.hostname
         self.hostmsg = proc.hostmsg
 
@@ -171,11 +175,15 @@ class TaskBase:
 
         # The stream fetcher threads have to exit if the '_threads_exit' flag becomes 'True'.
         self._threads_exit = False
-        # The output for the task that was read from 'queue', but not yet sent to the user
+        # The output for the task that was read from 'self._queue', but not yet sent to the user
         # (separate for 'stdout' and 'stderr').
         self._output = [[], []]
         # The last partial lines of the stdout and stderr streams of the task.
         self._partial = ["", ""]
+        # The threads fetching data from the stdout/stderr streams of the task.
+        self._threads = [None, None]
+        # The queue for passing task output from stream fetcher threads.
+        self._queue = None
 
         if self.shell:
             self._read_pid()
@@ -348,7 +356,7 @@ def all_output_consumed(task):
            not task._output[0] and \
            not task._output[1] and \
            not getattr(pd, "ll", None) and \
-           pd.queue.empty()
+           task._queue.empty()
 
 def cmd_failed_msg(command, stdout, stderr, exitcode, hostname=None, startmsg=None, timeout=None):
     """

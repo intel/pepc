@@ -82,18 +82,10 @@ class _ChannelPrivateData:
     def __init__(self):
         """The constructor."""
 
-        # The 2 output streams of the command's process (stdout, stderr).
-        self.streams = []
-        # The queue which is used for passing commands output from stream fetcher threads.
-        self.queue = None
-        # The threads fetching data from the output streams and placing them to the queue.
-        self.threads = [None, None]
-
 def _add_custom_fields(chan):
     """Add a couple of custom fields to the paramiko channel object."""
 
-    pd = chan._pd_ = _ChannelPrivateData()
-    pd.streams = [chan.recv, chan.recv_stderr]
+    chan._pd_ = _ChannelPrivateData()
     return chan
 
 def _init_intsh_custom_fields(chan, marker):
@@ -139,8 +131,6 @@ class Task(_Procs.TaskBase):
         of the executed program (either stdout or stderr) and puts the result into the queue.
         """
 
-        chan = self.tobj
-        pd = chan._pd_
         try:
             decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
             while not self._threads_exit:
@@ -165,12 +155,12 @@ class Task(_Procs.TaskBase):
                     continue
 
                 self._dbg("stream %d: read data:\n%s", streamid, data)
-                pd.queue.put((streamid, data))
+                self._queue.put((streamid, data))
         except BaseException as err: # pylint: disable=broad-except
             _LOG.error(err)
 
         # The end of stream indicator.
-        pd.queue.put((streamid, None))
+        self._queue.put((streamid, None))
         self._dbg("stream %d: thread exists", streamid)
 
     def _recv_exit_status_timeout(self, timeout):
@@ -293,11 +283,11 @@ class Task(_Procs.TaskBase):
                    str(pd.check_ll), str(pd.ll), self._partial, str(self._output))
 
         while not _have_enough_lines(self._output, lines=lines):
-            if self.exitcode is not None and pd.queue.empty():
+            if self.exitcode is not None and self._queue.empty():
                 self._dbg("_do_wait_for_cmd_intsh: process exited with status %d", self.exitcode)
                 break
 
-            streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
+            streamid, data = _Procs.get_next_queue_item(self._queue, timeout)
             if streamid == -1:
                 self._dbg("_do_wait_for_cmd_intsh: nothing in the queue for %d seconds", timeout)
             elif data is None:
@@ -340,8 +330,6 @@ class Task(_Procs.TaskBase):
         own separate SSH session.
         """
 
-        chan = self.tobj
-        pd = chan._pd_
         start_time = time.time()
 
         self._dbg("_do_wait_for_cmd: starting with partial: %s, output:\n%s",
@@ -352,7 +340,7 @@ class Task(_Procs.TaskBase):
                 self._dbg("_do_wait_for_cmd: process exited with status %d", self.exitcode)
                 break
 
-            streamid, data = _Procs.get_next_queue_item(pd.queue, timeout)
+            streamid, data = _Procs.get_next_queue_item(self._queue, timeout)
             self._dbg("get_next_queue_item(): returned: %d, %s", streamid, data)
             if streamid == -1:
                 self._dbg("_do_wait_for_cmd: nothing in the queue for %d seconds", timeout)
@@ -362,10 +350,10 @@ class Task(_Procs.TaskBase):
             else:
                 self._dbg("_do_wait_for_cmd: stream %d closed", streamid)
                 # One of the output streams closed.
-                pd.threads[streamid].join()
-                pd.threads[streamid] = pd.streams[streamid] = None
+                self._threads[streamid].join()
+                self._threads[streamid] = self._streams[streamid] = None
 
-                if not pd.streams[0] and not pd.streams[1]:
+                if not self._streams[0] and not self._streams[1]:
                     self._dbg("_do_wait_for_cmd: both streams closed")
                     self.exitcode = self._recv_exit_status_timeout(timeout)
                     break
@@ -400,7 +388,6 @@ class Task(_Procs.TaskBase):
             raise Error("the 'lines' argument cannot be (0, 0)")
 
         chan = self.tobj
-        pd = chan._pd_
         self.timeout = timeout
 
         self._dbg("wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: "
@@ -413,18 +400,18 @@ class Task(_Procs.TaskBase):
         if _Procs.all_output_consumed(self):
             return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
 
-        if not pd.queue:
-            pd.queue = queue.Queue()
+        if not self._queue:
+            self._queue = queue.Queue()
             for streamid in (0, 1):
-                if pd.streams[streamid]:
-                    assert pd.threads[streamid] is None
-                    args = (streamid, pd.streams[streamid])
-                    pd.threads[streamid] = threading.Thread(target=self._stream_fetcher,
-                                                            name='SSH-stream-fetcher', args=args,
-                                                            daemon=True)
-                    pd.threads[streamid].start()
+                if self._streams[streamid]:
+                    assert self._threads[streamid] is None
+                    args = (streamid, self._streams[streamid])
+                    self._threads[streamid] = threading.Thread(target=self._stream_fetcher,
+                                                               name='SSH-stream-fetcher', args=args,
+                                                               daemon=True)
+                    self._threads[streamid].start()
         else:
-            self._dbg("wait_for_cmd: queue is empty: %s", pd.queue.empty())
+            self._dbg("wait_for_cmd: queue is empty: %s", self._queue.empty())
 
         if self.proc._intsh and chan == self.proc._intsh.tobj:
             func = self._do_wait_for_cmd_intsh
@@ -510,7 +497,7 @@ class SSH(_Procs.ProcBase):
 
         _add_custom_fields(chan)
 
-        return Task(self, chan, command, cmd, shell)
+        return Task(self, chan, command, cmd, shell, (chan.recv, chan.recv_stderr))
 
     def _run_in_intsh(self, command, cwd=None):
         """Run command 'command' in the interactive shell."""
