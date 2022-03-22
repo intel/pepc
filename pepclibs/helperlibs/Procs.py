@@ -45,27 +45,6 @@ def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
     return "method '%s()' failed for %s" % (method, fobj.name)
 
-class _ProcessPrivateData:
-    """
-    We need to attach additional data to the Popen object. This class represents that data.
-    """
-
-    def __init__(self):
-        """The constructor."""
-
-def _add_custom_fields(tobj):
-    """Add a couple of custom fields to the process object returned by 'subprocess.Popen()'."""
-
-    for name in ("stdin", "stdout", "stderr"):
-        if getattr(tobj, name):
-            wrapped_fobj = WrapExceptions.WrapExceptions(getattr(tobj, name),
-                                                         exceptions=_EXCEPTIONS,
-                                                         get_err_prefix=_get_err_prefix)
-            setattr(tobj, name, wrapped_fobj)
-
-    tobj._pd_ = _ProcessPrivateData()
-    return tobj
-
 class Task(_Procs.TaskBase):
     """
     This class represents a local tobj (process) that was executed by a 'Proc' object.
@@ -306,7 +285,14 @@ class Proc(_Procs.ProcBase):
         except OSError as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        _add_custom_fields(tobj)
+        # Wrap the standard I/O file objects to ensure they raise only the 'Error' exception.
+        for name in ("stdin", "stdout", "stderr"):
+            if getattr(tobj, name):
+                wrapped_fobj = WrapExceptions.WrapExceptions(getattr(tobj, name),
+                                                             exceptions=_EXCEPTIONS,
+                                                             get_err_prefix=_get_err_prefix)
+                setattr(tobj, name, wrapped_fobj)
+
         return Task(self, tobj, command, real_cmd, shell, (tobj.stdout, tobj.stderr))
 
     def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,

@@ -73,27 +73,6 @@ def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
     return f"method '{method}()' failed for {fobj._stream_name_}"
 
-class _ChannelPrivateData:
-    """
-    We need to attach additional data to the paramiko channel object. This class represents that
-    data.
-    """
-
-    def __init__(self):
-        """The constructor."""
-
-def _add_custom_fields(chan):
-    """Add a couple of custom fields to the paramiko channel object."""
-
-    chan._pd_ = _ChannelPrivateData()
-    return chan
-
-def _init_intsh_custom_fields(chan):
-    """
-    In case of interactive shell we carry more private data in the paramiko channel. And for every
-    new command that we run in the interactive shell, we have to re-initialize some of the fields.
-    """
-
 def _get_username(uid=None):
     """Return username of the current process or UID 'uid'."""
 
@@ -523,8 +502,6 @@ class SSH(_Procs.ProcBase):
         except _PARAMIKO_EXCEPTIONS as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        _add_custom_fields(chan)
-
         return Task(self, chan, command, cmd, shell, (chan.recv, chan.recv_stderr))
 
     def _run_in_intsh(self, command, cwd=None):
@@ -538,14 +515,12 @@ class SSH(_Procs.ProcBase):
         task = self._intsh
         cmd = _Procs.format_command_for_pid(command, cwd=cwd)
 
+        # Pick a new marker for the new interactive shell command.
         task._reinit_marker()
-        _init_intsh_custom_fields(task.tobj)
-
+        # Run the command.
         cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{task._marker}" "$?"\n'
         task.tobj.send(cmd)
-
-        # Re-initialize the interactive shell task object to match the new command that we've just
-        # executed.
+        # Re-initialize the interactive shell task object to match the new command.
         task._reinit(command, cmd, True)
 
         return task
