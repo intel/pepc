@@ -347,15 +347,14 @@ def all_output_consumed(task):
     """
     Returns 'True' if all the output of the process in 'task' was returned to the user and the
     process exited. Returns 'False' if there is some output still in the queue or "cached" in
-    'task._pd_.output' or if the process did not exit yet.
+    'task.output' or if the process did not exit yet.
     """
 
     # pylint: disable=protected-access
-    pd = task.tobj._pd_
     return task.exitcode is not None and \
            not task._output[0] and \
            not task._output[1] and \
-           not getattr(pd, "ll", None) and \
+           not getattr(task, "_ll", None) and \
            task._queue.empty()
 
 def cmd_failed_msg(command, stdout, stderr, exitcode, hostname=None, startmsg=None, timeout=None):

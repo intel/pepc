@@ -88,23 +88,11 @@ def _add_custom_fields(chan):
     chan._pd_ = _ChannelPrivateData()
     return chan
 
-def _init_intsh_custom_fields(chan, marker):
+def _init_intsh_custom_fields(chan):
     """
     In case of interactive shell we carry more private data in the paramiko channel. And for every
     new command that we run in the interactive shell, we have to re-initialize some of the fields.
     """
-
-    pd = chan._pd_
-
-    # The marker indicating that the command has finished.
-    pd.marker = marker
-    # The regular expression the last line of command output should match.
-    pd.marker_regex = re.compile(f"^{marker}, \\d+ ---$")
-    # The last line printed by the command to stdout observed so far.
-    pd.ll = ""
-    # Whether the last line ('ll') should be checked against the marker. Used as an optimization in
-    # order to avoid matching the 'll' against the marker too often.
-    pd.check_ll = True
 
 def _get_username(uid=None):
     """Return username of the current process or UID 'uid'."""
@@ -203,53 +191,52 @@ class Task(_Procs.TaskBase):
         exit code of the command.
 
         In other words, if no marker was not found, this function returns '(cdata, None)', and
-        'cdata' may not be the same as 'data', because part of it may be saved in 'pd.ll', because
-        it looks like the beginning of the marker. I marker was found, this function returns
+        'cdata' may not be the same as 'data', because part of it may be saved in 'self._ll',
+        because it looks like the beginning of the marker. I marker was found, this function returns
         '(cdata, exitcode)'.  Again, 'cdata' does not have to be the same as 'data', because 'data'
         could contain the marker, which will not be present in 'cdata'. The 'exitcode' will contain
         an integer exit code of the command.
         """
 
-        chan = self.tobj
-        pd = chan._pd_
         exitcode = None
         cdata = None
 
-        self._dbg("_watch_for_marker: starting with pd.check_ll %s, pd.ll: %s, data:\n%s",
-                  str(pd.check_ll), str(pd.ll), data)
+        self._dbg("_watch_for_marker: starting with self._check_ll %s, self._ll: %s, data:\n%s",
+                  str(self._check_ll), str(self._ll), data)
 
         split = data.rsplit("\n", 1)
         if len(split) > 1:
-            # We have got a new line. This is our new marker suspect. Keep it in 'pd.ll', while old
-            # 'pd.ll' and the rest of 'data' can be returned up for capturing. Set 'pd.check_ll' to
-            # 'True' to indicate that 'pd.ll' has to be checked for the marker.
-            cdata = pd.ll + split[0] + "\n"
-            pd.check_ll = True
-            pd.ll = split[1]
+            # We have got a new line. This is our new marker suspect. Keep it in 'self._ll', while
+            # old 'self._ll' and the rest of 'data' can be returned up for capturing. Set
+            # 'self._check_ll' to 'True' to indicate that 'self._ll' has to be checked for the
+            # marker.
+            cdata = self._ll + split[0] + "\n"
+            self._check_ll = True
+            self._ll = split[1]
         else:
             # We have got a continuation of the previous line. The 'check_ll' flag is 'True' when
-            # 'pd.ll' being a marker is a real possibility. If we already checked 'pd.ll' and it
-            # starts with data that is different to the marker, there is not reason to check it
+            # 'self._ll' being a marker is a real possibility. If we already checked 'self._ll' and
+            # it starts with data that is different to the marker, there is not reason to check it
             # again, and we can send it up for capturing.
-            if not pd.ll:
-                pd.check_ll = True
-            if pd.check_ll:
-                pd.ll += split[0]
+            if not self._ll:
+                self._check_ll = True
+            if self._check_ll:
+                self._ll += split[0]
                 cdata = ""
             else:
-                cdata = pd.ll + data
-                pd.ll = ""
+                cdata = self._ll + data
+                self._ll = ""
 
-        if pd.check_ll:
-            # 'pd.ll' is a real suspect, check if it looks like the marker.
-            pd.check_ll = pd.ll.startswith(pd.marker) or pd.marker.startswith(pd.ll)
+        if self._check_ll:
+            # 'self._ll' is a real suspect, check if it looks like the marker.
+            self._check_ll = self._ll.startswith(self._marker) or self._marker.startswith(self._ll)
 
-        # OK, if 'pd.ll' is still a real suspect, do a full check using the regex: full marker line
-        # should contain not only the hash, but also the exit status.
-        if pd.check_ll and re.match(pd.marker_regex, pd.ll):
-            # Extract the exit code from the 'pd.ll' string that has the following form:
+        # OK, if 'self._ll' is still a real suspect, do a full check using the regex: full marker
+        # line should contain not only the hash, but also the exit status.
+        if self._check_ll and re.match(self._marker_regex, self._ll):
+            # Extract the exit code from the 'self._ll' string that has the following form:
             # --- hash, <exitcode> ---
-            split = pd.ll.rsplit(", ", 1)
+            split = self._ll.rsplit(", ", 1)
             assert len(split) == 2
             exitcode = split[1].rstrip(" ---")
             if not Trivial.is_int(exitcode):
@@ -257,12 +244,12 @@ class Task(_Procs.TaskBase):
                             f"shell and finished with a correct marker, but unexpected exit "
                             f"code '{exitcode}'.\nThe command was: {self.cmd}")
 
-            pd.ll = ""
-            pd.check_ll = False
+            self._ll = ""
+            self._check_ll = False
             exitcode = int(exitcode)
 
-        self._dbg("_watch_for_marker: ending with pd.check_ll %s, pd.ll %s, exitcode %s, cdata:\n"
-                  "%s", str(pd.check_ll), pd.ll, str(exitcode), cdata)
+        self._dbg("_watch_for_marker: ending with self._check_ll %s, self._ll %s, exitcode %s, "
+                  "cdata:\n%s", str(self._check_ll), self._ll, str(exitcode), cdata)
 
         return (cdata, exitcode)
 
@@ -274,13 +261,11 @@ class Task(_Procs.TaskBase):
         for commands.
         """
 
-        chan = self.tobj
-        pd = chan._pd_
         start_time = time.time()
 
-        self._dbg("_do_wait_for_cmd_intsh: starting with pd.check_ll %s, pd.ll: %s, "
+        self._dbg("_do_wait_for_cmd_intsh: starting with self._check_ll %s, self._ll: %s, "
                   "partial: %s, output:\n%s",
-                   str(pd.check_ll), str(pd.ll), self._partial, str(self._output))
+                   str(self._check_ll), str(self._ll), self._partial, str(self._output))
 
         while not _have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None and self._queue.empty():
@@ -469,6 +454,49 @@ class Task(_Procs.TaskBase):
             return chan.recv_exit_status()
         return None
 
+    def _reinit_marker(self):
+        """
+        Pick a new interactive shell command marker. The marker is used as an indication that the
+        command executed in the interactive shell finished.
+        """
+
+        # Generate a random string which will be used as the marker, which indicates that the
+        # interactive shell command has finished.
+        randbits = random.getrandbits(256)
+        self._marker = f"--- {randbits:064x}"
+        self._marker_regex = re.compile(f"^{self._marker}, \\d+ ---$")
+
+    def _reinit(self, cmd, real_cmd, shell):
+        """
+        Re-initialize the interactive shell task object when a new command is executed. The
+        arguments are the same as in 'TaskBase._reinit()'.
+        """
+
+        super()._reinit(cmd, real_cmd, shell)
+
+        self._ll = ""
+        self._check_ll = True
+
+    def __init__(self, proc, tobj, cmd, real_cmd, shell, streams):
+        """
+        Initialize a class instance. The arguments are the same as in 'TaskBase.__init__()'.
+        """
+
+        super().__init__(proc, tobj, cmd, real_cmd, shell, streams)
+
+        #
+        # The below attributes are used when the task runs in an interactive shell.
+        #
+        # The marker indicating that the command has finished.
+        self._marker = None
+        # The regular expression the last line of the command output should match.
+        self._marker_regex = None
+        # The last line printed by the command to stdout observed so far.
+        self._ll = ""
+        # Whether the last line ('ll') should be checked against the marker. Used as an optimization
+        # in order to avoid matching the 'll' against the marker too often.
+        self._check_ll = True
+
 class SSH(_Procs.ProcBase):
     """
     This class provides API for communicating with remote hosts over SSH.
@@ -510,14 +538,10 @@ class SSH(_Procs.ProcBase):
         task = self._intsh
         cmd = _Procs.format_command_for_pid(command, cwd=cwd)
 
-        # Run the command in the interactive shell. Once the command finishes, print its exit status
-        # and a random marker specifying the end of output. This marker will be used to detect that
-        # the command has finishes.
-        marker = random.getrandbits(256)
-        marker = f"--- {marker:064x}"
-        _init_intsh_custom_fields(task.tobj, marker)
+        task._reinit_marker()
+        _init_intsh_custom_fields(task.tobj)
 
-        cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{marker}" "$?"\n'
+        cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{task._marker}" "$?"\n'
         task.tobj.send(cmd)
 
         # Re-initialize the interactive shell task object to match the new command that we've just
