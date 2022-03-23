@@ -65,10 +65,11 @@ _SNR_PKG_CST_LIMITS = {"codes"   : {"PC0": 0},
 #
 # Clients.
 #
-# Alder Lake.
-_ADL_PKG_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5,
-                                  "PC8": 6, "PC9": 7, "PC10": 8},
-                        "bits" : (3, 0)}
+_CLIENT_PC7S_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5},
+                           "bits" : (3, 0)}
+_CLIENT_PC10_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5,
+                           "PC8": 6, "PC9": 7, "PC10": 8},
+                           "bits" : (3, 0)}
 
 # CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
@@ -77,17 +78,36 @@ _PKG_CST_LIMITS = {
         CPUInfo.INTEL_FAM6_ICELAKE_X:        _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_D:        _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_SKYLAKE_X:        _SKX_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_IVYBRIDGE_X:      _IVT_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_HASWELL_X:        _HSX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_BROADWELL_X:      _HSX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_BROADWELL_D:      _BDWD_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_BROADWELL_G:      _BDWD_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_HASWELL_X:        _HSX_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_IVYBRIDGE_X:      _IVT_PKG_CST_LIMITS,
         # Atom microservers.
         CPUInfo.INTEL_FAM6_GOLDMONT_D:       _DNV_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_TREMONT_D:        _SNR_PKG_CST_LIMITS,
         # Clients.
-        CPUInfo.INTEL_FAM6_ALDERLAKE:        _ADL_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_ALDERLAKE_L:      _ADL_PKG_CST_LIMITS,
+        # Deepest: PC10.
+        CPUInfo.INTEL_FAM6_ROCKETLAKE:       _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_ALDERLAKE:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_ALDERLAKE_L:      _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_TIGERLAKE:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_TIGERLAKE_L:      _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_LAKEFIELD:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_COMETLAKE:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_COMETLAKE_L:      _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_KABYLAKE_L:       _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_KABYLAKE:         _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_ICELAKE_L:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_ICELAKE_NNPI:     _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_CANNONLAKE_L:     _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_SKYLAKE:          _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_SKYLAKE_L:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_BROADWELL:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_HASWELL_L:        _CLIENT_PC10_CST_LIMITS,
+        # Deepest: PC7S.
+        CPUInfo.INTEL_FAM6_HASWELL:          _CLIENT_PC7S_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_HASWELL_G:        _CLIENT_PC7S_CST_LIMITS,
 }
 
 # Map of features available on various CPU models. Please, refer to the notes for
