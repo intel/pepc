@@ -17,7 +17,6 @@ import time
 import shlex
 import queue
 import errno
-import codecs
 import logging
 import threading
 import subprocess
@@ -50,43 +49,23 @@ class Task(_Procs.TaskBase):
     This class represents a local tobj (process) that was executed by a 'Proc' object.
     """
 
-    def _stream_fetcher(self, streamid, read_func):
-        """
-        This methos runs in a separate thread. All it does is it fetches one of the output streams
-        of the executed program (either stdout or stderr) and puts the result into the queue.
-        """
+    def _fetch_stream_data(self, streamid, size):
+        """Fetch up to 'size' butes from tasks stdout or stderr."""
 
-        try:
-            decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
-            while not self._threads_exit:
-                if not read_func:
-                    self._dbg("stream %d: stream is closed", streamid)
-                    break
+        retries = 0
+        max_retries = 16
 
-                data = None
-                try:
-                    data = read_func(4096)
-                except Error as err:
-                    if err.errno == errno.EAGAIN:
-                        continue
-                    raise
+        while retries < max_retries:
+            retries += 1
 
-                if not data:
-                    self._dbg("stream %d: no more data", streamid)
-                    break
-
-                data = decoder.decode(data)
-                if not data:
-                    self._dbg("stream %d: read more data", streamid)
+            try:
+                return self._streams[streamid].read(4096)
+            except Error as err:
+                if err.errno == errno.EAGAIN:
                     continue
+                raise
 
-                self._dbg("stream %d: read data:\n%s", streamid, data)
-                self._queue.put((streamid, data))
-        except BaseException as err: # pylint: disable=broad-except
-            _LOG.error(err)
-
-        self._queue.put((streamid, None))
-        self._dbg("stream %d: thread exists", streamid)
+        raise Error(f"received 'EAGAIN' error {retries} times")
 
     def _wait_timeout(self, timeout):
         """Wait for task to finish with a timeout."""
@@ -185,10 +164,9 @@ class Task(_Procs.TaskBase):
             for streamid in (0, 1):
                 if self._streams[streamid]:
                     assert self._threads[streamid] is None
-                    args = (streamid, self._streams[streamid].read)
                     self._threads[streamid] = threading.Thread(target=self._stream_fetcher,
                                                                name='Procs-stream-fetcher',
-                                                               args=args, daemon=True)
+                                                               args=(streamid,), daemon=True)
                     self._threads[streamid].start()
         else:
             self._dbg("wait_for_cmd: queue is empty: %s", self._queue.empty())

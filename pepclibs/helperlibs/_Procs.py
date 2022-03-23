@@ -14,6 +14,7 @@ This module contains common bits and pieces shared between the 'Procs' and 'SSH'
 
 import re
 import queue
+import codecs
 import logging
 import contextlib
 from collections import namedtuple
@@ -32,6 +33,60 @@ class TaskBase:
     """
     The base class for local and remote tasks (processes).
     """
+
+    @staticmethod
+    def _bug_method_not_defined(method_name):
+        """
+        Raise an error if the child class did not define the 'method_name' mandatory method.
+        """
+
+        raise Error(f"BUG: '{method_name}()' was not defined by the child class")
+
+    def _fetch_stream_data(self, streamid, size): # pylint: disable=unused-argument
+        """
+        Fetch up to 'size' bytes of data from stream 'streamid'. Returns 'None' if there are no
+        data.
+        """
+
+        return self._bug_method_not_defined("_fetch_stream_data")
+
+    def _stream_fetcher(self, streamid):
+        """
+        This methos runs in a separate thread. All it does is it fetches one of the output streams
+        of the executed program (either stdout or stderr) and puts the result into the queue.
+        """
+
+        try:
+            decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
+            while not self._threads_exit:
+                if not self._streams[streamid]:
+                    self._dbg("stream %d: stream is closed", streamid)
+                    break
+
+                data = None
+                try:
+                    data = self._fetch_stream_data(streamid, 4096)
+                except Error as err:
+                    self._dbg("stream %d: %s", streamid, err)
+                    continue
+
+                if not data:
+                    self._dbg("stream %d: no more data", streamid)
+                    break
+
+                data = decoder.decode(data)
+                if not data:
+                    self._dbg("stream %d: read more data", streamid)
+                    continue
+
+                self._dbg("stream %d: read data:\n%s", streamid, data)
+                self._queue.put((streamid, data))
+        except Exception as err: # pylint: disable=broad-except
+            _LOG.error(err)
+
+        # The end of stream indicator.
+        self._queue.put((streamid, None))
+        self._dbg("stream %d: thread exists", streamid)
 
     def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
                      lines=(None, None), join=True):
@@ -65,8 +120,8 @@ class TaskBase:
         This function returns the 'ProcResult' named tuple.
         """
 
-        # pylint: disable=no-self-use
-        raise Error("'wait_for_cmd()' was not defined by the child class")
+        # pylint: disable=no-self-use,unused-argument
+        return self._bug_method_not_defined("wait_for_cmd")
 
     def _read_pid(self):
         """Read 'PID' for the just executed command and store it in 'self.pid'."""
@@ -111,7 +166,7 @@ class TaskBase:
         """Check if the task is still running. If it is, return 'None', else return exit status."""
 
         # pylint: disable=no-self-use
-        raise Error("'poll()' was not defined by the child class")
+        return self._bug_method_not_defined("poll")
 
     def _reinit(self, cmd, real_cmd, shell):
         """
