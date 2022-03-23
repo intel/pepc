@@ -273,3 +273,12 @@ class EmulProc(_Procs.ProcBase):
         if getattr(self, "_basepath", None):
             with contextlib.suppress(OSError):
                 FSHelpers.rm_minus_rf(self._basepath)
+
+        with contextlib.suppress(Exception):
+            super().close()
+
+    def __del__(self):
+        """The destructor."""
+
+        with contextlib.suppress(Exception):
+            self.close()
