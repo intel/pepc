@@ -68,6 +68,15 @@ class EmulProc(_Procs.ProcBase):
 
         return self._cmds[cmd]
 
+    def _get_basepath(self):
+        """Return path to the temporary directory where all the emulated files should be created."""
+
+        if not self._basepath:
+            pid = Trivial.get_pid()
+            self._basepath = FSHelpers.mktemp(prefix=f"emulprocs_{pid}_")
+
+        return self._basepath
+
     def run_verify(self, cmd, **kwargs): # pylint: disable=unused-argument
         """
         Emulates 'Proc.run_verify()' for pre-defined set of commands. If command is not known,
@@ -89,7 +98,7 @@ class EmulProc(_Procs.ProcBase):
     def _open_rw(self, path, mode):
         """Create file in temporary directory and return the file object."""
 
-        tmppath = self._basepath / str(path).strip("/")
+        tmppath = self._get_basepath() / str(path).strip("/")
 
         # Disabling buffering is only allowed in binary mode.
         if "b" in mode:
@@ -181,7 +190,7 @@ class EmulProc(_Procs.ProcBase):
                 if finfo.get("readonly"):
                     self._ro_files[path] = data
                 else:
-                    path = self._basepath / path.lstrip("/")
+                    path = self._get_basepath() / path.lstrip("/")
                     populate_rw_file(path, data)
 
     def _init_msrs(self, msrinfo, datapath):
@@ -223,7 +232,7 @@ class EmulProc(_Procs.ProcBase):
 
                 data[regaddr] = int.to_bytes(regval, 8, byteorder="little")
 
-            path = self._basepath / path.lstrip("/")
+            path = self._get_basepath() / path.lstrip("/")
             _populate_sparse_file(path, data)
 
     def init_testdata(self, module, datapath):
@@ -259,8 +268,7 @@ class EmulProc(_Procs.ProcBase):
         # Data for emulated read-only files.
         self._ro_files = {}
         self._cmds = {}
-        pid = Trivial.get_pid()
-        self._basepath = FSHelpers.mktemp(prefix=f"emulprocs_{pid}_")
+        self._basepath = None
 
     def close(self):
         """Stop emulation."""
