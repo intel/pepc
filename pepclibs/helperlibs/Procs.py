@@ -15,12 +15,10 @@ This module contains helper function to run and manage operating system processe
 
 import time
 import shlex
-import queue
 import errno
 import logging
-import threading
 import subprocess
-from pepclibs.helperlibs import _Procs, WrapExceptions, Trivial
+from pepclibs.helperlibs import _Procs, WrapExceptions
 from pepclibs.helperlibs._Procs import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied, ErrorNotFound
 
@@ -127,77 +125,6 @@ class Task(_Procs.TaskBase):
                 break
 
         return self._get_lines_to_return(lines)
-
-    def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(None, None),
-             join=True):
-        """Refer to 'TaskBase.wait()'."""
-
-        if timeout is None:
-            timeout = _Procs.TIMEOUT
-        if timeout < 0:
-            raise Error(f"bad timeout value {timeout}, must be > 0")
-
-        for streamid in (0, 1):
-            if not lines[streamid]:
-                continue
-            if not Trivial.is_int(lines[streamid]):
-                raise Error("the 'lines' argument can only include integers and 'None'")
-            if lines[streamid] < 0:
-                raise Error("the 'lines' argument cannot include negative values")
-
-        if lines[0] == 0 and lines[1] == 0:
-            raise Error("the 'lines' argument cannot be (0, 0)")
-
-        self.timeout = timeout
-
-        self._dbg("wait: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
-                  "real command: %s", timeout, capture_output, str(lines), join, self.cmd,
-                  self.real_cmd)
-
-        if self._threads_exit:
-            raise Error("this process has '_threads_exit' flag set and it cannot be used")
-
-        if self._task_is_done():
-            # This command has already exited.
-            return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
-
-        if not self._queue:
-            self._queue = queue.Queue()
-            for streamid in (0, 1):
-                if self._streams[streamid]:
-                    assert self._threads[streamid] is None
-                    self._threads[streamid] = threading.Thread(target=self._stream_fetcher,
-                                                               name='Procs-stream-fetcher',
-                                                               args=(streamid,), daemon=True)
-                    self._threads[streamid].start()
-        else:
-            self._dbg("wait: queue is empty: %s", self._queue.empty())
-
-        output = self._wait(timeout=timeout, capture_output=capture_output,
-                            output_fobjs=output_fobjs, lines=lines)
-
-        stdout = stderr = ""
-        if output[0]:
-            stdout = output[0]
-            if join:
-                stdout = "".join(stdout)
-        if output[1]:
-            stderr = output[1]
-            if join:
-                stderr = "".join(stderr)
-
-        if self._task_is_done():
-            exitcode = self.exitcode
-        else:
-            exitcode = None
-
-        if self.debug:
-            sout = "".join(output[0])
-            serr = "".join(output[1])
-            self._dbg("wait: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
-                      exitcode, sout.rstrip(), serr.rstrip())
-
-        return ProcResult(stdout=stdout, stderr=stderr, exitcode=exitcode)
 
     def _cmd_failed_msg(self, stdout, stderr, exitcode, startmsg=None, timeout=None):
         """
