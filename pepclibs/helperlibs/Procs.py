@@ -151,7 +151,7 @@ class Task(_Procs.TaskBase):
         if self._threads_exit:
             raise Error("this process has '_threads_exit' flag set and it cannot be used")
 
-        if _Procs.all_output_consumed(self):
+        if self._task_is_done():
             # This command has already exited.
             return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
 
@@ -184,7 +184,7 @@ class Task(_Procs.TaskBase):
             if join:
                 stderr = "".join(stderr)
 
-        if _Procs.all_output_consumed(self):
+        if self._task_is_done():
             exitcode = self.exitcode
         else:
             exitcode = None

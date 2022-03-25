@@ -245,7 +245,7 @@ class Task(_Procs.TaskBase):
 
         result = self._get_lines_to_return(lines)
 
-        if _Procs.all_output_consumed(self):
+        if self._task_is_done():
             # Mark the interactive shell process as vacant.
             acquired = self.proc._acquire_intsh_lock(self.cmd)
             if not acquired:
@@ -330,7 +330,7 @@ class Task(_Procs.TaskBase):
         if self._threads_exit:
             raise Error("this SSH channel has 'threads_exit' flag set and it cannot be used")
 
-        if _Procs.all_output_consumed(self):
+        if self._task_is_done():
             return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
 
         if not self._queue:
@@ -363,7 +363,7 @@ class Task(_Procs.TaskBase):
             if join:
                 stderr = "".join(stderr)
 
-        if _Procs.all_output_consumed(self):
+        if self._task_is_done():
             exitcode = self.exitcode
         else:
             exitcode = None

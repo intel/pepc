@@ -170,6 +170,19 @@ class TaskBase:
                   self._partial, self._output, output)
         return output
 
+    def _task_is_done(self):
+        """
+        Returns 'True' if all output lines of the task have been returned to the user and the task
+        has finished. Returns 'False' otherwise.
+        """
+
+        # pylint: disable=protected-access
+        return self.exitcode is not None and \
+               not self._output[0] and \
+               not self._output[1] and \
+               not getattr(self, "_ll", None) and \
+               self._queue.empty()
+
     def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
                      lines=(None, None), join=True):
         """
@@ -414,20 +427,6 @@ class ProcBase:
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit the runtime context."""
         self.close()
-
-def all_output_consumed(task):
-    """
-    Returns 'True' if all the output of the process in 'task' was returned to the user and the
-    process exited. Returns 'False' if there is some output still in the queue or "cached" in
-    'task.output' or if the process did not exit yet.
-    """
-
-    # pylint: disable=protected-access
-    return task.exitcode is not None and \
-           not task._output[0] and \
-           not task._output[1] and \
-           not getattr(task, "_ll", None) and \
-           task._queue.empty()
 
 def cmd_failed_msg(command, stdout, stderr, exitcode, hostname=None, startmsg=None, timeout=None):
     """
