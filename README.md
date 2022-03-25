@@ -105,7 +105,7 @@ pip3 install --user --upgrade .
 
 ## Standalone version
 
-You can create a standalone version of this by cloning the repository and running a couple of
+You can create a standalone version of this tool by cloning the repository and running a couple of
 commands, here is an example:
 
 ```
