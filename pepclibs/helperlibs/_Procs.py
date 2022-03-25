@@ -52,7 +52,7 @@ class TaskBase:
 
     def _stream_fetcher(self, streamid):
         """
-        This methos runs in a separate thread. All it does is it fetches one of the output streams
+        This method runs in a separate thread. All it does is it fetches one of the output streams
         of the executed program (either stdout or stderr) and puts the result into the queue.
         """
 
@@ -87,6 +87,23 @@ class TaskBase:
         # The end of stream indicator.
         self._queue.put((streamid, None))
         self._dbg("stream %d: thread exists", streamid)
+
+    def _get_next_queue_item(self, timeout):
+        """
+        Read the next data item from the stream fetcher queue. The items in the queue have the
+        following format: '(streamid, data)'.
+           * streamid - 0 for stdout, 1 for stderr.
+           * data - stream data (can be a partial line).
+
+        Returns '(-1, None)' in case of time out.
+        """
+
+        try:
+            if timeout:
+                return self._queue.get(timeout=timeout)
+            return self._queue.get(block=False)
+        except queue.Empty:
+            return (-1, None)
 
     def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
                      lines=(None, None), join=True):
@@ -332,19 +349,6 @@ class ProcBase:
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit the runtime context."""
         self.close()
-
-def get_next_queue_item(qobj, timeout):
-    """
-    This is a common function for 'Procs' and 'SSH'. It reads the next data item from the 'qobj'
-    queue. Returns '(-1, None)' in case of time out.
-    """
-
-    try:
-        if timeout:
-            return qobj.get(timeout=timeout)
-        return qobj.get(block=False)
-    except queue.Empty:
-        return (-1, None)
 
 def capture_data(task, streamid, data, capture_output=True, output_fobjs=(None, None)):
     """

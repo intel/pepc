@@ -220,7 +220,7 @@ class Task(_Procs.TaskBase):
                 self._dbg("_do_wait_for_cmd_intsh: process exited with status %d", self.exitcode)
                 break
 
-            streamid, data = _Procs.get_next_queue_item(self._queue, timeout)
+            streamid, data = self._get_next_queue_item(timeout)
             if streamid == -1:
                 self._dbg("_do_wait_for_cmd_intsh: nothing in the queue for %d seconds", timeout)
             elif data is None:
@@ -273,8 +273,8 @@ class Task(_Procs.TaskBase):
                 self._dbg("_do_wait_for_cmd: process exited with status %d", self.exitcode)
                 break
 
-            streamid, data = _Procs.get_next_queue_item(self._queue, timeout)
-            self._dbg("get_next_queue_item(): returned: %d, %s", streamid, data)
+            streamid, data = self._get_next_queue_item(timeout)
+            self._dbg("_get_next_queue_item(): returned: %d, %s", streamid, data)
             if streamid == -1:
                 self._dbg("_do_wait_for_cmd: nothing in the queue for %d seconds", timeout)
             elif data is not None:
