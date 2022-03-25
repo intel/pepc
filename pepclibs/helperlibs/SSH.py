@@ -127,6 +127,14 @@ class Task(_Procs.TaskBase):
         self._dbg("_recv_exit_status_timeout: exit status %d", exitcode)
         return exitcode
 
+    def _task_is_done(self):
+        """
+        Returns 'True' if all output lines of the task have been returned to the user and the task
+        has finished. Returns 'False' otherwise.
+        """
+
+        return not self._ll and super()._task_is_done()
+
     def _watch_for_marker(self, data):
         """
         When we run a command in the interactive shell (as opposed to running in a dedicated SSH

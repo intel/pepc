@@ -180,7 +180,6 @@ class TaskBase:
         return self.exitcode is not None and \
                not self._output[0] and \
                not self._output[1] and \
-               not getattr(self, "_ll", None) and \
                self._queue.empty()
 
     def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
