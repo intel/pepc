@@ -120,7 +120,7 @@ class Task(_Procs.TaskBase):
                 self._dbg("_do_wait_for_cmd: stop waiting for the command - timeout")
                 break
 
-        return _Procs.get_lines_to_return(self, lines=lines)
+        return self._get_lines_to_return(lines)
 
     def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
                      lines=(None, None), join=True):

@@ -144,6 +144,32 @@ class TaskBase:
             if output_fobjs[streamid]:
                 output_fobjs[streamid].write(line)
 
+    def _get_lines_to_return(self, lines):
+        """
+        Figure out what part of captured task output should be returned to the user, and what part
+        should stay in 'task._output'. This depends on the 'lines' argument. The keyword arguments
+        are the same as in 'wait_for_cmd()'.
+        """
+
+        # pylint: disable=protected-access
+        self._dbg("_get_lines_to_return: start: lines:\n%s\npartial lines:\n%s\noutput:\n%s",
+                  str(lines), self._partial, self._output)
+
+        output = [[], []]
+
+        for streamid in (0, 1):
+            limit = lines[streamid]
+            if limit is None or len(self._output[streamid]) <= limit:
+                output[streamid] = self._output[streamid]
+                self._output[streamid] = []
+            else:
+                output[streamid] = self._output[streamid][:limit]
+                self._output[streamid] = self._output[streamid][limit:]
+
+        self._dbg("_get_lines_to_return: end: partial lines:\n%s\noutput:\n%s\nreturning:\n%s",
+                  self._partial, self._output, output)
+        return output
+
     def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
                      lines=(None, None), join=True):
         """
@@ -388,32 +414,6 @@ class ProcBase:
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit the runtime context."""
         self.close()
-
-def get_lines_to_return(task, lines=(None, None)):
-    """
-    A helper for 'Procs' and 'SSH' that figures out what part of the captured command output should
-    be returned to the user, and what part should stay in 'task._output', depending on the lines
-    limit 'lines'. The keyword arguments are the same as in 'Task()._wait_for_cmd()'.
-    """
-
-    # pylint: disable=protected-access
-    task._dbg("get_lines_to_return: starting with lines %s, partial: %s, output:\n%s",
-              str(lines), task._partial, task._output)
-
-    output = [[], []]
-
-    for streamid in (0, 1):
-        limit = lines[streamid]
-        if limit is None or len(task._output[streamid]) <= limit:
-            output[streamid] = task._output[streamid]
-            task._output[streamid] = []
-        else:
-            output[streamid] = task._output[streamid][:limit]
-            task._output[streamid] = task._output[streamid][limit:]
-
-    task._dbg("get_lines_to_return: starting with partial: %s, output:\n"
-              "%s\nreturning:\n%s", task._partial, task._output, output)
-    return output
 
 def all_output_consumed(task):
     """
