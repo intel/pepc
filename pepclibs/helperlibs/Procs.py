@@ -100,8 +100,8 @@ class Task(_Procs.TaskBase):
                 self._dbg("_do_wait_for_cmd: nothing in the queue for %d seconds", timeout)
                 break
             if data is not None:
-                _Procs.capture_data(self, streamid, data, capture_output=capture_output,
-                                    output_fobjs=output_fobjs)
+                self._process_queue_item(streamid, data, capture_output=capture_output,
+                                         output_fobjs=output_fobjs)
             else:
                 self._dbg("_do_wait_for_cmd: stream %d closed", streamid)
                 # One of the output streams closed.

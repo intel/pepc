@@ -29,6 +29,24 @@ TIMEOUT = 4 * 60 * 60
 # Results of a the process execution.
 ProcResult = namedtuple("proc_result", ["stdout", "stderr", "exitcode"])
 
+def extract_full_lines(text, join=False):
+    """
+    Extract full lines from string 'text'. Return a tuple containing 2 elements - the full lines and
+    the last partial line. If 'join' is 'False', the full lines are returned as a list of lines,
+    otherwise they are returned as a single string.
+    """
+
+    full, partial = [], ""
+    for line_match in re.finditer("(.*\n)|(.+$)", text):
+        if line_match.group(2):
+            partial = line_match.group(2)
+            break
+        full.append(line_match.group(1))
+
+    if join:
+        full = "".join(full)
+    return (full, partial)
+
 class TaskBase:
     """
     The base class for local and remote tasks (processes).
@@ -104,6 +122,27 @@ class TaskBase:
             return self._queue.get(block=False)
         except queue.Empty:
             return (-1, None)
+
+    def _process_queue_item(self, streamid, data, capture_output=True, output_fobjs=(None, None)):
+        """
+        Process the '(streamic, data)' item returned by '_get_next_queue_item()'. The keyword
+        arguments are the same as in 'wait_for_cmd()'.
+        """
+
+        self._dbg("_process_queue_item: got data from stream %d:\n%s", streamid, data)
+
+        data, self._partial[streamid] = extract_full_lines(self._partial[streamid] + data)
+        if data and self._partial[streamid]:
+            self._dbg("_process_queue_item: stream %d: full lines:\n%s\npartial line: %s",
+                      streamid, "".join(data), self._partial[streamid])
+
+        for line in data:
+            if not line:
+                continue
+            if capture_output:
+                self._output[streamid].append(line)
+            if output_fobjs[streamid]:
+                output_fobjs[streamid].write(line)
 
     def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
                      lines=(None, None), join=True):
@@ -350,33 +389,6 @@ class ProcBase:
         """Exit the runtime context."""
         self.close()
 
-def capture_data(task, streamid, data, capture_output=True, output_fobjs=(None, None)):
-    """
-    A helper for 'Procs' and 'SSH' that captures data 'data' from the 'streamid' stream fetcher
-    thread. The keyword arguments are the same as in 'Task()._wait_for_cmd()'.
-    """
-
-    if not data:
-        return
-
-    # pylint: disable=protected-access
-    task._dbg("capture_data: got data from stream %d:\n%s", streamid, data)
-
-    data, task._partial[streamid] = extract_full_lines(task._partial[streamid] + data)
-    if data and task._partial[streamid]:
-        task._dbg("capture_data: stream %d: full lines:\n%s",
-                  streamid, "".join(data))
-        task._dbg("capture_data: stream %d: partial line: %s",
-                  streamid, task._partial[streamid])
-    for line in data:
-        if not line:
-            continue
-
-        if capture_output:
-            task._output[streamid].append(line)
-        if output_fobjs[streamid]:
-            output_fobjs[streamid].write(line)
-
 def get_lines_to_return(task, lines=(None, None)):
     """
     A helper for 'Procs' and 'SSH' that figures out what part of the captured command output should
@@ -463,21 +475,3 @@ def cmd_failed_msg(command, stdout, stderr, exitcode, hostname=None, startmsg=No
     if msg:
         result += "\n\n%s" % msg.strip()
     return result
-
-def extract_full_lines(text, join=False):
-    """
-    Extract full lines from string 'text'. Return a tuple containing 2 elements - the full lines and
-    the last partial line. If 'join' is 'False', the full lines are returned as a list of lines,
-    otherwise they are returned as a single string.
-    """
-
-    full, partial = [], ""
-    for line_match in re.finditer("(.*\n)|(.+$)", text):
-        if line_match.group(2):
-            partial = line_match.group(2)
-            break
-        full.append(line_match.group(1))
-
-    if join:
-        full = "".join(full)
-    return (full, partial)
