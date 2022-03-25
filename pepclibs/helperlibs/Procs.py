@@ -81,43 +81,45 @@ class Task(_Procs.TaskBase):
         self._dbg("_wait_timeout: exit status %d", exitcode)
         return exitcode
 
-    def _do_wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                 lines=(None, None)):
-        """Implements 'wait()'."""
+    def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
+              lines=(None, None)):
+        """
+        Implements 'wait()'. The arguments are the same as in 'wait()', but returns a tuple of two
+        lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).
+        """
 
         start_time = time.time()
 
-        self._dbg("_do_wait: starting with partial: %s, output:\n%s",
-                  self._partial, str(self._output))
+        self._dbg("_wait: starting with partial: %s, output:\n%s", self._partial, str(self._output))
 
         while not _have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None:
-                self._dbg("_do_wait: process exited with status %d", self.exitcode)
+                self._dbg("_wait: process exited with status %d", self.exitcode)
                 break
 
             streamid, data = self._get_next_queue_item(timeout)
             if streamid == -1:
-                self._dbg("_do_wait: nothing in the queue for %d seconds", timeout)
+                self._dbg("_wait: nothing in the queue for %d seconds", timeout)
                 break
             if data is not None:
                 self._process_queue_item(streamid, data, capture_output=capture_output,
                                          output_fobjs=output_fobjs)
             else:
-                self._dbg("_do_wait: stream %d closed", streamid)
+                self._dbg("_wait: stream %d closed", streamid)
                 # One of the output streams closed.
                 self._threads[streamid].join()
                 self._threads[streamid] = self._streams[streamid] = None
 
                 if not self._streams[0] and not self._streams[1]:
-                    self._dbg("_do_wait: both streams closed")
+                    self._dbg("_wait: both streams closed")
                     self.exitcode = self._wait_timeout(timeout)
                     break
 
             if not timeout:
-                self._dbg(f"_do_wait: timeout is {timeout}, exit immediately")
+                self._dbg(f"_wait: timeout is {timeout}, exit immediately")
                 break
             if time.time() - start_time >= timeout:
-                self._dbg("_do_wait: stop waiting for the command - timeout")
+                self._dbg("_wait: stop waiting for the command - timeout")
                 break
 
         return self._get_lines_to_return(lines)
@@ -171,8 +173,8 @@ class Task(_Procs.TaskBase):
         else:
             self._dbg("wait: queue is empty: %s", self._queue.empty())
 
-        output = self._do_wait(timeout=timeout, capture_output=capture_output,
-                               output_fobjs=output_fobjs, lines=lines)
+        output = self._wait(timeout=timeout, capture_output=capture_output,
+                             output_fobjs=output_fobjs, lines=lines)
 
         stdout = stderr = ""
         if output[0]:
