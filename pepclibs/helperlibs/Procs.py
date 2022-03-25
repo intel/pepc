@@ -46,7 +46,7 @@ def _get_err_prefix(fobj, method):
 
 class Task(_Procs.TaskBase):
     """
-    This class represents a local tobj (process) that was executed by a 'Proc' object.
+    This class represents a local task (process) that was executed by a 'Proc' object.
     """
 
     def _fetch_stream_data(self, streamid, size):
