@@ -126,7 +126,7 @@ class TaskBase:
     def _process_queue_item(self, streamid, data, capture_output=True, output_fobjs=(None, None)):
         """
         Process the '(streamic, data)' item returned by '_get_next_queue_item()'. The keyword
-        arguments are the same as in 'wait_for_cmd()'.
+        arguments are the same as in 'wait()'.
         """
 
         self._dbg("_process_queue_item: got data from stream %d:\n%s", streamid, data)
@@ -148,7 +148,7 @@ class TaskBase:
         """
         Figure out what part of captured task output should be returned to the user, and what part
         should stay in 'task._output'. This depends on the 'lines' argument. The keyword arguments
-        are the same as in 'wait_for_cmd()'.
+        are the same as in 'wait()'.
         """
 
         # pylint: disable=protected-access
@@ -182,8 +182,8 @@ class TaskBase:
                not self._output[1] and \
                self._queue.empty()
 
-    def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                     lines=(None, None), join=True):
+    def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(None, None),
+             join=True):
         """
         This method waits for the task to finish or print something to stdout or stderr. The
         arguments are as follows.
@@ -215,7 +215,7 @@ class TaskBase:
         """
 
         # pylint: disable=no-self-use,unused-argument
-        return self._bug_method_not_defined("wait_for_cmd")
+        return self._bug_method_not_defined("wait")
 
     def _read_pid(self):
         """Read 'PID' for the just executed command and store it in 'self.pid'."""
@@ -223,7 +223,7 @@ class TaskBase:
         self._dbg("_read_pid: reading PID for command: %s", self.cmd)
         assert self.shell
 
-        stdout, stderr, _ = self.wait_for_cmd(timeout=10, lines=(1, 0), join=False)
+        stdout, stderr, _ = self.wait(timeout=10, lines=(1, 0), join=False)
 
         msg = f"\nThe command{self.hostmsg} was:\n{self.cmd}" \
               f"\nThe actual (real) command was:\n{self.real_cmd}"

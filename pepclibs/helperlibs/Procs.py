@@ -81,50 +81,50 @@ class Task(_Procs.TaskBase):
         self._dbg("_wait_timeout: exit status %d", exitcode)
         return exitcode
 
-    def _do_wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                         lines=(None, None)):
-        """Implements '_wait_for_cmd()'."""
+    def _do_wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
+                 lines=(None, None)):
+        """Implements 'wait()'."""
 
         start_time = time.time()
 
-        self._dbg("_do_wait_for_cmd: starting with partial: %s, output:\n%s",
+        self._dbg("_do_wait: starting with partial: %s, output:\n%s",
                   self._partial, str(self._output))
 
         while not _have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None:
-                self._dbg("_do_wait_for_cmd: process exited with status %d", self.exitcode)
+                self._dbg("_do_wait: process exited with status %d", self.exitcode)
                 break
 
             streamid, data = self._get_next_queue_item(timeout)
             if streamid == -1:
-                self._dbg("_do_wait_for_cmd: nothing in the queue for %d seconds", timeout)
+                self._dbg("_do_wait: nothing in the queue for %d seconds", timeout)
                 break
             if data is not None:
                 self._process_queue_item(streamid, data, capture_output=capture_output,
                                          output_fobjs=output_fobjs)
             else:
-                self._dbg("_do_wait_for_cmd: stream %d closed", streamid)
+                self._dbg("_do_wait: stream %d closed", streamid)
                 # One of the output streams closed.
                 self._threads[streamid].join()
                 self._threads[streamid] = self._streams[streamid] = None
 
                 if not self._streams[0] and not self._streams[1]:
-                    self._dbg("_do_wait_for_cmd: both streams closed")
+                    self._dbg("_do_wait: both streams closed")
                     self.exitcode = self._wait_timeout(timeout)
                     break
 
             if not timeout:
-                self._dbg(f"_do_wait_for_cmd: timeout is {timeout}, exit immediately")
+                self._dbg(f"_do_wait: timeout is {timeout}, exit immediately")
                 break
             if time.time() - start_time >= timeout:
-                self._dbg("_do_wait_for_cmd: stop waiting for the command - timeout")
+                self._dbg("_do_wait: stop waiting for the command - timeout")
                 break
 
         return self._get_lines_to_return(lines)
 
-    def wait_for_cmd(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                     lines=(None, None), join=True):
-        """Refer to '_Procs().TaskBase().wait_for_cmd()'."""
+    def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(None, None),
+             join=True):
+        """Refer to 'TaskBase.wait()'."""
 
         if timeout is None:
             timeout = _Procs.TIMEOUT
@@ -144,7 +144,7 @@ class Task(_Procs.TaskBase):
 
         self.timeout = timeout
 
-        self._dbg("wait_for_cmd: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
+        self._dbg("wait: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
                   "real command: %s", timeout, capture_output, str(lines), join, self.cmd,
                   self.real_cmd)
 
@@ -169,10 +169,10 @@ class Task(_Procs.TaskBase):
                                                                args=(streamid,), daemon=True)
                     self._threads[streamid].start()
         else:
-            self._dbg("wait_for_cmd: queue is empty: %s", self._queue.empty())
+            self._dbg("wait: queue is empty: %s", self._queue.empty())
 
-        output = self._do_wait_for_cmd(timeout=timeout, capture_output=capture_output,
-                                       output_fobjs=output_fobjs, lines=lines)
+        output = self._do_wait(timeout=timeout, capture_output=capture_output,
+                               output_fobjs=output_fobjs, lines=lines)
 
         stdout = stderr = ""
         if output[0]:
@@ -192,7 +192,7 @@ class Task(_Procs.TaskBase):
         if self.debug:
             sout = "".join(output[0])
             serr = "".join(output[1])
-            self._dbg("wait_for_cmd: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
+            self._dbg("wait: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
                       exitcode, sout.rstrip(), serr.rstrip())
 
         return ProcResult(stdout=stdout, stderr=stderr, exitcode=exitcode)
@@ -368,8 +368,8 @@ class Proc(_Procs.ProcBase):
                                   env=env, shell=shell, newgrp=newgrp)
 
         # Wait for the command to finish and handle the time-out situation.
-        result = task.wait_for_cmd(capture_output=capture_output, output_fobjs=output_fobjs,
-                                   timeout=timeout, join=join)
+        result = task.wait(capture_output=capture_output, output_fobjs=output_fobjs,
+                           timeout=timeout, join=join)
 
         if result.exitcode is None:
             msg = _Procs.cmd_failed_msg(command, *tuple(result), timeout=timeout)
