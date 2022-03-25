@@ -84,9 +84,13 @@ class Task(_Procs.TaskBase):
     def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
               lines=(None, None)):
         """
-        Implements 'wait()'. The arguments are the same as in 'wait()', but returns a tuple of two
-        lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).
+        Implements 'wait()'. The arguments are the same as in 'wait()', but returns a list of two
+        lists: '[stdout_lines, stderr_lines]' (lists of stdout/stderr lines).
         """
+
+        if not self.tobj.stdout and not self.tobj.stderr:
+            self.exitcode = self._wait_timeout(timeout)
+            return [[], []]
 
         start_time = time.time()
 
@@ -157,10 +161,6 @@ class Task(_Procs.TaskBase):
             # This command has already exited.
             return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
 
-        if not self.tobj.stdout and not self.tobj.stderr:
-            self.exitcode = self._wait_timeout(timeout)
-            return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
-
         if not self._queue:
             self._queue = queue.Queue()
             for streamid in (0, 1):
@@ -174,7 +174,7 @@ class Task(_Procs.TaskBase):
             self._dbg("wait: queue is empty: %s", self._queue.empty())
 
         output = self._wait(timeout=timeout, capture_output=capture_output,
-                             output_fobjs=output_fobjs, lines=lines)
+                            output_fobjs=output_fobjs, lines=lines)
 
         stdout = stderr = ""
         if output[0]:
