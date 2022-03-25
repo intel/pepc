@@ -249,7 +249,7 @@ class Proc(_Procs.ProcBase):
             stderr = subprocess.PIPE
 
         if shell:
-            real_cmd = cmd = _Procs.format_command_for_pid(command, cwd=cwd)
+            real_cmd = cmd = self._format_cmd_for_pid(command, cwd=cwd)
         elif isinstance(command, str):
             real_cmd = command
             cmd = shlex.split(command)

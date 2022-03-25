@@ -457,7 +457,7 @@ class SSH(_Procs.ProcBase):
 
         cmd = command
         if shell:
-            cmd = _Procs.format_command_for_pid(command, cwd=cwd)
+            cmd = self._format_cmd_for_pid(command, cwd=cwd)
 
         try:
             chan = self.ssh.get_transport().open_session(timeout=self.connection_timeout)
@@ -481,7 +481,7 @@ class SSH(_Procs.ProcBase):
             self._intsh = self._run_in_new_session(cmd, shell=False)
 
         task = self._intsh
-        cmd = _Procs.format_command_for_pid(command, cwd=cwd)
+        cmd = self._format_cmd_for_pid(command, cwd=cwd)
 
         # Pick a new marker for the new interactive shell command.
         task._reinit_marker()

@@ -284,6 +284,21 @@ class ProcBase:
 
     Error = Error
 
+    @staticmethod
+    def _format_cmd_for_pid(cmd, cwd=None):
+        """
+        When we run a command via the shell, we do not know it's PID. This function modifies command
+        'cmd' so that it prints the PID as the first line of its output to 'stdout'. This requires a
+        shell.
+        """
+
+        # Prepend the command with a shell statement which prints the PID of the shell where the
+        # command will be run. Then use 'exec' to make sure that the command inherits the PID.
+        prefix = r'printf "%s\n" "$$";'
+        if cwd:
+            prefix += f""" cd "{cwd}" &&"""
+        return prefix + " exec " + cmd
+
     def _cmd_start_failure(self, cmd, err, intsh=False):
         """
         Form and return the exception object for a situation when command 'cmd' has failed to start.
@@ -317,20 +332,6 @@ class ProcBase:
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit the runtime context."""
         self.close()
-
-def format_command_for_pid(command, cwd=None):
-    """
-    When we run a command via the shell, we do not know it's PID. This function modifies the
-    original user 'command' command so that it prints the PID as the first line of its output to the
-    'stdout' stream. This requires a shell.
-    """
-
-    # Prepend the command with a shell statement which prints the PID of the shell where the
-    # command will be run. Then use 'exec' to make sure that the command inherits the PID.
-    prefix = r'printf "%s\n" "$$";'
-    if cwd:
-        prefix += f""" cd "{cwd}" &&"""
-    return prefix + " exec " + command
 
 def get_next_queue_item(qobj, timeout):
     """
