@@ -141,8 +141,8 @@ class Task(_Procs.TaskBase):
         session), the way we can detect that the command has ended is by watching for a special
         marker in 'stdout' of the interactive shell process.
 
-        This is a helper for '_do_wait_intsh()' which takes a piece of 'stdout' data that came from
-        the stream fetcher and checks for the marker in it. Returns a tuple of '(cdata, exitcode)',
+        This is a helper for '_wait_intsh()' which takes a piece of 'stdout' data that came from the
+        stream fetcher and checks for the marker in it. Returns a tuple of '(cdata, exitcode)',
         where 'cdata' is the stdout data that has to be captured, and exitcode is the exit code of
         the command.
 
@@ -209,8 +209,8 @@ class Task(_Procs.TaskBase):
 
         return (cdata, exitcode)
 
-    def _do_wait_intsh(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                       lines=(None, None)):
+    def _wait_intsh(self, timeout=None, capture_output=True, output_fobjs=(None, None),
+                    lines=(None, None)):
         """
         Implements 'wait()' for the optimized case when the command was executed in the interactive
         shell process. This case allows us to save time on creating a separate session for
@@ -219,18 +219,17 @@ class Task(_Procs.TaskBase):
 
         start_time = time.time()
 
-        self._dbg("_do_wait_intsh: starting with self._check_ll %s, self._ll: %s, partial: %s, "
-                  "output:\n%s", str(self._check_ll), str(self._ll), self._partial,
-                  str(self._output))
+        self._dbg("_wait_intsh: starting with self._check_ll %s, self._ll: %s, partial: %s, output:"
+                  "\n%s", str(self._check_ll), str(self._ll), self._partial, str(self._output))
 
         while not _have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None and self._queue.empty():
-                self._dbg("_do_wait_intsh: process exited with status %d", self.exitcode)
+                self._dbg("_wait_intsh: process exited with status %d", self.exitcode)
                 break
 
             streamid, data = self._get_next_queue_item(timeout)
             if streamid == -1:
-                self._dbg("_do_wait_intsh: nothing in the queue for %d seconds", timeout)
+                self._dbg("_wait_intsh: nothing in the queue for %d seconds", timeout)
             elif data is None:
                 raise Error(f"the interactive shell process{self.hostmsg} closed stream {streamid} "
                             f"while running the following command:\n{self.cmd}")
@@ -245,10 +244,10 @@ class Task(_Procs.TaskBase):
                                      output_fobjs=output_fobjs)
 
             if not timeout:
-                self._dbg(f"_do_wait_intsh: timeout is {timeout}, exit immediately")
+                self._dbg(f"_wait_intsh: timeout is {timeout}, exit immediately")
                 break
             if time.time() - start_time > timeout:
-                self._dbg("_do_wait_intsh: stop waiting for the command - timeout")
+                self._dbg("_wait_intsh: stop waiting for the command - timeout")
                 break
 
         result = self._get_lines_to_return(lines)
@@ -264,8 +263,8 @@ class Task(_Procs.TaskBase):
 
         return result
 
-    def _do_wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                 lines=(None, None)):
+    def _wait_nointsh(self, timeout=None, capture_output=True, output_fobjs=(None, None),
+                      lines=(None, None)):
         """
         Implements 'wait()' for the non-optimized case when the command was executed in its own
         separate SSH session.
@@ -273,40 +272,55 @@ class Task(_Procs.TaskBase):
 
         start_time = time.time()
 
-        self._dbg("_do_wait: starting with partial: %s, output:\n%s",
+        self._dbg("_wait_nointsh: starting with partial: %s, output:\n%s",
                   self._partial, str(self._output))
 
         while not _have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None:
-                self._dbg("_do_wait: process exited with status %d", self.exitcode)
+                self._dbg("_wait_nointsh: process exited with status %d", self.exitcode)
                 break
 
             streamid, data = self._get_next_queue_item(timeout)
             self._dbg("_get_next_queue_item(): returned: %d, %s", streamid, data)
             if streamid == -1:
-                self._dbg("_do_wait: nothing in the queue for %d seconds", timeout)
+                self._dbg("_wait_nointsh: nothing in the queue for %d seconds", timeout)
             elif data is not None:
                 self._process_queue_item(streamid, data, capture_output=capture_output,
                                          output_fobjs=output_fobjs)
             else:
-                self._dbg("_do_wait: stream %d closed", streamid)
+                self._dbg("_wait_nointsh: stream %d closed", streamid)
                 # One of the output streams closed.
                 self._threads[streamid].join()
                 self._threads[streamid] = self._streams[streamid] = None
 
                 if not self._streams[0] and not self._streams[1]:
-                    self._dbg("_do_wait: both streams closed")
+                    self._dbg("_wait_nointsh: both streams closed")
                     self.exitcode = self._recv_exit_status_timeout(timeout)
                     break
 
             if not timeout:
-                self._dbg(f"_do_wait: timeout is {timeout}, exit immediately")
+                self._dbg(f"_wait_nointsh: timeout is {timeout}, exit immediately")
                 break
             if time.time() - start_time > timeout:
-                self._dbg("_do_wait: stop waiting for the command - timeout")
+                self._dbg("_wait_nointsh: stop waiting for the command - timeout")
                 break
 
         return self._get_lines_to_return(lines)
+
+    def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
+              lines=(None, None)):
+        """
+        Implements 'wait()'. The arguments are the same as in 'wait()', but returns a tuple of two
+        lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).
+        """
+
+        if self.proc._intsh and self.tobj == self.proc._intsh.tobj:
+            func = self._wait_intsh
+        else:
+            func = self._wait_nointsh
+
+        return func(timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
+                    lines=lines)
 
     def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(None, None),
              join=True):
@@ -328,7 +342,6 @@ class Task(_Procs.TaskBase):
         if lines[0] == 0 and lines[1] == 0:
             raise Error("the 'lines' argument cannot be (0, 0)")
 
-        chan = self.tobj
         self.timeout = timeout
 
         self._dbg("wait: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
@@ -353,13 +366,8 @@ class Task(_Procs.TaskBase):
         else:
             self._dbg("wait: queue is empty: %s", self._queue.empty())
 
-        if self.proc._intsh and chan == self.proc._intsh.tobj:
-            func = self._do_wait_intsh
-        else:
-            func = self._do_wait
-
-        output = func(timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
-                      lines=lines)
+        output = self._wait(timeout=timeout, capture_output=capture_output,
+                            output_fobjs=output_fobjs, lines=lines)
 
         stdout = stderr = ""
         if output[0]:
