@@ -346,6 +346,34 @@ class Task(_Procs.TaskBase):
             return chan.recv_exit_status()
         return None
 
+    def _read_pid(self):
+        """Read 'PID' for the just executed command and store it in 'self.pid'."""
+
+        self._dbg("_read_pid: reading PID for command: %s", self.cmd)
+        assert self.shell
+
+        stdout, stderr, _ = self.wait(timeout=10, lines=(1, 0), join=False)
+
+        msg = f"\nThe command{self.hostmsg} was:\n{self.cmd}" \
+              f"\nThe actual (real) command was:\n{self.real_cmd}"
+
+        if len(stdout) != 1:
+            raise Error(f"expected only one line with PID in stdout, got {len(stdout)} lines "
+                        "instead.{msg}")
+        if stderr:
+            raise Error(f"expected only one line with PID in stdout and no lines in stderr, got "
+                        f"{len(stderr)} lines in stderr instead.{msg}")
+
+        pid = stdout[0].strip()
+
+        if len(pid) > 128:
+            raise Error(f"received too long and probably bogus PID: {pid}{msg}")
+        if not Trivial.is_int(pid):
+            raise Error(f"received a bogus non-integer PID: {pid}{msg}")
+
+        self._dbg("_read_pid: PID is %s for command: %s", pid, self.cmd)
+        self.pid = int(pid)
+
     def _reinit_marker(self):
         """
         Pick a new interactive shell command marker. The marker is used as an indication that the
@@ -369,6 +397,9 @@ class Task(_Procs.TaskBase):
         self._ll = ""
         self._check_ll = True
 
+        if shell:
+            self._read_pid()
+
     def __init__(self, proc, tobj, cmd, real_cmd, shell, streams):
         """
         Initialize a class instance. The arguments are the same as in 'TaskBase.__init__()'.
@@ -389,6 +420,9 @@ class Task(_Procs.TaskBase):
         # in order to avoid matching the 'll' against the marker too often.
         self._check_ll = True
 
+        if shell:
+            self._read_pid()
+
 class SSH(_Procs.ProcBase):
     """
     This class provides API for communicating with remote hosts over SSH.
@@ -396,6 +430,21 @@ class SSH(_Procs.ProcBase):
     SECURITY NOTICE: this class and any part of it should only be used for debugging and development
     purposes. No security audit had been done. Not for production use.
     """
+
+    @staticmethod
+    def _format_cmd_for_pid(cmd, cwd=None):
+        """
+        When we run a command via the shell, we do not know it's PID. This function modifies command
+        'cmd' so that it prints the PID as the first line of its output to 'stdout'. This requires a
+        shell.
+        """
+
+        # Prepend the command with a shell statement which prints the PID of the shell where the
+        # command will be run. Then use 'exec' to make sure that the command inherits the PID.
+        prefix = r'printf "%s\n" "$$";'
+        if cwd:
+            prefix += f""" cd "{cwd}" &&"""
+        return prefix + " exec " + cmd
 
     def _run_in_new_session(self, command, cwd=None, shell=True):
         """Run command 'command' in a new session."""

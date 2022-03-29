@@ -178,7 +178,7 @@ class Proc(_Procs.ProcBase):
             stderr = subprocess.PIPE
 
         if shell:
-            real_cmd = cmd = self._format_cmd_for_pid(command, cwd=cwd)
+            real_cmd = cmd = f" exec -- {command}"
         elif isinstance(command, str):
             real_cmd = command
             cmd = shlex.split(command)
@@ -200,7 +200,9 @@ class Proc(_Procs.ProcBase):
                                                              get_err_prefix=_get_err_prefix)
                 setattr(tobj, name, wrapped_fobj)
 
-        return Task(self, tobj, command, real_cmd, shell, (tobj.stdout, tobj.stderr))
+        task = Task(self, tobj, command, real_cmd, shell, (tobj.stdout, tobj.stderr))
+        task.pid = tobj.pid
+        return task
 
     def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
                   env=None, shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument

@@ -291,34 +291,6 @@ class TaskBase:
 
         return ProcResult(stdout=stdout, stderr=stderr, exitcode=exitcode)
 
-    def _read_pid(self):
-        """Read 'PID' for the just executed command and store it in 'self.pid'."""
-
-        self._dbg("_read_pid: reading PID for command: %s", self.cmd)
-        assert self.shell
-
-        stdout, stderr, _ = self.wait(timeout=10, lines=(1, 0), join=False)
-
-        msg = f"\nThe command{self.hostmsg} was:\n{self.cmd}" \
-              f"\nThe actual (real) command was:\n{self.real_cmd}"
-
-        if len(stdout) != 1:
-            raise Error(f"expected only one line with PID in stdout, got {len(stdout)} lines "
-                        "instead.{msg}")
-        if stderr:
-            raise Error(f"expected only one line with PID in stdout and no lines in stderr, got "
-                        f"{len(stderr)} lines in stderr instead.{msg}")
-
-        pid = stdout[0].strip()
-
-        if len(pid) > 128:
-            raise Error(f"received too long and probably bogus PID: {pid}{msg}")
-        if not Trivial.is_int(pid):
-            raise Error(f"received a bogus non-integer PID: {pid}{msg}")
-
-        self._dbg("_read_pid: PID is %s for command: %s", pid, self.cmd)
-        self.pid = int(pid)
-
     def _dbg(self, fmt, *args):
         """Print a debugging message."""
 
@@ -353,9 +325,6 @@ class TaskBase:
         self._output = [[], []]
         self._partial = ["", ""]
 
-        if self.shell:
-            self._read_pid()
-
     def __init__(self, proc, tobj, cmd, real_cmd, shell, streams):
         """
         Initialize a class instance. The arguments are as follows.
@@ -371,6 +340,7 @@ class TaskBase:
           * streams - the stderr and stdout stream objects of the task. These are not necessarily
                       file-like objects, just some objects representing the streams (defined by
                       sub-classes).
+          * pid - process ID of the running task, if it is known.
         """
 
         self.proc = proc
@@ -384,8 +354,8 @@ class TaskBase:
         self.hostname = proc.hostname
         self.hostmsg = proc.hostmsg
 
-        # Process ID of the running task. In some cases may be set to 'None', which should be
-        # interpreted as "not known".
+        # Process ID of the running task. Should be set by the child class. In some cases may be set
+        # to 'None', which should be interpreted as "not known".
         self.pid = None
         # Exit code of the command ('None' if it is still running).
         self.exitcode = None
@@ -407,9 +377,6 @@ class TaskBase:
         self._threads = [None, None]
         # The queue for passing task output from stream fetcher threads.
         self._queue = None
-
-        if self.shell:
-            self._read_pid()
 
     def close(self):
         """Free allocated resources."""
@@ -451,21 +418,6 @@ class ProcBase:
     """
 
     Error = Error
-
-    @staticmethod
-    def _format_cmd_for_pid(cmd, cwd=None):
-        """
-        When we run a command via the shell, we do not know it's PID. This function modifies command
-        'cmd' so that it prints the PID as the first line of its output to 'stdout'. This requires a
-        shell.
-        """
-
-        # Prepend the command with a shell statement which prints the PID of the shell where the
-        # command will be run. Then use 'exec' to make sure that the command inherits the PID.
-        prefix = r'printf "%s\n" "$$";'
-        if cwd:
-            prefix += f""" cd "{cwd}" &&"""
-        return prefix + " exec " + cmd
 
     def _cmd_start_failure(self, cmd, err, intsh=False):
         """
