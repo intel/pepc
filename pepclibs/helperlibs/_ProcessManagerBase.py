@@ -125,17 +125,17 @@ class ProcessBase:
         except queue.Empty:
             return (-1, None)
 
-    def _process_queue_item(self, streamid, data, capture_output=True, output_fobjs=(None, None)):
+    def _handle_queue_item(self, streamid, data, capture_output=True, output_fobjs=(None, None)):
         """
-        Process the '(streamic, data)' item returned by '_get_next_queue_item()'. The keyword
-        arguments are the same as in 'wait()'.
+        Hadle an item item returned by '_get_next_queue_item()'. The item is the '(streamic, data)'
+        pair. The keyword arguments are the same as in 'wait()'.
         """
 
-        self._dbg("_process_queue_item: got data from stream %d:\n%s", streamid, data)
+        self._dbg("_handle_queue_item: got data from stream %d:\n%s", streamid, data)
 
         data, self._partial[streamid] = extract_full_lines(self._partial[streamid] + data)
         if data and self._partial[streamid]:
-            self._dbg("_process_queue_item: stream %d: full lines:\n%s\npartial line: %s",
+            self._dbg("_handle_queue_item: stream %d: full lines:\n%s\npartial line: %s",
                       streamid, "".join(data), self._partial[streamid])
 
         for line in data:

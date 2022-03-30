@@ -240,8 +240,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                 # line.
                 data, self.exitcode = self._watch_for_marker(data)
 
-            self._process_queue_item(streamid, data, capture_output=capture_output,
-                                     output_fobjs=output_fobjs)
+            self._handle_queue_item(streamid, data, capture_output=capture_output,
+                                    output_fobjs=output_fobjs)
 
             if not timeout:
                 self._dbg(f"_wait_intsh: timeout is {timeout}, exit immediately")
@@ -285,8 +285,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             if streamid == -1:
                 self._dbg("_wait_nointsh: nothing in the queue for %d seconds", timeout)
             elif data is not None:
-                self._process_queue_item(streamid, data, capture_output=capture_output,
-                                         output_fobjs=output_fobjs)
+                self._handle_queue_item(streamid, data, capture_output=capture_output,
+                                        output_fobjs=output_fobjs)
             else:
                 self._dbg("_wait_nointsh: stream %d closed", streamid)
                 # One of the output streams closed.

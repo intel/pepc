@@ -105,8 +105,8 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
                 self._dbg("_wait: nothing in the queue for %d seconds", timeout)
                 break
             if data is not None:
-                self._process_queue_item(streamid, data, capture_output=capture_output,
-                                         output_fobjs=output_fobjs)
+                self._handle_queue_item(streamid, data, capture_output=capture_output,
+                                        output_fobjs=output_fobjs)
             else:
                 self._dbg("_wait: stream %d closed", streamid)
                 # One of the output streams closed.
