@@ -12,7 +12,7 @@
 
 import os
 from pathlib import Path
-from pepclibs.helperlibs import EmulProcs, LocalProcessManager, SSHProcessManager
+from pepclibs.helperlibs import EmulProcessManager, LocalProcessManager, SSHProcessManager
 
 def get_pman(hostname, dataset):
     """
@@ -21,7 +21,7 @@ def get_pman(hostname, dataset):
     """
 
     if hostname == "emulation":
-        pman = EmulProcs.EmulProc()
+        pman = EmulProcessManager.EmulProcessManager()
 
         datapath = Path(__file__).parent.resolve() / "data" / dataset
         pman.init_testdata("CPUInfo", datapath)

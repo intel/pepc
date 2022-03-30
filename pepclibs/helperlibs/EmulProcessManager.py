@@ -54,7 +54,7 @@ def _populate_sparse_file(path, data):
     except OSError as err:
         raise Error(f"failed to prepare sparse file '{path}':\n{err}") from err
 
-class EmulProc(_ProcessManagerBase.ProcessManagerBase):
+class EmulProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """
     An process manager which pretends that it runs commands, but in reality it just returns
     pre-defined command output. This class is used for testing purposes.
@@ -77,7 +77,7 @@ class EmulProc(_ProcessManagerBase.ProcessManagerBase):
 
         return self._basepath
 
-    def run_verify(self, cmd, **kwargs): # pylint: disable=unused-argument
+    def run_verify(self, cmd, **kwargs):
         """
         Does not really run commands, just pretends running them and returns the pre-dfined output
         values. Works only for a limited set of known commands. If the command is not known, raises
@@ -86,6 +86,7 @@ class EmulProc(_ProcessManagerBase.ProcessManagerBase):
         Refer to 'ProcessManagerBase.run_verify()' for more information.
         """
 
+        # pylint: disable=unused-argument,arguments-differ
         _LOG.debug("running the following emulated command:\n%s", cmd)
 
         return self._get_cmd_result(cmd)
@@ -96,6 +97,7 @@ class EmulProc(_ProcessManagerBase.ProcessManagerBase):
         'ProcessManagerBase.run_verify()' for more information.
         """
 
+        # pylint: disable=unused-argument,arguments-differ
         _LOG.debug("running the following emulated command:\n%s", cmd)
 
         stdout, stderr = self._get_cmd_result(cmd)
