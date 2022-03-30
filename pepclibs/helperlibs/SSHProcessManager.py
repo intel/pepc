@@ -13,7 +13,7 @@ SSH.
 SECURITY NOTICE: this module and any part of it should only be used for debugging and development
 purposes. No security audit had been done. Not for production use.
 
-There are two ways we run commands remotely over SSH: in a new paramiko SSH session, and in the
+There are two ways run commands remotely over SSH: in a new paramiko SSH session, and in the
 interactive shell. The latter way adds complexity, but the reason we have it is because it is much
 faster to run a process this way, comparing to esablishing a new session.
 
@@ -73,27 +73,26 @@ def _get_err_prefix(fobj, method):
     return f"method '{method}()' failed for {fobj._stream_name_}"
 
 def _get_username(uid=None):
-    """Return username of the current process or UID 'uid'."""
+    """Return username of current process."""
 
     try:
         if uid is None:
             uid = os.getuid()
     except OSError as err:
-        raise Error("failed to detect user name of the current process:\n%s" % err) from None
+        raise Error("failed to detect user name of current process:\n%s" % err) from None
 
     try:
         return pwd.getpwuid(uid).pw_name
     except KeyError as err:
         raise Error("failed to get user name for UID %d:\n%s" % (uid, err)) from None
 
-class Task(_ProcessManagerBase.TaskBase):
+class SSHProcess(_ProcessManagerBase.ProcessBase):
     """
-    This class represents a remote task (process) that was executed by an 'SSHProcessManager'
-    object.
+    This class represents a remote process that was executed by 'SSHProcessManager'.
     """
 
     def _fetch_stream_data(self, streamid, size):
-        """Fetch up to 'size' butes from tasks stdout or stderr."""
+        """Fetch up to 'size' bytes from stdout or stderr of the process."""
 
         try:
             return self._streams[streamid](size)
@@ -106,7 +105,7 @@ class Task(_ProcessManagerBase.TaskBase):
         Returns the exit status or 'None' in case of 'timeout'.
         """
 
-        chan = self.tobj
+        chan = self.pobj
         self._dbg("_recv_exit_status_timeout: waiting for exit status, timeout %s sec", timeout)
 
 #        This is non-hacky, but polling implementation.
@@ -128,13 +127,13 @@ class Task(_ProcessManagerBase.TaskBase):
         self._dbg("_recv_exit_status_timeout: exit status %d", exitcode)
         return exitcode
 
-    def _task_is_done(self):
+    def _process_is_done(self):
         """
-        Returns 'True' if all output lines of the task have been returned to the user and the task
-        has finished. Returns 'False' otherwise.
+        Returns 'True' if all output lines of the process have been returned to the user and the
+        process has exited. Returns 'False' otherwise.
         """
 
-        return not self._ll and super()._task_is_done()
+        return not self._ll and super()._process_is_done()
 
     def _watch_for_marker(self, data):
         """
@@ -197,7 +196,7 @@ class Task(_ProcessManagerBase.TaskBase):
             assert len(split) == 2
             exitcode = split[1].rstrip(" ---")
             if not Trivial.is_int(exitcode):
-                raise Error(f"the command was running{self.hostmsg} under the interactive "
+                raise Error(f"the process was running{self.hostmsg} under the interactive "
                             f"shell and finished with a correct marker, but unexpected exit "
                             f"code '{exitcode}'.\nThe command was: {self.cmd}")
 
@@ -235,9 +234,9 @@ class Task(_ProcessManagerBase.TaskBase):
                 raise Error(f"the interactive shell process{self.hostmsg} closed stream {streamid} "
                             f"while running the following command:\n{self.cmd}")
             elif streamid == 0:
-                # The indication that the command has ended is our marker in stdout (stream 0). Our
+                # The indication that the process has exited is our marker in stdout (stream 0). Our
                 # goal is to watch for this marker, hide it from the user, because it does not
-                # belong to the output of the command. The marker always starts at the beginning of
+                # belong to the output of the process. The marker always starts at the beginning of
                 # line.
                 data, self.exitcode = self._watch_for_marker(data)
 
@@ -248,12 +247,12 @@ class Task(_ProcessManagerBase.TaskBase):
                 self._dbg(f"_wait_intsh: timeout is {timeout}, exit immediately")
                 break
             if time.time() - start_time > timeout:
-                self._dbg("_wait_intsh: stop waiting for the command - timeout")
+                self._dbg("_wait_intsh: stop waiting for the process - timeout")
                 break
 
         result = self._get_lines_to_return(lines)
 
-        if self._task_is_done():
+        if self._process_is_done():
             # Mark the interactive shell process as vacant.
             acquired = self.pman._acquire_intsh_lock(self.cmd)
             if not acquired:
@@ -267,7 +266,7 @@ class Task(_ProcessManagerBase.TaskBase):
     def _wait_nointsh(self, timeout=None, capture_output=True, output_fobjs=(None, None),
                       lines=(None, None)):
         """
-        Implements 'wait()' for the non-optimized case when the command was executed in its own
+        Implements 'wait()' for the non-optimized case when the process was executed in its own
         separate SSH session.
         """
 
@@ -303,7 +302,7 @@ class Task(_ProcessManagerBase.TaskBase):
                 self._dbg(f"_wait_nointsh: timeout is {timeout}, exit immediately")
                 break
             if time.time() - start_time > timeout:
-                self._dbg("_wait_nointsh: stop waiting for the command - timeout")
+                self._dbg("_wait_nointsh: stop waiting for the process - timeout")
                 break
 
         return self._get_lines_to_return(lines)
@@ -315,7 +314,7 @@ class Task(_ProcessManagerBase.TaskBase):
         lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).
         """
 
-        if self.pman._intsh and self.tobj == self.pman._intsh.tobj:
+        if self.pman._intsh and self.pobj == self.pman._intsh.pobj:
             func = self._wait_intsh
         else:
             func = self._wait_nointsh
@@ -342,15 +341,17 @@ class Task(_ProcessManagerBase.TaskBase):
                                                   timeout=timeout)
 
     def poll(self):
-        """Check if the task is still running. If it is, return 'None', else return exit status."""
+        """
+        Check if the process is still running. If it is, return 'None', else return exit status.
+        """
 
-        chan = self.tobj
+        chan = self.pobj
         if chan.exit_status_ready():
             return chan.recv_exit_status()
         return None
 
     def _read_pid(self):
-        """Read 'PID' for the just executed command and store it in 'self.pid'."""
+        """Read 'PID' for the just executed process and store it in 'self.pid'."""
 
         self._dbg("_read_pid: reading PID for command: %s", self.cmd)
         assert self.shell
@@ -391,8 +392,8 @@ class Task(_ProcessManagerBase.TaskBase):
 
     def _reinit(self, cmd, real_cmd, shell):
         """
-        Re-initialize the interactive shell task object when a new command is executed. The
-        arguments are the same as in 'TaskBase._reinit()'.
+        Re-initialize the interactive shell process object when a new command is executed. The
+        arguments are the same as in 'ProcessBase._reinit()'.
         """
 
         super()._reinit(cmd, real_cmd, shell)
@@ -403,15 +404,15 @@ class Task(_ProcessManagerBase.TaskBase):
         if shell:
             self._read_pid()
 
-    def __init__(self, pman, tobj, cmd, real_cmd, shell, streams):
+    def __init__(self, pman, pobj, cmd, real_cmd, shell, streams):
         """
-        Initialize a class instance. The arguments are the same as in 'TaskBase.__init__()'.
+        Initialize a class instance. The arguments are the same as in 'ProcessBase.__init__()'.
         """
 
-        super().__init__(pman, tobj, cmd, real_cmd, shell, streams)
+        super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
 
         #
-        # The below attributes are used when the task runs in an interactive shell.
+        # The below attributes are used when the process runs in an interactive shell.
         #
         # The marker indicating that the command has finished.
         self._marker = None
@@ -438,9 +439,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     @staticmethod
     def _format_cmd_for_pid(cmd, cwd=None):
         """
-        When we run a command via the shell, we do not know it's PID. This function modifies command
-        'cmd' so that it prints the PID as the first line of its output to 'stdout'. This requires a
-        shell.
+        When we run a process via the shell, we do not know it's PID. This function modifies the
+        'cmd' command so that it prints the PID as the first line of its output to 'stdout'. This
+        requires a shell.
         """
 
         # Prepend the command with a shell statement which prints the PID of the shell where the
@@ -468,7 +469,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except _PARAMIKO_EXCEPTIONS as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        return Task(self, chan, command, cmd, shell, (chan.recv, chan.recv_stderr))
+        return SSHProcess(self, chan, command, cmd, shell, (chan.recv, chan.recv_stderr))
 
     def _run_in_intsh(self, command, cwd=None):
         """Run command 'command' in the interactive shell."""
@@ -478,18 +479,18 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             _LOG.debug("starting interactive shell%s: %s", self.hostmsg, cmd)
             self._intsh = self._run_in_new_session(cmd, shell=False)
 
-        task = self._intsh
+        proc = self._intsh
         cmd = self._format_cmd_for_pid(command, cwd=cwd)
 
         # Pick a new marker for the new interactive shell command.
-        task._reinit_marker()
+        proc._reinit_marker()
         # Run the command.
-        cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{task._marker}" "$?"\n'
-        task.tobj.send(cmd)
-        # Re-initialize the interactive shell task object to match the new command.
-        task._reinit(command, cmd, True)
+        cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{proc._marker}" "$?"\n'
+        proc.pobj.send(cmd)
+        # Re-initialize the interactive shell process object to match the new command.
+        proc._reinit(command, cmd, True)
 
-        return task
+        return proc
 
     def _acquire_intsh_lock(self, command=None):
         """
@@ -659,13 +660,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             intsh = shell
 
         # Execute the command on the remote host.
-        task = self._run_async(command, cwd=cwd, shell=shell, intsh=intsh)
-        chan = task.tobj
+        proc = self._run_async(command, cwd=cwd, shell=shell, intsh=intsh)
+        chan = proc.pobj
         if mix_output:
             chan.set_combine_stderr(True)
 
         # Wait for the command to finish and handle the time-out situation.
-        result = task.wait(timeout=timeout, capture_output=capture_output,
+        result = proc.wait(timeout=timeout, capture_output=capture_output,
                            output_fobjs=output_fobjs, join=join)
 
         if result.exitcode is None:

@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module contains helper function to run and manage operating system processes (tasks).
+This module implements a process manager for running and monitoring local processes.
 """
 
 # pylint: disable=no-member
@@ -43,14 +43,13 @@ def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
     return "method '%s()' failed for %s" % (method, fobj.name)
 
-class Task(_ProcessManagerBase.TaskBase):
+class LocalProcess(_ProcessManagerBase.ProcessBase):
     """
-    This class represents a local task (process) that was executed by a 'LocalProcessManager'
-    object.
+    This class represents a process that was executed by 'LocalProcessManager'.
     """
 
     def _fetch_stream_data(self, streamid, size):
-        """Fetch up to 'size' butes from tasks stdout or stderr."""
+        """Fetch up to 'size' butes from stdout or stderr of the process."""
 
         retries = 0
         max_retries = 16
@@ -68,12 +67,12 @@ class Task(_ProcessManagerBase.TaskBase):
         raise Error(f"received 'EAGAIN' error {retries} times")
 
     def _wait_timeout(self, timeout):
-        """Wait for task to finish with a timeout."""
+        """Wait for process to finish with a timeout."""
 
-        tobj = self.tobj
+        pobj = self.pobj
         self._dbg("_wait_timeout: waiting for exit status, timeout %s sec", timeout)
         try:
-            exitcode = tobj.wait(timeout=timeout)
+            exitcode = pobj.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             self._dbg("_wait_timeout: exit status not ready for %s seconds", timeout)
             return None
@@ -88,7 +87,7 @@ class Task(_ProcessManagerBase.TaskBase):
         lists: '[stdout_lines, stderr_lines]' (lists of stdout/stderr lines).
         """
 
-        if not self.tobj.stdout and not self.tobj.stderr:
+        if not self.pobj.stdout and not self.pobj.stderr:
             self.exitcode = self._wait_timeout(timeout)
             return [[], []]
 
@@ -123,7 +122,7 @@ class Task(_ProcessManagerBase.TaskBase):
                 self._dbg(f"_wait: timeout is {timeout}, exit immediately")
                 break
             if time.time() - start_time >= timeout:
-                self._dbg("_wait: stop waiting for the command - timeout")
+                self._dbg("_wait: stop waiting for the process - timeout")
                 break
 
         return self._get_lines_to_return(lines)
@@ -147,12 +146,15 @@ class Task(_ProcessManagerBase.TaskBase):
                                                   timeout=timeout)
 
     def poll(self):
-        """Check if the task is still running. If it is, return 'None', else return exit status."""
-        return self.tobj.poll()
+        """
+        Check if the process is still running. If it is, return 'None', else return exit status.
+        """
+        return self.pobj.poll()
 
 class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """
-    The project manager for local processes executed using 'Popen'.
+    This class implements a process manager for running and monitoring local processes. The
+    implementation is based on 'Popen()'.
     """
 
     def _do_run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
@@ -192,29 +194,29 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             real_cmd = command = " ".join(command)
 
         try:
-            tobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
+            pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
                                     cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
         except OSError as err:
             raise self._cmd_start_failure(cmd, err) from err
 
         # Wrap the standard I/O file objects to ensure they raise only the 'Error' exception.
         for name in ("stdin", "stdout", "stderr"):
-            if getattr(tobj, name):
-                wrapped_fobj = WrapExceptions.WrapExceptions(getattr(tobj, name),
+            if getattr(pobj, name):
+                wrapped_fobj = WrapExceptions.WrapExceptions(getattr(pobj, name),
                                                              exceptions=_EXCEPTIONS,
                                                              get_err_prefix=_get_err_prefix)
-                setattr(tobj, name, wrapped_fobj)
+                setattr(pobj, name, wrapped_fobj)
 
-        task = Task(self, tobj, command, real_cmd, shell, (tobj.stdout, tobj.stderr))
-        task.pid = tobj.pid
-        return task
+        proc = LocalProcess(self, pobj, command, real_cmd, shell, (pobj.stdout, pobj.stderr))
+        proc.pid = pobj.pid
+        return proc
 
     def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
                   env=None, shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument
         """
-        A helper function to run an external command asynchronously. The 'command' argument should
-        be a string containing the command to run. The 'stdin', 'stdout', and 'stderr' parameters
-        can be one of:
+        A helper function to run a command asynchronously. The 'command' argument should be a string
+        containing the command to run. The 'stdin', 'stdout', and 'stderr' parameters can be one
+        of:
             * an open file descriptor (a positive integer)
             * a file object
             * file path (in case of stdout and stderr the file will be created if it does not exist)
@@ -242,11 +244,12 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             output_fobjs=(None, None), bufsize=0, cwd=None, env=None, shell=False, newgrp=False,
             intsh=True): # pylint: disable=unused-argument
         """
-        Run command 'command' on the remote host and block until it finishes. The 'command' argument
-        should be a string.
+        Run command 'command' locally and block until it finishes. The 'command' argument should be
+        a string.
 
-        The 'timeout' parameter specifies the longest time for this method to block. If the command
-        takes longer, this function will raise the 'ErrorTimeOut' exception. The default is 1h.
+        The 'timeout' parameter specifies the longest time for this method to block. If the executed
+        command runs for longer time, this function will raise the 'ErrorTimeOut' exception. The
+        default is 1h.
 
         If the 'capture_output' argument is 'True', this function intercept the output of the
         executed program, otherwise it doesn't and the output is dropped (default) or printed to
@@ -298,11 +301,11 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         else:
             stderr = subprocess.PIPE
 
-        task = self._do_run_async(command, stdout=stdout, stderr=stderr, bufsize=bufsize, cwd=cwd,
+        proc = self._do_run_async(command, stdout=stdout, stderr=stderr, bufsize=bufsize, cwd=cwd,
                                   env=env, shell=shell, newgrp=newgrp)
 
         # Wait for the command to finish and handle the time-out situation.
-        result = task.wait(capture_output=capture_output, output_fobjs=output_fobjs,
+        result = proc.wait(capture_output=capture_output, output_fobjs=output_fobjs,
                            timeout=timeout, join=join)
 
         if result.exitcode is None:

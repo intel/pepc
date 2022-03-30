@@ -18,7 +18,7 @@ _RAISE = object()
 
 def is_root():
     """
-    Return 'True' if the current process has the superuser (root) privileges and 'False' otherwise.
+    Return 'True' if current process has superuser (root) privileges and 'False' otherwise.
     """
 
     try:
