@@ -24,7 +24,7 @@ _TEST_DATA = int.from_bytes(_TEST_DATA_BYTES, byteorder="little")
 #pylint:disable=no-self-use
 
 @patch("builtins.open", new_callable=mock_open, read_data=_TEST_DATA_BYTES)
-@patch("pepclibs.helperlibs.Procs.Proc", new=MockedProc)
+@patch("pepclibs.helperlibs.LocalProcessManager.LocalProcessManager", new=MockedProc)
 class Test_v1_MSR(unittest.TestCase):
     """Unittests for the 'MSR' module."""
 

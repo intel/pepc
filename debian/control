@@ -19,6 +19,6 @@ Depends: python3:any (>= 3.7~),
          ${python3:Depends},
          util-linux (>= 2.20~), # dmesg, lscpu
          procps, # ps
-         rsync # SSH.py, Procx.py
+         rsync
 Description: Power, Energy, and Performance configuration tool.
  A tool configuring various power and performance aspects of a Linux system.

@@ -19,7 +19,7 @@ from pathlib import Path
 from hashlib import sha512
 from operator import itemgetter
 from collections import namedtuple
-from pepclibs.helperlibs import Procs, Trivial, Human
+from pepclibs.helperlibs import LocalProcessManager, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorExists
 
 # Default debugfs mount point.
@@ -32,13 +32,15 @@ _LOG = logging.getLogger()
 
 def get_sha512(path, default=_RAISE, proc=None, skip_lines=0):
     """
-    Calculate sha512 checksum of the file 'path' on the host defined by 'proc'. The'default'
-    argument can be used as an return value instead of raising an error. The 'skip_lines' argument
-    tells how many lines from the beginning will be excluded from checksum calculation.
+    Calculate sha512 checksum of the file 'path' on the host defined by the 'proc' process manager
+    object ('LocalProcessManager' by default, which means the local host).
+    The 'default' argument can be used as an return value instead of raising an error. The
+    'skip_lines' argument tells how many lines from the beginning will be excluded from checksum
+    calculation.
     """
 
     if not proc:
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
 
     with proc.open(path, "rb") as fobj:
         try:
@@ -83,8 +85,10 @@ def set_default_perm(path):
 def get_homedir(proc=None):
     """
     Return home directory path. By default returns current user's local home directory path.
-    If the 'procs' argument contains a connected "SSH" object, then this function returns home
-    directory path of the connected user on the remote host.
+
+    The 'proc' argument is the process manger object which defines the host to get the home
+    directory on. By default it is 'LocalProcessManager', which means that the home directory on the
+    local host will be returned.
     """
 
     if proc and proc.is_remote:
@@ -176,7 +180,10 @@ def move_copy_link(src, dst, action="symlink", exist_ok=False):
         raise Error(f"cannot {action} '{src}' to '{dst}':\n{err}") from err
 
 def get_mtime(path, proc=None):
-    """Returns file or directory mtime."""
+    """
+    Returns the modification time of file or directory on the host defined by the 'proc' process
+    manager object ('LocalProcessManager' by default, which means the local host).
+    """
 
     if not proc:
         try:
@@ -208,15 +215,16 @@ def mount_points(proc=None):
       * fstype - file-system type
       * options - list of options
 
-    By default this function operates on the local host, but the 'proc' argument can be used to pass
-    a connected 'SSH' object in which case this function will operate on the remote host.
+    The 'proc' argument is the process manger object which defines the host to parse '/proc/mounts'
+    on. By default it is 'LocalProcessManager', which means that local host's '/proc/mounts' will be
+    parsed.
     """
 
     mounts_file = "/proc/mounts"
     mntinfo = namedtuple("mntinfo", ["device", "mntpoint", "fstype", "options"])
 
     if not proc:
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
 
     with proc.open(mounts_file, "r") as fobj:
         try:
@@ -260,8 +268,9 @@ def mktemp(prefix=None, tmpdir=None, proc=None):
     specify the temporary directory name prefix. The 'tmpdir' argument path to the base directory
     where the temporary directory should be created.
 
-    By default this function operates on the local host, but the 'proc' argument can be used to pass
-    a connected 'SSH' object in which case this function will operate on the remote host.
+    The 'proc' argument is the process manger object which defines the host to create the temporary
+    directory on. By default it is 'LocalProcessManager', which means that local the temporary
+    directory will be created on the local host.
     """
 
     if not proc:
@@ -296,12 +305,12 @@ def shell_test(path, opt, proc=None):
     options. For example, pass '-f' to run 'test -f' which returns 0 if 'path' exists and is a
     regular file and 1 otherwise.
 
-    By default this function operates on the local host, but the 'proc' argument can be used to pass
-    a connected 'SSH' object in which case this function will operate on the remote host.
+    The 'proc' argument is the process manger object which defines the host to run the comman on.
+    By default it is 'LocalProcessManager', which means that command will be run on the local host.
     """
 
     if not proc:
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
 
     cmd = f"test {opt} '{path}'"
     stdout, stderr, exitcode = proc.run(cmd, shell=True)
@@ -323,12 +332,13 @@ def mkdir(dirpath, parents=False, exist_ok=False, proc=None):
     directory already exists, this function raises an exception if 'exist_ok' is 'True', and it
     returns without an error if 'exist_ok' is 'False'.
 
-    By default this function operates on the local host, but the 'proc' argument can be used to pass
-    a connected 'SSH' object in which case this function will operate on the remote host.
+    The 'proc' argument is the process manger object which defines the host to create the directory
+    on. By default it is 'LocalProcessManager', which means that the directory will be created on
+    the local host.
     """
 
     if not proc:
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
 
     exists_err = f"path '{dirpath}' already exists{proc.hostmsg}"
     if shell_test(dirpath, "-e", proc=proc):
@@ -353,8 +363,9 @@ def mkdir(dirpath, parents=False, exist_ok=False, proc=None):
 
 def rm_minus_rf(path, proc=None):
     """
-    Remove 'path' using 'rm -rf' on the host definec by 'Proc' (local host by default). If 'path' is
-    a symlink, the link is removed, but the target of the link is not removed.
+    Remove 'path' using 'rm -rf' on the host defined by the 'proc' process manager object
+    ('LocalProcessManager' by default, which means the local host). If 'path' is a symlink, the link
+    is removed, but the target of the link is not removed.
     """
 
     if proc and proc.is_remote:
@@ -373,7 +384,8 @@ def rm_minus_rf(path, proc=None):
 
 def exists(path, proc=None):
     """
-    Return 'True' if path 'path' exists on the host defined by 'proc' (local host by default).
+    Return 'True' if path 'path' exists on the host defined by the 'proc' process manager object
+    ('LocalProcessManager' by default, which means the local host).
     """
 
     if proc and proc.is_remote:
@@ -386,8 +398,8 @@ def exists(path, proc=None):
 
 def isfile(path, proc=None):
     """
-    Return 'True' if path 'path' exists an it is a regular file. The check is done on the host
-    defined by 'proc' (local host by default).
+    Return 'True' if path 'path' exists an it is a regular file on the host defined by the 'proc'
+    process manager object ('LocalProcessManager' by default, which means the local host).
     """
 
     if proc and proc.is_remote:
@@ -401,8 +413,8 @@ def isfile(path, proc=None):
 
 def isdir(path, proc=None):
     """
-    Return 'True' if path 'path' exists an it is a directory. The check is done on the host
-    defined by 'proc' (local host by default).
+    Return 'True' if path 'path' exists an it is a directory on the host defined by the 'proc'
+    process manager object ('LocalProcessManager' by default, which means the local host).
     """
 
     if proc and proc.is_remote:
@@ -416,8 +428,8 @@ def isdir(path, proc=None):
 
 def isexe(path, proc=None):
     """
-    Return 'True' if path 'path' exists an it is an executable file. The check is done on the host
-    defined by 'proc' (local host by default).
+    Return 'True' if path 'path' exists an it is an executable file on the host defined by the
+    'proc' process manager object ('LocalProcessManager' by default, which means the local host).
     """
 
     if proc and proc.is_remote:
@@ -431,8 +443,8 @@ def isexe(path, proc=None):
 
 def issocket(path, proc=None):
     """
-    Return 'True' if path 'path' exists an it is a Unix socket file. The check is done on the host
-    defined by 'proc' (local host by default).
+    Return 'True' if path 'path' exists an it is a Unix socket file on the host defined by the
+    'proc' process manager object ('LocalProcessManager' by default, which means the local host).
     """
 
     if proc and proc.is_remote:
@@ -450,8 +462,8 @@ def which(program, default=_RAISE, proc=None):
     found, otherwise retruns 'default' or rises an exception if the 'default' value was not
     provided.
 
-    By default this function operates on the local host, but the 'proc' argument can be used to pass
-    a connected 'SSH' object in which case this function will operate on the remote host.
+    The 'proc' argument is the process manger object which defines the host to search on. By default
+    it is 'LocalProcessManager', which means that the search will be one on the local host.
     """
 
     if proc and proc.is_remote:
@@ -504,15 +516,15 @@ def lsdir(path, must_exist=True, proc=None):
     changed with the 'must_exist' argument. If 'must_exist' is 'False, this function just returns
     and does not yield anything.
 
-    By default this function operates on the local host, but the 'proc' argument can be used to pass
-    a connected 'SSH' object in which case this function will operate on the remote host.
+    The 'proc' argument is the process manger object which defines the host 'path' resides on. By
+    default it is 'LocalProcessManager', which means that the 'path' is on the local host.
     """
 
     if not must_exist and not exists(path, proc=proc):
         return
 
     if not proc:
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
 
     if proc and proc.is_remote:
         stdout, _ = proc.run_verify(f"ls -c -1 --file-type -- '{path}'", join=False)
@@ -564,8 +576,8 @@ def abspath(path, must_exist=True, proc=None):
     path should exist by default, otherwise this function raises and exception. But if 'must_exist'
     is 'False', then it is acceptable for the components of the path not to exist.
 
-    By default this function operates on the local host, but the 'proc' argument can be used to pass
-    a connected 'SSH' object in which case this function will operate on the remote host.
+    The 'proc' argument is the process manger object which defines the host 'path' resides on. By
+    default it is 'LocalProcessManager', which means that the 'path' is on the local host.
     """
 
     if not proc or not proc.is_remote:
@@ -588,13 +600,14 @@ def abspath(path, must_exist=True, proc=None):
 def read(path, default=_RAISE, proc=None):
     """
     Read file 'path'. If it fails return 'default' or rise an exception if the 'default' value
-    was not provided. By default this function operates on the local host, but the 'proc' argument
-    can be used to pass a connected 'SSH' object in which case this function will operate on the
-    remote host.
+    was not provided.
+
+    The 'proc' argument is the process manger object which defines the host 'path' resides on. By
+    default it is 'LocalProcessManager', which means that the 'path' is on the local host.
     """
 
     if not proc:
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
 
     try:
         with proc.open(path, "r") as fobj:
@@ -610,7 +623,7 @@ def read_int(path, default=_RAISE, proc=None):
     """Read an integer from file 'path'. Other arguments are same as in 'read()'."""
 
     if not proc:
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
 
     val = read(path, default=default, proc=proc)
     if val is default:
@@ -622,10 +635,13 @@ def read_int(path, default=_RAISE, proc=None):
     return int(val)
 
 def write(path, data, proc=None):
-    """Write data 'data' into file 'path'."""
+    """
+    Write data 'data' to file 'path' on the host defined by the 'proc' process manager object
+    ('LocalProcessManager' by default, which means the local host).
+    """
 
     if not proc:
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
 
     try:
         with proc.open(path, "w") as fobj:
@@ -639,12 +655,12 @@ def wait_for_a_file(path, interval=1, timeout=60, proc=None):
     periodically polls for the file every 'interval' seconds. If the file does not get created
     within 'timeout' seconds, then this function fails with an exception.
 
-    By default this function operates on the local host, but the 'proc' argument can be used to pass
-    a connected 'SSH' object in which case this function will operate on the remote host.
+    The 'proc' argument is the process manger object which defines the host 'path' resides on. By
+    default it is 'LocalProcessManager', which means that the 'path' is on the local host.
     """
 
     if not proc:
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
 
     start_time = time.time()
     while time.time() - start_time < timeout:

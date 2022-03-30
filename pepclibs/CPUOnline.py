@@ -12,7 +12,7 @@ This module provides an API for onlining and offlining CPUs.
 
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import FSHelpers, Procs
+from pepclibs.helperlibs import FSHelpers, LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 
@@ -146,7 +146,7 @@ class CPUOnline:
         The class constructor. The arguments are as follows.
           * progress - controls the logging level for the progress messages. The default logging
                        level is 'DEBUG'.
-          * proc - the 'Proc' or 'SSH' object that defines the host to run the measurements on.
+          * proc - the process manager object that defines the host to run the measurements on.
           * cpuinfo - A 'CPUInfo.CPUInfo()' object.
         """
 
@@ -165,7 +165,7 @@ class CPUOnline:
             progress = logging.DEBUG
 
         if not self._proc:
-            self._proc = Procs.Proc()
+            self._proc = LocalProcessManager.LocalProcessManager()
 
     def close(self):
         """Uninitialize the class object."""

@@ -16,7 +16,7 @@ from contextlib import contextmanager
 from unittest.mock import patch, mock_open
 from pathlib import Path
 from pepclibs import CPUInfo, CStates
-from pepclibs.helperlibs import Procs, FSHelpers
+from pepclibs.helperlibs import LocalProcessManager, FSHelpers
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 from pepclibs.msr import MSR, PCStateConfigCtl, PlatformInfo, TurboRatioLimit, PMEnable
 
@@ -35,7 +35,7 @@ _TESTDATA = {
 # Max. 64-bit integer.
 _MAX64 = (1 << 64) - 1
 
-_ORIG_PROC = Procs.Proc()
+_ORIG_PROC = LocalProcessManager.LocalProcessManager()
 
 def _get_mocked_data():
     """
@@ -48,7 +48,7 @@ def _get_mocked_data():
     """
 
     mock_data = {}
-    basepath = Path(__file__).parents[1].resolve()
+    basepath = Path(__file__).parents[1].resolve() # pylint: disable=no-member
     testdatapath = basepath / "tests" / "data_v1"
 
     for name, filename in _TESTDATA:
@@ -77,10 +77,10 @@ _MOCKED_FILES = _get_mocked_files(("cstates", "cpufreq", "intel_uncore_frequency
 _MOCKED_EXISTS_FILES = _MOCKED_FILES | _get_mocked_files(("dev_cpu", ))
 _MOCKED_ASPM_POLICY_FILES = _get_mocked_files(("aspm_policy", ))
 
-class MockedProc(Procs.Proc):
-    """Mocked version of 'Proc' class in pepclibs.helperlibs.Procs module."""
+class MockedProc(LocalProcessManager.LocalProcessManager):
+    """Mocked version of the 'LocalProcessManager' class."""
 
-    def run_verify(self, command, **kwargs):
+    def run_verify(self, command, **kwargs): # pylint: disable=arguments-differ
         """
         Mocked 'run_verify()' method. Inspect 'command' argument and return test data if command is
         relevant to the tests. Otherwise pass call to original method.
@@ -138,7 +138,7 @@ class MockedProc(Procs.Proc):
     def _get_mock_fobj(self, path, mode):
         """Prepare new file object."""
 
-        # TODO: This implementation works only when single user access the file. I.e. when user A
+        # Note: This implementation works only when single user access the file. I.e. when user A
         #       opens the file and write to it. User B opens the same file, but cannot see what user
         #       A wrote to it. Improve it by adding support for multiple users.
 
@@ -154,7 +154,7 @@ class MockedProc(Procs.Proc):
             read_data = _MOCKED_FILES[str(path)]
 
         with patch("builtins.open", new_callable=mock_open, read_data=read_data):
-            self._mock_fobj[path] = open(path, mode)
+            self._mock_fobj[path] = open(path, mode) # pylint: disable=consider-using-with
         return self._mock_fobj[path]
 
     def open(self, path, mode):
@@ -250,14 +250,14 @@ def mock_lsdir(path: Path, must_exist: bool = True, proc=None):
 @contextmanager
 def get_mocked_objects():
     """
-    Helper function to mock 'lsdir()' function in FSHelpers module, Proc and MSR classes. Returns
-    objects as tuple.
+    Helper function to mock 'lsdir()' function in 'FSHelpers' module, 'LocalProcessManager' and
+    'MSR' classes. Returns objects as tuple.
     """
 
     with patch("pepclibs.helperlibs.FSHelpers.lsdir", new=mock_lsdir) as mock_FSHelpers_lsdir, \
          patch("pepclibs.helperlibs.FSHelpers.exists", new=mock_exists),  \
          patch("pepclibs.helperlibs.FSHelpers.isfile", new=mock_isfile), \
-         patch("pepclibs.helperlibs.Procs.Proc", new=MockedProc) as mock_proc, \
+         patch("pepclibs.helperlibs.LocalProcessManager.LocalProcessManager", new=MockedProc) as mock_proc, \
          patch("pepclibs.msr.MSR.MSR", new=MockedMSR) as mock_msr:
         yield (mock_FSHelpers_lsdir, mock_proc, mock_msr)
 

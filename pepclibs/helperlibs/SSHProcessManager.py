@@ -7,11 +7,15 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides helpful API for communicating and working with remote hosts over SSH.
+This module implements a process manager for running and monitorin processes on a remote host over
+SSH.
+
+SECURITY NOTICE: this module and any part of it should only be used for debugging and development
+purposes. No security audit had been done. Not for production use.
 
 There are two ways we run commands remotely over SSH: in a new paramiko SSH session, and in the
-interactive shell. The latter way adds complexity, and the only reason we have it is because it is
-faster to run a process this way.
+interactive shell. The latter way adds complexity, but the reason we have it is because it is much
+faster to run a process this way, comparing to esablishing a new session.
 
 The first way of running commands is very straight-forward - we just open a new paramiko SSH session
 and run the command. The session gets closed when the command finishes. The next command requires a
@@ -23,9 +27,6 @@ paramiko session, and then just run commands in this shell. One command can run 
 not need to create a new SSH session between the commands. The complication with this method is to
 detect when command has finished. We solve this problem my making each command print a unique random
 hash to 'stdout' when it finishes.
-
-SECURITY NOTICE: this module and any part of it should only be used for debugging and development
-purposes. No security audit had been done. Not for production use.
 """
 
 # pylint: disable=no-member
@@ -87,7 +88,8 @@ def _get_username(uid=None):
 
 class Task(_ProcessManagerBase.TaskBase):
     """
-    This class represents a remote task (process) that was executed by an 'SSH' object.
+    This class represents a remote task (process) that was executed by an 'SSHProcessManager'
+    object.
     """
 
     def _fetch_stream_data(self, streamid, size):
@@ -424,9 +426,10 @@ class Task(_ProcessManagerBase.TaskBase):
         if shell:
             self._read_pid()
 
-class SSH(_ProcessManagerBase.ProcessManagerBase):
+class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """
-    This class provides API for communicating with remote hosts over SSH.
+    This class implements a process manager for running and monitorin processes on a remote host
+    over SSH.
 
     SECURITY NOTICE: this class and any part of it should only be used for debugging and development
     purposes. No security audit had been done. Not for production use.
@@ -719,9 +722,9 @@ class SSH(_ProcessManagerBase.ProcessManagerBase):
         if remotesrc and remotedst:
             proc = self
         else:
-            from pepclibs.helperlibs import Procs # pylint: disable=import-outside-toplevel
+            from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
 
-            proc = Procs.Proc()
+            proc = LocalProcessManager.LocalProcessManager()
             cmd += f" -e 'ssh {self.get_ssh_opts()}'"
             if remotesrc:
                 src = f"{self.hostname}:{src}"
@@ -740,8 +743,8 @@ class SSH(_ProcessManagerBase.ProcessManagerBase):
         ')'.
         """
 
-        from pepclibs.helperlibs import Procs # pylint: disable=import-outside-toplevel
-        proc = Procs.Proc()
+        from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
+        proc = LocalProcessManager.LocalProcessManager()
 
         opts = f"-o \"Port={self.port}\" -o \"User={self.username}\""
         if self.privkeypath:
@@ -750,7 +753,7 @@ class SSH(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             proc.run_verify(f"{cmd} -- {src} {dst}")
-        except Procs.Error as err:
+        except LocalProcessManager.Error as err:
             raise Error(f"failed to copy files '{src}' to '{dst}':\n{err}") from err
 
     def get(self, remote_path, local_path):
@@ -923,8 +926,8 @@ class SSH(_ProcessManagerBase.ProcessManagerBase):
           o timeout - optional SSH connection timeout value in seconds
 
         The 'hostname' argument being 'None' is a special case - this module falls-back to using the
-        'Procs' module and runs all all operations locally without actually involving SSH or
-        networking. This is different to using 'localhost', which does involve SSH.
+        'LocalProcessManager' module and runs all all operations locally without actually involving
+        SSH or networking. This is different to using 'localhost', which does involve SSH.
 
         SECURITY NOTICE: this class and any part of it should only be used for debugging and
         development purposes. No security audit had been done. Not for production use.
@@ -1034,12 +1037,12 @@ class SSH(_ProcessManagerBase.ProcessManagerBase):
 
     def __new__(cls, *_, **kwargs):
         """
-        This method makes sure that when users creates an 'SSH' object with 'hostname == None', we
-        create an instance of 'Proc' class instead of an instance of 'SSH' class. The two classes
-        have similar API.
+        This method makes sure that when users creates an 'SSHProcessManager' object with
+        'hostname == None', we create an instance of 'LocalProcessManager' class instead of an
+        instance of 'SSHProcessManager' class.
         """
 
         if "hostname" not in kwargs or kwargs["hostname"] is None:
-            from pepclibs.helperlibs import Procs # pylint: disable=import-outside-toplevel
-            return Procs.Proc()
+            from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
+            return LocalProcessManager.LocalProcessManager()
         return super().__new__(cls)

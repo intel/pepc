@@ -9,7 +9,7 @@
 """This module provides an API to control PCI Active State Power Management (ASPM)."""
 
 from pathlib import Path
-from pepclibs.helperlibs import Procs, Trivial
+from pepclibs.helperlibs import LocalProcessManager, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 
 class ASPM:
@@ -77,7 +77,7 @@ class ASPM:
         self._policy_path = Path("/sys/module/pcie_aspm/parameters/policy")
 
         if not self._proc:
-            self._proc = Procs.Proc()
+            self._proc = LocalProcessManager.LocalProcessManager()
 
     def close(self):
         """Uninitialize the class object."""

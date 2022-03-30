@@ -12,7 +12,7 @@ This module provides API for loading and unloading Linux kernel modules (drivers
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import Procs, Dmesg, ToolChecker
+from pepclibs.helperlibs import LocalProcessManager, Dmesg, ToolChecker
 
 _LOG = logging.getLogger()
 
@@ -135,7 +135,7 @@ class KernelModule:
         self._close_tchk = tchk is None
 
         if not self._proc:
-            self._proc = Procs.Proc()
+            self._proc = LocalProcessManager.LocalProcessManager()
         if isinstance(dmesg, Dmesg.Dmesg):
             self._dmesg_obj = dmesg
         elif dmesg:

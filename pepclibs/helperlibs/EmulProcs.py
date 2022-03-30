@@ -8,7 +8,7 @@
 #
 # Author: Antti Laakso <antti.laakso@linux.intel.com>
 
-"""Emulated version or the 'Procs' module for testing purposes."""
+"""Emulated version or the 'LocalProcessManager' module for testing purposes."""
 
 import io
 import types
@@ -56,8 +56,8 @@ def _populate_sparse_file(path, data):
 
 class EmulProc(_ProcessManagerBase.ProcessManagerBase):
     """
-    Emulated version of the 'Proc' class in the 'pepclibs.helperlibs.Procs' module. The class is
-    used for testing purposes.
+    An process manager which pretends that it runs commands, but in reality it just returns
+    pre-defined command output. This class is used for testing purposes.
     """
 
     def _get_cmd_result(self, cmd):
@@ -79,8 +79,11 @@ class EmulProc(_ProcessManagerBase.ProcessManagerBase):
 
     def run_verify(self, cmd, **kwargs): # pylint: disable=unused-argument
         """
-        Emulates 'Proc.run_verify()' for pre-defined set of commands. If command is not known,
-        raises an 'ErrorNotSupported' exception.
+        Does not really run commands, just pretends running them and returns the pre-dfined output
+        values. Works only for a limited set of known commands. If the command is not known, raises
+        'ErrorNotSupported'.
+
+        Refer to 'ProcessManagerBase.run_verify()' for more information.
         """
 
         _LOG.debug("running the following emulated command:\n%s", cmd)
@@ -88,7 +91,10 @@ class EmulProc(_ProcessManagerBase.ProcessManagerBase):
         return self._get_cmd_result(cmd)
 
     def run(self, cmd, **kwargs): # pylint: disable=unused-argument
-        """Same as 'run_verify()', but emulates the 'Proc.run()' command."""
+        """
+        Similarly to 'run_verify()', emulates a pre-defined set of commands. Refer to
+        'ProcessManagerBase.run_verify()' for more information.
+        """
 
         _LOG.debug("running the following emulated command:\n%s", cmd)
 
@@ -96,7 +102,7 @@ class EmulProc(_ProcessManagerBase.ProcessManagerBase):
         return ProcResult(stdout=stdout, stderr=stderr, exitcode=0)
 
     def _open_rw(self, path, mode):
-        """Create file in temporary directory and return the file object."""
+        """Create a file in the temporary directory and return the file object."""
 
         tmppath = self._get_basepath() / str(path).strip("/")
 
@@ -123,7 +129,7 @@ class EmulProc(_ProcessManagerBase.ProcessManagerBase):
         return fobj
 
     def _open_ro(self, path, mode): # pylint: disable=unused-argument
-        """Emulate read-only file object by returning StringIO object."""
+        """Return an emulated read-only file object using a 'StringIO' object."""
 
         def _ro_write(self, data):
             """Write method for emulating RO file."""
@@ -134,7 +140,7 @@ class EmulProc(_ProcessManagerBase.ProcessManagerBase):
         return fobj
 
     def open(self, path, mode):
-        """Create file in temporary directory and return the file object."""
+        """Create a file in the temporary directory and return the file object."""
 
         path = str(path)
         if path in self._ro_files:
@@ -147,8 +153,8 @@ class EmulProc(_ProcessManagerBase.ProcessManagerBase):
 
     def _init_commands(self, cmdinfos, datapath):
         """
-        Initialize commands in 'cmdinfos' dictionary. Read commands' output from 'datapath' and save
-        them in 'self._cmds'.
+        Initialize commands described by the 'cmdinfos' dictionary. Read the stdout/stderr data of
+        the commands from 'datapath' and save them in 'self._cmds'.
         """
 
         for cmdinfo in cmdinfos:
@@ -255,7 +261,7 @@ class EmulProc(_ProcessManagerBase.ProcessManagerBase):
             self._init_msrs(config["msrs"], datapath)
 
     def __init__(self):
-        """Initialize the emulated 'Proc' class instance."""
+        """Initialize the emulated 'LocalProcessManager' class instance."""
 
         super().__init__()
 

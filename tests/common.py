@@ -12,10 +12,13 @@
 
 import os
 from pathlib import Path
-from pepclibs.helperlibs import EmulProcs, Procs, SSH
+from pepclibs.helperlibs import EmulProcs, LocalProcessManager, SSHProcessManager
 
 def get_proc(hostname, dataset):
-    """Depending on the 'hostname' argument, return emulated 'Proc', real 'Proc' or 'SSH' object."""
+    """
+    Depending on the 'hostname' argument, return emulated 'LocalProcessManager', real
+    'LocalProcessManager' or 'SSHProcessManager' object.
+    """
 
     if hostname == "emulation":
         proc = EmulProcs.EmulProc()
@@ -26,9 +29,9 @@ def get_proc(hostname, dataset):
         return proc
 
     if hostname == "localhost":
-        return Procs.Proc()
+        return LocalProcessManager.LocalProcessManager()
 
-    return SSH.SSH(hostname=hostname, username='root', timeout=10)
+    return SSHProcessManager.SSHProcessManager(hostname=hostname, username='root', timeout=10)
 
 def get_datasets():
     """Find all directories in 'tests/data' directory and yield the directory name."""

@@ -15,7 +15,7 @@ meaningful OS package installation suggestion if it is not installed.
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs import Procs, FSHelpers
+from pepclibs.helperlibs import LocalProcessManager, FSHelpers
 
 #
 # Tools information dictionary. Maps tool names to OS package names.
@@ -61,7 +61,7 @@ def _read_os_release(sysroot="/", proc=None):
     """
 
     if not proc:
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
 
     paths = ("/usr/lib/os-release", "/etc/os-release")
     paths = [Path(sysroot) / path.lstrip("/") for path in paths]
@@ -134,7 +134,7 @@ class ToolChecker:
     def __init__(self, proc=None):
         """
         The class constructor. The arguments are as follows.
-          * proc - the 'Proc' or 'SSH' object that defines the host to check for the tools on.
+          * proc - the process manager object that defines the host to check for the tools on.
         """
 
         self._proc = proc
@@ -144,7 +144,7 @@ class ToolChecker:
         self._cache = {}
 
         if not self._proc:
-            self._proc = Procs.Proc()
+            self._proc = LocalProcessManager.LocalProcessManager()
 
     def close(self):
         """Uninitialize the class object."""

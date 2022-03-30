@@ -17,7 +17,7 @@ from pathlib import Path
 from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg, MiscFeatureControl
 from pepclibs.msr import PlatformInfo, PowerCtl, PCStateConfigCtl, PMEnable, TurboRatioLimit
 from pepclibs.msr import TurboRatioLimit1
-from pepclibs.helperlibs import ArgParse, Logging, Procs, SSH, YAML
+from pepclibs.helperlibs import ArgParse, Logging, LocalProcessManager, SSHProcessManager, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
 OWN_NAME = "tdgen"
@@ -87,13 +87,15 @@ def parse_arguments():
     return args
 
 def get_proc(args):
-    """Returns and "SSH" object or the 'Procs' object depending on 'args.hostname'."""
+    """
+    Returns an 'SSHProcessManager' or 'LocalProcessManager' object depending on 'args.hostname'.
+    """
 
     if args.hostname == "localhost":
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
     else:
-        proc = SSH.SSH(hostname=args.hostname, username=args.username, privkeypath=args.privkey,
-                       timeout=args.timeout)
+        proc = SSHProcessManager.SSHProcessManager(hostname=args.hostname, username=args.username,
+                                                   privkeypath=args.privkey, timeout=args.timeout)
     return proc
 
 def collect_cmd_output(cmdinfo, proc, outdir):
@@ -101,7 +103,7 @@ def collect_cmd_output(cmdinfo, proc, outdir):
     Run the command defined in 'cmdinfo' and save the output to a file. The arguments are as
     follows.
       * cmdinfo - a dictionary of a command to run, see 'MODULE_TESTDATA'.
-      * proc - a 'Proc' or 'SSH' objetc that defines the remote host to run the 'cmdinfo' on.
+      * proc - the process manager object that defines the remote host to run the 'cmdinfo' on.
       * outdir - the directory to save the command output to.
     """
 
@@ -122,7 +124,7 @@ def collect_files(cmdinfo, proc, outdir):
     file. The arguments are as follows.
       * cmdinfo - a dictionary of a command to run to collect the file contents, see
                   'MODULE_TESTDATA'.
-      * proc - a 'Proc' or 'SSH' objetc that defines the remote host to read the files from.
+      * proc - the process manager object that defines the remote host to read the files from.
       * outdir - the directory to save the output to.
     """
 
@@ -140,7 +142,7 @@ def collect_msrs(msrinfo, proc, outdir):
     Read the values of the MSR registers defined in 'msrinfo' and save the output to a file. The
     arguments are as follows.
       * msrinfo - a dictionary of a MSR registers to read, see 'MODULE_TESTDATA'.
-      * proc - a 'Proc' or 'SSH' object that defines the remote host to read the MSR values from.
+      * proc - the process manager object that defines the remote host to read the MSR values from.
       * outdir - the directory to save the command output to.
     """
 

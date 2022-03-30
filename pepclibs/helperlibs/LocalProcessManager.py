@@ -24,7 +24,8 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionD
 
 _LOG = logging.getLogger()
 
-# This attribute helps making the API of this module similar to the API of the 'SSH' module.
+# This attribute helps making the API of this module similar to the API of the 'SSHProcessManager'
+# module.
 hostname = "localhost"
 
 # The exceptions to handle when dealing with file I/O.
@@ -44,7 +45,8 @@ def _get_err_prefix(fobj, method):
 
 class Task(_ProcessManagerBase.TaskBase):
     """
-    This class represents a local task (process) that was executed by a 'Proc' object.
+    This class represents a local task (process) that was executed by a 'LocalProcessManager'
+    object.
     """
 
     def _fetch_stream_data(self, streamid, size):
@@ -148,8 +150,10 @@ class Task(_ProcessManagerBase.TaskBase):
         """Check if the task is still running. If it is, return 'None', else return exit status."""
         return self.tobj.poll()
 
-class Proc(_ProcessManagerBase.ProcessManagerBase):
-    """This class provides API similar to the 'SSH' class API."""
+class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
+    """
+    The project manager for local processes executed using 'Popen'.
+    """
 
     def _do_run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
                       env=None, shell=False, newgrp=False):
@@ -219,8 +223,7 @@ class Proc(_ProcessManagerBase.ProcessManagerBase):
 
         If the 'newgrp' argument is 'True', then new process gets new session ID.
 
-        The 'intsh' argument is not used. It is present only for API compatibility between 'Procs'
-        and 'SSH'.
+        The 'intsh' argument is not used.
 
         Returns the 'Popen' object of the executed process.
         """
@@ -279,8 +282,7 @@ class Proc(_ProcessManagerBase.ProcessManagerBase):
         If the 'capture_output' argument is not 'True', the 'stdout' and 'stderr' parts of the
         returned tuple will be an empty string.
 
-        The 'intsh' argument is not used. It is present only for API compatibility between 'Procs'
-        and 'SSH'.
+        The 'intsh' argument is not used.
         """
 
         if cwd:
@@ -334,8 +336,7 @@ class Proc(_ProcessManagerBase.ProcessManagerBase):
         # pylint: disable=unused-argument
         """
         Copy data from path 'src' to path 'dst' using 'rsync' with options specified in 'opts'. The
-        'remotesrc' and 'remotedst' arguments are ignored. They only exist for compatibility with
-        'SSH.rsync()'. The default options are:
+        'remotesrc' and 'remotedst' arguments are ignored. The default options are:
           * r - recursive
           * l - copy symlinks as symlinks
           * p - preserve permission

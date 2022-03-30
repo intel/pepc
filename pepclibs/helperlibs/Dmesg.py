@@ -16,7 +16,7 @@ import itertools
 import difflib
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import Procs, ToolChecker
+from pepclibs.helperlibs import LocalProcessManager, ToolChecker
 
 _LOG = logging.getLogger()
 
@@ -93,7 +93,7 @@ class Dmesg:
     def __init__(self, proc=None, tchk=None):
         """
         The class constructor. The arguments are as follows.
-          * proc - the 'Proc' or 'SSH' object that defines the host to run 'dmesg' on.
+          * proc - the process manager object that defines the host to run 'dmesg' on.
           * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
                    the required tools like 'dmesg' are present on the target host.
         """
@@ -107,7 +107,7 @@ class Dmesg:
         self.captured = []
 
         if not self._proc:
-            self._proc = Procs.Proc()
+            self._proc = LocalProcessManager.LocalProcessManager()
         if not self._tchk:
             self._tchk = ToolChecker.ToolChecker(proc=self._proc)
 
@@ -140,7 +140,7 @@ def capture(proc):
     and should not be used for anything else, as the messages format is implementation-specific. So
     treat the return value as an opaque object.
 
-    The 'proc' argumen is a 'Proc' or 'SSH' object that defines the host to run 'dmesg' on.
+    The 'proc' argument is the process manager object that defines the host to run 'dmesg' on.
     """
 
     with Dmesg(proc) as dmesg:
@@ -156,7 +156,7 @@ def get_new_messages(captured, proc, join=True, strip=False):
     If an error occures and dmesg output cannot be captured, this function returns an empty string
     (or empty list if 'join' is 'False').
 
-    The 'proc' argumen is a 'Proc' or 'SSH' object that defines the host to run 'dmesg' on. The
+    The 'proc' argumens is the process manager object that defines the host to run 'dmesg' on. The
     'join' and 'strip' arguments are the same as in 'dmesg.run()'.
     """
 

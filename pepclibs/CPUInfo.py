@@ -13,7 +13,7 @@ This module provides an API to get CPU information.
 import re
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
-from pepclibs.helperlibs import ArgParse, Procs, Trivial, FSHelpers, ToolChecker
+from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, FSHelpers, ToolChecker
 
 # CPU model numbers.
 #
@@ -933,7 +933,7 @@ class CPUInfo:
     def __init__(self, proc=None, tchk=None):
         """
         The class constructor. The arguments are as follows.
-          * proc - the 'Proc' or 'SSH' object that defines the target host.
+          * proc - the process manager object that defines the target host.
           * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
                    the required tools like 'lscpu' are present on the target host.
         """
@@ -966,7 +966,7 @@ class CPUInfo:
         self.cpudescr = None
 
         if not self._proc:
-            self._proc = Procs.Proc()
+            self._proc = LocalProcessManager.LocalProcessManager()
         if not self._tchk:
             self._tchk = ToolChecker.ToolChecker(proc=self._proc)
 

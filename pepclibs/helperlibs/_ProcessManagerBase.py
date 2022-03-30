@@ -7,7 +7,8 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module contains common bits and pieces shared between the 'Procs' and 'SSH' modules.
+This module provides the base class for process managers, as well as common bits and pieces shared
+between diffrent process manager implementations.
 """
 
 # pylint: disable=protected-access
@@ -328,8 +329,7 @@ class TaskBase:
     def __init__(self, proc, tobj, cmd, real_cmd, shell, streams):
         """
         Initialize a class instance. The arguments are as follows.
-          * proc - the process management object that was used for creating this task (e.g.,
-                   'Procs.Proc()' or 'SSH.SSH()'.
+          * proc - the process management object that was used for creating this task.
           * tobj - the low-level object representing the local or remote process corresponding to
                    this task object. E.g., this is a 'Popen()' object in case of a local process.
           * cmd - the executed command.
@@ -414,7 +414,7 @@ class TaskBase:
 
 class ProcessManagerBase:
     """
-    The base class for process local or remote process managers.
+    The base class for process managers, which can manage both local and remote processes.
     """
 
     Error = Error
@@ -457,8 +457,7 @@ def cmd_failed_msg(command, stdout, stderr, exitcode, hostname=None, startmsg=No
     """
     This helper function formats an error message for a failed command 'command'. The 'stdout' and
     'stderr' arguments are what the command printed to the standard output and error streams, and
-    'exitcode' is the exit status of the failed command. The 'hostname' parameter is ignored and it
-    is here only for the sake of keeping the 'Procs' API look similar to the 'SSH' API. The
+    'exitcode' is the exit status of the failed command. The 'hostname' parameter is ignored. The
     'startmsg' parameter can be used to specify the start of the error message. The 'timeout'
     argument specifies the command timeout.
     """

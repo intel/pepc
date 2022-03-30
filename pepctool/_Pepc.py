@@ -21,7 +21,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from pepclibs.helperlibs import ArgParse, Human, Procs, Logging, SSH
+from pepclibs.helperlibs import ArgParse, Human, LocalProcessManager, Logging, SSHProcessManager
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, PStates
 
@@ -402,13 +402,15 @@ def aspm_config_command(args, proc):
 # pylint: enable=import-outside-toplevel
 
 def get_proc(args):
-    """Returns and "SSH" object or the 'Procs' object depending on 'hostname'."""
+    """
+    Returns 'SSHProcessManager' object or 'LocalProcessManager' object depending on 'hostname'.
+    """
 
     if args.hostname == "localhost":
-        proc = Procs.Proc()
+        proc = LocalProcessManager.LocalProcessManager()
     else:
-        proc = SSH.SSH(hostname=args.hostname, username=args.username, privkeypath=args.privkey,
-                       timeout=args.timeout)
+        proc = SSHProcessManager.SSHProcessManager(hostname=args.hostname, username=args.username,
+                                                   privkeypath=args.privkey, timeout=args.timeout)
     return proc
 
 

@@ -10,7 +10,7 @@
 This module provides python API to the systemctl tool.
 """
 
-from pepclibs.helperlibs import ToolChecker, Procs, Trivial
+from pepclibs.helperlibs import ToolChecker, LocalProcessManager, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
 class Systemctl:
@@ -106,7 +106,7 @@ class Systemctl:
     def __init__(self, proc=None, tchk=None):
         """
         The class constructor. The arguments are as follows.
-          * proc - the 'Proc' or 'SSH' object that defines the target host.
+          * proc - the process manager object that defines the target host.
           * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
                    the 'systemctl' tool is present on the target host.
        """
@@ -121,7 +121,7 @@ class Systemctl:
         self._saved_ntp_services = None
 
         if not self._proc:
-            self._proc = Procs.Proc()
+            self._proc = LocalProcessManager.LocalProcessManager()
         if not self._tchk:
             self._tchk = ToolChecker.ToolChecker(proc=self._proc)
 
