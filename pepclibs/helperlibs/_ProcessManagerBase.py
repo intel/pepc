@@ -49,26 +49,26 @@ def extract_full_lines(text, join=False):
         full = "".join(full)
     return (full, partial)
 
+def _bug_method_not_defined(method_name):
+    """
+    Raise an error if the child class did not define the 'method_name' mandatory method.
+    """
+
+    raise Error(f"BUG: '{method_name}()' was not defined by the child class")
+
 class ProcessBase:
     """
     The base class for processes created using one of the process managers.
     """
 
-    @staticmethod
-    def _bug_method_not_defined(method_name):
-        """
-        Raise an error if the child class did not define the 'method_name' mandatory method.
-        """
-
-        raise Error(f"BUG: '{method_name}()' was not defined by the child class")
-
-    def _fetch_stream_data(self, streamid, size): # pylint: disable=unused-argument
+    def _fetch_stream_data(self, streamid, size):
         """
         Fetch up to 'size' bytes of data from stream 'streamid'. Returns 'None' if there are no
         data.
         """
 
-        return self._bug_method_not_defined("_fetch_stream_data")
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessBase._fetch_stream_data")
 
     def _stream_fetcher(self, streamid):
         """
@@ -191,8 +191,8 @@ class ProcessBase:
         lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).
         """
 
-        # pylint: disable=unused-argument
-        return self._bug_method_not_defined("_wait")
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessBase._wait")
 
     def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(None, None),
              join=True):
@@ -309,7 +309,7 @@ class ProcessBase:
         """
 
         # pylint: disable=no-self-use
-        return self._bug_method_not_defined("poll")
+        return _bug_method_not_defined("ProcessBase.poll")
 
     def _reinit(self, cmd, real_cmd, shell):
         """
@@ -419,6 +419,78 @@ class ProcessManagerBase:
     """
 
     Error = Error
+
+    def run_async(self, command, cwd=None, shell=False, intsh=False, stdin=None, stdout=None,
+                  stderr=None):
+        """
+        Run command 'command' without waiting for it to complete. The arguments are as follows.
+          * command - the command to run.
+          * cwd - the working directory of the process.
+          * shell - whether the command should be run via shell.
+          * intsh - whether the command should run in an already running interactive shell or in a
+                    new shell. The former should be more effecient.
+          * stdin - the standard input stream to use for the process. Can be one of:
+            - a file-like object
+            - file path
+          * stdout - similar to 'stdin', but for sandard output. If a file path is provided and it
+                     does not exist, it will be created.
+          * stderr - similar to 'stdin', but for sandard error.
+
+        Note, there is only one interactive shell process at the moment, so only one asynchronous
+        process an run in an interactive shell at a time.
+
+        Returns the process object.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.run_async")
+
+    def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
+            output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
+        """
+        Run command 'command' wait for it to finish. The arguments are as follows.
+          * command - the command to run.
+          * timeout - the longest time for this method to block. If the command takes longer to
+                      finish, this method will raise the 'ErrorTimeOut' exception. The default is
+                      4h (see '_ProcessManagerBase.TIMEOUT').
+          * capture_output - if 'True', this method will intercept the output of the executed
+                             command, otherwise the output will be dropped (default) (or echoed to
+                             to 'output_fobjs').
+          * mix_output - if 'True', the standard output and error streams will be mixed together.
+          * join - controls whether the captured output is returned as a single string or as a list
+                   of lines (trailing newlines are not stripped).
+          * output_fobjs - an optional tuple providing 2 file-like objects where stdout and stderr
+                           of the executed command should be echoed to. If 'mix_output' is 'True',
+                           the second element of the tupe will be ignored and all the output will be
+                           echoed to the first element. By default the command output is not echoed
+                           anywhere.
+          * cwd - the working directory of the process.
+          * shell - whether the command should be run via shell.
+          * intsh - whether the command should run in an already running interactive shell or in a
+                    new shell. The former should be more effecient.
+
+        This function returns the 'ProcResult' named tuple of '(exitcode, stdout, stderr)' elements.
+          * 'stdout' - stdout executed command.
+          * 'stderr' - stdout executed command.
+          * 'exitcode' - exit code of the executed command.
+
+        If the 'mix_output' argument is 'True', the 'stderr' part of the returned tuple will be an
+        empty string.  If the 'capture_output' argument is not 'True', the 'stdout' and 'stderr'
+        parts of the returned tuple will be empty strings.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.run")
+
+    def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
+                   output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
+        """
+        Similar as the "run()" method, but and raises the 'Error' exception if the command has
+        failed.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.run_verify")
 
     def _cmd_start_failure(self, cmd, err, intsh=False):
         """

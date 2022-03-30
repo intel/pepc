@@ -157,8 +157,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     implementation is based on 'Popen()'.
     """
 
-    def _do_run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
-                      env=None, shell=False, newgrp=False):
+    def _do_run_async(self, command, cwd=None, shell=False, stdin=None, stdout=None, stderr=None,
+                      bufsize=0, env=None, newgrp=False):
         """Implements 'run_async()'."""
 
         # pylint: disable=consider-using-with
@@ -211,25 +211,20 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         proc.pid = pobj.pid
         return proc
 
-    def run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
-                  env=None, shell=False, newgrp=False, intsh=False): # pylint: disable=unused-argument
+    def run_async(self, command, cwd=None, shell=False, intsh=False, stdin=None, stdout=None,
+                  stderr=None, bufsize=0, env=None, newgrp=False,):
         """
-        A helper function to run a command asynchronously. The 'command' argument should be a string
-        containing the command to run. The 'stdin', 'stdout', and 'stderr' parameters can be one
-        of:
-            * an open file descriptor (a positive integer)
-            * a file object
-            * file path (in case of stdout and stderr the file will be created if it does not exist)
+        Run command 'command' on the local host using 'Popen'. Refer to
+        'ProcessManagerBase.run_async()' for more information.
 
-        The 'bufsize', 'cwd','env' and 'shell' arguments are the same as in 'Popen()'.
+        Notes.
 
-        If the 'newgrp' argument is 'True', then new process gets new session ID.
-
-        The 'intsh' argument is not used.
-
-        Returns the 'Popen' object of the executed process.
+        1. The 'bufsize' and 'env' arguments are the same as in 'Popen()'.
+        2. If the 'newgrp' argument is 'True', then executed process gets a new session ID.
+        3. The 'intsh' argument is ignored.
         """
 
+        # pylint: disable=unused-argument,arguments-differ
         if cwd:
             cwd_msg = "\nWorking directory: %s" % cwd
         else:
@@ -237,57 +232,24 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         _LOG.debug("running the following local command asynchronously (shell %s, newgrp %s):\n"
                    "%s%s", str(shell), str(newgrp), command, cwd_msg)
 
-        return self._do_run_async(command, stdin=stdin, stdout=stdout, stderr=stderr,
-                                  bufsize=bufsize, cwd=cwd, env=env, shell=shell, newgrp=newgrp)
+        return self._do_run_async(command, cwd=cwd, shell=shell, stdin=stdin, stdout=stdout,
+                                  stderr=stderr, bufsize=bufsize, env=env, newgrp=newgrp)
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-            output_fobjs=(None, None), bufsize=0, cwd=None, env=None, shell=False, newgrp=False,
-            intsh=True): # pylint: disable=unused-argument
+            output_fobjs=(None, None), cwd=None, shell=True, intsh=None, bufsize=0, env=None,
+            newgrp=False):
         """
-        Run command 'command' locally and block until it finishes. The 'command' argument should be
-        a string.
+        Run command 'command' on the local host and wait for it to finish. Refer to
+        'ProcessManagerBase.run()' for more information.
 
-        The 'timeout' parameter specifies the longest time for this method to block. If the executed
-        command runs for longer time, this function will raise the 'ErrorTimeOut' exception. The
-        default is 1h.
+        Notes.
 
-        If the 'capture_output' argument is 'True', this function intercept the output of the
-        executed program, otherwise it doesn't and the output is dropped (default) or printed to
-        'output_fobjs'.
-
-        If the 'mix_output' argument is 'True', the standard output and error streams will be mixed
-        together.
-
-        The 'join' argument controls whether the captured output is returned as a single string or a
-        list of lines (trailing newline is not stripped).
-
-        The 'bufsize', 'cwd','env' and 'shell' arguments are the same as in 'Popen()'.
-
-        If the 'newgrp' argument is 'True', then new process gets new session ID.
-
-        The 'output_fobjs' is a tuple which may provide 2 file-like objects where the standard
-        output and error streams of the executed program should be echoed to. If 'mix_output' is
-        'True', the 'output_fobjs[1]' file-like object, which corresponds to the standard error
-        stream, will be ignored and all the output will be echoed to 'output_fobjs[0]'. By default
-        the command output is not echoed anywhere.
-
-        Note, 'capture_output' and 'output_fobjs' arguments can be used at the same time. It is OK
-        to echo the output to some files and capture it at the same time.
-
-        This function returns an named tuple of (stdout, stderr, exitcode), where
-          o 'stdout' is the output of the executed command to stdout
-          o 'stderr' is the output of the executed command to stderr
-          o 'exitcode' is the integer exit code of the executed command
-
-        If the 'mix_output' argument is 'True', the 'stderr' part of the returned tuple will be an
-        empty string.
-
-        If the 'capture_output' argument is not 'True', the 'stdout' and 'stderr' parts of the
-        returned tuple will be an empty string.
-
-        The 'intsh' argument is not used.
+        1. The 'bufsize' and 'env' arguments are the same as in 'Popen()'.
+        2. If the 'newgrp' argument is 'True', then executed process gets a new session ID.
+        3. The 'intsh' argument is ignored.
         """
 
+        # pylint: disable=unused-argument,arguments-differ
         if cwd:
             cwd_msg = "\nWorking directory: %s" % cwd
         else:
@@ -301,8 +263,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         else:
             stderr = subprocess.PIPE
 
-        proc = self._do_run_async(command, stdout=stdout, stderr=stderr, bufsize=bufsize, cwd=cwd,
-                                  env=env, shell=shell, newgrp=newgrp)
+        proc = self._do_run_async(command, stdout=stdout, stderr=stderr, cwd=cwd, shell=shell,
+                                  bufsize=bufsize, env=env, newgrp=newgrp)
 
         # Wait for the command to finish and handle the time-out situation.
         result = proc.wait(capture_output=capture_output, output_fobjs=output_fobjs,
@@ -320,23 +282,23 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return result
 
     def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-                   output_fobjs=(None, None), bufsize=0, cwd=None, env=None, shell=False,
-                   newgrp=False, intsh=True):
+                   output_fobjs=(None, None), cwd=None, shell=True, intsh=None, bufsize=0, env=None,
+                   newgrp=False):
         """
         Same as 'run()' but verifies the command's exit code and raises an exception if it is not 0.
         """
 
+        # pylint: disable=unused-argument,arguments-differ
         result = self.run(command, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs,
-                          bufsize=bufsize, cwd=cwd, env=env, shell=shell, newgrp=newgrp,
-                          intsh=intsh)
+                          cwd=cwd, shell=shell, intsh=intsh, bufsize=bufsize, env=env,
+                          newgrp=newgrp)
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
         raise Error(_ProcessManagerBase.cmd_failed_msg(command, *tuple(result), timeout=timeout))
 
     def rsync(self, src, dst, opts="rlpD", remotesrc=False, remotedst=True):
-        # pylint: disable=unused-argument
         """
         Copy data from path 'src' to path 'dst' using 'rsync' with options specified in 'opts'. The
         'remotesrc' and 'remotedst' arguments are ignored. The default options are:
@@ -346,6 +308,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
           * s - preseve device nodes and others special files
         """
 
+        # pylint: disable=unused-argument
         cmd = "rsync -%s -- '%s' '%s'" % (opts, src, dst)
         try:
             self.run_verify(cmd)

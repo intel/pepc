@@ -558,30 +558,23 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
             return self._run_in_new_session(command, cwd=cwd, shell=shell)
 
-    def run_async(self, command, cwd=None, shell=True, intsh=False):
+    def run_async(self, command, cwd=None, shell=False, intsh=False, stdin=None, stdout=None,
+                  stderr=None):
         """
-        Run command 'command' on a remote host and return immediately without waiting for the
-        command to complete.
+        Run command 'command' on the remote host. Refer to 'ProcessManagerBase.run_async()' for more
+        information.
 
-        The 'cwd' argument is the same as in case of the 'run()' method.
+        Notes.
 
-        The 'shell' argument tells whether it is safe to assume that the SSH daemon on the target
-        system runs some sort of Unix shell for the SSH session. Usually this is the case, but not
-        always. E.g., Dell's iDRACs do not run a shell when you log into them. The reason this
-        function may want to assume that the 'command' command runs in a shell is to get the PID of
-        the process on the remote system. So if you do not really need to know the PID, leave the
-        'shell' parameter to be 'False'.
-
-        The 'intsh' argument indicates whether the command should run in an interactive shell or in
-        a separate SSH session. The former is faster because creating a new SSH session takes time.
-        However, only one command can run in an interactive shell at a time. Thereforr, by default
-        'intsh' is 'False'. Note, 'shell' cannot be 'False' if 'intsh' is 'True'.
-
-        Returns the paramiko session channel object. The object will contain an additional 'pid'
-        attribute, and depending on the 'shell' parameter, the attribute will have value 'None'
-        ('shell' is 'False') or the integer PID of the executed process on the remote host ('shell'
-        is 'True').
+        1. The 'stdin', 'stdout' and 'stderr' arguments are not supported.
+        2. Stadard Unix systems have some sort of shell, so it is safe to use 'shell=True'. But this
+           is not always the case. E.g., Dell's iDRACs do not run a shell when you log into them.
+           Use 'shell=False' in such cases.
         """
+
+        # pylint: disable=unused-argument
+        for arg in ('stdin', 'stdout', 'stderr'):
+            raise Error(f"'SSHProcessManager.run_async()' does not support the '{arg}' argument")
 
         # Allow for 'command' to be a 'pathlib.Path' object which Paramiko does not accept.
         command = str(command)
@@ -599,57 +592,22 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
             output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
+        """
+        Run command 'command' on the remote host and wait for it to finish. Refer to
+        'ProcessManagerBase.run()' for more information.
+
+        Notes.
+
+        1. Stadard Unix systems have some sort of shell, so it is safe to use 'shell=True'. But this
+           is not always the case. E.g., Dell's iDRACs do not run a shell when you log into them.
+           Use 'shell=False' in such cases.
+        2.  The 'intsh' argument indicates whether the command should run in an interactive shell or
+            in a separate SSH session. The former is faster because creating a new SSH session takes
+            time.  By default, 'intsh' is the same as 'shell' ('True' if using shell is allowed,
+            'False' otherwise).
+        """
+
         # pylint: disable=unused-argument
-        """
-        Run command 'command' on the remote host and block until it finishes. The 'command' argument
-        should be a string.
-
-        The 'timeout' parameter specifies the longest time for this method to block. If the command
-        takes longer, this function will raise the 'ErrorTimeOut' exception. The default is 4h (see
-        '_ProcessManagerBase.TIMEOUT').
-
-        If the 'capture_output' argument is 'True', this function intercept the output of the
-        executed program, otherwise it doesn't and the output is dropped (default) or printed to
-        'output_fobjs'.
-
-        If the 'mix_output' argument is 'True', the standard output and error streams will be mixed
-        together.
-
-        The 'output_fobjs' is a tuple which may provide 2 file-like objects where the standard
-        output and error streams of the executed program should be echoed to. If 'mix_output' is
-        'True', the 'output_fobjs[1]' file-like object, which corresponds to the standard error
-        stream, will be ignored and all the output will be echoed to 'output_fobjs[0]'. By default
-        the command output is not echoed anywhere.
-
-        Note, 'capture_output' and 'output_fobjs' arguments can be used at the same time. It is OK
-        to echo the output to some files and capture it at the same time.
-
-        The 'join' argument controls whether the captured output is returned as a single string or a
-        list of lines (trailing newline is not stripped).
-
-        The 'cwd' argument may be used to specify the working directory of the command.
-
-        The 'shell' argument controls whether the command should be run via a shell on the remote
-        host. Most SSH servers will use user shell to run the command anyway. But there are rare
-        cases when this is not the case, and 'shell=False' may be handy.
-
-        The 'intsh' argument indicates whether the command should run in an interactive shell or in
-        a separate SSH session. The former is faster because creating a new SSH session takes time.
-        By default, 'intsh' is the same as 'shell' ('True' if using shell is allowed, 'False'
-        otherwise).
-
-        This function returns an named tuple of (exitcode, stdout, stderr), where
-          o 'stdout' is the output of the executed command to stdout
-          o 'stderr' is the output of the executed command to stderr
-          o 'exitcode' is the integer exit code of the executed command
-
-        If the 'mix_output' argument is 'True', the 'stderr' part of the returned tuple will be an
-        empty string.
-
-        If the 'capture_output' argument is not 'True', the 'stdout' and 'stderr' parts of the
-        returned tuple will be an empty string.
-        """
-
         msg = f"running the following command{self.hostmsg} (shell {shell}, intsh {intsh}):\n" \
               f"{command}"
         if cwd:
@@ -680,8 +638,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return result
 
-    def run_verify(self, command, timeout=None, capture_output=True, mix_output=False,
-                   join=True, output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
+    def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
+                   output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
         """
         Same as the "run()" method, but also verifies the exit status and if the command failed,
         raises the "Error" exception.
