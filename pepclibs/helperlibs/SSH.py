@@ -423,7 +423,7 @@ class Task(_Procs.TaskBase):
         if shell:
             self._read_pid()
 
-class SSH(_Procs.ProcBase):
+class SSH(_Procs.ProcessManagerBase):
     """
     This class provides API for communicating with remote hosts over SSH.
 

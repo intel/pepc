@@ -147,7 +147,7 @@ class Task(_Procs.TaskBase):
         """Check if the task is still running. If it is, return 'None', else return exit status."""
         return self.tobj.poll()
 
-class Proc(_Procs.ProcBase):
+class Proc(_Procs.ProcessManagerBase):
     """This class provides API similar to the 'SSH' class API."""
 
     def _do_run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,

@@ -412,9 +412,9 @@ class TaskBase:
         """Exit the runtime context."""
         self.close()
 
-class ProcBase:
+class ProcessManagerBase:
     """
-    The base class for local or remote process management classes.
+    The base class for process local or remote process managers.
     """
 
     Error = Error

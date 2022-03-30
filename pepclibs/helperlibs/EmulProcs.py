@@ -54,7 +54,7 @@ def _populate_sparse_file(path, data):
     except OSError as err:
         raise Error(f"failed to prepare sparse file '{path}':\n{err}") from err
 
-class EmulProc(_Procs.ProcBase):
+class EmulProc(_Procs.ProcessManagerBase):
     """
     Emulated version of the 'Proc' class in the 'pepclibs.helperlibs.Procs' module. The class is
     used for testing purposes.
