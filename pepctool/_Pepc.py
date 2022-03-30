@@ -115,6 +115,8 @@ def build_arguments_parser():
 
     text = f"""List of CPUs to online. {cpu_list_txt}."""
     subpars2.add_argument("--cpus", help=text)
+    subpars2.add_argument("--cores", help=argparse.SUPPRESS)
+    subpars2.add_argument("--packages", help=argparse.SUPPRESS)
 
     #
     # Create parser for the 'cpu-hotplug offline' command.

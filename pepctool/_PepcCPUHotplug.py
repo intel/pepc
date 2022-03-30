@@ -35,6 +35,9 @@ def cpu_hotplug_info_command(_, proc):
 def cpu_hotplug_online_command(args, proc):
     """Implements the 'cpu-hotplug online' command."""
 
+    if args.cores or args.packages:
+        raise Error("'--cores' and '--packages' options are not supported for 'online' command")
+
     if not args.cpus:
         raise Error("please, specify the CPUs to online")
 
