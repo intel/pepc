@@ -14,8 +14,8 @@ import io
 import types
 import logging
 import contextlib
-from pepclibs.helperlibs import _Procs, FSHelpers, Trivial, WrapExceptions, YAML
-from pepclibs.helperlibs._Procs import ProcResult
+from pepclibs.helperlibs import _ProcessManagerBase, FSHelpers, Trivial, WrapExceptions, YAML
+from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
@@ -54,7 +54,7 @@ def _populate_sparse_file(path, data):
     except OSError as err:
         raise Error(f"failed to prepare sparse file '{path}':\n{err}") from err
 
-class EmulProc(_Procs.ProcessManagerBase):
+class EmulProc(_ProcessManagerBase.ProcessManagerBase):
     """
     Emulated version of the 'Proc' class in the 'pepclibs.helperlibs.Procs' module. The class is
     used for testing purposes.

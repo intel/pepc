@@ -46,8 +46,8 @@ import threading
 from pathlib import Path
 import contextlib
 import paramiko
-from pepclibs.helperlibs import _Procs, WrapExceptions, Trivial
-from pepclibs.helperlibs._Procs import ProcResult # pylint: disable=unused-import
+from pepclibs.helperlibs import _ProcessManagerBase, WrapExceptions, Trivial
+from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
@@ -85,7 +85,7 @@ def _get_username(uid=None):
     except KeyError as err:
         raise Error("failed to get user name for UID %d:\n%s" % (uid, err)) from None
 
-class Task(_Procs.TaskBase):
+class Task(_ProcessManagerBase.TaskBase):
     """
     This class represents a remote task (process) that was executed by an 'SSH' object.
     """
@@ -323,8 +323,8 @@ class Task(_Procs.TaskBase):
 
     def cmd_failed_msg(self, stdout, stderr, exitcode, startmsg=None, timeout=None):
         """
-        A wrapper over '_Procs.cmd_failed_msg()'. The optional 'timeout' argument specifies the
-        timeout that was used for the command.
+        A wrapper over '_ProcessManagerBase.cmd_failed_msg()'. The optional 'timeout' argument
+        specifies the timeout that was used for the command.
         """
 
         if timeout is None:
@@ -335,8 +335,9 @@ class Task(_Procs.TaskBase):
             if self.cmd != self.real_cmd:
                 cmd += f"\nReal command: {self.real_cmd}"
 
-        return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=self.hostname,
-                                     startmsg=startmsg, timeout=timeout)
+        return _ProcessManagerBase.cmd_failed_msg(cmd, stdout, stderr, exitcode,
+                                                  hostname=self.hostname, startmsg=startmsg,
+                                                  timeout=timeout)
 
     def poll(self):
         """Check if the task is still running. If it is, return 'None', else return exit status."""
@@ -423,7 +424,7 @@ class Task(_Procs.TaskBase):
         if shell:
             self._read_pid()
 
-class SSH(_Procs.ProcessManagerBase):
+class SSH(_ProcessManagerBase.ProcessManagerBase):
     """
     This class provides API for communicating with remote hosts over SSH.
 
@@ -593,14 +594,15 @@ class SSH(_Procs.ProcessManagerBase):
         return self._run_async(str(command), cwd=cwd, shell=shell, intsh=intsh)
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-            output_fobjs=(None, None), cwd=None, shell=True, intsh=None): # pylint: disable=unused-argument
+            output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
+        # pylint: disable=unused-argument
         """
         Run command 'command' on the remote host and block until it finishes. The 'command' argument
         should be a string.
 
         The 'timeout' parameter specifies the longest time for this method to block. If the command
         takes longer, this function will raise the 'ErrorTimeOut' exception. The default is 4h (see
-        '_Procs.TIMEOUT').
+        '_ProcessManagerBase.TIMEOUT').
 
         If the 'capture_output' argument is 'True', this function intercept the output of the
         executed program, otherwise it doesn't and the output is dropped (default) or printed to
@@ -767,10 +769,11 @@ class SSH(_Procs.ProcessManagerBase):
         self._scp(f"\"{local_path}\"", f"{self.hostname}:'\"{remote_path}\"'")
 
     def cmd_failed_msg(self, command, stdout, stderr, exitcode, startmsg=None, timeout=None):
-        """A simple wrapper around '_Procs.cmd_failed_msg()'."""
+        """A simple wrapper around '_ProcessManagerBase.cmd_failed_msg()'."""
 
-        return _Procs.cmd_failed_msg(command, stdout, stderr, exitcode, hostname=self.hostname,
-                                     startmsg=startmsg, timeout=timeout)
+        return _ProcessManagerBase.cmd_failed_msg(command, stdout, stderr, exitcode,
+                                                  hostname=self.hostname, startmsg=startmsg,
+                                                  timeout=timeout)
 
     def _get_sftp(self):
         """Get an SFTP server object."""

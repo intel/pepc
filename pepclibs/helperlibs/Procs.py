@@ -18,8 +18,8 @@ import shlex
 import errno
 import logging
 import subprocess
-from pepclibs.helperlibs import _Procs, WrapExceptions
-from pepclibs.helperlibs._Procs import ProcResult # pylint: disable=unused-import
+from pepclibs.helperlibs import _ProcessManagerBase, WrapExceptions
+from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied, ErrorNotFound
 
 _LOG = logging.getLogger()
@@ -42,7 +42,7 @@ def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
     return "method '%s()' failed for %s" % (method, fobj.name)
 
-class Task(_Procs.TaskBase):
+class Task(_ProcessManagerBase.TaskBase):
     """
     This class represents a local task (process) that was executed by a 'Proc' object.
     """
@@ -128,8 +128,8 @@ class Task(_Procs.TaskBase):
 
     def _cmd_failed_msg(self, stdout, stderr, exitcode, startmsg=None, timeout=None):
         """
-        A wrapper over '_Procs.cmd_failed_msg()'. The optional 'timeout' argument specifies the
-        timeout that was used for the command.
+        A wrapper over '_ProcessManagerBase.cmd_failed_msg()'. The optional 'timeout' argument
+        specifies the timeout that was used for the command.
         """
 
         if timeout is None:
@@ -140,14 +140,15 @@ class Task(_Procs.TaskBase):
             if self.cmd != self.real_cmd:
                 cmd += f"\nReal command: {self.real_cmd}"
 
-        return _Procs.cmd_failed_msg(cmd, stdout, stderr, exitcode, hostname=self.hostname,
-                                     startmsg=startmsg, timeout=timeout)
+        return _ProcessManagerBase.cmd_failed_msg(cmd, stdout, stderr, exitcode,
+                                                  hostname=self.hostname, startmsg=startmsg,
+                                                  timeout=timeout)
 
     def poll(self):
         """Check if the task is still running. If it is, return 'None', else return exit status."""
         return self.tobj.poll()
 
-class Proc(_Procs.ProcessManagerBase):
+class Proc(_ProcessManagerBase.ProcessManagerBase):
     """This class provides API similar to the 'SSH' class API."""
 
     def _do_run_async(self, command, stdin=None, stdout=None, stderr=None, bufsize=0, cwd=None,
@@ -303,7 +304,7 @@ class Proc(_Procs.ProcessManagerBase):
                            timeout=timeout, join=join)
 
         if result.exitcode is None:
-            msg = _Procs.cmd_failed_msg(command, *tuple(result), timeout=timeout)
+            msg = _ProcessManagerBase.cmd_failed_msg(command, *tuple(result), timeout=timeout)
             raise ErrorTimeOut(msg)
 
         if output_fobjs[0]:
@@ -327,7 +328,7 @@ class Proc(_Procs.ProcessManagerBase):
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
-        raise Error(_Procs.cmd_failed_msg(command, *tuple(result), timeout=timeout))
+        raise Error(_ProcessManagerBase.cmd_failed_msg(command, *tuple(result), timeout=timeout))
 
     def rsync(self, src, dst, opts="rlpD", remotesrc=False, remotedst=True):
         # pylint: disable=unused-argument
@@ -348,10 +349,11 @@ class Proc(_Procs.ProcessManagerBase):
             raise Error("failed to copy files '%s' to '%s':\n%s" % (src, dst, err)) from err
 
     def cmd_failed_msg(self, command, stdout, stderr, exitcode, startmsg=None, timeout=None):
-        """A simple wrapper around '_Procs.cmd_failed_msg()'."""
+        """A simple wrapper around '_ProcessManagerBase.cmd_failed_msg()'."""
 
-        return _Procs.cmd_failed_msg(command, stdout, stderr, exitcode, hostname=self.hostname,
-                                     startmsg=startmsg, timeout=timeout)
+        return _ProcessManagerBase.cmd_failed_msg(command, stdout, stderr, exitcode,
+                                                  hostname=self.hostname, startmsg=startmsg,
+                                                  timeout=timeout)
 
     @staticmethod
     def open(path, mode):
