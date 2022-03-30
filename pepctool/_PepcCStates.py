@@ -115,7 +115,7 @@ def _handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
     if print_cstates:
         _print_cstates_status(cpus, cpuinfo, rcsobj)
 
-def cstates_config_command(args, proc):
+def cstates_config_command(args, pman):
     """Implements the 'cstates config' command."""
 
     if not hasattr(args, "oargs"):
@@ -136,12 +136,12 @@ def cstates_config_command(args, proc):
         else:
             set_opts[optname] = optval
 
-    with ToolChecker.ToolChecker(proc=proc) as tchk:
+    with ToolChecker.ToolChecker(pman=pman) as tchk:
         if enable_opts or set_opts:
-            _PepcCommon.check_tuned_presence(proc, tchk=tchk)
+            _PepcCommon.check_tuned_presence(pman, tchk=tchk)
 
-        with CPUInfo.CPUInfo(proc=proc, tchk=tchk) as cpuinfo, \
-             CStates.ReqCStates(proc=proc, cpuinfo=cpuinfo, tchk=tchk) as rcsobj:
+        with CPUInfo.CPUInfo(pman=pman, tchk=tchk) as cpuinfo, \
+             CStates.ReqCStates(pman=pman, cpuinfo=cpuinfo, tchk=tchk) as rcsobj:
 
             cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
@@ -150,17 +150,17 @@ def cstates_config_command(args, proc):
             if not set_opts and not print_opts:
                 return
 
-            with MSR.MSR(proc=proc, cpuinfo=cpuinfo) as msr, \
-                CStates.CStates(proc=proc, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
+            with MSR.MSR(pman=pman, cpuinfo=cpuinfo) as msr, \
+                CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
 
                 _handle_set_opts(set_opts, cpus, csobj, msr, cpuinfo)
                 _handle_print_opts(print_opts, cpus, csobj, cpuinfo)
 
-def cstates_info_command(args, proc):
+def cstates_info_command(args, pman):
     """Implements the 'cstates info' command."""
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
-         CStates.ReqCStates(proc=proc, cpuinfo=cpuinfo) as rcsobj:
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CStates.ReqCStates(pman=pman, cpuinfo=cpuinfo) as rcsobj:
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
         #
@@ -194,7 +194,7 @@ def cstates_info_command(args, proc):
         #
         # Print platform configuration info.
         #
-        with CStates.CStates(proc=proc, cpuinfo=cpuinfo, rcsobj=rcsobj) as csobj:
+        with CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj) as csobj:
             pinfo_iter = csobj.get_props(csobj.props, cpus=cpus)
             aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
             _PepcCommon.print_aggr_props(aggr_pinfo, csobj, cpuinfo)

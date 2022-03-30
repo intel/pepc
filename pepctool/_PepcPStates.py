@@ -42,13 +42,13 @@ def _handle_print_opts(opts, cpus, psobj, cpuinfo):
 
     _PepcCommon.print_aggr_props(aggr_pinfo, psobj, cpuinfo)
 
-def pstates_config_command(args, proc):
+def pstates_config_command(args, pman):
     """Implements the 'pstates config' command."""
 
     if not hasattr(args, "oargs"):
         raise Error("please, provide a configuration option")
 
-    _PepcCommon.check_tuned_presence(proc)
+    _PepcCommon.check_tuned_presence(pman)
 
     # Options to set.
     set_opts = {}
@@ -61,8 +61,8 @@ def pstates_config_command(args, proc):
         else:
             set_opts[optname] = optval
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
-         PStates.PStates(proc=proc, cpuinfo=cpuinfo) as psobj:
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
@@ -71,11 +71,11 @@ def pstates_config_command(args, proc):
         if print_opts:
             _handle_print_opts(print_opts, cpus, psobj, cpuinfo)
 
-def pstates_info_command(args, proc):
+def pstates_info_command(args, pman):
     """Implements the 'pstates info' command."""
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
-         PStates.PStates(proc=proc, cpuinfo=cpuinfo) as psobj:
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
 
         pinfo_iter = psobj.get_props(psobj.props, cpus=cpus)

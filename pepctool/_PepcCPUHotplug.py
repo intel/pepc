@@ -20,19 +20,19 @@ from pepctool import _PepcCommon
 
 _LOG = logging.getLogger()
 
-def cpu_hotplug_info_command(_, proc):
+def cpu_hotplug_info_command(_, pman):
     """Implements the 'cpu-hotplug info' command."""
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         for func, word in (("get_cpus", "online"), ("get_offline_cpus", "offline")):
             cpus = getattr(cpuinfo, func)()
             if cpus:
                 _LOG.info("The following CPUs are %s%s: %s",
-                          word, proc.hostmsg, Human.rangify(cpus))
+                          word, pman.hostmsg, Human.rangify(cpus))
             else:
-                _LOG.info("No %s CPUs%s", word, proc.hostmsg)
+                _LOG.info("No %s CPUs%s", word, pman.hostmsg)
 
-def cpu_hotplug_online_command(args, proc):
+def cpu_hotplug_online_command(args, pman):
     """Implements the 'cpu-hotplug online' command."""
 
     if args.cores or args.packages:
@@ -41,14 +41,14 @@ def cpu_hotplug_online_command(args, proc):
     if not args.cpus:
         raise Error("please, specify the CPUs to online")
 
-    with CPUOnline.CPUOnline(progress=logging.INFO, proc=proc) as onl:
+    with CPUOnline.CPUOnline(progress=logging.INFO, pman=pman) as onl:
         onl.online(cpus=args.cpus)
 
-def cpu_hotplug_offline_command(args, proc):
+def cpu_hotplug_offline_command(args, pman):
     """Implements the 'cpu-hotplug offline' command."""
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo, \
-        CPUOnline.CPUOnline(progress=logging.INFO, proc=proc, cpuinfo=cpuinfo) as onl:
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+        CPUOnline.CPUOnline(progress=logging.INFO, pman=pman, cpuinfo=cpuinfo) as onl:
 
         # Some CPUs may not support offlining. Suppose it is CPU 0. If CPU 0 is in the 'cpus' list,
         # the 'onl.offline()' method will error out. This is OK in a situation when the user
@@ -74,6 +74,6 @@ def cpu_hotplug_offline_command(args, proc):
 
         if not siblings_to_offline:
             _LOG.warning("nothing to offline%s, no siblings among the following CPUs:%s",
-                         proc.hostmsg, Human.rangify(cpus))
+                         pman.hostmsg, Human.rangify(cpus))
         else:
             onl.offline(cpus=siblings_to_offline)

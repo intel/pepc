@@ -12,7 +12,7 @@
 
 from importlib import import_module
 import pytest
-from common import get_datasets, get_proc
+from common import get_datasets, get_pman
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR
 from pepclibs.msr.TurboRatioLimit import MSR_TURBO_RATIO_LIMIT
@@ -34,10 +34,10 @@ def _get_msr_objs(params):
     Yield the 'MSR' objects initialized with different parameters that we want to run tests with.
     """
 
-    proc = get_proc(params["hostname"], params["dataset"])
+    pman = get_pman(params["hostname"], params["dataset"])
 
     for enable_cache in (True, False):
-        with MSR.MSR(proc=proc, enable_cache=enable_cache) as msr:
+        with MSR.MSR(pman=pman, enable_cache=enable_cache) as msr:
             yield msr
 
 def _get_msr_test_params(params, include_ro=True, include_rw=True):
@@ -102,9 +102,9 @@ def get_params(hostname, request):
     params = {}
     params["hostname"] = hostname
     params["dataset"] = request.param
-    proc = get_proc(hostname, request.param)
+    pman = get_pman(hostname, request.param)
 
-    with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         allcpus = cpuinfo.get_cpus()
         medidx = int(len(allcpus)/2)
         params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
@@ -114,7 +114,7 @@ def get_params(hostname, request):
     params["msrs"] = {}
     for modname in _MSR_MODULES:
         msr_feature_class = getattr(import_module(f"pepclibs.msr.{modname}"), modname)
-        with msr_feature_class(proc=proc, cpuinfo=cpuinfo) as msr:
+        with msr_feature_class(pman=pman, cpuinfo=cpuinfo) as msr:
             for name, finfo in msr._features.items(): # pylint: disable=protected-access
                 if not msr.is_feature_supported(name):
                     continue

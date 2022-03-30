@@ -55,21 +55,21 @@ _PKGINFO = {
     "CentOS Linux" :     _FEDORA_PKGINFO,
 }
 
-def _read_os_release(sysroot="/", proc=None):
+def _read_os_release(sysroot="/", pman=None):
     """
-    Read the 'os-release' file from the host defined by 'proc' and return it as a dictionary.
+    Read the 'os-release' file from the host defined by 'pman' and return it as a dictionary.
     """
 
-    if not proc:
-        proc = LocalProcessManager.LocalProcessManager()
+    if not pman:
+        pman = LocalProcessManager.LocalProcessManager()
 
     paths = ("/usr/lib/os-release", "/etc/os-release")
     paths = [Path(sysroot) / path.lstrip("/") for path in paths]
     osinfo = {}
 
     for path in paths:
-        with contextlib.suppress(proc.Error):
-            with proc.open(path, "r") as fobj:
+        with contextlib.suppress(pman.Error):
+            with pman.open(path, "r") as fobj:
                 for line in fobj:
                     key, val = line.rstrip().split("=")
                     osinfo[key] = val.strip('"')
@@ -78,7 +78,7 @@ def _read_os_release(sysroot="/", proc=None):
 
     if not osinfo:
         files = "\n".join(paths)
-        raise Error(f"cannot discover OS version{proc.hostmsg}, these files were checked:\n{files}")
+        raise Error(f"cannot discover OS version{pman.hostmsg}, these files were checked:\n{files}")
 
     return osinfo
 
@@ -94,7 +94,7 @@ class ToolChecker:
         if self._osname:
             return self._osname
 
-        osinfo = _read_os_release(proc=self._proc)
+        osinfo = _read_os_release(pman=self._pman)
         return osinfo.get("NAME")
 
     def tool_to_pkg(self, tool):
@@ -118,38 +118,38 @@ class ToolChecker:
         if tool is self._cache:
             return self._cache[tool]
 
-        path = FSHelpers.which(tool, default=None, proc=self._proc)
+        path = FSHelpers.which(tool, default=None, pman=self._pman)
         if path is not None:
             self._cache[tool] = path
             return path
 
-        msg = f"failed to find tool '{tool}'{self._proc.hostmsg}"
+        msg = f"failed to find tool '{tool}'{self._pman.hostmsg}"
 
         pkgname = self.tool_to_pkg(Path(tool).name)
         if pkgname:
-            msg += f".\nTry to install package '{pkgname}'{self._proc.hostmsg}."
+            msg += f".\nTry to install package '{pkgname}'{self._pman.hostmsg}."
 
         raise ErrorNotSupported(msg)
 
-    def __init__(self, proc=None):
+    def __init__(self, pman=None):
         """
         The class constructor. The arguments are as follows.
-          * proc - the process manager object that defines the host to check for the tools on.
+          * pman - the process manager object that defines the host to check for the tools on.
         """
 
-        self._proc = proc
-        self._close_proc = proc is None
+        self._pman = pman
+        self._close_pman = pman is None
         self._osname = None
         # Tools name to tool path cache.
         self._cache = {}
 
-        if not self._proc:
-            self._proc = LocalProcessManager.LocalProcessManager()
+        if not self._pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
 
     def close(self):
         """Uninitialize the class object."""
 
-        for attr in ("_proc",):
+        for attr in ("_pman",):
             obj = getattr(self, attr, None)
             if obj:
                 if getattr(self, f"_close{attr}", False):

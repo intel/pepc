@@ -14,19 +14,19 @@ import os
 from pathlib import Path
 from pepclibs.helperlibs import EmulProcs, LocalProcessManager, SSHProcessManager
 
-def get_proc(hostname, dataset):
+def get_pman(hostname, dataset):
     """
     Depending on the 'hostname' argument, return emulated 'LocalProcessManager', real
     'LocalProcessManager' or 'SSHProcessManager' object.
     """
 
     if hostname == "emulation":
-        proc = EmulProcs.EmulProc()
+        pman = EmulProcs.EmulProc()
 
         datapath = Path(__file__).parent.resolve() / "data" / dataset
-        proc.init_testdata("CPUInfo", datapath)
+        pman.init_testdata("CPUInfo", datapath)
 
-        return proc
+        return pman
 
     if hostname == "localhost":
         return LocalProcessManager.LocalProcessManager()

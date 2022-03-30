@@ -336,82 +336,82 @@ def parse_arguments():
 
 # pylint: disable=import-outside-toplevel
 
-def cpu_hotplug_info_command(args, proc):
+def cpu_hotplug_info_command(args, pman):
     """Implements the 'cpu-hotplug info' command."""
 
     from pepctool import _PepcCPUHotplug
 
-    _PepcCPUHotplug.cpu_hotplug_info_command(args, proc)
+    _PepcCPUHotplug.cpu_hotplug_info_command(args, pman)
 
-def cpu_hotplug_online_command(args, proc):
+def cpu_hotplug_online_command(args, pman):
     """Implements the 'cpu-hotplug online' command."""
 
     from pepctool import _PepcCPUHotplug
 
-    _PepcCPUHotplug.cpu_hotplug_online_command(args, proc)
+    _PepcCPUHotplug.cpu_hotplug_online_command(args, pman)
 
-def cpu_hotplug_offline_command(args, proc):
+def cpu_hotplug_offline_command(args, pman):
     """Implements the 'cpu-hotplug offline' command."""
 
     from pepctool import _PepcCPUHotplug
 
-    _PepcCPUHotplug.cpu_hotplug_offline_command(args, proc)
+    _PepcCPUHotplug.cpu_hotplug_offline_command(args, pman)
 
-def cstates_info_command(args, proc):
+def cstates_info_command(args, pman):
     """Implements the 'cstates info' command."""
 
     from pepctool import _PepcCStates
 
-    _PepcCStates.cstates_info_command(args, proc)
+    _PepcCStates.cstates_info_command(args, pman)
 
-def cstates_config_command(args, proc):
+def cstates_config_command(args, pman):
     """Implements the 'cstates config' command."""
 
     from pepctool import _PepcCStates
 
-    _PepcCStates.cstates_config_command(args, proc)
+    _PepcCStates.cstates_config_command(args, pman)
 
-def pstates_info_command(args, proc):
+def pstates_info_command(args, pman):
     """Implements the 'pstates info' command."""
 
     from pepctool import _PepcPStates
 
-    _PepcPStates.pstates_info_command(args, proc)
+    _PepcPStates.pstates_info_command(args, pman)
 
-def pstates_config_command(args, proc):
+def pstates_config_command(args, pman):
     """Implements the 'pstates info' command."""
 
     from pepctool import _PepcPStates
 
-    _PepcPStates.pstates_config_command(args, proc)
+    _PepcPStates.pstates_config_command(args, pman)
 
-def aspm_info_command(args, proc):
+def aspm_info_command(args, pman):
     """Implements the 'aspm info'. command"""
 
     from pepctool import _PepcASPM
 
-    _PepcASPM.aspm_info_command(args, proc)
+    _PepcASPM.aspm_info_command(args, pman)
 
-def aspm_config_command(args, proc):
+def aspm_config_command(args, pman):
     """Implements the 'aspm config' command."""
 
     from pepctool import _PepcASPM
 
-    _PepcASPM.aspm_config_command(args, proc)
+    _PepcASPM.aspm_config_command(args, pman)
 
 # pylint: enable=import-outside-toplevel
 
-def get_proc(args):
+def get_pman(args):
     """
     Returns 'SSHProcessManager' object or 'LocalProcessManager' object depending on 'hostname'.
     """
 
     if args.hostname == "localhost":
-        proc = LocalProcessManager.LocalProcessManager()
+        pman = LocalProcessManager.LocalProcessManager()
     else:
-        proc = SSHProcessManager.SSHProcessManager(hostname=args.hostname, username=args.username,
+        pman = SSHProcessManager.SSHProcessManager(hostname=args.hostname, username=args.username,
                                                    privkeypath=args.privkey, timeout=args.timeout)
-    return proc
+    return pman
 
 
 def main():
@@ -424,8 +424,8 @@ def main():
             LOG.error("please, run '%s -h' for help", OWN_NAME)
             return -1
 
-        proc = get_proc(args)
-        args.func(args, proc)
+        pman = get_pman(args)
+        args.func(args, pman)
     except KeyboardInterrupt:
         LOG.info("\nInterrupted, exiting")
         return -1

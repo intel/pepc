@@ -11,7 +11,7 @@
 """Tests for the public methods of the 'CPUInfo' module."""
 
 import pytest
-from common import get_datasets, get_proc
+from common import get_datasets, get_pman
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
@@ -101,7 +101,7 @@ def _get_cpuinfos_cpus_offlined(cpuinfo, pattern):
 
     return cpuinfo
 
-def _get_emulated_cpuinfos(proc):
+def _get_emulated_cpuinfos(pman):
     """
     Yield the 'CPUInfo' objects with emulated testdata. The testdata is modified with different
     permutations that we want to test with.
@@ -112,7 +112,7 @@ def _get_emulated_cpuinfos(proc):
     # 2. Odd CPUs offline.
     # 3. All but first CPU offline.
     for pattern in (lambda x: True, lambda x: not(x % 2), lambda x: x == 0):
-        with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+        with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
             yield _get_cpuinfos_cpus_offlined(cpuinfo, pattern)
 
             if cpuinfo.info["model"] == CPUInfo.INTEL_FAM6_ICELAKE_X:
@@ -122,17 +122,17 @@ def _get_emulated_cpuinfos(proc):
 
 def _get_cpuinfos(params):
     """
-    Yield the 'CPUInfo' objects to test with. If 'proc' object is for emulated host, then attributes
+    Yield the 'CPUInfo' objects to test with. If 'pman' object is for emulated host, then attributes
     of the 'CPUInfo' object is modified with different permutations that we want to test with. If
-    the 'proc' object is for real host, yield single 'CPUInfo' object.
+    the 'pman' object is for real host, yield single 'CPUInfo' object.
     """
 
-    proc = get_proc(params["hostname"], params["dataset"])
+    pman = get_pman(params["hostname"], params["dataset"])
 
-    if "emulated" in proc.hostname:
-        yield from _get_emulated_cpuinfos(proc)
+    if "emulated" in pman.hostname:
+        yield from _get_emulated_cpuinfos(pman)
     else:
-        with CPUInfo.CPUInfo(proc=proc) as cpuinfo:
+        with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
             yield cpuinfo
 
 def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE, exp_exc=None):

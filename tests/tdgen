@@ -86,31 +86,31 @@ def parse_arguments():
 
     return args
 
-def get_proc(args):
+def get_pman(args):
     """
     Returns an 'SSHProcessManager' or 'LocalProcessManager' object depending on 'args.hostname'.
     """
 
     if args.hostname == "localhost":
-        proc = LocalProcessManager.LocalProcessManager()
+        pman = LocalProcessManager.LocalProcessManager()
     else:
-        proc = SSHProcessManager.SSHProcessManager(hostname=args.hostname, username=args.username,
+        pman = SSHProcessManager.SSHProcessManager(hostname=args.hostname, username=args.username,
                                                    privkeypath=args.privkey, timeout=args.timeout)
-    return proc
+    return pman
 
-def collect_cmd_output(cmdinfo, proc, outdir):
+def collect_cmd_output(cmdinfo, pman, outdir):
     """
     Run the command defined in 'cmdinfo' and save the output to a file. The arguments are as
     follows.
       * cmdinfo - a dictionary of a command to run, see 'MODULE_TESTDATA'.
-      * proc - the process manager object that defines the remote host to run the 'cmdinfo' on.
+      * pman - the process manager object that defines the remote host to run the 'cmdinfo' on.
       * outdir - the directory to save the command output to.
     """
 
     datapath = outdir / cmdinfo["dirname"]
     os.makedirs(datapath, exist_ok=True)
 
-    stdout, stderr = proc.run_verify(cmdinfo["command"])
+    stdout, stderr = pman.run_verify(cmdinfo["command"])
 
     for fname, data in ("stdout", stdout), ("stderr", stderr):
         path = datapath / f"{fname}.txt"
@@ -118,35 +118,35 @@ def collect_cmd_output(cmdinfo, proc, outdir):
         with open(path, "w") as fobj:
             fobj.write(data)
 
-def collect_files(cmdinfo, proc, outdir):
+def collect_files(cmdinfo, pman, outdir):
     """
     Read the content of files by running the command defined in 'cmdinfo' and save the output to a
     file. The arguments are as follows.
       * cmdinfo - a dictionary of a command to run to collect the file contents, see
                   'MODULE_TESTDATA'.
-      * proc - the process manager object that defines the remote host to read the files from.
+      * pman - the process manager object that defines the remote host to read the files from.
       * outdir - the directory to save the output to.
     """
 
     cmdpath = outdir / cmdinfo["dirname"]
     os.makedirs(cmdpath, exist_ok=True)
 
-    stdout, _ = proc.run_verify(cmdinfo["command"])
+    stdout, _ = pman.run_verify(cmdinfo["command"])
 
     path = cmdpath / cmdinfo["filename"]
     with open(path, "w") as fobj:
         fobj.write(stdout)
 
-def collect_msrs(msrinfo, proc, outdir):
+def collect_msrs(msrinfo, pman, outdir):
     """
     Read the values of the MSR registers defined in 'msrinfo' and save the output to a file. The
     arguments are as follows.
       * msrinfo - a dictionary of a MSR registers to read, see 'MODULE_TESTDATA'.
-      * proc - the process manager object that defines the remote host to read the MSR values from.
+      * pman - the process manager object that defines the remote host to read the MSR values from.
       * outdir - the directory to save the command output to.
     """
 
-    lines, _ = proc.run_verify("lscpu -p=cpu", join=False)
+    lines, _ = pman.run_verify("lscpu -p=cpu", join=False)
 
     cpus = []
     for line in lines:
@@ -165,7 +165,7 @@ def collect_msrs(msrinfo, proc, outdir):
             line = f"/dev/cpu/{cpu}/msr{msrinfo['separator1']}"
 
             for addr in msrinfo["addresses"]:
-                result = proc.run(f"rdmsr {addr} -p {cpu}")
+                result = pman.run(f"rdmsr {addr} -p {cpu}")
                 if result.exitcode != 0:
                     continue
 
@@ -186,26 +186,26 @@ def main():
 
     try:
         args = parse_arguments()
-        proc = get_proc(args)
+        pman = get_pman(args)
 
         outdir = args.outdir
         if not outdir:
-            outdir = Path(proc.hostname)
+            outdir = Path(pman.hostname)
 
         for modname, testdata in MODULE_TESTDATA.items():
             datapath = outdir / modname
 
             for cmdinfo in testdata["commands"]:
-                collect_cmd_output(cmdinfo, proc, datapath)
+                collect_cmd_output(cmdinfo, pman, datapath)
                 cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
 
             for cmdinfo in testdata["inlinefiles"]:
-                collect_files(cmdinfo, proc, datapath)
+                collect_files(cmdinfo, pman, datapath)
                 cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
                 # We do not need command used to collect file contents, remove it.
                 del cmdinfo["command"]
 
-            collect_msrs(testdata["msrs"], proc, datapath)
+            collect_msrs(testdata["msrs"], pman, datapath)
             testdata["msrs"]["dirname"] = f"{modname}/{testdata['msrs']['dirname']}"
 
             generate_config_file(modname, testdata, outdir)

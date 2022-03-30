@@ -25,7 +25,7 @@ from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
 
-# The default command timeout in seconds
+# The default command timeout in seconds.
 TIMEOUT = 4 * 60 * 60
 
 # Results of a the process execution.
@@ -326,10 +326,10 @@ class TaskBase:
         self._output = [[], []]
         self._partial = ["", ""]
 
-    def __init__(self, proc, tobj, cmd, real_cmd, shell, streams):
+    def __init__(self, pman, tobj, cmd, real_cmd, shell, streams):
         """
         Initialize a class instance. The arguments are as follows.
-          * proc - the process management object that was used for creating this task.
+          * pman - the process management object that was used for creating this task.
           * tobj - the low-level object representing the local or remote process corresponding to
                    this task object. E.g., this is a 'Popen()' object in case of a local process.
           * cmd - the executed command.
@@ -343,7 +343,7 @@ class TaskBase:
           * pid - process ID of the running task, if it is known.
         """
 
-        self.proc = proc
+        self.pman = pman
         self.tobj = tobj
         self.cmd = cmd
         self.real_cmd = real_cmd
@@ -351,8 +351,8 @@ class TaskBase:
         self._streams = list(streams)
 
         self.timeout = TIMEOUT
-        self.hostname = proc.hostname
-        self.hostmsg = proc.hostmsg
+        self.hostname = pman.hostname
+        self.hostmsg = pman.hostmsg
 
         # Process ID of the running task. Should be set by the child class. In some cases may be set
         # to 'None', which should be interpreted as "not known".
@@ -392,8 +392,8 @@ class TaskBase:
                 tobj.close()
             self.tobj = None
 
-        if hasattr(self, "proc"):
-            self.proc = None
+        if hasattr(self, "pman"):
+            self.pman = None
 
     def __del__(self):
         """Class destructor."""

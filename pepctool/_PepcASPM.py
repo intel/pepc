@@ -18,31 +18,31 @@ from pepclibs import ASPM
 
 _LOG = logging.getLogger()
 
-def aspm_info_command(_, proc):
+def aspm_info_command(_, pman):
     """Implements the 'aspm info'. command"""
 
-    with ASPM.ASPM(proc=proc) as aspm:
+    with ASPM.ASPM(pman=pman) as aspm:
         cur_policy = aspm.get_policy()
-        _LOG.info("Active ASPM policy%s: %s", proc.hostmsg, cur_policy)
+        _LOG.info("Active ASPM policy%s: %s", pman.hostmsg, cur_policy)
         available_policies = ", ".join(aspm.get_policies())
         _LOG.info("Available policies: %s", available_policies)
 
-def aspm_config_command(args, proc):
+def aspm_config_command(args, pman):
     """Implements the 'aspm config' command."""
 
-    with ASPM.ASPM(proc=proc) as aspm:
+    with ASPM.ASPM(pman=pman) as aspm:
         old_policy = aspm.get_policy()
         if not args.policy:
-            _LOG.info("Active ASPM policy%s: %s", proc.hostmsg, old_policy)
+            _LOG.info("Active ASPM policy%s: %s", pman.hostmsg, old_policy)
             return
 
         if args.policy == old_policy:
-            _LOG.info("ASPM policy%s is already '%s', nothing to change", proc.hostmsg, args.policy)
+            _LOG.info("ASPM policy%s is already '%s', nothing to change", pman.hostmsg, args.policy)
         else:
             aspm.set_policy(args.policy)
             new_policy = aspm.get_policy()
             if args.policy != new_policy:
-                raise Error(f"ASPM policy{proc.hostmsg} was set to '{args.policy}', but it became "
+                raise Error(f"ASPM policy{pman.hostmsg} was set to '{args.policy}', but it became "
                             f"'{new_policy}' instead")
             _LOG.info("ASPM policy%s was changed from '%s' to '%s'",
-                      proc.hostmsg, old_policy, args.policy)
+                      pman.hostmsg, old_policy, args.policy)

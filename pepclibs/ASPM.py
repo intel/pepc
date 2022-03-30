@@ -22,11 +22,11 @@ class ASPM:
         """
 
         try:
-            with self._proc.open(self._policy_path, "r") as fobj:
+            with self._pman.open(self._policy_path, "r") as fobj:
                 policies = fobj.read().strip()
         except Error as err:
             raise Error(f"failed to read ASPM policy from file '{self._policy_path}'"
-                        f"{self._proc.hostmsg}:\n{err}") from err
+                        f"{self._pman.hostmsg}:\n{err}") from err
 
         policies = Trivial.split_csv_line(policies, sep=" ")
         if strip:
@@ -41,12 +41,12 @@ class ASPM:
 
         if policy not in policies:
             policies_str = ", ".join(policies)
-            raise Error(f"ASPM policy '{policy}' not available{self._proc.hostmsg}. Use one of the "
+            raise Error(f"ASPM policy '{policy}' not available{self._pman.hostmsg}. Use one of the "
                         f"following: {policies_str}")
 
-        errmsg = f"failed to set ASPM policy to '{policy}'{self._proc.hostmsg}:"
+        errmsg = f"failed to set ASPM policy to '{policy}'{self._pman.hostmsg}:"
         try:
-            with self._proc.open(self._policy_path, "w") as fobj:
+            with self._pman.open(self._policy_path, "w") as fobj:
                 fobj.write(policy)
         except ErrorPermissionDenied as err:
             raise Error(f"{errmsg}\n{err}\nsometimes booting with 'pcie_aspm=force' command line "
@@ -68,24 +68,24 @@ class ASPM:
         for policy in self._get_policies():
             yield policy
 
-    def __init__(self, proc=None):
+    def __init__(self, pman=None):
         """The class constructor."""
 
-        self._proc = proc
+        self._pman = pman
 
-        self._close_proc = proc is None
+        self._close_pman = pman is None
         self._policy_path = Path("/sys/module/pcie_aspm/parameters/policy")
 
-        if not self._proc:
-            self._proc = LocalProcessManager.LocalProcessManager()
+        if not self._pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
 
     def close(self):
         """Uninitialize the class object."""
 
-        if getattr(self, "_proc", None):
-            if self._close_proc:
-                self._proc.close()
-            self._proc = None
+        if getattr(self, "_pman", None):
+            if self._close_pman:
+                self._pman.close()
+            self._pman = None
 
     def __enter__(self):
         """Enter the runtime context."""

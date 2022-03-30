@@ -255,12 +255,12 @@ class Task(_ProcessManagerBase.TaskBase):
 
         if self._task_is_done():
             # Mark the interactive shell process as vacant.
-            acquired = self.proc._acquire_intsh_lock(self.cmd)
+            acquired = self.pman._acquire_intsh_lock(self.cmd)
             if not acquired:
                 _LOG.warning("failed to mark the interactive shell process as free")
             else:
-                self.proc._intsh_busy = False
-                self.proc._intsh_lock.release()
+                self.pman._intsh_busy = False
+                self.pman._intsh_lock.release()
 
         return result
 
@@ -315,7 +315,7 @@ class Task(_ProcessManagerBase.TaskBase):
         lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).
         """
 
-        if self.proc._intsh and self.tobj == self.proc._intsh.tobj:
+        if self.pman._intsh and self.tobj == self.pman._intsh.tobj:
             func = self._wait_intsh
         else:
             func = self._wait_nointsh
@@ -403,12 +403,12 @@ class Task(_ProcessManagerBase.TaskBase):
         if shell:
             self._read_pid()
 
-    def __init__(self, proc, tobj, cmd, real_cmd, shell, streams):
+    def __init__(self, pman, tobj, cmd, real_cmd, shell, streams):
         """
         Initialize a class instance. The arguments are the same as in 'TaskBase.__init__()'.
         """
 
-        super().__init__(proc, tobj, cmd, real_cmd, shell, streams)
+        super().__init__(pman, tobj, cmd, real_cmd, shell, streams)
 
         #
         # The below attributes are used when the task runs in an interactive shell.
@@ -720,11 +720,11 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         cmd = f"rsync -{opts}"
         if remotesrc and remotedst:
-            proc = self
+            pman = self
         else:
             from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
 
-            proc = LocalProcessManager.LocalProcessManager()
+            pman = LocalProcessManager.LocalProcessManager()
             cmd += f" -e 'ssh {self.get_ssh_opts()}'"
             if remotesrc:
                 src = f"{self.hostname}:{src}"
@@ -732,8 +732,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 dst = f"{self.hostname}:{dst}"
 
         try:
-            proc.run_verify(f"{cmd} -- '{src}' '{dst}'")
-        except proc.Error as err:
+            pman.run_verify(f"{cmd} -- '{src}' '{dst}'")
+        except pman.Error as err:
             raise Error(f"failed to copy files '{src}' to '{dst}':\n{err}") from err
 
     def _scp(self, src, dst):
@@ -744,7 +744,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """
 
         from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
-        proc = LocalProcessManager.LocalProcessManager()
+        pman = LocalProcessManager.LocalProcessManager()
 
         opts = f"-o \"Port={self.port}\" -o \"User={self.username}\""
         if self.privkeypath:
@@ -752,7 +752,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         cmd = f"scp -r {opts}"
 
         try:
-            proc.run_verify(f"{cmd} -- {src} {dst}")
+            pman.run_verify(f"{cmd} -- {src} {dst}")
         except LocalProcessManager.Error as err:
             raise Error(f"failed to copy files '{src}' to '{dst}':\n{err}") from err
 

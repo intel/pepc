@@ -38,7 +38,7 @@ class Dmesg:
         """
 
         try:
-            output = self._proc.run_verify("dmesg", join=False)[0]
+            output = self._pman.run_verify("dmesg", join=False)[0]
         except Error as err:
             if default is _RAISE:
                 raise
@@ -73,8 +73,8 @@ class Dmesg:
         new_lines = []
 
         diff = difflib.unified_diff(self.captured, new_output, n=0,
-                                    fromfile=f"{self._proc.hostname}-dmesg-before",
-                                    tofile=f"{self._proc.hostname}-dmesg-after")
+                                    fromfile=f"{self._pman.hostname}-dmesg-before",
+                                    tofile=f"{self._pman.hostname}-dmesg-after")
 
         for line in itertools.islice(diff, 2, None):
             if line[0] == "+":
@@ -90,33 +90,33 @@ class Dmesg:
             return [line.strip() for line in new_lines]
         return new_lines
 
-    def __init__(self, proc=None, tchk=None):
+    def __init__(self, pman=None, tchk=None):
         """
         The class constructor. The arguments are as follows.
-          * proc - the process manager object that defines the host to run 'dmesg' on.
+          * pman - the process manager object that defines the host to run 'dmesg' on.
           * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
                    the required tools like 'dmesg' are present on the target host.
         """
 
-        self._proc = proc
+        self._pman = pman
         self._tchk = tchk
 
-        self._close_proc = proc is None
+        self._close_pman = pman is None
         self._close_tchk = tchk is None
 
         self.captured = []
 
-        if not self._proc:
-            self._proc = LocalProcessManager.LocalProcessManager()
+        if not self._pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
         if not self._tchk:
-            self._tchk = ToolChecker.ToolChecker(proc=self._proc)
+            self._tchk = ToolChecker.ToolChecker(pman=self._pman)
 
         self._tchk.check_tool("dmesg")
 
     def close(self):
         """Stop the measurements."""
 
-        for attr in ("_tchk", "_proc"):
+        for attr in ("_tchk", "_pman"):
             obj = getattr(self, attr, None)
             if obj:
                 if getattr(self, f"_close{attr}", False):
@@ -131,7 +131,7 @@ class Dmesg:
         """Exit the run-time context."""
         self.close()
 
-def capture(proc):
+def capture(pman):
     """
     This is a helper function for capturing the dmesg output and ignoring errors. The idea is that
     the caputred messaged then can be passed to 'get_new_messages()' in order to get new messages.
@@ -140,15 +140,15 @@ def capture(proc):
     and should not be used for anything else, as the messages format is implementation-specific. So
     treat the return value as an opaque object.
 
-    The 'proc' argument is the process manager object that defines the host to run 'dmesg' on.
+    The 'pman' argument is the process manager object that defines the host to run 'dmesg' on.
     """
 
-    with Dmesg(proc) as dmesg:
+    with Dmesg(pman) as dmesg:
         if dmesg.run(join=False, strip=False, capture=True, default=None) is None:
             return None
         return dmesg.captured
 
-def get_new_messages(captured, proc, join=True, strip=False):
+def get_new_messages(captured, pman, join=True, strip=False):
     """
     Return new dmesg messages since the previous 'capture()' invocation. The 'captured' argument is
     the object previously returned by 'capture()'.
@@ -156,14 +156,14 @@ def get_new_messages(captured, proc, join=True, strip=False):
     If an error occures and dmesg output cannot be captured, this function returns an empty string
     (or empty list if 'join' is 'False').
 
-    The 'proc' argumens is the process manager object that defines the host to run 'dmesg' on. The
+    The 'pman' argumens is the process manager object that defines the host to run 'dmesg' on. The
     'join' and 'strip' arguments are the same as in 'dmesg.run()'.
     """
 
     if captured is None:
         new_lines = None
     else:
-        with Dmesg(proc) as dmesg:
+        with Dmesg(pman) as dmesg:
             dmesg.captured = captured
             new_lines = dmesg.get_new_messages(join=join, strip=strip, default=None)
 

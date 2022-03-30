@@ -202,10 +202,10 @@ class MockedMSR(MSR.MSR):
 
         self._mocked_msr[regaddr] = regval
 
-    def __init__(self, proc=None, cpuinfo=None):
+    def __init__(self, pman=None, cpuinfo=None):
         """Initialize MSR object with test data."""
 
-        super().__init__(proc=proc, cpuinfo=cpuinfo)
+        super().__init__(pman=pman, cpuinfo=cpuinfo)
 
         self._mocked_msr = {}
 
@@ -215,23 +215,23 @@ class MockedMSR(MSR.MSR):
         self._mocked_msr[TurboRatioLimit.MSR_TURBO_RATIO_LIMIT] = 0x1f1f212222232323
         self._mocked_msr[PMEnable.MSR_PM_ENABLE] = 1
 
-def mock_exists(path: Path, proc=None): # pylint: disable=unused-argument
+def mock_exists(path: Path, pman=None): # pylint: disable=unused-argument
     """Mock version of 'exists' function in FSHelpers module."""
 
     return any(Path(m_path) for m_path in _MOCKED_EXISTS_FILES if str(path) in m_path)
 
-def mock_isfile(path: Path, proc=None):
+def mock_isfile(path: Path, pman=None):
     """Mock version of 'isfile' function in FSHelpers module."""
 
-    return mock_exists(path, proc)
+    return mock_exists(path, pman)
 
-def mock_lsdir(path: Path, must_exist: bool = True, proc=None):
+def mock_lsdir(path: Path, must_exist: bool = True, pman=None):
     """Mock version of 'lsdir' function in FSHelpers module."""
 
     m_paths = [Path(m_path) for m_path in _MOCKED_FILES if str(path) in m_path]
 
     if not m_paths:
-        yield from FSHelpers.lsdir(path, must_exist=must_exist, proc=proc)
+        yield from FSHelpers.lsdir(path, must_exist=must_exist, pman=pman)
     else:
         # Use test data to generate output similar to 'lsdir()'.
         entries = []
@@ -257,9 +257,10 @@ def get_mocked_objects():
     with patch("pepclibs.helperlibs.FSHelpers.lsdir", new=mock_lsdir) as mock_FSHelpers_lsdir, \
          patch("pepclibs.helperlibs.FSHelpers.exists", new=mock_exists),  \
          patch("pepclibs.helperlibs.FSHelpers.isfile", new=mock_isfile), \
-         patch("pepclibs.helperlibs.LocalProcessManager.LocalProcessManager", new=MockedProc) as mock_proc, \
+         patch("pepclibs.helperlibs.LocalProcessManager.LocalProcessManager",
+               new=MockedProc) as mock_pman, \
          patch("pepclibs.msr.MSR.MSR", new=MockedMSR) as mock_msr:
-        yield (mock_FSHelpers_lsdir, mock_proc, mock_msr)
+        yield (mock_FSHelpers_lsdir, mock_pman, mock_msr)
 
 def get_test_cpu_info():
     """
