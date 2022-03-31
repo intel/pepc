@@ -574,7 +574,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         # pylint: disable=unused-argument
         for arg in ('stdin', 'stdout', 'stderr'):
-            raise Error(f"'SSHProcessManager.run_async()' does not support the '{arg}' argument")
+            if locals()[arg] is not None:
+                raise Error(f"'SSHProcessManager.run_async()' does not support the '{arg}' "
+                            f"argument")
 
         # Allow for 'command' to be a 'pathlib.Path' object which Paramiko does not accept.
         command = str(command)
