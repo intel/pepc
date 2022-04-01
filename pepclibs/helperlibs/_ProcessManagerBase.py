@@ -87,8 +87,9 @@ class ProcessBase:
                 try:
                     data = self._fetch_stream_data(streamid, 4096)
                 except Error as err:
-                    self._dbg("stream %d: %s", streamid, err)
-                    continue
+                    _LOG.error("failed reading from stream %d: %s\nThe command of the process:\n%s",
+                               streamid, err, self.cmd)
+                    break
 
                 if not data:
                     self._dbg("stream %d: no more data", streamid)
