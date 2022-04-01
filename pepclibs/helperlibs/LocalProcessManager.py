@@ -55,7 +55,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
 
             try:
                 return self._streams[streamid].read(4096)
-            except Error as err:
+            except _EXCEPTIONS as err:
                 if err.errno == errno.EAGAIN:
                     continue
                 raise
@@ -194,14 +194,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                                     cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
         except OSError as err:
             raise self._cmd_start_failure(cmd, err) from err
-
-        # Wrap the standard I/O file objects to ensure they raise only the 'Error' exception.
-        for name in ("stdin", "stdout", "stderr"):
-            if getattr(pobj, name):
-                wrapped_fobj = WrapExceptions.WrapExceptions(getattr(pobj, name),
-                                                             exceptions=_EXCEPTIONS,
-                                                             get_err_prefix=_get_err_prefix)
-                setattr(pobj, name, wrapped_fobj)
 
         proc = LocalProcess(self, pobj, command, real_cmd, shell, (pobj.stdout, pobj.stderr))
         proc.pid = pobj.pid
