@@ -21,7 +21,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from pepclibs.helperlibs import ArgParse, Human, LocalProcessManager, Logging, SSHProcessManager
+from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, PStates
 
@@ -399,21 +399,6 @@ def aspm_config_command(args, pman):
 
     _PepcASPM.aspm_config_command(args, pman)
 
-# pylint: enable=import-outside-toplevel
-
-def get_pman(args):
-    """
-    Returns 'SSHProcessManager' object or 'LocalProcessManager' object depending on 'hostname'.
-    """
-
-    if args.hostname == "localhost":
-        pman = LocalProcessManager.LocalProcessManager()
-    else:
-        pman = SSHProcessManager.SSHProcessManager(hostname=args.hostname, username=args.username,
-                                                   privkeypath=args.privkey, timeout=args.timeout)
-    return pman
-
-
 def main():
     """Script entry point."""
 
@@ -424,7 +409,12 @@ def main():
             LOG.error("please, run '%s -h' for help", OWN_NAME)
             return -1
 
-        pman = get_pman(args)
+        # pylint: disable=no-member
+        if args.hostname == "localhost":
+            args.username = args.privkey = args.timeout = None
+
+        pman = ProcessManager.get_pman(args.hostname, username=args.username,
+                                       privkeypath=args.privkey, timeout=args.timeout)
         args.func(args, pman)
     except KeyboardInterrupt:
         LOG.info("\nInterrupted, exiting")

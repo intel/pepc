@@ -12,26 +12,19 @@
 
 import os
 from pathlib import Path
-from pepclibs.helperlibs import EmulProcessManager, LocalProcessManager, SSHProcessManager
+from pepclibs.helperlibs import ProcessManager
 
 def get_pman(hostname, dataset):
     """
-    Depending on the 'hostname' argument, return emulated 'LocalProcessManager', real
-    'LocalProcessManager' or 'SSHProcessManager' object.
+    Returns the process manager for host 'hostname' using the 'dataset' data for emulation.
     """
 
     if hostname == "emulation":
-        pman = EmulProcessManager.EmulProcessManager()
-
         datapath = Path(__file__).parent.resolve() / "data" / dataset
-        pman.init_testdata("CPUInfo", datapath)
+    else:
+        datapath = None
 
-        return pman
-
-    if hostname == "localhost":
-        return LocalProcessManager.LocalProcessManager()
-
-    return SSHProcessManager.SSHProcessManager(hostname=hostname, username='root', timeout=10)
+    return ProcessManager.get_pman(hostname, datapath=datapath)
 
 def get_datasets():
     """Find all directories in 'tests/data' directory and yield the directory name."""

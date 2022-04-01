@@ -17,7 +17,7 @@ from pathlib import Path
 from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg, MiscFeatureControl
 from pepclibs.msr import PlatformInfo, PowerCtl, PCStateConfigCtl, PMEnable, TurboRatioLimit
 from pepclibs.msr import TurboRatioLimit1
-from pepclibs.helperlibs import ArgParse, Logging, LocalProcessManager, SSHProcessManager, YAML
+from pepclibs.helperlibs import ArgParse, Logging, ProcessManager, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
 OWN_NAME = "tdgen"
@@ -85,18 +85,6 @@ def parse_arguments():
     args = parser.parse_args()
 
     return args
-
-def get_pman(args):
-    """
-    Returns an 'SSHProcessManager' or 'LocalProcessManager' object depending on 'args.hostname'.
-    """
-
-    if args.hostname == "localhost":
-        pman = LocalProcessManager.LocalProcessManager()
-    else:
-        pman = SSHProcessManager.SSHProcessManager(hostname=args.hostname, username=args.username,
-                                                   privkeypath=args.privkey, timeout=args.timeout)
-    return pman
 
 def collect_cmd_output(cmdinfo, pman, outdir):
     """
@@ -186,7 +174,12 @@ def main():
 
     try:
         args = parse_arguments()
-        pman = get_pman(args)
+
+        # pylint: disable=no-member
+        if args.hostname == "localhost":
+            args.username = args.privkey = args.timeout = None
+        pman = ProcessManager.get_pman(args.hostname, username=args.username,
+                                       privkeypath=args.privkey, timeout=args.timeout)
 
         outdir = args.outdir
         if not outdir:
