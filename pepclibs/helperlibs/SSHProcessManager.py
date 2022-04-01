@@ -885,6 +885,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         self.is_remote = True
         self.hostname = hostname
         self.hostmsg = f" on host '{hostname}'"
+        if not timeout:
+            timeout = 60
         self.connection_timeout = timeout
         if port is None:
             port = 22
@@ -917,10 +919,6 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 printhost = f"{hostname} ({connhost})"
             else:
                 printhost = connhost = hostname
-
-        timeoutstr = str(timeout)
-        if not self.connection_timeout:
-            timeoutstr = "(default)"
 
         if not self.privkeypath:
             # Try finding the key filename from the SSH configuration files.
@@ -955,11 +953,11 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise ErrorConnect(f"SSH authentication failed when connecting to {printhost} as "
                                f"'{self.username}':\n{err}") from err
         except Exception as err:
-            raise ErrorConnect(f"cannot establish TCP connection to {printhost} with {timeoutstr} "
+            raise ErrorConnect(f"cannot establish TCP connection to {printhost} with {timeout} "
                                f"secs time-out:\n{err}") from err
 
         _LOG.debug("established SSH connection to %s, port %d, username '%s', timeout '%s', "
-                   "priv. key '%s'", printhost, port, self.username, timeoutstr, self.privkeypath)
+                   "priv. key '%s'", printhost, port, self.username, timeout, self.privkeypath)
 
     def close(self):
         """Close the SSH connection."""
