@@ -24,10 +24,6 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionD
 
 _LOG = logging.getLogger()
 
-# This attribute helps making the API of this module similar to the API of the 'SSHProcessManager'
-# module.
-hostname = "localhost"
-
 # The exceptions to handle when dealing with file I/O.
 _EXCEPTIONS = (OSError, IOError, BrokenPipeError)
 
