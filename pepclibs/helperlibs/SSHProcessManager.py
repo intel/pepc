@@ -861,15 +861,15 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                  privkeypath=None, timeout=None):
         """
         Initialize a class instance and establish SSH connection to host 'hostname'. The arguments
-        are:
-          o hostname - name of the host to connect to
+        are as followas.
+          o hostname - name of the host to connect to.
           o ipaddr - optional IP address of the host to connect to. If specified, then it is used
             instead of hostname, otherwise hostname is used.
-          o port - optional port number to connect to, default is 22
-          o username - optional user name to use when connecting
-          o password - optional password to authenticate the 'username' user (not secure!)
-          o privkeypath - optional public key path to use for authentication
-          o timeout - optional SSH connection timeout value in seconds
+          o port - optional port number to connect to, default is 22.
+          o username - optional user name to use when connecting.
+          o password - optional password to authenticate the 'username' user (not secure!).
+          o privkeypath - optional public key path to use for authentication.
+          o timeout - optional SSH connection timeout value in seconds.
 
         The 'hostname' argument being 'None' is a special case - this module falls-back to using the
         'LocalProcessManager' module and runs all all operations locally without actually involving
