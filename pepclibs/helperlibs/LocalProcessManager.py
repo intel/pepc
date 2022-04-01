@@ -298,15 +298,19 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         raise Error(_ProcessManagerBase.cmd_failed_msg(command, *tuple(result), timeout=timeout))
 
-    def rsync(self, src, dst, opts="rlpD", remotesrc=False, remotedst=True):
+    def rsync(self, src, dst, opts="rlpD", remotesrc=False, remotedst=False):
         """
-        Copy data from path 'src' to path 'dst' using 'rsync' with options specified in 'opts'. The
-        'remotesrc' and 'remotedst' arguments are ignored. The default options are:
-          * r - recursive
-          * l - copy symlinks as symlinks
-          * p - preserve permission
-          * s - preseve device nodes and others special files
+        Copy data from path 'src' to path 'dst' using the 'rsync' tool with options specified in
+        'opts'. Refer to '_ProcessManagerBase.rsync() for more information.
+
+        Limitation: the 'remotedst' and 'remotesrc' options must be 'False'. Copying from/to a
+        remote host is not supported.
         """
+
+        for arg in ("remotesrc", "remotedst"):
+            if locals()[arg]:
+                raise Error(f"the 'LocalProcessManager' class does not support 'rsync' from/to a "
+                            f"remote host: the {arg} argument must be 'False'")
 
         # pylint: disable=unused-argument
         cmd = "rsync -%s -- '%s' '%s'" % (opts, src, dst)

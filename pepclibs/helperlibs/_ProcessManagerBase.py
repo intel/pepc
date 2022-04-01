@@ -492,6 +492,33 @@ class ProcessManagerBase:
         # pylint: disable=unused-argument,no-self-use
         return _bug_method_not_defined("ProcessManagerBase.run_verify")
 
+    def rsync(self, src, dst, opts="rlpD", remotesrc=False, remotedst=False):
+        """
+        Copy data from path 'src' to path 'dst' using the 'rsync' tool with options specified in
+        'opts'. The arguments are as follows.
+          * src - the source path.
+          * dst - the destination path.
+          * opts - the rsync tool options to use.
+          * remotesrc - if 'True' the 'src' path is a path on the remote host (the host associated
+                         with this object - 'self.hostname'). Otherwise this is a path on the local
+                         host.
+          * remotedst - if 'True', the 'dst' path is a path on the remote host, otherwise on the
+                        local host.
+
+        Notes.
+          1. Please, refer to the 'rsync' tool documentation for the options description.
+          2. The backslash at the end of the paths matters, refer to 'rsync' documentation.
+
+        The default options in 'opts' are the following.
+          * r - recursive.
+          * l - copy symlinks as symlinks.
+          * p - preserve permission.
+          * s - preseve device nodes and others special files.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.rsync")
+
     def _cmd_start_failure(self, cmd, err, intsh=False):
         """
         Form and return the exception object for a situation when command 'cmd' has failed to start.
