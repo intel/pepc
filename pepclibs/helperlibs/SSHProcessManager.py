@@ -34,7 +34,6 @@ hash to 'stdout' when it finishes.
 
 import os
 import re
-import pwd
 import glob
 import time
 import stat
@@ -71,20 +70,6 @@ def _have_enough_lines(output, lines=(None, None)):
 def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
     return f"method '{method}()' failed for {fobj._stream_name_}"
-
-def _get_username(uid=None):
-    """Return username of current process."""
-
-    try:
-        if uid is None:
-            uid = os.getuid()
-    except OSError as err:
-        raise Error("failed to detect user name of current process:\n%s" % err) from None
-
-    try:
-        return pwd.getpwuid(uid).pw_name
-    except KeyError as err:
-        raise Error("failed to get user name for UID %d:\n%s" % (uid, err)) from None
 
 class SSHProcess(_ProcessManagerBase.ProcessBase):
     """
@@ -921,7 +906,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if not self.username:
             self.username = os.getenv("USER")
             if not self.username:
-                self.username = _get_username()
+                self.username = Trivial.get_username()
 
         if ipaddr:
             connhost = ipaddr

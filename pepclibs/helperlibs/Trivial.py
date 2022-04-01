@@ -11,6 +11,7 @@ This module contains common trivial helpers.
 """
 
 import os
+import pwd
 from pepclibs.helperlibs.Exceptions import Error
 
 # A unique object used as the default value for the 'default' key in some functions.
@@ -41,6 +42,21 @@ def get_pgid(pid):
         return os.getpgid(pid)
     except OSError as err:
         raise Error(f"failed to get group ID of process with PID {pid}: {err}") from None
+
+def get_username(uid=None):
+    """Return username of current process."""
+
+    try:
+        if uid is None:
+            uid = os.getuid()
+    except OSError as err:
+        raise Error("failed to detect user name of current process:\n%s" % err) from None
+
+    try:
+        return pwd.getpwuid(uid).pw_name
+    except KeyError as err:
+        raise Error("failed to get user name for UID %d:\n%s" % (uid, err)) from None
+
 
 def str_to_num(snum, default=_RAISE):
     """
