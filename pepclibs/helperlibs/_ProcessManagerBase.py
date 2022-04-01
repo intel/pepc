@@ -20,7 +20,7 @@ import logging
 import threading
 import contextlib
 from collections import namedtuple
-from pepclibs.helperlibs import Human, Trivial
+from pepclibs.helperlibs import Human, Trivial, WrapExceptions
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
@@ -30,6 +30,10 @@ TIMEOUT = 4 * 60 * 60
 
 # Results of a process finished its execution.
 ProcResult = namedtuple("proc_result", ["stdout", "stderr", "exitcode"])
+
+def _get_err_prefix(fobj, method):
+    """Return the error message prefix for a wrapped file-like object 'fobj'."""
+    return f"method '{method}()' failed for stream '{fobj.name}'"
 
 def extract_full_lines(text, join=False):
     """
@@ -340,9 +344,14 @@ class ProcessBase:
                        prefixed with a PID print command. This argument should provide the actual
                        executed command.
           * shell - whether the command was executed via shell.
-          * streams - the stderr and stdout stream objects of the process. These are not necessarily
-                      file-like objects, just some objects representing the streams (defined by
-                      sub-classes).
+          * streams - the stdin, stdout and stderr stream objects of the process (collection of 3
+                      elements).
+
+         Note about the stream objects in 'streams'. The stderr stream object must be a file-like
+         object, and it will be exposed via 'self.stderr'. The stdout and stderr stream objects do
+         not have to be file-like objects. They can be just some objects representing the streams
+         (defined by sub-classes). The are not exposed to the user, and they are only accessed via
+         the '_fetch_stream_data()' method, which is defined by the sub-class.
         """
 
         self.pman = pman
@@ -350,7 +359,7 @@ class ProcessBase:
         self.cmd = cmd
         self.real_cmd = real_cmd
         self.shell = shell
-        self._streams = list(streams)
+        self.stdin = streams[0]
 
         self.timeout = TIMEOUT
         self.hostname = pman.hostname
@@ -361,6 +370,8 @@ class ProcessBase:
         self.pid = None
         # Exit code of the process ('None' if it is still running).
         self.exitcode = None
+        # The stdout and stderr streams.
+        self._streams = [streams[1], streams[2]]
 
         # Print debugging messages if 'True'.
         self.debug = False
@@ -380,6 +391,9 @@ class ProcessBase:
         # The queue for passing process output from stream fetcher threads.
         self._queue = None
 
+        if self.stdin:
+            self.stdin = WrapExceptions.WrapExceptions(self.stdin, exceptions=(Exception,),
+                                                       get_err_prefix=_get_err_prefix)
     def close(self):
         """Free allocated resources."""
 

@@ -195,7 +195,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except OSError as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        proc = LocalProcess(self, pobj, command, real_cmd, shell, (pobj.stdout, pobj.stderr))
+        streams = (pobj.stdin, pobj.stdout, pobj.stderr)
+        proc = LocalProcess(self, pobj, command, real_cmd, shell, streams)
         proc.pid = pobj.pid
         return proc
 

@@ -454,7 +454,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except _PARAMIKO_EXCEPTIONS as err:
             raise self._cmd_start_failure(cmd, err) from err
 
-        return SSHProcess(self, chan, command, cmd, shell, (chan.recv, chan.recv_stderr))
+        try:
+            stdin = chan.makefile_stdin("wb", 0)
+        except _PARAMIKO_EXCEPTIONS as err:
+            raise Error(f"failed to create the stdin file-like object: {err}") from err
+
+        streams = (stdin, chan.recv, chan.recv_stderr)
+        return SSHProcess(self, chan, command, cmd, shell, streams)
 
     def _run_in_intsh(self, command, cwd=None):
         """Run command 'command' in the interactive shell."""
