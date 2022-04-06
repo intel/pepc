@@ -292,9 +292,3 @@ class EmulProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         with contextlib.suppress(Exception):
             super().close()
-
-    def __del__(self):
-        """The destructor."""
-
-        with contextlib.suppress(Exception):
-            self.close()
