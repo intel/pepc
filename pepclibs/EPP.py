@@ -212,7 +212,10 @@ class EPP:
         try:
             # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
             hwpreq = self._get_hwpreq()
-            pkg_control = hwpreq.is_cpu_feature_enabled("pkg_control", cpu)
+            # Note, some Broadwell architecture-based platforms support EPP, but do not support
+            # package control. Therefore, the "is_cpu_feature_supported()" check.
+            pkg_control = hwpreq.is_cpu_feature_supported("pkg_control", cpu) and \
+                          hwpreq.is_cpu_feature_enabled("pkg_control", cpu)
             epp_valid = hwpreq.is_cpu_feature_enabled("epp_valid", cpu)
             if pkg_control and not epp_valid:
                 hwpreq = self._get_hwpreq_pkg()
@@ -285,7 +288,8 @@ class EPP:
         # Could not set EPP via sysfs because the running Linux kernel does not support it. Try to
         # set it via the MSR.
         hwpreq = self._get_hwpreq()
-        if hwpreq.is_cpu_feature_enabled("pkg_control", cpu):
+        if hwpreq.is_cpu_feature_supported("pkg_control", cpu) and \
+           hwpreq.is_cpu_feature_enabled("pkg_control", cpu):
             # Override package control by setting the "EPP valid" bit.
             hwpreq.write_cpu_feature("epp_valid", "on", cpu)
         hwpreq.write_cpu_feature("epp", epp, cpu)
