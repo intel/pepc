@@ -178,30 +178,30 @@ def main():
         # pylint: disable=no-member
         if args.hostname == "localhost":
             args.username = args.privkey = args.timeout = None
-        pman = ProcessManager.get_pman(args.hostname, username=args.username,
-                                       privkeypath=args.privkey, timeout=args.timeout)
 
-        outdir = args.outdir
-        if not outdir:
-            outdir = Path(pman.hostname)
+        with ProcessManager.get_pman(args.hostname, username=args.username,
+                                     privkeypath=args.privkey, timeout=args.timeout) as pman:
+            outdir = args.outdir
+            if not outdir:
+                outdir = Path(pman.hostname)
 
-        for modname, testdata in MODULE_TESTDATA.items():
-            datapath = outdir / modname
+            for modname, testdata in MODULE_TESTDATA.items():
+                datapath = outdir / modname
 
-            for cmdinfo in testdata["commands"]:
-                collect_cmd_output(cmdinfo, pman, datapath)
-                cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
+                for cmdinfo in testdata["commands"]:
+                    collect_cmd_output(cmdinfo, pman, datapath)
+                    cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
 
-            for cmdinfo in testdata["inlinefiles"]:
-                collect_files(cmdinfo, pman, datapath)
-                cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
-                # We do not need command used to collect file contents, remove it.
-                del cmdinfo["command"]
+                for cmdinfo in testdata["inlinefiles"]:
+                    collect_files(cmdinfo, pman, datapath)
+                    cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
+                    # We do not need command used to collect file contents, remove it.
+                    del cmdinfo["command"]
 
-            collect_msrs(testdata["msrs"], pman, datapath)
-            testdata["msrs"]["dirname"] = f"{modname}/{testdata['msrs']['dirname']}"
+                collect_msrs(testdata["msrs"], pman, datapath)
+                testdata["msrs"]["dirname"] = f"{modname}/{testdata['msrs']['dirname']}"
 
-            generate_config_file(modname, testdata, outdir)
+                generate_config_file(modname, testdata, outdir)
 
     except KeyboardInterrupt:
         LOG.info("\nInterrupted, exiting")
