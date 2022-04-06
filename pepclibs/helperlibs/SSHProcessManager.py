@@ -962,22 +962,21 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def close(self):
         """Close the SSH connection."""
 
-        if self._sftp:
-            sftp = self._sftp
+        super().close()
+
+        if getattr(self, "_sftp", None):
+            self._sftp.close()
             self._sftp = None
-            sftp.close()
 
-        if self._intsh:
-            intsh = self._intsh
-            self._intsh = None
+        if getattr(self, "_intsh", None):
             with contextlib.suppress(Exception):
-                intsh.send("exit\n")
-            intsh.close()
+                self._intsh.send("exit\n")
+            self._intsh.close()
+            self._intsh = None
 
-        if self.ssh:
-            ssh = self.ssh
+        if getattr(self, "ssh", None):
+            self.ssh.close()
             self.ssh = None
-            ssh.close()
 
     def __new__(cls, *_, **kwargs):
         """
