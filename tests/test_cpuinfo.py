@@ -127,13 +127,12 @@ def _get_cpuinfos(params):
     the 'pman' object is for real host, yield single 'CPUInfo' object.
     """
 
-    pman = get_pman(params["hostname"], params["dataset"])
-
-    if "emulated" in pman.hostname:
-        yield from _get_emulated_cpuinfos(pman)
-    else:
-        with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-            yield cpuinfo
+    with get_pman(params["hostname"], params["dataset"]) as pman:
+        if "emulated" in pman.hostname:
+            yield from _get_emulated_cpuinfos(pman)
+        else:
+            with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+                yield cpuinfo
 
 def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE, exp_exc=None):
     """

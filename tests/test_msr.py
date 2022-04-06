@@ -34,11 +34,10 @@ def _get_msr_objs(params):
     Yield the 'MSR' objects initialized with different parameters that we want to run tests with.
     """
 
-    pman = get_pman(params["hostname"], params["dataset"])
-
-    for enable_cache in (True, False):
-        with MSR.MSR(pman=pman, enable_cache=enable_cache) as msr:
-            yield msr
+    with get_pman(params["hostname"], params["dataset"]) as pman:
+        for enable_cache in (True, False):
+            with MSR.MSR(pman=pman, enable_cache=enable_cache) as msr:
+                yield msr
 
 def _get_msr_test_params(params, include_ro=True, include_rw=True):
     """
