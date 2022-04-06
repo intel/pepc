@@ -348,6 +348,57 @@ class PStates:
                 self._cache[cpu] = {}
             self._cache[cpu][pname] = val
 
+    def __is_uncore_freq_supported(self):
+        """Implements '_is_uncore_freq_supported()'."""
+
+        if FSHelpers.exists(self._sysfs_base_uncore, self._pman):
+            return True
+
+        drvname = "intel_uncore_frequency"
+        msg = f"Uncore frequency operations are not supported{self._pman.hostmsg}. Here are the " \
+              f"possible reasons:\n" \
+              f" 1. the hardware does not support uncore frequency management.\n" \
+              f" 2. the '{drvname}' driver does not support this hardware.\n" \
+              f" 3. the '{drvname}' driver is not enabled. Try to compile the kernel with " \
+              f"the 'CONFIG_INTEL_UNCORE_FREQ_CONTROL' option."
+
+        try:
+            self._ufreq_drv = KernelModule.KernelModule(drvname, pman=self._pman)
+            loaded = self._ufreq_drv.is_loaded()
+        except Error as err:
+            _LOG.debug("%s\n%s", err, msg)
+            self._uncore_errmsg = msg
+            return False
+
+        if loaded:
+            # The sysfs directories do not exist, but the driver is loaded.
+            _LOG.debug("The uncore frequency driver '%s' is loaded, but the sysfs directory '%s' "
+                       "does not exist.\n%s", drvname, self._sysfs_base_uncore, msg)
+            self._uncore_errmsg = msg
+
+        try:
+            self._ufreq_drv.load()
+            self._unload_ufreq_drv = True
+            FSHelpers.wait_for_a_file(self._sysfs_base_uncore, timeout=1, pman=self._pman)
+        except Error as err:
+            _LOG.debug("%s\n%s", err, msg)
+            self._uncore_errmsg = msg
+            return False
+
+        return True
+
+    def _is_uncore_freq_supported(self):
+        """
+        Make sure that the uncore frequency control is supported. Load the uncore frequency
+        control driver if necessary.
+        """
+
+        if self._uncore_freq_supported is not None:
+            return self._uncore_freq_supported
+
+        self._uncore_freq_supported = self.__is_uncore_freq_supported()
+        return self._uncore_freq_supported
+
     def _get_base_eff_freqs(self, cpu):
         """
         Read and return a tuple of the following CPU 'cpu' frequencies.
@@ -499,7 +550,7 @@ class PStates:
             return self._cache[cpu][pname]
 
         if "fname" in prop:
-            if not self._uncore_freq_supported and _is_uncore_prop(prop):
+            if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
                 _LOG.debug(self._uncore_errmsg)
                 return None
 
@@ -919,7 +970,7 @@ class PStates:
                 if "fname" not in prop:
                     raise Error(f"BUG: unsupported property '{pname}'")
 
-                if not self._uncore_freq_supported and _is_uncore_prop(prop):
+                if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
                     raise Error(self._uncore_errmsg)
 
                 self._set_prop_in_sysfs(pname, val, cpu)
@@ -993,49 +1044,6 @@ class PStates:
 
         self.set_props(((pname, val),), cpus=(cpu,))
 
-    def _ensure_uncore_freq_support(self):
-        """
-        Make sure that the uncore frequency control is supported. Load the uncore frequency
-        control driver if necessary.
-        """
-
-        if FSHelpers.exists(self._sysfs_base_uncore, self._pman):
-            self._uncore_freq_supported = True
-            return
-
-        drvname = "intel_uncore_frequency"
-        msg = f"Uncore frequency operations are not supported{self._pman.hostmsg}. Here are the " \
-              f"possible reasons:\n" \
-              f" 1. the hardware does not support uncore frequency management.\n" \
-              f" 2. the '{drvname}' driver does not support this hardware.\n" \
-              f" 3. the '{drvname}' driver is not enabled. Try to compile the kernel with " \
-              f"the 'CONFIG_INTEL_UNCORE_FREQ_CONTROL' option."
-
-        try:
-            self._ufreq_drv = KernelModule.KernelModule(drvname, pman=self._pman)
-            loaded = self._ufreq_drv.is_loaded()
-        except Error as err:
-            _LOG.debug("%s\n%s", err, msg)
-            self._uncore_errmsg = msg
-            return
-
-        if loaded:
-            # The sysfs directories do not exist, but the driver is loaded.
-            _LOG.debug("The uncore frequency driver '%s' is loaded, but the sysfs directory '%s' "
-                       "does not exist.\n%s", drvname, self._sysfs_base_uncore, msg)
-            self._uncore_errmsg = msg
-
-        try:
-            self._ufreq_drv.load()
-            self._unload_ufreq_drv = True
-            FSHelpers.wait_for_a_file(self._sysfs_base_uncore, timeout=1, pman=self._pman)
-        except Error as err:
-            _LOG.debug("%s\n%s", err, msg)
-            self._uncore_errmsg = msg
-            return
-
-        self._uncore_freq_supported = True
-
     def _init_props_dict(self):
         """Initialize the 'props' dictionary."""
 
@@ -1097,8 +1105,8 @@ class PStates:
         # The write-through per-CPU properties cache.
         self._cache = {}
 
-        # Will be 'True' if uncore frequency operations are supported.
-        self._uncore_freq_supported = False
+        # Will be 'True' if uncore frequency operations are supported, 'False' otherwise.
+        self._uncore_freq_supported = None
         self._uncore_errmsg = None
         self._ufreq_drv = None
         self._unload_ufreq_drv = False
@@ -1112,7 +1120,6 @@ class PStates:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
         self._init_props_dict()
-        self._ensure_uncore_freq_support()
 
     def close(self):
         """Uninitialize the class object."""
