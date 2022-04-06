@@ -28,10 +28,10 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=N
     basically 3 possibilities.
      1. 'hostname' is "localhost".
         1.1. If 'username' is 'None', then create and return a 'LocalProcessManager' object, which
-             provides an effecient way of managing local processes.
-        1.2 If 'username' is not 'None', thenn create and return an 'SSHProcessManager' object,
+             provides an efficient way of managing local processes.
+        1.2 If 'username' is not 'None', then create and return an 'SSHProcessManager' object,
             which will connect to local host over SSH and manage processes over a local SSH
-            connectoin. This is a less effecient way of managing processes, but may be useful for,
+            connection. This is a less efficient way of managing processes, but may be useful for,
             say, debugging purposes.
      2. 'hostname' is any string except for "localhost" and "emulation". Create and return an
         'SSHProcessManager' object, which will be connected to the 'hostname' host over SSH and will
@@ -51,6 +51,18 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=N
     'privkeypath', and 'timeout' arguments are used only for 'SSHProcessManager'. Have to be 'None'
     for everything else. The 'datapath' argument is used only for the 'EmulProcessManager' process
     manager, and it defines the emulated host data. Must be 'None' for everything else.
+
+    Notes.
+    1. The preferred way of using this method is with the 'with' statement:
+          with get_pman() as pman:
+              do_something(pman)
+       The context manager then closes the object.
+    2. The alternative way is to close the object after it had been used.
+          pman = get_pman()
+          try:
+              do_something()
+          finally:
+              pman.close()
     """
 
     # pylint: disable=import-outside-toplevel
