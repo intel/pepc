@@ -413,9 +413,9 @@ def main():
         if args.hostname == "localhost":
             args.username = args.privkey = args.timeout = None
 
-        pman = ProcessManager.get_pman(args.hostname, username=args.username,
-                                       privkeypath=args.privkey, timeout=args.timeout)
-        args.func(args, pman)
+        with ProcessManager.get_pman(args.hostname, username=args.username,
+                                     privkeypath=args.privkey, timeout=args.timeout) as pman:
+            args.func(args, pman)
     except KeyboardInterrupt:
         LOG.info("\nInterrupted, exiting")
         return -1
