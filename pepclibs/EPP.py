@@ -277,7 +277,6 @@ class EPP:
                 policy_names = ", ".join(self.get_cpu_epp_policies(cpu))
                 raise Error(f"EPP policy '{epp}' is not supported{self._proc.hostmsg}, please "
                             f"provide one of the following EPP policy names: {policy_names}")
-            epp = policies[epp]
 
         if self._set_cpu_epp_via_sysfs(epp, cpu) == epp:
             # EPP was successfully set via syfs.
