@@ -19,12 +19,14 @@ def get_pman(hostname, dataset):
     Returns the process manager for host 'hostname' using the 'dataset' data for emulation.
     """
 
+    datapath = None
+    username = None
     if hostname == "emulation":
         datapath = Path(__file__).parent.resolve() / "data" / dataset
-    else:
-        datapath = None
+    elif hostname != "localhost":
+        username = "root"
 
-    return ProcessManager.get_pman(hostname, datapath=datapath)
+    return ProcessManager.get_pman(hostname, username=username, datapath=datapath)
 
 def get_datasets():
     """Find all directories in 'tests/data' directory and yield the directory name."""
