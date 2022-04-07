@@ -49,7 +49,7 @@ OPTIONS
 **-K** *PRIVKEY*, **--priv-key** *PRIVKEY*
    Path to the private SSH key that should be used for logging into the
    remote host. By default the key is automatically found from standard
-   paths like '~/.ssh'.
+   paths like
 
 **-T** *TIMEOUT*, **--timeout** *TIMEOUT*
    SSH connect timeout in seconds, default is 8.
@@ -183,7 +183,7 @@ OPTIONS *'pepc* cpu-hotplug offline'
    Offline only "sibling CPUs", making sure there is only one logical
    CPU per core is left online. The sibling CPUs will be searched for
    among the CPUs selected with '--cpus', '--cores', and '--packages'.
-   Therefore, specifying '--cpus all --siblings' will effectively
+   Therefore, specifying '-- cpus all --siblings' will effectively
    disable hyper-threading on Intel CPUs.
 
 COMMAND *'pepc* cstates'
@@ -306,18 +306,19 @@ OPTIONS *'pepc* cstates config'
 **--packages** *PACKAGES*
    List of packages to configure. The list can include individual
    package numbers and package number ranges. For example, '1-3' would
-   mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the
-   special keyword 'all' to specify all packages.
+   mean packages 1 to 3, and
+
+all packages.
 
 **--enable** *[CSTATES]*
    Comma-sepatated list of C-states to enable. C-states should be
    specified by name (e.g., 'C1'). Use 'all' to specify all the
    available Linux C-states (this is the default). Note, there is a
-   difference between Linux C-states (e.g., 'C6') and hardware C-states
-   (e.g., Core C6 or Package C6 on many Intel platforms). The former is
-   what Linux can request, and on Intel hardware this is usually about
-   various 'mwait' instruction hints. The latter are platform-specific
-   hardware state, entered upon a Linux request..
+   difference between Linux C-states (e.g.,
+
+platforms). The former is what Linux can request, and on Intel hardware
+this is usually about various 'mwait' instruction hints. The latter are
+platform- specific hardware state, entered upon a Linux request..
 
 **--disable** *[CSTATES]*
    Similar to '--enable', but specifies the list of C-states to disable.
@@ -326,7 +327,7 @@ OPTIONS *'pepc* cstates config'
    Set package C-state limit. The deepest package C-state the platform
    is allowed to enter. The package C-state limit is configured via MSR
    {MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This
-   model-specific register can be locked by the BIOS, in which case the
+   model- specific register can be locked by the BIOS, in which case the
    package C-state limit can only be read, but cannot be modified. This
    option has package scope.
 
@@ -464,14 +465,12 @@ OPTIONS *'pepc* pstates config'
 **--min-freq** *[MIN_FREQ]*
    Set minimum CPU frequency. Minimum frequency the operating system
    will configure the CPU to run at. The default unit is 'Hz', but
-   'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This
-   option has CPU scope.
+   'kHz', 'MHz', and
 
 **--max-freq** *[MAX_FREQ]*
    Set maximum CPU frequency. Maximum frequency the operating system
    will configure the CPU to run at. The default unit is 'Hz', but
-   'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This
-   option has CPU scope.
+   'kHz', 'MHz', and
 
 **--turbo** *[TURBO]*
    Enable or disable turbo. When turbo is enabled, the CPUs can
