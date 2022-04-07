@@ -30,11 +30,14 @@ Name of the host to run the command on.
 
 .TP
 \fB\-U\fR \fI\,USERNAME\/\fR, \fB\-\-username\fR \fI\,USERNAME\/\fR
-Name of the user to use for logging into the remote host over SSH. The default user name is 'root'.
+Name of the user to use for logging into the remote host over SSH. The default
+user name is 'root'.
 
 .TP
 \fB\-K\fR \fI\,PRIVKEY\/\fR, \fB\-\-priv\-key\fR \fI\,PRIVKEY\/\fR
-Path to the private SSH key that should be used for logging into the remote host. By default the key is automatically found from standard paths like '~/.ssh'.
+Path to the private SSH key that should be used for logging into the remote
+host. By default the key is automatically found from standard paths like
+'~/.ssh'.
 
 .TP
 \fB\-T\fR \fI\,TIMEOUT\/\fR, \fB\-\-timeout\fR \fI\,TIMEOUT\/\fR
@@ -125,7 +128,9 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to online. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+List of CPUs to online. The list can include individual CPU numbers and CPU
+number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8,
+and 10 to 12. Use the special keyword 'all' to specify all CPUs.
 
 .SH COMMAND \fI\,'pepc cpu-hotplug offline'\/\fR
 usage: pepc cpu-hotplug offline [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--siblings]
@@ -147,7 +152,9 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to offline. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+List of CPUs to offline. The list can include individual CPU numbers and CPU
+number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8,
+and 10 to 12. Use the special keyword 'all' to specify all CPUs.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
@@ -159,8 +166,10 @@ Same as '\-\-cpus', but specifies list of packages.
 
 .TP
 \fB\-\-siblings\fR
-Offline only "sibling CPUs", making sure there is only one logical CPU per core is left online. The sibling CPUs will be searched for among the CPUs selected with '\-\-cpus', '\-\-cores', and '\-\-packages'. Therefore, specifying '\-\-cpus all
-\-\-siblings' will effectively disable hyper\-threading on Intel CPUs.
+Offline only "sibling CPUs", making sure there is only one logical CPU per
+core is left online. The sibling CPUs will be searched for among the CPUs
+selected with '\-\-cpus', '\-\-cores', and '\-\-packages'. Therefore, specifying '\-\-
+cpus all \-\-siblings' will effectively disable hyper\-threading on Intel CPUs.
 
 .SH COMMAND \fI\,'pepc cstates'\/\fR
 usage: pepc cstates [-h] [-q] [-d]  ...
@@ -208,23 +217,35 @@ Print debugging information.
 
 .TP
 \fB\-\-cstates\fR \fI\,CSNAMES\/\fR
-Comma\-sepatated list of C\-states to get information about (all C\-states by default). C\-states should be specified by name (e.g., 'C1'). Use 'all' to specify all the available Linux C\-states (this is the default). Note, there is a
-difference between Linux C\-states (e.g., 'C6') and hardware C\-states (e.g., Core C6 or Package C6 on many Intel platforms). The former is what Linux can request, and on Intel hardware this is usually about various 'mwait' instruction
-hints. The latter are platform\-specific hardware state, entered upon a Linux request..
+Comma\-sepatated list of C\-states to get information about (all C\-states by
+default). C\-states should be specified by name (e.g., 'C1'). Use 'all' to
+specify all the available Linux C\-states (this is the default). Note, there is
+a difference between Linux C\-states (e.g., 'C6') and hardware C\-states (e.g.,
+Core C6 or Package C6 on many Intel platforms). The former is what Linux can
+request, and on Intel hardware this is usually about various 'mwait'
+instruction hints. The latter are platform\-specific hardware state, entered
+upon a Linux request..
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to get information about. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+List of CPUs to get information about. The list can include individual CPU
+numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1
+to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+CPUs.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
-List of cores to get information about. The list can include individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+List of cores to get information about. The list can include individual core
+numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores
+1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
 cores.
 
 .TP
 \fB\-\-packages\fR \fI\,PACKAGES\/\fR
-List of packages to get information about. The list can include individual package numbers and package number ranges. For example, '1\-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special keyword 'all' to
-specify all packages.
+List of packages to get information about. The list can include individual
+package numbers and package number ranges. For example, '1\-3' would mean
+packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special
+keyword 'all' to specify all packages.
 
 .SH COMMAND \fI\,'pepc cstates config'\/\fR
 usage: pepc cstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--enable [CSTATES]] [--disable [CSTATES]] [--pkg-cstate-limit [PKG_CSTATE_LIMIT]] [--c1-demotion [C1_DEMOTION]]
@@ -247,22 +268,32 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to configure. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+List of CPUs to configure. The list can include individual CPU numbers and CPU
+number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8,
+and 10 to 12. Use the special keyword 'all' to specify all CPUs.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
-List of cores to configure. The list can include individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all cores.
+List of cores to configure. The list can include individual core numbers and
+core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4,
+cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all cores.
 
 .TP
 \fB\-\-packages\fR \fI\,PACKAGES\/\fR
-List of packages to configure. The list can include individual package numbers and package number ranges. For example, '1\-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special keyword 'all' to specify all
-packages.
+List of packages to configure. The list can include individual package numbers
+and package number ranges. For example, '1\-3' would mean packages 1 to 3, and
+'1,3' would mean packages 1 and 3. Use the special keyword 'all' to specify
+all packages.
 
 .TP
 \fB\-\-enable\fR \fI\,[CSTATES]\/\fR
-Comma\-sepatated list of C\-states to enable. C\-states should be specified by name (e.g., 'C1'). Use 'all' to specify all the available Linux C\-states (this is the default). Note, there is a difference between Linux C\-states (e.g., 'C6')
-and hardware C\-states (e.g., Core C6 or Package C6 on many Intel platforms). The former is what Linux can request, and on Intel hardware this is usually about various 'mwait' instruction hints. The latter are platform\-specific hardware
-state, entered upon a Linux request..
+Comma\-sepatated list of C\-states to enable. C\-states should be specified by
+name (e.g., 'C1'). Use 'all' to specify all the available Linux C\-states (this
+is the default). Note, there is a difference between Linux C\-states (e.g.,
+'C6') and hardware C\-states (e.g., Core C6 or Package C6 on many Intel
+platforms). The former is what Linux can request, and on Intel hardware this
+is usually about various 'mwait' instruction hints. The latter are platform\-
+specific hardware state, entered upon a Linux request..
 
 .TP
 \fB\-\-disable\fR \fI\,[CSTATES]\/\fR
@@ -270,25 +301,35 @@ Similar to '\-\-enable', but specifies the list of C\-states to disable.
 
 .TP
 \fB\-\-pkg\-cstate\-limit\fR \fI\,[PKG_CSTATE_LIMIT]\/\fR
-Set package C\-state limit. The deepest package C\-state the platform is allowed to enter. The package C\-state limit is configured via MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This model\-specific register can be
-locked by the BIOS, in which case the package C\-state limit can only be read, but cannot be modified. This option has package scope.
+Set package C\-state limit. The deepest package C\-state the platform is allowed
+to enter. The package C\-state limit is configured via MSR
+{MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This model\-
+specific register can be locked by the BIOS, in which case the package C\-state
+limit can only be read, but cannot be modified. This option has package scope.
 
 .TP
 \fB\-\-c1\-demotion\fR \fI\,[C1_DEMOTION]\/\fR
-Enable or disable c1 demotion. Allow/disallow the CPU to demote C6/C7 requests to C1. Use "on" or "off". This option has core scope.
+Enable or disable c1 demotion. Allow/disallow the CPU to demote C6/C7 requests
+to C1. Use "on" or "off". This option has core scope.
 
 .TP
 \fB\-\-c1\-undemotion\fR \fI\,[C1_UNDEMOTION]\/\fR
-Enable or disable c1 undemotion. Allow/disallow the CPU to un\-demote previously demoted requests back from C1 to C6/C7. Use "on" or "off". This option has core scope.
+Enable or disable c1 undemotion. Allow/disallow the CPU to un\-demote
+previously demoted requests back from C1 to C6/C7. Use "on" or "off". This
+option has core scope.
 
 .TP
 \fB\-\-c1e\-autopromote\fR \fI\,[C1E_AUTOPROMOTE]\/\fR
-Enable or disable c1E autopromote. When enabled, the CPU automatically converts all C1 requests to C1E requests. This CPU feature is controlled by MSR 0x1fc, bit 1. Use "on" or "off". This option has package scope.
+Enable or disable c1E autopromote. When enabled, the CPU automatically
+converts all C1 requests to C1E requests. This CPU feature is controlled by
+MSR 0x1fc, bit 1. Use "on" or "off". This option has package scope.
 
 .TP
 \fB\-\-cstate\-prewake\fR \fI\,[CSTATE_PREWAKE]\/\fR
-Enable or disable c\-state prewake. When enabled, the CPU will start exiting the C6 idle state in advance, prior to the next local APIC timer event. This CPU feature is controlled by MSR 0x1fc, bit 30. Use "on" or "off". This option has
-package scope.
+Enable or disable c\-state prewake. When enabled, the CPU will start exiting
+the C6 idle state in advance, prior to the next local APIC timer event. This
+CPU feature is controlled by MSR 0x1fc, bit 30. Use "on" or "off". This option
+has package scope.
 
 .SH COMMAND \fI\,'pepc pstates'\/\fR
 usage: pepc pstates [-h] [-q] [-d]  ...
@@ -336,17 +377,24 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to get information about. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+List of CPUs to get information about. The list can include individual CPU
+numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1
+to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+CPUs.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
-List of cores to get information about. The list can include individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+List of cores to get information about. The list can include individual core
+numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores
+1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
 cores.
 
 .TP
 \fB\-\-packages\fR \fI\,PACKAGES\/\fR
-List of packages to get information about. The list can include individual package numbers and package number ranges. For example, '1\-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special keyword 'all' to
-specify all packages.
+List of packages to get information about. The list can include individual
+package numbers and package number ranges. For example, '1\-3' would mean
+packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special
+keyword 'all' to specify all packages.
 
 .SH COMMAND \fI\,'pepc pstates config'\/\fR
 usage: pepc pstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--min-freq [MIN_FREQ]] [--max-freq [MAX_FREQ]] [--turbo [TURBO]] [--min-uncore-freq [MIN_UNCORE_FREQ]] [--max-uncore-freq [MAX_UNCORE_FREQ]]
@@ -369,59 +417,84 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to configure P\-States on. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+List of CPUs to configure P\-States on. The list can include individual CPU
+numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1
+to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+CPUs.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
-List of cores to configure P\-States on. The list can include individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+List of cores to configure P\-States on. The list can include individual core
+numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores
+1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
 cores.
 
 .TP
 \fB\-\-packages\fR \fI\,PACKAGES\/\fR
-List of packages to configure P\-States on. The list can include individual package numbers and package number ranges. For example, '1\-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special keyword 'all' to
-specify all packages.
+List of packages to configure P\-States on. The list can include individual
+package numbers and package number ranges. For example, '1\-3' would mean
+packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special
+keyword 'all' to specify all packages.
 
 .TP
 \fB\-\-min\-freq\fR \fI\,[MIN_FREQ]\/\fR
-Set minimum CPU frequency. Minimum frequency the operating system will configure the CPU to run at. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This option has CPU scope.
+Set minimum CPU frequency. Minimum frequency the operating system will
+configure the CPU to run at. The default unit is 'Hz', but 'kHz', 'MHz', and
+'GHz' can also be used, for example '900MHz'. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\fR \fI\,[MAX_FREQ]\/\fR
-Set maximum CPU frequency. Maximum frequency the operating system will configure the CPU to run at. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This option has CPU scope.
+Set maximum CPU frequency. Maximum frequency the operating system will
+configure the CPU to run at. The default unit is 'Hz', but 'kHz', 'MHz', and
+'GHz' can also be used, for example '900MHz'. This option has CPU scope.
 
 .TP
 \fB\-\-turbo\fR \fI\,[TURBO]\/\fR
-Enable or disable turbo. When turbo is enabled, the CPUs can automatically run at a frequency greater than base frequency. Use "on" or "off". This option has global scope.
+Enable or disable turbo. When turbo is enabled, the CPUs can automatically run
+at a frequency greater than base frequency. Use "on" or "off". This option has
+global scope.
 
 .TP
 \fB\-\-min\-uncore\-freq\fR \fI\,[MIN_UNCORE_FREQ]\/\fR
-Set minimum uncore frequency. Minimum frequency the operating system will configure the uncore to run at. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This option has die scope.
+Set minimum uncore frequency. Minimum frequency the operating system will
+configure the uncore to run at. The default unit is 'Hz', but 'kHz', 'MHz',
+and 'GHz' can also be used, for example '900MHz'. This option has die scope.
 
 .TP
 \fB\-\-max\-uncore\-freq\fR \fI\,[MAX_UNCORE_FREQ]\/\fR
-Set maximum uncore frequency. Maximum frequency the operating system will configure the uncore to run at. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This option has die scope.
+Set maximum uncore frequency. Maximum frequency the operating system will
+configure the uncore to run at. The default unit is 'Hz', but 'kHz', 'MHz',
+and 'GHz' can also be used, for example '900MHz'. This option has die scope.
 
 .TP
 \fB\-\-epp\fR \fI\,[EPP]\/\fR
-Set energy Performance Preference. Energy Performance Preference (EPP) is a hint to the CPU on energy efficiency vs performance. EPP has an effect only when the CPU is in the hardware power management (HWP) mode. This option has CPU
-scope.
+Set energy Performance Preference. Energy Performance Preference (EPP) is a
+hint to the CPU on energy efficiency vs performance. EPP has an effect only
+when the CPU is in the hardware power management (HWP) mode. This option has
+CPU scope.
 
 .TP
 \fB\-\-epp\-policy\fR \fI\,[EPP_POLICY]\/\fR
-Set EPP policy. EPP policy is a name, such as 'performance', which Linux maps to an EPP value, which may depend on the platform. This option has CPU scope.
+Set EPP policy. EPP policy is a name, such as 'performance', which Linux maps
+to an EPP value, which may depend on the platform. This option has CPU scope.
 
 .TP
 \fB\-\-epb\fR \fI\,[EPB]\/\fR
-Set energy Performance Bias. Energy Performance Bias (EPB) is a hint to the CPU on energy efficiency vs performance. Value 0 means maximum performance, value 15 means maximum energy efficiency. EPP may have an effect in both HWP enabled
-and disabled modes (HWP stands for Hardware Power Management). This option has CPU scope.
+Set energy Performance Bias. Energy Performance Bias (EPB) is a hint to the
+CPU on energy efficiency vs performance. Value 0 means maximum performance,
+value 15 means maximum energy efficiency. EPP may have an effect in both HWP
+enabled and disabled modes (HWP stands for Hardware Power Management). This
+option has CPU scope.
 
 .TP
 \fB\-\-epb\-policy\fR \fI\,[EPB_POLICY]\/\fR
-Set EPB policy. EPB policy is a name, such as 'performance', which Linux maps to an EPB value, which may depend on the platform. This option has CPU scope.
+Set EPB policy. EPB policy is a name, such as 'performance', which Linux maps
+to an EPB value, which may depend on the platform. This option has CPU scope.
 
 .TP
 \fB\-\-governor\fR \fI\,[GOVERNOR]\/\fR
-Set CPU frequency governor. Linux CPU frequency governor name. This option has CPU scope.
+Set CPU frequency governor. Linux CPU frequency governor name. This option has
+CPU scope.
 
 .SH COMMAND \fI\,'pepc aspm'\/\fR
 usage: pepc aspm [-h] [-q] [-d]  ...
