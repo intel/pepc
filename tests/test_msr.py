@@ -91,17 +91,12 @@ def _get_good_msr_cpu_nums(params):
     for cpu in (allcpus[0], allcpus[medidx], allcpus[-1]):
         yield cpu
 
-@pytest.fixture(name="params", scope="module", params=get_datasets())
-def get_params(hostname, request):
-    """
-    Return a dictionary with information we need for testing. For example, to optimize the test
-    duration, use only subset of all CPUs available on target system to run tests on.
-    """
+def _get_params(hostname, dataset, pman):
+    """Implements the 'get_params()' fixture."""
 
     params = {}
     params["hostname"] = hostname
-    params["dataset"] = request.param
-    pman = get_pman(hostname, request.param)
+    params["dataset"] = dataset
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         allcpus = cpuinfo.get_cpus()
@@ -124,6 +119,17 @@ def get_params(hostname, request):
                 params["msrs"][msr.regaddr].update({name : finfo})
 
     return params
+
+@pytest.fixture(name="params", scope="module", params=get_datasets())
+def get_params(hostname, request):
+    """
+    Yield a dictionary with information we need for testing. For example, to optimize the test
+    duration, use only subset of all CPUs available on target system to run tests on.
+    """
+
+    dataset = request.param
+    with get_pman(hostname, dataset) as pman:
+        yield _get_params(hostname, dataset, pman)
 
 def _test_msr_read_good(params):
     """Test 'read()' method for good option values."""
