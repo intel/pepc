@@ -10,6 +10,7 @@
 This module provides a unified way of creating a process manager object for local or remote hosts.
 """
 
+import contextlib
 from pepclibs.helperlibs.Exceptions import Error
 
 def _check_for_none(hostname, **kwargs):
@@ -19,7 +20,7 @@ def _check_for_none(hostname, **kwargs):
 
     for name, val in kwargs.items():
         if val is not None:
-            raise Error(f"BUG: get_pmon: hostname is '{hostname}', but argument '{name}' is not "
+            raise Error(f"BUG: get_pman: hostname is '{hostname}', but argument '{name}' is not "
                         f"'None'. Instead, it is '{val}'")
 
 def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=None):
@@ -91,3 +92,31 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=N
                                                    privkeypath=privkeypath, timeout=timeout)
 
     return pman
+
+def pman_or_local(pman):
+    """
+    Return 'pman' if it is not 'None', otherwise return a new instance of 'LocalProcessManager'.
+
+    This helper is designed for situations when you have a function, which takes a 'pman' object on
+    input. However, your function allows for 'pman == None', in which case it falls back to a
+    'LocalProcessManager' object.
+
+    Here is how this helper is supposed to be used:
+
+      with pman_or_local(pman) as wpman:
+          do_stuff()
+
+    If user provided a process manager object ('pman != None'), 'wpman' will be 'pman'. In this
+    case, the 'pman.__exit__()' will not be called, which is the right thing to do because 'pman'
+    came from a user, who is responsible for closing the process manager.
+
+    If user did not provide a process manager ('pman == None'), then a 'LocalProcessManager()'
+    instance will be created and closed upon exiting the 'with' context.
+    """
+
+    if pman:
+        return contextlib.nullcontext(enter_result=pman)
+
+    from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
+
+    return LocalProcessManager.LocalProcessManager()
