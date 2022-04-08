@@ -188,11 +188,11 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                     if cde <= code:
                         code = cde
                         break
-
-                known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
-                raise Error(f"unexpected package C-state limit code '{code}' read from "
-                            f"'{self.regname}' MSR ({self.regaddr}){self._pman.hostmsg}, known "
-                            f"codes are: {known_codes}")
+                else:
+                    known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
+                    raise Error(f"unexpected package C-state limit code '{code}' read from "
+                                f"'{self.regname}' MSR ({self.regaddr}) on CPU {cpu}"
+                                f"{self._pman.hostmsg}, known codes are: {known_codes}")
 
             res = {"pkg_cstate_limit" : finfo["rvals"][code],
                    "pkg_cstate_limits" : list(finfo["vals"].keys()),
