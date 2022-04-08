@@ -18,7 +18,7 @@ import logging
 from pathlib import Path
 from operator import itemgetter
 from collections import namedtuple
-from pepclibs.helperlibs import LocalProcessManager, Trivial, Human
+from pepclibs.helperlibs import ProcessManager, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorExists
 
 # Default debugfs mount point.
@@ -192,14 +192,12 @@ def mount_points(pman=None):
     mounts_file = "/proc/mounts"
     mntinfo = namedtuple("mntinfo", ["device", "mntpoint", "fstype", "options"])
 
-    if not pman:
-        pman = LocalProcessManager.LocalProcessManager()
-
-    with pman.open(mounts_file, "r") as fobj:
-        try:
-            contents = fobj.read()
-        except OSError as err:
-            raise Error(f"cannot read '{mounts_file}': {err}") from err
+    with ProcessManager.pman_or_local(pman) as wpman:
+        with wpman.open(mounts_file, "r") as fobj:
+            try:
+                contents = fobj.read()
+            except OSError as err:
+                raise Error(f"cannot read '{mounts_file}': {err}") from err
 
     for line in contents.splitlines():
         if not line:
@@ -277,20 +275,18 @@ def shell_test(path, opt, pman=None):
     By default, the shell test command will be run on the local host.
     """
 
-    if not pman:
-        pman = LocalProcessManager.LocalProcessManager()
+    with ProcessManager.pman_or_local(pman) as wpman:
+        cmd = f"test {opt} '{path}'"
+        stdout, stderr, exitcode = wpman.run(cmd, shell=True)
+        if stderr and exitcode == 127:
+            # There is some output in 'stderr' and exit code is 127, which happens when the 'test'
+            # command is not in '$PATH'. Let's try running 'sh' with '-l', which will make it read
+            # '/etc/profile' and possibly ensure that 'test' is in '$PATH'.
+            cmd = f"sh -c -l 'test {opt} \"{path}\"'"
+            stdout, stderr, exitcode = wpman.run(cmd, shell=True)
 
-    cmd = f"test {opt} '{path}'"
-    stdout, stderr, exitcode = pman.run(cmd, shell=True)
-    if stderr and exitcode == 127:
-        # There is some output in 'stderr' and exit code is 127, which happens when the 'test'
-        # command is not in '$PATH'. Let's try running 'sh' with '-l', which will make it read
-        # '/etc/profile' and possibly ensure that 'test' is in '$PATH'.
-        cmd = f"sh -c -l 'test {opt} \"{path}\"'"
-        stdout, stderr, exitcode = pman.run(cmd, shell=True)
-
-    if stdout or stderr or exitcode not in (0, 1):
-        raise Error(pman.cmd_failed_msg(cmd, stdout, stderr, exitcode))
+        if stdout or stderr or exitcode not in (0, 1):
+            raise Error(wpman.cmd_failed_msg(cmd, stdout, stderr, exitcode))
 
     return exitcode == 0
 
@@ -304,29 +300,27 @@ def mkdir(dirpath, parents=False, exist_ok=False, pman=None):
     on. By default, the directory will be created on the local host.
     """
 
-    if not pman:
-        pman = LocalProcessManager.LocalProcessManager()
+    with ProcessManager.pman_or_local(pman) as wpman:
+        exists_err = f"path '{dirpath}' already exists{wpman.hostmsg}"
+        if shell_test(dirpath, "-e", pman=wpman):
+            if exist_ok:
+                return
+            raise ErrorExists(exists_err)
 
-    exists_err = f"path '{dirpath}' already exists{pman.hostmsg}"
-    if shell_test(dirpath, "-e", pman=pman):
-        if exist_ok:
-            return
-        raise ErrorExists(exists_err)
-
-    if pman.is_remote:
-        cmd = "mkdir"
-        if parents:
-            cmd += " -p"
-        cmd += f" -- '{dirpath}'"
-        pman.run_verify(cmd)
-    else:
-        try:
-            dirpath.mkdir(parents=parents, exist_ok=exist_ok)
-        except FileExistsError as err:
-            if not exist_ok:
-                raise ErrorExists(exists_err) from None
-        except OSError as err:
-            raise Error(f"failed to create directory '{dirpath}':\n{err}") from None
+        if wpman.is_remote:
+            cmd = "mkdir"
+            if parents:
+                cmd += " -p"
+            cmd += f" -- '{dirpath}'"
+            wpman.run_verify(cmd)
+        else:
+            try:
+                dirpath.mkdir(parents=parents, exist_ok=exist_ok)
+            except FileExistsError as err:
+                if not exist_ok:
+                    raise ErrorExists(exists_err) from None
+            except OSError as err:
+                raise Error(f"failed to create directory '{dirpath}':\n{err}") from None
 
 def rm_minus_rf(path, pman=None):
     """
@@ -490,9 +484,6 @@ def lsdir(path, must_exist=True, pman=None):
     if not must_exist and not exists(path, pman=pman):
         return
 
-    if not pman:
-        pman = LocalProcessManager.LocalProcessManager()
-
     if pman and pman.is_remote:
         stdout, _ = pman.run_verify(f"ls -c -1 --file-type -- '{path}'", join=False)
         if not stdout:
@@ -573,33 +564,29 @@ def read(path, default=_RAISE, pman=None):
     default, 'path' is assumed to be on the local host.
     """
 
-    if not pman:
-        pman = LocalProcessManager.LocalProcessManager()
-
-    try:
-        with pman.open(path, "r") as fobj:
-            val = fobj.read().strip()
-    except Error as err:
-        if default is _RAISE:
-            raise type(err)(f"failed to read file '{path}'{pman.hostmsg}:\n{err}") from err
-        return default
+    with ProcessManager.pman_or_local(pman) as wpman:
+        try:
+            with wpman.open(path, "r") as fobj:
+                val = fobj.read().strip()
+        except Error as err:
+            if default is _RAISE:
+                raise type(err)(f"failed to read file '{path}'{wpman.hostmsg}:\n{err}") from err
+            return default
 
     return val
 
 def read_int(path, default=_RAISE, pman=None):
     """Read an integer from file 'path'. Other arguments are same as in 'read()'."""
 
-    if not pman:
-        pman = LocalProcessManager.LocalProcessManager()
-
-    val = read(path, default=default, pman=pman)
-    if val is default:
-        return val
-    if not Trivial.is_int(val):
-        if default is _RAISE:
-            raise Error(f"unexpected non-integer value in file '{path}'{pman.hostmsg}")
-        return default
-    return int(val)
+    with ProcessManager.pman_or_local(pman) as wpman:
+        val = read(path, default=default, pman=wpman)
+        if val is default:
+            return val
+        if not Trivial.is_int(val):
+            if default is _RAISE:
+                raise Error(f"unexpected non-integer value in file '{path}'{wpman.hostmsg}")
+            return default
+        return int(val)
 
 def write(path, data, pman=None):
     """
@@ -607,14 +594,12 @@ def write(path, data, pman=None):
     (local host by default).
     """
 
-    if not pman:
-        pman = LocalProcessManager.LocalProcessManager()
-
-    try:
-        with pman.open(path, "w") as fobj:
-            fobj.write(str(data))
-    except Error as err:
-        raise type(err)(f"failed to write into file '{path}'{pman.hostmsg}:\n{err}") from err
+    with ProcessManager.pman_or_local(pman) as wpman:
+        try:
+            with wpman.open(path, "w") as fobj:
+                fobj.write(str(data))
+        except Error as err:
+            raise type(err)(f"failed to write into file '{path}'{wpman.hostmsg}:\n{err}") from err
 
 def wait_for_a_file(path, interval=1, timeout=60, pman=None):
     """
@@ -626,14 +611,12 @@ def wait_for_a_file(path, interval=1, timeout=60, pman=None):
     default, 'path' is assumed to be on the local host.
     """
 
-    if not pman:
-        pman = LocalProcessManager.LocalProcessManager()
+    with ProcessManager.pman_or_local(pman) as wpman:
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if exists(path, pman=wpman):
+                return
+            time.sleep(interval)
 
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if exists(path, pman=pman):
-            return
-        time.sleep(interval)
-
-    interval = Human.duration(timeout)
-    raise Error(f"file '{path}' did not appear{pman.hostmsg} within '{interval}'")
+        interval = Human.duration(timeout)
+        raise Error(f"file '{path}' did not appear{wpman.hostmsg} within '{interval}'")
