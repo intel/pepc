@@ -58,8 +58,7 @@ def get_homedir(pman=None):
     Return home directory path. By default returns current user's local home directory path.
 
     The 'pman' argument is the process manger object which defines the host to get the home
-    directory on. By default it is 'LocalProcessManager', which means that the home directory on the
-    local host will be returned.
+    directory on. By default, the home directory on the local host will be returned.
     """
 
     if pman and pman.is_remote:
@@ -153,7 +152,7 @@ def move_copy_link(src, dst, action="symlink", exist_ok=False):
 def get_mtime(path, pman=None):
     """
     Returns the modification time of file or directory on the host defined by the 'pman' process
-    manager object ('LocalProcessManager' by default, which means the local host).
+    manager object (local host by default).
     """
 
     if not pman:
@@ -187,8 +186,7 @@ def mount_points(pman=None):
       * options - list of options
 
     The 'pman' argument is the process manger object which defines the host to parse '/proc/mounts'
-    on. By default it is 'LocalProcessManager', which means that local host's '/proc/mounts' will be
-    parsed.
+    on. By default, local host's '/proc/mounts' will be parsed.
     """
 
     mounts_file = "/proc/mounts"
@@ -240,8 +238,7 @@ def mktemp(prefix=None, tmpdir=None, pman=None):
     where the temporary directory should be created.
 
     The 'pman' argument is the process manger object which defines the host to create the temporary
-    directory on. By default it is 'LocalProcessManager', which means that local the temporary
-    directory will be created on the local host.
+    directory on. By default, the temporary directory will be created on the local host.
     """
 
     if not pman:
@@ -272,12 +269,12 @@ def mktemp(prefix=None, tmpdir=None, pman=None):
 
 def shell_test(path, opt, pman=None):
     """
-    Run a shell test against path 'path'. The 'opt' argument specifies the the 'test' command
-    options. For example, pass '-f' to run 'test -f' which returns 0 if 'path' exists and is a
-    regular file and 1 otherwise.
+    Run the shell 'test' comman against path 'path'. The 'opt' argument specifies the the 'test'
+    command options. For example, pass '-f' to run 'test -f' which returns 0 if 'path' exists and is
+    a regular file and 1 otherwise.
 
     The 'pman' argument is the process manger object which defines the host to run the comman on.
-    By default it is 'LocalProcessManager', which means that command will be run on the local host.
+    By default, the shell test command will be run on the local host.
     """
 
     if not pman:
@@ -304,8 +301,7 @@ def mkdir(dirpath, parents=False, exist_ok=False, pman=None):
     returns without an error if 'exist_ok' is 'False'.
 
     The 'pman' argument is the process manger object which defines the host to create the directory
-    on. By default it is 'LocalProcessManager', which means that the directory will be created on
-    the local host.
+    on. By default, the directory will be created on the local host.
     """
 
     if not pman:
@@ -335,8 +331,8 @@ def mkdir(dirpath, parents=False, exist_ok=False, pman=None):
 def rm_minus_rf(path, pman=None):
     """
     Remove 'path' using 'rm -rf' on the host defined by the 'pman' process manager object
-    ('LocalProcessManager' by default, which means the local host). If 'path' is a symlink, the link
-    is removed, but the target of the link is not removed.
+    (local host by default). If 'path' is a symlink, the link is removed, but the target of the link
+    is not removed.
     """
 
     if pman and pman.is_remote:
@@ -356,7 +352,7 @@ def rm_minus_rf(path, pman=None):
 def exists(path, pman=None):
     """
     Return 'True' if path 'path' exists on the host defined by the 'pman' process manager object
-    ('LocalProcessManager' by default, which means the local host).
+    (local host by default).
     """
 
     if pman and pman.is_remote:
@@ -370,7 +366,7 @@ def exists(path, pman=None):
 def isfile(path, pman=None):
     """
     Return 'True' if path 'path' exists an it is a regular file on the host defined by the 'pman'
-    process manager object ('LocalProcessManager' by default, which means the local host).
+    process manager object (local host by default).
     """
 
     if pman and pman.is_remote:
@@ -385,7 +381,7 @@ def isfile(path, pman=None):
 def isdir(path, pman=None):
     """
     Return 'True' if path 'path' exists an it is a directory on the host defined by the 'pman'
-    process manager object ('LocalProcessManager' by default, which means the local host).
+    process manager object (local host by default).
     """
 
     if pman and pman.is_remote:
@@ -400,7 +396,7 @@ def isdir(path, pman=None):
 def isexe(path, pman=None):
     """
     Return 'True' if path 'path' exists an it is an executable file on the host defined by the
-    'pman' process manager object ('LocalProcessManager' by default, which means the local host).
+    'pman' process manager object (local host by default).
     """
 
     if pman and pman.is_remote:
@@ -415,7 +411,7 @@ def isexe(path, pman=None):
 def issocket(path, pman=None):
     """
     Return 'True' if path 'path' exists an it is a Unix socket file on the host defined by the
-    'pman' process manager object ('LocalProcessManager' by default, which means the local host).
+    'pman' process manager object (local host by default).
     """
 
     if pman and pman.is_remote:
@@ -433,8 +429,8 @@ def which(program, default=_RAISE, pman=None):
     found, otherwise retruns 'default' or rises an exception if the 'default' value was not
     provided.
 
-    The 'pman' argument is the process manger object which defines the host to search on. By default
-    it is 'LocalProcessManager', which means that the search will be one on the local host.
+    The 'pman' argument is the process manger object which defines the host to search on. By
+    default, search on the local host.
     """
 
     if pman and pman.is_remote:
@@ -488,7 +484,7 @@ def lsdir(path, must_exist=True, pman=None):
     and does not yield anything.
 
     The 'pman' argument is the process manger object which defines the host 'path' resides on. By
-    default it is 'LocalProcessManager', which means that the 'path' is on the local host.
+    default, 'path' is assumed to be on the local host.
     """
 
     if not must_exist and not exists(path, pman=pman):
@@ -548,7 +544,7 @@ def abspath(path, must_exist=True, pman=None):
     is 'False', then it is acceptable for the components of the path not to exist.
 
     The 'pman' argument is the process manger object which defines the host 'path' resides on. By
-    default it is 'LocalProcessManager', which means that the 'path' is on the local host.
+    default, 'path' is assumed to be on the local host.
     """
 
     if not pman or not pman.is_remote:
@@ -574,7 +570,7 @@ def read(path, default=_RAISE, pman=None):
     was not provided.
 
     The 'pman' argument is the process manger object which defines the host 'path' resides on. By
-    default it is 'LocalProcessManager', which means that the 'path' is on the local host.
+    default, 'path' is assumed to be on the local host.
     """
 
     if not pman:
@@ -608,7 +604,7 @@ def read_int(path, default=_RAISE, pman=None):
 def write(path, data, pman=None):
     """
     Write data 'data' to file 'path' on the host defined by the 'pman' process manager object
-    ('LocalProcessManager' by default, which means the local host).
+    (local host by default).
     """
 
     if not pman:
@@ -627,7 +623,7 @@ def wait_for_a_file(path, interval=1, timeout=60, pman=None):
     within 'timeout' seconds, then this function fails with an exception.
 
     The 'pman' argument is the process manger object which defines the host 'path' resides on. By
-    default it is 'LocalProcessManager', which means that the 'path' is on the local host.
+    default, 'path' is assumed to be on the local host.
     """
 
     if not pman:
