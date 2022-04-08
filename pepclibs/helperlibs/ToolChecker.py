@@ -55,38 +55,37 @@ _PKGINFO = {
     "CentOS Linux" :     _FEDORA_PKGINFO,
 }
 
-def _read_os_release(sysroot="/", pman=None):
-    """
-    Read the 'os-release' file from the host defined by 'pman' and return it as a dictionary.
-    """
-
-    if not pman:
-        pman = LocalProcessManager.LocalProcessManager()
-
-    paths = ("/usr/lib/os-release", "/etc/os-release")
-    paths = [Path(sysroot) / path.lstrip("/") for path in paths]
-    osinfo = {}
-
-    for path in paths:
-        with contextlib.suppress(pman.Error):
-            with pman.open(path, "r") as fobj:
-                for line in fobj:
-                    key, val = line.rstrip().split("=")
-                    osinfo[key] = val.strip('"')
-        if osinfo:
-            break
-
-    if not osinfo:
-        files = "\n".join(paths)
-        raise Error(f"cannot discover OS version{pman.hostmsg}, these files were checked:\n{files}")
-
-    return osinfo
-
 class ToolChecker:
     """
     This class provides a capability of checking if a tool is installed on a Linux host and
     providing a meaningful suggestion if it is not installed.
     """
+
+
+    def _read_os_release(self, sysroot="/"):
+        """
+        Read and parse the '/etc/os-release' file, and return its contents as a dictionary.
+        """
+
+        paths = ("/usr/lib/os-release", "/etc/os-release")
+        paths = [Path(sysroot) / path.lstrip("/") for path in paths]
+        osinfo = {}
+
+        for path in paths:
+            with contextlib.suppress(self._pman.Error):
+                with self._pman.open(path, "r") as fobj:
+                    for line in fobj:
+                        key, val = line.rstrip().split("=")
+                        osinfo[key] = val.strip('"')
+            if osinfo:
+                break
+
+        if not osinfo:
+            files = "\n".join(paths)
+            raise Error(f"cannot discover OS version{self._pman.hostmsg}, these files were "
+                        f"checked:\n{files}")
+
+        return osinfo
 
     def _get_osname(self):
         """Returns the OS name of the SUT."""
@@ -94,7 +93,7 @@ class ToolChecker:
         if self._osname:
             return self._osname
 
-        osinfo = _read_os_release(pman=self._pman)
+        osinfo = self._read_os_release()
         return osinfo.get("NAME")
 
     def tool_to_pkg(self, tool):
