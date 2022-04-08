@@ -16,7 +16,6 @@ import time
 import shutil
 import logging
 from pathlib import Path
-from hashlib import sha512
 from operator import itemgetter
 from collections import namedtuple
 from pepclibs.helperlibs import LocalProcessManager, Trivial, Human
@@ -29,34 +28,6 @@ DEBUGFS_MOUNT_POINT = Path("/sys/kernel/debug")
 _RAISE = object()
 
 _LOG = logging.getLogger()
-
-def get_sha512(path, default=_RAISE, pman=None, skip_lines=0):
-    """
-    Calculate sha512 checksum of the file 'path' on the host defined by the 'pman' process manager
-    object ('LocalProcessManager' by default, which means the local host).
-    The 'default' argument can be used as an return value instead of raising an error. The
-    'skip_lines' argument tells how many lines from the beginning will be excluded from checksum
-    calculation.
-    """
-
-    if not pman:
-        pman = LocalProcessManager.LocalProcessManager()
-
-    with pman.open(path, "rb") as fobj:
-        try:
-            while skip_lines:
-                skip_lines -= 1
-                fobj.readline()
-
-            data = fobj.read()
-            checksum = sha512(data).hexdigest()
-        except Error as err:
-            if default is _RAISE:
-                raise type(err)(f"cannot calculate sha512 checksum for the file "
-                                f"'{path}'{pman.hostmsg}:\n{err}") from err
-            return default
-
-    return checksum
 
 def set_default_perm(path):
     """
