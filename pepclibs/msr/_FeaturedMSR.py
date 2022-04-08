@@ -379,9 +379,6 @@ class FeaturedMSR:
           * msr - the 'MSR.MSR()' object to use for writing to the MSR register.
         """
 
-        if not pman:
-            pman = LocalProcessManager.LocalProcessManager()
-
         self._pman = pman
         self._cpuinfo = cpuinfo
         self._msr = msr
