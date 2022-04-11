@@ -9,7 +9,7 @@
 """This module provides an API to control PCI Active State Power Management (ASPM)."""
 
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, Trivial
+from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 
 class ASPM:
@@ -81,11 +81,7 @@ class ASPM:
 
     def close(self):
         """Uninitialize the class object."""
-
-        if getattr(self, "_pman", None):
-            if self._close_pman:
-                self._pman.close()
-            self._pman = None
+        ClassHelpers.close(self, close_attrs=("_pman",))
 
     def __enter__(self):
         """Enter the runtime context."""

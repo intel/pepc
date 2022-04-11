@@ -15,7 +15,7 @@ import re
 import copy
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, Trivial, FSHelpers, ToolChecker
+from pepclibs.helperlibs import LocalProcessManager, Trivial, FSHelpers, ToolChecker, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo, _Common
 from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
@@ -459,13 +459,7 @@ class ReqCStates:
 
     def close(self):
         """Uninitialize the class object."""
-
-        for attr in ("_tchk", "_cpuinfo", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        ClassHelpers.close(self, close_attrs=("_tchk", "_cpuinfo", "_pman"))
 
     def __enter__(self):
         """Enter the runtime context."""
@@ -770,18 +764,8 @@ class CStates:
     def close(self):
         """Uninitialize the class object."""
 
-        for attr in ("_pcstatectl", "_powerctl"):
-            obj = getattr(self, attr, None)
-            if obj:
-                obj.close()
-                setattr(self, attr, None)
-
-        for attr in ("_msr", "_rcsobj", "_cpuinfo", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        close_attrs = ("_pcstatectl", "_powerctl", "_msr", "_rcsobj", "_cpuinfo", "_pman")
+        ClassHelpers.close(self, close_attrs=close_attrs)
 
     def __enter__(self):
         """Enter the runtime context."""

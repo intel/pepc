@@ -13,7 +13,8 @@ This module provides an API to get CPU information.
 import re
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
-from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, FSHelpers, ToolChecker
+from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, FSHelpers, ClassHelpers
+from pepclibs.helperlibs import ToolChecker
 
 # CPU model numbers.
 #
@@ -983,13 +984,7 @@ class CPUInfo:
 
     def close(self):
         """Uninitialize the class object."""
-
-        for attr in ("_tchk", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        ClassHelpers.close(self, close_attrs=("_tchk", "_pman",))
 
     def __enter__(self):
         """Enter the runtime context."""

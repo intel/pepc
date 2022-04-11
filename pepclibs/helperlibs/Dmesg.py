@@ -16,7 +16,7 @@ import itertools
 import difflib
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import LocalProcessManager, ToolChecker
+from pepclibs.helperlibs import LocalProcessManager, ToolChecker, ClassHelpers
 
 _LOG = logging.getLogger()
 
@@ -115,13 +115,7 @@ class Dmesg:
 
     def close(self):
         """Stop the measurements."""
-
-        for attr in ("_tchk", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        ClassHelpers.close(self, close_attrs=("_tchk", "_pman",))
 
     def __enter__(self):
         """Enter the run-time context."""

@@ -13,7 +13,7 @@ This module provides the base class for "featured" MSRs, such as 'MSR_PKG_CST_CO
 
 import copy
 import logging
-from pepclibs.helperlibs import LocalProcessManager, Human
+from pepclibs.helperlibs import LocalProcessManager, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR
@@ -414,13 +414,7 @@ class FeaturedMSR:
 
     def close(self):
         """Uninitialize the class object."""
-
-        for attr in ("_msr", "_cpuinfo", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        ClassHelpers.close(self, close_attrs=("_msr", "_cpuinfo", "_pman",))
 
     def __enter__(self):
         """Enter the runtime context."""

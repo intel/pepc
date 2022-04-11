@@ -10,7 +10,7 @@
 This module provides python API to the systemctl tool.
 """
 
-from pepclibs.helperlibs import ToolChecker, LocalProcessManager, Trivial
+from pepclibs.helperlibs import ToolChecker, LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
 
 class Systemctl:
@@ -129,13 +129,7 @@ class Systemctl:
 
     def close(self):
         """Uninitialize the class object."""
-
-        for attr in ("_tchk", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        ClassHelpers.close(self, close_attrs=("_tchk", "_pman",))
 
     def __enter__(self):
         """Enter the runtime context."""

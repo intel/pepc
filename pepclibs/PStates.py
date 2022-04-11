@@ -16,7 +16,7 @@ import time
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, KernelModule, FSHelpers, Human
+from pepclibs.helperlibs import LocalProcessManager, KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs import CPUInfo, _Common
 
@@ -1130,18 +1130,9 @@ class PStates:
                 self._unload_ufreq_drv = None
             self._ufreq_drv = None
 
-        for attr in ("_eppobj", "_epbobj", "_pmenable", "_platinfo", "_trl"):
-            obj = getattr(self, attr, None)
-            if obj:
-                obj.close()
-                setattr(self, attr, None)
-
-        for attr in ("_msr", "_cpuinfo", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_platinfo", "_trl", "_msr", "_cpuinfo",
+                       "_pman")
+        ClassHelpers.close(self, close_attrs=close_attrs)
 
     def __enter__(self):
         """Enter the runtime context."""

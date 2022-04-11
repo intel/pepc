@@ -12,7 +12,7 @@ This module provides API for loading and unloading Linux kernel modules (drivers
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import LocalProcessManager, Dmesg, ToolChecker
+from pepclibs.helperlibs import LocalProcessManager, Dmesg, ToolChecker, ClassHelpers
 
 _LOG = logging.getLogger()
 
@@ -148,13 +148,7 @@ class KernelModule:
 
     def close(self):
         """Stop the measurements."""
-
-        for attr in ("_tchk", "_dmesg_obj", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        ClassHelpers.close(self, close_attrs=("_tchk", "_dmesg_obj", "_pman",))
 
     def __enter__(self):
         """Enter the run-time context."""

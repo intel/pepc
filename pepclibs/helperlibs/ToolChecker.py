@@ -15,7 +15,7 @@ meaningful OS package installation suggestion if it is not installed.
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs import LocalProcessManager, FSHelpers
+from pepclibs.helperlibs import LocalProcessManager, FSHelpers, ClassHelpers
 
 #
 # Tools information dictionary. Maps tool names to OS package names.
@@ -147,13 +147,7 @@ class ToolChecker:
 
     def close(self):
         """Uninitialize the class object."""
-
-        for attr in ("_pman",):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        ClassHelpers.close(self, close_attrs=("_pman",))
 
     def __enter__(self):
         """Enter the runtime context."""

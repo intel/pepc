@@ -15,7 +15,7 @@ Intel CPUs.
 import logging
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.helperlibs import LocalProcessManager, Trivial, FSHelpers
+from pepclibs.helperlibs import LocalProcessManager, Trivial, FSHelpers, ClassHelpers
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, HWPRequest, HWPRequestPkg
 
@@ -353,15 +353,8 @@ class EPP:
     def close(self):
         """Uninitialize the class object."""
 
-        for attr in ("_hwpreq", "_hwpreq_pkg", "_msr", "_cpuinfo", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if hasattr(self, f"_close{attr}"):
-                    if getattr(self, f"_close{attr}"):
-                        getattr(obj, "close")()
-                else:
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        close_attrs = ("_hwpreq", "_hwpreq_pkg", "_msr", "_cpuinfo", "_pman")
+        ClassHelpers.close(self, close_attrs=close_attrs)
 
     def __enter__(self):
         """Enter the runtime context."""

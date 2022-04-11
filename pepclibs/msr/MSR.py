@@ -14,7 +14,7 @@ Registers. This module has been designed and implemented for Intel CPUs.
 
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, FSHelpers, KernelModule, Trivial
+from pepclibs.helperlibs import LocalProcessManager, FSHelpers, KernelModule, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 
@@ -434,12 +434,7 @@ class MSR:
                 self._msr_drv.unload()
             self._msr_drv = None
 
-        for attr in ("_cpuinfo", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman",))
 
     def __enter__(self):
         """Enter the runtime context."""

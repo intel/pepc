@@ -394,6 +394,7 @@ class ProcessBase:
         if self.stdin:
             self.stdin = ClassHelpers.WrapExceptions(self.stdin, exceptions=(Exception,),
                                                      get_err_prefix=_get_err_prefix)
+
     def close(self):
         """Free allocated resources."""
 
@@ -402,14 +403,7 @@ class ProcessBase:
         if hasattr(self, "_threads_exit"):
             self._threads_exit = True
 
-        pobj = getattr(self, "pobj", None)
-        if pobj:
-            if hasattr(pobj, "close"):
-                pobj.close()
-            self.pobj = None
-
-        if hasattr(self, "pman"):
-            self.pman = None
+        ClassHelpers.close(self, unref_attrs=("pman",))
 
     def __del__(self):
         """Class destructor."""

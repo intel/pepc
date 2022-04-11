@@ -12,7 +12,7 @@ This module provides an API for onlining and offlining CPUs.
 
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import FSHelpers, LocalProcessManager
+from pepclibs.helperlibs import FSHelpers, LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 
@@ -175,12 +175,7 @@ class CPUOnline:
                getattr(self, "_saved_states", None):
                 self.restore()
 
-        for attr in ("_cpuinfo", "_pman"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
+        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman",))
 
     def __enter__(self):
         """Enter the runtime context."""
