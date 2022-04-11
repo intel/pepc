@@ -95,3 +95,71 @@ class WrapExceptions:
     def __next__(self):
         """Next iteration."""
         return self._obj.__next__()
+
+def close(cls_obj, unref_attrs=None, close_attrs=None):
+    """
+    Uninitialize a class object 'cls_obj' by freeing objects referred to by attributes in 'attrs'.
+
+    1. The 'cls_obj' class object may store references to other objects, which were created outside
+       of 'cls_obj' (for example, were provided to 'cls_obj.__init__()'). A typical example:
+       'self._pman'. The list of 'cls_obj' attribute names of this sort should be provided via
+       'unref_attrs'. In this case, this method will set the attributes to 'None', thus removing a
+       reference to the object.
+
+    2. The 'cls_obj' class object may store references to other objects, which were created by
+       'cls_obj'. The list of 'cls_obj' attribute names of this sort should be provided via
+       'close_attrs'. In this case, this method will first close the object by calling its 'close()'
+       method, then set the attribute to 'None' to remove a reference.
+
+    3. Some attributes of the 'cls_obj' class may store references to other objects which are of
+       type #1 or #2, depending on various factors. For example, 'self._pman' may be provided by the
+       user, or may be created by 'cls_obj'. In this situation, this method expects the 'cls_obj' to
+       have an extra attribute named as '_close_{attr}', containing a boolean which tells whether
+       the object in '{attr}' have to be closed. For example, if 'self._close_pman' attriubte exists
+       and it is 'True', then the 'self._pman' object should be closed. Otherwise it won't be
+       closed.
+    """
+
+    if unref_attrs is None:
+        unref_attrs = []
+    if close_attrs is None:
+        close_attrs = []
+
+    for attr in unref_attrs:
+        obj = getattr(cls_obj, attr, None)
+        if obj:
+            setattr(cls_obj, attr, None)
+        else:
+            _LOG.debug("attribute '%s' was not found in '%s'", attr, cls_obj)
+            _LOG.debug_print_stack()
+
+    for attr in close_attrs:
+        obj = getattr(cls_obj, attr, None)
+        if not obj:
+            if not hasattr(cls_obj, attr):
+                _LOG.debug("attribute '%s' was not found in '%s'", attr, cls_obj)
+                _LOG.debug_print_stack()
+            continue
+
+        if attr.startswith("_"):
+            name = f"_close{attr}"
+        else:
+            name = f"_close_{attr}"
+
+        run_close = True
+        if hasattr(cls_obj, name):
+            run_close = getattr(cls_obj, name)
+            if run_close not in (True, False):
+                _LOG.warning("BUG: bad value of attribute '%s' in '%s'", name, cls_obj)
+                _LOG.debug_print_stack()
+                setattr(cls_obj, attr, None)
+                continue
+
+        if run_close:
+            if hasattr(obj, "close"):
+                getattr(obj, "close")()
+            else:
+                _LOG.debug("BUG: no 'close()' method in '%s'", obj)
+                _LOG.debug_print_stack()
+
+        setattr(cls_obj, attr, None)
