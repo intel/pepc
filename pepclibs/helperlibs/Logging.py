@@ -91,6 +91,12 @@ def _error_out(logger, msgformat, *args, print_tb=False):
 
     raise SystemExit(1)
 
+def _debug_print_stack(logger):
+    """If debugging is enabled, print the stack trace."""
+
+    if logger.getEffectiveLevel() == DEBUG:
+        traceback.print_stack()
+
 def _notice(logger, fmt, *args):
     """Just a convenient 'notice()' method for the logger."""
     logger.log(NOTICE, fmt, *args)
@@ -266,5 +272,6 @@ def setup_logger(prefix=None, loglevel=None, colored=None, info_stream=sys.stdou
 
     logger.notice = types.MethodType(_notice, logger)
     logger.error_out = types.MethodType(_error_out, logger)
+    logger.debug_print_stack = types.MethodType(_debug_print_stack, logger)
 
     return logger
