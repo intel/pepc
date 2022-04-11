@@ -46,7 +46,7 @@ import threading
 from pathlib import Path
 import contextlib
 import paramiko
-from pepclibs.helperlibs import _ProcessManagerBase, WrapExceptions, Trivial
+from pepclibs.helperlibs import _ProcessManagerBase, ClassHelpers, Trivial
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
@@ -813,8 +813,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             fobj.write = types.MethodType(_write_, fobj)
 
         # Make sure methods of 'fobj' always raise the 'Error' exception.
-        fobj = WrapExceptions.WrapExceptions(fobj, exceptions=_PARAMIKO_EXCEPTIONS,
-                                             get_err_prefix=get_err_prefix)
+        fobj = ClassHelpers.WrapExceptions(fobj, exceptions=_PARAMIKO_EXCEPTIONS,
+                                           get_err_prefix=get_err_prefix)
         return fobj
 
     def _cfg_lookup(self, optname, hostname, username, cfgfiles=None):

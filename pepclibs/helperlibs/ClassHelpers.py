@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides capabilities of redefining exceptions in existing classes.
+Miscellaneous common helpers for class objects.
 """
 
 import types

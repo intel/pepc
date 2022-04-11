@@ -20,7 +20,7 @@ import logging
 import threading
 import contextlib
 from collections import namedtuple
-from pepclibs.helperlibs import Human, Trivial, WrapExceptions
+from pepclibs.helperlibs import Human, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
@@ -392,8 +392,8 @@ class ProcessBase:
         self._queue = None
 
         if self.stdin:
-            self.stdin = WrapExceptions.WrapExceptions(self.stdin, exceptions=(Exception,),
-                                                       get_err_prefix=_get_err_prefix)
+            self.stdin = ClassHelpers.WrapExceptions(self.stdin, exceptions=(Exception,),
+                                                     get_err_prefix=_get_err_prefix)
     def close(self):
         """Free allocated resources."""
 

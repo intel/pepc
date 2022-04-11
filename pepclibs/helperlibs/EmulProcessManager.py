@@ -14,7 +14,7 @@ import io
 import types
 import logging
 import contextlib
-from pepclibs.helperlibs import _ProcessManagerBase, FSHelpers, Trivial, WrapExceptions, YAML
+from pepclibs.helperlibs import _ProcessManagerBase, FSHelpers, Trivial, ClassHelpers, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
@@ -125,8 +125,8 @@ class EmulProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"{errmsg}{err}") from None
 
         # Make sure methods of 'fobj' always raise the 'Error' exceptions.
-        fobj = WrapExceptions.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
-                                             get_err_prefix=_get_err_prefix)
+        fobj = ClassHelpers.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
+                                           get_err_prefix=_get_err_prefix)
         self._ofiles[path] = fobj
         return fobj
 

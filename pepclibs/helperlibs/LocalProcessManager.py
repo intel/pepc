@@ -18,7 +18,7 @@ import shlex
 import errno
 import logging
 import subprocess
-from pepclibs.helperlibs import _ProcessManagerBase, WrapExceptions
+from pepclibs.helperlibs import _ProcessManagerBase, ClassHelpers
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied, ErrorNotFound
 
@@ -333,8 +333,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"{errmsg}{err}") from None
 
         # Make sure methods of 'fobj' always raise the 'Error' exceptions.
-        return WrapExceptions.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
-                                             get_err_prefix=_get_err_prefix)
+        return ClassHelpers.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
+                                           get_err_prefix=_get_err_prefix)
 
     def __init__(self):
         """Initialize a class instance."""
