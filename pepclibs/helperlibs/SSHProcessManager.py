@@ -976,15 +976,3 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 self._intsh.send("exit\n")
 
         ClassHelpers.close(self, close_attrs=("_sftp", "_intsh", "ssh",))
-
-    def __new__(cls, *_, **kwargs):
-        """
-        This method makes sure that when users creates an 'SSHProcessManager' object with
-        'hostname == None', we create an instance of 'LocalProcessManager' class instead of an
-        instance of 'SSHProcessManager' class.
-        """
-
-        if "hostname" not in kwargs or kwargs["hostname"] is None:
-            from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
-            return LocalProcessManager.LocalProcessManager()
-        return super().__new__(cls)
