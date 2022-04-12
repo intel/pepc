@@ -411,8 +411,8 @@ class ProcessBase:
         with contextlib.suppress(Exception):
             self._dbg("__del__()")
 
-        with contextlib.suppress(Exception):
-            self.close()
+        if hasattr(self, "_threads_exit"):
+            self._threads_exit = True
 
     def __enter__(self):
         """Enter the runtime context."""
