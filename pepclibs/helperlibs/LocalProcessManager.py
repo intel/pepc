@@ -123,24 +123,6 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
 
         return self._get_lines_to_return(lines)
 
-    def _cmd_failed_msg(self, stdout, stderr, exitcode, startmsg=None, timeout=None):
-        """
-        A wrapper over '_ProcessManagerBase.cmd_failed_msg()'. The optional 'timeout' argument
-        specifies the timeout that was used for the command.
-        """
-
-        if timeout is None:
-            timeout = self.timeout
-
-        cmd = self.cmd
-        if _LOG.getEffectiveLevel() == logging.DEBUG:
-            if self.cmd != self.real_cmd:
-                cmd += f"\nReal command: {self.real_cmd}"
-
-        return _ProcessManagerBase.cmd_failed_msg(cmd, stdout, stderr, exitcode,
-                                                  hostname=self.hostname, startmsg=startmsg,
-                                                  timeout=timeout)
-
     def poll(self):
         """
         Check if the process is still running. If it is, return 'None', else return exit status.
@@ -260,7 +242,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                            timeout=timeout, join=join)
 
         if result.exitcode is None:
-            msg = _ProcessManagerBase.cmd_failed_msg(command, *tuple(result), timeout=timeout)
+            msg = self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout)
             raise ErrorTimeOut(msg)
 
         if output_fobjs[0]:
@@ -285,7 +267,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
-        raise Error(_ProcessManagerBase.cmd_failed_msg(command, *tuple(result), timeout=timeout))
+        raise Error(self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout))
 
     def rsync(self, src, dst, opts="rlpD", remotesrc=False, remotedst=False):
         """
@@ -307,13 +289,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             self.run_verify(cmd)
         except Error as err:
             raise Error("failed to copy files '%s' to '%s':\n%s" % (src, dst, err)) from err
-
-    def cmd_failed_msg(self, command, stdout, stderr, exitcode, startmsg=None, timeout=None):
-        """A simple wrapper around '_ProcessManagerBase.cmd_failed_msg()'."""
-
-        return _ProcessManagerBase.cmd_failed_msg(command, stdout, stderr, exitcode,
-                                                  hostname=self.hostname, startmsg=startmsg,
-                                                  timeout=timeout)
 
     @staticmethod
     def open(path, mode):

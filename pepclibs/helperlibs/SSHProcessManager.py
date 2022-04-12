@@ -307,24 +307,6 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         return func(timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
                     lines=lines)
 
-    def cmd_failed_msg(self, stdout, stderr, exitcode, startmsg=None, timeout=None):
-        """
-        A wrapper over '_ProcessManagerBase.cmd_failed_msg()'. The optional 'timeout' argument
-        specifies the timeout that was used for the command.
-        """
-
-        if timeout is None:
-            timeout = self.timeout
-
-        cmd = self.cmd
-        if _LOG.getEffectiveLevel() == logging.DEBUG:
-            if self.cmd != self.real_cmd:
-                cmd += f"\nReal command: {self.real_cmd}"
-
-        return _ProcessManagerBase.cmd_failed_msg(cmd, stdout, stderr, exitcode,
-                                                  hostname=self.hostname, startmsg=startmsg,
-                                                  timeout=timeout)
-
     def poll(self):
         """
         Check if the process is still running. If it is, return 'None', else return exit status.
@@ -628,7 +610,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                            output_fobjs=output_fobjs, join=join)
 
         if result.exitcode is None:
-            msg = self.cmd_failed_msg(command, *tuple(result), timeout=timeout)
+            msg = self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout)
             raise ErrorTimeOut(msg)
 
         if output_fobjs[0]:
@@ -651,7 +633,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
-        msg = self.cmd_failed_msg(command, *tuple(result), timeout=timeout)
+        msg = self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout)
         raise Error(msg)
 
     def get_ssh_opts(self):
@@ -723,13 +705,6 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """
 
         self._scp(f"\"{local_path}\"", f"{self.hostname}:'\"{remote_path}\"'")
-
-    def cmd_failed_msg(self, command, stdout, stderr, exitcode, startmsg=None, timeout=None):
-        """A simple wrapper around '_ProcessManagerBase.cmd_failed_msg()'."""
-
-        return _ProcessManagerBase.cmd_failed_msg(command, stdout, stderr, exitcode,
-                                                  hostname=self.hostname, startmsg=startmsg,
-                                                  timeout=timeout)
 
     def _get_sftp(self):
         """Get an SFTP server object."""

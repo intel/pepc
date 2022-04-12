@@ -316,6 +316,23 @@ class ProcessBase:
         # pylint: disable=no-self-use
         return _bug_method_not_defined("ProcessBase.poll")
 
+    def get_cmd_failure_msg(self, stdout, stderr, exitcode, timeout=None, startmsg=None):
+        """
+        Format and return the command failure message. The arguments are the same as in
+        'ProcessManagerBase.get_cmd_failure_msg()'.
+        """
+
+        if timeout is None:
+            timeout = self.timeout
+
+        cmd = self.cmd
+        if _LOG.getEffectiveLevel() == logging.DEBUG:
+            if self.cmd != self.real_cmd:
+                cmd += f"\nReal command: {self.real_cmd}"
+
+        return self.pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode, timeout=timeout,
+                                             startmsg=startmsg)
+
     def _reinit(self, cmd, real_cmd, shell):
         """
         Re-initialize this object in case the process it is associated with is re-used for running a
@@ -528,6 +545,50 @@ class ProcessManagerBase:
         # pylint: disable=unused-argument,no-self-use
         return _bug_method_not_defined("ProcessManagerBase.rsync")
 
+    def get_cmd_failure_msg(self, cmd, stdout, stderr, exitcode, timeout=None, startmsg=None):
+        """
+        Format and return the command failure message. The arguments are as follows.
+            * cmd - the failed command.
+            * stdout - standard output of the failed command.
+            * stderr - standard error of the failed command.
+            * exitcode - exit code of the failed command.
+            * timeout - command time out.
+            * startmsg - a string to start the error message with.
+        """
+
+        if timeout is None:
+            timeout = TIMEOUT
+
+        if exitcode is None:
+            human_tout = Human.duration(timeout)
+            exitcode_msg = f"did not finish within {timeout} seconds ({human_tout})"
+        else:
+            exitcode_msg = f"failed with exit code {exitcode}"
+
+        msg = ""
+        for stream in (stdout, stderr):
+            if not stream:
+                continue
+            if isinstance(stream, list):
+                stream = "".join(stream)
+            msg += "%s\n" % stream.strip()
+
+        if not startmsg:
+            startmsg = ""
+        else:
+            startmsg += ".\n"
+
+        if self.is_remote:
+            startmsg += f"ran the following command on host '{self.hostname}', but it " \
+                        f"{exitcode_msg}:"
+        else:
+            startmsg += "the following command {exitcode_msg}:"
+
+        result = f"{startmsg}\n{cmd}"
+        if msg:
+            result += "\n\n%s" % msg.strip()
+        return result
+
     def _cmd_start_failure(self, cmd, err, intsh=False):
         """
         Form and return the exception object for a situation when command 'cmd' has failed to start.
@@ -561,49 +622,3 @@ class ProcessManagerBase:
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit the runtime context."""
         self.close()
-
-def cmd_failed_msg(command, stdout, stderr, exitcode, hostname=None, startmsg=None, timeout=None):
-    """
-    This helper function formats an error message for a failed command 'command'. The 'stdout' and
-    'stderr' arguments are what the command printed to the standard output and error streams, and
-    'exitcode' is the exit status of the failed command. The 'hostname' parameter is ignored. The
-    'startmsg' parameter can be used to specify the start of the error message. The 'timeout'
-    argument specifies the command timeout.
-    """
-
-    if not isinstance(command, str):
-        # Sometimes commands are represented by a list of command components - join it.
-        command = " ".join(command)
-
-    if timeout is None:
-        timeout = TIMEOUT
-    elif timeout == -1:
-        timeout = None
-
-    if exitcode is not None:
-        exitcode_msg = "failed with exit code %s" % exitcode
-    elif timeout is not None:
-        exitcode_msg = "did not finish within %s seconds (%s)" \
-                       % (timeout, Human.duration(timeout))
-    else:
-        exitcode_msg = "failed, but no exit code is available, this is a bug!"
-
-    msg = ""
-    for stream in (stdout, stderr):
-        if not stream:
-            continue
-        if isinstance(stream, list):
-            stream = "".join(stream)
-        msg += "%s\n" % stream.strip()
-
-    if not startmsg:
-        if hostname:
-            startmsg = "ran the following command on host '%s', but it %s" \
-                        % (hostname, exitcode_msg)
-        else:
-            startmsg = "the following command %s:" % exitcode_msg
-
-    result = "%s\n%s" % (startmsg, command)
-    if msg:
-        result += "\n\n%s" % msg.strip()
-    return result

@@ -286,7 +286,7 @@ def shell_test(path, opt, pman=None):
             stdout, stderr, exitcode = wpman.run(cmd, shell=True)
 
         if stdout or stderr or exitcode not in (0, 1):
-            raise Error(wpman.cmd_failed_msg(cmd, stdout, stderr, exitcode))
+            raise Error(wpman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
 
     return exitcode == 0
 
@@ -444,10 +444,10 @@ def which(program, default=_RAISE, pman=None):
         # The 'which' tool exits with status 1 when the program is not found. Any other error code
         # is an real failure that we always want to report.
         if exitcode != 1:
-            raise Error(pman.cmd_failed_msg(cmd, stdout, stderr, exitcode))
+            raise Error(pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
 
         if default is _RAISE:
-            raise ErrorNotFound(pman.cmd_failed_msg(cmd, stdout, stderr, exitcode))
+            raise ErrorNotFound(pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
         return default
 
     program = Path(program)
