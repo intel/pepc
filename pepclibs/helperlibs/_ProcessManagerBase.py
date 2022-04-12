@@ -53,6 +53,15 @@ def extract_full_lines(text, join=False):
         full = "".join(full)
     return (full, partial)
 
+def have_enough_lines(output, lines=(None, None)):
+    """Returns 'True' if there are enough lines in the output buffer."""
+
+    for streamid in (0, 1):
+        if lines[streamid] and len(output[streamid]) >= lines[streamid]:
+            return True
+    return False
+
+
 def _bug_method_not_defined(method_name):
     """
     Raise an error if the child class did not define the 'method_name' mandatory method.

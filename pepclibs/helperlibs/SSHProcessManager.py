@@ -59,18 +59,6 @@ logging.getLogger("paramiko").setLevel(logging.WARNING)
 # The exceptions to handle when dealing with paramiko.
 _PARAMIKO_EXCEPTIONS = (OSError, IOError, paramiko.SSHException, socket.error)
 
-def _have_enough_lines(output, lines=(None, None)):
-    """Returns 'True' if there are enough lines in the output buffer."""
-
-    for streamid in (0, 1):
-        if lines[streamid] and len(output[streamid]) >= lines[streamid]:
-            return True
-    return False
-
-def _get_err_prefix(fobj, method):
-    """Return the error message prefix."""
-    return f"method '{method}()' failed for {fobj._stream_name_}"
-
 class SSHProcess(_ProcessManagerBase.ProcessBase):
     """
     This class represents a remote process that was executed by 'SSHProcessManager'.
@@ -207,7 +195,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         self._dbg("_wait_intsh: starting with self._check_ll %s, self._ll: %s, partial: %s, output:"
                   "\n%s", str(self._check_ll), str(self._ll), self._partial, str(self._output))
 
-        while not _have_enough_lines(self._output, lines=lines):
+        while not _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None and self._queue.empty():
                 self._dbg("_wait_intsh: process exited with status %d", self.exitcode)
                 break
@@ -260,7 +248,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         self._dbg("_wait_nointsh: starting with partial: %s, output:\n%s",
                   self._partial, str(self._output))
 
-        while not _have_enough_lines(self._output, lines=lines):
+        while not _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None:
                 self._dbg("_wait_nointsh: process exited with status %d", self.exitcode)
                 break

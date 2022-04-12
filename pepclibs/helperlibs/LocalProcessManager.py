@@ -27,18 +27,6 @@ _LOG = logging.getLogger()
 # The exceptions to handle when dealing with file I/O.
 _EXCEPTIONS = (OSError, IOError, BrokenPipeError)
 
-def _have_enough_lines(output, lines=(None, None)):
-    """Returns 'True' if there are enough lines in the output buffer."""
-
-    for streamid in (0, 1):
-        if lines[streamid] and len(output[streamid]) >= lines[streamid]:
-            return True
-    return False
-
-def _get_err_prefix(fobj, method):
-    """Return the error message prefix."""
-    return "method '%s()' failed for %s" % (method, fobj.name)
-
 class LocalProcess(_ProcessManagerBase.ProcessBase):
     """
     This class represents a process that was executed by 'LocalProcessManager'.
@@ -91,7 +79,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
 
         self._dbg("_wait: starting with partial: %s, output:\n%s", self._partial, str(self._output))
 
-        while not _have_enough_lines(self._output, lines=lines):
+        while not _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None:
                 self._dbg("_wait: process exited with status %d", self.exitcode)
                 break
@@ -297,6 +285,10 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         'open()' function).
         """
 
+        def get_err_prefix(fobj, method):
+            """Return the error message prefix."""
+            return "method '%s()' failed for %s" % (method, fobj.name)
+
         errmsg = f"cannot open file '{path}' with mode '{mode}': "
         try:
             fobj = open(path, mode) # pylint: disable=consider-using-with
@@ -309,7 +301,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         # Make sure methods of 'fobj' always raise the 'Error' exceptions.
         return ClassHelpers.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
-                                           get_err_prefix=_get_err_prefix)
+                                           get_err_prefix=get_err_prefix)
 
     def __init__(self):
         """Initialize a class instance."""
