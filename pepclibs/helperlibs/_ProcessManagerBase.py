@@ -591,7 +591,7 @@ class ProcessManagerBase:
             startmsg += f"ran the following command on host '{self.hostname}', but it " \
                         f"{exitcode_msg}:"
         else:
-            startmsg += "the following command {exitcode_msg}:"
+            startmsg += f"the following command {exitcode_msg}:"
 
         result = f"{startmsg}\n{cmd}"
         if msg:
