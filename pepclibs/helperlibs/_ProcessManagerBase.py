@@ -21,7 +21,7 @@ import threading
 import contextlib
 from collections import namedtuple
 from pepclibs.helperlibs import Human, Trivial, ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 _LOG = logging.getLogger()
 
@@ -281,6 +281,11 @@ class ProcessBase:
 
         output = self._wait(timeout=timeout, capture_output=capture_output,
                             output_fobjs=output_fobjs, lines=lines)
+
+        if self.exitcode == 127 and self._lines_cnt[0] == 0 and self._lines_cnt[1] == 1:
+            # Exit code 127 is a typical shell exit code for the "command not found" case. We expect
+            # a single output line in stderr in this case.
+            raise self.pman._command_not_found(self.cmd, output[1][0])
 
         stdout = stderr = ""
         if output[0]:
@@ -554,6 +559,33 @@ class ProcessManagerBase:
 
         # pylint: disable=unused-argument,no-self-use
         return _bug_method_not_defined("ProcessManagerBase.rsync")
+
+    def _command_not_found(self, cmd, errmsg):
+        """
+        This method is called when command 'cmd' could not be executed be it was not found. This
+        method formats a helpful error message and returns an exception object.
+        """
+
+        from pepclibs.helperlibs import ToolChecker # pylint: disable=import-outside-toplevel
+
+        # Get the tool (program) name.
+        tool = cmd.split()[0].split("/")[-1]
+        pkgname = None
+
+        try:
+            # Try to resolve tool name to the OS package name.
+            with ToolChecker.ToolChecker(pman=self) as tchk:
+                pkgname = tchk.tool_to_pkg(tool)
+        except Exception as err: # pylint: disable=broad-except
+            _LOG.debug("failed to format the command package suggestion: %s", err)
+
+        if pkgname:
+            what = f"'{pkgname}' OS package"
+        else:
+            what = f"'{tool}' program"
+
+        return ErrorNotFound(f"cannot execute the following command{self.hostmsg}:\n{cmd}\n"
+                             f"The error is: {errmsg}\nTry to install the {what}{self.hostmsg}.")
 
     def get_cmd_failure_msg(self, cmd, stdout, stderr, exitcode, timeout=None, startmsg=None):
         """

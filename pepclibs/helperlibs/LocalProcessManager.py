@@ -162,6 +162,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
                                     cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
+        except FileNotFoundError as err:
+            raise self._command_not_found(command, str(err))
         except OSError as err:
             raise Error(f"cannot execute the following command{self.hostmsg}:\n{command}\n"
                         f"The error is: {err}") from err
