@@ -60,9 +60,30 @@ CPUInfoData = {
          "separator1": ":",
          "separator2": "|",
          "dirname":   "msr",
-         "filename":  "msr.txt"}}
+         "filename":  "msr.txt"}
+    }
 
-MODULE_TESTDATA = {"CPUInfo" : CPUInfoData}
+ASPMData = {
+    "inlinefiles" : [
+        {"command": r"find /sys/module/pcie_aspm/parameters/policy -type f -exec printf '%s' {}: " \
+                    r"\; -exec grep . {} \;",
+         "separator": ":",
+         "readonly":  False,
+         "dirname":   "aspm-info",
+         "filename":  "aspm.txt"}]
+    }
+
+CPUOnlineData = {
+    "inlinefiles" : [
+        {"command" : r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
+                     r"'.*cpu([[:digit:]]+)/online' -exec printf '%s' {}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly":  False,
+         "dirname":   "cpuonline-info",
+         "filename":  "cpuonline.txt"}]
+    }
+
+MODULE_TESTDATA = {"CPUInfo" : CPUInfoData, "ASPM" : ASPMData, "CPUOnline" : CPUOnlineData}
 
 def build_arguments_parser():
     """A helper function which parses the input arguments."""
@@ -188,18 +209,21 @@ def main():
             for modname, testdata in MODULE_TESTDATA.items():
                 datapath = outdir / modname
 
-                for cmdinfo in testdata["commands"]:
-                    collect_cmd_output(cmdinfo, pman, datapath)
-                    cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
+                if "commands" in testdata:
+                    for cmdinfo in testdata["commands"]:
+                        collect_cmd_output(cmdinfo, pman, datapath)
+                        cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
 
-                for cmdinfo in testdata["inlinefiles"]:
-                    collect_files(cmdinfo, pman, datapath)
-                    cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
-                    # We do not need command used to collect file contents, remove it.
-                    del cmdinfo["command"]
+                if "inlinefiles" in testdata:
+                    for cmdinfo in testdata["inlinefiles"]:
+                        collect_files(cmdinfo, pman, datapath)
+                        cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
+                        # We do not need command used to collect file contents, remove it.
+                        del cmdinfo["command"]
 
-                collect_msrs(testdata["msrs"], pman, datapath)
-                testdata["msrs"]["dirname"] = f"{modname}/{testdata['msrs']['dirname']}"
+                if "msrs" in testdata:
+                    collect_msrs(testdata["msrs"], pman, datapath)
+                    testdata["msrs"]["dirname"] = f"{modname}/{testdata['msrs']['dirname']}"
 
                 generate_config_file(modname, testdata, outdir)
 
