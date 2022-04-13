@@ -371,6 +371,8 @@ class FeaturedMSR:
           * self.regname = the featured MSR name.
         """
 
+        raise Error("BUG: sub-class did not define the '_set_baseclass_attributes()' method")
+
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
         The class constructor. The argument are as follows.
