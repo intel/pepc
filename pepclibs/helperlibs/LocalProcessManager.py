@@ -163,7 +163,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
                                     cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
         except OSError as err:
-            raise self._cmd_start_failure(cmd, err) from err
+            raise self._cmd_start_failure(command, err) from err
 
         streams = (pobj.stdin, pobj.stdout, pobj.stderr)
         proc = LocalProcess(self, pobj, command, real_cmd, shell, streams)
