@@ -369,8 +369,12 @@ class FeaturedMSR:
           * self._features - the private features dictionary.
           * self.regaddr - the featured MSR address.
           * self.regname = the featured MSR name.
+
+        Note: this base class will create a copy of the 'self._features' dictionary povided by the
+        sub-class, and then will mangle it (e.g., add the "supported" flag).
         """
 
+        # pylint: disable=unused-argument,no-self-use
         raise Error("BUG: sub-class did not define the '_set_baseclass_attributes()' method")
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
@@ -397,6 +401,7 @@ class FeaturedMSR:
         self.regname = None
 
         self._set_baseclass_attributes()
+        self._features = copy.deepcopy(self._features)
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
