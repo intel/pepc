@@ -149,6 +149,8 @@ class ProcessBase:
             self._dbg("_handle_queue_item: stream %d: full lines:\n%s\npartial line: %s",
                       streamid, "".join(data), self._partial[streamid])
 
+        self._lines_cnt[streamid] += len(data)
+
         for line in data:
             if not line:
                 continue
@@ -395,6 +397,8 @@ class ProcessBase:
         self.exitcode = None
         # The stdout and stderr streams.
         self._streams = [streams[1], streams[2]]
+        # Count of lines the process printed to stdout and stderr.
+        self._lines_cnt = [0, 0]
 
         # Print debugging messages if 'True'.
         self.debug = False

@@ -325,6 +325,9 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         pid = stdout[0].strip()
 
+        # The 'PID' line does not belong to the process, so decrement the lines counter.
+        self._lines_cnt[0] -= 1
+
         if len(pid) > 128:
             raise Error(f"received too long and probably bogus PID: {pid}{msg}")
         if not Trivial.is_int(pid):
