@@ -429,7 +429,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             chan.exec_command(cmd)
         except _PARAMIKO_EXCEPTIONS as err:
-            raise self._cmd_start_failure(cmd, err) from err
+            raise Error(f"cannot execute the following command in a new SSH session"
+                        f"{self.hostmsg}:\n{cmd}\nThe error is: {err}") from err
 
         try:
             stdin = chan.makefile_stdin("wb", 0)
