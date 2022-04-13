@@ -35,11 +35,10 @@ def _get_err_prefix(fobj, method):
     """Return the error message prefix for a wrapped file-like object 'fobj'."""
     return f"method '{method}()' failed for stream '{fobj.name}'"
 
-def extract_full_lines(text, join=False):
+def extract_full_lines(text):
     """
     Extract full lines from string 'text'. Return a tuple containing 2 elements - the full lines and
-    the last partial line. If 'join' is 'False', the full lines are returned as a list of lines,
-    otherwise they are returned as a single string.
+    the last partial line.
     """
 
     full, partial = [], ""
@@ -49,8 +48,6 @@ def extract_full_lines(text, join=False):
             break
         full.append(line_match.group(1))
 
-    if join:
-        full = "".join(full)
     return (full, partial)
 
 def have_enough_lines(output, lines=(None, None)):
