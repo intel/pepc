@@ -14,7 +14,6 @@ This module includes the "cstates" 'pepc' command implementation.
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import ToolChecker
 from pepclibs.msr import MSR
 from pepclibs import CStates, CPUInfo
 from pepctool import _PepcCommon
@@ -136,25 +135,24 @@ def cstates_config_command(args, pman):
         else:
             set_opts[optname] = optval
 
-    with ToolChecker.ToolChecker(pman=pman) as tchk:
-        if enable_opts or set_opts:
-            _PepcCommon.check_tuned_presence(pman, tchk=tchk)
+    if enable_opts or set_opts:
+        _PepcCommon.check_tuned_presence(pman)
 
-        with CPUInfo.CPUInfo(pman=pman, tchk=tchk) as cpuinfo, \
-             CStates.ReqCStates(pman=pman, cpuinfo=cpuinfo, tchk=tchk) as rcsobj:
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CStates.ReqCStates(pman=pman, cpuinfo=cpuinfo) as rcsobj:
 
-            cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
+        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-            _handle_enable_disable_opts(enable_opts, cpus, cpuinfo, rcsobj)
+        _handle_enable_disable_opts(enable_opts, cpus, cpuinfo, rcsobj)
 
-            if not set_opts and not print_opts:
-                return
+        if not set_opts and not print_opts:
+            return
 
-            with MSR.MSR(pman=pman, cpuinfo=cpuinfo) as msr, \
-                CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
+        with MSR.MSR(pman=pman, cpuinfo=cpuinfo) as msr, \
+            CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
 
-                _handle_set_opts(set_opts, cpus, csobj, msr, cpuinfo)
-                _handle_print_opts(print_opts, cpus, csobj, cpuinfo)
+            _handle_set_opts(set_opts, cpus, csobj, msr, cpuinfo)
+            _handle_print_opts(print_opts, cpus, csobj, cpuinfo)
 
 def cstates_info_command(args, pman):
     """Implements the 'cstates info' command."""

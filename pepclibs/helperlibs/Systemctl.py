@@ -10,7 +10,7 @@
 This module provides python API to the systemctl tool.
 """
 
-from pepclibs.helperlibs import ToolChecker, LocalProcessManager, Trivial, ClassHelpers
+from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
 
 class Systemctl:
@@ -103,33 +103,24 @@ class Systemctl:
             self._start(self._saved_timers, True)
         self._saved_timers = None
 
-    def __init__(self, pman=None, tchk=None):
+    def __init__(self, pman=None):
         """
         The class constructor. The arguments are as follows.
           * pman - the process manager object that defines the target host.
-          * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
-                   the 'systemctl' tool is present on the target host.
        """
 
         self._pman = pman
-        self._tchk = tchk
-
         self._close_pman = pman is None
-        self._close_tchk = tchk is None
 
         self._saved_timers = None
         self._saved_ntp_services = None
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
-        if not self._tchk:
-            self._tchk = ToolChecker.ToolChecker(pman=self._pman)
-
-        self._tchk.check_tool("systemctl")
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_tchk", "_pman",))
+        ClassHelpers.close(self, close_attrs=("_pman",))
 
     def __enter__(self):
         """Enter the runtime context."""

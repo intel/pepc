@@ -16,7 +16,7 @@ import itertools
 import difflib
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import LocalProcessManager, ToolChecker, ClassHelpers
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
 
 _LOG = logging.getLogger()
 
@@ -90,32 +90,23 @@ class Dmesg:
             return [line.strip() for line in new_lines]
         return new_lines
 
-    def __init__(self, pman=None, tchk=None):
+    def __init__(self, pman=None):
         """
         The class constructor. The arguments are as follows.
           * pman - the process manager object that defines the host to run 'dmesg' on.
-          * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
-                   the required tools like 'dmesg' are present on the target host.
         """
 
         self._pman = pman
-        self._tchk = tchk
-
         self._close_pman = pman is None
-        self._close_tchk = tchk is None
 
         self.captured = []
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
-        if not self._tchk:
-            self._tchk = ToolChecker.ToolChecker(pman=self._pman)
-
-        self._tchk.check_tool("dmesg")
 
     def close(self):
         """Stop the measurements."""
-        ClassHelpers.close(self, close_attrs=("_tchk", "_pman",))
+        ClassHelpers.close(self, close_attrs=("_pman",))
 
     def __enter__(self):
         """Enter the run-time context."""

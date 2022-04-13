@@ -14,7 +14,6 @@ import re
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, FSHelpers, ClassHelpers
-from pepclibs.helperlibs import ToolChecker
 
 # CPU model numbers.
 #
@@ -931,19 +930,14 @@ class CPUInfo:
 
         return cpuinfo
 
-    def __init__(self, pman=None, tchk=None):
+    def __init__(self, pman=None):
         """
         The class constructor. The arguments are as follows.
           * pman - the process manager object that defines the target host.
-          * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
-                   the required tools like 'lscpu' are present on the target host.
         """
 
         self._pman = pman
-        self._tchk = tchk
-
         self._close_pman = pman is None
-        self._close_tchk = tchk is None
 
         # The topology dictionary. See '_get_topology()' for more information.
         self._topology = {}
@@ -968,10 +962,6 @@ class CPUInfo:
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
-        if not self._tchk:
-            self._tchk = ToolChecker.ToolChecker(pman=self._pman)
-
-        self._tchk.check_tool("lscpu")
 
         self.info = self._get_cpu_info()
 
@@ -984,7 +974,7 @@ class CPUInfo:
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_tchk", "_pman",))
+        ClassHelpers.close(self, close_attrs=("_pman",))
 
     def __enter__(self):
         """Enter the runtime context."""

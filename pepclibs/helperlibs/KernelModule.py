@@ -12,7 +12,7 @@ This module provides API for loading and unloading Linux kernel modules (drivers
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import LocalProcessManager, Dmesg, ToolChecker, ClassHelpers
+from pepclibs.helperlibs import LocalProcessManager, Dmesg, ClassHelpers
 
 _LOG = logging.getLogger()
 
@@ -100,15 +100,13 @@ class KernelModule:
             opts += " dyndbg=+pf"
         self._run_mod_cmd(f"modprobe {self.name} {opts}")
 
-    def __init__(self, name, pman=None, dmesg=None, tchk=None):
+    def __init__(self, name, pman=None, dmesg=None):
         """
         The class constructor. The arguments are as follows.
           * name - kernel module name.
           * pman - the process manager object that defines the target host.
           * dmesg - 'True' to enable 'dmesg' output checks (default), 'False' to disable them. Can
                     also be a 'Dmesg' object.
-          * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
-                   the required tools like 'modprobe' are present on the target host.
 
         By default, objects of this class capture 'dmesg' output on the host defined by 'pman'. The
         first 'dmesg' snapshot is taken before loading/unloading the driver. The second snapsot is
@@ -127,11 +125,9 @@ class KernelModule:
         self._pman = pman
         self.name = name
         self._dmesg_obj = None
-        self._tchk = tchk
 
         self._close_pman = pman is None
         self._close_dmesg_obj = False
-        self._close_tchk = tchk is None
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
@@ -140,15 +136,10 @@ class KernelModule:
         elif dmesg:
             self._dmesg_obj = Dmesg.Dmesg(pman=self._pman)
             self._close_dmesg = True
-        if not self._tchk:
-            self._tchk = ToolChecker.ToolChecker(pman=self._pman)
-
-        self._tchk.check_tool("modprobe")
-        self._tchk.check_tool("rmmod")
 
     def close(self):
         """Stop the measurements."""
-        ClassHelpers.close(self, close_attrs=("_tchk", "_dmesg_obj", "_pman",))
+        ClassHelpers.close(self, close_attrs=("_dmesg_obj", "_pman",))
 
     def __enter__(self):
         """Enter the run-time context."""

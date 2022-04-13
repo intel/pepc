@@ -18,10 +18,10 @@ from pepclibs.helperlibs import Systemctl, Trivial, Human
 
 _LOG = logging.getLogger()
 
-def check_tuned_presence(pman, tchk=None):
+def check_tuned_presence(pman):
     """Check if the 'tuned' service is active, and if it is, print a warning message."""
 
-    with Systemctl.Systemctl(pman=pman, tchk=tchk) as systemctl:
+    with Systemctl.Systemctl(pman=pman) as systemctl:
         if systemctl.is_active("tuned"):
             _LOG.warning("the 'tuned' service is active%s! It may override the changes made by "
                          "'pepc'.\nConsider having 'tuned' disabled while experimenting with power "
