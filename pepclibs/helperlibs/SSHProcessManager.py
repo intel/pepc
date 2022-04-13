@@ -318,7 +318,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         if len(stdout) != 1:
             raise Error(f"expected only one line with PID in stdout, got {len(stdout)} lines "
-                        "instead.{msg}")
+                        f"instead.{msg}")
         if stderr:
             raise Error(f"expected only one line with PID in stdout and no lines in stderr, got "
                         f"{len(stderr)} lines in stderr instead.{msg}")
