@@ -11,10 +11,16 @@
 """Common bits for the 'pepc' tests."""
 
 import os
+import sys
+import logging
 from pathlib import Path
 import pytest
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import ProcessManager
+from pepctool import _Pepc
+
+logging.basicConfig(level=logging.DEBUG)
+_LOG = logging.getLogger()
 
 def get_pman(hostname, dataset, modules=None):
     """
@@ -78,3 +84,29 @@ def get_params(hostname, request):
     dataset = request.param
     with get_pman(hostname, dataset) as pman:
         yield build_params(hostname, dataset, pman)
+
+def run_pepc(arguments, pman, exp_exc=None):
+    """
+    Run the 'pepc' command with arguments 'arguments' and with process manager 'pman'. The 'exp_exc'
+    is expected exception type. By default, any exception is considered to be a failure.
+    """
+
+    cmd = f"{_Pepc.__file__} {arguments}"
+    _LOG.debug("running: %s", cmd)
+    sys.argv = cmd.split()
+    args = _Pepc.parse_arguments()
+    try:
+        ret = args.func(args, pman)
+    except Exception as err: # pylint: disable=broad-except
+        if exp_exc is None:
+            assert False, f"command '{cmd}' raised the following exception:\n\t" \
+                          f"type: {type(err)}\n\tmessage: {err}"
+
+        if isinstance(err, exp_exc):
+            return None
+
+        assert False, f"command '{cmd}' raised the following exception:\n\t" \
+                      f"type: {type(err)}\n\tmessage: {err}\n" \
+                      f"but it was expected to raise the following exception type: {type(exp_exc)}"
+
+    return ret
