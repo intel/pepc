@@ -28,7 +28,7 @@ _SAFE_TO_SET_FEATURES = ("epb", "epp", "pkg_control", "epp", "c1e_autopromote", 
 def get_bad_cpu_nums(params):
     """Yield CPU numbers which should not be accepted by any method."""
 
-    for cpu in (params["allcpus"][-1] + 1, -1, "ALL", "a"):
+    for cpu in (params["cpus"][-1] + 1, -1, "ALL", "a"):
         yield cpu
 
 def is_safe_to_set(name, hostname):

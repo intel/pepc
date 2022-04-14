@@ -137,7 +137,7 @@ def _test_msr_read_feature_good(params):
             for cpu, val in msr.read_feature(name):
                 _check_feature_val(val, name, msr)
                 allcpus.append(cpu)
-            assert allcpus == params["allcpus"]
+            assert allcpus == params["cpus"]
 
 def _test_msr_read_feature_bad(params):
     """Test 'read_feature()' method for bad option values."""
@@ -260,7 +260,7 @@ def _test_msr_is_feature_enabled_good(params):
                 for cpu, enabled in msr.is_feature_enabled(name):
                     assert enable == enabled
                     allcpus.append(cpu)
-                assert allcpus == params["allcpus"]
+                assert allcpus == params["cpus"]
 
 def _test_msr_is_feature_enabled_bad(params):
     """Test 'is_feature_enabled()' method for bad option values."""
@@ -273,12 +273,12 @@ def _test_msr_is_feature_enabled_bad(params):
                         assert cpu in params["testcpus"]
                 with pytest.raises(Error):
                     for cpu, _ in msr.is_feature_enabled(name):
-                        assert cpu in params["allcpus"]
+                        assert cpu in params["cpus"]
 
         for name in _get_bad_feature_names():
             with pytest.raises(Error):
                 for cpu, _ in msr.is_feature_enabled(name):
-                    assert cpu in params["allcpus"]
+                    assert cpu in params["cpus"]
 
 def test_msr_is_feature_enabled(params):
     """Test 'is_feature_enabled()' method."""

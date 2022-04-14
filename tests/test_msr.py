@@ -59,7 +59,7 @@ def _bits_to_mask(allbits):
 def _get_good_msr_cpu_nums(params):
     """Yield good CPU numbers."""
 
-    allcpus = params["allcpus"]
+    allcpus = params["cpus"]
     medidx = int(len(allcpus)/2)
     for cpu in (allcpus[0], allcpus[medidx], allcpus[-1]):
         yield cpu
@@ -75,7 +75,7 @@ def _test_msr_read_good(params):
             read_cpus = []
             for cpu, _ in msr.read(tp["addr"]):
                 read_cpus.append(cpu)
-            assert read_cpus == params["allcpus"]
+            assert read_cpus == params["cpus"]
 
 def _test_msr_read_bad(params):
     """Test 'read()' method for bad option values."""
@@ -109,7 +109,7 @@ def _test_msr_write_good(params):
 
             msr.write(tp["addr"], val)
             for cpu, newval in msr.read(tp["addr"]):
-                assert cpu in params["allcpus"]
+                assert cpu in params["cpus"]
                 assert val == newval
 
 def _test_msr_write_bad(params):
@@ -211,7 +211,7 @@ def _test_msr_read_bits_good(params):
             read_cpus = []
             for cpu, _ in msr.read_bits(tp["addr"], bits):
                 read_cpus.append(cpu)
-            assert read_cpus == params["allcpus"]
+            assert read_cpus == params["cpus"]
 
             # No need to test 'read_bits()' with default 'cpus' argument multiple times.
             break

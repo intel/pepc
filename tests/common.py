@@ -69,7 +69,11 @@ def build_params(hostname, dataset, pman):
         allcpus = cpuinfo.get_cpus()
         medidx = int(len(allcpus)/2)
         params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
-        params["allcpus"] = allcpus
+        params["cpus"] = allcpus
+        params["packages"] = cpuinfo.get_packages()
+        params["cores"] = {}
+        for pkg in params["packages"]:
+            params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
         params["cpumodel"] = cpuinfo.info["model"]
 
     return params
