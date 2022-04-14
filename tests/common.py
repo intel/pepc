@@ -16,9 +16,13 @@ import pytest
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import ProcessManager
 
-def get_pman(hostname, dataset):
+def get_pman(hostname, dataset, modules=None):
     """
-    Returns the process manager for host 'hostname' using the 'dataset' data for emulation.
+    Create and return process manager, the arguments are as follows.
+      * hostname - the hostn name to create a process manager object for.
+      * dataset - the name of the dataset used to emulate the real hardware.
+      * modules - the list of python module names to be initialized before testing. Refer to
+                  'EmulProcessManager.init_testdata()' for more information.
     """
 
     datapath = None
@@ -28,7 +32,16 @@ def get_pman(hostname, dataset):
     elif hostname != "localhost":
         username = "root"
 
-    return ProcessManager.get_pman(hostname, username=username, datapath=datapath)
+    pman = ProcessManager.get_pman(hostname, username=username, datapath=datapath)
+
+    if hostname == "emulation" and modules is not None:
+        if not isinstance(modules, list):
+            modules = [modules]
+
+        for module in modules:
+            pman.init_testdata(module, datapath)
+
+    return pman
 
 def get_datasets():
     """Find all directories in 'tests/data' directory and yield the directory name."""
