@@ -21,7 +21,7 @@ import threading
 import contextlib
 from collections import namedtuple
 from pepclibs.helperlibs import Human, Trivial, ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorExists
 
 _LOG = logging.getLogger()
 
@@ -639,6 +639,27 @@ class ProcessManagerBase:
 
         # pylint: disable=unused-argument,no-self-use
         return _bug_method_not_defined("ProcessManagerBase.open")
+
+    def mkdir(self, dirpath, parents=False, exist_ok=False):
+        """
+        Create a directory. The a arguments are as follows.
+          * dirpath - path to the directory to create.
+          * parents - if 'True', the parent directories are created as well.
+          * exist_ok - if the directory already exists, this method raises an exception if
+                       'exist_ok' is 'True', and it returns without an error if 'exist_ok' is
+                       'False'.
+        """
+
+        if self.shell_test(dirpath, "-e"):
+            if exist_ok:
+                return
+            raise ErrorExists(f"path '{dirpath}' already exists{self.hostmsg}")
+
+        cmd = "mkdir"
+        if parents:
+            cmd += " -p"
+        cmd += f" -- '{dirpath}'"
+        self.run_verify(cmd)
 
     def shell_test(self, path, opt):
         """

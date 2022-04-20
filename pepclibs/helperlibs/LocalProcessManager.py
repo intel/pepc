@@ -18,9 +18,11 @@ import shlex
 import errno
 import logging
 import subprocess
+from pathlib import Path
 from pepclibs.helperlibs import _ProcessManagerBase, ClassHelpers
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
-from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied
+from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 _LOG = logging.getLogger()
 
@@ -284,7 +286,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     @staticmethod
     def open(path, mode):
         """
-        Open a file. Refer to '_ProcessManagerBase.ProcessManagerBase().open()' for more information.
+        Open a file. Refer to '_ProcessManagerBase.ProcessManagerBase().open()' for more
+        information.
         """
 
         def get_err_prefix(fobj, method):
@@ -304,6 +307,21 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         # Make sure methods of 'fobj' always raise the 'Error' exceptions.
         return ClassHelpers.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
                                            get_err_prefix=get_err_prefix)
+
+    @staticmethod
+    def mkdir(dirpath, parents=False, exist_ok=False):
+        """
+        Create a directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdir()' for more
+        information.
+        """
+
+        try:
+            Path(dirpath).mkdir(parents=parents, exist_ok=exist_ok)
+        except FileExistsError:
+            if not exist_ok:
+                raise ErrorExists(f"path '{dirpath}' already exists") from None
+        except OSError as err:
+            raise Error(f"failed to create directory '{dirpath}':\n{err}") from None
 
     def __init__(self):
         """Initialize a class instance."""
