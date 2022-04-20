@@ -10,6 +10,8 @@
 
 """Emulated version or the 'LocalProcessManager' module for testing purposes."""
 
+# pylint: disable=protected-access
+
 import io
 import types
 import logging
@@ -76,6 +78,27 @@ class EmulProcessManager(_ProcessManagerBase.ProcessManagerBase):
             self._basepath = FSHelpers.mktemp(prefix=f"emulprocs_{pid}_")
 
         return self._basepath
+
+    def _wrap_aspm(self, fobj, path, mode):
+        """
+        The "policy" ASPM sysfs file needs special handling. This method wraps the file object
+        'write()' to ensure the emulated sysfs file behavior is same as in real hardware.
+        """
+
+        if "pcie_aspm/parameters/policy" in path and "w" in mode:
+            def _aspm_write(self, data):
+                """Method to write ASPM profile to emulated sysfs file."""
+
+                line = self._policies.strip("[]")
+                line = line.replace(data, f"[{data}]")
+                self._orig_write(line)
+
+            with open(path, "r") as fobj1:
+                fobj._policies = fobj1.read().strip()
+            fobj._orig_write = fobj.write
+            fobj.write = types.MethodType(_aspm_write, fobj)
+
+        return fobj
 
     def run_verify(self, cmd, **kwargs):
         """
@@ -149,6 +172,7 @@ class EmulProcessManager(_ProcessManagerBase.ProcessManagerBase):
             fobj = self._open_ro(path, mode)
         else:
             fobj = self._open_rw(path, mode)
+            fobj = self._wrap_aspm(fobj, path, mode)
 
         self._ofiles[path] = fobj
         return fobj
