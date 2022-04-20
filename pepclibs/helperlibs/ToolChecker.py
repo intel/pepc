@@ -81,7 +81,7 @@ class ToolChecker:
                 break
 
         if not osinfo:
-            files = "\n".join(paths)
+            files = "\n".join([str(path) for path in paths])
             raise Error(f"cannot discover OS version{self._pman.hostmsg}, these files were "
                         f"checked:\n{files}")
 
