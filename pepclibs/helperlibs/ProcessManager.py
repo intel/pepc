@@ -8,6 +8,11 @@
 
 """
 This module provides a unified way of creating a process manager object for local or remote hosts.
+
+Historically, the process manager was about running processes on a local or remote hosts in a
+uniform manner. However, over time, the process manager grew file I/O-related operations, such as
+'open()' and 'exists()'. This is very useful because it allows for file operations on a remote host
+as if it was a local host.
 """
 
 import contextlib

@@ -8,7 +8,7 @@
 
 """
 This module provides the base class for process managers, as well as common bits and pieces shared
-between diffrent process manager implementations.
+between different process manager implementations.
 """
 
 # pylint: disable=protected-access

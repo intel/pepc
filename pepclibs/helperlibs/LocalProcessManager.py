@@ -284,8 +284,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     @staticmethod
     def open(path, mode):
         """
-        Open a file at 'path' using mode 'mode' (the arguments are the same as in the builtin Python
-        'open()' function).
+        Open a file. Refer to '_ProcessManagerBase.ProcessManagerBase().open()' for more information.
         """
 
         def get_err_prefix(fobj, method):

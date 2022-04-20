@@ -7,15 +7,16 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module implements a process manager for running and monitorin processes on a remote host over
-SSH.
+This module implements a process manager for running and monitoring processes on a remote host over
+SSH. In addition to this, the process manager provides many file I/O methods, such as 'open()' and
+'exists()'. This allows for doing file I/O on a remote host as if it was a local host.
 
 SECURITY NOTICE: this module and any part of it should only be used for debugging and development
 purposes. No security audit had been done. Not for production use.
 
 There are two ways run commands remotely over SSH: in a new paramiko SSH session, and in the
 interactive shell. The latter way adds complexity, but the reason we have it is because it is much
-faster to run a process this way, comparing to esablishing a new session.
+faster to run a process this way, comparing to establishing a new session.
 
 The first way of running commands is very straight-forward - we just open a new paramiko SSH session
 and run the command. The session gets closed when the command finishes. The next command requires a
@@ -714,8 +715,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
     def open(self, path, mode):
         """
-        Open a file on the remote host at 'path' using mode 'mode' (the arguments are the same as in
-        the builtin Python 'open()' function).
+        Open a file. Refer to '_ProcessManagerBase.ProcessManagerBase().open()' for more
+        information.
         """
 
         def _read_(fobj, size=None):
