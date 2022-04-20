@@ -24,14 +24,12 @@ def test_aspm_info(params):
 def test_aspm_config(params):
     """Test 'pepc aspm config' command."""
 
-    # The ASPM policy is changed by writing profile name to sysfs file
-    # '/sys/module/pcie_aspm/parameters/policy'. The selected profile appears in square brackets
-    # among all available profiles. For example, if "performance" profile is selected, the output
-    # would be: 'default [performance] powersave powersupersave'. Emulating this behavior would need
-    # wrapping file read/write methods, and is not supported for emulated hosts.
-    good_options = ["", "--policy"]
-    if params["hostname"] != "emulation":
-        good_options = ["--policy performance", "--policy powersave", "--policy powersupersave"]
+    good_options = [
+        "",
+        "--policy",
+        "--policy performance",
+        "--policy powersave",
+        "--policy powersupersave"]
 
     pman = get_pman(params["hostname"], params["dataset"], modules="ASPM")
     for option in good_options:
