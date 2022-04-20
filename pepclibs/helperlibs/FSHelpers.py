@@ -276,15 +276,15 @@ def shell_test(path, opt, pman=None):
     """
 
     with ProcessManager.pman_or_local(pman) as wpman:
-        cmd = f"test {opt} '{path}'"
+        cmd = f"sh -c 'test {opt} \"{path}\"'"
         try:
-            stdout, stderr, exitcode = wpman.run(cmd, shell=True)
+            stdout, stderr, exitcode = wpman.run(cmd)
         except ErrorNotFound:
             # For some reason the 'test' command was not recognized as a built-in shell command and
             # the external 'test' program was not fond in '$PATH'. Let's try running 'sh' with '-l',
             # which will make it read '/etc/profile' and possibly ensure that 'test' is in '$PATH'.
             cmd = f"sh -c -l 'test {opt} \"{path}\"'"
-            stdout, stderr, exitcode = wpman.run(cmd, shell=True)
+            stdout, stderr, exitcode = wpman.run(cmd)
 
         if stdout or stderr or exitcode not in (0, 1):
             raise Error(wpman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
