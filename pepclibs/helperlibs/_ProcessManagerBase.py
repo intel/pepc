@@ -631,6 +631,15 @@ class ProcessManagerBase:
             result += "\n\n%s" % msg.strip()
         return result
 
+    def open(self, path, mode):
+        """
+        Open a file on the at 'path' and return a file-like object. The arguments are the same as in
+        the builtin Python 'open()' function.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.open")
+
     def __init__(self):
         """Initialize a class instance."""
 
