@@ -358,6 +358,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         self._ll = ""
         self._check_ll = True
+        self._lines_cnt = [0, 0]
 
         if shell:
             self._read_pid()
