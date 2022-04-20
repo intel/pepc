@@ -640,6 +640,28 @@ class ProcessManagerBase:
         # pylint: disable=unused-argument,no-self-use
         return _bug_method_not_defined("ProcessManagerBase.open")
 
+    def shell_test(self, path, opt):
+        """
+        Run the shell 'test' command against path 'path'. The 'opt' argument specifies the 'test'
+        command options. For example, pass '-f' to run 'test -f' which returns 0 if 'path' exists
+        and is a regular file and 1 otherwise.
+        """
+
+        cmd = f"sh -c 'test {opt} \"{path}\"'"
+        try:
+            stdout, stderr, exitcode = self.run(cmd)
+        except ErrorNotFound:
+            # For some reason the 'test' command was not recognized as a built-in shell command and
+            # the external 'test' program was not fond in '$PATH'. Let's try running 'sh' with '-l',
+            # which will make it read '/etc/profile' and possibly ensure that 'test' is in '$PATH'.
+            cmd = f"sh -c -l 'test {opt} \"{path}\"'"
+            stdout, stderr, exitcode = self.run(cmd)
+
+        if stdout or stderr or exitcode not in (0, 1):
+            raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
+
+        return exitcode == 0
+
     def __init__(self):
         """Initialize a class instance."""
 
