@@ -277,11 +277,12 @@ def shell_test(path, opt, pman=None):
 
     with ProcessManager.pman_or_local(pman) as wpman:
         cmd = f"test {opt} '{path}'"
-        stdout, stderr, exitcode = wpman.run(cmd, shell=True)
-        if stderr and exitcode == 127:
-            # There is some output in 'stderr' and exit code is 127, which happens when the 'test'
-            # command is not in '$PATH'. Let's try running 'sh' with '-l', which will make it read
-            # '/etc/profile' and possibly ensure that 'test' is in '$PATH'.
+        try:
+            stdout, stderr, exitcode = wpman.run(cmd, shell=True)
+        except ErrorNotFound:
+            # For some reason the 'test' command was not recognized as a built-in shell command and
+            # the external 'test' program was not fond in '$PATH'. Let's try running 'sh' with '-l',
+            # which will make it read '/etc/profile' and possibly ensure that 'test' is in '$PATH'.
             cmd = f"sh -c -l 'test {opt} \"{path}\"'"
             stdout, stderr, exitcode = wpman.run(cmd, shell=True)
 
