@@ -13,6 +13,7 @@ This module implements a process manager for running and monitoring local proces
 # pylint: disable=no-member
 # pylint: disable=protected-access
 
+import os
 import time
 import shlex
 import errno
@@ -322,6 +323,55 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 raise ErrorExists(f"path '{dirpath}' already exists") from None
         except OSError as err:
             raise Error(f"failed to create directory '{dirpath}':\n{err}") from None
+
+    @staticmethod
+    def exists(path):
+        """Returns 'True' if path 'path' exists."""
+
+        try:
+            return Path(path).exists()
+        except OSError as err:
+            raise Error(f"failed to check if '{path}' exists: {err}") from None
+
+    @staticmethod
+    def is_file(path):
+        """Return 'True' if path 'path' exists an it is a regular file."""
+
+        try:
+            return Path(path).is_file()
+        except OSError as err:
+            raise Error(f"failed to check if '{path}' exists and it is a regular file: {err}") \
+                        from None
+
+    @staticmethod
+    def is_dir(path):
+        """Return 'True' if path 'path' exists an it is a directory."""
+
+        try:
+            return Path(path).is_dir()
+        except OSError as err:
+            raise Error(f"failed to check if '{path}' exists and it is a directory: {err}") \
+                        from None
+
+    @staticmethod
+    def is_exe(path):
+        """Return 'True' if path 'path' exists an it is an executable file."""
+
+        try:
+            return Path(path).is_file() and os.access(path, os.X_OK)
+        except OSError as err:
+            raise Error(f"failed to check if '{path}' exists and it is an executable file: {err}") \
+                        from None
+
+    @staticmethod
+    def is_socket(path):
+        """Return 'True' if path 'path' exists an it is a Unix socket file."""
+
+        try:
+            return Path(path).is_socket()
+        except OSError as err:
+            raise Error(f"failed to check if '{path}' exists and it is a Unix socket file: {err}") \
+                        from None
 
     def __init__(self):
         """Initialize a class instance."""

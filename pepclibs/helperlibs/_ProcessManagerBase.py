@@ -661,6 +661,26 @@ class ProcessManagerBase:
         cmd += f" -- '{dirpath}'"
         self.run_verify(cmd)
 
+    def exists(self, path):
+        """Returns 'True' if path 'path' exists."""
+        return self.shell_test(path, "-e")
+
+    def is_file(self, path):
+        """Return 'True' if path 'path' exists an it is a regular file."""
+        return self.shell_test(path, "-f")
+
+    def is_dir(self, path):
+        """Return 'True' if path 'path' exists an it is a directory."""
+        return self.shell_test(path, "-d")
+
+    def is_exe(self, path):
+        """Return 'True' if path 'path' exists an it is an executable file."""
+        return self.shell_test(path, "-x")
+
+    def is_socket(self, path):
+        """Return 'True' if path 'path' exists an it is a Unix socket file."""
+        return self.shell_test(path, "-S")
+
     def shell_test(self, path, opt):
         """
         Run the shell 'test' command against path 'path'. The 'opt' argument specifies the 'test'
