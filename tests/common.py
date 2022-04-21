@@ -15,7 +15,7 @@ import sys
 import logging
 from pathlib import Path
 import pytest
-from pepclibs import CPUInfo
+from pepclibs import CPUInfo, CStates
 from pepclibs.helperlibs import ProcessManager
 from pepctool import _Pepc
 
@@ -72,8 +72,10 @@ def build_params(hostname, dataset, pman):
     if hostname == "emulation":
         datapath = _get_datapath(dataset)
         pman.init_testdata("CPUInfo", datapath)
+        pman.init_testdata("CStates", datapath)
 
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
         allcpus = cpuinfo.get_cpus()
         medidx = int(len(allcpus)/2)
         params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
@@ -83,6 +85,11 @@ def build_params(hostname, dataset, pman):
         for pkg in params["packages"]:
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
         params["cpumodel"] = cpuinfo.info["model"]
+
+        params["cstates"] = []
+        for _, csinfo in csobj.get_cstates_info(cpus=[allcpus[0]]):
+            for csname in csinfo:
+                params["cstates"].append(csname)
 
     return params
 
