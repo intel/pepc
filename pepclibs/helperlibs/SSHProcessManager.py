@@ -879,6 +879,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         # A lock protecting 'self._intsh_busy' and 'self._intsh'. Basically this lock makes sure we
         # always run exactly one process in the interactive shell.
         self._intsh_lock = threading.Lock()
+        # The "verbose" host name. The 'self.hostname', but with more details, like the IP address.
+        self._vhostname = None
 
         if not self.username:
             self.username = os.getenv("USER")
@@ -887,13 +889,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         if ipaddr:
             connhost = ipaddr
-            printhost = f"{hostname} ({ipaddr})"
+            self._vhostname = f"{hostname} ({ipaddr})"
         else:
             connhost = self._cfg_lookup("hostname", hostname, self.username)
             if connhost:
-                printhost = f"{hostname} ({connhost})"
+                self._vhostname = f"{hostname} ({connhost})"
             else:
-                printhost = connhost = hostname
+                self._vhostname = connhost = hostname
 
         if not self.privkeypath:
             # Try finding the key filename from the SSH configuration files.
@@ -925,17 +927,22 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                              key_filename=key_filename, timeout=self.connection_timeout,
                              password=self.password, allow_agent=False, look_for_keys=look_for_keys)
         except paramiko.AuthenticationException as err:
-            raise ErrorConnect(f"SSH authentication failed when connecting to {printhost} as "
+            raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
                                f"'{self.username}':\n{err}") from err
         except Exception as err:
-            raise ErrorConnect(f"cannot establish TCP connection to {printhost} with {timeout} "
-                               f"secs time-out:\n{err}") from err
+            raise ErrorConnect(f"cannot establish TCP connection to {self._vhostname} with "
+                               f"{timeout} secs time-out:\n{err}") from err
 
         _LOG.debug("established SSH connection to %s, port %d, username '%s', timeout '%s', "
-                   "priv. key '%s'", printhost, port, self.username, timeout, self.privkeypath)
+                   "priv. key '%s', SSH pman object ID: %s", self._vhostname, port, self.username,
+                   timeout, self.privkeypath, id(self))
 
     def close(self):
         """Close the SSH connection."""
+
+        _LOG.debug("closing SSH connection to %s (port %d, username '%s', priv. key '%s', SSH pman "
+                   "object ID: %s", self._vhostname, self.port, self.username, self.privkeypath,
+                   id(self))
 
         super().close()
 
