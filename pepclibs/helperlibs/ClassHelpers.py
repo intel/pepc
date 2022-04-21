@@ -118,6 +118,11 @@ def close(cls_obj, unref_attrs=None, close_attrs=None):
        the object in '{attr}' have to be closed. For example, if 'self._close_pman' attriubte exists
        and it is 'True', then the 'self._pman' object should be closed. Otherwise it won't be
        closed.
+
+    Note, the implementation uses a lot of 'getattr()' and 'hasattr()' because the assumption is
+    that this function can be called from the destructor, which may happen even before the
+    '__init__()' has finished (consider a crash in the middle of '__init__()'), so the attributes
+    may not even exists.
     """
 
     if unref_attrs is None:
@@ -129,16 +134,10 @@ def close(cls_obj, unref_attrs=None, close_attrs=None):
         obj = getattr(cls_obj, attr, None)
         if obj:
             setattr(cls_obj, attr, None)
-        else:
-            _LOG.debug("attribute '%s' was not found in '%s'", attr, cls_obj)
-            _LOG.debug_print_stack()
 
     for attr in close_attrs:
         obj = getattr(cls_obj, attr, None)
         if not obj:
-            if not hasattr(cls_obj, attr):
-                _LOG.debug("attribute '%s' was not found in '%s'", attr, cls_obj)
-                _LOG.debug_print_stack()
             continue
 
         if attr.startswith("_"):
