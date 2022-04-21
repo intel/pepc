@@ -13,7 +13,6 @@ Intel CPUs.
 """
 
 import logging
-from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import LocalProcessManager, Trivial, FSHelpers, ClassHelpers
 from pepclibs import CPUInfo
@@ -105,7 +104,7 @@ class EPP:
         if self._is_cached("supported", cpu):
             return self._cache[cpu]["supported"]
 
-        if FSHelpers.exists(Path(self._sysfs_epp_path % cpu), pman=self._pman):
+        if self._pman.exists(self._sysfs_epp_path % cpu):
             self._add_to_cache("supported", True, cpu)
         else:
             val = self._get_hwpreq().is_cpu_feature_supported("epp", cpu)

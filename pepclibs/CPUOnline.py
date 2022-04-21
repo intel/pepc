@@ -12,7 +12,7 @@ This module provides an API for onlining and offlining CPUs.
 
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import FSHelpers, LocalProcessManager, ClassHelpers
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 
@@ -31,8 +31,8 @@ class CPUOnline:
     def _verify_path(self, cpu, path):
         """Verify if path 'path' exists."""
 
-        if not FSHelpers.isfile(path, pman=self._pman):
-            if FSHelpers.isdir(path.parent, pman=self._pman):
+        if not self._pman.is_file(path):
+            if self._pman.is_dir(path.parent):
                 raise ErrorNotSupported(f"CPU '{cpu}' on host {self._pman.hostname}' does not "
                                         f"support onlining/offlining")
             raise Error(f"CPU '{cpu}' does not exist on host '{self._pman.hostname}'")
