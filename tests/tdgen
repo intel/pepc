@@ -94,8 +94,19 @@ CStatesData = {
          "filename": "cstates.txt"}]
     }
 
+SystemctlData = {
+    "commands" : [
+        {"command": "systemctl is-active -- 'tuned'",
+         "dirname": "systemctl-tuned-active",
+         "ignore_exitcode": True}],
+    }
+
 MODULE_TESTDATA = {
-    "CPUInfo" : CPUInfoData, "ASPM" : ASPMData, "CPUOnline" : CPUOnlineData, "CStates" : CStatesData
+    "CPUInfo" : CPUInfoData,
+    "ASPM" : ASPMData,
+    "CPUOnline" : CPUOnlineData,
+    "CStates" : CStatesData,
+    "Systemctl" : SystemctlData,
     }
 
 def build_arguments_parser():
@@ -132,9 +143,11 @@ def collect_cmd_output(cmdinfo, pman, outdir):
     datapath = outdir / cmdinfo["dirname"]
     os.makedirs(datapath, exist_ok=True)
 
-    stdout, stderr = pman.run_verify(cmdinfo["command"])
+    res = pman.run(cmdinfo["command"])
+    if res.exitcode != 0 and not cmdinfo.get("ignore_exitcode"):
+        LOG.error("running command '%s' failed and returned '%s'", cmdinfo["command"], res.exitcode)
 
-    for fname, data in ("stdout", stdout), ("stderr", stderr):
+    for fname, data in ("stdout", res.stdout), ("stderr", res.stderr):
         path = datapath / f"{fname}.txt"
 
         with open(path, "w") as fobj:
