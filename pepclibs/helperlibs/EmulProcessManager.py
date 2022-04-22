@@ -334,6 +334,58 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if "msrs" in config:
             self._init_msrs(config["msrs"], datapath)
 
+    def mkdir(self, dirpath, parents=False, exist_ok=False):
+        """
+        Create a directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdir()' for more
+        information.
+        """
+
+        dirpath = self._get_basepath() / dirpath
+        super().mkdir(dirpath, parents=parents, exist_ok=exist_ok)
+
+    def exists(self, path):
+        """Returns 'True' if path 'path' exists."""
+
+        path = Path(self._get_basepath() / path)
+        return super().exists(path)
+
+    def is_file(self, path):
+        """Return 'True' if path 'path' exists an it is a regular file."""
+
+        path = Path(self._get_basepath() / path)
+        return super().is_file(path)
+
+    def is_dir(self, path):
+        """Return 'True' if path 'path' exists an it is a directory."""
+
+        path = Path(self._get_basepath() / path)
+        return super().is_dir(path)
+
+    def is_exe(self, path):
+        """Return 'True' if path 'path' exists an it is an executable file."""
+
+        path = Path(self._get_basepath() / path)
+        return super().is_exe(path)
+
+    def is_socket(self, path):
+        """Return 'True' if path 'path' exists an it is a Unix socket file."""
+
+        path = Path(self._get_basepath() / path)
+        return super().is_socket(path)
+
+    def mkdtemp(self, prefix=None, basedir=None):
+        """
+        Create a temporary directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdtemp()'
+        for more information.
+        """
+
+        path = self._get_basepath()
+        if basedir:
+            path = path / basedir
+
+        temppath = super().mkdtemp(prefix=prefix, basedir=path)
+        return temppath.relative_to(self._get_basepath())
+
     def __init__(self):
         """Initialize the emulated 'LocalProcessManager' class instance."""
 
