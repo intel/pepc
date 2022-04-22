@@ -75,15 +75,28 @@ ASPMData = {
 
 CPUOnlineData = {
     "inlinefiles" : [
-        {"command" : r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
-                     r"'.*cpu([[:digit:]]+)/online' -exec printf '%s' {}: \; -exec grep . {} \;",
+        {"command": r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
+                    r"'.*cpu([[:digit:]]+)/online' -exec printf '%s' {}: \; -exec grep . {} \;",
          "separator": ":",
          "readonly":  False,
          "dirname":   "cpuonline-info",
          "filename":  "cpuonline.txt"}]
     }
 
-MODULE_TESTDATA = {"CPUInfo" : CPUInfoData, "ASPM" : ASPMData, "CPUOnline" : CPUOnlineData}
+CStatesData = {
+    "inlinefiles" : [
+        {"command": r"find '/sys/devices/system/cpu' -type f -regextype posix-extended -regex " \
+                    r"'.*cpu([[:digit:]]+)/cpuidle/state([[:digit:]]+)/[^/]+' -exec printf '%s' " \
+                    r"{}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly": False,
+         "dirname": "cstates",
+         "filename": "cstates.txt"}]
+    }
+
+MODULE_TESTDATA = {
+    "CPUInfo" : CPUInfoData, "ASPM" : ASPMData, "CPUOnline" : CPUOnlineData, "CStates" : CStatesData
+    }
 
 def build_arguments_parser():
     """A helper function which parses the input arguments."""
