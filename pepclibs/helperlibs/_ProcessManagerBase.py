@@ -19,6 +19,7 @@ import codecs
 import logging
 import threading
 import contextlib
+from pathlib import Path
 from collections import namedtuple
 from pepclibs.helperlibs import Human, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorExists
@@ -702,6 +703,14 @@ class ProcessManagerBase:
             raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
 
         return exitcode == 0
+
+    def get_homedir(self):
+        """Return return the home directory path for the logged in user."""
+        try:
+            return Path(self.run_verify("echo $HOME")[0].strip())
+        except ErrorNotFound:
+            # See commentaries in 'shell_test()', this is a similar case.
+            return Path(self.run_verify("sh -c -l \"echo $HOME\"")[0].strip())
 
     def __init__(self):
         """Initialize a class instance."""

@@ -373,6 +373,11 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"failed to check if '{path}' exists and it is a Unix socket file: {err}") \
                         from None
 
+    @staticmethod
+    def get_homedir():
+        """Return return the home directory of the current user."""
+        return Path("~").expanduser()
+
     def __init__(self):
         """Initialize a class instance."""
 
