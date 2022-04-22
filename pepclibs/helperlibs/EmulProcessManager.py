@@ -16,6 +16,7 @@ import io
 import types
 import logging
 import contextlib
+from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, FSHelpers, Trivial, ClassHelpers, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
@@ -100,6 +101,40 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         return fobj
 
+    def _extract_path(self, cmd):
+        """
+        Parse command 'cmd' and find if it includes path which is also emulated. Returns the path if
+        found, otherwise returns 'None'.
+        """
+
+        basepath = self._get_basepath()
+
+        for split in cmd.split():
+            if Path(basepath / split).exists():
+                return split
+            for strip_chr in ("'", "\""):
+                if Path(basepath / split.strip(strip_chr)).exists():
+                    return split.strip(strip_chr)
+
+        return None
+
+    def _rebase_cmd(self, cmd):
+        """
+        Modify command 'cmd' so that it is run against emulted files. Returns 'None' if the command
+        doesn't include any paths, or paths are not emulated.
+        """
+
+        basepath = self._get_basepath()
+        if str(basepath) in cmd:
+            return cmd
+
+        path = self._extract_path(cmd)
+        if path:
+            rebased_cmd = cmd.replace(path, f"{basepath}/{str(path).lstrip('/')}")
+            return rebased_cmd
+
+        return None
+
     def run_verify(self, cmd, **kwargs):
         """
         Does not really run commands, just pretends running them and returns the pre-dfined output
@@ -112,7 +147,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # pylint: disable=unused-argument,arguments-differ
         _LOG.debug("running the following emulated command:\n%s", cmd)
 
-        return self._get_predefined_result(cmd)
+        try:
+            return self._get_predefined_result(cmd)
+        except ErrorNotSupported:
+            cmd = self._rebase_cmd(cmd)
+            if cmd:
+                return super().run_verify(cmd, **kwargs)
+            raise
 
     def run(self, cmd, **kwargs): # pylint: disable=unused-argument
         """
@@ -123,7 +164,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # pylint: disable=unused-argument,arguments-differ
         _LOG.debug("running the following emulated command:\n%s", cmd)
 
-        stdout, stderr = self._get_predefined_result(cmd)
+        try:
+            stdout, stderr = self._get_predefined_result(cmd)
+        except ErrorNotSupported:
+            cmd = self._rebase_cmd(cmd)
+            if cmd:
+                return super().run(cmd, **kwargs)
+            raise
+
         return ProcResult(stdout=stdout, stderr=stderr, exitcode=0)
 
     def _open_rw(self, path, mode):
