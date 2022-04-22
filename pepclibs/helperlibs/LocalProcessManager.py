@@ -374,9 +374,97 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                         from None
 
     @staticmethod
+    def get_mtime(path):
+        """Returns the modification time of a file or directory at path 'path'."""
+
+        try:
+            return Path(path).stat().st_mtime
+        except FileNotFoundError:
+            raise ErrorNotFound(f"'{path}' does not exist") from None
+        except OSError as err:
+            raise Error(f"'stat()' failed for '{path}':\n{err}") from None
+
+    @staticmethod
+    def rmtree(path):
+        """
+        Create a temporary directory. Refer to '_ProcessManagerBase.ProcessManagerBase().rmtree()'
+        for more information.
+        """
+
+        import shutil # pylint: disable=import-outside-toplevel
+
+        path = Path(path)
+
+        try:
+            if path.is_dir():
+                shutil.rmtree(path)
+            else:
+                path.unlink()
+        except FileNotFoundError:
+            pass
+        except (OSError, shutil.Error) as err:
+            raise Error(f"failed to remove {path}: {err}") from err
+
+    @staticmethod
+    def abspath(path, must_exist=True):
+        """
+        Create a temporary directory. Refer to '_ProcessManagerBase.ProcessManagerBase().abspath()'
+        for more information.
+        """
+
+        try:
+            rpath = Path(path).resolve()
+        except OSError as err:
+            raise Error(f"failed to get real path for '{path}': {err}") from None
+
+        if must_exist and not rpath.exists():
+            raise Error(f"path '{rpath}' does not exist")
+
+        return rpath
+
+    @staticmethod
+    def mkdtemp(prefix=None, basedir=None):
+        """
+        Create a temporary directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdtemp()'
+        for more information.
+        """
+
+        import tempfile # pylint: disable=import-outside-toplevel
+
+        try:
+            path = tempfile.mkdtemp(prefix=prefix, dir=basedir)
+        except OSError as err:
+            raise Error(f"failed to create a temporary directory: {err}") from err
+
+        _LOG.debug("created a temporary directory '%s'", path)
+        return Path(path)
+
+    @staticmethod
     def get_homedir():
         """Return return the home directory of the current user."""
         return Path("~").expanduser()
+
+    @staticmethod
+    def which(program, must_find=True):
+        """
+        Find and return full path to a program 'program'. Refer to
+        '_ProcessManagerBase.ProcessManagerBase().which()' for more information.
+        """
+
+        program = Path(program)
+        if os.access(program, os.F_OK | os.X_OK) and Path(program).is_file():
+            return program
+
+        envpaths = os.environ["PATH"]
+        for path in envpaths.split(os.pathsep):
+            path = path.strip('"')
+            candidate = Path(f"{path}/{program}")
+            if os.access(candidate, os.F_OK | os.X_OK) and candidate.is_file():
+                return candidate
+
+        if must_find:
+            raise ErrorNotFound(f"program '{program}' was not found in $PATH ({envpaths})")
+        return None
 
     def __init__(self):
         """Initialize a class instance."""

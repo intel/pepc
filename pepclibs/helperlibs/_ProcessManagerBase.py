@@ -641,6 +641,38 @@ class ProcessManagerBase:
         # pylint: disable=unused-argument,no-self-use
         return _bug_method_not_defined("ProcessManagerBase.open")
 
+    def read(self, path, must_exist=True):
+        """
+        Read file at path 'path'. The arguments are as follows.
+          * path - path to the file to read.
+          * must_exist - if file 'path' does not exist, raise the 'ErrorNotFound' error if
+                         'must_exist' is 'True'. Otherwise, return 'None' without raising an
+                         exception.
+        """
+
+        try:
+            with self.open(path, "r") as fobj:
+                val = fobj.read().strip()
+        except ErrorNotFound as err:
+            if must_exist:
+                raise ErrorNotFound(f"file '{path}' does not exist{self.hostmsg}") from err
+            return None
+
+        return val
+
+    def write(self, path, data):
+        """
+        Write data 'data' to file at path 'path'. The arguments are as follows.
+          * path - path to the file to write to.
+          * data - the data to write.
+        """
+
+        try:
+            with self.open(path, "w") as fobj:
+                fobj.write(data)
+        except Error as err:
+            raise type(err)(f"failed to write to file '{path}'{self.hostmsg}:\n{err}") from err
+
     def mkdir(self, dirpath, parents=False, exist_ok=False):
         """
         Create a directory. The a arguments are as follows.
@@ -667,20 +699,81 @@ class ProcessManagerBase:
         return self.shell_test(path, "-e")
 
     def is_file(self, path):
-        """Return 'True' if path 'path' exists an it is a regular file."""
+        """Returns 'True' if path 'path' exists an it is a regular file."""
         return self.shell_test(path, "-f")
 
     def is_dir(self, path):
-        """Return 'True' if path 'path' exists an it is a directory."""
+        """Returns 'True' if path 'path' exists an it is a directory."""
         return self.shell_test(path, "-d")
 
     def is_exe(self, path):
-        """Return 'True' if path 'path' exists an it is an executable file."""
+        """Returns 'True' if path 'path' exists an it is an executable file."""
         return self.shell_test(path, "-x")
 
     def is_socket(self, path):
-        """Return 'True' if path 'path' exists an it is a Unix socket file."""
+        """Returns 'True' if path 'path' exists an it is a Unix socket file."""
         return self.shell_test(path, "-S")
+
+    def get_mtime(self, path):
+        """Returns the modification time of a file or directory at path 'path'."""
+
+        try:
+            stdout, _ = self.run_verify(f"stat -c %Y -- {path}")
+        except Error as err:
+            if "No such file or directory" in str(err):
+                raise ErrorNotFound(f"'{path}' does not exist{self.hostmsg}") from None
+            raise
+
+        mtime = stdout.strip()
+        if not Trivial.is_float(mtime):
+            raise Error(f"got erroneous modification time of '{path}'{self.hostmsg}:\n{mtime}")
+        return float(mtime)
+
+    def mkdtemp(self, prefix=None, basedir=None):
+        """
+        Create a temporary directory and return its path. The arguments are as follows.
+          * prefix - specifies the temporary directory name prefix.
+          * basedir - path to the base directory where the temporary directory should be created.
+        """
+
+        cmd = "mktemp -d -t '"
+        if prefix:
+            cmd += prefix
+        cmd += "XXXXXX'"
+        if basedir:
+            cmd += " -p '{basedir}'"
+
+        path, _ = self.run_verify(cmd).strip()
+        if not path:
+            raise Error(f"cannot create a temporary directory{self.hostmsg}, the following command "
+                        f"returned an empty string:\n{cmd}")
+
+        _LOG.debug("created a temporary directory '%s'%s", path, self.hostmsg)
+        return Path(path)
+
+    def rmtree(self, path):
+        """
+        Recursively remove a file or directory at path 'path'. If 'path' is a symlink, the link is
+        removed, but the target of the link does not get removed.
+        """
+
+        self.run_verify(f"rm -rf -- '{path}'")
+
+    def abspath(self, path, must_exist=True):
+        """
+        Returns absolute real path for 'path'. The arguments are as follows.
+          * path - the path to resolve into the absolute real (no symlinks) path.
+          * must_exist - if 'path' does not exist, raise and exception when 'must_exist' is 'True',
+                         otherwise return 'None'.
+        """
+
+        if must_exist:
+            opt = "-e"
+        else:
+            opt = "-m"
+
+        stdout, _ = self.run_verify(f"readlink {opt} -- '{path}'")
+        return Path(stdout.strip())
 
     def shell_test(self, path, opt):
         """
@@ -711,6 +804,39 @@ class ProcessManagerBase:
         except ErrorNotFound:
             # See commentaries in 'shell_test()', this is a similar case.
             return Path(self.run_verify("sh -c -l \"echo $HOME\"")[0].strip())
+
+    def which(self, program, must_find=True):
+        """
+        Find and return full path to a program 'program' by searching it in '$PATH'. The arguments
+        are as follows.
+          * program - name of the program to find the path to.
+          * must_find - if 'True', raises the 'ErrorNotFound' exception if the program was not
+                        found, otherwise returns 'None' without raising the exception.
+        """
+
+        def raise_or_return(): # pylint: disable=useless-return
+            """This helper is called when the 'program' program was not found."""
+
+            if must_find:
+                raise ErrorNotFound(f"program '{program}' was not found in $PATH{self.hostmsg}")
+            return None
+
+        cmd = f"which -- '{program}'"
+        stdout, stderr, exitcode = self.run(cmd)
+        if not exitcode:
+            # Which could return several paths. They may contain aliases.
+            for line in stdout.strip().splitlines():
+                line = line.strip()
+                if not line.startswith("alias"):
+                    return Path(line)
+            return raise_or_return()
+
+        # The 'which' tool exits with status 1 when the program is not found. Any other error code
+        # is an real failure.
+        if exitcode != 1:
+            raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
+
+        return raise_or_return()
 
     def __init__(self):
         """Initialize a class instance."""
