@@ -170,6 +170,15 @@ class MockedProc(LocalProcessManager.LocalProcessManager):
 
         return super().open(path, mode)
 
+    @staticmethod
+    def exists(path): # pylint: disable=unused-argument
+        """Mock version of 'exists()'."""
+        return any(Path(m_path) for m_path in _MOCKED_EXISTS_FILES if str(path) in m_path)
+
+    def is_file(self, path):
+        """Mock version of 'is_file()'."""
+        return self.exists(path)
+
     def __init__(self):
         """Initialize mock class instance."""
 
