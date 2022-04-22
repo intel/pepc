@@ -351,7 +351,7 @@ class PStates:
     def __is_uncore_freq_supported(self):
         """Implements '_is_uncore_freq_supported()'."""
 
-        if FSHelpers.exists(self._sysfs_base_uncore, self._pman):
+        if self._pman.exists(self._sysfs_base_uncore):
             return True
 
         drvname = "intel_uncore_frequency"
@@ -523,7 +523,7 @@ class PStates:
         """Read a string from a sysfs file corresponding to property 'prop' and CPU 'cpu'."""
 
         path = self._get_sysfs_path(prop, cpu)
-        return FSHelpers.read(path, pman=self._pman).strip()
+        return self._pman.read(path).strip()
 
     def _get_prop_from_sysfs(self, prop, cpu):
         """Read CPU 'cpu' property described by 'prop' from sysfs."""
@@ -734,10 +734,10 @@ class PStates:
 
         if driver in {"intel_pstate", "intel_cpufreq"}:
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
-            FSHelpers.write(path, str(int(not enable)), pman=self._pman)
+            self._pman.write(path, str(int(not enable)))
         elif driver == "acpi_cpufreq":
             path = self._sysfs_base / "cpufreq" / "boost"
-            FSHelpers.write(path, str(int(enable)), pman=self._pman)
+            self._pman.write(path, str(int(enable)))
         else:
             raise Error(f"failed to enable or disable turbo{self._pman.hostmsg}: unsupported CPU "
                         f"frequency driver '{driver}'")
@@ -767,7 +767,7 @@ class PStates:
         if prop.get("unit") == "Hz":
             # Sysfs files use kHz
             val //= 1000
-        FSHelpers.write(path, str(val), pman=self._pman)
+        self._pman.write(path, str(val))
 
         count = 3
         while count > 0:

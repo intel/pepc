@@ -14,7 +14,7 @@ Intel CPUs.
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.helperlibs import LocalProcessManager, Trivial, FSHelpers, ClassHelpers
+from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, HWPRequest, HWPRequestPkg
 
@@ -125,7 +125,7 @@ class EPP:
 
         # Prefer using the names from the Linux kernel.
         path = self._sysfs_epp_policies_path % cpu
-        line = FSHelpers.read(path, default=None, pman=self._pman)
+        line = self._pman.read(path, must_exist=False)
         if line is None:
             policies = list(_EPP_POLICIES)
         else:
@@ -157,7 +157,7 @@ class EPP:
         """
 
         try:
-            policy = FSHelpers.read(self._sysfs_epp_path % cpu, pman=self._pman)
+            policy = self._pman.read(self._sysfs_epp_path % cpu)
         except ErrorNotFound:
             return None
 
@@ -246,7 +246,7 @@ class EPP:
         """Set EPP to 'epp' for CPU 'cpu' via the sysfs file."""
 
         try:
-            FSHelpers.write(self._sysfs_epp_path % cpu, epp, pman=self._pman)
+            self._pman.write(self._sysfs_epp_path % cpu, epp)
         except ErrorNotFound:
             return None
         except Error as err:

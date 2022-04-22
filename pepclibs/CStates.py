@@ -15,7 +15,7 @@ import re
 import copy
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, Trivial, FSHelpers, ClassHelpers
+from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo, _Common
 from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
@@ -160,7 +160,7 @@ class ReqCStates:
                 fpaths.append(fpath)
 
         # Write the names to a temporary file and then read them all in an efficient way.
-        tmpdir = FSHelpers.mktemp(prefix="_linuxcstates_", pman=self._pman)
+        tmpdir = self._pman.mkdtemp(prefix="_linuxcstates_")
         tmpfile = tmpdir / "fpaths.txt"
 
         try:
@@ -172,7 +172,7 @@ class ReqCStates:
             cmd = f"xargs -a '{tmpfile}' cat"
             values, _ = self._pman.run_verify(cmd, join=False)
         finally:
-            FSHelpers.rm_minus_rf(tmpdir, pman=self._pman)
+            self._pman.rmtree(tmpdir)
 
         # At this point 'values' will contain the value for every file in 'fpaths'.
 

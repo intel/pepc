@@ -13,7 +13,7 @@ This module provides an API to get CPU information.
 import re
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
-from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, FSHelpers, ClassHelpers
+from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers
 
 # CPU model numbers.
 #
@@ -211,7 +211,7 @@ class CPUInfo:
         # Get the CPU die number.
         die_id_path = sysfs_base / "die_id"
         try:
-            die = FSHelpers.read(die_id_path, pman=self._pman)
+            die = self._pman.read(die_id_path)
         except ErrorNotFound:
             # The file does not exist.
             self._no_die_info = True
@@ -220,7 +220,7 @@ class CPUInfo:
         die = int(die)
 
         # Get the list of CPUs belonging to the same die.
-        cpus = FSHelpers.read(sysfs_base / "die_cpus_list", pman=self._pman)
+        cpus = self._pman.read(sysfs_base / "die_cpus_list")
         cpus = ArgParse.parse_int_list(cpus, ints=True)
 
         # Save the list of CPUs in the case.

@@ -362,7 +362,7 @@ class MSR:
 
         cpus = self._cpuinfo.get_cpus()
         dev_path = Path(f"/dev/cpu/{cpus[0]}/msr")
-        if FSHelpers.exists(dev_path, self._pman):
+        if self._pman.exists(dev_path):
             return
 
         drvname = "msr"

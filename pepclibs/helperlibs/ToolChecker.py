@@ -15,7 +15,7 @@ meaningful OS package installation suggestion if it is not installed.
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs import LocalProcessManager, FSHelpers, ClassHelpers
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
 
 #
 # Tools information dictionary. Maps tool names to OS package names.
@@ -117,8 +117,8 @@ class ToolChecker:
         if tool is self._cache:
             return self._cache[tool]
 
-        path = FSHelpers.which(tool, default=None, pman=self._pman)
-        if path is not None:
+        path = self._pman.which(tool, must_find=False)
+        if path:
             self._cache[tool] = path
             return path
 
