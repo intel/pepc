@@ -63,13 +63,18 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     pre-defined command output. This class is used for testing purposes.
     """
 
-    def _get_predefined_result(self, cmd):
+    def _get_predefined_result(self, cmd, join=True):
         """Return pre-defined value for the command 'cmd'."""
 
         if cmd not in self._cmds:
             raise ErrorNotSupported(f"unsupported command: '{cmd}'")
 
-        return self._cmds[cmd]
+        stdout, stderr = self._cmds[cmd]
+        if join:
+            stdout = "".join(stdout)
+            stderr = "".join(stderr)
+
+        return (stdout, stderr)
 
     def _get_basepath(self):
         """Return path to the temporary directory where all the emulated files should be created."""
@@ -135,7 +140,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         return None
 
-    def run_verify(self, cmd, **kwargs):
+    def run_verify(self, cmd, join=True, **kwargs):
         """
         Does not really run commands, just pretends running them and returns the pre-dfined output
         values. Works only for a limited set of known commands. If the command is not known, raises
@@ -148,14 +153,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         _LOG.debug("running the following emulated command:\n%s", cmd)
 
         try:
-            return self._get_predefined_result(cmd)
+            return self._get_predefined_result(cmd, join=join)
         except ErrorNotSupported:
             cmd = self._rebase_cmd(cmd)
             if cmd:
-                return super().run_verify(cmd, **kwargs)
+                return super().run_verify(cmd, join=join, **kwargs)
             raise
 
-    def run(self, cmd, **kwargs): # pylint: disable=unused-argument
+    def run(self, cmd, join=True, **kwargs): # pylint: disable=unused-argument
         """
         Similarly to 'run_verify()', emulates a pre-defined set of commands. Refer to
         'ProcessManagerBase.run_verify()' for more information.
@@ -165,11 +170,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         _LOG.debug("running the following emulated command:\n%s", cmd)
 
         try:
-            stdout, stderr = self._get_predefined_result(cmd)
+            stdout, stderr = self._get_predefined_result(cmd, join=join)
         except ErrorNotSupported:
             cmd = self._rebase_cmd(cmd)
             if cmd:
-                return super().run(cmd, **kwargs)
+                return super().run(cmd, join=join, **kwargs)
             raise
 
         return ProcResult(stdout=stdout, stderr=stderr, exitcode=0)
