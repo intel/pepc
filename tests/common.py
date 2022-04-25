@@ -98,8 +98,8 @@ def run_pepc(arguments, pman, exp_exc=None):
     cmd = f"{_Pepc.__file__} {arguments}"
     _LOG.debug("running: %s", cmd)
     sys.argv = cmd.split()
-    args = _Pepc.parse_arguments()
     try:
+        args = _Pepc.parse_arguments()
         ret = args.func(args, pman)
     except Exception as err: # pylint: disable=broad-except
         if exp_exc is None:
