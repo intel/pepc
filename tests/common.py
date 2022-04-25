@@ -22,6 +22,10 @@ from pepctool import _Pepc
 logging.basicConfig(level=logging.DEBUG)
 _LOG = logging.getLogger()
 
+def _get_datapath(dataset):
+    """Return path to test data for the dataset 'dataset'."""
+    return Path(__file__).parent.resolve() / "data" / dataset
+
 def get_pman(hostname, dataset, modules=None):
     """
     Create and return process manager, the arguments are as follows.
@@ -34,7 +38,7 @@ def get_pman(hostname, dataset, modules=None):
     datapath = None
     username = None
     if hostname == "emulation":
-        datapath = Path(__file__).parent.resolve() / "data" / dataset
+        datapath = _get_datapath(dataset)
     elif hostname != "localhost":
         username = "root"
 
@@ -64,6 +68,10 @@ def build_params(hostname, dataset, pman):
     params = {}
     params["hostname"] = hostname
     params["dataset"] = dataset
+
+    if hostname == "emulation":
+        datapath = _get_datapath(dataset)
+        pman.init_testdata("CPUInfo", datapath)
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         allcpus = cpuinfo.get_cpus()
