@@ -16,7 +16,7 @@ import io
 import types
 import logging
 import contextlib
-from pepclibs.helperlibs import _ProcessManagerBase, FSHelpers, Trivial, ClassHelpers, YAML
+from pepclibs.helperlibs import LocalProcessManager, FSHelpers, Trivial, ClassHelpers, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
@@ -56,7 +56,7 @@ def _populate_sparse_file(path, data):
     except OSError as err:
         raise Error(f"failed to prepare sparse file '{path}':\n{err}") from err
 
-class EmulProcessManager(_ProcessManagerBase.ProcessManagerBase):
+class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     """
     An process manager which pretends that it runs commands, but in reality it just returns
     pre-defined command output. This class is used for testing purposes.
