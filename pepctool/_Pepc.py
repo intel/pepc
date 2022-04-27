@@ -74,6 +74,8 @@ def build_arguments_parser():
     cpu_list_txt = """The list can include individual CPU numbers and CPU number ranges. For
                       example, '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12.
                       Use the special keyword 'all' to specify all CPUs"""
+    cpu_list_dflt_txt = f"""{cpu_list_txt}. If the CPUs/cores/packages were not specified, all CPUs
+                           will be used as the default value"""
     core_list_txt = """The list can include individual core numbers and core number ranges. For
                        example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
                        Use the special keyword 'all' to specify all cores"""
@@ -167,7 +169,7 @@ def build_arguments_parser():
                {cst_list_text}."""
     subpars2.add_argument("--cstates", dest="csnames", help=text, default="all")
 
-    text = f"""List of CPUs to get information about. {cpu_list_txt}."""
+    text = f"""List of CPUs to get information about. {cpu_list_dflt_txt}."""
     subpars2.add_argument("--cpus", help=text)
 
     text = f"""List of cores to get information about. {core_list_txt}."""
@@ -185,7 +187,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=cstates_config_command)
 
-    text = f"""List of CPUs to configure. {cpu_list_txt}."""
+    text = f"""List of CPUs to configure. {cpu_list_dflt_txt}."""
     subpars2.add_argument("--cpus", help=text)
 
     text = f"""List of cores to configure. {core_list_txt}."""
@@ -242,7 +244,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=pstates_info_command)
 
-    text = f"""List of CPUs to get information about. {cpu_list_txt}."""
+    text = f"""List of CPUs to get information about. {cpu_list_dflt_txt}."""
     subpars2.add_argument("--cpus", help=text)
 
     text = f"""List of cores to get information about. {core_list_txt}."""
@@ -260,7 +262,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=pstates_config_command)
 
-    text = f"""List of CPUs to configure P-States on. {cpu_list_txt}."""
+    text = f"""List of CPUs to configure P-States on. {cpu_list_dflt_txt}."""
     subpars2.add_argument("--cpus", help=text)
 
     text = f"""List of cores to configure P-States on. {core_list_txt}."""
