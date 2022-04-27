@@ -165,10 +165,6 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=cstates_info_command)
 
-    text = f"""Comma-sepatated list of C-states to get information about (all C-states by default).
-               {cst_list_text}."""
-    subpars2.add_argument("--cstates", dest="csnames", help=text, default="all")
-
     text = f"""List of CPUs to get information about. {cpu_list_dflt_txt}."""
     subpars2.add_argument("--cpus", help=text)
 
@@ -177,6 +173,11 @@ def build_arguments_parser():
 
     text = f"""List of packages to get information about. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
+
+    text = f"""Comma-sepatated list of C-states to get information about (all C-states by default).
+               {cst_list_text}."""
+    subpars2.add_argument("--cstates", dest="csnames", help=text, default="all")
+
 
     #
     # Create parser for the 'cstates config' command.
