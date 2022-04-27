@@ -17,7 +17,7 @@ import types
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, FSHelpers, Trivial, ClassHelpers, YAML
+from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
@@ -76,7 +76,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         if not self._basepath:
             pid = Trivial.get_pid()
-            self._basepath = FSHelpers.mktemp(prefix=f"emulprocs_{pid}_")
+            self._basepath = super().mkdtemp(prefix=f"emulprocs_{pid}_")
 
         return self._basepath
 
@@ -359,8 +359,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self._ofiles = None
 
         if getattr(self, "_basepath", None):
-            with contextlib.suppress(OSError):
-                FSHelpers.rm_minus_rf(self._basepath)
+            with contextlib.suppress(Error):
+                super().rmtree(self._basepath)
 
         with contextlib.suppress(Exception):
             super().close()
