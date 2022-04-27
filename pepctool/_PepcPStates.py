@@ -76,7 +76,7 @@ def pstates_info_command(args, pman):
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
+        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         pinfo_iter = psobj.get_props(psobj.props, cpus=cpus)
         aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
