@@ -743,7 +743,7 @@ class ProcessManagerBase:
         if basedir:
             cmd += " -p '{basedir}'"
 
-        path, _ = self.run_verify(cmd).strip()
+        path = self.run_verify(cmd)[0].strip()
         if not path:
             raise Error(f"cannot create a temporary directory{self.hostmsg}, the following command "
                         f"returned an empty string:\n{cmd}")
