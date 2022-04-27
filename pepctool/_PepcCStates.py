@@ -159,7 +159,7 @@ def cstates_info_command(args, pman):
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.ReqCStates(pman=pman, cpuinfo=cpuinfo) as rcsobj:
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=0)
+        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         #
         # Print requestable C-states info.
