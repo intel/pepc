@@ -62,7 +62,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     pre-defined command output. This class is used for testing purposes.
     """
 
-    def _get_cmd_result(self, cmd):
+    def _get_predefined_result(self, cmd):
         """Return pre-defined value for the command 'cmd'."""
 
         if cmd not in self._cmds:
@@ -112,7 +112,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # pylint: disable=unused-argument,arguments-differ
         _LOG.debug("running the following emulated command:\n%s", cmd)
 
-        return self._get_cmd_result(cmd)
+        return self._get_predefined_result(cmd)
 
     def run(self, cmd, **kwargs): # pylint: disable=unused-argument
         """
@@ -123,7 +123,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # pylint: disable=unused-argument,arguments-differ
         _LOG.debug("running the following emulated command:\n%s", cmd)
 
-        stdout, stderr = self._get_cmd_result(cmd)
+        stdout, stderr = self._get_predefined_result(cmd)
         return ProcResult(stdout=stdout, stderr=stderr, exitcode=0)
 
     def _open_rw(self, path, mode):
