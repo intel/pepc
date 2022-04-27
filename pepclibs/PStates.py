@@ -16,6 +16,7 @@ import time
 import logging
 import contextlib
 from pathlib import Path
+from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs import LocalProcessManager, KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs import CPUInfo, _Common
@@ -479,12 +480,12 @@ class PStates:
 
         if driver in {"intel_pstate", "intel_cpufreq"}:
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
-            disabled = FSHelpers.read_int(path, pman=self._pman)
+            disabled = self._read_int(path)
             return "off" if disabled else "on"
 
         if driver == "acpi_cpufreq":
             path = self._sysfs_base / "cpufreq" / "boost"
-            enabled = FSHelpers.read_int(path, pman=self._pman)
+            enabled = self._read_int(path)
             return "on" if enabled else "off"
 
         raise Error(f"can't check if turbo is enabled{self._pman.hostmsg}: unsupported CPU "
@@ -513,11 +514,20 @@ class PStates:
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
 
+    def _read_int(self, path):
+        """Read an integer from file 'path' via the process manager."""
+
+        val = self._pman.read(path)
+        if not Trivial.is_int(val):
+            raise Error(f"read an unexpected non-integer value from '{path}'"
+                        f"{self._pman.hostmsg}")
+        return int(val)
+
     def _sysfs_read_int(self, prop, cpu):
         """Read an integer from a sysfs file corresponding to property 'prop' and CPU 'cpu'."""
 
         path = self._get_sysfs_path(prop, cpu)
-        return FSHelpers.read_int(path, pman=self._pman)
+        return self._read_int(path)
 
     def _sysfs_read(self, prop, cpu):
         """Read a string from a sysfs file corresponding to property 'prop' and CPU 'cpu'."""

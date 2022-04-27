@@ -576,19 +576,6 @@ def read(path, default=_RAISE, pman=None):
 
     return val
 
-def read_int(path, default=_RAISE, pman=None):
-    """Read an integer from file 'path'. Other arguments are same as in 'read()'."""
-
-    with ProcessManager.pman_or_local(pman) as wpman:
-        val = read(path, default=default, pman=wpman)
-        if val is default:
-            return val
-        if not Trivial.is_int(val):
-            if default is _RAISE:
-                raise Error(f"unexpected non-integer value in file '{path}'{wpman.hostmsg}")
-            return default
-        return int(val)
-
 def write(path, data, pman=None):
     """
     Write data 'data' to file 'path' on the host defined by the 'pman' process manager object
