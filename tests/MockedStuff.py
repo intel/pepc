@@ -16,7 +16,7 @@ from contextlib import contextmanager
 from unittest.mock import patch, mock_open
 from pathlib import Path
 from pepclibs import CPUInfo, CStates
-from pepclibs.helperlibs import LocalProcessManager, FSHelpers
+from pepclibs.helperlibs import LocalProcessManager
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 from pepclibs.msr import MSR, PCStateConfigCtl, PlatformInfo, TurboRatioLimit, PMEnable
 
@@ -224,52 +224,16 @@ class MockedMSR(MSR.MSR):
         self._mocked_msr[TurboRatioLimit.MSR_TURBO_RATIO_LIMIT] = 0x1f1f212222232323
         self._mocked_msr[PMEnable.MSR_PM_ENABLE] = 1
 
-def mock_exists(path: Path, pman=None): # pylint: disable=unused-argument
-    """Mock version of 'exists' function in FSHelpers module."""
-
-    return any(Path(m_path) for m_path in _MOCKED_EXISTS_FILES if str(path) in m_path)
-
-def mock_isfile(path: Path, pman=None):
-    """Mock version of 'isfile' function in FSHelpers module."""
-
-    return mock_exists(path, pman)
-
-def mock_lsdir(path: Path, must_exist: bool = True, pman=None):
-    """Mock version of 'lsdir' function in FSHelpers module."""
-
-    m_paths = [Path(m_path) for m_path in _MOCKED_FILES if str(path) in m_path]
-
-    if not m_paths:
-        yield from FSHelpers.lsdir(path, must_exist=must_exist, pman=pman)
-    else:
-        # Use test data to generate output similar to 'lsdir()'.
-        entries = []
-        for m_path in m_paths:
-            einfo = {}
-            m_path = m_path.relative_to(path)
-            einfo["name"] = m_path.parts[0]
-            einfo["ftype"] = "/" if len(m_path.parts) > 1 else ""
-
-            if einfo not in entries:
-                entries.append(einfo)
-
-        for einfo in entries:
-            yield (einfo["name"], path / einfo["name"], einfo["ftype"])
-
 @contextmanager
 def get_mocked_objects():
     """
-    Helper function to mock 'lsdir()' function in 'FSHelpers' module, 'LocalProcessManager' and
-    'MSR' classes. Returns objects as tuple.
+    Helper function to mock 'LocalProcessManager' and 'MSR' classes. Returns objects as tuple.
     """
 
-    with patch("pepclibs.helperlibs.FSHelpers.lsdir", new=mock_lsdir) as mock_FSHelpers_lsdir, \
-         patch("pepclibs.helperlibs.FSHelpers.exists", new=mock_exists),  \
-         patch("pepclibs.helperlibs.FSHelpers.isfile", new=mock_isfile), \
-         patch("pepclibs.helperlibs.LocalProcessManager.LocalProcessManager",
+    with patch("pepclibs.helperlibs.LocalProcessManager.LocalProcessManager",
                new=MockedProc) as mock_pman, \
          patch("pepclibs.msr.MSR.MSR", new=MockedMSR) as mock_msr:
-        yield (mock_FSHelpers_lsdir, mock_pman, mock_msr)
+        yield (mock_pman, mock_msr)
 
 def get_test_cpu_info():
     """
