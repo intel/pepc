@@ -14,9 +14,6 @@ import os
 import pwd
 from pepclibs.helperlibs.Exceptions import Error
 
-# A unique object used as the default value for the 'default' key in some functions.
-_RAISE = object()
-
 def is_root():
     """
     Return 'True' if current process has superuser (root) privileges and 'False' otherwise.
@@ -58,11 +55,12 @@ def get_username(uid=None):
         raise Error("failed to get user name for UID %d:\n%s" % (uid, err)) from None
 
 
-def str_to_num(snum, default=_RAISE):
+def str_to_num(snum, must_convert=True):
     """
-    Convert a string to a numeric value, either 'int' or 'float'. If the conversion is not possible,
-    this function raises an exception. However, if the 'default' argumen is provided, this function
-    returns 'default' instead of raising the exception.
+    Convert a string to a numeric value, either 'int' or 'float'. The arguments are as follows.
+      * snum - the value to convert to 'int' or 'float'. Should be a string or a numeric value.
+      * must_convert - if 'True', raises an exception if the conversion is impossible, otherwise
+                       returns 'None' in that case.
     """
 
     try:
@@ -71,9 +69,9 @@ def str_to_num(snum, default=_RAISE):
         try:
             num = float(snum)
         except (ValueError, TypeError):
-            if default is _RAISE:
+            if must_convert:
                 raise Error(f"failed to convert '{str(snum)}' to a number") from None
-            return default
+            return None
 
     return num
 
