@@ -32,9 +32,6 @@ _EPP_POLICIES = {"performance": 0,
 # The minimum and maximum EPP values.
 _EPP_MIN, _EPP_MAX = 0, 0xFF
 
-# A unique object used for the 'not_supported_ok' key in some methods.
-_RAISE = object()
-
 class EPP:
     """
     This module provides a capability of reading and changing EPP (Energy Performance Preference) on
@@ -112,13 +109,13 @@ class EPP:
 
         return self._cache[cpu]["supported"]
 
-    def _get_cpu_epp_policies(self, cpu, not_supported_ok=_RAISE):
+    def _get_cpu_epp_policies(self, cpu, not_supported_ok=False):
         """Implements 'get_cpu_epp_policies()'."""
 
         if not self.is_epp_supported(cpu):
-            if not_supported_ok is _RAISE:
-                raise Error(f"CPU {cpu} does not support EPP")
-            return None
+            if not_supported_ok:
+                return None
+            raise ErrorNotSupported(f"CPU {cpu} does not support EPP")
 
         if self._is_cached("policies", cpu):
             return self._cache[cpu]["policies"]
@@ -134,7 +131,7 @@ class EPP:
         self._add_to_cache("policies", policies, cpu)
         return policies
 
-    def get_epp_policies(self, cpus="all", not_supported_ok=_RAISE):
+    def get_epp_policies(self, cpus="all", not_supported_ok=False):
         """
         Yield (CPU number, List of supported EPP policy names) pairs for CPUs in 'cpus'.
           * cpus - same as in 'get_epp_policy()'.
@@ -144,7 +141,7 @@ class EPP:
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield cpu, self._get_cpu_epp_policies(cpu, not_supported_ok=not_supported_ok)
 
-    def get_cpu_epp_policies(self, cpu, not_supported_ok=_RAISE):
+    def get_cpu_epp_policies(self, cpu, not_supported_ok=False):
         """Return a list of all EPP policy names for CPU 'cpu."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
@@ -163,7 +160,7 @@ class EPP:
 
         return policy.strip()
 
-    def _get_cpu_epp_policy(self, cpu, not_supported_ok=_RAISE):
+    def _get_cpu_epp_policy(self, cpu, not_supported_ok=False):
         """Returns EPP policy for CPU 'cpu'."""
 
         policy = self._get_cpu_epp_policy_from_sysfs(cpu)
@@ -187,7 +184,7 @@ class EPP:
 
         raise Error(f"unknown policy name for EPP value {epp} on CPU {cpu}{self._pman.hostmsg}")
 
-    def get_epp_policy(self, cpus="all", not_supported_ok=_RAISE):
+    def get_epp_policy(self, cpus="all", not_supported_ok=False):
         """
         Yield (CPU number, EPP policy name) pairs for CPUs in 'cpus'.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
@@ -199,13 +196,13 @@ class EPP:
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield (cpu, self._get_cpu_epp_policy(cpu, not_supported_ok=not_supported_ok))
 
-    def get_cpu_epp_policy(self, cpu, not_supported_ok=_RAISE):
+    def get_cpu_epp_policy(self, cpu, not_supported_ok=False):
         """Similar to 'get_epp_policy()', but for a single CPU 'cpu'."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._get_cpu_epp_policy(cpu, not_supported_ok=not_supported_ok)
 
-    def _get_cpu_epp(self, cpu, not_supported_ok=_RAISE):
+    def _get_cpu_epp(self, cpu, not_supported_ok=False):
         """Implements 'get_cpu_epp()'."""
 
         try:
@@ -221,22 +218,22 @@ class EPP:
 
             return hwpreq.read_cpu_feature("epp", cpu)
         except ErrorNotSupported as err:
-            if not_supported_ok is _RAISE:
-                raise Error(f"CPU {cpu} does not support EPP:\n{err}") from err
-            return None
+            if not_supported_ok:
+                return None
+            raise ErrorNotSupported(f"CPU {cpu} does not support EPP:\n{err}") from err
 
-    def get_epp(self, cpus="all", not_supported_ok=_RAISE):
+    def get_epp(self, cpus="all", not_supported_ok=False):
         """
         Yield (CPU number, EPP) pairs for CPUs in 'cpus'. The arguments are as follows:
           * cpus - the same as in 'set_epp()'.
-          * not_supported_ok - controls what to do if EPP is not supported on a CPU. By default,
-            'ErrorNotSupported' is raised, othewise 'None' is yielded as the EPP value.
+          * not_supported_ok - if 'False', raise 'ErrorNotSupported' exception if EPP is not
+          *                    supported on a CPU, if 'True', return 'None' instead.
         """
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield (cpu, self._get_cpu_epp(cpu, not_supported_ok=not_supported_ok))
 
-    def get_cpu_epp(self, cpu, not_supported_ok=_RAISE):
+    def get_cpu_epp(self, cpu, not_supported_ok=False):
         """Similar to 'get_epp()', but for a single CPU 'cpu'."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
