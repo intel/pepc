@@ -94,6 +94,22 @@ CStatesData = {
          "filename": "cstates.txt"}]
     }
 
+PStatesData = {
+    "inlinefiles" : [
+        {"command": r"find '/sys/devices/system/cpu' -type f -regextype posix-extended -regex " \
+                    r"'.*policy([[:digit:]]+)/[^/]+' -exec printf '%s' {}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly": False,
+         "dirname": "pstates",
+         "filename": "pstates.txt"},
+        {"command" : r"find '/sys/devices/system/cpu/intel_pstate/' -type f -exec printf '%s' " \
+                     r"{}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly": False,
+         "dirname": "pstates",
+         "filename": "intel_pstates.txt"}]
+    }
+
 SystemctlData = {
     "commands" : [
         {"command": "systemctl is-active -- 'tuned'",
@@ -106,6 +122,7 @@ MODULE_TESTDATA = {
     "ASPM" : ASPMData,
     "CPUOnline" : CPUOnlineData,
     "CStates" : CStatesData,
+    "PStates" : PStatesData,
     "Systemctl" : SystemctlData,
     }
 
