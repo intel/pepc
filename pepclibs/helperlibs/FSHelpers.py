@@ -80,55 +80,6 @@ def copy_dir(src: Path, dst: Path, exist_ok: bool = False, ignore=None):
 
     _copy_dir(src, dst, ignore)
 
-def move_copy_link(src, dst, action="symlink", exist_ok=False):
-    """
-    Moves, copy. or link the 'src' file or directory to 'dst' depending on the 'action' contents
-    ('move', 'copy', 'symlink').
-    """
-
-    exists_err = f"cannot {action} '{src}' to '{dst}', the destination path already exists"
-    if dst.exists():
-        if exist_ok:
-            return
-        raise ErrorExists(exists_err)
-
-    # Type cast in shutil.move() can be removed when python is fixed. See
-    # https://bugs.python.org/issue32689
-    try:
-        if action == "move":
-            if src.is_dir():
-                try:
-                    dst.mkdir(parents=True, exist_ok=True)
-                except FileExistsError as err:
-                    if not exist_ok:
-                        raise ErrorExists(exists_err) from None
-                for item in src.iterdir():
-                    shutil.move(str(item), dst)
-            else:
-                shutil.move(str(src), dst)
-        elif action == "copy":
-            if not dst.parent.exists():
-                dst.parent.mkdir(parents=True)
-
-            if src.is_dir():
-                _copy_dir(src, dst)
-            else:
-                shutil.copyfile(src, dst)
-        elif action == "symlink":
-            if not dst.is_dir():
-                dstdir = dst.parent
-            else:
-                dstdir = dst
-
-            if not dst.parent.exists():
-                dst.parent.mkdir(parents=True)
-
-            os.symlink(os.path.relpath(src.resolve(), dstdir.resolve()), dst)
-        else:
-            raise Error(f"unrecognized action '{action}'")
-    except (OSError, shutil.Error) as err:
-        raise Error(f"cannot {action} '{src}' to '{dst}':\n{err}") from err
-
 def wait_for_a_file(path, interval=1, timeout=60, pman=None):
     """
     Wait for a file or directory defined by path 'path' to get created. This function just
