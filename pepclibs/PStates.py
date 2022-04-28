@@ -939,6 +939,9 @@ class PStates:
         for pname, val in inprops.items():
             prop = self._props[pname]
 
+            if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
+                raise Error(self._uncore_errmsg)
+
             if prop.get("unit", None) == "Hz":
                 inprops[pname] = self._parse_freq(pname, prop, val, cpu)
 
@@ -979,9 +982,6 @@ class PStates:
             else:
                 if "fname" not in prop:
                     raise Error(f"BUG: unsupported property '{pname}'")
-
-                if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
-                    raise Error(self._uncore_errmsg)
 
                 self._set_prop_in_sysfs(pname, val, cpu)
 
