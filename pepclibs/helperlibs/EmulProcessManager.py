@@ -270,7 +270,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 # Emulated path: /sys/devices/system/cpu/cpu0/
                 # Real path: /tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0/
                 path = split[0]
-                data = split[1].strip()
+                data = split[1]
 
                 if finfo.get("readonly"):
                     self._ro_files[path] = data
