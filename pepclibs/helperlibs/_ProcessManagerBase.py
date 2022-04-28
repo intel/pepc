@@ -799,6 +799,7 @@ class ProcessManagerBase:
 
     def get_homedir(self):
         """Return return the home directory path for the logged in user."""
+
         try:
             return Path(self.run_verify("echo $HOME")[0].strip())
         except ErrorNotFound:
