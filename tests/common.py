@@ -15,7 +15,7 @@ import sys
 import logging
 from pathlib import Path
 import pytest
-from pepclibs import CPUInfo, CStates
+from pepclibs import CPUInfo, CStates, PStates
 from pepclibs.helperlibs import ProcessManager
 from pepctool import _Pepc
 
@@ -27,6 +27,15 @@ _REQUIRED_MODULES = ["ASPM", "CPUInfo", "CPUOnline", "CStates", "PStates", "Syst
 def _get_datapath(dataset):
     """Return path to test data for the dataset 'dataset'."""
     return Path(__file__).parent.resolve() / "data" / dataset
+
+def prop_is_supported(prop, props):
+    """
+    Return 'True' if property 'prop' is supported by properties 'props', otherwise return 'False'.
+    """
+
+    if prop in props:
+        return props[prop].get(prop) is not None
+    return False
 
 def get_pman(hostname, dataset, modules=None):
     """
@@ -94,7 +103,8 @@ def build_params(hostname, dataset, pman):
             pman.init_testdata(module, datapath)
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
+         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj, \
+         PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
         allcpus = cpuinfo.get_cpus()
         medidx = int(len(allcpus)/2)
         params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
@@ -109,6 +119,12 @@ def build_params(hostname, dataset, pman):
         for _, csinfo in csobj.get_cstates_info(cpus=[allcpus[0]]):
             for csname in csinfo:
                 params["cstates"].append(csname)
+
+        _, pinfo = next(csobj.get_props(csobj.props, cpus=[0]))
+        params["cstate_props"] = pinfo
+
+        _, pinfo = next(psobj.get_props(psobj.props, cpus=[0]))
+        params["pstate_props"] = pinfo
 
     return params
 
