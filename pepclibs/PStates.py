@@ -216,7 +216,9 @@ def _is_uncore_prop(prop):
     Returns 'True' if propert 'prop' is an uncore property, otherwise returns 'False'.
     """
 
-    return prop["fname"].endswith("khz")
+    if "fname" in prop and prop["fname"].endswith("khz"):
+        return True
+    return False
 
 class PStates:
     """
