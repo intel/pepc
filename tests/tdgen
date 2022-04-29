@@ -95,6 +95,12 @@ CStatesData = {
     }
 
 PStatesData = {
+    "prepare-cmds" : [
+        "modprobe intel_uncore_frequency",
+        "modprobe msr",
+        "pepc pstates config --min-freq min --max-freq hfm --cpus all",
+        "pepc pstates config --min-uncore-freq min --max-uncore-freq max --cpus all",
+        "pepc cstates config --enable all --cpus all"],
     "inlinefiles" : [
         {"command": r"find '/sys/devices/system/cpu' -type f -regextype posix-extended -regex " \
                     r"'.*policy([[:digit:]]+)/[^/]+' -exec printf '%s' {}: \; -exec grep . {} \;",
@@ -251,6 +257,11 @@ def main():
 
             for modname, testdata in MODULE_TESTDATA.items():
                 datapath = outdir / modname
+
+                if "prepare-cmds" in testdata:
+                    for command in testdata["prepare-cmds"]:
+                        pman.run(command)
+                    del testdata["prepare-cmds"]
 
                 if "commands" in testdata:
                     for cmdinfo in testdata["commands"]:
