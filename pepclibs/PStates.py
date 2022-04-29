@@ -957,7 +957,7 @@ class PStates:
                 vals = (True, False, "on", "off", "enable", "disable")
                 if val not in vals:
                     name = Human.untitle(prop['name'])
-                    use = ", ".join(vals)
+                    use = ", ".join([str(val1) for val1 in vals])
                     raise Error(f"bad value '{val}' for {name}, use one of: {use}")
 
         inprops = self._validate_and_order_freq(inprops, cpu, uncore=False)
