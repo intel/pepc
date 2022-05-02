@@ -278,6 +278,23 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                     path = self._get_basepath() / path.lstrip("/")
                     populate_rw_file(path, data)
 
+    def _init_directories(self, finfos, datapath):
+        """
+        Directories are defined as paths in a text file. Create emulated directories as defined by
+        dictionary 'finfos'.
+        """
+
+        for finfo in finfos:
+            filepath = datapath / finfo["dirname"] / finfo["filename"]
+
+            with open(filepath, "r") as fobj:
+                lines = fobj.readlines()
+
+            for line in lines:
+                path = self._get_basepath() / line.strip().lstrip("/")
+                if not path.exists():
+                    path.mkdir(parents=True)
+
     def _init_msrs(self, msrinfo, datapath):
         """
         MSR values are defined in text file where single line defines path used to access MSR values
@@ -329,6 +346,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                                     f"({confpath}).")
 
         config = YAML.load(confpath)
+
+        if "directories" in config:
+            self._init_directories(config["directories"], datapath)
 
         if "commands" in config:
             self._init_commands(config["commands"], datapath)
