@@ -120,7 +120,14 @@ PStatesData = {
          "separator": ":",
          "readonly": False,
          "dirname": "pstates",
-         "filename": "intel_pstates.txt"}]
+         "filename": "intel_pstates.txt"},
+         {"command" : r"find /sys/devices/system/cpu/intel_uncore_frequency -type f -regextype " \
+                      r"posix-extended -regex '.*package_([[:digit:]]+)_die_([[:digit:]]+)/[^/]+'" \
+                      r" -exec printf '%s'{}: \; -exec grep . {} \;",
+          "separator": ":",
+          "readonly": False,
+          "dirname": "pstates",
+          "filename": "uncore.txt"}]
     }
 
 SystemctlData = {
