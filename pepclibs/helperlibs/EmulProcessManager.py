@@ -365,37 +365,37 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         information.
         """
 
-        dirpath = self._get_basepath() / dirpath
+        dirpath = self._get_basepath() / str(dirpath).lstrip("/")
         super().mkdir(dirpath, parents=parents, exist_ok=exist_ok)
 
     def exists(self, path):
         """Returns 'True' if path 'path' exists."""
 
-        path = Path(self._get_basepath() / path)
+        path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().exists(path)
 
     def is_file(self, path):
         """Return 'True' if path 'path' exists an it is a regular file."""
 
-        path = Path(self._get_basepath() / path)
+        path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().is_file(path)
 
     def is_dir(self, path):
         """Return 'True' if path 'path' exists an it is a directory."""
 
-        path = Path(self._get_basepath() / path)
+        path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().is_dir(path)
 
     def is_exe(self, path):
         """Return 'True' if path 'path' exists an it is an executable file."""
 
-        path = Path(self._get_basepath() / path)
+        path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().is_exe(path)
 
     def is_socket(self, path):
         """Return 'True' if path 'path' exists an it is a Unix socket file."""
 
-        path = Path(self._get_basepath() / path)
+        path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().is_socket(path)
 
     def mkdtemp(self, prefix=None, basedir=None):
