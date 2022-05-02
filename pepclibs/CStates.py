@@ -112,7 +112,11 @@ class ReqCStates:
 
         if cpu not in self._cache:
             self._cache[cpu] = {}
-        self._cache[cpu] = csinfo
+
+        # Normalize C-state names before adding them to the cache.
+        csnames = self._normalize_csnames(csinfo)
+        for normalized_name, name in zip(csnames, csinfo):
+            self._cache[cpu][normalized_name] = csinfo[name]
 
     def _read_fpaths_and_values(self, cpus):
         """
