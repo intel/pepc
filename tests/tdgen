@@ -203,11 +203,14 @@ def collect_files(cmdinfo, pman, outdir):
     cmdpath = outdir / cmdinfo["dirname"]
     os.makedirs(cmdpath, exist_ok=True)
 
-    stdout, _ = pman.run_verify(cmdinfo["command"])
+    res = pman.run(cmdinfo["command"])
+    if res.exitcode != 0:
+        LOG.notice("running command '%s' failed and returned '%s'",
+                   cmdinfo["command"], res.exitcode)
 
     path = cmdpath / cmdinfo["filename"]
     with open(path, "w") as fobj:
-        fobj.write(stdout)
+        fobj.write(res.stdout)
 
 def collect_msrs(msrinfo, pman, outdir):
     """
