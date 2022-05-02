@@ -111,9 +111,8 @@ commands, here is an example:
 ```
 git clone https://github.com/intel/pepc.git --branch release pepc
 cd pepc
-git checkout release
 echo '#!/usr/bin/python3' > pepc.standalone
-git archive --format zip HEAD >> pepc.standalone
+git archive --format zip release >> pepc.standalone
 chmod ug+x pepc.standalone
 ```
 
