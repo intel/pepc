@@ -3,7 +3,7 @@
 pepc
 .SH SYNOPSIS
 .B pepc
-[-h] [-q] [-d] [--version] [-H HOSTNAME] [-U USERNAME] [-K PRIVKEY] [-T TIMEOUT] [--force-color] ...
+[-h] [-q] [-d] [--version] [-H HOSTNAME] [-U USERNAME] [-K PRIVKEY] [-T TIMEOUT] [--force-color] {cpu-hotplug,cstates,pstates,aspm} ...
 .SH DESCRIPTION
 pepc \- Power, Energy, and Performance Configuration tool for Linux.
 
@@ -62,7 +62,7 @@ P-state commands.
 \fBpepc\fR \fI\,aspm\/\fR
 PCI ASPM commands.
 .SH COMMAND \fI\,'pepc cpu-hotplug'\/\fR
-usage: pepc cpu-hotplug [-h] [-q] [-d]  ...
+usage: pepc cpu-hotplug [-h] [-q] [-d] {info,online,offline} ...
 
 CPU online/offline commands.
 
@@ -172,7 +172,7 @@ selected with '\-\-cpus', '\-\-cores', and '\-\-packages'. Therefore, specifying
 cpus all \-\-siblings' will effectively disable hyper\-threading on Intel CPUs.
 
 .SH COMMAND \fI\,'pepc cstates'\/\fR
-usage: pepc cstates [-h] [-q] [-d]  ...
+usage: pepc cstates [-h] [-q] [-d] {info,config} ...
 
 Various commands related to CPU C\-states.
 
@@ -332,7 +332,7 @@ CPU feature is controlled by MSR 0x1fc, bit 30. Use "on" or "off". This option
 has package scope.
 
 .SH COMMAND \fI\,'pepc pstates'\/\fR
-usage: pepc pstates [-h] [-q] [-d]  ...
+usage: pepc pstates [-h] [-q] [-d] {info,config} ...
 
 Various commands related to P\-states (CPU performance states).
 
@@ -497,7 +497,7 @@ Set CPU frequency governor. Linux CPU frequency governor name. This option has
 CPU scope.
 
 .SH COMMAND \fI\,'pepc aspm'\/\fR
-usage: pepc aspm [-h] [-q] [-d]  ...
+usage: pepc aspm [-h] [-q] [-d] {info,config} ...
 
 Manage Active State Power Management configuration.
 
