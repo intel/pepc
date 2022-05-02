@@ -88,7 +88,7 @@ def build_arguments_parser():
 
     text = "Force coloring of the text output."
     parser.add_argument("--force-color", action="store_true", help=text)
-    subparsers = parser.add_subparsers(title="commands", metavar="")
+    subparsers = parser.add_subparsers(title="commands")
     subparsers.required = True
 
     #
@@ -97,7 +97,8 @@ def build_arguments_parser():
     text = "CPU online/offline commands."
     descr = """CPU online/offline commands."""
     subpars = subparsers.add_parser("cpu-hotplug", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands", metavar="")
+    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subparsers2.required = True
 
     #
     # Create parser for the 'cpu-hotplug info' command.
@@ -141,7 +142,8 @@ def build_arguments_parser():
     text = "CPU C-state commands."
     descr = """Various commands related to CPU C-states."""
     subpars = subparsers.add_parser("cstates", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands", metavar="")
+    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subparsers2.required = True
 
     cst_list_text = """C-states should be specified by name (e.g., 'C1'). Use 'all' to specify all
                        the available Linux C-states (this is the default). Note, there is a
@@ -230,7 +232,8 @@ def build_arguments_parser():
     text = "P-state commands."
     descr = """Various commands related to P-states (CPU performance states)."""
     subpars = subparsers.add_parser("pstates", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands", metavar="")
+    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subparsers2.required = True
 
     #
     # Create parser for the 'pstates info' command.
@@ -305,7 +308,8 @@ def build_arguments_parser():
     text = "PCI ASPM commands."
     descr = """Manage Active State Power Management configuration."""
     subpars = subparsers.add_parser("aspm", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands", metavar="")
+    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subparsers2.required = True
 
     text = "Get PCI ASPM information."
     descr = """Get information about current PCI ASPM configuration."""
