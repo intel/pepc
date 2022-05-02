@@ -22,6 +22,8 @@ from pepctool import _Pepc
 logging.basicConfig(level=logging.DEBUG)
 _LOG = logging.getLogger()
 
+_REQUIRED_MODULES = ["ASPM", "CPUInfo", "CPUOnline", "CStates", "PStates", "Systemctl"]
+
 def _get_datapath(dataset):
     """Return path to test data for the dataset 'dataset'."""
     return Path(__file__).parent.resolve() / "data" / dataset
@@ -53,13 +55,29 @@ def get_pman(hostname, dataset, modules=None):
 
     return pman
 
+def _has_required_modules(datapath):
+    """Returns 'True' if datapath has all required modules to run tests."""
+
+    for module in _REQUIRED_MODULES:
+        if not Path(datapath / f"{module}.yaml").exists():
+            return False
+
+    return True
+
 def get_datasets():
     """Find all directories in 'tests/data' directory and yield the directory name."""
 
     basepath = Path(__file__).parent.resolve() / "data"
     for dirname in os.listdir(basepath):
-        if not Path(f"{basepath}/{dirname}").is_dir():
+        datapath = Path(f"{basepath}/{dirname}")
+
+        if not datapath.is_dir():
             continue
+
+        if not _has_required_modules(datapath):
+            _LOG.warning("excluding dataset '%s', incomplete test data", datapath)
+            continue
+
         yield dirname
 
 def build_params(hostname, dataset, pman):
@@ -71,8 +89,8 @@ def build_params(hostname, dataset, pman):
 
     if hostname == "emulation":
         datapath = _get_datapath(dataset)
-        pman.init_testdata("CPUInfo", datapath)
-        pman.init_testdata("CStates", datapath)
+        for module in _REQUIRED_MODULES:
+            pman.init_testdata(module, datapath)
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
