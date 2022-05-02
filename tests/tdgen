@@ -74,13 +74,20 @@ ASPMData = {
     }
 
 CPUOnlineData = {
+    "prepare-cmds" : [
+        "pepc cpu-hotplug online --cpus all"],
     "inlinefiles" : [
         {"command": r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
                     r"'.*cpu([[:digit:]]+)/online' -exec printf '%s' {}: \; -exec grep . {} \;",
          "separator": ":",
          "readonly":  False,
          "dirname":   "cpuonline-info",
-         "filename":  "cpuonline.txt"}]
+         "filename":  "cpuonline.txt"}],
+    "directories" : [
+        {"command": r"find /sys/devices/system/cpu -type d -regextype posix-extended -regex " \
+                    r"'.*cpu([[:digit:]]+)'",
+         "dirname":   "cpuonline-info",
+         "filename":  "cpuonline-dirs.txt"}],
     }
 
 CStatesData = {
@@ -268,8 +275,11 @@ def main():
                         collect_cmd_output(cmdinfo, pman, datapath)
                         cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
 
-                if "inlinefiles" in testdata:
-                    for cmdinfo in testdata["inlinefiles"]:
+                for section in ("directories", "inlinefiles"):
+                    if section not in testdata:
+                        continue
+
+                    for cmdinfo in testdata[section]:
                         collect_files(cmdinfo, pman, datapath)
                         cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
                         # We do not need command used to collect file contents, remove it.
