@@ -1,27 +1,29 @@
 Architecture:                    x86_64
 CPU op-mode(s):                  32-bit, 64-bit
-Byte Order:                      Little Endian
 Address sizes:                   46 bits physical, 48 bits virtual
+Byte Order:                      Little Endian
 CPU(s):                          88
 On-line CPU(s) list:             0-87
+Vendor ID:                       GenuineIntel
+BIOS Vendor ID:                  Intel
+Model name:                      Intel(R) Xeon(R) CPU E5-2699A v4 @ 2.40GHz
+BIOS Model name:                 Intel(R) Xeon(R) CPU E5-2699A v4 @ 2.40GHz
+CPU family:                      6
+Model:                           79
 Thread(s) per core:              2
 Core(s) per socket:              22
 Socket(s):                       2
-NUMA node(s):                    4
-Vendor ID:                       GenuineIntel
-CPU family:                      6
-Model:                           79
-Model name:                      Intel(R) Xeon(R) CPU E5-2699A v4 @ 2.40GHz
 Stepping:                        1
-CPU MHz:                         1200.000
 CPU max MHz:                     3600.0000
 CPU min MHz:                     1200.0000
-BogoMIPS:                        4800.05
+BogoMIPS:                        4799.66
+Flags:                           fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm rdt_a rdseed adx smap intel_pt xsaveopt cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts md_clear flush_l1d
 Virtualization:                  VT-x
-L1d cache:                       1.4 MiB
-L1i cache:                       1.4 MiB
-L2 cache:                        11 MiB
-L3 cache:                        110 MiB
+L1d cache:                       1.4 MiB (44 instances)
+L1i cache:                       1.4 MiB (44 instances)
+L2 cache:                        11 MiB (44 instances)
+L3 cache:                        110 MiB (4 instances)
+NUMA node(s):                    4
 NUMA node0 CPU(s):               0,2,4,6,8,10,12,14,16,18,20,44,46,48,50,52,54,56,58,60,62,64
 NUMA node1 CPU(s):               1,3,5,7,9,11,13,15,17,19,21,45,47,49,51,53,55,57,59,61,63,65
 NUMA node2 CPU(s):               22,24,26,28,30,32,34,36,38,40,42,66,68,70,72,74,76,78,80,82,84,86
@@ -35,4 +37,3 @@ Vulnerability Spectre v1:        Mitigation; usercopy/swapgs barriers and __user
 Vulnerability Spectre v2:        Mitigation; Retpolines, IBPB conditional, IBRS_FW, STIBP conditional, RSB filling
 Vulnerability Srbds:             Not affected
 Vulnerability Tsx async abort:   Mitigation; Clear CPU buffers; SMT vulnerable
-Flags:                           fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm rdt_a rdseed adx smap intel_pt xsaveopt cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts md_clear flush_l1d

@@ -215,7 +215,6 @@
 /sys/devices/system/cpu/cpu136/online:1
 /sys/devices/system/cpu/cpu220/online:1
 /sys/devices/system/cpu/cpu164/online:1
-/sys/devices/system/cpu/cpu0/online:1
 /sys/devices/system/cpu/cpu98/online:1
 /sys/devices/system/cpu/cpu192/online:1
 /sys/devices/system/cpu/cpu31/online:1
