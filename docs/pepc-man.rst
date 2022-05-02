@@ -17,7 +17,8 @@ SYNOPSIS
 ========
 
 **pepc** [-h] [-q] [-d] [--version] [-H HOSTNAME] [-U USERNAME] [-K
-PRIVKEY] [-T TIMEOUT] [--force-color] ...
+PRIVKEY] [-T TIMEOUT] [--force-color] {cpu-hotplug,cstates,pstates,aspm}
+...
 
 DESCRIPTION
 ===========
@@ -75,7 +76,7 @@ COMMANDS
 COMMAND *'pepc* cpu-hotplug'
 ============================
 
-usage: pepc cpu-hotplug [-h] [-q] [-d] ...
+usage: pepc cpu-hotplug [-h] [-q] [-d] {info,online,offline} ...
 
 CPU online/offline commands.
 
@@ -189,7 +190,7 @@ OPTIONS *'pepc* cpu-hotplug offline'
 COMMAND *'pepc* cstates'
 ========================
 
-usage: pepc cstates [-h] [-q] [-d] ...
+usage: pepc cstates [-h] [-q] [-d] {info,config} ...
 
 Various commands related to CPU C-states.
 
@@ -355,7 +356,7 @@ platform- specific hardware state, entered upon a Linux request..
 COMMAND *'pepc* pstates'
 ========================
 
-usage: pepc pstates [-h] [-q] [-d] ...
+usage: pepc pstates [-h] [-q] [-d] {info,config} ...
 
 Various commands related to P-states (CPU performance states).
 
@@ -519,7 +520,7 @@ OPTIONS *'pepc* pstates config'
 COMMAND *'pepc* aspm'
 =====================
 
-usage: pepc aspm [-h] [-q] [-d] ...
+usage: pepc aspm [-h] [-q] [-d] {info,config} ...
 
 Manage Active State Power Management configuration.
 
