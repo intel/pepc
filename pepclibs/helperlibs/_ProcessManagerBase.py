@@ -462,7 +462,7 @@ class ProcessManagerBase:
 
     Error = Error
 
-    def run_async(self, command, cwd=None, shell=False, intsh=False, stdin=None, stdout=None,
+    def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
                   stderr=None):
         """
         Run command 'command' without waiting for it to complete. The arguments are as follows.

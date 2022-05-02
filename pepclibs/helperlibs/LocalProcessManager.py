@@ -126,7 +126,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     implementation is based on 'Popen()'.
     """
 
-    def _do_run_async(self, command, cwd=None, shell=False, stdin=None, stdout=None, stderr=None,
+    def _do_run_async(self, command, cwd=None, shell=True, stdin=None, stdout=None, stderr=None,
                       bufsize=0, env=None, newgrp=False):
         """Implements 'run_async()'."""
 
@@ -176,7 +176,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         proc.pid = pobj.pid
         return proc
 
-    def run_async(self, command, cwd=None, shell=False, intsh=False, stdin=None, stdout=None,
+    def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
                   stderr=None, bufsize=0, env=None, newgrp=False,):
         """
         Run command 'command' on the local host using 'Popen'. Refer to

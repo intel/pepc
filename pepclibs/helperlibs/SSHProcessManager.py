@@ -532,7 +532,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
             return self._run_in_new_session(command, cwd=cwd, shell=shell)
 
-    def run_async(self, command, cwd=None, shell=False, intsh=False, stdin=None, stdout=None,
+    def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
                   stderr=None):
         """
         Run command 'command' on the remote host. Refer to 'ProcessManagerBase.run_async()' for more
