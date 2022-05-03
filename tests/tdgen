@@ -109,8 +109,8 @@ PStatesData = {
         "pepc pstates config --min-uncore-freq min --max-uncore-freq max --cpus all",
         "pepc cstates config --enable all --cpus all"],
     "inlinefiles" : [
-        {"command": r"find '/sys/devices/system/cpu' -type f -regextype posix-extended -regex " \
-                    r"'.*policy([[:digit:]]+)/[^/]+' -exec printf '%s' {}: \; -exec grep . {} \;",
+        {"command": r"find '/sys/devices/system/cpu/cpufreq' -type f -maxdepth 2 -regextype " \
+                    r"posix-extended -regex '.*[^/]+' -exec printf '%s' {}: \; -exec grep . {} \;",
          "separator": ":",
          "readonly": False,
          "dirname": "pstates",
