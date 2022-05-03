@@ -490,8 +490,10 @@ class PStates:
             enabled = self._read_int(path)
             return "on" if enabled else "off"
 
-        raise Error(f"can't check if turbo is enabled{self._pman.hostmsg}: unsupported CPU "
-                    f"frequency driver '{driver}'")
+        _LOG.debug("can't check if turbo is enabled%s: unsupported CPU frequency driver '%s'",
+                   self._pman.hostmsg, driver)
+
+        return None
 
     def _get_cpu_hwp(self, cpu):
         """
@@ -574,7 +576,10 @@ class PStates:
                 # The sysfs file was not found. The base frequency can be figured out from the MSR
                 # registers.
                 if pname != "base_freq":
-                    raise
+                    path = self._get_sysfs_path(prop, cpu)
+                    _LOG.debug("can't read value of property '%s', path '%s' is not found",
+                               pname, path)
+                    return None
 
         if pname in ("base_freq", "max_eff_freq"):
             base, max_eff_freq = self._get_base_eff_freqs(cpu)
