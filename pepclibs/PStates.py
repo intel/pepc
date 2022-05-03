@@ -485,7 +485,7 @@ class PStates:
             disabled = self._read_int(path)
             return "off" if disabled else "on"
 
-        if driver == "acpi_cpufreq":
+        if driver == "acpi-cpufreq":
             path = self._sysfs_base / "cpufreq" / "boost"
             enabled = self._read_int(path)
             return "on" if enabled else "off"
@@ -747,7 +747,7 @@ class PStates:
         if driver in {"intel_pstate", "intel_cpufreq"}:
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
             self._pman.write(path, str(int(not enable)))
-        elif driver == "acpi_cpufreq":
+        elif driver == "acpi-cpufreq":
             path = self._sysfs_base / "cpufreq" / "boost"
             self._pman.write(path, str(int(enable)))
         else:
