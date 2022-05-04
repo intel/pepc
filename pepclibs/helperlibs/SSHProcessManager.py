@@ -203,6 +203,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
             streamid, data = self._get_next_queue_item(timeout)
             if streamid == -1:
+                # Note, 'data' is going to be 'None' in this case.
                 self._dbg("_wait_intsh: nothing in the queue for %d seconds", timeout)
             elif data is None:
                 raise Error(f"the interactive shell process{self.hostmsg} closed stream {streamid} "
@@ -214,8 +215,9 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                 # line.
                 data, self.exitcode = self._watch_for_marker(data)
 
-            self._handle_queue_item(streamid, data, capture_output=capture_output,
-                                    output_fobjs=output_fobjs)
+            if data is not None:
+                self._handle_queue_item(streamid, data, capture_output=capture_output,
+                                        output_fobjs=output_fobjs)
 
             if not timeout:
                 self._dbg(f"_wait_intsh: timeout is {timeout}, exit immediately")
@@ -312,7 +314,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         self._dbg("_read_pid: reading PID for command: %s", self.cmd)
         assert self.shell
 
-        stdout, stderr, _ = self.wait(timeout=10, lines=(1, 0), join=False)
+        stdout, stderr, _ = self.wait(timeout=60, lines=(1, 0), join=False)
 
         msg = f"\nThe command{self.hostmsg} was:\n{self.cmd}" \
               f"\nThe actual (real) command was:\n{self.real_cmd}"
