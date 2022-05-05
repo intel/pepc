@@ -10,7 +10,7 @@
 
 """Test module for 'pepc' project 'aspm' command."""
 
-from common import run_pepc, get_pman
+from common import run_pepc
 # Fixtures need to be imported explicitly
 from common import build_params, get_params # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error
@@ -18,11 +18,12 @@ from pepclibs.helperlibs.Exceptions import Error
 def test_aspm_info(params):
     """Test 'pepc aspm info' command."""
 
-    pman = get_pman(params["hostname"], params["dataset"], modules="ASPM")
-    run_pepc("aspm info", pman)
+    run_pepc("aspm info", params["pman"])
 
 def test_aspm_config(params):
     """Test 'pepc aspm config' command."""
+
+    pman = params["pman"]
 
     good_options = [
         "",
@@ -31,7 +32,6 @@ def test_aspm_config(params):
         "--policy powersave",
         "--policy powersupersave"]
 
-    pman = get_pman(params["hostname"], params["dataset"], modules="ASPM")
     for option in good_options:
         run_pepc(f"aspm config {option}", pman)
 

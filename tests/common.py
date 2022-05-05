@@ -86,6 +86,7 @@ def build_params(hostname, dataset, pman):
     params = {}
     params["hostname"] = hostname
     params["dataset"] = dataset
+    params["pman"] = pman
 
     if hostname == "emulation":
         datapath = _get_datapath(dataset)

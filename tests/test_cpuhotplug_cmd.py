@@ -10,7 +10,7 @@
 
 """Test module for 'pepc' project 'cpu-hotplug' command."""
 
-from common import run_pepc, get_pman
+from common import run_pepc
 # Fixtures need to be imported explicitly
 from common import build_params, get_params # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error
@@ -18,19 +18,19 @@ from pepclibs.helperlibs.Exceptions import Error
 def test_cpuhotplug_info(params):
     """Test 'pepc cpu-hotplug info' command."""
 
-    pman = get_pman(params["hostname"], params["dataset"], modules="CPUOnline")
+    pman = params["pman"]
     run_pepc("cpu-hotplug info", pman)
 
 def test_cpuhotplug_online(params):
     """Test 'pepc cpu-hotplug online' command."""
+
+    pman = params["pman"]
 
     good_options = ["--cpus all"]
     if len(params["cpus"]) > 2:
         good_options += ["--cpus 1"]
     if len(params["cpus"]) > 3:
         good_options += ["--cpus 1-2"]
-
-    pman = get_pman(params["hostname"], params["dataset"], modules="CPUOnline")
 
     for option in good_options:
         run_pepc(f"cpu-hotplug online {option}", pman)
@@ -54,7 +54,7 @@ def test_cpuhotplug_online(params):
 def test_cpuhotplug_offline(params):
     """Test 'pepc cpu-hotplug offline' command."""
 
-    pman = get_pman(params["hostname"], params["dataset"], modules="CPUOnline")
+    pman = params["pman"]
 
     good_options = [
         "--cpus all",
