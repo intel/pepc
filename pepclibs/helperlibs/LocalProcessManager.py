@@ -274,8 +274,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         for arg in ("remotesrc", "remotedst"):
             if locals()[arg]:
-                raise Error(f"the 'LocalProcessManager' class does not support 'rsync' from/to a "
-                            f"remote host: the {arg} argument must be 'False'")
+                raise Error(f"BUG: the 'LocalProcessManager' class does not support 'rsync' "
+                            f"from/to a remote host: the {arg} argument must be 'False'")
 
         # pylint: disable=unused-argument
         cmd = "rsync -%s -- '%s' '%s'" % (opts, src, dst)
