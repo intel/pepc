@@ -48,10 +48,14 @@ _BDWD_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
 _SKX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
                        "aliases" : {"PC6": "PC6R"},
                        "bits"    : (2, 0)}
-# Ice Lake and Sapphire Rapids Xeon.
+# Ice Lake Xeon.
 _ICX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
                        "aliases" : {"PC6N": "PC6"},
                        "bits"    : (2, 0)}
+# Sapphire Rapids Xeon.
+_SPR_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6": 3, "unlimited": 7},
+                       "bits"    : (2, 0)}
+
 #
 # Atom-based micro servers.
 #
@@ -74,7 +78,7 @@ _CLIENT_PC10_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "
 # CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
         # Xeons.
-        CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _ICX_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _SPR_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_X:        _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_D:        _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_SKYLAKE_X:        _SKX_PKG_CST_LIMITS,
