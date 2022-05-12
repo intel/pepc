@@ -51,14 +51,13 @@ def test_cpuhotplug_online(params):
     for option in bad_options:
         run_pepc(f"cpu-hotplug online {option}", pman, exp_exc=Error)
 
-def test_cpuhotplug_offline(params):
-    """Test 'pepc cpu-hotplug offline' command."""
+def _test_cpuhotplug_offline_good(params):
+    """Test 'pepc cpu-hotplug offline' command with good option values."""
 
     pman = params["pman"]
 
     good_options = [
         "--cpus all",
-        f"--cpus {params['cpus'][-1]}",
         f"--cpus all --cores {params['cores'][0][0]} --packages 0",
         "--packages 0",
         "--packages 0 --cores all",
@@ -66,6 +65,8 @@ def test_cpuhotplug_offline(params):
         f"--packages 0 --cores {params['cores'][0][0]}",
         f"--packages 0 --cores {params['cores'][0][-1]}"]
 
+    if len(params["cpus"]) > 1:
+        good_options += [f"--cpus {params['cpus'][-1]}"]
     if len(params["cpus"]) > 2:
         good_options += ["--cpus 1"]
     if len(params["cpus"]) > 3:
@@ -79,6 +80,11 @@ def test_cpuhotplug_offline(params):
         run_pepc(f"cpu-hotplug offline {option}", pman)
         run_pepc(f"cpu-hotplug offline {option} --siblings", pman)
 
+def _test_cpuhotplug_offline_bad(params):
+    """Test 'pepc cpu-hotplug offline' command with bad option values."""
+
+    pman = params["pman"]
+
     bad_options = ["--cpus 0"]
     if len(params["cpus"]) > 5:
         bad_options += ["--cpus 0-4"]
@@ -89,3 +95,10 @@ def test_cpuhotplug_offline(params):
     for option in bad_options:
         # With '--siblings' CPU 0 will be excluded and all these "bad" options become OK.
         run_pepc(f"cpu-hotplug offline {option} --siblings", pman)
+
+def test_cpuhotplug_offline(params):
+    """Test 'pepc cpu-hotplug offline' command."""
+
+    if params["hostname"] == "emulation":
+        _test_cpuhotplug_offline_good(params)
+    _test_cpuhotplug_offline_bad(params)
