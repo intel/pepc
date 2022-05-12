@@ -120,11 +120,8 @@ def build_params(hostname, dataset, pman):
             for csname in csinfo:
                 params["cstates"].append(csname)
 
-        _, pinfo = next(csobj.get_props(csobj.props, cpus=[0]))
-        params["cstate_props"] = pinfo
-
-        _, pinfo = next(psobj.get_props(psobj.props, cpus=[0]))
-        params["pstate_props"] = pinfo
+        params["cstate_props"] = csobj.get_cpu_props(csobj.props, 0)
+        params["pstate_props"] = psobj.get_cpu_props(psobj.props, 0)
 
     return params
 
