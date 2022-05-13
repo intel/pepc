@@ -727,7 +727,7 @@ class PStates:
         """Same as 'get_props()', but for a single CPU."""
 
         pinfo = None
-        for pinfo in self.get_props(pnames, cpus=(cpu,)):
+        for _, pinfo in self.get_props(pnames, cpus=(cpu,)):
             pass
         return pinfo
 
@@ -735,7 +735,7 @@ class PStates:
         """Same as 'get_props()', but for a single CPU and a single property."""
 
         pinfo = None
-        for pinfo in self.get_props((pname,), cpus=(cpu,)):
+        for _, pinfo in self.get_props((pname,), cpus=(cpu,)):
             pass
         return pinfo[pname]
 
