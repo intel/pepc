@@ -155,12 +155,9 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         if shell:
             real_cmd = cmd = f" exec -- {command}"
-        elif isinstance(command, str):
+        else:
             real_cmd = command
             cmd = shlex.split(command)
-        else:
-            cmd = command
-            real_cmd = command = " ".join(command)
 
         try:
             pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
@@ -196,6 +193,9 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             cwd_msg = ""
         _LOG.debug("running the following local command asynchronously (shell %s, newgrp %s):\n"
                    "%s%s", str(shell), str(newgrp), command, cwd_msg)
+
+        # Allow for 'command' to be a 'pathlib.Path' object which Paramiko does not accept.
+        command = str(command)
 
         return self._do_run_async(command, cwd=cwd, shell=shell, stdin=stdin, stdout=stdout,
                                   stderr=stderr, bufsize=bufsize, env=env, newgrp=newgrp)
