@@ -61,7 +61,6 @@ class ToolChecker:
     providing a meaningful suggestion if it is not installed.
     """
 
-
     def _read_os_release(self, sysroot="/"):
         """
         Read and parse the '/etc/os-release' file, and return its contents as a dictionary.
