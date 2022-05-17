@@ -244,7 +244,8 @@ def build_arguments_parser():
     # Create parser for the 'pstates info' command.
     #
     text = "Get P-states information."
-    descr = "Get P-states information for specified CPUs (CPU0 by default)."
+    descr = """Get P-states information for specified CPUs (CPU0 by default). Prints all information
+               by default."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=pstates_info_command)
 
@@ -256,6 +257,19 @@ def build_arguments_parser():
 
     text = f"""List of packages to get information about. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
+
+    for name, pinfo in PStates.PROPS.items():
+        if pinfo["type"] == "bool":
+            # This is a binary "on/off" type of features.
+            text = "Get current setting for "
+        else:
+            text = "Get "
+
+        option = f"--{name.replace('_', '-')}"
+        name = Human.untitle(pinfo["name"])
+        text += f"""{name}. {pinfo["help"]} This option has {pinfo["scope"]} scope."""
+
+        subpars2.add_argument(option, action="store_true", help=text)
 
     #
     # Create parser for the 'pstates config' command.

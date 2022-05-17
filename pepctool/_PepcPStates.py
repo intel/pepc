@@ -74,10 +74,21 @@ def pstates_config_command(args, pman):
 def pstates_info_command(args, pman):
     """Implements the 'pstates info' command."""
 
+    # Options to print.
+    print_opts = []
+
+    for optname in PStates.PROPS:
+        if getattr(args, f"{optname}"):
+            print_opts.append(optname)
+
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
+
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        pinfo_iter = psobj.get_props(psobj.props, cpus=cpus)
-        aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
-        _PepcCommon.print_aggr_props(aggr_pinfo, psobj, cpuinfo)
+        if print_opts:
+            _handle_print_opts(print_opts, cpus, psobj, cpuinfo)
+        else:
+            pinfo_iter = psobj.get_props(psobj.props, cpus=cpus)
+            aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
+            _PepcCommon.print_aggr_props(aggr_pinfo, psobj, cpuinfo)
