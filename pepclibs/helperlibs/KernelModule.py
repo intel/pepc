@@ -119,6 +119,9 @@ class KernelModule:
         more optimal.
         """
 
+        if not name:
+            raise Error("BUG: no driver name provided")
+
         if dmesg is None:
             dmesg = True
 
