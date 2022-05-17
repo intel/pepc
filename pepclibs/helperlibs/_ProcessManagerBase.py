@@ -425,6 +425,8 @@ class ProcessBase:
         self._queue = None
 
         if self.stdin:
+            if not getattr(self.stdin, "name", None):
+                setattr(self.stdin, "name", "stdin")
             self.stdin = ClassHelpers.WrapExceptions(self.stdin, exceptions=(Exception,),
                                                      get_err_prefix=_get_err_prefix)
 
