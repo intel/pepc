@@ -163,7 +163,8 @@ def build_arguments_parser():
     text = "Get CPU C-states information."
     descr = """Get information about C-states on specified CPUs (CPU0 by default). Remember, this is
                information about the C-states that Linux can request, they are not necessarily the
-               same as the C-states supported by the underlying hardware."""
+               same as the C-states supported by the underlying hardware. Prints all information by
+               default."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=cstates_info_command)
 
@@ -178,9 +179,20 @@ def build_arguments_parser():
 
     text = f"""Comma-sepatated list of C-states to get information about (all C-states by default).
                {cst_list_text}."""
-    subpars2.add_argument("--cstates", dest="csnames", help=text, default="all")
+    subpars2.add_argument("--cstates", dest="csnames", help=text, default="default")
 
+    for name, pinfo in CStates.PROPS.items():
+        if pinfo["type"] == "bool":
+            # This is a binary "on/off" type of features.
+            text = "Get current setting for "
+        else:
+            text = "Get "
 
+        option = f"--{name.replace('_', '-')}"
+        name = Human.untitle(pinfo["name"])
+        text += f"""{name}. {pinfo["help"]} This option has {pinfo["scope"]} scope."""
+
+        subpars2.add_argument(option, action="store_true", help=text)
     #
     # Create parser for the 'cstates config' command.
     #
