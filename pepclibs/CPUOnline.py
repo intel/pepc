@@ -98,10 +98,10 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
 
             state = self._get_online(path)
             if data == state:
-                msg = f"CPU{cpu} is already {state_str}, skipping"
-            else:
-                msg = f"{action_str} CPU{cpu}"
-            _LOG.log(self._loglevel, msg)
+                _LOG.log(self._loglevel, "CPU%d is already %s, skipping", cpu, state_str)
+                continue
+
+            _LOG.log(self._loglevel, "%s CPU%d", action_str, cpu)
 
             try:
                 with self._pman.open(path, "w") as fobj:
