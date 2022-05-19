@@ -165,13 +165,13 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
 
+        if progress is None:
+            progress = logging.DEBUG
+
         self._loglevel = progress
         self._saved_states = {}
         self._sysfs_base = Path("/sys/devices/system/cpu")
         self.restore_on_close = False
-
-        if progress is None:
-            progress = logging.DEBUG
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
