@@ -522,7 +522,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 self._intsh_lock.release()
                 if self._intsh:
                     with contextlib.suppress(BaseException):
-                        self._intsh.send("exit\n")
+                        self._intsh.pobj.send("exit\n")
                         self._intsh.close()
                     self._intsh = None
             else:
@@ -945,7 +945,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         if getattr(self, "_intsh", None):
             with contextlib.suppress(BaseException):
-                self._intsh.send("exit\n")
+                self._intsh.pobj.send("exit\n")
 
         ClassHelpers.close(self, close_attrs=("_sftp", "_intsh", "ssh",))
 
