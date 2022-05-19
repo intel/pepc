@@ -113,7 +113,7 @@ class ProcessBase:
 
                 self._dbg("stream %d: read data:\n%s", streamid, data)
                 self._queue.put((streamid, data))
-        except Exception as err: # pylint: disable=broad-except
+        except BaseException as err: # pylint: disable=broad-except
             _LOG.error(err)
 
         # The end of stream indicator.
@@ -427,7 +427,7 @@ class ProcessBase:
         if self.stdin:
             if not getattr(self.stdin, "name", None):
                 setattr(self.stdin, "name", "stdin")
-            self.stdin = ClassHelpers.WrapExceptions(self.stdin, exceptions=(Exception,),
+            self.stdin = ClassHelpers.WrapExceptions(self.stdin, exceptions=(BaseException,),
                                                      get_err_prefix=_get_err_prefix)
 
     def close(self):
@@ -443,7 +443,7 @@ class ProcessBase:
     def __del__(self):
         """Class destructor."""
 
-        with contextlib.suppress(Exception):
+        with contextlib.suppress(BaseException):
             self._dbg("__del__()")
 
         if hasattr(self, "_threads_exit"):
@@ -579,7 +579,7 @@ class ProcessManagerBase:
             # Try to resolve tool name to the OS package name.
             with ToolChecker.ToolChecker(pman=self) as tchk:
                 pkgname = tchk.tool_to_pkg(tool)
-        except Exception as err: # pylint: disable=broad-except
+        except BaseException as err: # pylint: disable=broad-except
             _LOG.debug("failed to format the command package suggestion: %s", err)
 
         if pkgname:

@@ -40,7 +40,6 @@ import time
 import stat
 import types
 import shlex
-import socket
 import random
 import logging
 import threading
@@ -57,9 +56,6 @@ _LOG = logging.getLogger()
 # Paramiko is a bit too noisy, lower its log level.
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 
-# The exceptions to handle when dealing with paramiko.
-_PARAMIKO_EXCEPTIONS = (OSError, IOError, paramiko.SSHException, socket.error)
-
 class SSHProcess(_ProcessManagerBase.ProcessBase):
     """
     This class represents a remote process that was executed by 'SSHProcessManager'.
@@ -70,7 +66,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         try:
             return self._streams[streamid](size)
-        except _PARAMIKO_EXCEPTIONS as err:
+        except BaseException as err:
             raise Error(str(err)) from err
 
     def _recv_exit_status_timeout(self, timeout):
@@ -429,19 +425,19 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             chan = self.ssh.get_transport().open_session(timeout=self.connection_timeout)
-        except _PARAMIKO_EXCEPTIONS as err:
+        except BaseException as err:
             raise Error(f"cannot create a new SSH session for running the following "
                         f"command{self.hostmsg}:\n{cmd}\nThe error is: {err}") from err
 
         try:
             chan.exec_command(cmd)
-        except _PARAMIKO_EXCEPTIONS as err:
+        except BaseException as err:
             raise Error(f"cannot execute the following command in a new SSH session"
                         f"{self.hostmsg}:\n{cmd}\nThe error is: {err}") from err
 
         try:
             stdin = chan.makefile_stdin("wb", 0)
-        except _PARAMIKO_EXCEPTIONS as err:
+        except BaseException as err:
             raise Error(f"failed to create the stdin file-like object: {err}") from err
 
         streams = (stdin, chan.recv, chan.recv_stderr)
@@ -513,19 +509,19 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             return self._run_in_intsh(command, cwd=cwd)
-        except _PARAMIKO_EXCEPTIONS as err:
+        except BaseException as err: # pylint: disable=broad-except
             _LOG.warning("failed to run the following command in an interactive shell: %s\n"
                          "The error was: %s", command, err)
 
             # Close the internal shell and try to run in a new session.
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(BaseException):
                 acquired = self._acquire_intsh_lock(command=command)
 
             if acquired:
                 self._intsh_busy = False
                 self._intsh_lock.release()
                 if self._intsh:
-                    with contextlib.suppress(Exception):
+                    with contextlib.suppress(BaseException):
                         self._intsh.send("exit\n")
                         self._intsh.close()
                     self._intsh = None
@@ -710,7 +706,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             self._sftp = self.ssh.open_sftp()
-        except _PARAMIKO_EXCEPTIONS as err:
+        except BaseException as err:
             raise Error(f"failed to establish SFTP session with {self.hostname}:\n{err}") from err
 
         return self._sftp
@@ -775,7 +771,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise ErrorPermissionDenied(f"{errmsg}{err}") from None
         except FileNotFoundError as err:
             raise ErrorNotFound(f"{errmsg}{err}") from None
-        except _PARAMIKO_EXCEPTIONS as err:
+        except BaseException as err:
             raise Error(f"{errmsg}{err}") from err
 
         # Save the path and the mode in the object.
@@ -791,7 +787,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             fobj.write = types.MethodType(_write_, fobj)
 
         # Make sure methods of 'fobj' always raise the 'Error' exception.
-        fobj = ClassHelpers.WrapExceptions(fobj, exceptions=_PARAMIKO_EXCEPTIONS,
+        fobj = ClassHelpers.WrapExceptions(fobj, exceptions=(BaseException,),
                                            get_err_prefix=get_err_prefix)
         return fobj
 
@@ -903,7 +899,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if not self.privkeypath:
             # Try finding the key filename from the SSH configuration files.
             look_for_keys = True
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(BaseException):
                 self.privkeypath = Path(self._lookup_privkey(hostname, self.username))
 
         key_filename = str(self.privkeypath) if self.privkeypath else None
@@ -932,7 +928,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except paramiko.AuthenticationException as err:
             raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
                                f"'{self.username}':\n{err}") from err
-        except Exception as err:
+        except BaseException as err:
             raise ErrorConnect(f"cannot establish TCP connection to {self._vhostname} with "
                                f"{timeout} secs time-out:\n{err}") from err
 
@@ -948,7 +944,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    id(self))
 
         if getattr(self, "_intsh", None):
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(BaseException):
                 self._intsh.send("exit\n")
 
         ClassHelpers.close(self, close_attrs=("_sftp", "_intsh", "ssh",))
