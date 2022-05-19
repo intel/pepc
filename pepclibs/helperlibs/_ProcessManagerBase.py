@@ -438,7 +438,7 @@ class ProcessBase:
         if hasattr(self, "_threads_exit"):
             self._threads_exit = True
 
-        ClassHelpers.close(self, unref_attrs=("pman",))
+        ClassHelpers.close(self, unref_attrs=("pman", "pobj"))
 
     def __del__(self):
         """Class destructor."""
