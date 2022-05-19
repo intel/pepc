@@ -19,7 +19,16 @@ from pepclibs import CPUInfo
 _LOG = logging.getLogger()
 
 class CPUOnline(ClassHelpers.SimpleCloseContext):
-    """This class provides API for onlining and offlining CPUs."""
+    """
+    This class provides API for onlining and offlining CPUs.
+
+    Public methods overview.
+
+      * 'online()'
+      * 'offline()'
+      * 'is_online()'
+      * 'restore()'
+    """
 
     def _get_cpuinfo(self):
         """Returns a 'CPUInfo.CPUInfo()' object."""
