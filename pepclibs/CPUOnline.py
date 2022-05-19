@@ -33,8 +33,15 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
     def _get_cpuinfo(self):
         """Returns a 'CPUInfo.CPUInfo()' object."""
 
+        if self._reload_cpuinfo:
+            if self._cpuinfo:
+                self._cpuinfo.close()
+                self._cpuinfo = None
+            self._reload_cpuinfo = False
+
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+
         return self._cpuinfo
 
     def _verify_path(self, cpu, path):
@@ -102,6 +109,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                 continue
 
             _LOG.log(self._loglevel, "%s CPU%d", action_str, cpu)
+            self._reload_cpuinfo = True
 
             try:
                 with self._pman.open(path, "w") as fobj:
@@ -171,6 +179,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
         self._loglevel = progress
         self._saved_states = {}
         self._sysfs_base = Path("/sys/devices/system/cpu")
+        self._reload_cpuinfo = False
         self.restore_on_close = False
 
         if not self._pman:
