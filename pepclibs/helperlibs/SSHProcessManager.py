@@ -947,10 +947,10 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    "object ID: %s", self._vhostname, self.port, self.username, self.privkeypath,
                    id(self))
 
-        super().close()
-
         if getattr(self, "_intsh", None):
             with contextlib.suppress(Exception):
                 self._intsh.send("exit\n")
 
         ClassHelpers.close(self, close_attrs=("_sftp", "_intsh", "ssh",))
+
+        super().close()
