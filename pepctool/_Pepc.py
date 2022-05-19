@@ -161,10 +161,10 @@ def build_arguments_parser():
     # Create parser for the 'cstates info' command.
     #
     text = "Get CPU C-states information."
-    descr = """Get information about C-states on specified CPUs (CPU0 by default). Remember, this is
-               information about the C-states that Linux can request, they are not necessarily the
-               same as the C-states supported by the underlying hardware. Prints all information by
-               default."""
+    descr = """Get information about C-states on specified CPUs. By default, prints all information
+               for all CPUs. Remember, this is information about the C-states that Linux can
+               request, they are not necessarily the same as the C-states supported by the
+               underlying hardware."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=cstates_info_command)
 
@@ -256,8 +256,8 @@ def build_arguments_parser():
     # Create parser for the 'pstates info' command.
     #
     text = "Get P-states information."
-    descr = """Get P-states information for specified CPUs (CPU0 by default). Prints all information
-               by default."""
+    descr = """Get P-states information for specified CPUs. By default, prints all information for
+               all CPUs."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=pstates_info_command)
 
