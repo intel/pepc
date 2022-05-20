@@ -96,7 +96,7 @@ class WrapExceptions:
         """Next iteration."""
         return self._obj.__next__()
 
-def close(cls_obj, unref_attrs=None, close_attrs=None):
+def close(cls_obj, close_attrs=None, unref_attrs=None):
     """
     Uninitialize a class object 'cls_obj' by freeing objects referred to by attributes in 'attrs'.
 
@@ -130,11 +130,6 @@ def close(cls_obj, unref_attrs=None, close_attrs=None):
     if close_attrs is None:
         close_attrs = []
 
-    for attr in unref_attrs:
-        obj = getattr(cls_obj, attr, None)
-        if obj:
-            setattr(cls_obj, attr, None)
-
     for attr in close_attrs:
         obj = getattr(cls_obj, attr, None)
         if not obj:
@@ -162,3 +157,8 @@ def close(cls_obj, unref_attrs=None, close_attrs=None):
                 _LOG.debug_print_stack()
 
         setattr(cls_obj, attr, None)
+
+    for attr in unref_attrs:
+        obj = getattr(cls_obj, attr, None)
+        if obj:
+            setattr(cls_obj, attr, None)
