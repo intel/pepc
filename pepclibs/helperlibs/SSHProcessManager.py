@@ -436,7 +436,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                         f"{self.hostmsg}:\n{cmd}\nThe error is: {err}") from err
 
         try:
-            stdin = chan.makefile_stdin("wb", 0)
+            stdin = chan.makefile("wb")
         except BaseException as err:
             raise Error(f"failed to create the stdin file-like object: {err}") from err
 
