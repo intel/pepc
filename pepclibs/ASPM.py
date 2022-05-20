@@ -12,7 +12,7 @@ from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 
-class ASPM:
+class ASPM(ClassHelpers.SimpleCloseContext):
     """This class provides an API to control PCI ASPM."""
 
     def _get_policies(self, strip=True):
@@ -82,11 +82,3 @@ class ASPM:
     def close(self):
         """Uninitialize the class object."""
         ClassHelpers.close(self, close_attrs=("_pman",))
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

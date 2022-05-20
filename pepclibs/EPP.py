@@ -32,7 +32,7 @@ _EPP_POLICIES = {"performance": 0,
 # The minimum and maximum EPP values.
 _EPP_MIN, _EPP_MAX = 0, 0xFF
 
-class EPP:
+class EPP(ClassHelpers.SimpleCloseContext):
     """
     This module provides a capability of reading and changing EPP (Energy Performance Preference) on
     Intel CPUs.
@@ -351,11 +351,3 @@ class EPP:
 
         close_attrs = ("_hwpreq", "_hwpreq_pkg", "_msr", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

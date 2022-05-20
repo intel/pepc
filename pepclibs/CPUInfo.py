@@ -152,7 +152,7 @@ _CPU_DESCR = {INTEL_FAM6_SAPPHIRERAPIDS_X: "Sapphire Rapids Xeon",
 # The levels names have to be the same as "scope" names in 'PStates', 'CStates', etc.
 LEVELS = ("package", "die", "node", "core", "CPU")
 
-class CPUInfo:
+class CPUInfo(ClassHelpers.SimpleCloseContext):
     """
     Provide information about the CPU of a local or remote host.
 
@@ -975,11 +975,3 @@ class CPUInfo:
     def close(self):
         """Uninitialize the class object."""
         ClassHelpers.close(self, close_attrs=("_pman",))
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

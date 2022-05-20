@@ -29,7 +29,7 @@ _LOG = logging.getLogger()
 # * Sub-classes do not necessary implement all features available in the MSR register.
 FEATURES = {}
 
-class FeaturedMSR:
+class FeaturedMSR(ClassHelpers.SimpleCloseContext):
     """
     This is the base class for "featured" MSRs, such as 'MSR_PKG_CST_CONFIG_CONTROL'.
 
@@ -422,11 +422,3 @@ class FeaturedMSR:
     def close(self):
         """Uninitialize the class object."""
         ClassHelpers.close(self, close_attrs=("_msr", "_cpuinfo", "_pman",))
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

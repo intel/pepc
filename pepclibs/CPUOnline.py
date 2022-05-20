@@ -18,7 +18,7 @@ from pepclibs import CPUInfo
 
 _LOG = logging.getLogger()
 
-class CPUOnline:
+class CPUOnline(ClassHelpers.SimpleCloseContext):
     """This class provides API for onlining and offlining CPUs."""
 
     def _get_cpuinfo(self):
@@ -176,11 +176,3 @@ class CPUOnline:
                 self.restore()
 
         ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman",))
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

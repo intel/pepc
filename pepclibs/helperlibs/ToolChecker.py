@@ -55,7 +55,7 @@ _PKGINFO = {
     "CentOS Linux" :     _FEDORA_PKGINFO,
 }
 
-class ToolChecker:
+class ToolChecker(ClassHelpers.SimpleCloseContext):
     """
     This class provides a capability of checking if a tool is installed on a Linux host and
     providing a meaningful suggestion if it is not installed.
@@ -147,11 +147,3 @@ class ToolChecker:
     def close(self):
         """Uninitialize the class object."""
         ClassHelpers.close(self, close_attrs=("_pman",))
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

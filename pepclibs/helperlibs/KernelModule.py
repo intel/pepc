@@ -19,7 +19,7 @@ _LOG = logging.getLogger()
 # The drivers supported by this module.
 DRIVERS = {}
 
-class KernelModule:
+class KernelModule(ClassHelpers.SimpleCloseContext):
     """This class represents a Linux kernel module."""
 
     def _get_usage_count(self):
@@ -143,11 +143,3 @@ class KernelModule:
     def close(self):
         """Stop the measurements."""
         ClassHelpers.close(self, close_attrs=("_dmesg_obj", "_pman",))
-
-    def __enter__(self):
-        """Enter the run-time context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the run-time context."""
-        self.close()

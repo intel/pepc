@@ -67,7 +67,7 @@ def _bug_method_not_defined(method_name):
 
     raise Error(f"BUG: '{method_name}()' was not defined by the child class")
 
-class ProcessBase:
+class ProcessBase(ClassHelpers.SimpleCloseContext):
     """
     The base class for processes created using one of the process managers.
     """
@@ -449,15 +449,7 @@ class ProcessBase:
         if hasattr(self, "_threads_exit"):
             self._threads_exit = True
 
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()
-
-class ProcessManagerBase:
+class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     """
     The base class for process managers, which can manage both local and remote processes.
     """
@@ -850,11 +842,3 @@ class ProcessManagerBase:
 
     def close(self):
         """Free allocated resources."""
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

@@ -33,7 +33,7 @@ _EPB_POLICIES = {"performance": 0,
 # The minimum and maximum EPB values.
 _EPB_MIN, _EPB_MAX = 0, 15
 
-class EPB:
+class EPB(ClassHelpers.SimpleCloseContext):
     """
     This class provides a capability of reading and changing EPB (Energy Performance Bias) on Intel
     CPUs.
@@ -189,11 +189,3 @@ class EPB:
 
         close_attrs = ("_epb_msr", "_msr", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

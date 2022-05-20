@@ -13,7 +13,7 @@ This module provides python API to the systemctl tool.
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
 
-class Systemctl:
+class Systemctl(ClassHelpers.SimpleCloseContext):
     """This module provides python API to the systemctl tool."""
 
     def _start(self, units, start):
@@ -121,11 +121,3 @@ class Systemctl:
     def close(self):
         """Uninitialize the class object."""
         ClassHelpers.close(self, close_attrs=("_pman",))
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

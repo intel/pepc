@@ -19,7 +19,7 @@ from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
 
 _LOG = logging.getLogger()
 
-class Dmesg:
+class Dmesg(ClassHelpers.SimpleCloseContext):
     """This class provides convenient API to the 'dmesg' tool."""
 
     def run(self, join=True, strip=False, capture=False):
@@ -93,11 +93,3 @@ class Dmesg:
     def close(self):
         """Stop the measurements."""
         ClassHelpers.close(self, close_attrs=("_pman",))
-
-    def __enter__(self):
-        """Enter the run-time context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the run-time context."""
-        self.close()

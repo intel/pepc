@@ -220,7 +220,7 @@ def _is_uncore_prop(prop):
         return True
     return False
 
-class PStates:
+class PStates(ClassHelpers.SimpleCloseContext):
     """
     This module provides API for managing platform settings related to P-states.
 
@@ -1150,11 +1150,3 @@ class PStates:
         close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_platinfo", "_trl", "_msr", "_cpuinfo",
                        "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

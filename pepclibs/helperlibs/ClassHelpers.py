@@ -16,6 +16,21 @@ from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
 
+class SimpleCloseContext():
+    """
+    Many classes we that we have use the same context manager '__enter__()' and '__exit__()' methods
+    implementation. This class helps avoid code duplication and can be sub-classed to get the
+    default implementation of the context manager that just calls 'close()' on exit.
+    """
+
+    def __enter__(self):
+        """Enter the run-time context."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the runtime context."""
+        self.close() # pylint: disable=no-member
+
 class WrapExceptions:
     """This class allows for wrapping objects in order to intercept their exceptions."""
 

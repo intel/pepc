@@ -33,7 +33,7 @@ DCU_IP = 3
 
 _LOG = logging.getLogger()
 
-class MSR:
+class MSR(ClassHelpers.SimpleCloseContext):
     """
     This class provides helpers to read and write CPU Model Specific Registers.
 
@@ -435,11 +435,3 @@ class MSR:
             self._msr_drv = None
 
         ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman",))
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()

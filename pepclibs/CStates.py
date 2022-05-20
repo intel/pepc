@@ -93,7 +93,7 @@ PROPS = {
 # information dictionary returned by 'get_cstates_info()' uses these file names as keys as well.
 CST_SYSFS_FNAMES = ["name", "desc", "disable", "latency", "residency", "time", "usage"]
 
-class ReqCStates:
+class ReqCStates(ClassHelpers.SimpleCloseContext):
     """
     This class provides API for managing requestable C-states via Linux sysfs API.
 
@@ -455,16 +455,7 @@ class ReqCStates:
         """Uninitialize the class object."""
         ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman"))
 
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()
-
-
-class CStates:
+class CStates(ClassHelpers.SimpleCloseContext):
     """
     This class provides C-state management API.
 
@@ -760,11 +751,3 @@ class CStates:
 
         close_attrs = ("_pcstatectl", "_powerctl", "_msr", "_rcsobj", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()
