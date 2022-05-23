@@ -62,7 +62,7 @@ _UBUNTU_PKGINFO.update(_COMMON_PKGINFO)
 _DEBIAN_PKGINFO.update(_COMMON_PKGINFO)
 
 _PKGINFO = {
-    "Fedora"           : _FEDORA_PKGINFO,
+    "Fedora Linux"     : _FEDORA_PKGINFO,
     "CentOS Linux"     : _FEDORA_PKGINFO,
     "Ubuntu"           : _UBUNTU_PKGINFO,
     "Debian GNU/Linux" : _DEBIAN_PKGINFO,
@@ -106,7 +106,14 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
             return self._osname
 
         osinfo = self._read_os_release()
-        return osinfo.get("NAME")
+        osname = osinfo.get("NAME")
+
+        if osname == "Fedora":
+            # A piece of compatibility code. Prior to Fedora 35, the OS name was "Fedora". In Fedora
+            # 35, it changed to "Fedora Linux".
+            osname = "Fedora Linux"
+
+        return osname
 
     def tool_to_pkg(self, tool):
         """
