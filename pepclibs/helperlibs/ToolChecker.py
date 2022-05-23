@@ -39,20 +39,33 @@ _COMMON_PKGINFO = {
     "xargs"     : "findutils",
 }
 
-# CentOS and Fedora.
-_FEDORA_PKGINFO = {"sch_etf.ko" : "kernel-modules-extra"}
+# CentOS and Fedora
+_FEDORA_PKGINFO = {
+    "bpftool"    : "bpftool",
+    "sch_etf.ko" : "kernel-modules-extra",
+}
 
-# Ubuntu and Debian.
-_DEBIAN_PKGINFO = {"sch_etf.ko" : "linux-modules"}
+# Ubuntu
+_UBUNTU_PKGINFO = {
+    "bpftool"    : "linux-tools-common",
+    "sch_etf.ko" : "linux-modules",
+}
+
+# Debian.
+_DEBIAN_PKGINFO = {
+    "bpftool"    : "bpftool",
+    "sch_etf.ko" : "linux-modules",
+}
 
 _FEDORA_PKGINFO.update(_COMMON_PKGINFO)
+_UBUNTU_PKGINFO.update(_COMMON_PKGINFO)
 _DEBIAN_PKGINFO.update(_COMMON_PKGINFO)
 
 _PKGINFO = {
-    "Ubuntu" :           _DEBIAN_PKGINFO,
+    "Fedora"           : _FEDORA_PKGINFO,
+    "CentOS Linux"     : _FEDORA_PKGINFO,
+    "Ubuntu"           : _UBUNTU_PKGINFO,
     "Debian GNU/Linux" : _DEBIAN_PKGINFO,
-    "Fedora" :           _FEDORA_PKGINFO,
-    "CentOS Linux" :     _FEDORA_PKGINFO,
 }
 
 class ToolChecker(ClassHelpers.SimpleCloseContext):
