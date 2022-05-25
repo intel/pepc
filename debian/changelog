@@ -1,8 +1,13 @@
+pepc (1.3.5) unstable; urgency=low
+
+  * pepc: add per-property options to 'cstates info' and 'pstates info'.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 25 May 2022 16:45:39 +0300
+
 pepc (1.3.4) unstable; urgency=low
 
   * pepc cstates config: fix "bad C-state name" failures.
   * pepc: improve error message if sub-command was not specified.
-  * pepc: add per-property options to 'cstates info' and 'pstates info'.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 08 Apr 2022 15:47:31 +0300
 
