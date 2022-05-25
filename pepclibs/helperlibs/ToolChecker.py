@@ -116,13 +116,19 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
 
         return osname
 
-    def tool_to_pkg(self, tool):
+    def tool_to_pkg(self, tool, osname=None):
         """
+        Get OS package name by tool name. The arguments are as follows.
+          * tool - name of the tool to get OS package name for.
+          * osname - optional OS name (will be automatically discovered by default)
+
         Returns the OS package name providing 'tool'. Returns 'None' if package name is was not
         found.
         """
 
-        osname = self._get_osname()
+        if not osname:
+            osname = self._get_osname()
+
         if osname not in _PKGINFO:
             return None
 
@@ -144,9 +150,11 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
 
         msg = f"failed to find tool '{tool}'{self._pman.hostmsg}"
 
-        pkgname = self.tool_to_pkg(Path(tool).name)
+        osname = self._get_osname()
+
+        pkgname = self.tool_to_pkg(Path(tool).name, osname=osname)
         if pkgname:
-            msg += f".\nTry to install package '{pkgname}'{self._pman.hostmsg}."
+            msg += f".\nTry to install {osname} package '{pkgname}'{self._pman.hostmsg}."
 
         raise ErrorNotSupported(msg)
 
