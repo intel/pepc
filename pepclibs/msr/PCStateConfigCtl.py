@@ -48,10 +48,14 @@ _BDWD_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
 _SKX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
                        "aliases" : {"PC6": "PC6R"},
                        "bits"    : (2, 0)}
-# Ice Lake and Sapphire Rapids Xeon.
+# Ice Lake Xeon.
 _ICX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
                        "aliases" : {"PC6N": "PC6"},
                        "bits"    : (2, 0)}
+# Sapphire Rapids Xeon.
+_SPR_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6": 3, "unlimited": 7},
+                       "bits"    : (2, 0)}
+
 #
 # Atom-based micro servers.
 #
@@ -65,29 +69,49 @@ _SNR_PKG_CST_LIMITS = {"codes"   : {"PC0": 0},
 #
 # Clients.
 #
-# Alder Lake.
-_ADL_PKG_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5,
-                                  "PC8": 6, "PC9": 7, "PC10": 8},
-                        "bits" : (3, 0)}
+_CLIENT_PC7S_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5},
+                           "bits" : (3, 0)}
+_CLIENT_PC10_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5,
+                           "PC8": 6, "PC9": 7, "PC10": 8},
+                           "bits" : (3, 0)}
 
 # CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
         # Xeons.
-        CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _ICX_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _SPR_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_X:        _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_D:        _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_SKYLAKE_X:        _SKX_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_IVYBRIDGE_X:      _IVT_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_HASWELL_X:        _HSX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_BROADWELL_X:      _HSX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_BROADWELL_D:      _BDWD_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_BROADWELL_G:      _BDWD_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_HASWELL_X:        _HSX_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_IVYBRIDGE_X:      _IVT_PKG_CST_LIMITS,
         # Atom microservers.
         CPUInfo.INTEL_FAM6_GOLDMONT_D:       _DNV_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_TREMONT_D:        _SNR_PKG_CST_LIMITS,
         # Clients.
-        CPUInfo.INTEL_FAM6_ALDERLAKE:        _ADL_PKG_CST_LIMITS,
-        CPUInfo.INTEL_FAM6_ALDERLAKE_L:      _ADL_PKG_CST_LIMITS,
+        # Deepest: PC10.
+        CPUInfo.INTEL_FAM6_ROCKETLAKE:       _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_ALDERLAKE:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_ALDERLAKE_L:      _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_TIGERLAKE:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_TIGERLAKE_L:      _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_LAKEFIELD:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_COMETLAKE:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_COMETLAKE_L:      _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_KABYLAKE_L:       _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_KABYLAKE:         _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_ICELAKE_L:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_ICELAKE_NNPI:     _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_CANNONLAKE_L:     _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_SKYLAKE:          _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_SKYLAKE_L:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_BROADWELL:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_HASWELL_L:        _CLIENT_PC10_CST_LIMITS,
+        # Deepest: PC7S.
+        CPUInfo.INTEL_FAM6_HASWELL:          _CLIENT_PC7S_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_HASWELL_G:        _CLIENT_PC7S_CST_LIMITS,
 }
 
 # Map of features available on various CPU models. Please, refer to the notes for
@@ -172,7 +196,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                     known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
                     raise Error(f"unexpected package C-state limit code '{code}' read from "
                                 f"'{self.regname}' MSR ({self.regaddr}) on CPU {cpu}"
-                                f"{self._proc.hostmsg}, known codes are: {known_codes}")
+                                f"{self._pman.hostmsg}, known codes are: {known_codes}")
 
             res = {"pkg_cstate_limit" : finfo["rvals"][code],
                    "pkg_cstate_limits" : list(finfo["vals"].keys()),
@@ -186,7 +210,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         for cpu, regval in self._msr.read(self.regaddr, cpus=cpus):
             if self._msr.get_bits(regval, self._features["locked"]["bits"]):
-                raise Error(f"cannot set package C-state limit{self._proc.hostmsg} for CPU "
+                raise Error(f"cannot set package C-state limit{self._pman.hostmsg} for CPU "
                             f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
 
@@ -198,7 +222,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         if not self._features["pkg_cstate_limit"]["supported"]:
             _LOG.notice("no package C-state limit table available for %s%s. Try to contact "
-                        "project maintainers.", self._cpuinfo.cpudescr, self._proc.hostmsg)
+                        "project maintainers.", self._cpuinfo.cpudescr, self._pman.hostmsg)
             return
 
         cpumodel = self._cpuinfo.info["model"]
@@ -225,12 +249,12 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         self.regaddr = MSR_PKG_CST_CONFIG_CONTROL
         self.regname = "MSR_PKG_CST_CONFIG_CONTROL"
 
-    def __init__(self, proc=None, cpuinfo=None, msr=None):
+    def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
         The class constructor. The argument are as follows.
-          * proc - the 'Proc' or 'SSH' object that defines the host to run the measurements on.
+          * pman - the process manager object that defines the host to run the measurements on.
           * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
           * msr - the 'MSR.MSR()' object to use for writing to the MSR register.
         """
 
-        super().__init__(proc=proc, cpuinfo=cpuinfo, msr=msr)
+        super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr)

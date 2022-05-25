@@ -13,9 +13,8 @@ Intel CPUs.
 """
 
 import logging
-from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.helperlibs import Procs, Trivial, FSHelpers
+from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, HWPRequest, HWPRequestPkg
 
@@ -33,10 +32,7 @@ _EPP_POLICIES = {"performance": 0,
 # The minimum and maximum EPP values.
 _EPP_MIN, _EPP_MAX = 0, 0xFF
 
-# A unique object used for the 'not_supported_ok' key in some methods.
-_RAISE = object()
-
-class EPP:
+class EPP(ClassHelpers.SimpleCloseContext):
     """
     This module provides a capability of reading and changing EPP (Energy Performance Preference) on
     Intel CPUs.
@@ -58,7 +54,7 @@ class EPP:
         """Returns an 'MSR.MSR()' object."""
 
         if not self._msr:
-            self._msr = MSR.MSR(self._proc, cpuinfo=self._cpuinfo)
+            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo)
         return self._msr
 
     def _get_hwpreq(self):
@@ -66,7 +62,7 @@ class EPP:
 
         if not self._hwpreq:
             msr = self._get_msr()
-            self._hwpreq = HWPRequest.HWPRequest(proc=self._proc, cpuinfo=self._cpuinfo, msr=msr)
+            self._hwpreq = HWPRequest.HWPRequest(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
         return self._hwpreq
 
@@ -75,7 +71,7 @@ class EPP:
 
         if not self._hwpreq_pkg:
             msr = self._get_msr()
-            self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(proc=self._proc, cpuinfo=self._cpuinfo,
+            self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
                                                            msr=msr)
         return self._hwpreq_pkg
 
@@ -105,7 +101,7 @@ class EPP:
         if self._is_cached("supported", cpu):
             return self._cache[cpu]["supported"]
 
-        if FSHelpers.exists(Path(self._sysfs_epp_path % cpu), proc=self._proc):
+        if self._pman.exists(self._sysfs_epp_path % cpu):
             self._add_to_cache("supported", True, cpu)
         else:
             val = self._get_hwpreq().is_cpu_feature_supported("epp", cpu)
@@ -113,20 +109,20 @@ class EPP:
 
         return self._cache[cpu]["supported"]
 
-    def _get_cpu_epp_policies(self, cpu, not_supported_ok=_RAISE):
+    def _get_cpu_epp_policies(self, cpu, not_supported_ok=False):
         """Implements 'get_cpu_epp_policies()'."""
 
         if not self.is_epp_supported(cpu):
-            if not_supported_ok is _RAISE:
-                raise Error(f"CPU {cpu} does not support EPP")
-            return None
+            if not_supported_ok:
+                return None
+            raise ErrorNotSupported(f"CPU {cpu} does not support EPP")
 
         if self._is_cached("policies", cpu):
             return self._cache[cpu]["policies"]
 
         # Prefer using the names from the Linux kernel.
         path = self._sysfs_epp_policies_path % cpu
-        line = FSHelpers.read(path, default=None, proc=self._proc)
+        line = self._pman.read(path, must_exist=False)
         if line is None:
             policies = list(_EPP_POLICIES)
         else:
@@ -135,7 +131,7 @@ class EPP:
         self._add_to_cache("policies", policies, cpu)
         return policies
 
-    def get_epp_policies(self, cpus="all", not_supported_ok=_RAISE):
+    def get_epp_policies(self, cpus="all", not_supported_ok=False):
         """
         Yield (CPU number, List of supported EPP policy names) pairs for CPUs in 'cpus'.
           * cpus - same as in 'get_epp_policy()'.
@@ -145,7 +141,7 @@ class EPP:
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield cpu, self._get_cpu_epp_policies(cpu, not_supported_ok=not_supported_ok)
 
-    def get_cpu_epp_policies(self, cpu, not_supported_ok=_RAISE):
+    def get_cpu_epp_policies(self, cpu, not_supported_ok=False):
         """Return a list of all EPP policy names for CPU 'cpu."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
@@ -158,13 +154,13 @@ class EPP:
         """
 
         try:
-            policy = FSHelpers.read(self._sysfs_epp_path % cpu, proc=self._proc)
+            policy = self._pman.read(self._sysfs_epp_path % cpu)
         except ErrorNotFound:
             return None
 
         return policy.strip()
 
-    def _get_cpu_epp_policy(self, cpu, not_supported_ok=_RAISE):
+    def _get_cpu_epp_policy(self, cpu, not_supported_ok=False):
         """Returns EPP policy for CPU 'cpu'."""
 
         policy = self._get_cpu_epp_policy_from_sysfs(cpu)
@@ -186,9 +182,9 @@ class EPP:
         if epp in self._epp_rmap:
             return self._epp_rmap[epp]
 
-        raise Error(f"unknown policy name for EPP value {epp} on CPU {cpu}{self._proc.hostmsg}")
+        raise Error(f"unknown policy name for EPP value {epp} on CPU {cpu}{self._pman.hostmsg}")
 
-    def get_epp_policy(self, cpus="all", not_supported_ok=_RAISE):
+    def get_epp_policy(self, cpus="all", not_supported_ok=False):
         """
         Yield (CPU number, EPP policy name) pairs for CPUs in 'cpus'.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
@@ -200,13 +196,13 @@ class EPP:
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield (cpu, self._get_cpu_epp_policy(cpu, not_supported_ok=not_supported_ok))
 
-    def get_cpu_epp_policy(self, cpu, not_supported_ok=_RAISE):
+    def get_cpu_epp_policy(self, cpu, not_supported_ok=False):
         """Similar to 'get_epp_policy()', but for a single CPU 'cpu'."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._get_cpu_epp_policy(cpu, not_supported_ok=not_supported_ok)
 
-    def _get_cpu_epp(self, cpu, not_supported_ok=_RAISE):
+    def _get_cpu_epp(self, cpu, not_supported_ok=False):
         """Implements 'get_cpu_epp()'."""
 
         try:
@@ -222,22 +218,22 @@ class EPP:
 
             return hwpreq.read_cpu_feature("epp", cpu)
         except ErrorNotSupported as err:
-            if not_supported_ok is _RAISE:
-                raise Error(f"CPU {cpu} does not support EPP:\n{err}") from err
-            return None
+            if not_supported_ok:
+                return None
+            raise ErrorNotSupported(f"CPU {cpu} does not support EPP:\n{err}") from err
 
-    def get_epp(self, cpus="all", not_supported_ok=_RAISE):
+    def get_epp(self, cpus="all", not_supported_ok=False):
         """
         Yield (CPU number, EPP) pairs for CPUs in 'cpus'. The arguments are as follows:
           * cpus - the same as in 'set_epp()'.
-          * not_supported_ok - controls what to do if EPP is not supported on a CPU. By default,
-            'ErrorNotSupported' is raised, othewise 'None' is yielded as the EPP value.
+          * not_supported_ok - if 'False', raise 'ErrorNotSupported' exception if EPP is not
+          *                    supported on a CPU, if 'True', return 'None' instead.
         """
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield (cpu, self._get_cpu_epp(cpu, not_supported_ok=not_supported_ok))
 
-    def get_cpu_epp(self, cpu, not_supported_ok=_RAISE):
+    def get_cpu_epp(self, cpu, not_supported_ok=False):
         """Similar to 'get_epp()', but for a single CPU 'cpu'."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
@@ -247,12 +243,12 @@ class EPP:
         """Set EPP to 'epp' for CPU 'cpu' via the sysfs file."""
 
         try:
-            FSHelpers.write(self._sysfs_epp_path % cpu, epp, proc=self._proc)
+            self._pman.write(self._sysfs_epp_path % cpu, epp)
         except ErrorNotFound:
             return None
         except Error as err:
             # Writing to the sysfs file failed, provide a meaningful error message.
-            msg = f"failed to set EPP to {epp}{self._proc.hostmsg}: {err}"
+            msg = f"failed to set EPP to {epp}{self._pman.hostmsg}: {err}"
 
             try:
                 policies = self._get_cpu_epp_policies(cpu)
@@ -278,7 +274,7 @@ class EPP:
             policy = epp.lower()
             if policy not in policies:
                 policy_names = ", ".join(self.get_cpu_epp_policies(cpu))
-                raise Error(f"EPP policy '{epp}' is not supported{self._proc.hostmsg}, please "
+                raise Error(f"EPP policy '{epp}' is not supported{self._pman.hostmsg}, please "
                             f"provide one of the following EPP policy names: {policy_names}")
 
         if self._set_cpu_epp_via_sysfs(epp, cpu) == epp:
@@ -313,19 +309,19 @@ class EPP:
         cpu = self._cpuinfo.normalize_cpu(cpu)
         self._set_cpu_epp(epp, cpu)
 
-    def __init__(self, proc=None, cpuinfo=None, msr=None):
+    def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
         The class constructor. The argument are as follows.
-          * proc - the 'Proc' or 'SSH' object that defines the host to manage EPP for.
+          * pman - the process manager object that defines the host to manage EPP for.
           * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
           * msr - an 'MSR.MSR()' object which should be used for accessing MSR registers.
         """
 
-        self._proc = proc
+        self._pman = pman
         self._cpuinfo = cpuinfo
         self._msr = msr
 
-        self._close_proc = proc is None
+        self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
         self._close_msr = msr is None
 
@@ -340,33 +336,18 @@ class EPP:
         self._sysfs_epp_path = sysfs_base + "/energy_performance_preference"
         self._sysfs_epp_policies_path = sysfs_base + "/energy_performance_available_preferences"
 
-        if not self._proc:
-            self._proc = Procs.Proc()
+        if not self._pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
 
         if not self._cpuinfo:
-            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
+            self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
-            raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{proc.hostmsg}. "
+            raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. "
                                     f"Only Intel CPUs are supported.")
 
     def close(self):
         """Uninitialize the class object."""
 
-        for attr in ("_hwpreq", "_hwpreq_pkg", "_msr", "_cpuinfo", "_proc"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if hasattr(self, f"_close{attr}"):
-                    if getattr(self, f"_close{attr}"):
-                        getattr(obj, "close")()
-                else:
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()
+        close_attrs = ("_hwpreq", "_hwpreq_pkg", "_msr", "_cpuinfo", "_pman")
+        ClassHelpers.close(self, close_attrs=close_attrs)

@@ -12,39 +12,55 @@ This module provides an API for onlining and offlining CPUs.
 
 import logging
 from pathlib import Path
-from pepclibs.helperlibs import FSHelpers, Procs
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo
 
 _LOG = logging.getLogger()
 
-class CPUOnline:
-    """This class provides API for onlining and offlining CPUs."""
+class CPUOnline(ClassHelpers.SimpleCloseContext):
+    """
+    This class provides API for onlining and offlining CPUs.
+
+    Public methods overview.
+
+      * 'online()'
+      * 'offline()'
+      * 'is_online()'
+      * 'restore()'
+    """
 
     def _get_cpuinfo(self):
         """Returns a 'CPUInfo.CPUInfo()' object."""
 
+        if self._reload_cpuinfo:
+            if self._cpuinfo:
+                self._cpuinfo.close()
+                self._cpuinfo = None
+            self._reload_cpuinfo = False
+
         if not self._cpuinfo:
-            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
+            self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+
         return self._cpuinfo
 
     def _verify_path(self, cpu, path):
         """Verify if path 'path' exists."""
 
-        if not FSHelpers.isfile(path, proc=self._proc):
-            if FSHelpers.isdir(path.parent, proc=self._proc):
-                raise ErrorNotSupported(f"CPU '{cpu}' on host {self._proc.hostname}' does not "
+        if not self._pman.is_file(path):
+            if self._pman.is_dir(path.parent):
+                raise ErrorNotSupported(f"CPU '{cpu}' on host {self._pman.hostname}' does not "
                                         f"support onlining/offlining")
-            raise Error(f"CPU '{cpu}' does not exist on host '{self._proc.hostname}'")
+            raise Error(f"CPU '{cpu}' does not exist on host '{self._pman.hostname}'")
 
     def _get_online(self, path):
         """Read the 'online' sysfs file at 'path'."""
 
-        with self._proc.open(path, "r") as fobj:
+        with self._pman.open(path, "r") as fobj:
             state = fobj.read().strip()
         if state in ("0", "1"):
             return state
-        raise Error("unexpected value '{state}' in '{path}' on host '{self._proc.hostname}'")
+        raise Error("unexpected value '{state}' in '{path}' on host '{self._pman.hostname}'")
 
     def _get_path(self, cpu):
         """Build and return path to the 'online' sysfs file for CPU number 'cpu'."""
@@ -89,13 +105,14 @@ class CPUOnline:
 
             state = self._get_online(path)
             if data == state:
-                msg = f"CPU{cpu} is already {state_str}, skipping"
-            else:
-                msg = f"{action_str} CPU{cpu}"
-            _LOG.log(self._loglevel, msg)
+                _LOG.log(self._loglevel, "CPU%d is already %s, skipping", cpu, state_str)
+                continue
+
+            _LOG.log(self._loglevel, "%s CPU%d", action_str, cpu)
+            self._reload_cpuinfo = True
 
             try:
-                with self._proc.open(path, "w") as fobj:
+                with self._pman.open(path, "w") as fobj:
                     fobj.write(data)
             except Error as err:
                 raise Error(f"failed to {state_str} CPU{cpu}:\n{err}") from err
@@ -141,51 +158,39 @@ class CPUOnline:
         for cpu, state in reversed(self._saved_states.items()):
             self._toggle([cpu], state, False)
 
-    def __init__(self, progress=None, proc=None, cpuinfo=None):
+    def __init__(self, progress=None, pman=None, cpuinfo=None):
         """
         The class constructor. The arguments are as follows.
           * progress - controls the logging level for the progress messages. The default logging
                        level is 'DEBUG'.
-          * proc - the 'Proc' or 'SSH' object that defines the host to run the measurements on.
+          * pman - the process manager object that defines the host to run the measurements on.
           * cpuinfo - A 'CPUInfo.CPUInfo()' object.
         """
 
-        self._proc = proc
+        self._pman = pman
         self._cpuinfo = cpuinfo
 
-        self._close_proc = proc is None
+        self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
-
-        self._loglevel = progress
-        self._saved_states = {}
-        self._sysfs_base = Path("/sys/devices/system/cpu")
-        self.restore_on_close = False
 
         if progress is None:
             progress = logging.DEBUG
 
-        if not self._proc:
-            self._proc = Procs.Proc()
+        self._loglevel = progress
+        self._saved_states = {}
+        self._sysfs_base = Path("/sys/devices/system/cpu")
+        self._reload_cpuinfo = False
+        self.restore_on_close = False
+
+        if not self._pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
 
     def close(self):
         """Uninitialize the class object."""
 
-        if getattr(self, "_proc", None):
+        if getattr(self, "_pman", None):
             if getattr(self, "restore_on_close", None) and \
                getattr(self, "_saved_states", None):
                 self.restore()
 
-        for attr in ("_cpuinfo", "_proc"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()
+        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman",))

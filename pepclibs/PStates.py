@@ -16,7 +16,8 @@ import time
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import Procs, KernelModule, FSHelpers, Human
+from pepclibs.helperlibs import Trivial
+from pepclibs.helperlibs import LocalProcessManager, KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs import CPUInfo, _Common
 
@@ -215,9 +216,11 @@ def _is_uncore_prop(prop):
     Returns 'True' if propert 'prop' is an uncore property, otherwise returns 'False'.
     """
 
-    return prop["fname"].endswith("khz")
+    if "fname" in prop and prop["fname"].endswith("khz"):
+        return True
+    return False
 
-class PStates:
+class PStates(ClassHelpers.SimpleCloseContext):
     """
     This module provides API for managing platform settings related to P-states.
 
@@ -236,7 +239,7 @@ class PStates:
         if not self._msr:
             from pepclibs.msr import MSR #pylint: disable=import-outside-toplevel
 
-            self._msr = MSR.MSR(self._proc, cpuinfo=self._cpuinfo)
+            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo)
 
         return self._msr
 
@@ -247,7 +250,7 @@ class PStates:
             from pepclibs import EPP #pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
-            self._eppobj = EPP.EPP(proc=self._proc, cpuinfo=self._cpuinfo, msr=msr)
+            self._eppobj = EPP.EPP(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
         return self._eppobj
 
@@ -258,7 +261,7 @@ class PStates:
             from pepclibs import EPB #pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
-            self._epbobj = EPB.EPB(proc=self._proc, cpuinfo=self._cpuinfo, msr=msr)
+            self._epbobj = EPB.EPB(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
         return self._epbobj
 
@@ -269,7 +272,7 @@ class PStates:
             from pepclibs import BClock #pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
-            self._bclk[cpu] = BClock.get_bclk(self._proc, cpu=cpu, cpuinfo=self._cpuinfo, msr=msr)
+            self._bclk[cpu] = BClock.get_bclk(self._pman, cpu=cpu, cpuinfo=self._cpuinfo, msr=msr)
             _LOG.debug("CPU %d: bus clock speed: %fMHz", cpu, self._bclk[cpu])
 
         return self._bclk[cpu]
@@ -281,7 +284,7 @@ class PStates:
             from pepclibs.msr import PMEnable # pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
-            self._pmenable = PMEnable.PMEnable(proc=self._proc, cpuinfo=self._cpuinfo, msr=msr)
+            self._pmenable = PMEnable.PMEnable(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
         return self._pmenable
 
@@ -292,7 +295,7 @@ class PStates:
             from pepclibs.msr import PlatformInfo # pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
-            self._platinfo = PlatformInfo.PlatformInfo(proc=self._proc, cpuinfo=self._cpuinfo,
+            self._platinfo = PlatformInfo.PlatformInfo(pman=self._pman, cpuinfo=self._cpuinfo,
                                                        msr=msr)
         return self._platinfo
 
@@ -303,7 +306,7 @@ class PStates:
             from pepclibs.msr import TurboRatioLimit # pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
-            self._trl = TurboRatioLimit.TurboRatioLimit(proc=self._proc, cpuinfo=self._cpuinfo,
+            self._trl = TurboRatioLimit.TurboRatioLimit(pman=self._pman, cpuinfo=self._cpuinfo,
                                                         msr=msr)
         return self._trl
 
@@ -312,7 +315,7 @@ class PStates:
 
         if pname not in PROPS:
             pnames_str = ", ".join(set(PROPS))
-            raise ErrorNotSupported(f"property '{pname}' is not supported{self._proc.hostmsg}, "
+            raise ErrorNotSupported(f"property '{pname}' is not supported{self._pman.hostmsg}, "
                                     f"use one of the following: {pnames_str}")
 
     def _is_cached(self, pname, cpu):
@@ -347,6 +350,57 @@ class PStates:
             if cpu not in self._cache:
                 self._cache[cpu] = {}
             self._cache[cpu][pname] = val
+
+    def __is_uncore_freq_supported(self):
+        """Implements '_is_uncore_freq_supported()'."""
+
+        if self._pman.exists(self._sysfs_base_uncore):
+            return True
+
+        drvname = "intel_uncore_frequency"
+        msg = f"Uncore frequency operations are not supported{self._pman.hostmsg}. Here are the " \
+              f"possible reasons:\n" \
+              f" 1. the hardware does not support uncore frequency management.\n" \
+              f" 2. the '{drvname}' driver does not support this hardware.\n" \
+              f" 3. the '{drvname}' driver is not enabled. Try to compile the kernel with " \
+              f"the 'CONFIG_INTEL_UNCORE_FREQ_CONTROL' option."
+
+        try:
+            self._ufreq_drv = KernelModule.KernelModule(drvname, pman=self._pman)
+            loaded = self._ufreq_drv.is_loaded()
+        except Error as err:
+            _LOG.debug("%s\n%s", err, msg)
+            self._uncore_errmsg = msg
+            return False
+
+        if loaded:
+            # The sysfs directories do not exist, but the driver is loaded.
+            _LOG.debug("The uncore frequency driver '%s' is loaded, but the sysfs directory '%s' "
+                       "does not exist.\n%s", drvname, self._sysfs_base_uncore, msg)
+            self._uncore_errmsg = msg
+
+        try:
+            self._ufreq_drv.load()
+            self._unload_ufreq_drv = True
+            FSHelpers.wait_for_a_file(self._sysfs_base_uncore, timeout=1, pman=self._pman)
+        except Error as err:
+            _LOG.debug("%s\n%s", err, msg)
+            self._uncore_errmsg = msg
+            return False
+
+        return True
+
+    def _is_uncore_freq_supported(self):
+        """
+        Make sure that the uncore frequency control is supported. Load the uncore frequency
+        control driver if necessary.
+        """
+
+        if self._uncore_freq_supported is not None:
+            return self._uncore_freq_supported
+
+        self._uncore_freq_supported = self.__is_uncore_freq_supported()
+        return self._uncore_freq_supported
 
     def _get_base_eff_freqs(self, cpu):
         """
@@ -390,7 +444,7 @@ class PStates:
         else:
             _LOG.warning("module 'TurboRatioLimit' does not support 'MSR_TURBO_RATIO_LIMIT' for "
                          "CPU '%s'%s\nPlease, contact project maintainers.",
-                         self._cpuinfo.cpudescr, self._proc.hostmsg)
+                         self._cpuinfo.cpudescr, self._pman.hostmsg)
 
         max_turbo_freq = None
         if ratio is not None:
@@ -409,7 +463,7 @@ class PStates:
             max_turbo_freq = Human.largenum(max_turbo_freq, unit="Hz")
             base_freq =Human.largenum(base_freq, unit="Hz")
             _LOG.warning("something is not right: max. turbo frequency %s is lower than base "
-                         "frequency %s%s", max_turbo_freq, base_freq, self._proc.hostmsg)
+                         "frequency %s%s", max_turbo_freq, base_freq, self._pman.hostmsg)
 
         return max_turbo_freq is not None or max_turbo_freq > base_freq
 
@@ -428,16 +482,18 @@ class PStates:
 
         if driver in {"intel_pstate", "intel_cpufreq"}:
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
-            disabled = FSHelpers.read_int(path, proc=self._proc)
+            disabled = self._read_int(path)
             return "off" if disabled else "on"
 
-        if driver == "acpi_cpufreq":
+        if driver == "acpi-cpufreq":
             path = self._sysfs_base / "cpufreq" / "boost"
-            enabled = FSHelpers.read_int(path, proc=self._proc)
+            enabled = self._read_int(path)
             return "on" if enabled else "off"
 
-        raise Error(f"can't check if turbo is enabled{self._proc.hostmsg}: unsupported CPU "
-                    f"frequency driver '{driver}'")
+        _LOG.debug("can't check if turbo is enabled%s: unsupported CPU frequency driver '%s'",
+                   self._pman.hostmsg, driver)
+
+        return None
 
     def _get_cpu_hwp(self, cpu):
         """
@@ -462,17 +518,26 @@ class PStates:
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
 
+    def _read_int(self, path):
+        """Read an integer from file 'path' via the process manager."""
+
+        val = self._pman.read(path)
+        if not Trivial.is_int(val):
+            raise Error(f"read an unexpected non-integer value from '{path}'"
+                        f"{self._pman.hostmsg}")
+        return int(val)
+
     def _sysfs_read_int(self, prop, cpu):
         """Read an integer from a sysfs file corresponding to property 'prop' and CPU 'cpu'."""
 
         path = self._get_sysfs_path(prop, cpu)
-        return FSHelpers.read_int(path, proc=self._proc)
+        return self._read_int(path)
 
     def _sysfs_read(self, prop, cpu):
         """Read a string from a sysfs file corresponding to property 'prop' and CPU 'cpu'."""
 
         path = self._get_sysfs_path(prop, cpu)
-        return FSHelpers.read(path, proc=self._proc).strip()
+        return self._pman.read(path).strip()
 
     def _get_prop_from_sysfs(self, prop, cpu):
         """Read CPU 'cpu' property described by 'prop' from sysfs."""
@@ -493,13 +558,13 @@ class PStates:
     def _get_cpu_prop_or_subprop(self, pname, prop, cpu):
         """Returns property or sub-property 'pname' for CPU 'cpu'."""
 
-        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._proc.hostmsg)
+        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
         if self._is_cached(pname, cpu):
             return self._cache[cpu][pname]
 
         if "fname" in prop:
-            if not self._uncore_freq_supported and _is_uncore_prop(prop):
+            if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
                 _LOG.debug(self._uncore_errmsg)
                 return None
 
@@ -511,7 +576,10 @@ class PStates:
                 # The sysfs file was not found. The base frequency can be figured out from the MSR
                 # registers.
                 if pname != "base_freq":
-                    raise
+                    path = self._get_sysfs_path(prop, cpu)
+                    _LOG.debug("can't read value of property '%s', path '%s' is not found",
+                               pname, path)
+                    return None
 
         if pname in ("base_freq", "max_eff_freq"):
             base, max_eff_freq = self._get_base_eff_freqs(cpu)
@@ -659,7 +727,7 @@ class PStates:
         """Same as 'get_props()', but for a single CPU."""
 
         pinfo = None
-        for pinfo in self.get_props(pnames, cpus=(cpu,)):
+        for _, pinfo in self.get_props(pnames, cpus=(cpu,)):
             pass
         return pinfo
 
@@ -667,7 +735,7 @@ class PStates:
         """Same as 'get_props()', but for a single CPU and a single property."""
 
         pinfo = None
-        for pinfo in self.get_props((pname,), cpus=(cpu,)):
+        for _, pinfo in self.get_props((pname,), cpus=(cpu,)):
             pass
         return pinfo[pname]
 
@@ -675,7 +743,7 @@ class PStates:
         """Enable or disable turbo."""
 
         if not self._is_turbo_supported(cpu):
-            raise ErrorNotSupported(f"turbo is not supported{self._proc.hostmsg}")
+            raise ErrorNotSupported(f"turbo is not supported{self._pman.hostmsg}")
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
@@ -683,12 +751,12 @@ class PStates:
 
         if driver in {"intel_pstate", "intel_cpufreq"}:
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
-            FSHelpers.write(path, str(int(not enable)), proc=self._proc)
-        elif driver == "acpi_cpufreq":
+            self._pman.write(path, str(int(not enable)))
+        elif driver == "acpi-cpufreq":
             path = self._sysfs_base / "cpufreq" / "boost"
-            FSHelpers.write(path, str(int(enable)), proc=self._proc)
+            self._pman.write(path, str(int(enable)))
         else:
-            raise Error(f"failed to enable or disable turbo{self._proc.hostmsg}: unsupported CPU "
+            raise Error(f"failed to enable or disable turbo{self._pman.hostmsg}: unsupported CPU "
                         f"frequency driver '{driver}'")
 
     def _get_num_str(self, prop, cpu):
@@ -716,7 +784,7 @@ class PStates:
         if prop.get("unit") == "Hz":
             # Sysfs files use kHz
             val //= 1000
-        FSHelpers.write(path, str(val), proc=self._proc)
+        self._pman.write(path, str(val))
 
         count = 3
         while count > 0:
@@ -878,6 +946,9 @@ class PStates:
         for pname, val in inprops.items():
             prop = self._props[pname]
 
+            if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
+                raise Error(self._uncore_errmsg)
+
             if prop.get("unit", None) == "Hz":
                 inprops[pname] = self._parse_freq(pname, prop, val, cpu)
 
@@ -891,7 +962,7 @@ class PStates:
                 vals = (True, False, "on", "off", "enable", "disable")
                 if val not in vals:
                     name = Human.untitle(prop['name'])
-                    use = ", ".join(vals)
+                    use = ", ".join([str(val1) for val1 in vals])
                     raise Error(f"bad value '{val}' for {name}, use one of: {use}")
 
         inprops = self._validate_and_order_freq(inprops, cpu, uncore=False)
@@ -919,9 +990,6 @@ class PStates:
                 if "fname" not in prop:
                     raise Error(f"BUG: unsupported property '{pname}'")
 
-                if not self._uncore_freq_supported and _is_uncore_prop(prop):
-                    raise Error(self._uncore_errmsg)
-
                 self._set_prop_in_sysfs(pname, val, cpu)
 
     def _normalize_inprops(self, inprops):
@@ -934,7 +1002,7 @@ class PStates:
 
             if not self.props[pname]["writable"]:
                 name = Human.untitle(self.props[pname]["name"])
-                raise Error(f"{name} is read-only and can not be modified{self._proc.hostmsg}")
+                raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
 
             if pname in result:
                 _LOG.warning("duplicate property '%s': dropping value '%s', keeping '%s'",
@@ -973,7 +1041,7 @@ class PStates:
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for pname in inprops:
-            _Common.validate_prop_scope(self._props[pname], cpus, self._cpuinfo, self._proc.hostmsg)
+            _Common.validate_prop_scope(self._props[pname], cpus, self._cpuinfo, self._pman.hostmsg)
 
         for cpu in cpus:
             self._set_cpu_props(inprops, cpu)
@@ -992,49 +1060,6 @@ class PStates:
         """Same as 'set_props()', but for a single CPU and a single property."""
 
         self.set_props(((pname, val),), cpus=(cpu,))
-
-    def _ensure_uncore_freq_support(self):
-        """
-        Make sure that the uncore frequency control is supported. Load the uncore frequency
-        control driver if necessary.
-        """
-
-        if FSHelpers.exists(self._sysfs_base_uncore, self._proc):
-            self._uncore_freq_supported = True
-            return
-
-        drvname = "intel_uncore_frequency"
-        msg = f"Uncore frequency operations are not supported{self._proc.hostmsg}. Here are the " \
-              f"possible reasons:\n" \
-              f" 1. the hardware does not support uncore frequency management.\n" \
-              f" 2. the '{drvname}' driver does not support this hardware.\n" \
-              f" 3. the '{drvname}' driver is not enabled. Try to compile the kernel with " \
-              f"the 'CONFIG_INTEL_UNCORE_FREQ_CONTROL' option."
-
-        try:
-            self._ufreq_drv = KernelModule.KernelModule(drvname, proc=self._proc)
-            loaded = self._ufreq_drv.is_loaded()
-        except Error as err:
-            _LOG.debug("%s\n%s", err, msg)
-            self._uncore_errmsg = msg
-            return
-
-        if loaded:
-            # The sysfs directories do not exist, but the driver is loaded.
-            _LOG.debug("The uncore frequency driver '%s' is loaded, but the sysfs directory '%s' "
-                       "does not exist.\n%s", drvname, self._sysfs_base_uncore, msg)
-            self._uncore_errmsg = msg
-
-        try:
-            self._ufreq_drv.load()
-            self._unload_ufreq_drv = True
-            FSHelpers.wait_for_a_file(self._sysfs_base_uncore, timeout=1, proc=self._proc)
-        except Error as err:
-            _LOG.debug("%s\n%s", err, msg)
-            self._uncore_errmsg = msg
-            return
-
-        self._uncore_freq_supported = True
 
     def _init_props_dict(self):
         """Initialize the 'props' dictionary."""
@@ -1067,19 +1092,19 @@ class PStates:
         self._props["governor"]["fname"] = "scaling_governor"
         self._props["governor"]["subprops"]["governors"]["fname"] = "scaling_available_governors"
 
-    def __init__(self, proc=None, cpuinfo=None, msr=None):
+    def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
         The class constructor. The arguments are as follows.
-          * proc - the 'Proc' or 'SSH' object that defines the host to run the measurements on.
+          * pman - the process manager object that defines the host to run the measurements on.
           * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
           * msr - an 'MSR.MSR()' object which should be used for accessing MSR registers.
         """
 
-        self._proc = proc
+        self._pman = pman
         self._cpuinfo = cpuinfo
         self._msr = msr
 
-        self._close_proc = proc is None
+        self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
         self._close_msr = msr is None
 
@@ -1097,8 +1122,8 @@ class PStates:
         # The write-through per-CPU properties cache.
         self._cache = {}
 
-        # Will be 'True' if uncore frequency operations are supported.
-        self._uncore_freq_supported = False
+        # Will be 'True' if uncore frequency operations are supported, 'False' otherwise.
+        self._uncore_freq_supported = None
         self._uncore_errmsg = None
         self._ufreq_drv = None
         self._unload_ufreq_drv = False
@@ -1106,13 +1131,12 @@ class PStates:
         self._sysfs_base = Path("/sys/devices/system/cpu")
         self._sysfs_base_uncore = Path("/sys/devices/system/cpu/intel_uncore_frequency")
 
-        if not self._proc:
-            self._proc = Procs.Proc()
+        if not self._pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
         if not self._cpuinfo:
-            self._cpuinfo = CPUInfo.CPUInfo(proc=self._proc)
+            self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
         self._init_props_dict()
-        self._ensure_uncore_freq_support()
 
     def close(self):
         """Uninitialize the class object."""
@@ -1123,23 +1147,6 @@ class PStates:
                 self._unload_ufreq_drv = None
             self._ufreq_drv = None
 
-        for attr in ("_eppobj", "_epbobj", "_pmenable", "_platinfo", "_trl"):
-            obj = getattr(self, attr, None)
-            if obj:
-                obj.close()
-                setattr(self, attr, None)
-
-        for attr in ("_msr", "_cpuinfo", "_proc"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()
+        close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_platinfo", "_trl", "_msr", "_cpuinfo",
+                       "_pman")
+        ClassHelpers.close(self, close_attrs=close_attrs)

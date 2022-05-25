@@ -12,14 +12,14 @@ This module provides API for loading and unloading Linux kernel modules (drivers
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import Procs, Dmesg, ToolChecker
+from pepclibs.helperlibs import LocalProcessManager, Dmesg, ClassHelpers
 
 _LOG = logging.getLogger()
 
 # The drivers supported by this module.
 DRIVERS = {}
 
-class KernelModule:
+class KernelModule(ClassHelpers.SimpleCloseContext):
     """This class represents a Linux kernel module."""
 
     def _get_usage_count(self):
@@ -27,7 +27,7 @@ class KernelModule:
         Returns 'None' if module is not loaded, otherwise returns the module usage count.
         """
 
-        with self._proc.open("/proc/modules", "r") as fobj:
+        with self._pman.open("/proc/modules", "r") as fobj:
             for line in fobj:
                 line = line.strip()
                 if not line:
@@ -45,7 +45,7 @@ class KernelModule:
             return ""
         new_msgs = self._dmesg_obj.get_new_messages(join=True)
         if new_msgs:
-            return f"New kernel messages{self._proc.hostmsg}:\n{new_msgs}"
+            return f"New kernel messages{self._pman.hostmsg}:\n{new_msgs}"
         return ""
 
     def _run_mod_cmd(self, cmd):
@@ -56,14 +56,14 @@ class KernelModule:
                 self._dmesg_obj.run(capture=True)
 
             try:
-                self._proc.run_verify(cmd)
+                self._pman.run_verify(cmd)
             except Error as err:
                 raise Error(f"{err}\n{self._get_new_dmesg()}") from err
 
             if _LOG.getEffectiveLevel() == logging.DEBUG:
                 _LOG.debug("the following command finished: %s\n%s", cmd, self._get_new_dmesg())
         else:
-            self._proc.run_verify(cmd)
+            self._pman.run_verify(cmd)
 
     def is_loaded(self):
         """Check if the module is loaded."""
@@ -100,18 +100,15 @@ class KernelModule:
             opts += " dyndbg=+pf"
         self._run_mod_cmd(f"modprobe {self.name} {opts}")
 
-    def __init__(self, name, proc=None, dmesg=None, tchk=None):
+    def __init__(self, name, pman=None, dmesg=None):
         """
         The class constructor. The arguments are as follows.
           * name - kernel module name.
-          * proc - the host to operate on. This object will keep a 'proc' reference and use it in
-                   various methods.
+          * pman - the process manager object that defines the target host.
           * dmesg - 'True' to enable 'dmesg' output checks (default), 'False' to disable them. Can
                     also be a 'Dmesg' object.
-          * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
-                   the required tools like 'modprobe' are present on the target host.
 
-        By default, objects of this class capture 'dmesg' output on the host defined by 'proc'. The
+        By default, objects of this class capture 'dmesg' output on the host defined by 'pman'. The
         first 'dmesg' snapshot is taken before loading/unloading the driver. The second snapsot is
         taken only if an error happens. This allows to extract new 'dmesg' lines, which are
         potentially related to the delayed event device driver. These lines are then included to the
@@ -122,45 +119,27 @@ class KernelModule:
         more optimal.
         """
 
+        if not name:
+            raise Error("BUG: no driver name provided")
+
         if dmesg is None:
             dmesg = True
 
-        self._proc = proc
+        self._pman = pman
         self.name = name
         self._dmesg_obj = None
-        self._tchk = tchk
 
-        self._close_proc = proc is None
+        self._close_pman = pman is None
         self._close_dmesg_obj = False
-        self._close_tchk = tchk is None
 
-        if not self._proc:
-            self._proc = Procs.Proc()
+        if not self._pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
         if isinstance(dmesg, Dmesg.Dmesg):
             self._dmesg_obj = dmesg
         elif dmesg:
-            self._dmesg_obj = Dmesg.Dmesg(proc=self._proc)
+            self._dmesg_obj = Dmesg.Dmesg(pman=self._pman)
             self._close_dmesg = True
-        if not self._tchk:
-            self._tchk = ToolChecker.ToolChecker(proc=self._proc)
-
-        self._tchk.check_tool("modprobe")
-        self._tchk.check_tool("rmmod")
 
     def close(self):
         """Stop the measurements."""
-
-        for attr in ("_tchk", "_dmesg_obj", "_proc"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
-
-    def __enter__(self):
-        """Enter the run-time context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the run-time context."""
-        self.close()
+        ClassHelpers.close(self, close_attrs=("_dmesg_obj", "_pman",))

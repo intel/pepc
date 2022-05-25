@@ -1,5 +1,5 @@
 ====
-pepc
+PEPC
 ====
 
 :Date:   Manual
@@ -218,13 +218,14 @@ FURTHER SUB-COMMANDS *'pepc cstates'*
 COMMAND *'pepc* cstates info'
 =============================
 
-usage: pepc cstates info [-h] [-q] [-d] [--cstates CSNAMES] [--cpus
-CPUS] [--cores CORES] [--packages PACKAGES]
+usage: pepc cstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
+[--packages PACKAGES] [--cstates CSNAMES] [--pkg-cstate-limit]
+[--c1-demotion] [--c1-undemotion] [--c1e-autopromote] [--cstate-prewake]
 
-Get information about C-states on specified CPUs (CPU0 by default).
-Remember, this is information about the C-states that Linux can request,
-they are not necessarily the same as the C-states supported by the
-underlying hardware.
+Get information about C-states on specified CPUs. By default, prints all
+information for all CPUs. Remember, this is information about the
+C-states that Linux can request, they are not necessarily the same as
+the C-states supported by the underlying hardware.
 
 OPTIONS *'pepc* cstates info'
 =============================
@@ -238,22 +239,13 @@ OPTIONS *'pepc* cstates info'
 **-d**
    Print debugging information.
 
-**--cstates** *CSNAMES*
-   Comma-sepatated list of C-states to get information about (all
-   C-states by default). C-states should be specified by name (e.g.,
-   'C1'). Use 'all' to specify all the available Linux C-states (this is
-   the default). Note, there is a difference between Linux C-states
-   (e.g., 'C6') and hardware C-states (e.g., Core C6 or Package C6 on
-   many Intel platforms). The former is what Linux can request, and on
-   Intel hardware this is usually about various 'mwait' instruction
-   hints. The latter are platform-specific hardware state, entered upon
-   a Linux request..
-
 **--cpus** *CPUS*
    List of CPUs to get information about. The list can include
    individual CPU numbers and CPU number ranges. For example,
    '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use
-   the special keyword 'all' to specify all CPUs.
+   the special keyword 'all' to specify all CPUs. If the
+   CPUs/cores/packages were not specified, all CPUs will be used as the
+   default value.
 
 **--cores** *CORES*
    List of cores to get information about. The list can include
@@ -266,6 +258,46 @@ OPTIONS *'pepc* cstates info'
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
+
+**--cstates** *CSNAMES*
+   Comma-sepatated list of C-states to get information about (all
+   C-states by default). C-states should be specified by name (e.g.,
+   'C1'). Use 'all' to specify all the available Linux C-states (this is
+   the default). Note, there is a difference between Linux C-states
+   (e.g., 'C6') and hardware C-states (e.g., Core C6 or Package C6 on
+   many Intel platforms). The former is what Linux can request, and on
+   Intel hardware this is usually about various 'mwait' instruction
+   hints. The latter are platform-specific hardware state, entered upon
+   a Linux request..
+
+**--pkg-cstate-limit**
+   Get package C-state limit. The deepest package C-state the platform
+   is allowed to enter. The package C-state limit is configured via MSR
+   {MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This
+   model- specific register can be locked by the BIOS, in which case the
+   package C-state limit can only be read, but cannot be modified. This
+   option has package scope.
+
+**--c1-demotion**
+   Get current setting for c1 demotion. Allow/disallow the CPU to demote
+   C6/C7 requests to C1. This option has core scope.
+
+**--c1-undemotion**
+   Get current setting for c1 undemotion. Allow/disallow the CPU to
+   un-demote previously demoted requests back from C1 to C6/C7. This
+   option has core scope.
+
+**--c1e-autopromote**
+   Get current setting for c1E autopromote. When enabled, the CPU
+   automatically converts all C1 requests to C1E requests. This CPU
+   feature is controlled by MSR 0x1fc, bit 1. This option has package
+   scope.
+
+**--cstate-prewake**
+   Get current setting for c-state prewake. When enabled, the CPU will
+   start exiting the C6 idle state in advance, prior to the next local
+   APIC timer event. This CPU feature is controlled by MSR 0x1fc, bit
+   30. This option has package scope.
 
 COMMAND *'pepc* cstates config'
 ===============================
@@ -296,7 +328,8 @@ OPTIONS *'pepc* cstates config'
    List of CPUs to configure. The list can include individual CPU
    numbers and CPU number ranges. For example, '1-4,7,8,10-12' would
    mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword
-   'all' to specify all CPUs.
+   'all' to specify all CPUs. If the CPUs/cores/packages were not
+   specified, all CPUs will be used as the default value.
 
 **--cores** *CORES*
    List of cores to configure. The list can include individual core
@@ -385,9 +418,14 @@ COMMAND *'pepc* pstates info'
 =============================
 
 usage: pepc pstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES]
+[--packages PACKAGES] [--min-freq] [--max-freq] [--min-freq-limit]
+[--max-freq-limit] [--base-freq] [--max-eff-freq] [--turbo]
+[--max-turbo-freq] [--min-uncore-freq] [--max-uncore-freq]
+[--min-uncore-freq-limit] [--max-uncore-freq-limit] [--hwp] [--epp]
+[--epp-policy] [--epb] [--epb-policy] [--driver] [--governor]
 
-Get P-states information for specified CPUs (CPU0 by default).
+Get P-states information for specified CPUs. By default, prints all
+information for all CPUs.
 
 OPTIONS *'pepc* pstates info'
 =============================
@@ -405,7 +443,9 @@ OPTIONS *'pepc* pstates info'
    List of CPUs to get information about. The list can include
    individual CPU numbers and CPU number ranges. For example,
    '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use
-   the special keyword 'all' to specify all CPUs.
+   the special keyword 'all' to specify all CPUs. If the
+   CPUs/cores/packages were not specified, all CPUs will be used as the
+   default value.
 
 **--cores** *CORES*
    List of cores to get information about. The list can include
@@ -418,6 +458,91 @@ OPTIONS *'pepc* pstates info'
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
+
+**--min-freq**
+   Get minimum CPU frequency. Minimum frequency the operating system
+   will configure the CPU to run at. This option has CPU scope.
+
+**--max-freq**
+   Get maximum CPU frequency. Maximum frequency the operating system
+   will configure the CPU to run at. This option has CPU scope.
+
+**--min-freq-limit**
+   Get minimum supported CPU frequency. Minimum supported CPU frequency.
+   This option has CPU scope.
+
+**--max-freq-limit**
+   Get maximum supported CPU frequency. Maximum supported CPU frequency.
+   This option has CPU scope.
+
+**--base-freq**
+   Get base CPU frequency. Base CPU frequency. This option has CPU
+   scope.
+
+**--max-eff-freq**
+   Get maximum CPU efficiency frequency. Maximum energy efficient CPU
+   frequency. This option has CPU scope.
+
+**--turbo**
+   Get current setting for turbo. When turbo is enabled, the CPUs can
+   automatically run at a frequency greater than base frequency. This
+   option has global scope.
+
+**--max-turbo-freq**
+   Get maximum CPU turbo frequency. Maximum frequency CPU can run at in
+   turbo mode. This option has CPU scope.
+
+**--min-uncore-freq**
+   Get minimum uncore frequency. Minimum frequency the operating system
+   will configure the uncore to run at. This option has die scope.
+
+**--max-uncore-freq**
+   Get maximum uncore frequency. Maximum frequency the operating system
+   will configure the uncore to run at. This option has die scope.
+
+**--min-uncore-freq-limit**
+   Get minimum supported uncore frequency. Minimum supported uncore
+   frequency This option has die scope.
+
+**--max-uncore-freq-limit**
+   Get maximum supported uncore frequency. Maximum supported uncore
+   frequency This option has die scope.
+
+**--hwp**
+   Get current setting for hardware power mangement. When hardware power
+   management is enabled, CPUs can automatically scale their frequency
+   without active OS involemenent. This option has global scope.
+
+**--epp**
+   Get energy Performance Preference. Energy Performance Preference
+   (EPP) is a hint to the CPU on energy efficiency vs performance. EPP
+   has an effect only when the CPU is in the hardware power management
+   (HWP) mode. This option has CPU scope.
+
+**--epp-policy**
+   Get EPP policy. EPP policy is a name, such as 'performance', which
+   Linux maps to an EPP value, which may depend on the platform. This
+   option has CPU scope.
+
+**--epb**
+   Get energy Performance Bias. Energy Performance Bias (EPB) is a hint
+   to the CPU on energy efficiency vs performance. Value 0 means maximum
+   performance, value 15 means maximum energy efficiency. EPP may have
+   an effect in both HWP enabled and disabled modes (HWP stands for
+   Hardware Power Management). This option has CPU scope.
+
+**--epb-policy**
+   Get EPB policy. EPB policy is a name, such as 'performance', which
+   Linux maps to an EPB value, which may depend on the platform. This
+   option has CPU scope.
+
+**--driver**
+   Get CPU frequency driver. Linux CPU frequency driver name. This
+   option has global scope.
+
+**--governor**
+   Get CPU frequency governor. Linux CPU frequency governor name. This
+   option has CPU scope.
 
 COMMAND *'pepc* pstates config'
 ===============================
@@ -449,7 +574,9 @@ OPTIONS *'pepc* pstates config'
    List of CPUs to configure P-States on. The list can include
    individual CPU numbers and CPU number ranges. For example,
    '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use
-   the special keyword 'all' to specify all CPUs.
+   the special keyword 'all' to specify all CPUs. If the
+   CPUs/cores/packages were not specified, all CPUs will be used as the
+   default value.
 
 **--cores** *CORES*
    List of cores to configure P-States on. The list can include
@@ -590,7 +717,11 @@ OPTIONS *'pepc* aspm config'
 AUTHORS
 =======
 
-**pepc** was written by Artem Bityutskiy <dedekind1@gmail.com>.
+::
+
+   Artem Bityutskiy
+
+dedekind1@gmail.com
 
 DISTRIBUTION
 ============

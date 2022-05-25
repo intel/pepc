@@ -11,43 +11,153 @@
 """Common bits for the 'pepc' tests."""
 
 import os
+import sys
+import logging
 from pathlib import Path
 import pytest
-from pepclibs.helperlibs import EmulProcs, Procs, SSH
+from pepclibs import CPUInfo, CStates, PStates
+from pepclibs.helperlibs import ProcessManager
+from pepctool import _Pepc
 
-def get_proc(hostname, dataset):
-    """Depending on the 'hostname' argument, return emulated 'Proc', real 'Proc' or 'SSH' object."""
+logging.basicConfig(level=logging.DEBUG)
+_LOG = logging.getLogger()
 
+_REQUIRED_MODULES = ["ASPM", "CPUInfo", "CPUOnline", "CStates", "PStates", "Systemctl"]
+
+def _get_datapath(dataset):
+    """Return path to test data for the dataset 'dataset'."""
+    return Path(__file__).parent.resolve() / "data" / dataset
+
+def prop_is_supported(prop, props):
+    """
+    Return 'True' if property 'prop' is supported by properties 'props', otherwise return 'False'.
+    """
+
+    if prop in props:
+        return props[prop].get(prop) is not None
+    return False
+
+def get_pman(hostname, dataset, modules=None):
+    """
+    Create and return process manager, the arguments are as follows.
+      * hostname - the hostn name to create a process manager object for.
+      * dataset - the name of the dataset used to emulate the real hardware.
+      * modules - the list of python module names to be initialized before testing. Refer to
+                  'EmulProcessManager.init_testdata()' for more information.
+    """
+
+    datapath = None
+    username = None
     if hostname == "emulation":
-        proc = EmulProcs.EmulProc()
+        datapath = _get_datapath(dataset)
+    elif hostname != "localhost":
+        username = "root"
 
-        datapath = Path(__file__).parent.resolve() / "data" / dataset
-        proc.init_testdata("CPUInfo", datapath)
+    pman = ProcessManager.get_pman(hostname, username=username, datapath=datapath)
 
-        return proc
+    if hostname == "emulation" and modules is not None:
+        if not isinstance(modules, list):
+            modules = [modules]
 
-    if hostname == "localhost":
-        return Procs.Proc()
+        for module in modules:
+            pman.init_testdata(module, datapath)
 
-    return SSH.SSH(hostname=hostname, username='root', timeout=10)
+    return pman
+
+def _has_required_modules(datapath):
+    """Returns 'True' if datapath has all required modules to run tests."""
+
+    for module in _REQUIRED_MODULES:
+        if not Path(datapath / f"{module}.yaml").exists():
+            return False
+
+    return True
 
 def get_datasets():
     """Find all directories in 'tests/data' directory and yield the directory name."""
 
     basepath = Path(__file__).parent.resolve() / "data"
     for dirname in os.listdir(basepath):
-        if not Path(f"{basepath}/{dirname}").is_dir():
+        datapath = Path(f"{basepath}/{dirname}")
+
+        if not datapath.is_dir():
             continue
+
+        if not _has_required_modules(datapath):
+            _LOG.warning("excluding dataset '%s', incomplete test data", datapath)
+            continue
+
         yield dirname
 
-@pytest.fixture(name="proc", params=get_datasets())
-def fixture_proc(request, hostname):
+def build_params(hostname, dataset, pman):
+    """Implements the 'get_params()' fixture."""
+
+    params = {}
+    params["hostname"] = hostname
+    params["dataset"] = dataset
+    params["pman"] = pman
+
+    if hostname == "emulation":
+        datapath = _get_datapath(dataset)
+        for module in _REQUIRED_MODULES:
+            pman.init_testdata(module, datapath)
+
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj, \
+         PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
+        allcpus = cpuinfo.get_cpus()
+        medidx = int(len(allcpus)/2)
+        params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
+        params["cpus"] = allcpus
+        params["packages"] = cpuinfo.get_packages()
+        params["cores"] = {}
+        for pkg in params["packages"]:
+            params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+        params["cpumodel"] = cpuinfo.info["model"]
+
+        params["cstates"] = []
+        for _, csinfo in csobj.get_cstates_info(cpus=[allcpus[0]]):
+            for csname in csinfo:
+                params["cstates"].append(csname)
+
+        params["cstate_props"] = csobj.get_cpu_props(csobj.props, 0)
+        params["pstate_props"] = psobj.get_cpu_props(psobj.props, 0)
+
+    return params
+
+@pytest.fixture(name="params", scope="module", params=get_datasets())
+def get_params(hostname, request):
     """
-    The test fixture is called before each test function. Yields the 'Proc' object, and closes it
-    after the test function returns.
+    Yield a dictionary with information we need for testing. For example, to optimize the test
+    duration, use only subset of all CPUs available on target system to run tests on.
     """
 
     dataset = request.param
-    proc = get_proc(hostname, dataset)
-    yield proc
-    proc.close()
+    with get_pman(hostname, dataset) as pman:
+        yield build_params(hostname, dataset, pman)
+
+def run_pepc(arguments, pman, exp_exc=None):
+    """
+    Run the 'pepc' command with arguments 'arguments' and with process manager 'pman'. The 'exp_exc'
+    is expected exception type. By default, any exception is considered to be a failure.
+    """
+
+    cmd = f"{_Pepc.__file__} {arguments}"
+    _LOG.debug("running: %s", cmd)
+    sys.argv = cmd.split()
+    try:
+        args = _Pepc.parse_arguments()
+        ret = args.func(args, pman)
+    except Exception as err: # pylint: disable=broad-except
+        if exp_exc is None:
+            assert False, f"command '{cmd}' raised the following exception:\n\t" \
+                          f"type: {type(err)}\n\tmessage: {err}"
+
+        if isinstance(err, exp_exc):
+            return None
+
+        assert False, f"command '{cmd}' raised the following exception:\n\t" \
+                      f"type: {type(err)}\n\tmessage: {err}\n" \
+                      f"but it was expected to raise the following exception type: {type(exp_exc)}"
+
+    return ret

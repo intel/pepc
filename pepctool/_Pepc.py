@@ -21,14 +21,14 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from pepclibs.helperlibs import ArgParse, Human, Procs, Logging, SSH
+from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, PStates
 
 if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
 
-VERSION = "1.3.4"
+VERSION = "1.3.5"
 OWN_NAME = "pepc"
 
 LOG = logging.getLogger()
@@ -74,6 +74,8 @@ def build_arguments_parser():
     cpu_list_txt = """The list can include individual CPU numbers and CPU number ranges. For
                       example, '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12.
                       Use the special keyword 'all' to specify all CPUs"""
+    cpu_list_dflt_txt = f"""{cpu_list_txt}. If the CPUs/cores/packages were not specified, all CPUs
+                           will be used as the default value"""
     core_list_txt = """The list can include individual core numbers and core number ranges. For
                        example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
                        Use the special keyword 'all' to specify all cores"""
@@ -116,6 +118,8 @@ def build_arguments_parser():
 
     text = f"""List of CPUs to online. {cpu_list_txt}."""
     subpars2.add_argument("--cpus", help=text)
+    subpars2.add_argument("--cores", help=argparse.SUPPRESS)
+    subpars2.add_argument("--packages", help=argparse.SUPPRESS)
 
     #
     # Create parser for the 'cpu-hotplug offline' command.
@@ -157,17 +161,14 @@ def build_arguments_parser():
     # Create parser for the 'cstates info' command.
     #
     text = "Get CPU C-states information."
-    descr = """Get information about C-states on specified CPUs (CPU0 by default). Remember, this is
-               information about the C-states that Linux can request, they are not necessarily the
-               same as the C-states supported by the underlying hardware."""
+    descr = """Get information about C-states on specified CPUs. By default, prints all information
+               for all CPUs. Remember, this is information about the C-states that Linux can
+               request, they are not necessarily the same as the C-states supported by the
+               underlying hardware."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=cstates_info_command)
 
-    text = f"""Comma-sepatated list of C-states to get information about (all C-states by default).
-               {cst_list_text}."""
-    subpars2.add_argument("--cstates", dest="csnames", help=text, default="all")
-
-    text = f"""List of CPUs to get information about. {cpu_list_txt}."""
+    text = f"""List of CPUs to get information about. {cpu_list_dflt_txt}."""
     subpars2.add_argument("--cpus", help=text)
 
     text = f"""List of cores to get information about. {core_list_txt}."""
@@ -176,6 +177,22 @@ def build_arguments_parser():
     text = f"""List of packages to get information about. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
+    text = f"""Comma-sepatated list of C-states to get information about (all C-states by default).
+               {cst_list_text}."""
+    subpars2.add_argument("--cstates", dest="csnames", help=text, default="default")
+
+    for name, pinfo in CStates.PROPS.items():
+        if pinfo["type"] == "bool":
+            # This is a binary "on/off" type of features.
+            text = "Get current setting for "
+        else:
+            text = "Get "
+
+        option = f"--{name.replace('_', '-')}"
+        name = Human.untitle(pinfo["name"])
+        text += f"""{name}. {pinfo["help"]} This option has {pinfo["scope"]} scope."""
+
+        subpars2.add_argument(option, action="store_true", help=text)
     #
     # Create parser for the 'cstates config' command.
     #
@@ -185,7 +202,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=cstates_config_command)
 
-    text = f"""List of CPUs to configure. {cpu_list_txt}."""
+    text = f"""List of CPUs to configure. {cpu_list_dflt_txt}."""
     subpars2.add_argument("--cpus", help=text)
 
     text = f"""List of cores to configure. {core_list_txt}."""
@@ -239,11 +256,12 @@ def build_arguments_parser():
     # Create parser for the 'pstates info' command.
     #
     text = "Get P-states information."
-    descr = "Get P-states information for specified CPUs (CPU0 by default)."
+    descr = """Get P-states information for specified CPUs. By default, prints all information for
+               all CPUs."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=pstates_info_command)
 
-    text = f"""List of CPUs to get information about. {cpu_list_txt}."""
+    text = f"""List of CPUs to get information about. {cpu_list_dflt_txt}."""
     subpars2.add_argument("--cpus", help=text)
 
     text = f"""List of cores to get information about. {core_list_txt}."""
@@ -251,6 +269,19 @@ def build_arguments_parser():
 
     text = f"""List of packages to get information about. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
+
+    for name, pinfo in PStates.PROPS.items():
+        if pinfo["type"] == "bool":
+            # This is a binary "on/off" type of features.
+            text = "Get current setting for "
+        else:
+            text = "Get "
+
+        option = f"--{name.replace('_', '-')}"
+        name = Human.untitle(pinfo["name"])
+        text += f"""{name}. {pinfo["help"]} This option has {pinfo["scope"]} scope."""
+
+        subpars2.add_argument(option, action="store_true", help=text)
 
     #
     # Create parser for the 'pstates config' command.
@@ -261,7 +292,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=pstates_config_command)
 
-    text = f"""List of CPUs to configure P-States on. {cpu_list_txt}."""
+    text = f"""List of CPUs to configure P-States on. {cpu_list_dflt_txt}."""
     subpars2.add_argument("--cpus", help=text)
 
     text = f"""List of cores to configure P-States on. {core_list_txt}."""
@@ -338,81 +369,68 @@ def parse_arguments():
 
 # pylint: disable=import-outside-toplevel
 
-def cpu_hotplug_info_command(args, proc):
+def cpu_hotplug_info_command(args, pman):
     """Implements the 'cpu-hotplug info' command."""
 
     from pepctool import _PepcCPUHotplug
 
-    _PepcCPUHotplug.cpu_hotplug_info_command(args, proc)
+    _PepcCPUHotplug.cpu_hotplug_info_command(args, pman)
 
-def cpu_hotplug_online_command(args, proc):
+def cpu_hotplug_online_command(args, pman):
     """Implements the 'cpu-hotplug online' command."""
 
     from pepctool import _PepcCPUHotplug
 
-    _PepcCPUHotplug.cpu_hotplug_online_command(args, proc)
+    _PepcCPUHotplug.cpu_hotplug_online_command(args, pman)
 
-def cpu_hotplug_offline_command(args, proc):
+def cpu_hotplug_offline_command(args, pman):
     """Implements the 'cpu-hotplug offline' command."""
 
     from pepctool import _PepcCPUHotplug
 
-    _PepcCPUHotplug.cpu_hotplug_offline_command(args, proc)
+    _PepcCPUHotplug.cpu_hotplug_offline_command(args, pman)
 
-def cstates_info_command(args, proc):
+def cstates_info_command(args, pman):
     """Implements the 'cstates info' command."""
 
     from pepctool import _PepcCStates
 
-    _PepcCStates.cstates_info_command(args, proc)
+    _PepcCStates.cstates_info_command(args, pman)
 
-def cstates_config_command(args, proc):
+def cstates_config_command(args, pman):
     """Implements the 'cstates config' command."""
 
     from pepctool import _PepcCStates
 
-    _PepcCStates.cstates_config_command(args, proc)
+    _PepcCStates.cstates_config_command(args, pman)
 
-def pstates_info_command(args, proc):
+def pstates_info_command(args, pman):
     """Implements the 'pstates info' command."""
 
     from pepctool import _PepcPStates
 
-    _PepcPStates.pstates_info_command(args, proc)
+    _PepcPStates.pstates_info_command(args, pman)
 
-def pstates_config_command(args, proc):
+def pstates_config_command(args, pman):
     """Implements the 'pstates info' command."""
 
     from pepctool import _PepcPStates
 
-    _PepcPStates.pstates_config_command(args, proc)
+    _PepcPStates.pstates_config_command(args, pman)
 
-def aspm_info_command(args, proc):
+def aspm_info_command(args, pman):
     """Implements the 'aspm info'. command"""
 
     from pepctool import _PepcASPM
 
-    _PepcASPM.aspm_info_command(args, proc)
+    _PepcASPM.aspm_info_command(args, pman)
 
-def aspm_config_command(args, proc):
+def aspm_config_command(args, pman):
     """Implements the 'aspm config' command."""
 
     from pepctool import _PepcASPM
 
-    _PepcASPM.aspm_config_command(args, proc)
-
-# pylint: enable=import-outside-toplevel
-
-def get_proc(args):
-    """Returns and "SSH" object or the 'Procs' object depending on 'hostname'."""
-
-    if args.hostname == "localhost":
-        proc = Procs.Proc()
-    else:
-        proc = SSH.SSH(hostname=args.hostname, username=args.username, privkeypath=args.privkey,
-                       timeout=args.timeout)
-    return proc
-
+    _PepcASPM.aspm_config_command(args, pman)
 
 def main():
     """Script entry point."""
@@ -424,8 +442,13 @@ def main():
             LOG.error("please, run '%s -h' for help", OWN_NAME)
             return -1
 
-        proc = get_proc(args)
-        args.func(args, proc)
+        # pylint: disable=no-member
+        if args.hostname == "localhost":
+            args.username = args.privkey = args.timeout = None
+
+        with ProcessManager.get_pman(args.hostname, username=args.username,
+                                     privkeypath=args.privkey, timeout=args.timeout) as pman:
+            args.func(args, pman)
     except KeyboardInterrupt:
         LOG.info("\nInterrupted, exiting")
         return -1

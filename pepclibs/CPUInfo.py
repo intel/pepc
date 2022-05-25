@@ -13,7 +13,7 @@ This module provides an API to get CPU information.
 import re
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
-from pepclibs.helperlibs import ArgParse, Procs, Trivial, FSHelpers, ToolChecker
+from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers
 
 # CPU model numbers.
 #
@@ -41,12 +41,12 @@ INTEL_FAM6_ALDERLAKE_L = 0x9A          # Alder Lake mobile.
 INTEL_FAM6_TIGERLAKE = 0x8D            # Tiger Lake client.
 INTEL_FAM6_TIGERLAKE_L = 0x8C          # Tiger Lake mobile.
 INTEL_FAM6_LAKEFIELD = 0x8A            # Lakefield client.
-INTEL_FAM6_ICELAKE = 0x7D              # IceLake client.
-INTEL_FAM6_ICELAKE_L = 0x7E            # Ice Lake mobile.
 INTEL_FAM6_COMETLAKE = 0xA5            # Comet Lake client.
 INTEL_FAM6_COMETLAKE_L = 0xA6          # Comet Lake mobile.
 INTEL_FAM6_KABYLAKE = 0x9E             # Kaby Lake client.
 INTEL_FAM6_KABYLAKE_L = 0x8E           # Kaby Lake mobile.
+INTEL_FAM6_ICELAKE = 0x7D              # IceLake client.
+INTEL_FAM6_ICELAKE_L = 0x7E            # Ice Lake mobile.
 INTEL_FAM6_CANNONLAKE_L = 0x66         # Cannonlake mobile.
 INTEL_FAM6_SKYLAKE = 0x5E              # Skylake client.
 INTEL_FAM6_SKYLAKE_L = 0x4E            # Skylake mobile.
@@ -152,7 +152,7 @@ _CPU_DESCR = {INTEL_FAM6_SAPPHIRERAPIDS_X: "Sapphire Rapids Xeon",
 # The levels names have to be the same as "scope" names in 'PStates', 'CStates', etc.
 LEVELS = ("package", "die", "node", "core", "CPU")
 
-class CPUInfo:
+class CPUInfo(ClassHelpers.SimpleCloseContext):
     """
     Provide information about the CPU of a local or remote host.
 
@@ -211,7 +211,7 @@ class CPUInfo:
         # Get the CPU die number.
         die_id_path = sysfs_base / "die_id"
         try:
-            die = FSHelpers.read(die_id_path, proc=self._proc)
+            die = self._pman.read(die_id_path)
         except ErrorNotFound:
             # The file does not exist.
             self._no_die_info = True
@@ -220,7 +220,7 @@ class CPUInfo:
         die = int(die)
 
         # Get the list of CPUs belonging to the same die.
-        cpus = FSHelpers.read(sysfs_base / "die_cpus_list", proc=self._proc)
+        cpus = self._pman.read(sysfs_base / "die_cpus_list")
         cpus = ArgParse.parse_int_list(cpus, ints=True)
 
         # Save the list of CPUs in the case.
@@ -308,7 +308,7 @@ class CPUInfo:
 
         # Note, we could just walk sysfs, but 'lscpu' is faster.
         cmd = "lscpu --physical --all -p=socket,node,core,cpu,online"
-        lines, _ = self._proc.run_verify(cmd, join=False)
+        lines, _ = self._pman.run_verify(cmd, join=False)
 
         # Prepare the list of levels excluding the "die" level for parsing 'lscpu' output, which
         # does not include die information.
@@ -444,7 +444,7 @@ class CPUInfo:
         for num in nums:
             if num not in valid_nums:
                 valid_nums_str = ", ".join([str(num) for num in valid_nums])
-                raise Error(f"{lvl} {num} does not exist{self._proc.hostmsg}.\n"
+                raise Error(f"{lvl} {num} does not exist{self._pman.hostmsg}.\n"
                             f"Valid {lvl} numbers are: {valid_nums_str}")
 
         return list(result)
@@ -544,7 +544,7 @@ class CPUInfo:
             if cpu == tline["CPU"]:
                 break
         else:
-            raise Error("CPU {cpu} is not available{self._proc.hostmsg}")
+            raise Error("CPU {cpu} is not available{self._pman.hostmsg}")
 
         siblings = []
         for tline1 in self._get_topology(order="CPU"):
@@ -567,10 +567,10 @@ class CPUInfo:
             if cpu == tline["CPU"]:
                 break
         else:
-            raise Error("CPU {cpu} is not available{self._proc.hostmsg}")
+            raise Error("CPU {cpu} is not available{self._pman.hostmsg}")
 
         if not tline["online"]:
-            raise Error("CPU {cpu} is offline{self._proc.hostmsg}, cannot get its topology")
+            raise Error("CPU {cpu} is offline{self._pman.hostmsg}, cannot get its topology")
 
         result = {}
         for lvl in LEVELS:
@@ -684,7 +684,7 @@ class CPUInfo:
         for pkg in packages:
             if pkg not in allpkgs:
                 pkgs_str = ", ".join([str(pkg) for pkg in sorted(allpkgs)])
-                raise Error(f"package '{pkg}' not available{self._proc.hostmsg}, available "
+                raise Error(f"package '{pkg}' not available{self._pman.hostmsg}, available "
                             f"packages are: {pkgs_str}")
 
         return packages
@@ -852,7 +852,7 @@ class CPUInfo:
             if die not in pkg_dies:
                 dies_str = ", ".join([str(pkg) for pkg in sorted(pkg_dies)])
                 raise Error(f"die '{die}' is not available in package "
-                            f"'{package}'{self._proc.hostmsg}, available dies are: {dies_str}")
+                            f"'{package}'{self._pman.hostmsg}, available dies are: {dies_str}")
 
         return dies
 
@@ -879,7 +879,7 @@ class CPUInfo:
         for cpu in cpus:
             if cpu not in allcpus:
                 cpus_str = ", ".join([str(cpu) for cpu in sorted(allcpus)])
-                raise Error(f"CPU{cpu} is not available{self._proc.hostmsg}, available CPUs are: "
+                raise Error(f"CPU{cpu} is not available{self._pman.hostmsg}, available CPUs are: "
                             f"{cpus_str}")
 
         return cpus
@@ -895,7 +895,7 @@ class CPUInfo:
             return self.info
 
         self.info = cpuinfo = {}
-        lscpu, _ = self._proc.run_verify("lscpu", join=False)
+        lscpu, _ = self._pman.run_verify("lscpu", join=False)
 
         # Parse misc. information about the CPU.
         patterns = ((r"^Architecture:\s*(.*)$", "arch"),
@@ -930,19 +930,14 @@ class CPUInfo:
 
         return cpuinfo
 
-    def __init__(self, proc=None, tchk=None):
+    def __init__(self, pman=None):
         """
         The class constructor. The arguments are as follows.
-          * proc - the 'Proc' or 'SSH' object that defines the target host.
-          * tchk - an optional 'ToolChecker.ToolChecker()' object which will be used for checking if
-                   the required tools like 'lscpu' are present on the target host.
+          * pman - the process manager object that defines the target host.
         """
 
-        self._proc = proc
-        self._tchk = tchk
-
-        self._close_proc = proc is None
-        self._close_tchk = tchk is None
+        self._pman = pman
+        self._close_pman = pman is None
 
         # The topology dictionary. See '_get_topology()' for more information.
         self._topology = {}
@@ -965,12 +960,8 @@ class CPUInfo:
         # A short CPU description string.
         self.cpudescr = None
 
-        if not self._proc:
-            self._proc = Procs.Proc()
-        if not self._tchk:
-            self._tchk = ToolChecker.ToolChecker(proc=self._proc)
-
-        self._tchk.check_tool("lscpu")
+        if not self._pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
 
         self.info = self._get_cpu_info()
 
@@ -983,18 +974,4 @@ class CPUInfo:
 
     def close(self):
         """Uninitialize the class object."""
-
-        for attr in ("_tchk", "_proc"):
-            obj = getattr(self, attr, None)
-            if obj:
-                if getattr(self, f"_close{attr}", False):
-                    getattr(obj, "close")()
-                setattr(self, attr, None)
-
-    def __enter__(self):
-        """Enter the runtime context."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close()
+        ClassHelpers.close(self, close_attrs=("_pman",))

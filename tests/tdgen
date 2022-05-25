@@ -17,7 +17,7 @@ from pathlib import Path
 from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg, MiscFeatureControl
 from pepclibs.msr import PlatformInfo, PowerCtl, PCStateConfigCtl, PMEnable, TurboRatioLimit
 from pepclibs.msr import TurboRatioLimit1
-from pepclibs.helperlibs import ArgParse, Logging, Procs, SSH, YAML
+from pepclibs.helperlibs import ArgParse, Logging, ProcessManager, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
 OWN_NAME = "tdgen"
@@ -60,9 +60,91 @@ CPUInfoData = {
          "separator1": ":",
          "separator2": "|",
          "dirname":   "msr",
-         "filename":  "msr.txt"}}
+         "filename":  "msr.txt"}
+    }
 
-MODULE_TESTDATA = {"CPUInfo" : CPUInfoData}
+ASPMData = {
+    "inlinefiles" : [
+        {"command": r"find /sys/module/pcie_aspm/parameters/policy -type f -exec printf '%s' {}: " \
+                    r"\; -exec grep . {} \;",
+         "separator": ":",
+         "readonly":  False,
+         "dirname":   "aspm-info",
+         "filename":  "aspm.txt"}]
+    }
+
+CPUOnlineData = {
+    "prepare-cmds" : [
+        "pepc cpu-hotplug online --cpus all"],
+    "inlinefiles" : [
+        {"command": r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
+                    r"'.*cpu([[:digit:]]+)/online' -exec printf '%s' {}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly":  False,
+         "dirname":   "cpuonline-info",
+         "filename":  "cpuonline.txt"}],
+    "directories" : [
+        {"command": r"find /sys/devices/system/cpu -type d -regextype posix-extended -regex " \
+                    r"'.*cpu([[:digit:]]+)'",
+         "dirname":   "cpuonline-info",
+         "filename":  "cpuonline-dirs.txt"}],
+    }
+
+CStatesData = {
+    "inlinefiles" : [
+        {"command": r"find '/sys/devices/system/cpu' -type f -regextype posix-extended -regex " \
+                    r"'.*cpu([[:digit:]]+)/cpuidle/state([[:digit:]]+)/[^/]+' -exec printf '%s' " \
+                    r"{}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly": False,
+         "dirname": "cstates",
+         "filename": "cstates.txt"}]
+    }
+
+PStatesData = {
+    "prepare-cmds" : [
+        "modprobe intel_uncore_frequency",
+        "modprobe msr",
+        "pepc pstates config --min-freq min --max-freq hfm --cpus all",
+        "pepc pstates config --min-uncore-freq min --max-uncore-freq max --cpus all",
+        "pepc cstates config --enable all --cpus all"],
+    "inlinefiles" : [
+        {"command": r"find '/sys/devices/system/cpu/cpufreq' -type f -maxdepth 2 -regextype " \
+                    r"posix-extended -regex '.*[^/]+' -exec printf '%s' {}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly": False,
+         "dirname": "pstates",
+         "filename": "pstates.txt"},
+        {"command" : r"find '/sys/devices/system/cpu/intel_pstate/' -type f -exec printf '%s' " \
+                     r"{}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly": False,
+         "dirname": "pstates",
+         "filename": "intel_pstates.txt"},
+         {"command" : r"find /sys/devices/system/cpu/intel_uncore_frequency -type f -regextype " \
+                      r"posix-extended -regex '.*package_([[:digit:]]+)_die_([[:digit:]]+)/[^/]+'" \
+                      r" -exec printf '%s'{}: \; -exec grep . {} \;",
+          "separator": ":",
+          "readonly": False,
+          "dirname": "pstates",
+          "filename": "uncore.txt"}]
+    }
+
+SystemctlData = {
+    "commands" : [
+        {"command": "systemctl is-active -- 'tuned'",
+         "dirname": "systemctl-tuned-active",
+         "ignore_exitcode": True}],
+    }
+
+MODULE_TESTDATA = {
+    "CPUInfo" : CPUInfoData,
+    "ASPM" : ASPMData,
+    "CPUOnline" : CPUOnlineData,
+    "CStates" : CStatesData,
+    "PStates" : PStatesData,
+    "Systemctl" : SystemctlData,
+    }
 
 def build_arguments_parser():
     """A helper function which parses the input arguments."""
@@ -86,65 +168,60 @@ def parse_arguments():
 
     return args
 
-def get_proc(args):
-    """Returns and "SSH" object or the 'Procs' object depending on 'args.hostname'."""
-
-    if args.hostname == "localhost":
-        proc = Procs.Proc()
-    else:
-        proc = SSH.SSH(hostname=args.hostname, username=args.username, privkeypath=args.privkey,
-                       timeout=args.timeout)
-    return proc
-
-def collect_cmd_output(cmdinfo, proc, outdir):
+def collect_cmd_output(cmdinfo, pman, outdir):
     """
     Run the command defined in 'cmdinfo' and save the output to a file. The arguments are as
     follows.
       * cmdinfo - a dictionary of a command to run, see 'MODULE_TESTDATA'.
-      * proc - a 'Proc' or 'SSH' objetc that defines the remote host to run the 'cmdinfo' on.
+      * pman - the process manager object that defines the remote host to run the 'cmdinfo' on.
       * outdir - the directory to save the command output to.
     """
 
     datapath = outdir / cmdinfo["dirname"]
     os.makedirs(datapath, exist_ok=True)
 
-    stdout, stderr = proc.run_verify(cmdinfo["command"])
+    res = pman.run(cmdinfo["command"])
+    if res.exitcode != 0 and not cmdinfo.get("ignore_exitcode"):
+        LOG.error("running command '%s' failed and returned '%s'", cmdinfo["command"], res.exitcode)
 
-    for fname, data in ("stdout", stdout), ("stderr", stderr):
+    for fname, data in ("stdout", res.stdout), ("stderr", res.stderr):
         path = datapath / f"{fname}.txt"
 
         with open(path, "w") as fobj:
             fobj.write(data)
 
-def collect_files(cmdinfo, proc, outdir):
+def collect_files(cmdinfo, pman, outdir):
     """
     Read the content of files by running the command defined in 'cmdinfo' and save the output to a
     file. The arguments are as follows.
       * cmdinfo - a dictionary of a command to run to collect the file contents, see
                   'MODULE_TESTDATA'.
-      * proc - a 'Proc' or 'SSH' objetc that defines the remote host to read the files from.
+      * pman - the process manager object that defines the remote host to read the files from.
       * outdir - the directory to save the output to.
     """
 
     cmdpath = outdir / cmdinfo["dirname"]
     os.makedirs(cmdpath, exist_ok=True)
 
-    stdout, _ = proc.run_verify(cmdinfo["command"])
+    res = pman.run(cmdinfo["command"])
+    if res.exitcode != 0:
+        LOG.notice("running command '%s' failed and returned '%s'",
+                   cmdinfo["command"], res.exitcode)
 
     path = cmdpath / cmdinfo["filename"]
     with open(path, "w") as fobj:
-        fobj.write(stdout)
+        fobj.write(res.stdout)
 
-def collect_msrs(msrinfo, proc, outdir):
+def collect_msrs(msrinfo, pman, outdir):
     """
     Read the values of the MSR registers defined in 'msrinfo' and save the output to a file. The
     arguments are as follows.
       * msrinfo - a dictionary of a MSR registers to read, see 'MODULE_TESTDATA'.
-      * proc - a 'Proc' or 'SSH' object that defines the remote host to read the MSR values from.
+      * pman - the process manager object that defines the remote host to read the MSR values from.
       * outdir - the directory to save the command output to.
     """
 
-    lines, _ = proc.run_verify("lscpu -p=cpu", join=False)
+    lines, _ = pman.run_verify("lscpu -p=cpu", join=False)
 
     cpus = []
     for line in lines:
@@ -163,7 +240,7 @@ def collect_msrs(msrinfo, proc, outdir):
             line = f"/dev/cpu/{cpu}/msr{msrinfo['separator1']}"
 
             for addr in msrinfo["addresses"]:
-                result = proc.run(f"rdmsr {addr} -p {cpu}")
+                result = pman.run(f"rdmsr {addr} -p {cpu}")
                 if result.exitcode != 0:
                     continue
 
@@ -184,29 +261,45 @@ def main():
 
     try:
         args = parse_arguments()
-        proc = get_proc(args)
 
-        outdir = args.outdir
-        if not outdir:
-            outdir = Path(proc.hostname)
+        # pylint: disable=no-member
+        if args.hostname == "localhost":
+            args.username = args.privkey = args.timeout = None
 
-        for modname, testdata in MODULE_TESTDATA.items():
-            datapath = outdir / modname
+        with ProcessManager.get_pman(args.hostname, username=args.username,
+                                     privkeypath=args.privkey, timeout=args.timeout) as pman:
+            outdir = args.outdir
+            if not outdir:
+                outdir = Path(pman.hostname)
 
-            for cmdinfo in testdata["commands"]:
-                collect_cmd_output(cmdinfo, proc, datapath)
-                cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
+            for modname, testdata in MODULE_TESTDATA.items():
+                datapath = outdir / modname
 
-            for cmdinfo in testdata["inlinefiles"]:
-                collect_files(cmdinfo, proc, datapath)
-                cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
-                # We do not need command used to collect file contents, remove it.
-                del cmdinfo["command"]
+                if "prepare-cmds" in testdata:
+                    for command in testdata["prepare-cmds"]:
+                        pman.run(command)
+                    del testdata["prepare-cmds"]
 
-            collect_msrs(testdata["msrs"], proc, datapath)
-            testdata["msrs"]["dirname"] = f"{modname}/{testdata['msrs']['dirname']}"
+                if "commands" in testdata:
+                    for cmdinfo in testdata["commands"]:
+                        collect_cmd_output(cmdinfo, pman, datapath)
+                        cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
 
-            generate_config_file(modname, testdata, outdir)
+                for section in ("directories", "inlinefiles"):
+                    if section not in testdata:
+                        continue
+
+                    for cmdinfo in testdata[section]:
+                        collect_files(cmdinfo, pman, datapath)
+                        cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
+                        # We do not need command used to collect file contents, remove it.
+                        del cmdinfo["command"]
+
+                if "msrs" in testdata:
+                    collect_msrs(testdata["msrs"], pman, datapath)
+                    testdata["msrs"]["dirname"] = f"{modname}/{testdata['msrs']['dirname']}"
+
+                generate_config_file(modname, testdata, outdir)
 
     except KeyboardInterrupt:
         LOG.info("\nInterrupted, exiting")
