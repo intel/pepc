@@ -918,6 +918,10 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 raise Error(f"private SSH key at '{key_filename}' permissions are too wide: make "
                             f" sure 'others' cannot read/write/execute it")
 
+        _LOG.debug("establishing SSH connection to %s, port %d, username '%s', timeout '%s', "
+                   "priv. key '%s', SSH pman object ID: %s", self._vhostname, port, self.username,
+                   timeout, self.privkeypath, id(self))
+
         try:
             self.ssh = paramiko.SSHClient()
             self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -931,10 +935,6 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except BaseException as err:
             raise ErrorConnect(f"cannot establish TCP connection to {self._vhostname} with "
                                f"{timeout} secs time-out:\n{err}") from err
-
-        _LOG.debug("established SSH connection to %s, port %d, username '%s', timeout '%s', "
-                   "priv. key '%s', SSH pman object ID: %s", self._vhostname, port, self.username,
-                   timeout, self.privkeypath, id(self))
 
     def close(self):
         """Close the SSH connection."""
