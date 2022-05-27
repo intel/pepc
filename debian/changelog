@@ -1,3 +1,9 @@
+pepc (1.3.6) unstable; urgency=low
+
+  * pepc: fix running commands in Ubuntu/'dash' (regression in 1.3.5)
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 25 May 2022 16:45:39 +0300
+
 pepc (1.3.5) unstable; urgency=low
 
   * pepc: add per-property options to 'cstates info' and 'pstates info'.
