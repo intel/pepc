@@ -154,7 +154,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             stderr = subprocess.PIPE
 
         if shell:
-            real_cmd = cmd = f" exec -- {command}"
+            real_cmd = cmd = f"exec {command}"
         else:
             real_cmd = command
             cmd = shlex.split(command)
@@ -165,7 +165,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except FileNotFoundError as err:
             raise self._command_not_found(command, str(err))
         except OSError as err:
-            raise Error(f"cannot execute the following command{self.hostmsg}:\n{command}\n"
+            raise Error(f"cannot execute the following command{self.hostmsg}:\n{real_cmd}\n"
                         f"The error is: {err}") from err
 
         streams = (pobj.stdin, pobj.stdout, pobj.stderr)
