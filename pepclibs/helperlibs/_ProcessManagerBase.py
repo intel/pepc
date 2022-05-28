@@ -761,12 +761,11 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                          otherwise return 'None'.
         """
 
-        if must_exist:
-            opt = "-e"
-        else:
-            opt = "-m"
+        if not must_exist and not self.exists(path):
+            return None
 
-        stdout, _ = self.run_verify(f"readlink {opt} -- '{path}'")
+        cmd = f"python -c 'from pathlib import Path; print(Path(\"{path}\").resolve())'"
+        stdout, _ = self.run_verify(cmd)
         return Path(stdout.strip())
 
     def shell_test(self, path, opt):
