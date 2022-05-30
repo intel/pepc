@@ -711,10 +711,11 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     def get_mtime(self, path):
         """Returns the modification time of a file or directory at path 'path'."""
 
+        cmd = f"python -c 'import os; print(os.stat(\"{path}\").st_mtime)'"
         try:
-            stdout, _ = self.run_verify(f"stat -c %Y -- {path}")
+            stdout, _ = self.run_verify(cmd)
         except Error as err:
-            if "No such file or directory" in str(err):
+            if "FileNotFoundError" in str(err):
                 raise ErrorNotFound(f"'{path}' does not exist{self.hostmsg}") from None
             raise
 
