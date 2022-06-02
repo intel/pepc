@@ -395,15 +395,23 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         path = Path(path)
 
-        try:
-            if path.is_dir():
-                shutil.rmtree(path)
-            else:
-                path.unlink()
-        except FileNotFoundError:
-            pass
-        except (OSError, shutil.Error) as err:
-            raise Error(f"failed to remove {path}: {err}") from err
+        # Sometimes shutil.rmtree() fails to remove non empty directory, in such case, retry few
+        # times.
+        retry = 3
+        while True:
+            try:
+                if path.is_dir():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink()
+            except FileNotFoundError:
+                pass
+            except (OSError, shutil.Error) as err:
+                if retry:
+                    retry -= 1
+                    continue
+                raise Error(f"failed to remove {path}: {err}") from err
+            break
 
     @staticmethod
     def abspath(path, must_exist=True):
