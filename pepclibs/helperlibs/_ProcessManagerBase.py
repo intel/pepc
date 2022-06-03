@@ -759,15 +759,18 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Returns absolute real path for 'path'. The arguments are as follows.
           * path - the path to resolve into the absolute real (no symlinks) path.
           * must_exist - if 'path' does not exist, raise and exception when 'must_exist' is 'True',
-                         otherwise return 'None'.
+                         otherwise returns the 'path' value.
         """
-
-        if not must_exist and not self.exists(path):
-            return None
 
         cmd = f"python -c 'from pathlib import Path; print(Path(\"{path}\").resolve())'"
         stdout, _ = self.run_verify(cmd)
-        return Path(stdout.strip())
+
+        rpath = stdout.strip()
+
+        if must_exist and not self.exists(rpath):
+            raise ErrorNotFound(f"path '{rpath}' does not exist")
+
+        return Path(rpath)
 
     def shell_test(self, path, opt):
         """

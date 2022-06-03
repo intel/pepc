@@ -426,7 +426,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"failed to get real path for '{path}': {err}") from None
 
         if must_exist and not rpath.exists():
-            raise Error(f"path '{rpath}' does not exist")
+            raise ErrorNotFound(f"path '{rpath}' does not exist")
 
         return rpath
 
