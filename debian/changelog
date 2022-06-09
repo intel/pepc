@@ -1,3 +1,9 @@
+pepc (1.3.8) unstable; urgency=low
+
+  * pepc: provide a python interpreter search capability dependent projects.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 09 Jun 2022 15:59:32 +0300
+
 pepc (1.3.7) unstable; urgency=low
 
   * pepc: fix in 'abspath()', which fixes the 'wult' tool using pepc libraries.
