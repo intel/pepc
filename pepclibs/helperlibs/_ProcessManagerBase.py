@@ -667,6 +667,30 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         except Error as err:
             raise type(err)(f"failed to write to file '{path}'{self.hostmsg}:\n{err}") from err
 
+    def _get_python_path(self):
+        """
+        Some FS operations have to execute python scripts on the remote host. This method finds and
+        returns python interpreter path.
+        """
+
+        if self._python_path:
+            return self._python_path
+
+        # The paths to try.
+        paths = ("/usr/bin/python", "/usr/bin/python3", "python", "python3")
+        for path in paths:
+            try:
+                self.run_verify(f"{path} --version")
+            except Error:
+                continue
+
+            self._python_path = path
+            return Path(path)
+
+        paths_descr = "\n * " + "\n * ".join(paths)
+        raise ErrorNotFound(f"python interpreter was not found{self.hostmsg}.\n"
+                            f"Checked the following paths:{paths_descr}")
+
     def mkdir(self, dirpath, parents=False, exist_ok=False):
         """
         Create a directory. The a arguments are as follows.
@@ -711,7 +735,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     def get_mtime(self, path):
         """Returns the modification time of a file or directory at path 'path'."""
 
-        cmd = f"python -c 'import os; print(os.stat(\"{path}\").st_mtime)'"
+        python_path = self._get_python_path()
+        cmd = f"{python_path} -c 'import os; print(os.stat(\"{path}\").st_mtime)'"
         try:
             stdout, _ = self.run_verify(cmd)
         except Error as err:
@@ -762,7 +787,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                          otherwise returns the 'path' value.
         """
 
-        cmd = f"python -c 'from pathlib import Path; print(Path(\"{path}\").resolve())'"
+        python_path = self._get_python_path()
+        cmd = f"{python_path} -c 'from pathlib import Path; print(Path(\"{path}\").resolve())'"
         stdout, _ = self.run_verify(cmd)
 
         rpath = stdout.strip()
@@ -842,6 +868,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         self.is_remote = None
         self.hostname = None
         self.hostmsg = None
+
+        # Path to python interpreter on the remote host.
+        self._python_path = None
 
     def close(self):
         """Free allocated resources."""
