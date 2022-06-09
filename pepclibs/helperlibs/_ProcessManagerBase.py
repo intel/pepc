@@ -668,7 +668,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         except Error as err:
             raise type(err)(f"failed to write to file '{path}'{self.hostmsg}:\n{err}") from err
 
-    def _get_python_path(self):
+    def get_python_path(self):
         """
         Some FS operations have to execute python scripts on the remote host. This method finds and
         returns python interpreter path.
@@ -732,7 +732,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             return
 
         # A small python program to get the list of directories with some metadata.
-        python_path = self._get_python_path()
+        python_path = self.get_python_path()
         cmd = f"""{python_path} -c 'import os
 path = "{path}"
 for entry in os.listdir(path):
@@ -772,7 +772,7 @@ for entry in os.listdir(path):
     def get_mtime(self, path):
         """Returns the modification time of a file or directory at path 'path'."""
 
-        python_path = self._get_python_path()
+        python_path = self.get_python_path()
         cmd = f"{python_path} -c 'import os; print(os.stat(\"{path}\").st_mtime)'"
         try:
             stdout, _ = self.run_verify(cmd)
@@ -824,7 +824,7 @@ for entry in os.listdir(path):
                          otherwise returns the 'path' value.
         """
 
-        python_path = self._get_python_path()
+        python_path = self.get_python_path()
         cmd = f"{python_path} -c 'from pathlib import Path; print(Path(\"{path}\").resolve())'"
         stdout, _ = self.run_verify(cmd)
 
