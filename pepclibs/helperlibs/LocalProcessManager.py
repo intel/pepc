@@ -20,6 +20,7 @@ import errno
 import logging
 import subprocess
 from pathlib import Path
+from operator import itemgetter
 from pepclibs.helperlibs import _ProcessManagerBase, ClassHelpers
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied
@@ -323,6 +324,37 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 raise ErrorExists(f"path '{dirpath}' already exists") from None
         except OSError as err:
             raise Error(f"failed to create directory '{dirpath}':\n{err}") from None
+
+    @staticmethod
+    def lsdir(path, must_exist=True):
+        """
+        List directory entries in 'path'. Refer to
+        '_ProcessManagerBase.ProcessManagerBase().lsdir()' for more information.
+        """
+
+        path = Path(path)
+
+        if not must_exist and not path.exists():
+            return
+
+        # Get list of directory entries. For a dummy dictionary out of it. We'll need it later for
+        # sorting by ctime.
+        try:
+            entries = {entry : None for entry in os.listdir(path)}
+        except OSError as err:
+            raise Error(f"failed to get list of files in '{path}':\n{err}") from None
+
+        # For each directory entry, get its file type and ctime. Fill the entry dictionary value.
+        for entry in entries:
+            try:
+                stinfo = path.joinpath(entry).lstat()
+            except OSError as err:
+                raise Error(f"'stat()' failed for '{entry}':\n{err}") from None
+
+            entries[entry] = {"name": entry, "ctime": stinfo.st_ctime, "mode": stinfo.st_mode}
+
+        for einfo in sorted(entries.values(), key=itemgetter("ctime"), reverse=True):
+            yield (einfo["name"], path / einfo["name"], einfo["mode"])
 
     @staticmethod
     def exists(path):

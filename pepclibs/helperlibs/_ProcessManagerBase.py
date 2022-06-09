@@ -20,6 +20,7 @@ import logging
 import threading
 import contextlib
 from pathlib import Path
+from operator import itemgetter
 from collections import namedtuple
 from pepclibs.helperlibs import Human, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorExists
@@ -711,6 +712,42 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             cmd += " -p"
         cmd += f" -- '{dirpath}'"
         self.run_verify(cmd)
+
+    def lsdir(self, path, must_exist=True):
+        """
+        For each directory entry in 'path', yield the ('name', 'path', 'mode') tuple, where 'name'
+        is the direntry name, 'path' is full directory entry path, and 'mode' is the
+        'os.lstat().st_mode' value for the directory entry.
+
+        The directory entries are yielded in ctime (creation time) order.
+
+        If 'path' does not exist, this function raises an exception. However, this behavior can be
+        changed with the 'must_exist' argument. If 'must_exist' is 'False, this function just
+        returns and does not yield anything.
+        """
+
+        path = Path(path)
+
+        if not must_exist and not self.exists(path):
+            return
+
+        # A small python program to get the list of directories with some metadata.
+        python_path = self._get_python_path()
+        cmd = f"""{python_path} -c 'import os
+path = "{path}"
+for entry in os.listdir(path):
+    stinfo = os.lstat(os.path.join(path, entry))
+    print(entry, stinfo.st_mode, stinfo.st_ctime)'"""
+
+        stdout, _ = self.run_verify(cmd, shell=True)
+
+        entries = {}
+        for line in stdout.splitlines():
+            entry, mode, ctime = Trivial.split_csv_line(line.strip(), sep=" ")
+            entries[entry] = {"name": entry, "ctime": float(ctime), "mode": int(mode)}
+
+        for einfo in sorted(entries.values(), key=itemgetter("ctime"), reverse=True):
+            yield (einfo["name"], path / einfo["name"], einfo["mode"])
 
     def exists(self, path):
         """Returns 'True' if path 'path' exists."""
