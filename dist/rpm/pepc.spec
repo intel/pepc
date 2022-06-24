@@ -57,6 +57,10 @@ install -pDm644 docs/man1/pepc.1 %{buildroot}/%{_mandir}/man1/pepc.1
 %{python3_sitelib}/pepctool
 %{python3_sitelib}/pepc-*.egg-info/
 
+# Date format: date "+%a %b %d %Y"
 %changelog
+* Fri Jun 24 2022 Artem Bityutskiy <artem.bityutskiy@linux.intel.com> - 1.3.9-1
+- Add RPM packaging support.
+
 * Tue Jun 21 2022 Ali Erdinc Koroglu <ali.erdinc.koroglu@intel.com> - 1.3.8-1
-- Initial package
+- Initial package.

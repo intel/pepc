@@ -42,20 +42,6 @@ ask_question() {
 	done
 }
 
-format_changelog() {
-	local logfile="$1"; shift
-	local pfx1="$1"; shift
-	local pfx2="$1"; shift
-	local pfx_len="$(printf "%s" "$pfx1" | wc -c)"
-	local width="$((80-$pfx_len))"
-
-	while IFS= read -r line; do
-		printf "%s\n" "$line" | fold -c -s -w "$width" | \
-			sed -e "1 s/^/$pfx1/" | sed -e "1! s/^/$pfx2/" | \
-			sed -e "s/[\t ]\+$//"
-	done < "$logfile"
-}
-
 [ $# -eq 0 ] && usage
 [ $# -eq 1 ] || fatal "insufficient or too many argumetns"
 
@@ -73,7 +59,7 @@ fi
 
 # Remind the maintainer about various important things.
 ask_question "Did you run tests"
-ask_question "Did you update 'debian/changelog'"
+ask_question "Did you update 'debian/changelog' and 'dist/rpm/wult.spec'"
 
 # Change the tool version.
 sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" pepctool/_Pepc.py
