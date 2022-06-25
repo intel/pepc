@@ -63,6 +63,8 @@ ask_question "Did you update 'debian/changelog' and 'dist/rpm/wult.spec'"
 
 # Change the tool version.
 sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" pepctool/_Pepc.py
+# Change RPM package version.
+sed -i -e "s/^Version:\(\s\+\)[0-9]\+\.[0-9]\+\.[0-9]\+$/Version:\1$new_ver/" dist/rpm/pepc.spec
 
 # Update the man page.
 argparse-manpage --pyfile pepctool/_Pepc.py --function build_arguments_parser \
