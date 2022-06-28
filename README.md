@@ -26,8 +26,6 @@ configuring various Linux and Hardware power management features.
 **IMPORTANT**: this is tool is for debug and research purposes only. It requires root permissions,
 and must only be used in an isolated lab environment, not in production.
 
-The project license is the 3-clause BSD license: https://opensource.org/licenses/BSD-3-Clause
-
 ## Context
 
 There are many Linux tools for configuring power management in Linux, and this sub-section tries to
