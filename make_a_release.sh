@@ -59,7 +59,7 @@ fi
 
 # Remind the maintainer about various important things.
 ask_question "Did you run tests"
-ask_question "Did you update 'debian/changelog' and 'dist/rpm/wult.spec'"
+ask_question "Did you update 'CHANGELOG.md'"
 
 # Change the tool version.
 sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" pepctool/_Pepc.py
