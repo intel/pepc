@@ -48,7 +48,7 @@ install -pDm644 docs/man1/pepc.1 %{buildroot}/%{_mandir}/man1/pepc.1
 
 %files
 %doc README.md
-%license debian/copyright
+%license debian/LICENSE.md
 %{_bindir}/pepc
 %{_mandir}/man1/pepc.1*
 
