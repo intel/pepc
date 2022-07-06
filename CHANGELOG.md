@@ -7,6 +7,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 - Your description
 
+## [1.3.10] - 2022-07-06
+### Changed
+ - Minor improvements required for RPM packaging
+
 ## [1.3.9] - 2022-06-24
 ### Changed
  - Add RPM packaging support.
