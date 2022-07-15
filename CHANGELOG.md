@@ -4,8 +4,14 @@ Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
 ### Added
-- Your description
+### Changed
+
+## [1.3.11] - 2022-07-15
+### Fixed
+- Changed Sapphire Rapids PC6 limits: support retention and non-retention
+  variants
 
 ## [1.3.10] - 2022-07-06
 ### Changed
