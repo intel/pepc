@@ -442,9 +442,9 @@ class PStates(ClassHelpers.SimpleCloseContext):
             # to look at 'MSR_TURBO_RATIO_LIMIT1'.
             ratio = trl.read_cpu_feature("max_g0_turbo_ratio", cpu)
         else:
-            _LOG.warning("module 'TurboRatioLimit' does not support 'MSR_TURBO_RATIO_LIMIT' for "
-                         "CPU '%s'%s\nPlease, contact project maintainers.",
-                         self._cpuinfo.cpudescr, self._pman.hostmsg)
+            _LOG.debug("module 'TurboRatioLimit' does not support 'MSR_TURBO_RATIO_LIMIT' for "
+                       "CPU '%s'%s\nPlease, contact project maintainers.",
+                       self._cpuinfo.cpudescr, self._pman.hostmsg)
 
         max_turbo_freq = None
         if ratio is not None:
