@@ -87,6 +87,29 @@ PROPS = {
         "scope": PowerCtl.FEATURES["cstate_prewake"]["scope"],
         "writable" : True,
     },
+    "idle_driver" : {
+        "name" : "Idle driver",
+        "help" : "Current idle driver name.",
+        "type" : "str",
+        "scope": "global",
+        "writable" : False,
+    },
+    "governor" : {
+        "name" : "Idle governor",
+        "help" : "Current governor name.",
+        "type" : "str",
+        "scope": "global",
+        "writable" : False,
+        "subprops" : {
+            "governors" : {
+                "name" : "Available idle governors",
+                "help" : "Available idle governor names.",
+                "type" : "list[str]",
+                "scope": "global",
+                "writable" : False,
+            },
+        },
+    },
 }
 
 # The C-state sysfs file names which are read by 'get_cstates_info()'. The C-state
@@ -548,6 +571,25 @@ class CStates(ClassHelpers.SimpleCloseContext):
 
         return module.read_cpu_feature(pname, cpu)
 
+    def _sysfs_read(self, prop):
+        """Read 'prop's sysfs file and return contents."""
+
+        path = self._sysfs_cpuidle / prop["fname"]
+        val = self._pman.read(path)
+
+        if prop["type"] == "list[str]":
+            return val.split()
+        return val
+
+    def _read_prop_from_sysfs(self, prop, pname):
+        """
+        Read all 'pname' properties and all its sub-properties sysfs files and save into 'prop'.
+        """
+
+        prop[pname] = self._sysfs_read(self._props[pname])
+        for subpname in self._props[pname]["subprops"]:
+            prop[subpname] = self._sysfs_read(self._props[pname]["subprops"][subpname])
+
     def _get_pinfo(self, pnames, cpu):
         """
         Build and return the properties information dictionary for properties in 'pnames' and CPU
@@ -558,6 +600,10 @@ class CStates(ClassHelpers.SimpleCloseContext):
 
         for pname in pnames:
             pinfo[pname] = {pname : None}
+
+            if "fname" in self._props[pname]:
+                self._read_prop_from_sysfs(pinfo[pname], pname)
+                continue
 
             if pname == "pkg_cstate_limit":
                 # Add the "locked" bit as a sub-property.
@@ -745,6 +791,11 @@ class CStates(ClassHelpers.SimpleCloseContext):
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
         self._init_props_dict()
+
+        self._sysfs_cpuidle = Path("/sys/devices/system/cpu/cpuidle")
+        self._props["idle_driver"]["fname"] = "current_driver"
+        self._props["governor"]["fname"] = "current_governor"
+        self._props["governor"]["subprops"]["governors"]["fname"] = "available_governors"
 
     def close(self):
         """Uninitialize the class object."""
