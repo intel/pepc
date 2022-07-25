@@ -93,8 +93,8 @@ CPUOnlineData = {
 CStatesData = {
     "inlinefiles" : [
         {"command": r"find '/sys/devices/system/cpu' -type f -regextype posix-extended -regex " \
-                    r"'.*cpu([[:digit:]]+)/cpuidle/state([[:digit:]]+)/[^/]+' -exec printf '%s' " \
-                    r"{}: \; -exec grep . {} \;",
+                    r"'.*(cpu([[:digit:]]+)/cpuidle/state([[:digit:]]+)|/cpuidle)/[^/]+' " \
+                    r"-exec printf '%s' {}: \; -exec grep . {} \;",
          "separator": ":",
          "readonly": False,
          "dirname": "cstates",
