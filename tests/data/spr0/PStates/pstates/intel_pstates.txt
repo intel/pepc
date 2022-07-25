@@ -1,7 +1,7 @@
 /sys/devices/system/cpu/intel_pstate/no_turbo:0
-/sys/devices/system/cpu/intel_pstate/num_pstates:30
+/sys/devices/system/cpu/intel_pstate/num_pstates:31
 /sys/devices/system/cpu/intel_pstate/status:active
-/sys/devices/system/cpu/intel_pstate/turbo_pct:61
+/sys/devices/system/cpu/intel_pstate/turbo_pct:59
 /sys/devices/system/cpu/intel_pstate/max_perf_pct:100
 /sys/devices/system/cpu/intel_pstate/hwp_dynamic_boost:0
 /sys/devices/system/cpu/intel_pstate/min_perf_pct:21

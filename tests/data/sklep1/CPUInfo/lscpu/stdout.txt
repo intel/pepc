@@ -7,13 +7,15 @@ On-line CPU(s) list:             0-95
 Vendor ID:                       GenuineIntel
 BIOS Vendor ID:                  Intel(R) Corporation
 Model name:                      Intel(R) Xeon(R) Platinum 8168 CPU @ 2.70GHz
-BIOS Model name:                 Intel(R) Xeon(R) Platinum 8168 CPU @ 2.70GHz
+BIOS Model name:                 Intel(R) Xeon(R) Platinum 8168 CPU @ 2.70GHz  CPU @ 2.7GHz
+BIOS CPU family:                 179
 CPU family:                      6
 Model:                           85
 Thread(s) per core:              2
 Core(s) per socket:              24
 Socket(s):                       2
 Stepping:                        4
+CPU(s) scaling MHz:              32%
 CPU max MHz:                     3700.0000
 CPU min MHz:                     1200.0000
 BogoMIPS:                        5400.00
@@ -29,8 +31,10 @@ Vulnerability Itlb multihit:     KVM: Mitigation: VMX unsupported
 Vulnerability L1tf:              Mitigation; PTE Inversion
 Vulnerability Mds:               Mitigation; Clear CPU buffers; SMT vulnerable
 Vulnerability Meltdown:          Mitigation; PTI
+Vulnerability Mmio stale data:   Mitigation; Clear CPU buffers; SMT vulnerable
+Vulnerability Retbleed:          Mitigation; IBRS
 Vulnerability Spec store bypass: Mitigation; Speculative Store Bypass disabled via prctl
 Vulnerability Spectre v1:        Mitigation; usercopy/swapgs barriers and __user pointer sanitization
-Vulnerability Spectre v2:        Mitigation; Retpolines, IBPB conditional, IBRS_FW, STIBP conditional, RSB filling
+Vulnerability Spectre v2:        Mitigation; IBRS, IBPB conditional, RSB filling
 Vulnerability Srbds:             Not affected
 Vulnerability Tsx async abort:   Mitigation; Clear CPU buffers; SMT vulnerable

@@ -7,13 +7,15 @@ On-line CPU(s) list:             0-191
 Vendor ID:                       GenuineIntel
 BIOS Vendor ID:                  Intel(R) Corporation
 Model name:                      Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
-BIOS Model name:                 Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
+BIOS Model name:                 Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz  CPU @ 2.4GHz
+BIOS CPU family:                 179
 CPU family:                      6
 Model:                           85
 Thread(s) per core:              2
 Core(s) per socket:              24
 Socket(s):                       4
 Stepping:                        6
+CPU(s) scaling MHz:              26%
 CPU max MHz:                     3900.0000
 CPU min MHz:                     1000.0000
 BogoMIPS:                        4800.00
@@ -32,6 +34,8 @@ Vulnerability Itlb multihit:     KVM: Mitigation: VMX disabled
 Vulnerability L1tf:              Not affected
 Vulnerability Mds:               Not affected
 Vulnerability Meltdown:          Not affected
+Vulnerability Mmio stale data:   Vulnerable: Clear CPU buffers attempted, no microcode; SMT vulnerable
+Vulnerability Retbleed:          Mitigation; Enhanced IBRS
 Vulnerability Spec store bypass: Mitigation; Speculative Store Bypass disabled via prctl
 Vulnerability Spectre v1:        Mitigation; usercopy/swapgs barriers and __user pointer sanitization
 Vulnerability Spectre v2:        Mitigation; Enhanced IBRS, IBPB conditional, RSB filling
