@@ -1,3 +1,7 @@
+/sys/devices/system/cpu/cpuidle/current_governor_ro:menu
+/sys/devices/system/cpu/cpuidle/current_driver:intel_idle
+/sys/devices/system/cpu/cpuidle/available_governors:menu 
+/sys/devices/system/cpu/cpuidle/current_governor:menu
 /sys/devices/system/cpu/cpu88/cpuidle/state3/disable:0
 /sys/devices/system/cpu/cpu88/cpuidle/state3/above:8523
 /sys/devices/system/cpu/cpu88/cpuidle/state3/time:62390759
