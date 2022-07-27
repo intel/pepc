@@ -6,6 +6,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [Unreleased]
 ### Fixed
 ### Added
+- Add idle driver and governor options to 'cstates info'.
 ### Changed
 
 ## [1.3.11] - 2022-07-15
