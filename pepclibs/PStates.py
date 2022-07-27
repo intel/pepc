@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -15,6 +15,7 @@ import time
 import logging
 import contextlib
 from pathlib import Path
+from pepclibs import _PropsCache
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs import KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
@@ -313,39 +314,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                                                         msr=msr)
         return self._trl
 
-    def _is_cached(self, pname, cpu):
-        """Returns 'True' if there is a cached value for property or sub-property 'pname'."""
-
-        if cpu in self._cache and pname in self._cache[cpu]:
-            return True
-        return False
-
-    def _remove_from_cache(self, pname, cpu):
-        """Remove CPU 'cpu' property or sub-property 'pname' from the cache."""
-
-        if cpu in self._cache and pname in self._cache[cpu]:
-            del self._cache[cpu][pname]
-
-    def _add_to_cache(self, pname, prop, val, cpu):
-        """Add property or sub-property 'pname' to the cache."""
-
-        scope = prop["scope"]
-        if scope == "global":
-            cpus = self._cpuinfo.get_cpus()
-        elif scope == "die":
-            levels = self._cpuinfo.get_cpu_levels(cpu)
-            dies = (levels["die"], )
-            packages = (levels["package"], )
-
-            cpus = self._cpuinfo.dies_to_cpus(dies=dies, packages=packages)
-        else:
-            cpus = (cpu, )
-
-        for cpu in cpus: # pylint: disable=redefined-argument-from-local
-            if cpu not in self._cache:
-                self._cache[cpu] = {}
-            self._cache[cpu][pname] = val
-
     def __is_uncore_freq_supported(self):
         """Implements '_is_uncore_freq_supported()'."""
 
@@ -531,8 +499,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
-        if self._is_cached(pname, cpu):
-            return self._cache[cpu][pname]
+        if self._pcache.is_cached(pname, cpu):
+            return self._pcache.get(pname, cpu)
 
         if "fname" in prop:
             if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
@@ -542,7 +510,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             path = self._get_sysfs_path(prop, cpu)
             try:
                 val = self._get_prop_from_sysfs(prop, path)
-                self._add_to_cache(pname, prop, val, cpu)
+                self._pcache.add(pname, cpu, val, scope=prop["scope"])
                 return val
             except ErrorNotFound:
                 # The sysfs file was not found. The base frequency can be figured out from the MSR
@@ -555,13 +523,14 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if pname in ("base_freq", "max_eff_freq"):
             base, max_eff_freq = self._get_base_eff_freqs(cpu)
-            self._add_to_cache("base_freq", self._props["base_freq"], base, cpu)
-            self._add_to_cache("max_eff_freq", self._props["max_eff_freq"], max_eff_freq, cpu)
-            return self._cache[cpu][pname]
+            self._pcache.add("base_freq", cpu, base, scope=self._props["base_freq"]["scope"])
+            self._pcache.add("max_eff_freq", cpu, max_eff_freq,
+                             scope=self._props["max_eff_freq"]["scope"])
+            return self._pcache.get(pname, cpu)
 
         if pname == "hwp":
             hwp = self._get_cpu_hwp(cpu)
-            self._add_to_cache("hwp", prop, hwp, cpu)
+            self._pcache.add("hwp", cpu, hwp, scope=prop["scope"])
             return hwp
 
         if pname == "max_turbo_freq":
@@ -570,12 +539,12 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # Assume that max. turbo is the Linux max. frequency.
                 path = self._get_sysfs_path(self._props["max_freq"], cpu)
                 max_turbo_freq = self._get_prop_from_sysfs(prop, path)
-            self._add_to_cache("max_turbo_freq", prop, max_turbo_freq, cpu)
+            self._pcache.add("max_turbo_freq", cpu, max_turbo_freq, scope=prop["scope"])
             return max_turbo_freq
 
         if pname == "turbo":
             turbo = self._get_cpu_turbo(cpu)
-            self._add_to_cache("turbo", prop, turbo, cpu)
+            self._pcache.add("turbo", cpu, turbo, scope=prop["scope"])
             return turbo
 
         raise Error(f"BUG: unsupported property '{pname}'")
@@ -591,7 +560,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # Get list of CPUs which do not have 'pname' property cached yet.
                 uncached_cpus = []
                 for cpu in cpus:
-                    if not self._is_cached(pname, cpu):
+                    if not self._pcache.is_cached(pname, cpu):
                         uncached_cpus.append(cpu)
 
                 if not uncached_cpus:
@@ -610,11 +579,11 @@ class PStates(_PCStatesBase.PCStatesBase):
                     kwargs["not_supported_ok"] = True
 
                 for cpu, val in getattr(obj, f"get_{pname}")(**kwargs):
-                    self._add_to_cache(pname, self._props[pname], val, cpu)
+                    self._pcache.add(pname, cpu, val, scope=self._props[pname]["scope"])
 
                 for subpname, subprop in self._props[pname]["subprops"].items():
                     for cpu, val in getattr(obj, f"get_{subpname}")(**kwargs):
-                        self._add_to_cache(subpname, subprop, val, cpu)
+                        self._pcache.add(subpname, cpu, val, scope=subprop["scope"])
 
     def get_props(self, pnames, cpus="all"):
         """
@@ -709,7 +678,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             read_val = self._get_prop_from_sysfs(prop, path)
 
             if orig_val == read_val:
-                self._add_to_cache(pname, prop, orig_val, cpu)
+                self._pcache.add(pname, cpu, orig_val, scope=prop["scope"])
                 return
 
             # Sometimes the update does not happen immediately. For example, we observed this on
@@ -890,7 +859,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             prop = self._props[pname]
 
             # Invalidate the cache record for this CPU/property.
-            self._remove_from_cache(pname, cpu)
+            self._pcache.remove(pname, cpu)
 
             if pname.startswith("epp") or pname.startswith("epb"):
                 # Figure out the feature name ("epp" or "epb").
@@ -973,9 +942,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._platinfo = None
         self._trl = None
 
-        # The write-through per-CPU properties cache.
-        self._cache = {}
-
         # Will be 'True' if uncore frequency operations are supported, 'False' otherwise.
         self._uncore_freq_supported = None
         self._uncore_errmsg = None
@@ -984,6 +950,10 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
         self._sysfs_base_uncore = Path("/sys/devices/system/cpu/intel_uncore_frequency")
+
+        # The write-through per-CPU properties cache. The properties that are backed by an MSR are
+        # not cached, because the MSR layer implements its own caching.
+        self._pcache = _PropsCache._PropsCache(cpuinfo=self._cpuinfo, pman=self._pman)
 
         self._init_props_dict()
 
@@ -996,7 +966,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._unload_ufreq_drv = None
             self._ufreq_drv = None
 
-        close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_platinfo", "_trl")
+        close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_platinfo", "_trl", "_pcache")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
