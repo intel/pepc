@@ -13,6 +13,7 @@ Intel CPUs.
 """
 
 import logging
+from pepclibs import _PropsCache
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo
@@ -75,39 +76,19 @@ class EPP(ClassHelpers.SimpleCloseContext):
                                                            msr=msr)
         return self._hwpreq_pkg
 
-    def _is_cached(self, key, cpu):
-        """Returns 'True' if there is a cached value for 'key' and CPU 'cpu'."""
-
-        if cpu in self._cache and key in self._cache[cpu]:
-            return True
-        return False
-
-    def _remove_from_cache(self, key, cpu):
-        """Remove key 'key' of CPU 'cpu' from the cache."""
-
-        if cpu in self._cache and key in self._cache[cpu]:
-            del self._cache[cpu][key]
-
-    def _add_to_cache(self, key, val, cpu):
-        """Add key 'key' of CPU 'cpu' to the cache."""
-
-        if cpu not in self._cache:
-            self._cache[cpu] = {}
-        self._cache[cpu][key] = val
-
     def is_epp_supported(self, cpu):
         """Returns 'True' if EPP is supported, on CPU 'cpu', otherwise returns 'False'."""
 
-        if self._is_cached("supported", cpu):
-            return self._cache[cpu]["supported"]
+        if self._pcache.is_cached("supported", cpu):
+            return self._pcache.get("supported", cpu)
 
         if self._pman.exists(self._sysfs_epp_path % cpu):
-            self._add_to_cache("supported", True, cpu)
+            self._pcache.add("supported", cpu, True)
         else:
             val = self._get_hwpreq().is_cpu_feature_supported("epp", cpu)
-            self._add_to_cache("supported", val, cpu)
+            self._pcache.add("supported", cpu, val)
 
-        return self._cache[cpu]["supported"]
+        return self._pcache.get("supported", cpu)
 
     def _get_cpu_epp_policies(self, cpu, not_supported_ok=False):
         """Implements 'get_cpu_epp_policies()'."""
@@ -117,8 +98,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
                 return None
             raise ErrorNotSupported(f"CPU {cpu} does not support EPP")
 
-        if self._is_cached("policies", cpu):
-            return self._cache[cpu]["policies"]
+        if self._pcache.is_cached("policies", cpu):
+            return self._pcache.get("policies", cpu)
 
         # Prefer using the names from the Linux kernel.
         path = self._sysfs_epp_policies_path % cpu
@@ -128,7 +109,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         else:
             policies = Trivial.split_csv_line(line, sep=" ")
 
-        self._add_to_cache("policies", policies, cpu)
+        self._pcache.add("policies", cpu, policies)
         return policies
 
     def get_epp_policies(self, cpus="all", not_supported_ok=False):
@@ -329,9 +310,6 @@ class EPP(ClassHelpers.SimpleCloseContext):
         self._hwpreq_pkg = None
         self._epp_rmap = {code:name for name, code in _EPP_POLICIES.items()}
 
-        # The per-CPU cache for read-only data, such as policies list.
-        self._cache = {}
-
         sysfs_base = "/sys/devices/system/cpu/cpufreq/policy%d"
         self._sysfs_epp_path = sysfs_base + "/energy_performance_preference"
         self._sysfs_epp_policies_path = sysfs_base + "/energy_performance_available_preferences"
@@ -342,6 +320,10 @@ class EPP(ClassHelpers.SimpleCloseContext):
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
+        # The per-CPU cache for read-only data, such as policies list. MSR implements its own
+        # caching.
+        self._pcache = _PropsCache._PropsCache(cpuinfo=self._cpuinfo, pman=self._pman)
+
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
             raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. "
                                     f"Only Intel CPUs are supported.")
@@ -349,5 +331,5 @@ class EPP(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_hwpreq", "_hwpreq_pkg", "_msr", "_cpuinfo", "_pman")
+        close_attrs = ("_hwpreq", "_hwpreq_pkg", "_msr", "_cpuinfo", "_pman", "_pcache")
         ClassHelpers.close(self, close_attrs=close_attrs)
