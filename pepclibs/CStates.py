@@ -770,7 +770,7 @@ class CStates(ClassHelpers.SimpleCloseContext):
 
         self._pman = pman
         self._cpuinfo = cpuinfo
-        self._rcsobj = None
+        self._rcsobj = rcsobj
         self._msr = msr
 
         self._close_pman = pman is None
@@ -778,7 +778,6 @@ class CStates(ClassHelpers.SimpleCloseContext):
         self._close_rcsobj = rcsobj is None
         self._close_msr = msr is None
 
-        self._rcsobj = None
         self._powerctl = None
         self._pcstatectl = None
 
