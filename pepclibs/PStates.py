@@ -188,21 +188,25 @@ PROPS = {
     },
     "driver" : {
         "name" : "CPU frequency driver",
-        "help" : "Linux CPU frequency driver name.",
+        "help" : """CPU frequency driver enumerates and requests the P-states available on the
+                    platform.""",
         "type" : "str",
         "scope": "global",
         "writable" : False,
     },
     "governor" : {
         "name" : "CPU frequency governor",
-        "help" : "Linux CPU frequency governor name.",
+        "help" : """CPU frequency governor decides which P-state to select on a CPU depending
+                    on CPU business and other factors.""",
         "type" : "str",
         "scope": "CPU",
         "writable" : True,
         "subprops" : {
             "governors" : {
                 "name" : "Available CPU frequency governors",
-                "help" : "Available Linux CPU frequency governor names.",
+                "help" : """CPU frequency governors decide which P-state to select on a CPU
+                            depending on CPU business and other factors. Different governors
+                            implement different selection policy.""",
                 "type" : "list[str]",
                 "scope": "global",
                 "writable" : False,

@@ -89,21 +89,23 @@ PROPS = {
     },
     "idle_driver" : {
         "name" : "Idle driver",
-        "help" : "Current idle driver name.",
+        "help" : """Idle driver is responsible for enumerating and requesting the C-states
+                    available on the platform.""",
         "type" : "str",
         "scope": "global",
         "writable" : False,
     },
     "governor" : {
         "name" : "Idle governor",
-        "help" : "Current governor name.",
+        "help" : "Idle governor decides which C-state to request on an idle CPU.",
         "type" : "str",
         "scope": "global",
         "writable" : False,
         "subprops" : {
             "governors" : {
                 "name" : "Available idle governors",
-                "help" : "Available idle governor names.",
+                "help" : """Idle governors decide which C-state to request on an idle CPU.
+                            Different governors implement different selection policy.""",
                 "type" : "list[str]",
                 "scope": "global",
                 "writable" : False,
