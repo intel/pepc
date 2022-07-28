@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -100,6 +100,14 @@ def _debug_print_stack(logger):
 def _notice(logger, fmt, *args):
     """Just a convenient 'notice()' method for the logger."""
     logger.log(NOTICE, fmt, *args)
+
+def _warn_once(logger, fmt, *args):
+    """Same as 'logging.warning()', but avoid printing the same message twice."""
+
+    msg_hash = hash(fmt)
+    if msg_hash not in logger.seen_msgs:
+        logger.seen_msgs.add(msg_hash)
+        logger.log(WARNING, fmt, *args)
 
 class _MyFormatter(logging.Formatter):
     """
@@ -273,5 +281,7 @@ def setup_logger(prefix=None, loglevel=None, colored=None, info_stream=sys.stdou
     logger.notice = types.MethodType(_notice, logger)
     logger.error_out = types.MethodType(_error_out, logger)
     logger.debug_print_stack = types.MethodType(_debug_print_stack, logger)
+    logger.seen_msgs = set()
+    logger.warn_once = types.MethodType(_warn_once, logger)
 
     return logger
