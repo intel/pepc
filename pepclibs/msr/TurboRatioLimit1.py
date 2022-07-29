@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0x1AE (MSR_TURBO_RATIO_LIMIT1). Depending on the platform, this  MSR
+This module provides API to MSR 0x1AE (MSR_TURBO_RATIO_LIMIT1). Depending on the platform, this MSR
 provides either turbo ratio information, or the turbo ratio groups encoding. In the latter case it
 is called either 'MSR_TURBO_GROUP_CORECNT' (Atoms) or 'MSR_TURBO_RATIO_LIMIT_CORES' (big cores).
 """
