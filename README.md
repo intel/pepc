@@ -63,48 +63,74 @@ Some of the features are hardware-independent, but some are hardware-specific.
 
 # Installation
 
-## Dependencies
+## Fedora
 
-Before using or installing 'pepc', we recommend to install the following OS packages.
+The 'pepc' tool is available starting from Fedora 35. To install 'pepc', run
 
-Fedora.
+```
+sudo dnf install pepc
+```
+
+Fedora packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
+
+In case of Fedora 34 or older Fedora, use the 'pip' installation method. But install
+the dependencies by running
 
 ```
 sudo dnf install -y rsync openssl-devel util-linux procps-ng
 sudo dnf install -y python3-colorama python3-paramiko python3-argcomplete
 ```
 
-Ubuntu.
+## CentOS 8 Stream
+
+To install 'pepc' in CentOS stream, you can use the
+["copr"](https://copr.fedorainfracloud.org/coprs/aekoroglu/c8s-py39/) repository
+maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
+
+Run the following commands.
+
+```
+sudo dnf copr enable aekoroglu/c8s-py39 centos-stream-8-x86_64
+sudo dnf install pepc
+```
+
+## Ubuntu and Debian
+
+We do not provide Ubuntu/Debian packages, so you'll need to use the 'pip' installation method.
+Install the following dependencies, though.
 
 ```
 sudo apt install -y rsync libssl-dev util-linux procps
 sudo apt install -y python3 python3-colorama python3-paramiko python3-argcomplete
 ```
 
-## Using 'pip'
+## Installing with 'pip'
 
-The easiest way of installing 'pepc' is by using the 'pip' tool, and one way of doing this is by
-running the following command:
-
-```
-pip3 install --user --upgrade git+https://github.com/intel/pepc.git@release
-```
-
-This command will download 'pepc' from the 'release' branch of the git repository, and install it to
-the home directory. Note, the "release" branch contains more stable code. To install the latest code,
-use the "master" branch instead.
-
-The other way of doing this is by first cloning the git repository, checking out the 'release'
-branch, and running the following command:
+Run the following command:
 
 ```
-pip3 install --user --upgrade .
+sudo pip3 install --upgrade git+https://github.com/intel/pepc.git@release
 ```
+
+This command will download 'pepc' from the 'release' branch of the git repository and
+install it to the system.
+
+The other way of doing this is by first cloning the git repository and running
+
+```
+git clone https://github.com/intel/pepc.git --branch release pepc
+cd pepc
+pip3 install --upgrade .
+```
+
+Note, 'pepc' has to be run with superuser (root) privileges in many cases, and if you install it
+with the '--user' option of 'pip3', it won't work "out of the box". This is why we do not recommend
+using '--user'.
 
 ## Standalone version
 
-You can create a standalone version of this tool by cloning the repository and running a couple of
-commands. Below is an example. You may want to adjust the '#!/usr/bin/python3' shebang in it.
+You can also create a standalone version of this tool by cloning the repository and running a couple
+of commands. Below is an example. You may want to adjust the '#!/usr/bin/python3' shebang in it.
 
 First of all, make sure the below command prints "Good". It verifies that your
 '/usr/bin/python3' version is greater than 3.7:
@@ -124,8 +150,8 @@ git archive --format zip release >> pepc.standalone
 chmod ug+x pepc.standalone
 ```
 
-This will create the 'pepc.stanalone' file, which you can rename and copy to any other place, and it
-will work as a standalone program.
+This will create the 'pepc.stanalone' file, which you can rename and copy anywhere. It will work
+as a standalone program.
 
 ## Tab completions
 
