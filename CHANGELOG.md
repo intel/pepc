@@ -6,6 +6,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [1.3.13] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add Knights Landing/Mill package C-state limit table.
 ### Removed
 ### Changed
 
