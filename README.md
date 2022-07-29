@@ -65,7 +65,7 @@ Some of the features are hardware-independent, but some are hardware-specific.
 
 ## Fedora
 
-The 'pepc' tool is available starting from Fedora 35. To install 'pepc', run
+'Pepc' is part of Fedora starting from Fedora 35. To install 'pepc', run
 
 ```
 sudo dnf install pepc
@@ -80,6 +80,18 @@ the dependencies by running
 sudo dnf install -y rsync openssl-devel util-linux procps-ng
 sudo dnf install -y python3-colorama python3-paramiko python3-argcomplete
 ```
+
+## CentOS 9 Stream
+
+'Pepc' is available for CentOS 9 Stream via the 'epel' repository. Here is how to add 'epel' and
+install 'pepc'.
+
+```
+sudo dnf install epel-release
+sudo dnf install pepc
+```
+
+Epel packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
 
 ## CentOS 8 Stream
 
@@ -155,7 +167,7 @@ as a standalone program.
 
 ## Tab completions
 
-The 'pepc' tool has tab completions support, but this will only work if you have certain environment
+'Pepc' has tab completions support, but this will only work if you have certain environment
 variables defined. The following command will do it:
 
 ```
