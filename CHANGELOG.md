@@ -6,13 +6,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [Unreleased]
 ### Fixed
 ### Added
-- Add idle driver and governor options to 'cstates info'.
+ - Add idle driver and governor options to 'cstates info'.
 ### Changed
 
 ## [1.3.11] - 2022-07-15
 ### Fixed
-- Changed Sapphire Rapids PC6 limits: support retention and non-retention
-  variants
+ - Changed Sapphire Rapids PC6 limits: support retention and non-retention
+   variants
 
 ## [1.3.10] - 2022-07-06
 ### Changed
