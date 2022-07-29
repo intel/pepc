@@ -44,7 +44,7 @@ _HSX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unl
 # Broadwell-D Xeon.
 _BDWD_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
                         "bits"    : (3, 0)}
-# Sky/Cascade/Cooper/Sapphire Rapids Lake Xeon, Skylake-D Xeon.
+# Sky/Cascade/Cooper/Sapphire Rapids Lake Xeon, Skylake-D Xeon, Knights Mill/Landing Xeon Phi.
 _SKX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
                        "aliases" : {"PC6": "PC6R"},
                        "bits"    : (2, 0)}
@@ -84,6 +84,9 @@ _PKG_CST_LIMITS = {
         CPUInfo.INTEL_FAM6_BROADWELL_G:      _BDWD_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_HASWELL_X:        _HSX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_IVYBRIDGE_X:      _IVT_PKG_CST_LIMITS,
+        # Xeon Phi.
+        CPUInfo.INTEL_FAM6_XEON_PHI_KNL:     _SKX_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_XEON_PHI_KNM:     _SKX_PKG_CST_LIMITS,
         # Atom microservers.
         CPUInfo.INTEL_FAM6_GOLDMONT_D:       _DNV_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_TREMONT_D:        _SNR_PKG_CST_LIMITS,
