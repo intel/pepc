@@ -221,6 +221,7 @@ COMMAND *'pepc* cstates info'
 usage: pepc cstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
 [--packages PACKAGES] [--cstates CSNAMES] [--pkg-cstate-limit]
 [--c1-demotion] [--c1-undemotion] [--c1e-autopromote] [--cstate-prewake]
+[--idle-driver] [--governor]
 
 Get information about C-states on specified CPUs. By default, prints all
 information for all CPUs. Remember, this is information about the
@@ -298,6 +299,15 @@ OPTIONS *'pepc* cstates info'
    start exiting the C6 idle state in advance, prior to the next local
    APIC timer event. This CPU feature is controlled by MSR 0x1fc, bit
    30. This option has package scope.
+
+**--idle-driver**
+   Get idle driver. Idle driver is responsible for enumerating and
+   requesting the C-states available on the platform. This option has
+   global scope.
+
+**--governor**
+   Get idle governor. Idle governor decides which C-state to request on
+   an idle CPU. This option has global scope.
 
 COMMAND *'pepc* cstates config'
 ===============================
@@ -537,12 +547,14 @@ OPTIONS *'pepc* pstates info'
    option has CPU scope.
 
 **--driver**
-   Get CPU frequency driver. Linux CPU frequency driver name. This
-   option has global scope.
+   Get CPU frequency driver. CPU frequency driver enumerates and
+   requests the P-states available on the platform. This option has
+   global scope.
 
 **--governor**
-   Get CPU frequency governor. Linux CPU frequency governor name. This
-   option has CPU scope.
+   Get CPU frequency governor. CPU frequency governor decides which
+   P-state to select on a CPU depending on CPU business and other
+   factors. This option has CPU scope.
 
 COMMAND *'pepc* pstates config'
 ===============================
@@ -641,8 +653,9 @@ OPTIONS *'pepc* pstates config'
    option has CPU scope.
 
 **--governor** *[GOVERNOR]*
-   Set CPU frequency governor. Linux CPU frequency governor name. This
-   option has CPU scope.
+   Set CPU frequency governor. CPU frequency governor decides which
+   P-state to select on a CPU depending on CPU business and other
+   factors. This option has CPU scope.
 
 COMMAND *'pepc* aspm'
 =====================
