@@ -486,15 +486,16 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return self._get_level_nums("die", "package", package, order=order)
 
-    def get_nodes(self, order="node"):
+    def get_nodes(self, package=0, order="node"):
         """
-        Returns list of package numbers sorted in ascending order.
+        Returns list of node numbers in package 'package'. The returned list is sorted in ascending
+        order.
 
         Important: if a node has all CPUs offline, the node number will not be included in the
         returned list.
         """
 
-        return self._get_level_nums("node", "package", "all", order=order)
+        return self._get_level_nums("node", "package", package, order=order)
 
     def get_cores(self, package=0, order="core"):
         """
@@ -558,7 +559,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_cpu_levels(self, cpu):
         """
-        Returns a dictionary of levels an onlin CPU 'cpu' belongs to. Exemple for CPU 16:
+        Returns a dictionary of levels an online CPU 'cpu' belongs to. Example for CPU 16:
             {"package": 0, "die": 1, "node": 1, "core" : 5, "CPU": 16}
         """
 
