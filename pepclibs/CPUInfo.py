@@ -174,6 +174,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         * 'package_to_nodes()'
         * 'package_to_cores()'
         * 'dies_to_cpus()'
+        * 'nodes_to_cpus()'
         * 'cores_to_cpus()'
     3. Get packages/core/etc counts.
         * 'get_packages_count()'
@@ -630,6 +631,24 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         cpus = []
         for cpu in by_die:
+            if cpu in by_package:
+                cpus.append(cpu)
+
+        return cpus
+
+    def nodes_to_cpus(self, nodes="all", packages="all", order="CPU"):
+        """
+        Returns list of online CPU numbers belonging to nodes 'nodes' in packages 'packages'. The
+        'nodes' and 'packages' arguments are similar to the 'packages' argument in
+        'normalize_packages()'. The 'order' argument is the same as in 'get_cpus()'. By default, the
+        result sorted in ascending order.
+        """
+
+        by_node = self._get_level_nums("CPU", "node", nodes, order=order)
+        by_package = set(self._get_level_nums("CPU", "package", packages))
+
+        cpus = []
+        for cpu in by_node:
             if cpu in by_package:
                 cpus.append(cpu)
 
