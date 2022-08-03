@@ -413,7 +413,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             self._msr = MSR.MSR(pman=self._pman)
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
-            raise ErrorNotSupported(f"unsupported {self._cpuinfo.descr}{self._pman.hostmsg}, "
+            raise ErrorNotSupported(f"unsupported {self._cpuinfo.cpudescr}{self._pman.hostmsg}, "
                                     f"model-specific register {self.regaddr:#x} ({self.regname}) "
                                     f"is available only on Intel CPUs.")
 
