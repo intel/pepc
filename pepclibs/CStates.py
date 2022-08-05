@@ -16,7 +16,7 @@ import copy
 import logging
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs import CPUInfo, _Common
 from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
 
@@ -583,45 +583,68 @@ class CStates(ClassHelpers.SimpleCloseContext):
             return val.split()
         return val
 
-    def _read_prop_from_sysfs(self, prop, pname):
-        """
-        Read all 'pname' properties and all its sub-properties sysfs files and save into 'prop'.
-        """
+    def _get_cpu_prop_or_subprop(self, pname, prop, cpu):
+        """Returns property or sub-property 'pname' for CPU 'cpu'."""
 
-        prop[pname] = self._sysfs_read(self._props[pname])
-        for subpname in self._props[pname]["subprops"]:
-            prop[subpname] = self._sysfs_read(self._props[pname]["subprops"][subpname])
+        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
-    def _get_pinfo(self, pnames, cpu):
-        """
-        Build and return the properties information dictionary for properties in 'pnames' and CPU
-        number 'cpu'.
-        """
+        if "fname" in prop:
+            try:
+                return self._sysfs_read(prop)
+            except ErrorNotFound:
+                path = self._sysfs_cpuidle / prop["fname"]
+                _LOG.debug("can't read value of property '%s', path '%s' is not found", pname,
+                           path)
+                return None
+
+        if pname in ("pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"):
+            pkg_cstate_limit_props = self._read_prop_from_msr("pkg_cstate_limit", cpu)
+            return pkg_cstate_limit_props[pname]
+
+        if pname == "pkg_cstate_limit_locked":
+            return self._read_prop_from_msr("locked", cpu)
+
+        try:
+            return self._read_prop_from_msr(pname, cpu)
+        except ErrorNotSupported:
+            return None
+
+    def _get_cpu_subprop(self, pname, subpname, cpu):
+        """Returns sup-property 'subpname' of property 'pname' for CPU 'cpu'."""
+
+        subprop = self._props[pname]["subprops"][subpname]
+        return self._get_cpu_prop_or_subprop(subpname, subprop, cpu)
+
+    def _get_cpu_prop(self, pname, cpu):
+        """Returns property 'pname' for CPU 'cpu'."""
+
+        prop = self._props[pname]
+        return self._get_cpu_prop_or_subprop(pname, prop, cpu)
+
+    def _get_cpu_props(self, pnames, cpu):
+        """Returns all properties in 'pnames' for CPU 'cpu'."""
 
         pinfo = {}
 
         for pname in pnames:
-            pinfo[pname] = {pname : None}
+            pinfo[pname] = {}
 
-            if "fname" in self._props[pname]:
-                self._read_prop_from_sysfs(pinfo[pname], pname)
+            # Get the 'pname' property.
+            pinfo[pname][pname] = self._get_cpu_prop(pname, cpu)
+            if pinfo[pname][pname] is None:
+                _LOG.debug("CPU %d: %s is not supported", cpu, pname)
                 continue
+            _LOG.debug("CPU %d: %s = %s", cpu, pname, pinfo[pname][pname])
 
-            if pname == "pkg_cstate_limit":
-                # Add the "locked" bit as a sub-property.
-                val = self._read_prop_from_msr("locked", cpu)
-                pinfo[pname]["pkg_cstate_limit_locked"] = val
-
-            try:
-                val = self._read_prop_from_msr(pname, cpu)
-            except ErrorNotSupported:
-                continue
-
-            if isinstance(val, dict):
-                for fkey, fval in val.items():
-                    pinfo[pname][fkey] = fval
-            else:
-                pinfo[pname][pname] = val
+            # Get all the sub-properties.
+            for subpname in self._props[pname]["subprops"]:
+                if pinfo[pname][pname] is not None:
+                    # Get the 'subpname' sub-property.
+                    pinfo[pname][subpname] = self._get_cpu_subprop(pname, subpname, cpu)
+                else:
+                    # The property is not supported, so all sub-properties are not supported either.
+                    pinfo[pname][subpname] = None
+                _LOG.debug("CPU %d: %s = %s", cpu, subpname, pinfo[pname][subpname])
 
         return pinfo
 
@@ -663,7 +686,7 @@ class CStates(ClassHelpers.SimpleCloseContext):
             self._check_prop(pname)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield cpu, self._get_pinfo(pnames, cpu)
+            yield cpu, self._get_cpu_props(pnames, cpu)
 
     def get_cpu_props(self, pnames, cpu):
         """Same as 'get_props()', but for a single CPU."""
