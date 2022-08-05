@@ -276,7 +276,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
         set_mask = val << bits[1]
         return (regval & ~clear_mask) | set_mask
 
-    def _write(self, regaddr, regval, cpu, regval_bytes=None):
+    def _write_cpu(self, regaddr, regval, cpu, regval_bytes=None):
         """Write value 'regval' to MSR at 'regaddr' on CPU 'cpu."""
 
         if regval_bytes is None:
@@ -308,7 +308,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
             if not self._in_transaction:
                 if regval_bytes is not None:
                     regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
-                self._write(regaddr, regval, cpu, regval_bytes=regval_bytes)
+                self._write_cpu(regaddr, regval, cpu, regval_bytes=regval_bytes)
                 dirty = False
             else:
                 dirty = True
