@@ -704,13 +704,13 @@ class CStates(ClassHelpers.SimpleCloseContext):
             pass
         return pinfo
 
-    def set_props(self, pinfo, cpus="all"):
+    def set_props(self, inprops, cpus="all"):
         """
-        Set multiple properties described by 'pinfo' to values also provided in 'pinfo'.
-          * pinfo - an iterable collection of property names and values.
+        Set multiple properties described by 'inprops' to values also provided in 'inprops'.
+          * inprops - an iterable collection of property names and values.
           * cpus - same as in 'get_props()'.
 
-        This method accepts two 'pinfo' formats.
+        This method accepts two 'inprops' formats.
 
         1. An iterable collection (e.g., list or a tuple) of ('pname', 'val') pairs. For example:
            * [("c1_demotion", "on"), ("c1_undemotion", "off")]
@@ -723,11 +723,11 @@ class CStates(ClassHelpers.SimpleCloseContext):
         """
 
         inprops = {}
-        if hasattr(pinfo, "items"):
-            for pname, val in pinfo.items():
+        if hasattr(inprops, "items"):
+            for pname, val in inprops.items():
                 inprops[pname] = val
         else:
-            for pname, val in pinfo:
+            for pname, val in inprops:
                 inprops[pname] = val
 
         for pname, val in inprops.items():
