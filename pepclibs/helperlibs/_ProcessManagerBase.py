@@ -647,7 +647,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         try:
             with self.open(path, "r") as fobj:
-                val = fobj.read().strip()
+                val = fobj.read()
         except ErrorNotFound as err:
             if must_exist:
                 raise ErrorNotFound(f"file '{path}' does not exist{self.hostmsg}") from err

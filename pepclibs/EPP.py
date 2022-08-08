@@ -103,7 +103,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         # Prefer using the names from the Linux kernel.
         path = self._sysfs_epp_policies_path % cpu
-        line = self._pman.read(path, must_exist=False)
+        line = self._pman.read(path, must_exist=False).strip()
         if line is None:
             policies = list(_EPP_POLICIES)
         else:
@@ -135,11 +135,11 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """
 
         try:
-            policy = self._pman.read(self._sysfs_epp_path % cpu)
+            policy = self._pman.read(self._sysfs_epp_path % cpu).strip()
         except ErrorNotFound:
             return None
 
-        return policy.strip()
+        return policy
 
     def _get_cpu_epp_policy(self, cpu, not_supported_ok=False):
         """Returns EPP policy for CPU 'cpu'."""

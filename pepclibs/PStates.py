@@ -525,7 +525,7 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _read_int(self, path):
         """Read an integer from file 'path' via the process manager."""
 
-        val = self._pman.read(path)
+        val = self._pman.read(path).strip()
         if not Trivial.is_int(val):
             raise Error(f"read an unexpected non-integer value from '{path}'"
                         f"{self._pman.hostmsg}")

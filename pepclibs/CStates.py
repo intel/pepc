@@ -577,7 +577,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         """Read 'prop's sysfs file and return contents."""
 
         path = self._sysfs_cpuidle / prop["fname"]
-        val = self._pman.read(path)
+        val = self._pman.read(path).strip()
 
         if prop["type"] == "list[str]":
             return val.split()
