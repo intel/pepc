@@ -79,6 +79,11 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
         return val
 
+    def set_prop(self, pname, val, cpus):
+        """Same as 'set_props()', but for a single property."""
+
+        self.set_props(((pname, val),), cpus=cpus) # pylint: disable=no-member
+
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
         The class constructor. The arguments are as follows.

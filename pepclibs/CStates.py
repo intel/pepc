@@ -720,11 +720,6 @@ class CStates(_PCStatesBase.PCStatesBase):
             else:
                 raise Error(f"BUG: undefined property '{pname}'")
 
-    def set_prop(self, pname, val, cpus="all"):
-        """Same as 'set_props()', but for a single property."""
-
-        self.set_props(((pname, val),), cpus=cpus)
-
     def set_cpu_props(self, pinfo, cpu):
         """Same as 'set_props()', but for a single CPU."""
 
