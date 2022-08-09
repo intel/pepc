@@ -11,7 +11,6 @@
 This module provides P-state management API.
 """
 
-import copy
 import time
 import logging
 import contextlib
@@ -994,22 +993,10 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         self.set_props(((pname, val),), cpus=(cpu,))
 
-    def _init_props_dict(self):
+    def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
 
-        self.props = copy.deepcopy(PROPS)
-
-        for prop in self.props.values():
-            # Every features should include the 'subprops' sub-dictionary.
-            if "subprops" not in prop:
-                prop["subprops"] = {}
-            else:
-                # Propagate the "scope" key to sub-properties.
-                for subprop in prop["subprops"].values():
-                    if "scope" not in subprop:
-                        subprop["scope"] = prop["scope"]
-
-        self._props = copy.deepcopy(self.props)
+        super()._init_props_dict(PROPS)
 
         # These properties are backed by a sysfs file.
         self._props["min_freq"]["fname"] = "scaling_min_freq"

@@ -11,6 +11,7 @@
 This module provides the base class for 'PState' and 'CState' classes.
 """
 
+import copy
 import logging
 from pepclibs.helperlibs import ClassHelpers, LocalProcessManager, Human, Trivial
 from pepclibs import CPUInfo
@@ -78,6 +79,23 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             val = val.split()
 
         return val
+
+    def _init_props_dict(self, props):
+        """Initialize the 'props' dictionary."""
+
+        self.props = copy.deepcopy(props)
+
+        for prop in self.props.values():
+            # Every features should include the 'subprops' sub-dictionary.
+            if "subprops" not in prop:
+                prop["subprops"] = {}
+            else:
+                # Propagate the "scope" key to sub-properties.
+                for subprop in prop["subprops"].values():
+                    if "scope" not in subprop:
+                        subprop["scope"] = prop["scope"]
+
+        self._props = copy.deepcopy(self.props)
 
     def set_prop(self, pname, val, cpus):
         """Same as 'set_props()', but for a single property."""

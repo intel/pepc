@@ -12,7 +12,6 @@ This module provides C-state management API.
 """
 
 import re
-import copy
 import logging
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
@@ -725,22 +724,15 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         self.set_props(((pname, val),), cpus=(cpu,))
 
-    def _init_props_dict(self):
+    def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
 
-        self.props = copy.deepcopy(PROPS)
+        super()._init_props_dict(PROPS)
 
-        for prop in self.props.values():
-            # Every features should include the 'subprops' sub-dictionary.
-            if "subprops" not in prop:
-                prop["subprops"] = {}
-            else:
-                # Propagate the "scope" key to sub-properties.
-                for subprop in prop["subprops"].values():
-                    if "scope" not in subprop:
-                        subprop["scope"] = prop["scope"]
-
-        self._props = copy.deepcopy(self.props)
+        # These properties are backed by a sysfs file.
+        self._props["idle_driver"]["fname"] = "current_driver"
+        self._props["governor"]["fname"] = "current_governor"
+        self._props["governor"]["subprops"]["governors"]["fname"] = "available_governors"
 
     def __init__(self, pman=None, cpuinfo=None, rcsobj=None, msr=None):
         """
@@ -763,9 +755,6 @@ class CStates(_PCStatesBase.PCStatesBase):
         self._init_props_dict()
 
         self._sysfs_cpuidle = Path("/sys/devices/system/cpu/cpuidle")
-        self._props["idle_driver"]["fname"] = "current_driver"
-        self._props["governor"]["fname"] = "current_governor"
-        self._props["governor"]["subprops"]["governors"]["fname"] = "available_governors"
 
     def close(self):
         """Uninitialize the class object."""
