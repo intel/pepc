@@ -314,14 +314,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                                                         msr=msr)
         return self._trl
 
-    def _check_prop(self, pname):
-        """Raise an error if a property 'pname' is not supported."""
-
-        if pname not in PROPS:
-            pnames_str = ", ".join(set(PROPS))
-            raise ErrorNotSupported(f"property '{pname}' is not supported{self._pman.hostmsg}, "
-                                    f"use one of the following: {pnames_str}")
-
     def _is_cached(self, pname, cpu):
         """Returns 'True' if there is a cached value for property or sub-property 'pname'."""
 

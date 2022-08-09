@@ -13,11 +13,20 @@ This module provides the base class for 'PState' and 'CState' classes.
 
 from pepclibs.helperlibs import ClassHelpers, LocalProcessManager
 from pepclibs import CPUInfo
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 class PCStatesBase(ClassHelpers.SimpleCloseContext):
     """
     This is a base class for the 'PState' and 'CState' classes.
     """
+
+    def _check_prop(self, pname):
+        """Raise an error if a property 'pname' is not supported."""
+
+        if pname not in self._props:
+            pnames_str = ", ".join(set(self._props))
+            raise ErrorNotSupported(f"property '{pname}' is not supported{self._pman.hostmsg}, use "
+                                    f"one of the following: {pnames_str}")
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

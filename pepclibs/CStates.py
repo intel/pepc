@@ -555,14 +555,6 @@ class CStates(_PCStatesBase.PCStatesBase):
                                                                  cpuinfo=self._cpuinfo, msr=msr)
         return self._pcstatectl
 
-    def _check_prop(self, pname):
-        """Raise an error if a property 'pname' is not supported."""
-
-        if pname not in PROPS:
-            pnames_str = ", ".join(set(PROPS))
-            raise ErrorNotSupported(f"property '{pname}' is not supported{self._pman.hostmsg}, "
-                                    f"use one of the following: {pnames_str}")
-
     def _read_prop_from_msr(self, pname, cpu):
         """Read property 'pname' from the corresponding MSR register on CPU 'cpu'."""
 
