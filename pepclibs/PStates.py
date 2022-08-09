@@ -989,11 +989,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         for cpu in cpus:
             self._set_cpu_props(inprops, cpu)
 
-    def set_cpu_props(self, inprops, cpu):
-        """Same as 'set_props()', but for a single CPU."""
-
-        self.set_props(inprops, cpus=(cpu,))
-
     def set_cpu_prop(self, pname, val, cpu):
         """Same as 'set_props()', but for a single CPU and a single property."""
 
