@@ -727,7 +727,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             for pname, val in inprops.items():
                 inprops[pname] = val
         else:
-            for pname, val in inprops:
+            for pname, val in inprops: # pylint: disable=dict-iter-missing-items
                 inprops[pname] = val
 
         for pname, val in inprops.items():
