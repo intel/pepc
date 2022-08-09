@@ -988,11 +988,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         for cpu in cpus:
             self._set_cpu_props(inprops, cpu)
 
-    def set_cpu_prop(self, pname, val, cpu):
-        """Same as 'set_props()', but for a single CPU and a single property."""
-
-        self.set_props(((pname, val),), cpus=(cpu,))
-
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
 

@@ -719,11 +719,6 @@ class CStates(_PCStatesBase.PCStatesBase):
             else:
                 raise Error(f"BUG: undefined property '{pname}'")
 
-    def set_cpu_prop(self, pname, val, cpu):
-        """Same as 'set_props()', but for a single CPU and a single property."""
-
-        self.set_props(((pname, val),), cpus=(cpu,))
-
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
 
