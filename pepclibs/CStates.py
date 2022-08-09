@@ -677,14 +677,6 @@ class CStates(_PCStatesBase.PCStatesBase):
             pass
         return pinfo
 
-    def get_cpu_prop(self, pname, cpu):
-        """Same as 'get_props()', but for a single CPU and a single property."""
-
-        pinfo = None
-        for _, pinfo in self.get_props((pname,), cpus=(cpu,)):
-            pass
-        return pinfo
-
     def set_props(self, inprops, cpus="all"):
         """
         Set multiple properties described by 'inprops' to values also provided in 'inprops'.
