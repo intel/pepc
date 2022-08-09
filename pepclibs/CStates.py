@@ -714,24 +714,13 @@ class CStates(_PCStatesBase.PCStatesBase):
            * False, "off", "disable" for disabling the feature.
         """
 
-        inprops = {}
-        if hasattr(inprops, "items"):
-            for pname, val in inprops.items():
-                inprops[pname] = val
-        else:
-            for pname, val in inprops: # pylint: disable=dict-iter-missing-items
-                inprops[pname] = val
+        inprops = self._normalize_inprops(inprops)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+
+        for pname in inprops:
+            _Common.validate_prop_scope(self._props[pname], cpus, self._cpuinfo, self._pman.hostmsg)
 
         for pname, val in inprops.items():
-            self._check_prop(pname)
-
-            _Common.validate_prop_scope(self._props[pname], cpus, self._cpuinfo,
-                                        self._pman.hostmsg)
-
-            if not self._props[pname]["writable"]:
-                name = self._props[pname][pname]
-                raise Error(f"failed to change read-only property '{pname}' ({name})")
-
             if pname in PowerCtl.FEATURES:
                 powerctl = self._get_powerctl()
                 powerctl.write_feature(pname, val, cpus)
