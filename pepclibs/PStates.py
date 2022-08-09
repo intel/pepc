@@ -494,8 +494,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                         f"{self._pman.hostmsg}")
         return int(val)
 
-    def _get_cpu_prop_or_subprop(self, pname, prop, cpu):
-        """Returns property or sub-property 'pname' for CPU 'cpu'."""
+    def _get_cpu_prop_value(self, pname, prop, cpu):
+        """Returns property or sub-property 'pname' value for CPU 'cpu'."""
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
