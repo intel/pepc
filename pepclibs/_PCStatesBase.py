@@ -11,9 +11,12 @@
 This module provides the base class for 'PState' and 'CState' classes.
 """
 
-from pepclibs.helperlibs import ClassHelpers, LocalProcessManager
+import logging
+from pepclibs.helperlibs import ClassHelpers, LocalProcessManager, Human
 from pepclibs import CPUInfo
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported, Error
+
+_LOG = logging.getLogger()
 
 class PCStatesBase(ClassHelpers.SimpleCloseContext):
     """
@@ -27,6 +30,33 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             pnames_str = ", ".join(set(self._props))
             raise ErrorNotSupported(f"property '{pname}' is not supported{self._pman.hostmsg}, use "
                                     f"one of the following: {pnames_str}")
+
+    def _normalize_inprops(self, inprops):
+        """Normalize the 'inprops' argument of the 'set_props()' method and return the result."""
+
+        def _add_prop(pname, val):
+            """Add property 'pname' to the 'result' dictionary."""
+
+            self._check_prop(pname)
+
+            if not self.props[pname]["writable"]:
+                name = Human.untitle(self.props[pname]["name"])
+                raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
+
+            if pname in result:
+                _LOG.warning("duplicate property '%s': dropping value '%s', keeping '%s'",
+                             pname, result[pname], val)
+            result[pname] = val
+
+        result = {}
+        if hasattr(inprops, "items"):
+            for pname, val in inprops.items():
+                _add_prop(pname, val)
+        else:
+            for pname, val in inprops:
+                _add_prop(pname, val)
+
+        return result
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

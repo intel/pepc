@@ -988,33 +988,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
                 self._set_prop_in_sysfs(pname, val, cpu)
 
-    def _normalize_inprops(self, inprops):
-        """Normalize the 'inprops' argument of the 'set_props()' method and return the result."""
-
-        def _add_prop(pname, val):
-            """Add property 'pname' to the 'result' dictionary."""
-
-            self._check_prop(pname)
-
-            if not self.props[pname]["writable"]:
-                name = Human.untitle(self.props[pname]["name"])
-                raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
-
-            if pname in result:
-                _LOG.warning("duplicate property '%s': dropping value '%s', keeping '%s'",
-                             pname, result[pname], val)
-            result[pname] = val
-
-        result = {}
-        if hasattr(inprops, "items"):
-            for pname, val in inprops.items():
-                _add_prop(pname, val)
-        else:
-            for pname, val in inprops:
-                _add_prop(pname, val)
-
-        return result
-
     def set_props(self, inprops, cpus="all"):
         """
         Set multiple properties described by 'inprops' to values also provided in 'inprops'.
