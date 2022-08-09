@@ -565,26 +565,16 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         return module.read_cpu_feature(pname, cpu)
 
-    def _sysfs_read(self, prop):
-        """Read 'prop's sysfs file and return contents."""
-
-        path = self._sysfs_cpuidle / prop["fname"]
-        val = self._pman.read(path).strip()
-
-        if prop["type"] == "list[str]":
-            return val.split()
-        return val
-
     def _get_cpu_prop_or_subprop(self, pname, prop, cpu):
         """Returns property or sub-property 'pname' for CPU 'cpu'."""
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
         if "fname" in prop:
+            path = self._sysfs_cpuidle / prop["fname"]
             try:
-                return self._sysfs_read(prop)
+                return self._get_prop_from_sysfs(prop, path)
             except ErrorNotFound:
-                path = self._sysfs_cpuidle / prop["fname"]
                 _LOG.debug("can't read value of property '%s', path '%s' is not found", pname,
                            path)
                 return None

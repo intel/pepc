@@ -523,34 +523,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                         f"{self._pman.hostmsg}")
         return int(val)
 
-    def _sysfs_read_int(self, prop, cpu):
-        """Read an integer from a sysfs file corresponding to property 'prop' and CPU 'cpu'."""
-
-        path = self._get_sysfs_path(prop, cpu)
-        return self._read_int(path)
-
-    def _sysfs_read(self, prop, cpu):
-        """Read a string from a sysfs file corresponding to property 'prop' and CPU 'cpu'."""
-
-        path = self._get_sysfs_path(prop, cpu)
-        return self._pman.read(path).strip()
-
-    def _get_prop_from_sysfs(self, prop, cpu):
-        """Read CPU 'cpu' property described by 'prop' from sysfs."""
-
-        if prop["type"] == "int":
-            val = self._sysfs_read_int(prop, cpu)
-            if prop.get("unit") == "Hz":
-                # Sysfs files have the numbers in kHz, convert to Hz.
-                val *= 1000
-        else:
-            val = self._sysfs_read(prop, cpu)
-
-        if prop["type"] == "list[str]":
-            val = val.split()
-
-        return val
-
     def _get_cpu_prop_or_subprop(self, pname, prop, cpu):
         """Returns property or sub-property 'pname' for CPU 'cpu'."""
 
@@ -564,8 +536,9 @@ class PStates(_PCStatesBase.PCStatesBase):
                 _LOG.debug(self._uncore_errmsg)
                 return None
 
+            path = self._get_sysfs_path(prop, cpu)
             try:
-                val = self._get_prop_from_sysfs(prop, cpu)
+                val = self._get_prop_from_sysfs(prop, path)
                 self._add_to_cache(pname, prop, val, cpu)
                 return val
             except ErrorNotFound:
@@ -592,7 +565,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             max_turbo_freq = self._get_max_turbo_freq_freq(cpu)
             if max_turbo_freq is None:
                 # Assume that max. turbo is the Linux max. frequency.
-                max_turbo_freq = self._get_prop_from_sysfs(self._props["max_freq"], cpu)
+                path = self._get_sysfs_path(self._props["max_freq"], cpu)
+                max_turbo_freq = self._get_prop_from_sysfs(prop, path)
             self._add_to_cache("max_turbo_freq", prop, max_turbo_freq, cpu)
             return max_turbo_freq
 
@@ -784,7 +758,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         count = 3
         while count > 0:
-            read_val = self._get_prop_from_sysfs(prop, cpu)
+            read_val = self._get_prop_from_sysfs(prop, path)
 
             if orig_val == read_val:
                 self._add_to_cache(pname, prop, orig_val, cpu)

@@ -12,7 +12,7 @@ This module provides the base class for 'PState' and 'CState' classes.
 """
 
 import logging
-from pepclibs.helperlibs import ClassHelpers, LocalProcessManager, Human
+from pepclibs.helperlibs import ClassHelpers, LocalProcessManager, Human, Trivial
 from pepclibs import CPUInfo
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, Error
 
@@ -57,6 +57,27 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
                 _add_prop(pname, val)
 
         return result
+
+    def _get_prop_from_sysfs(self, prop, path):
+        """
+        Read CPU 'cpu' property described by 'prop' from sysfs, and return in 'prop["type"]' format.
+        '"""
+
+        val = self._pman.read(path).strip()
+
+        if prop["type"] == "int":
+            val = int(val)
+            if not Trivial.is_int(val):
+                raise Error(f"read an unexpected non-integer value from '{path}'"
+                            f"{self._pman.hostmsg}")
+            if prop.get("unit") == "Hz":
+                # Sysfs files have the numbers in kHz, convert to Hz.
+                val *= 1000
+
+        if prop["type"] == "list[str]":
+            val = val.split()
+
+        return val
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
