@@ -97,6 +97,14 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
         self._props = copy.deepcopy(self.props)
 
+    def get_cpu_props(self, pnames, cpu):
+        """Same as 'get_props()', but for a single CPU."""
+
+        pinfo = None
+        for _, pinfo in self.get_props(pnames, cpus=(cpu,)): # pylint: disable=no-member
+            pass
+        return pinfo
+
     def get_cpu_prop(self, pname, cpu):
         """Same as 'get_props()', but for a single CPU and a single property."""
 

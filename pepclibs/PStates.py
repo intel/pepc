@@ -692,14 +692,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield cpu, self._get_cpu_props(pnames, cpu)
 
-    def get_cpu_props(self, pnames, cpu):
-        """Same as 'get_props()', but for a single CPU."""
-
-        pinfo = None
-        for _, pinfo in self.get_props(pnames, cpus=(cpu,)):
-            pass
-        return pinfo
-
     def _set_turbo(self, cpu, enable):
         """Enable or disable turbo."""
 
