@@ -97,6 +97,18 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
         self._props = copy.deepcopy(self.props)
 
+    def _get_cpu_subprop(self, pname, subpname, cpu):
+        """Returns sup-property 'subpname' of property 'pname' for CPU 'cpu'."""
+
+        subprop = self._props[pname]["subprops"][subpname]
+        return self._get_cpu_prop_or_subprop(subpname, subprop, cpu) # pylint: disable=no-member
+
+    def _get_cpu_prop(self, pname, cpu):
+        """Returns property 'pname' for CPU 'cpu'."""
+
+        prop = self._props[pname]
+        return self._get_cpu_prop_or_subprop(pname, prop, cpu) # pylint: disable=no-member
+
     def _get_cpu_props(self, pnames, cpu):
         """Returns all properties in 'pnames' for CPU 'cpu'."""
 
@@ -106,7 +118,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             pinfo[pname] = {}
 
             # Get the 'pname' property.
-            pinfo[pname][pname] = self._get_cpu_prop(pname, cpu) # pylint: disable=no-member
+            pinfo[pname][pname] = self._get_cpu_prop(pname, cpu)
             if pinfo[pname][pname] is None:
                 _LOG.debug("CPU %d: %s is not supported", cpu, pname)
                 continue
@@ -116,7 +128,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             for subpname in self._props[pname]["subprops"]:
                 if pinfo[pname][pname] is not None:
                     # Get the 'subpname' sub-property.
-                    pinfo[pname][subpname] = self._get_cpu_subprop(pname, subpname, cpu)  # pylint: disable=no-member
+                    pinfo[pname][subpname] = self._get_cpu_subprop(pname, subpname, cpu)
                 else:
                     # The property is not supported, so all sub-properties are not supported either.
                     pinfo[pname][subpname] = None

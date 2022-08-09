@@ -590,18 +590,6 @@ class CStates(_PCStatesBase.PCStatesBase):
         except ErrorNotSupported:
             return None
 
-    def _get_cpu_subprop(self, pname, subpname, cpu):
-        """Returns sup-property 'subpname' of property 'pname' for CPU 'cpu'."""
-
-        subprop = self._props[pname]["subprops"][subpname]
-        return self._get_cpu_prop_or_subprop(subpname, subprop, cpu)
-
-    def _get_cpu_prop(self, pname, cpu):
-        """Returns property 'pname' for CPU 'cpu'."""
-
-        prop = self._props[pname]
-        return self._get_cpu_prop_or_subprop(pname, prop, cpu)
-
     def get_props(self, pnames, cpus="all"):
         """
         Read all properties specified in the 'pnames' list for CPUs in 'cpus', and for every CPU

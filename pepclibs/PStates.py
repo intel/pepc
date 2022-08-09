@@ -576,18 +576,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
-    def _get_cpu_subprop(self, pname, subpname, cpu):
-        """Returns sup-property 'subpname' of property 'pname' for CPU 'cpu'."""
-
-        subprop = self._props[pname]["subprops"][subpname]
-        return self._get_cpu_prop_or_subprop(subpname, subprop, cpu)
-
-    def _get_cpu_prop(self, pname, cpu):
-        """Returns property 'pname' for CPU 'cpu'."""
-
-        prop = self._props[pname]
-        return self._get_cpu_prop_or_subprop(pname, prop, cpu)
-
     def _populate_cache(self, pnames, cpus):
         """
         Populate the properties cache for properties in 'pnames' for CPUs in 'cpus'. The idea is
