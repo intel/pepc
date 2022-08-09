@@ -799,11 +799,6 @@ class CStates(_PCStatesBase.PCStatesBase):
         self._powerctl = None
         self._pcstatectl = None
 
-        self.props = None
-        # Internal version of 'self.props'. Contains some data which we don't want to expose to the
-        # user.
-        self._props = None
-
         self._init_props_dict()
 
         self._sysfs_cpuidle = Path("/sys/devices/system/cpu/cpuidle")

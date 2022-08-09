@@ -35,6 +35,11 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         self._close_cpuinfo = cpuinfo is None
         self._close_msr = msr is None
 
+        self.props = None
+        # Internal version of 'self.props'. Contains some data which we don't want to expose to the
+        # user.
+        self._props = None
+
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
         if not self._cpuinfo:

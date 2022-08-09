@@ -1113,10 +1113,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._platinfo = None
         self._trl = None
 
-        self.props = None
-        # This is the internal version of 'self.props' with additional data which we is not supposed
-        # to be used outside of this class.
-        self._props = None
         # The write-through per-CPU properties cache.
         self._cache = {}
 
