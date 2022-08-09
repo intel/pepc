@@ -17,7 +17,7 @@ import logging
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
-from pepclibs import CPUInfo, _Common
+from pepclibs import _PCStatesBase, CPUInfo, _Common
 from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
 
 _LOG = logging.getLogger()
@@ -480,7 +480,7 @@ class ReqCStates(ClassHelpers.SimpleCloseContext):
         """Uninitialize the class object."""
         ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman"))
 
-class CStates(ClassHelpers.SimpleCloseContext):
+class CStates(_PCStatesBase.PCStatesBase):
     """
     This class provides C-state management API.
 
@@ -791,15 +791,10 @@ class CStates(ClassHelpers.SimpleCloseContext):
           * msr - an 'MSR.MSR()' object which should be used for accessing MSR registers.
         """
 
-        self._pman = pman
-        self._cpuinfo = cpuinfo
-        self._rcsobj = rcsobj
-        self._msr = msr
+        super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr)
 
-        self._close_pman = pman is None
-        self._close_cpuinfo = cpuinfo is None
+        self._rcsobj = rcsobj
         self._close_rcsobj = rcsobj is None
-        self._close_msr = msr is None
 
         self._powerctl = None
         self._pcstatectl = None
@@ -808,11 +803,6 @@ class CStates(ClassHelpers.SimpleCloseContext):
         # Internal version of 'self.props'. Contains some data which we don't want to expose to the
         # user.
         self._props = None
-
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-        if not self._cpuinfo:
-            self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
         self._init_props_dict()
 
@@ -824,5 +814,7 @@ class CStates(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_pcstatectl", "_powerctl", "_msr", "_rcsobj", "_cpuinfo", "_pman")
+        close_attrs = ("_pcstatectl", "_powerctl", "_rcsobj")
         ClassHelpers.close(self, close_attrs=close_attrs)
+
+        super().close()
