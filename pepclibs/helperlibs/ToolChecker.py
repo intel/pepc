@@ -38,24 +38,26 @@ _COMMON_PKGINFO = {
     "rsync"     : "rsync",
     "sync"      : "coreutils",
     "systemctl" : "systemd",
-    "tc"        : "iproute2",
     "xargs"     : "findutils",
 }
 
 # CentOS and Fedora
 _FEDORA_PKGINFO = {
+    "tc"         : "iproute-tc",
     "bpftool"    : "bpftool",
     "sch_etf.ko" : "kernel-modules-extra",
 }
 
 # Ubuntu
 _UBUNTU_PKGINFO = {
+    "tc"         : "iproute2",
     "bpftool"    : "linux-tools-common",
     "sch_etf.ko" : "linux-modules",
 }
 
 # Debian.
 _DEBIAN_PKGINFO = {
+    "tc"         : "iproute2",
     "bpftool"    : "bpftool",
     "sch_etf.ko" : "linux-modules",
 }
