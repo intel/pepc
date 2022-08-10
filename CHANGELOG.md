@@ -3,7 +3,13 @@
 Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.13] - ADD DATE HERE
+## [1.3.14] - ADD DATE HERE
+### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.3.13] - 2022-08-10
 ### Fixed
 ### Added
  - Add Knights Landing/Mill package C-state limit table.
