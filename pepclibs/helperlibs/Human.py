@@ -17,6 +17,7 @@ from pepclibs.helperlibs.Exceptions import Error
 
 _SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "EiB"]
 _LARGENUM_UNITS = ["k", "M", "G", "T", "E"]
+_NSTIME_UNITS = ["us", "ms", "s"]
 
 # pylint: disable=undefined-loop-variable
 def bytesize(size, precision=1, sep=""):
@@ -117,6 +118,26 @@ def duration(seconds, s=True, ms=False):
             result += "%ds " % secs
 
     return result.strip()
+
+def duration_ns(value, sep=""):
+    """
+    Transform a supposedly large integer amount of nanoseconds into a human-readable form using
+    suffixes like "us" (microseconds), etc.
+    """
+
+    scaler = None
+    if value >= 500:
+        for scaler in _NSTIME_UNITS:
+            value /= 1000.0
+            if value < 1000:
+                break
+
+    result = "%f" % value
+    result = result.rstrip("0").rstrip(".")
+    if not scaler:
+        scaler = "ns"
+    result += sep + scaler
+    return result
 
 def _tokenize(hval, specs, default_unit, name, multiple=True):
     """
