@@ -619,6 +619,9 @@ class PStates(_PCStatesBase.PCStatesBase):
             raise Error(f"failed to enable or disable turbo{self._pman.hostmsg}: unsupported CPU "
                         f"frequency driver '{driver}'")
 
+        self._pcache.add("turbo", cpu, "on" if enable else "off",
+                         scope=self._props["turbo"]["scope"])
+
     def _get_num_str(self, prop, cpu):
         """
         If 'prop' has CPU scope, returns "CPU <num>" string. If 'prop' has die scope, returns
@@ -681,100 +684,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                                f"this may be the limiting factor."
 
         raise Error(msg)
-
-    def _validate_and_order_freq(self, inprops, cpu, uncore=False):
-        """
-        Validate the 'min_freq' and 'max_freq' properties in 'inprops' and possibly re-order
-        them. Returns the re-ordered 'inprops' version.
-        """
-
-        if uncore:
-            min_freq_key = "min_uncore_freq"
-            max_freq_key = "max_uncore_freq"
-            min_freq_limit_key = "min_uncore_freq_limit"
-            max_freq_limit_key = "max_uncore_freq_limit"
-        else:
-            min_freq_key = "min_freq"
-            max_freq_key = "max_freq"
-            min_freq_limit_key = "min_freq_limit"
-            max_freq_limit_key = "max_freq_limit"
-
-        what = self._get_num_str(self._props[min_freq_key], cpu)
-
-        if min_freq_key not in inprops and max_freq_key not in inprops:
-            return inprops
-
-        cur_min_freq = self._get_cpu_prop_value(min_freq_key, cpu)
-        cur_max_freq = self._get_cpu_prop_value(max_freq_key, cpu)
-
-        if min_freq_key in inprops:
-            min_freq = inprops[min_freq_key]
-        else:
-            min_freq = None
-
-        if max_freq_key in inprops:
-            max_freq = inprops[max_freq_key]
-        else:
-            max_freq = None
-
-        min_limit = self._get_cpu_prop_value(min_freq_limit_key, cpu)
-        max_limit = self._get_cpu_prop_value(max_freq_limit_key, cpu)
-
-        for pname, val in ((min_freq_key, min_freq), (max_freq_key, max_freq)):
-            if val is None:
-                continue
-
-            if val < min_limit or val > max_limit:
-                name = Human.untitle(self._props[pname]["name"])
-                val = Human.largenum(val, unit="Hz")
-                min_limit = Human.largenum(min_limit, unit="Hz")
-                max_limit = Human.largenum(max_limit, unit="Hz")
-                raise Error(f"{name} value of '{val}' for {what} is out of range, must be within "
-                            f"[{min_limit}, {max_limit}]")
-
-        if min_freq_key in inprops and max_freq_key in inprops:
-            if min_freq > max_freq:
-                name_min = Human.untitle(self._props[min_freq_key]["name"])
-                name_max = Human.untitle(self._props[max_freq_key]["name"])
-                min_freq = Human.largenum(min_freq, unit="Hz")
-                max_freq = Human.largenum(max_freq, unit="Hz")
-                raise Error(f"can't set {name_min} to {min_freq} and {name_max} to {max_freq} for "
-                            f"{what}: minimum can't be greater than maximum")
-        elif max_freq_key not in inprops:
-            if min_freq > cur_max_freq:
-                name = Human.untitle(self._props[min_freq_key]["name"])
-                min_freq = Human.largenum(min_freq, unit="Hz")
-                cur_max_freq = Human.largenum(cur_max_freq, unit="Hz")
-                raise Error(f"can't set {name} of {what} to {min_freq} - it is higher than "
-                            f"currently configured maximum frequency of {cur_max_freq}")
-        elif min_freq_key not in inprops:
-            if max_freq < cur_min_freq:
-                name = Human.untitle(self._props[max_freq_key]["name"])
-                max_freq = Human.largenum(max_freq, unit="Hz")
-                cur_min_freq = Human.largenum(cur_min_freq, unit="Hz")
-                raise Error(f"can't set {name} of {what} to {max_freq} - it is lower than "
-                            f"currently configured minimum frequency of {cur_min_freq}")
-
-        # Make sure we change the frequencies in the right order.
-        if min_freq_key in inprops and max_freq_key in inprops:
-            if min_freq >= cur_max_freq:
-                # The situation is the following:
-                #   ---- Cur. Min --- Cur. Max -------- New Min --- New Max ----------> (Frequency)
-                # Make sure we first configure the new maximum frequency, and then new minimum
-                # frequency.
-                inprops = inprops.copy()
-                del inprops[min_freq_key]
-                inprops[min_freq_key] = min_freq
-            if max_freq <= cur_min_freq:
-                # The situation is the following:
-                #   ---- New Min --- New Max -------- Cur. Min --- Cur. Max ----------> (Frequency)
-                # Make sure we first configure the new minimum frequency, and then new maximum
-                # frequency.
-                inprops = inprops.copy()
-                del inprops[max_freq_key]
-                inprops[max_freq_key] = max_freq
-
-        return inprops
 
     def _parse_freq(self, pname, prop, val, cpu):
         """Turn a user-provided CPU or uncore frequency property value to hertz."""
@@ -895,35 +804,20 @@ class PStates(_PCStatesBase.PCStatesBase):
             if new_max_freq != cur_max_freq:
                 self._set_prop_in_sysfs(max_freq_key, new_max_freq, cpu)
 
-    def _set_cpu_props(self, inprops, cpu):
-        """Sets user-provided properties in 'inprops' for CPU 'cpu'."""
+    def _set_cpu_prop_value(self, pname, val, cpus):
+        """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
 
-        for pname, val in inprops.items():
-            prop = self._props[pname]
-
-            if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
-                raise Error(self._uncore_errmsg)
-
-            if prop.get("unit", None) == "Hz":
-                inprops[pname] = self._parse_freq(pname, prop, val, cpu)
-
-            if pname == "governor":
-                self._validate_governor_name(val)
-
-            if prop.get("type") == "bool":
-                self._validate_bool_type_value(prop, val)
-
-        inprops = self._validate_and_order_freq(inprops, cpu, uncore=False)
-        inprops = self._validate_and_order_freq(inprops, cpu, uncore=True)
-
-        for pname, val in inprops.items():
-            prop = self._props[pname]
-
-            # Invalidate the cache record for this CPU/property.
+        for cpu in cpus:
             self._pcache.remove(pname, cpu)
 
+        for cpu in cpus:
+            if self._pcache.is_cached(pname, cpu):
+                if self._props[pname]["scope"] == "global":
+                    break
+                continue
+
             if pname.startswith("epp") or pname.startswith("epb"):
-                # Figure out the feature name ("epp" or "epb").
+                # Figure out the feature name.
                 feature = pname.split("_")
                 if len(feature) == 2:
                     feature = feature[0]
@@ -932,13 +826,13 @@ class PStates(_PCStatesBase.PCStatesBase):
 
                 obj = getattr(self, f"_get_{feature}obj")()
                 getattr(obj, f"set_cpu_{feature}")(val, cpu)
+                self._pcache.add(pname, cpu, val, scope=self._props[pname]["scope"])
             elif pname == "turbo":
                 self._set_turbo(cpu, val in {True, "on", "enable"})
-            else:
-                if "fname" not in prop:
-                    raise Error(f"BUG: unsupported property '{pname}'")
-
+            elif "fname" in self._props[pname]:
                 self._set_prop_in_sysfs(pname, val, cpu)
+            else:
+                raise Error(f"BUG: unsupported property '{pname}'")
 
     def set_props(self, inprops, cpus="all"):
         """Refer to 'set_props() in '_PCStatesBase' class."""
@@ -946,11 +840,35 @@ class PStates(_PCStatesBase.PCStatesBase):
         inprops = self._normalize_inprops(inprops)
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
-        for pname in inprops:
-            self._validate_prop_scope(self._props[pname], cpus)
+        for pname, val in inprops.items():
+            prop = self._props[pname]
 
-        for cpu in cpus:
-            self._set_cpu_props(inprops, cpu)
+            if pname == "governor":
+                self._validate_governor_name(val)
+
+            if prop.get("type") == "bool":
+                self._validate_bool_type_value(prop, val)
+
+            self._validate_prop_scope(prop, cpus)
+
+            if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
+                raise Error(self._uncore_errmsg)
+
+        # Setting frequency may be tricky, because there are ordering constraints, so it is done
+        # separately.
+        if "min_freq" in inprops or "max_freq" in inprops:
+            for cpu in cpus:
+                self._validate_and_set_freq(inprops, cpu, uncore=False)
+        if "uncore_min_freq" in inprops or "uncore_max_freq" in inprops:
+            for cpu in cpus:
+                self._validate_and_set_freq(inprops, cpu, uncore=True)
+
+        for pname, val in inprops.items():
+            if pname in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
+                # Were already set.
+                continue
+
+            self._set_cpu_prop_value(pname, val, cpus)
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
