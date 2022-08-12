@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.3.14] - ADD DATE HERE
 ### Fixed
+ - Fix 'cpu info --turbo' failure on turbo-less systems.
 ### Added
 ### Removed
 ### Changed
@@ -23,11 +24,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [1.3.11] - 2022-07-15
 ### Fixed
  - Changed Sapphire Rapids PC6 limits: support retention and non-retention
-   variants
+   variants.
 
 ## [1.3.10] - 2022-07-06
 ### Changed
- - Minor improvements required for RPM packaging
+ - Minor improvements required for RPM packaging.
 
 ## [1.3.9] - 2022-06-24
 ### Changed
