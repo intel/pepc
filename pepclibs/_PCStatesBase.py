@@ -59,9 +59,9 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
         return result
 
-    def _get_prop_from_sysfs(self, prop, path):
+    def _read_prop_value_from_sysfs(self, prop, path):
         """
-        Read CPU 'cpu' property described by 'prop' from sysfs, and return in 'prop["type"]' format.
+        Read CPU 'cpu' property described by 'prop' from sysfs, and return its value.
         '"""
 
         val = self._pman.read(path).strip()

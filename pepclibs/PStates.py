@@ -509,7 +509,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             path = self._get_sysfs_path(prop, cpu)
             try:
-                val = self._get_prop_from_sysfs(prop, path)
+                val = self._read_prop_value_from_sysfs(prop, path)
                 self._pcache.add(pname, cpu, val, scope=prop["scope"])
                 return val
             except ErrorNotFound:
@@ -538,7 +538,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             if max_turbo_freq is None:
                 # Assume that max. turbo is the Linux max. frequency.
                 path = self._get_sysfs_path(self._props["max_freq"], cpu)
-                max_turbo_freq = self._get_prop_from_sysfs(prop, path)
+                max_turbo_freq = self._read_prop_value_from_sysfs(prop, path)
             self._pcache.add("max_turbo_freq", cpu, max_turbo_freq, scope=prop["scope"])
             return max_turbo_freq
 
@@ -675,7 +675,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         count = 3
         while count > 0:
-            read_val = self._get_prop_from_sysfs(prop, path)
+            read_val = self._read_prop_value_from_sysfs(prop, path)
 
             if orig_val == read_val:
                 self._pcache.add(pname, cpu, orig_val, scope=prop["scope"])

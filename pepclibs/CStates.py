@@ -574,7 +574,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         if "fname" in prop:
             path = self._sysfs_cpuidle / prop["fname"]
             try:
-                return self._get_prop_from_sysfs(prop, path)
+                return self._read_prop_value_from_sysfs(prop, path)
             except ErrorNotFound:
                 _LOG.debug("can't read value of property '%s', path '%s' is not found", pname,
                            path)
