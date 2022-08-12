@@ -475,15 +475,19 @@ class PStates(_PCStatesBase.PCStatesBase):
         # name first.
         driver = self._get_cpu_prop("driver", cpu)
 
-        if driver in {"intel_pstate", "intel_cpufreq"}:
-            path = self._sysfs_base / "intel_pstate" / "no_turbo"
-            disabled = self._read_int(path)
-            return "off" if disabled else "on"
+        try:
+            if driver in {"intel_pstate", "intel_cpufreq"}:
+                path = self._sysfs_base / "intel_pstate" / "no_turbo"
+                disabled = self._read_int(path)
+                return "off" if disabled else "on"
 
-        if driver == "acpi-cpufreq":
-            path = self._sysfs_base / "cpufreq" / "boost"
-            enabled = self._read_int(path)
-            return "on" if enabled else "off"
+            if driver == "acpi-cpufreq":
+                path = self._sysfs_base / "cpufreq" / "boost"
+                enabled = self._read_int(path)
+                return "on" if enabled else "off"
+        except ErrorNotFound:
+            # If the sysfs file does not exist, the system does not support turbo.
+            return None
 
         _LOG.debug("CPU %d: can't check if turbo is enabled%s: unsupported CPU frequency driver "
                    "'%s'", cpu, self._pman.hostmsg, driver)
