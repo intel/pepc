@@ -101,13 +101,12 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         """Returns sup-property 'subpname' of property 'pname' for CPU 'cpu'."""
 
         subprop = self._props[pname]["subprops"][subpname]
-        return self._get_cpu_prop_value(subpname, subprop, cpu) # pylint: disable=no-member
+        return self._get_cpu_prop_value(subpname, cpu, prop=subprop) # pylint: disable=no-member
 
     def _get_cpu_prop(self, pname, cpu):
         """Returns property 'pname' for CPU 'cpu'."""
 
-        prop = self._props[pname]
-        return self._get_cpu_prop_value(pname, prop, cpu) # pylint: disable=no-member
+        return self._get_cpu_prop_value(pname, cpu) # pylint: disable=no-member
 
     def _get_cpu_props(self, pnames, cpu):
         """Returns all properties in 'pnames' for CPU 'cpu'."""
