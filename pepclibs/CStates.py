@@ -554,8 +554,10 @@ class CStates(_PCStatesBase.PCStatesBase):
                                                                  cpuinfo=self._cpuinfo, msr=msr)
         return self._pcstatectl
 
-    def _read_prop_from_msr(self, pname, cpu):
-        """Read property 'pname' from the corresponding MSR register on CPU 'cpu'."""
+    def _read_prop_value_from_msr(self, pname, cpu):
+        """
+        Read property 'pname' from the corresponding MSR register on CPU 'cpu' and return its value.
+        """
 
         if pname in PowerCtl.FEATURES:
             module = self._get_powerctl()
@@ -579,14 +581,14 @@ class CStates(_PCStatesBase.PCStatesBase):
                 return None
 
         if pname in ("pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"):
-            pkg_cstate_limit_props = self._read_prop_from_msr("pkg_cstate_limit", cpu)
+            pkg_cstate_limit_props = self._read_prop_value_from_msr("pkg_cstate_limit", cpu)
             return pkg_cstate_limit_props[pname]
 
         if pname == "pkg_cstate_limit_locked":
-            return self._read_prop_from_msr("locked", cpu)
+            return self._read_prop_value_from_msr("locked", cpu)
 
         try:
-            return self._read_prop_from_msr(pname, cpu)
+            return self._read_prop_value_from_msr(pname, cpu)
         except ErrorNotSupported:
             return None
 
