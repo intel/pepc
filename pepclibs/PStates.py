@@ -418,8 +418,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _is_turbo_supported(self, cpu):
         """Returns 'True' if turbo is supported and 'False' otherwise."""
 
-        base_freq = self._get_cpu_prop("base_freq", cpu)
-        max_turbo_freq = self._get_cpu_prop("max_turbo_freq", cpu)
+        base_freq = self._get_cpu_prop_value("base_freq", cpu)
+        max_turbo_freq = self._get_cpu_prop_value("max_turbo_freq", cpu)
 
         # Just a sanity check.
         if max_turbo_freq < base_freq:
@@ -441,7 +441,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
-        driver = self._get_cpu_prop("driver", cpu)
+        driver = self._get_cpu_prop_value("driver", cpu)
 
         try:
             if driver in {"intel_pstate", "intel_cpufreq"}:
@@ -637,7 +637,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
-        driver = self._get_cpu_prop("driver", cpu)
+        driver = self._get_cpu_prop_value("driver", cpu)
 
         if driver in {"intel_pstate", "intel_cpufreq"}:
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
@@ -704,7 +704,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if pname == "max_freq":
             with contextlib.suppress(Error):
                 if self._get_cpu_turbo(cpu) == "off":
-                    base_freq = self._get_cpu_prop("base_freq", cpu)
+                    base_freq = self._get_cpu_prop_value("base_freq", cpu)
                     if orig_val > base_freq:
                         base_freq = Human.largenum(base_freq, unit="Hz")
                         msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and " \
@@ -734,8 +734,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         if min_freq_key not in inprops and max_freq_key not in inprops:
             return inprops
 
-        cur_min_freq = self._get_cpu_prop(min_freq_key, cpu)
-        cur_max_freq = self._get_cpu_prop(max_freq_key, cpu)
+        cur_min_freq = self._get_cpu_prop_value(min_freq_key, cpu)
+        cur_max_freq = self._get_cpu_prop_value(max_freq_key, cpu)
 
         if min_freq_key in inprops:
             min_freq = inprops[min_freq_key]
@@ -747,8 +747,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         else:
             max_freq = None
 
-        min_limit = self._get_cpu_prop(min_freq_limit_key, cpu)
-        max_limit = self._get_cpu_prop(max_freq_limit_key, cpu)
+        min_limit = self._get_cpu_prop_value(min_freq_limit_key, cpu)
+        max_limit = self._get_cpu_prop_value(max_freq_limit_key, cpu)
 
         for pname, val in ((min_freq_key, min_freq), (max_freq_key, max_freq)):
             if val is None:
@@ -811,20 +811,20 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if "uncore" in pname:
             if val == "min":
-                freq = self._get_cpu_prop("min_uncore_freq_limit", cpu)
+                freq = self._get_cpu_prop_value("min_uncore_freq_limit", cpu)
             elif val == "max":
-                freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
+                freq = self._get_cpu_prop_value("max_uncore_freq_limit", cpu)
             else:
                 freq = Human.parse_freq(val, name=Human.untitle(prop["name"]))
         else:
             if val in {"min", "lfm"}:
-                freq = self._get_cpu_prop("min_freq_limit", cpu)
+                freq = self._get_cpu_prop_value("min_freq_limit", cpu)
             elif val == "max":
-                freq = self._get_cpu_prop("max_freq_limit", cpu)
+                freq = self._get_cpu_prop_value("max_freq_limit", cpu)
             elif val in {"base", "hfm"}:
-                freq = self._get_cpu_prop("base_freq", cpu)
+                freq = self._get_cpu_prop_value("base_freq", cpu)
             elif val == "eff":
-                freq = self._get_cpu_prop("max_eff_freq", cpu)
+                freq = self._get_cpu_prop_value("max_eff_freq", cpu)
             else:
                 freq = Human.parse_freq(val, name=Human.untitle(prop["name"]))
 

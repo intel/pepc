@@ -103,11 +103,6 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         subprop = self._props[pname]["subprops"][subpname]
         return self._get_cpu_prop_value(subpname, cpu, prop=subprop) # pylint: disable=no-member
 
-    def _get_cpu_prop(self, pname, cpu):
-        """Returns property 'pname' for CPU 'cpu'."""
-
-        return self._get_cpu_prop_value(pname, cpu) # pylint: disable=no-member
-
     def _get_cpu_props(self, pnames, cpu):
         """Returns all properties in 'pnames' for CPU 'cpu'."""
 
@@ -117,7 +112,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             pinfo[pname] = {}
 
             # Get the 'pname' property.
-            pinfo[pname][pname] = self._get_cpu_prop(pname, cpu)
+            pinfo[pname][pname] = self._get_cpu_prop_value(pname, cpu) # pylint: disable=no-member
             if pinfo[pname][pname] is None:
                 _LOG.debug("CPU %d: %s is not supported", cpu, pname)
                 continue
