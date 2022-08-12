@@ -97,7 +97,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
         self._props = copy.deepcopy(self.props)
 
-    def _get_cpu_subprop(self, pname, subpname, cpu):
+    def _get_cpu_subprop_value(self, pname, subpname, cpu):
         """Returns sup-property 'subpname' of property 'pname' for CPU 'cpu'."""
 
         subprop = self._props[pname]["subprops"][subpname]
@@ -122,7 +122,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             for subpname in self._props[pname]["subprops"]:
                 if pinfo[pname][pname] is not None:
                     # Get the 'subpname' sub-property.
-                    pinfo[pname][subpname] = self._get_cpu_subprop(pname, subpname, cpu)
+                    pinfo[pname][subpname] = self._get_cpu_subprop_value(pname, subpname, cpu)
                 else:
                     # The property is not supported, so all sub-properties are not supported either.
                     pinfo[pname][subpname] = None

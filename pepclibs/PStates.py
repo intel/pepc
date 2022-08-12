@@ -843,7 +843,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 inprops[pname] = self._parse_freq(pname, prop, val, cpu)
 
             if pname == "governor":
-                governors = self._get_cpu_subprop("governor", "governors", cpu)
+                governors = self._get_cpu_subprop_value("governor", "governors", cpu)
                 if val not in governors:
                     governors = ", ".join(governors)
                     raise Error(f"bad governor name '{val}', use one of: {governors}")
