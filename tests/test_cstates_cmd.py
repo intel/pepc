@@ -99,3 +99,16 @@ def test_cstates_config(params):
 
         for scope in scope_options["bad"]:
             run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
+
+    # Options tested without 'scope_options'.
+    good_options = []
+    bad_options = []
+
+    if prop_is_supported("governor", params["pstate_props"]):
+        good_options += ["--governor menu"]
+        bad_options += ["--governor reardenmetal"]
+
+    for option in good_options:
+        run_pepc(f"cstates config {option}", pman)
+    for option in bad_options:
+        run_pepc(f"cstates config {option}", pman, exp_exc=Error)
