@@ -605,22 +605,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             yield cpu, self._get_cpu_props(pnames, cpu)
 
     def set_props(self, inprops, cpus="all"):
-        """
-        Set multiple properties described by 'inprops' to values also provided in 'inprops'.
-          * inprops - an iterable collection of property names and values.
-          * cpus - same as in 'get_props()'.
-
-        This method accepts two 'inprops' formats.
-
-        1. An iterable collection (e.g., list or a tuple) of ('pname', 'val') pairs. For example:
-           * [("c1_demotion", "on"), ("c1_undemotion", "off")]
-        2. A dictionary with property names as keys. For example:
-           * {"c1_demotion" : "on", "c1_undemotion" : "off"}
-
-        Properties of "bool" type accept the following values:
-           * True, "on", "enable" for enabling the feature.
-           * False, "off", "disable" for disabling the feature.
-        """
+        """Refer to 'set_props() in '_PCStatesBase' class."""
 
         inprops = self._normalize_inprops(inprops)
         cpus = self._cpuinfo.normalize_cpus(cpus)

@@ -195,20 +195,41 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             pass
         return pinfo
 
+    def set_props(self, inprops, cpus="all"):
+        """
+        Set multiple properties described by 'inprops' to values also provided in 'inprops'.
+          * inprops - an iterable collection of property names and values.
+          * cpus - same as in 'get_props()'.
+
+        This method accepts two 'inprops' formats.
+
+        1. An iterable collection (e.g., list or a tuple) of ('pname', 'val') pairs. For example:
+           * [(property1_name, property1_value), (property2_name, property2_value)]
+        2. A dictionary with property names as keys. For example:
+           * {property1_name : property1_value, property2_name : property2_value}
+
+        Properties of "bool" type accept the following values:
+           * True, "on", "enable" for enabling the feature.
+           * False, "off", "disable" for disabling the feature.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("PCStatesBase.set_props")
+
     def set_prop(self, pname, val, cpus):
         """Same as 'set_props()', but for a single property."""
 
-        self.set_props(((pname, val),), cpus=cpus) # pylint: disable=no-member
+        self.set_props(((pname, val),), cpus=cpus)
 
     def set_cpu_props(self, inprops, cpu):
         """Same as 'set_props()', but for a single CPU."""
 
-        self.set_props(inprops, cpus=(cpu,)) # pylint: disable=no-member
+        self.set_props(inprops, cpus=(cpu,))
 
     def set_cpu_prop(self, pname, val, cpu):
         """Same as 'set_props()', but for a single CPU and a single property."""
 
-        self.set_props(((pname, val),), cpus=(cpu,)) # pylint: disable=no-member
+        self.set_props(((pname, val),), cpus=(cpu,))
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
