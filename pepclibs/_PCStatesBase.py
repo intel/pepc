@@ -19,6 +19,13 @@ from pepclibs.helperlibs.Exceptions import ErrorNotSupported, Error
 
 _LOG = logging.getLogger()
 
+def _bug_method_not_defined(method_name):
+    """
+    Raise an error if the child class did not define the 'method_name' mandatory method.
+    """
+
+    raise Error(f"BUG: '{method_name}()' was not defined by the child class")
+
 class PCStatesBase(ClassHelpers.SimpleCloseContext):
     """
     This is a base class for the 'PState' and 'CState' classes.
