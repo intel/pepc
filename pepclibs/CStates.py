@@ -14,6 +14,7 @@ This module provides C-state management API.
 import re
 import logging
 from pathlib import Path
+from pepclibs import _PropsCache
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs import _PCStatesBase, CPUInfo
@@ -574,26 +575,34 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
-        if "fname" in prop:
-            path = self._sysfs_cpuidle / prop["fname"]
-            try:
-                return self._read_prop_value_from_sysfs(prop, path)
-            except ErrorNotFound:
-                _LOG.debug("can't read value of property '%s', path '%s' is not found", pname,
-                           path)
-                return None
-
-        if pname in ("pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"):
+        if pname in {"pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"}:
             pkg_cstate_limit_props = self._read_prop_value_from_msr("pkg_cstate_limit", cpu)
             return pkg_cstate_limit_props[pname]
 
         if pname == "pkg_cstate_limit_locked":
             return self._read_prop_value_from_msr("locked", cpu)
 
-        try:
-            return self._read_prop_value_from_msr(pname, cpu)
-        except ErrorNotSupported:
-            return None
+        if pname in {"c1_demotion", "c1_undemotion", "c1e_autopromote", "cstate_prewake"}:
+            try:
+                return self._read_prop_value_from_msr(pname, cpu)
+            except ErrorNotSupported:
+                return None
+
+        if self._pcache.is_cached(pname, cpu):
+            return self._pcache.get(pname, cpu)
+
+        if "fname" in prop:
+            path = self._sysfs_cpuidle / prop["fname"]
+            try:
+                val = self._read_prop_value_from_sysfs(prop, path)
+                self._pcache.add(pname, cpu, val, scope=prop["scope"])
+                return val
+            except ErrorNotFound:
+                _LOG.debug("can't read value of property '%s', path '%s' is not found", pname,
+                           path)
+                return None
+
+        raise Error(f"BUG: unsupported property '{pname}'")
 
     def get_props(self, pnames, cpus="all"):
         """Refer to 'get_props() in '_PCStatesBase' class."""
@@ -655,10 +664,14 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         self._sysfs_cpuidle = Path("/sys/devices/system/cpu/cpuidle")
 
+        # The write-through per-CPU properties cache. The properties that are backed by an MSR are
+        # not cached, because the MSR layer implements its own caching.
+        self._pcache = _PropsCache._PropsCache(cpuinfo=self._cpuinfo, pman=self._pman)
+
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_pcstatectl", "_powerctl", "_rcsobj")
+        close_attrs = ("_pcstatectl", "_powerctl", "_rcsobj", "_pcache")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
