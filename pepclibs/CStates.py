@@ -596,38 +596,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             return None
 
     def get_props(self, pnames, cpus="all"):
-        """
-        Read all properties specified in the 'pnames' list for CPUs in 'cpus', and for every CPU
-        yield a ('cpu', 'pinfo') tuple, where 'pinfo' is dictionary containing the read values of
-        all the properties. The arguments are as follows.
-          * pnames - list or an iterable collection of properties to read and yield the values for.
-                     These properties will be read for every CPU in 'cpus'.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. Value 'all' mean "all CPUs" (default).
-
-        The yielded 'pinfo' dictionaries have the following format.
-
-        { property1_name: { property1_name : property1_value,
-                            subprop1_key : subprop1_value,
-                            subprop2_key : subprop2_value,
-                            ... etc for every key ...},
-          property2_name: { property2_name : property2_value,
-                            subprop1_key : subprop2_value,
-                            ... etc ...},
-          ... etc ... }
-
-        So each property has the (main) value, and possibly sub-properties, which provide additional
-        read-only information related to the property. For example, the 'pkg_cstate_limit' property
-        comes with 'pkg_cstate_limit_locked' and other sub-properties. Most properties have no
-        sub-properties.
-
-        If a property is not supported, its value will be 'None'.
-
-        Properties of "bool" type use the following values:
-           * "on" if the feature is enabled.
-           * "off" if the feature is disabled.
-        """
+        """Refer to 'get_props() in '_PCStatesBase' class."""
 
         for pname in pnames:
             self._check_prop(pname)
