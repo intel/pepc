@@ -16,7 +16,7 @@ import logging
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
-from pepclibs import _PCStatesBase, CPUInfo, _Common
+from pepclibs import _PCStatesBase, CPUInfo
 from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
 
 _LOG = logging.getLogger()
@@ -611,7 +611,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for pname in inprops:
-            _Common.validate_prop_scope(self._props[pname], cpus, self._cpuinfo, self._pman.hostmsg)
+            self._validate_prop_scope(self._props[pname], cpus)
 
         for pname, val in inprops.items():
             if pname in PowerCtl.FEATURES:

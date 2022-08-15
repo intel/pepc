@@ -19,7 +19,7 @@ from pepclibs import _PropsCache
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs import KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs import _PCStatesBase, _Common
+from pepclibs import _PCStatesBase
 
 _LOG = logging.getLogger()
 
@@ -859,7 +859,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for pname in inprops:
-            _Common.validate_prop_scope(self._props[pname], cpus, self._cpuinfo, self._pman.hostmsg)
+            self._validate_prop_scope(self._props[pname], cpus)
 
         for cpu in cpus:
             self._set_cpu_props(inprops, cpu)
