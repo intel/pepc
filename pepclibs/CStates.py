@@ -100,7 +100,7 @@ PROPS = {
         "help" : "Idle governor decides which C-state to request on an idle CPU.",
         "type" : "str",
         "scope": "global",
-        "writable" : False,
+        "writable" : True,
         "subprops" : {
             "governors" : {
                 "name" : "Available idle governors",
@@ -633,7 +633,12 @@ class CStates(_PCStatesBase.PCStatesBase):
                     break
                 continue
 
-            raise Error(f"BUG: undefined property '{pname}'")
+            if "fname" in self._props[pname]:
+                path = self._sysfs_cpuidle / self._props[pname]["fname"]
+                self._write_prop_value_to_sysfs(self._props[pname], path, val)
+                self._pcache.add(pname, cpu, val, scope=self._props[pname]["scope"])
+            else:
+                raise Error(f"BUG: undefined property '{pname}'")
 
     def set_props(self, inprops, cpus="all"):
         """Refer to 'set_props() in '_PCStatesBase' class."""
@@ -641,8 +646,11 @@ class CStates(_PCStatesBase.PCStatesBase):
         inprops = self._normalize_inprops(inprops)
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
-        for pname in inprops:
+        for pname, val in inprops.items():
             self._validate_prop_scope(self._props[pname], cpus)
+
+            if pname == "governor":
+                self._validate_governor_name(val)
 
         for pname, val in inprops.items():
             self._set_cpu_prop_value(pname, val, cpus)

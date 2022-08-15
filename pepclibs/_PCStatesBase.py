@@ -42,7 +42,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             raise Error(f"bad value '{val}' for {name}, use one of: {use}")
 
     def _validate_governor_name(self, name):
-        """Validate P-state governor name 'name'."""
+        """Validate P-state or C-state governor name 'name'."""
 
         # Get the list of governors to validate 'name' against. Note, the list of governors is the
         # same for all CPUs (global scope).
