@@ -105,6 +105,23 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
         return val
 
+    def _write_prop_value_to_sysfs(self, prop, path, val):
+        """Write property value 'val' to a sysfs file at path 'path'."""
+
+        if prop["type"] == "int":
+            val = int(val)
+            if not Trivial.is_int(val):
+                raise Error(f"received an unexpected non-integer value from '{prop['name']}'"
+                            f"{self._pman.hostmsg}")
+            if prop.get("unit") == "Hz":
+                # Sysfs files have the numbers in kHz, convert to Hz.
+                val //= 1000
+
+        if prop["type"] == "list[str]":
+            val = ' '.join(val)
+
+        self._pman.write(path, str(val))
+
     def _init_props_dict(self, props):
         """Initialize the 'props' dictionary."""
 

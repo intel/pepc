@@ -581,10 +581,10 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if driver in {"intel_pstate", "intel_cpufreq"}:
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
-            self._pman.write(path, str(int(not enable)))
+            self._write_prop_value_to_sysfs(self._props["turbo"], path, int(not enable))
         elif driver == "acpi-cpufreq":
             path = self._sysfs_base / "cpufreq" / "boost"
-            self._pman.write(path, str(int(enable)))
+            self._write_prop_value_to_sysfs(self._props["turbo"], path, int(enable))
         else:
             raise Error(f"failed to enable or disable turbo{self._pman.hostmsg}: unsupported CPU "
                         f"frequency driver '{driver}'")
