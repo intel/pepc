@@ -613,6 +613,28 @@ class CStates(_PCStatesBase.PCStatesBase):
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield cpu, self._get_cpu_props(pnames, cpu)
 
+    def _set_cpu_prop_value(self, pname, val, cpus):
+        """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
+
+        if pname in PowerCtl.FEATURES:
+            self._get_powerctl().write_feature(pname, val, cpus=cpus)
+            return
+
+        if pname in PCStateConfigCtl.FEATURES:
+            self._get_pcstatectl().write_feature(pname, val, cpus=cpus)
+            return
+
+        for cpu in cpus:
+            self._pcache.remove(pname, cpu)
+
+        for cpu in cpus:
+            if self._pcache.is_cached(pname, cpu):
+                if self._props[pname]["scope"] == "global":
+                    break
+                continue
+
+            raise Error(f"BUG: undefined property '{pname}'")
+
     def set_props(self, inprops, cpus="all"):
         """Refer to 'set_props() in '_PCStatesBase' class."""
 
@@ -623,14 +645,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             self._validate_prop_scope(self._props[pname], cpus)
 
         for pname, val in inprops.items():
-            if pname in PowerCtl.FEATURES:
-                powerctl = self._get_powerctl()
-                powerctl.write_feature(pname, val, cpus)
-            elif pname in PCStateConfigCtl.FEATURES:
-                pcstatectl = self._get_pcstatectl()
-                pcstatectl.write_feature(pname, val, cpus=cpus)
-            else:
-                raise Error(f"BUG: undefined property '{pname}'")
+            self._set_cpu_prop_value(pname, val, cpus)
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
