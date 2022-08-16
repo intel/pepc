@@ -93,6 +93,7 @@ class _PropsCache():
           * cpu - an integer CPU number.
           * val - value to get cached.
           * scope - name of scope (e.g. "package", "core").
+        Returns 'val'.
         """
 
         cpus = self._get_cpus_in_scope(cpu, scope)
@@ -101,6 +102,8 @@ class _PropsCache():
             self._cache[pname] = {}
         for cpu in cpus: # pylint: disable=redefined-argument-from-local
             self._cache[pname][cpu] = val
+
+        return val
 
     def __init__(self, cpuinfo=None, pman=None):
         """
