@@ -17,7 +17,6 @@ CPUs.
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo
-from pepclibs import _PropsCache
 from pepclibs.msr import MSR, EnergyPerfBias
 
 # EPB policy to EPB value map. The names are from the following Linux kernel header file:
@@ -68,12 +67,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
     def is_epb_supported(self, cpu):
         """Returns 'True' if EPB is supported, on CPU 'cpu', otherwise returns 'False'."""
 
-        if self._pcache.is_cached("supported", cpu):
-            return self._pcache.get("supported", cpu)
-
-        val = self._epb_msr.is_cpu_feature_supported("epb", cpu)
-        self._pcache.add("supported", cpu, val)
-        return val
+        return self._epb_msr.is_cpu_feature_supported("epb", cpu)
 
     def _cpu_epb_to_policy(self, cpu, epb): # pylint: disable=unused-argument
         """Return policy name for EPB value 'epb' on CPU 'cpu'."""
@@ -184,9 +178,6 @@ class EPB(ClassHelpers.SimpleCloseContext):
             raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. "
                                     f"Only Intel CPUs are supported.")
 
-        # The per-CPU cache for read-only data. MSR implements its own caching.
-        self._pcache = _PropsCache._PropsCache(cpuinfo=self._cpuinfo, pman=self._pman)
-
         if not self._msr:
             self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo)
 
@@ -196,5 +187,5 @@ class EPB(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_epb_msr", "_msr", "_cpuinfo", "_pman", "_pcache")
+        close_attrs = ("_epb_msr", "_msr", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
