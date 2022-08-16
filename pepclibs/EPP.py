@@ -83,12 +83,11 @@ class EPP(ClassHelpers.SimpleCloseContext):
             return self._pcache.get("supported", cpu)
 
         if self._pman.exists(self._sysfs_epp_path % cpu):
-            self._pcache.add("supported", cpu, True)
+            val = True
         else:
             val = self._get_hwpreq().is_cpu_feature_supported("epp", cpu)
-            self._pcache.add("supported", cpu, val)
 
-        return self._pcache.get("supported", cpu)
+        return self._pcache.add("supported", cpu, val)
 
     def _get_cpu_epp_policies(self, cpu, not_supported_ok=False):
         """Implements 'get_cpu_epp_policies()'."""
@@ -98,8 +97,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
                 return None
             raise ErrorNotSupported(f"CPU {cpu} does not support EPP")
 
-        if self._pcache.is_cached("policies", cpu):
-            return self._pcache.get("policies", cpu)
+        if self._pcache.is_cached("epp_policies", cpu):
+            return self._pcache.get("epp_policies", cpu)
 
         # Prefer using the names from the Linux kernel.
         path = self._sysfs_epp_policies_path % cpu
@@ -109,8 +108,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         else:
             policies = Trivial.split_csv_line(line, sep=" ")
 
-        self._pcache.add("policies", cpu, policies)
-        return policies
+        return self._pcache.add("epp_policies", cpu, policies)
 
     def get_epp_policies(self, cpus="all", not_supported_ok=False):
         """
@@ -144,24 +142,27 @@ class EPP(ClassHelpers.SimpleCloseContext):
     def _get_cpu_epp_policy(self, cpu, not_supported_ok=False):
         """Returns EPP policy for CPU 'cpu'."""
 
+        if self._pcache.is_cached("epp_policy", cpu):
+            return self._pcache.get("epp_policy", cpu)
+
         policy = self._get_cpu_epp_policy_from_sysfs(cpu)
         policies = self._get_cpu_epp_policies(cpu, not_supported_ok=not_supported_ok)
         if policies is None:
-            return None
+            return self._pcache.add("epp_policy", cpu, None)
 
         if policy in policies:
-            return policy
+            return self._pcache.add("epp_policy", cpu, policy)
 
         if policy is not None:
             # We got a direct EPP value instead.
-            return f"unknown EPP={policy}"
+            return self._pcache.add("epp_policy", cpu, f"unknown EPP={policy}")
 
         # The kernel does not support EPP sysfs knobs. Try to figure the policy out.
         epp = self._get_cpu_epp(cpu, not_supported_ok=not_supported_ok)
         if epp is None:
-            return None
+            return self._pcache.add("epp_policy", cpu, None)
         if epp in self._epp_rmap:
-            return self._epp_rmap[epp]
+            return self._pcache.add("epp_policy", cpu, self._epp_rmap[epp])
 
         raise Error(f"unknown policy name for EPP value {epp} on CPU {cpu}{self._pman.hostmsg}")
 
@@ -240,7 +241,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
             raise Error(msg) from err
 
-        return epp
+        return self._pcache.add("epp", cpu, epp)
 
     def _set_cpu_epp(self, epp, cpu):
         """Implements 'set_cpu_epp()'."""
