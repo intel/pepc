@@ -502,6 +502,14 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
+        if pname.startswith("epp"):
+            obj = self._get_eppobj()
+            return getattr(obj, f"get_cpu_{pname}")(cpu, True)
+
+        if pname.startswith("epb"):
+            obj = self._get_epbobj()
+            return getattr(obj, f"get_cpu_{pname}")(cpu)
+
         if self._pcache.is_cached(pname, cpu):
             return self._pcache.get(pname, cpu)
 
@@ -552,49 +560,11 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
-    def _populate_cache(self, pnames, cpus):
-        """
-        Populate the properties cache for properties in 'pnames' for CPUs in 'cpus'. The idea is
-        that some properties may be more effecient to read in one go for all CPUs.
-        """
-
-        for pname in pnames:
-            if pname.startswith("epp") or pname.startswith("epb"):
-                # Get list of CPUs which do not have 'pname' property cached yet.
-                uncached_cpus = []
-                for cpu in cpus:
-                    if not self._pcache.is_cached(pname, cpu):
-                        uncached_cpus.append(cpu)
-
-                if not uncached_cpus:
-                    continue
-
-                # Figure out the feature name ("epp" or "epb").
-                feature = pname.split("_")
-                if len(feature) == 2:
-                    feature = feature[0]
-                else:
-                    feature = pname
-
-                obj = getattr(self, f"_get_{feature}obj")()
-                kwargs = {"cpus" : uncached_cpus}
-                if pname.startswith("epp"):
-                    kwargs["not_supported_ok"] = True
-
-                for cpu, val in getattr(obj, f"get_{pname}")(**kwargs):
-                    self._pcache.add(pname, cpu, val, scope=self._props[pname]["scope"])
-
-                for subpname, subprop in self._props[pname]["subprops"].items():
-                    for cpu, val in getattr(obj, f"get_{subpname}")(**kwargs):
-                        self._pcache.add(subpname, cpu, val, scope=subprop["scope"])
-
     def get_props(self, pnames, cpus="all"):
         """Refer to 'get_props() in '_PCStatesBase' class."""
 
         for pname in pnames:
             self._check_prop(pname)
-
-        self._populate_cache(pnames, cpus)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield cpu, self._get_cpu_props(pnames, cpu)
@@ -805,6 +775,14 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _set_cpu_prop_value(self, pname, val, cpus):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
 
+        if pname.startswith("epp"):
+            self._get_eppobj().set_epp(val, cpus=cpus)
+            return
+
+        if pname.startswith("epb"):
+            self._get_epbobj().set_epb(val, cpus=cpus)
+            return
+
         for cpu in cpus:
             self._pcache.remove(pname, cpu)
 
@@ -814,18 +792,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                     break
                 continue
 
-            if pname.startswith("epp") or pname.startswith("epb"):
-                # Figure out the feature name.
-                feature = pname.split("_")
-                if len(feature) == 2:
-                    feature = feature[0]
-                else:
-                    feature = pname
-
-                obj = getattr(self, f"_get_{feature}obj")()
-                getattr(obj, f"set_cpu_{feature}")(val, cpu)
-                self._pcache.add(pname, cpu, val, scope=self._props[pname]["scope"])
-            elif pname == "turbo":
+            if pname == "turbo":
                 self._set_turbo(cpu, val in {True, "on", "enable"})
             elif "fname" in self._props[pname]:
                 self._set_prop_in_sysfs(pname, val, cpu)
@@ -913,8 +880,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._sysfs_base = Path("/sys/devices/system/cpu")
         self._sysfs_base_uncore = Path("/sys/devices/system/cpu/intel_uncore_frequency")
 
-        # The write-through per-CPU properties cache. The properties that are backed by an MSR are
-        # not cached, because the MSR layer implements its own caching.
+        # The write-through per-CPU properties cache. The properties that are backed by MSR/EPP/EPB
+        # are not cached, because they implement their own caching.
         self._pcache = _PropsCache._PropsCache(cpuinfo=self._cpuinfo, pman=self._pman)
 
         self._init_props_dict()
