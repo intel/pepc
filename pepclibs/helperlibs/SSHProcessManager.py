@@ -394,7 +394,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
 class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """
-    This class implements a process manager for running and monitorin processes on a remote host
+    This class implements a process manager for running and monitoring processes on a remote host
     over SSH.
 
     SECURITY NOTICE: this class and any part of it should only be used for debugging and development
@@ -526,7 +526,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                         self._intsh.close()
                     self._intsh = None
             else:
-                _LOG.warning("failed to aquire the interactive shell process lock")
+                _LOG.warning("failed to acquire the interactive shell process lock")
 
             return self._run_in_new_session(command, cwd=cwd, shell=shell)
 
@@ -539,9 +539,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         Notes.
 
         1. The 'stdin', 'stdout' and 'stderr' arguments are not supported.
-        2. Stadard Unix systems have some sort of shell, so it is safe to use 'shell=True'. But this
-           is not always the case. E.g., Dell's iDRACs do not run a shell when you log into them.
-           Use 'shell=False' in such cases.
+        2. Standard Unix systems have some sort of shell, so it is safe to use 'shell=True'. But
+           this is not always the case. E.g., Dell's iDRACs do not run a shell when you log into
+           them.  Use 'shell=False' in such cases.
         """
 
         # pylint: disable=unused-argument
@@ -572,13 +572,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         Notes.
 
-        1. Stadard Unix systems have some sort of shell, so it is safe to use 'shell=True'. But this
-           is not always the case. E.g., Dell's iDRACs do not run a shell when you log into them.
-           Use 'shell=False' in such cases.
-        2.  The 'intsh' argument indicates whether the command should run in an interactive shell or
-            in a separate SSH session. The former is faster because creating a new SSH session takes
-            time.  By default, 'intsh' is the same as 'shell' ('True' if using shell is allowed,
-            'False' otherwise).
+        1. Standard Unix systems have some sort of shell, so it is safe to use 'shell=True'. But
+           this is not always the case. E.g., Dell's iDRACs do not run a shell when you log into
+           them. Use 'shell=False' in such cases.
+        2. The 'intsh' argument indicates whether the command should run in an interactive shell or
+           in a separate SSH session. The former is faster because creating a new SSH session takes
+           time.  By default, 'intsh' is the same as 'shell' ('True' if using shell is allowed,
+           'False' otherwise).
         """
 
         # pylint: disable=unused-argument
@@ -658,10 +658,19 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             if remotedst:
                 dst = f"{self.hostname}:{dst}"
 
-        try:
-            pman.run_verify(f"{cmd} -- '{src}' '{dst}'")
-        except pman.Error as err:
-            raise Error(f"failed to copy files '{src}' to '{dst}':\n{err}") from err
+        command = f"{cmd} -- '{src}' '{dst}'"
+        result = pman.run(command)
+        if result.exitcode == 0:
+            return
+
+        if not pman.is_remote and result.exitcode == 12 and "command not found" in result.stderr:
+            # This is special case. We ran 'rsync' on the local system in order to copy files
+            # to/from the remote system. The 'rsync' is available on the local system, but it is not
+            # installed on the remote system.
+            raise self._command_not_found(command, result.stderr, toolname="rsync")
+
+        msg = self.get_cmd_failure_msg(command, *tuple(result))
+        raise Error(msg)
 
     def _scp(self, src, dst):
         """
@@ -835,7 +844,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                  privkeypath=None, timeout=None):
         """
         Initialize a class instance and establish SSH connection to host 'hostname'. The arguments
-        are as followas.
+        are as follows.
           o hostname - name of the host to connect to.
           o ipaddr - optional IP address of the host to connect to. If specified, then it is used
             instead of hostname, otherwise hostname is used.
