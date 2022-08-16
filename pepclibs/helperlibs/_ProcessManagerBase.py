@@ -883,8 +883,24 @@ for entry in os.listdir(path):
                 raise ErrorNotFound(f"program '{program}' was not found in $PATH{self.hostmsg}")
             return None
 
-        cmd = f"which -- '{program}'"
-        stdout, stderr, exitcode = self.run(cmd)
+        if self._which_cmd is None:
+            which_cmds = ("which", "command -v")
+        else:
+            which_cmds = (self._which_cmd,)
+
+        for which_cmd in which_cmds:
+            cmd = f"{which_cmd} -- '{program}'"
+            try:
+                stdout, stderr, exitcode = self.run(cmd)
+            except ErrorNotFound:
+                if which_cmd != which_cmds[-1]:
+                    # We have more commands to try.
+                    continue
+                raise
+            else:
+                self._which_cmd = which_cmd
+                break
+
         if not exitcode:
             # Which could return several paths. They may contain aliases.
             for line in stdout.strip().splitlines():
@@ -909,6 +925,8 @@ for entry in os.listdir(path):
 
         # Path to python interpreter on the remote host.
         self._python_path = None
+        # The command to use for figuring out full paths in the 'which()' method.
+        self._which_cmd = None
 
     def close(self):
         """Free allocated resources."""
