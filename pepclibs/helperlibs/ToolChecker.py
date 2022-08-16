@@ -24,10 +24,12 @@ from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
 # Common for CentOS, Fedora, Debian, and Ubuntu.
 _COMMON_PKGINFO = {
     "cat"       : "coreutils",
+    "cc"        : "gcc",
     "clang"     : "clang",
     "find"      : "findutils",
     "depmod"    : "kmod",
     "dmesg"     : "util-linux",
+    "gcc"       : "gcc",
     "lscpu"     : "util-linux",
     "make"      : "make",
     "modprobe"  : "kmod",
