@@ -26,7 +26,7 @@ from pepclibs import CStates, PStates
 if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
 
-VERSION = "1.3.13"
+VERSION = "1.3.14"
 OWN_NAME = "pepc"
 
 LOG = logging.getLogger()
