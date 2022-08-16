@@ -140,7 +140,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
     def _handle_queue_item(self, streamid, data, capture_output=True, output_fobjs=(None, None)):
         """
-        Hadle an item item returned by '_get_next_queue_item()'. The item is the '(streamic, data)'
+        Handle an item item returned by '_get_next_queue_item()'. The item is the '(streamic, data)'
         pair. The keyword arguments are the same as in 'wait()'.
         """
 
@@ -410,7 +410,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         # Print debugging messages if 'True'.
         self.debug = False
         # Prefix debugging messages with this string. Can be useful to distinguish between debugging
-        # message related to different processs.
+        # message related to different processes.
         self.debug_id = None
 
         # The stream fetcher threads have to exit if the '_threads_exit' flag becomes 'True'.
@@ -465,13 +465,13 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
           * cwd - the working directory of the process.
           * shell - whether the command should be run via shell.
           * intsh - whether the command should run in an already running interactive shell or in a
-                    new shell. The former should be more effecient.
+                    new shell. The former should be more efficient.
           * stdin - the standard input stream to use for the process. Can be one of:
             - a file-like object
             - file path
-          * stdout - similar to 'stdin', but for sandard output. If a file path is provided and it
+          * stdout - similar to 'stdin', but for standard output. If a file path is provided and it
                      does not exist, it will be created.
-          * stderr - similar to 'stdin', but for sandard error.
+          * stderr - similar to 'stdin', but for standard error.
 
         Note, there is only one interactive shell process at the moment, so only one asynchronous
         process an run in an interactive shell at a time.
@@ -498,13 +498,13 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    of lines (trailing newlines are not stripped).
           * output_fobjs - an optional tuple providing 2 file-like objects where stdout and stderr
                            of the executed command should be echoed to. If 'mix_output' is 'True',
-                           the second element of the tupe will be ignored and all the output will be
-                           echoed to the first element. By default the command output is not echoed
-                           anywhere.
+                           the second element of the tuple will be ignored and all the output will
+                           be echoed to the first element. By default the command output is not
+                           echoed anywhere.
           * cwd - the working directory of the process.
           * shell - whether the command should be run via shell.
           * intsh - whether the command should run in an already running interactive shell or in a
-                    new shell. The former should be more effecient.
+                    new shell. The former should be more efficient.
 
         This function returns the 'ProcResult' named tuple of '(exitcode, stdout, stderr)' elements.
           * 'stdout' - stdout executed command.
@@ -550,13 +550,13 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
           * r - recursive.
           * l - copy symlinks as symlinks.
           * p - preserve permission.
-          * s - preseve device nodes and others special files.
+          * s - preserve device nodes and others special files.
         """
 
         # pylint: disable=unused-argument,no-self-use
         return _bug_method_not_defined("ProcessManagerBase.rsync")
 
-    def _command_not_found(self, cmd, errmsg):
+    def _command_not_found(self, cmd, errmsg, toolname=None):
         """
         This method is called when command 'cmd' could not be executed be it was not found. This
         method formats a helpful error message and returns an exception object.
@@ -564,21 +564,22 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         from pepclibs.helperlibs import ToolChecker # pylint: disable=import-outside-toplevel
 
-        # Get the tool (program) name.
-        tool = cmd.split()[0].split("/")[-1]
         pkgname = None
+        if not toolname:
+            # Get the tool (program) name.
+            toolname = cmd.split()[0].split("/")[-1]
 
         try:
             # Try to resolve tool name to the OS package name.
             with ToolChecker.ToolChecker(pman=self) as tchk:
-                pkgname = tchk.tool_to_pkg(tool)
+                pkgname = tchk.tool_to_pkg(toolname)
         except BaseException as err: # pylint: disable=broad-except
             _LOG.debug("failed to format the command package suggestion: %s", err)
 
         if pkgname:
             what = f"'{pkgname}' OS package"
         else:
-            what = f"'{tool}' program"
+            what = f"'{toolname}' program"
 
         return ErrorNotFound(f"cannot execute the following command{self.hostmsg}:\n{cmd}\n"
                              f"The error is: {errmsg}\nTry to install the {what}{self.hostmsg}.")
