@@ -816,11 +816,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._validate_governor_name(val)
 
             if prop.get("type") == "bool":
-                vals = (True, False, "on", "off", "enable", "disable")
-                if val not in vals:
-                    name = Human.untitle(prop['name'])
-                    use = ", ".join([str(val1) for val1 in vals])
-                    raise Error(f"bad value '{val}' for {name}, use one of: {use}")
+                self._validate_bool_type_value(prop, val)
 
         inprops = self._validate_and_order_freq(inprops, cpu, uncore=False)
         inprops = self._validate_and_order_freq(inprops, cpu, uncore=True)

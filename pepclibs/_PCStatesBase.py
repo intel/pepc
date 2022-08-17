@@ -31,6 +31,16 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
     This is a base class for the 'PState' and 'CState' classes.
     """
 
+    @staticmethod
+    def _validate_bool_type_value(prop, val):
+        """Validate value 'val' of a boolean-type property 'prop'."""
+
+        vals = {True, False, "on", "off", "enable", "disable"}
+        if val not in vals:
+            name = Human.untitle(prop["name"])
+            use = ", ".join([str(val1) for val1 in vals])
+            raise Error(f"bad value '{val}' for {name}, use one of: {use}")
+
     def _validate_governor_name(self, name):
         """Validate P-state governor name 'name'."""
 
