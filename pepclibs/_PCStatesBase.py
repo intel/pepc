@@ -31,6 +31,16 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
     This is a base class for the 'PState' and 'CState' classes.
     """
 
+    def _validate_governor_name(self, name):
+        """Validate P-state governor name 'name'."""
+
+        # Get the list of governors to validate 'name' against. Note, the list of governors is the
+        # same for all CPUs (global scope).
+        governors = self._get_cpu_subprop_value("governor", "governors", 0)
+        if name not in governors:
+            governors = ", ".join(governors)
+            raise Error(f"bad governor name '{name}', use one of: {governors}")
+
     def _check_prop(self, pname):
         """Raise an error if a property 'pname' is not supported."""
 
