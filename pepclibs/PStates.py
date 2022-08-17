@@ -685,16 +685,16 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise Error(msg)
 
-    def _parse_freq(self, pname, prop, val, cpu):
+    def _parse_freq(self, pname, val, cpu, uncore=False):
         """Turn a user-provided CPU or uncore frequency property value to hertz."""
 
-        if "uncore" in pname:
+        if uncore:
             if val == "min":
                 freq = self._get_cpu_prop_value("min_uncore_freq_limit", cpu)
             elif val == "max":
                 freq = self._get_cpu_prop_value("max_uncore_freq_limit", cpu)
             else:
-                freq = Human.parse_freq(val, name=Human.untitle(prop["name"]))
+                freq = Human.parse_freq(val, name=Human.untitle(self._props[pname]["name"]))
         else:
             if val in {"min", "lfm"}:
                 freq = self._get_cpu_prop_value("min_freq_limit", cpu)
@@ -705,7 +705,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif val == "eff":
                 freq = self._get_cpu_prop_value("max_eff_freq", cpu)
             else:
-                freq = Human.parse_freq(val, name=Human.untitle(prop["name"]))
+                freq = Human.parse_freq(val, name=Human.untitle(self._props[pname]["name"]))
 
         return freq
 
@@ -745,11 +745,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         new_max_freq = None
 
         if min_freq_key in inprops:
-            new_min_freq = self._parse_freq(min_freq_key, self._props[min_freq_key],
-                                            inprops[min_freq_key], cpu)
+            new_min_freq = self._parse_freq(min_freq_key, inprops[min_freq_key], cpu, uncore=uncore)
         if max_freq_key in inprops:
-            new_max_freq = self._parse_freq(max_freq_key, self._props[min_freq_key],
-                                            inprops[max_freq_key], cpu)
+            new_max_freq = self._parse_freq(max_freq_key, inprops[max_freq_key], cpu, uncore=uncore)
 
         cur_min_freq = self._get_cpu_prop_value(min_freq_key, cpu)
         cur_max_freq = self._get_cpu_prop_value(max_freq_key, cpu)
