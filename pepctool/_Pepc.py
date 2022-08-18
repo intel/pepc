@@ -451,8 +451,7 @@ def main():
         LOG.info("\nInterrupted, exiting")
         return -1
     except Error as err:
-        LOG.error(err)
-        return -1
+        LOG.error_out(err)
 
     return 0
 
