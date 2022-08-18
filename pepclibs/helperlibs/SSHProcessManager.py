@@ -728,7 +728,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         def _read_(fobj, size=None):
             """
-            SFTP file objects support only binary mode. This wrapper adds basic text mode support.
+            This wrapper improves exceptions message and adds text mode support (SFTP file objects
+            support only binary mode).
             """
 
             try:
@@ -747,7 +748,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         def _write_(fobj, data):
             """
-            SFTP file objects support only binary mode. This wrapper adds basic text mode support.
+            This wrapper improves exceptions message and adds text mode support (SFTP file objects
+            support only binary mode).
             """
 
             errmsg = f"failed to write to '{fobj._orig_fpath_}': "
@@ -787,13 +789,11 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         fobj._orig_fpath_ = path
         fobj._orig_fmode_ = mode
 
-        # Redefine the 'read()' and 'write()' methods to do decoding on the fly, because all files
-        # are binary in case of SFTP.
-        if "b" not in mode:
-            fobj._orig_fread_ = fobj.read
-            fobj.read = types.MethodType(_read_, fobj)
-            fobj._orig_fwrite_ = fobj.write
-            fobj.write = types.MethodType(_write_, fobj)
+        fobj._orig_fread_ = fobj.read
+        fobj._orig_fwrite_ = fobj.write
+
+        fobj.read = types.MethodType(_read_, fobj)
+        fobj.write = types.MethodType(_write_, fobj)
 
         # Make sure methods of 'fobj' always raise the 'Error' exception.
         fobj = ClassHelpers.WrapExceptions(fobj, exceptions=(BaseException,),
