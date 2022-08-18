@@ -36,16 +36,16 @@ class WrapExceptions:
 
     def _get_exception(self, name, err):
         """
-        Format and return an 'Error' exception object for exception 'err' happened in method
-        'name'.
+        Format and return an 'self._target_exception' exception object for exception 'err' happened
+        in method 'name'.
         """
 
         # pylint: disable=protected-access
         errno = getattr(err, "errno", None)
         if self._we_get_err_prefix:
-            return Error("%s: %s" % (self._we_get_err_prefix(self._obj, name), err),
-                         errno=errno)
-        return Error("method '%s()' failed: %s" % (name, err), errno=errno)
+            msg = "%s: %s" % (self._we_get_err_prefix(self._obj, name), err)
+            return self._target_exception(msg, errno=errno)
+        return self._target_exception("method '%s()' failed: %s" % (name, err), errno=errno)
         # pylint: enable=protected-access
 
     def _wrap(self, name):
@@ -53,17 +53,19 @@ class WrapExceptions:
 
         def wrapper(self, *args, **kwargs):
             """The actual wrapper."""
+
             try:
                 return getattr(self._obj, name)(*args, **kwargs)
-            except Error:
-                # Do not override the exception if it already has the 'Error' type.
+            except self._target_exception:
+                # Do not override the exception if it already has the 'self._target_exception' type.
                 raise
             except self._we_exceptions as err:
                 raise self._get_exception(name, err) from err
 
         setattr(self, name, types.MethodType(wrapper, self))
 
-    def __init__(self, obj, methods=None, exceptions=None, get_err_prefix=None):
+    def __init__(self, obj, methods=None, exceptions=None, target_exception=None,
+                 get_err_prefix=None):
         """
         Intercept and translate exceptions 'exceptions' for object 'obj'. The arguments are as
         follows.
@@ -71,16 +73,21 @@ class WrapExceptions:
           * methods - list of methods to intercept exceptions for. All non-private methods by
             default.
           * exceptions - list of exceptions to intercept and translate.
+          * target_exception - the target exception type to translate to ('Error' by default).
           * get_err_prefix - a method which will be called when forming the exception message.
             Should return a string, which will be used as the exception message prefix.
 
         The purpose of this class is to translate exceptions raised by methods of 'obj' to the
-        'Error' type.
+        'target_exception' type.
         """
 
         if not exceptions:
             exceptions = (Exception, )
 
+        if not target_exception:
+            target_exception = Error
+
+        self._target_exception = target_exception
         self._obj = obj
         self._we_exceptions = exceptions
         self._we_get_err_prefix = get_err_prefix
@@ -117,7 +124,7 @@ class WrapExceptions:
 
         if hasattr(self._obj, "__iter__"):
             return self
-        raise Error("object of type '%s' is not iterable" % type(self._obj))
+        raise self._target_exception("object of type '%s' is not iterable" % type(self._obj))
 
     def __next__(self):
         """Next iteration."""
