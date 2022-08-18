@@ -306,7 +306,12 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except OSError as err:
             raise Error(f"{errmsg}{err}") from None
 
-        # Make sure methods of 'fobj' always raise the 'Error' exceptions.
+        # Make sure I/O methods raise 'ErrorPermissionDenied' on 'PermissionError'.
+        fobj = ClassHelpers.WrapExceptions(fobj, methods=("write", "flush", "close"),
+                                           exceptions=(PermissionError,),
+                                           target_exception=ErrorPermissionDenied,
+                                           get_err_prefix=get_err_prefix)
+        # Make sure all methods raise only the 'Error' exception.
         return ClassHelpers.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
                                            get_err_prefix=get_err_prefix)
 
