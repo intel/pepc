@@ -50,11 +50,17 @@ class WrapExceptions:
 
     def __init__(self, obj, methods=None, exceptions=None, get_err_prefix=None):
         """
-        Wrap 'obj' and intercept exceptions in the 'exceptions' collection from every method in
-        'methods' (default all non-private) and raise an 'Error' type exception instead. If
-        'get_err_prefix' argument is provided, it should be a function which must return a string
-        that will be used as the error message prefix. The function signature is
-        'get_err_prefix(obj, methodname)'. The wrapped version of 'obj' is returned.
+        Intercept and translate exceptions 'exceptions' for object 'obj'. The arguments are as
+        follows.
+          * obj - the object to intercept and translate exceptions for.
+          * methods - list of methods to intercept exceptions for. All non-private methods by
+            default.
+          * exceptions - list of exceptions to intercept and translate.
+          * get_err_prefix - a method which will be called when forming the exception message.
+            Should return a string, which will be used as the exception message prefix.
+
+        The purpose of this class is to translate exceptions raised by methods of 'obj' to the
+        'Error' type.
         """
 
         def wrap(name):
