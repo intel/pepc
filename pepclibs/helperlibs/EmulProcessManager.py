@@ -22,9 +22,6 @@ from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
 _LOG = logging.getLogger()
 
-# The exceptions to handle when dealing with file I/O.
-_EXCEPTIONS = (OSError, IOError, BrokenPipeError)
-
 def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
     return "method '%s()' failed for %s" % (method, fobj.name)
@@ -199,8 +196,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             raise Error(f"{errmsg}{err}") from None
 
         # Make sure methods of 'fobj' always raise the 'Error' exceptions.
-        fobj = ClassHelpers.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
-                                           get_err_prefix=_get_err_prefix)
+        fobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
         self._ofiles[path] = fobj
         return fobj
 

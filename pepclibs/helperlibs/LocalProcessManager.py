@@ -28,9 +28,6 @@ from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 _LOG = logging.getLogger()
 
-# The exceptions to handle when dealing with file I/O.
-_EXCEPTIONS = (OSError, IOError, BrokenPipeError)
-
 class LocalProcess(_ProcessManagerBase.ProcessBase):
     """
     This class represents a process that was executed by 'LocalProcessManager'.
@@ -47,7 +44,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
 
             try:
                 return self._streams[streamid].read(4096)
-            except _EXCEPTIONS as err:
+            except Exception as err:
                 if err.errno == errno.EAGAIN:
                     continue
                 raise
@@ -312,8 +309,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                                            target_exception=ErrorPermissionDenied,
                                            get_err_prefix=get_err_prefix)
         # Make sure all methods raise only the 'Error' exception.
-        return ClassHelpers.WrapExceptions(fobj, exceptions=_EXCEPTIONS,
-                                           get_err_prefix=get_err_prefix)
+        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
 
     @staticmethod
     def mkdir(dirpath, parents=False, exist_ok=False):

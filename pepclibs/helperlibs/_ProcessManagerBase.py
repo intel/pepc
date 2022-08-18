@@ -428,8 +428,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         if self.stdin:
             if not getattr(self.stdin, "name", None):
                 setattr(self.stdin, "name", "stdin")
-            self.stdin = ClassHelpers.WrapExceptions(self.stdin, exceptions=(BaseException,),
-                                                     get_err_prefix=_get_err_prefix)
+            self.stdin = ClassHelpers.WrapExceptions(self.stdin, get_err_prefix=_get_err_prefix)
 
     def close(self):
         """Free allocated resources."""

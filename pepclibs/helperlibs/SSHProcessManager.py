@@ -796,8 +796,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         fobj.write = types.MethodType(_write_, fobj)
 
         # Make sure methods of 'fobj' always raise the 'Error' exception.
-        fobj = ClassHelpers.WrapExceptions(fobj, exceptions=(BaseException,),
-                                           get_err_prefix=get_err_prefix)
+        fobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
         return fobj
 
     def _cfg_lookup(self, optname, hostname, username, cfgfiles=None):
