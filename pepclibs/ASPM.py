@@ -49,8 +49,8 @@ class ASPM(ClassHelpers.SimpleCloseContext):
             with self._pman.open(self._policy_path, "w") as fobj:
                 fobj.write(policy)
         except ErrorPermissionDenied as err:
-            raise Error(f"{errmsg}\n{err}\nSometimes booting with 'pcie_aspm=force' command line "
-                        f"option helps.") from err
+            raise ErrorPermissionDenied(f"{errmsg}\n{err}\nSometimes booting with " \
+                                        f"'pcie_aspm=force' command line option helps.") from err
         except Error as err:
             raise Error(f"{errmsg}\n{err}") from err
 
