@@ -48,6 +48,21 @@ class WrapExceptions:
         return Error("method '%s()' failed: %s" % (name, err), errno=errno)
         # pylint: enable=protected-access
 
+    def _wrap(self, name):
+        """Wrap the 'name' method."""
+
+        def wrapper(self, *args, **kwargs):
+            """The actual wrapper."""
+            try:
+                return getattr(self._obj, name)(*args, **kwargs)
+            except Error:
+                # Do not override the exception if it already has the 'Error' type.
+                raise
+            except self._we_exceptions as err:
+                raise self._get_exception(name, err) from err
+
+        setattr(self, name, types.MethodType(wrapper, self))
+
     def __init__(self, obj, methods=None, exceptions=None, get_err_prefix=None):
         """
         Intercept and translate exceptions 'exceptions' for object 'obj'. The arguments are as
@@ -62,21 +77,6 @@ class WrapExceptions:
         The purpose of this class is to translate exceptions raised by methods of 'obj' to the
         'Error' type.
         """
-
-        def wrap(name):
-            """Create and return the wrapper for the 'name' method of the wrapped class."""
-
-            def wrapper(self, *args, **kwargs):
-                """The actual wrapper."""
-                try:
-                    return getattr(self._obj, name)(*args, **kwargs)
-                except Error:
-                    # Do not override the exception if it already has the 'Error' type.
-                    raise
-                except self._we_exceptions as err:
-                    raise self._get_exception(name, err) from err
-
-            return types.MethodType(wrapper, self)
 
         if not exceptions:
             exceptions = (Exception, )
@@ -95,10 +95,10 @@ class WrapExceptions:
             value = getattr(obj, name)
             # If the attribute is not a private attribute and it is a function, then wrap it.
             if (name[0] != "_" and hasattr(value, "__call__")):
-                setattr(self, name, wrap(name))
+                self._wrap(name)
             # But we want to wrap iteration methods.
             if name in {"__next__", "__iter__"}:
-                setattr(self, name, wrap(name))
+                self._wrap(name)
 
     def __enter__(self):
         """The context enter method."""
