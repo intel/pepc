@@ -7,6 +7,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
  - Fix ASPM-related tests failures when they run on real HW (vs emulated).
 ### Added
+ - Add 'cstates config --governor' option.
 ### Removed
 ### Changed
 
