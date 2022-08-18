@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 from pepclibs import CPUInfo, CStates, PStates
 from pepclibs.helperlibs import ProcessManager
+from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
 from pepctool import _Pepc
 
 logging.basicConfig(level=logging.DEBUG)
@@ -136,6 +137,12 @@ def get_params(hostname, request):
     with get_pman(hostname, dataset) as pman:
         yield build_params(hostname, dataset, pman)
 
+# A map of error type and command argument strings to look for in case of error. For matching
+# exceptions print warning instead of asserting.
+_WARN_ONLY = {
+    ErrorPermissionDenied : "aspm config --policy ",
+}
+
 def run_pepc(arguments, pman, exp_exc=None):
     """
     Run the 'pepc' command with arguments 'arguments' and with process manager 'pman'. The 'exp_exc'
@@ -150,8 +157,15 @@ def run_pepc(arguments, pman, exp_exc=None):
         ret = args.func(args, pman)
     except Exception as err: # pylint: disable=broad-except
         if exp_exc is None:
-            assert False, f"command '{cmd}' raised the following exception:\n\t" \
-                          f"type: {type(err)}\n\tmessage: {err}"
+            err_type = type(err)
+            errmsg = f"command '{cmd}' raised the following exception:\n\ttype: {err_type}\n\t" \
+                     f"message: {err}"
+
+            if pman.is_remote and err_type in _WARN_ONLY and _WARN_ONLY[err_type] in arguments:
+                _LOG.warning(errmsg)
+                return None
+
+            assert False, errmsg
 
         if isinstance(err, exp_exc):
             return None
