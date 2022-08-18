@@ -109,18 +109,18 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Changed
  - pepc: fix file type markers in 'lsdir()', which fixes 'wult scan'.
 
-## [1.1.3] - 2022-11-12
+## [1.1.3] - 2021-11-12
 ### Changed
  - pepc: python 3.8 crash fix.
 
-## [1.1.2] - 2022-11-12
+## [1.1.2] - 2021-11-12
 ### Changed
  - pepc: speed-up the C-state validation, required for wult tool.
 
-## [1.1.1] - 2022-11-03
+## [1.1.1] - 2021-11-03
 ### Changed
  - pepc: start tagging new releases, otherwise only very minor changes.
 
-## [1.1.0] - 2022-10-29
+## [1.1.0] - 2021-10-29
 ### Changed
  - pepc: first release.
