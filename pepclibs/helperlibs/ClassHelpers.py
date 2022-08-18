@@ -64,6 +64,9 @@ class WrapExceptions:
                 """The actual wrapper."""
                 try:
                     return getattr(self._obj, name)(*args, **kwargs)
+                except Error:
+                    # Do not override the exception if it already has the 'Error' type.
+                    raise
                 except self._we_exceptions as err:
                     raise self._get_exception(name, err) from err
 
@@ -85,7 +88,10 @@ class WrapExceptions:
 
             value = getattr(obj, name)
             # If the attribute is not a private attribute and it is a function, then wrap it.
-            if (name[0] != "_" and hasattr(value, "__call__")) or name == "__next__":
+            if (name[0] != "_" and hasattr(value, "__call__")):
+                setattr(self, name, wrap(name))
+            # But we want to wrap iteration methods.
+            if name in {"__next__", "__iter__"}:
                 setattr(self, name, wrap(name))
 
     def __enter__(self):
