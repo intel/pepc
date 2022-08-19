@@ -823,7 +823,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if "min_freq" in inprops or "max_freq" in inprops:
             for cpu in cpus:
                 self._validate_and_set_freq(inprops, cpu, uncore=False)
-        if "uncore_min_freq" in inprops or "uncore_max_freq" in inprops:
+        if "min_uncore_freq" in inprops or "max_uncore_freq" in inprops:
             for cpu in cpus:
                 self._validate_and_set_freq(inprops, cpu, uncore=True)
 
