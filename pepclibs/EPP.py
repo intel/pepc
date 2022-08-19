@@ -142,27 +142,29 @@ class EPP(ClassHelpers.SimpleCloseContext):
     def _get_cpu_epp_policy(self, cpu, not_supported_ok=False):
         """Returns EPP policy for CPU 'cpu'."""
 
-        if self._pcache.is_cached("epp_policy", cpu):
-            return self._pcache.get("epp_policy", cpu)
-
-        policy = self._get_cpu_epp_policy_from_sysfs(cpu)
         policies = self._get_cpu_epp_policies(cpu, not_supported_ok=not_supported_ok)
         if policies is None:
-            return self._pcache.add("epp_policy", cpu, None)
+            return None
+
+        if self._pcache.is_cached("epp_policy", cpu):
+            policy = self._pcache.get("epp_policy", cpu)
+        else:
+            policy = self._get_cpu_epp_policy_from_sysfs(cpu)
+            self._pcache.add("epp_policy", cpu, policy)
 
         if policy in policies:
-            return self._pcache.add("epp_policy", cpu, policy)
+            return policy
 
         if policy is not None:
             # We got a direct EPP value instead.
-            return self._pcache.add("epp_policy", cpu, f"unknown EPP={policy}")
+            return f"unknown EPP={policy}"
 
         # The kernel does not support EPP sysfs knobs. Try to figure the policy out.
         epp = self._get_cpu_epp(cpu, not_supported_ok=not_supported_ok)
         if epp is None:
-            return self._pcache.add("epp_policy", cpu, None)
+            return None
         if epp in self._epp_rmap:
-            return self._pcache.add("epp_policy", cpu, self._epp_rmap[epp])
+            return self._epp_rmap[epp]
 
         raise Error(f"unknown policy name for EPP value {epp} on CPU {cpu}{self._pman.hostmsg}")
 
@@ -241,7 +243,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
             raise Error(msg) from err
 
-        return self._pcache.add("epp", cpu, epp)
+        return epp
 
     def _set_cpu_epp(self, epp, cpu):
         """Implements 'set_cpu_epp()'."""
@@ -261,6 +263,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         if self._set_cpu_epp_via_sysfs(epp, cpu) == epp:
             # EPP was successfully set via syfs.
+            self._pcache.add("epp_policy", cpu, epp)
             return
 
         # Could not set EPP via sysfs because the running Linux kernel does not support it. Try to
