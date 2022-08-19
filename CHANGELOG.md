@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.3.15] - ADD DATE HERE
 ### Fixed
+ - Fix ASPM-related tests failures when they run on real HW (vs emulated).
 ### Added
 ### Removed
 ### Changed
