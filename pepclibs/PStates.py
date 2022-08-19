@@ -608,23 +608,25 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return what
 
-    def _set_prop_in_sysfs(self, pname, val, cpu):
-        """Set property 'pname' to value 'val' by writing to the corresponding syfs file."""
+    def _write_freq_prop_value_to_sysfs(self, pname, freq, cpu):
+        """
+        Write frequency value 'freq' of a CPU frequency property 'pname' to the corresponding sysfs
+        file.
+        """
 
         prop = self._props[pname]
         path = self._get_sysfs_path(prop, cpu)
-        orig_val = val
-        if prop.get("unit") == "Hz":
-            # Sysfs files use kHz
-            val //= 1000
-        self._pman.write(path, str(val))
+
+        # Sysfs files use kHz.
+        self._pman.write(path, str(freq // 1000))
 
         count = 3
         while count > 0:
-            read_val = self._read_prop_value_from_sysfs(prop, path)
+            # Returns frequency in Hz.
+            read_freq = self._read_prop_value_from_sysfs(prop, path)
 
-            if orig_val == read_val:
-                self._pcache.add(pname, cpu, orig_val, scope=prop["scope"])
+            if freq == read_freq:
+                self._pcache.add(pname, cpu, freq, scope=prop["scope"])
                 return
 
             # Sometimes the update does not happen immediately. For example, we observed this on
@@ -635,20 +637,15 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         name = Human.untitle(prop["name"])
         what = self._get_num_str(prop, cpu)
-
-        if prop.get("unit") == "Hz":
-            freq = Human.largenum(orig_val, unit="Hz")
-            msg = f"failed to set {name} to {freq} for {what}: wrote '{val}' to '{path}', but " \
-                  f"read '{read_val // 1000}' back."
-        else:
-            msg = f"failed to set {name} to value '{val} for {what}'.\nWrote '{val}' to " \
-                  f"'{path}', but read back value '{read_val}'."
+        short_freq = Human.largenum(freq, unit="Hz")
+        msg = f"failed to set {name} to {short_freq} for {what}: wrote '{freq // 1000}' to " \
+              f"'{path}', but read '{read_freq // 1000}' back."
 
         if pname == "max_freq":
             with contextlib.suppress(Error):
                 if self._get_cpu_turbo(cpu) == "off":
                     base_freq = self._get_cpu_prop_value("base_freq", cpu)
-                    if orig_val > base_freq:
+                    if freq > base_freq:
                         base_freq = Human.largenum(base_freq, unit="Hz")
                         msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and " \
                                f"this may be the limiting factor."
@@ -748,11 +745,11 @@ class PStates(_PCStatesBase.PCStatesBase):
                             f"{new_max_freq} for {what}: minimum can't be greater than maximum")
             if new_min_freq != cur_min_freq or new_max_freq != cur_max_freq:
                 if cur_max_freq < new_min_freq:
-                    self._set_prop_in_sysfs(max_freq_key, new_max_freq, cpu)
-                    self._set_prop_in_sysfs(min_freq_key, new_min_freq, cpu)
+                    self._write_freq_prop_value_to_sysfs(max_freq_key, new_max_freq, cpu)
+                    self._write_freq_prop_value_to_sysfs(min_freq_key, new_min_freq, cpu)
                 else:
-                    self._set_prop_in_sysfs(min_freq_key, new_min_freq, cpu)
-                    self._set_prop_in_sysfs(max_freq_key, new_max_freq, cpu)
+                    self._write_freq_prop_value_to_sysfs(min_freq_key, new_min_freq, cpu)
+                    self._write_freq_prop_value_to_sysfs(max_freq_key, new_max_freq, cpu)
         elif max_freq_key not in inprops:
             if new_min_freq > cur_max_freq:
                 name = Human.untitle(self._props[min_freq_key]["name"])
@@ -761,7 +758,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 raise Error(f"can't set {name} of {what} to {new_min_freq} - it is higher than "
                             f"currently configured maximum frequency of {cur_max_freq}")
             if new_min_freq != cur_min_freq:
-                self._set_prop_in_sysfs(min_freq_key, new_min_freq, cpu)
+                self._write_freq_prop_value_to_sysfs(min_freq_key, new_min_freq, cpu)
         elif min_freq_key not in inprops:
             if new_max_freq < cur_min_freq:
                 name = Human.untitle(self._props[max_freq_key]["name"])
@@ -770,7 +767,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 raise Error(f"can't set {name} of {what} to {new_max_freq} - it is lower than "
                             f"currently configured minimum frequency of {cur_min_freq}")
             if new_max_freq != cur_max_freq:
-                self._set_prop_in_sysfs(max_freq_key, new_max_freq, cpu)
+                self._write_freq_prop_value_to_sysfs(max_freq_key, new_max_freq, cpu)
 
     def _set_cpu_prop_value(self, pname, val, cpus):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
@@ -795,7 +792,9 @@ class PStates(_PCStatesBase.PCStatesBase):
             if pname == "turbo":
                 self._set_turbo(cpu, val in {True, "on", "enable"})
             elif "fname" in self._props[pname]:
-                self._set_prop_in_sysfs(pname, val, cpu)
+                path = self._get_sysfs_path(self._props[pname], cpu)
+                self._write_prop_value_to_sysfs(self._props[pname], path, val)
+                self._pcache.add(pname, cpu, val, scope=self._props[pname]["scope"])
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
 
