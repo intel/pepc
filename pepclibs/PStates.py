@@ -537,7 +537,9 @@ class PStates(_PCStatesBase.PCStatesBase):
             self._pcache.add("base_freq", cpu, base, scope=self._props["base_freq"]["scope"])
             self._pcache.add("max_eff_freq", cpu, max_eff_freq,
                              scope=self._props["max_eff_freq"]["scope"])
-            return self._pcache.get(pname, cpu)
+            if pname == "base_freq":
+                return base
+            return max_eff_freq
 
         if pname == "hwp":
             hwp = self._get_cpu_hwp(cpu)
