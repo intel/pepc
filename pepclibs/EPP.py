@@ -225,7 +225,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """Set EPP to 'epp' for CPU 'cpu' via the sysfs file."""
 
         try:
-            self._pman.write(self._sysfs_epp_path % cpu, epp)
+            self._pman.write(self._sysfs_epp_path % cpu, str(epp))
         except ErrorNotFound:
             return None
         except Error as err:
