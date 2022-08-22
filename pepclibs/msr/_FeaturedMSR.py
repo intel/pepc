@@ -410,7 +410,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
         if not self._msr:
-            self._msr = MSR.MSR(pman=self._pman)
+            self._msr = MSR.MSR(pman=self._pman, cpuinfo=self._cpuinfo)
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
             raise ErrorNotSupported(f"unsupported {self._cpuinfo.cpudescr}{self._pman.hostmsg}, "
