@@ -211,8 +211,11 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
            * "off" if the feature is disabled.
         """
 
-        # pylint: disable=unused-argument,no-self-use
-        return _bug_method_not_defined("PCStatesBase.get_props")
+        for pname in pnames:
+            self._check_prop(pname)
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            yield cpu, self._get_cpu_props(pnames, cpu)
 
     def get_cpu_props(self, pnames, cpu):
         """Same as 'get_props()', but for a single CPU."""

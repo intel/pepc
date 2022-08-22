@@ -604,15 +604,6 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
-    def get_props(self, pnames, cpus="all"):
-        """Refer to 'get_props() in '_PCStatesBase' class."""
-
-        for pname in pnames:
-            self._check_prop(pname)
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield cpu, self._get_cpu_props(pnames, cpu)
-
     def _set_cpu_prop_value(self, pname, val, cpus):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
 
