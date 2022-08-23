@@ -26,11 +26,11 @@ from pepclibs import CStates, PStates
 if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
 
-VERSION = "1.3.14"
-OWN_NAME = "pepc"
+_VERSION = "1.3.14"
+_OWN_NAME = "pepc"
 
-LOG = logging.getLogger()
-Logging.setup_logger(prefix=OWN_NAME)
+_LOG = logging.getLogger()
+Logging.setup_logger(prefix=_OWN_NAME)
 
 class PepcArgsParser(ArgParse.ArgsParser):
     """
@@ -82,7 +82,7 @@ def build_arguments_parser():
                       3. Use the special keyword 'all' to specify all packages"""
 
     text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
-    parser = PepcArgsParser(description=text, prog=OWN_NAME, ver=VERSION)
+    parser = PepcArgsParser(description=text, prog=_OWN_NAME, ver=_VERSION)
 
     ArgParse.add_ssh_options(parser)
 
@@ -437,7 +437,7 @@ def main():
         args = parse_arguments()
 
         if not getattr(args, "func", None):
-            LOG.error("please, run '%s -h' for help", OWN_NAME)
+            _LOG.error("please, run '%s -h' for help", _OWN_NAME)
             return -1
 
         # pylint: disable=no-member
@@ -448,10 +448,10 @@ def main():
                                      privkeypath=args.privkey, timeout=args.timeout) as pman:
             args.func(args, pman)
     except KeyboardInterrupt:
-        LOG.info("\nInterrupted, exiting")
+        _LOG.info("\nInterrupted, exiting")
         return -1
     except Error as err:
-        LOG.error_out(err)
+        _LOG.error_out(err)
 
     return 0
 
