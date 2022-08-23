@@ -104,7 +104,7 @@ def test_cstates_config(params):
     good_options = []
     bad_options = []
 
-    if prop_is_supported("governor", params["pstate_props"]):
+    if prop_is_supported("governor", params["cstate_props"]):
         good_options += ["--governor menu"]
         bad_options += ["--governor reardenmetal"]
 
