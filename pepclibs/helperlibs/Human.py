@@ -162,7 +162,7 @@ def _tokenize(hval, specs, default_unit, name, multiple=True):
 
     try:
         hval = hval.strip()
-        if hval.isdigit():
+        if Trivial.is_num(hval):
             hval += default_unit
     except AttributeError:
         raise Error(f"bad{name} value {hval}: has to be a string") from None
