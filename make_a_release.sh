@@ -62,7 +62,7 @@ ask_question "Did you run tests"
 ask_question "Did you update 'CHANGELOG.md'"
 
 # Change the tool version.
-sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" pepctool/_Pepc.py
+sed -i -e "s/^_VERSION = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"$/_VERSION = \"$new_ver\"/" pepctool/_Pepc.py
 # Change RPM package version.
 sed -i -e "s/^Version:\(\s\+\)[0-9]\+\.[0-9]\+\.[0-9]\+$/Version:\1$new_ver/" dist/rpm/pepc.spec
 

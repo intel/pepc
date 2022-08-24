@@ -18,7 +18,7 @@ def get_version(filename):
 
     with open(filename, "r") as fobj:
         for line in fobj:
-            matchobj = re.match(r'^VERSION = "(\d+.\d+.\d+)"$', line)
+            matchobj = re.match(r'^_VERSION = "(\d+.\d+.\d+)"$', line)
             if matchobj:
                 return matchobj.group(1)
     return None
