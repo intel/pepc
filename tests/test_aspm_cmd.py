@@ -11,8 +11,7 @@
 """Test module for 'pepc' project 'aspm' command."""
 
 from common import run_pepc
-# Fixtures need to be imported explicitly
-from common import build_params, get_params # pylint: disable=unused-import
+from common import get_params # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error
 
 def test_aspm_info(params):

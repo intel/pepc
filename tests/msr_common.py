@@ -12,8 +12,8 @@
 
 from importlib import import_module
 import pytest
-from common import build_params, get_pman, get_datasets # pylint: disable=unused-import
 from pepclibs.msr import MSR
+from common import build_params, get_pman, get_datasets
 
 _MSR_MODULES = (
     "PMEnable", "MiscFeatureControl", "HWPRequest", "EnergyPerfBias", "FSBFreq", "HWPRequestPkg",

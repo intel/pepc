@@ -12,7 +12,7 @@
 
 from common import run_pepc, prop_is_supported
 # Fixtures need to be imported explicitly
-from common import build_params, get_params # pylint: disable=unused-import
+from common import get_params # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human
 

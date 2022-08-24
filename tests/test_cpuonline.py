@@ -11,7 +11,7 @@
 """Tests for the public methods of the 'CPUOnline' module."""
 
 import pytest
-from common import build_params, get_params # pylint: disable=unused-import
+from common import get_params # pylint: disable=unused-import
 from pepclibs import CPUOnline
 from pepclibs.helperlibs.Exceptions import Error
 
