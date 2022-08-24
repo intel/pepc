@@ -15,7 +15,7 @@ import sys
 import logging
 from pathlib import Path
 import pytest
-from pepclibs import CPUInfo, CStates
+from pepclibs import CPUInfo
 from pepclibs.helperlibs import ProcessManager
 from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
 from pepctool import _Pepc
@@ -103,23 +103,15 @@ def build_params(hostname, dataset, pman, cpuinfo):
         for module in _REQUIRED_MODULES:
             pman.init_testdata(module, datapath)
 
-    with CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
-        allcpus = cpuinfo.get_cpus()
-        medidx = int(len(allcpus)/2)
-        params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
-        params["cpus"] = allcpus
-        params["packages"] = cpuinfo.get_packages()
-        params["cores"] = {}
-        for pkg in params["packages"]:
-            params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
-        params["cpumodel"] = cpuinfo.info["model"]
-
-        params["cstates"] = []
-        for _, csinfo in csobj.get_cstates_info(cpus=[allcpus[0]]):
-            for csname in csinfo:
-                params["cstates"].append(csname)
-
-        params["cstate_props"] = csobj.get_cpu_props(csobj.props, 0)
+    allcpus = cpuinfo.get_cpus()
+    medidx = int(len(allcpus)/2)
+    params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
+    params["cpus"] = allcpus
+    params["packages"] = cpuinfo.get_packages()
+    params["cores"] = {}
+    for pkg in params["packages"]:
+        params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+    params["cpumodel"] = cpuinfo.info["model"]
 
     return params
 
