@@ -63,10 +63,10 @@ def str_to_num(snum, must_convert=True):
     """
 
     try:
-        num = int(snum)
+        num = int(str(snum))
     except (ValueError, TypeError):
         try:
-            num = float(snum)
+            num = float(str(snum))
         except (ValueError, TypeError):
             if must_convert:
                 raise Error(f"failed to convert '{str(snum)}' to a number") from None
@@ -94,7 +94,7 @@ def is_float(value):
     """
 
     try:
-        float(value)
+        float(str(value))
     except (ValueError, TypeError):
         return False
     return True
