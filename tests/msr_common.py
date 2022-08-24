@@ -14,6 +14,7 @@ from importlib import import_module
 import pytest
 from common import build_params, get_pman, get_datasets
 from pepclibs.msr import MSR
+from pepclibs import CPUInfo
 
 _MSR_MODULES = (
     "PMEnable", "MiscFeatureControl", "HWPRequest", "EnergyPerfBias", "FSBFreq", "HWPRequestPkg",
@@ -75,6 +76,6 @@ def get_msr_params(hostname, request):
     """
 
     dataset = request.param
-    with get_pman(hostname, dataset) as pman:
-        params = build_params(hostname, dataset, pman)
+    with get_pman(hostname, dataset) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+        params = build_params(hostname, dataset, pman, cpuinfo)
         yield _build_msr_params(params, pman)

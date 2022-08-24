@@ -90,7 +90,7 @@ def get_datasets():
 
         yield dirname
 
-def build_params(hostname, dataset, pman):
+def build_params(hostname, dataset, pman, cpuinfo):
     """Implements the 'get_params()' fixture."""
 
     params = {}
@@ -103,8 +103,7 @@ def build_params(hostname, dataset, pman):
         for module in _REQUIRED_MODULES:
             pman.init_testdata(module, datapath)
 
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj, \
+    with CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
         allcpus = cpuinfo.get_cpus()
         medidx = int(len(allcpus)/2)
@@ -134,8 +133,8 @@ def get_params(hostname, request):
     """
 
     dataset = request.param
-    with get_pman(hostname, dataset) as pman:
-        yield build_params(hostname, dataset, pman)
+    with get_pman(hostname, dataset) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+        yield build_params(hostname, dataset, pman, cpuinfo)
 
 # A map of error type and command argument strings to look for in case of error. For matching
 # exceptions print warning instead of asserting.
