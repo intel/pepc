@@ -535,7 +535,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         """Returns an 'MSR.MSR()' object."""
 
         if not self._msr:
-            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo)
+            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
         return self._msr
 
     def _get_powerctl(self):
@@ -656,7 +656,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         self._props["governor"]["fname"] = "current_governor"
         self._props["governor"]["subprops"]["governors"]["fname"] = "available_governors"
 
-    def __init__(self, pman=None, cpuinfo=None, rcsobj=None, msr=None):
+    def __init__(self, pman=None, cpuinfo=None, rcsobj=None, msr=None, enable_cache=True):
         """
         The class constructor. The arguments are as follows.
           * pman - the process manager object that defines the target host.
@@ -664,6 +664,7 @@ class CStates(_PCStatesBase.PCStatesBase):
           * rcsobj - a 'CStates.ReqCStates()' object which should be used for reading and setting
                      requestable C-state properties.
           * msr - an 'MSR.MSR()' object which should be used for accessing MSR registers.
+          * enable_cache - this argument can be used to disable caching.
         """
 
         super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr)
@@ -680,7 +681,9 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         # The write-through per-CPU properties cache. The properties that are backed by an MSR are
         # not cached, because the MSR layer implements its own caching.
-        self._pcache = _PropsCache._PropsCache(cpuinfo=self._cpuinfo, pman=self._pman)
+        self._enable_cache = enable_cache
+        self._pcache = _PropsCache._PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
+                                               enable_cache=self._enable_cache)
 
     def close(self):
         """Uninitialize the class object."""
