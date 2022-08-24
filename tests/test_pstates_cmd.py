@@ -10,11 +10,25 @@
 
 """Test module for 'pepc' project 'pstates' command."""
 
-from common import run_pepc, prop_is_supported
-# Fixtures need to be imported explicitly
-from common import get_params # pylint: disable=unused-import
+import pytest
+from common import run_pepc, prop_is_supported, build_params, get_datasets, get_pman
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human
+from pepclibs import CPUInfo, PStates
+
+@pytest.fixture(name="params", scope="module", params=get_datasets())
+def get_params(hostname, request):
+    """Yield a dictionary with information we need for testing."""
+
+    dataset = request.param
+    with get_pman(hostname, dataset) as pman, \
+                  CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+                  PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
+
+        params = build_params(hostname, dataset, pman, cpuinfo)
+        params["psobj"] = psobj
+        params["pstate_props"] = psobj.get_cpu_props(psobj.props, 0)
+        yield params
 
 def _get_scope_options(params):
     """Return dictionary of good and bad scope options to be used for testing."""
