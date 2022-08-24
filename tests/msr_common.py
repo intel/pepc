@@ -12,8 +12,8 @@
 
 from importlib import import_module
 import pytest
-from pepclibs.msr import MSR
 from common import build_params, get_pman, get_datasets
+from pepclibs.msr import MSR
 
 _MSR_MODULES = (
     "PMEnable", "MiscFeatureControl", "HWPRequest", "EnergyPerfBias", "FSBFreq", "HWPRequestPkg",
