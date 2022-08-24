@@ -76,7 +76,7 @@ def str_to_num(snum, must_convert=True):
 
 def is_int(value, base=10):
     """
-    Return 'True' if 'value' can be converted to integer using 'int()' and 'False' otherwise.
+    Return 'True' if 'value' can be converted to an integer using 'int()' and 'False' otherwise.
     """
 
     try:
@@ -97,6 +97,22 @@ def is_float(value):
         float(str(value))
     except (ValueError, TypeError):
         return False
+    return True
+
+def is_num(value):
+    """
+    Return 'True' if 'value' can be converted to an integer using 'int()' or to a float using
+    'float()'. Returns 'False' otherwise.
+    """
+
+    try:
+        int(str(value))
+    except (ValueError, TypeError):
+        try:
+            float(str(value))
+        except (ValueError, TypeError):
+            return False
+
     return True
 
 def validate_int_range(value, minval, maxval, what="value"):
