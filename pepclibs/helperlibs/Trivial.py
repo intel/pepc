@@ -54,7 +54,6 @@ def get_username(uid=None):
     except KeyError as err:
         raise Error("failed to get user name for UID %d:\n%s" % (uid, err)) from None
 
-
 def str_to_num(snum, must_convert=True):
     """
     Convert a string to a numeric value, either 'int' or 'float'. The arguments are as follows.
@@ -89,6 +88,17 @@ def is_int(value, base=10):
             return False
     return True
 
+def is_float(value):
+    """
+    Return 'True' if 'value' can be converted to a float using 'float()' and 'False' otherwise.
+    """
+
+    try:
+        float(value)
+    except (ValueError, TypeError):
+        return False
+    return True
+
 def validate_int_range(value, minval, maxval, what="value"):
     """Validate integer value against range ['minval', 'maxval']."""
 
@@ -103,17 +113,6 @@ def is_iterable(value):
     except TypeError:
         return False
     return not isinstance(value, str)
-
-def is_float(value):
-    """
-    Return 'True' if 'value' can be converted to a float using 'float()' and 'False' otherwise.
-    """
-
-    try:
-        float(value)
-    except (ValueError, TypeError):
-        return False
-    return True
 
 def list_dedup(elts):
     """Return list of unique elements in 'elts'."""
