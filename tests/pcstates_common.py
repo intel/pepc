@@ -33,3 +33,24 @@ def get_fellows(params, cpuinfo, cpu=0):
     fellows["CPU"] = cpu
 
     return fellows
+
+def set_and_verify(pcobj, pname, val1, val2, fellows):
+    """
+    This function sets and verifies that the get value matches the set value for each CPU in
+    fellows.
+
+    The argument are as follows.
+     * pcobj - 'CStates' or 'PStates' object.
+     * pname - name of the propery.
+     * val1 - the first value.
+     * val2 - the second value.
+     * fellows - CPUs that share the same 'pname' property scope as CPU 0.
+    """
+
+    pcobj.set_prop(pname, val1, fellows)
+    pcobj.set_prop(pname, val2, fellows)
+
+    for cpu, pinfo in pcobj.get_props((pname, ), fellows):
+        if pinfo[pname][pname] != val2:
+            assert False, f"Failed to update property '{pname}' for CPU {cpu}\nSet to '{val2}' " \
+                          f"and received '{pinfo[pname][pname]}'."
