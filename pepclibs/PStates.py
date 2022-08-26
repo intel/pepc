@@ -165,7 +165,7 @@ PROPS = {
                     performance. Value 0 means maximum performance, value 15 means maximum energy
                     efficiency. EPP may have an effect in both HWP enabled and disabled modes (HWP
                     stands for Hardware Power Management).""",
-        "type" : "str",
+        "type" : "int",
         "scope": "CPU",
         "writable" : True,
     },
