@@ -12,7 +12,7 @@
 
 import pytest
 from common import build_params, get_pman, is_prop_supported, get_datasets
-from pcstates_common import get_fellows, set_and_verify
+from pcstates_common import get_fellows, set_and_verify, verify_props_value_type
 from pepclibs import CPUInfo, CStates
 
 def _get_params():
@@ -65,3 +65,8 @@ def test_cstates_set_and_verify(params):
         fellows = params["fellows"][scope]
 
         set_and_verify(params["csobj"], pname, value, fellows)
+
+def test_cstates_property_type(params):
+    """This test verifies that 'get_props()' returns values of the correct type."""
+
+    verify_props_value_type(params["csobj"].props, params["pinfo"])
