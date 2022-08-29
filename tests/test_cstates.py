@@ -11,17 +11,24 @@
 """Tests for the public methods of the 'CStates' module."""
 
 import pytest
-from common import build_params, get_datasets, get_pman, prop_is_supported
+from common import build_params, get_pman, prop_is_supported, get_datasets
 from pcstates_common import get_fellows, set_and_verify
 from pepclibs import CPUInfo, CStates
 
-@pytest.fixture(name="params", scope="module", params=get_datasets())
+def _get_params():
+    """Yield each dataset with a bool. Used for toggling CStates 'enable_cache'."""
+
+    for dataset in get_datasets():
+        yield dataset, True
+        yield dataset, False
+
+@pytest.fixture(name="params", scope="module", params=_get_params())
 def get_params(hostname, request):
     """Yield a dictionary with information we need for testing."""
 
-    dataset = request.param
+    dataset, enable_cache = request.param
     with get_pman(hostname, dataset) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
+         CStates.CStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as csobj:
         params = build_params(hostname, dataset, pman, cpuinfo)
         params["fellows"] = get_fellows(params, cpuinfo, cpu=0)
 
