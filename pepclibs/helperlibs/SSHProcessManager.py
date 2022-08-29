@@ -698,14 +698,14 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         machine.
         """
 
-        self._scp(f"{self.hostname}:'\"{remote_path}\"'", f"\"{local_path}\"")
+        self._scp(f"{self.hostname}:\"{remote_path}\"", f"\"{local_path}\"")
 
     def put(self, local_path, remote_path):
         """
         Copy local file or directory defined by 'local_path' to 'remote_path' on the remote host.
         """
 
-        self._scp(f"\"{local_path}\"", f"{self.hostname}:'\"{remote_path}\"'")
+        self._scp(f"\"{local_path}\"", f"{self.hostname}:\"{remote_path}\"")
 
     def _get_sftp(self):
         """Get an SFTP server object."""
