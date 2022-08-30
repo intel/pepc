@@ -32,29 +32,34 @@ def get_params(hostname, request):
 
 def _set_and_verify_data(params):
     """
-    Yields data for the 'test_pstates_set_and_verify()' test-case. Yields tuples of the following
-    format: '(pname, val1, val2)'.
+    Yields ('pname', 'value') tuples for the 'test_pstates_set_and_verify()' test-case. The current
+    value of the property is not known, so we yield more than one value for each property. This
+    makes sure the property actually gets changed.
     """
 
     props = params["props"]
 
     if prop_is_supported("turbo", props):
-        yield "turbo", "off", "on"
+        yield "turbo", "off"
+        yield "turbo", "on"
 
     if prop_is_supported("epp_policy", props):
-        yield "epp_policy", props["epp_policy"]["epp_policies"][0], \
-              props["epp_policy"]["epp_policies"][-1]
+        yield "epp_policy", props["epp_policy"]["epp_policies"][0]
+        yield "epp_policy", props["epp_policy"]["epp_policies"][-1]
     elif prop_is_supported("epp", props):
-        yield "epp", 0, 128
+        yield "epp", 0
+        yield "epp", 128
 
     if prop_is_supported("epb_policy", props):
-        yield "epb_policy", props["epb_policy"]["epb_policies"][0], \
-              props["epb_policy"]["epb_policies"][-1]
+        yield "epb_policy", props["epb_policy"]["epb_policies"][0]
+        yield "epb_policy", props["epb_policy"]["epb_policies"][-1]
     elif prop_is_supported("epb", props):
-        yield "epb", 0, 15
+        yield "epb", 0
+        yield "epb", 15
 
     if prop_is_supported("governor", props):
-        yield "governor", props["governor"]["governors"][0], props["governor"]["governors"][-1]
+        yield "governor", props["governor"]["governors"][0]
+        yield "governor", props["governor"]["governors"][-1]
 
     freq_pairs = (("min_freq", "max_freq"), ("min_uncore_freq", "max_uncore_freq"))
     for pname_min, pname_max in freq_pairs:
@@ -62,22 +67,20 @@ def _set_and_verify_data(params):
             min_limit = props[f"{pname_min}_limit"][f"{pname_min}_limit"]
             max_limit = props[f"{pname_max}_limit"][f"{pname_max}_limit"]
 
-            # Right now we do not know how the SUT min. and max frequency is configured, so we have
-            # to be careful to avoid failures related to setting min. frequency higher than the
-            # currently configured max. frequency. The next two "yields" will make sure the SUT has
-            # min. frequency set to the minimum supported frequency, and max. frequency set to the
-            # maximum supported frequency.
-            yield pname_min, min_limit, min_limit
-            yield pname_max, max_limit, max_limit
-            # Now we can test the properties by setting them to different values.
-            yield pname_min, max_limit, min_limit
-            yield pname_max, min_limit, max_limit
+            # Right now we do not know how the systems min. and max frequencies are configured, so
+            # we have to be careful to avoid failures related to setting min. frequency higher than
+            # the currently configured max. frequency.
+            yield pname_min, min_limit
+            yield pname_max, min_limit
+
+            yield pname_max, max_limit
+            yield pname_min, max_limit
 
 def test_pstates_set_and_verify(params):
     """Test for if 'get_props()' returns the same values set by 'set_props()'."""
 
-    for pname, val1, val2 in _set_and_verify_data(params):
+    for pname, value in _set_and_verify_data(params):
         scope = params["psobj"].props[pname]["scope"]
         fellows = params["fellows"][scope]
 
-        set_and_verify(params["psobj"], pname, val1, val2, fellows)
+        set_and_verify(params["psobj"], pname, value, fellows)

@@ -32,8 +32,9 @@ def get_params(hostname, request):
 
 def _set_and_verify_data(params):
     """
-    Yields data for the 'test_cstates_set_and_verify()' test-case. Yields tuples of the following
-    format: '(pname, val1, val2)'.
+    Yields ('pname', 'value') tuples for the 'test_cstates_set_and_verify()' test-case. The current
+    value of the property is not known, so we yield more than one value for each property. This
+    makes sure the property actually gets changed.
     """
 
     props = params["props"]
@@ -41,16 +42,18 @@ def _set_and_verify_data(params):
     bool_pnames = {"c1_demotion", "c1_undemotion", "c1e_autopromote", "cstate_prewake"}
     for pname in bool_pnames:
         if prop_is_supported(pname, props):
-            yield pname, "on", "off"
+            yield pname, "on"
+            yield pname, "off"
 
     if prop_is_supported("governor", props):
-        yield "governor", props["governor"]["governors"][0], props["governor"]["governors"][-1]
+        yield "governor", props["governor"]["governors"][0]
+        yield "governor", props["governor"]["governors"][-1]
 
 def test_cstates_set_and_verify(params):
     """Test for if 'get_props()' returns the same values set by 'set_props()'."""
 
-    for pname, val1, val2 in _set_and_verify_data(params):
+    for pname, value in _set_and_verify_data(params):
         scope = params["csobj"].props[pname]["scope"]
         fellows = params["fellows"][scope]
 
-        set_and_verify(params["csobj"], pname, val1, val2, fellows)
+        set_and_verify(params["csobj"], pname, value, fellows)
