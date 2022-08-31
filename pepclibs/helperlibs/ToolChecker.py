@@ -31,6 +31,7 @@ _COMMON_PKGINFO = {
     "dmesg"     : "util-linux",
     "gcc"       : "gcc",
     "lscpu"     : "util-linux",
+    "lspci"     : "pciutils",
     "make"      : "make",
     "modprobe"  : "kmod",
     "phc2sys"   : "linuxptp",
