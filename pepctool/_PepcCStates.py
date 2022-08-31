@@ -118,7 +118,7 @@ def cstates_config_command(args, pman):
     if not hasattr(args, "oargs"):
         raise Error("please, provide a configuration option")
 
-    # The '--enable' and '--disable' optoins.
+    # The '--enable' and '--disable' options.
     enable_opts = {}
     # Options to set (excluding '--enable' and '--disable').
     set_opts = {}
@@ -147,7 +147,7 @@ def cstates_config_command(args, pman):
             return
 
         with MSR.MSR(pman=pman, cpuinfo=cpuinfo) as msr, \
-            CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
+             CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
 
             _handle_set_opts(set_opts, cpus, csobj, msr, cpuinfo)
             _handle_print_opts(print_opts, cpus, csobj, cpuinfo)
@@ -171,7 +171,7 @@ def _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj):
                     elif key == "residency":
                         name = "target residency"
 
-                    # The first line starts with C-state name, aling the second line nicely
+                    # The first line starts with C-state name, align the second line nicely
                     # using the prefix. The end result is expected to be like this:
                     #
                     # POLL: 'on' for CPUs 0-15

@@ -175,7 +175,7 @@ def build_arguments_parser():
     text = f"""List of packages to get information about. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
-    text = f"""Comma-sepatated list of C-states to get information about (all C-states by default).
+    text = f"""Comma-separated list of C-states to get information about (all C-states by default).
                {cst_list_text}."""
     subpars2.add_argument("--cstates", dest="csnames", help=text, default="default")
 
@@ -209,7 +209,7 @@ def build_arguments_parser():
     text = f"""List of packages to configure. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
-    text = f"""Comma-sepatated list of C-states to enable. {cst_list_text}."""
+    text = f"""Comma-separated list of C-states to enable. {cst_list_text}."""
     subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
                           nargs="?")
 

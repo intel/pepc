@@ -50,7 +50,7 @@ def cpu_hotplug_offline_command(args, pman):
 
         # Some CPUs may not support offlining. Suppose it is CPU 0. If CPU 0 is in the 'cpus' list,
         # the 'onl.offline()' method will error out. This is OK in a situation when the user
-        # explicitely specified CPU 0 (e.g., via '--cpus 0'). However, this is not OK if the user
+        # explicitly specified CPU 0 (e.g., via '--cpus 0'). However, this is not OK if the user
         # indirectly specified CPU 0 via '--cpus all' or '--packages 0'.
         skip_unsupported = args.cpus in ("all", None)
 
