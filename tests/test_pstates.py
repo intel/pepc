@@ -34,7 +34,7 @@ def get_params(hostname, request):
         params["fellows"] = get_fellows(params, cpuinfo, cpu=0)
 
         params["psobj"] = psobj
-        params["props"] = psobj.get_cpu_props(psobj.props, 0)
+        params["pinfo"] = psobj.get_cpu_props(psobj.props, 0)
 
         yield params
 
@@ -45,35 +45,35 @@ def _set_and_verify_data(params):
     makes sure the property actually gets changed.
     """
 
-    props = params["props"]
+    pinfo = params["pinfo"]
 
-    if prop_is_supported("turbo", props):
+    if prop_is_supported("turbo", pinfo):
         yield "turbo", "off"
         yield "turbo", "on"
 
-    if prop_is_supported("epp_policy", props):
-        yield "epp_policy", props["epp_policy"]["epp_policies"][0]
-        yield "epp_policy", props["epp_policy"]["epp_policies"][-1]
-    elif prop_is_supported("epp", props):
+    if prop_is_supported("epp_policy", pinfo):
+        yield "epp_policy", pinfo["epp_policy"]["epp_policies"][0]
+        yield "epp_policy", pinfo["epp_policy"]["epp_policies"][-1]
+    elif prop_is_supported("epp", pinfo):
         yield "epp", 0
         yield "epp", 128
 
-    if prop_is_supported("epb_policy", props):
-        yield "epb_policy", props["epb_policy"]["epb_policies"][0]
-        yield "epb_policy", props["epb_policy"]["epb_policies"][-1]
-    elif prop_is_supported("epb", props):
+    if prop_is_supported("epb_policy", pinfo):
+        yield "epb_policy", pinfo["epb_policy"]["epb_policies"][0]
+        yield "epb_policy", pinfo["epb_policy"]["epb_policies"][-1]
+    elif prop_is_supported("epb", pinfo):
         yield "epb", 0
         yield "epb", 15
 
-    if prop_is_supported("governor", props):
-        yield "governor", props["governor"]["governors"][0]
-        yield "governor", props["governor"]["governors"][-1]
+    if prop_is_supported("governor", pinfo):
+        yield "governor", pinfo["governor"]["governors"][0]
+        yield "governor", pinfo["governor"]["governors"][-1]
 
     freq_pairs = (("min_freq", "max_freq"), ("min_uncore_freq", "max_uncore_freq"))
     for pname_min, pname_max in freq_pairs:
-        if prop_is_supported(pname_min, props):
-            min_limit = props[f"{pname_min}_limit"][f"{pname_min}_limit"]
-            max_limit = props[f"{pname_max}_limit"][f"{pname_max}_limit"]
+        if prop_is_supported(pname_min, pinfo):
+            min_limit = pinfo[f"{pname_min}_limit"][f"{pname_min}_limit"]
+            max_limit = pinfo[f"{pname_max}_limit"][f"{pname_max}_limit"]
 
             # Right now we do not know how the systems min. and max frequencies are configured, so
             # we have to be careful to avoid failures related to setting min. frequency higher than
