@@ -34,7 +34,7 @@ def get_params(hostname, request):
         params["fellows"] = get_fellows(params, cpuinfo, cpu=0)
 
         params["csobj"] = csobj
-        params["props"] = csobj.get_cpu_props(csobj.props, 0)
+        params["pinfo"] = csobj.get_cpu_props(csobj.props, 0)
 
         yield params
 
@@ -45,17 +45,17 @@ def _set_and_verify_data(params):
     makes sure the property actually gets changed.
     """
 
-    props = params["props"]
+    pinfo = params["pinfo"]
 
     bool_pnames = {"c1_demotion", "c1_undemotion", "c1e_autopromote", "cstate_prewake"}
     for pname in bool_pnames:
-        if prop_is_supported(pname, props):
+        if prop_is_supported(pname, pinfo):
             yield pname, "on"
             yield pname, "off"
 
-    if prop_is_supported("governor", props):
-        yield "governor", props["governor"]["governors"][0]
-        yield "governor", props["governor"]["governors"][-1]
+    if prop_is_supported("governor", pinfo):
+        yield "governor", pinfo["governor"]["governors"][0]
+        yield "governor", pinfo["governor"]["governors"][-1]
 
 def test_cstates_set_and_verify(params):
     """Test for if 'get_props()' returns the same values set by 'set_props()'."""
