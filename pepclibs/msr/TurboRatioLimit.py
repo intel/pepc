@@ -60,7 +60,7 @@ _GT_CPUS = (CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X,
             CPUInfo.INTEL_FAM6_ATOM_GOLDMONT_PLUS,)
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
-# notes for '_FearuredMSR.FEATURES' for more comments.
+# notes for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
     "max_1c_turbo_ratio" : {
         "name" : "Maximum 1 Core Turbo Ratio",

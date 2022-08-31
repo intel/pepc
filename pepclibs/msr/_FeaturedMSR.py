@@ -370,7 +370,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
           * self.regaddr - the featured MSR address.
           * self.regname = the featured MSR name.
 
-        Note: this base class will create a copy of the 'self._features' dictionary povided by the
+        Note: this base class will create a copy of the 'self._features' dictionary provided by the
         sub-class, and then will mangle it (e.g., add the "supported" flag).
         """
 

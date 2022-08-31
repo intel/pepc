@@ -74,7 +74,7 @@ FEATURES = {
     "fsb" : {
         "name" : "Bus clock speed (megahertz)",
         "scope": "package",
-        "help" : f"""Platform bus clock speed (FSB) in megahertz, as inidcated by MSR
+        "help" : f"""Platform bus clock speed (FSB) in megahertz, as indicated by MSR
                      {MSR_FSB_FREQ:#x} (MSR_FSB_FREQ).""",
         "cpumodels" : tuple(_FSB_CODES.keys()),
         "type"      : "float",
@@ -102,7 +102,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         finfo["vals"] = cpumodel_info["codes"]
 
     def _init_features_dict(self):
-        """Intitialize the 'features' dictionary with platform-specific information."""
+        """Initialize the 'features' dictionary with platform-specific information."""
 
         self._init_supported_flag()
         self._init_features_dict_fsb()

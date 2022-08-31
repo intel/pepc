@@ -111,7 +111,7 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
             self._features["dcu_ip_prefetcher"]["bits"] = (3, 3)
 
     def _init_features_dict(self):
-        """Intitialize the 'features' dictionary with platform-specific information."""
+        """Initialize the 'features' dictionary with platform-specific information."""
 
         self._init_supported_flag()
         self._init_features_dict_bits()

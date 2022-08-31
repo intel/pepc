@@ -23,7 +23,7 @@ MSR_TURBO_GROUP_CORECNT     = 0x1AE
 MSR_TURBO_RATIO_LIMIT_CORES = 0x1AE
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
-# notes for '_FearuredMSR.FEATURES' for more comments.
+# notes for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
     "g0_cpu_cnt" : {
         "name" : "Group 0 cores count",
