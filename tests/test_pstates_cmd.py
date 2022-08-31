@@ -27,7 +27,7 @@ def get_params(hostname, request):
 
         params = build_params(hostname, dataset, pman, cpuinfo)
         params["psobj"] = psobj
-        params["pstate_props"] = psobj.get_cpu_props(psobj.props, 0)
+        params["pinfo"] = psobj.get_cpu_props(psobj.props, 0)
         yield params
 
 def _get_scope_options(params):
@@ -66,7 +66,7 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
 
-    if prop_is_supported("min_freq", params["pstate_props"]):
+    if prop_is_supported("min_freq", params["pinfo"]):
         good_options += [
             "--min-freq",
             "--max-freq",
@@ -91,7 +91,7 @@ def _get_config_options(params):
             "--min-freq maximum",
             "--min-freq max --max-freq min"]
 
-    if prop_is_supported("min_uncore_freq", params["pstate_props"]):
+    if prop_is_supported("min_uncore_freq", params["pinfo"]):
         good_options += [
             "--min-uncore-freq",
             "--max-uncore-freq",
@@ -106,15 +106,15 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
 
-    if prop_is_supported("governor", params["pstate_props"]):
+    if prop_is_supported("governor", params["pinfo"]):
         good_options += ["--governor powersave"]
         bad_options += ["--governor savepower"]
 
-    if prop_is_supported("epp", params["pstate_props"]):
+    if prop_is_supported("epp", params["pinfo"]):
         good_options += ["--epp", "--epp 0", "--epp 128"]
         bad_options += ["--epp 256"]
 
-    if prop_is_supported("epb", params["pstate_props"]):
+    if prop_is_supported("epb", params["pinfo"]):
         good_options += ["--epb", "--epb 0", "--epb 15"]
         bad_options += ["--epb 16"]
 
@@ -122,7 +122,7 @@ def _get_config_options(params):
 
     good_options = []
     bad_options = []
-    if prop_is_supported("turbo", params["pstate_props"]):
+    if prop_is_supported("turbo", params["pinfo"]):
         good_options += ["--turbo", "--turbo on", "--turbo off"]
         bad_options += ["--turbo 1", "--turbo enable", "--turbo OFF"]
 
