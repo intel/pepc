@@ -46,7 +46,7 @@ def is_prop_supported(pname, pinfo):
 def get_pman(hostname, dataset, modules=None):
     """
     Create and return process manager, the arguments are as follows.
-      * hostname - the hostn name to create a process manager object for.
+      * hostname - the host name to create a process manager object for.
       * dataset - the name of the dataset used to emulate the real hardware.
       * modules - the list of python module names to be initialized before testing. Refer to
                   'EmulProcessManager.init_testdata()' for more information.

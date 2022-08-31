@@ -41,7 +41,7 @@ def set_and_verify(pcobj, pname, value, cpus):
 
     The argument are as follows.
      * pcobj - 'CStates' or 'PStates' object.
-     * pname - name of the propery.
+     * pname - name of the property.
      * value - the new value.
      * cpus - list of CPUs.
     """

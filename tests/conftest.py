@@ -36,9 +36,9 @@ def pytest_collection_modifyitems(session, config, items): # pylint: disable=unu
     deselect = []
     select = []
     if hostname != "emulation":
-        # The 'dataset' option is relevant only with 'emulation' host. Remove dublicate function
+        # The 'dataset' option is relevant only with 'emulation' host. Remove duplicate function
         # calls from the list, and rename tests only according to hostname. E.g. with 'sklep1' as
-        # hotname, the list of tests would be modified as follows.
+        # hostname, the list of tests would be modified as follows.
         # test_get[bdwup0-sklep1]
         # test_get[icx2s0-sklep1]
         # test_get[ivbep0-sklep1]
