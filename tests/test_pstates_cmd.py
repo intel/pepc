@@ -11,7 +11,7 @@
 """Test module for 'pepc' project 'pstates' command."""
 
 import pytest
-from common import run_pepc, prop_is_supported, build_params, get_datasets, get_pman
+from common import run_pepc, is_prop_supported, build_params, get_datasets, get_pman
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human
 from pepclibs import CPUInfo, PStates
@@ -66,7 +66,7 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
 
-    if prop_is_supported("min_freq", params["pinfo"]):
+    if is_prop_supported("min_freq", params["pinfo"]):
         good_options += [
             "--min-freq",
             "--max-freq",
@@ -91,7 +91,7 @@ def _get_config_options(params):
             "--min-freq maximum",
             "--min-freq max --max-freq min"]
 
-    if prop_is_supported("min_uncore_freq", params["pinfo"]):
+    if is_prop_supported("min_uncore_freq", params["pinfo"]):
         good_options += [
             "--min-uncore-freq",
             "--max-uncore-freq",
@@ -106,15 +106,15 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
 
-    if prop_is_supported("governor", params["pinfo"]):
+    if is_prop_supported("governor", params["pinfo"]):
         good_options += ["--governor powersave"]
         bad_options += ["--governor savepower"]
 
-    if prop_is_supported("epp", params["pinfo"]):
+    if is_prop_supported("epp", params["pinfo"]):
         good_options += ["--epp", "--epp 0", "--epp 128"]
         bad_options += ["--epp 256"]
 
-    if prop_is_supported("epb", params["pinfo"]):
+    if is_prop_supported("epb", params["pinfo"]):
         good_options += ["--epb", "--epb 0", "--epb 15"]
         bad_options += ["--epb 16"]
 
@@ -122,7 +122,7 @@ def _get_config_options(params):
 
     good_options = []
     bad_options = []
-    if prop_is_supported("turbo", params["pinfo"]):
+    if is_prop_supported("turbo", params["pinfo"]):
         good_options += ["--turbo", "--turbo on", "--turbo off"]
         bad_options += ["--turbo 1", "--turbo enable", "--turbo OFF"]
 

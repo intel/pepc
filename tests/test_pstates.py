@@ -11,7 +11,7 @@
 """Tests for the public methods of the 'PStates' module."""
 
 import pytest
-from common import build_params, get_pman, prop_is_supported, get_datasets
+from common import build_params, get_pman, is_prop_supported, get_datasets
 from pcstates_common import get_fellows, set_and_verify
 from pepclibs import CPUInfo, PStates
 
@@ -47,31 +47,31 @@ def _set_and_verify_data(params):
 
     pinfo = params["pinfo"]
 
-    if prop_is_supported("turbo", pinfo):
+    if is_prop_supported("turbo", pinfo):
         yield "turbo", "off"
         yield "turbo", "on"
 
-    if prop_is_supported("epp_policy", pinfo):
+    if is_prop_supported("epp_policy", pinfo):
         yield "epp_policy", pinfo["epp_policy"]["epp_policies"][0]
         yield "epp_policy", pinfo["epp_policy"]["epp_policies"][-1]
-    elif prop_is_supported("epp", pinfo):
+    elif is_prop_supported("epp", pinfo):
         yield "epp", 0
         yield "epp", 128
 
-    if prop_is_supported("epb_policy", pinfo):
+    if is_prop_supported("epb_policy", pinfo):
         yield "epb_policy", pinfo["epb_policy"]["epb_policies"][0]
         yield "epb_policy", pinfo["epb_policy"]["epb_policies"][-1]
-    elif prop_is_supported("epb", pinfo):
+    elif is_prop_supported("epb", pinfo):
         yield "epb", 0
         yield "epb", 15
 
-    if prop_is_supported("governor", pinfo):
+    if is_prop_supported("governor", pinfo):
         yield "governor", pinfo["governor"]["governors"][0]
         yield "governor", pinfo["governor"]["governors"][-1]
 
     freq_pairs = (("min_freq", "max_freq"), ("min_uncore_freq", "max_uncore_freq"))
     for pname_min, pname_max in freq_pairs:
-        if prop_is_supported(pname_min, pinfo):
+        if is_prop_supported(pname_min, pinfo):
             min_limit = pinfo[f"{pname_min}_limit"][f"{pname_min}_limit"]
             max_limit = pinfo[f"{pname_max}_limit"][f"{pname_max}_limit"]
 

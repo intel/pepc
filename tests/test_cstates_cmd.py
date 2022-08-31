@@ -11,7 +11,7 @@
 """Test module for 'pepc' project 'cstates' command."""
 
 import pytest
-from common import run_pepc, prop_is_supported, build_params, get_datasets, get_pman
+from common import run_pepc, is_prop_supported, build_params, get_datasets, get_pman
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human
 from pepclibs import CPUInfo, CStates
@@ -88,13 +88,13 @@ def test_cstates_config(params):
         f"--enable {params['cstates'][-1]}",
         f"--disable {params['cstates'][-1]}",
         "--pkg-cstate-limit"]
-    if prop_is_supported("c1_demotion", params["pinfo"]):
+    if is_prop_supported("c1_demotion", params["pinfo"]):
         good_options += ["--c1-demotion", "--c1-demotion on", "--c1-demotion off"]
-    if prop_is_supported("c1_undemotion", params["pinfo"]):
+    if is_prop_supported("c1_undemotion", params["pinfo"]):
         good_options += ["--c1-undemotion", "--c1-undemotion on", "--c1-undemotion off"]
-    if prop_is_supported("c1e_autopromote", params["pinfo"]):
+    if is_prop_supported("c1e_autopromote", params["pinfo"]):
         good_options += ["--c1e-autopromote", "--c1e-autopromote on", "--c1e-autopromote off"]
-    if prop_is_supported("cstate_prewake", params["pinfo"]):
+    if is_prop_supported("cstate_prewake", params["pinfo"]):
         good_options += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake off"]
 
     for option in good_options:
@@ -124,7 +124,7 @@ def test_cstates_config(params):
     good_options = []
     bad_options = []
 
-    if prop_is_supported("governor", params["pinfo"]):
+    if is_prop_supported("governor", params["pinfo"]):
         good_options += ["--governor menu"]
         bad_options += ["--governor reardenmetal"]
 

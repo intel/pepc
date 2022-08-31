@@ -11,7 +11,7 @@
 """Tests for the public methods of the 'CStates' module."""
 
 import pytest
-from common import build_params, get_pman, prop_is_supported, get_datasets
+from common import build_params, get_pman, is_prop_supported, get_datasets
 from pcstates_common import get_fellows, set_and_verify
 from pepclibs import CPUInfo, CStates
 
@@ -49,11 +49,11 @@ def _set_and_verify_data(params):
 
     bool_pnames = {"c1_demotion", "c1_undemotion", "c1e_autopromote", "cstate_prewake"}
     for pname in bool_pnames:
-        if prop_is_supported(pname, pinfo):
+        if is_prop_supported(pname, pinfo):
             yield pname, "on"
             yield pname, "off"
 
-    if prop_is_supported("governor", pinfo):
+    if is_prop_supported("governor", pinfo):
         yield "governor", pinfo["governor"]["governors"][0]
         yield "governor", pinfo["governor"]["governors"][-1]
 

@@ -29,7 +29,7 @@ def _get_datapath(dataset):
     """Return path to test data for the dataset 'dataset'."""
     return Path(__file__).parent.resolve() / "data" / dataset
 
-def prop_is_supported(pname, pinfo):
+def is_prop_supported(pname, pinfo):
     """
     Return 'True' or 'False' depending on if property 'pname' is supported on the system.
 
