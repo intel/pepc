@@ -30,6 +30,7 @@ _COMMON_PKGINFO = {
     "depmod"    : "kmod",
     "dmesg"     : "util-linux",
     "gcc"       : "gcc",
+    "libelf.h"  : "elfutils-libelf-devel",
     "lscpu"     : "util-linux",
     "lspci"     : "pciutils",
     "make"      : "make",
