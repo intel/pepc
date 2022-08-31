@@ -29,13 +29,18 @@ def _get_datapath(dataset):
     """Return path to test data for the dataset 'dataset'."""
     return Path(__file__).parent.resolve() / "data" / dataset
 
-def prop_is_supported(prop, props):
+def prop_is_supported(pname, pinfo):
     """
-    Return 'True' if property 'prop' is supported by properties 'props', otherwise return 'False'.
+    Return 'True' or 'False' depending on if property 'pname' is supported on the system.
+
+    The arguments are as follows.
+      * pname - name of the property.
+      * pinfo - a properties dictionary in the format returned by 'PStates.get_props()' or
+                'CStates.get_props()'. Check 'get_props()' docstring for more information.
     """
 
-    if prop in props:
-        return props[prop].get(prop) is not None
+    if pname in pinfo:
+        return pinfo[pname].get(pname) is not None
     return False
 
 def get_pman(hostname, dataset, modules=None):
