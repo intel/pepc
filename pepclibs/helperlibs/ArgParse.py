@@ -211,11 +211,11 @@ class SSHOptsAwareArgsParser(ArgsParser):
 
 def parse_int_list(nums, ints=False, dedup=False, sort=False):
     """
-    Turn a string contaning a comma-separated list of numbers and ranges into a list of numbers and
+    Turn a string containing a comma-separated list of numbers and ranges into a list of numbers and
     return it. For example, a string like "0,1-3,7" would become ["0", "1", "2", "3", "7"].
     Optional arguments are:
       * ints - controls whether the resulting list should contain strings or integers.
-      * dedup - controls whether returned list should include dublicate values or not.
+      * dedup - controls whether returned list should include duplicate values or not.
       * sort - controls whether returned list is sorted or not.
     """
 

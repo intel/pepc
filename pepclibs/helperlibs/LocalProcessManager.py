@@ -34,7 +34,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
     """
 
     def _fetch_stream_data(self, streamid, size):
-        """Fetch up to 'size' butes from stdout or stderr of the process."""
+        """Fetch up to 'size' bytes from stdout or stderr of the process."""
 
         retries = 0
         max_retries = 16

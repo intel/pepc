@@ -28,7 +28,7 @@ NOTICE = logging.INFO + 1
 DEBUG = logging.DEBUG
 WARNING = logging.WARNING
 ERROR = logging.ERROR
-# Add the "ERRINFO" log lovel which is the same as "ERROR", but not prefixed.
+# Add the "ERRINFO" log level which is the same as "ERROR", but not prefixed.
 ERRINFO = logging.ERROR + 1
 CRITICAL = logging.CRITICAL
 
@@ -75,7 +75,7 @@ def _error_traceback(logger, msgformat, *args):
 
 def _error_out(logger, msgformat, *args, print_tb=False):
     """
-    Print an error message and terminate program execution. The optional 'print_tb' agument
+    Print an error message and terminate program execution. The optional 'print_tb' argument
     controls whether the stack trace should also be printed. Note, however, if debugging is enabled,
     the stack trace is printed out regardless of 'print_tb' value.
     """
@@ -121,7 +121,7 @@ class _MyFormatter(logging.Formatter):
         """
         The constructor. The arguments are as follows.
           * prefix - prefix for non-info and non-debug messages (info messages go without any
-                    formating, debug message prefix is controlled with 'prerix_debug'). By default,
+                    formatting, debug message prefix is controlled with 'prefix_debug'). By default,
                     the prefix is just the log level name.
           * prefix_debug - prefix for debug messages. The default value is '_DEFAULT_DBG_PREFIX'.
                            See the 'logging' module documentation for the prefix format.
@@ -212,7 +212,7 @@ def setup_logger(prefix=None, loglevel=None, colored=None, info_stream=sys.stdou
                       'sys.stdout'.
       * error_stream - same as 'info_stream', but will be used for all other logging levels. Default
                        is 'sys.stderr'.
-      * info_logfile - path to the fiile where messages with "INFO" level will be directed to. If
+      * info_logfile - path to the file where messages with "INFO" level will be directed to. If
                        both 'info_stream' and 'info_logfile' are provided, messages will go the
                        both.
       * error_logfile - same as 'info_logfile", but  will be used for all other logging levels.

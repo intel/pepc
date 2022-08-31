@@ -149,7 +149,7 @@ def close(cls_obj, close_attrs=None, unref_attrs=None):
        type #1 or #2, depending on various factors. For example, 'self._pman' may be provided by the
        user, or may be created by 'cls_obj'. In this situation, this method expects the 'cls_obj' to
        have an extra attribute named as '_close_{attr}', containing a boolean which tells whether
-       the object in '{attr}' have to be closed. For example, if 'self._close_pman' attriubte exists
+       the object in '{attr}' have to be closed. For example, if 'self._close_pman' attribute exists
        and it is 'True', then the 'self._pman' object should be closed. Otherwise it won't be
        closed.
 

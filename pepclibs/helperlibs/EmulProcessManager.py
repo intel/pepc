@@ -137,7 +137,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def run_verify(self, cmd, join=True, **kwargs):
         """
-        Does not really run commands, just pretends running them and returns the pre-dfined output
+        Does not really run commands, just pretends running them and returns the pre-defined output
         values. Works only for a limited set of known commands. If the command is not known, raises
         'ErrorNotSupported'.
 

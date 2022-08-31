@@ -114,7 +114,7 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
         potentially related to the delayed event device driver. These lines are then included to the
         error message, which is very helpful for diagnosing the error.
 
-        If you already have a 'Dmesg' object with the first snapshot capured, you can pass it via
+        If you already have a 'Dmesg' object with the first snapshot captured, you can pass it via
         the 'dmesg' argument, in which case the 'dmesg' tool will be invoked one less time, which is
         more optimal.
         """
