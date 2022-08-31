@@ -58,7 +58,7 @@ def _set_and_verify_data(params):
         yield "governor", pinfo["governor"]["governors"][-1]
 
 def test_cstates_set_and_verify(params):
-    """Test for if 'get_props()' returns the same values set by 'set_props()'."""
+    """This test verifies that 'get_props()' returns same values set by 'set_props()'."""
 
     for pname, value in _set_and_verify_data(params):
         scope = params["csobj"].props[pname]["scope"]
