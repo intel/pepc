@@ -128,7 +128,7 @@ PROPS = {
     "hwp" : {
         "name" : "Hardware power mangement",
         "help" : """When hardware power management is enabled, CPUs can automatically scale their
-                    frequency without active OS involemenent.""",
+                    frequency without active OS involvement.""",
         "type" : "bool",
         "scope": "global",
         "writable" : False,
@@ -217,7 +217,7 @@ PROPS = {
 
 def _is_uncore_prop(prop):
     """
-    Returns 'True' if propert 'prop' is an uncore property, otherwise returns 'False'.
+    Returns 'True' if property 'prop' is an uncore property, otherwise returns 'False'.
     """
 
     if "fname" in prop and prop["fname"].endswith("khz"):

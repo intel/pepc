@@ -759,7 +759,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         Returns a tuple of two lists: ('dies', 'rem_cpus').
           * dies - list of ('die', 'package') tuples with all CPUs present in 'cpus'.
               o die - die number.
-              o package - packae number 'die' belongs to
+              o package - package number 'die' belongs to
           * rem_cpus - list of remaining CPUs that cannot be converted to a die number.
 
         The return value is inconsistent with 'cpus_div_packages()' because die numbers are not
@@ -810,7 +810,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         Returns a tuple of two lists: ('cores', 'rem_cpus').
           * cores - list of ('core', 'package') tuples with all CPUs present in 'cpus'.
               o core - core number.
-              o package - packae number 'core' belongs to
+              o package - package number 'core' belongs to
           * rem_cpus - list of remaining CPUs that cannot be converted to a core number.
 
         The return value is inconsistent with 'cpus_div_packages()' because cores numbers are not

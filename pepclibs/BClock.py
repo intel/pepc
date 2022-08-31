@@ -10,7 +10,7 @@
 # Contributor: Len Brown <len.brown@intel.com>
 
 """
-This module provides a capability for discoviring bus clock speed (FSB speed) on Intel CPUs.
+This module provides a capability for discovering bus clock speed (FSB speed) on Intel CPUs.
 """
 
 from pepclibs import CPUInfo

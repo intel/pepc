@@ -48,7 +48,7 @@ class _PropsCache():
         """
         Checks if '(pname, cpu)' item exists in the cache. Returns 'True' if the item was found and
         'False' otherwise. The argument are as follows.
-          * pname - name of the propery.
+          * pname - name of the property.
           * cpu - an integer CPU number.
         """
 
@@ -63,7 +63,7 @@ class _PropsCache():
         """
         Looks up the '(pname, cpu)' item in the cache. Returns the value if the item was found,
         raises 'ErrorNotFound' otherwise. The argument are as follows.
-          * pname - name of the propery.
+          * pname - name of the property.
           * cpu - an integer CPU number.
         """
 
@@ -75,7 +75,7 @@ class _PropsCache():
     def remove(self, pname, cpu, scope="CPU"):
         """
         Removes '(pname, cpu)' and all the other items sharing the same scope from the cache.
-          * pname - name of the propery.
+          * pname - name of the property.
           * cpu - an integer CPU number.
           * scope - name of scope (e.g. "package", "core").
         """
@@ -95,7 +95,7 @@ class _PropsCache():
         """
         Add value 'val' for item '(pname, cpu)' to the cache. Add it also for each CPU sharing the
         same scope 'scope'. The argument are as follows.
-          * pname - name of the propery.
+          * pname - name of the property.
           * cpu - an integer CPU number.
           * val - value to get cached.
           * scope - name of scope (e.g. "package", "core").

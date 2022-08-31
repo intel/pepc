@@ -262,7 +262,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
                             f"provide one of the following EPP policy names: {policy_names}")
 
         if self._set_cpu_epp_via_sysfs(epp, cpu) == epp:
-            # EPP was successfully set via syfs.
+            # EPP was successfully set via sysfs.
             self._pcache.add("epp_policy", cpu, epp)
             return
 
