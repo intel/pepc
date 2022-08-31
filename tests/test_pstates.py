@@ -27,7 +27,8 @@ def get_params(hostname, request):
     """Yield a dictionary with information we need for testing."""
 
     dataset, enable_cache = request.param
-    with get_pman(hostname, dataset) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+    with get_pman(hostname, dataset) as pman, \
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as psobj:
         params = build_params(hostname, dataset, pman, cpuinfo)
         params["fellows"] = get_fellows(params, cpuinfo, cpu=0)

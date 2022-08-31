@@ -22,8 +22,8 @@ def get_params(hostname, request):
 
     dataset = request.param
     with get_pman(hostname, dataset) as pman, \
-                  CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-                  CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
 
         params = build_params(hostname, dataset, pman, cpuinfo)
         params["csobj"] = csobj
