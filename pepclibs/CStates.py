@@ -32,7 +32,7 @@ PROPS = {
     "pkg_cstate_limit" : {
         "name" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["name"],
         "help" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["help"],
-        "type" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["type"],
+        "type" : "str",
         "scope": PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["scope"],
         "writable" : True,
         "subprops" : {

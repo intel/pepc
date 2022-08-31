@@ -89,7 +89,7 @@ def _get_bad_feature_values(finfo):
     elif ftype == "choice":
         vals = {"Bad", "enable", None, "", 12345}
 
-    # Ensure we dont' return valid values.
+    # Ensure we don't return valid values.
     if "vals" in finfo:
         vals -= set(finfo["vals"].values())
 
