@@ -27,7 +27,7 @@ def get_params(hostname, request):
 
         params = build_params(hostname, dataset, pman, cpuinfo)
         params["csobj"] = csobj
-        params["cstate_props"] = csobj.get_cpu_props(csobj.props, 0)
+        params["pinfo"] = csobj.get_cpu_props(csobj.props, 0)
 
         params["cstates"] = []
         for _, csinfo in csobj.get_cstates_info(cpus=[params["testcpus"][0]]):
@@ -88,13 +88,13 @@ def test_cstates_config(params):
         f"--enable {params['cstates'][-1]}",
         f"--disable {params['cstates'][-1]}",
         "--pkg-cstate-limit"]
-    if prop_is_supported("c1_demotion", params["cstate_props"]):
+    if prop_is_supported("c1_demotion", params["pinfo"]):
         good_options += ["--c1-demotion", "--c1-demotion on", "--c1-demotion off"]
-    if prop_is_supported("c1_undemotion", params["cstate_props"]):
+    if prop_is_supported("c1_undemotion", params["pinfo"]):
         good_options += ["--c1-undemotion", "--c1-undemotion on", "--c1-undemotion off"]
-    if prop_is_supported("c1e_autopromote", params["cstate_props"]):
+    if prop_is_supported("c1e_autopromote", params["pinfo"]):
         good_options += ["--c1e-autopromote", "--c1e-autopromote on", "--c1e-autopromote off"]
-    if prop_is_supported("cstate_prewake", params["cstate_props"]):
+    if prop_is_supported("cstate_prewake", params["pinfo"]):
         good_options += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake off"]
 
     for option in good_options:
@@ -124,7 +124,7 @@ def test_cstates_config(params):
     good_options = []
     bad_options = []
 
-    if prop_is_supported("governor", params["cstate_props"]):
+    if prop_is_supported("governor", params["pinfo"]):
         good_options += ["--governor menu"]
         bad_options += ["--governor reardenmetal"]
 
