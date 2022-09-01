@@ -104,7 +104,15 @@ def _notice(logger, fmt, *args):
 def _warn_once(logger, fmt, *args):
     """Same as 'logging.warning()', but avoid printing the same message twice."""
 
-    msg_hash = hash(fmt)
+    import inspect # pylint: disable=import-outside-toplevel
+
+    caller_frame = inspect.stack()[1][0]
+    if caller_frame:
+        caller_info = inspect.getframeinfo(caller_frame)
+        msg_hash = f"{caller_info.filename}:{caller_info.lineno}"
+    else:
+        raise Error("python interpretor does not support 'inspect.stack()'")
+
     if msg_hash not in logger.seen_msgs:
         logger.seen_msgs.add(msg_hash)
         logger.log(WARNING, fmt, *args)
