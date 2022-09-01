@@ -3,7 +3,13 @@
 Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.15] - ADD DATE HERE
+## [1.3.16] - ADD DATE HERE
+### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.3.15] - 2022-09-01
 ### Fixed
  - Fix ASPM-related tests failures when they run on real HW (vs emulated).
 ### Added
