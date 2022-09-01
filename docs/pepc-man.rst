@@ -261,7 +261,7 @@ OPTIONS *'pepc* cstates info'
    3. Use the special keyword 'all' to specify all packages.
 
 **--cstates** *CSNAMES*
-   Comma-sepatated list of C-states to get information about (all
+   Comma-separated list of C-states to get information about (all
    C-states by default). C-states should be specified by name (e.g.,
    'C1'). Use 'all' to specify all the available Linux C-states (this is
    the default). Note, there is a difference between Linux C-states
@@ -316,7 +316,7 @@ usage: pepc cstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
 [--packages PACKAGES] [--enable [CSTATES]] [--disable [CSTATES]]
 [--pkg-cstate-limit [PKG_CSTATE_LIMIT]] [--c1-demotion [C1_DEMOTION]]
 [--c1-undemotion [C1_UNDEMOTION]] [--c1e-autopromote [C1E_AUTOPROMOTE]]
-[--cstate-prewake [CSTATE_PREWAKE]]
+[--cstate-prewake [CSTATE_PREWAKE]] [--governor [GOVERNOR]]
 
 Configure C-states on specified CPUs. All options can be used without a
 parameter, in which case the currently configured value(s) will be
@@ -355,7 +355,7 @@ OPTIONS *'pepc* cstates config'
 all packages.
 
 **--enable** *[CSTATES]*
-   Comma-sepatated list of C-states to enable. C-states should be
+   Comma-separated list of C-states to enable. C-states should be
    specified by name (e.g., 'C1'). Use 'all' to specify all the
    available Linux C-states (this is the default). Note, there is a
    difference between Linux C-states (e.g.,
@@ -395,6 +395,10 @@ platform- specific hardware state, entered upon a Linux request..
    exiting the C6 idle state in advance, prior to the next local APIC
    timer event. This CPU feature is controlled by MSR 0x1fc, bit 30. Use
    "on" or "off". This option has package scope.
+
+**--governor** *[GOVERNOR]*
+   Set idle governor. Idle governor decides which C-state to request on
+   an idle CPU. This option has global scope.
 
 COMMAND *'pepc* pstates'
 ========================
@@ -521,7 +525,7 @@ OPTIONS *'pepc* pstates info'
 **--hwp**
    Get current setting for hardware power mangement. When hardware power
    management is enabled, CPUs can automatically scale their frequency
-   without active OS involemenent. This option has global scope.
+   without active OS involvement. This option has global scope.
 
 **--epp**
    Get energy Performance Preference. Energy Performance Preference
