@@ -97,3 +97,45 @@ def test_pstates_property_type(params):
     """This test verifies that 'get_props()' returns values of the correct type."""
 
     verify_props_value_type(params["psobj"].props, params["pinfo"])
+
+def _set_freq_pairs(params, min_pname, max_pname):
+    """
+    Set min. and max frequencies to various values in order to verify that the 'PState' modules set
+    them correctly. The arguments 'min_pname' and 'max_pname' are the frequency property names.
+    """
+
+    scope = params["psobj"].props[min_pname]["scope"]
+    fellows = params["fellows"][scope]
+
+    min_limit = params["pinfo"][f"{min_pname}_limit"][f"{min_pname}_limit"]
+    max_limit = params["pinfo"][f"{max_pname}_limit"][f"{max_pname}_limit"]
+    a_quarter = int((max_limit - min_limit) / 4)
+
+    # [Min ------------------ Max ----------------------------------------------------------]
+    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + a_quarter}, fellows)
+
+    # [-------------------------------------------------------- Min -------------------- Max]
+    params["psobj"].set_props({min_pname : max_limit - a_quarter, max_pname : max_limit}, fellows)
+
+    # [Min ------------------ Max ----------------------------------------------------------]
+    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + a_quarter}, fellows)
+
+def test_pstates_frequency_set_order(params):
+    """
+    Test min. and max frequency set order. We do not know how the systems min. and max frequencies
+    are configured, so we have to be careful when setting min. and max frequency simultaneously.
+
+    See 'PStates._validate_and_set_freq()' docstring, for more information.
+    """
+
+    # When Turbo is disabled the max frequency may be limited.
+    if is_prop_supported("turbo", params["pinfo"]):
+        scope = params["psobj"].props["turbo"]["scope"]
+        cpus = params["fellows"][scope]
+        params["psobj"].set_prop("turbo", "on", cpus)
+
+    if is_prop_supported("min_freq", params["pinfo"]):
+        _set_freq_pairs(params, "min_freq", "max_freq")
+
+    if is_prop_supported("min_uncore_freq", params["pinfo"]):
+        _set_freq_pairs(params, "min_uncore_freq", "max_uncore_freq")
