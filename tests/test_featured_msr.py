@@ -154,7 +154,7 @@ def _test_msr_read_feature_bad(params):
                         _check_feature_val(val, name, msr)
                         assert cpu in params["testcpus"]
 
-def test_msr_read_feature_good(params):
+def test_msr_read_feature(params):
     """Test 'read_feature()' method."""
 
     _test_msr_read_feature_good(params)
