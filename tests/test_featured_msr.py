@@ -86,8 +86,8 @@ def _get_bad_feature_values(finfo):
         vals = {"0", None, -1, ""}
     elif ftype in ("int", "float"):
         vals = {"True", True, None, ""}
-    elif ftype == "choice":
-        vals = {"Bad", "enable", None, "", 12345}
+    elif ftype == "dict":
+        vals = {"str", 1}
 
     # Ensure we don't return valid values.
     if "vals" in finfo:
@@ -111,18 +111,18 @@ def _check_feature_val(val, name, msr):
     if "type" in finfo:
         if finfo["type"] == "int":
             assert isinstance(val, int)
-        if finfo["type"] == "float":
+        elif finfo["type"] == "float":
             assert isinstance(val, float)
-        if finfo["type"] == "bool":
+        elif finfo["type"] == "bool":
             assert val in ("on", "off")
-        if finfo["type"] == "choice":
-            choices = list(finfo["vals"])
-            if "aliases" in finfo:
-                choices += finfo["aliases"].values()
-            if isinstance(val, dict) and name in val:
-                assert val[name] in choices
-            else:
-                assert val in choices
+        elif finfo["type"] == "dict":
+            assert isinstance(val, dict)
+            if name == "pkg_cstate_limit":
+                assert isinstance(val["pkg_cstate_limit"], str)
+                assert isinstance(val["pkg_cstate_limits"], list)
+                assert isinstance(val["pkg_cstate_limit_aliases"], dict)
+        else:
+            assert False, f"Unknown '{name}' feature type: {type(val)}"
 
 def _test_msr_read_feature_good(params):
     """Test 'read_feature()' method for good option values."""
