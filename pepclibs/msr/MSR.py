@@ -306,7 +306,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         for cpu in cpus:
             if not self._in_transaction:
-                if regval_bytes is not None:
+                if regval_bytes is None:
                     regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                 self._write_cpu(regaddr, regval, cpu, regval_bytes=regval_bytes)
                 dirty = False
