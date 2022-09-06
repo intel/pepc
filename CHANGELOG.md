@@ -6,6 +6,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [1.3.16] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Added OS package information for the 'libbpf' library.
 ### Removed
 ### Changed
 
