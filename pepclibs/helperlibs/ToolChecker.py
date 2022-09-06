@@ -47,6 +47,7 @@ _COMMON_PKGINFO = {
 _FEDORA_PKGINFO = {
     "tc"         : "iproute-tc",
     "bpftool"    : "bpftool",
+    "libbpf"     : "libbpf-devel",
     "sch_etf.ko" : "kernel-modules-extra",
 }
 
@@ -54,6 +55,7 @@ _FEDORA_PKGINFO = {
 _UBUNTU_PKGINFO = {
     "tc"         : "iproute2",
     "bpftool"    : "linux-tools-common",
+    "libbpf"     : "libbpf-dev",
     "sch_etf.ko" : "linux-modules",
 }
 
@@ -61,6 +63,7 @@ _UBUNTU_PKGINFO = {
 _DEBIAN_PKGINFO = {
     "tc"         : "iproute2",
     "bpftool"    : "bpftool",
+    "libbpf"     : "libbpf-dev",
     "sch_etf.ko" : "linux-modules",
 }
 
