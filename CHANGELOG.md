@@ -3,7 +3,13 @@
 Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.16] - ADD DATE HERE
+## [1.3.17] - ADD DATE HERE
+### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.3.16] - 2022-09-07
 ### Fixed
 ### Added
  - Added OS package information for the 'libbpf' library.
