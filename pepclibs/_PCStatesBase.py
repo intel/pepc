@@ -9,6 +9,12 @@
 
 """
 This module provides the base class for 'PState' and 'CState' classes.
+
+Some naming conventions:
+ * props - dictionary describing the properties, see 'PROPS' in 'PStates' and 'CStates'.
+ * pinfo - a properties dictionary in the format returned by 'PStates.get_props()' or
+           'CStates.get_props()'. Check 'get_props()' docstring for more information.
+ * pname - name of a property, see 'PROPS["name"]' in 'PStates' and 'CStates'.
 """
 
 import copy
