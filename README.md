@@ -9,7 +9,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 -->
 - [Introduction](#introduction)
   - [Context](#tool-context)
-- [Authors](#authors)
+- [Authors](#authors-and-contributors)
 - [What is supported](#what-is-supported)
 - [Installation](#installation)
   - [Dependencies](#dependencies)
