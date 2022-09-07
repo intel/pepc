@@ -24,6 +24,16 @@ class Error(Exception):
         else:
             self.msg = str(msg)
 
+    def indent(self, indent):
+        """
+        Prefix each line in the error message with the 'indent' string. The intended usage is
+        combining multiple multi-line error messages into a single message.
+        """
+
+        replacement = f"\n{indent}"
+        msg = replacement + self.msg.replace("\n", replacement)
+        return msg
+
     def __str__(self):
         """The string representation of the exception."""
         return self.msg
