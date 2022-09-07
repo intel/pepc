@@ -14,7 +14,7 @@ meaningful OS package installation suggestion if it is not installed.
 
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
 
 #
@@ -147,7 +147,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
     def check_tool(self, tool):
         """
         Check if tool 'tool' is available on the SUT. Returns tool path if it is available, raises
-        an 'ErrorNotSupported' exception otherwise.
+        an 'ErrorNotFound' exception otherwise.
         """
 
         if tool is self._cache:
@@ -166,7 +166,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
         if pkgname:
             msg += f".\nTry to install {osname} package '{pkgname}'{self._pman.hostmsg}."
 
-        raise ErrorNotSupported(msg)
+        raise ErrorNotFound(msg)
 
     def __init__(self, pman=None):
         """
