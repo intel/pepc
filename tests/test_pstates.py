@@ -88,8 +88,8 @@ def test_pstates_set_and_verify(params):
     """This test verifies that 'get_props()' returns same values set by 'set_props()'."""
 
     for pname, value in _set_and_verify_data(params):
-        scope = params["psobj"].props[pname]["scope"]
-        fellows = params["fellows"][scope]
+        sname = params["psobj"].props[pname]["scope"]
+        fellows = params["fellows"][sname]
 
         set_and_verify(params["psobj"], pname, value, fellows)
 
@@ -104,8 +104,8 @@ def _set_freq_pairs(params, min_pname, max_pname):
     them correctly. The arguments 'min_pname' and 'max_pname' are the frequency property names.
     """
 
-    scope = params["psobj"].props[min_pname]["scope"]
-    fellows = params["fellows"][scope]
+    sname = params["psobj"].props[min_pname]["scope"]
+    fellows = params["fellows"][sname]
 
     min_limit = params["pinfo"][f"{min_pname}_limit"][f"{min_pname}_limit"]
     max_limit = params["pinfo"][f"{max_pname}_limit"][f"{max_pname}_limit"]
@@ -130,8 +130,8 @@ def test_pstates_frequency_set_order(params):
 
     # When Turbo is disabled the max frequency may be limited.
     if is_prop_supported("turbo", params["pinfo"]):
-        scope = params["psobj"].props["turbo"]["scope"]
-        cpus = params["fellows"][scope]
+        sname = params["psobj"].props["turbo"]["scope"]
+        cpus = params["fellows"][sname]
         params["psobj"].set_prop("turbo", "on", cpus)
 
     if is_prop_supported("min_freq", params["pinfo"]):

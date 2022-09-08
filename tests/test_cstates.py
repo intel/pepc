@@ -61,8 +61,8 @@ def test_cstates_set_and_verify(params):
     """This test verifies that 'get_props()' returns same values set by 'set_props()'."""
 
     for pname, value in _set_and_verify_data(params):
-        scope = params["csobj"].props[pname]["scope"]
-        fellows = params["fellows"][scope]
+        sname = params["csobj"].props[pname]["scope"]
+        fellows = params["fellows"][sname]
 
         set_and_verify(params["csobj"], pname, value, fellows)
 
