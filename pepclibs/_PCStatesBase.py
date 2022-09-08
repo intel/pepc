@@ -282,15 +282,15 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         packages.
         """
 
-        scope = prop["scope"]
+        sname = prop["scope"]
 
-        if scope not in {"global", "package", "die", "core", "CPU"}:
-            raise Error(f"BUG: unsupported scope \"{scope}\"")
+        if sname not in {"global", "package", "die", "core", "CPU"}:
+            raise Error(f"BUG: unsupported scope \"{sname}\"")
 
-        if scope == "CPU":
+        if sname == "CPU":
             return
 
-        if scope == "global":
+        if sname == "global":
             all_cpus = set(self._cpuinfo.get_cpus())
 
             if all_cpus.issubset(cpus):
@@ -298,10 +298,10 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
             name = Human.untitle(prop["name"])
             missing_cpus = all_cpus - set(cpus)
-            raise Error(f"{name} has {scope} scope, so the list of CPUs must include all CPUs.\n"
+            raise Error(f"{name} has {sname} scope, so the list of CPUs must include all CPUs.\n"
                         f"However, the following CPUs are missing from the list: {missing_cpus}")
 
-        _, rem_cpus = getattr(self._cpuinfo, f"cpus_div_{scope}s")(cpus)
+        _, rem_cpus = getattr(self._cpuinfo, f"cpus_div_{sname}s")(cpus)
         if not rem_cpus:
             return
 
@@ -311,19 +311,19 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             pkg_cpus_str = Human.rangify(pkg_cpus)
             mapping += f"\n  * package {pkg}: CPUs: {pkg_cpus_str}"
 
-            if scope in {"core", "die"}:
+            if sname in {"core", "die"}:
                 # Build the cores or dies to packages map, in order to make the error message more
                 # helpful. We use "core" in variable names, but in case of the "die" scope, they
                 # actually mean "die".
 
-                pkg_cores = getattr(self._cpuinfo, f"package_to_{scope}s")(pkg)
+                pkg_cores = getattr(self._cpuinfo, f"package_to_{sname}s")(pkg)
                 pkg_cores_str = Human.rangify(pkg_cores)
-                mapping += f"\n               {scope}s: {pkg_cores_str}"
+                mapping += f"\n               {sname}s: {pkg_cores_str}"
 
                 # Build the cores to CPUs mapping string.
                 clist = []
                 for core in pkg_cores:
-                    if scope == "core":
+                    if sname == "core":
                         cpus = self._cpuinfo.cores_to_cpus(cores=(core,), packages=(pkg,))
                     else:
                         cpus = self._cpuinfo.dies_to_cpus(dies=(core,), packages=(pkg,))
@@ -333,7 +333,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
                 # The core/die->CPU mapping may be very long, wrap it to 100 symbols.
                 import textwrap # pylint: disable=import-outside-toplevel
 
-                prefix = f"               {scope}s to CPUs: "
+                prefix = f"               {sname}s to CPUs: "
                 indent = " " * len(prefix)
                 clist_wrapped = textwrap.wrap(", ".join(clist), width=100,
                                               initial_indent=prefix, subsequent_indent=indent)
@@ -344,16 +344,16 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         name = Human.untitle(prop["name"])
         rem_cpus_str = Human.rangify(rem_cpus)
 
-        if scope == "core":
+        if sname == "core":
             mapping_name = "relation between CPUs, cores, and packages"
-        elif scope == "die":
+        elif sname == "die":
             mapping_name = "relation between CPUs, dies, and packages"
         else:
             mapping_name = "relation between CPUs and packages"
 
-        errmsg = f"{name} has {scope} scope, so the list of CPUs must include all CPUs " \
-                f"in one or multiple {scope}s.\n" \
-                f"However, the following CPUs do not comprise full {scope}(s): {rem_cpus_str}\n" \
+        errmsg = f"{name} has {sname} scope, so the list of CPUs must include all CPUs " \
+                f"in one or multiple {sname}s.\n" \
+                f"However, the following CPUs do not comprise full {sname}(s): {rem_cpus_str}\n" \
                 f"Here is the {mapping_name}{self._pman.hostmsg}:{mapping}"
 
         raise Error(errmsg)
