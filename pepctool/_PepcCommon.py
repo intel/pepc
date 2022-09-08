@@ -11,7 +11,7 @@ Misc. helpers shared between various 'pepc' commands.
 """
 
 import logging
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 from pepclibs.helperlibs import Systemctl, Trivial, Human
 
 _LOG = logging.getLogger()
@@ -20,10 +20,15 @@ def check_tuned_presence(pman):
     """Check if the 'tuned' service is active, and if it is, print a warning message."""
 
     with Systemctl.Systemctl(pman=pman) as systemctl:
-        if systemctl.is_active("tuned"):
-            _LOG.warning("the 'tuned' service is active%s! It may override the changes made by "
-                         "'pepc'.\nConsider having 'tuned' disabled while experimenting with power "
-                         "mangement settings.", pman.hostmsg)
+        try:
+            if systemctl.is_active("tuned"):
+                _LOG.warning("the 'tuned' service is active%s! It may override the changes made by "
+                             "'pepc'.\nConsider having 'tuned' disabled while experimenting with "
+                             "power mangement settings.", pman.hostmsg)
+        except ErrorNotFound:
+            pass
+        except Error as err:
+            _LOG.warning("failed to check for 'tuned' presence:\n%s", err.indent(2))
 
 def get_cpus(args, cpuinfo, default_cpus="all"):
     """
