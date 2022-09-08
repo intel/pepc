@@ -14,7 +14,7 @@ from common import is_prop_supported
 
 def get_fellows(params, cpuinfo, cpu=0):
     """
-    Return a dict with keys being scopes and values being all fellow CPUs (CPUs sharing the same
+    Return a dict where keys are scope names and values are all fellow CPUs (CPUs sharing the same
     scope as a CPU) to the CPU 'cpu'. The dict is used when running tests with function calls that
     require a list of CPUs with the same scope as the CPU that we are changing the value of.
 
