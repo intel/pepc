@@ -595,7 +595,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             path = self._sysfs_cpuidle / prop["fname"]
             try:
                 val = self._read_prop_value_from_sysfs(prop, path)
-                self._pcache.add(pname, cpu, val, scope=prop["scope"])
+                self._pcache.add(pname, cpu, val, sname=prop["scope"])
                 return val
             except ErrorNotFound:
                 _LOG.debug("can't read value of property '%s', path '%s' is not found", pname,
@@ -627,7 +627,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             if "fname" in self._props[pname]:
                 path = self._sysfs_cpuidle / self._props[pname]["fname"]
                 self._write_prop_value_to_sysfs(self._props[pname], path, val)
-                self._pcache.add(pname, cpu, val, scope=self._props[pname]["scope"])
+                self._pcache.add(pname, cpu, val, sname=self._props[pname]["scope"])
             else:
                 raise Error(f"BUG: undefined property '{pname}'")
 

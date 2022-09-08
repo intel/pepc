@@ -23,26 +23,26 @@ class _PropsCache():
     write-through policy.
     """
 
-    def _get_cpus_in_scope(self, cpu, scope):
-        """Returns all CPUs sharing the same scope 'scope' as the CPU 'cpu'."""
+    def _get_cpus_in_scope(self, cpu, sname):
+        """Returns all CPUs sharing the same specific scope as the CPU 'cpu'."""
 
-        if scope == "CPU":
+        if sname == "CPU":
             return (cpu, )
 
-        if scope == "global":
+        if sname == "global":
             return self._cpuinfo.get_cpus()
 
         levels = self._cpuinfo.get_cpu_levels(cpu)
-        if scope == "package":
-            return self._cpuinfo.package_to_cpus(levels[scope])
-        if scope == "die":
-            return self._cpuinfo.dies_to_cpus(dies=levels[scope], packages=levels["package"])
-        if scope == "node":
-            return self._cpuinfo.nodes_to_cpus(nodes=levels[scope], packages=levels["package"])
-        if scope == "core":
-            return self._cpuinfo.cores_to_cpus(cores=levels[scope], packages=levels["package"])
+        if sname == "package":
+            return self._cpuinfo.package_to_cpus(levels[sname])
+        if sname == "die":
+            return self._cpuinfo.dies_to_cpus(dies=levels[sname], packages=levels["package"])
+        if sname == "node":
+            return self._cpuinfo.nodes_to_cpus(nodes=levels[sname], packages=levels["package"])
+        if sname == "core":
+            return self._cpuinfo.cores_to_cpus(cores=levels[sname], packages=levels["package"])
 
-        raise ErrorNotSupported(f"Scope '{scope}' is not supported")
+        raise ErrorNotSupported(f"Scope '{sname}' is not supported")
 
     def is_cached(self, pname, cpu):
         """
@@ -72,18 +72,18 @@ class _PropsCache():
         except KeyError:
             raise ErrorNotFound(f"{pname} is not cached for CPU {cpu}") from None
 
-    def remove(self, pname, cpu, scope="CPU"):
+    def remove(self, pname, cpu, sname="CPU"):
         """
         Removes '(pname, cpu)' and all the other items sharing the same scope from the cache.
           * pname - name of the property.
           * cpu - an integer CPU number.
-          * scope - name of scope (e.g. "package", "core").
+          * sname - name of scope (e.g. "package", "core").
         """
 
         if not self._enable_cache:
             return
 
-        cpus = self._get_cpus_in_scope(cpu, scope)
+        cpus = self._get_cpus_in_scope(cpu, sname)
 
         for cpu in cpus: # pylint: disable=redefined-argument-from-local
             try:
@@ -91,21 +91,21 @@ class _PropsCache():
             except KeyError:
                 pass
 
-    def add(self, pname, cpu, val, scope="CPU"):
+    def add(self, pname, cpu, val, sname="CPU"):
         """
         Add value 'val' for item '(pname, cpu)' to the cache. Add it also for each CPU sharing the
-        same scope 'scope'. The argument are as follows.
+        same scope. The argument are as follows.
           * pname - name of the property.
           * cpu - an integer CPU number.
           * val - value to get cached.
-          * scope - name of scope (e.g. "package", "core").
+          * sname - name of scope (e.g. "package", "core").
         Returns 'val'.
         """
 
         if not self._enable_cache:
             return val
 
-        cpus = self._get_cpus_in_scope(cpu, scope)
+        cpus = self._get_cpus_in_scope(cpu, sname)
 
         if pname not in self._cache:
             self._cache[pname] = {}

@@ -523,7 +523,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             path = self._get_sysfs_path(prop, cpu)
             try:
                 val = self._read_prop_value_from_sysfs(prop, path)
-                self._pcache.add(pname, cpu, val, scope=prop["scope"])
+                self._pcache.add(pname, cpu, val, sname=prop["scope"])
                 return val
             except ErrorNotFound:
                 # The sysfs file was not found. The base frequency can be figured out from the MSR
@@ -536,16 +536,16 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if pname in ("base_freq", "max_eff_freq"):
             base, max_eff_freq = self._get_base_eff_freqs(cpu)
-            self._pcache.add("base_freq", cpu, base, scope=self._props["base_freq"]["scope"])
+            self._pcache.add("base_freq", cpu, base, sname=self._props["base_freq"]["scope"])
             self._pcache.add("max_eff_freq", cpu, max_eff_freq,
-                             scope=self._props["max_eff_freq"]["scope"])
+                             sname=self._props["max_eff_freq"]["scope"])
             if pname == "base_freq":
                 return base
             return max_eff_freq
 
         if pname == "hwp":
             hwp = self._get_cpu_hwp(cpu)
-            self._pcache.add("hwp", cpu, hwp, scope=prop["scope"])
+            self._pcache.add("hwp", cpu, hwp, sname=prop["scope"])
             return hwp
 
         if pname == "max_turbo_freq":
@@ -554,12 +554,12 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # Assume that max. turbo is the Linux max. frequency.
                 path = self._get_sysfs_path(self._props["max_freq"], cpu)
                 max_turbo_freq = self._read_prop_value_from_sysfs(prop, path)
-            self._pcache.add("max_turbo_freq", cpu, max_turbo_freq, scope=prop["scope"])
+            self._pcache.add("max_turbo_freq", cpu, max_turbo_freq, sname=prop["scope"])
             return max_turbo_freq
 
         if pname == "turbo":
             turbo = self._get_cpu_turbo(cpu)
-            self._pcache.add("turbo", cpu, turbo, scope=prop["scope"])
+            self._pcache.add("turbo", cpu, turbo, sname=prop["scope"])
             return turbo
 
         raise Error(f"BUG: unsupported property '{pname}'")
@@ -585,7 +585,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                         f"frequency driver '{driver}'")
 
         self._pcache.add("turbo", cpu, "on" if enable else "off",
-                         scope=self._props["turbo"]["scope"])
+                         sname=self._props["turbo"]["scope"])
 
     def _get_num_str(self, prop, cpu):
         """
@@ -621,7 +621,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             read_freq = self._read_prop_value_from_sysfs(prop, path)
 
             if freq == read_freq:
-                self._pcache.add(pname, cpu, freq, scope=prop["scope"])
+                self._pcache.add(pname, cpu, freq, sname=prop["scope"])
                 return
 
             # Sometimes the update does not happen immediately. For example, we observed this on
@@ -789,7 +789,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif "fname" in self._props[pname]:
                 path = self._get_sysfs_path(self._props[pname], cpu)
                 self._write_prop_value_to_sysfs(self._props[pname], path, val)
-                self._pcache.add(pname, cpu, val, scope=self._props[pname]["scope"])
+                self._pcache.add(pname, cpu, val, sname=self._props[pname]["scope"])
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
 
