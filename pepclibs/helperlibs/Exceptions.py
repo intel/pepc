@@ -26,12 +26,21 @@ class Error(Exception):
 
     def indent(self, indent):
         """
-        Prefix each line in the error message with the 'indent' string. The intended usage is
-        combining multiple multi-line error messages into a single message.
+        Prefix each line in the error message. The arguments are as follows.
+          * indent - can be an integer or a string. In case of an integer, each line of the error
+                     string is prefixed with the 'indent' count of white-spaces. In case of a
+                     string, each line is prefixed with the 'indent' string.
+
+        The intended usage is combining several multi-line error messages into a single message.
         """
 
-        replacement = f"\n{indent}"
-        msg = replacement + self.msg.replace("\n", replacement)
+        if isinstance(indent, int):
+            pfx = " " * indent
+        else:
+            pfx = indent
+
+        pfx += f"\n{pfx}"
+        msg = pfx + self.msg.replace("\n", pfx)
         return msg
 
     def __str__(self):
