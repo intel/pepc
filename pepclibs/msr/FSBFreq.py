@@ -73,7 +73,7 @@ _FSB_CODES = {
 FEATURES = {
     "fsb" : {
         "name" : "Bus clock speed (megahertz)",
-        "scope": "package",
+        "sname": "package",
         "help" : f"""Platform bus clock speed (FSB) in megahertz, as indicated by MSR
                      {MSR_FSB_FREQ:#x} (MSR_FSB_FREQ).""",
         "cpumodels" : tuple(_FSB_CODES.keys()),

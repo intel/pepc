@@ -33,7 +33,7 @@ PROPS = {
         "name" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["name"],
         "help" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["help"],
         "type" : "str",
-        "scope": PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["scope"],
+        "sname": PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["sname"],
         "writable" : True,
         "subprops" : {
             "pkg_cstate_limit_locked" : {
@@ -63,28 +63,28 @@ PROPS = {
         "name" : PCStateConfigCtl.FEATURES["c1_demotion"]["name"],
         "help" : PCStateConfigCtl.FEATURES["c1_demotion"]["help"],
         "type" : PCStateConfigCtl.FEATURES["c1_demotion"]["type"],
-        "scope": PCStateConfigCtl.FEATURES["c1_demotion"]["scope"],
+        "sname": PCStateConfigCtl.FEATURES["c1_demotion"]["sname"],
         "writable" : True,
     },
     "c1_undemotion" : {
         "name" : PCStateConfigCtl.FEATURES["c1_undemotion"]["name"],
         "help" : PCStateConfigCtl.FEATURES["c1_undemotion"]["help"],
         "type" : PCStateConfigCtl.FEATURES["c1_undemotion"]["type"],
-        "scope": PCStateConfigCtl.FEATURES["c1_undemotion"]["scope"],
+        "sname": PCStateConfigCtl.FEATURES["c1_undemotion"]["sname"],
         "writable" : True,
     },
     "c1e_autopromote" : {
         "name" : PowerCtl.FEATURES["c1e_autopromote"]["name"],
         "help" : PowerCtl.FEATURES["c1e_autopromote"]["help"],
         "type" : PowerCtl.FEATURES["c1e_autopromote"]["type"],
-        "scope": PowerCtl.FEATURES["c1e_autopromote"]["scope"],
+        "sname": PowerCtl.FEATURES["c1e_autopromote"]["sname"],
         "writable" : True,
     },
     "cstate_prewake" : {
         "name" : PowerCtl.FEATURES["cstate_prewake"]["name"],
         "help" : PowerCtl.FEATURES["cstate_prewake"]["help"],
         "type" : PowerCtl.FEATURES["cstate_prewake"]["type"],
-        "scope": PowerCtl.FEATURES["cstate_prewake"]["scope"],
+        "sname": PowerCtl.FEATURES["cstate_prewake"]["sname"],
         "writable" : True,
     },
     "idle_driver" : {
@@ -92,14 +92,14 @@ PROPS = {
         "help" : """Idle driver is responsible for enumerating and requesting the C-states
                     available on the platform.""",
         "type" : "str",
-        "scope": "global",
+        "sname": "global",
         "writable" : False,
     },
     "governor" : {
         "name" : "Idle governor",
         "help" : "Idle governor decides which C-state to request on an idle CPU.",
         "type" : "str",
-        "scope": "global",
+        "sname": "global",
         "writable" : True,
         "subprops" : {
             "governors" : {
@@ -107,7 +107,7 @@ PROPS = {
                 "help" : """Idle governors decide which C-state to request on an idle CPU.
                             Different governors implement different selection policy.""",
                 "type" : "list[str]",
-                "scope": "global",
+                "sname": "global",
                 "writable" : False,
             },
         },
@@ -595,7 +595,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             path = self._sysfs_cpuidle / prop["fname"]
             try:
                 val = self._read_prop_value_from_sysfs(prop, path)
-                self._pcache.add(pname, cpu, val, sname=prop["scope"])
+                self._pcache.add(pname, cpu, val, sname=prop["sname"])
                 return val
             except ErrorNotFound:
                 _LOG.debug("can't read value of property '%s', path '%s' is not found", pname,
@@ -620,14 +620,14 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         for cpu in cpus:
             if self._pcache.is_cached(pname, cpu):
-                if self._props[pname]["scope"] == "global":
+                if self._props[pname]["sname"] == "global":
                     break
                 continue
 
             if "fname" in self._props[pname]:
                 path = self._sysfs_cpuidle / self._props[pname]["fname"]
                 self._write_prop_value_to_sysfs(self._props[pname], path, val)
-                self._pcache.add(pname, cpu, val, sname=self._props[pname]["scope"])
+                self._pcache.add(pname, cpu, val, sname=self._props[pname]["sname"])
             else:
                 raise Error(f"BUG: undefined property '{pname}'")
 

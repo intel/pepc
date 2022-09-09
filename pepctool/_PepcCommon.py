@@ -84,7 +84,7 @@ def fmt_cpus(cpus, cpuinfo):
 def print_prop_msg(prop, val, cpuinfo, action=None, cpus=None, prefix=None):
     """Format and print a message about a property 'prop'."""
 
-    if cpus is None or (prop["scope"] == "global" and not prop["writable"]):
+    if cpus is None or (prop["sname"] == "global" and not prop["writable"]):
         sfx = ""
     else:
         cpus = fmt_cpus(cpus, cpuinfo)

@@ -139,10 +139,10 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             if "subprops" not in prop:
                 prop["subprops"] = {}
             else:
-                # Propagate the "scope" key to sub-properties.
+                # Propagate the 'sname' key to sub-properties.
                 for subprop in prop["subprops"].values():
-                    if "scope" not in subprop:
-                        subprop["scope"] = prop["scope"]
+                    if "sname" not in subprop:
+                        subprop["sname"] = prop["sname"]
 
         self._props = copy.deepcopy(self.props)
 
@@ -283,7 +283,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         packages.
         """
 
-        sname = prop["scope"]
+        sname = prop["sname"]
 
         if sname not in {"global", "package", "die", "core", "CPU"}:
             raise Error(f"BUG: unsupported scope \"{sname}\"")

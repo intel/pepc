@@ -25,7 +25,7 @@ MSR_HWP_REQUEST_PKG = 0x772
 FEATURES = {
     "epp" : {
         "name" : "Energy Performance Preference",
-        "scope": "package",
+        "sname": "package",
         "help" : """Energy Performance Preference is a hint to the CPU running in HWP mode about the
                     power and performance preference. Value 0 indicates highest performance and
                     value 255 indicates maximum energy savings.""",

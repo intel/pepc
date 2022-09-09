@@ -119,7 +119,7 @@ _PKG_CST_LIMITS = {
 FEATURES = {
     "pkg_cstate_limit" : {
         "name" : "Package C-state limit",
-        "scope": "package",
+        "sname": "package",
         "help" : """The deepest package C-state the platform is allowed to enter. The package
                     C-state limit is configured via MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                     (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
@@ -133,7 +133,7 @@ FEATURES = {
     },
     "locked" :  {
         "name" : "MSR lock",
-        "scope": "package",
+        "sname": "package",
         "help" : """Lock/unlock bits 15:0 of MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                     (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
                     is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
@@ -145,7 +145,7 @@ FEATURES = {
     },
     "c1_demotion" : {
         "name" : "C1 demotion",
-        "scope": "core",
+        "sname": "core",
         "help" : """Allow/disallow the CPU to demote C6/C7 requests to C1.""",
         "type" : "bool",
         "vals" : { "on" : 1, "off" : 0},
@@ -153,7 +153,7 @@ FEATURES = {
     },
     "c1_undemotion" : {
         "name" : "C1 undemotion",
-        "scope": "core",
+        "sname": "core",
         "help" : """Allow/disallow the CPU to un-demote previously demoted requests back from C1 to
                     C6/C7.""",
         "type" : "bool",

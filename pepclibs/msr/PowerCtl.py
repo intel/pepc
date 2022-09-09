@@ -39,7 +39,7 @@ _CSTATE_PREWAKE_CPUS = (CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X,
 FEATURES = {
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
-        "scope": "package",
+        "sname": "package",
         "help" : f"""When enabled, the CPU automatically converts all C1 requests to C1E requests.
                      This CPU feature is controlled by MSR {MSR_POWER_CTL:#x}, bit 1.""",
         "type" : "bool",
@@ -48,7 +48,7 @@ FEATURES = {
     },
     "cstate_prewake" : {
         "name" : "C-state prewake",
-        "scope": "package",
+        "sname": "package",
         "help" : f"""When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                      the next local APIC timer event. This CPU feature is controlled by MSR
                      {MSR_POWER_CTL:#x}, bit 30.""",

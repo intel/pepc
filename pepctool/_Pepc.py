@@ -188,7 +188,7 @@ def build_arguments_parser():
 
         option = f"--{name.replace('_', '-')}"
         name = Human.untitle(pinfo["name"])
-        text += f"""{name}. {pinfo["help"]} This option has {pinfo["scope"]} scope."""
+        text += f"""{name}. {pinfo["help"]} This option has {pinfo["sname"]} scope."""
 
         subpars2.add_argument(option, action="store_true", help=text)
     #
@@ -235,7 +235,7 @@ def build_arguments_parser():
 
         option = f"--{name.replace('_', '-')}"
         name = Human.untitle(pinfo["name"])
-        text += f"""{name}. {pinfo["help"]}{choices} This option has {pinfo["scope"]} scope."""
+        text += f"""{name}. {pinfo["help"]}{choices} This option has {pinfo["sname"]} scope."""
 
         kwargs["help"] = text
         kwargs["action"] = ArgParse.OrderedArg
@@ -277,7 +277,7 @@ def build_arguments_parser():
 
         option = f"--{name.replace('_', '-')}"
         name = Human.untitle(pinfo["name"])
-        text += f"""{name}. {pinfo["help"]} This option has {pinfo["scope"]} scope."""
+        text += f"""{name}. {pinfo["help"]} This option has {pinfo["sname"]} scope."""
 
         subpars2.add_argument(option, action="store_true", help=text)
 
@@ -324,7 +324,7 @@ def build_arguments_parser():
 
         option = f"--{name.replace('_', '-')}"
         name = Human.untitle(pinfo["name"])
-        text += f"""{name}. {pinfo["help"]}{choices}{unit} This option has {pinfo["scope"]}
+        text += f"""{name}. {pinfo["help"]}{choices}{unit} This option has {pinfo["sname"]}
                     scope."""
 
         kwargs["help"] = text

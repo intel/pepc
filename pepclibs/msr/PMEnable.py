@@ -24,7 +24,7 @@ MSR_PM_ENABLE = 0x770
 FEATURES = {
     "hwp" : {
         "name" : "Hardware Power Management enabled",
-        "scope": "package",
+        "sname": "package",
         "help" : """When hardware power management is enabled, the platform autonomously scales CPU
                     frequency depending on the load.""",
         "cpuflags" : ("hwp",),

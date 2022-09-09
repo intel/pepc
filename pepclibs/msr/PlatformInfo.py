@@ -48,7 +48,7 @@ _BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS
 FEATURES = {
     "max_non_turbo_ratio" : {
         "name" : "Maximum Non-Turbo Ratio",
-        "scope": "package",
+        "sname": "package",
         "help" : """The ratio of the maximum non-turbo frequency. This ratio multiplied by bus
                     clock speed gives the maximum non-turbo frequency.""",
         "cpumodels" : _BASEFREQ_CPUS,
@@ -58,7 +58,7 @@ FEATURES = {
     },
     "max_eff_ratio" : {
         "name" : "Maximum Efficiency Ratio",
-        "scope": "package",
+        "sname": "package",
         "help" : """The maximum efficiency CPU ratio (in practice, the minimum ratio the OS can
                     request the CPU to run at). This ratio multiplied by bus clock speed gives the
                     efficiency CPU frequency.""",

@@ -50,7 +50,7 @@ _ALL_PREFETCHERS_CPUS = CPUInfo.NEHALEMS +     \
 FEATURES = {
     "l2_hw_prefetcher" : {
         "name" : "L2 hardware prefetcher",
-        "scope": "core",
+        "sname": "core",
         "help" : """Enable/disable the L2 cache hardware prefetcher.""",
         "cpumodels" : _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
         "type" : "bool",
@@ -59,7 +59,7 @@ FEATURES = {
     },
     "l1_adj_prefetcher" : {
         "name" : "L2 adjacent cache line prefetcher",
-        "scope": "core",
+        "sname": "core",
         "help" : """Enable/disable the L2 adjacent cache lines prefetcher, which fetches cache
                     lines that comprise a cache line pair.""",
         "cpumodels" : _ALL_PREFETCHERS_CPUS,
@@ -69,7 +69,7 @@ FEATURES = {
     },
     "dcu_hw_prefetcher" : {
         "name" : "DCU hardware prefetcher",
-        "scope": "core",
+        "sname": "core",
         "help" : """Enable/disable the DCU hardware prefetcher, which fetches the next cache line
                     into L1 data cache.""",
         "cpumodels" : _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
@@ -79,7 +79,7 @@ FEATURES = {
     },
     "dcu_ip_prefetcher" : {
         "name" : "DCU IP prefetcher",
-        "scope": "core",
+        "sname": "core",
         "help" : """Enable/disable the DCU IP prefetcher, which uses sequential load history (based
                     on instruction pointer of previous loads) to determine whether to prefetch
                     additional lines.""",

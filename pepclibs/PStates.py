@@ -34,7 +34,7 @@ PROPS = {
         "help" : "Minimum frequency the operating system will configure the CPU to run at.",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : True,
     },
     "max_freq" : {
@@ -42,7 +42,7 @@ PROPS = {
         "help" : "Maximum frequency the operating system will configure the CPU to run at.",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : True,
     },
     "min_freq_limit" : {
@@ -50,7 +50,7 @@ PROPS = {
         "help" : "Minimum supported CPU frequency.",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : False,
     },
     "max_freq_limit" : {
@@ -58,7 +58,7 @@ PROPS = {
         "help" : "Maximum supported CPU frequency.",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : False,
     },
     "base_freq" : {
@@ -66,7 +66,7 @@ PROPS = {
         "help" : "Base CPU frequency.",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : False,
     },
     "max_eff_freq" : {
@@ -74,7 +74,7 @@ PROPS = {
         "help" : "Maximum energy efficient CPU frequency.",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : False,
     },
     "turbo" : {
@@ -82,7 +82,7 @@ PROPS = {
         "help" : """When turbo is enabled, the CPUs can automatically run at a frequency greater
                     than base frequency.""",
         "type" : "bool",
-        "scope": "global",
+        "sname": "global",
         "writable" : True,
     },
     "max_turbo_freq" : {
@@ -90,7 +90,7 @@ PROPS = {
         "help" : "Maximum frequency CPU can run at in turbo mode.",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : False,
     },
     "min_uncore_freq" : {
@@ -98,7 +98,7 @@ PROPS = {
         "help" : "Minimum frequency the operating system will configure the uncore to run at.",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "die",
+        "sname": "die",
         "writable" : True,
     },
     "max_uncore_freq" : {
@@ -106,7 +106,7 @@ PROPS = {
         "help" : "Maximum frequency the operating system will configure the uncore to run at.",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "die",
+        "sname": "die",
         "writable" : True,
     },
     "min_uncore_freq_limit" : {
@@ -114,7 +114,7 @@ PROPS = {
         "help" : "Minimum supported uncore frequency",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "die",
+        "sname": "die",
         "writable" : False,
     },
     "max_uncore_freq_limit" : {
@@ -122,7 +122,7 @@ PROPS = {
         "help" : "Maximum supported uncore frequency",
         "unit" : "Hz",
         "type" : "int",
-        "scope": "die",
+        "sname": "die",
         "writable" : False,
     },
     "hwp" : {
@@ -130,7 +130,7 @@ PROPS = {
         "help" : """When hardware power management is enabled, CPUs can automatically scale their
                     frequency without active OS involvement.""",
         "type" : "bool",
-        "scope": "global",
+        "sname": "global",
         "writable" : False,
     },
     "epp" : {
@@ -139,7 +139,7 @@ PROPS = {
                     performance. EPP has an effect only when the CPU is in the hardware power
                     management (HWP) mode.""",
         "type" : "int",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : True,
     },
     "epp_policy" : {
@@ -147,14 +147,14 @@ PROPS = {
         "help" : """EPP policy is a name, such as 'performance', which Linux maps to an EPP value,
                     which may depend on the platform.""",
         "type" : "str",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : True,
         "subprops" : {
             "epp_policies" : {
                 "name" : "Available EPP policies",
                 "help" : "Available Linux EPP policy names.",
                 "type" : "list[str]",
-                "scope": "global",
+                "sname": "global",
                 "writable" : False,
             },
         },
@@ -166,7 +166,7 @@ PROPS = {
                     efficiency. EPP may have an effect in both HWP enabled and disabled modes (HWP
                     stands for Hardware Power Management).""",
         "type" : "int",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : True,
     },
     "epb_policy" : {
@@ -174,7 +174,7 @@ PROPS = {
         "help" : """EPB policy is a name, such as 'performance', which Linux maps to an EPB value,
                     which may depend on the platform.""",
         "type" : "str",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : True,
         "subprops" : {
             "epb_policies" : {
@@ -182,7 +182,7 @@ PROPS = {
                 "help" : "Available Linux EPB policy names.",
                 "type" : "list[str]",
                 "writable" : False,
-                "scope": "global",
+                "sname": "global",
             },
         },
     },
@@ -191,7 +191,7 @@ PROPS = {
         "help" : """CPU frequency driver enumerates and requests the P-states available on the
                     platform.""",
         "type" : "str",
-        "scope": "global",
+        "sname": "global",
         "writable" : False,
     },
     "governor" : {
@@ -199,7 +199,7 @@ PROPS = {
         "help" : """CPU frequency governor decides which P-state to select on a CPU depending
                     on CPU business and other factors.""",
         "type" : "str",
-        "scope": "CPU",
+        "sname": "CPU",
         "writable" : True,
         "subprops" : {
             "governors" : {
@@ -208,7 +208,7 @@ PROPS = {
                             depending on CPU business and other factors. Different governors
                             implement different selection policy.""",
                 "type" : "list[str]",
-                "scope": "global",
+                "sname": "global",
                 "writable" : False,
             },
         },
@@ -523,7 +523,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             path = self._get_sysfs_path(prop, cpu)
             try:
                 val = self._read_prop_value_from_sysfs(prop, path)
-                self._pcache.add(pname, cpu, val, sname=prop["scope"])
+                self._pcache.add(pname, cpu, val, sname=prop["sname"])
                 return val
             except ErrorNotFound:
                 # The sysfs file was not found. The base frequency can be figured out from the MSR
@@ -536,16 +536,16 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if pname in ("base_freq", "max_eff_freq"):
             base, max_eff_freq = self._get_base_eff_freqs(cpu)
-            self._pcache.add("base_freq", cpu, base, sname=self._props["base_freq"]["scope"])
+            self._pcache.add("base_freq", cpu, base, sname=self._props["base_freq"]["sname"])
             self._pcache.add("max_eff_freq", cpu, max_eff_freq,
-                             sname=self._props["max_eff_freq"]["scope"])
+                             sname=self._props["max_eff_freq"]["sname"])
             if pname == "base_freq":
                 return base
             return max_eff_freq
 
         if pname == "hwp":
             hwp = self._get_cpu_hwp(cpu)
-            self._pcache.add("hwp", cpu, hwp, sname=prop["scope"])
+            self._pcache.add("hwp", cpu, hwp, sname=prop["sname"])
             return hwp
 
         if pname == "max_turbo_freq":
@@ -554,12 +554,12 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # Assume that max. turbo is the Linux max. frequency.
                 path = self._get_sysfs_path(self._props["max_freq"], cpu)
                 max_turbo_freq = self._read_prop_value_from_sysfs(prop, path)
-            self._pcache.add("max_turbo_freq", cpu, max_turbo_freq, sname=prop["scope"])
+            self._pcache.add("max_turbo_freq", cpu, max_turbo_freq, sname=prop["sname"])
             return max_turbo_freq
 
         if pname == "turbo":
             turbo = self._get_cpu_turbo(cpu)
-            self._pcache.add("turbo", cpu, turbo, sname=prop["scope"])
+            self._pcache.add("turbo", cpu, turbo, sname=prop["sname"])
             return turbo
 
         raise Error(f"BUG: unsupported property '{pname}'")
@@ -585,7 +585,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                         f"frequency driver '{driver}'")
 
         self._pcache.add("turbo", cpu, "on" if enable else "off",
-                         sname=self._props["turbo"]["scope"])
+                         sname=self._props["turbo"]["sname"])
 
     def _get_num_str(self, prop, cpu):
         """
@@ -621,7 +621,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             read_freq = self._read_prop_value_from_sysfs(prop, path)
 
             if freq == read_freq:
-                self._pcache.add(pname, cpu, freq, sname=prop["scope"])
+                self._pcache.add(pname, cpu, freq, sname=prop["sname"])
                 return
 
             # Sometimes the update does not happen immediately. For example, we observed this on
@@ -780,7 +780,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         for cpu in cpus:
             if self._pcache.is_cached(pname, cpu):
-                if self._props[pname]["scope"] == "global":
+                if self._props[pname]["sname"] == "global":
                     break
                 continue
 
@@ -789,7 +789,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif "fname" in self._props[pname]:
                 path = self._get_sysfs_path(self._props[pname], cpu)
                 self._write_prop_value_to_sysfs(self._props[pname], path, val)
-                self._pcache.add(pname, cpu, val, sname=self._props[pname]["scope"])
+                self._pcache.add(pname, cpu, val, sname=self._props[pname]["sname"])
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
 
