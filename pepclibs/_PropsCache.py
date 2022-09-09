@@ -19,7 +19,7 @@ from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorNotSupported
 class _PropsCache():
     """
     This class implements properties caching. The cache is indexed by property name and CPU number.
-    It takes property scope ("global", "package", etc) into account as well. The cache uses the
+    It takes the CPU scope (global 0, package 3, etc) into account as well. The cache uses the
     write-through policy.
     """
 
@@ -42,7 +42,7 @@ class _PropsCache():
         if sname == "core":
             return self._cpuinfo.cores_to_cpus(cores=levels[sname], packages=levels["package"])
 
-        raise ErrorNotSupported(f"Scope '{sname}' is not supported")
+        raise ErrorNotSupported(f"Scope name '{sname}' is not supported")
 
     def is_cached(self, pname, cpu):
         """

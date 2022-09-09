@@ -277,16 +277,12 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         self.set_props(((pname, val),), cpus=(cpu,))
 
     def _validate_prop_scope(self, prop, cpus):
-        """
-        Make sure that CPUs in 'cpus' match the scope of a property described by 'prop'. For
-        example, if the property has "package" scope, 'cpus' should include all CPUs in one or more
-        packages.
-        """
+        """Make sure that CPUs in 'cpus' match the scope of a property described by 'prop'."""
 
         sname = prop["sname"]
 
         if sname not in {"global", "package", "die", "core", "CPU"}:
-            raise Error(f"BUG: unsupported scope \"{sname}\"")
+            raise Error(f"BUG: unsupported scope name \"{sname}\"")
 
         if sname == "CPU":
             return
@@ -314,8 +310,8 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
             if sname in {"core", "die"}:
                 # Build the cores or dies to packages map, in order to make the error message more
-                # helpful. We use "core" in variable names, but in case of the "die" scope, they
-                # actually mean "die".
+                # helpful. We use "core" in variable names, but in case of the "die" scope name,
+                # they actually mean "die".
 
                 pkg_cores = getattr(self._cpuinfo, f"package_to_{sname}s")(pkg)
                 pkg_cores_str = Human.rangify(pkg_cores)
