@@ -808,7 +808,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             if prop.get("type") == "bool":
                 self._validate_bool_type_value(prop, val)
 
-            self._validate_prop_scope(prop, cpus)
+            self._validate_cpus_vs_scope(prop, cpus)
 
             if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
                 raise Error(self._uncore_errmsg)

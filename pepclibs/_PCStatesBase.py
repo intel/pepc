@@ -276,7 +276,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
         self.set_props(((pname, val),), cpus=(cpu,))
 
-    def _validate_prop_scope(self, prop, cpus):
+    def _validate_cpus_vs_scope(self, prop, cpus):
         """Make sure that CPUs in 'cpus' match the scope of a property described by 'prop'."""
 
         sname = prop["sname"]

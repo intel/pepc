@@ -638,7 +638,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for pname, val in inprops.items():
-            self._validate_prop_scope(self._props[pname], cpus)
+            self._validate_cpus_vs_scope(self._props[pname], cpus)
 
             if pname == "governor":
                 self._validate_governor_name(val)
