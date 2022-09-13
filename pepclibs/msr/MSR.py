@@ -158,13 +158,14 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         return regval
 
-    def read(self, regaddr, cpus="all"):
+    def read(self, regaddr, cpus="all", sname="CPU"):
         """
         Read an MSR on CPUs 'cpus' and yield the result. The arguments are as follows.
           * regaddr - address of the MSR to read.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
                    7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+          * sname - the 'regaddr' MSR scope name (e.g. "package", "core").
 
         Yields tuples of '(cpu, regval)'.
           * cpu - the CPU number the MSR was read from.
@@ -184,44 +185,47 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
             yield (cpu, regval)
 
-    def read_cpu(self, regaddr, cpu):
+    def read_cpu(self, regaddr, cpu, sname="CPU"):
         """
         Read an MSR at 'regaddr' on CPU 'cpu' and return read result. The arguments are as follows.
           * regaddr - address of the MSR to read.
           * cpu - the CPU to read the MSR at. Can be an integer or a string with an integer number.
+          * sname - same as in 'read()'.
         """
 
         regval = None
-        for _, regval in self.read(regaddr, cpus=(cpu,)):
+        for _, regval in self.read(regaddr, cpus=(cpu,), sname=sname):
             pass
 
         return regval
 
-    def read_bits(self, regaddr, bits, cpus="all"):
+    def read_bits(self, regaddr, bits, cpus="all", sname="CPU"):
         """
         Read bits 'bits' from an MSR at 'regaddr' from CPUs in 'cpus' and yield the results. The
         arguments are as follows.
           * regaddr - address of the MSR to read the bits from.
           * bits - the MSR bits range (similar to the 'bits' argument in 'get_bits()').
           * cpus - the CPUs to read from (similar to the 'cpus' argument in 'read()').
+          * sname - same as in 'read()'.
 
         Yields tuples of '(cpu, regval)'.
           * cpu - the CPU number the MSR was read from.
           * val - the value in MSR bits 'bits'.
         """
 
-        for cpu, regval in self.read(regaddr, cpus):
+        for cpu, regval in self.read(regaddr, cpus, sname=sname):
             yield (cpu, self.get_bits(regval, bits))
 
-    def read_cpu_bits(self, regaddr, bits, cpu):
+    def read_cpu_bits(self, regaddr, bits, cpu, sname="CPU"):
         """
         Read bits 'bits' from an MSR at 'regaddr' on CPU 'cpu'. The arguments are as follows.
           * regaddr - address of the MSR to read the bits from.
           * bits - the MSR bits range (similar to the 'bits' argument in 'get_bits()').
           * cpu - the CPU to read the MSR at. Can be an integer or a string with an integer number.
+          * sname - same as in 'read()'.
         """
 
-        regval = self.read_cpu(regaddr, cpu)
+        regval = self.read_cpu(regaddr, cpu, sname=sname)
         return self.get_bits(regval, bits)
 
     def set_bits(self, regval, bits, val):
@@ -268,12 +272,13 @@ class MSR(ClassHelpers.SimpleCloseContext):
                             f"failed to write to file '{path}'{self._pman.hostmsg}:\n"
                             f"{err}") from err
 
-    def write(self, regaddr, regval, cpus="all"):
+    def write(self, regaddr, regval, cpus="all", sname="CPU"):
         """
         Write 'regval' to an MSR at 'regaddr' on CPUs in 'cpus'. The arguments are as follows.
           * regaddr - address of the MSR to write to.
           * regval - the value to write to the MSR.
           * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read()').
+          * sname - the 'regaddr' MSR scope name (e.g. "package", "core").
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
@@ -289,17 +294,18 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
             self._pcache.add(regaddr, cpu, regval)
 
-    def write_cpu(self, regaddr, regval, cpu):
+    def write_cpu(self, regaddr, regval, cpu, sname="CPU"):
         """
         Write 'regval' to an MSR at 'regaddr' on CPU 'cpu'. The arguments are as follows.
           * regaddr - address of the MSR to write to.
           * regval - the value to write to the MSR.
           * cpu - the CPU to write the MSR on. Can be an integer or a string with an integer number.
+          * sname - same as in 'write()'.
         """
 
-        self.write(regaddr, regval, cpus=(cpu,))
+        self.write(regaddr, regval, cpus=(cpu,), sname=sname)
 
-    def write_bits(self, regaddr, bits, val, cpus="all"):
+    def write_bits(self, regaddr, bits, val, cpus="all", sname="CPU"):
         """
         Write value 'val' to bits 'bits' of an MSR at 'regaddr' on CPUs in 'cpus'. The arguments are
         as follows.
@@ -308,14 +314,15 @@ class MSR(ClassHelpers.SimpleCloseContext):
           * val - the integer value to write to MSR bits 'bits'. Use 'MSR.ALL_BITS_1' to set all
                   bits to '1'.
           * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read()').
+          * sname - same as in 'write()'.
         """
 
-        for cpu, regval in self.read(regaddr, cpus):
+        for cpu, regval in self.read(regaddr, cpus, sname=sname):
             new_regval = self.set_bits(regval, bits, val)
             if regval != new_regval:
-                self.write(regaddr, new_regval, cpu)
+                self.write(regaddr, new_regval, cpu, sname=sname)
 
-    def write_cpu_bits(self, regaddr, bits, val, cpu):
+    def write_cpu_bits(self, regaddr, bits, val, cpu, sname="CPU"):
         """
         Write value 'val' to bits 'bits' of an MSR at 'regaddr' on CPU 'cpu'. The arguments are
         as follows.
@@ -324,9 +331,10 @@ class MSR(ClassHelpers.SimpleCloseContext):
           * val - the integer value to write to MSR bits 'bits'. Use 'MSR.ALL_BITS_1' to set all
                   bits to '1'.
           * cpu - the CPU to write the MSR on. Can be an integer or a string with an integer number.
+          * sname - same as in 'write()'.
         """
 
-        self.write_bits(regaddr, bits, val, cpus=(cpu,))
+        self.write_bits(regaddr, bits, val, cpus=(cpu,), sname=sname)
 
     def _ensure_dev_msr(self):
         """
