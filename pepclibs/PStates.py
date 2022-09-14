@@ -764,7 +764,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             if new_max_freq != cur_max_freq:
                 self._write_freq_prop_value_to_sysfs(max_freq_key, new_max_freq, cpu)
 
-    def _set_cpu_prop_value(self, pname, val, cpus):
+    def _set_prop_value(self, pname, val, cpus):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
 
         if pname.startswith("epp"):
@@ -827,7 +827,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # Were already set.
                 continue
 
-            self._set_cpu_prop_value(pname, val, cpus)
+            self._set_prop_value(pname, val, cpus)
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""

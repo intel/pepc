@@ -604,7 +604,7 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
-    def _set_cpu_prop_value(self, pname, val, cpus):
+    def _set_prop_value(self, pname, val, cpus):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
 
         if pname in PowerCtl.FEATURES:
@@ -644,7 +644,7 @@ class CStates(_PCStatesBase.PCStatesBase):
                 self._validate_governor_name(val)
 
         for pname, val in inprops.items():
-            self._set_cpu_prop_value(pname, val, cpus)
+            self._set_prop_value(pname, val, cpus)
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
