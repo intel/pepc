@@ -778,18 +778,20 @@ class PStates(_PCStatesBase.PCStatesBase):
         for cpu in cpus:
             self._pcache.remove(pname, cpu)
 
+        prop = self._props[pname]
+
         for cpu in cpus:
             if self._pcache.is_cached(pname, cpu):
-                if self._props[pname]["sname"] == "global":
+                if prop["sname"] == "global":
                     break
                 continue
 
             if pname == "turbo":
                 self._set_turbo(cpu, val in {True, "on", "enable"})
-            elif "fname" in self._props[pname]:
-                path = self._get_sysfs_path(self._props[pname], cpu)
-                self._write_prop_value_to_sysfs(self._props[pname], path, val)
-                self._pcache.add(pname, cpu, val, sname=self._props[pname]["sname"])
+            elif "fname" in prop:
+                path = self._get_sysfs_path(prop, cpu)
+                self._write_prop_value_to_sysfs(prop, path, val)
+                self._pcache.add(pname, cpu, val, sname=prop["sname"])
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
 
