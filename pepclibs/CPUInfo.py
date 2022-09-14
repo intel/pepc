@@ -395,14 +395,14 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         Assume a system with 2 packages, 1 die per package, 2 cores per package, and 2 CPUs per
         core:
-            * Package 0 includes die 0.
-            * Package 1 includes die 1.
-            * Package 0 includes cores 1 and 2.
-            * Package 1 includes cores 2 and 3.
-            * Core 0 includes CPUs 0 and 4
-            * Core 1 includes CPUs 1 and 5
-            * Core 3 includes CPUs 2 and 6
-            * Core 4 includes CPUs 3 and 7
+          * Package 0 includes die 0.
+          * Package 1 includes die 1.
+          * Die 0 includes cores 0 and 1.
+          * Die 1 includes cores 2 and 3.
+          * Core 0 includes CPUs 0 and 4
+          * Core 1 includes CPUs 1 and 5
+          * Core 3 includes CPUs 2 and 6
+          * Core 4 includes CPUs 3 and 7
 
         Examples.
 
