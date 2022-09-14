@@ -73,11 +73,11 @@ def _test_msr_read_good(params):
 
     for msr in msr_common.get_msr_objs(params):
         for tp in  _get_msr_test_params(params):
-            for cpu, _ in msr.read(tp["addr"], cpus=params["testcpus"]):
+            for cpu, _ in msr.read(tp["addr"], cpus=params["testcpus"], sname=tp["sname"]):
                 assert cpu in params["testcpus"]
 
             read_cpus = []
-            for cpu, _ in msr.read(tp["addr"]):
+            for cpu, _ in msr.read(tp["addr"], sname=tp["sname"]):
                 read_cpus.append(cpu)
             assert read_cpus == params["cpus"]
 
@@ -88,7 +88,7 @@ def _test_msr_read_bad(params):
         tp = next(_get_msr_test_params(params))
         for bad_cpu in msr_common.get_bad_cpu_nums(params):
             with pytest.raises(Error):
-                for cpu, _ in msr.read(tp["addr"], cpus=[bad_cpu]):
+                for cpu, _ in msr.read(tp["addr"], cpus=[bad_cpu], sname=tp["sname"]):
                     assert cpu == bad_cpu
 
 def test_msr_read(params):
@@ -102,17 +102,17 @@ def _test_msr_write_good(params):
 
     for msr in msr_common.get_msr_objs(params):
         for tp in  _get_msr_test_params(params, include_ro=False):
-            val = msr.read_cpu(tp["addr"], params["testcpus"][0])
+            val = msr.read_cpu(tp["addr"], params["testcpus"][0], sname=tp["sname"])
             mask = _bits_to_mask(tp["bits"])
             newval = mask ^ val
-            msr.write(tp["addr"], newval, cpus=params["testcpus"])
+            msr.write(tp["addr"], newval, cpus=params["testcpus"], sname=tp["sname"])
 
-            for cpu, val in msr.read(tp["addr"], cpus=params["testcpus"]):
+            for cpu, val in msr.read(tp["addr"], cpus=params["testcpus"], sname=tp["sname"]):
                 assert cpu in params["testcpus"]
                 assert val == newval
 
-            msr.write(tp["addr"], val)
-            for cpu, newval in msr.read(tp["addr"]):
+            msr.write(tp["addr"], val, sname=tp["sname"])
+            for cpu, newval in msr.read(tp["addr"], sname=tp["sname"]):
                 assert cpu in params["cpus"]
                 assert val == newval
 
@@ -122,10 +122,10 @@ def _test_msr_write_bad(params):
     tp = next(_get_msr_test_params(params))
 
     for msr in msr_common.get_msr_objs(params):
-        val = msr.read_cpu(tp["addr"], params["testcpus"][0])
+        val = msr.read_cpu(tp["addr"], params["testcpus"][0], sname=tp["sname"])
         for bad_cpu in msr_common.get_bad_cpu_nums(params):
             with pytest.raises(Error):
-                msr.write(tp["addr"], val, cpus=bad_cpu)
+                msr.write(tp["addr"], val, cpus=bad_cpu, sname=tp["sname"])
 
     # Following test will expect failure when writing to readonly MSR. On emulated host, such writes
     # don't fail.
@@ -138,10 +138,10 @@ def _test_msr_write_bad(params):
             if tp["addr"] in (MSR_TURBO_RATIO_LIMIT, MSR_TURBO_RATIO_LIMIT1):
                 continue
 
-            val = msr.read_cpu(tp["addr"], params["testcpus"][0])
+            val = msr.read_cpu(tp["addr"], params["testcpus"][0], sname=tp["sname"])
             mask = _bits_to_mask(tp["bits"])
             with pytest.raises(Error):
-                msr.write(tp["addr"], mask ^ val, cpus=params["testcpus"])
+                msr.write(tp["addr"], mask ^ val, cpus=params["testcpus"], sname=tp["sname"])
 
 def test_msr_write(params):
     """Test the 'write()' method of the 'MSR' class."""
@@ -155,7 +155,7 @@ def _test_msr_read_cpu_good(params):
     for msr in msr_common.get_msr_objs(params):
         for tp in  _get_msr_test_params(params):
             for cpu in _get_good_msr_cpu_nums(params):
-                msr.read_cpu(tp["addr"], cpu=cpu)
+                msr.read_cpu(tp["addr"], cpu=cpu, sname=tp["sname"])
 
 def _test_msr_read_cpu_bad(params):
     """Test the 'read_cpu()' method for bad option values."""
@@ -164,7 +164,7 @@ def _test_msr_read_cpu_bad(params):
     for msr in msr_common.get_msr_objs(params):
         for bad_cpu in msr_common.get_bad_cpu_nums(params):
             with pytest.raises(Error):
-                msr.read_cpu(tp["addr"], cpu=bad_cpu)
+                msr.read_cpu(tp["addr"], cpu=bad_cpu, sname=tp["sname"])
 
 def test_msr_read_cpu(params):
     """Test the 'read_cpu()' method."""
@@ -179,10 +179,10 @@ def _test_msr_write_cpu_good(params):
         for tp in _get_msr_test_params(params, include_ro=False):
             mask = _bits_to_mask(tp["bits"])
             for cpu in _get_good_msr_cpu_nums(params):
-                val = msr.read_cpu(tp["addr"], cpu)
+                val = msr.read_cpu(tp["addr"], cpu, sname=tp["sname"])
                 newval = mask ^ val
-                msr.write_cpu(tp["addr"], newval, cpu)
-                assert newval == msr.read_cpu(tp["addr"], cpu)
+                msr.write_cpu(tp["addr"], newval, cpu, sname=tp["sname"])
+                assert newval == msr.read_cpu(tp["addr"], cpu, sname=tp["sname"])
 
 def _test_msr_write_cpu_bad(params):
     """Test the 'write_cpu()' method for bad option values."""
@@ -190,10 +190,10 @@ def _test_msr_write_cpu_bad(params):
     tp = next(_get_msr_test_params(params))
 
     for msr in msr_common.get_msr_objs(params):
-        val = msr.read_cpu(tp["addr"], params["testcpus"][0])
+        val = msr.read_cpu(tp["addr"], params["testcpus"][0], sname=tp["sname"])
         for bad_cpu in msr_common.get_bad_cpu_nums(params):
             with pytest.raises(Error):
-                msr.write_cpu(tp["addr"], val, bad_cpu)
+                msr.write_cpu(tp["addr"], val, bad_cpu, sname=tp["sname"])
 
 def test_msr_write_cpu(params):
     """Test the 'write_cpu()' method."""
@@ -207,13 +207,14 @@ def _test_msr_read_bits_good(params):
     for msr in msr_common.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
             for bits in tp["bits"]:
-                for cpu, _ in msr.read_bits(tp["addr"], bits, cpus=params["testcpus"]):
+                for cpu, _ in msr.read_bits(tp["addr"], bits, cpus=params["testcpus"],
+                                            sname=tp["sname"]):
                     assert cpu in params["testcpus"]
 
         for tp in _get_msr_test_params(params, include_ro=False):
             bits = tp["bits"][0]
             read_cpus = []
-            for cpu, _ in msr.read_bits(tp["addr"], bits):
+            for cpu, _ in msr.read_bits(tp["addr"], bits, sname=tp["sname"]):
                 read_cpus.append(cpu)
             assert read_cpus == params["cpus"]
 
@@ -231,12 +232,12 @@ def _test_msr_read_bits_bad(params):
 
         for bad_cpu in msr_common.get_bad_cpu_nums(params):
             with pytest.raises(Error):
-                for cpu, _ in msr.read_bits(tp["addr"], bits, cpus=[bad_cpu]):
+                for cpu, _ in msr.read_bits(tp["addr"], bits, cpus=[bad_cpu], sname=tp["sname"]):
                     assert cpu == bad_cpu
 
         bad_bits = (msr.regbits + 1, 0)
         with pytest.raises(Error):
-            for cpu1, _ in msr.read_bits(tp["addr"], bad_bits, cpus=cpu):
+            for cpu1, _ in msr.read_bits(tp["addr"], bad_bits, cpus=cpu, sname=tp["sname"]):
                 assert cpu == cpu1
 
 def test_msr_read_bits(params):
@@ -253,17 +254,17 @@ def _test_msr_write_bits_good(params):
             mask = _bits_to_mask(tp["bits"])
             bits = tp["bits"][0]
 
-            for cpu, val in msr.read(tp["addr"], cpus=params["testcpus"]):
+            for cpu, val in msr.read(tp["addr"], cpus=params["testcpus"], sname=tp["sname"]):
                 newval = msr.get_bits(val ^ mask, bits)
-                msr.write_bits(tp["addr"], bits, newval, cpus=[cpu])
+                msr.write_bits(tp["addr"], bits, newval, cpus=[cpu], sname=tp["sname"])
 
-                for _, bitsval in msr.read_bits(tp["addr"], bits, cpus=[cpu]):
+                for _, bitsval in msr.read_bits(tp["addr"], bits, cpus=[cpu], sname=tp["sname"]):
                     assert newval == bitsval
 
-            val = msr.read_cpu(tp["addr"], params["testcpus"][0])
+            val = msr.read_cpu(tp["addr"], params["testcpus"][0], sname=tp["sname"])
             newval = msr.get_bits(val ^ mask, bits)
-            msr.write_bits(tp["addr"], bits, newval)
-            for _, val in msr.read_bits(tp["addr"], bits):
+            msr.write_bits(tp["addr"], bits, newval, sname=tp["sname"])
+            for _, val in msr.read_bits(tp["addr"], bits, sname=tp["sname"]):
                 assert val == newval
 
 def _test_msr_write_bits_bad(params):
@@ -274,20 +275,20 @@ def _test_msr_write_bits_bad(params):
     cpu = params["testcpus"][0]
 
     for msr in msr_common.get_msr_objs(params):
-        val = msr.read(tp["addr"], cpus=cpu)
+        val = msr.read(tp["addr"], cpus=cpu, sname=tp["sname"])
 
         for bad_cpu in msr_common.get_bad_cpu_nums(params):
             with pytest.raises(Error):
-                msr.write_bits(tp["addr"], bits, val, cpus=[bad_cpu])
+                msr.write_bits(tp["addr"], bits, val, cpus=[bad_cpu], sname=tp["sname"])
 
         bits_cnt = (bits[0] - bits[1]) + 1
         bad_val = (1 << bits_cnt)
         with pytest.raises(Error):
-            msr.write_bits(tp["addr"], bits, bad_val, cpus=[cpu])
+            msr.write_bits(tp["addr"], bits, bad_val, cpus=[cpu], sname=tp["sname"])
 
         bad_bits = (msr.regbits + 1, 0)
         with pytest.raises(Error):
-            msr.write_bits(tp["addr"], bad_bits, val, cpus=[cpu])
+            msr.write_bits(tp["addr"], bad_bits, val, cpus=[cpu], sname=tp["sname"])
 
         # Repeating this negative test for every CPU is an overkill.
         break
@@ -305,7 +306,7 @@ def _test_msr_read_cpu_bits_good(params):
         for tp in _get_msr_test_params(params):
             for bits in tp["bits"]:
                 for cpu in _get_good_msr_cpu_nums(params):
-                    msr.read_cpu_bits(tp["addr"], bits, cpu)
+                    msr.read_cpu_bits(tp["addr"], bits, cpu, sname=tp["sname"])
 
 def _test_msr_read_cpu_bits_bad(params):
     """Test 'read_cpu_bits()' method for bad option values."""
@@ -317,11 +318,11 @@ def _test_msr_read_cpu_bits_bad(params):
         bits = tp["bits"][0]
         for bad_cpu in msr_common.get_bad_cpu_nums(params):
             with pytest.raises(Error):
-                msr.read_cpu_bits(tp["addr"], bits, bad_cpu)
+                msr.read_cpu_bits(tp["addr"], bits, bad_cpu, sname=tp["sname"])
 
         bad_bits = (msr.regbits + 1, 0)
         with pytest.raises(Error):
-            msr.read_cpu_bits(tp["addr"], bad_bits, cpu)
+            msr.read_cpu_bits(tp["addr"], bad_bits, cpu, sname=tp["sname"])
 
         # Repeating this negative test for every CPU is an overkill.
         break
@@ -340,11 +341,11 @@ def _test_msr_write_cpu_bits_good(params):
             mask = _bits_to_mask(tp["bits"])
             for bits in tp["bits"]:
                 for cpu in _get_good_msr_cpu_nums(params):
-                    val = msr.read_cpu(tp["addr"], cpu)
+                    val = msr.read_cpu(tp["addr"], cpu, sname=tp["sname"])
                     newval = msr.get_bits(val ^ mask, bits)
-                    msr.write_cpu_bits(tp["addr"], bits, newval, cpu)
+                    msr.write_cpu_bits(tp["addr"], bits, newval, cpu, sname=tp["sname"])
 
-                    val = msr.read_cpu_bits(tp["addr"], bits, cpu)
+                    val = msr.read_cpu_bits(tp["addr"], bits, cpu, sname=tp["sname"])
                     assert val == newval
 
 def _test_msr_write_cpu_bits_bad(params):
@@ -355,19 +356,19 @@ def _test_msr_write_cpu_bits_bad(params):
     cpu = params["testcpus"][0]
 
     for msr in msr_common.get_msr_objs(params):
-        val = msr.read_cpu_bits(tp["addr"], bits, cpu)
+        val = msr.read_cpu_bits(tp["addr"], bits, cpu, sname=tp["sname"])
         for bad_cpu in msr_common.get_bad_cpu_nums(params):
             with pytest.raises(Error):
-                msr.write_cpu_bits(tp["addr"], bits, val, bad_cpu)
+                msr.write_cpu_bits(tp["addr"], bits, val, bad_cpu, sname=tp["sname"])
 
         bits_cnt = (bits[0] - bits[1]) + 1
         bad_val = (1 << bits_cnt)
         with pytest.raises(Error):
-            msr.write_cpu_bits(tp["addr"], bits, bad_val, cpu)
+            msr.write_cpu_bits(tp["addr"], bits, bad_val, cpu, sname=tp["sname"])
 
         bad_bits = (msr.regbits + 1, 0)
         with pytest.raises(Error):
-            msr.write_cpu_bits(tp["addr"], bad_bits, val, cpu)
+            msr.write_cpu_bits(tp["addr"], bad_bits, val, cpu, sname=tp["sname"])
 
         # Repeating this negative test for every CPU is an overkill.
         break
