@@ -3,11 +3,18 @@
 Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.19] - ADD DATE HERE
+### Fixed
+### Added
+### Removed
+### Changed
+
 ## [1.3.18] - ADD DATE HERE
 ### Fixed
 ### Added
 ### Removed
 ### Changed
+ - Another minor update in 'Exceptions.py' to satisfy 'wult' project needs.
 
 ## [1.3.17] - 2022-09-08
 ### Fixed
