@@ -49,7 +49,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
         * Get/set bits from/in a user-provided MSR value: 'get_bits()', 'set_bits()'.
     """
 
-    def _cache_add(self, regaddr, regval, cpu, dirty=False):
+    def _cache_add(self, regaddr, regval, cpu):
         """Add CPU 'cpu' MSR at 'regaddr' with its value 'regval' to the cache."""
 
         if not self._enable_cache:
@@ -57,10 +57,8 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         if cpu not in self._cache:
             self._cache[cpu] = {}
-        if regaddr not in self._cache[cpu]:
-            self._cache[cpu][regaddr] = {}
 
-        self._cache[cpu][regaddr] = { "regval" : regval, "dirty" : dirty }
+        self._cache[cpu][regaddr] = regval
 
     def _cache_get(self, regaddr, cpu):
         """
@@ -75,7 +73,18 @@ class MSR(ClassHelpers.SimpleCloseContext):
         if regaddr not in self._cache[cpu]:
             return None
 
-        return self._cache[cpu][regaddr]["regval"]
+        return self._cache[cpu][regaddr]
+
+    def _add_for_transation(self, regaddr, regval, cpu):
+        """Add CPU 'cpu' MSR at 'regaddr' with its value 'regval' to the transaction buffer."""
+
+        if not self._enable_cache:
+            return
+
+        if cpu not in self._transaction_buffer:
+            self._transaction_buffer[cpu] = {}
+
+        self._transaction_buffer[cpu][regaddr] = regval
 
     def start_transaction(self):
         """
@@ -101,21 +110,11 @@ class MSR(ClassHelpers.SimpleCloseContext):
         if not self._in_transaction:
             raise Error("cannot commit a transaction, it did not start")
 
-        for cpu, cdata in self._cache.items():
-            # Pick all the dirty data from the cache.
-            to_write = []
-            for regaddr in cdata:
-                if cdata[regaddr]["dirty"]:
-                    to_write.append((regaddr, cdata[regaddr]["regval"]))
-                    cdata[regaddr]["dirty"] = False
-
-            if not to_write:
-                continue
-
+        for cpu, to_write in self._transaction_buffer.items():
             # Write all the dirty data.
             path = Path(f"/dev/cpu/{cpu}/msr")
             with self._pman.open(path, "wb") as fobj:
-                for regaddr, regval in to_write:
+                for regaddr, regval in to_write.items():
                     try:
                         fobj.seek(regaddr)
                         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
@@ -127,6 +126,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
                                     f"{cpu}:\nfailed to write to file '{path}'"
                                     f"{self._pman.hostmsg}:\n{err}") from err
 
+        self._transaction_buffer.clear()
         self._in_transaction = False
 
     def _normalize_bits(self, bits):
@@ -205,7 +205,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
             if regval is None:
                 # Not in the cache, read from the HW.
                 regval = self._read_cpu(regaddr, cpu)
-                self._cache_add(regaddr, regval, cpu, dirty=False)
+                self._cache_add(regaddr, regval, cpu)
 
             yield (cpu, regval)
 
@@ -309,11 +309,10 @@ class MSR(ClassHelpers.SimpleCloseContext):
                 if regval_bytes is None:
                     regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                 self._write_cpu(regaddr, regval, cpu, regval_bytes=regval_bytes)
-                dirty = False
             else:
-                dirty = True
+                self._add_for_transation(regaddr, regval, cpu)
 
-            self._cache_add(regaddr, regval, cpu, dirty=dirty)
+            self._cache_add(regaddr, regval, cpu)
 
     def write_cpu(self, regaddr, regval, cpu):
         """
@@ -421,6 +420,8 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         # The MSR I/O cache. Indexed by CPU number and MSR address. Contains MSR values.
         self._cache = {}
+        # Stores new MSR values to be written when 'commit_transaction()' is called.
+        self._transaction_buffer = {}
         # Whether there is an ongoing transaction.
         self._in_transaction = False
 
