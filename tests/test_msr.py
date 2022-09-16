@@ -26,10 +26,11 @@ def _get_msr_test_params(params, include_ro=True, include_rw=True):
       * bits - list of bit ranges in 'addr' to test. This is a list of tuples. If 'include_ro' is
                'False', then read-only MSR bit ranges are not included. If 'include_rw' is False,
                then readable and writable MSR bit ranges are not included.
+      * sname - name of scope (e.g. "package", "core").
     """
 
     for addr, features in params["msrs"].items():
-        bits = []
+        bits_per_sname = {}
         for finfo in features.values():
             if finfo.get("writable"):
                 if not include_rw:
@@ -38,10 +39,13 @@ def _get_msr_test_params(params, include_ro=True, include_rw=True):
                 continue
 
             if finfo["bits"]:
-                bits.append(finfo["bits"])
+                sname = finfo["sname"]
+                if sname not in bits_per_sname:
+                    bits_per_sname[sname] = []
+                bits_per_sname[sname].append(finfo["bits"])
 
-        if bits:
-            yield { "addr" : addr, "bits" : bits }
+        for sname, bits in bits_per_sname.items():
+            yield { "addr" : addr, "bits" : bits, "sname" : sname }
 
 def _bits_to_mask(allbits):
     """
