@@ -192,8 +192,8 @@ class MSR(ClassHelpers.SimpleCloseContext):
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
                    7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
 
-        Yields tuples of '(cpunum, regval)'.
-          * cpunum - the CPU number the MSR was read from.
+        Yields tuples of '(cpu, regval)'.
+          * cpu - the CPU number the MSR was read from.
           * regval - the read MSR value.
         """
 
@@ -230,13 +230,13 @@ class MSR(ClassHelpers.SimpleCloseContext):
           * bits - the MSR bits range (similar to the 'bits' argument in 'get_bits()').
           * cpus - the CPUs to read from (similar to the 'cpus' argument in 'read()').
 
-        Yields tuples of '(cpunum, regval)'.
-          * cpunum - the CPU number the MSR was read from.
+        Yields tuples of '(cpu, regval)'.
+          * cpu - the CPU number the MSR was read from.
           * val - the value in MSR bits 'bits'.
         """
 
-        for cpunum, regval in self.read(regaddr, cpus):
-            yield (cpunum, self.get_bits(regval, bits))
+        for cpu, regval in self.read(regaddr, cpus):
+            yield (cpu, self.get_bits(regval, bits))
 
     def read_cpu_bits(self, regaddr, bits, cpu):
         """
@@ -336,10 +336,10 @@ class MSR(ClassHelpers.SimpleCloseContext):
           * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read()').
         """
 
-        for cpunum, regval in self.read(regaddr, cpus):
+        for cpu, regval in self.read(regaddr, cpus):
             new_regval = self.set_bits(regval, bits, val)
             if regval != new_regval:
-                self.write(regaddr, new_regval, cpunum)
+                self.write(regaddr, new_regval, cpu)
 
     def write_cpu_bits(self, regaddr, bits, val, cpu):
         """
