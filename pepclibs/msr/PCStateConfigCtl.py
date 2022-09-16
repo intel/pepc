@@ -214,8 +214,9 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                             f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
                             f"depending on the vendor, there is a BIOS knob to unlock it.")
 
-            regval = self._msr.set_bits(regval, finfo["bits"], limit)
-            self._msr.write_cpu(self.regaddr, regval, cpu)
+            new_regval = self._msr.set_bits(regval, finfo["bits"], limit)
+            if regval != new_regval:
+                self._msr.write_cpu(self.regaddr, new_regval, cpu)
 
     def _init_features_dict_pkg_cstate_limit(self):
         """Initialize the 'pkg_cstate_limit' information in the 'self._features' dictionary."""
