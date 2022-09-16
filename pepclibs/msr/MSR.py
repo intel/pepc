@@ -16,7 +16,7 @@ import logging
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, FSHelpers, KernelModule, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CPUInfo
+from pepclibs import CPUInfo, _PropsCache
 
 _CPU_BYTEORDER = "little"
 
@@ -48,32 +48,6 @@ class MSR(ClassHelpers.SimpleCloseContext):
     3. CPU-independent, involve no MSR read/write.
         * Get/set bits from/in a user-provided MSR value: 'get_bits()', 'set_bits()'.
     """
-
-    def _cache_add(self, regaddr, regval, cpu):
-        """Add CPU 'cpu' MSR at 'regaddr' with its value 'regval' to the cache."""
-
-        if not self._enable_cache:
-            return
-
-        if cpu not in self._cache:
-            self._cache[cpu] = {}
-
-        self._cache[cpu][regaddr] = regval
-
-    def _cache_get(self, regaddr, cpu):
-        """
-        If MSR register at 'regaddr' is in the cache, return the cached value, otherwise return
-        'None'.
-        """
-
-        if not self._enable_cache:
-            return None
-        if cpu not in self._cache:
-            return None
-        if regaddr not in self._cache[cpu]:
-            return None
-
-        return self._cache[cpu][regaddr]
 
     def _add_for_transation(self, regaddr, regval, cpu):
         """Add CPU 'cpu' MSR at 'regaddr' with its value 'regval' to the transaction buffer."""
@@ -201,11 +175,12 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         for cpu in cpus:
             # Return the cached value if possible.
-            regval = self._cache_get(regaddr, cpu)
-            if regval is None:
+            if self._pcache.is_cached(regaddr, cpu):
+                regval = self._pcache.get(regaddr, cpu)
+            else:
                 # Not in the cache, read from the HW.
                 regval = self._read_cpu(regaddr, cpu)
-                self._cache_add(regaddr, regval, cpu)
+                self._pcache.add(regaddr, cpu, regval)
 
             yield (cpu, regval)
 
@@ -312,7 +287,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
             else:
                 self._add_for_transation(regaddr, regval, cpu)
 
-            self._cache_add(regaddr, regval, cpu)
+            self._pcache.add(regaddr, cpu, regval)
 
     def write_cpu(self, regaddr, regval, cpu):
         """
@@ -418,8 +393,9 @@ class MSR(ClassHelpers.SimpleCloseContext):
         self._msr_drv = None
         self._unload_msr_drv = False
 
-        # The MSR I/O cache. Indexed by CPU number and MSR address. Contains MSR values.
-        self._cache = {}
+        # The write-through per-CPU MSR values cache.
+        self._pcache = _PropsCache._PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
+                                               enable_cache=self._enable_cache)
         # Stores new MSR values to be written when 'commit_transaction()' is called.
         self._transaction_buffer = {}
         # Whether there is an ongoing transaction.
