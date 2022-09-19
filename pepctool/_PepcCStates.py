@@ -176,9 +176,10 @@ def _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj):
                     #
                     # POLL: 'on' for CPUs 0-15
                     # POLL: 'off' for CPUs 16-31
-                    #       - expected latency: '0'
+                    #       - expected latency: '0' us
                     prefix = " " * (len(csname) + 2) + "- "
-                    _PepcCommon.print_val_msg(val, cpuinfo, name=name, prefix=prefix)
+                    suffix = " us"
+                    _PepcCommon.print_val_msg(val, cpuinfo, name=name, prefix=prefix, suffix=suffix)
 
 def cstates_info_command(args, pman):
     """Implements the 'cstates info' command."""
