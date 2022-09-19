@@ -3,9 +3,16 @@
 Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.19] - ADD DATE HERE
+## [1.3.20] - ADD DATE HERE
 ### Fixed
 ### Added
+### Removed
+### Changed
+
+## [1.3.19] - 2022-09-19
+### Fixed
+### Added
+ - Alder Lake mobile support (CPU model 0xBE).
 ### Removed
 ### Changed
 
