@@ -181,7 +181,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
             else:
                 # Not in the cache, read from the HW.
                 regval = self._read_cpu(regaddr, cpu)
-                self._pcache.add(regaddr, cpu, regval)
+                self._pcache.add(regaddr, cpu, regval, sname=sname)
 
             yield (cpu, regval)
 
@@ -285,6 +285,15 @@ class MSR(ClassHelpers.SimpleCloseContext):
         regval_bytes = None
 
         for cpu in cpus:
+            self._pcache.remove(regaddr, cpu)
+
+        # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
+        # 'False' for every CPU number that was not yet modified by the scope-aware '_pcache.add()'
+        # method.
+        for cpu in cpus:
+            if self._pcache.is_cached(regaddr, cpu):
+                continue
+
             if not self._in_transaction:
                 if regval_bytes is None:
                     regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
@@ -292,7 +301,11 @@ class MSR(ClassHelpers.SimpleCloseContext):
             else:
                 self._add_for_transation(regaddr, regval, cpu)
 
-            self._pcache.add(regaddr, cpu, regval)
+            # Note, below 'add()' call is scope-aware. It will cache 'regval' not only for CPU
+            # number 'cpu', but also for all the "fellow" CPUs. For example, if 'sname' is
+            # "package", 'regval' will be cached for all CPUs in the package that contains CPU
+            # number 'cpu'.
+            self._pcache.add(regaddr, cpu, regval, sname=sname)
 
     def write_cpu(self, regaddr, regval, cpu, sname="CPU"):
         """
@@ -317,10 +330,18 @@ class MSR(ClassHelpers.SimpleCloseContext):
           * sname - same as in 'write()'.
         """
 
+        regvals = {}
         for cpu, regval in self.read(regaddr, cpus, sname=sname):
             new_regval = self.set_bits(regval, bits, val)
-            if regval != new_regval:
-                self.write(regaddr, new_regval, cpu, sname=sname)
+            if regval == new_regval:
+                continue
+
+            if new_regval not in regvals:
+                regvals[new_regval] = []
+            regvals[new_regval].append(cpu)
+
+        for regval, regval_cpus in regvals.items():
+            self.write(regaddr, regval, regval_cpus, sname=sname)
 
     def write_cpu_bits(self, regaddr, bits, val, cpu, sname="CPU"):
         """
