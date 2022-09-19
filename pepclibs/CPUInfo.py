@@ -549,7 +549,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             if cpu == tline["CPU"]:
                 break
         else:
-            raise Error("CPU {cpu} is not available{self._pman.hostmsg}")
+            raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}")
 
         siblings = []
         for tline1 in self._get_topology(order="CPU"):
@@ -572,10 +572,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             if cpu == tline["CPU"]:
                 break
         else:
-            raise Error("CPU {cpu} is not available{self._pman.hostmsg}")
+            raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}")
 
         if not tline["online"]:
-            raise Error("CPU {cpu} is offline{self._pman.hostmsg}, cannot get its topology")
+            raise Error(f"CPU {cpu} is offline{self._pman.hostmsg}, cannot get its topology")
 
         result = {}
         for lvl in LEVELS:
