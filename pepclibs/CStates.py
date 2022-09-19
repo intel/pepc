@@ -615,6 +615,9 @@ class CStates(_PCStatesBase.PCStatesBase):
             self._get_pcstatectl().write_feature(pname, val, cpus=cpus)
             return
 
+        # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
+        # 'False' for every CPU number that was not yet modified by the scope-aware '_pcache.add()'
+        # method.
         for cpu in cpus:
             self._pcache.remove(pname, cpu)
 
@@ -629,6 +632,11 @@ class CStates(_PCStatesBase.PCStatesBase):
             if "fname" in prop:
                 path = self._sysfs_cpuidle / prop["fname"]
                 self._write_prop_value_to_sysfs(prop, path, val)
+
+                # Note, below 'add()' call is scope-aware. It will cache 'val' not only for CPU
+                # number 'cpu', but also for all the "fellow" CPUs. For example, if property scope
+                # name is "package", 'val' will be cached for all CPUs in the package that contains
+                # CPU number 'cpu'.
                 self._pcache.add(pname, cpu, val, sname=prop["sname"])
             else:
                 raise Error(f"BUG: undefined property '{pname}'")
