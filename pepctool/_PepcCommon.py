@@ -112,7 +112,7 @@ def print_prop_msg(prop, val, cpuinfo, action=None, cpus=None, prefix=None):
     msg += f"{val}{sfx}"
     _LOG.info(msg)
 
-def print_val_msg(val, cpuinfo, name=None, cpus=None, prefix=None):
+def print_val_msg(val, cpuinfo, name=None, cpus=None, prefix=None, suffix=None):
     """Format and print a message about 'name' and its value 'val'."""
 
     if cpus is None:
@@ -120,6 +120,9 @@ def print_val_msg(val, cpuinfo, name=None, cpus=None, prefix=None):
     else:
         cpus = fmt_cpus(cpus, cpuinfo)
         sfx = f" for {cpus}"
+
+    if suffix is not None:
+        sfx = sfx + suffix
 
     if name is not None:
         pfx = f"{name}: "
