@@ -17,8 +17,8 @@ Depends: python3:any (>= 3.7~),
          python3-paramiko,
          ${misc:Depends},
          ${python3:Depends},
-         util-linux (>= 2.20~), # dmesg, lscpu
-         procps, # ps
+         util-linux (>= 2.20~),
+         procps,
          rsync
 Description: Power, Energy, and Performance configuration tool.
  A tool configuring various power and performance aspects of a Linux system.
