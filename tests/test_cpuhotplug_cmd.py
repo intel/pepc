@@ -32,6 +32,7 @@ def _test_cpuhotplug_online_good(params):
         good_options += ["--cpus 1-2"]
 
     for option in good_options:
+        run_pepc(f"cpu-hotplug offline {option}", pman)
         run_pepc(f"cpu-hotplug online {option}", pman)
 
 def _test_cpuhotplug_online_bad(params):
@@ -86,8 +87,12 @@ def _test_cpuhotplug_offline_good(params):
     if len(params["cores"][0]) > 3:
         good_options += [f"--packages 0 --cores {params['cores'][0][1]}-{params['cores'][0][2]}"]
 
+    # 'cpu-hotplug online' does not support '--package', '--core' and '--siblings', hence we online
+    # all CPUs 'cpu-hotplug online '--cpus all'.
     for option in good_options:
+        run_pepc("cpu-hotplug online --cpus all", pman)
         run_pepc(f"cpu-hotplug offline {option}", pman)
+        run_pepc("cpu-hotplug online --cpus all", pman)
         run_pepc(f"cpu-hotplug offline {option} --siblings", pman)
 
 def _test_cpuhotplug_offline_bad(params):
@@ -104,6 +109,7 @@ def _test_cpuhotplug_offline_bad(params):
 
     for option in bad_options:
         # With '--siblings' CPU 0 will be excluded and all these "bad" options become OK.
+        run_pepc("cpu-hotplug online --cpus all", pman)
         run_pepc(f"cpu-hotplug offline {option} --siblings", pman)
 
 def test_cpuhotplug_offline(params):
