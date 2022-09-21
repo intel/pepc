@@ -10,9 +10,22 @@
 
 """Test module for 'pepc' project 'cpu-hotplug' command."""
 
+import pytest
 from common import run_pepc
-from common import get_params # pylint: disable=unused-import
+from common import build_params, get_pman, get_datasets
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs import CPUInfo
+
+@pytest.fixture(name="params", scope="module", params=get_datasets())
+def get_params(hostname, request):
+    """Yield a dictionary with information we need for testing."""
+
+    dataset = request.param
+    with get_pman(hostname, dataset) as pman, \
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+        params = build_params(hostname, dataset, pman, cpuinfo)
+
+        yield params
 
 def test_cpuhotplug_info(params):
     """Test 'pepc cpu-hotplug info' command."""
