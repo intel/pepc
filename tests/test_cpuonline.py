@@ -26,8 +26,21 @@ def get_params(hostname, request):
         params = build_params(hostname, dataset, pman, cpuinfo)
 
         params["onl"] = onl
+        params["cpu_onl_status"] = {}
+
+        for cpu in params["cpus"]:
+            params["cpu_onl_status"][cpu] = onl.is_online(cpu)
 
         yield params
+
+def _restore_cpus_onl_status(params):
+    """Restore CPUs to the original online/offline status."""
+
+    for cpu, onl_status in params["cpu_onl_status"].items():
+        if onl_status is True:
+            params["onl"].online(cpu, skip_unsupported=True)
+        else:
+            params["onl"].offline(cpu, skip_unsupported=True)
 
 def test_cpuonline_good(params):
     """Test public methods of 'CPUOnline' class with good option values."""
@@ -43,6 +56,7 @@ def test_cpuonline_good(params):
         assert onl.is_online(cpu)
 
     if params["hostname"] != "emulation":
+        _restore_cpus_onl_status(params)
         return
 
     if params["testcpus"].count(0):
@@ -84,3 +98,5 @@ def test_cpuonline_bad(params):
     for cpu in bad_cpus:
         with pytest.raises(Error):
             onl.is_online(cpu)
+
+    _restore_cpus_onl_status(params)
