@@ -20,8 +20,8 @@ def test_cpuhotplug_info(params):
     pman = params["pman"]
     run_pepc("cpu-hotplug info", pman)
 
-def test_cpuhotplug_online(params):
-    """Test 'pepc cpu-hotplug online' command."""
+def _test_cpuhotplug_online_good(params):
+    """Test 'pepc cpu-hotplug online' command with good option values."""
 
     pman = params["pman"]
 
@@ -33,6 +33,11 @@ def test_cpuhotplug_online(params):
 
     for option in good_options:
         run_pepc(f"cpu-hotplug online {option}", pman)
+
+def _test_cpuhotplug_online_bad(params):
+    """Test 'pepc cpu-hotplug online' command with bad option values."""
+
+    pman = params["pman"]
 
     bad_options = [
         "",
@@ -49,6 +54,12 @@ def test_cpuhotplug_online(params):
 
     for option in bad_options:
         run_pepc(f"cpu-hotplug online {option}", pman, exp_exc=Error)
+
+def test_cpuhotplug_online(params):
+    """Test 'pepc cpu-hotplug online' command."""
+
+    _test_cpuhotplug_online_good(params)
+    _test_cpuhotplug_online_bad(params)
 
 def _test_cpuhotplug_offline_good(params):
     """Test 'pepc cpu-hotplug offline' command with good option values."""
