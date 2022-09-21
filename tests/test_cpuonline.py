@@ -21,62 +21,66 @@ def get_params(hostname, request):
 
     dataset = request.param
     with get_pman(hostname, dataset) as pman, \
-         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as onl:
         params = build_params(hostname, dataset, pman, cpuinfo)
+
+        params["onl"] = onl
 
         yield params
 
 def test_cpuonline_good(params):
     """Test public methods of 'CPUOnline' class with good option values."""
 
-    with CPUOnline.CPUOnline(pman=params["pman"]) as onl:
-        # Note: When using "all" or 'None' as 'cpus' argument value to 'online()' or 'offline()'
-        # methods, offlined CPUs will be eventually read using 'lscpu' command. The output of
-        # 'lscpu' command is emulated, but changed offline/online CPUs is not reflected to the
-        # output.
-        onl.online(cpus="all")
-        for cpu in params["cpus"]:
-            assert onl.is_online(cpu)
+    onl = params["onl"]
 
-        if params["hostname"] != "emulation":
-            return
+    # Note: When using "all" or 'None' as 'cpus' argument value to 'online()' or 'offline()'
+    # methods, offlined CPUs will be eventually read using 'lscpu' command. The output of
+    # 'lscpu' command is emulated, but changed offline/online CPUs is not reflected to the
+    # output.
+    onl.online(cpus="all")
+    for cpu in params["cpus"]:
+        assert onl.is_online(cpu)
 
-        if params["testcpus"].count(0):
-            params["testcpus"].remove(0)
+    if params["hostname"] != "emulation":
+        return
 
-        onl.offline(cpus=params["testcpus"])
-        for cpu in params["testcpus"]:
-            assert not onl.is_online(cpu)
+    if params["testcpus"].count(0):
+        params["testcpus"].remove(0)
 
-        onl.online(params["cpus"], skip_unsupported=True)
-        for cpu in params["cpus"]:
-            assert onl.is_online(cpu)
+    onl.offline(cpus=params["testcpus"])
+    for cpu in params["testcpus"]:
+        assert not onl.is_online(cpu)
 
-        onl.offline(cpus=params["cpus"], skip_unsupported=True)
-        onl.restore()
-        for cpu in params["cpus"]:
-            assert onl.is_online(cpu)
+    onl.online(params["cpus"], skip_unsupported=True)
+    for cpu in params["cpus"]:
+        assert onl.is_online(cpu)
+
+    onl.offline(cpus=params["cpus"], skip_unsupported=True)
+    onl.restore()
+    for cpu in params["cpus"]:
+        assert onl.is_online(cpu)
 
 def test_cpuonline_bad(params):
     """Test public methods of 'CPUOnline' class with bad option values."""
 
+    onl = params["onl"]
     bad_cpus = [-1, "one", True, params["cpus"][-1] + 1]
 
-    with CPUOnline.CPUOnline(pman=params["pman"]) as onl:
+    with pytest.raises(Error):
+        onl.online(cpus=[0], skip_unsupported=False)
+
+    for cpu in bad_cpus:
         with pytest.raises(Error):
-            onl.online(cpus=[0], skip_unsupported=False)
+            onl.online(cpus=[cpu])
 
-        for cpu in bad_cpus:
-            with pytest.raises(Error):
-                onl.online(cpus=[cpu])
+    with pytest.raises(Error):
+        onl.offline(cpus=[0], skip_unsupported=False)
 
+    for cpu in bad_cpus:
         with pytest.raises(Error):
-            onl.offline(cpus=[0], skip_unsupported=False)
+            onl.offline(cpus=[cpu])
 
-        for cpu in bad_cpus:
-            with pytest.raises(Error):
-                onl.offline(cpus=[cpu])
-
-        for cpu in bad_cpus:
-            with pytest.raises(Error):
-                onl.is_online(cpu)
+    for cpu in bad_cpus:
+        with pytest.raises(Error):
+            onl.is_online(cpu)
