@@ -68,5 +68,5 @@ class ErrorConnect(Error):
         """Constructor."""
 
         if host:
-            msg = "cannot connect to host '%s'\n" % host + msg
+            msg = f"cannot connect to host '{host}'\n{msg}"
         super().__init__(msg, *args, **kwargs)
