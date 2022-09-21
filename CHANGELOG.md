@@ -6,6 +6,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [1.3.20] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add scope awareness to the 'MSR.py' module. This speeds 'pepc' commands that
+   end up accessing MSR registers which have, say, package scope.
 ### Removed
 ### Changed
 
