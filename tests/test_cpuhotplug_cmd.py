@@ -14,7 +14,7 @@ import pytest
 from common import run_pepc
 from common import build_params, get_pman, get_datasets
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CPUInfo
+from pepclibs import CPUInfo, CPUOnline
 
 @pytest.fixture(name="params", scope="module", params=get_datasets())
 def get_params(hostname, request):
@@ -22,10 +22,26 @@ def get_params(hostname, request):
 
     dataset = request.param
     with get_pman(hostname, dataset) as pman, \
-         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as onl:
         params = build_params(hostname, dataset, pman, cpuinfo)
 
+        params["onl"] = onl
+        params["cpu_onl_status"] = {}
+
+        for cpu in params["cpus"]:
+            params["cpu_onl_status"][cpu] = onl.is_online(cpu)
+
         yield params
+
+def _restore_cpus_onl_status(params):
+    """Restore CPUs to the original online/offline status."""
+
+    for cpu, onl_status in params["cpu_onl_status"].items():
+        if onl_status is True:
+            params["onl"].online(cpu, skip_unsupported=True)
+        else:
+            params["onl"].offline(cpu, skip_unsupported=True)
 
 def test_cpuhotplug_info(params):
     """Test 'pepc cpu-hotplug info' command."""
@@ -45,8 +61,8 @@ def _test_cpuhotplug_online_good(params):
         good_options += ["--cpus 1-2"]
 
     for option in good_options:
-        run_pepc(f"cpu-hotplug offline {option}", pman)
         run_pepc(f"cpu-hotplug online {option}", pman)
+        _restore_cpus_onl_status(params)
 
 def _test_cpuhotplug_online_bad(params):
     """Test 'pepc cpu-hotplug online' command with bad option values."""
@@ -103,10 +119,10 @@ def _test_cpuhotplug_offline_good(params):
     # 'cpu-hotplug online' does not support '--package', '--core' and '--siblings', hence we online
     # all CPUs 'cpu-hotplug online '--cpus all'.
     for option in good_options:
-        run_pepc("cpu-hotplug online --cpus all", pman)
         run_pepc(f"cpu-hotplug offline {option}", pman)
-        run_pepc("cpu-hotplug online --cpus all", pman)
+        _restore_cpus_onl_status(params)
         run_pepc(f"cpu-hotplug offline {option} --siblings", pman)
+        _restore_cpus_onl_status(params)
 
 def _test_cpuhotplug_offline_bad(params):
     """Test 'pepc cpu-hotplug offline' command with bad option values."""
@@ -122,8 +138,8 @@ def _test_cpuhotplug_offline_bad(params):
 
     for option in bad_options:
         # With '--siblings' CPU 0 will be excluded and all these "bad" options become OK.
-        run_pepc("cpu-hotplug online --cpus all", pman)
         run_pepc(f"cpu-hotplug offline {option} --siblings", pman)
+        _restore_cpus_onl_status(params)
 
 def test_cpuhotplug_offline(params):
     """Test 'pepc cpu-hotplug offline' command."""
