@@ -11,9 +11,20 @@
 """Tests for the public methods of the 'CPUOnline' module."""
 
 import pytest
-from common import get_params # pylint: disable=unused-import
-from pepclibs import CPUOnline
+from common import build_params, get_pman, get_datasets
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs import CPUInfo, CPUOnline
+
+@pytest.fixture(name="params", scope="module", params=get_datasets())
+def get_params(hostname, request):
+    """Yield a dictionary with information we need for testing."""
+
+    dataset = request.param
+    with get_pman(hostname, dataset) as pman, \
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+        params = build_params(hostname, dataset, pman, cpuinfo)
+
+        yield params
 
 def test_cpuonline_good(params):
     """Test public methods of 'CPUOnline' class with good option values."""
