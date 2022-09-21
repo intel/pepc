@@ -39,8 +39,7 @@ class Error(Exception):
         else:
             pfx = indent
 
-        pfx += f"\n{pfx}"
-        msg = pfx + self.msg.replace("\n", pfx)
+        msg = pfx + self.msg.replace("\n", f"\n{pfx}")
         return msg
 
     def __str__(self):
