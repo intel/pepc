@@ -54,6 +54,20 @@ def get_username(uid=None):
     except KeyError as err:
         raise Error(f"failed to get user name for UID {uid}:\n{err}") from None
 
+def str_to_int(snum, what="value"):
+    """
+    Convert a string to an integer numeric value. The arguments are as follows.
+      * snum - the value to convert to 'int'. Should be a string or an integer.
+      * what - a string describing the value to convert, for the possible error message.
+    """
+
+    try:
+        num = int(str(snum))
+    except (ValueError, TypeError):
+        raise Error(f"bad {what} '{snum}': should be an integer") from None
+
+    return num
+
 def str_to_num(snum, what="value"):
     """
     Convert a string to a numeric value, either 'int' or 'float'. The arguments are as follows.
