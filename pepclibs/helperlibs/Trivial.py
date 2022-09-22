@@ -54,10 +54,11 @@ def get_username(uid=None):
     except KeyError as err:
         raise Error(f"failed to get user name for UID {uid}:\n{err}") from None
 
-def str_to_num(snum):
+def str_to_num(snum, what="value"):
     """
     Convert a string to a numeric value, either 'int' or 'float'. The arguments are as follows.
       * snum - the value to convert to 'int' or 'float'. Should be a string or a numeric value.
+      * what - a string describing the value to convert, for the possible error message.
     """
 
     try:
@@ -66,7 +67,8 @@ def str_to_num(snum):
         try:
             num = float(str(snum))
         except (ValueError, TypeError):
-            raise Error(f"failed to convert '{str(snum)}' to a number") from None
+            pfx = f"bad {what} '{snum}'"
+            raise Error(f"{pfx}: should be an integer of floating point number") from None
 
     return num
 
