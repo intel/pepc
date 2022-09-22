@@ -1,0 +1,112 @@
+#!/usr/bin/python3
+#
+# -*- coding: utf-8 -*-
+# vim: ts=4 sw=4 tw=100 et ai si
+#
+# Copyright (C) 2020-2022 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# Author: Juha Haapakorpi <juha.haapakorpi@linux.intel.com>
+
+"""Script for converting CHANGELOG.md to debian changelog"""
+
+import sys
+import logging
+import re
+from pathlib import Path
+from datetime import datetime
+import argcomplete
+
+from pepclibs.helperlibs import ArgParse, Logging
+from pepclibs.helperlibs.Exceptions import Error
+
+VERSION = "1.0.0"
+OWN_NAME = "convert_changelog"
+
+Logging.setup_logger(prefix=OWN_NAME)
+LOG = logging.getLogger()
+
+def parse_arguments():
+    """Parse input arguments."""
+
+    text = sys.modules[__name__].__doc__
+    parser = ArgParse.ArgsParser(description=text, prog=OWN_NAME, ver=VERSION)
+
+    text = """The input file in CHANGELOG.md format."""
+    parser.add_argument("-i", "--infile", required=True, metavar="PATH", type=Path, help=text) \
+            .completer = argcomplete.completers.FilesCompleter()
+
+    text = """The output file in Debian changelog format. Any existing file will be overwritten."""
+    parser.add_argument("-o", "--outfile", required=True, metavar="PATH", type=Path, help=text) \
+            .completer = argcomplete.completers.FilesCompleter()
+
+    text = """The name of the project."""
+    parser.add_argument("-p", "--project-name", required=True, metavar="name", help=text)
+
+    text = """The full name of the project maintainer."""
+    parser.add_argument("-n", "--maintainer-name", required=True, nargs='+',
+                        metavar="Firstname Lastname", help=text)
+
+    text = """The email address of the project maintainer."""
+    parser.add_argument("-e", "--maintainer-email", required=True, metavar="email",
+                        help=text)
+
+    argcomplete.autocomplete(parser)
+    return parser.parse_args()
+
+def handle_entry(args, entry):
+    """Convert CHANGELOG.md entries to debian changelog format."""
+
+    # Example of start of a entry line we are matching: "## [1.8.11] - 2021-01-13".
+    mobj = re.match(r"^## \[(\d+.\d+.\d+)]\s+-\s+(\d+-\d+-\d+)", entry)
+    if not mobj:
+        return ""
+    version, date = mobj.groups()
+    # Get the rest of the entry line containing the entry content.
+    content = re.search(r"###.*$", entry, re.DOTALL).group()
+
+    # Convert to debian changelog format.
+    datetimeobj = datetime.strptime(date,"%Y-%m-%d")
+    date = f"{datetimeobj.strftime('%a, %d %b %Y %H:%M:%S')} +0200"
+    substitutions = [
+        (r"###\s+[A-Za-z]+\n", ""),
+        ("\n", "<newline>"),
+        (r"\s+-\s+", "  * "),
+        (r"\s\s\s+", "    "),
+        ("<newline>", "\n")
+    ]
+    for old, new in substitutions:
+        content = re.sub(old, new, content)
+
+    return (f"{args.project_name} ({version}) unstable; urgency=low\n\n"
+            f"{content}\n\n -- {' '.join(map(str, args.maintainer_name))} <{args.maintainer_email}>"
+            f"  {date}\n\n")
+
+def convert_changelog(args):
+    """Convert CHANGELOG.md to debian changelog."""
+
+    outtext = ""
+    with open(args.infile, "r", encoding="utf-8") as fobj:
+        intext = fobj.read()
+        for entry in re.findall(r"##\s+\[.*?(?=\n##\s+\[)", intext, re.DOTALL):
+            outtext += handle_entry(args, entry.strip())
+
+    with open(args.outfile, "w", encoding='utf-8') as fobj:
+        fobj.write(outtext)
+
+def main():
+    """Script entry point."""
+
+    try:
+        args = parse_arguments()
+        convert_changelog(args)
+    except KeyboardInterrupt:
+        LOG.info("\nInterrupted, exiting")
+        return -1
+    except Error as err:
+        LOG.error_out(err)
+
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
