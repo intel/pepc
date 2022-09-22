@@ -133,7 +133,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         """
 
         if Trivial.is_int(epb):
-            Trivial.validate_int_range(epb, _EPB_MIN, _EPB_MAX, what="EPB")
+            Trivial.validate_value_in_range(int(epb), _EPB_MIN, _EPB_MAX, what="EPB value")
         else:
             epb_policy = epb.lower()
             if epb_policy not in _EPB_POLICIES:

@@ -47,12 +47,12 @@ def get_username(uid=None):
         if uid is None:
             uid = os.getuid()
     except OSError as err:
-        raise Error("failed to detect user name of current process:\n%s" % err) from None
+        raise Error(f"failed to detect user name of current process:\n{err}") from None
 
     try:
         return pwd.getpwuid(uid).pw_name
     except KeyError as err:
-        raise Error("failed to get user name for UID %d:\n%s" % (uid, err)) from None
+        raise Error(f"failed to get user name for UID {uid}:\n{err}") from None
 
 def str_to_num(snum, must_convert=True):
     """
@@ -115,12 +115,18 @@ def is_num(value):
 
     return True
 
-def validate_int_range(value, minval, maxval, what="value"):
-    """Validate integer value against range ['minval', 'maxval']."""
+def validate_value_in_range(value, minval, maxval, what="value"):
+    """
+    Validate that value 'value' is in the ['minval', 'maxval'] range. The arguments are as follows.
+      * value - the value to validate.
+      * minval - the minimum allowed value for 'value'.
+      * maxval - the maximum allowed value for 'value'.
+      * what - a string describing the value that is being validated, for the possible error
+               message.
+    """
 
-    if not is_int(value) or int(value) < minval or int(value) > maxval:
-        raise Error(f"{what} '{value}' is not supported, please provide integer number between "
-                    f"[{minval},{maxval}]")
+    if value < minval or value > maxval:
+        raise Error(f"{what} '{value}' is out of range, should be within [{minval},{maxval}]")
 
 def is_iterable(value):
     """Return 'True' if 'value' is iterable collection (not string) and 'False' otherwise."""

@@ -252,7 +252,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
             raise Error(f"CPU {cpu} does not support EPP")
 
         if Trivial.is_int(epp):
-            Trivial.validate_int_range(epp, _EPP_MIN, _EPP_MAX, what="EPP")
+            Trivial.validate_value_in_range(int(epp), _EPP_MIN, _EPP_MAX, what="EPP")
         else:
             policies = self._get_cpu_epp_policies(cpu)
             policy = epp.lower()
