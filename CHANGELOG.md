@@ -10,62 +10,39 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Changed
 
 ## [1.3.20] - 2022-09-21
-### Fixed
 ### Added
  - Add scope awareness to the 'MSR.py' module. This speeds 'pepc' commands that
    end up accessing MSR registers which have, say, package scope.
-### Removed
-### Changed
 
 ## [1.3.19] - 2022-09-19
-### Fixed
 ### Added
  - Alder Lake mobile support (CPU model 0xBE).
-### Removed
-### Changed
 
 ## [1.3.18] - 2022-09-16
-### Fixed
-### Added
-### Removed
 ### Changed
  - Another minor update in 'Exceptions.py' to satisfy 'wult' project needs.
 
 ## [1.3.17] - 2022-09-08
-### Fixed
 ### Added
  - A minor update in 'Exceptions.py' to satisfy 'wult' project needs.
-### Removed
-### Changed
 
 ## [1.3.16] - 2022-09-07
-### Fixed
 ### Added
  - Added OS package information for the 'libbpf' library.
-### Removed
-### Changed
 
 ## [1.3.15] - 2022-09-01
 ### Fixed
  - Fix ASPM-related tests failures when they run on real HW (vs emulated).
 ### Added
  - Add 'cstates config --governor' option.
-### Removed
-### Changed
 
 ## [1.3.14] - 2022-08-16
 ### Fixed
  - Fix 'cpu info --turbo' failure on turbo-less systems.
-### Added
-### Removed
-### Changed
 
 ## [1.3.13] - 2022-08-10
-### Fixed
 ### Added
  - Add Knights Landing/Mill package C-state limit table.
-### Removed
-### Changed
 
 ## [1.3.12] - 2022-08-01
 ### Added
