@@ -128,6 +128,33 @@ def validate_value_in_range(value, minval, maxval, what="value"):
     if value < minval or value > maxval:
         raise Error(f"{what} '{value}' is out of range, should be within [{minval},{maxval}]")
 
+def validate_range(minval, maxval, min_limit=None, max_limit=None, what="range"):
+    """
+    Validate correctness of range ['minval', 'maxval']. The arguments are as follows.
+      * minval - the minimum value (first number in the range).
+      * maxval - the maximum value (second number in the range).
+      * min_limit - the minimum allowed value for 'minval'.
+      * max_limit - the maximum allowed value for 'maxval'.
+      * what - a string describing the range that is being validated, for the possible error
+               messages.
+    """
+
+    pfx = f"bad {what} '[{minval},{maxval}]'"
+
+    if minval > maxval:
+        raise Error(f"{pfx}: min. value '{minval}' should not be greater than max. value "
+                    f"'{maxval}'")
+
+    if min_limit is not None:
+        if max_limit is not None:
+            assert max_limit >= min_limit
+        if minval < min_limit:
+            raise Error(f"{pfx}: should be within '[{min_limit},{max_limit}]'")
+
+    if max_limit is not None:
+        if maxval > max_limit:
+            raise Error(f"{pfx}: should be within '[{min_limit},{max_limit}]'")
+
 def is_iterable(value):
     """Return 'True' if 'value' is iterable collection (not string) and 'False' otherwise."""
     try:
