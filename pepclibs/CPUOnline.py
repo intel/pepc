@@ -13,7 +13,7 @@ This module provides an API for onlining and offlining CPUs.
 import logging
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs import CPUInfo
 
 _LOG = logging.getLogger()
@@ -144,7 +144,13 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
         """Returns 'True' if CPU number 'cpu' is online and 'False' otherwise."""
 
         path = self._get_path(cpu)
-        return self._get_online(path) == "1"
+        try:
+            return self._get_online(path) == "1"
+        except ErrorNotFound:
+            if cpu == 0:
+                # On many systems CPU 0 can't be offlined, in that case there is no "online" file.
+                return True
+            raise
 
     def _save(self, cpus, state):
         """Update saved online/offline state 'state' on CPUs 'cpus'."""
