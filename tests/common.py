@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import ProcessManager
-from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
+from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied, Error
 from pepctool import _Pepc
 
 logging.basicConfig(level=logging.DEBUG)
@@ -135,6 +135,9 @@ def get_params(hostname, request):
 # exceptions print warning instead of asserting.
 _WARN_ONLY = {
     ErrorPermissionDenied : "aspm config --policy ",
+    # On a non-emulated hardware CPUs can't be offlined in some cases (e.g., if an interrupt can't
+    # be migrated to another CPU).
+    Error : "cpu-hotplug offline"
 }
 
 def run_pepc(arguments, pman, exp_exc=None):
