@@ -26,15 +26,20 @@ def get_params(hostname, request):
         params = build_params(hostname, dataset, pman, cpuinfo)
 
         params["onl"] = onl
-        params["cpu_onl_status"] = {}
 
-        for cpu in params["cpus"]:
-            params["cpu_onl_status"][cpu] = onl.is_online(cpu)
+        if hostname != "emulation":
+            params["cpu_onl_status"] = {}
+            for cpu in params["cpus"]:
+                params["cpu_onl_status"][cpu] = onl.is_online(cpu)
 
         yield params
 
 def _restore_cpus_onl_status(params):
     """Restore CPUs to the original online/offline status."""
+
+    if params["hostname"] == "emulation":
+        # Emulated data does not change the original CPU online status.
+        return
 
     for cpu, onl_status in params["cpu_onl_status"].items():
         if onl_status is True:
