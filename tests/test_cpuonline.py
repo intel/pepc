@@ -25,8 +25,6 @@ def test_cpuonline_good(params):
         # output.
         onl.online(cpus="all")
         for cpu in params["cpus"]:
-            if cpu == 0:
-                continue
             assert onl.is_online(cpu)
 
         if params["hostname"] != "emulation":
@@ -41,15 +39,11 @@ def test_cpuonline_good(params):
 
         onl.online(params["cpus"], skip_unsupported=True)
         for cpu in params["cpus"]:
-            if cpu == 0:
-                continue
             assert onl.is_online(cpu)
 
         onl.offline(cpus=params["cpus"], skip_unsupported=True)
         onl.restore()
         for cpu in params["cpus"]:
-            if cpu == 0:
-                continue
             assert onl.is_online(cpu)
 
 def test_cpuonline_bad(params):
@@ -72,7 +66,6 @@ def test_cpuonline_bad(params):
             with pytest.raises(Error):
                 onl.offline(cpus=[cpu])
 
-        bad_cpus.append(0)
         for cpu in bad_cpus:
             with pytest.raises(Error):
                 onl.is_online(cpu)
