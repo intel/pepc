@@ -147,10 +147,11 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
         try:
             return self._get_online(path) == "1"
         except ErrorNotFound:
-            if cpu == 0:
-                # On many systems CPU 0 can't be offlined, in that case there is no "online" file.
-                return True
-            raise
+            if not self._pman.is_dir(path.parent):
+                raise
+            # Hotplug sub-system might be disabled, in that case there is no "online" file and the
+            # CPU is online.
+            return True
 
     def _save(self, cpus, state):
         """Update saved online/offline state 'state' on CPUs 'cpus'."""
