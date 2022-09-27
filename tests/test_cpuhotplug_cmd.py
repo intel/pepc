@@ -151,7 +151,3 @@ def test_cpuhotplug_offline(params):
 
     _test_cpuhotplug_offline_good(params)
     _test_cpuhotplug_offline_bad(params)
-
-    # Make sure all CPUs are online for the next tests.
-    if params["hostname"] != "emulation":
-        run_pepc("cpu-hotplug online --cpus all", params["pman"])
