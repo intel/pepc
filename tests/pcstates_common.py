@@ -32,7 +32,7 @@ def get_fellows(params, cpuinfo, cpu=0):
     fellows["die"] = cpuinfo.dies_to_cpus(dies=levels["die"], packages=levels["package"])
     # No fellows['node'], because there is currently no property with 'node' scope.
     fellows["core"] = cpuinfo.cores_to_cpus(cores=levels["core"], packages=levels["package"])
-    fellows["CPU"] = cpu
+    fellows["CPU"] = (cpu, )
 
     return fellows
 
