@@ -16,7 +16,7 @@ from pepclibs import CPUInfo
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorNotSupported
 
-class _PropsCache():
+class PropsCache():
     """
     This class implements properties caching. The cache is indexed by property name and CPU number.
     It takes the CPU scope (global 0, package 3, etc) into account as well. The cache uses the

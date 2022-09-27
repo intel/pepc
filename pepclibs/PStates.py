@@ -888,8 +888,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         # The write-through per-CPU properties cache. The properties that are backed by MSR/EPP/EPB
         # are not cached, because they implement their own caching.
         self._enable_cache = enable_cache
-        self._pcache = _PropsCache._PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                               enable_cache=self._enable_cache)
+        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
+                                              enable_cache=self._enable_cache)
 
         self._init_props_dict()
 

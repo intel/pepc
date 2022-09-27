@@ -328,8 +328,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         # The per-CPU cache for read-only data, such as policies list. MSR implements its own
         # caching.
-        self._pcache = _PropsCache._PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                               enable_cache=enable_cache)
+        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
+                                              enable_cache=enable_cache)
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
             raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. "
