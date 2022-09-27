@@ -13,7 +13,7 @@
 import pytest
 from common import build_params, get_pman, is_prop_supported, get_datasets
 from pcstates_common import get_fellows, set_and_verify, verify_props_value_type
-from pepclibs import CPUInfo, PStates
+from pepclibs import CPUInfo, PStates, BClock
 
 def _get_params():
     """Yield each dataset with a bool. Used for toggling PStates 'enable_cache'."""
@@ -31,6 +31,7 @@ def get_params(hostname, request):
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as psobj:
         params = build_params(hostname, dataset, pman, cpuinfo)
+        params["cpuinfo"] = cpuinfo
         params["fellows"] = get_fellows(params, cpuinfo, cpu=0)
 
         params["psobj"] = psobj
@@ -109,16 +110,20 @@ def _set_freq_pairs(params, min_pname, max_pname):
 
     min_limit = params["pinfo"][f"{min_pname}_limit"][f"{min_pname}_limit"]
     max_limit = params["pinfo"][f"{max_pname}_limit"][f"{max_pname}_limit"]
+
+    bclk_MHz = BClock.get_bclk(params["pman"], cpu=0, cpuinfo=params["cpuinfo"])
+    bclk_Hz = int(bclk_MHz * 1000000)
     a_quarter = int((max_limit - min_limit) / 4)
+    increment = a_quarter - a_quarter % bclk_Hz
 
     # [Min ------------------ Max ----------------------------------------------------------]
-    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + a_quarter}, fellows)
+    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + increment}, fellows)
 
     # [-------------------------------------------------------- Min -------------------- Max]
-    params["psobj"].set_props({min_pname : max_limit - a_quarter, max_pname : max_limit}, fellows)
+    params["psobj"].set_props({min_pname : max_limit - increment, max_pname : max_limit}, fellows)
 
     # [Min ------------------ Max ----------------------------------------------------------]
-    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + a_quarter}, fellows)
+    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + increment}, fellows)
 
 def test_pstates_frequency_set_order(params):
     """
