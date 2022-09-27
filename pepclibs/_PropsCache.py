@@ -37,8 +37,7 @@ class _PropsCache():
             return self._cpuinfo.package_to_cpus(levels[sname])
         if sname == "die":
             return self._cpuinfo.dies_to_cpus(dies=levels[sname], packages=levels["package"])
-        if sname == "node":
-            return self._cpuinfo.nodes_to_cpus(nodes=levels[sname], packages=levels["package"])
+        # No 'node', because there is currently no property with 'node' scope.
         if sname == "core":
             return self._cpuinfo.cores_to_cpus(cores=levels[sname], packages=levels["package"])
 
