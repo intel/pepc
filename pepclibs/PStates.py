@@ -636,7 +636,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         msg = f"failed to set {name} to {short_freq} for {what}: wrote '{freq // 1000}' to " \
               f"'{path}', but read '{read_freq // 1000}' back."
 
-        if pname == "max_freq":
+        bclk = None
+        with contextlib.suppress(Error):
+            bclk = self._get_bclk(cpu)
+
+        if bclk and freq % (bclk * 1000000):
+            msg += f"\nConsider using frequency value aligned to {bclk}MHz."
+        elif pname == "max_freq":
             with contextlib.suppress(Error):
                 if self._get_cpu_turbo(cpu) == "off":
                     base_freq = self._get_cpu_prop_value("base_freq", cpu)
