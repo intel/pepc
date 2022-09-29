@@ -13,7 +13,7 @@ many Intel platforms.
 """
 
 import logging
-from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr import _FeaturedMSR, PMEnable
 
 _LOG = logging.getLogger()
 
@@ -57,3 +57,12 @@ class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
         """
 
         super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr)
+
+        for finfo in self._features.values():
+            if "cpuflags" in finfo and "hwp" in finfo["cpuflags"]:
+                # Accessing 'MSR_HWP_REQUEST' is allowed only if bit 0 is set in 'MSR_PM_ENABLE'.
+                # In current implementation we assume that HWP status is the same for all CPUs,
+                # hence we only check CPU 0.
+                if not self._msr.read_cpu_bits(PMEnable.MSR_PM_ENABLE,
+                                               PMEnable.FEATURES["hwp"]["bits"], 0):
+                    finfo["supported"] = False
