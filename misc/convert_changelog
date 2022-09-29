@@ -7,12 +7,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Juha Haapakorpi <juha.haapakorpi@linux.intel.com>
+#         Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Script for converting CHANGELOG.md to debian changelog"""
+"""Convert CHANGELOG.md to debian changelog."""
 
 import re
 import sys
-import logging
+import argparse
 from pathlib import Path
 from datetime import datetime
 
@@ -22,36 +23,32 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from pepclibs.helperlibs import ArgParse, Logging
-from pepclibs.helperlibs.Exceptions import Error
-
 VERSION = "1.0.0"
 OWN_NAME = "convert_changelog"
-
-Logging.setup_logger(prefix=OWN_NAME)
-LOG = logging.getLogger()
 
 def parse_arguments():
     """Parse input arguments."""
 
     text = sys.modules[__name__].__doc__
-    parser = ArgParse.ArgsParser(description=text, prog=OWN_NAME, ver=VERSION)
+    parser = argparse.ArgumentParser(description=text, prog=OWN_NAME)
 
-    text = """The output file in Debian changelog format. Any existing file will be overwritten."""
-    arg = parser.add_argument("-o", "--outfile", required=True, metavar="PATH", type=Path,
-                              help=text)
+    text = "Print version and exit."
+    parser.add_argument("--version", action="version", help=text, version=VERSION)
+
+    text = """The output file path."""
+    arg = parser.add_argument("-o", "--outfile", metavar="PATH", type=Path, help=text)
     if argcomplete:
         arg.completer = argcomplete.completers.FilesCompleter()
 
-    text = """The name of the project."""
-    parser.add_argument("-p", "--project-name", required=True, metavar="name", help=text)
+    text = """Name of the project."""
+    parser.add_argument("-p", "--project-name", metavar="PRGNAME", default="prjname", help=text)
 
-    text = """The full name of the project maintainer."""
-    parser.add_argument("-n", "--maintainer-name", required=True, nargs='+',
-                        metavar="Firstname Lastname", help=text)
+    text = """Full name of the project maintainer."""
+    parser.add_argument("-n", "--maintainer-name", metavar="NAME", default="Boo Hoo", help=text)
 
-    text = """The email address of the project maintainer."""
-    parser.add_argument("-e", "--maintainer-email", required=True, metavar="email", help=text)
+    text = """Email address of the project maintainer."""
+    parser.add_argument("-e", "--maintainer-email", metavar="EMAIL",
+                        default="boo.hoo@company.com", help=text)
 
     text = """The input file changelog file in a format described here:
               https://keepachangelog.com/en/1.0.0"""
@@ -67,29 +64,40 @@ def parse_arguments():
 def handle_entry(args, entry):
     """Convert CHANGELOG.md entries to debian changelog format."""
 
-    # Example of start of a entry line we are matching: "## [1.8.11] - 2021-01-13".
-    mobj = re.match(r"^## \[(\d+.\d+.\d+)]\s+-\s+(\d+-\d+-\d+)", entry)
-    if not mobj:
-        return ""
-    version, date = mobj.groups()
-    # Get the rest of the entry line containing the entry content.
-    content = re.search(r"###.*$", entry, re.DOTALL).group()
+    lines = entry.splitlines()
 
-    # Convert to debian changelog format.
+    # Example of start of a entry line we are matching: "## [1.8.11] - 2021-01-13".
+    mobj = re.match(r"^## \[(\d+.\d+.\d+)]\s+-\s+(\d+-\d+-\d+)", lines[0])
+    if not mobj:
+        if "ADD DATE HERE" in lines[0]:
+            return ""
+        raise ValueError(f"bad first line of a changelong entry:\n{lines[0]}")
+
+    version, date = mobj.groups()
+
+    # Convert the date to the debian changelog format.
     datetimeobj = datetime.strptime(date,"%Y-%m-%d")
     date = f"{datetimeobj.strftime('%a, %d %b %Y %H:%M:%S')} +0200"
+
     substitutions = [
-        (r"###\s+[A-Za-z]+\n", ""),
-        ("\n", "<newline>"),
         (r"\s+-\s+", "  * "),
         (r"\s\s\s+", "    "),
-        ("<newline>", "\n")
     ]
-    for old, new in substitutions:
-        content = re.sub(old, new, content)
+
+    changes = []
+    for line in lines[1:]:
+        if line.startswith("#"):
+            continue
+
+        for old, new in substitutions:
+            line = re.sub(old, new, line)
+
+        changes.append(line)
+
+    changes = "\n".join(changes)
 
     return (f"{args.project_name} ({version}) unstable; urgency=low\n\n"
-            f"{content}\n\n -- {' '.join(map(str, args.maintainer_name))} <{args.maintainer_email}>"
+            f"{changes}\n\n -- {args.maintainer_name} <{args.maintainer_email}>"
             f"  {date}\n\n")
 
 def convert_changelog(args):
@@ -98,23 +106,53 @@ def convert_changelog(args):
     outtext = ""
     with open(args.infile, "r", encoding="utf-8") as fobj:
         intext = fobj.read()
-        for entry in re.findall(r"##\s+\[.*?(?=\n##\s+\[)", intext, re.DOTALL):
+        # Decoding for regex.
+        #
+        # The entire regext is structured like this: 'start_line.*?(?:stopline)'
+        #
+        # Yield 1:
+        # # ## [1.3.21] - 2022-09-29
+		# ## Fixed
+		#  - Fix a bug.
+		#
+		# Yield 2:
+        # ## [1.3.20] - 2022-09-21
+		# ### Added
+		#  - Add a feature
+        #
+        # So the idea is that we match the 'start_line', which is '## [1.3.21] - 2022-09-29' in this
+        # example. We include all lines until we meet 'stopline', which is '## [1.3.20] -
+        # 2022-09-21' in this example (or the end of file). We do not inlcude the 'stopline' to the
+        # changelog entry, it is actually the beginning of the next changelog entry.
+        #
+        # the '.*?' after 'start_line', combind with 're.DOTALL', means "match any character,
+        # including a newline, use greedy algorithm". It will try to match as many characters as
+        # possible. The '(?stopline)' part basically says - but stop when you meet a line like this.
+        #
+        # The 'stopline' is structure like htis: '(?:(?:startline)|(?:\Z)'.
+        #
+        # The '(?:)' is just grouping but without capturing into a group. The '\Z' part is the endo
+        # of input string. So the entire construct just says that our stopline is either the start
+        # of the new changelog entry, or the end of the input (to catch the very last changelog
+        # entry too).
+        for entry in re.findall(r"##\s+\[.*?(?=(?:(?:\n##\s+\[)|(?:\Z)))", intext, re.DOTALL):
             outtext += handle_entry(args, entry.strip())
 
-    with open(args.outfile, "w", encoding='utf-8') as fobj:
-        fobj.write(outtext)
+    outtext = outtext.strip()
+    if args.outfile:
+        with open(args.outfile, "w", encoding='utf-8') as fobj:
+            fobj.write(outtext)
+    else:
+        print(outtext)
 
 def main():
     """Script entry point."""
 
-    try:
-        args = parse_arguments()
-        convert_changelog(args)
-    except KeyboardInterrupt:
-        LOG.info("\nInterrupted, exiting")
-        return -1
-    except Error as err:
-        LOG.error_out(err)
+    args = parse_arguments()
+
+    args.maintainer_name = " ".join([part.strip() for part in args.maintainer_name.split()])
+
+    convert_changelog(args)
 
     return 0
 
