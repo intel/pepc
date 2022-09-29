@@ -10,12 +10,17 @@
 
 """Script for converting CHANGELOG.md to debian changelog"""
 
+import re
 import sys
 import logging
-import re
 from pathlib import Path
 from datetime import datetime
-import argcomplete
+
+try:
+    import argcomplete
+except ImportError:
+    # We can live without argcomplete, we only lose tab completions.
+    argcomplete = None
 
 from pepclibs.helperlibs import ArgParse, Logging
 from pepclibs.helperlibs.Exceptions import Error
@@ -33,12 +38,14 @@ def parse_arguments():
     parser = ArgParse.ArgsParser(description=text, prog=OWN_NAME, ver=VERSION)
 
     text = """The input file in CHANGELOG.md format."""
-    parser.add_argument("-i", "--infile", required=True, metavar="PATH", type=Path, help=text) \
-            .completer = argcomplete.completers.FilesCompleter()
+    arg = parser.add_argument("-i", "--infile", required=True, metavar="PATH", type=Path, help=text)
+    if argcomplete:
+        arg.completer = argcomplete.completers.FilesCompleter()
 
     text = """The output file in Debian changelog format. Any existing file will be overwritten."""
-    parser.add_argument("-o", "--outfile", required=True, metavar="PATH", type=Path, help=text) \
-            .completer = argcomplete.completers.FilesCompleter()
+    arg = parser.add_argument("-o", "--outfile", required=True, metavar="PATH", type=Path, help=text)
+    if argcomplete:
+        arg.completer = argcomplete.completers.FilesCompleter()
 
     text = """The name of the project."""
     parser.add_argument("-p", "--project-name", required=True, metavar="name", help=text)
@@ -51,7 +58,9 @@ def parse_arguments():
     parser.add_argument("-e", "--maintainer-email", required=True, metavar="email",
                         help=text)
 
-    argcomplete.autocomplete(parser)
+    if argcomplete:
+        argcomplete.autocomplete(parser)
+
     return parser.parse_args()
 
 def handle_entry(args, entry):
