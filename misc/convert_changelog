@@ -37,13 +37,9 @@ def parse_arguments():
     text = sys.modules[__name__].__doc__
     parser = ArgParse.ArgsParser(description=text, prog=OWN_NAME, ver=VERSION)
 
-    text = """The input file in CHANGELOG.md format."""
-    arg = parser.add_argument("-i", "--infile", required=True, metavar="PATH", type=Path, help=text)
-    if argcomplete:
-        arg.completer = argcomplete.completers.FilesCompleter()
-
     text = """The output file in Debian changelog format. Any existing file will be overwritten."""
-    arg = parser.add_argument("-o", "--outfile", required=True, metavar="PATH", type=Path, help=text)
+    arg = parser.add_argument("-o", "--outfile", required=True, metavar="PATH", type=Path,
+                              help=text)
     if argcomplete:
         arg.completer = argcomplete.completers.FilesCompleter()
 
@@ -55,8 +51,13 @@ def parse_arguments():
                         metavar="Firstname Lastname", help=text)
 
     text = """The email address of the project maintainer."""
-    parser.add_argument("-e", "--maintainer-email", required=True, metavar="email",
-                        help=text)
+    parser.add_argument("-e", "--maintainer-email", required=True, metavar="email", help=text)
+
+    text = """The input file changelog file in a format described here:
+              https://keepachangelog.com/en/1.0.0"""
+    arg = parser.add_argument("infile", metavar="PATH", type=Path, help=text)
+    if argcomplete:
+        arg.completer = argcomplete.completers.FilesCompleter()
 
     if argcomplete:
         argcomplete.autocomplete(parser)
