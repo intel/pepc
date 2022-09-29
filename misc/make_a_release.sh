@@ -76,6 +76,10 @@ argparse-manpage --pyfile "$BASEDIR/pepctool/_Pepc.py" --function build_argument
                  --url 'https://github.com/intel/pepc'
 pandoc --toc -t man -s "$BASEDIR/docs/man1/pepc.1" -t rst -o "$BASEDIR/docs/pepc-man.rst"
 
+# Update debian changelog.
+"$BASEDIR"/misc/convert_changelog -o "$BASEDIR/debian/changelog" -p "pepc" -n "Artem Bityutskiy" \
+                                  -e "artem.bityutskiy@intel.com" "$BASEDIR/CHANGELOG.md"
+
 # Commit the changes.
 git --git-dir="$BASEDIR/.git" commit -a -s -m "Release version $new_ver"
 
