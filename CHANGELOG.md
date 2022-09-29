@@ -3,9 +3,18 @@
 Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.21] - ADD DATE HERE
+## [1.3.22] - ADD DATE HERE
 ### Fixed
 ### Added
+### Removed
+### Changed
+
+## [1.3.21] - 2022-09-29
+### Fixed
+ - Fix bugs in tests.
+### Added
+ - Add a couple of helper functions to the 'Trivial' module, they are needed
+   for the dependent 'wult' project.
 ### Removed
 ### Changed
 
