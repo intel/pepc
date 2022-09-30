@@ -1,3 +1,11 @@
+pepc (1.3.21) unstable; urgency=low
+
+  * Fix bugs in tests.
+  * Add a couple of helper functions to the 'Trivial' module, they are needed
+    for the dependent 'wult' project.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 29 Sep 2022 00:00:00 +0200
+
 pepc (1.3.20) unstable; urgency=low
 
   * Add scope awareness to the 'MSR.py' module. This speeds 'pepc' commands that
@@ -195,4 +203,3 @@ pepc (1.1.0) unstable; urgency=low
   * pepc: first release.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 29 Oct 2021 00:00:00 +0200
-

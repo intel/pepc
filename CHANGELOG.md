@@ -15,8 +15,6 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
  - Add a couple of helper functions to the 'Trivial' module, they are needed
    for the dependent 'wult' project.
-### Removed
-### Changed
 
 ## [1.3.20] - 2022-09-21
 ### Added
