@@ -36,7 +36,7 @@ FEATURES = {
     "pkg_control" : {
         "name" : "HWP is controlled by MSR_HWP_REQUEST_PKG",
         "sname": "CPU",
-        "help" : f"""Wen enabled, the CPU ignores this per-CPU ignores MSR {MSR_HWP_REQUEST}
+        "help" : f"""When enabled, the CPU ignores this per-CPU ignores MSR {MSR_HWP_REQUEST}
                      (MSR_HWP_REQUEST), and instead, uses per-package MSR 0x772
                      (MSR_HWP_REQUEST_PKG).""",
         "cpuflags" : ("hwp", "hwp_pkg_req"),
@@ -47,7 +47,7 @@ FEATURES = {
     "epp_valid" : {
         "name" : "EPP is controlled by MSR_HWP_REQUEST",
         "sname": "CPU",
-        "help" : f"""Wen set, the CPU reads the EPP value from per-CPU MSR {MSR_HWP_REQUEST}
+        "help" : f"""When set, the CPU reads the EPP value from per-CPU MSR {MSR_HWP_REQUEST}
                      (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
         "cpuflags" : ("hwp", "hwp_epp"),
         "type" : "bool",
