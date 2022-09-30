@@ -25,7 +25,8 @@ def _handle_set_opts(opts, cpus, psobj, cpuinfo):
 
     psobj.set_props(opts, cpus)
     for pname in opts:
-        # Read back the just set value.
+        # Read back the just set value in order to get "resolved" values. For example, "min" would
+        # be resolved to the actual frequency number.
         _, pinfo = next(psobj.get_props((pname,), cpus=cpus))
         val = pinfo[pname][pname]
         _PepcCommon.print_prop_msg(psobj.props[pname], val, cpuinfo, action="set to", cpus=cpus)
