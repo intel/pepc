@@ -114,7 +114,7 @@ def duration(seconds, s=True, ms=False):
             result += "%f" % (secs + float(msecs) / 1000)
             result = result.rstrip("0").rstrip(".")
             result += "s"
-        else:
+        elif secs:
             result += "%ds " % secs
 
     return result.strip()
