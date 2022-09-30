@@ -84,9 +84,7 @@ def pstates_info_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        if print_opts:
-            _handle_print_opts(print_opts, cpus, psobj, cpuinfo)
-        else:
-            pinfo_iter = psobj.get_props(psobj.props, cpus=cpus)
-            aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
-            _PepcCommon.print_aggr_props(aggr_pinfo, psobj, cpuinfo)
+        if not print_opts:
+            print_opts = psobj.props
+
+        _handle_print_opts(print_opts, cpus, psobj, cpuinfo)
