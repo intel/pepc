@@ -202,7 +202,7 @@ PROPS = {
                     built-in 'intel_pstate' driver governors (active mode).""",
         "type" : "str",
         "sname": "global",
-        "writable" : False,
+        "writable" : True,
     },
     "governor" : {
         "name" : "CPU frequency governor",
@@ -827,6 +827,19 @@ class PStates(_PCStatesBase.PCStatesBase):
             if new_max_freq != cur_max_freq:
                 self._write_freq_prop_value_to_sysfs(max_freq_key, new_max_freq, cpu)
 
+    def _set_intel_pstate_mode(self, cpu, mode):
+        """Change mode of the CPU frequency driver 'intel_pstate'."""
+
+        path = self._sysfs_base / "intel_pstate" / "status"
+        try:
+            self._write_prop_value_to_sysfs(self._props["intel_pstate_mode"], path, mode)
+            self._pcache.add("intel_pstate_mode", cpu, mode,
+                             sname=self._props["intel_pstate_mode"]["sname"])
+        except Error:
+            # When 'intel_pstate' driver is 'off' it is not possible to write 'off' again.
+            if mode != "off" or self._get_cpu_prop_value("intel_pstate_mode", cpu) != "off":
+                raise
+
     def _validate_intel_pstate_mode(self, mode):
         """Validate 'intel_pstate_mode' mode."""
 
@@ -867,6 +880,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             if pname == "turbo":
                 self._set_turbo(cpu, val in {True, "on", "enable"})
+            elif pname == "intel_pstate_mode":
+                self._set_intel_pstate_mode(cpu, val)
             elif "fname" in prop:
                 path = self._get_sysfs_path(prop, cpu)
                 self._write_prop_value_to_sysfs(prop, path, val)
