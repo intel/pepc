@@ -194,6 +194,16 @@ PROPS = {
         "sname": "global",
         "writable" : False,
     },
+    "intel_pstate_mode" : {
+        "name" : "Operation mode of 'intel_pstate' driver",
+        "help" : """The 'intel_pstate' driver has 3 operation modes: 'active', 'passive' and 'off'.
+                    The main difference between the active and passive mode is in what frequency
+                    governors are used - the generic Linux governors (passive mode) or the custom,
+                    built-in 'intel_pstate' driver governors (active mode).""",
+        "type" : "str",
+        "sname": "global",
+        "writable" : False,
+    },
     "governor" : {
         "name" : "CPU frequency governor",
         "help" : """CPU frequency governor decides which P-state to select on a CPU depending
@@ -570,11 +580,27 @@ class PStates(_PCStatesBase.PCStatesBase):
                 val = self._get_cpu_prop_value("max_freq", cpu)
         elif pname == "turbo":
             val = self._get_cpu_turbo(cpu)
+        elif pname == "intel_pstate_mode":
+            val = self._get_intel_pstate_mode(pname, cpu)
         else:
             raise Error(f"BUG: unsupported property '{pname}'")
 
         self._pcache.add(pname, cpu, val, sname=prop["sname"])
         return val
+
+    def _get_intel_pstate_mode(self, pname, cpu):
+        """Returns the 'intel_pstate' driver operation mode."""
+
+        # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode, and
+        # 'intel_cpufreq' when it is in passive mode. So there are 2 names for the same kernel
+        # driver.
+        driver = self._get_cpu_prop_value("driver", cpu)
+
+        if driver in {"intel_pstate", "intel_cpufreq"}:
+            path = self._sysfs_base / "intel_pstate" / "status"
+            return self._read_prop_value_from_sysfs(self._props[pname], path)
+
+        return None
 
     def _set_turbo(self, cpu, enable):
         """Enable or disable turbo."""
