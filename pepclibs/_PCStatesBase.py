@@ -74,8 +74,8 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
             self._check_prop(pname)
 
-            if not self.props[pname]["writable"]:
-                name = Human.untitle(self.props[pname]["name"])
+            if not self._props[pname]["writable"]:
+                name = Human.untitle(self._props[pname]["name"])
                 raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
 
             if pname in result:
