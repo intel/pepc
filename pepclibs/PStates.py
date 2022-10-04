@@ -545,7 +545,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if pname == "hwp":
             hwp = self._get_cpu_hwp(cpu)
-            self._pcache.add("hwp", cpu, hwp, sname=prop["sname"])
+            self._pcache.add(pname, cpu, hwp, sname=prop["sname"])
             return hwp
 
         if pname == "max_turbo_freq":
@@ -554,12 +554,12 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # Assume that max. turbo is the Linux max. frequency.
                 path = self._get_sysfs_path(self._props["max_freq"], cpu)
                 max_turbo_freq = self._read_prop_value_from_sysfs(prop, path)
-            self._pcache.add("max_turbo_freq", cpu, max_turbo_freq, sname=prop["sname"])
+            self._pcache.add(pname, cpu, max_turbo_freq, sname=prop["sname"])
             return max_turbo_freq
 
         if pname == "turbo":
             turbo = self._get_cpu_turbo(cpu)
-            self._pcache.add("turbo", cpu, turbo, sname=prop["sname"])
+            self._pcache.add(pname, cpu, turbo, sname=prop["sname"])
             return turbo
 
         raise Error(f"BUG: unsupported property '{pname}'")
