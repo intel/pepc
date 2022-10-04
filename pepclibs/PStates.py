@@ -552,8 +552,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             max_turbo_freq = self._get_max_turbo_freq_freq(cpu)
             if max_turbo_freq is None:
                 # Assume that max. turbo is the Linux max. frequency.
-                path = self._get_sysfs_path(self._props["max_freq"], cpu)
-                max_turbo_freq = self._read_prop_value_from_sysfs(prop, path)
+                max_turbo_freq = self._get_cpu_prop_value("max_freq", cpu)
             self._pcache.add(pname, cpu, max_turbo_freq, sname=prop["sname"])
             return max_turbo_freq
 
