@@ -532,16 +532,13 @@ class PStates(_PCStatesBase.PCStatesBase):
             except ErrorNotFound:
                 # The sysfs file was not found. The base frequency can be figured out from the MSR
                 # registers.
-                if pname != "base_freq":
-                    path = self._get_sysfs_path(prop, cpu)
-                    _LOG.debug("can't read value of property '%s', path '%s' is not found",
-                               pname, path)
-                    return None
+                if pname == "base_freq":
+                    return self._get_base_freq(cpu)
 
-        if pname == "base_freq":
-            base = self._get_base_freq(cpu)
-            self._pcache.add(pname, cpu, base, sname=prop["sname"])
-            return base
+                path = self._get_sysfs_path(prop, cpu)
+                _LOG.debug("can't read value of property '%s', path '%s' is not found",
+                            pname, path)
+                return None
 
         if pname == "max_eff_freq":
             max_eff_freq = self._get_max_eff_freq(cpu)
