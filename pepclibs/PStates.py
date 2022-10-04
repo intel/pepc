@@ -520,25 +520,21 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._pcache.get(pname, cpu)
 
         if "fname" in prop:
+            val = None
             if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
                 _LOG.debug(self._uncore_errmsg)
-                return None
-
-            path = self._get_sysfs_path(prop, cpu)
-            try:
-                val = self._read_prop_value_from_sysfs(prop, path)
-                self._pcache.add(pname, cpu, val, sname=prop["sname"])
-                return val
-            except ErrorNotFound:
-                # The sysfs file was not found. The base frequency can be figured out from the MSR
-                # registers.
-                if pname == "base_freq":
-                    return self._get_base_freq(cpu)
-
+            else:
                 path = self._get_sysfs_path(prop, cpu)
-                _LOG.debug("can't read value of property '%s', path '%s' is not found",
-                            pname, path)
-                return None
+                try:
+                    val = self._read_prop_value_from_sysfs(prop, path)
+                except ErrorNotFound:
+                    _LOG.debug("can't read value of property '%s', path '%s' missing", pname, path)
+                    # The base frequency can be figured out from the MSR registers.
+                    if pname == "base_freq":
+                        val = self._get_base_freq(cpu)
+
+            self._pcache.add(pname, cpu, val, sname=prop["sname"])
+            return val
 
         if pname == "max_eff_freq":
             max_eff_freq = self._get_max_eff_freq(cpu)
