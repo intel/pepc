@@ -389,7 +389,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return base, max_eff_freq
 
-    def _get_max_turbo_freq_freq(self, cpu):
+    def _get_max_turbo_freq(self, cpu):
         """
         Read and return the maximum turbo frequency for CPU 'cpu' from 'MSR_TURBO_RATIO_LIMIT'.
         """
@@ -549,7 +549,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             return hwp
 
         if pname == "max_turbo_freq":
-            max_turbo_freq = self._get_max_turbo_freq_freq(cpu)
+            max_turbo_freq = self._get_max_turbo_freq(cpu)
             if max_turbo_freq is None:
                 # Assume that max. turbo is the Linux max. frequency.
                 max_turbo_freq = self._get_cpu_prop_value("max_freq", cpu)
