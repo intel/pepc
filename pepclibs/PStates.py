@@ -367,14 +367,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._uncore_freq_supported = self.__is_uncore_freq_supported()
         return self._uncore_freq_supported
 
-    def _get_base_eff_freqs(self, cpu):
-        """
-        Read and return a tuple of the following CPU 'cpu' frequencies.
-          * The base frequency ("base_freq").
-          * Max. efficiency frequency ("max_eff_freq").
-
-        The frequencies are read from 'MSR_PLATFORM_INFO'.
-        """
+    def _get_base_freq(self, cpu):
+        """Read and return the base frequency. The frequency is read from 'MSR_PLATFORM_INFO'."""
 
         bclk = self._get_bclk(cpu)
         platinfo = self._get_platinfo()
@@ -382,12 +376,22 @@ class PStates(_PCStatesBase.PCStatesBase):
         ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
         base = int(ratio * bclk * 1000 * 1000)
 
-        max_eff_freq = None
+        return base
+
+    def _get_max_eff_freq(self, cpu):
+        """
+        Read and Max. efficiency frequency. The frequency is read from 'MSR_PLATFORM_INFO'.
+        Returns 'None' if not supported.
+        """
+
+        bclk = self._get_bclk(cpu)
+        platinfo = self._get_platinfo()
+
         if platinfo.is_cpu_feature_supported("max_eff_ratio", cpu):
             ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
-            max_eff_freq = int(ratio * bclk * 1000 * 1000)
+            return int(ratio * bclk * 1000 * 1000)
 
-        return base, max_eff_freq
+        return None
 
     def _get_max_turbo_freq(self, cpu):
         """
@@ -534,13 +538,14 @@ class PStates(_PCStatesBase.PCStatesBase):
                                pname, path)
                     return None
 
-        if pname in ("base_freq", "max_eff_freq"):
-            base, max_eff_freq = self._get_base_eff_freqs(cpu)
-            self._pcache.add("base_freq", cpu, base, sname=self._props["base_freq"]["sname"])
-            self._pcache.add("max_eff_freq", cpu, max_eff_freq,
-                             sname=self._props["max_eff_freq"]["sname"])
-            if pname == "base_freq":
-                return base
+        if pname == "base_freq":
+            base = self._get_base_freq(cpu)
+            self._pcache.add(pname, cpu, base, sname=prop["sname"])
+            return base
+
+        if pname == "max_eff_freq":
+            max_eff_freq = self._get_max_eff_freq(cpu)
+            self._pcache.add(pname, cpu, max_eff_freq, sname=prop["sname"])
             return max_eff_freq
 
         if pname == "hwp":
