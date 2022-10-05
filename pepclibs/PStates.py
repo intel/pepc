@@ -393,6 +393,20 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return None
 
+    def _get_driver_name(self, cpu): # pylint: disable=unused-argument
+        """
+        Returns the current CPU frequency driver name. The assumption is that the "scaling_driver"
+        sysfs has already been checked and it does not exist. So this is the "fallback" function
+        which tries to figure the driver name.
+        """
+
+        # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
+        # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
+        if self._pman.exists(self._sysfs_base / "intel_pstate"):
+            return "intel_pstate"
+
+        return None
+
     def _get_max_turbo_freq(self, cpu):
         """
         Read and return the maximum turbo frequency for CPU 'cpu' from 'MSR_TURBO_RATIO_LIMIT'.
@@ -866,6 +880,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         # "getter" function. E.g., the "base_frequency" file is specific to the 'intel_pstate'
         # driver. In case of a different driver, we can fall-back to reading the MSR register.
         self._props["base_freq"]["getter"] = self._get_base_freq
+        self._props["driver"]["getter"] = self._get_driver_name
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
