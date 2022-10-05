@@ -63,7 +63,7 @@ def pytest_collection_modifyitems(session, config, items): # pylint: disable=unu
         opt_str = f"{dataset}-{hostname}]"
 
         for item in items:
-            if item.name.startswith("test_v1_") or dataset == "all" or opt_str in item.name:
+            if dataset == "all" or opt_str in item.name:
                 select.append(item)
             else:
                 deselect.append(item)
@@ -73,10 +73,6 @@ def pytest_collection_modifyitems(session, config, items): # pylint: disable=unu
 
 def pytest_generate_tests(metafunc):
     """Generate tests with custom options."""
-
-    # The "v1" tests do not expect extra options.
-    if "_v1_" in str(metafunc.function):
-        return
 
     for opt in _PYTEST_OPTS:
         if opt.private:
