@@ -405,12 +405,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         temppath = super().mkdtemp(prefix=prefix, basedir=path)
         return temppath.relative_to(self._get_basepath())
 
-    def __init__(self):
-        """Initialize the emulated 'LocalProcessManager' class instance."""
+    def __init__(self, hostname=None):
+        """Initialize the class instance."""
 
         super().__init__()
 
-        self.hostname = "emulated local host"
+        if hostname:
+            self.hostname = hostname
+        else:
+            self.hostname = "emulated local host"
         self.hostmsg = f" on '{self.hostname}'"
         self.is_remote = False
 
