@@ -87,7 +87,6 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=N
 
         pman = EmulProcessManager.EmulProcessManager()
         pman.init_testdata("CPUInfo", datapath)
-
     else:
         _check_for_none(hostname, datapath=datapath)
 
