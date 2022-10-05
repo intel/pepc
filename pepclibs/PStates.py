@@ -514,6 +514,33 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
 
+    def _get_cpu_prop_value_sysfs(self, prop, cpu):
+        """
+        This is a helper for '_get_cpu_prop_value()' which handles the properties backed by a sysfs
+        file.
+        """
+
+        if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
+            _LOG.debug(self._uncore_errmsg)
+            return None
+
+        path = self._get_sysfs_path(prop, cpu)
+        val = None
+
+        try:
+            val = self._read_prop_value_from_sysfs(prop, path)
+        except ErrorNotFound as err1:
+            _LOG.debug("can't read value of property '%s', path '%s' missing", prop["name"], path)
+
+            if "getter" in prop:
+                _LOG.debug("running the fallback function property '%s'", prop["name"])
+                try:
+                    val = prop["getter"](cpu)
+                except Error as err2:
+                    raise Error(f"{err1}\nThe fall-back method failed too:\n{err2}") from err2
+
+        return val
+
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
 
@@ -534,24 +561,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._pcache.get(pname, cpu)
 
         if "fname" in prop:
-            val = None
-            if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
-                _LOG.debug(self._uncore_errmsg)
-            else:
-                path = self._get_sysfs_path(prop, cpu)
-                try:
-                    val = self._read_prop_value_from_sysfs(prop, path)
-                except ErrorNotFound as err1:
-                    _LOG.debug("can't read value of property '%s', path '%s' missing", pname, path)
-
-                    if "getter" in prop:
-                        _LOG.debug("running the fallback function property '%s'", pname)
-                        try:
-                            val = prop["getter"](cpu)
-                        except Error as err2:
-                            msg = f"{err1}\nThe fall-back method failed too:\n{err2}"
-                            raise Error(msg) from err2
-
+            val = self._get_cpu_prop_value_sysfs(prop, cpu)
             self._pcache.add(pname, cpu, val, sname=prop["sname"])
             return val
 
