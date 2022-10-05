@@ -368,7 +368,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         return self._uncore_freq_supported
 
     def _get_base_freq(self, cpu):
-        """Read and return the base frequency. The frequency is read from 'MSR_PLATFORM_INFO'."""
+        """Read base frequency from 'MSR_PLATFORM_INFO' and return it."""
 
         bclk = self._get_bclk(cpu)
         platinfo = self._get_platinfo()
@@ -379,10 +379,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         return base
 
     def _get_max_eff_freq(self, cpu):
-        """
-        Read and Max. efficiency frequency. The frequency is read from 'MSR_PLATFORM_INFO'.
-        Returns 'None' if not supported.
-        """
+        """Read max effeciency frequency from 'MSR_PLATFORM_INFO' and return it."""
 
         bclk = self._get_bclk(cpu)
         platinfo = self._get_platinfo()
