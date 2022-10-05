@@ -541,12 +541,16 @@ class PStates(_PCStatesBase.PCStatesBase):
                 path = self._get_sysfs_path(prop, cpu)
                 try:
                     val = self._read_prop_value_from_sysfs(prop, path)
-                except ErrorNotFound:
+                except ErrorNotFound as err1:
                     _LOG.debug("can't read value of property '%s', path '%s' missing", pname, path)
 
                     if "getter" in prop:
                         _LOG.debug("running the fallback function property '%s'", pname)
-                        val = prop["getter"](cpu)
+                        try:
+                            val = prop["getter"](cpu)
+                        except Error as err2:
+                            msg = f"{err1}\nThe fall-back method failed too:\n{err2}"
+                            raise Error(msg) from err2
 
             self._pcache.add(pname, cpu, val, sname=prop["sname"])
             return val
