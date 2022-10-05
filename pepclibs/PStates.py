@@ -445,6 +445,9 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _is_turbo_supported(self, cpu):
         """Returns 'True' if turbo is supported and 'False' otherwise."""
 
+        if self._get_cpu_prop_value("intel_pstate_mode", cpu) == "off":
+            return False
+
         base_freq = self._get_cpu_prop_value("base_freq", cpu)
         max_turbo_freq = self._get_cpu_prop_value("max_turbo_freq", cpu)
 
