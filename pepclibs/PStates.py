@@ -450,6 +450,15 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return max_turbo_freq is not None or max_turbo_freq > base_freq
 
+    def _read_int(self, path):
+        """Read an integer from file 'path' via the process manager."""
+
+        val = self._pman.read(path).strip()
+        if not Trivial.is_int(val):
+            raise Error(f"read an unexpected non-integer value from '{path}'"
+                        f"{self._pman.hostmsg}")
+        return int(val)
+
     def _get_cpu_turbo(self, cpu):
         """
         Returns "on" if turbo is enabled, "off" if it is disabled, and 'None' if it is not
@@ -504,15 +513,6 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._sysfs_base_uncore / f"package_{pkg:02d}_die_{die:02d}" / prop["fname"]
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
-
-    def _read_int(self, path):
-        """Read an integer from file 'path' via the process manager."""
-
-        val = self._pman.read(path).strip()
-        if not Trivial.is_int(val):
-            raise Error(f"read an unexpected non-integer value from '{path}'"
-                        f"{self._pman.hostmsg}")
-        return int(val)
 
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
