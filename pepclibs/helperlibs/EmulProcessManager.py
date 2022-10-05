@@ -9,6 +9,7 @@
 """Emulated version or the 'LocalProcessManager' module for testing purposes."""
 
 # pylint: disable=protected-access
+# pylint: disable=arguments-differ
 
 import io
 import types
