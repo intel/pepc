@@ -24,7 +24,7 @@ _LOG = logging.getLogger()
 
 def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
-    return "method '%s()' failed for %s" % (method, fobj.name)
+    return f"method '{method}()' failed for {fobj.name}"
 
 def populate_rw_file(path, data):
     """Create text file 'path' and write 'data' into it."""
