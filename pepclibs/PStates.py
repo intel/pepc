@@ -562,33 +562,22 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if "fname" in prop:
             val = self._get_cpu_prop_value_sysfs(prop, cpu)
-            self._pcache.add(pname, cpu, val, sname=prop["sname"])
-            return val
-
-        if pname == "max_eff_freq":
-            max_eff_freq = self._get_max_eff_freq(cpu)
-            self._pcache.add(pname, cpu, max_eff_freq, sname=prop["sname"])
-            return max_eff_freq
-
-        if pname == "hwp":
-            hwp = self._get_cpu_hwp(cpu)
-            self._pcache.add(pname, cpu, hwp, sname=prop["sname"])
-            return hwp
-
-        if pname == "max_turbo_freq":
-            max_turbo_freq = self._get_max_turbo_freq(cpu)
-            if max_turbo_freq is None:
+        elif pname == "max_eff_freq":
+            val = self._get_max_eff_freq(cpu)
+        elif pname == "hwp":
+            val = self._get_cpu_hwp(cpu)
+        elif pname == "max_turbo_freq":
+            val = self._get_max_turbo_freq(cpu)
+            if val is None:
                 # Assume that max. turbo is the Linux max. frequency.
-                max_turbo_freq = self._get_cpu_prop_value("max_freq", cpu)
-            self._pcache.add(pname, cpu, max_turbo_freq, sname=prop["sname"])
-            return max_turbo_freq
+                val = self._get_cpu_prop_value("max_freq", cpu)
+        elif pname == "turbo":
+            val = self._get_cpu_turbo(cpu)
+        else:
+            raise Error(f"BUG: unsupported property '{pname}'")
 
-        if pname == "turbo":
-            turbo = self._get_cpu_turbo(cpu)
-            self._pcache.add(pname, cpu, turbo, sname=prop["sname"])
-            return turbo
-
-        raise Error(f"BUG: unsupported property '{pname}'")
+        self._pcache.add(pname, cpu, val, sname=prop["sname"])
+        return val
 
     def _set_turbo(self, cpu, enable):
         """Enable or disable turbo."""
