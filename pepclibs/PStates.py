@@ -529,9 +529,10 @@ class PStates(_PCStatesBase.PCStatesBase):
                     val = self._read_prop_value_from_sysfs(prop, path)
                 except ErrorNotFound:
                     _LOG.debug("can't read value of property '%s', path '%s' missing", pname, path)
-                    # The base frequency can be figured out from the MSR registers.
-                    if pname == "base_freq":
-                        val = self._get_base_freq(cpu)
+
+                    if "getter" in prop:
+                        _LOG.debug("running the fallback function property '%s'", pname)
+                        val = prop["getter"](cpu)
 
             self._pcache.add(pname, cpu, val, sname=prop["sname"])
             return val
@@ -860,6 +861,11 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._props["driver"]["fname"] = "scaling_driver"
         self._props["governor"]["fname"] = "scaling_governor"
         self._props["governor"]["subprops"]["governors"]["fname"] = "scaling_available_governors"
+
+        # Some of the sysfs files may not exist, in which case thy can be aquired using the
+        # "getter" function. E.g., the "base_frequency" file is specific to the 'intel_pstate'
+        # driver. In case of a different driver, we can fall-back to reading the MSR register.
+        self._props["base_freq"]["getter"] = self._get_base_freq
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
