@@ -10,6 +10,7 @@
 
 # pylint: disable=protected-access
 # pylint: disable=arguments-differ
+# pylint: disable=arguments-renamed
 
 import io
 import types
