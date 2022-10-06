@@ -39,19 +39,18 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=N
             which will connect to local host over SSH and manage processes over a local SSH
             connection. This is a less efficient way of managing processes, but may be useful for,
             say, debugging purposes.
-     2. 'hostname' is any string except for "localhost" and "emulation". Create and return an
-        'SSHProcessManager' object, which will be connected to the 'hostname' host over SSH and will
-        manage processes on the 'hostname' host over SSH.
-     3. 'hostname is "emulation". Create and return an 'EmulProcessManager' object. This object
-        is used for testing purposes only. However, if 'datapath' is 'None', then this is treated as
-        case #2.
+     2. 'datapath' is 'None' and 'hostname' is not "localhost". Create and return an
+        'SSHProcessManager' object, which will be connected to the 'hostname' host over SSH and
+        will manage processes on the 'hostname' host over SSH.
+     3. 'datapath' is not 'None'. Create and return an 'EmulProcessManager' object. This object is
+        used for testing purposes only.
 
     The arguments are as follows.
       * hostname - the host name to create a process manager object for.
       * username - the user name to use for logging into the 'hostname' host over SSH.
       * privkeypath - path to SSH private key to use for logging into the host.
       * timeout - the SSH connection time out in seconds.
-      * datapath - path to the emulation data.
+      * datapath - path to the emulation data. Ignored if 'hostname' is "localhost".
 
     The 'hostname' argument is used for all types of process managers. The 'username',
     'privkeypath', and 'timeout' arguments are used only for 'SSHProcessManager'. Have to be 'None'
@@ -80,16 +79,12 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=N
         from pepclibs.helperlibs import LocalProcessManager
 
         pman = LocalProcessManager.LocalProcessManager()
-    elif hostname == "emulation" and datapath is not None:
-        _check_for_none(hostname, username=username, privkeypath=privkeypath, timeout=timeout)
-
+    elif datapath is not None:
         from pepclibs.helperlibs import EmulProcessManager
 
         pman = EmulProcessManager.EmulProcessManager(hostname=hostname)
         pman.init_testdata("CPUInfo", datapath)
     else:
-        _check_for_none(hostname, datapath=datapath)
-
         from pepclibs.helperlibs import SSHProcessManager
 
         pman = SSHProcessManager.SSHProcessManager(hostname=hostname, username=username,
