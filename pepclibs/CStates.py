@@ -567,6 +567,23 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         return module.read_cpu_feature(pname, cpu)
 
+
+    def _get_cpu_prop_value_sysfs(self, prop):
+        """
+        This is a helper for '_get_cpu_prop_value()' which handles the properties backed by a sysfs
+        file.
+        """
+
+        path = self._sysfs_cpuidle / prop["fname"]
+        val = None
+
+        try:
+            val = self._read_prop_value_from_sysfs(prop, path)
+        except ErrorNotFound:
+            _LOG.debug("can't read value of property '%s', path '%s' missing", prop["name"], path)
+
+        return val
+
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """"Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
 
@@ -592,15 +609,9 @@ class CStates(_PCStatesBase.PCStatesBase):
             return self._pcache.get(pname, cpu)
 
         if "fname" in prop:
-            path = self._sysfs_cpuidle / prop["fname"]
-            try:
-                val = self._read_prop_value_from_sysfs(prop, path)
-                self._pcache.add(pname, cpu, val, sname=prop["sname"])
-                return val
-            except ErrorNotFound:
-                _LOG.debug("can't read value of property '%s', path '%s' is not found", pname,
-                           path)
-                return None
+            val = self._get_cpu_prop_value_sysfs(prop)
+            self._pcache.add(pname, cpu, val, sname=prop["sname"])
+            return val
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
