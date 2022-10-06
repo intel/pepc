@@ -404,7 +404,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         ratio = None
 
         if trl.is_cpu_feature_supported("max_1c_turbo_ratio", cpu):
-            ratio = trl.read_cpu_feature("max_1c_turbo_ratio", 0)
+            ratio = trl.read_cpu_feature("max_1c_turbo_ratio", cpu)
         elif trl.is_cpu_feature_supported("max_g0_turbo_ratio", cpu):
             # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores. We
             # can safely assume that group 0 will correspond to max. 1-core turbo, so we do not need
