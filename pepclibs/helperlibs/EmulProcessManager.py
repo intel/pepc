@@ -355,6 +355,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if "msrs" in config:
             self._init_msrs(config["msrs"], datapath)
 
+        self.datapath = datapath
+
     def mkdir(self, dirpath, parents=False, exist_ok=False):
         """
         Create a directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdir()' for more
@@ -419,6 +421,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self.hostmsg = f" on '{self.hostname}'"
         self.is_remote = False
 
+        self.datapath = None
         # Opened files.
         self._ofiles = {}
         # Data for emulated read-only files.
