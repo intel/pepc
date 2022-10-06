@@ -12,21 +12,23 @@
 
 import random
 import pytest
-from common import build_params, get_pman, get_datasets
-from pcstates_common import get_fellows
+import common
+import pcstates_common
 from pepclibs import CPUInfo, _PropsCache
 
-@pytest.fixture(name="params", scope="module", params=get_datasets())
-def get_params(hostname, request):
+@pytest.fixture(name="params", scope="module")
+def get_params(hostspec):
     """Yield a dictionary with information we need for testing."""
 
-    dataset = request.param
-    with get_pman(hostname, dataset) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        params = build_params(hostname, dataset, pman, cpuinfo)
-        params["cpuinfo"] = cpuinfo
+    emul_modules = ["CPUInfo"]
 
-        params["test_cpu"] = random.choice(params["cpus"])
-        params["fellows"] = get_fellows(params, cpuinfo, cpu=params["test_cpu"])
+    with common.get_pman(hostspec, modules=emul_modules) as pman, \
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+        params = common.build_params(pman)
+
+        params["cpuinfo"] = cpuinfo
+        params["test_cpu"] = random.choice(cpuinfo.get_cpus())
+        params["fellows"] = pcstates_common.get_fellows(cpuinfo, cpu=params["test_cpu"])
 
         yield params
 
@@ -34,7 +36,9 @@ def test_propscache_scope(params):
     """This functions tests that the PropsCache class caches a value to the correct CPUs."""
 
     test_cpu = params["test_cpu"]
-    pcache = _PropsCache.PropsCache(cpuinfo=params["cpuinfo"], pman=params["pman"])
+    cpuinfo = params["cpuinfo"]
+
+    pcache = _PropsCache.PropsCache(cpuinfo=cpuinfo, pman=params["pman"])
 
     snames = {"global", "package", "die", "core", "CPU"}
 
@@ -45,7 +49,7 @@ def test_propscache_scope(params):
 
         pcache.add(pname, test_cpu, val, sname=sname)
 
-        for cpu in params["cpus"]:
+        for cpu in cpuinfo.get_cpus():
             res = pcache.is_cached(pname, cpu)
             if cpu in params["fellows"][sname]:
                 assert pcache.get(pname, cpu) == val

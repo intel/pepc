@@ -12,8 +12,7 @@
 
 import pytest
 import msr_common
-# Fixtures need to be imported explicitly
-from msr_common import get_msr_params # pylint: disable=unused-import
+from msr_common import get_params # pylint: disable=unused-import
 from pepclibs.msr.TurboRatioLimit import MSR_TURBO_RATIO_LIMIT
 from pepclibs.msr.TurboRatioLimit1 import MSR_TURBO_RATIO_LIMIT1
 from pepclibs.helperlibs.Exceptions import Error

@@ -12,7 +12,7 @@
 
 from importlib import import_module
 import pytest
-from common import build_params, get_pman, get_datasets
+import common
 from pepclibs.msr import MSR
 from pepclibs import CPUInfo
 
@@ -43,40 +43,39 @@ def get_msr_objs(params):
     Yield the 'MSR' objects initialized with different parameters that we want to run tests with.
     """
 
-    with get_pman(params["hostname"], params["dataset"]) as pman:
-        for enable_cache in (True, False):
-            with MSR.MSR(pman=pman, enable_cache=enable_cache) as msr:
-                yield msr
+    for enable_cache in (True, False):
+        with MSR.MSR(pman=params["pman"], enable_cache=enable_cache) as msr:
+            yield msr
 
-def _build_msr_params(params, pman):
-    """Implements the 'get_msr_params()' fixture."""
+@pytest.fixture(name="params", scope="module")
+def get_params(hostspec):
+    """Yield a dictionary with information we need for testing."""
 
-    # The MSR addresses that will be tested.
-    params["msrs"] = {}
-    params["feature_classes"] = []
-    for modname in _MSR_MODULES:
-        msr_feature_class = getattr(import_module(f"pepclibs.msr.{modname}"), modname)
-        params["feature_classes"].append(msr_feature_class)
-        with msr_feature_class(pman=pman) as msr:
-            for name, finfo in msr._features.items(): # pylint: disable=protected-access
-                if not msr.is_feature_supported(name):
-                    continue
-                if not is_safe_to_set(name, params["hostname"]):
-                    continue
-                if msr.regaddr not in params["msrs"]:
-                    params["msrs"][msr.regaddr] = {}
-                params["msrs"][msr.regaddr].update({name : finfo})
+    emul_modules = ["CPUInfo"]
 
-    return params
+    with common.get_pman(hostspec, modules=emul_modules) as pman, \
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+        params = common.build_params(pman)
 
-@pytest.fixture(name="params", scope="module", params=get_datasets())
-def get_msr_params(hostname, request):
-    """
-    Yield a dictionary with information we need for testing. For example, to optimize the test
-    duration, use only subset of all CPUs available on target system to run tests on.
-    """
+        allcpus = cpuinfo.get_cpus()
+        params["cpus"] = allcpus
+        medidx = int(len(allcpus)/2)
+        params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
 
-    dataset = request.param
-    with get_pman(hostname, dataset) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        params = build_params(hostname, dataset, pman, cpuinfo)
-        yield _build_msr_params(params, pman)
+        # The MSR addresses that will be tested.
+        params["msrs"] = {}
+        params["feature_classes"] = []
+        for modname in _MSR_MODULES:
+            msr_feature_class = getattr(import_module(f"pepclibs.msr.{modname}"), modname)
+            params["feature_classes"].append(msr_feature_class)
+            with msr_feature_class(pman=pman) as msr:
+                for name, finfo in msr._features.items(): # pylint: disable=protected-access
+                    if not msr.is_feature_supported(name):
+                        continue
+                    if not is_safe_to_set(name, params["hostname"]):
+                        continue
+                    if msr.regaddr not in params["msrs"]:
+                        params["msrs"][msr.regaddr] = {}
+                    params["msrs"][msr.regaddr].update({name : finfo})
+
+        yield params

@@ -7,15 +7,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Antti Laakso <antti.laakso@linux.intel.com>
+#         Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """Common bits for the 'pepc' tests."""
 
-import os
 import sys
 import logging
 from pathlib import Path
-import pytest
-from pepclibs import CPUInfo
 from pepclibs.helperlibs import ProcessManager
 from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied, Error
 from pepctool import _Pepc
@@ -23,45 +21,41 @@ from pepctool import _Pepc
 logging.basicConfig(level=logging.DEBUG)
 _LOG = logging.getLogger()
 
-_REQUIRED_MODULES = ["ASPM", "CPUInfo", "CPUOnline", "CStates", "PStates", "Systemctl"]
-
 def _get_datapath(dataset):
     """Return path to test data for the dataset 'dataset'."""
+
     return Path(__file__).parent.resolve() / "data" / dataset
 
-def is_prop_supported(pname, pinfo):
-    """
-    Return 'True' or 'False' depending on if property 'pname' is supported on the system.
+def is_emulated(pman):
+    """Returns 'True' if 'pman' corresponds to an emulated system."""
 
-    The arguments are as follows.
-      * pname - name of the property.
-      * pinfo - a properties dictionary in the format returned by 'PStates.get_props()' or
-                'CStates.get_props()'. Check 'get_props()' docstring for more information.
-    """
+    return hasattr(pman, "datapath")
 
-    if pname in pinfo:
-        return pinfo[pname].get(pname) is not None
-    return False
-
-def get_pman(hostname, dataset, modules=None):
+def get_pman(hostspec, modules=None):
     """
     Create and return process manager, the arguments are as follows.
-      * hostname - the host name to create a process manager object for.
-      * dataset - the name of the dataset used to emulate the real hardware.
+      * hostspec - the host to create a process manager for.
       * modules - the list of python module names to be initialized before testing. Refer to
                   'EmulProcessManager.init_testdata()' for more information.
     """
 
     datapath = None
     username = None
-    if hostname == "emulation":
+    if hostspec.startswith("emulation:"):
+        dataset = hostspec.split(":", maxsplit=2)[1]
         datapath = _get_datapath(dataset)
-    elif hostname != "localhost":
+
+        for module in modules:
+            if not Path(datapath / f"{module}.yaml").exists():
+                assert False, f"bad dataset {dataset}: missing data for emulating the '{module}' " \
+                              f"module"
+
+    elif hostspec != "localhost":
         username = "root"
 
-    pman = ProcessManager.get_pman(hostname, username=username, datapath=datapath)
+    pman = ProcessManager.get_pman(hostspec, username=username, datapath=datapath)
 
-    if hostname == "emulation" and modules is not None:
+    if datapath and modules is not None:
         if not isinstance(modules, list):
             modules = [modules]
 
@@ -70,66 +64,14 @@ def get_pman(hostname, dataset, modules=None):
 
     return pman
 
-def _has_required_modules(datapath):
-    """Returns 'True' if datapath has all required modules to run tests."""
-
-    for module in _REQUIRED_MODULES:
-        if not Path(datapath / f"{module}.yaml").exists():
-            return False
-
-    return True
-
-def get_datasets():
-    """Find all directories in 'tests/data' directory and yield the directory name."""
-
-    basepath = Path(__file__).parent.resolve() / "data"
-    for dirname in os.listdir(basepath):
-        datapath = Path(f"{basepath}/{dirname}")
-
-        if not datapath.is_dir():
-            continue
-
-        if not _has_required_modules(datapath):
-            _LOG.warning("excluding dataset '%s', incomplete test data", datapath)
-            continue
-
-        yield dirname
-
-def build_params(hostname, dataset, pman, cpuinfo):
-    """Implements the 'get_params()' fixture."""
+def build_params(pman):
+    """Build the test parameters dictionary (the common part of it)."""
 
     params = {}
-    params["hostname"] = hostname
-    params["dataset"] = dataset
+    params["hostname"] = pman.hostname
     params["pman"] = pman
 
-    if hostname == "emulation":
-        datapath = _get_datapath(dataset)
-        for module in _REQUIRED_MODULES:
-            pman.init_testdata(module, datapath)
-
-    allcpus = cpuinfo.get_cpus()
-    medidx = int(len(allcpus)/2)
-    params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
-    params["cpus"] = allcpus
-    params["packages"] = cpuinfo.get_packages()
-    params["cores"] = {}
-    for pkg in params["packages"]:
-        params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
-    params["cpumodel"] = cpuinfo.info["model"]
-
     return params
-
-@pytest.fixture(name="params", scope="module", params=get_datasets())
-def get_params(hostname, request):
-    """
-    Yield a dictionary with information we need for testing. For example, to optimize the test
-    duration, use only subset of all CPUs available on target system to run tests on.
-    """
-
-    dataset = request.param
-    with get_pman(hostname, dataset) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        yield build_params(hostname, dataset, pman, cpuinfo)
 
 # A map of error type and command argument strings to look for in case of error. For matching
 # exceptions print warning instead of asserting.

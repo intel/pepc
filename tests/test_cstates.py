@@ -11,28 +11,29 @@
 """Tests for the public methods of the 'CStates' module."""
 
 import pytest
-from common import build_params, get_pman, is_prop_supported, get_datasets
-from pcstates_common import get_fellows, set_and_verify, verify_props_value_type
+import common
+from pcstates_common import get_fellows, set_and_verify, verify_props_value_type, is_prop_supported
 from pepclibs import CPUInfo, CStates
 
-def _get_params():
+def _get_enable_cache_param():
     """Yield each dataset with a bool. Used for toggling CStates 'enable_cache'."""
 
-    for dataset in get_datasets():
-        yield dataset, True
-        yield dataset, False
+    yield True
+    yield False
 
-@pytest.fixture(name="params", scope="module", params=_get_params())
-def get_params(hostname, request):
+@pytest.fixture(name="params", scope="module", params=_get_enable_cache_param())
+def get_params(hostspec, request):
     """Yield a dictionary with information we need for testing."""
 
-    dataset, enable_cache = request.param
-    with get_pman(hostname, dataset) as pman, \
+    emul_modules = ["CPUInfo", "CStates"]
+    enable_cache = request.param
+
+    with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.CStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as csobj:
-        params = build_params(hostname, dataset, pman, cpuinfo)
-        params["fellows"] = get_fellows(params, cpuinfo, cpu=0)
+        params = common.build_params(pman)
 
+        params["fellows"] = get_fellows(cpuinfo, cpu=0)
         params["csobj"] = csobj
         params["pinfo"] = csobj.get_cpu_props(csobj.props, 0)
 

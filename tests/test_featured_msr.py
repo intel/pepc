@@ -12,8 +12,7 @@
 
 import pytest
 import msr_common
-# Fixtures need to be imported explicitly
-from msr_common import get_msr_params # pylint: disable=unused-import
+from msr_common import get_params # pylint: disable=unused-import
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR
 from pepclibs.helperlibs.Exceptions import Error
@@ -26,10 +25,9 @@ def _get_msr_feature_objs(params):
 
     for msr_feature_class in params["feature_classes"]:
         for enable_cache in (True, False):
-            with msr_common.get_pman(params["hostname"], params["dataset"]) as pman, \
-                 CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-                 MSR.MSR(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as msr, \
-                 msr_feature_class(pman=pman, cpuinfo=cpuinfo, msr=msr) as feature_msr:
+            with CPUInfo.CPUInfo(pman=params["pman"]) as cpuinfo, \
+                 MSR.MSR(pman=params["pman"], cpuinfo=cpuinfo, enable_cache=enable_cache) as msr, \
+                 msr_feature_class(pman=params["pman"], cpuinfo=cpuinfo, msr=msr) as feature_msr:
                 yield feature_msr
 
 def _get_msr_feature_test_params(msr, params, include_ro=True, include_rw=True,

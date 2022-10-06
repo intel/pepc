@@ -11,7 +11,7 @@
 """Tests for the public methods of the 'CPUInfo' module."""
 
 import pytest
-from common import get_datasets, get_pman
+import common
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
@@ -19,20 +19,15 @@ from pepclibs.helperlibs.Exceptions import Error
 # A unique object used in '_run_method()' for ignoring method's return value by default.
 _IGNORE = object()
 
-@pytest.fixture(name="params", scope="module", params=get_datasets())
-def get_params(hostname, request):
-    """
-    Return a dictionary with information we need for testing. The dictionary has following keys:
-      * hostname - Name of the host to run the tests on or "emulation" to run locally and emulate
-                   real hardware.
-      * dataset - Name of the dataset used to emulate the real hardware.
-    """
+@pytest.fixture(name="params", scope="module")
+def get_params(hostspec):
+    """Yield a dictionary with information we need for testing."""
 
-    params = {}
-    params["hostname"] = hostname
-    params["dataset"] = request.param
+    emul_modules = ["CPUInfo"]
 
-    return params
+    with common.get_pman(hostspec, modules=emul_modules) as pman:
+        params = common.build_params(pman)
+        yield params
 
 def _get_levels():
     """Yield 'CPUInfo.LEVEL' values as a lowercase strings."""
@@ -127,12 +122,12 @@ def _get_cpuinfos(params):
     the 'pman' object is for real host, yield single 'CPUInfo' object.
     """
 
-    with get_pman(params["hostname"], params["dataset"]) as pman:
-        if "emulated" in pman.hostname:
-            yield from _get_emulated_cpuinfos(pman)
-        else:
-            with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-                yield cpuinfo
+    pman = params["pman"]
+    if common.is_emulated(pman):
+        yield from _get_emulated_cpuinfos(pman)
+    else:
+        with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+            yield cpuinfo
 
 def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE, exp_exc=None):
     """

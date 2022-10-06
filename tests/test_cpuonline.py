@@ -11,23 +11,28 @@
 """Tests for the public methods of the 'CPUOnline' module."""
 
 import pytest
-from common import build_params, get_pman, get_datasets
+import common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, CPUOnline
 
-@pytest.fixture(name="params", scope="module", params=get_datasets())
-def get_params(hostname, request):
+@pytest.fixture(name="params", scope="module")
+def get_params(hostspec):
     """Yield a dictionary with information we need for testing."""
 
-    dataset = request.param
-    with get_pman(hostname, dataset) as pman, \
+    emul_modules = ["CPUInfo", "CPUOnline"]
+
+    with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as onl:
-        params = build_params(hostname, dataset, pman, cpuinfo)
+        params = common.build_params(pman)
 
         params["onl"] = onl
+        allcpus = cpuinfo.get_cpus()
+        params["cpus"] = allcpus
+        medidx = int(len(allcpus)/2)
+        params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
 
-        if hostname != "emulation":
+        if not common.is_emulated(pman):
             params["cpu_onl_status"] = {}
             for cpu in params["cpus"]:
                 params["cpu_onl_status"][cpu] = onl.is_online(cpu)
@@ -37,7 +42,7 @@ def get_params(hostname, request):
 def _restore_cpus_onl_status(params):
     """Restore CPUs to the original online/offline status."""
 
-    if params["hostname"] == "emulation":
+    if common.is_emulated(params["pman"]):
         # Emulated data does not change the original CPU online status.
         return
 
@@ -60,7 +65,7 @@ def test_cpuonline_good(params):
     for cpu in params["cpus"]:
         assert onl.is_online(cpu)
 
-    if params["hostname"] != "emulation":
+    if common.is_emulated(params["pman"]):
         _restore_cpus_onl_status(params)
         return
 

@@ -11,24 +11,30 @@
 """Test module for 'pepc' project 'cpu-hotplug' command."""
 
 import pytest
-from common import run_pepc
-from common import build_params, get_pman, get_datasets
+import common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, CPUOnline
 
-@pytest.fixture(name="params", scope="module", params=get_datasets())
-def get_params(hostname, request):
+@pytest.fixture(name="params", scope="module")
+def get_params(hostspec):
     """Yield a dictionary with information we need for testing."""
 
-    dataset = request.param
-    with get_pman(hostname, dataset) as pman, \
+    emul_modules = ["CPUInfo", "CPUOnline"]
+
+    with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as onl:
-        params = build_params(hostname, dataset, pman, cpuinfo)
+        params = common.build_params(pman)
 
         params["onl"] = onl
 
-        if hostname != "emulation":
+        params["cpus"] = cpuinfo.get_cpus()
+        params["packages"] = cpuinfo.get_packages()
+        params["cores"] = {}
+        for pkg in params["packages"]:
+            params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+
+        if not common.is_emulated(pman):
             params["cpu_onl_status"] = {}
             for cpu in params["cpus"]:
                 params["cpu_onl_status"][cpu] = onl.is_online(cpu)
@@ -38,7 +44,7 @@ def get_params(hostname, request):
 def _restore_cpus_onl_status(params):
     """Restore CPUs to the original online/offline status."""
 
-    if params["hostname"] == "emulation":
+    if common.is_emulated(params["pman"]):
         # Emulated data does not change the original CPU online status.
         return
 
@@ -52,7 +58,7 @@ def test_cpuhotplug_info(params):
     """Test 'pepc cpu-hotplug info' command."""
 
     pman = params["pman"]
-    run_pepc("cpu-hotplug info", pman)
+    common.run_pepc("cpu-hotplug info", pman)
 
 def _test_cpuhotplug_online_good(params):
     """Test 'pepc cpu-hotplug online' command with good option values."""
@@ -66,7 +72,7 @@ def _test_cpuhotplug_online_good(params):
         good_options += ["--cpus 1-2"]
 
     for option in good_options:
-        run_pepc(f"cpu-hotplug online {option}", pman)
+        common.run_pepc(f"cpu-hotplug online {option}", pman)
         _restore_cpus_onl_status(params)
 
 def _test_cpuhotplug_online_bad(params):
@@ -88,7 +94,7 @@ def _test_cpuhotplug_online_bad(params):
         bad_options += [f"--packages 0 --cores {params['cores'][0][1]}-{params['cores'][0][2]}"]
 
     for option in bad_options:
-        run_pepc(f"cpu-hotplug online {option}", pman, exp_exc=Error)
+        common.run_pepc(f"cpu-hotplug online {option}", pman, exp_exc=Error)
 
 def test_cpuhotplug_online(params):
     """Test 'pepc cpu-hotplug online' command."""
@@ -124,9 +130,9 @@ def _test_cpuhotplug_offline_good(params):
     # 'cpu-hotplug online' does not support '--package', '--core' and '--siblings', hence we online
     # all CPUs 'cpu-hotplug online '--cpus all'.
     for option in good_options:
-        run_pepc(f"cpu-hotplug offline {option}", pman)
+        common.run_pepc(f"cpu-hotplug offline {option}", pman)
         _restore_cpus_onl_status(params)
-        run_pepc(f"cpu-hotplug offline {option} --siblings", pman)
+        common.run_pepc(f"cpu-hotplug offline {option} --siblings", pman)
         _restore_cpus_onl_status(params)
 
 def _test_cpuhotplug_offline_bad(params):
@@ -139,11 +145,11 @@ def _test_cpuhotplug_offline_bad(params):
         bad_options += ["--cpus 0-4"]
 
     for option in bad_options:
-        run_pepc(f"cpu-hotplug offline {option}", pman, exp_exc=Error)
+        common.run_pepc(f"cpu-hotplug offline {option}", pman, exp_exc=Error)
 
     for option in bad_options:
         # With '--siblings' CPU 0 will be excluded and all these "bad" options become OK.
-        run_pepc(f"cpu-hotplug offline {option} --siblings", pman)
+        common.run_pepc(f"cpu-hotplug offline {option} --siblings", pman)
         _restore_cpus_onl_status(params)
 
 def test_cpuhotplug_offline(params):

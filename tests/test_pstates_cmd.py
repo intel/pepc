@@ -11,23 +11,32 @@
 """Test module for 'pepc' project 'pstates' command."""
 
 import pytest
-from common import run_pepc, is_prop_supported, build_params, get_datasets, get_pman
+from common import get_pman, run_pepc, build_params
+from pcstates_common import is_prop_supported
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human
 from pepclibs import CPUInfo, PStates
 
-@pytest.fixture(name="params", scope="module", params=get_datasets())
-def get_params(hostname, request):
+@pytest.fixture(name="params", scope="module")
+def get_params(hostspec):
     """Yield a dictionary with information we need for testing."""
 
-    dataset = request.param
-    with get_pman(hostname, dataset) as pman, \
+    emul_modules = ["CPUInfo", "PStates"]
+
+    with get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
+        params = build_params(pman)
 
-        params = build_params(hostname, dataset, pman, cpuinfo)
+        params["cpus"] = cpuinfo.get_cpus()
+        params["packages"] = cpuinfo.get_packages()
+        params["cores"] = {}
+        for pkg in params["packages"]:
+            params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+
         params["psobj"] = psobj
         params["pinfo"] = psobj.get_cpu_props(psobj.props, 0)
+
         yield params
 
 def _get_scope_options(params):
