@@ -71,7 +71,7 @@ def cpu_hotplug_offline_command(args, pman):
         siblings_to_offline = set(cpus).intersection(siblings_to_offline)
 
         if not siblings_to_offline:
-            _LOG.warning("nothing to offline%s, no siblings among the following CPUs: %s",
-                         pman.hostmsg, Human.rangify(cpus))
+            _LOG.info("Nothing to offline%s, no siblings among the following CPUs: %s",
+                      pman.hostmsg, Human.rangify(cpus))
         else:
             onl.offline(cpus=siblings_to_offline)
