@@ -16,7 +16,7 @@ from pcstates_common import get_fellows, is_prop_supported, set_and_verify, veri
 from pepclibs import CPUInfo, PStates, BClock
 
 def _get_enable_cache_param():
-    """Yield each dataset with a bool. Used for toggling CStates 'enable_cache'."""
+    """Yield each dataset with a bool. Used for toggling PStates 'enable_cache'."""
 
     yield True
     yield False

@@ -18,8 +18,8 @@ def pytest_addoption(parser):
     """Add custom pytest options."""
 
     text = """Name of the host to run the test on. The default value is "emulation", which means
-              running on emulated sytem. Emuation requires a dataset, and there are many datasets
-              available in the "data" subdirecory."""
+              running on emulated system. Emulation requires a dataset, and there are many datasets
+              available in the "data" subdirectory."""
     parser.addoption("-H", "--host", dest="hostname", default="emulation", help=text)
 
     text = """This option specifies the dataset to use for emulation. By default, all datasets are
