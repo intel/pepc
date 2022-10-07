@@ -610,10 +610,11 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         if "fname" in prop:
             val = self._get_cpu_prop_value_sysfs(prop)
-            self._pcache.add(pname, cpu, val, sname=prop["sname"])
-            return val
+        else:
+            raise Error(f"BUG: unsupported property '{pname}'")
 
-        raise Error(f"BUG: unsupported property '{pname}'")
+        self._pcache.add(pname, cpu, val, sname=prop["sname"])
+        return val
 
     def _set_prop_value(self, pname, val, cpus):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
