@@ -150,7 +150,7 @@ def _tokenize(hval, specs, default_unit, name, multiple=True):
         * Result: {'d': '1', 'm': '4', 's': '1'}
 
     The 'multiple' argument can be used to limit the input value to just a single number and unit.
-    In the above example, if 'multiple' is 'False', this function would riese an error.
+    In the above example, if 'multiple' is 'False', this function would raise an error.
     """
 
     if name:
@@ -275,7 +275,7 @@ FREQ_SPECS_DESCR = ", ".join([f"{key} - {val}" for key, val in FREQ_SPECS.items(
 
 def parse_freq(hfreq, default_unit="Hz", name=None):
     """
-    Turn a user-provided frequency string into 'int' or 'float' amoun of hertz and return the
+    Turn a user-provided frequency string into 'int' or 'float' amount of hertz and return the
     result. The 'hfreq' string is allowed to include the unit, for example 'GHz' or 'megaherz'.
 
     Optional 'name' argument may include a short description of the 'hfreq' value, which will be
@@ -329,7 +329,7 @@ def rangify(numbers):
     return ",".join(range_strs)
 
 def untitle(word):
-    """Does the opposit to the 'title()' method of python strings."""
+    """Does the opposite to the 'title()' method of python strings."""
 
     # Do nothing if the first character is lowercase or if both first and second characters are
     # upper case, which would mean this 'word' is an abbreviation, such as "DNA".

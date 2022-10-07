@@ -109,7 +109,7 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
                     also be a 'Dmesg' object.
 
         By default, objects of this class capture 'dmesg' output on the host defined by 'pman'. The
-        first 'dmesg' snapshot is taken before loading/unloading the driver. The second snapsot is
+        first 'dmesg' snapshot is taken before loading/unloading the driver. The second snapshot is
         taken only if an error happens. This allows to extract new 'dmesg' lines, which are
         potentially related to the delayed event device driver. These lines are then included to the
         error message, which is very helpful for diagnosing the error.

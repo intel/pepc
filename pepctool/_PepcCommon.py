@@ -24,7 +24,7 @@ def check_tuned_presence(pman):
             if systemctl.is_active("tuned"):
                 _LOG.warning("the 'tuned' service is active%s! It may override the changes made by "
                              "'pepc'.\nConsider having 'tuned' disabled while experimenting with "
-                             "power mangement settings.", pman.hostmsg)
+                             "power management settings.", pman.hostmsg)
         except ErrorNotFound:
             pass
         except Error as err:

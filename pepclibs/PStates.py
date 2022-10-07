@@ -126,7 +126,7 @@ PROPS = {
         "writable" : False,
     },
     "hwp" : {
-        "name" : "Hardware power mangement",
+        "name" : "Hardware power management",
         "help" : """When hardware power management is enabled, CPUs can automatically scale their
                     frequency without active OS involvement.""",
         "type" : "bool",
@@ -379,7 +379,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         return base
 
     def _get_max_eff_freq(self, cpu):
-        """Read max effeciency frequency from 'MSR_PLATFORM_INFO' and return it."""
+        """Read max efficiency frequency from 'MSR_PLATFORM_INFO' and return it."""
 
         bclk = self._get_bclk(cpu)
         platinfo = self._get_platinfo()
@@ -441,7 +441,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         # Just a sanity check.
         if max_turbo_freq < base_freq:
             max_turbo_freq = Human.largenum(max_turbo_freq, unit="Hz")
-            base_freq =Human.largenum(base_freq, unit="Hz")
+            base_freq = Human.largenum(base_freq, unit="Hz")
             _LOG.warning("something is not right: max. turbo frequency %s is lower than base "
                          "frequency %s%s", max_turbo_freq, base_freq, self._pman.hostmsg)
 
@@ -706,7 +706,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         And then new minimum frequency (New Min):
          ----------------------------------- Cur. Min -- Cur. Max ---------> (Frequency)
 
-        Otherwise Cur. Max will be smaler that Cur. Min:
+        Otherwise Cur. Max will be smaller that Cur. Min:
          ----------------- Cur. Max -------- Cur. Min -- New Max ----------> (Frequency)
         """
 
@@ -876,7 +876,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._props["governor"]["fname"] = "scaling_governor"
         self._props["governor"]["subprops"]["governors"]["fname"] = "scaling_available_governors"
 
-        # Some of the sysfs files may not exist, in which case thy can be aquired using the
+        # Some of the sysfs files may not exist, in which case they can be acquired using the
         # "getter" function. E.g., the "base_frequency" file is specific to the 'intel_pstate'
         # driver. In case of a different driver, we can fall-back to reading the MSR register.
         self._props["base_freq"]["getter"] = self._get_base_freq
