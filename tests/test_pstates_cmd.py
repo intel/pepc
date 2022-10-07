@@ -21,7 +21,7 @@ from pepclibs import CPUInfo, PStates
 def get_params(hostspec):
     """Yield a dictionary with information we need for testing."""
 
-    emul_modules = ["CPUInfo", "PStates"]
+    emul_modules = ["CPUInfo", "PStates", "Systemctl"]
 
     with get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \

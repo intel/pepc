@@ -19,7 +19,7 @@ from pepclibs import CPUInfo, CPUOnline
 def get_params(hostspec):
     """Yield a dictionary with information we need for testing."""
 
-    emul_modules = ["CPUInfo", "CPUOnline"]
+    emul_modules = ["CPUInfo", "CPUOnline", "Systemctl"]
 
     with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
