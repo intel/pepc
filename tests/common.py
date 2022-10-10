@@ -101,8 +101,8 @@ def run_pepc(arguments, pman, exp_exc=None):
     except Exception as err: # pylint: disable=broad-except
         if exp_exc is None:
             err_type = type(err)
-            errmsg = f"command '{cmd}' raised the following exception:\n\ttype: {err_type}\n\t" \
-                     f"message: {err}"
+            errmsg = f"command 'pepc {arguments}' raised the following exception:\n" \
+                     f"- {type(err).__name__}({err})"
 
             if pman.is_remote and err_type in _WARN_ONLY and _WARN_ONLY[err_type] in arguments:
                 _LOG.warning(errmsg)
@@ -113,12 +113,13 @@ def run_pepc(arguments, pman, exp_exc=None):
         if isinstance(err, exp_exc):
             return None
 
-        assert False, f"command '{cmd}' raised the following exception:\n\t" \
-                      f"type: {type(err)}\n\tmessage: {err}\n" \
-                      f"but it was expected to raise the following exception type: {type(exp_exc)}"
+        assert False, f"command 'pepc {arguments}' raised the following exception:\n" \
+                      f"- {type(err).__name__}({err})\n" \
+                      f"but it was expected to raise the following exception:\n" \
+                      f"- {exp_exc.__name__}"
 
     if exp_exc is not None:
-        assert False, f"command '{cmd}' did not raise the following exception:\n\ttype: " \
-                      f"{type(exp_exc)}"
+        assert False, f"command 'pepc {arguments}' did not raise the following exception type:\n" \
+                      f"- {exp_exc.__name__}"
 
     return ret
