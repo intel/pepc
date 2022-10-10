@@ -13,39 +13,9 @@ This module includes the "pstates" 'pepc' command implementation.
 import logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import PStates, CPUInfo
-from pepctool import _PepcCommon
+from pepctool import _PepcCommon, _PepcPCStates
 
 _LOG = logging.getLogger()
-
-def _handle_set_opts(opts, cpus, psobj, cpuinfo):
-    """
-    Handle C-state configuration options other than '--enable' and '--disable' which have to be
-    set.
-    """
-
-    psobj.set_props(opts, cpus)
-    for pname in opts:
-        # Read back the just set value in order to get "resolved" values. For example, "min" would
-        # be resolved to the actual frequency number.
-        _, pinfo = next(psobj.get_props((pname,), cpus=cpus))
-        val = pinfo[pname][pname]
-        _PepcCommon.print_prop_msg(psobj.props[pname], val, cpuinfo, action="set to", cpus=cpus)
-
-def _handle_print_opts(opts, cpus, psobj, cpuinfo):
-    """Handle P-state configuration options that have to be printed."""
-
-    skip_unsupported = False
-    if not opts:
-        opts = psobj.props
-        # When printing all the options, skip the unsupported ones as they add clutter.
-        skip_unsupported = True
-
-    # Build the aggregate properties information dictionary for all options we are going to print
-    # about.
-    pinfo_iter = psobj.get_props(opts, cpus=cpus)
-    aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
-
-    _PepcCommon.print_aggr_props(aggr_pinfo, psobj, cpuinfo, skip_unsupported)
 
 def pstates_config_command(args, pman):
     """Implements the 'pstates config' command."""
@@ -67,14 +37,15 @@ def pstates_config_command(args, pman):
             set_opts[optname] = optval
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
+         PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj, \
+         _PepcPCStates.PepcPCStates(psobj, cpuinfo=cpuinfo) as pcstates:
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         if set_opts:
-            _handle_set_opts(set_opts, cpus, psobj, cpuinfo)
+            pcstates.set_props(set_opts, cpus)
         if print_opts:
-            _handle_print_opts(print_opts, cpus, psobj, cpuinfo)
+            pcstates.print_props(print_opts, cpus, False)
 
 def pstates_info_command(args, pman):
     """Implements the 'pstates info' command."""
@@ -87,8 +58,15 @@ def pstates_info_command(args, pman):
             print_opts.append(optname)
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
+         PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj, \
+         _PepcPCStates.PepcPCStates(psobj, cpuinfo=cpuinfo) as pcstates:
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        _handle_print_opts(print_opts, cpus, psobj, cpuinfo)
+        skip_unsupported = False
+        if not print_opts:
+            print_opts = psobj.props
+            # When printing all the options, skip the unsupported ones as they add clutter.
+            skip_unsupported = True
+
+        pcstates.print_props(print_opts, cpus, skip_unsupported)
