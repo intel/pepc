@@ -14,7 +14,7 @@ import logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
 from pepclibs import CStates, CPUInfo
-from pepctool import _PepcCommon
+from pepctool import _PepcCommon, _PepcPCStates
 
 _LOG = logging.getLogger()
 
@@ -31,42 +31,6 @@ def _fmt_csnames(csnames):
         msg += ",".join(csnames)
 
     return msg
-
-def _handle_print_opts(opts, cpus, csobj, cpuinfo):
-    """
-    Handle C-state configuration options other than '--enable' and '--disable' which have to be
-    printed.
-    """
-
-    if not opts:
-        return
-
-    # Build the aggregate properties information dictionary for all options we are going to
-    # print about.
-    pinfo_iter = csobj.get_props(opts, cpus=cpus)
-    aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
-
-    _PepcCommon.print_aggr_props(aggr_pinfo, csobj, cpuinfo, True)
-
-def _handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
-    """
-    Handle C-state configuration options other than '--enable' and '--disable' which have to be
-    set.
-    """
-
-    if not opts:
-        return
-
-    # Start a transaction, which will delay and aggregate MSR writes until the transaction
-    # is committed.
-    msr.start_transaction()
-
-    csobj.set_props(opts, cpus)
-    for pname, val in opts.items():
-        _PepcCommon.print_prop_msg(csobj.props[pname], val, cpuinfo, action="set to", cpus=cpus)
-
-    # Commit the transaction. This will flush all the change MSRs (if there were any).
-    msr.commit_transaction()
 
 def _print_cstates_status(cpus, cpuinfo, rcsobj):
     """Print brief C-state enabled/disabled status."""
@@ -147,10 +111,15 @@ def cstates_config_command(args, pman):
             return
 
         with MSR.MSR(pman=pman, cpuinfo=cpuinfo) as msr, \
-             CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj:
+             CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj, \
+             _PepcPCStates.PepcPCStates(csobj, cpuinfo) as pcstates:
 
-            _handle_set_opts(set_opts, cpus, csobj, msr, cpuinfo)
-            _handle_print_opts(print_opts, cpus, csobj, cpuinfo)
+            msr.start_transaction()
+            pcstates.set_props(set_opts, cpus)
+            # Commit the transaction. This will flush all the change MSRs (if there were any).
+            msr.commit_transaction()
+
+            pcstates.print_props(print_opts, cpus, False)
 
 def _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj):
     """Prints requestable C-states information."""
@@ -198,15 +167,14 @@ def cstates_info_command(args, pman):
         #
         # Print platform configuration info.
         #
-        with CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj) as csobj:
+        with CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj) as csobj, \
+             _PepcPCStates.PepcPCStates(csobj, cpuinfo) as pcstates:
 
             if args.csnames != "default":
                 _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj)
             if print_opts:
-                _handle_print_opts(print_opts, cpus, csobj, cpuinfo)
+                pcstates.print_props(print_opts, cpus, False)
             if not print_opts and args.csnames == "default":
                 args.csnames = "all"
                 _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj)
-                pinfo_iter = csobj.get_props(csobj.props, cpus=cpus)
-                aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
-                _PepcCommon.print_aggr_props(aggr_pinfo, csobj, cpuinfo, False)
+                pcstates.print_props(csobj.props, cpus, True)
