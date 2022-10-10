@@ -57,7 +57,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         msg += f"{val}{sfx}"
         _LOG.info(msg)
 
-    def _print_aggr_props(self, aggr_pinfo, skip_unsupported):
+    def _print_aggr_props(self, aggr_pinfo, skip_unsupported, action=None):
         """Print the aggregate C-state or P-state properties information."""
 
         props = self._pcobj.props
@@ -69,7 +69,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
                     if key in props:
                         if skip_unsupported and val is None:
                             continue
-                        self._print_prop_msg(props[pname], val, cpus=cpus)
+                        self._print_prop_msg(props[pname], val, cpus=cpus, action=action)
                     else:
                         if val is None:
                             # Just skip unsupported sub-property instead of printing something like
@@ -79,7 +79,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
                         # Print sub-properties with a prefix and exclude CPU information, because it
                         # is the same as in the (parent) property, which has already been printed.
                         prop = props[pname]["subprops"][key]
-                        self._print_prop_msg(prop, val, self._cpuinfo, cpus=cpus)
+                        self._print_prop_msg(prop, val, cpus=cpus, action=action)
 
     def set_props(self, props, cpus):
         """
