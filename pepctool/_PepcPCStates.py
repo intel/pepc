@@ -81,6 +81,12 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
                         prop = props[pname]["subprops"][key]
                         self._print_prop_msg(prop, val, cpus=cpus, action=action)
 
+    def _get_aggr_pinfo(self, props, cpus):
+        """Read properties 'props' and build and return aggregated property dictionary."""
+
+        pinfo_iter = self._pcobj.get_props(props, cpus=cpus)
+        return _PepcCommon.build_aggregate_pinfo(pinfo_iter)
+
     def set_props(self, props, cpus):
         """
         Set multiple properties 'props' for multiple CPUs 'cpus'. The arguments are as follows.
@@ -89,12 +95,8 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         """
 
         self._pcobj.set_props(props, cpus)
-        for pname in props:
-            # Read back the just set value in order to get "resolved" values. For example, "min"
-            # would be resolved to the actual frequency number.
-            _, pinfo = next(self._pcobj.get_props((pname,), cpus=cpus))
-            val = pinfo[pname][pname]
-            self._print_prop_msg(self._pcobj.props[pname], val, action="set to", cpus=cpus)
+        aggr_pinfo = self._get_aggr_pinfo(props, cpus)
+        self._print_aggr_props(aggr_pinfo, True, action="set to")
 
     def print_props(self, pnames, cpus, skip_unsupported):
         """
@@ -105,9 +107,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
           * skip_unsupported - if 'True', do not print unsupported values.
         """
 
-        pinfo_iter = self._pcobj.get_props(pnames, cpus=cpus)
-        aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
-
+        aggr_pinfo = self._get_aggr_pinfo(pnames, cpus)
         self._print_aggr_props(aggr_pinfo, skip_unsupported)
 
     def __init__(self, pcobj, cpuinfo):
