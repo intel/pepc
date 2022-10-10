@@ -81,37 +81,6 @@ def fmt_cpus(cpus, cpuinfo):
 
     return msg
 
-def print_prop_msg(prop, val, cpuinfo, action=None, cpus=None, prefix=None):
-    """Format and print a message about a property 'prop'."""
-
-    if cpus is None or (prop["sname"] == "global" and not prop["writable"]):
-        sfx = ""
-    else:
-        cpus = fmt_cpus(cpus, cpuinfo)
-        sfx = f" for {cpus}"
-
-    msg = f"{prop['name']}: "
-
-    if prefix is not None:
-        msg = prefix + msg
-
-    if val is None:
-        val = "not supported"
-    else:
-        unit = prop.get("unit")
-        if unit:
-            if val > 9999:
-                val = Human.largenum(val)
-            val = f"{val}{unit}"
-        if sfx:
-            val = f"'{val}'"
-
-    if action is not None:
-        msg += f"{action} "
-
-    msg += f"{val}{sfx}"
-    _LOG.info(msg)
-
 def print_val_msg(val, cpuinfo, name=None, cpus=None, prefix=None, suffix=None):
     """Format and print a message about 'name' and its value 'val'."""
 

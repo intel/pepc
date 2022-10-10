@@ -11,8 +11,11 @@
 This module implements the 'PepcPCStates' class, which handles 'pepc' P-state and C-state commands.
 """
 
+import logging
 from pepctool import _PepcCommon
-from pepclibs.helperlibs import ClassHelpers
+from pepclibs.helperlibs import ClassHelpers, Human
+
+_LOG = logging.getLogger()
 
 class PepcPCStates(ClassHelpers.SimpleCloseContext):
     """
@@ -22,6 +25,37 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
       * set multiple C-state or P-state properties for multiple CPUs: 'set_props()'.
       * print multiple C-state or P-state properties for multiple CPUs: 'print_props()'.
     """
+
+    def _print_prop_msg(self, prop, val, action=None, cpus=None, prefix=None):
+        """Format and print a message about a property 'prop'."""
+
+        if cpus is None or (prop["sname"] == "global" and not prop["writable"]):
+            sfx = ""
+        else:
+            cpus = _PepcCommon.fmt_cpus(cpus, self._cpuinfo)
+            sfx = f" for {cpus}"
+
+        msg = f"{prop['name']}: "
+
+        if prefix is not None:
+            msg = prefix + msg
+
+        if val is None:
+            val = "not supported"
+        else:
+            unit = prop.get("unit")
+            if unit:
+                if val > 9999:
+                    val = Human.largenum(val)
+                val = f"{val}{unit}"
+            if sfx:
+                val = f"'{val}'"
+
+        if action is not None:
+            msg += f"{action} "
+
+        msg += f"{val}{sfx}"
+        _LOG.info(msg)
 
     def _print_aggr_props(self, aggr_pinfo, skip_unsupported):
         """Print the aggregate C-state or P-state properties information."""
@@ -35,7 +69,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
                     if key in props:
                         if skip_unsupported and val is None:
                             continue
-                        _PepcCommon.print_prop_msg(props[pname], val, self._cpuinfo, cpus=cpus)
+                        self._print_prop_msg(props[pname], val, cpus=cpus)
                     else:
                         if val is None:
                             # Just skip unsupported sub-property instead of printing something like
@@ -45,7 +79,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
                         # Print sub-properties with a prefix and exclude CPU information, because it
                         # is the same as in the (parent) property, which has already been printed.
                         prop = props[pname]["subprops"][key]
-                        _PepcCommon.print_prop_msg(prop, val, self._cpuinfo, cpus=cpus)
+                        self._print_prop_msg(prop, val, self._cpuinfo, cpus=cpus)
 
     def set_props(self, props, cpus):
         """
@@ -60,8 +94,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
             # would be resolved to the actual frequency number.
             _, pinfo = next(self._pcobj.get_props((pname,), cpus=cpus))
             val = pinfo[pname][pname]
-            _PepcCommon.print_prop_msg(self._pcobj.props[pname], val, self._cpuinfo,
-                                       action="set to", cpus=cpus)
+            self._print_prop_msg(self._pcobj.props[pname], val, action="set to", cpus=cpus)
 
     def print_props(self, pnames, cpus, skip_unsupported):
         """
