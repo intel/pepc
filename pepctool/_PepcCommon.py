@@ -141,7 +141,7 @@ def print_val_msg(val, cpuinfo, name=None, cpus=None, prefix=None, suffix=None):
     msg += f"{val}{sfx}"
     _LOG.info(msg)
 
-def print_aggr_props(aggr_pinfo, sobj, cpuinfo):
+def print_aggr_props(aggr_pinfo, sobj, cpuinfo, skip_unsupported):
     """Print the aggregate C-state or P-state properties information."""
 
     for pname in aggr_pinfo:
@@ -149,6 +149,8 @@ def print_aggr_props(aggr_pinfo, sobj, cpuinfo):
             for val, cpus in kinfo.items():
                 # Distinguish between properties and sub-properties.
                 if key in sobj.props:
+                    if skip_unsupported and val is None:
+                        continue
                     print_prop_msg(sobj.props[pname], val, cpuinfo, cpus=cpus)
                 else:
                     if val is None:

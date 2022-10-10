@@ -34,12 +34,18 @@ def _handle_set_opts(opts, cpus, psobj, cpuinfo):
 def _handle_print_opts(opts, cpus, psobj, cpuinfo):
     """Handle P-state configuration options that have to be printed."""
 
+    skip_unsupported = False
+    if not opts:
+        opts = psobj.props
+        # When printing all the options, skip the unsupported ones as they add clutter.
+        skip_unsupported = True
+
     # Build the aggregate properties information dictionary for all options we are going to print
     # about.
     pinfo_iter = psobj.get_props(opts, cpus=cpus)
     aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
 
-    _PepcCommon.print_aggr_props(aggr_pinfo, psobj, cpuinfo)
+    _PepcCommon.print_aggr_props(aggr_pinfo, psobj, cpuinfo, skip_unsupported)
 
 def pstates_config_command(args, pman):
     """Implements the 'pstates config' command."""
@@ -84,8 +90,5 @@ def pstates_info_command(args, pman):
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
-
-        if not print_opts:
-            print_opts = psobj.props
 
         _handle_print_opts(print_opts, cpus, psobj, cpuinfo)
