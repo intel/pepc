@@ -46,7 +46,7 @@ def _handle_print_opts(opts, cpus, csobj, cpuinfo):
     pinfo_iter = csobj.get_props(opts, cpus=cpus)
     aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
 
-    _PepcCommon.print_aggr_props(aggr_pinfo, csobj, cpuinfo)
+    _PepcCommon.print_aggr_props(aggr_pinfo, csobj, cpuinfo, True)
 
 def _handle_set_opts(opts, cpus, csobj, msr, cpuinfo):
     """
@@ -209,4 +209,4 @@ def cstates_info_command(args, pman):
                 _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj)
                 pinfo_iter = csobj.get_props(csobj.props, cpus=cpus)
                 aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
-                _PepcCommon.print_aggr_props(aggr_pinfo, csobj, cpuinfo)
+                _PepcCommon.print_aggr_props(aggr_pinfo, csobj, cpuinfo, False)
