@@ -113,4 +113,8 @@ def run_pepc(arguments, pman, exp_exc=None):
                       f"type: {type(err)}\n\tmessage: {err}\n" \
                       f"but it was expected to raise the following exception type: {type(exp_exc)}"
 
+    if exp_exc is not None:
+        assert False, f"command '{cmd}' did not raise the following exception:\n\ttype: " \
+                      f"{type(exp_exc)}"
+
     return ret
