@@ -87,7 +87,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
         for cpu, to_write in self._transaction_buffer.items():
             # Write all the dirty data.
             path = Path(f"/dev/cpu/{cpu}/msr")
-            with self._pman.open(path, "wb") as fobj:
+            with self._pman.open(path, "r+b") as fobj:
                 for regaddr, regval in to_write.items():
                     try:
                         fobj.seek(regaddr)
@@ -262,7 +262,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
             regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
 
         path = Path(f"/dev/cpu/{cpu}/msr")
-        with self._pman.open(path, "wb") as fobj:
+        with self._pman.open(path, "r+b") as fobj:
             try:
                 fobj.seek(regaddr)
                 fobj.write(regval_bytes)
