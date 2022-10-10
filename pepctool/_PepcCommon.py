@@ -141,28 +141,6 @@ def print_val_msg(val, cpuinfo, name=None, cpus=None, prefix=None, suffix=None):
     msg += f"{val}{sfx}"
     _LOG.info(msg)
 
-def print_aggr_props(aggr_pinfo, sobj, cpuinfo, skip_unsupported):
-    """Print the aggregate C-state or P-state properties information."""
-
-    for pname in aggr_pinfo:
-        for key, kinfo in aggr_pinfo[pname].items():
-            for val, cpus in kinfo.items():
-                # Distinguish between properties and sub-properties.
-                if key in sobj.props:
-                    if skip_unsupported and val is None:
-                        continue
-                    print_prop_msg(sobj.props[pname], val, cpuinfo, cpus=cpus)
-                else:
-                    if val is None:
-                        # Just skip unsupported sub-property instead of printing something like
-                        # "Package C-state limit aliases: not supported on CPUs 0-11".
-                        continue
-
-                    # Print sub-properties with a prefix and exclude CPU information, because it is
-                    # the same as in the (parent) property, which has already been printed.
-                    prop = sobj.props[pname]["subprops"][key]
-                    print_prop_msg(prop, val, cpuinfo, cpus=cpus)
-
 def build_aggregate_pinfo(pinfo_iter, sprops=None):
     """
     Build the aggregated properties dictionary for properties in the 'pinfo_iter' iterator. The

@@ -23,6 +23,30 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
       * print multiple C-state or P-state properties for multiple CPUs: 'print_props()'.
     """
 
+    def _print_aggr_props(self, aggr_pinfo, skip_unsupported):
+        """Print the aggregate C-state or P-state properties information."""
+
+        props = self._pcobj.props
+
+        for pname in aggr_pinfo:
+            for key, kinfo in aggr_pinfo[pname].items():
+                for val, cpus in kinfo.items():
+                    # Distinguish between properties and sub-properties.
+                    if key in props:
+                        if skip_unsupported and val is None:
+                            continue
+                        _PepcCommon.print_prop_msg(props[pname], val, self._cpuinfo, cpus=cpus)
+                    else:
+                        if val is None:
+                            # Just skip unsupported sub-property instead of printing something like
+                            # "Package C-state limit aliases: not supported on CPUs 0-11".
+                            continue
+
+                        # Print sub-properties with a prefix and exclude CPU information, because it
+                        # is the same as in the (parent) property, which has already been printed.
+                        prop = props[pname]["subprops"][key]
+                        _PepcCommon.print_prop_msg(prop, val, self._cpuinfo, cpus=cpus)
+
     def set_props(self, props, cpus):
         """
         Set multiple properties 'props' for multiple CPUs 'cpus'. The arguments are as follows.
@@ -51,7 +75,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         pinfo_iter = self._pcobj.get_props(pnames, cpus=cpus)
         aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter)
 
-        _PepcCommon.print_aggr_props(aggr_pinfo, self._pcobj, self._cpuinfo, skip_unsupported)
+        self._print_aggr_props(aggr_pinfo, skip_unsupported)
 
     def __init__(self, pcobj, cpuinfo):
         """
