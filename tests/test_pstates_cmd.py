@@ -132,8 +132,8 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
     if is_prop_supported("turbo", params["pinfo"]):
-        good_options += ["--turbo", "--turbo on", "--turbo off"]
-        bad_options += ["--turbo 1", "--turbo enable", "--turbo OFF"]
+        good_options += ["--turbo", "--turbo enable", "--turbo off"]
+        bad_options += ["--turbo 1", "--turbo OFF"]
 
     options["turbo"] = { "good" : good_options, "bad" : bad_options }
 
