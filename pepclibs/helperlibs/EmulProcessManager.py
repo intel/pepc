@@ -89,7 +89,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """
 
         def _aspm_write(self, data):
-            """Method to write ASPM profile to emulated sysfs file."""
+            """
+            Method for writing and mimicking sysfs ASPM policy file update.
+            For example, writing "powersave" to the file will result in the following file contents:
+            "default performance [powersave] powersupersave"
+            """
 
             line = fobj._policies.replace(data, f"[{data}]")
             self._orig_write(line)
