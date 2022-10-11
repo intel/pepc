@@ -84,8 +84,12 @@ _WARN_ONLY = {
 
 def run_pepc(arguments, pman, exp_exc=None):
     """
-    Run the 'pepc' command with arguments 'arguments' and with process manager 'pman'. The 'exp_exc'
-    is expected exception type. By default, any exception is considered to be a failure.
+    Run pepc command and verify the outcome. The arguments are as follows.
+      * arguments - the arguments to run the command with, e.g. 'pstate info --cpus 0-43'.
+      * pman - the process manager object that defines the host to run the measurements on.
+      * exp_exc - the expected exception, by default, any exception is considered to be a failure.
+                  But when set if the command did not raise the expected exception then the test is
+                  considered to be a failure.
     """
 
     cmd = f"{_Pepc.__file__} {arguments}"
