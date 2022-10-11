@@ -655,19 +655,6 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         return val
 
-    def write(self, path, data):
-        """
-        Write data 'data' to file at path 'path'. The arguments are as follows.
-          * path - path to the file to write to.
-          * data - the data to write.
-        """
-
-        try:
-            with self.open(path, "w") as fobj:
-                fobj.write(data)
-        except Error as err:
-            raise type(err)(f"failed to write to file '{path}'{self.hostmsg}:\n{err}") from err
-
     def get_python_path(self):
         """
         Some FS operations have to execute python scripts on the remote host. This method finds and
