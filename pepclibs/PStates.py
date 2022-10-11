@@ -653,8 +653,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         prop = self._props[pname]
         path = self._get_sysfs_path(prop, cpu)
 
-        # Sysfs files use kHz.
-        self._pman.write(path, str(freq // 1000))
+        try:
+            with self._pman.open(path, "w") as fobj:
+                # Sysfs files use kHz.
+                fobj.write(str(freq // 1000))
+        except Error as err:
+            raise Error(f"failed to write '{pname}' frequency to file '{path}'{self._pman.hostmsg}:"
+                        f"\n{err}") from err
 
         count = 3
         while count > 0:
