@@ -112,7 +112,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             self._reload_cpuinfo = True
 
             try:
-                with self._pman.open(path, "w") as fobj:
+                with self._pman.open(path, "r+") as fobj:
                     fobj.write(data)
             except Error as err:
                 raise Error(f"failed to {state_str} CPU{cpu}:\n{err}") from err

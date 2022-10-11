@@ -654,7 +654,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         path = self._get_sysfs_path(prop, cpu)
 
         try:
-            with self._pman.open(path, "w") as fobj:
+            with self._pman.open(path, "r+") as fobj:
                 # Sysfs files use kHz.
                 fobj.write(str(freq // 1000))
         except Error as err:

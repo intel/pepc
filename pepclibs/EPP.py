@@ -227,7 +227,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """Set EPP to 'epp' for CPU 'cpu' via the sysfs file."""
 
         try:
-            with self._pman.open(self._sysfs_epp_path % cpu, "w") as fobj:
+            with self._pman.open(self._sysfs_epp_path % cpu, "r+") as fobj:
                 fobj.write(str(epp))
         except ErrorNotFound:
             return None

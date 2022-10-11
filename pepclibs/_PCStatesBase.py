@@ -128,7 +128,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             val = ' '.join(val)
 
         try:
-            with self._pman.open(path, "w") as fobj:
+            with self._pman.open(path, "r+") as fobj:
                 fobj.write(str(val))
         except Error as err:
             raise Error(f"failed to write to file '{path}'{self._pman.hostmsg}:\n{err}") from err
