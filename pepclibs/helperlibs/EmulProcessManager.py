@@ -88,14 +88,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         'write()' to ensure the emulated sysfs file behavior is same as in real hardware.
         """
 
+        def _aspm_write(self, data):
+            """Method to write ASPM profile to emulated sysfs file."""
+
+            line = self._policies.strip("[]")
+            line = line.replace(data, f"[{data}]")
+            self._orig_write(line)
+
         if "pcie_aspm/parameters/policy" in path and "w" in mode:
-            def _aspm_write(self, data):
-                """Method to write ASPM profile to emulated sysfs file."""
-
-                line = self._policies.strip("[]")
-                line = line.replace(data, f"[{data}]")
-                self._orig_write(line)
-
             with open(path, "r") as fobj1:
                 fobj._policies = fobj1.read().strip()
             fobj._orig_write = fobj.write
