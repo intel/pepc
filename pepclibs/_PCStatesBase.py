@@ -127,7 +127,11 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         if prop["type"] == "list[str]":
             val = ' '.join(val)
 
-        self._pman.write(path, str(val))
+        try:
+            with self._pman.open(path, "w") as fobj:
+                fobj.write(str(val))
+        except Error as err:
+            raise Error(f"failed to write to file '{path}'{self._pman.hostmsg}:\n{err}") from err
 
     def _init_props_dict(self, props):
         """Initialize the 'props' dictionary."""
