@@ -64,9 +64,15 @@ def _get_scope_options(params):
 
     bad_scope_options = [
         f"--cpus {params['cpus'][-1] + 1}",
-        f"--cores {pkg0_core_ranges}",
         f"--packages 0 --cores {params['cores'][0][-1] + 1}",
         f"--packages {params['packages'][-1] + 1}"]
+
+    # Option '--cores' must be used with '--packages', except for 1-package systems, or single
+    # socket system.
+    if len(params["packages"]) == 1:
+        good_scope_options += [f"--cores {pkg0_core_ranges}"]
+    else:
+        bad_scope_options += [f"--cores {pkg0_core_ranges}"]
 
     return {"good" : good_scope_options, "bad" : bad_scope_options}
 
