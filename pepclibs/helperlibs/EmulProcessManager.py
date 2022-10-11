@@ -91,13 +91,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         def _aspm_write(self, data):
             """Method to write ASPM profile to emulated sysfs file."""
 
-            line = self._policies.strip("[]")
-            line = line.replace(data, f"[{data}]")
+            line = fobj._policies.replace(data, f"[{data}]")
             self._orig_write(line)
 
         if "pcie_aspm/parameters/policy" in path and "w" in mode:
             with open(path, "r") as fobj1:
-                fobj._policies = fobj1.read().strip()
+                policies = fobj1.read().strip()
+            fobj._policies = policies.replace("[", "").replace("]", "")
             fobj._orig_write = fobj.write
             fobj.write = types.MethodType(_aspm_write, fobj)
 
