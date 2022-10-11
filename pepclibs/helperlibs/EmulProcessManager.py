@@ -96,14 +96,17 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             """
 
             line = fobj._policies.replace(data, f"[{data}]")
+            self.seek(0)
             self._orig_write(line)
 
-        if "pcie_aspm/parameters/policy" in path and "w" in mode:
-            with open(path, "r") as fobj1:
-                policies = fobj1.read().strip()
-            fobj._policies = policies.replace("[", "").replace("]", "")
-            fobj._orig_write = fobj.write
-            fobj.write = types.MethodType(_aspm_write, fobj)
+        if "pcie_aspm/parameters/policy" in path:
+            if "r+" == mode:
+                policies = fobj.read().strip()
+                fobj._policies = policies.replace("[", "").replace("]", "")
+                fobj._orig_write = fobj.write
+                fobj.write = types.MethodType(_aspm_write, fobj)
+            elif "w" in mode:
+                raise Error(f"BUG: unsupported open mode '{mode}', use 'r+'")
 
         return fobj
 

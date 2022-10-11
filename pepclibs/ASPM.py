@@ -46,7 +46,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
 
         errmsg = f"failed to set ASPM policy to '{policy}'{self._pman.hostmsg}:"
         try:
-            with self._pman.open(self._policy_path, "w") as fobj:
+            with self._pman.open(self._policy_path, "r+") as fobj:
                 fobj.write(policy)
         except ErrorPermissionDenied as err:
             raise ErrorPermissionDenied(f"{errmsg}\n{err}\nSometimes booting with " \
