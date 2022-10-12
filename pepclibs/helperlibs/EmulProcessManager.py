@@ -82,10 +82,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         return self._basepath
 
-    def _wrap_aspm(self, fobj, path, mode):
+    def _sysfs_write(self, fobj, path, mode):
         """
-        The "policy" ASPM sysfs file needs special handling. This method wraps the file object
-        'write()' to ensure the emulated sysfs file behavior is same as in real hardware.
+        Sysfs files needs special handling when written to. This method ensure the emulated sysfs
+        file behavior is same as in real hardware.
         """
 
         def _aspm_write(self, data):
@@ -99,16 +99,19 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self.seek(0)
             self._orig_write(line)
 
-        if "pcie_aspm/parameters/policy" in path:
-            if "r+" == mode:
+        if path.startswith("/sys/"):
+            if "w" in mode:
+                raise Error("BUG: use 'r+' mode when opening sysfs virtual files.")
+
+            if mode != "r+":
+                return
+
+            if path.endswith("pcie_aspm/parameters/policy"):
                 policies = fobj.read().strip()
                 fobj._policies = policies.replace("[", "").replace("]", "")
                 fobj._orig_write = fobj.write
                 fobj.write = types.MethodType(_aspm_write, fobj)
-            elif "w" in mode:
-                raise Error(f"BUG: unsupported open mode '{mode}', use 'r+'")
 
-        return fobj
 
     def _extract_path(self, cmd):
         """
@@ -228,7 +231,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             fobj = self._open_ro(path, mode)
         else:
             fobj = self._open_rw(path, mode)
-            fobj = self._wrap_aspm(fobj, path, mode)
+            self._sysfs_write(fobj, path, mode)
 
         self._ofiles[path] = fobj
         return fobj
