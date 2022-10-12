@@ -3,11 +3,20 @@
 Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.22] - ADD DATE HERE
+## [1.3.23] - ADD DATE HERE
 ### Fixed
 ### Added
 ### Removed
 ### Changed
+
+## [1.3.22] - 2022-10-12
+### Fixed
+ - Do not try to read HWP-related features (like EPP) on non-HWP systems.
+### Added
+ - Add and 'intel_pstate' driver operation mode support (passive, active).
+### Changed
+ - The "pepc [pc]state info" does not print information about unsupported
+   commands any longer.
 
 ## [1.3.21] - 2022-09-29
 ### Fixed

@@ -1,3 +1,12 @@
+pepc (1.3.22) unstable; urgency=low
+
+  * Do not try to read HWP-related features (like EPP) on non-HWP systems.
+  * Add and 'intel_pstate' driver operation mode support (passive, active).
+  * The "pepc [pc]state info" does not print information about unsupported
+    commands any longer.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 12 Oct 2022 00:00:00 +0200
+
 pepc (1.3.21) unstable; urgency=low
 
   * Fix bugs in tests.

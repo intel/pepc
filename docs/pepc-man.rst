@@ -436,7 +436,8 @@ usage: pepc pstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
 [--max-freq-limit] [--base-freq] [--max-eff-freq] [--turbo]
 [--max-turbo-freq] [--min-uncore-freq] [--max-uncore-freq]
 [--min-uncore-freq-limit] [--max-uncore-freq-limit] [--hwp] [--epp]
-[--epp-policy] [--epb] [--epb-policy] [--driver] [--governor]
+[--epp-policy] [--epb] [--epb-policy] [--driver] [--intel-pstate-mode]
+[--governor]
 
 Get P-states information for specified CPUs. By default, prints all
 information for all CPUs.
@@ -523,9 +524,10 @@ OPTIONS *'pepc* pstates info'
    frequency This option has die scope.
 
 **--hwp**
-   Get current setting for hardware power mangement. When hardware power
-   management is enabled, CPUs can automatically scale their frequency
-   without active OS involvement. This option has global scope.
+   Get current setting for hardware power management. When hardware
+   power management is enabled, CPUs can automatically scale their
+   frequency without active OS involvement. This option has global
+   scope.
 
 **--epp**
    Get energy Performance Preference. Energy Performance Preference
@@ -554,6 +556,14 @@ OPTIONS *'pepc* pstates info'
    Get CPU frequency driver. CPU frequency driver enumerates and
    requests the P-states available on the platform. This option has
    global scope.
+
+**--intel-pstate-mode**
+   Get operation mode of 'intel_pstate' driver. The 'intel_pstate'
+   driver has 3 operation modes: 'active', 'passive' and 'off'. The main
+   difference between the active and passive mode is in what frequency
+   governors are used - the generic Linux governors (passive mode) or
+   the custom, built-in 'intel_pstate' driver governors (active mode).
+   This option has global scope.
 
 **--governor**
    Get CPU frequency governor. CPU frequency governor decides which
