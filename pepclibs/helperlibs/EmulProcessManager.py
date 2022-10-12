@@ -99,6 +99,17 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self.seek(0)
             self._orig_write(line)
 
+        def _truncate_write(self, data):
+            """
+            Method for writing and mimicking sysfs files.
+            For example, writing "Performance" to sysfs 'scaling_governor' file will result in the
+            file containing only "Performance", irrelevant what the file contained before writing.
+            """
+
+            self.truncate(len(data))
+            self.seek(0)
+            self._orig_write(data)
+
         if path.startswith("/sys/"):
             if "w" in mode:
                 raise Error("BUG: use 'r+' mode when opening sysfs virtual files.")
@@ -112,6 +123,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 fobj._orig_write = fobj.write
                 fobj.write = types.MethodType(_aspm_write, fobj)
 
+            else:
+                fobj._orig_write = fobj.write
+                fobj.write = types.MethodType(_truncate_write, fobj)
 
     def _extract_path(self, cmd):
         """
