@@ -13,6 +13,7 @@
 
 import os
 from pathlib import Path
+import pytest
 
 def pytest_addoption(parser):
     """Add custom pytest options."""
@@ -54,3 +55,15 @@ def pytest_generate_tests(metafunc):
             params = [f"emulation:{dataset}"]
 
         metafunc.parametrize("hostspec", params, scope="module")
+
+def pytest_configure(config):
+    """Verify the existence of requested dataset."""
+
+    hostname = config.getoption("hostname")
+    dataset = config.getoption("dataset")
+
+    if hostname == "emulation" and dataset != "all":
+        path = Path(__file__).parent.resolve() / "data" / dataset
+
+        if not path.exists():
+            raise pytest.exit(f"Did not find dataset '{dataset}'.")
