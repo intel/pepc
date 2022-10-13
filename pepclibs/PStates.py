@@ -469,7 +469,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         driver = self._get_cpu_prop_value("driver", cpu)
 
         try:
-            if driver in {"intel_pstate", "intel_cpufreq"}:
+            if driver == "intel_pstate":
                 path = self._sysfs_base / "intel_pstate" / "no_turbo"
                 disabled = self._read_int(path)
                 return "off" if disabled else "on"
@@ -597,17 +597,20 @@ class PStates(_PCStatesBase.PCStatesBase):
             _LOG.debug("can't read value of property '%s', path '%s' missing", prop["name"], path)
             return None
 
+        # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode, and
+        # 'intel_cpufreq' when it is in passive mode. But we always report the 'intel_pstate' name,
+        # because reporting 'intel_cpufreq' is just confusing.
+        if driver == "intel_cpufreq":
+            return "intel_pstate"
+
         return driver
 
     def _get_intel_pstate_mode(self, pname, cpu):
         """Returns the 'intel_pstate' driver operation mode."""
 
-        # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode, and
-        # 'intel_cpufreq' when it is in passive mode. So there are 2 names for the same kernel
-        # driver.
         driver = self._get_cpu_prop_value("driver", cpu)
 
-        if driver in {"intel_pstate", "intel_cpufreq"}:
+        if driver == "intel_pstate":
             path = self._sysfs_base / "intel_pstate" / "status"
             return self._read_prop_value_from_sysfs(self._props[pname], path)
 
@@ -623,7 +626,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         # name first.
         driver = self._get_cpu_prop_value("driver", cpu)
 
-        if driver in {"intel_pstate", "intel_cpufreq"}:
+        if driver == "intel_pstate":
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
             self._write_prop_value_to_sysfs(self._props["turbo"], path, int(not enable))
         elif driver == "acpi-cpufreq":
