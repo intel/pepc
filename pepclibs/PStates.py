@@ -827,6 +827,19 @@ class PStates(_PCStatesBase.PCStatesBase):
             if new_max_freq != cur_max_freq:
                 self._write_freq_prop_value_to_sysfs(max_freq_key, new_max_freq, cpu)
 
+    def _validate_intel_pstate_mode(self, mode):
+        """Validate 'intel_pstate_mode' mode."""
+
+        if self._get_cpu_prop_value("intel_pstate_mode", 0) is None:
+            driver = self._get_cpu_prop_value("driver", 0)
+            raise Error(f"can't set property 'intel_pstate_mode'{self._pman.hostmsg}:\n  "
+                        f"the CPU frequency driver is '{driver}', not 'inel_pstate'")
+
+        modes = ("active", "passive", "off")
+        if mode not in modes:
+            modes = ", ".join(modes)
+            raise Error(f"bad 'intel_pstate' mode '{mode}', use one of: {modes}")
+
     def _set_prop_value(self, pname, val, cpus):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
 
@@ -877,6 +890,9 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             if pname == "governor":
                 self._validate_governor_name(val)
+
+            if pname == "intel_pstate_mode":
+                self._validate_intel_pstate_mode(val)
 
             if prop.get("type") == "bool":
                 self._validate_bool_type_value(prop, val)
