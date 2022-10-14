@@ -116,8 +116,6 @@ def test_cstates_config(params):
         good_options += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake off"]
 
     for option in good_options:
-        run_pepc(f"cstates config {option}", pman)
-
         for scope in scope_options["good"]:
             run_pepc(f"cstates config {option} {scope}", pman)
 
