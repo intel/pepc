@@ -137,11 +137,16 @@ def _get_config_options(params):
 
     good_options = []
     bad_options = []
+
+    if is_prop_supported("intel_pstate_mode", params["pinfo"]):
+        good_options += ["--intel-pstate-mode off", "--intel-pstate-mode passive"]
+        bad_options += ["--intel-pstate-mode Dagny"]
+
     if is_prop_supported("turbo", params["pinfo"]):
         good_options += ["--turbo", "--turbo enable", "--turbo off"]
         bad_options += ["--turbo 1", "--turbo OFF"]
 
-    options["turbo"] = { "good" : good_options, "bad" : bad_options }
+    options["config_global"] = { "good" : good_options, "bad" : bad_options }
 
     return options
 
@@ -180,7 +185,7 @@ def _test_pstates_config_good(params):
         for scope in scope_options["bad"]:
             run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
 
-    for option in config_options["turbo"]["good"]:
+    for option in config_options["config_global"]["good"]:
         for scope in scope_options["good_global"]:
             run_pepc(f"pstates config {option} {scope}", pman)
 
@@ -199,7 +204,7 @@ def _test_pstates_config_bad(params):
         for scope in scope_options["bad"]:
             run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
 
-    for option in config_options["turbo"]["bad"]:
+    for option in config_options["config_global"]["bad"]:
         run_pepc(f"pstates config {option}", pman, exp_exc=Error)
 
     for option in config_options["config"]["bad"]:

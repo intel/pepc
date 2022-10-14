@@ -49,6 +49,10 @@ def _set_and_verify_data(params):
 
     pinfo = params["pinfo"]
 
+    if is_prop_supported("intel_pstate_mode", pinfo):
+        yield "intel_pstate_mode", "active"
+        yield "intel_pstate_mode", "passive"
+
     if is_prop_supported("turbo", pinfo):
         yield "turbo", "off"
         yield "turbo", "on"
