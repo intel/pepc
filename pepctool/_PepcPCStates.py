@@ -57,7 +57,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         msg += f"{val}{sfx}"
         _LOG.info(msg)
 
-    def _print_aggr_props(self, aggr_pinfo, skip_unsupported, action=None):
+    def _print_aggr_props(self, aggr_pinfo, skip_unsupported=False, action=None):
         """Print the aggregate C-state or P-state properties information."""
 
         props = self._pcobj.props
@@ -96,9 +96,9 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
 
         self._pcobj.set_props(props, cpus)
         aggr_pinfo = self._get_aggr_pinfo(props, cpus)
-        self._print_aggr_props(aggr_pinfo, True, action="set to")
+        self._print_aggr_props(aggr_pinfo, skip_unsupported=True, action="set to")
 
-    def print_props(self, pnames, cpus, skip_unsupported):
+    def print_props(self, pnames, cpus, skip_unsupported=False):
         """
         Read and print values of multiple properties for multiple CPUs. The argument are as follows.
           * pnames - property names as a list of strings. For property names, see 'PROPS' in
@@ -108,7 +108,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         """
 
         aggr_pinfo = self._get_aggr_pinfo(pnames, cpus)
-        self._print_aggr_props(aggr_pinfo, skip_unsupported)
+        self._print_aggr_props(aggr_pinfo, skip_unsupported=skip_unsupported)
 
     def __init__(self, pcobj, cpuinfo):
         """

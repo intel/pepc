@@ -45,7 +45,7 @@ def pstates_config_command(args, pman):
         if set_opts:
             pcstates.set_props(set_opts, cpus)
         if print_opts:
-            pcstates.print_props(print_opts, cpus, False)
+            pcstates.print_props(print_opts, cpus)
 
 def pstates_info_command(args, pman):
     """Implements the 'pstates info' command."""
@@ -69,4 +69,4 @@ def pstates_info_command(args, pman):
             # When printing all the options, skip the unsupported ones as they add clutter.
             skip_unsupported = True
 
-        pcstates.print_props(print_opts, cpus, skip_unsupported)
+        pcstates.print_props(print_opts, cpus, skip_unsupported=skip_unsupported)

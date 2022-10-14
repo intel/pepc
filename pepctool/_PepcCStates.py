@@ -119,7 +119,7 @@ def cstates_config_command(args, pman):
             # Commit the transaction. This will flush all the change MSRs (if there were any).
             msr.commit_transaction()
 
-            pcstates.print_props(print_opts, cpus, False)
+            pcstates.print_props(print_opts, cpus)
 
 def _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj):
     """Prints requestable C-states information."""
@@ -173,8 +173,8 @@ def cstates_info_command(args, pman):
             if args.csnames != "default":
                 _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj)
             if print_opts:
-                pcstates.print_props(print_opts, cpus, False)
+                pcstates.print_props(print_opts, cpus)
             if not print_opts and args.csnames == "default":
                 args.csnames = "all"
                 _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj)
-                pcstates.print_props(csobj.props, cpus, True)
+                pcstates.print_props(csobj.props, cpus, skip_unsupported=True)
