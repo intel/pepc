@@ -26,7 +26,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
                 policies = fobj.read().strip()
         except Error as err:
             raise Error(f"failed to read ASPM policy from file '{self._policy_path}'"
-                        f"{self._pman.hostmsg}:\n{err}") from err
+                        f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         policies = Trivial.split_csv_line(policies, sep=" ")
         if strip:

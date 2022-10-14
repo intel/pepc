@@ -204,7 +204,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except ErrorNotSupported as err:
             if not_supported_ok:
                 return None
-            raise ErrorNotSupported(f"CPU {cpu} does not support EPP:\n{err}") from err
+            raise ErrorNotSupported(f"CPU {cpu} does not support EPP:\n{err.indent(2)}") from err
 
     def get_epp(self, cpus="all", not_supported_ok=False):
         """

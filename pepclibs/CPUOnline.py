@@ -115,7 +115,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                 with self._pman.open(path, "r+") as fobj:
                     fobj.write(data)
             except Error as err:
-                raise Error(f"failed to {state_str} CPU{cpu}:\n{err}") from err
+                raise Error(f"failed to {state_str} CPU{cpu}:\n{err.indent(2)}") from err
 
             if self._get_online(path) != data:
                 raise Error(f"failed to {state_str} CPU{cpu}")

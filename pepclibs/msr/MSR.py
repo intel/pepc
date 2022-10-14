@@ -98,7 +98,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
                     except Error as err:
                         raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                                     f"{cpu}:\nfailed to write to file '{path}'"
-                                    f"{self._pman.hostmsg}:\n{err}") from err
+                                    f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         self._transaction_buffer.clear()
         self._in_transaction = False
@@ -151,7 +151,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
                 regval = fobj.read(self.regbytes)
         except Error as err:
             raise Error(f"failed to read MSR '{regaddr:#x}' from file '{path}'"
-                        f"{self._pman.hostmsg}:\n{err}") from err
+                        f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         regval = int.from_bytes(regval, byteorder=_CPU_BYTEORDER)
         _LOG.debug("CPU%d: MSR 0x%x: read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)

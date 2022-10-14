@@ -547,7 +547,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 try:
                     val = prop["getter"](cpu)
                 except Error as err2:
-                    raise Error(f"{err1}\nThe fall-back method failed too:\n{err2}") from err2
+                    raise Error(f"{err1}\nThe fall-back method failed too:\n{err2.indent(2)}") \
+                                from err2
 
         return val
 
@@ -658,7 +659,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # Sysfs files use kHz.
                 fobj.write(str(freq // 1000))
         except Error as err:
-            raise Error(f"failed to set '{prop['name']}'{self._pman.hostmsg}:\n{err}") from err
+            raise Error(f"failed to set '{prop['name']}'{self._pman.hostmsg}:\n{err.indent(2)}") \
+                        from err
 
         count = 3
         while count > 0:

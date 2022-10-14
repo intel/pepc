@@ -321,13 +321,13 @@ class ReqCStates(ClassHelpers.SimpleCloseContext):
             with self._pman.open(path, "r+") as fobj:
                 fobj.write(val + "\n")
         except Error as err:
-            raise Error(f"failed to {msg}:\n{err}") from err
+            raise Error(f"failed to {msg}:\n{err.indent(2)}") from err
 
         try:
             with self._pman.open(path, "r") as fobj:
                 read_val = fobj.read().strip()
         except Error as err:
-            raise Error(f"failed to {msg}:\n{err}") from err
+            raise Error(f"failed to {msg}:\n{err.indent(2)}") from err
 
         if val != read_val:
             raise Error(f"failed to {msg}:\nfile '{path}' contains '{read_val}', but should "
