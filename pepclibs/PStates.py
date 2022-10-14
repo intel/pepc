@@ -400,20 +400,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return None
 
-    def _get_driver_name(self, cpu): # pylint: disable=unused-argument
-        """
-        Returns the current CPU frequency driver name. The assumption is that the "scaling_driver"
-        sysfs has already been checked and it does not exist. So this is the "fallback" function
-        which tries to figure the driver name.
-        """
-
-        # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
-        # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
-        if self._pman.exists(self._sysfs_base / "intel_pstate"):
-            return "intel_pstate"
-
-        return None
-
     def _get_max_turbo_freq(self, cpu):
         """
         Read and return the maximum turbo frequency for CPU 'cpu' from 'MSR_TURBO_RATIO_LIMIT'.
@@ -584,6 +570,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 val = self._get_cpu_prop_value("max_freq", cpu)
         elif pname == "turbo":
             val = self._get_cpu_turbo(cpu)
+        elif pname == "driver":
+            val = self._get_driver(cpu)
         elif pname == "intel_pstate_mode":
             val = self._get_intel_pstate_mode(pname, cpu)
         else:
@@ -591,6 +579,25 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         self._pcache.add(pname, cpu, val, sname=prop["sname"])
         return val
+
+    def _get_driver(self, cpu):
+        """Returns the CPU frequency driver name."""
+
+        prop = self._props["driver"]
+        path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
+
+        try:
+            driver = self._read_prop_value_from_sysfs(prop, path)
+        except ErrorNotFound:
+            # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
+            # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
+            if self._pman.exists(self._sysfs_base / "intel_pstate"):
+                return "intel_pstate"
+
+            _LOG.debug("can't read value of property '%s', path '%s' missing", prop["name"], path)
+            return None
+
+        return driver
 
     def _get_intel_pstate_mode(self, pname, cpu):
         """Returns the 'intel_pstate' driver operation mode."""
@@ -907,15 +914,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._props["max_uncore_freq"]["fname"] = "max_freq_khz"
         self._props["min_uncore_freq_limit"]["fname"] = "initial_min_freq_khz"
         self._props["max_uncore_freq_limit"]["fname"] = "initial_max_freq_khz"
-        self._props["driver"]["fname"] = "scaling_driver"
         self._props["governor"]["fname"] = "scaling_governor"
         self._props["governor"]["subprops"]["governors"]["fname"] = "scaling_available_governors"
 
         # Some of the sysfs files may not exist, in which case they can be acquired using the
         # "getter" function. E.g., the "base_frequency" file is specific to the 'intel_pstate'
-        # driver. In case of a different driver, we can fall-back to reading the MSR register.
+        # driver.
         self._props["base_freq"]["getter"] = self._get_base_freq
-        self._props["driver"]["getter"] = self._get_driver_name
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
