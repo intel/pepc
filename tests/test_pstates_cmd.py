@@ -164,13 +164,7 @@ def _test_pstates_config_good(params):
     scope_options = _get_scope_options(params)
     config_options = _get_config_options(params)
 
-    # Test frequency settings supported by test configuration.
     for option in config_options["freq"]["good"]:
-        run_pepc(f"pstates config {option}", pman)
-
-    for option in config_options["freq"]["good"]:
-        run_pepc(f"pstates config {option}", pman)
-
         for scope in scope_options["good"]:
             if "uncore" in option and ("package" not in scope or "core" in scope):
                 continue
@@ -180,8 +174,6 @@ def _test_pstates_config_good(params):
             run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
 
     for option in config_options["config"]["good"]:
-        run_pepc(f"pstates config {option}", pman)
-
         for scope in scope_options["good"]:
             run_pepc(f"pstates config {option} {scope}", pman)
 
@@ -189,8 +181,6 @@ def _test_pstates_config_good(params):
             run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
 
     for option in config_options["turbo"]["good"]:
-        run_pepc(f"pstates config {option}", pman)
-
         for scope in scope_options["good_global"]:
             run_pepc(f"pstates config {option} {scope}", pman)
 
