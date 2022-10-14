@@ -538,6 +538,42 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return val
 
+    def _get_driver(self, cpu):
+        """Returns the CPU frequency driver."""
+
+        prop = self._props["driver"]
+        path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
+
+        try:
+            driver = self._read_prop_value_from_sysfs(prop, path)
+        except ErrorNotFound:
+            # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
+            # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
+            if self._pman.exists(self._sysfs_base / "intel_pstate"):
+                return "intel_pstate"
+
+            _LOG.debug("can't read value of property '%s', path '%s' missing", prop["name"], path)
+            return None
+
+        # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode, and
+        # 'intel_cpufreq' when it is in passive mode. But we always report the 'intel_pstate' name,
+        # because reporting 'intel_cpufreq' is just confusing.
+        if driver == "intel_cpufreq":
+            return "intel_pstate"
+
+        return driver
+
+    def _get_intel_pstate_mode(self, pname, cpu):
+        """Returns the 'intel_pstate' driver operation mode."""
+
+        driver = self._get_cpu_prop_value("driver", cpu)
+
+        if driver == "intel_pstate":
+            path = self._sysfs_base / "intel_pstate" / "status"
+            return self._read_prop_value_from_sysfs(self._props[pname], path)
+
+        return None
+
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
 
@@ -579,42 +615,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         self._pcache.add(pname, cpu, val, sname=prop["sname"])
         return val
-
-    def _get_driver(self, cpu):
-        """Returns the CPU frequency driver name."""
-
-        prop = self._props["driver"]
-        path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
-
-        try:
-            driver = self._read_prop_value_from_sysfs(prop, path)
-        except ErrorNotFound:
-            # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
-            # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
-            if self._pman.exists(self._sysfs_base / "intel_pstate"):
-                return "intel_pstate"
-
-            _LOG.debug("can't read value of property '%s', path '%s' missing", prop["name"], path)
-            return None
-
-        # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode, and
-        # 'intel_cpufreq' when it is in passive mode. But we always report the 'intel_pstate' name,
-        # because reporting 'intel_cpufreq' is just confusing.
-        if driver == "intel_cpufreq":
-            return "intel_pstate"
-
-        return driver
-
-    def _get_intel_pstate_mode(self, pname, cpu):
-        """Returns the 'intel_pstate' driver operation mode."""
-
-        driver = self._get_cpu_prop_value("driver", cpu)
-
-        if driver == "intel_pstate":
-            path = self._sysfs_base / "intel_pstate" / "status"
-            return self._read_prop_value_from_sysfs(self._props[pname], path)
-
-        return None
 
     def _set_turbo(self, cpu, enable):
         """Enable or disable turbo."""
