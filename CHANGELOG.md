@@ -6,6 +6,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [1.3.23] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add the 'cstates config --intel-pstate-mode' option.
 ### Removed
 ### Changed
 
