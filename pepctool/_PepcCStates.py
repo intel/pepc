@@ -11,12 +11,54 @@ This module includes the "cstates" 'pepc' command implementation.
 """
 
 import logging
+from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
 from pepclibs import CStates, CPUInfo
 from pepctool import _PepcCommon, _PepcPCStates
 
 _LOG = logging.getLogger()
+
+class _PepcCStates(_PepcPCStates.PepcPCStates):
+    """Class for handling the 'pepc cstates' options."""
+
+    def _get_msr(self):
+        """Returns an 'MSR.MSR()' object."""
+
+        if not self._msr:
+            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo)
+
+        return self._msr
+
+    def set_props(self, props, cpus):
+        """
+        Same as 'set_props()' in PepcPCStates, and will make use of caching feature of the 'MSR'
+        module.
+        """
+
+        self._get_msr().start_transaction()
+        super().set_props(props, cpus)
+        # Commit the transaction. This will flush all the change MSRs (if there were any).
+        self._get_msr().commit_transaction()
+
+    def __init__(self, pman, csobj, cpuinfo, msr=None):
+        """
+        The class constructor. The 'csobj' and 'cpuinfo' are same as in '_PepcPCStates.PepcPCState',
+        and other arguments are as follows.
+          * pman - the process manager object that defines the target system.
+          * msr - an 'MSR.MSR()' object which should be used for accessing MSR registers.
+        """
+
+        super().__init__(csobj, cpuinfo)
+
+        self._pman = pman
+        self._msr = msr
+
+        self._close_msr = msr is None
+
+    def close(self):
+        """Uninitialize the class object."""
+        ClassHelpers.close(self, close_attrs=("_msr"), unref_attrs=("_pman"))
 
 def _fmt_csnames(csnames):
     """Formats and returns the C-states list string, which can be used in messages."""
@@ -112,14 +154,9 @@ def cstates_config_command(args, pman):
 
         with MSR.MSR(pman=pman, cpuinfo=cpuinfo) as msr, \
              CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj, \
-             _PepcPCStates.PepcPCStates(csobj, cpuinfo) as pcstates:
-
-            msr.start_transaction()
-            pcstates.set_props(set_opts, cpus)
-            # Commit the transaction. This will flush all the change MSRs (if there were any).
-            msr.commit_transaction()
-
-            pcstates.print_props(print_opts, cpus)
+             _PepcCStates(pman, csobj, cpuinfo, msr=msr) as cstates:
+            cstates.set_props(set_opts, cpus)
+            cstates.print_props(print_opts, cpus)
 
 def _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj):
     """Prints requestable C-states information."""
@@ -168,13 +205,13 @@ def cstates_info_command(args, pman):
         # Print platform configuration info.
         #
         with CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj) as csobj, \
-             _PepcPCStates.PepcPCStates(csobj, cpuinfo) as pcstates:
+             _PepcCStates(pman, csobj, cpuinfo) as cstates:
 
             if args.csnames != "default":
                 _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj)
             if print_opts:
-                pcstates.print_props(print_opts, cpus)
+                cstates.print_props(print_opts, cpus)
             if not print_opts and args.csnames == "default":
                 args.csnames = "all"
                 _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj)
-                pcstates.print_props(csobj.props, cpus, skip_unsupported=True)
+                cstates.print_props(csobj.props, cpus, skip_unsupported=True)
