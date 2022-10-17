@@ -5,7 +5,8 @@ Maintainer: Artem Bityutskiy <artem.bityutskiy@intel.com>
 Build-Depends: debhelper (>= 9),
                dh-python,
                python3-all (>= 3.7),
-               python3-setuptools
+               python3-setuptools,
+               python3-pytest
 Standards-Version: 3.9.8
 Homepage: https://intelpedia.intel.com/ServerPowerLab/Pepc
 X-Python3-Version: >= 3.7
@@ -14,7 +15,7 @@ Package: pepc
 Architecture: all
 Multi-Arch: foreign
 Depends: python3:any (>= 3.7~),
-         python3-paramiko,
+         python3-pepc,
          ${misc:Depends},
          ${python3:Depends},
          util-linux (>= 2.20~),
@@ -22,3 +23,13 @@ Depends: python3:any (>= 3.7~),
          rsync
 Description: Power, Energy, and Performance configuration tool.
  A tool configuring various power and performance aspects of a Linux system.
+
+Package: python3-pepc
+Architecture: all
+Multi-Arch: foreign
+Depends: python3:any (>= 3.7~),
+         python3-paramiko,
+         ${misc:Depends},
+         ${python3:Depends}
+Description: Pepc Python libraries.
+ Pepc Python libraries.
