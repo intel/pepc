@@ -40,6 +40,23 @@ _EFREQ_CPUS = CPUInfo.GOLDMONTS +    \
               CPUInfo.ALDERLAKES +   \
               CPUInfo.ROCKETLAKES
 
+# CPU models supporting the "minimum operating ratio" feature.
+_MIN_OPER_RATIO_CPUS = CPUInfo.GOLDMONTS +                  \
+                       CPUInfo.TREMONTS +                   \
+                       CPUInfo.PHIS +                       \
+                       (CPUInfo.INTEL_FAM6_IVYBRIDGE, ) +   \
+                       CPUInfo.HASWELLS +                   \
+                       CPUInfo.BROADWELLS +                 \
+                       CPUInfo.SKYLAKES +                   \
+                       CPUInfo.CANNONLAKES +                \
+                       CPUInfo.KABYLAKES +                  \
+                       CPUInfo.COMETLAKES +                 \
+                       CPUInfo.ICELAKES +                   \
+                       CPUInfo.TIGERLAKES +                 \
+                       CPUInfo.SPRS +                       \
+                       CPUInfo.ALDERLAKES +                 \
+                       CPUInfo.ROCKETLAKES
+
 # CPU models supporting the "maximum non-turbo ratio" feature.
 _BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS
 
@@ -66,6 +83,16 @@ FEATURES = {
         "type"      : "int",
         "writable"  : False,
         "bits"      : (47, 40),
+    },
+    "min_oper_ratio" : {
+        "name" : "Minimum Operating Ratio",
+        "sname": "package",
+        "help" : """The minimum operating CPU ratio. This ratio multiplied by bus clock speed gives
+                    the minimum operating CPU frequency.""",
+        "cpumodels" : _MIN_OPER_RATIO_CPUS,
+        "type"      : "int",
+        "writable"  : False,
+        "bits"      : (55, 48),
     },
 }
 
