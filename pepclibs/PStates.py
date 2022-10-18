@@ -391,11 +391,11 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_max_eff_freq(self, cpu):
         """Read max efficiency frequency from 'MSR_PLATFORM_INFO' and return it."""
 
-        bclk = self._get_bclk(cpu)
         platinfo = self._get_platinfo()
 
         if platinfo.is_cpu_feature_supported("max_eff_ratio", cpu):
             ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
+            bclk = self._get_bclk(cpu)
             return int(ratio * bclk * 1000 * 1000)
 
         return None
@@ -405,9 +405,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         Read and return the maximum turbo frequency for CPU 'cpu' from 'MSR_TURBO_RATIO_LIMIT'.
         """
 
-        bclk = self._get_bclk(cpu)
         trl = self._get_trl()
-
         ratio = None
 
         if trl.is_cpu_feature_supported("max_1c_turbo_ratio", cpu):
@@ -424,6 +422,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         max_turbo_freq = None
         if ratio is not None:
+            bclk = self._get_bclk(cpu)
             max_turbo_freq = int(ratio * bclk * 1000 * 1000)
 
         return max_turbo_freq
