@@ -73,6 +73,17 @@ PROPS = {
         "sname": "CPU",
         "writable" : False,
     },
+    "min_oper_freq" : {
+        "name" : "Minimum CPU operating frequency",
+        "help" : """Minimum operating frequency is the lowest possible frequency the CPU can
+                    operate at. Depending on the CPU model, this frequency may or may not be
+                    directly available to the operating system, but the platform may use it in
+                    certain situations (e.g., in some C-states).""",
+        "unit" : "Hz",
+        "type" : "int",
+        "sname": "CPU",
+        "writable" : False,
+    },
     "max_eff_freq" : {
         "name" : "Maximum CPU efficiency frequency",
         "help" : "Maximum efficiency frequency is the most energy efficient CPU frequency.",
@@ -408,6 +419,18 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return None
 
+    def _get_min_oper_freq(self, cpu):
+        """Read the minimum operating frequency from 'MSR_PLATFORM_INFO' and return it."""
+
+        platinfo = self._get_platinfo()
+
+        if platinfo.is_cpu_feature_supported("min_oper_ratio", cpu):
+            ratio = platinfo.read_cpu_feature("min_oper_ratio", cpu)
+            bclk = self._get_bclk(cpu)
+            return int(ratio * bclk * 1000 * 1000)
+
+        return None
+
     def _get_max_turbo_freq(self, cpu):
         """
         Read and return the maximum turbo frequency for CPU 'cpu' from 'MSR_TURBO_RATIO_LIMIT'.
@@ -602,6 +625,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if "fname" in prop:
             val = self._get_cpu_prop_value_sysfs(prop, cpu)
+        elif pname == "min_oper_freq":
+            val = self._get_min_oper_freq(cpu)
         elif pname == "max_eff_freq":
             val = self._get_max_eff_freq(cpu)
         elif pname == "hwp":
