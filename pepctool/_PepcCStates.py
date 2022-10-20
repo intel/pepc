@@ -173,20 +173,19 @@ def cstates_config_command(args, pman):
         _PepcCommon.check_tuned_presence(pman)
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CStates.ReqCStates(pman=pman, cpuinfo=cpuinfo) as rcsobj:
+         MSR.MSR(pman=pman, cpuinfo=cpuinfo) as msr, \
+         CStates.CStates(pman=pman, cpuinfo=cpuinfo, msr=msr) as csobj, \
+         _PepcCStates(pman, csobj, cpuinfo, msr=msr) as cstates:
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        _handle_enable_disable_opts(enable_opts, cpus, cpuinfo, rcsobj)
+        _handle_enable_disable_opts(enable_opts, cpus, cpuinfo, csobj)
 
         if not set_opts and not print_opts:
             return
 
-        with MSR.MSR(pman=pman, cpuinfo=cpuinfo) as msr, \
-             CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj, msr=msr) as csobj, \
-             _PepcCStates(pman, csobj, cpuinfo, msr=msr) as cstates:
-            cstates.set_props(set_opts, cpus)
-            cstates.print_props(print_opts, cpus)
+        cstates.set_props(set_opts, cpus)
+        cstates.print_props(print_opts, cpus)
 
 def cstates_info_command(args, pman):
     """Implements the 'cstates info' command."""
