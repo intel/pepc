@@ -426,6 +426,12 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if platinfo.is_cpu_feature_supported("min_oper_ratio", cpu):
             ratio = platinfo.read_cpu_feature("min_oper_ratio", cpu)
+            if ratio == 0:
+                _LOG.warn_once("BUG: 'Minimum Operating Ratio' is '0' on CPU %d, MSR address '%#x' "
+                               "bit field '55:48'\nPlease, contact project maintainers.",
+                               cpu, platinfo.regaddr)
+                return None
+
             bclk = self._get_bclk(cpu)
             return int(ratio * bclk * 1000 * 1000)
 
