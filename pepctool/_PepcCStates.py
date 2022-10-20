@@ -30,6 +30,36 @@ class _PepcCStates(_PepcPCStates.PepcPCStates):
 
         return self._msr
 
+    def print_requestable_cstates_info(self, csnames, cpus):
+        """Prints requestable C-states information."""
+
+        csinfo_iter = self._pcobj.get_cstates_info(csnames=csnames, cpus=cpus)
+        sprops = {"disable", "latency", "residency"}
+        aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops=sprops)
+
+        for csname, csinfo in aggr_csinfo.items():
+            for key, kinfo in csinfo.items():
+                for val, val_cpus in kinfo.items():
+                    if key == "disable":
+                        val = "off" if val else "on"
+                        _PepcCommon.print_val_msg(val, self._cpuinfo, name=csname, cpus=val_cpus)
+                    else:
+                        if key == "latency":
+                            name = "expected latency"
+                        elif key == "residency":
+                            name = "target residency"
+
+                        # The first line starts with C-state name, align the second line nicely
+                        # using the prefix. The end result is expected to be like this:
+                        #
+                        # POLL: 'on' for CPUs 0-15
+                        # POLL: 'off' for CPUs 16-31
+                        #       - expected latency: '0' us
+                        prefix = " " * (len(csname) + 2) + "- "
+                        suffix = " us"
+                        _PepcCommon.print_val_msg(val, self._cpuinfo, name=name, prefix=prefix,
+                                                  suffix=suffix)
+
     def set_props(self, props, cpus):
         """
         Same as 'set_props()' in PepcPCStates, and will make use of caching feature of the 'MSR'
@@ -158,35 +188,6 @@ def cstates_config_command(args, pman):
             cstates.set_props(set_opts, cpus)
             cstates.print_props(print_opts, cpus)
 
-def _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj):
-    """Prints requestable C-states information."""
-
-    csinfo_iter = rcsobj.get_cstates_info(csnames=args.csnames, cpus=cpus)
-    sprops = {"disable", "latency", "residency"}
-    aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops=sprops)
-
-    for csname, csinfo in aggr_csinfo.items():
-        for key, kinfo in csinfo.items():
-            for val, val_cpus in kinfo.items():
-                if key == "disable":
-                    val = "off" if val else "on"
-                    _PepcCommon.print_val_msg(val, cpuinfo, name=csname, cpus=val_cpus)
-                else:
-                    if key == "latency":
-                        name = "expected latency"
-                    elif key == "residency":
-                        name = "target residency"
-
-                    # The first line starts with C-state name, align the second line nicely
-                    # using the prefix. The end result is expected to be like this:
-                    #
-                    # POLL: 'on' for CPUs 0-15
-                    # POLL: 'off' for CPUs 16-31
-                    #       - expected latency: '0' us
-                    prefix = " " * (len(csname) + 2) + "- "
-                    suffix = " us"
-                    _PepcCommon.print_val_msg(val, cpuinfo, name=name, prefix=prefix, suffix=suffix)
-
 def cstates_info_command(args, pman):
     """Implements the 'cstates info' command."""
 
@@ -206,10 +207,9 @@ def cstates_info_command(args, pman):
         # Print platform configuration info.
         #
         if args.csnames != "default":
-            _print_requestable_cstates_info(args, cpus, cpuinfo, csobj)
+            cstates.print_requestable_cstates_info(args.csnames, cpus)
         if print_opts:
             cstates.print_props(print_opts, cpus)
         if not print_opts and args.csnames == "default":
-            args.csnames = "all"
-            _print_requestable_cstates_info(args, cpus, cpuinfo, csobj)
+            cstates.print_requestable_cstates_info("all", cpus)
             cstates.print_props(csobj.props, cpus, skip_unsupported=True)
