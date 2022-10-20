@@ -30,6 +30,64 @@ class _PepcCStates(_PepcPCStates.PepcPCStates):
 
         return self._msr
 
+    def _fmt_csnames(self, csnames): # pylint: disable=no-self-use
+        """Formats and returns the C-states list string, which can be used in messages."""
+
+        if csnames == "all":
+            msg = "all C-states"
+        else:
+            if len(csnames) == 1:
+                msg = "C-state "
+            else:
+                msg = "C-states "
+            msg += ",".join(csnames)
+
+        return msg
+
+    def _print_cstates_status(self, cpus):
+        """Print brief C-state enabled/disabled status."""
+
+        csinfo_iter = self._pcobj.get_cstates_info(csnames="all", cpus=cpus)
+        aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
+
+        for csname, csinfo in aggr_csinfo.items():
+            for kinfo in csinfo.values():
+                for val, val_cpus in kinfo.items():
+                    val = "off" if val else "on"
+                    _PepcCommon.print_val_msg(val, self._cpuinfo, name=csname, cpus=val_cpus)
+
+    def handle_enable_disable_opts(self, opts, cpus):
+        """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
+
+        print_cstates = False
+
+        for optname, optval in opts.items():
+            if not optval:
+                # No value means that we should print the C-states information.
+                print_cstates = True
+                continue
+
+            method = getattr(self._pcobj, f"{optname}_cstates")
+            toggled = method(csnames=optval, cpus=cpus)
+
+            # The 'toggled' dictionary is indexed with CPU number. But we want to print a single
+            # line for all CPU numbers that have the same toggled C-states list. Build a "reversed"
+            # version of the 'toggled' dictionary for these purposes.
+            revdict = {}
+            for cpu, csinfo in toggled.items():
+                key = ",".join(csinfo["csnames"])
+                if key not in revdict:
+                    revdict[key] = []
+                revdict[key].append(cpu)
+
+            for cstnames, cpunums in revdict.items():
+                cstnames = cstnames.split(",")
+                _LOG.info("%sd %s on %s", optname.title(), self._fmt_csnames(cstnames),
+                                          _PepcCommon.fmt_cpus(cpunums, self._cpuinfo))
+
+        if print_cstates:
+            self._print_cstates_status(cpus)
+
     def print_requestable_cstates_info(self, csnames, cpus):
         """Prints requestable C-states information."""
 
@@ -90,64 +148,6 @@ class _PepcCStates(_PepcPCStates.PepcPCStates):
         """Uninitialize the class object."""
         ClassHelpers.close(self, close_attrs=("_msr"), unref_attrs=("_pman"))
 
-def _fmt_csnames(csnames):
-    """Formats and returns the C-states list string, which can be used in messages."""
-
-    if csnames == "all":
-        msg = "all C-states"
-    else:
-        if len(csnames) == 1:
-            msg = "C-state "
-        else:
-            msg = "C-states "
-        msg += ",".join(csnames)
-
-    return msg
-
-def _print_cstates_status(cpus, cpuinfo, rcsobj):
-    """Print brief C-state enabled/disabled status."""
-
-    csinfo_iter = rcsobj.get_cstates_info(csnames="all", cpus=cpus)
-    aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
-
-    for csname, csinfo in aggr_csinfo.items():
-        for kinfo in csinfo.values():
-            for val, val_cpus in kinfo.items():
-                val = "off" if val else "on"
-                _PepcCommon.print_val_msg(val, cpuinfo, name=csname, cpus=val_cpus)
-
-def _handle_enable_disable_opts(opts, cpus, cpuinfo, rcsobj):
-    """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
-
-    print_cstates = False
-
-    for optname, optval in opts.items():
-        if not optval:
-            # No value means that we should print the C-states information.
-            print_cstates = True
-            continue
-
-        method = getattr(rcsobj, f"{optname}_cstates")
-        toggled = method(csnames=optval, cpus=cpus)
-
-        # The 'toggled' dictionary is indexed with CPU number. But we want to print a single line
-        # for all CPU numbers that have the same toggled C-states list. Build a "reversed" version
-        # of the 'toggled' dictionary for these purposes.
-        revdict = {}
-        for cpu, csinfo in toggled.items():
-            key = ",".join(csinfo["csnames"])
-            if key not in revdict:
-                revdict[key] = []
-            revdict[key].append(cpu)
-
-        for cstnames, cpunums in revdict.items():
-            cstnames = cstnames.split(",")
-            _LOG.info("%sd %s on %s", optname.title(), _fmt_csnames(cstnames),
-                                      _PepcCommon.fmt_cpus(cpunums, cpuinfo))
-
-    if print_cstates:
-        _print_cstates_status(cpus, cpuinfo, rcsobj)
-
 def cstates_config_command(args, pman):
     """Implements the 'cstates config' command."""
 
@@ -179,7 +179,7 @@ def cstates_config_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        _handle_enable_disable_opts(enable_opts, cpus, cpuinfo, csobj)
+        cstates.handle_enable_disable_opts(enable_opts, cpus)
 
         if not set_opts and not print_opts:
             return
