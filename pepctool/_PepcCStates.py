@@ -88,12 +88,8 @@ class _PepcCStates(_PepcPCStates.PepcPCStates):
         if print_cstates:
             self._print_cstates_status(cpus)
 
-    def print_requestable_cstates_info(self, csnames, cpus):
-        """Prints requestable C-states information."""
-
-        csinfo_iter = self._pcobj.get_cstates_info(csnames=csnames, cpus=cpus)
-        sprops = {"disable", "latency", "residency"}
-        aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops=sprops)
+    def _print_aggr_cstates_info(self, aggr_csinfo):
+        """Prints aggregated requestable C-states information."""
 
         for csname, csinfo in aggr_csinfo.items():
             for key, kinfo in csinfo.items():
@@ -117,6 +113,14 @@ class _PepcCStates(_PepcPCStates.PepcPCStates):
                         suffix = " us"
                         _PepcCommon.print_val_msg(val, self._cpuinfo, name=name, prefix=prefix,
                                                   suffix=suffix)
+
+    def print_requestable_cstates_info(self, csnames, cpus):
+        """Prints requestable C-states information."""
+
+        csinfo_iter = self._pcobj.get_cstates_info(csnames=csnames, cpus=cpus)
+        sprops = {"disable", "latency", "residency"}
+        aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops=sprops)
+        self._print_aggr_cstates_info(aggr_csinfo)
 
     def set_props(self, props, cpus):
         """
