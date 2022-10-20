@@ -198,20 +198,18 @@ def cstates_info_command(args, pman):
             print_opts.append(optname)
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CStates.ReqCStates(pman=pman, cpuinfo=cpuinfo) as rcsobj:
+         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj, \
+         _PepcCStates(pman, csobj, cpuinfo) as cstates:
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         #
         # Print platform configuration info.
         #
-        with CStates.CStates(pman=pman, cpuinfo=cpuinfo, rcsobj=rcsobj) as csobj, \
-             _PepcCStates(pman, csobj, cpuinfo) as cstates:
-
-            if args.csnames != "default":
-                _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj)
-            if print_opts:
-                cstates.print_props(print_opts, cpus)
-            if not print_opts and args.csnames == "default":
-                args.csnames = "all"
-                _print_requestable_cstates_info(args, cpus, cpuinfo, rcsobj)
-                cstates.print_props(csobj.props, cpus, skip_unsupported=True)
+        if args.csnames != "default":
+            _print_requestable_cstates_info(args, cpus, cpuinfo, csobj)
+        if print_opts:
+            cstates.print_props(print_opts, cpus)
+        if not print_opts and args.csnames == "default":
+            args.csnames = "all"
+            _print_requestable_cstates_info(args, cpus, cpuinfo, csobj)
+            cstates.print_props(csobj.props, cpus, skip_unsupported=True)
