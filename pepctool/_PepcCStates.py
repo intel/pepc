@@ -44,17 +44,31 @@ class _PepcCStates(_PepcPCStates.PepcPCStates):
 
         return msg
 
-    def _print_cstates_status(self, cpus):
-        """Print brief C-state enabled/disabled status."""
-
-        csinfo_iter = self._pcobj.get_cstates_info(csnames="all", cpus=cpus)
-        aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
+    def _print_aggr_cstates_info(self, aggr_csinfo):
+        """Prints aggregated requestable C-states information."""
 
         for csname, csinfo in aggr_csinfo.items():
-            for kinfo in csinfo.values():
+            for key, kinfo in csinfo.items():
                 for val, val_cpus in kinfo.items():
-                    val = "off" if val else "on"
-                    _PepcCommon.print_val_msg(val, self._cpuinfo, name=csname, cpus=val_cpus)
+                    if key == "disable":
+                        val = "off" if val else "on"
+                        _PepcCommon.print_val_msg(val, self._cpuinfo, name=csname, cpus=val_cpus)
+                    else:
+                        if key == "latency":
+                            name = "expected latency"
+                        elif key == "residency":
+                            name = "target residency"
+
+                        # The first line starts with C-state name, align the second line nicely
+                        # using the prefix. The end result is expected to be like this:
+                        #
+                        # POLL: 'on' for CPUs 0-15
+                        # POLL: 'off' for CPUs 16-31
+                        #       - expected latency: '0' us
+                        prefix = " " * (len(csname) + 2) + "- "
+                        suffix = " us"
+                        _PepcCommon.print_val_msg(val, self._cpuinfo, name=name, prefix=prefix,
+                                                  suffix=suffix)
 
     def handle_enable_disable_opts(self, opts, cpus):
         """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
@@ -86,33 +100,9 @@ class _PepcCStates(_PepcPCStates.PepcPCStates):
                                           _PepcCommon.fmt_cpus(cpunums, self._cpuinfo))
 
         if print_cstates:
-            self._print_cstates_status(cpus)
-
-    def _print_aggr_cstates_info(self, aggr_csinfo):
-        """Prints aggregated requestable C-states information."""
-
-        for csname, csinfo in aggr_csinfo.items():
-            for key, kinfo in csinfo.items():
-                for val, val_cpus in kinfo.items():
-                    if key == "disable":
-                        val = "off" if val else "on"
-                        _PepcCommon.print_val_msg(val, self._cpuinfo, name=csname, cpus=val_cpus)
-                    else:
-                        if key == "latency":
-                            name = "expected latency"
-                        elif key == "residency":
-                            name = "target residency"
-
-                        # The first line starts with C-state name, align the second line nicely
-                        # using the prefix. The end result is expected to be like this:
-                        #
-                        # POLL: 'on' for CPUs 0-15
-                        # POLL: 'off' for CPUs 16-31
-                        #       - expected latency: '0' us
-                        prefix = " " * (len(csname) + 2) + "- "
-                        suffix = " us"
-                        _PepcCommon.print_val_msg(val, self._cpuinfo, name=name, prefix=prefix,
-                                                  suffix=suffix)
+            csinfo_iter = self._pcobj.get_cstates_info(csnames="all", cpus=cpus)
+            aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
+            self._print_aggr_cstates_info(aggr_csinfo)
 
     def print_requestable_cstates_info(self, csnames, cpus):
         """Prints requestable C-states information."""
