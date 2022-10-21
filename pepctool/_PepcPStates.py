@@ -23,8 +23,6 @@ def pstates_config_command(args, pman):
     if not hasattr(args, "oargs"):
         raise Error("please, provide a configuration option")
 
-    _PepcCommon.check_tuned_presence(pman)
-
     # Options to set.
     set_opts = {}
     # Options to print.
@@ -35,6 +33,9 @@ def pstates_config_command(args, pman):
             print_opts.append(optname)
         else:
             set_opts[optname] = optval
+
+    if set_opts:
+        _PepcCommon.check_tuned_presence(pman)
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj, \
