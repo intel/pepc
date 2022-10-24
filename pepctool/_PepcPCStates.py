@@ -111,20 +111,22 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         aggr_pinfo = self._get_aggr_pinfo(pnames, cpus)
         self._print_aggr_props(aggr_pinfo, skip_unsupported=skip_unsupported)
 
-    def __init__(self, pcobj, cpuinfo):
+    def __init__(self, pman, pcobj, cpuinfo):
         """
         The class constructor. The arguments are as follows.
+          * pman - the process manager object that defines the target system.
           * pcobj - the 'CStates' or 'PStates' object.
           * cpuinfo - the 'CPUInfo' object.
         """
 
+        self._pman = pman
         self._pcobj = pcobj
         self._cpuinfo = cpuinfo
 
     def close(self):
         """Uninitialize the class object."""
 
-        ClassHelpers.close(self, unref_attrs=("_pcobj", "_cpuinfo"))
+        ClassHelpers.close(self, unref_attrs=("_pman", "_pcobj", "_cpuinfo"))
 
 class PepcCStates(PepcPCStates):
     """Class for handling the 'pepc cstates' options."""
@@ -232,19 +234,20 @@ class PepcCStates(PepcPCStates):
 
     def __init__(self, pman, csobj, cpuinfo, msr=None):
         """
-        The class constructor. The 'csobj' and 'cpuinfo' are same as in '_PepcPCStates.PepcPCState',
-        and other arguments are as follows.
-          * pman - the process manager object that defines the target system.
+        The class constructor. The other except the 'msr' argument are same as in
+        '_PepcPCStates.PepcPCState'. The 'msr' argument is as follows.
           * msr - an 'MSR.MSR()' object which should be used for accessing MSR registers.
         """
 
-        super().__init__(csobj, cpuinfo)
+        super().__init__(pman, csobj, cpuinfo)
 
-        self._pman = pman
         self._msr = msr
 
         self._close_msr = msr is None
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_msr"), unref_attrs=("_pman"))
+
+        ClassHelpers.close(self, close_attrs=("_msr"))
+
+        super().close()

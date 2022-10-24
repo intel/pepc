@@ -39,7 +39,7 @@ def pstates_config_command(args, pman):
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj, \
-         _PepcPCStates.PepcPCStates(psobj, cpuinfo=cpuinfo) as pcstates:
+         _PepcPCStates.PepcPCStates(pman, psobj, cpuinfo=cpuinfo) as pcstates:
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
@@ -60,7 +60,7 @@ def pstates_info_command(args, pman):
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj, \
-         _PepcPCStates.PepcPCStates(psobj, cpuinfo=cpuinfo) as pcstates:
+         _PepcPCStates.PepcPCStates(pman, psobj, cpuinfo=cpuinfo) as pcstates:
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
