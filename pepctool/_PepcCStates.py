@@ -75,10 +75,11 @@ def cstates_info_command(args, pman):
         #
         # Print platform configuration info.
         #
+        csnames = []
         if args.csnames != "default":
-            cstates.print_requestable_cstates_info(args.csnames, cpus)
-        if print_opts:
-            cstates.print_props(print_opts, cpus)
+            csnames = args.csnames
         if not print_opts and args.csnames == "default":
-            cstates.print_requestable_cstates_info("all", cpus)
-            cstates.print_props(csobj.props, cpus, skip_unsupported=True)
+            csnames = "all"
+            print_opts = csobj.props
+
+        cstates.print_cstates_info(csnames, print_opts, cpus)

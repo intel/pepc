@@ -283,6 +283,23 @@ class PepcCStates(PepcPCStates):
         self.aggr_rcsinfo = self._build_aggregate_pinfo(csinfo_iter, sprops=sprops)
         self._print_aggr_cstates_info()
 
+    def print_cstates_info(self, csnames, pnames, cpus):
+        """
+        Print C-states information. The arguments are as follows.
+          * csnames - list of requestable C-states.
+          * pnames - list of C-state property names.
+          * cpus - list of CPU numbers to print the properties for.
+        """
+
+        csinfo_iter = self._pcobj.get_cstates_info(csnames=csnames, cpus=cpus)
+        sprops = {"disable", "latency", "residency"}
+        self.aggr_rcsinfo = self._build_aggregate_pinfo(csinfo_iter, sprops=sprops)
+        self._print_aggr_cstates_info()
+
+        pinfo_iter = self._pcobj.get_props(pnames, cpus=cpus)
+        self.aggr_props = self._build_aggregate_pinfo(pinfo_iter)
+        self._print_aggr_props(skip_unsupported=True)
+
     def set_and_print_props(self, props, cpus):
         """
         Same as 'set_and_print_props()' in PepcPCStates, and will make use of caching feature of the
