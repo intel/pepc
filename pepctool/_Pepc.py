@@ -303,6 +303,9 @@ def build_arguments_parser():
     text = f"""List of packages to configure P-States on. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
+    text = """Path to the file to restore P-state configuration from."""
+    subpars2.add_argument("--restore", help=text, metavar="PATH")
+
     for name, pinfo in PStates.PROPS.items():
         if not pinfo.get("writable"):
             continue

@@ -20,7 +20,7 @@ _LOG = logging.getLogger()
 def pstates_config_command(args, pman):
     """Implements the 'pstates config' command."""
 
-    if not hasattr(args, "oargs"):
+    if not hasattr(args, "oargs") and not getattr(args, "restore"):
         raise Error("please, provide a configuration option")
 
     # Options to set.
@@ -28,7 +28,8 @@ def pstates_config_command(args, pman):
     # Options to print.
     print_opts = []
 
-    for optname, optval in args.oargs.items():
+    opts =  getattr(args, "oargs", {})
+    for optname, optval in opts.items():
         if optval is None:
             print_opts.append(optname)
         else:
@@ -43,10 +44,12 @@ def pstates_config_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        if set_opts:
+        if args.restore:
+            pcstates.restore_props(path=args.restore)
+        else:
             pcstates.set_and_print_props(set_opts, cpus)
-        if print_opts:
-            pcstates.print_props(print_opts, cpus)
+
+        pcstates.print_props(print_opts, cpus)
 
 def pstates_info_command(args, pman):
     """Implements the 'pstates info' command."""
