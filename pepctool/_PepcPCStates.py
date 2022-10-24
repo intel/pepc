@@ -275,13 +275,6 @@ class PepcCStates(PepcPCStates):
             self.aggr_rcsinfo = self._build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
             self._print_aggr_cstates_info()
 
-    def print_requestable_cstates_info(self, csnames, cpus):
-        """Prints requestable C-states information."""
-
-        csinfo_iter = self._pcobj.get_cstates_info(csnames=csnames, cpus=cpus)
-        sprops = {"disable", "latency", "residency"}
-        self.aggr_rcsinfo = self._build_aggregate_pinfo(csinfo_iter, sprops=sprops)
-        self._print_aggr_cstates_info()
 
     def print_cstates_info(self, csnames, pnames, cpus):
         """
