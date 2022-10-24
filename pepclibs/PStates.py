@@ -67,7 +67,9 @@ PROPS = {
     },
     "base_freq" : {
         "name" : "Base CPU frequency",
-        "help" : "Base CPU frequency is the highest sustainable CPU frequency.",
+        "help" : """Base CPU frequency is the highest sustainable CPU frequency. This frequency is
+                    also referred to as \"guaranteed frequency\", HFM (High Frequency Mode), or
+                    P1.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -75,10 +77,11 @@ PROPS = {
     },
     "min_oper_freq" : {
         "name" : "Minimum CPU operating frequency",
-        "help" : """Minimum operating frequency is the lowest possible frequency the CPU can
-                    operate at. Depending on the CPU model, this frequency may or may not be
-                    directly available to the operating system, but the platform may use it in
-                    certain situations (e.g., in some C-states).""",
+        "help" : """Minimum operating frequency is the lowest possible frequency the CPU can operate
+                    at. Depending on the CPU model, this frequency may or may not be directly
+                    available to the operating system, but the platform may use it in certain
+                    situations (e.g., in some C-states). This frequency is also referred to as
+                    Pm.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -86,7 +89,8 @@ PROPS = {
     },
     "max_eff_freq" : {
         "name" : "Maximum CPU efficiency frequency",
-        "help" : "Maximum efficiency frequency is the most energy efficient CPU frequency.",
+        "help" : """Maximum efficiency frequency is the most energy efficient CPU frequency. This
+                    frequency is also referred to as LFM (Low Frequency Mode) or Pn.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -102,7 +106,8 @@ PROPS = {
     },
     "max_turbo_freq" : {
         "name" : "Maximum CPU turbo frequency",
-        "help" : "Maximum turbo frequency is the highest frequency a single CPU can operate at.",
+        "help" : """Maximum turbo frequency is the highest frequency a single CPU can operate at.
+                    This frequency is also referred to as max. 1-core turbo and P01.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
