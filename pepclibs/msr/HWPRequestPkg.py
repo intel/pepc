@@ -29,7 +29,7 @@ FEATURES = {
         "help" : """Energy Performance Preference is a hint to the CPU running in HWP mode about the
                     power and performance preference. Value 0 indicates highest performance and
                     value 255 indicates maximum energy savings.""",
-        "cpuflags" : ("hwp", "hwp_epp"),
+        "cpuflags" : {"hwp", "hwp_epp"},
         "type" : "int",
         "bits" : (31, 24),
     },

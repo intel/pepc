@@ -293,9 +293,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             if "cpuflags" in finfo:
                 # Make sure that current CPU has all the required CPU flags.
                 available_cpuflags = set(self._cpuinfo.info["flags"])
-                for cpuflag in finfo["cpuflags"]:
-                    if cpuflag not in available_cpuflags:
-                        finfo["supported"] = False
+                if not finfo["cpuflags"].issubset(available_cpuflags):
+                    finfo["supported"] = False
 
             if "cpumodels" in finfo:
                 # Check if current CPU model is supported by the feature.

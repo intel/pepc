@@ -28,7 +28,7 @@ FEATURES = {
         "help" : """Energy Performance Bias is a hint to the CPU about the power and performance
                     preference. Value 0 indicates highest performance and value 15 indicates
                     maximum energy savings.""",
-        "cpuflags" : ("epb",),
+        "cpuflags" : {"epb",},
         "type" : "int",
         "bits" : (3, 0),
     },

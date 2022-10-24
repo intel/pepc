@@ -27,7 +27,7 @@ FEATURES = {
         "sname": "package",
         "help" : """When hardware power management is enabled, the platform autonomously scales CPU
                     frequency depending on the load.""",
-        "cpuflags" : ("hwp",),
+        "cpuflags" : {"hwp",},
         "type" : "bool",
         "vals" : { "on" : 1, "off" : 0},
         "bits" : (0, 0),
