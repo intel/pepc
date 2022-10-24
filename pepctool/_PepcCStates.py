@@ -21,7 +21,7 @@ _LOG = logging.getLogger()
 def cstates_config_command(args, pman):
     """Implements the 'cstates config' command."""
 
-    if not hasattr(args, "oargs"):
+    if not hasattr(args, "oargs") and not getattr(args, "restore"):
         raise Error("please, provide a configuration option")
 
     # The '--enable' and '--disable' options.
@@ -31,7 +31,8 @@ def cstates_config_command(args, pman):
     # Options to print (excluding '--enable' and '--disable').
     print_opts = []
 
-    for optname, optval in args.oargs.items():
+    opts =  getattr(args, "oargs", {})
+    for optname, optval in opts.items():
         if optname in {"enable", "disable"}:
             enable_opts[optname] = optval
         elif optval is None:
@@ -49,13 +50,10 @@ def cstates_config_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        cstates.handle_enable_disable_opts(enable_opts, cpus)
-
-        if not set_opts and not print_opts:
-            return
-
-        cstates.set_and_print_props(set_opts, cpus)
-        cstates.print_props(print_opts, cpus)
+        if args.restore:
+            cstates.restore_cstate_config(args.restore)
+        else:
+            cstates.set_and_print_cstates(enable_opts, set_opts, print_opts, cpus)
 
 def cstates_info_command(args, pman):
     """Implements the 'cstates info' command."""

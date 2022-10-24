@@ -213,6 +213,9 @@ def build_arguments_parser():
     text = f"""List of packages to configure. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
+    text = """Path to the file to restore C-state configuration from."""
+    subpars2.add_argument("--restore", help=text, metavar="PATH")
+
     text = f"""Comma-separated list of C-states to enable. {cst_list_text}."""
     subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
                           nargs="?")
