@@ -31,7 +31,8 @@ _LOG = logging.getLogger()
 PROPS = {
     "min_freq" : {
         "name" : "Minimum CPU frequency",
-        "help" : "Minimum frequency the operating system will configure the CPU to run at.",
+        "help" : """Minimum CPU frequency is the lowest frequency the operating system configured the
+                    CPU to run at.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -39,7 +40,8 @@ PROPS = {
     },
     "max_freq" : {
         "name" : "Maximum CPU frequency",
-        "help" : "Maximum frequency the operating system will configure the CPU to run at.",
+        "help" : """Maximum CPU frequency is the highest frequency the operating system configured
+                    the CPU to run at.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -47,7 +49,8 @@ PROPS = {
     },
     "min_freq_limit" : {
         "name" : "Minimum supported CPU frequency",
-        "help" : "Minimum supported CPU frequency.",
+        "help" : """Minimum supported CPU frequency is the lowest frequency supported by the
+                    operating system.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -55,7 +58,8 @@ PROPS = {
     },
     "max_freq_limit" : {
         "name" : "Maximum supported CPU frequency",
-        "help" : "Maximum supported CPU frequency.",
+        "help" : """Maximum supported CPU frequency is the maximum CPU frequency supported by the
+                    operating system.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -63,7 +67,7 @@ PROPS = {
     },
     "base_freq" : {
         "name" : "Base CPU frequency",
-        "help" : "Base CPU frequency.",
+        "help" : "Base CPU frequency is the highest sustainable CPU frequency.",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -71,7 +75,7 @@ PROPS = {
     },
     "max_eff_freq" : {
         "name" : "Maximum CPU efficiency frequency",
-        "help" : "Maximum energy efficient CPU frequency.",
+        "help" : "Maximum efficiency frequency is the most energy efficient CPU frequency.",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -87,7 +91,7 @@ PROPS = {
     },
     "max_turbo_freq" : {
         "name" : "Maximum CPU turbo frequency",
-        "help" : "Maximum frequency CPU can run at in turbo mode.",
+        "help" : "Maximum turbo frequency is the highest frequency a single CPU can operate at.",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -95,7 +99,8 @@ PROPS = {
     },
     "min_uncore_freq" : {
         "name" : "Minimum uncore frequency",
-        "help" : "Minimum frequency the operating system will configure the uncore to run at.",
+        "help" : """Minimum uncore frequency is the lowest frequency the operating system configured
+                    the uncore to run at.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
@@ -103,7 +108,8 @@ PROPS = {
     },
     "max_uncore_freq" : {
         "name" : "Maximum uncore frequency",
-        "help" : "Maximum frequency the operating system will configure the uncore to run at.",
+        "help" : """Maximum uncore frequency is the highest frequency the operating system
+                    configured the uncore to run at.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
@@ -111,7 +117,8 @@ PROPS = {
     },
     "min_uncore_freq_limit" : {
         "name" : "Minimum supported uncore frequency",
-        "help" : "Minimum supported uncore frequency",
+        "help" : """Minimum supported uncore frequency is the lowest uncore frequency supported by
+                    the operating system.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
@@ -119,7 +126,8 @@ PROPS = {
     },
     "max_uncore_freq_limit" : {
         "name" : "Maximum supported uncore frequency",
-        "help" : "Maximum supported uncore frequency",
+        "help" : """Maximum supported uncore frequency is the highest uncore frequency supported by
+                    the operating system.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
