@@ -31,8 +31,8 @@ _LOG = logging.getLogger()
 PROPS = {
     "min_freq" : {
         "name" : "Minimum CPU frequency",
-        "help" : """Minimum CPU frequency is the lowest frequency the operating system configured the
-                    CPU to run at.""",
+        "help" : """Minimum CPU frequency is the lowest frequency the operating system configured
+                    the CPU to run at.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
