@@ -951,7 +951,12 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                     cpuinfo[key] = val
 
         if cpuinfo.get("flags"):
-            cpuinfo["flags"] = cpuinfo["flags"].split()
+            cpuflags = set(cpuinfo["flags"].split())
+            cpuinfo["flags"] = {}
+            # In current implementation we assume all CPUs have the same flags. But ideally, we
+            # should read the flags for each CPU from '/proc/cpuinfo', instead of using 'lscpu'.
+            for cpu in self.get_cpus():
+                cpuinfo["flags"][cpu] = cpuflags
 
         return cpuinfo
 
