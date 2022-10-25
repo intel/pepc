@@ -236,11 +236,28 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     def is_feature_supported(self, fname, cpus="all"):
         """
+        Same as 'check_feature_supported()', except return 'False' if exception was raised,
+        otherwise returns 'True'.
+        """
+
+        try:
+            self.check_feature_supported(fname, cpus)
+            return True
+        except ErrorNotSupported:
+            return False
+
+    def is_cpu_feature_supported(self, fname, cpu):
+        """Same as 'is_feature_supported()' but for a single CPU."""
+
+        return self.is_feature_supported(fname, cpus=(cpu, ))
+
+    def check_feature_supported(self, fname, cpus="all"):
+        """
         Check if a feature is supported by all CPUs in 'cpus'.
           * fname - name of the feature to check.
           * cpus - the CPUs to check the feature for (same as in 'read_feature()').
 
-        Returns 'True' if the feature is supported by all CPUs in 'cpus', returns 'False' otherwise.
+        Raises 'ErrorNotSupported' exception if the feature is not supported by a CPU in 'cpus'.
         """
 
         if fname not in self._features:
@@ -251,38 +268,11 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         for cpu in cpus:
             if not self._features[fname]["supported"][cpu]:
-                return False
-
-        return True
-
-    def is_cpu_feature_supported(self, fname, cpu):
-        """
-        Check if a feature is supported by CPU 'cpu'.
-          * fname - name of the feature to check.
-
-        Returns 'True' if the feature is supported by CPU in 'cpu', returns 'False' otherwise.
-        """
-
-        return self.is_feature_supported(fname, cpus=(cpu, ))
-
-    def check_feature_supported(self, fname, cpus="all"):
-        """
-        Same as 'is_feature_supported()', but if the feature is not supported by any CPU in 'cpus',
-        raises the 'ErrorNotSupported' exception.
-        """
-
-        if self.is_feature_supported(fname, cpus=cpus):
-            return
-
-        finfo = self._features[fname]
-        raise ErrorNotSupported(f"the '{finfo['name']}' feature is not supported on "
-                                f"{self._cpuinfo.cpudescr}{self._pman.hostmsg}")
+                raise ErrorNotSupported(f"CPU {cpu} does not support feature '{fname}' on:\n"
+                                        f"{self._cpuinfo.cpudescr}{self._pman.hostmsg}")
 
     def check_cpu_feature_supported(self, fname, cpu):
-        """
-        Same as 'is_cpu_feature_supported()', but if the feature is not supported by CPU 'cpu',
-        raises the 'ErrorNotSupported' exception.
-        """
+        """Same as 'check_feature_supported()' but for a single CPU."""
 
         self.check_feature_supported(fname, cpus=(cpu, ))
 
