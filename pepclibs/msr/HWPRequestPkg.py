@@ -59,13 +59,18 @@ class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
         super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr)
 
         for finfo in self._features.values():
-            if not finfo["supported"]:
-                continue
-
             if "cpuflags" in finfo and "hwp" in finfo["cpuflags"]:
-                # Accessing 'MSR_HWP_REQUEST' is allowed only if bit 0 is set in 'MSR_PM_ENABLE'.
-                # In current implementation we assume that HWP status is the same for all CPUs,
-                # hence we only check CPU 0.
-                if not self._msr.read_cpu_bits(PMEnable.MSR_PM_ENABLE,
-                                               PMEnable.FEATURES["hwp"]["bits"], 0):
-                    finfo["supported"] = False
+                for pkg in self._cpuinfo.get_packages():
+                    cpus = self._cpuinfo.package_to_cpus(pkg)
+
+                    if not finfo["supported"][cpus[0]]:
+                        continue
+
+                    # Accessing 'MSR_HWP_REQUEST' is allowed only if bit 0 is set in
+                    # 'MSR_PM_ENABLE'.
+                    if self._msr.read_cpu_bits(PMEnable.MSR_PM_ENABLE,
+                                               PMEnable.FEATURES["hwp"]["bits"], cpus[0]):
+                        continue
+
+                    for cpu in cpus:
+                        finfo["supported"][cpu] = False
