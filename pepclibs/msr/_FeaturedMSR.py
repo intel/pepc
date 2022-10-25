@@ -250,7 +250,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         # In current implementation we assume that all CPUs are the same and whether the feature is
         # supported per-platform. But in the future this may not be the case (e.g., on hybrid
         # platforms).
-        return self._features[fname]["supported"]
+        return self._features[fname]["supported"][0]
 
     def is_cpu_feature_supported(self, fname, cpu):
         """
@@ -286,20 +286,23 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
     def _init_supported_flag(self):
         """Initialize the 'supported' flag for all features."""
 
+        cpumodel = self._cpuinfo.info["model"]
+
         for finfo in self._features.values():
-            # By default let's assume the feature is supported by this CPU.
-            finfo["supported"] = True
+            finfo["supported"] = {}
 
-            if "cpuflags" in finfo:
-                # Make sure that current CPU has all the required CPU flags.
-                available_cpuflags = self._cpuinfo.info["flags"][0]
-                if not finfo["cpuflags"].issubset(available_cpuflags):
-                    finfo["supported"] = False
+            if "cpumodels" in finfo and cpumodel not in finfo["cpumodels"]:
+                for cpu in self._cpuinfo.get_cpus():
+                    finfo["supported"][cpu] = False
+                continue
 
-            if "cpumodels" in finfo:
-                # Check if current CPU model is supported by the feature.
-                cpumodel = self._cpuinfo.info["model"]
-                finfo["supported"] = cpumodel in finfo["cpumodels"]
+            if "cpuflags" not in finfo:
+                for cpu in self._cpuinfo.get_cpus():
+                    finfo["supported"][cpu] = True
+            else:
+                for cpu in self._cpuinfo.get_cpus():
+                    cpuflags = self._cpuinfo.info["flags"][cpu]
+                    finfo["supported"][cpu] = finfo["cpuflags"].issubset(cpuflags)
 
     def _init_features_dict_defaults(self):
         """
@@ -310,7 +313,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         """
 
         for finfo in self._features.values():
-            if not finfo["supported"]:
+            if not finfo["supported"][0]:
                 continue
 
             if "writable" not in finfo:

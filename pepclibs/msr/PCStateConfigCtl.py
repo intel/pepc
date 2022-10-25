@@ -231,7 +231,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     def _init_features_dict_pkg_cstate_limit(self):
         """Initialize the 'pkg_cstate_limit' information in the 'self._features' dictionary."""
 
-        if not self._features["pkg_cstate_limit"]["supported"]:
+        if not self._features["pkg_cstate_limit"]["supported"][0]:
             _LOG.notice("no package C-state limit table available for %s%s. Try to contact "
                         "project maintainers.", self._cpuinfo.cpudescr, self._pman.hostmsg)
             return

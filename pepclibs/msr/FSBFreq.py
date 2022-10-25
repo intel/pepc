@@ -91,7 +91,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
     def _init_features_dict_fsb(self):
         """Initialize the 'fsb' feature information in the 'self._features' dictionary."""
 
-        if not self._features["fsb"]["supported"]:
+        if not self._features["fsb"]["supported"][0]:
             return
 
         cpumodel = self._cpuinfo.info["model"]
