@@ -234,7 +234,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         self.enable_feature(fname, enable, cpus=(cpu,))
 
-    def is_feature_supported(self, fname, cpus="all"): # pylint: disable=unused-argument
+    def is_feature_supported(self, fname, cpus="all"):
         """
         Check if a feature is supported by all CPUs in 'cpus'.
           * fname - name of the feature to check.
@@ -247,10 +247,13 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             features_str = ", ".join(set(self._features))
             raise Error(f"unknown feature '{fname}', known features are: {features_str}")
 
-        # In current implementation we assume that all CPUs are the same and whether the feature is
-        # supported per-platform. But in the future this may not be the case (e.g., on hybrid
-        # platforms).
-        return self._features[fname]["supported"][0]
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+
+        for cpu in cpus:
+            if not self._features[fname]["supported"][cpu]:
+                return False
+
+        return True
 
     def is_cpu_feature_supported(self, fname, cpu):
         """
@@ -262,7 +265,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         return self.is_feature_supported(fname, cpus=(cpu, ))
 
-    def check_feature_supported(self, fname, cpus="all"): # pylint: disable=unused-argument
+    def check_feature_supported(self, fname, cpus="all"):
         """
         Same as 'is_feature_supported()', but if the feature is not supported by any CPU in 'cpus',
         raises the 'ErrorNotSupported' exception.
@@ -313,7 +316,11 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         """
 
         for finfo in self._features.values():
-            if not finfo["supported"][0]:
+            for cpu in self._cpuinfo.get_cpus():
+                if finfo["supported"][cpu]:
+                    # The 'feature' is supported by at least one CPU, continue initializing it.
+                    break
+            else:
                 continue
 
             if "writable" not in finfo:
