@@ -110,7 +110,7 @@ def print_val_msg(val, cpuinfo, name=None, cpus=None, prefix=None, suffix=None):
     msg += f"{val}{sfx}"
     _LOG.info(msg)
 
-def build_aggregate_pinfo(pinfo_iter, sprops=None):
+def build_aggregate_pinfo(pinfo_iter, sprops="all"):
     """
     Build the aggregated properties dictionary for properties in the 'pinfo_iter' iterator. The
     iterator must provide the (cpu, pinfo) tuples, just like 'CStates.get_props()' or
@@ -135,7 +135,8 @@ def build_aggregate_pinfo(pinfo_iter, sprops=None):
     In other words, the aggregate dictionary mapping of property/sub-property values to the list of
     CPUs having these values.
 
-    The 'sprops' argument can be used to limit the sub-properties to only the names in 'sprops'.
+    The 'sprops' argument can be used to limit the sub-properties to only the names in 'sprops'. The
+    'sprops' value "all" will include all sub-properties and 'None' doesn't include any.
     """
 
     aggr_pinfo = {}
@@ -145,8 +146,12 @@ def build_aggregate_pinfo(pinfo_iter, sprops=None):
             if pname not in aggr_pinfo:
                 aggr_pinfo[pname] = {}
             for key, val in pinfo[pname].items():
-                if sprops is not None and key not in sprops:
-                    continue
+                if key != pname:
+                    if sprops is None:
+                        continue
+                    if sprops != "all" and key not in sprops:
+                        continue
+
                 # Make sure 'val' is "hashable" and can be used as a dictionary key.
                 if isinstance(val, list):
                     if not val:
