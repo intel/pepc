@@ -232,6 +232,11 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound:
             return None
         except Error as err:
+            # We noticed that in some kernel version writing the same EPP value to the sysfs file
+            # fails. This may be a kernel bug, but here is a work-around.
+            if str(epp) == self._get_cpu_epp_policy_from_sysfs(cpu):
+                return epp
+
             # Writing to the sysfs file failed, provide a meaningful error message.
             msg = f"failed to set EPP to {epp}{self._pman.hostmsg}: {err}"
 
