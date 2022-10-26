@@ -82,11 +82,11 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
                         prop = props[pname]["subprops"][key]
                         self._print_prop_msg(prop, val, cpus=cpus, action=action)
 
-    def _get_aggr_pinfo(self, props, cpus):
+    def _get_aggr_pinfo(self, props, cpus, sprops="all"):
         """Read properties 'props' and build and return aggregated property dictionary."""
 
         pinfo_iter = self._pcobj.get_props(props, cpus=cpus)
-        return _PepcCommon.build_aggregate_pinfo(pinfo_iter)
+        return _PepcCommon.build_aggregate_pinfo(pinfo_iter, sprops=sprops)
 
     def set_props(self, props, cpus):
         """
@@ -96,7 +96,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         """
 
         self._pcobj.set_props(props, cpus)
-        aggr_pinfo = self._get_aggr_pinfo(props, cpus)
+        aggr_pinfo = self._get_aggr_pinfo(props, cpus, sprops=None)
         self._print_aggr_props(aggr_pinfo, skip_unsupported=True, action="set to")
 
     def print_props(self, pnames, cpus, skip_unsupported=False):
