@@ -16,6 +16,9 @@ Some naming conventions:
            'CStates.get_props()'. Check 'get_props()' docstring for more information.
  * pname - name of a property, see 'PROPS["name"]' in 'PStates' and 'CStates'.
  * sname - name of a scope from the allowed list of scope names in 'CPUInfo.LEVELS'.
+ * <sname> siblings - all CPUs sharing the same <sname>. E.g. "package siblings" means all CPUs
+                      sharing the same package, "CPU 6 core siblings" means all CPUs sharing the
+                      same core as CPU 6.
 """
 
 import copy
