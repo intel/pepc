@@ -534,32 +534,33 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return sorted(cpus)
 
-    def get_cpu_siblings(self, cpu):
+    def get_cpu_siblings(self, cpu, level):
         """
-        Returns list of online CPUs belonging to the same core as CPU 'cpu' (including CPU 'cpu').
-        The list is sorted in ascending order.
+        Returns a list of 'level' siblings. The arguments are as follows:
+         * cpu - the CPU whose siblings to return.
+         * level - the siblings level (e.g. "package", "core").
+
+        For example, if 'level' is "package", this method returns a list of CPUs sharing the same
+        package as CPU 'cpu'.
         """
 
-        cpu = self.normalize_cpu(cpu)
+        if level == "CPU":
+            return self.normalize_cpus((cpu, ))
 
-        tline = None
-        for tline in self._get_topology(order="CPU"):
-            if not tline["online"]:
-                continue
-            if cpu == tline["CPU"]:
-                break
-        else:
-            raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}")
+        if level == "global":
+            return self.get_cpus()
 
-        siblings = []
-        for tline1 in self._get_topology(order="CPU"):
-            if not tline1["online"]:
-                continue
+        levels = self.get_cpu_levels(cpu)
+        if level == "package":
+            return self.package_to_cpus(levels[level])
+        if level == "die":
+            return self.dies_to_cpus(dies=levels[level], packages=levels["package"])
+        if level == "node":
+            return self.nodes_to_cpus(nodes=levels[level], packages=levels["package"])
+        if level == "core":
+            return self.cores_to_cpus(cores=levels[level], packages=levels["package"])
 
-            if tline["package"] == tline1["package"] and tline["core"] == tline1["core"]:
-                siblings.append(tline1["CPU"])
-
-        return siblings
+        raise Error(f"unsupported scope name \"{level}\"")
 
     def get_cpu_levels(self, cpu):
         """

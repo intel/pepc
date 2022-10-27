@@ -65,7 +65,7 @@ def cpu_hotplug_offline_command(args, pman):
 
         siblings_to_offline = set()
         for cpu in cpus:
-            siblings = cpuinfo.get_cpu_siblings(cpu)
+            siblings = cpuinfo.get_cpu_siblings(cpu, "core")
             siblings_to_offline.update(siblings[1:])
 
         siblings_to_offline = set(cpus).intersection(siblings_to_offline)
