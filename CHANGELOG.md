@@ -8,6 +8,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Change option '--siblings' to '--ht-siblings'
 
 ## [1.3.23] - 2022-10-28
 ### Added
