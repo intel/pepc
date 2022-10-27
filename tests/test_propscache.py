@@ -28,7 +28,7 @@ def get_params(hostspec):
 
         params["cpuinfo"] = cpuinfo
         params["test_cpu"] = random.choice(cpuinfo.get_cpus())
-        params["fellows"] = pcstates_common.get_fellows(cpuinfo, cpu=params["test_cpu"])
+        params["siblings"] = pcstates_common.get_siblings(cpuinfo, cpu=params["test_cpu"])
 
         yield params
 
@@ -51,7 +51,7 @@ def test_propscache_scope(params):
 
         for cpu in cpuinfo.get_cpus():
             res = pcache.is_cached(pname, cpu)
-            if cpu in params["fellows"][sname]:
+            if cpu in params["siblings"][sname]:
                 assert pcache.get(pname, cpu) == val
             else:
                 assert res is False

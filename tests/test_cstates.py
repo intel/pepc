@@ -12,7 +12,7 @@
 
 import pytest
 import common
-from pcstates_common import get_fellows, set_and_verify, verify_props_value_type, is_prop_supported
+from pcstates_common import get_siblings, set_and_verify, verify_props_value_type, is_prop_supported
 from pepclibs import CPUInfo, CStates
 
 def _get_enable_cache_param():
@@ -33,7 +33,7 @@ def get_params(hostspec, request):
          CStates.CStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as csobj:
         params = common.build_params(pman)
 
-        params["fellows"] = get_fellows(cpuinfo, cpu=0)
+        params["siblings"] = get_siblings(cpuinfo, cpu=0)
         params["csobj"] = csobj
         params["pinfo"] = csobj.get_cpu_props(csobj.props, 0)
 
@@ -63,9 +63,9 @@ def test_cstates_set_and_verify(params):
 
     for pname, value in _set_and_verify_data(params):
         sname = params["csobj"].props[pname]["sname"]
-        fellows = params["fellows"][sname]
+        siblings = params["siblings"][sname]
 
-        set_and_verify(params["csobj"], pname, value, fellows)
+        set_and_verify(params["csobj"], pname, value, siblings)
 
 def test_cstates_property_type(params):
     """This test verifies that 'get_props()' returns values of the correct type."""

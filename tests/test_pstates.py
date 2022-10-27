@@ -12,7 +12,7 @@
 
 import pytest
 import common
-from pcstates_common import get_fellows, is_prop_supported, set_and_verify, verify_props_value_type
+from pcstates_common import get_siblings, is_prop_supported, set_and_verify, verify_props_value_type
 from pepclibs import CPUInfo, PStates, BClock
 
 def _get_enable_cache_param():
@@ -34,7 +34,7 @@ def get_params(hostspec, request):
         params = common.build_params(pman)
 
         params["cpuinfo"] = cpuinfo
-        params["fellows"] = get_fellows(cpuinfo, cpu=0)
+        params["siblings"] = get_siblings(cpuinfo, cpu=0)
         params["psobj"] = psobj
         params["pinfo"] = psobj.get_cpu_props(psobj.props, 0)
 
@@ -100,9 +100,9 @@ def test_pstates_set_and_verify(params):
             continue
 
         sname = params["psobj"].props[pname]["sname"]
-        fellows = params["fellows"][sname]
+        siblings = params["siblings"][sname]
 
-        set_and_verify(params["psobj"], pname, value, fellows)
+        set_and_verify(params["psobj"], pname, value, siblings)
 
 def test_pstates_property_type(params):
     """This test verifies that 'get_props()' returns values of the correct type."""
@@ -116,7 +116,7 @@ def _set_freq_pairs(params, min_pname, max_pname):
     """
 
     sname = params["psobj"].props[min_pname]["sname"]
-    fellows = params["fellows"][sname]
+    siblings = params["siblings"][sname]
 
     min_limit = params["pinfo"][f"{min_pname}_limit"][f"{min_pname}_limit"]
     max_limit = params["pinfo"][f"{max_pname}_limit"][f"{max_pname}_limit"]
@@ -127,13 +127,13 @@ def _set_freq_pairs(params, min_pname, max_pname):
     increment = a_quarter - a_quarter % bclk_Hz
 
     # [Min ------------------ Max ----------------------------------------------------------]
-    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + increment}, fellows)
+    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + increment}, siblings)
 
     # [-------------------------------------------------------- Min -------------------- Max]
-    params["psobj"].set_props({min_pname : max_limit - increment, max_pname : max_limit}, fellows)
+    params["psobj"].set_props({min_pname : max_limit - increment, max_pname : max_limit}, siblings)
 
     # [Min ------------------ Max ----------------------------------------------------------]
-    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + increment}, fellows)
+    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + increment}, siblings)
 
 def test_pstates_frequency_set_order(params):
     """
@@ -146,7 +146,7 @@ def test_pstates_frequency_set_order(params):
     # When Turbo is disabled the max frequency may be limited.
     if is_prop_supported("turbo", params["pinfo"]):
         sname = params["psobj"].props["turbo"]["sname"]
-        cpus = params["fellows"][sname]
+        cpus = params["siblings"][sname]
         params["psobj"].set_prop("turbo", "on", cpus)
 
     if is_prop_supported("min_freq", params["pinfo"]):
