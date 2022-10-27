@@ -14,7 +14,7 @@ This module implements CPU properties caching.
 
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import ClassHelpers
-from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
 class PropsCache():
     """
@@ -22,26 +22,6 @@ class PropsCache():
     It takes the CPU scope (global 0, package 3, etc) into account as well. The cache uses the
     write-through policy.
     """
-
-    def _get_cpus_in_scope(self, cpu, sname):
-        """Returns all CPUs sharing the same specific scope as the CPU 'cpu'."""
-
-        if sname == "CPU":
-            return (cpu, )
-
-        if sname == "global":
-            return self._cpuinfo.get_cpus()
-
-        levels = self._cpuinfo.get_cpu_levels(cpu)
-        if sname == "package":
-            return self._cpuinfo.package_to_cpus(levels[sname])
-        if sname == "die":
-            return self._cpuinfo.dies_to_cpus(dies=levels[sname], packages=levels["package"])
-        # No 'node', because there is currently no property with 'node' scope.
-        if sname == "core":
-            return self._cpuinfo.cores_to_cpus(cores=levels[sname], packages=levels["package"])
-
-        raise ErrorNotSupported(f"Scope name '{sname}' is not supported")
 
     def is_cached(self, pname, cpu):
         """
@@ -82,7 +62,7 @@ class PropsCache():
         if not self._enable_cache:
             return
 
-        cpus = self._get_cpus_in_scope(cpu, sname)
+        cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
 
         for cpu in cpus: # pylint: disable=redefined-argument-from-local
             try:
@@ -104,7 +84,7 @@ class PropsCache():
         if not self._enable_cache:
             return val
 
-        cpus = self._get_cpus_in_scope(cpu, sname)
+        cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
 
         if pname not in self._cache:
             self._cache[pname] = {}
