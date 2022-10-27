@@ -88,16 +88,12 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         pinfo_iter = self._pcobj.get_props(props, cpus=cpus)
         return _PepcCommon.build_aggregate_pinfo(pinfo_iter, sprops=sprops)
 
-    def set_props(self, props, cpus):
-        """
-        Set multiple properties 'props' for multiple CPUs 'cpus'. The arguments are as follows.
-          * props - A dictionary with property names as keys and property values as values.
-          * cpus - list of CPU numbers to set the properties for.
-        """
+    def _print_props(self, pnames, cpus, skip_unsupported=False, sprops="all", action=None):
+        """Implements the 'print_props()'."""
 
-        self._pcobj.set_props(props, cpus)
-        aggr_pinfo = self._get_aggr_pinfo(props, cpus, sprops=None)
-        self._print_aggr_props(aggr_pinfo, skip_unsupported=True, action="set to")
+        pinfo_iter = self._pcobj.get_props(pnames, cpus=cpus)
+        aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter, sprops=sprops)
+        self._print_aggr_props(aggr_pinfo, skip_unsupported=skip_unsupported, action=action)
 
     def print_props(self, pnames, cpus, skip_unsupported=False):
         """
@@ -107,9 +103,17 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
           * cpus - list of CPU numbers to print the property values for.
           * skip_unsupported - if 'True', do not print unsupported values.
         """
+        self._print_props(pnames, cpus, skip_unsupported=skip_unsupported)
 
-        aggr_pinfo = self._get_aggr_pinfo(pnames, cpus)
-        self._print_aggr_props(aggr_pinfo, skip_unsupported=skip_unsupported)
+    def set_props(self, props, cpus):
+        """
+        Set multiple properties 'props' for multiple CPUs 'cpus'. The arguments are as follows.
+          * props - A dictionary with property names as keys and property values as values.
+          * cpus - list of CPU numbers to set the properties for.
+        """
+
+        self._pcobj.set_props(props, cpus)
+        self._print_props(props, cpus, skip_unsupported=True, sprops=None, action="set to")
 
     def __init__(self, pman, pcobj, cpuinfo):
         """
