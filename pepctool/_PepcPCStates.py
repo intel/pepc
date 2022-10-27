@@ -58,13 +58,13 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         msg += f"{val}{sfx}"
         _LOG.info(msg)
 
-    def _print_aggr_props(self, aggr_pinfo, skip_unsupported=False, action=None):
+    def _print_aggr_props(self, skip_unsupported=False, action=None):
         """Print the aggregate C-state or P-state properties information."""
 
         props = self._pcobj.props
 
-        for pname in aggr_pinfo:
-            for key, kinfo in aggr_pinfo[pname].items():
+        for pname, pinfo in self.aggr_props.items():
+            for key, kinfo in pinfo.items():
                 for val, cpus in kinfo.items():
                     # Distinguish between properties and sub-properties.
                     if key in props:
@@ -86,8 +86,8 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         """Implements the 'print_props()'."""
 
         pinfo_iter = self._pcobj.get_props(pnames, cpus=cpus)
-        aggr_pinfo = _PepcCommon.build_aggregate_pinfo(pinfo_iter, sprops=sprops)
-        self._print_aggr_props(aggr_pinfo, skip_unsupported=skip_unsupported, action=action)
+        self.aggr_props = _PepcCommon.build_aggregate_pinfo(pinfo_iter, sprops=sprops)
+        self._print_aggr_props(skip_unsupported=skip_unsupported, action=action)
 
     def print_props(self, pnames, cpus, skip_unsupported=False):
         """
@@ -121,6 +121,8 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         self._pman = pman
         self._pcobj = pcobj
         self._cpuinfo = cpuinfo
+
+        self.aggr_props = {}
 
     def close(self):
         """Uninitialize the class object."""
