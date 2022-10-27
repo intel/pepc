@@ -59,7 +59,7 @@ def cpu_hotplug_offline_command(args, pman):
         if not cpus:
             raise Error("please, specify the CPUs to offline")
 
-        if not args.siblings:
+        if not args.ht_siblings:
             onl.offline(cpus=cpus, skip_unsupported=skip_unsupported)
             return
 

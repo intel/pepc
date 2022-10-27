@@ -132,11 +132,11 @@ def build_arguments_parser():
     subpars2.add_argument("--cores", help=text)
     text = """Same as '--cpus', but specifies list of packages."""
     subpars2.add_argument("--packages", help=text)
-    text = """Offline only "sibling CPUs",  making sure there is only one logical CPU per core is
+    text = """Offline core siblings, making sure there is only one logical CPU per core is
               left online. The sibling CPUs will be searched for among the CPUs selected with
-              '--cpus', '--cores', and '--packages'. Therefore, specifying '--cpus all --siblings'
-              will effectively disable hyper-threading on Intel CPUs."""
-    subpars2.add_argument("--siblings", action="store_true", help=text)
+              '--cpus', '--cores', and '--packages'. Therefore, specifying '--cpus all
+              --ht-siblings' will effectively disable hyper-threading on Intel CPUs."""
+    subpars2.add_argument("--ht-siblings", action="store_true", help=text)
 
     #
     # Create parser for the 'cstates' command.
