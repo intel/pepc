@@ -195,7 +195,6 @@ def _test_get_good(cpuinfo):
                                      f"got '{nums}'"
 
     _run_method("get_offline_cpus", cpuinfo)
-    _run_method("get_cpu_siblings", cpuinfo, args=(0,))
 
 def _test_get_bad(cpuinfo):
     """Test 'get' methods with bad 'order' values and expect methods to fail."""
@@ -207,10 +206,6 @@ def _test_get_bad(cpuinfo):
         for order in _get_bad_orders():
             with pytest.raises(Error):
                 _get_level_nums(lvl, cpuinfo, order=order)
-
-    cpus = _get_level_nums("cpu", cpuinfo)
-    bad_cpu = cpus[-1] + 1
-    _run_method("get_cpu_siblings", cpuinfo, args=(bad_cpu,), exp_exc=Error)
 
 def test_cpuinfo_get(params):
     """
