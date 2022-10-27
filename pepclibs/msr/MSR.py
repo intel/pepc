@@ -302,7 +302,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
                 self._add_for_transation(regaddr, regval, cpu)
 
             # Note, below 'add()' call is scope-aware. It will cache 'regval' not only for CPU
-            # number 'cpu', but also for all the "fellow" CPUs. For example, if 'sname' is
+            # number 'cpu', but also for all the 'sname' siblings. For example, if 'sname' is
             # "package", 'regval' will be cached for all CPUs in the package that contains CPU
             # number 'cpu'.
             self._pcache.add(regaddr, cpu, regval, sname=sname)

@@ -930,9 +930,9 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._write_prop_value_to_sysfs(prop, path, val)
 
                 # Note, below 'add()' call is scope-aware. It will cache 'val' not only for CPU
-                # number 'cpu', but also for all the "fellow" CPUs. For example, if property scope
-                # name is "package", 'val' will be cached for all CPUs in the package that contains
-                # CPU number 'cpu'.
+                # number 'cpu', but also for all the 'sname' siblings. For example, if property
+                # scope name is "package", 'val' will be cached for all CPUs in the package that
+                # contains CPU number 'cpu'.
                 self._pcache.add(pname, cpu, val, sname=prop["sname"])
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
