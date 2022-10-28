@@ -448,6 +448,20 @@ class PepcCStates(PepcPCStates):
             self.aggr_rcsinfo = self._build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
             self._print_aggr_cstates_info()
 
+    def set_and_print_cstates(self, enable_props, set_props, print_props, cpus):
+        """
+        Handle C-state configuration properties, arguments are as follows.
+          * enable_props - requestable C-state properties as a dictionary where key is "enable" or
+                           "disable", and value is requestable C-state. See
+                           'CStates.ReqCStates.enable_cstates()'.
+          * set_props - C-state property values. See 'props' in PepcPCStates.set_props()'.
+          * print_props - list of C-state property names to print values for.
+          * cpus - CPU numbers to apply or print values for.
+        """
+
+        self.handle_enable_disable_opts(enable_props, cpus)
+        self.set_and_print_props(set_props, cpus)
+        self.print_props(print_props, cpus)
 
     def print_or_save_cstates(self, csnames, pnames, cpus, path=None):
         """
