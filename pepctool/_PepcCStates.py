@@ -54,7 +54,7 @@ def cstates_config_command(args, pman):
         if not set_opts and not print_opts:
             return
 
-        cstates.set_props(set_opts, cpus)
+        cstates.set_and_print_props(set_opts, cpus)
         cstates.print_props(print_opts, cpus)
 
 def cstates_info_command(args, pman):

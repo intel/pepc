@@ -44,7 +44,7 @@ def pstates_config_command(args, pman):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         if set_opts:
-            pcstates.set_props(set_opts, cpus)
+            pcstates.set_and_print_props(set_opts, cpus)
         if print_opts:
             pcstates.print_props(print_opts, cpus)
 

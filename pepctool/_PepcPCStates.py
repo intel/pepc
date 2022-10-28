@@ -23,7 +23,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
     This class provides interface to set and print C-state and P-state properties.
 
     Public methods overview.
-      * set multiple C-state or P-state properties for multiple CPUs: 'set_props()'.
+      * set multiple C-state or P-state properties for multiple CPUs: 'set_and_print_props()'.
       * print multiple C-state or P-state properties for multiple CPUs: 'print_props()'.
     """
 
@@ -105,9 +105,10 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         """
         self._print_props(pnames, cpus, skip_unsupported=skip_unsupported)
 
-    def set_props(self, props, cpus):
+    def set_and_print_props(self, props, cpus):
         """
-        Set multiple properties 'props' for multiple CPUs 'cpus'. The arguments are as follows.
+        Set and print multiple properties 'props' for multiple CPUs 'cpus'. The arguments are as
+        follows.
           * props - A dictionary with property names as keys and property values as values.
           * cpus - list of CPU numbers to set the properties for.
         """
@@ -225,14 +226,14 @@ class PepcCStates(PepcPCStates):
         aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops=sprops)
         self._print_aggr_cstates_info(aggr_csinfo)
 
-    def set_props(self, props, cpus):
+    def set_and_print_props(self, props, cpus):
         """
-        Same as 'set_props()' in PepcPCStates, and will make use of caching feature of the 'MSR'
-        module.
+        Same as 'set_and_print_props()' in PepcPCStates, and will make use of caching feature of the
+        'MSR' module.
         """
 
         self._get_msr().start_transaction()
-        super().set_props(props, cpus)
+        super().set_and_print_props(props, cpus)
         # Commit the transaction. This will flush all the change MSRs (if there were any).
         self._get_msr().commit_transaction()
 
