@@ -154,10 +154,10 @@ class PepcCStates(PepcPCStates):
 
         return msg
 
-    def _print_aggr_cstates_info(self, aggr_csinfo):
+    def _print_aggr_cstates_info(self):
         """Prints aggregated requestable C-states information."""
 
-        for csname, csinfo in aggr_csinfo.items():
+        for csname, csinfo in self.aggr_rcsinfo.items():
             for key, kinfo in csinfo.items():
                 for val, val_cpus in kinfo.items():
                     if key == "disable":
@@ -211,16 +211,16 @@ class PepcCStates(PepcPCStates):
 
         if print_cstates:
             csinfo_iter = self._pcobj.get_cstates_info(csnames="all", cpus=cpus)
-            aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
-            self._print_aggr_cstates_info(aggr_csinfo)
+            self.aggr_rcsinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
+            self._print_aggr_cstates_info()
 
     def print_requestable_cstates_info(self, csnames, cpus):
         """Prints requestable C-states information."""
 
         csinfo_iter = self._pcobj.get_cstates_info(csnames=csnames, cpus=cpus)
         sprops = {"disable", "latency", "residency"}
-        aggr_csinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops=sprops)
-        self._print_aggr_cstates_info(aggr_csinfo)
+        self.aggr_rcsinfo = _PepcCommon.build_aggregate_pinfo(csinfo_iter, sprops=sprops)
+        self._print_aggr_cstates_info()
 
     def set_and_print_props(self, props, cpus):
         """
@@ -243,8 +243,9 @@ class PepcCStates(PepcPCStates):
         super().__init__(pman, csobj, cpuinfo)
 
         self._msr = msr
-
         self._close_msr = msr is None
+
+        self.aggr_rcsinfo = {}
 
     def close(self):
         """Uninitialize the class object."""
