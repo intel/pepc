@@ -3,12 +3,15 @@
 Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.23] - ADD DATE HERE
+## [1.3.24] - ADD DATE HERE
 ### Fixed
 ### Added
- - Add the 'cstates config --intel-pstate-mode' option.
 ### Removed
 ### Changed
+
+## [1.3.23] - 2022-10-28
+### Added
+ - Add the 'cstates config --intel-pstate-mode' option.
 
 ## [1.3.22] - 2022-10-12
 ### Fixed

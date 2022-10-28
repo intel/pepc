@@ -433,8 +433,8 @@ COMMAND *'pepc* pstates info'
 
 usage: pepc pstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
 [--packages PACKAGES] [--min-freq] [--max-freq] [--min-freq-limit]
-[--max-freq-limit] [--base-freq] [--max-eff-freq] [--turbo]
-[--max-turbo-freq] [--min-uncore-freq] [--max-uncore-freq]
+[--max-freq-limit] [--base-freq] [--min-oper-freq] [--max-eff-freq]
+[--turbo] [--max-turbo-freq] [--min-uncore-freq] [--max-uncore-freq]
 [--min-uncore-freq-limit] [--max-uncore-freq-limit] [--hwp] [--epp]
 [--epp-policy] [--epb] [--epb-policy] [--driver] [--intel-pstate-mode]
 [--governor]
@@ -475,28 +475,44 @@ OPTIONS *'pepc* pstates info'
    3. Use the special keyword 'all' to specify all packages.
 
 **--min-freq**
-   Get minimum CPU frequency. Minimum frequency the operating system
-   will configure the CPU to run at. This option has CPU scope.
+   Get minimum CPU frequency. Minimum CPU frequency is the lowest
+   frequency the operating system configured the CPU to run at. This
+   option has CPU scope.
 
 **--max-freq**
-   Get maximum CPU frequency. Maximum frequency the operating system
-   will configure the CPU to run at. This option has CPU scope.
+   Get maximum CPU frequency. Maximum CPU frequency is the highest
+   frequency the operating system configured the CPU to run at. This
+   option has CPU scope.
 
 **--min-freq-limit**
-   Get minimum supported CPU frequency. Minimum supported CPU frequency.
-   This option has CPU scope.
+   Get minimum supported CPU frequency. Minimum supported CPU frequency
+   is the lowest frequency supported by the operating system. This
+   option has CPU scope.
 
 **--max-freq-limit**
-   Get maximum supported CPU frequency. Maximum supported CPU frequency.
-   This option has CPU scope.
+   Get maximum supported CPU frequency. Maximum supported CPU frequency
+   is the maximum CPU frequency supported by the operating system. This
+   option has CPU scope.
 
 **--base-freq**
-   Get base CPU frequency. Base CPU frequency. This option has CPU
+   Get base CPU frequency. Base CPU frequency is the highest sustainable
+   CPU frequency. This frequency is also referred to as "guaranteed
+   frequency", HFM (High Frequency Mode), or P1. This option has CPU
    scope.
 
+**--min-oper-freq**
+   Get minimum CPU operating frequency. Minimum operating frequency is
+   the lowest possible frequency the CPU can operate at. Depending on
+   the CPU model, this frequency may or may not be directly available to
+   the operating system, but the platform may use it in certain
+   situations (e.g., in some C-states). This frequency is also referred
+   to as Pm. This option has CPU scope.
+
 **--max-eff-freq**
-   Get maximum CPU efficiency frequency. Maximum energy efficient CPU
-   frequency. This option has CPU scope.
+   Get maximum CPU efficiency frequency. Maximum efficiency frequency is
+   the most energy efficient CPU frequency. This frequency is also
+   referred to as LFM (Low Frequency Mode) or Pn. This option has CPU
+   scope.
 
 **--turbo**
    Get current setting for turbo. When turbo is enabled, the CPUs can
@@ -504,24 +520,29 @@ OPTIONS *'pepc* pstates info'
    option has global scope.
 
 **--max-turbo-freq**
-   Get maximum CPU turbo frequency. Maximum frequency CPU can run at in
-   turbo mode. This option has CPU scope.
+   Get maximum CPU turbo frequency. Maximum turbo frequency is the
+   highest frequency a single CPU can operate at. This frequency is also
+   referred to as max. 1-core turbo and P01. This option has CPU scope.
 
 **--min-uncore-freq**
-   Get minimum uncore frequency. Minimum frequency the operating system
-   will configure the uncore to run at. This option has die scope.
+   Get minimum uncore frequency. Minimum uncore frequency is the lowest
+   frequency the operating system configured the uncore to run at. This
+   option has die scope.
 
 **--max-uncore-freq**
-   Get maximum uncore frequency. Maximum frequency the operating system
-   will configure the uncore to run at. This option has die scope.
+   Get maximum uncore frequency. Maximum uncore frequency is the highest
+   frequency the operating system configured the uncore to run at. This
+   option has die scope.
 
 **--min-uncore-freq-limit**
    Get minimum supported uncore frequency. Minimum supported uncore
-   frequency This option has die scope.
+   frequency is the lowest uncore frequency supported by the operating
+   system. This option has die scope.
 
 **--max-uncore-freq-limit**
    Get maximum supported uncore frequency. Maximum supported uncore
-   frequency This option has die scope.
+   frequency is the highest uncore frequency supported by the operating
+   system. This option has die scope.
 
 **--hwp**
    Get current setting for hardware power management. When hardware
@@ -577,8 +598,8 @@ usage: pepc pstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
 [--packages PACKAGES] [--min-freq [MIN_FREQ]] [--max-freq [MAX_FREQ]]
 [--turbo [TURBO]] [--min-uncore-freq [MIN_UNCORE_FREQ]]
 [--max-uncore-freq [MAX_UNCORE_FREQ]] [--epp [EPP]] [--epp-policy
-[EPP_POLICY]] [--epb [EPB]] [--epb-policy [EPB_POLICY]] [--governor
-[GOVERNOR]]
+[EPP_POLICY]] [--epb [EPB]] [--epb-policy [EPB_POLICY]]
+[--intel-pstate-mode [INTEL_PSTATE_MODE]] [--governor [GOVERNOR]]
 
 Configure P-states on specified CPUs. All options can be used without a
 parameter, in which case the currently configured value(s) will be
@@ -617,14 +638,18 @@ OPTIONS *'pepc* pstates config'
    3. Use the special keyword 'all' to specify all packages.
 
 **--min-freq** *[MIN_FREQ]*
-   Set minimum CPU frequency. Minimum frequency the operating system
-   will configure the CPU to run at. The default unit is 'Hz', but
-   'kHz', 'MHz', and
+   Set minimum CPU frequency. Minimum CPU frequency is the lowest
+   frequency the operating system configured the CPU to run at. The
+   default unit is 'Hz', but
+
+has CPU scope.
 
 **--max-freq** *[MAX_FREQ]*
-   Set maximum CPU frequency. Maximum frequency the operating system
-   will configure the CPU to run at. The default unit is 'Hz', but
-   'kHz', 'MHz', and
+   Set maximum CPU frequency. Maximum CPU frequency is the highest
+   frequency the operating system configured the CPU to run at. The
+   default unit is 'Hz', but
+
+has CPU scope.
 
 **--turbo** *[TURBO]*
    Enable or disable turbo. When turbo is enabled, the CPUs can
@@ -632,16 +657,17 @@ OPTIONS *'pepc* pstates config'
    "on" or "off". This option has global scope.
 
 **--min-uncore-freq** *[MIN_UNCORE_FREQ]*
-   Set minimum uncore frequency. Minimum frequency the operating system
-   will configure the uncore to run at. The default unit is 'Hz', but
-   'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This
-   option has die scope.
+   Set minimum uncore frequency. Minimum uncore frequency is the lowest
+   frequency the operating system configured the uncore to run at. The
+   default unit is
+
+option has die scope.
 
 **--max-uncore-freq** *[MAX_UNCORE_FREQ]*
-   Set maximum uncore frequency. Maximum frequency the operating system
-   will configure the uncore to run at. The default unit is 'Hz', but
-   'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This
-   option has die scope.
+   Set maximum uncore frequency. Maximum uncore frequency is the highest
+   frequency the operating system configured the uncore to run at. The
+   default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used,
+   for example
 
 **--epp** *[EPP]*
    Set energy Performance Preference. Energy Performance Preference
@@ -665,6 +691,14 @@ OPTIONS *'pepc* pstates config'
    Set EPB policy. EPB policy is a name, such as 'performance', which
    Linux maps to an EPB value, which may depend on the platform. This
    option has CPU scope.
+
+**--intel-pstate-mode** *[INTEL_PSTATE_MODE]*
+   Set operation mode of 'intel_pstate' driver. The 'intel_pstate'
+   driver has 3 operation modes: 'active', 'passive' and 'off'. The main
+   difference between the active and passive mode is in what frequency
+   governors are used - the generic Linux governors (passive mode) or
+   the custom, built-in 'intel_pstate' driver governors (active mode).
+   This option has global scope.
 
 **--governor** *[GOVERNOR]*
    Set CPU frequency governor. CPU frequency governor decides which

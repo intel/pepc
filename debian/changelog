@@ -1,3 +1,9 @@
+pepc (1.3.23) unstable; urgency=low
+
+  * Add the 'cstates config --intel-pstate-mode' option.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 28 Oct 2022 00:00:00 +0200
+
 pepc (1.3.22) unstable; urgency=low
 
   * Do not try to read HWP-related features (like EPP) on non-HWP systems.
