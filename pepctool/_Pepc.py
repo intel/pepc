@@ -21,7 +21,7 @@ except ImportError:
 
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CStates, PStates
+from pepclibs import CStates, PStates, CPUInfo
 
 if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
@@ -435,6 +435,12 @@ def build_arguments_parser():
                may be unavailable, in these cases the number will be substituted with "?"."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=topology_info_command)
+
+    orders = ", ".join([lvl.lower() for lvl in CPUInfo.LEVELS])
+    text = f"""By default, the topology table is printed in CPU number order. Use this option to
+               print it in a different order (e.g., core or package number order). Here are the
+               supported order names: {orders}."""
+    subpars2.add_argument("--order", help=text, default="CPU")
 
     if argcomplete:
         argcomplete.autocomplete(parser)

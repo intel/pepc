@@ -11,6 +11,7 @@ This module includes the "topology" 'pepc' command implementation.
 """
 
 import logging
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 
 _LOG = logging.getLogger()
@@ -32,15 +33,23 @@ def topology_info_command(args, pman):
 
     colnames = tuple(reversed(CPUInfo.LEVELS))
 
+    order = args.order
+    if order == "cpu":
+        order = "CPU"
+
+    if order not in CPUInfo.LEVELS:
+        orders = ", ".join([lvl.lower() for lvl in CPUInfo.LEVELS])
+        raise Error(f"unknown order '{args.order}', use one of: {orders}")
+
     # Create format string, example: '%7s    %3s    %4s    %4s    %3s'.
-    fmt = "    ".join([f"%{len(info)}s" for info in colnames])
+    fmt = "    ".join([f"%{len(name)}s" for name in colnames])
 
     # Create list of level names with the first letter capitalized. Example:
     # ["CPU", "Core", "Node", "Die", "Package"]
-    headers = [info[0].upper() + info[1:] for info in colnames]
+    headers = [name[0].upper() + name[1:] for name in colnames]
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         _LOG.info(fmt, *headers)
 
-        for tline in cpuinfo.get_topology():
+        for tline in cpuinfo.get_topology(order=order):
             _LOG.info(fmt, *_format_row(tline, colnames))
