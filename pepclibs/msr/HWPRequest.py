@@ -23,6 +23,22 @@ MSR_HWP_REQUEST = 0x774
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
+    "min_perf" : {
+        "name" : "Minimum CPU performance",
+        "sname": "CPU",
+        "help" : """The minimum desired CPU performance.""",
+        "cpuflags" : {"hwp"},
+        "type" : "int",
+        "bits" : (7, 0),
+    },
+    "max_perf" : {
+        "name" : "Maximum CPU performance",
+        "sname": "CPU",
+        "help" : """The maximum desired CPU performance.""",
+        "cpuflags" : {"hwp"},
+        "type" : "int",
+        "bits" : (15, 8),
+    },
     "epp" : {
         "name" : "Energy Performance Preference",
         "sname": "CPU",
@@ -53,6 +69,26 @@ FEATURES = {
         "type" : "bool",
         "vals" : { "on" : 1, "off" : 0},
         "bits" : (60, 60),
+    },
+    "max_valid" : {
+        "name" : "Max. performance is controlled by MSR_HWP_REQUEST",
+        "sname": "CPU",
+        "help" : f"""When set, the CPU reads the Maximum performance value from per-CPU MSR
+                     {MSR_HWP_REQUEST} (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
+        "cpuflags" : {"hwp"},
+        "type" : "bool",
+        "vals" : { "on" : 1, "off" : 0},
+        "bits" : (62, 62),
+    },
+    "min_valid" : {
+        "name" : "Min. performance is controlled by MSR_HWP_REQUEST",
+        "sname": "CPU",
+        "help" : f"""When set, the CPU reads the Minimum performance value from per-CPU MSR
+                     {MSR_HWP_REQUEST} (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
+        "cpuflags" : {"hwp"},
+        "type" : "bool",
+        "vals" : { "on" : 1, "off" : 0},
+        "bits" : (63, 63),
     },
 }
 
