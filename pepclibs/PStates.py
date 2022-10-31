@@ -24,9 +24,9 @@ from pepclibs import _PCStatesBase
 _LOG = logging.getLogger()
 
 _CPU_FREQ_VALS_HELP = """The following special values are supported: "min" - minimum CPU frequency
-                         supported by the OS (via Linux sysfs files), "hfm" and "base" - base CPU
+                         supported by the OS (via Linux sysfs files), "hfm", "base", "P1" - base CPU
                          frequency, "max" - maximum CPU frequency supported by the OS (via Linux
-                         sysfs), "eff" and "lfm" - maximum CPU efficiency frequency."""
+                         sysfs), "eff", "lfm", "Pn" - maximum CPU efficiency frequency"""
 
 _UNCORE_FREQ_VALS_HELP = """The following special values are supported: "min" - minimum uncore
                             frequency supported by the OS (via Linux sysfs files), "max" - maximum
@@ -777,9 +777,9 @@ class PStates(_PCStatesBase.PCStatesBase):
                 freq = self._get_cpu_prop_value("min_freq_limit", cpu)
             elif val == "max":
                 freq = self._get_cpu_prop_value("max_freq_limit", cpu)
-            elif val in {"base", "hfm"}:
+            elif val in {"base", "hfm", "P1"}:
                 freq = self._get_cpu_prop_value("base_freq", cpu)
-            elif val in {"eff", "lfm"}:
+            elif val in {"eff", "lfm", "Pn"}:
                 freq = self._get_cpu_prop_value("max_eff_freq", cpu)
             else:
                 freq = Human.parse_freq(val, name=Human.untitle(self._props[pname]["name"]))
