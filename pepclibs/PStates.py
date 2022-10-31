@@ -23,6 +23,15 @@ from pepclibs import _PCStatesBase
 
 _LOG = logging.getLogger()
 
+_CPU_FREQ_VALS_HELP = """The following special values are supported: "min" - minimum CPU frequency
+                         supported by the OS (via Linux sysfs files), "hfm" and "base" - base CPU
+                         frequency, "max" - maximum CPU frequency supported by the OS (via Linux
+                         sysfs)"""
+
+_UNCORE_FREQ_VALS_HELP = """The following special values are supported: "min" - minimum uncore
+                            frequency supported by the OS (via Linux sysfs files), "max" - maximum
+                            uncore frequency supported by the OS (via Linux sysfs)"""
+
 # This dictionary describes the CPU properties this module supports.
 #
 # While this dictionary is user-visible and can be used, it is not recommended, because it is not
@@ -31,8 +40,8 @@ _LOG = logging.getLogger()
 PROPS = {
     "min_freq" : {
         "name" : "Minimum CPU frequency",
-        "help" : """Minimum CPU frequency is the lowest frequency the operating system configured
-                    the CPU to run at.""",
+        "help" : f"""Minimum CPU frequency is the lowest frequency the operating system configured
+                     the CPU to run at. {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -41,7 +50,7 @@ PROPS = {
     "max_freq" : {
         "name" : "Maximum CPU frequency",
         "help" : """Maximum CPU frequency is the highest frequency the operating system configured
-                    the CPU to run at.""",
+                    the CPU to run at. {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -115,8 +124,8 @@ PROPS = {
     },
     "min_uncore_freq" : {
         "name" : "Minimum uncore frequency",
-        "help" : """Minimum uncore frequency is the lowest frequency the operating system configured
-                    the uncore to run at.""",
+        "help" : f"""Minimum uncore frequency is the lowest frequency the operating system
+                     configured the uncore to run at. {_UNCORE_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
@@ -124,8 +133,8 @@ PROPS = {
     },
     "max_uncore_freq" : {
         "name" : "Maximum uncore frequency",
-        "help" : """Maximum uncore frequency is the highest frequency the operating system
-                    configured the uncore to run at.""",
+        "help" : f"""Maximum uncore frequency is the highest frequency the operating system
+                     configured the uncore to run at. {_UNCORE_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
@@ -134,7 +143,7 @@ PROPS = {
     "min_uncore_freq_limit" : {
         "name" : "Minimum supported uncore frequency",
         "help" : """Minimum supported uncore frequency is the lowest uncore frequency supported by
-                    the operating system.""",
+                    the operating system. """,
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
