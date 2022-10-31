@@ -449,6 +449,9 @@ def build_arguments_parser():
     text = f"""List of packages to print topology information for. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
+    text = """Include only online CPUs. By default offline and online CPUs are included."""
+    subpars2.add_argument("--online-only", action='store_true', help=text)
+
     if argcomplete:
         argcomplete.autocomplete(parser)
 

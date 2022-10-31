@@ -42,6 +42,8 @@ def topology_info_command(args, pman):
         orders = ", ".join([lvl.lower() for lvl in CPUInfo.LEVELS])
         raise Error(f"unknown order '{args.order}', use one of: {orders}")
 
+    offlined_ok = not args.online_only
+
     # Create format string, example: '%7s    %3s    %4s    %4s    %3s'.
     fmt = "    ".join([f"%{len(name)}s" for name in colnames])
 
@@ -50,9 +52,9 @@ def topology_info_command(args, pman):
     headers = [name[0].upper() + name[1:] for name in colnames]
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=None)
+        cpus = _PepcCommon.get_cpus(args, cpuinfo, offlined_ok=offlined_ok)
 
         _LOG.info(fmt, *headers)
         for tline in cpuinfo.get_topology(order=order):
-            if not cpus or tline["CPU"] in cpus:
+            if tline["CPU"] in cpus:
                 _LOG.info(fmt, *_format_row(tline, colnames))

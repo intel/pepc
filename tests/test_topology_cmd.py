@@ -34,6 +34,7 @@ def test_topology_info(params):
 
     good_options = [
         "",
+        "--online-only",
         f"--cpus 0-{params['cpus'][-1]} --cores all --packages all",
         "--order cpu",
         "--order core",
