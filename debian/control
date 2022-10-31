@@ -1,7 +1,7 @@
 Source: pepc
 Section: utils
 Priority: optional
-Maintainer: Artem Bityutskiy <artem.bityutskiy@intel.com>
+Maintainer: Juha Haapakorpi <juha.haapakorpi@intel.com>
 Build-Depends: debhelper (>= 12),
                dh-python,
                python3-all (>= 3.7),
