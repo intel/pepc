@@ -421,6 +421,21 @@ def build_arguments_parser():
     text = """the PCI ASPM policy to set, use "default" to set the Linux default policy."""
     subpars2.add_argument("--policy", nargs="?", help=text)
 
+    #
+    # Create parser for the 'topology' command.
+    #
+    text = "CPU topology commands."
+    descr = """Various commands related to CPU topology."""
+    subpars = subparsers.add_parser("topology", help=text, description=descr)
+    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subparsers2.required = True
+
+    text = "Print CPU topology."
+    descr = """Print CPU topology information. Note, the topology information for some offline CPUs
+               may be unavailable, in these cases the number will be substituted with "?"."""
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr)
+    subpars2.set_defaults(func=topology_info_command)
+
     if argcomplete:
         argcomplete.autocomplete(parser)
 
@@ -435,6 +450,13 @@ def parse_arguments():
     return args
 
 # pylint: disable=import-outside-toplevel
+
+def topology_info_command(args, pman):
+    """Implements the 'topology info' command."""
+
+    from pepctool import _PepcTopology
+
+    _PepcTopology.topology_info_command(args, pman)
 
 def cpu_hotplug_info_command(args, pman):
     """Implements the 'cpu-hotplug info' command."""
