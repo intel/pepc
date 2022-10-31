@@ -23,14 +23,18 @@ from pepclibs import _PCStatesBase
 
 _LOG = logging.getLogger()
 
-_CPU_FREQ_VALS_HELP = """The following special values are supported: "min" - minimum CPU frequency
-                         supported by the OS (via Linux sysfs files), "hfm", "base", "P1" - base CPU
-                         frequency, "max" - maximum CPU frequency supported by the OS (via Linux
-                         sysfs), "eff", "lfm", "Pn" - maximum CPU efficiency frequency"""
+_CPU_FREQ_VALS_HELP = """The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for
+                         example "900MHz"). The following special values are supported: "min" -
+                         minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm",
+                         "base", "P1" - base CPU frequency, "max" - maximum CPU frequency supported
+                         by the OS (via Linux sysfs), "eff", "lfm", "Pn" - maximum CPU efficiency
+                         frequency"""
 
-_UNCORE_FREQ_VALS_HELP = """The following special values are supported: "min" - minimum uncore
-                            frequency supported by the OS (via Linux sysfs files), "max" - maximum
-                            uncore frequency supported by the OS (via Linux sysfs)"""
+_UNCORE_FREQ_VALS_HELP = """The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
+                            (for example "900MHz"). The following special values are supported:
+                            "min" - minimum uncore frequency supported by the OS (via Linux sysfs
+                            files), "max" - maximum uncore frequency supported by the OS (via Linux
+                            sysfs)"""
 
 # This dictionary describes the CPU properties this module supports.
 #

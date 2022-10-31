@@ -299,8 +299,6 @@ def build_arguments_parser():
     text = f"""List of packages to configure P-States on. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
-    freq_unit = """ The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used, for
-                   example '900MHz'."""
     for name, pinfo in PStates.PROPS.items():
         if not pinfo.get("writable"):
             continue
@@ -317,14 +315,9 @@ def build_arguments_parser():
             text = "Set "
             choices = ""
 
-        if pinfo.get("unit") == "Hz":
-            unit = freq_unit
-        else:
-            unit = ""
-
         option = f"--{name.replace('_', '-')}"
         name = Human.untitle(pinfo["name"])
-        text += f"""{name}. {pinfo["help"]}{choices}{unit} This option has {pinfo["sname"]}
+        text += f"""{name}. {pinfo["help"]}{choices} This option has {pinfo["sname"]}
                     scope."""
 
         kwargs["help"] = text
