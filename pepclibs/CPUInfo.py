@@ -164,7 +164,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     Public methods overview.
 
-    1. Get list of packages/cores/etc.
+    1. Get CPU topology information.
+        * 'get_topology()'
+    2. Get list of packages/cores/etc.
         * 'get_packages()'
         * 'get_dies()'
         * 'get_nodes()'
@@ -173,7 +175,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         * 'get_offline_cpus()'
         * 'get_cpu_siblings()'
         * 'get_cpu_levels()'
-    2. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
+    3. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
         * 'packages_to_cpus()'
         * 'package_to_cpus()'
         * 'package_to_dies()'
@@ -182,11 +184,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         * 'dies_to_cpus()'
         * 'nodes_to_cpus()'
         * 'cores_to_cpus()'
-    3. Get packages/core/etc counts.
+    4. Get packages/core/etc counts.
         * 'get_packages_count()'
         * 'get_cpus_count()'
         * 'get_offline_cpus_count()'
-    4. Normalize a list of packages/cores/etc.
+    5. Normalize a list of packages/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
             * 'normalize_packages()'
             * 'normalize_dies()'
@@ -194,11 +196,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         B. Single package/CPU/etc.
             * 'normalize_package()'
             * 'normalize_cpu()'
-    5. "Divide" list of CPUs.
+    6. "Divide" list of CPUs.
         A. By packages: 'cpus_div_packages()'.
         B. By dies: 'cpus_div_dies()'.
         B. By cores: 'cpus_div_cores()'.
-    6. Mark CPUs online/offline.
+    7. Mark CPUs online/offline.
         * 'mark_cpus_online()'
         * 'mark_cpus_offline()'
     """
@@ -232,7 +234,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return die
 
-    def _get_topology(self, order="CPU"):
+    def get_topology(self, order="CPU"):
         """
         Build and return the topology list. Here is an example topology list for the following
         hypothetical system:
@@ -305,6 +307,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 		  {'package': 0, 'die': 0, 'node': 0, 'core': 5, 'CPU': 14, 'online': True},
 		  {'package': 1, 'die': 1, 'node': 1, 'core': 5, 'CPU': 15, 'online': True},
         """
+
+        self._check_level(order, name="order")
 
         if self._topology:
             return self._topology[order]
@@ -432,7 +436,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         result = {}
         valid_nums = set()
 
-        for tline in self._get_topology(order=order):
+        for tline in self.get_topology(order=order):
             if not tline["online"]:
                 continue
 
@@ -456,7 +460,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Mark CPUs 'cpus' online status to 'online' in internal topology dictionary."""
 
         cpus = self.normalize_cpus(cpus, offlined_ok=True)
-        topology = self._get_topology(order="CPU")
+        topology = self.get_topology(order="CPU")
         for cpu in cpus:
             topology[cpu]["online"] = online
 
@@ -527,7 +531,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Returns list of offline CPU numbers sorted in ascending order."""
 
         cpus = []
-        for tline in self._get_topology(order="CPU"):
+        for tline in self.get_topology(order="CPU"):
             if not tline["online"]:
                 cpus.append(tline["CPU"])
 
@@ -570,7 +574,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         cpu = self.normalize_cpu(cpu)
 
         tline = None
-        for tline in self._get_topology(order="CPU"):
+        for tline in self.get_topology(order="CPU"):
             if cpu == tline["CPU"]:
                 break
         else:
@@ -969,7 +973,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._pman = pman
         self._close_pman = pman is None
 
-        # The topology dictionary. See '_get_topology()' for more information.
+        # The topology dictionary. See 'get_topology()' for more information.
         self._topology = {}
 
         # Level name to its index number.
