@@ -3,16 +3,20 @@
 Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.24] - ADD DATE HERE
+## [1.3.26] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.3.25] - 2022-10-31
 ### Added
  - pepc pstates: add "P1" and "Pn" special frequency values support. Now they can be used with
    '--min-freq' and '--max-freq' options.
-### Removed
 ### Changed
- - Change option '--siblings' to '--ht-siblings'
+ - pepc cpu-hotplug online/offline: rename the '--siblings' to '--ht-siblings'.
 
-## [1.3.23] - 2022-10-28
+## [1.3.24] - 2022-10-28
 ### Added
  - Add the 'cstates config --intel-pstate-mode' option.
 
