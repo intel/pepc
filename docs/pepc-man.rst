@@ -152,7 +152,7 @@ COMMAND *'pepc* cpu-hotplug offline'
 ====================================
 
 usage: pepc cpu-hotplug offline [-h] [-q] [-d] [--cpus CPUS] [--cores
-CORES] [--packages PACKAGES] [--siblings]
+CORES] [--packages PACKAGES] [--ht-siblings]
 
 Bring CPUs offline.
 
@@ -180,12 +180,12 @@ OPTIONS *'pepc* cpu-hotplug offline'
 **--packages** *PACKAGES*
    Same as '--cpus', but specifies list of packages.
 
-**--siblings**
-   Offline only "sibling CPUs", making sure there is only one logical
-   CPU per core is left online. The sibling CPUs will be searched for
-   among the CPUs selected with '--cpus', '--cores', and '--packages'.
-   Therefore, specifying '-- cpus all --siblings' will effectively
-   disable hyper-threading on Intel CPUs.
+**--ht-siblings**
+   Offline core siblings, making sure there is only one logical CPU per
+   core is left online. The sibling CPUs will be searched for among the
+   CPUs selected with '--cpus', '--cores', and '--packages'. Therefore,
+   specifying '--cpus all --ht-siblings' will effectively disable
+   hyper-threading on Intel CPUs.
 
 COMMAND *'pepc* cstates'
 ========================
@@ -476,13 +476,18 @@ OPTIONS *'pepc* pstates info'
 
 **--min-freq**
    Get minimum CPU frequency. Minimum CPU frequency is the lowest
-   frequency the operating system configured the CPU to run at. This
-   option has CPU scope.
+   frequency the operating system configured the CPU to run at. The
+   default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
+   (for example "900MHz"). The following special values are supported:
+   "min" - minimum CPU frequency supported by the OS (via Linux sysfs
+   files), "hfm", "base", "P1" - base CPU frequency, "max" - maximum CPU
+   frequency supported by the OS (via Linux sysfs), "eff", "lfm", "Pn" -
+   maximum CPU efficiency frequency. This option has CPU scope.
 
 **--max-freq**
    Get maximum CPU frequency. Maximum CPU frequency is the highest
-   frequency the operating system configured the CPU to run at. This
-   option has CPU scope.
+   frequency the operating system configured the CPU to run at.
+   {_CPU_FREQ_VALS_HELP}. This option has CPU scope.
 
 **--min-freq-limit**
    Get minimum supported CPU frequency. Minimum supported CPU frequency
@@ -526,13 +531,21 @@ OPTIONS *'pepc* pstates info'
 
 **--min-uncore-freq**
    Get minimum uncore frequency. Minimum uncore frequency is the lowest
-   frequency the operating system configured the uncore to run at. This
-   option has die scope.
+   frequency the operating system configured the uncore to run at. The
+   default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
+   (for example "900MHz"). The following special values are supported:
+   "min" - minimum uncore frequency supported by the OS (via Linux sysfs
+   files), "max" - maximum uncore frequency supported by the OS (via
+   Linux sysfs). This option has die scope.
 
 **--max-uncore-freq**
    Get maximum uncore frequency. Maximum uncore frequency is the highest
-   frequency the operating system configured the uncore to run at. This
-   option has die scope.
+   frequency the operating system configured the uncore to run at. The
+   default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
+   (for example "900MHz"). The following special values are supported:
+   "min" - minimum uncore frequency supported by the OS (via Linux sysfs
+   files), "max" - maximum uncore frequency supported by the OS (via
+   Linux sysfs). This option has die scope.
 
 **--min-uncore-freq-limit**
    Get minimum supported uncore frequency. Minimum supported uncore
@@ -640,16 +653,17 @@ OPTIONS *'pepc* pstates config'
 **--min-freq** *[MIN_FREQ]*
    Set minimum CPU frequency. Minimum CPU frequency is the lowest
    frequency the operating system configured the CPU to run at. The
-   default unit is 'Hz', but
-
-has CPU scope.
+   default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
+   (for example "900MHz"). The following special values are supported:
+   "min" - minimum CPU frequency supported by the OS (via Linux sysfs
+   files), "hfm", "base", "P1" - base CPU frequency, "max" - maximum CPU
+   frequency supported by the OS (via Linux sysfs), "eff", "lfm", "Pn" -
+   maximum CPU efficiency frequency. This option has CPU scope.
 
 **--max-freq** *[MAX_FREQ]*
    Set maximum CPU frequency. Maximum CPU frequency is the highest
-   frequency the operating system configured the CPU to run at. The
-   default unit is 'Hz', but
-
-has CPU scope.
+   frequency the operating system configured the CPU to run at.
+   {_CPU_FREQ_VALS_HELP}. This option has CPU scope.
 
 **--turbo** *[TURBO]*
    Enable or disable turbo. When turbo is enabled, the CPUs can
@@ -659,15 +673,20 @@ has CPU scope.
 **--min-uncore-freq** *[MIN_UNCORE_FREQ]*
    Set minimum uncore frequency. Minimum uncore frequency is the lowest
    frequency the operating system configured the uncore to run at. The
-   default unit is
-
-option has die scope.
+   default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
+   (for example "900MHz"). The following special values are supported:
+   "min" - minimum uncore frequency supported by the OS (via Linux sysfs
+   files), "max" - maximum uncore frequency supported by the OS (via
+   Linux sysfs). This option has die scope.
 
 **--max-uncore-freq** *[MAX_UNCORE_FREQ]*
    Set maximum uncore frequency. Maximum uncore frequency is the highest
    frequency the operating system configured the uncore to run at. The
-   default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used,
-   for example
+   default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
+   (for example "900MHz"). The following special values are supported:
+   "min" - minimum uncore frequency supported by the OS (via Linux sysfs
+   files), "max" - maximum uncore frequency supported by the OS (via
+   Linux sysfs). This option has die scope.
 
 **--epp** *[EPP]*
    Set energy Performance Preference. Energy Performance Preference

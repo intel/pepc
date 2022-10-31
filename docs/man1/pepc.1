@@ -133,7 +133,7 @@ number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8,
 and 10 to 12. Use the special keyword 'all' to specify all CPUs.
 
 .SH COMMAND \fI\,'pepc cpu-hotplug offline'\/\fR
-usage: pepc cpu-hotplug offline [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--siblings]
+usage: pepc cpu-hotplug offline [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--ht-siblings]
 
 Bring CPUs offline.
 
@@ -165,11 +165,11 @@ Same as '\-\-cpus', but specifies list of cores.
 Same as '\-\-cpus', but specifies list of packages.
 
 .TP
-\fB\-\-siblings\fR
-Offline only "sibling CPUs", making sure there is only one logical CPU per
-core is left online. The sibling CPUs will be searched for among the CPUs
-selected with '\-\-cpus', '\-\-cores', and '\-\-packages'. Therefore, specifying '\-\-
-cpus all \-\-siblings' will effectively disable hyper\-threading on Intel CPUs.
+\fB\-\-ht\-siblings\fR
+Offline core siblings, making sure there is only one logical CPU per core is
+left online. The sibling CPUs will be searched for among the CPUs selected
+with '\-\-cpus', '\-\-cores', and '\-\-packages'. Therefore, specifying '\-\-cpus all
+\-\-ht\-siblings' will effectively disable hyper\-threading on Intel CPUs.
 
 .SH COMMAND \fI\,'pepc cstates'\/\fR
 usage: pepc cstates [-h] [-q] [-d] {info,config} ...
@@ -450,12 +450,18 @@ keyword 'all' to specify all packages.
 .TP
 \fB\-\-min\-freq\fR
 Get minimum CPU frequency. Minimum CPU frequency is the lowest frequency the
-operating system configured the CPU to run at. This option has CPU scope.
+operating system configured the CPU to run at. The default unit is "Hz", but
+"kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The following
+special values are supported: "min" \- minimum CPU frequency supported by the
+OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \-
+maximum CPU frequency supported by the OS (via Linux sysfs), "eff", "lfm",
+"Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\fR
 Get maximum CPU frequency. Maximum CPU frequency is the highest frequency the
-operating system configured the CPU to run at. This option has CPU scope.
+operating system configured the CPU to run at. {_CPU_FREQ_VALS_HELP}. This
+option has CPU scope.
 
 .TP
 \fB\-\-min\-freq\-limit\fR
@@ -503,14 +509,20 @@ max. 1\-core turbo and P01. This option has CPU scope.
 .TP
 \fB\-\-min\-uncore\-freq\fR
 Get minimum uncore frequency. Minimum uncore frequency is the lowest frequency
-the operating system configured the uncore to run at. This option has die
-scope.
+the operating system configured the uncore to run at. The default unit is
+"Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The
+following special values are supported: "min" \- minimum uncore frequency
+supported by the OS (via Linux sysfs files), "max" \- maximum uncore frequency
+supported by the OS (via Linux sysfs). This option has die scope.
 
 .TP
 \fB\-\-max\-uncore\-freq\fR
 Get maximum uncore frequency. Maximum uncore frequency is the highest
-frequency the operating system configured the uncore to run at. This option
-has die scope.
+frequency the operating system configured the uncore to run at. The default
+unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example
+"900MHz"). The following special values are supported: "min" \- minimum uncore
+frequency supported by the OS (via Linux sysfs files), "max" \- maximum uncore
+frequency supported by the OS (via Linux sysfs). This option has die scope.
 
 .TP
 \fB\-\-min\-uncore\-freq\-limit\fR
@@ -618,16 +630,18 @@ keyword 'all' to specify all packages.
 .TP
 \fB\-\-min\-freq\fR \fI\,[MIN_FREQ]\/\fR
 Set minimum CPU frequency. Minimum CPU frequency is the lowest frequency the
-operating system configured the CPU to run at. The default unit is 'Hz', but
-'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This option
-has CPU scope.
+operating system configured the CPU to run at. The default unit is "Hz", but
+"kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The following
+special values are supported: "min" \- minimum CPU frequency supported by the
+OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \-
+maximum CPU frequency supported by the OS (via Linux sysfs), "eff", "lfm",
+"Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\fR \fI\,[MAX_FREQ]\/\fR
 Set maximum CPU frequency. Maximum CPU frequency is the highest frequency the
-operating system configured the CPU to run at. The default unit is 'Hz', but
-'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This option
-has CPU scope.
+operating system configured the CPU to run at. {_CPU_FREQ_VALS_HELP}. This
+option has CPU scope.
 
 .TP
 \fB\-\-turbo\fR \fI\,[TURBO]\/\fR
@@ -639,15 +653,19 @@ global scope.
 \fB\-\-min\-uncore\-freq\fR \fI\,[MIN_UNCORE_FREQ]\/\fR
 Set minimum uncore frequency. Minimum uncore frequency is the lowest frequency
 the operating system configured the uncore to run at. The default unit is
-'Hz', but 'kHz', 'MHz', and 'GHz' can also be used, for example '900MHz'. This
-option has die scope.
+"Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The
+following special values are supported: "min" \- minimum uncore frequency
+supported by the OS (via Linux sysfs files), "max" \- maximum uncore frequency
+supported by the OS (via Linux sysfs). This option has die scope.
 
 .TP
 \fB\-\-max\-uncore\-freq\fR \fI\,[MAX_UNCORE_FREQ]\/\fR
 Set maximum uncore frequency. Maximum uncore frequency is the highest
 frequency the operating system configured the uncore to run at. The default
-unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used, for example
-'900MHz'. This option has die scope.
+unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example
+"900MHz"). The following special values are supported: "min" \- minimum uncore
+frequency supported by the OS (via Linux sysfs files), "max" \- maximum uncore
+frequency supported by the OS (via Linux sysfs). This option has die scope.
 
 .TP
 \fB\-\-epp\fR \fI\,[EPP]\/\fR
