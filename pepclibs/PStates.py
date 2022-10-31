@@ -26,7 +26,7 @@ _LOG = logging.getLogger()
 _CPU_FREQ_VALS_HELP = """The following special values are supported: "min" - minimum CPU frequency
                          supported by the OS (via Linux sysfs files), "hfm" and "base" - base CPU
                          frequency, "max" - maximum CPU frequency supported by the OS (via Linux
-                         sysfs)"""
+                         sysfs), "eff" and "lfm" - maximum CPU efficiency frequency."""
 
 _UNCORE_FREQ_VALS_HELP = """The following special values are supported: "min" - minimum uncore
                             frequency supported by the OS (via Linux sysfs files), "max" - maximum
@@ -422,7 +422,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         return base
 
     def _get_max_eff_freq(self, cpu):
-        """Read max efficiency frequency from 'MSR_PLATFORM_INFO' and return it."""
+        """Read max. efficiency frequency from 'MSR_PLATFORM_INFO' and return it."""
 
         platinfo = self._get_platinfo()
 
@@ -773,13 +773,13 @@ class PStates(_PCStatesBase.PCStatesBase):
             else:
                 freq = Human.parse_freq(val, name=Human.untitle(self._props[pname]["name"]))
         else:
-            if val in {"min", "lfm"}:
+            if val == "min":
                 freq = self._get_cpu_prop_value("min_freq_limit", cpu)
             elif val == "max":
                 freq = self._get_cpu_prop_value("max_freq_limit", cpu)
             elif val in {"base", "hfm"}:
                 freq = self._get_cpu_prop_value("base_freq", cpu)
-            elif val == "eff":
+            elif val in {"eff", "lfm"}:
                 freq = self._get_cpu_prop_value("max_eff_freq", cpu)
             else:
                 freq = Human.parse_freq(val, name=Human.untitle(self._props[pname]["name"]))
