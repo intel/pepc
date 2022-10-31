@@ -6,6 +6,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [1.3.24] - ADD DATE HERE
 ### Fixed
 ### Added
+ - pepc pstates: add "P1" and "Pn" special frequency values support. Now they can be used with
+   '--min-freq' and '--max-freq' options.
 ### Removed
 ### Changed
  - Change option '--siblings' to '--ht-siblings'
