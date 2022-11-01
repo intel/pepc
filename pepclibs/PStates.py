@@ -42,6 +42,24 @@ _UNCORE_FREQ_VALS_HELP = """The default unit is "Hz", but "kHz", "MHz", and "GHz
 # complete. This dictionary is extended by 'PStates' objects. Use the full dictionary via
 # 'PStates.props'.
 PROPS = {
+    "min_freq_hw" : {
+        "name" : "Min. CPU frequency (OS bypass)",
+        "help" : """Minimum frequency that the CPU is configured by the OS to run at. This value is
+                    read directly from the MSR(s), bypassing the OS.""",
+        "unit" : "Hz",
+        "type" : "int",
+        "sname": "CPU",
+        "writable" : False,
+    },
+    "max_freq_hw" : {
+        "name" : "Max. CPU frequency (OS bypass)",
+        "help" : """Maximum frequency that the CPU is configured by the OS to run at. This value is
+                    read directly from the MSR(s), bypassing the OS.""",
+        "unit" : "Hz",
+        "type" : "int",
+        "sname": "CPU",
+        "writable" : False,
+    },
     "min_freq" : {
         "name" : "Minimum CPU frequency",
         "help" : f"""Minimum CPU frequency is the lowest frequency the operating system configured
@@ -650,6 +668,30 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return None
 
+    def _get_cpu_freq_hw(self, pname, cpu):
+        """Returns the CPU frequency read through MSR."""
+
+        prefix = pname[0:3]
+        hwpreq = self._get_hwpreq()
+
+        try:
+            # Note, some Broadwell architecture-based platforms support min/max. performance, but do
+            # not support package control. Therefore, the "is_cpu_feature_supported()" check.
+            pkg_control = hwpreq.is_cpu_feature_supported("pkg_control", cpu) and \
+                          hwpreq.is_cpu_feature_enabled("pkg_control", cpu)
+            valid = hwpreq.is_cpu_feature_enabled(f"{prefix}_valid", cpu)
+            if pkg_control and not valid:
+                hwpreq = self._get_hwpreq_pkg()
+
+            perf = hwpreq.read_cpu_feature(f"{prefix}_perf", cpu)
+        except ErrorNotSupported:
+            _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, prefix)
+            return None
+
+        # Convert the performance to frequency in Hz.
+        freq = perf * 100000000
+        return freq
+
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
 
@@ -688,6 +730,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = self._get_driver(cpu)
         elif pname == "intel_pstate_mode":
             val = self._get_intel_pstate_mode(pname, cpu)
+        elif pname.endswith("_hw"):
+            val = self._get_cpu_freq_hw(pname, cpu)
         else:
             raise Error(f"BUG: unsupported property '{pname}'")
 
