@@ -528,7 +528,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument,no-self-use
         return _bug_method_not_defined("ProcessManagerBase.run_verify")
 
-    def rsync(self, src, dst, opts="rlpD", remotesrc=False, remotedst=False):
+    def rsync(self, src, dst, opts="-rlpD", remotesrc=False, remotedst=False):
         """
         Copy data from path 'src' to path 'dst' using the 'rsync' tool with options specified in
         'opts'. The arguments are as follows.
