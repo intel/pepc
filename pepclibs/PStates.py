@@ -288,7 +288,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Returns an 'MSR.MSR()' object."""
 
         if not self._msr:
-            from pepclibs.msr import MSR #pylint: disable=import-outside-toplevel
+            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
 
             self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
 
@@ -298,7 +298,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Returns an 'EPP.EPP()' object."""
 
         if not self._eppobj:
-            from pepclibs import EPP #pylint: disable=import-outside-toplevel
+            from pepclibs import EPP # pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
             self._eppobj = EPP.EPP(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr,
@@ -310,7 +310,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Returns an 'EPB.EPB()' object."""
 
         if not self._epbobj:
-            from pepclibs import EPB #pylint: disable=import-outside-toplevel
+            from pepclibs import EPB # pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
             self._epbobj = EPB.EPB(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr,
@@ -322,7 +322,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Discover bus clock speed."""
 
         if cpu not in self._bclk:
-            from pepclibs import BClock #pylint: disable=import-outside-toplevel
+            from pepclibs import BClock # pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
             self._bclk[cpu] = BClock.get_bclk(self._pman, cpu=cpu, cpuinfo=self._cpuinfo, msr=msr)
