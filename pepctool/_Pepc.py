@@ -268,6 +268,10 @@ def build_arguments_parser():
     text = f"""List of packages to get information about. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
+    text = """Instead of printing the P-states information, save it to a file in YAML format. The
+              file can used to restore the settings with option '--restore'."""
+    subpars2.add_argument("--save", help=text, metavar="PATH")
+
     for name, pinfo in PStates.PROPS.items():
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.

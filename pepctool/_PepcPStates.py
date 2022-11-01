@@ -70,4 +70,9 @@ def pstates_info_command(args, pman):
             # When printing all the options, skip the unsupported ones as they add clutter.
             skip_unsupported = True
 
-        pcstates.print_props(print_opts, cpus, skip_unsupported=skip_unsupported)
+        if args.save:
+            pcstates.save_props(print_opts, cpus, args.save)
+
+            _LOG.info("The P-States information saved to the file '%s'.", args.save)
+        else:
+            pcstates.print_props(print_opts, cpus, skip_unsupported=skip_unsupported)
