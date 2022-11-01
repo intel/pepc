@@ -175,6 +175,10 @@ def build_arguments_parser():
     text = f"""List of packages to get information about. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
+    text = """Instead of printing the C-states information, save it to a file in YAML format. The
+              file can used to restore the settings with option '--restore'."""
+    subpars2.add_argument("--save", help=text, metavar="PATH")
+
     text = f"""Comma-separated list of C-states to get information about (all C-states by default).
                {cst_list_text}."""
     subpars2.add_argument("--cstates", dest="csnames", help=text, default="default")

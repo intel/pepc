@@ -82,4 +82,4 @@ def cstates_info_command(args, pman):
             csnames = "all"
             print_opts = csobj.props
 
-        cstates.print_cstates_info(csnames, print_opts, cpus)
+        cstates.print_or_save_cstates(csnames, print_opts, cpus, path=args.save)

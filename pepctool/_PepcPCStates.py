@@ -438,22 +438,36 @@ class PepcCStates(PepcPCStates):
             self._print_aggr_cstates_info()
 
 
-    def print_cstates_info(self, csnames, pnames, cpus):
+    def print_or_save_cstates(self, csnames, pnames, cpus, path=None):
         """
-        Print C-states information. The arguments are as follows.
+        Print C-states information, or save it to a file in YAML format. The arguments are as
+        follows.
           * csnames - list of requestable C-states.
           * pnames - list of C-state property names.
           * cpus - list of CPU numbers to print the properties for.
+          * path - path of the file to save the information to.
+
+        If 'path' is not None, C-state information is saved to a file and no information is printed.
         """
 
         csinfo_iter = self._pcobj.get_cstates_info(csnames=csnames, cpus=cpus)
         sprops = {"disable", "latency", "residency"}
         self.aggr_rcsinfo = self._build_aggregate_pinfo(csinfo_iter, sprops=sprops)
-        self._print_aggr_cstates_info()
 
         pinfo_iter = self._pcobj.get_props(pnames, cpus=cpus)
         self.aggr_props = self._build_aggregate_pinfo(pinfo_iter)
-        self._print_aggr_props(skip_unsupported=True)
+
+        if path:
+            props = {}
+            props.update(self._get_reqcstates_for_saving())
+            props.update(self._get_props_for_saving())
+
+            self._yaml.save(props, path)
+
+            _LOG.info("The C-states information saved to the file '%s'.", path)
+        else:
+            self._print_aggr_cstates_info()
+            self._print_aggr_props(skip_unsupported=True)
 
     def set_and_print_props(self, props, cpus):
         """
