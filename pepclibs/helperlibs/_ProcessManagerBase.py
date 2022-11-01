@@ -528,6 +528,27 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument,no-self-use
         return _bug_method_not_defined("ProcessManagerBase.run_verify")
 
+    @staticmethod
+    def _rsync_add_debug_opts(opts):
+        """Add the '-v' option to rsync options 'opts' if debug-level logging is enabled."""
+
+        if _LOG.getEffectiveLevel() == logging.DEBUG:
+            if opts:
+                opts = f"{opts} -v"
+            else:
+                opts = "-v"
+
+        return opts
+
+    @staticmethod
+    def _rsync_debug_log(stdout):
+        """
+        If debug-level logging is enabled, log the 'stdout' output of the 'rsync' command.
+        """
+
+        if stdout and _LOG.getEffectiveLevel() == logging.DEBUG:
+            _LOG.debug("rsync output:\n%s", stdout)
+
     def rsync(self, src, dst, opts="-rlpD", remotesrc=False, remotedst=False):
         """
         Copy data from path 'src' to path 'dst' using the 'rsync' tool with options specified in

@@ -275,12 +275,16 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 raise Error(f"BUG: the 'LocalProcessManager' class does not support 'rsync' "
                             f"from/to a remote host: the {arg} argument must be 'False'")
 
+        opts = self._rsync_add_debug_opts(opts)
+
         # pylint: disable=unused-argument
         cmd = f"rsync {opts} -- '{src}' '{dst}'"
         try:
-            self.run_verify(cmd)
+            stdout, _ = self.run_verify(cmd)
         except Error as err:
             raise Error(f"failed to copy files '{src}' to '{dst}':\n{err}") from err
+
+        self._rsync_debug_log(stdout)
 
     @staticmethod
     def open(path, mode):

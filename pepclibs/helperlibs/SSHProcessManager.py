@@ -645,7 +645,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         'opts'. Refer to '_ProcessManagerBase.rsync() for more information.
         """
 
+        opts = self._rsync_add_debug_opts(opts)
         cmd = f"rsync {opts}"
+
         if remotesrc and remotedst:
             pman = self
         else:
@@ -661,6 +663,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         command = f"{cmd} -- '{src}' '{dst}'"
         result = pman.run(command)
         if result.exitcode == 0:
+            self._rsync_debug_log(result.stdout)
             return
 
         if not pman.is_remote and result.exitcode == 12 and "command not found" in result.stderr:
