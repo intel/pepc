@@ -376,6 +376,33 @@ class PepcCStates(PepcPCStates):
                         _PepcCommon.print_val_msg(val, self._cpuinfo, name=name, prefix=prefix,
                                                   suffix=suffix)
 
+    def _get_reqcstates_for_saving(self):
+        """
+        Convert aggregated requestable property information to dictionary suitable for saving as a
+        YAML file. The dictionary format is as follows.
+        { requestable_cstate_name1: {state1 : range of CPUs having state1},
+                                    {state2 : range of CPUs having state2},
+                           ...,
+          requestable_cstate_name2: {state1 : range of CPUs having state1}
+                           ...,
+          ... and so on of all requestable C-states ...}
+
+        The 'state' is "enable" or "disable".
+        """
+
+        rcsinfo = {}
+        for csname, csinfo in self.aggr_rcsinfo.items():
+            for key, kinfo in csinfo.items():
+                if key != "disable":
+                    continue
+
+                rcsinfo[csname] = []
+                for val, cpus in kinfo.items():
+                    state = "disable" if val else "enable"
+                    rcsinfo[csname].append({"value" : state, "cpus" : Human.rangify(cpus)})
+
+        return rcsinfo
+
     def handle_enable_disable_opts(self, opts, cpus):
         """Handle the '--enable' and '--disable' options of the 'cstates config' command."""
 
