@@ -341,6 +341,28 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._pmenable
 
+    def _get_hwpreq(self):
+        """Returns an 'HWPRequest.HWPRequest()' object."""
+
+        if not self._hwpreq:
+            from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            self._hwpreq = HWPRequest.HWPRequest(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
+
+        return self._hwpreq
+
+    def _get_hwpreq_pkg(self):
+        """Returns an 'HWPRequest.HWPRequest()' object."""
+
+        if not self._hwpreq_pkg:
+            from pepclibs.msr import HWPRequestPkg # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
+                                                           msr=msr)
+        return self._hwpreq_pkg
+
     def _get_platinfo(self):
         """Returns an 'PlatformInfo.PlatformInfo()' object."""
 
@@ -1027,6 +1049,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._epbobj = None
         self._bclk = {}
         self._pmenable = None
+        self._hwpreq = None
+        self._hwpreq_pkg = None
         self._platinfo = None
         self._trl = None
 
@@ -1056,7 +1080,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._unload_ufreq_drv = None
             self._ufreq_drv = None
 
-        close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_platinfo", "_trl", "_pcache")
+        close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_hwpreq","_hwpreq_pkg", "_platinfo",
+                       "_trl", "_pcache", )
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
