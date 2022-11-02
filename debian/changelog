@@ -1,3 +1,9 @@
+pepc (1.3.26) unstable; urgency=low
+
+  * minor changes needed to support the 'wult' project.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 02 Nov 2022 00:00:00 +0200
+
 pepc (1.3.25) unstable; urgency=low
 
   * pepc pstates: add "P1" and "Pn" special frequency values support. Now they can be used with
