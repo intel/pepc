@@ -856,11 +856,10 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return freq
 
-    def _validate_and_set_freq(self, inprops, cpu, uncore=False):
+    def _validate_and_set_freq(self, inprops, cpu, freq_type):
         """
         Validate frequency-related properties in 'inprops' and if they are alright, go ahead and set
-        them on the target system. This function handles either CPU or uncore frequency, depending
-        on the 'uncore' argument.
+        them on the target system. This function handles either CPU or uncore frequency.
 
         If both min frequency and max frequency have to be set, set them in order to never overlap,
         in other words min frequency should never be larger than max frequency and vice versa.
@@ -877,16 +876,18 @@ class PStates(_PCStatesBase.PCStatesBase):
          ----------------- Cur. Max -------- Cur. Min -- New Max ----------> (Frequency)
         """
 
-        if uncore:
-            min_freq_key = "min_uncore_freq"
-            max_freq_key = "max_uncore_freq"
-            min_freq_limit_key = "min_uncore_freq_limit"
-            max_freq_limit_key = "max_uncore_freq_limit"
-        else:
+        if freq_type == "freq":
+            uncore = False
             min_freq_key = "min_freq"
             max_freq_key = "max_freq"
             min_freq_limit_key = "min_freq_limit"
             max_freq_limit_key = "max_freq_limit"
+        else:
+            uncore = True
+            min_freq_key = "min_uncore_freq"
+            max_freq_key = "max_uncore_freq"
+            min_freq_limit_key = "min_uncore_freq_limit"
+            max_freq_limit_key = "max_uncore_freq_limit"
 
         new_min_freq = None
         new_max_freq = None
@@ -1043,10 +1044,10 @@ class PStates(_PCStatesBase.PCStatesBase):
         # separately.
         if "min_freq" in inprops or "max_freq" in inprops:
             for cpu in cpus:
-                self._validate_and_set_freq(inprops, cpu, uncore=False)
+                self._validate_and_set_freq(inprops, cpu, "freq")
         if "min_uncore_freq" in inprops or "max_uncore_freq" in inprops:
             for cpu in cpus:
-                self._validate_and_set_freq(inprops, cpu, uncore=True)
+                self._validate_and_set_freq(inprops, cpu, "uncore_freq")
 
         for pname, val in inprops.items():
             if pname in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
