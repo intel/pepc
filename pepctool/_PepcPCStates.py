@@ -25,6 +25,17 @@ class _PepcYaml():
     file.
     """
 
+    def load(self, path): # pylint: disable=no-self-use
+        """Load YAML file, verify it and return the information as a dictionary."""
+
+        try:
+            state_info = YAML.load(path)
+        except Error as err:
+            raise Error(f"unable to load state information from the file '{path}':\n" \
+                        f"{err}") from None
+
+        return state_info
+
     def save(self, props, path): # pylint: disable=no-self-use
         """write aggregated properties to YAML -file."""
 
