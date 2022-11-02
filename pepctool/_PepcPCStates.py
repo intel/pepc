@@ -275,6 +275,36 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         self._pcobj.set_props(props, cpus)
         self._print_props(props, cpus, skip_unsupported=True, sprops=None, action="set to")
 
+    def _restore_props(self, props):
+        """
+        Set and print multiple properties for multiple CPUs. The arguments are as follows.
+          * props - dictionary of properties to restore. The dictionary format is same as described
+                    in '_get_props_for_saving()'.
+        """
+
+        for pname, pinfos in props.items():
+            for pinfo in pinfos:
+                cpus = self._cpuinfo.normalize_cpus(pinfo["cpus"])
+                val = pinfo["value"]
+
+                try:
+                    self._pcobj.set_prop(pname, val, cpus)
+                except Error as err:
+                    _LOG.warning("failed to set '%s' to '%s'%s\n%s",
+                                 pname, val, self._pman.hostmsg, err)
+                    continue
+
+                self._print_prop_msg(self._pcobj.props[pname], val, cpus=cpus, action="set to")
+
+    def restore_props(self, path):
+        """
+        Set and print multiple properties for multiple CPUs. The arguments are as follows.
+          * path - path to the YAML file with property information.
+        """
+
+        props = self._yaml.load(path)
+        self._restore_props(props)
+
     def __init__(self, pman, pcobj, cpuinfo):
         """
         The class constructor. The arguments are as follows.
