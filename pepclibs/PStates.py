@@ -49,7 +49,7 @@ PROPS = {
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
-        "writable" : False,
+        "writable" : True,
     },
     "max_freq_hw" : {
         "name" : "Max. CPU frequency (OS bypass)",
@@ -58,7 +58,7 @@ PROPS = {
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
-        "writable" : False,
+        "writable" : True,
     },
     "min_freq" : {
         "name" : "Minimum CPU frequency",
@@ -777,6 +777,23 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return what
 
+    def _write_freq_prop_value_to_msr(self, pname, freq, cpu):
+        """
+        Write frequency value 'freq' of a CPU frequency property 'pname' to the corresponding MSR.
+        """
+
+        prefix = pname[0:3]
+        prop = self._props[pname]
+
+        hwpreq = self._get_hwpreq()
+        if hwpreq.is_cpu_feature_supported("pkg_control", cpu) and \
+            hwpreq.is_cpu_feature_enabled("pkg_control", cpu):
+            # Override package control by setting the "min/max valid" bit.
+            hwpreq.write_cpu_feature(f"{prefix}_valid", "on", cpu)
+
+        hwpreq.write_cpu_feature(f"{prefix}_perf", int(freq // 100000000), cpu)
+        self._pcache.add(pname, cpu, freq, sname=prop["sname"])
+
     def _write_freq_prop_value_to_sysfs(self, pname, freq, cpu):
         """
         Write frequency value 'freq' of a CPU frequency property 'pname' to the corresponding sysfs
@@ -883,6 +900,13 @@ class PStates(_PCStatesBase.PCStatesBase):
             min_freq_limit_key = "min_freq_limit"
             max_freq_limit_key = "max_freq_limit"
             write_func = self._write_freq_prop_value_to_sysfs
+        elif freq_type == "freq_hw":
+            uncore = False
+            min_freq_key = "min_freq_hw"
+            max_freq_key = "max_freq_hw"
+            min_freq_limit_key = "min_oper_freq"
+            max_freq_limit_key = "max_turbo_freq"
+            write_func = self._write_freq_prop_value_to_msr
         else:
             uncore = True
             min_freq_key = "min_uncore_freq"
@@ -902,6 +926,11 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             cur_min_freq = self._get_cpu_prop_value(min_freq_key, cpu)
             cur_max_freq = self._get_cpu_prop_value(max_freq_key, cpu)
+
+            if not cur_min_freq:
+                name = Human.untitle(self._props[max_freq_key]["name"])
+                raise ErrorNotSupported(f"CPU {cpu} does not support min. and {name}"
+                                        f"{self._pman.hostmsg}")
 
             min_limit = self._get_cpu_prop_value(min_freq_limit_key, cpu)
             max_limit = self._get_cpu_prop_value(max_freq_limit_key, cpu)
@@ -1049,9 +1078,12 @@ class PStates(_PCStatesBase.PCStatesBase):
             self._validate_and_set_freq(inprops, cpus, "freq")
         if "min_uncore_freq" in inprops or "max_uncore_freq" in inprops:
             self._validate_and_set_freq(inprops, cpus, "uncore_freq")
+        if "min_freq_hw" in inprops or "max_freq_hw" in inprops:
+            self._validate_and_set_freq(inprops, cpus, "freq_hw")
 
         for pname, val in inprops.items():
-            if pname in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
+            if pname in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq",
+                         "min_freq_hw", "max_freq_hw"}:
                 # Were already set.
                 continue
 
