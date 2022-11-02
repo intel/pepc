@@ -868,8 +868,13 @@ class PStates(_PCStatesBase.PCStatesBase):
                 freq = self._get_cpu_prop_value("base_freq", cpu)
             elif val in {"eff", "lfm", "Pn"}:
                 freq = self._get_cpu_prop_value("max_eff_freq", cpu)
+            elif val == "Pm":
+                freq = self._get_cpu_prop_value("min_oper_freq", cpu)
             else:
                 freq = Human.parse_freq(val, name=Human.untitle(self._props[pname]["name"]))
+
+        if not freq:
+            raise ErrorNotSupported(f"'{val} is not supported{self._pman.hostmsg}")
 
         return freq
 
