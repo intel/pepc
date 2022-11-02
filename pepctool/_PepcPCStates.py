@@ -150,6 +150,41 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         self.aggr_props = self._build_aggregate_pinfo(pinfo_iter, sprops=sprops)
         self._print_aggr_props(skip_unsupported=skip_unsupported, action=action)
 
+    def _get_props_for_saving(self):
+        """
+        Collect writable properties and return them as a dictionary suitable for saving in YAML
+        format. The format is as follows.
+
+        { property1_name: {value1 : range of CPUs having value1},
+                          {value2 : range of CPUs having value2},
+                           ...,
+          property2_name: {value1 : range of CPUs having value1}
+                           ...,
+          ... and so on of all properties ...}
+
+        The range of CPUs is output of 'Human.rangify()'.
+        """
+
+        props = self._pcobj.props
+        result = {}
+
+        for pname, pinfo in self.aggr_props.items():
+            for key, kinfo in pinfo.items():
+                writable = False
+                if key in props:
+                    writable = props[key].get("writable")
+                elif "subprops" in props[pname]:
+                    writable = props[pname]["subprops"].get("writable")
+
+                if not writable:
+                    continue
+
+                result[key] = []
+                for val, cpus in kinfo.items():
+                    result[key].append({"value" : val, "cpus" : Human.rangify(cpus)})
+
+        return result
+
     def print_props(self, pnames, cpus, skip_unsupported=False):
         """
         Read and print values of multiple properties for multiple CPUs. The argument are as follows.
