@@ -23,6 +23,22 @@ MSR_HWP_REQUEST_PKG = 0x772
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
+    "min_perf" : {
+        "name" : "Minimum CPU performance",
+        "sname": "package",
+        "help" : """The minimum desired CPU performance.""",
+        "cpuflags" : {"hwp"},
+        "type" : "int",
+        "bits" : (7, 0),
+    },
+    "max_perf" : {
+        "name" : "Maximum CPU performance",
+        "sname": "package",
+        "help" : """The maximum desired CPU performance.""",
+        "cpuflags" : {"hwp"},
+        "type" : "int",
+        "bits" : (15, 8),
+    },
     "epp" : {
         "name" : "Energy Performance Preference",
         "sname": "package",
