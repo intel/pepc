@@ -856,7 +856,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return freq
 
-    def _validate_and_set_freq(self, inprops, cpu, freq_type):
+    def _validate_and_set_freq(self, inprops, cpus, freq_type):
         """
         Validate frequency-related properties in 'inprops' and if they are alright, go ahead and set
         them on the target system. This function handles either CPU or uncore frequency.
@@ -891,66 +891,67 @@ class PStates(_PCStatesBase.PCStatesBase):
             max_freq_limit_key = "max_uncore_freq_limit"
             write_func = self._write_freq_prop_value_to_sysfs
 
-        new_min_freq = None
-        new_max_freq = None
+        for cpu in cpus:
+            new_min_freq = None
+            new_max_freq = None
 
-        if min_freq_key in inprops:
-            new_min_freq = self._parse_freq(min_freq_key, inprops[min_freq_key], cpu, uncore=uncore)
-        if max_freq_key in inprops:
-            new_max_freq = self._parse_freq(max_freq_key, inprops[max_freq_key], cpu, uncore=uncore)
+            if min_freq_key in inprops:
+                new_min_freq = self._parse_freq(min_freq_key, inprops[min_freq_key], cpu, uncore)
+            if max_freq_key in inprops:
+                new_max_freq = self._parse_freq(max_freq_key, inprops[max_freq_key], cpu, uncore)
 
-        cur_min_freq = self._get_cpu_prop_value(min_freq_key, cpu)
-        cur_max_freq = self._get_cpu_prop_value(max_freq_key, cpu)
+            cur_min_freq = self._get_cpu_prop_value(min_freq_key, cpu)
+            cur_max_freq = self._get_cpu_prop_value(max_freq_key, cpu)
 
-        min_limit = self._get_cpu_prop_value(min_freq_limit_key, cpu)
-        max_limit = self._get_cpu_prop_value(max_freq_limit_key, cpu)
+            min_limit = self._get_cpu_prop_value(min_freq_limit_key, cpu)
+            max_limit = self._get_cpu_prop_value(max_freq_limit_key, cpu)
 
-        what = self._get_num_str(self._props[min_freq_key], cpu)
-        for pname, val in ((min_freq_key, new_min_freq), (max_freq_key, new_max_freq)):
-            if val is None:
-                continue
+            what = self._get_num_str(self._props[min_freq_key], cpu)
+            for pname, val in ((min_freq_key, new_min_freq), (max_freq_key, new_max_freq)):
+                if val is None:
+                    continue
 
-            if val < min_limit or val > max_limit:
-                name = Human.untitle(self._props[pname]["name"])
-                val = Human.largenum(val, unit="Hz")
-                min_limit = Human.largenum(min_limit, unit="Hz")
-                max_limit = Human.largenum(max_limit, unit="Hz")
-                raise Error(f"{name} value of '{val}' for {what} is out of range, must be within "
-                            f"[{min_limit}, {max_limit}]")
+                if val < min_limit or val > max_limit:
+                    name = Human.untitle(self._props[pname]["name"])
+                    val = Human.largenum(val, unit="Hz")
+                    min_limit = Human.largenum(min_limit, unit="Hz")
+                    max_limit = Human.largenum(max_limit, unit="Hz")
+                    raise Error(f"{name} value of '{val}' for {what} is out of range, must be "
+                                f"within [{min_limit}, {max_limit}]")
 
-        if new_min_freq and new_max_freq:
-            if new_min_freq > new_max_freq:
-                name_min = Human.untitle(self._props[min_freq_key]["name"])
-                name_max = Human.untitle(self._props[max_freq_key]["name"])
-                new_min_freq = Human.largenum(new_min_freq, unit="Hz")
-                new_max_freq = Human.largenum(new_max_freq, unit="Hz")
-                raise Error(f"can't set {name_min} to {new_min_freq} and {name_max} to "
-                            f"{new_max_freq} for {what}: minimum can't be greater than maximum")
-            if new_min_freq != cur_min_freq or new_max_freq != cur_max_freq:
-                if cur_max_freq < new_min_freq:
-                    write_func(max_freq_key, new_max_freq, cpu)
+            if new_min_freq and new_max_freq:
+                if new_min_freq > new_max_freq:
+                    name_min = Human.untitle(self._props[min_freq_key]["name"])
+                    name_max = Human.untitle(self._props[max_freq_key]["name"])
+                    new_min_freq = Human.largenum(new_min_freq, unit="Hz")
+                    new_max_freq = Human.largenum(new_max_freq, unit="Hz")
+                    raise Error(f"can't set {name_min} to {new_min_freq} and {name_max} to "
+                                f"{new_max_freq} for {what}: minimum can't be greater than maximum")
+                if new_min_freq != cur_min_freq or new_max_freq != cur_max_freq:
+                    if cur_max_freq < new_min_freq:
+                        write_func(max_freq_key, new_max_freq, cpu)
+                        write_func(min_freq_key, new_min_freq, cpu)
+                    else:
+                        write_func(min_freq_key, new_min_freq, cpu)
+                        write_func(max_freq_key, new_max_freq, cpu)
+            elif not new_max_freq:
+                if new_min_freq > cur_max_freq:
+                    name = Human.untitle(self._props[min_freq_key]["name"])
+                    new_min_freq = Human.largenum(new_min_freq, unit="Hz")
+                    cur_max_freq = Human.largenum(cur_max_freq, unit="Hz")
+                    raise Error(f"can't set {name} of {what} to {new_min_freq} - it is higher than "
+                                f"currently configured maximum frequency of {cur_max_freq}")
+                if new_min_freq != cur_min_freq:
                     write_func(min_freq_key, new_min_freq, cpu)
-                else:
-                    write_func(min_freq_key, new_min_freq, cpu)
+            elif not new_min_freq:
+                if new_max_freq < cur_min_freq:
+                    name = Human.untitle(self._props[max_freq_key]["name"])
+                    new_max_freq = Human.largenum(new_max_freq, unit="Hz")
+                    cur_min_freq = Human.largenum(cur_min_freq, unit="Hz")
+                    raise Error(f"can't set {name} of {what} to {new_max_freq} - it is lower than "
+                                f"currently configured minimum frequency of {cur_min_freq}")
+                if new_max_freq != cur_max_freq:
                     write_func(max_freq_key, new_max_freq, cpu)
-        elif not new_max_freq:
-            if new_min_freq > cur_max_freq:
-                name = Human.untitle(self._props[min_freq_key]["name"])
-                new_min_freq = Human.largenum(new_min_freq, unit="Hz")
-                cur_max_freq = Human.largenum(cur_max_freq, unit="Hz")
-                raise Error(f"can't set {name} of {what} to {new_min_freq} - it is higher than "
-                            f"currently configured maximum frequency of {cur_max_freq}")
-            if new_min_freq != cur_min_freq:
-                write_func(min_freq_key, new_min_freq, cpu)
-        elif not new_min_freq:
-            if new_max_freq < cur_min_freq:
-                name = Human.untitle(self._props[max_freq_key]["name"])
-                new_max_freq = Human.largenum(new_max_freq, unit="Hz")
-                cur_min_freq = Human.largenum(cur_min_freq, unit="Hz")
-                raise Error(f"can't set {name} of {what} to {new_max_freq} - it is lower than "
-                            f"currently configured minimum frequency of {cur_min_freq}")
-            if new_max_freq != cur_max_freq:
-                write_func(max_freq_key, new_max_freq, cpu)
 
     def _set_intel_pstate_mode(self, cpu, mode):
         """Change mode of the CPU frequency driver 'intel_pstate'."""
@@ -1045,11 +1046,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         # Setting frequency may be tricky, because there are ordering constraints, so it is done
         # separately.
         if "min_freq" in inprops or "max_freq" in inprops:
-            for cpu in cpus:
-                self._validate_and_set_freq(inprops, cpu, "freq")
+            self._validate_and_set_freq(inprops, cpus, "freq")
         if "min_uncore_freq" in inprops or "max_uncore_freq" in inprops:
-            for cpu in cpus:
-                self._validate_and_set_freq(inprops, cpu, "uncore_freq")
+            self._validate_and_set_freq(inprops, cpus, "uncore_freq")
 
         for pname, val in inprops.items():
             if pname in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
