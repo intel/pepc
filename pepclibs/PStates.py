@@ -871,7 +871,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 raise Error(f"{name} value of '{val}' for {what} is out of range, must be within "
                             f"[{min_limit}, {max_limit}]")
 
-        if min_freq_key in inprops and max_freq_key in inprops:
+        if new_min_freq and new_max_freq:
             if new_min_freq > new_max_freq:
                 name_min = Human.untitle(self._props[min_freq_key]["name"])
                 name_max = Human.untitle(self._props[max_freq_key]["name"])
@@ -886,7 +886,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 else:
                     self._write_freq_prop_value_to_sysfs(min_freq_key, new_min_freq, cpu)
                     self._write_freq_prop_value_to_sysfs(max_freq_key, new_max_freq, cpu)
-        elif max_freq_key not in inprops:
+        elif not new_max_freq:
             if new_min_freq > cur_max_freq:
                 name = Human.untitle(self._props[min_freq_key]["name"])
                 new_min_freq = Human.largenum(new_min_freq, unit="Hz")
@@ -895,7 +895,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                             f"currently configured maximum frequency of {cur_max_freq}")
             if new_min_freq != cur_min_freq:
                 self._write_freq_prop_value_to_sysfs(min_freq_key, new_min_freq, cpu)
-        elif min_freq_key not in inprops:
+        elif not new_min_freq:
             if new_max_freq < cur_min_freq:
                 name = Human.untitle(self._props[max_freq_key]["name"])
                 new_max_freq = Human.largenum(new_max_freq, unit="Hz")
