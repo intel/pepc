@@ -882,12 +882,14 @@ class PStates(_PCStatesBase.PCStatesBase):
             max_freq_key = "max_freq"
             min_freq_limit_key = "min_freq_limit"
             max_freq_limit_key = "max_freq_limit"
+            write_func = self._write_freq_prop_value_to_sysfs
         else:
             uncore = True
             min_freq_key = "min_uncore_freq"
             max_freq_key = "max_uncore_freq"
             min_freq_limit_key = "min_uncore_freq_limit"
             max_freq_limit_key = "max_uncore_freq_limit"
+            write_func = self._write_freq_prop_value_to_sysfs
 
         new_min_freq = None
         new_max_freq = None
@@ -926,11 +928,11 @@ class PStates(_PCStatesBase.PCStatesBase):
                             f"{new_max_freq} for {what}: minimum can't be greater than maximum")
             if new_min_freq != cur_min_freq or new_max_freq != cur_max_freq:
                 if cur_max_freq < new_min_freq:
-                    self._write_freq_prop_value_to_sysfs(max_freq_key, new_max_freq, cpu)
-                    self._write_freq_prop_value_to_sysfs(min_freq_key, new_min_freq, cpu)
+                    write_func(max_freq_key, new_max_freq, cpu)
+                    write_func(min_freq_key, new_min_freq, cpu)
                 else:
-                    self._write_freq_prop_value_to_sysfs(min_freq_key, new_min_freq, cpu)
-                    self._write_freq_prop_value_to_sysfs(max_freq_key, new_max_freq, cpu)
+                    write_func(min_freq_key, new_min_freq, cpu)
+                    write_func(max_freq_key, new_max_freq, cpu)
         elif not new_max_freq:
             if new_min_freq > cur_max_freq:
                 name = Human.untitle(self._props[min_freq_key]["name"])
@@ -939,7 +941,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 raise Error(f"can't set {name} of {what} to {new_min_freq} - it is higher than "
                             f"currently configured maximum frequency of {cur_max_freq}")
             if new_min_freq != cur_min_freq:
-                self._write_freq_prop_value_to_sysfs(min_freq_key, new_min_freq, cpu)
+                write_func(min_freq_key, new_min_freq, cpu)
         elif not new_min_freq:
             if new_max_freq < cur_min_freq:
                 name = Human.untitle(self._props[max_freq_key]["name"])
@@ -948,7 +950,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 raise Error(f"can't set {name} of {what} to {new_max_freq} - it is lower than "
                             f"currently configured minimum frequency of {cur_min_freq}")
             if new_max_freq != cur_max_freq:
-                self._write_freq_prop_value_to_sysfs(max_freq_key, new_max_freq, cpu)
+                write_func(max_freq_key, new_max_freq, cpu)
 
     def _set_intel_pstate_mode(self, cpu, mode):
         """Change mode of the CPU frequency driver 'intel_pstate'."""
