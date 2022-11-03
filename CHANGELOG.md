@@ -10,6 +10,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Fix kernel 'DEBUG_LOCKS_WARN_ON' warning caused by wult drivers.
 ### Added
  - Add 'pepc [pc]state info --yaml' option.
+ - Add 'topology info' command that prints CPU topology information.
 ### Removed
 ### Changed
  - Remove '--save' and '--restore' option, add 'pepc [pc]states save/restore'
