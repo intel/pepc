@@ -127,6 +127,25 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 fobj._orig_write = fobj.write
                 fobj.write = types.MethodType(_truncate_write, fobj)
 
+    def _msr_seek(self, fobj, path):
+        """
+        MSR files needs special handling when seeked. This method ensure the emulated behavior is
+        same as in real hardware.
+        """
+
+        def _seek_offset(self, offset, whence=0):
+            """
+            Method for mimicking MSR seek().
+            MSR register address are offset by 8 bytes, meaning register address 10 is 80 bytes from
+            start of file.
+            """
+
+            self._orig_seek(offset * 8, whence)
+
+        if path.endswith("/msr"):
+            fobj._orig_seek = fobj.seek
+            fobj.seek = types.MethodType(_seek_offset, fobj)
+
     def _extract_path(self, cmd):
         """
         Parse command 'cmd' and find if it includes path which is also emulated. Returns the path if
@@ -247,6 +266,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             fobj = self._open_rw(path, mode)
             self._sysfs_write(fobj, path, mode)
 
+        self._msr_seek(fobj, path)
         self._ofiles[path] = fobj
         return fobj
 
@@ -354,7 +374,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 regaddr = int(regaddr)
                 regval = int(regval, 16)
 
-                data[regaddr] = int.to_bytes(regval, 8, byteorder="little")
+                # MSR register address are offset by 8 bytes.
+                data[regaddr * 8] = int.to_bytes(regval, 8, byteorder="little")
 
             path = self._get_basepath() / path.lstrip("/")
             _populate_sparse_file(path, data)
