@@ -18,9 +18,9 @@ fatal() {
 
 usage() {
         cat <<EOF
-Usage: ${0##*/} <new_ver> <outdir>
+Usage: ${0##*/} <new_ver>
 
-<new_ver>  - new tool version to make in X.Y format
+<new_ver> - new tool version to make in X.Y.Z format
 EOF
         exit 0
 }
