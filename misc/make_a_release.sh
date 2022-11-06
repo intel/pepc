@@ -15,7 +15,7 @@ BASEDIR="$(readlink -ev -- ${0%/*}/..)"
 VERSION_REGEX='\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)'
 
 # File paths containing the version number that we'll have to adjust.
-PEPC_FILE="$BASEDIR/pepctools/_Pepc.py"
+PEPC_FILE="$BASEDIR/pepctool/_Pepc.py"
 SPEC_FILE="$BASEDIR/rpm/pepc.spec"
 
 # The CHANGELOG.md file path.
@@ -27,6 +27,8 @@ PEPC_RST_FILE="$BASEDIR/docs/pepc-man.rst"
 
 # Path to the script converting CHANGELOG.md into debian changelog.
 CHANGELOG_MD_TO_DEBIAN="$BASEDIR/misc/changelog_md_to_debian"
+# Path to the script that prepares CHANGELOG.md for the release.
+PREPARE_CHENGELOG_MD="$BASEDIR/misc/prepare_changelog_md"
 
 fatal() {
         printf "Error: %s\n" "$1" >&2
@@ -37,7 +39,8 @@ usage() {
         cat <<EOF
 Usage: ${0##*/} <new_ver>
 
-<new_ver> - new tool version to make in X.Y.Z format
+<new_ver> - new tool version to make in X.Y.Z format. The X.Y.(Z+1) version
+            will be used by default.
 EOF
         exit 0
 }
@@ -60,10 +63,21 @@ ask_question() {
 	done
 }
 
-[ $# -eq 0 ] && usage
-[ $# -eq 1 ] || fatal "insufficient or too many argumetns"
+if [ $# -eq 1 ]; then
+    new_ver="$1"; shift
+    # Validate the new version.
+    printf "%s" "$new_ver" | grep -q -x "$VERSION_REGEX" ||
+            fatal "please, provide new version in X.Y.Z format"
+else
+    # The new version was not provided, increment the current version umber.
+    sed_regex="^_VERSION = \"$VERSION_REGEX\"$"
+    ver_start="$(sed -n -e "s/$sed_regex/\1.\2./p" "$PEPC_FILE")"
+    ver_end="$(sed -n -e "s/$sed_regex/\3/p" "$PEPC_FILE")"
+    ver_end="$(($ver_end+1))"
+    new_ver="$ver_start$ver_end"
+fi
 
-new_ver="$1"; shift
+echo "New version: $new_ver"
 
 # Validate the new version.
 printf "%s" "$new_ver" | grep -q -x "$VERSION_REGEX" ||
@@ -79,6 +93,13 @@ fi
 ask_question "Did you run tests"
 ask_question "Did you update 'CHANGELOG.md'"
 
+# Update CHANGELOG.md.
+"$PREPARE_CHENGELOG_MD" "$new_ver" "$CHANGELOG_FILE"
+# Update debian changelog.
+"$CHANGELOG_MD_TO_DEBIAN" -o "$BASEDIR/debian/changelog" -p "pepc" -n "Artem Bityutskiy" \
+                          -e "artem.bityutskiy@intel.com" "$CHANGELOG_FILE"
+
+
 # Change the tool version.
 sed -i -e "s/^_VERSION = \"$VERSION_REGEX\"$/_VERSION = \"$new_ver\"/" "$PEPC_FILE"
 # Change RPM package version.
@@ -90,10 +111,6 @@ argparse-manpage --pyfile "$PEPC_FILE" --function build_arguments_parser \
                  --author-email 'dedekind1@gmail.com' --output "$PEPC_MAN_FILE" \
                  --url 'https://github.com/intel/pepc'
 pandoc --toc -t man -s "$PEPC_MAN_FILE" -t rst -o "$PEPC_RST_FILE"
-
-# Update debian changelog.
-"$CHANGELOG_MD_TO_DEBIAN" -o "$BASEDIR/debian/changelog" -p "pepc" -n "Artem Bityutskiy" \
-                          -e "artem.bityutskiy@intel.com" "$CHANGELOG_FILE"
 
 # Commit the changes.
 git -C "$BASEDIR" commit -a -s -m "Release version $new_ver"

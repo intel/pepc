@@ -49,3 +49,17 @@ def get_chmd_entries(path):
         # changelog entry too).
         for entry in re.findall(r"##\s+\[.*?(?=(?:(?:\n##\s+\[)|(?:\Z)))", intext, re.DOTALL):
             yield entry
+
+def get_preamble(path):
+    """
+    Read and return the 'CHANGELOG.md' preamble (everything that goes before the first changelog
+    entry.
+    """
+
+    with open(path, "r", encoding="utf-8") as fobj:
+        intext = fobj.read()
+
+    mobj = re.search(r"^.*?(?=(?:##.*ADD DATE HERE))", intext, re.DOTALL)
+    if not mobj:
+        return ""
+    return mobj.group(0)

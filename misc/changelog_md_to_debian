@@ -105,7 +105,7 @@ def changelog_md_to_debian(args):
     """Convert CHANGELOG.md to Debian changelog."""
 
     outtext = ""
-    for entry in _Changelogmd.get_chmd_sections(args.infile):
+    for entry in _Changelogmd.get_chmd_entries(args.infile):
         outtext += handle_entry(args, entry)
 
     outtext = outtext.strip()
