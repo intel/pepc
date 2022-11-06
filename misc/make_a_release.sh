@@ -77,8 +77,9 @@ argparse-manpage --pyfile "$BASEDIR/pepctool/_Pepc.py" --function build_argument
 pandoc --toc -t man -s "$BASEDIR/docs/man1/pepc.1" -t rst -o "$BASEDIR/docs/pepc-man.rst"
 
 # Update debian changelog.
-"$BASEDIR"/misc/convert_changelog -o "$BASEDIR/debian/changelog" -p "pepc" -n "Artem Bityutskiy" \
-                                  -e "artem.bityutskiy@intel.com" "$BASEDIR/CHANGELOG.md"
+"$BASEDIR"/misc/changelog_md_to_debian -o "$BASEDIR/debian/changelog" \
+                                       -p "pepc" -n "Artem Bityutskiy" \
+                                       -e "artem.bityutskiy@intel.com" "$BASEDIR/CHANGELOG.md"
 
 # Commit the changes.
 git -C "$BASEDIR" commit -a -s -m "Release version $new_ver"

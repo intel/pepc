@@ -6,10 +6,10 @@
 # Copyright (C) 2020-2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Juha Haapakorpi <juha.haapakorpi@linux.intel.com>
-#         Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Juha Haapakorpi <juha.haapakorpi@linux.intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Convert CHANGELOG.md to debian changelog."""
+"""Convert CHANGELOG.md to Debian changelog."""
 
 import re
 import sys
@@ -24,7 +24,7 @@ except ImportError:
     argcomplete = None
 
 VERSION = "1.0.0"
-OWN_NAME = "convert_changelog"
+OWN_NAME = "changelog_md_to_debian"
 
 def parse_arguments():
     """Parse input arguments."""
@@ -50,7 +50,7 @@ def parse_arguments():
     parser.add_argument("-e", "--maintainer-email", metavar="EMAIL",
                         default="boo.hoo@company.com", help=text)
 
-    text = """The input file changelog file in a format described here:
+    text = """The input CHANGELOG.md file in a format described here:
               https://keepachangelog.com/en/1.0.0"""
     arg = parser.add_argument("infile", metavar="PATH", type=Path, help=text)
     if argcomplete:
@@ -62,7 +62,7 @@ def parse_arguments():
     return parser.parse_args()
 
 def handle_entry(args, entry):
-    """Convert CHANGELOG.md entries to debian changelog format."""
+    """Convert CHANGELOG.md entries to Debian changelog format."""
 
     lines = entry.splitlines()
 
@@ -71,12 +71,12 @@ def handle_entry(args, entry):
     if not mobj:
         if "ADD DATE HERE" in lines[0]:
             return ""
-        raise ValueError(f"bad first line of a changelong entry:\n{lines[0]}")
+        raise ValueError(f"bad first line of a changelog entry:\n{lines[0]}")
 
     version, date = mobj.groups()
 
-    # Convert the date to the debian changelog format.
-    datetimeobj = datetime.strptime(date,"%Y-%m-%d")
+    # Convert the date to the Debian changelog format.
+    datetimeobj = datetime.strptime(date, "%Y-%m-%d")
     date = f"{datetimeobj.strftime('%a, %d %b %Y %H:%M:%S')} +0200"
 
     substitutions = [
@@ -100,18 +100,18 @@ def handle_entry(args, entry):
             f"{changes}\n\n -- {args.maintainer_name} <{args.maintainer_email}>"
             f"  {date}\n\n")
 
-def convert_changelog(args):
-    """Convert CHANGELOG.md to debian changelog."""
+def changelog_md_to_debian(args):
+    """Convert CHANGELOG.md to Debian changelog."""
 
     outtext = ""
     with open(args.infile, "r", encoding="utf-8") as fobj:
         intext = fobj.read()
         # Decoding for regex.
         #
-        # The entire regext is structured like this: 'start_line.*?(?:stopline)'
+        # The entire regex is structured like this: 'start_line.*?(?:stopline)'
         #
         # Yield 1:
-        # # ## [1.3.21] - 2022-09-29
+        # ## [1.3.21] - 2022-09-29
 		# ## Fixed
 		#  - Fix a bug.
 		#
@@ -122,16 +122,16 @@ def convert_changelog(args):
         #
         # So the idea is that we match the 'start_line', which is '## [1.3.21] - 2022-09-29' in this
         # example. We include all lines until we meet 'stopline', which is '## [1.3.20] -
-        # 2022-09-21' in this example (or the end of file). We do not inlcude the 'stopline' to the
+        # 2022-09-21' in this example (or the end of file). We do not include the 'stopline' to the
         # changelog entry, it is actually the beginning of the next changelog entry.
         #
-        # the '.*?' after 'start_line', combind with 're.DOTALL', means "match any character,
+        # the '.*?' after 'start_line', combined with 're.DOTALL', means "match any character,
         # including a newline, use greedy algorithm". It will try to match as many characters as
         # possible. The '(?stopline)' part basically says - but stop when you meet a line like this.
         #
-        # The 'stopline' is structure like htis: '(?:(?:startline)|(?:\Z)'.
+        # The 'stopline' is structure like this: '(?:(?:startline)|(?:\Z)'.
         #
-        # The '(?:)' is just grouping but without capturing into a group. The '\Z' part is the endo
+        # The '(?:)' is just grouping but without capturing into a group. The '\Z' part is the end
         # of input string. So the entire construct just says that our stopline is either the start
         # of the new changelog entry, or the end of the input (to catch the very last changelog
         # entry too).
@@ -152,7 +152,7 @@ def main():
 
     args.maintainer_name = " ".join([part.strip() for part in args.maintainer_name.split()])
 
-    convert_changelog(args)
+    changelog_md_to_debian(args)
 
     return 0
 
