@@ -11,6 +11,10 @@
 PROG="make_a_release.sh"
 BASEDIR="$(readlink -ev -- ${0%/*}/..)"
 
+# File paths containing the version number that we'll have to adjust.
+PEPC_FILE="$BASEDIR/pepctools/_Pepc.py"
+SPEC_FILE="$BASEDIR/rpm/pepc.spec"
+
 fatal() {
         printf "Error: %s\n" "$1" >&2
         exit 1
@@ -64,13 +68,13 @@ ask_question "Did you update 'CHANGELOG.md'"
 
 # Change the tool version.
 sed -i -e "s/^_VERSION = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"$/_VERSION = \"$new_ver\"/" \
-    "$BASEDIR/pepctool/_Pepc.py"
+    "$PEPC_FILE"
 # Change RPM package version.
 sed -i -e "s/^Version:\(\s\+\)[0-9]\+\.[0-9]\+\.[0-9]\+$/Version:\1$new_ver/" \
-    "$BASEDIR/rpm/pepc.spec"
+    "$SPEC_FILE"
 
 # Update the man page.
-argparse-manpage --pyfile "$BASEDIR/pepctool/_Pepc.py" --function build_arguments_parser \
+argparse-manpage --pyfile "$PEPC_FILE" --function build_arguments_parser \
                  --project-name 'pepc' --author 'Artem Bityutskiy' \
                  --author-email 'dedekind1@gmail.com' --output "$BASEDIR/docs/man1/pepc.1" \
                  --url 'https://github.com/intel/pepc'
