@@ -336,6 +336,17 @@ class PepcCStates(PepcPCStates):
 
         return self._msr
 
+    def _get_csnames(self):
+        """Get list of requestable C-state names."""
+
+        csnames = []
+        for _, cstinfos in self._pcobj.get_cstates_info():
+            for csname in cstinfos.keys():
+                if csname not in csnames:
+                    csnames.append(csname)
+
+        return csnames
+
     def _fmt_csnames(self, csnames): # pylint: disable=no-self-use
         """Formats and returns the C-states list string, which can be used in messages."""
 
@@ -493,6 +504,9 @@ class PepcCStates(PepcPCStates):
         self._close_msr = msr is None
 
         self.aggr_rcsinfo = {}
+
+        self._csnames = self._get_csnames()
+        self._yaml.known_yaml_keys.extend(self._csnames)
 
     def close(self):
         """Uninitialize the class object."""
