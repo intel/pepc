@@ -25,6 +25,9 @@ CHANGELOG_FILE="$BASEDIR/CHANGELOG.md"
 PEPC_MAN_FILE="$BASEDIR/docs/man1/pepc.1"
 PEPC_RST_FILE="$BASEDIR/docs/pepc-man.rst"
 
+# Path to the script converting CHANGELOG.md into debian changelog.
+CHANGELOG_MD_TO_DEBIAN="$BASEDIR/misc/changelog_md_to_debian"
+
 fatal() {
         printf "Error: %s\n" "$1" >&2
         exit 1
@@ -89,9 +92,8 @@ argparse-manpage --pyfile "$PEPC_FILE" --function build_arguments_parser \
 pandoc --toc -t man -s "$PEPC_MAN_FILE" -t rst -o "$PEPC_RST_FILE"
 
 # Update debian changelog.
-"$BASEDIR"/misc/changelog_md_to_debian -o "$BASEDIR/debian/changelog" \
-                                       -p "pepc" -n "Artem Bityutskiy" \
-                                       -e "artem.bityutskiy@intel.com" "$CHANGELOG_FILE"
+"$CHANGELOG_MD_TO_DEBIAN" -o "$BASEDIR/debian/changelog" -p "pepc" -n "Artem Bityutskiy" \
+                          -e "artem.bityutskiy@intel.com" "$CHANGELOG_FILE"
 
 # Commit the changes.
 git -C "$BASEDIR" commit -a -s -m "Release version $new_ver"
