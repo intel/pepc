@@ -14,9 +14,24 @@ This module implements the 'PepcPCStates' class, which handles 'pepc' P-state an
 import logging
 from pepctool import _PepcCommon
 from pepclibs.msr import MSR
-from pepclibs.helperlibs import ClassHelpers, Human
+from pepclibs.helperlibs import ClassHelpers, Human, YAML
+from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
+
+class _PepcYaml():
+    """
+    This is a helper class for reading and writing pepc pstates and cstates information to YAML
+    file.
+    """
+
+    def save(self, props, path): # pylint: disable=no-self-use
+        """write aggregated properties to YAML -file."""
+
+        try:
+            YAML.dump(props, path)
+        except Error as err:
+            raise Error(f"failed to save properties to path: '{path}'\n{err}") from None
 
 class PepcPCStates(ClassHelpers.SimpleCloseContext):
     """
