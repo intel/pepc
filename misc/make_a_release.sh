@@ -18,6 +18,13 @@ VERSION_REGEX='\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)'
 PEPC_FILE="$BASEDIR/pepctools/_Pepc.py"
 SPEC_FILE="$BASEDIR/rpm/pepc.spec"
 
+# The CHANGELOG.md file path.
+CHANGELOG_FILE="$BASEDIR/CHANGELOG.md"
+
+# Documentation file paths.
+PEPC_MAN_FILE="$BASEDIR/docs/man1/pepc.1"
+PEPC_RST_FILE="$BASEDIR/docs/pepc-man.rst"
+
 fatal() {
         printf "Error: %s\n" "$1" >&2
         exit 1
@@ -77,14 +84,14 @@ sed -i -e "s/^Version:\(\s\+\)$VERSION_REGEX$/Version:\1$new_ver/" "$SPEC_FILE"
 # Update the man page.
 argparse-manpage --pyfile "$PEPC_FILE" --function build_arguments_parser \
                  --project-name 'pepc' --author 'Artem Bityutskiy' \
-                 --author-email 'dedekind1@gmail.com' --output "$BASEDIR/docs/man1/pepc.1" \
+                 --author-email 'dedekind1@gmail.com' --output "$PEPC_MAN_FILE" \
                  --url 'https://github.com/intel/pepc'
-pandoc --toc -t man -s "$BASEDIR/docs/man1/pepc.1" -t rst -o "$BASEDIR/docs/pepc-man.rst"
+pandoc --toc -t man -s "$PEPC_MAN_FILE" -t rst -o "$PEPC_RST_FILE"
 
 # Update debian changelog.
 "$BASEDIR"/misc/changelog_md_to_debian -o "$BASEDIR/debian/changelog" \
                                        -p "pepc" -n "Artem Bityutskiy" \
-                                       -e "artem.bityutskiy@intel.com" "$BASEDIR/CHANGELOG.md"
+                                       -e "artem.bityutskiy@intel.com" "$CHANGELOG_FILE"
 
 # Commit the changes.
 git -C "$BASEDIR" commit -a -s -m "Release version $new_ver"
