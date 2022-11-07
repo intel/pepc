@@ -3,7 +3,7 @@
 Changelog practices: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.27] - ADD DATE HERE
+## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
  - Add options '--min-freq-hw' and '--max-freq-hw' to 'pepc pstate info' command.
