@@ -63,7 +63,7 @@ _GT_CPUS = (CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X,
 # notes for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
     "max_1c_turbo_ratio" : {
-        "name" : "Maximum 1 Core Turbo Ratio",
+        "name" : "Max. 1 Core Turbo Ratio",
         "sname": "package",
         "help" : """The ratio of maximum turbo frequency in case of 1 active core. This ratio
                     multiplied by bus clock speed gives the maximum 1 core turbo frequency.""",
@@ -73,7 +73,7 @@ FEATURES = {
         "bits"      : (7, 0),
     },
     "max_g0_turbo_ratio" : {
-        "name" : "Maximum Group 0 cores Turbo Ratio",
+        "name" : "Max. Group 0 cores Turbo Ratio",
         "sname": "package",
         "help" : """The ratio of maximum turbo frequency in case "group 0" count of cores are
                     active. This ratio multiplied by bus clock speed gives the frequency. Count of

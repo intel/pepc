@@ -61,7 +61,7 @@ PROPS = {
         "writable" : True,
     },
     "min_freq" : {
-        "name" : "Minimum CPU frequency",
+        "name" : "Min. CPU frequency",
         "help" : f"""Minimum CPU frequency is the lowest frequency the operating system configured
                      the CPU to run at. {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
@@ -70,7 +70,7 @@ PROPS = {
         "writable" : True,
     },
     "max_freq" : {
-        "name" : "Maximum CPU frequency",
+        "name" : "Max. CPU frequency",
         "help" : """Maximum CPU frequency is the highest frequency the operating system configured
                     the CPU to run at. {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
@@ -79,7 +79,7 @@ PROPS = {
         "writable" : True,
     },
     "min_freq_limit" : {
-        "name" : "Minimum supported CPU frequency",
+        "name" : "Min. supported CPU frequency",
         "help" : """Minimum supported CPU frequency is the lowest frequency supported by the
                     operating system.""",
         "unit" : "Hz",
@@ -88,7 +88,7 @@ PROPS = {
         "writable" : False,
     },
     "max_freq_limit" : {
-        "name" : "Maximum supported CPU frequency",
+        "name" : "Max. supported CPU frequency",
         "help" : """Maximum supported CPU frequency is the maximum CPU frequency supported by the
                     operating system.""",
         "unit" : "Hz",
@@ -107,7 +107,7 @@ PROPS = {
         "writable" : False,
     },
     "min_oper_freq" : {
-        "name" : "Minimum CPU operating frequency",
+        "name" : "Min. CPU operating frequency",
         "help" : """Minimum operating frequency is the lowest possible frequency the CPU can operate
                     at. Depending on the CPU model, this frequency may or may not be directly
                     available to the operating system, but the platform may use it in certain
@@ -119,7 +119,7 @@ PROPS = {
         "writable" : False,
     },
     "max_eff_freq" : {
-        "name" : "Maximum CPU efficiency frequency",
+        "name" : "Max. CPU efficiency frequency",
         "help" : """Maximum efficiency frequency is the most energy efficient CPU frequency. This
                     frequency is also referred to as LFM (Low Frequency Mode) or Pn.""",
         "unit" : "Hz",
@@ -136,7 +136,7 @@ PROPS = {
         "writable" : True,
     },
     "max_turbo_freq" : {
-        "name" : "Maximum CPU turbo frequency",
+        "name" : "Max. CPU turbo frequency",
         "help" : """Maximum turbo frequency is the highest frequency a single CPU can operate at.
                     This frequency is also referred to as max. 1-core turbo and P01.""",
         "unit" : "Hz",
@@ -145,7 +145,7 @@ PROPS = {
         "writable" : False,
     },
     "min_uncore_freq" : {
-        "name" : "Minimum uncore frequency",
+        "name" : "Min. uncore frequency",
         "help" : f"""Minimum uncore frequency is the lowest frequency the operating system
                      configured the uncore to run at. {_UNCORE_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
@@ -154,7 +154,7 @@ PROPS = {
         "writable" : True,
     },
     "max_uncore_freq" : {
-        "name" : "Maximum uncore frequency",
+        "name" : "Max. uncore frequency",
         "help" : f"""Maximum uncore frequency is the highest frequency the operating system
                      configured the uncore to run at. {_UNCORE_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
@@ -163,7 +163,7 @@ PROPS = {
         "writable" : True,
     },
     "min_uncore_freq_limit" : {
-        "name" : "Minimum supported uncore frequency",
+        "name" : "Min. supported uncore frequency",
         "help" : """Minimum supported uncore frequency is the lowest uncore frequency supported by
                     the operating system. """,
         "unit" : "Hz",
@@ -172,7 +172,7 @@ PROPS = {
         "writable" : False,
     },
     "max_uncore_freq_limit" : {
-        "name" : "Maximum supported uncore frequency",
+        "name" : "Max. supported uncore frequency",
         "help" : """Maximum supported uncore frequency is the highest uncore frequency supported by
                     the operating system.""",
         "unit" : "Hz",

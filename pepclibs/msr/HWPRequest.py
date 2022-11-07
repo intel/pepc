@@ -24,7 +24,7 @@ MSR_HWP_REQUEST = 0x774
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
     "min_perf" : {
-        "name" : "Minimum CPU performance",
+        "name" : "Min. CPU performance",
         "sname": "CPU",
         "help" : """The minimum desired CPU performance.""",
         "cpuflags" : {"hwp"},
@@ -32,7 +32,7 @@ FEATURES = {
         "bits" : (7, 0),
     },
     "max_perf" : {
-        "name" : "Maximum CPU performance",
+        "name" : "Max. CPU performance",
         "sname": "CPU",
         "help" : """The maximum desired CPU performance.""",
         "cpuflags" : {"hwp"},
