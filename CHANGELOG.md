@@ -6,10 +6,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Add options '--min-freq-hw' and '--max-freq-hw' to 'pepc pstate info' command.
- - pepc pstates: add "Pm" special frequency value support.
 ### Removed
 ### Changed
+
+## [1.3.27] - 2022-11-07
+### Added
+ - Add options '--min-freq-hw' and '--max-freq-hw' to 'pepc pstate info' command.
+ - pepc pstates: add "Pm" special frequency value support.
 
 ## [1.3.26] - 2022-11-02
 ### Changed
