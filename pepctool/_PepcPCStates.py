@@ -25,11 +25,37 @@ class _PepcYaml():
     file.
     """
 
-    def load(self, path): # pylint: disable=no-self-use
+    def _verify_loaded_dictionary(self, info):
+        """Verify information loaded from YAML file. Raise an 'Error' if validation fails."""
+
+        if not isinstance(info, dict):
+            raise Error(f"expected dictionary, got:\n'{type(info)}'") from None
+
+        for pname, pinfos in info.items():
+            if not isinstance(pinfos, list):
+                raise Error(f"expected list type value for the key '{pname}', got:\n" \
+                            f"'{type(pinfos)}'") from None
+
+            if pname not in self.known_yaml_keys:
+                known_yaml_keys_str = ", ".join(self.known_yaml_keys)
+                raise Error(f"unknown key '{pname}', expected one of following:\n" \
+                            f"{known_yaml_keys_str}")
+
+            for pinfo in pinfos:
+                if not isinstance(pinfo, dict):
+                    raise Error(f"expected list of dictionaries for the key '{pname}', got:\n" \
+                                f"'{type(pinfo)}'") from None
+
+                for key in ("value", "cpus"):
+                    if key not in pinfo:
+                        raise Error(f"expected key '{key}' in dictionary")
+
+    def load(self, path):
         """Load YAML file, verify it and return the information as a dictionary."""
 
         try:
             state_info = YAML.load(path)
+            self._verify_loaded_dictionary(state_info)
         except Error as err:
             raise Error(f"unable to load state information from the file '{path}':\n" \
                         f"{err}") from None
@@ -43,6 +69,12 @@ class _PepcYaml():
             YAML.dump(props, path)
         except Error as err:
             raise Error(f"failed to save properties to path: '{path}'\n{err}") from None
+
+    def __init__(self, known_keys):
+        """The class constructor."""
+
+        # Known item keys in YAML file.
+        self.known_yaml_keys = known_keys
 
 class PepcPCStates(ClassHelpers.SimpleCloseContext):
     """
@@ -256,7 +288,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         self._cpuinfo = cpuinfo
 
         self.aggr_props = {}
-        self._yaml = _PepcYaml()
+        self._yaml = _PepcYaml(list(self._pcobj.props.keys()))
 
     def close(self):
         """Uninitialize the class object."""
