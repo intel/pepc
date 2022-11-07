@@ -330,12 +330,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         except OSError as err:
             raise Error(f"failed to read emulated MSR data from file '{datapath}':\n{err}") from err
 
-        sep = msrinfo["separator1"]
+        sep1 = msrinfo["separator1"]
+        sep2 = msrinfo["separator2"]
+
         for line in lines:
-            split = line.split(sep)
+            split = line.split(sep1)
 
             if len(split) != 2:
-                raise Error(f"unexpected line format in file '{datapath}', expected <path>{sep}" \
+                raise Error(f"unexpected line format in file '{datapath}', expected <path>{sep1}" \
                             f"<reg_value_pairs>, received\n{line}")
 
             path = split[0].strip()
@@ -343,11 +345,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             data = {}
             for reg_val_pair in reg_val_pairs:
-                regaddr, regval = reg_val_pair.split(msrinfo["separator2"])
+                regaddr, regval = reg_val_pair.split(sep2)
 
                 if len(split) != 2:
                     raise Error(f"unexpected register-value format in file '{datapath}', " \
-                                f"expected <path>{msrinfo['separator2']}<value>, received\n{line}")
+                                f"expected <regaddr>{sep2}<value>, received\n{line}")
 
                 regaddr = int(regaddr)
                 regval = int(regval, 16)
