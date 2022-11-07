@@ -210,6 +210,17 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         """
         self._print_props(pnames, cpus, skip_unsupported=skip_unsupported)
 
+    def save_props(self, pnames, cpus, path):
+        """
+        Read values of multiple properties for multiple CPUs, and save them to file 'path'. The
+        'pnames, and 'cpus' arguments are same as in 'print_props()'.'
+        """
+
+        pinfo_iter = self._pcobj.get_props(pnames, cpus=cpus)
+        self.aggr_props = self._build_aggregate_pinfo(pinfo_iter, sprops="all")
+        props = self._get_props_for_saving()
+        self._yaml.save(props, path)
+
     def set_and_print_props(self, props, cpus):
         """
         Set and print multiple properties 'props' for multiple CPUs 'cpus'. The arguments are as
@@ -234,6 +245,7 @@ class PepcPCStates(ClassHelpers.SimpleCloseContext):
         self._cpuinfo = cpuinfo
 
         self.aggr_props = {}
+        self._yaml = _PepcYaml()
 
     def close(self):
         """Uninitialize the class object."""
