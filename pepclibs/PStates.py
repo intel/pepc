@@ -460,13 +460,15 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_base_freq(self, cpu):
         """Read base frequency from 'MSR_PLATFORM_INFO' and return it."""
 
-        bclk = self._get_bclk(cpu)
         platinfo = self._get_platinfo()
 
-        ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
-        base = int(ratio * bclk * 1000 * 1000)
+        try:
+            ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
+        except ErrorNotSupported:
+            return None
 
-        return base
+        bclk = self._get_bclk(cpu)
+        return int(ratio * bclk * 1000 * 1000)
 
     def _get_max_eff_freq(self, cpu):
         """Read max. efficiency frequency from 'MSR_PLATFORM_INFO' and return it."""
