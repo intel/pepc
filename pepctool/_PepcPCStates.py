@@ -448,6 +448,37 @@ class PepcCStates(PepcPCStates):
             self.aggr_rcsinfo = self._build_aggregate_pinfo(csinfo_iter, sprops={"disable"})
             self._print_aggr_cstates_info()
 
+    def _restore_cstates(self, cstates):
+        """Restore requestable C-states 'csnames'."""
+
+        for csname, csinfos in cstates.items():
+            for csinfo in csinfos:
+                cpus = self._cpuinfo.normalize_cpus(csinfo["cpus"])
+                state = csinfo["value"]
+
+                try:
+                    self.handle_enable_disable_opts({state : csname}, cpus)
+                except Error as err:
+                    _LOG.warning("failed to %s %s on CPUs %s%s\n%s", state, csname, csinfo["cpus"],
+                                 self._pman.hostmsg, err)
+
+    def restore_cstate_config(self, path):
+        """Load and apply C-states configuration from YAML file 'path'."""
+
+        cstates_info = self._yaml.load(path)
+
+        cstates = {}
+        props = {}
+
+        for key, kinfos in cstates_info.items():
+            if key in self._csnames:
+                cstates[key] = kinfos
+            if key in self._pcobj.props:
+                props[key] = kinfos
+
+        self._restore_props(props)
+        self._restore_cstates(cstates)
+
     def set_and_print_cstates(self, enable_props, set_props, print_props, cpus):
         """
         Handle C-state configuration properties, arguments are as follows.
