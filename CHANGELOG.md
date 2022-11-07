@@ -8,6 +8,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Abbreviate property names from "Minimum" and "Maximum" to "Min." and "Max.".
 
 ## [1.3.27] - 2022-11-07
 ### Added
