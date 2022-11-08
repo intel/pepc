@@ -66,7 +66,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             governors = ", ".join(governors)
             raise Error(f"bad governor name '{name}', use one of: {governors}")
 
-    def _check_prop(self, pname):
+    def _validate_pname(self, pname):
         """Raise an error if a property 'pname' is not supported."""
 
         if pname not in self._props:
@@ -80,7 +80,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         def _add_prop(pname, val):
             """Add property 'pname' to the 'result' dictionary."""
 
-            self._check_prop(pname)
+            self._validate_pname(pname)
 
             prop = self._props[pname]
             if not prop["writable"]:
@@ -237,7 +237,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         """
 
         for pname in pnames:
-            self._check_prop(pname)
+            self._validate_pname(pname)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield cpu, self._get_cpu_props(pnames, cpu)
