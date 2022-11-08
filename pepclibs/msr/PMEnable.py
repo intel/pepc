@@ -29,7 +29,7 @@ FEATURES = {
                     frequency depending on the load.""",
         "cpuflags" : {"hwp",},
         "type" : "bool",
-        "vals" : { "on" : 1, "off" : 0},
+        "vals" : {"on" : 1, "off" : 0},
         "bits" : (0, 0),
     },
 }

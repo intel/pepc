@@ -57,7 +57,7 @@ FEATURES = {
                      (MSR_HWP_REQUEST_PKG).""",
         "cpuflags" : {"hwp", "hwp_pkg_req"},
         "type" : "bool",
-        "vals" : { "on" : 1, "off" : 0},
+        "vals" : {"on" : 1, "off" : 0},
         "bits" : (42, 42),
     },
     "epp_valid" : {
@@ -67,7 +67,7 @@ FEATURES = {
                      (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
         "cpuflags" : {"hwp", "hwp_epp"},
         "type" : "bool",
-        "vals" : { "on" : 1, "off" : 0},
+        "vals" : {"on" : 1, "off" : 0},
         "bits" : (60, 60),
     },
     "max_valid" : {
@@ -77,7 +77,7 @@ FEATURES = {
                      {MSR_HWP_REQUEST} (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
         "cpuflags" : {"hwp"},
         "type" : "bool",
-        "vals" : { "on" : 1, "off" : 0},
+        "vals" : {"on" : 1, "off" : 0},
         "bits" : (62, 62),
     },
     "min_valid" : {
@@ -87,7 +87,7 @@ FEATURES = {
                      {MSR_HWP_REQUEST} (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
         "cpuflags" : {"hwp"},
         "type" : "bool",
-        "vals" : { "on" : 1, "off" : 0},
+        "vals" : {"on" : 1, "off" : 0},
         "bits" : (63, 63),
     },
 }

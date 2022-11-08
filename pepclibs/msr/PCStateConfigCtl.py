@@ -140,7 +140,7 @@ FEATURES = {
                     is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
                     MSR.""",
         "type" : "bool",
-        "vals" : { "on" : 1, "off" : 0},
+        "vals" : {"on" : 1, "off" : 0},
         "bits" : (15, 15),
         "writable" : False,
     },
@@ -149,7 +149,7 @@ FEATURES = {
         "sname": "core",
         "help" : """Allow/disallow the CPU to demote C6/C7 requests to C1.""",
         "type" : "bool",
-        "vals" : { "on" : 1, "off" : 0},
+        "vals" : {"on" : 1, "off" : 0},
         "bits" : (26, 26),
     },
     "c1_undemotion" : {
@@ -158,7 +158,7 @@ FEATURES = {
         "help" : """Allow/disallow the CPU to un-demote previously demoted requests back from C1 to
                     C6/C7.""",
         "type" : "bool",
-        "vals" : { "on" : 1, "off" : 0},
+        "vals" : {"on" : 1, "off" : 0},
         "bits" : (28, 28),
     },
 }
