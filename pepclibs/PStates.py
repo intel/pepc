@@ -753,9 +753,6 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _set_turbo(self, cpu, enable):
         """Enable or disable turbo."""
 
-        if not self._is_turbo_supported(cpu):
-            raise ErrorNotSupported(f"turbo is not supported{self._pman.hostmsg}")
-
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
         driver = self._get_cpu_prop_value("driver", cpu)
@@ -764,6 +761,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         errmsg = f"failed to switch turbo {status}{self._pman.hostmsg}"
 
         if driver == "intel_pstate":
+            if self._get_cpu_prop_value("intel_pstate_mode", cpu) == "off":
+                raise ErrorNotSupported(f"{errmsg}: 'intel_pstate' driver is in 'off' mode")
+
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
             sysfs_val = int(not enable)
         elif driver == "acpi-cpufreq":
