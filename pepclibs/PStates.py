@@ -564,15 +564,15 @@ class PStates(_PCStatesBase.PCStatesBase):
         supported.
         """
 
-        if not self._is_turbo_supported(cpu):
-            return None
-
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
         driver = self._get_cpu_prop_value("driver", cpu)
 
         try:
             if driver == "intel_pstate":
+                if self._get_cpu_prop_value("intel_pstate_mode", cpu) == "off":
+                    return None
+
                 path = self._sysfs_base / "intel_pstate" / "no_turbo"
                 disabled = self._read_int(path)
                 return "off" if disabled else "on"
