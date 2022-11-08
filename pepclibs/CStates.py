@@ -567,7 +567,6 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         return module.read_cpu_feature(pname, cpu)
 
-
     def _get_cpu_prop_value_sysfs(self, prop):
         """
         This is a helper for '_get_cpu_prop_value()' which handles the properties backed by a sysfs
