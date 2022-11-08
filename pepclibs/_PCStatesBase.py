@@ -42,14 +42,19 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
     """
 
     @staticmethod
-    def _validate_bool_type_value(prop, val):
-        """Validate value 'val' of a boolean-type property 'prop'."""
+    def _normalize_bool_type_value(prop, val):
+        """
+        Normalize and validate value 'val' of a boolean-type property 'prop'. Returns the boolean
+        value corresponding to 'val'.
+        """
 
         vals = {True, False, "on", "off", "enable", "disable"}
         if val not in vals:
             name = Human.untitle(prop["name"])
             use = ", ".join([str(val1) for val1 in vals])
             raise Error(f"bad value '{val}' for {name}, use one of: {use}")
+
+        return val in {True, "on", "enable"}
 
     def _validate_governor_name(self, name):
         """Validate P-state or C-state governor name 'name'."""
@@ -77,13 +82,18 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
             self._check_prop(pname)
 
-            if not self._props[pname]["writable"]:
-                name = Human.untitle(self._props[pname]["name"])
+            prop = self._props[pname]
+            if not prop["writable"]:
+                name = Human.untitle(prop["name"])
                 raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
 
             if pname in result:
                 _LOG.warning("duplicate property '%s': dropping value '%s', keeping '%s'",
                              pname, result[pname], val)
+
+            if prop.get("type") == "bool":
+                val = self._normalize_bool_type_value(prop, val)
+
             result[pname] = val
 
         result = {}

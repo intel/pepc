@@ -1039,7 +1039,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 continue
 
             if pname == "turbo":
-                self._set_turbo(cpu, val in {True, "on", "enable"})
+                self._set_turbo(cpu, val)
             elif pname == "intel_pstate_mode":
                 self._set_intel_pstate_mode(cpu, val)
             elif "fname" in prop:
@@ -1068,9 +1068,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             if pname == "intel_pstate_mode":
                 self._validate_intel_pstate_mode(val)
-
-            if prop.get("type") == "bool":
-                self._validate_bool_type_value(prop, val)
 
             self._validate_cpus_vs_scope(prop, cpus)
 
