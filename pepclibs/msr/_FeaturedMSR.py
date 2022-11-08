@@ -65,6 +65,13 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             elif val.lower() in finfo["aliases_nocase"]:
                 val = finfo["aliases_nocase"][val.lower()]
 
+        if finfo["type"] == "bool":
+            # Treat boolean 'True' as "on", and 'False' as "off".
+            if val is True:
+                val = "on"
+            elif val is False:
+                val = "off"
+
         if val in finfo["vals"]:
             return finfo["vals"][val]
 
