@@ -42,6 +42,7 @@ _ALL_PREFETCHERS_CPUS = CPUInfo.NEHALEMS +     \
                         CPUInfo.ICELAKES +     \
                         CPUInfo.TIGERLAKES +   \
                         CPUInfo.SPRS +         \
+                        CPUInfo.EMRS +         \
                         CPUInfo.ALDERLAKES +   \
                         CPUInfo.ROCKETLAKES
 

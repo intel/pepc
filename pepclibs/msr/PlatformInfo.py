@@ -37,6 +37,7 @@ _EFREQ_CPUS = CPUInfo.GOLDMONTS +    \
               CPUInfo.ICELAKES +     \
               CPUInfo.TIGERLAKES +   \
               CPUInfo.SPRS +         \
+              CPUInfo.EMRS +         \
               CPUInfo.ALDERLAKES +   \
               CPUInfo.ROCKETLAKES
 
@@ -54,6 +55,7 @@ _MIN_OPER_RATIO_CPUS = CPUInfo.GOLDMONTS +                  \
                        CPUInfo.ICELAKES +                   \
                        CPUInfo.TIGERLAKES +                 \
                        CPUInfo.SPRS +                       \
+                       CPUInfo.EMRS +                       \
                        CPUInfo.ALDERLAKES +                 \
                        CPUInfo.ROCKETLAKES
 

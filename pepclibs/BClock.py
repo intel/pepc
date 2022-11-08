@@ -20,6 +20,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 # CPUs with 100Mhz bus clock.
 _BCLK_100MHZ = {
         # Xeons.
+        CPUInfo.INTEL_FAM6_EMERALDRAPIDS_X,
         CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X,
         CPUInfo.INTEL_FAM6_ICELAKE_X,
         CPUInfo.INTEL_FAM6_ICELAKE_D,

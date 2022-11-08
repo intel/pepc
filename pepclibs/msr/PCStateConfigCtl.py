@@ -44,7 +44,8 @@ _HSX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unl
 # Broadwell-D Xeon.
 _BDWD_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
                         "bits"    : (3, 0)}
-# Sky/Cascade/Cooper/Sapphire Rapids Lake Xeon, Skylake-D Xeon, Knights Mill/Landing Xeon Phi.
+# Sky/Cascade/Cooper/Sapphire/Emerald Rapids Lake Xeon, Skylake-D Xeon, Knights Mill/Landing Xeon
+# Phi.
 _SKX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
                        "aliases" : {"PC6": "PC6R"},
                        "bits"    : (2, 0)}
@@ -75,6 +76,7 @@ _CLIENT_PC10_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "
 # CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
         # Xeons.
+        CPUInfo.INTEL_FAM6_EMERALDRAPIDS_X:  _SKX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _SKX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_X:        _ICX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_D:        _ICX_PKG_CST_LIMITS,
