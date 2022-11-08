@@ -579,7 +579,10 @@ class CStates(_PCStatesBase.PCStatesBase):
         else:
             module = self._get_pcstatectl()
 
-        return module.read_cpu_feature(pname, cpu)
+        try:
+            return module.read_cpu_feature(pname, cpu)
+        except ErrorNotSupported:
+            return None
 
     def _get_cpu_prop_value_sysfs(self, prop):
         """
@@ -610,10 +613,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             return self._read_prop_value_from_msr("locked", cpu)
 
         if pname in {"c1_demotion", "c1_undemotion", "c1e_autopromote", "cstate_prewake"}:
-            try:
-                return self._read_prop_value_from_msr(pname, cpu)
-            except ErrorNotSupported:
-                return None
+            return self._read_prop_value_from_msr(pname, cpu)
 
         if self._pcache.is_cached(pname, cpu):
             return self._pcache.get(pname, cpu)
