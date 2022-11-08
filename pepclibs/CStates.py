@@ -574,14 +574,12 @@ class CStates(_PCStatesBase.PCStatesBase):
         """
 
         path = self._sysfs_cpuidle / prop["fname"]
-        val = None
 
         try:
-            val = self._read_prop_value_from_sysfs(prop, path)
+            return self._read_prop_value_from_sysfs(prop, path)
         except ErrorNotFound:
             _LOG.debug("can't read value of property '%s', path '%s' missing", prop["name"], path)
-
-        return val
+            return None
 
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """"Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
