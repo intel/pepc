@@ -6,6 +6,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+- Add '--save' -option to 'pepc pstates info' and 'pepc cstates info' commands.
+- Add '--restore' -option to 'pepc pstates config' and 'pepc cstates config' commands.
 ### Removed
 ### Changed
  - Abbreviate property names from "Minimum" and "Maximum" to "Min." and "Max.".
