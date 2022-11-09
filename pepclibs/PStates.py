@@ -505,17 +505,18 @@ class PStates(_PCStatesBase.PCStatesBase):
         trl = self._get_trl()
         ratio = None
 
-        if trl.is_cpu_feature_supported("max_1c_turbo_ratio", cpu):
+        try:
             ratio = trl.read_cpu_feature("max_1c_turbo_ratio", cpu)
-        elif trl.is_cpu_feature_supported("max_g0_turbo_ratio", cpu):
-            # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores. We
-            # can safely assume that group 0 will correspond to max. 1-core turbo, so we do not need
-            # to look at 'MSR_TURBO_RATIO_LIMIT1'.
-            ratio = trl.read_cpu_feature("max_g0_turbo_ratio", cpu)
-        else:
-            _LOG.warn_once("CPU %d: module 'TurboRatioLimit' doesn't support "
-                           "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
-                           "maintainers.", cpu, self._cpuinfo.cpudescr, self._pman.hostmsg)
+        except ErrorNotSupported:
+            try:
+                # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores.
+                # We can safely assume that group 0 will correspond to max. 1-core turbo, so we do
+                # not need to look at 'MSR_TURBO_RATIO_LIMIT1'.
+                ratio = trl.read_cpu_feature("max_g0_turbo_ratio", cpu)
+            except ErrorNotSupported:
+                _LOG.warn_once("CPU %d: module 'TurboRatioLimit' doesn't support "
+                               "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
+                               "maintainers.", cpu, self._cpuinfo.cpudescr, self._pman.hostmsg)
 
         max_turbo_freq = None
         if ratio is not None:
