@@ -189,17 +189,12 @@ class EPP(ClassHelpers.SimpleCloseContext):
     def _get_cpu_epp(self, cpu, not_supported_ok=False):
         """Implements 'get_cpu_epp()'."""
 
-        try:
-            # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
-            hwpreq = self._get_hwpreq()
-            # Note, some Broadwell architecture-based platforms support EPP, but do not support
-            # package control. Therefore, the "is_cpu_feature_supported()" check.
-            pkg_control = hwpreq.is_cpu_feature_supported("pkg_control", cpu) and \
-                          hwpreq.is_cpu_feature_enabled("pkg_control", cpu)
-            epp_valid = hwpreq.is_cpu_feature_enabled("epp_valid", cpu)
-            if pkg_control and not epp_valid:
-                hwpreq = self._get_hwpreq_pkg()
+        # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
+        hwpreq = self._get_hwpreq()
+        if hwpreq.is_cpu_feature_pkg_controlled("epp", cpu):
+            hwpreq = self._get_hwpreq_pkg()
 
+        try:
             return hwpreq.read_cpu_feature("epp", cpu)
         except ErrorNotSupported as err:
             if not_supported_ok:
