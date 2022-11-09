@@ -14,6 +14,7 @@ Intel platforms.
 
 import logging
 from pepclibs.msr import _FeaturedMSR, PMEnable
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 _LOG = logging.getLogger()
 
@@ -97,6 +98,28 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
     This class provides API to MSR 0x774 (MSR_HWP_REQUEST). This is an architectural MSR found on
     many Intel platforms.
     """
+
+    def is_cpu_feature_pkg_controlled(self, fname, cpu):
+        """
+        Returns 'True' if an HWP feature is controlled by 'MSR_HWP_REQUEST_PKG' or 'False' if it is
+        controlled by 'MSR_HWP_REQUEST'. The arguments are as follows.
+         * fname - name of the 'MSR_HWP_REQUEST' feature to check.
+         * cpu - CPU number to check the feature for.
+        """
+
+        try:
+            pkg_control = self.is_cpu_feature_enabled("pkg_control", cpu)
+        except ErrorNotSupported:
+            # If package control is not supported, 'fname' is controlled on a per-CPU basis.
+            return False
+
+        if pkg_control:
+            # Even if package control is enabled, it can be overridden by the 'fname' "valid" bit.
+            valid = self.is_cpu_feature_enabled(f"{fname}_valid", cpu)
+            if not valid:
+                return True
+
+        return False
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
