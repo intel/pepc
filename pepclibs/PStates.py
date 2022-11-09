@@ -470,12 +470,13 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         platinfo = self._get_platinfo()
 
-        if platinfo.is_cpu_feature_supported("max_eff_ratio", cpu):
+        try:
             ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
-            bclk = self._get_bclk(cpu)
-            return int(ratio * bclk * 1000 * 1000)
+        except ErrorNotSupported:
+            return None
 
-        return None
+        bclk = self._get_bclk(cpu)
+        return int(ratio * bclk * 1000 * 1000)
 
     def _get_min_oper_freq(self, cpu):
         """Read the minimum operating frequency from 'MSR_PLATFORM_INFO' and return it."""
