@@ -15,7 +15,7 @@ This module provides a capability for discovering bus clock speed (FSB speed) on
 
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 # CPUs with 100Mhz bus clock.
 _BCLK_100MHZ = {
@@ -99,9 +99,9 @@ def get_bclk(pman, cpu=0, cpuinfo=None, msr=None):
             from pepclibs.msr import FSBFreq # pylint: disable=import-outside-toplevel
 
             fsbfreq = FSBFreq.FSBFreq(pman=pman, cpuinfo=cpuinfo, msr=msr)
-            if fsbfreq.is_cpu_feature_supported("fsb", cpu):
+            try:
                 bclk = fsbfreq.read_cpu_feature("fsb", cpu)
-            else:
+            except ErrorNotSupported:
                 # Fall back to 133.33 clock speed.
                 bclk = 133.33
     finally:
