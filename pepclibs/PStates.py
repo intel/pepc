@@ -665,17 +665,12 @@ class PStates(_PCStatesBase.PCStatesBase):
         prefix = pname[0:3]
         # The corresponding 'MSR_HWP_REQUEST' feature name.
         fname = f"{prefix}_perf"
+
         hwpreq = self._get_hwpreq()
+        if hwpreq.is_cpu_feature_pkg_controlled(fname, cpu):
+            hwpreq = self._get_hwpreq_pkg()
 
         try:
-            # Note, some Broadwell architecture-based platforms support min/max. performance, but do
-            # not support package control. Therefore, the "is_cpu_feature_supported()" check.
-            pkg_control = hwpreq.is_cpu_feature_supported("pkg_control", cpu) and \
-                          hwpreq.is_cpu_feature_enabled("pkg_control", cpu)
-            valid = hwpreq.is_cpu_feature_enabled(f"{fname}_valid", cpu)
-            if pkg_control and not valid:
-                hwpreq = self._get_hwpreq_pkg()
-
             perf = hwpreq.read_cpu_feature(fname, cpu)
         except ErrorNotSupported:
             _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, prefix)
