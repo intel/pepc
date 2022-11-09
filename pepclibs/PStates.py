@@ -590,9 +590,12 @@ class PStates(_PCStatesBase.PCStatesBase):
         """
 
         pmenable = self._get_pmenable()
-        if not pmenable.is_cpu_feature_supported("hwp", cpu):
+        try:
+            enabled = pmenable.is_cpu_feature_enabled("hwp", cpu)
+        except ErrorNotSupported:
             return None
-        return "on" if pmenable.is_cpu_feature_enabled("hwp", cpu) else "off"
+
+        return "on" if enabled else "off"
 
     def _get_sysfs_path(self, prop, cpu):
         """
