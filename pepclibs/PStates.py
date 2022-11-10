@@ -112,8 +112,8 @@ PROPS = {
         "help" : """Minimum operating frequency is the lowest possible frequency the CPU can operate
                     at. Depending on the CPU model, this frequency may or may not be directly
                     available to the operating system, but the platform may use it in certain
-                    situations (e.g., in some C-states). This frequency is also referred to as
-                    Pm.""",
+                    situations (e.g., in some C-states). This frequency is also referred to as Pm.
+                    Min. operating frequency is acquired from an MSR register, bypassing the OS.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
