@@ -53,7 +53,7 @@ PROPS = {
     },
     "max_freq" : {
         "name" : "Max. CPU frequency",
-        "help" : """Maximum CPU frequency is the highest frequency the operating system configured
+        "help" : f"""Maximum CPU frequency is the highest frequency the operating system configured
                     the CPU to run at. {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
