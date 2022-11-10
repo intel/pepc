@@ -45,7 +45,7 @@ PROPS = {
     "min_freq" : {
         "name" : "Min. CPU frequency",
         "help" : f"""Minimum CPU frequency is the lowest frequency the operating system configured
-                     the CPU to run at. {_CPU_FREQ_VALS_HELP}.""",
+                     the CPU to run at (via sysfs knobs). {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -54,7 +54,7 @@ PROPS = {
     "max_freq" : {
         "name" : "Max. CPU frequency",
         "help" : f"""Maximum CPU frequency is the highest frequency the operating system configured
-                    the CPU to run at. {_CPU_FREQ_VALS_HELP}.""",
+                    the CPU to run at (via sysfs knobs). {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -63,7 +63,7 @@ PROPS = {
     "min_freq_limit" : {
         "name" : "Min. supported CPU frequency",
         "help" : """Minimum supported CPU frequency is the lowest frequency supported by the
-                    operating system.""",
+                    operating system (reported via sysfs knobs).""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -72,7 +72,7 @@ PROPS = {
     "max_freq_limit" : {
         "name" : "Max. supported CPU frequency",
         "help" : """Maximum supported CPU frequency is the maximum CPU frequency supported by the
-                    operating system.""",
+                    operating system (reported via sysfs knobs).""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
