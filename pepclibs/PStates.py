@@ -132,7 +132,8 @@ PROPS = {
     "turbo" : {
         "name" : "Turbo",
         "help" : """When turbo is enabled, the CPUs can automatically run at a frequency greater
-                    than base frequency.""",
+                    than base frequency. Turbo on/off status is acquired and modified via sysfs
+                    knobs.""",
         "type" : "bool",
         "sname": "global",
         "writable" : True,
