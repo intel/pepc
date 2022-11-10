@@ -91,7 +91,7 @@ PROPS = {
     },
     "min_freq_hw" : {
         "name" : "Min. CPU frequency (OS bypass)",
-        "help" : """Minimum frequency that the CPU is configured by the OS to run at. This value is
+        "help" : """Minimum frequency the CPU is configured by the OS to run at. This value is
                     read directly from the MSR(s), bypassing the OS.""",
         "unit" : "Hz",
         "type" : "int",
@@ -100,7 +100,7 @@ PROPS = {
     },
     "max_freq_hw" : {
         "name" : "Max. CPU frequency (OS bypass)",
-        "help" : """Maximum frequency that the CPU is configured by the OS to run at. This value is
+        "help" : """Maximum frequency the CPU is configured by the OS to run at. This value is
                     read directly from the MSR(s), bypassing the OS.""",
         "unit" : "Hz",
         "type" : "int",
