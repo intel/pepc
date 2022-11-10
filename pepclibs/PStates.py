@@ -678,9 +678,12 @@ class PStates(_PCStatesBase.PCStatesBase):
         return None
 
     def _get_cpu_freq_hw(self, pname, cpu):
-        """Returns the CPU frequency read through MSR."""
+        """Reads and returns the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
 
+        # The "min" or "max" property name prefix.
         prefix = pname[0:3]
+        # The corresponding 'MSR_HWP_REQUEST' feature name.
+        fname = f"{prefix}_perf"
         hwpreq = self._get_hwpreq()
 
         try:
@@ -688,11 +691,11 @@ class PStates(_PCStatesBase.PCStatesBase):
             # not support package control. Therefore, the "is_cpu_feature_supported()" check.
             pkg_control = hwpreq.is_cpu_feature_supported("pkg_control", cpu) and \
                           hwpreq.is_cpu_feature_enabled("pkg_control", cpu)
-            valid = hwpreq.is_cpu_feature_enabled(f"{prefix}_valid", cpu)
+            valid = hwpreq.is_cpu_feature_enabled(f"{fname}_valid", cpu)
             if pkg_control and not valid:
                 hwpreq = self._get_hwpreq_pkg()
 
-            perf = hwpreq.read_cpu_feature(f"{prefix}_perf", cpu)
+            perf = hwpreq.read_cpu_feature(fname, cpu)
         except ErrorNotSupported:
             _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, prefix)
             return None
@@ -791,16 +794,19 @@ class PStates(_PCStatesBase.PCStatesBase):
         Write frequency value 'freq' of a CPU frequency property 'pname' to the corresponding MSR.
         """
 
+        # The "min" or "max" property name prefix.
         prefix = pname[0:3]
+        # The corresponding 'MSR_HWP_REQUEST' feature name.
+        fname = f"{prefix}_perf"
         prop = self._props[pname]
 
         hwpreq = self._get_hwpreq()
         if hwpreq.is_cpu_feature_supported("pkg_control", cpu) and \
             hwpreq.is_cpu_feature_enabled("pkg_control", cpu):
             # Override package control by setting the "min/max valid" bit.
-            hwpreq.write_cpu_feature(f"{prefix}_valid", "on", cpu)
+            hwpreq.write_cpu_feature(f"{fname}_valid", "on", cpu)
 
-        hwpreq.write_cpu_feature(f"{prefix}_perf", int(freq // 100000000), cpu)
+        hwpreq.write_cpu_feature(f"fname", int(freq // 100000000), cpu)
         self._pcache.add(pname, cpu, freq, sname=prop["sname"])
 
     def _write_freq_prop_value_to_sysfs(self, pname, freq, cpu):

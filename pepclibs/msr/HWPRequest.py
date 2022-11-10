@@ -70,7 +70,7 @@ FEATURES = {
         "vals" : {"on" : 1, "off" : 0},
         "bits" : (60, 60),
     },
-    "max_valid" : {
+    "max_perf_valid" : {
         "name" : "Max. performance is controlled by MSR_HWP_REQUEST",
         "sname": "CPU",
         "help" : f"""When set, the CPU reads the Maximum performance value from per-CPU MSR
@@ -80,7 +80,7 @@ FEATURES = {
         "vals" : {"on" : 1, "off" : 0},
         "bits" : (62, 62),
     },
-    "min_valid" : {
+    "min_perf_valid" : {
         "name" : "Min. performance is controlled by MSR_HWP_REQUEST",
         "sname": "CPU",
         "help" : f"""When set, the CPU reads the Minimum performance value from per-CPU MSR
