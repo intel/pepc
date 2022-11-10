@@ -122,7 +122,8 @@ PROPS = {
     "max_eff_freq" : {
         "name" : "Max. CPU efficiency frequency",
         "help" : """Maximum efficiency frequency is the most energy efficient CPU frequency. This
-                    frequency is also referred to as LFM (Low Frequency Mode) or Pn.""",
+                    frequency is also referred to as LFM (Low Frequency Mode) or Pn. Max. efficiency
+                    frequency is acquired from an MSR register, bypassing the OS.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
