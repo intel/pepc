@@ -42,24 +42,6 @@ _UNCORE_FREQ_VALS_HELP = """The default unit is "Hz", but "kHz", "MHz", and "GHz
 # complete. This dictionary is extended by 'PStates' objects. Use the full dictionary via
 # 'PStates.props'.
 PROPS = {
-    "min_freq_hw" : {
-        "name" : "Min. CPU frequency (OS bypass)",
-        "help" : """Minimum frequency that the CPU is configured by the OS to run at. This value is
-                    read directly from the MSR(s), bypassing the OS.""",
-        "unit" : "Hz",
-        "type" : "int",
-        "sname": "CPU",
-        "writable" : True,
-    },
-    "max_freq_hw" : {
-        "name" : "Max. CPU frequency (OS bypass)",
-        "help" : """Maximum frequency that the CPU is configured by the OS to run at. This value is
-                    read directly from the MSR(s), bypassing the OS.""",
-        "unit" : "Hz",
-        "type" : "int",
-        "sname": "CPU",
-        "writable" : True,
-    },
     "min_freq" : {
         "name" : "Min. CPU frequency",
         "help" : f"""Minimum CPU frequency is the lowest frequency the operating system configured
@@ -105,6 +87,24 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
+    },
+    "min_freq_hw" : {
+        "name" : "Min. CPU frequency (OS bypass)",
+        "help" : """Minimum frequency that the CPU is configured by the OS to run at. This value is
+                    read directly from the MSR(s), bypassing the OS.""",
+        "unit" : "Hz",
+        "type" : "int",
+        "sname": "CPU",
+        "writable" : True,
+    },
+    "max_freq_hw" : {
+        "name" : "Max. CPU frequency (OS bypass)",
+        "help" : """Maximum frequency that the CPU is configured by the OS to run at. This value is
+                    read directly from the MSR(s), bypassing the OS.""",
+        "unit" : "Hz",
+        "type" : "int",
+        "sname": "CPU",
+        "writable" : True,
     },
     "min_oper_freq" : {
         "name" : "Min. CPU operating frequency",
