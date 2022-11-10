@@ -531,24 +531,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return max_turbo_freq
 
-    def _is_turbo_supported(self, cpu):
-        """Returns 'True' if turbo is supported and 'False' otherwise."""
-
-        if self._get_cpu_prop_value("intel_pstate_mode", cpu) == "off":
-            return False
-
-        base_freq = self._get_cpu_prop_value("base_freq", cpu)
-        max_turbo_freq = self._get_cpu_prop_value("max_turbo_freq", cpu)
-
-        # Just a sanity check.
-        if max_turbo_freq < base_freq:
-            max_turbo_freq = Human.largenum(max_turbo_freq, unit="Hz")
-            base_freq = Human.largenum(base_freq, unit="Hz")
-            _LOG.warning("something is not right: max. turbo frequency %s is lower than base "
-                         "frequency %s%s", max_turbo_freq, base_freq, self._pman.hostmsg)
-
-        return max_turbo_freq is not None or max_turbo_freq > base_freq
-
     def _read_int(self, path):
         """Read an integer from file 'path' via the process manager."""
 
