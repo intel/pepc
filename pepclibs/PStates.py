@@ -81,8 +81,9 @@ PROPS = {
     "base_freq" : {
         "name" : "Base CPU frequency",
         "help" : """Base CPU frequency is the highest sustainable CPU frequency. This frequency is
-                    also referred to as \"guaranteed frequency\", HFM (High Frequency Mode), or
-                    P1.""",
+                    also referred to as \"guaranteed frequency\", HFM (High Frequency Mode), or P1.
+                    The base frequency is acquired from a sysfs file of from an MSR register, if
+                    the sysfs file does not exist.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
