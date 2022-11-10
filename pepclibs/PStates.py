@@ -789,10 +789,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return what
 
-    def _write_freq_prop_value_to_msr(self, pname, freq, cpu):
-        """
-        Write frequency value 'freq' of a CPU frequency property 'pname' to the corresponding MSR.
-        """
+    def _set_cpu_freq_hw(self, pname, freq, cpu):
+        """Set the minimum or maximum CPU frequency by programming 'MSR_HWP_REQUEST'."""
 
         # The "min" or "max" property name prefix.
         prefix = pname[0:3]
@@ -926,7 +924,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             max_freq_key = "max_freq_hw"
             min_freq_limit_key = "min_oper_freq"
             max_freq_limit_key = "max_turbo_freq"
-            write_func = self._write_freq_prop_value_to_msr
+            write_func = self._set_cpu_freq_hw
         else:
             uncore = True
             min_freq_key = "min_uncore_freq"
