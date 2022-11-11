@@ -12,7 +12,7 @@ Misc. helpers shared between various 'pepc' commands.
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
-from pepclibs.helperlibs import Systemctl, Trivial, Human
+from pepclibs.helperlibs import Systemctl, Trivial
 
 _LOG = logging.getLogger()
 
@@ -56,56 +56,3 @@ def get_cpus(args, cpuinfo, default_cpus="all"):
         cpus = cpuinfo.normalize_cpus(default_cpus)
 
     return Trivial.list_dedup(cpus)
-
-def fmt_cpus(cpus, cpuinfo):
-    """Formats and returns a string describing CPU numbers in the 'cpus' list."""
-
-    cpus_range = Human.rangify(cpus)
-    if len(cpus) == 1:
-        msg = f"CPU {cpus_range}"
-    else:
-        msg = f"CPUs {cpus_range}"
-
-    allcpus = cpuinfo.get_cpus()
-    if set(cpus) == set(allcpus):
-        msg += " (all CPUs)"
-    else:
-        pkgs, rem_cpus = cpuinfo.cpus_div_packages(cpus)
-        if pkgs and not rem_cpus:
-            # CPUs in 'cpus' are actually the packages in 'pkgs'.
-            pkgs_range = Human.rangify(pkgs)
-            if len(pkgs) == 1:
-                msg += f" (package {pkgs_range})"
-            else:
-                msg += f" (packages {pkgs_range})"
-
-    return msg
-
-def print_val_msg(val, cpuinfo, name=None, cpus=None, prefix=None, suffix=None):
-    """Format and print a message about 'name' and its value 'val'."""
-
-    if cpus is None:
-        sfx = ""
-    else:
-        cpus = fmt_cpus(cpus, cpuinfo)
-        sfx = f" for {cpus}"
-
-    if suffix is not None:
-        sfx = sfx + suffix
-
-    if name is not None:
-        pfx = f"{name}: "
-    else:
-        pfx = ""
-
-    msg = pfx
-    if prefix is not None:
-        msg = prefix + msg
-
-    if val is None:
-        val = "not supported"
-    elif cpus is not None:
-        val = f"'{val}'"
-
-    msg += f"{val}{sfx}"
-    _LOG.info(msg)

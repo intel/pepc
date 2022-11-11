@@ -11,17 +11,50 @@ This module includes the "cstates" 'pepc' command implementation.
 """
 
 import logging
+import contextlib
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
 from pepclibs import CStates, CPUInfo
-from pepctool import _PepcCommon, _PepcPCStates
+from pepctool import _PepcCommon, _PepcPrinter, _PepcSetter
 
 _LOG = logging.getLogger()
+
+def cstates_info_command(args, pman):
+    """Implements the 'cstates info' command."""
+
+    # Options to print.
+    pnames = []
+
+    for optname in CStates.PROPS:
+        if getattr(args, f"{optname}"):
+            pnames.append(optname)
+
+    # The output format to use.
+    fmt = "yaml" if args.yaml else "human"
+
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj, \
+         _PepcPrinter.CStatesPrinter(csobj, cpuinfo, fmt=fmt) as csprint:
+        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
+
+        skip_unsupported = False
+        if not pnames and args.csnames == "default":
+            pnames = "all"
+            # When printing all the options, skip the unsupported ones as they add clutter.
+            skip_unsupported = True
+
+        if args.csnames != "default":
+            csprint.print_cstates(csnames=args.csnames, cpus=cpus)
+        elif pnames:
+            csprint.print_cstates(csnames="all", cpus=cpus)
+
+        if pnames:
+            csprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=skip_unsupported)
 
 def cstates_config_command(args, pman):
     """Implements the 'cstates config' command."""
 
-    if not hasattr(args, "oargs") and not getattr(args, "restore"):
+    if not hasattr(args, "oargs"):
         raise Error("please, provide a configuration option")
 
     # The '--enable' and '--disable' options.
@@ -43,41 +76,102 @@ def cstates_config_command(args, pman):
     if enable_opts or set_opts:
         _PepcCommon.check_tuned_presence(pman)
 
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         MSR.MSR(pman=pman, cpuinfo=cpuinfo) as msr, \
-         CStates.CStates(pman=pman, cpuinfo=cpuinfo, msr=msr) as csobj, \
-         _PepcPCStates.PepcCStates(pman, csobj, cpuinfo, msr=msr) as cstates:
+    with contextlib.ExitStack() as stack:
+        cpuinfo = CPUInfo.CPUInfo(pman=pman)
+        stack.enter_context(cpuinfo)
+
+        msr = MSR.MSR(pman, cpuinfo=cpuinfo)
+        stack.enter_context(msr)
+
+        csobj = CStates.CStates(pman=pman, msr=None, cpuinfo=cpuinfo)
+        stack.enter_context(csobj)
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        if args.restore:
-            cstates.restore_cstate_config(args.restore)
-        else:
-            cstates.set_and_print_cstates(enable_opts, set_opts, print_opts, cpus)
+        csprint =  _PepcPrinter.CStatesPrinter(csobj, cpuinfo)
+        stack.enter_context(csprint)
 
-def cstates_info_command(args, pman):
-    """Implements the 'cstates info' command."""
+        all_cstates_printed = False
+        for optname in list(enable_opts):
+            if not enable_opts[optname]:
+                # Handle the special case of '--enable' and '--disable' option without arguments. In
+                # this case we just print the C-states enable/disable status.
+                if not all_cstates_printed:
+                    csprint.print_cstates(csnames="all", cpus=cpus)
+                    all_cstates_printed = True
+                del enable_opts[optname]
 
-    # Options to print.
-    print_opts = []
+        if print_opts:
+            csprint.print_props(pnames=print_opts, cpus=cpus, skip_unsupported=False)
 
-    for optname in CStates.PROPS:
-        if getattr(args, f"{optname}"):
-            print_opts.append(optname)
+        if set_opts or enable_opts:
+            csset = _PepcSetter.CStatesSetter(csobj, cpuinfo, csprint, msr=msr)
+            stack.enter_context(csset)
 
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj, \
-         _PepcPCStates.PepcCStates(pman, csobj, cpuinfo) as cstates:
+        if enable_opts:
+            for optname, optval in enable_opts.items():
+                enable = optname == "enable"
+                csset.set_cstates(csnames=optval, cpus=cpus, enable=enable)
+
+        if set_opts:
+            csset.set_props(set_opts, cpus=cpus)
+
+def cstates_save_command(args, pman):
+    """Implements the 'cstates save' command."""
+
+    with contextlib.ExitStack() as stack:
+        cpuinfo = CPUInfo.CPUInfo(pman=pman)
+        stack.enter_context(cpuinfo)
+
+        csobj = CStates.CStates(pman=pman, cpuinfo=cpuinfo)
+        stack.enter_context(csobj)
+
+        fobj = None
+        if args.outfile:
+            try:
+                # pylint: disable=consider-using-with
+                fobj = open(args.outfile, "w", encoding="utf-8")
+            except OSError as err:
+                raise Error(f"failed to open file '{args.outfile}':\n  {err}") from None
+
+            stack.enter_context(fobj)
+
+        csprint = _PepcPrinter.CStatesPrinter(csobj, cpuinfo, fobj=fobj, fmt="yaml")
+        stack.enter_context(csprint)
+
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        #
-        # Print platform configuration info.
-        #
-        csnames = []
-        if args.csnames != "default":
-            csnames = args.csnames
-        if not print_opts and args.csnames == "default":
-            csnames = "all"
-            print_opts = csobj.props
+        csprint.print_cstates(csnames="all", cpus=cpus, skip_ro=True)
 
-        cstates.print_or_save_cstates(csnames, print_opts, cpus, path=args.save)
+        # We'll only include writable properties.
+        pnames = []
+        for pname, pinfo in csobj.props.items():
+            if pinfo["writable"]:
+                pnames.append(pname)
+
+        csprint.print_props(pnames=pnames, cpus=cpus, skip_ro=True, skip_unsupported=True)
+
+def cstates_restore_command(args, pman):
+    """Implements the 'cstates restore' command."""
+
+    if not args.infile:
+        raise Error("please, specify the file to restore from (use '-' to restore from standard "
+                    "input)")
+
+    with contextlib.ExitStack() as stack:
+        cpuinfo = CPUInfo.CPUInfo(pman=pman)
+        stack.enter_context(cpuinfo)
+
+        msr = MSR.MSR(pman, cpuinfo=cpuinfo)
+        stack.enter_context(msr)
+
+        csobj = CStates.CStates(pman=pman, msr=None, cpuinfo=cpuinfo)
+        stack.enter_context(csobj)
+
+        csprint =  _PepcPrinter.CStatesPrinter(csobj, cpuinfo)
+        stack.enter_context(csprint)
+
+        csset = _PepcSetter.CStatesSetter(csobj, cpuinfo, csprint, msr=msr)
+        stack.enter_context(csset)
+
+        csset.restore(args.infile)

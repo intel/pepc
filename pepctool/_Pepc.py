@@ -175,9 +175,8 @@ def build_arguments_parser():
     text = f"""List of packages to get information about. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
-    text = """Instead of printing the C-states information, save it to a file in YAML format. The
-              file can used to restore the settings with option '--restore'."""
-    subpars2.add_argument("--save", help=text, metavar="PATH")
+    text = """Print information in YAML format."""
+    subpars2.add_argument("--yaml", action="store_true", help=text)
 
     text = f"""Comma-separated list of C-states to get information about (all C-states by default).
                {cst_list_text}."""
@@ -195,6 +194,7 @@ def build_arguments_parser():
         text += f"""{name}. {pinfo["help"]} This option has {pinfo["sname"]} scope."""
 
         subpars2.add_argument(option, action="store_true", help=text)
+
     #
     # Create parser for the 'cstates config' command.
     #
@@ -212,9 +212,6 @@ def build_arguments_parser():
 
     text = f"""List of packages to configure. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
-
-    text = """Path to the file to restore C-state configuration from."""
-    subpars2.add_argument("--restore", help=text, metavar="PATH")
 
     text = f"""Comma-separated list of C-states to enable. {cst_list_text}."""
     subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
@@ -249,6 +246,40 @@ def build_arguments_parser():
         subpars2.add_argument(option, **kwargs)
 
     #
+    # Create parser for the 'cstates save' command.
+    #
+    text = "Save C-states settings."
+    descr = f"""Save all the modifiable C-state settings into a file. This file can later be used
+                for restoring C-state settings with the '{_OWN_NAME} cstates restore' command."""
+    subpars2 = subparsers2.add_parser("save", help=text, description=descr)
+    subpars2.set_defaults(func=cstates_save_command)
+
+    text = f"""List of CPUs to save C-state information about. {cpu_list_dflt_txt}."""
+    subpars2.add_argument("--cpus", help=text)
+
+    text = f"""List of cores to save C-state information about. {core_list_txt}."""
+    subpars2.add_argument("--cores", help=text)
+
+    text = f"""List of packages to save C-state information about. {pkg_list_txt}."""
+    subpars2.add_argument("--packages", help=text)
+
+    text = "Name of the file to save the settings to."
+    subpars2.add_argument("-o", "--outfile", help=text)
+
+    #
+    # Create parser for the 'cstates restore' command.
+    #
+    text = "Restore C-states settings."
+    descr = f"""Restore C-state settings from a file previously created with the
+               '{_OWN_NAME} cstates save' command."""
+    subpars2 = subparsers2.add_parser("restore", help=text, description=descr)
+    subpars2.set_defaults(func=cstates_restore_command)
+
+    text = """Name of the file restore the settings from (use "-" to read from the standard
+              output."""
+    subpars2.add_argument("-f", "--from", dest="infile", help=text)
+
+    #
     # Create parser for the 'pstates' command.
     #
     text = "P-state commands."
@@ -275,9 +306,8 @@ def build_arguments_parser():
     text = f"""List of packages to get information about. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
-    text = """Instead of printing the P-states information, save it to a file in YAML format. The
-              file can used to restore the settings with option '--restore'."""
-    subpars2.add_argument("--save", help=text, metavar="PATH")
+    text = """Print information in YAML format."""
+    subpars2.add_argument("--yaml", action="store_true", help=text)
 
     for name, pinfo in PStates.PROPS.items():
         if pinfo["type"] == "bool":
@@ -310,9 +340,6 @@ def build_arguments_parser():
     text = f"""List of packages to configure P-States on. {pkg_list_txt}."""
     subpars2.add_argument("--packages", help=text)
 
-    text = """Path to the file to restore P-state configuration from."""
-    subpars2.add_argument("--restore", help=text, metavar="PATH")
-
     for name, pinfo in PStates.PROPS.items():
         if not pinfo.get("writable"):
             continue
@@ -337,6 +364,40 @@ def build_arguments_parser():
         kwargs["help"] = text
         kwargs["action"] = ArgParse.OrderedArg
         subpars2.add_argument(option, **kwargs)
+
+    #
+    # Create parser for the 'pstates save' command.
+    #
+    text = "Save P-states settings."
+    descr = f"""Save all the modifiable P-state settings into a file. This file can later be used
+                for restoring P-state settings with the '{_OWN_NAME} pstates restore' command."""
+    subpars2 = subparsers2.add_parser("save", help=text, description=descr)
+    subpars2.set_defaults(func=pstates_save_command)
+
+    text = f"""List of CPUs to save P-state information about. {cpu_list_dflt_txt}."""
+    subpars2.add_argument("--cpus", help=text)
+
+    text = f"""List of cores to save P-state information about. {core_list_txt}."""
+    subpars2.add_argument("--cores", help=text)
+
+    text = f"""List of packages to save P-state information about. {pkg_list_txt}."""
+    subpars2.add_argument("--packages", help=text)
+
+    text = "Name of the file to save the settings to (printed to standard output by default)."
+    subpars2.add_argument("-o", "--outfile", help=text, default="-")
+
+    #
+    # Create parser for the 'pstates restore' command.
+    #
+    text = "Restore P-states settings."
+    descr = f"""Restore P-state settings from a file previously created with the
+               '{_OWN_NAME} pstates save' command."""
+    subpars2 = subparsers2.add_parser("restore", help=text, description=descr)
+    subpars2.set_defaults(func=pstates_restore_command)
+
+    text = """Name of the file restore the settings from (use "-" to read from the standard
+              output."""
+    subpars2.add_argument("-f", "--from", dest="infile", help=text)
 
     #
     # Create parser for the 'aspm' command.
@@ -409,6 +470,20 @@ def cstates_config_command(args, pman):
 
     _PepcCStates.cstates_config_command(args, pman)
 
+def cstates_save_command(args, pman):
+    """Implements the 'cstates save' command."""
+
+    from pepctool import _PepcCStates
+
+    _PepcCStates.cstates_save_command(args, pman)
+
+def cstates_restore_command(args, pman):
+    """Implements the 'cstates restore' command."""
+
+    from pepctool import _PepcCStates
+
+    _PepcCStates.cstates_restore_command(args, pman)
+
 def pstates_info_command(args, pman):
     """Implements the 'pstates info' command."""
 
@@ -417,11 +492,25 @@ def pstates_info_command(args, pman):
     _PepcPStates.pstates_info_command(args, pman)
 
 def pstates_config_command(args, pman):
-    """Implements the 'pstates info' command."""
+    """Implements the 'pstates config' command."""
 
     from pepctool import _PepcPStates
 
     _PepcPStates.pstates_config_command(args, pman)
+
+def pstates_save_command(args, pman):
+    """Implements the 'pstates save' command."""
+
+    from pepctool import _PepcPStates
+
+    _PepcPStates.pstates_save_command(args, pman)
+
+def pstates_restore_command(args, pman):
+    """Implements the 'pstates restore' command."""
+
+    from pepctool import _PepcPStates
+
+    _PepcPStates.pstates_restore_command(args, pman)
 
 def aspm_info_command(args, pman):
     """Implements the 'aspm info'. command"""
