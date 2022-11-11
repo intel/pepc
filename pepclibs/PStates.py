@@ -768,8 +768,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             path = self._sysfs_base / "cpufreq" / "boost"
             self._write_prop_value_to_sysfs(self._props["turbo"], path, int(enable))
         else:
-            raise Error(f"failed to switch turbo {status}{self._pman.hostmsg}: unsupported CPU "
-                        f"frequency driver '{driver}'")
+            raise ErrorNotSupported(f"failed to switch turbo {status}{self._pman.hostmsg}: "
+                                    f"unsupported CPU frequency driver '{driver}'")
 
         self._pcache.add("turbo", cpu, status, sname=self._props["turbo"]["sname"])
 
