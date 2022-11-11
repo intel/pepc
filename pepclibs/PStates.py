@@ -788,7 +788,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             # Override package control by setting the "min/max valid" bit.
             hwpreq.write_cpu_feature(f"{fname}_valid", "on", cpu)
 
-        hwpreq.write_cpu_feature(f"fname", int(freq // 100000000), cpu)
+        hwpreq.write_cpu_feature(fname, int(freq // 100000000), cpu)
         self._pcache.add(pname, cpu, freq, sname=prop["sname"])
 
     def _write_freq_prop_value_to_sysfs(self, pname, freq, cpu):
