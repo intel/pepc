@@ -42,9 +42,9 @@ _ALL_PREFETCHERS_CPUS = CPUInfo.NEHALEMS +     \
                         CPUInfo.ICELAKES +     \
                         CPUInfo.TIGERLAKES +   \
                         CPUInfo.SPRS +         \
-                        CPUInfo.EMRS +         \
                         CPUInfo.ALDERLAKES +   \
-                        CPUInfo.ROCKETLAKES
+                        CPUInfo.ROCKETLAKES +  \
+                        CPUInfo.EMRS
 
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
