@@ -219,9 +219,9 @@ COMMAND *'pepc* cstates info'
 =============================
 
 usage: pepc cstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--cstates CSNAMES] [--pkg-cstate-limit]
-[--c1-demotion] [--c1-undemotion] [--c1e-autopromote] [--cstate-prewake]
-[--idle-driver] [--governor]
+[--packages PACKAGES] [--save PATH] [--cstates CSNAMES]
+[--pkg-cstate-limit] [--c1-demotion] [--c1-undemotion]
+[--c1e-autopromote] [--cstate-prewake] [--idle-driver] [--governor]
 
 Get information about C-states on specified CPUs. By default, prints all
 information for all CPUs. Remember, this is information about the
@@ -259,6 +259,11 @@ OPTIONS *'pepc* cstates info'
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
+
+**--save** *PATH*
+   Instead of printing the C-states information, save it to a file in
+   YAML format. The file can used to restore the settings with option
+   '--restore'.
 
 **--cstates** *CSNAMES*
    Comma-separated list of C-states to get information about (all
@@ -313,10 +318,11 @@ COMMAND *'pepc* cstates config'
 ===============================
 
 usage: pepc cstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--enable [CSTATES]] [--disable [CSTATES]]
-[--pkg-cstate-limit [PKG_CSTATE_LIMIT]] [--c1-demotion [C1_DEMOTION]]
-[--c1-undemotion [C1_UNDEMOTION]] [--c1e-autopromote [C1E_AUTOPROMOTE]]
-[--cstate-prewake [CSTATE_PREWAKE]] [--governor [GOVERNOR]]
+[--packages PACKAGES] [--restore PATH] [--enable [CSTATES]] [--disable
+[CSTATES]] [--pkg-cstate-limit [PKG_CSTATE_LIMIT]] [--c1-demotion
+[C1_DEMOTION]] [--c1-undemotion [C1_UNDEMOTION]] [--c1e-autopromote
+[C1E_AUTOPROMOTE]] [--cstate-prewake [CSTATE_PREWAKE]] [--governor
+[GOVERNOR]]
 
 Configure C-states on specified CPUs. All options can be used without a
 parameter, in which case the currently configured value(s) will be
@@ -353,6 +359,9 @@ OPTIONS *'pepc* cstates config'
    mean packages 1 to 3, and
 
 all packages.
+
+**--restore** *PATH*
+   Path to the file to restore C-state configuration from.
 
 **--enable** *[CSTATES]*
    Comma-separated list of C-states to enable. C-states should be
@@ -432,9 +441,10 @@ COMMAND *'pepc* pstates info'
 =============================
 
 usage: pepc pstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--min-freq] [--max-freq] [--min-freq-limit]
-[--max-freq-limit] [--base-freq] [--min-oper-freq] [--max-eff-freq]
-[--turbo] [--max-turbo-freq] [--min-uncore-freq] [--max-uncore-freq]
+[--packages PACKAGES] [--save PATH] [--min-freq] [--max-freq]
+[--min-freq-limit] [--max-freq-limit] [--base-freq] [--min-freq-hw]
+[--max-freq-hw] [--min-oper-freq] [--max-eff-freq] [--turbo]
+[--max-turbo-freq] [--min-uncore-freq] [--max-uncore-freq]
 [--min-uncore-freq-limit] [--max-uncore-freq-limit] [--hwp] [--epp]
 [--epp-policy] [--epb] [--epb-policy] [--driver] [--intel-pstate-mode]
 [--governor]
@@ -474,63 +484,90 @@ OPTIONS *'pepc* pstates info'
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
 
+**--save** *PATH*
+   Instead of printing the P-states information, save it to a file in
+   YAML format. The file can used to restore the settings with option
+   '--restore'.
+
 **--min-freq**
-   Get minimum CPU frequency. Minimum CPU frequency is the lowest
-   frequency the operating system configured the CPU to run at. The
-   default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
-   (for example "900MHz"). The following special values are supported:
-   "min" - minimum CPU frequency supported by the OS (via Linux sysfs
-   files), "hfm", "base", "P1" - base CPU frequency, "max" - maximum CPU
-   frequency supported by the OS (via Linux sysfs), "eff", "lfm", "Pn" -
-   maximum CPU efficiency frequency. This option has CPU scope.
+   Get min. CPU frequency. Minimum CPU frequency is the lowest frequency
+   the operating system configured the CPU to run at (via sysfs knobs).
+   The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be
+   used (for example "900MHz"). The following special values are
+   supported: "min" - minimum CPU frequency supported by the OS (via
+   Linux sysfs files), "hfm", "base", "P1" - base CPU frequency, "max" -
+   maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
+   "lfm", "Pn" - maximum CPU efficiency frequency. This option has CPU
+   scope.
 
 **--max-freq**
-   Get maximum CPU frequency. Maximum CPU frequency is the highest
-   frequency the operating system configured the CPU to run at.
-   {_CPU_FREQ_VALS_HELP}. This option has CPU scope.
+   Get max. CPU frequency. Maximum CPU frequency is the highest
+   frequency the operating system configured the CPU to run at (via
+   sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz"
+   can also be used (for example "900MHz"). The following special values
+   are supported: "min" - minimum CPU frequency supported by the OS (via
+   Linux sysfs files), "hfm", "base", "P1" - base CPU frequency, "max" -
+   maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
+   "lfm", "Pn" - maximum CPU efficiency frequency. This option has CPU
+   scope.
 
 **--min-freq-limit**
-   Get minimum supported CPU frequency. Minimum supported CPU frequency
-   is the lowest frequency supported by the operating system. This
-   option has CPU scope.
+   Get min. supported CPU frequency. Minimum supported CPU frequency is
+   the lowest frequency supported by the operating system (reported via
+   sysfs knobs). This option has CPU scope.
 
 **--max-freq-limit**
-   Get maximum supported CPU frequency. Maximum supported CPU frequency
-   is the maximum CPU frequency supported by the operating system. This
-   option has CPU scope.
+   Get max. supported CPU frequency. Maximum supported CPU frequency is
+   the maximum CPU frequency supported by the operating system (reported
+   via sysfs knobs). This option has CPU scope.
 
 **--base-freq**
    Get base CPU frequency. Base CPU frequency is the highest sustainable
    CPU frequency. This frequency is also referred to as "guaranteed
-   frequency", HFM (High Frequency Mode), or P1. This option has CPU
-   scope.
+   frequency", HFM (High Frequency Mode), or P1. The base frequency is
+   acquired from a sysfs file of from an MSR register, if the sysfs file
+   does not exist. This option has CPU scope.
+
+**--min-freq-hw**
+   Get min. CPU frequency (OS bypass). Minimum frequency the CPU is
+   configured by the OS to run at. This value is read directly from the
+   MSR(s), bypassing the OS. This option has CPU scope.
+
+**--max-freq-hw**
+   Get max. CPU frequency (OS bypass). Maximum frequency the CPU is
+   configured by the OS to run at. This value is read directly from the
+   MSR(s), bypassing the OS. This option has CPU scope.
 
 **--min-oper-freq**
-   Get minimum CPU operating frequency. Minimum operating frequency is
-   the lowest possible frequency the CPU can operate at. Depending on
-   the CPU model, this frequency may or may not be directly available to
-   the operating system, but the platform may use it in certain
-   situations (e.g., in some C-states). This frequency is also referred
-   to as Pm. This option has CPU scope.
+   Get min. CPU operating frequency. Minimum operating frequency is the
+   lowest possible frequency the CPU can operate at. Depending on the
+   CPU model, this frequency may or may not be directly available to the
+   operating system, but the platform may use it in certain situations
+   (e.g., in some C-states). This frequency is also referred to as Pm.
+   Min. operating frequency is acquired from an MSR register, bypassing
+   the OS. This option has CPU scope.
 
 **--max-eff-freq**
-   Get maximum CPU efficiency frequency. Maximum efficiency frequency is
+   Get max. CPU efficiency frequency. Maximum efficiency frequency is
    the most energy efficient CPU frequency. This frequency is also
-   referred to as LFM (Low Frequency Mode) or Pn. This option has CPU
-   scope.
+   referred to as LFM (Low Frequency Mode) or Pn. Max. efficiency
+   frequency is acquired from an MSR register, bypassing the OS. This
+   option has CPU scope.
 
 **--turbo**
    Get current setting for turbo. When turbo is enabled, the CPUs can
-   automatically run at a frequency greater than base frequency. This
-   option has global scope.
+   automatically run at a frequency greater than base frequency. Turbo
+   on/off status is acquired and modified via sysfs knobs. This option
+   has global scope.
 
 **--max-turbo-freq**
-   Get maximum CPU turbo frequency. Maximum turbo frequency is the
+   Get max. CPU turbo frequency. Maximum 1-core turbo frequency is the
    highest frequency a single CPU can operate at. This frequency is also
-   referred to as max. 1-core turbo and P01. This option has CPU scope.
+   referred to as max. 1-core turbo and P01. It is acquired from an MSR
+   register, bypassing the OS. This option has CPU scope.
 
 **--min-uncore-freq**
-   Get minimum uncore frequency. Minimum uncore frequency is the lowest
+   Get min. uncore frequency. Minimum uncore frequency is the lowest
    frequency the operating system configured the uncore to run at. The
    default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
    (for example "900MHz"). The following special values are supported:
@@ -539,7 +576,7 @@ OPTIONS *'pepc* pstates info'
    Linux sysfs). This option has die scope.
 
 **--max-uncore-freq**
-   Get maximum uncore frequency. Maximum uncore frequency is the highest
+   Get max. uncore frequency. Maximum uncore frequency is the highest
    frequency the operating system configured the uncore to run at. The
    default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
    (for example "900MHz"). The following special values are supported:
@@ -548,12 +585,12 @@ OPTIONS *'pepc* pstates info'
    Linux sysfs). This option has die scope.
 
 **--min-uncore-freq-limit**
-   Get minimum supported uncore frequency. Minimum supported uncore
+   Get min. supported uncore frequency. Minimum supported uncore
    frequency is the lowest uncore frequency supported by the operating
    system. This option has die scope.
 
 **--max-uncore-freq-limit**
-   Get maximum supported uncore frequency. Maximum supported uncore
+   Get max. supported uncore frequency. Maximum supported uncore
    frequency is the highest uncore frequency supported by the operating
    system. This option has die scope.
 
@@ -608,8 +645,9 @@ COMMAND *'pepc* pstates config'
 ===============================
 
 usage: pepc pstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--min-freq [MIN_FREQ]] [--max-freq [MAX_FREQ]]
-[--turbo [TURBO]] [--min-uncore-freq [MIN_UNCORE_FREQ]]
+[--packages PACKAGES] [--restore PATH] [--min-freq [MIN_FREQ]]
+[--max-freq [MAX_FREQ]] [--min-freq-hw [MIN_FREQ_HW]] [--max-freq-hw
+[MAX_FREQ_HW]] [--turbo [TURBO]] [--min-uncore-freq [MIN_UNCORE_FREQ]]
 [--max-uncore-freq [MAX_UNCORE_FREQ]] [--epp [EPP]] [--epp-policy
 [EPP_POLICY]] [--epb [EPB]] [--epb-policy [EPB_POLICY]]
 [--intel-pstate-mode [INTEL_PSTATE_MODE]] [--governor [GOVERNOR]]
@@ -650,28 +688,49 @@ OPTIONS *'pepc* pstates config'
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
 
+**--restore** *PATH*
+   Path to the file to restore P-state configuration from.
+
 **--min-freq** *[MIN_FREQ]*
-   Set minimum CPU frequency. Minimum CPU frequency is the lowest
-   frequency the operating system configured the CPU to run at. The
-   default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
-   (for example "900MHz"). The following special values are supported:
-   "min" - minimum CPU frequency supported by the OS (via Linux sysfs
-   files), "hfm", "base", "P1" - base CPU frequency, "max" - maximum CPU
-   frequency supported by the OS (via Linux sysfs), "eff", "lfm", "Pn" -
-   maximum CPU efficiency frequency. This option has CPU scope.
+   Set min. CPU frequency. Minimum CPU frequency is the lowest frequency
+   the operating system configured the CPU to run at (via sysfs knobs).
+   The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be
+   used (for example "900MHz"). The following special values are
+   supported: "min" - minimum CPU frequency supported by the OS (via
+   Linux sysfs files), "hfm", "base", "P1" - base CPU frequency, "max" -
+   maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
+   "lfm", "Pn" - maximum CPU efficiency frequency. This option has CPU
+   scope.
 
 **--max-freq** *[MAX_FREQ]*
-   Set maximum CPU frequency. Maximum CPU frequency is the highest
-   frequency the operating system configured the CPU to run at.
-   {_CPU_FREQ_VALS_HELP}. This option has CPU scope.
+   Set max. CPU frequency. Maximum CPU frequency is the highest
+   frequency the operating system configured the CPU to run at (via
+   sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz"
+   can also be used (for example "900MHz"). The following special values
+   are supported: "min" - minimum CPU frequency supported by the OS (via
+   Linux sysfs files), "hfm", "base", "P1" - base CPU frequency, "max" -
+   maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
+   "lfm", "Pn" - maximum CPU efficiency frequency. This option has CPU
+   scope.
+
+**--min-freq-hw** *[MIN_FREQ_HW]*
+   Set min. CPU frequency (OS bypass). Minimum frequency the CPU is
+   configured by the OS to run at. This value is read directly from the
+   MSR(s), bypassing the OS. This option has CPU scope.
+
+**--max-freq-hw** *[MAX_FREQ_HW]*
+   Set max. CPU frequency (OS bypass). Maximum frequency the CPU is
+   configured by the OS to run at. This value is read directly from the
+   MSR(s), bypassing the OS. This option has CPU scope.
 
 **--turbo** *[TURBO]*
    Enable or disable turbo. When turbo is enabled, the CPUs can
-   automatically run at a frequency greater than base frequency. Use
-   "on" or "off". This option has global scope.
+   automatically run at a frequency greater than base frequency. Turbo
+   on/off status is acquired and modified via sysfs knobs. Use "on" or
+   "off". This option has global scope.
 
 **--min-uncore-freq** *[MIN_UNCORE_FREQ]*
-   Set minimum uncore frequency. Minimum uncore frequency is the lowest
+   Set min. uncore frequency. Minimum uncore frequency is the lowest
    frequency the operating system configured the uncore to run at. The
    default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
    (for example "900MHz"). The following special values are supported:
@@ -680,7 +739,7 @@ OPTIONS *'pepc* pstates config'
    Linux sysfs). This option has die scope.
 
 **--max-uncore-freq** *[MAX_UNCORE_FREQ]*
-   Set maximum uncore frequency. Maximum uncore frequency is the highest
+   Set max. uncore frequency. Maximum uncore frequency is the highest
    frequency the operating system configured the uncore to run at. The
    default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
    (for example "900MHz"). The following special values are supported:
