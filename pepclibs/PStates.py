@@ -140,8 +140,9 @@ PROPS = {
     },
     "max_turbo_freq" : {
         "name" : "Max. CPU turbo frequency",
-        "help" : """Maximum turbo frequency is the highest frequency a single CPU can operate at.
-                    This frequency is also referred to as max. 1-core turbo and P01.""",
+        "help" : """Maximum 1-core turbo frequency is the highest frequency a single CPU can operate
+                    at. This frequency is also referred to as max. 1-core turbo and P01. It is
+                    acquired from an MSR register, bypassing the OS.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -735,9 +736,6 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = self._get_cpu_hwp(cpu)
         elif pname == "max_turbo_freq":
             val = self._get_max_turbo_freq(cpu)
-            if val is None:
-                # Assume that max. turbo is the Linux max. frequency.
-                val = self._get_cpu_prop_value("max_freq", cpu)
         elif pname == "turbo":
             val = self._get_cpu_turbo(cpu)
         elif pname == "driver":
