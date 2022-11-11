@@ -112,10 +112,11 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         val = self._pman.read(path).strip()
 
         if prop["type"] == "int":
-            val = int(val)
             if not Trivial.is_int(val):
                 raise Error(f"read an unexpected non-integer value from '{path}'"
                             f"{self._pman.hostmsg}")
+
+            val = int(val)
             if prop.get("unit") == "Hz":
                 # Sysfs files have the numbers in kHz, convert to Hz.
                 val *= 1000
@@ -131,10 +132,11 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         pname = prop["name"]
 
         if prop["type"] == "int":
-            val = int(val)
             if not Trivial.is_int(val):
                 raise Error(f"received an unexpected non-integer value from '{pname}'"
                             f"{self._pman.hostmsg}")
+
+            val = int(val)
             if prop.get("unit") == "Hz":
                 # Sysfs files have the numbers in kHz, convert to Hz.
                 val //= 1000
