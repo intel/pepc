@@ -759,17 +759,23 @@ class PStates(_PCStatesBase.PCStatesBase):
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
         driver = self._get_cpu_prop_value("driver", cpu)
+
         status = "on" if enable else "off"
+        errmsg = f"failed to switch turbo {status}{self._pman.hostmsg}"
 
         if driver == "intel_pstate":
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
-            self._write_prop_value_to_sysfs(self._props["turbo"], path, int(not enable))
+            sysfs_val = int(not enable)
         elif driver == "acpi-cpufreq":
             path = self._sysfs_base / "cpufreq" / "boost"
-            self._write_prop_value_to_sysfs(self._props["turbo"], path, int(enable))
+            sysfs_val = int(enable)
         else:
-            raise ErrorNotSupported(f"failed to switch turbo {status}{self._pman.hostmsg}: "
-                                    f"unsupported CPU frequency driver '{driver}'")
+            raise ErrorNotSupported(f"{errmsg}: unsupported CPU frequency driver '{driver}'")
+
+        try:
+            self._write_prop_value_to_sysfs(self._props["turbo"], path, sysfs_val)
+        except ErrorNotFound as err:
+            raise ErrorNotSupported(f"{errmsg}: turbo is not supported") from err
 
         self._pcache.add("turbo", cpu, status, sname=self._props["turbo"]["sname"])
 
