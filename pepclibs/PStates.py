@@ -509,7 +509,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         """
 
         trl = self._get_trl()
-        ratio = None
 
         try:
             ratio = trl.read_cpu_feature("max_1c_turbo_ratio", cpu)
@@ -523,13 +522,10 @@ class PStates(_PCStatesBase.PCStatesBase):
                 _LOG.warn_once("CPU %d: module 'TurboRatioLimit' doesn't support "
                                "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
                                "maintainers.", cpu, self._cpuinfo.cpudescr, self._pman.hostmsg)
+                return None
 
-        max_turbo_freq = None
-        if ratio is not None:
-            bclk = self._get_bclk(cpu)
-            max_turbo_freq = int(ratio * bclk * 1000 * 1000)
-
-        return max_turbo_freq
+        bclk = self._get_bclk(cpu)
+        return int(ratio * bclk * 1000 * 1000)
 
     def _read_int(self, path):
         """Read an integer from file 'path' via the process manager."""
