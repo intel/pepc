@@ -556,9 +556,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         return self._pcstatectl
 
     def _get_pkg_cstate_limit(self, pname, cpu):
-        """
-        Get property 'pkg_cstate_limit' dictionary and return the specific 'pname' value.
-        """
+        """Return the 'pname' sub-property for the 'pkg_cstate_limit' property."""
 
         pcstatectl = self._get_pcstatectl()
 
