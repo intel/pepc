@@ -24,7 +24,7 @@ MSR_ENERGY_PERF_BIAS = 0x1B0
 FEATURES = {
     "epb" : {
         "name" : "Energy Performance Bias",
-        "sname": "package",
+        "sname": "CPU",
         "help" : """Energy Performance Bias is a hint to the CPU about the power and performance
                     preference. Value 0 indicates highest performance and value 15 indicates
                     maximum energy savings.""",
