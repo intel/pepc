@@ -60,11 +60,11 @@ def dump(data, path, float_format=None, skip_none=False):
         yaml.add_representer(float, represent_float)
 
     if hasattr(path, "write"):
-        yaml.dump(data, path, default_flow_style=False)
+        yaml.dump(data, path, default_flow_style=False, sort_keys=False)
         _LOG.debug("wrote YAML file at '%s'", path.name)
     else:
         with open(path, "w") as fobj:
-            yaml.dump(data, fobj, default_flow_style=False)
+            yaml.dump(data, fobj, default_flow_style=False, sort_keys=False)
         _LOG.debug("wrote YAML file at '%s'", path)
 
 def _load(path, included, render=None):
