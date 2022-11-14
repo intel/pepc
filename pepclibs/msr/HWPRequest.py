@@ -121,6 +121,22 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
 
         return False
 
+    def disable_cpu_feature_pkg_control(self, fname, cpu):
+        """
+        Disable 'MSR_HWP_REQUEST_PKG' control over an HWP feature. The arguments are as follows.
+         * fname - name of the 'MSR_HWP_REQUEST' feature.
+         * cpu - CPU number for which to disable package control.
+        """
+
+        try:
+            pkg_control = self.is_cpu_feature_enabled("pkg_control", cpu)
+        except ErrorNotSupported:
+            # If package control is not supported, 'fname' is controlled on a per-CPU basis.
+            return
+
+        if pkg_control:
+            self.write_cpu_feature(f"{fname}_valid", "on", cpu)
+
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 

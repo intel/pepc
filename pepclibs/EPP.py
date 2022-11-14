@@ -270,10 +270,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
         # Could not set EPP via sysfs because the running Linux kernel does not support it. Try to
         # set it via the MSR.
         hwpreq = self._get_hwpreq()
-        if hwpreq.is_cpu_feature_supported("pkg_control", cpu) and \
-           hwpreq.is_cpu_feature_enabled("pkg_control", cpu):
-            # Override package control by setting the "EPP valid" bit.
-            hwpreq.write_cpu_feature("epp_valid", "on", cpu)
+        hwpreq.disable_cpu_feature_pkg_control("epp", cpu)
+
         hwpreq.write_cpu_feature("epp", epp, cpu)
 
     def set_epp(self, epp, cpus="all"):

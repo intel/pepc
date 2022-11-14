@@ -778,10 +778,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         prop = self._props[pname]
 
         hwpreq = self._get_hwpreq()
-        if hwpreq.is_cpu_feature_supported("pkg_control", cpu) and \
-            hwpreq.is_cpu_feature_enabled("pkg_control", cpu):
-            # Override package control by setting the "min/max valid" bit.
-            hwpreq.write_cpu_feature(f"{fname}_valid", "on", cpu)
+        hwpreq.disable_cpu_feature_pkg_control(fname, cpu)
 
         hwpreq.write_cpu_feature(fname, int(freq // 100000000), cpu)
         self._pcache.add(pname, cpu, freq, sname=prop["sname"])
