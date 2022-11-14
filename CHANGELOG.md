@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix 'pepc pstates config/info --epp' option: it incorrectly assumed that EPP
+   is per-package, even though it is per-CPU.
 ### Added
 ### Removed
 ### Changed
