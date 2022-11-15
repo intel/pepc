@@ -32,11 +32,11 @@ def dump(data, path, float_format=None, skip_none=False):
 
     def represent_float(dumper, data):
         """Apply the floating point format."""
-        return dumper.represent_scalar(u'tag:yaml.org,2002:float', float_format % data)
+        return dumper.represent_scalar("tag:yaml.org,2002:float", float_format % data)
 
     def represent_posixpath(dumper, value):
         """Convert 'PosixPath' values to strings."""
-        return dumper.represent_scalar(u'tag:yaml.org,2002:str', str(value))
+        return dumper.represent_scalar("tag:yaml.org,2002:str", str(value))
 
     def copy_skip_none(data):
         """Create a copy of the 'data' dictionary and skip 'None' values."""
@@ -63,7 +63,7 @@ def dump(data, path, float_format=None, skip_none=False):
         yaml.dump(data, path, default_flow_style=False, sort_keys=False)
         _LOG.debug("wrote YAML file at '%s'", path.name)
     else:
-        with open(path, "w") as fobj:
+        with open(path, "w", encoding="utf-8") as fobj:
             yaml.dump(data, fobj, default_flow_style=False, sort_keys=False)
         _LOG.debug("wrote YAML file at '%s'", path)
 
@@ -105,10 +105,15 @@ def _load(path, included, render=None):
         args = render["args"]
         contents = func(path.resolve(), *args)
     else:
-        try:
-            fobj = contents = open(path, "r") # pylint: disable=consider-using-with
-        except OSError as err:
-            raise Error(f"failed to open file '{path}':\n{err}") from None
+        # We allow 'path' to be a file-like object.
+        if hasattr(path, "read"):
+            fobj = path
+        else:
+            try:
+                fobj = open(path, "r", encoding="utf-8") # pylint: disable=consider-using-with
+            except OSError as err:
+                raise Error(f"failed to open file '{path}':\n{err}") from None
+        contents = fobj
 
     try:
         loaded = yaml.safe_load(contents)
@@ -117,7 +122,7 @@ def _load(path, included, render=None):
     except OSError as err:
         raise Error(f"failed to read YAML file '{path}':\n{err}") from None
     finally:
-        if fobj:
+        if fobj and fobj is not path:
             fobj.close()
 
     if not loaded:
@@ -155,7 +160,7 @@ def load(path, render=None):
     Load a YAML file at 'path' while preserving its order. This method extends the standard YAML
     loader and adds support for the 'include' statement, which allows for including other YAML
     files. The arguments are as follows.
-      * path - path to the YAML file to load.
+      * path - path to the YAML file to load or a file-like object to read the YAML contents from.
       * render - and optional argument which can be used for rendering the file at 'path' before
                  loading it. This can be useful if the file at 'path' requires a jinja2 pass before
                  being loaded a YAML file. The 'render' argument should be a dictionary with the
@@ -167,5 +172,9 @@ def load(path, render=None):
                             called as 'func(path, *args)', where 'path' is path to the file to
                             render.
     """
+
+    if render and not getattr(path, "read"):
+        # Can be implemented later if needed.
+        raise Error("file-like objects are not supported")
 
     return _load(path, False, render=render)
