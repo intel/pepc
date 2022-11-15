@@ -7,16 +7,20 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
  - Fix 'pepc pstates config/info --epp' option: it incorrectly assumed that EPP
    is per-package, even though it is per-CPU.
+ - Fix kernel 'DEBUG_LOCKS_WARN_ON' warning caused by wult drivers.
 ### Added
+ - Add 'pepc [pc]state info --yaml' option.
 ### Removed
 ### Changed
+ - Remove '--save' and '--restore' option, add 'pepc [pc]states save/restore'
+   sub-commands instead.
 
 ## [1.3.28] - 2022-11-11
 ### Added
  - Add '--save' -option to 'pepc pstates info' and 'pepc cstates info' commands.
- - Add '--restore' -option to 'pepc pstates config' and 'pepc cstates config' commands.
+ - Add '--restore' -option to 'pepc pstates config' and 'pepc cstates config'
+   commands.
  - Add Emerald Rapids support.
-### Changed
 
 ## [1.3.27] - 2022-11-07
 ### Added
@@ -29,8 +33,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.3.25] - 2022-10-31
 ### Added
- - pepc pstates: add "P1" and "Pn" special frequency values support. Now they can be used with
-   '--min-freq' and '--max-freq' options.
+ - pepc pstates: add "P1" and "Pn" special frequency values support. Now they
+   can be used with '--min-freq' and '--max-freq' options.
 ### Changed
  - pepc cpu-hotplug online/offline: rename the '--siblings' to '--ht-siblings'.
 
