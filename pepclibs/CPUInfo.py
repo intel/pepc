@@ -156,7 +156,7 @@ _CPU_DESCR = {INTEL_FAM6_EMERALDRAPIDS_X:  "Emerald Rapids Xeon",
               INTEL_FAM6_TREMONT_D:        "Tremont Atom (Snow Ridge)"}
 
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
-LEVELS = ("CPU", "core", "die", "node", "package")
+LEVELS = ("CPU", "core", "module", "die", "node", "package")
 
 class CPUInfo(ClassHelpers.SimpleCloseContext):
     """
@@ -205,6 +205,35 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         * 'mark_cpus_offline()'
     """
 
+    def _get_cpu_module(self, cpu):
+        """
+        Returns the module number for CPU number in 'cpu'. If number can't be resolved returns
+        'None'.
+        """
+
+        if cpu in self._module_cache:
+            return self._module_cache[cpu]
+
+        sysfs_base = Path(f"/sys/devices/system/cpu/cpu{cpu}/cache/index2/")
+
+        # All CPUs in a module share the same L2 cache, so we use L2 cache ID for the module number.
+        module_id_path = sysfs_base / "id"
+        try:
+            module = self._pman.read(module_id_path)
+        except ErrorNotFound:
+            return None
+
+        module = int(module)
+
+        # Get the list of CPUs belonging to the same module.
+        cpus = self._pman.read(sysfs_base / "shared_cpu_list")
+        cpus = ArgParse.parse_int_list(cpus, ints=True)
+
+        for cpunum in cpus:
+            self._module_cache[cpunum] = module
+
+        return module
+
     def _get_cpu_die(self, cpu):
         """
         Returns the die number for CPU number in 'cpu'. If number can't be resolved returns 'None'.
@@ -241,6 +270,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         # die numbers are per-package, therefore we always sort them by package first.
         sorting_map = {"CPU"     : ("CPU", ),
                        "core"    : ("package", "core", "CPU"),
+                       "module"  : ("module", "CPU"),
                        "die"     : ("package", "die", "CPU"),
                        "node"    : ("node", "CPU"),
                        "package" : ("package", "CPU")}
@@ -271,6 +301,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
           * core    - Core number.
                     - Per-package numbering, not globally unique.
                     - There can be gaps in the numbering.
+          * module  - Module number.
+                    - Shares same L2 cache.
+                    - Globally unique.
           * die     - Die number.
                     - Per-package numbering, not globally unique.
           * node    - NUMA node number.
@@ -286,27 +319,28 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
           * 2 packages, numbers 0, 1.
           * 2 nodes, numbers 0, 1.
           * 1 die per package, numbers 0.
+          * 3 modules, numbers 0, 4, 5.
           * 4 cores per package, numbers 0, 1, 5, 6.
           * 16 CPUs, numbers 0-16.
 
         Here is the topology table in package order. It is sorted by package and CPU.
 
-		  {'CPU': 0,  'core': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 2,  'core': 6, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 4,  'core': 1, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 6,  'core': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 8,  'core': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 10, 'core': 6, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 12, 'core': 1, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 14, 'core': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 1,  'core': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 3,  'core': 6, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 5,  'core': 1, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 7,  'core': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 9,  'core': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 11, 'core': 6, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 13, 'core': 1, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 15, 'core': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 0,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 2,  'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 4,  'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 6,  'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 8,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 10, 'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 12, 'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 14, 'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 1,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 3,  'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 5,  'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 7,  'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 9,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 11, 'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 13, 'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
 
         The topology tables in node/die order will look the same (in this particular example). They
         are sorted by package number, then node/die number, then CPU number.
@@ -314,41 +348,41 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         Here is the topology table in core order. It'll be sorted by package number, and then core
         number, then CPU number.
 
-		  {'CPU': 0,  'core': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 8,  'core': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 4,  'core': 1, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 12, 'core': 1, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 6,  'core': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 14, 'core': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 2,  'core': 6, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 10, 'core': 6, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 1,  'core': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 9,  'core': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 5,  'core': 1, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 13, 'core': 1, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 7,  'core': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 15, 'core': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 3,  'core': 6, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 11, 'core': 6, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 0,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 8,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 4,  'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 12, 'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 6,  'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 14, 'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 2,  'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 10, 'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 1,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 9,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 5,  'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 13, 'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 7,  'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 3,  'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 11, 'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
 
         Here is the topology table in CPU order.
 
-		  {'CPU': 0,  'core': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 1,  'core': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 2,  'core': 6, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 3,  'core': 6, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 4,  'core': 1, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 5,  'core': 1, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 6,  'core': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 7,  'core': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 8,  'core': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 9,  'core': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 10, 'core': 6, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 11, 'core': 6, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 12, 'core': 1, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 13, 'core': 1, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 14, 'core': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 15, 'core': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 0,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 1,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 2,  'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 3,  'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 4,  'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 5,  'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 6,  'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 7,  'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 8,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 9,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 10, 'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 11, 'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 12, 'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 13, 'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 14, 'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
+		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
         """
 
         self._check_level(order, name="order")
@@ -377,6 +411,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
             if tline["online"]:
                 tline["core"] = int(vals[2])
+                tline["module"] = self._get_cpu_module(tline["CPU"])
                 tline["die"] = self._get_cpu_die(tline["CPU"])
                 tline["node"] = int(vals[1])
                 tline["package"] = int(vals[0])
@@ -940,9 +975,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         # The CPU topology sysfs directory path pattern.
         self._topology_sysfs_base = "/sys/devices/system/cpu/cpu%d/topology/"
-        # A CPU number -> die number cache. Used only when building the topology dictionary, helps
-        # reading less sysfs files.
+        # A CPU number -> die/module number cache. Used only when building the topology dictionary,
+        # helps reading less sysfs files.
         self._die_cache = {}
+        self._module_cache = {}
 
         # General CPU information.
         self.info = None
