@@ -39,17 +39,21 @@ def cstates_info_command(args, pman):
 
         skip_unsupported = False
         if not pnames and args.csnames == "default":
-            pnames = "all"
-            # When printing all the options, skip the unsupported ones as they add clutter.
-            skip_unsupported = True
-
-        if args.csnames != "default":
-            csprint.print_cstates(csnames=args.csnames, cpus=cpus)
-        elif pnames:
+            # No options were specified. Print all the information. Skip the unsupported ones as
+            # they add clutter.
             csprint.print_cstates(csnames="all", cpus=cpus)
+            csprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True)
+        else:
+            if args.csnames != "default":
+                # args.csname is "default" if '--csnames' option was not specified, and 'None' if it
+                # was specified, but without an argument.
+                csnames = args.csnames
+                if args.csnames is None:
+                    csnames = "all"
+                csprint.print_cstates(csnames=csnames, cpus=cpus)
 
-        if pnames:
-            csprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=skip_unsupported)
+            if pnames:
+                csprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=skip_unsupported)
 
 def cstates_config_command(args, pman):
     """Implements the 'cstates config' command."""

@@ -180,7 +180,8 @@ def build_arguments_parser():
 
     text = f"""Comma-separated list of C-states to get information about (all C-states by default).
                {cst_list_text}."""
-    subpars2.add_argument("--cstates", dest="csnames", help=text, default="default")
+    subpars2.add_argument("--cstates", dest="csnames", metavar="CATATES", nargs="?", help=text,
+                          default="default")
 
     for name, pinfo in CStates.PROPS.items():
         if pinfo["type"] == "bool":
