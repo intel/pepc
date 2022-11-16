@@ -173,7 +173,7 @@ def load(path, render=None):
                             render.
     """
 
-    if render and not getattr(path, "read"):
+    if render and hasattr(path, "read"):
         # Can be implemented later if needed.
         raise Error("file-like objects are not supported")
 
