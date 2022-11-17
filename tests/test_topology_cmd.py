@@ -36,10 +36,10 @@ def test_topology_info(params):
         "",
         "--online-only",
         f"--cpus 0-{params['cpus'][-1]} --cores all --packages all",
-        "--order cpu",
-        "--order core",
-        "--order node",
-        "--order die",
+        "--order cpu --columns CPU",
+        "--order core --columns core",
+        "--order node --columns node",
+        "--order die --columns die",
         "--order PaCkAgE"
     ]
 
@@ -48,8 +48,9 @@ def test_topology_info(params):
 
     bad_options = [
         "--order cpu,node",
-        "--order Packages"
-        "--order HELLO_WORLD"
+        "--order Packages",
+        "--order HELLO_WORLD",
+        "--columns Alfredo"
     ]
 
     for option in bad_options:

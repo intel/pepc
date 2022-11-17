@@ -452,6 +452,11 @@ def build_arguments_parser():
     text = """Include only online CPUs. By default offline and online CPUs are included."""
     subpars2.add_argument("--online-only", action='store_true', help=text)
 
+    columns = ", ".join(CPUInfo.LEVELS)
+    text = f"""By default, the topology columns are {columns}. Use this option to select topology
+               columns names and order (e.g.,'--columns Package,Core,CPU')."""
+    subpars2.add_argument("--columns", help=text, default=None)
+
     if argcomplete:
         argcomplete.autocomplete(parser)
 

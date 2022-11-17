@@ -11,6 +11,7 @@ This module includes the "topology" 'pepc' command implementation.
 """
 
 import logging
+from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 from pepctool import _PepcCommon
@@ -32,7 +33,18 @@ def _format_row(tline, colnames):
 def topology_info_command(args, pman):
     """Implements the 'topology info' command."""
 
-    colnames = CPUInfo.LEVELS
+    if args.columns is None:
+        colnames = CPUInfo.LEVELS
+    else:
+        colnames = []
+        for colname in Trivial.split_csv_line(args.columns):
+            for key in CPUInfo.LEVELS:
+                if colname.lower() == key.lower():
+                    colnames.append(key)
+                    break
+            else:
+                columns = ", ".join(CPUInfo.LEVELS)
+                raise Error(f"invalid colname '{colname}', use one of: {columns}")
 
     order = args.order
     for lvl in CPUInfo.LEVELS:
