@@ -204,7 +204,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     """
 
     def _get_cpu_die(self, cpu):
-        """Returns the die number for CPU number in 'cpu'."""
+        """
+        Returns the die number for CPU number in 'cpu'. If number can't be resolved returns 'None'.
+        """
 
         if cpu in self._die_cache:
             return self._die_cache[cpu]
@@ -216,7 +218,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         try:
             die = self._pman.read(die_id_path)
         except ErrorNotFound:
-            return 0
+            return None
 
         die = int(die)
 
