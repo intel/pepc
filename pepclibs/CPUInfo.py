@@ -974,8 +974,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         # Level name to its index number.
         self._lvl2idx = {lvl : idx for idx, lvl in enumerate(LEVELS)}
-        # Level index number to its name.
-        self._idx2lvl = dict(enumerate(LEVELS))
 
         # The CPU topology sysfs directory path pattern.
         self._topology_sysfs_base = "/sys/devices/system/cpu/cpu%d/topology/"
