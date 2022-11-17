@@ -23,3 +23,10 @@ Examples.
 Possible exceptoins example:
 
 * ``f"dictionary elemeht {mydict['element']}"``
+
+Commentaries
+============
+
+#. We always use a dot at the end of a sentence, even for single line commentaries.
+
+   * Example: ``# Calculate CPU frequency.``
