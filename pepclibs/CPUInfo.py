@@ -206,10 +206,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def _get_cpu_die(self, cpu):
         """Returns the die number for CPU number in 'cpu'."""
 
-        if self._no_die_info:
-            # Just assume there is one die per package.
-            return 0
-
         if cpu in self._die_cache:
             return self._die_cache[cpu]
 
@@ -220,8 +216,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         try:
             die = self._pman.read(die_id_path)
         except ErrorNotFound:
-            # The file does not exist.
-            self._no_die_info = True
             return 0
 
         die = int(die)
@@ -986,8 +980,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         # A CPU number -> die number cache. Used only when building the topology dictionary, helps
         # reading less sysfs files.
         self._die_cache = {}
-        # Will be 'True' if the system does not provide die information (e.g., the kernel is old).
-        self._no_die_info = False
 
         # General CPU information.
         self.info = None
