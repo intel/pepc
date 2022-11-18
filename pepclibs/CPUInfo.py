@@ -156,7 +156,7 @@ _CPU_DESCR = {INTEL_FAM6_EMERALDRAPIDS_X:  "Emerald Rapids Xeon",
               INTEL_FAM6_TREMONT_D:        "Tremont Atom (Snow Ridge)"}
 
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
-LEVELS = ("package", "die", "node", "core", "CPU")
+LEVELS = ("package", "node", "die", "core", "CPU")
 
 class CPUInfo(ClassHelpers.SimpleCloseContext):
     """
@@ -239,30 +239,30 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         Build and return the topology list. Here is an example topology list for the following
         hypothetical system:
           * 2 packages, numbers 0, 1 (global numbering).
-          * 1 die, numbers 0, 1 (global numbering).
           * 1 node per package, numbers 0, 1 (global numbering)
+          * 1 die, numbers 0, 1 (global numbering).
           * 4 cores per package, numbers 0, 1, 5, 6 (cores 2, 3, 4 do not exist). Non-global
           *   numbering.
           * 2 CPUs per core. Total 16 CPUs, numbers 0-16 (global numbering).
 
         Here is the topology table in package order. It is sorted by package and CPU.
 
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 0, 'CPU': 0,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 6, 'CPU': 2,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 1, 'CPU': 4,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 5, 'CPU': 6,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 0, 'CPU': 8,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 6, 'CPU': 10, 'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 1, 'CPU': 12, 'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 5, 'CPU': 14, 'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 0, 'CPU': 1,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 6, 'CPU': 3,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 1, 'CPU': 5,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 5, 'CPU': 7,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 0, 'CPU': 9,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 6, 'CPU': 11, 'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 1, 'CPU': 13, 'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 5, 'CPU': 15, 'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 0, 'CPU': 0,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 6, 'CPU': 2,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 1, 'CPU': 4,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 5, 'CPU': 6,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 0, 'CPU': 8,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 6, 'CPU': 10, 'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 1, 'CPU': 12, 'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 5, 'CPU': 14, 'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 0, 'CPU': 1,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 6, 'CPU': 3,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 1, 'CPU': 5,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 5, 'CPU': 7,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 0, 'CPU': 9,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 6, 'CPU': 11, 'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 1, 'CPU': 13, 'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 5, 'CPU': 15, 'online': True},
 
         The topology tables in node/die order will look the same (in this particular example). They
         are sorted by package number, then node/die number, then CPU number.
@@ -270,42 +270,42 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         Here is the topology table in core order. It'll be sorted by package number, and then core
         number, then CPU number.
 
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 0, 'CPU': 0,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 0, 'CPU': 8,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 1, 'CPU': 4,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 1, 'CPU': 12, 'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 5, 'CPU': 6,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 5, 'CPU': 14, 'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 6, 'CPU': 2,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 6, 'CPU': 10, 'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 0, 'CPU': 1,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 0, 'CPU': 9,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 1, 'CPU': 5,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 1, 'CPU': 13, 'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 5, 'CPU': 7,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 5, 'CPU': 15, 'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 6, 'CPU': 3,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 6, 'CPU': 11, 'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 0, 'CPU': 0,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 0, 'CPU': 8,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 1, 'CPU': 4,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 1, 'CPU': 12, 'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 5, 'CPU': 6,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 5, 'CPU': 14, 'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 6, 'CPU': 2,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 6, 'CPU': 10, 'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 0, 'CPU': 1,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 0, 'CPU': 9,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 1, 'CPU': 5,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 1, 'CPU': 13, 'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 5, 'CPU': 7,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 5, 'CPU': 15, 'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 6, 'CPU': 3,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 6, 'CPU': 11, 'online': True},
 
         Here is the topology table in CPU order. It'll be sorted by CPU number and then package
         number.
 
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 0, 'CPU': 0,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 0, 'CPU': 1,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 6, 'CPU': 2,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 6, 'CPU': 3,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 1, 'CPU': 4,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 1, 'CPU': 5,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 5, 'CPU': 6,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 5, 'CPU': 7,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 0, 'CPU': 8,  'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 0, 'CPU': 9,  'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 6, 'CPU': 10, 'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 6, 'CPU': 11, 'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 1, 'CPU': 12, 'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 1, 'CPU': 13, 'online': True},
-		  {'package': 0, 'die': 0, 'node': 0, 'core': 5, 'CPU': 14, 'online': True},
-		  {'package': 1, 'die': 1, 'node': 1, 'core': 5, 'CPU': 15, 'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 0, 'CPU': 0,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 0, 'CPU': 1,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 6, 'CPU': 2,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 6, 'CPU': 3,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 1, 'CPU': 4,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 1, 'CPU': 5,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 5, 'CPU': 6,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 5, 'CPU': 7,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 0, 'CPU': 8,  'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 0, 'CPU': 9,  'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 6, 'CPU': 10, 'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 6, 'CPU': 11, 'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 1, 'CPU': 12, 'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 1, 'CPU': 13, 'online': True},
+		  {'package': 0, 'node': 0, 'die': 0, 'core': 5, 'CPU': 14, 'online': True},
+		  {'package': 1, 'node': 1, 'die': 1, 'core': 5, 'CPU': 15, 'online': True},
         """
 
         self._check_level(order, name="order")
