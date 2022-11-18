@@ -24,11 +24,10 @@ Commentaries
 
    * Example: ``# Calculate CPU frequency.``
 
-Strings
-=======
+Qoutes for strings
+==================
 
-Whenever possible, use double quotes for strings. Do not use single quotes, unless you have to.
-Examples.
+Whenever possible, use double quotes. Do not use single quotes, unless you have to.
 
 *Do*:
 
@@ -46,3 +45,18 @@ Possible exceptoins example:
 
 * ``f"dictionary elemeht {mydict['element']}"``
 
+Splitting f-strings
+===================
+
+If an f-string needs to be split because it is too long, we use the "f" marker in front of all the
+string parts, even if it is not necessary.
+
+*Do*:::
+
+ f"my long f-string {variable}"
+ f"no variables in this part"
+
+*Don't*:::
+
+ f"my long f-string {variable}"
+ "no variables in this part"
