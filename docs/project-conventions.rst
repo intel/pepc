@@ -5,6 +5,7 @@
 Project conventions
 ===================
 
+.. contents::
 
 Function starting with "validate\_"
 ===================================

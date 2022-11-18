@@ -5,6 +5,10 @@
 .. Current structure is one item per section, no inner sections. We may re-consider this later,
    though.
 
+============
+Coding Style
+============
+
 .. contents::
 
 Characters per line
