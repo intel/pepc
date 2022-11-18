@@ -2,8 +2,6 @@
 .. vim: ts=4 sw=4 tw=100 et ai si
 
 .. Please, keep sections in alphabet order.
-.. Current structure is one item per section, no inner sections. We may re-consider this later,
-   though.
 
 ============
 Coding Style
@@ -24,12 +22,35 @@ for your favorite editor.
 Commentaries
 ============
 
+Dot at the end of sentence
+++++++++++++++++++++++++++
+
 #. We always use a dot at the end of a sentence, even for single line commentaries.
 
    * Example: ``# Calculate CPU frequency.``
 
-Qoutes for strings
-==================
+We try to do document the code and provide useful comments. However, not every comment is useful.
+Here are some guidelines.
+
+Commenting the obvious
+++++++++++++++++++++++
+
+In other words, don't comment the obvious.
+
+*Don't*:::
+
+ # Increase the counter.
+ counter += 1
+
+We can see from the code that we are increasing the counter, no need to explain that in the comment.
+Either do not add any comment, or, if it is a tricky place, explain *why* the counter is increased.
+
+
+Strings
+=======
+
+Quoting
++++++++
 
 Whenever possible, use double quotes. Do not use single quotes, unless you have to.
 
@@ -50,7 +71,7 @@ Possible exceptoins example:
 * ``f"dictionary elemeht {mydict['element']}"``
 
 Splitting f-strings
-===================
++++++++++++++++++++
 
 If an f-string needs to be split because it is too long, we use the "f" marker in front of all the
 string parts, even if it is not necessary.
