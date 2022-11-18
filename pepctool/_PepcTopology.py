@@ -31,7 +31,7 @@ def _format_row(tline, colnames):
 def topology_info_command(args, pman):
     """Implements the 'topology info' command."""
 
-    colnames = tuple(reversed(CPUInfo.LEVELS))
+    colnames = CPUInfo.LEVELS
 
     order = args.order
     if order == "cpu":
