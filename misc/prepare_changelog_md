@@ -14,6 +14,7 @@ import sys
 import argparse
 from pathlib import Path
 from datetime import datetime
+from itertools import zip_longest
 import _Changelogmd
 
 try:
@@ -71,7 +72,7 @@ def _format_release_entry(tmp_entry, newver):
     # ### Added
     # - log
     stripped = []
-    for line1, line2 in zip(lines, lines[1:]):
+    for line1, line2 in zip_longest(lines, lines[1:], fillvalue=""):
         if line1.startswith("###") and (not line2.strip() or line2.startswith("###")):
             continue
         stripped.append(line1)
