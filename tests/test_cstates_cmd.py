@@ -10,15 +10,16 @@
 
 """Test module for 'pepc' project 'cstates' command."""
 
+import copy
 import pytest
 from common import get_pman, run_pepc, build_params
 from pcstates_common import is_prop_supported
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import Human
+from pepclibs.helperlibs import Human, YAML
 from pepclibs import CPUInfo, CStates
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec):
+def get_params(hostspec, tmp_path_factory):
     """Yield a dictionary with information we need for testing."""
 
     emul_modules = ["CPUInfo", "CStates", "Systemctl"]
@@ -27,6 +28,7 @@ def get_params(hostspec):
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
         params = build_params(pman)
+        params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         params["csobj"] = csobj
         params["pinfo"] = csobj.get_cpu_props(csobj.props, 0)
@@ -148,3 +150,48 @@ def test_cstates_config(params):
         run_pepc(f"cstates config {option}", pman)
     for option in bad_options:
         run_pepc(f"cstates config {option}", pman, exp_exc=Error)
+
+def test_cstates_save_restore(params):
+    """Test 'pepc cstates save' and 'pepc cstates restore' commands."""
+
+    pman = params["pman"]
+    hostname = params["hostname"]
+    tmp_path = params["tmp_path"]
+    scope_options = _get_scope_options(params)
+
+    good_options = [
+        "",
+        f"-o {tmp_path}/cstates.{hostname}"]
+
+    for option in good_options:
+        for scope in scope_options["good"]:
+            run_pepc(f"cstates save {option} {scope}", pman)
+
+        for scope in scope_options["bad"]:
+            run_pepc(f"cstates save {option} {scope}", pman, exp_exc=Error)
+
+    state_path = tmp_path / f"state.{hostname}"
+    run_pepc(f"cstates save -o {state_path}", pman)
+    state = YAML.load(state_path)
+
+    state_swap = copy.deepcopy(state)
+    for pinfos in state_swap.values():
+        for pinfo in pinfos:
+            if pinfo["value"] == "on":
+                pinfo["value"] = "off"
+            elif pinfo["value"] == "off":
+                pinfo["value"] = "on"
+
+    state_swap_path = tmp_path / f"state_swap.{hostname}"
+    YAML.dump(state_swap, state_swap_path)
+    run_pepc(f"cstates restore -f {state_swap_path}", pman)
+
+    state_read_back_path = tmp_path / f"state_read_back.{hostname}"
+    run_pepc(f"cstates save -o {state_read_back_path}", pman)
+    read_back = YAML.load(state_read_back_path)
+    assert read_back == state_swap, "restoring C-states configuration failed"
+
+    run_pepc(f"cstates restore -f {state_path}", pman)
+    run_pepc(f"cstates save -o {state_read_back_path}", pman)
+    read_back = YAML.load(state_read_back_path)
+    assert read_back == state, "restoring C-states configuration failed"
