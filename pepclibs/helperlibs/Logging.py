@@ -124,9 +124,10 @@ class _MyFormatter(logging.Formatter):
     """
 
     # pylint: disable=protected-access
-    def __init__(self, prefix=None, prefix_debug=None, colors=None):
+    def __init__(self, logger, prefix=None, prefix_debug=None, colors=None):
         """
         The constructor. The arguments are as follows.
+          * logger - the 'Logger' object this formatter belongs to.
           * prefix - prefix for non-info and non-debug messages (info messages go without any
                     formatting, debug message prefix is controlled with 'prefix_debug'). By default,
                     the prefix is just the log level name.
@@ -149,9 +150,13 @@ class _MyFormatter(logging.Formatter):
 
         logging.Formatter.__init__(self, "%(levelname)s: %(message)s", "%H:%M:%S")
 
+        self.logger = logger
+        self.myfmt = {}
+        # Assume that the output if for a TTY if colors are enabled.
+        self.for_tty = bool(colors)
+
         if not colors or not colorama:
             colors = {}
-        self.myfmt = {}
 
         if not prefix:
             prefix = ""
@@ -186,6 +191,9 @@ class _MyFormatter(logging.Formatter):
         """
 
         self._style._fmt = self.myfmt[record.levelno]
+        if self.for_tty and self.logger.force_tty_newline_prefix:
+            self.logger.force_tty_newline_prefix = False
+            self._style._fmt = "\n" + self._style._fmt
         return logging.Formatter.format(self, record)
 
 class _MyFilter(logging.Filter):
@@ -254,9 +262,11 @@ def setup_logger(prefix=None, loglevel=None, colored=None, info_stream=sys.stdou
         colors[NOTICE] = colorama.Fore.CYAN + colorama.Style.BRIGHT
         colors[ERROR] = colors[CRITICAL] = colorama.Fore.RED + colorama.Style.BRIGHT
 
-    formatter = _MyFormatter(prefix=prefix, colors=colors)
+    logger.force_tty_newline_prefix = False
+
+    formatter = _MyFormatter(logger, prefix=prefix, colors=colors)
     if colored:
-        nocolor_formatter = _MyFormatter(prefix=prefix, colors={})
+        nocolor_formatter = _MyFormatter(logger, prefix=prefix, colors={})
     else:
         nocolor_formatter = formatter
 
