@@ -169,6 +169,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     2. Get list of packages/cores/etc.
         * 'get_cpus()'
         * 'get_cores()'
+        * 'get_modules()'
         * 'get_dies()'
         * 'get_nodes()'
         * 'get_packages()'
@@ -534,6 +535,13 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         CPU will be included.
         """
         return self._get_level_nums("core", "package", package, order=order)
+
+    def get_modules(self, order="module"):
+        """
+        Returns list of module numbers, only modules containing at least one online CPU will be
+        included.
+        """
+        return self._get_level_nums("module", "module", "all", order=order)
 
     def get_dies(self, package=0, order="die"):
         """
