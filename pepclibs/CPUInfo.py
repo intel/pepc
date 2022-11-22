@@ -234,6 +234,36 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return die
 
+    def _sort_topology(self, topology):
+        """Sorts the topology list."""
+
+        # We are going to store 4 versions of the table, sorted in different order. The package and
+        # CPU orders are obvious. Package and CPU numbers are global, so this is the easy case.
+        # Note and core numbers are not necessarily global, therefore we always first sort by
+        # package.
+        sorting_map = {"CPU"     : ("CPU", "package"),
+                       "core"    : ("package", "core", "CPU"),
+                       "die"     : ("package", "die", "CPU"),
+                       "node"    : ("package", "node", "CPU"),
+                       "package" : ("package", "CPU")}
+
+        def sort_func(tline):
+            """
+            The sorting function. It receives a topology line and returns the sorting key for
+            'sorted()'. The returned key is a tuple with numbers, and 'sorted()' method will sort by
+            the these returned tuples.
+
+            The first element of the returned tuples is a bit tricky. For online CPUs, it'll be
+            'True', and for offline CPUs it'll be 'False'. This will make sure that topology lines
+            corresponding to offline CPUs will always go last.
+            """
+
+            vals = (tline[skey] for skey in skeys) # pylint: disable=undefined-loop-variable
+            return (not tline["online"], *vals)
+
+        for lvl, skeys in sorting_map.items():
+            self._topology[lvl] = sorted(topology, key=sort_func)
+
     def get_topology(self, order="CPU"):
         """
         Build and return the topology list. Here is an example topology list for the following
@@ -340,33 +370,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
             topology.append(tline)
 
-        # We are going to store 4 versions of the table, sorted in different order. The package and
-        # CPU orders are obvious. Package and CPU numbers are global, so this is the easy case.
-        # Note and core numbers are not necessarily global, therefore we always first sort by
-        # package.
-        sorting_map = {"CPU"     : ("CPU", "package"),
-                       "core"    : ("package", "core", "CPU"),
-                       "die"     : ("package", "die", "CPU"),
-                       "node"    : ("package", "node", "CPU"),
-                       "package" : ("package", "CPU")}
-
-        def sort_func(tline):
-            """
-            The sorting function. It receives a topology line and returns the sorting key for
-            'sorted()'. The returned key is a tuple with numbers, and 'sorted()' method will sort by
-            the these returned tuples.
-
-            The first element of the returned tuples is a bit tricky. For online CPUs, it'll be
-            'True', and for offline CPUs it'll be 'False'. This will make sure that topology lines
-            corresponding to offline CPUs will always go last.
-            """
-
-            vals = (tline[skey] for skey in skeys) # pylint: disable=undefined-loop-variable
-            return (not tline["online"], *vals)
-
-        for lvl, skeys in sorting_map.items():
-            self._topology[lvl] = sorted(topology, key=sort_func)
-
+        self._sort_topology(topology)
         return self._topology[order]
 
     def _check_level(self, lvl, name="level"):
