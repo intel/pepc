@@ -124,8 +124,7 @@ class _MyFormatter(logging.Formatter):
     """
 
     # pylint: disable=protected-access
-    def __init__(self, prefix=None, prefix_debug=None,
-                 colors=None):
+    def __init__(self, prefix=None, prefix_debug=None, colors=None):
         """
         The constructor. The arguments are as follows.
           * prefix - prefix for non-info and non-debug messages (info messages go without any
