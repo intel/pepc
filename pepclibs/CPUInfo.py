@@ -465,6 +465,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         for cpu in cpus:
             topology[cpu]["online"] = online
 
+        self._sort_topology(topology)
+        return self._topology["CPU"]
+
     def mark_cpus_online(self, cpus):
         """Mark CPUs 'cpus' as online in internal topology dictionary."""
         self._toggle_cpus_online(cpus, True)
