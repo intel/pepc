@@ -17,3 +17,14 @@ Examples:
 
 * ``validate_pname()``
 * ``validate_governor_name()``
+
+MSR functions with a single CPU argument
+===================================
+
+Functions in "pepclibs/msr/" modules that have a single CPU argument, should have "cpu" in the name.
+This helps distinguish if the function is a single or multi CPU function.
+
+Examples:
+
+* ``read_feature()`` - many CPUs
+* ``read_cpu_feature()`` - one CPU
