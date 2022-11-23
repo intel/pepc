@@ -32,7 +32,7 @@ CPUInfoData = {
         {"command": "lscpu",
          "dirname": "lscpu"}],
     "inlinefiles" : [
-        # Command for reading following files:
+        # Command for reading die info from the following files:
         # * /sys/devices/system/cpu/cpu*/topology/die_id
         # * /sys/devices/system/cpu/cpu*/topology/die_cpus_list
         {"command": r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
@@ -41,7 +41,17 @@ CPUInfoData = {
          "separator": ":",
          "readonly":  True,
          "dirname":   "die-info",
-         "filename":  "die.txt"}],
+         "filename":  "die.txt"},
+        # Command for reading module info from the following files:
+        # * /sys/devices/system/cpu/cpu*/cache/index2/id
+        # * /sys/devices/system/cpu/cpu*/cache/index2/shared_cpus_list
+        {"command": r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
+                    r"'.*cpu([[:digit:]]+)/cache/index2/(id|shared_cpu_list)' -type f -exec " \
+                    r"printf '%s' {}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly":  True,
+         "dirname":   "module-info",
+         "filename":  "module.txt"}],
     "msrs" :
         {"addresses": [
             EnergyPerfBias.MSR_ENERGY_PERF_BIAS,
