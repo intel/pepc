@@ -7,6 +7,43 @@ Code conventions
 
 .. contents::
 
+Class attribute definitions
+===========================
+
+All class attributes must be defined at the top of the constructor.
+
+*Do*:::
+
+ class Blah:
+     ....
+     def __init__(self, arg1, arg2):
+         """Reasonable docstring."""
+
+         self._arg1 = arg1
+         self._arg2 = arg2
+
+         self._something = None
+         self._foo = None
+
+         self._validate_input_args()
+         self._do_somthing_else()
+
+*Don't*:::
+
+ class Blah:
+     ....
+     def __init__(self, arg1, arg2):
+         """Reasonable docstring."""
+
+         self._arg1 = arg1
+         self._arg2 = arg2
+
+         self._validate_input_args()
+         self._do_somthing_else()
+
+         self._something = None
+         self._foo = None
+
 Functions starting with "validate\_"
 ====================================
 
