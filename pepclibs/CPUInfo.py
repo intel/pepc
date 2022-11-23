@@ -179,6 +179,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     3. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
         * 'package_to_cpus()'
         * 'package_to_cores()'
+        * 'package_to_modules()'
         * 'package_to_dies()'
         * 'package_to_nodes()'
         * 'cores_to_cpus()'
@@ -632,6 +633,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def package_to_cores(self, package, order="core"):
         """Similar to 'package_to_cpus()', but for cores."""
         return self._get_level_nums("core", "package", (package,), order=order)
+
+    def package_to_modules(self, package, order="module"):
+        """Similar to 'package_to_cpus()', but for modules."""
+        return self._get_level_nums("module", "package", (package,), order=order)
 
     def package_to_dies(self, package, order="die"):
         """Similar to 'package_to_cpus()', but for dies."""
