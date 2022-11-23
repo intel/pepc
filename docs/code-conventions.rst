@@ -7,8 +7,8 @@ Code conventions
 
 .. contents::
 
-Function starting with "validate\_"
-===================================
+Functions starting with "validate\_"
+====================================
 
 If you have a function or a class method that validates input arguments and raises an exception if
 the arguments are incorrect (out of range, bad type, etc), call it ``'validate_something()'``.
@@ -18,13 +18,19 @@ Examples:
 * ``validate_pname()``
 * ``validate_governor_name()``
 
-MSR functions with a single CPU argument
-===================================
+MSR modules
+============
 
-Functions in "pepclibs/msr/" modules that have a single CPU argument, should have "cpu" in the name.
-This helps distinguish if the function is a single or multi CPU function.
+This section is specific to "pepclibs/msr/" modules.
+
+Methods for single CPU vs multiple CPUs
++++++++++++++++++++++++++++++++++++++++
+
+Some methods accept a single CPU number (argument name s 'cpu'), some methods accept multiple CPU
+numbers (argument name is 'cpus'). The convention is to include the "cpu" word in function names
+that deal with a single CPU.
 
 Examples:
 
-* ``read_feature()`` - many CPUs
-* ``read_cpu_feature()`` - one CPU
+* ``read_feature(blah, cpus)`` - read a feature for multiple CPUs
+* ``read_cpu_feature(blah, cpu)`` - read a feature for a single CPU
