@@ -167,39 +167,39 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     1. Get CPU topology information.
         * 'get_topology()'
     2. Get list of packages/cores/etc.
-        * 'get_packages()'
+        * 'get_cpus()'
+        * 'get_cores()'
         * 'get_dies()'
         * 'get_nodes()'
-        * 'get_cores()'
-        * 'get_cpus()'
+        * 'get_packages()'
         * 'get_offline_cpus()'
-        * 'get_cpu_siblings()'
         * 'get_cpu_levels()'
+        * 'get_cpu_siblings()'
     3. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
-        * 'packages_to_cpus()'
         * 'package_to_cpus()'
+        * 'package_to_cores()'
         * 'package_to_dies()'
         * 'package_to_nodes()'
-        * 'package_to_cores()'
+        * 'cores_to_cpus()'
         * 'dies_to_cpus()'
         * 'nodes_to_cpus()'
-        * 'cores_to_cpus()'
+        * 'packages_to_cpus()'
     4. Get packages/core/etc counts.
-        * 'get_packages_count()'
         * 'get_cpus_count()'
+        * 'get_packages_count()'
         * 'get_offline_cpus_count()'
     5. Normalize a list of packages/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
-            * 'normalize_packages()'
-            * 'normalize_dies()'
             * 'normalize_cpus()'
+            * 'normalize_dies()'
+            * 'normalize_packages()'
         B. Single package/CPU/etc.
-            * 'normalize_package()'
             * 'normalize_cpu()'
+            * 'normalize_package()'
     6. "Divide" list of CPUs.
-        A. By packages: 'cpus_div_packages()'.
+        A. By cores: 'cpus_div_cores()'.
         B. By dies: 'cpus_div_dies()'.
-        B. By cores: 'cpus_div_cores()'.
+        C. By packages: 'cpus_div_packages()'.
     7. Mark CPUs online/offline.
         * 'mark_cpus_online()'
         * 'mark_cpus_offline()'
@@ -469,15 +469,28 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Same as 'mark_cpus_online()' but mark CPUs as offline."""
         self._toggle_cpus_online(cpus, False)
 
-    def get_packages(self, order="package"):
+    def get_cpus(self, order="CPU"):
         """
-        Returns list of package numbers sorted in ascending order.
+        Returns list of online CPU numbers. The numbers are sorted in ascending order by default.
+        The 'order' argument can be one of:
+          * "package" - sort in ascending package order.
+          * "node" - sort in ascending node order.
+          * "core" - sort in ascending core order.
+          * "CPU" - sort in ascending CPU order (same as default).
+        """
 
-        Important: if a package has all CPUs offline, the package number will not be included in the
+        return self._get_level_nums("CPU", "CPU", "all", order=order)
+
+    def get_cores(self, package=0, order="core"):
+        """
+        Returns list of cores numbers in package 'package'. The returned list is sorted in ascending
+        order.
+
+        Important: if a core has all CPUs offline, the core number will not be included in the
         returned list.
         """
 
-        return self._get_level_nums("package", "package", "all", order=order)
+        return self._get_level_nums("core", "package", package, order=order)
 
     def get_dies(self, package=0, order="die"):
         """
@@ -501,28 +514,15 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return self._get_level_nums("node", "package", package, order=order)
 
-    def get_cores(self, package=0, order="core"):
+    def get_packages(self, order="package"):
         """
-        Returns list of cores numbers in package 'package'. The returned list is sorted in ascending
-        order.
+        Returns list of package numbers sorted in ascending order.
 
-        Important: if a core has all CPUs offline, the core number will not be included in the
+        Important: if a package has all CPUs offline, the package number will not be included in the
         returned list.
         """
 
-        return self._get_level_nums("core", "package", package, order=order)
-
-    def get_cpus(self, order="CPU"):
-        """
-        Returns list of online CPU numbers. The numbers are sorted in ascending order by default.
-        The 'order' argument can be one of:
-          * "package" - sort in ascending package order.
-          * "node" - sort in ascending node order.
-          * "core" - sort in ascending core order.
-          * "CPU" - sort in ascending CPU order (same as default).
-        """
-
-        return self._get_level_nums("CPU", "CPU", "all", order=order)
+        return self._get_level_nums("package", "package", "all", order=order)
 
     def get_offline_cpus(self):
         """Returns list of offline CPU numbers sorted in ascending order."""
@@ -533,6 +533,29 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 cpus.append(tline["CPU"])
 
         return sorted(cpus)
+
+    def get_cpu_levels(self, cpu):
+        """
+        Returns a dictionary of levels an online CPU 'cpu' belongs to. Example for CPU 16:
+            {"package": 0, "die": 1, "node": 1, "core" : 5, "CPU": 16}
+        """
+
+        cpu = self.normalize_cpu(cpu)
+
+        tline = None
+        for tline in self.get_topology(order="CPU"):
+            if cpu == tline["CPU"]:
+                break
+        else:
+            raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}")
+
+        if not tline["online"]:
+            raise Error(f"CPU {cpu} is offline{self._pman.hostmsg}, cannot get its topology")
+
+        result = {}
+        for lvl in LEVELS:
+            result[lvl] = tline[lvl]
+        return result
 
     def get_cpu_siblings(self, cpu, level):
         """
@@ -562,42 +585,20 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         raise Error(f"unsupported scope name \"{level}\"")
 
-    def get_cpu_levels(self, cpu):
-        """
-        Returns a dictionary of levels an online CPU 'cpu' belongs to. Example for CPU 16:
-            {"package": 0, "die": 1, "node": 1, "core" : 5, "CPU": 16}
-        """
-
-        cpu = self.normalize_cpu(cpu)
-
-        tline = None
-        for tline in self.get_topology(order="CPU"):
-            if cpu == tline["CPU"]:
-                break
-        else:
-            raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}")
-
-        if not tline["online"]:
-            raise Error(f"CPU {cpu} is offline{self._pman.hostmsg}, cannot get its topology")
-
-        result = {}
-        for lvl in LEVELS:
-            result[lvl] = tline[lvl]
-        return result
-
-    def packages_to_cpus(self, packages="all", order="CPU"):
-        """
-        Returns list of online CPU numbers belonging to packages 'packages'. The 'packages' argument
-        is similar to the one in 'normalize_packages()'. The 'order' argument is the same as in
-        'get_cpus()'. By default, the result sorted in ascending order.
-        """
-        return self._get_level_nums("CPU", "package", packages, order=order)
-
     def package_to_cpus(self, package, order="CPU"):
         """
         Same as 'packages_to_cpus()', but for a single package 'package'.
         """
         return self._get_level_nums("CPU", "package", (package,), order=order)
+
+    def package_to_cores(self, package, order="core"):
+        """
+        Returns list of cores numbers belonging to package 'package'. The 'order' argument can be
+        one of:
+           * "node" - sort in ascending node order.
+           * "core" - sort in ascending core order (same as default).
+        """
+        return self._get_level_nums("core", "package", (package,), order=order)
 
     def package_to_dies(self, package, order="die"):
         """
@@ -615,14 +616,23 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """
         return self._get_level_nums("node", "package", (package,), order=order)
 
-    def package_to_cores(self, package, order="core"):
+    def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
         """
-        Returns list of cores numbers belonging to package 'package'. The 'order' argument can be
-        one of:
-           * "node" - sort in ascending node order.
-           * "core" - sort in ascending core order (same as default).
+        Returns list of online CPU numbers belonging to cores 'cores' in packages 'packages'. The
+        'cores' and 'packages' arguments are similar to the 'packages' argument in
+        'normalize_packages()'. The 'order' argument is the same as in 'get_cpus()'. By default, the
+        result sorted in ascending order.
         """
-        return self._get_level_nums("core", "package", (package,), order=order)
+
+        by_core = self._get_level_nums("CPU", "core", cores, order=order)
+        by_package = set(self._get_level_nums("CPU", "package", packages))
+
+        cpus = []
+        for cpu in by_core:
+            if cpu in by_package:
+                cpus.append(cpu)
+
+        return cpus
 
     def dies_to_cpus(self, dies="all", packages="all", order="CPU"):
         """
@@ -660,101 +670,71 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return cpus
 
-    def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
+    def packages_to_cpus(self, packages="all", order="CPU"):
         """
-        Returns list of online CPU numbers belonging to cores 'cores' in packages 'packages'. The
-        'cores' and 'packages' arguments are similar to the 'packages' argument in
-        'normalize_packages()'. The 'order' argument is the same as in 'get_cpus()'. By default, the
-        result sorted in ascending order.
+        Returns list of online CPU numbers belonging to packages 'packages'. The 'packages' argument
+        is similar to the one in 'normalize_packages()'. The 'order' argument is the same as in
+        'get_cpus()'. By default, the result sorted in ascending order.
         """
-
-        by_core = self._get_level_nums("CPU", "core", cores, order=order)
-        by_package = set(self._get_level_nums("CPU", "package", packages))
-
-        cpus = []
-        for cpu in by_core:
-            if cpu in by_package:
-                cpus.append(cpu)
-
-        return cpus
-
-    def get_packages_count(self):
-        """Returns packages count."""
-        return len(self.get_packages())
-
-    def get_cpus_count(self):
-        """Returns count of online CPUs."""
-        return len(self.get_cpus())
+        return self._get_level_nums("CPU", "package", packages, order=order)
 
     def get_offline_cpus_count(self):
         """Returns count of offline CPUs."""
         return len(self.get_offline_cpus())
 
-    def normalize_packages(self, packages):
+    def get_cpus_count(self):
+        """Returns count of online CPUs."""
+        return len(self.get_cpus())
+
+    def get_packages_count(self):
+        """Returns packages count."""
+        return len(self.get_packages())
+
+    def cpus_div_cores(self, cpus):
         """
-        Validate package numbers in 'packages' and return the normalized list. The input package
-        numbers may be integers or strings containing integer numbers. It may also be a string with
-        comma-separated package numbers and ranges. This is similar to the 'cpus' argument in
-        'normalize_cpus()'.
-
-        Returns a list of integer package numbers.
-        """
-
-        allpkgs = self.get_packages()
-
-        if packages == "all":
-            return allpkgs
-
-        allpkgs = set(allpkgs)
-        packages = ArgParse.parse_int_list(packages, ints=True, dedup=True)
-        for pkg in packages:
-            if pkg not in allpkgs:
-                pkgs_str = ", ".join([str(pkg) for pkg in sorted(allpkgs)])
-                raise Error(f"package '{pkg}' not available{self._pman.hostmsg}, available "
-                            f"packages are: {pkgs_str}")
-
-        return packages
-
-    def cpus_div_packages(self, cpus, packages="all"):
-        """
-        Check which CPU numbers in 'cpus' cover entire package(s). In other words, this method is
-        inverse to 'packages_to_cpus()' and turns list of CPUs into a list of packages. The
-        arguments are as follows.
+        This method is similar to 'cpus_div_packages()', but it checks which CPU numbers in 'cpus'
+        cover entire core(s). So it is inverse to the 'cores_to_cpus()' method. The arguments are as
+        follows.
           * cpus - same as in 'normalize_cpus()'.
-          * packages - the packages to check for CPU numbers in.
 
-        Returns a tuple of two lists: ('packages', 'rem_cpus').
-          * packages - list of packages with all CPUs present in 'cpus'.
-          * rem_cpus - list of remaining CPUs that cannot be converted to a package number.
+        Returns a tuple of two lists: ('cores', 'rem_cpus').
+          * cores - list of ('core', 'package') tuples with all CPUs present in 'cpus'.
+              o core - core number.
+              o package - package number 'core' belongs to
+          * rem_cpus - list of remaining CPUs that cannot be converted to a core number.
 
-        Consider an example of a system with 2 packages and 2 CPUs per package.
-          * package 0 includes CPUs 0 and 1
-          * package 1 includes CPUs 2 and 3
+        The return value is inconsistent with 'cpus_div_packages()' because cores numbers are not
+        global, so they must go with package numbers.
 
-        1. cpus_div_packages("0-3") would return ([0,1], []).
-        2. cpus_div_packages("2,3") would return ([1],   []).
-        3. cpus_div_packages("0,3") would return ([],    [0,3]).
+        Consider an example of a system with 2 packages, 1 core per package, 2 CPUs per core.
+          * package 0 includes core 0 and CPUs 0 and 1
+          * package 1 includes core 0 and CPUs 2 and 3
+
+        1. cpus_div_cores("0-3") would return ([(0,0), (0,1)], []).
+        2. cpus_div_cores("2,3") would return ([(0,1)],        []).
+        3. cpus_div_cores("0,3") would return ([],             [0,3]).
         """
 
-        pkgs = []
+        cores = []
         rem_cpus = []
 
         cpus = self.normalize_cpus(cpus)
         cpus_set = set(cpus)
 
-        for pkg in self.normalize_packages(packages):
-            pkg_cpus_set = set(self.package_to_cpus(pkg))
+        for pkg in self.get_packages():
+            for core in self.package_to_cores(pkg):
+                siblings_set = set(self.cores_to_cpus(cores=(core,), packages=(pkg,)))
 
-            if pkg_cpus_set.issubset(cpus_set):
-                pkgs.append(pkg)
-                cpus_set -= pkg_cpus_set
+                if siblings_set.issubset(cpus_set):
+                    cores.append((core, pkg))
+                    cpus_set -= siblings_set
 
         # Return the remaining CPUs in the order of the input 'cpus'.
         for cpu in cpus:
             if cpu in cpus_set:
                 rem_cpus.append(cpu)
 
-        return (pkgs, rem_cpus)
+        return (cores, rem_cpus)
 
     def cpus_div_dies(self, cpus):
         """
@@ -806,81 +786,46 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return (dies, rem_cpus)
 
-    def cpus_div_cores(self, cpus):
+    def cpus_div_packages(self, cpus, packages="all"):
         """
-        This method is similar to 'cpus_div_packages()', but it checks which CPU numbers in 'cpus'
-        cover entire core(s). So it is inverse to the 'cores_to_cpus()' method. The arguments are as
-        follows.
+        Check which CPU numbers in 'cpus' cover entire package(s). In other words, this method is
+        inverse to 'packages_to_cpus()' and turns list of CPUs into a list of packages. The
+        arguments are as follows.
           * cpus - same as in 'normalize_cpus()'.
+          * packages - the packages to check for CPU numbers in.
 
-        Returns a tuple of two lists: ('cores', 'rem_cpus').
-          * cores - list of ('core', 'package') tuples with all CPUs present in 'cpus'.
-              o core - core number.
-              o package - package number 'core' belongs to
-          * rem_cpus - list of remaining CPUs that cannot be converted to a core number.
+        Returns a tuple of two lists: ('packages', 'rem_cpus').
+          * packages - list of packages with all CPUs present in 'cpus'.
+          * rem_cpus - list of remaining CPUs that cannot be converted to a package number.
 
-        The return value is inconsistent with 'cpus_div_packages()' because cores numbers are not
-        global, so they must go with package numbers.
+        Consider an example of a system with 2 packages and 2 CPUs per package.
+          * package 0 includes CPUs 0 and 1
+          * package 1 includes CPUs 2 and 3
 
-        Consider an example of a system with 2 packages, 1 core per package, 2 CPUs per core.
-          * package 0 includes core 0 and CPUs 0 and 1
-          * package 1 includes core 0 and CPUs 2 and 3
-
-        1. cpus_div_cores("0-3") would return ([(0,0), (0,1)], []).
-        2. cpus_div_cores("2,3") would return ([(0,1)],        []).
-        3. cpus_div_cores("0,3") would return ([],             [0,3]).
+        1. cpus_div_packages("0-3") would return ([0,1], []).
+        2. cpus_div_packages("2,3") would return ([1],   []).
+        3. cpus_div_packages("0,3") would return ([],    [0,3]).
         """
 
-        cores = []
+        pkgs = []
         rem_cpus = []
 
         cpus = self.normalize_cpus(cpus)
         cpus_set = set(cpus)
 
-        for pkg in self.get_packages():
-            for core in self.package_to_cores(pkg):
-                siblings_set = set(self.cores_to_cpus(cores=(core,), packages=(pkg,)))
+        for pkg in self.normalize_packages(packages):
+            pkg_cpus_set = set(self.package_to_cpus(pkg))
 
-                if siblings_set.issubset(cpus_set):
-                    cores.append((core, pkg))
-                    cpus_set -= siblings_set
+            if pkg_cpus_set.issubset(cpus_set):
+                pkgs.append(pkg)
+                cpus_set -= pkg_cpus_set
 
         # Return the remaining CPUs in the order of the input 'cpus'.
         for cpu in cpus:
             if cpu in cpus_set:
                 rem_cpus.append(cpu)
 
-        return (cores, rem_cpus)
-
-    def normalize_package(self, package):
-        """Same as 'normalize_packages()', but for a single package number."""
-        return self.normalize_packages([package])[0]
-
-    def normalize_dies(self, dies, package=0):
-        """
-        Validate die numbers in 'dies' for package 'package' and return the normalized list. The
-        arguments are as follows.
-          * dies - similar to 'packages' in 'normalize_packages()', but contains die numbers.
-          * package - package number to validate the 'dies' against: all numbers in 'dies' should be
-            valid die numbers in package number 'package'.
-
-        Returns a list of integer die numbers.
-        """
-
-        pkg_dies = self.package_to_dies(package)
-
-        if dies == "all":
-            return pkg_dies
-
-        pkg_dies = set(pkg_dies)
-        dies = ArgParse.parse_int_list(dies, ints=True, dedup=True)
-        for die in dies:
-            if die not in pkg_dies:
-                dies_str = ", ".join([str(pkg) for pkg in sorted(pkg_dies)])
-                raise Error(f"die '{die}' is not available in package "
-                            f"'{package}'{self._pman.hostmsg}, available dies are: {dies_str}")
-
-        return dies
+        return (pkgs, rem_cpus)
 
     def normalize_cpus(self, cpus, offlined_ok=False):
         """
@@ -910,9 +855,64 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return cpus
 
+    def normalize_dies(self, dies, package=0):
+        """
+        Validate die numbers in 'dies' for package 'package' and return the normalized list. The
+        arguments are as follows.
+          * dies - similar to 'packages' in 'normalize_packages()', but contains die numbers.
+          * package - package number to validate the 'dies' against: all numbers in 'dies' should be
+            valid die numbers in package number 'package'.
+
+        Returns a list of integer die numbers.
+        """
+
+        pkg_dies = self.package_to_dies(package)
+
+        if dies == "all":
+            return pkg_dies
+
+        pkg_dies = set(pkg_dies)
+        dies = ArgParse.parse_int_list(dies, ints=True, dedup=True)
+        for die in dies:
+            if die not in pkg_dies:
+                dies_str = ", ".join([str(pkg) for pkg in sorted(pkg_dies)])
+                raise Error(f"die '{die}' is not available in package "
+                            f"'{package}'{self._pman.hostmsg}, available dies are: {dies_str}")
+
+        return dies
+
+    def normalize_packages(self, packages):
+        """
+        Validate package numbers in 'packages' and return the normalized list. The input package
+        numbers may be integers or strings containing integer numbers. It may also be a string with
+        comma-separated package numbers and ranges. This is similar to the 'cpus' argument in
+        'normalize_cpus()'.
+
+        Returns a list of integer package numbers.
+        """
+
+        allpkgs = self.get_packages()
+
+        if packages == "all":
+            return allpkgs
+
+        allpkgs = set(allpkgs)
+        packages = ArgParse.parse_int_list(packages, ints=True, dedup=True)
+        for pkg in packages:
+            if pkg not in allpkgs:
+                pkgs_str = ", ".join([str(pkg) for pkg in sorted(allpkgs)])
+                raise Error(f"package '{pkg}' not available{self._pman.hostmsg}, available "
+                            f"packages are: {pkgs_str}")
+
+        return packages
+
     def normalize_cpu(self, cpu):
         """Same as 'normalize_cpus()', but for a single CPU number."""
         return  self.normalize_cpus([cpu])[0]
+
+    def normalize_package(self, package):
+        """Same as 'normalize_packages()', but for a single package number."""
+        return self.normalize_packages([package])[0]
 
     def _get_cpu_info(self):
         """Get general CPU information (model, architecture, etc)."""
