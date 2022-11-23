@@ -17,8 +17,8 @@ SYNOPSIS
 ========
 
 **pepc** [-h] [-q] [-d] [--version] [-H HOSTNAME] [-U USERNAME] [-K
-PRIVKEY] [-T TIMEOUT] [--force-color] {cpu-hotplug,cstates,pstates,aspm}
-...
+PRIVKEY] [-T TIMEOUT] [--force-color]
+{cpu-hotplug,cstates,pstates,aspm,topology} ...
 
 DESCRIPTION
 ===========
@@ -72,6 +72,9 @@ COMMANDS
 
 **pepc** *aspm*
    PCI ASPM commands.
+
+**pepc** *topology*
+   CPU topology commands.
 
 COMMAND *'pepc* cpu-hotplug'
 ============================
@@ -190,7 +193,7 @@ OPTIONS *'pepc* cpu-hotplug offline'
 COMMAND *'pepc* cstates'
 ========================
 
-usage: pepc cstates [-h] [-q] [-d] {info,config} ...
+usage: pepc cstates [-h] [-q] [-d] {info,config,save,restore} ...
 
 Various commands related to CPU C-states.
 
@@ -215,11 +218,17 @@ FURTHER SUB-COMMANDS *'pepc cstates'*
 **pepc cstates** *config*
    Configure C-states.
 
+**pepc cstates** *save*
+   Save C-states settings.
+
+**pepc cstates** *restore*
+   Restore C-states settings.
+
 COMMAND *'pepc* cstates info'
 =============================
 
 usage: pepc cstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--save PATH] [--cstates CSNAMES]
+[--packages PACKAGES] [--yaml] [--cstates [CATATES]]
 [--pkg-cstate-limit] [--c1-demotion] [--c1-undemotion]
 [--c1e-autopromote] [--cstate-prewake] [--idle-driver] [--governor]
 
@@ -260,12 +269,10 @@ OPTIONS *'pepc* cstates info'
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
 
-**--save** *PATH*
-   Instead of printing the C-states information, save it to a file in
-   YAML format. The file can used to restore the settings with option
-   '--restore'.
+**--yaml**
+   Print information in YAML format.
 
-**--cstates** *CSNAMES*
+**--cstates** *[CATATES]*
    Comma-separated list of C-states to get information about (all
    C-states by default). C-states should be specified by name (e.g.,
    'C1'). Use 'all' to specify all the available Linux C-states (this is
@@ -318,11 +325,10 @@ COMMAND *'pepc* cstates config'
 ===============================
 
 usage: pepc cstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--restore PATH] [--enable [CSTATES]] [--disable
-[CSTATES]] [--pkg-cstate-limit [PKG_CSTATE_LIMIT]] [--c1-demotion
-[C1_DEMOTION]] [--c1-undemotion [C1_UNDEMOTION]] [--c1e-autopromote
-[C1E_AUTOPROMOTE]] [--cstate-prewake [CSTATE_PREWAKE]] [--governor
-[GOVERNOR]]
+[--packages PACKAGES] [--enable [CSTATES]] [--disable [CSTATES]]
+[--pkg-cstate-limit [PKG_CSTATE_LIMIT]] [--c1-demotion [C1_DEMOTION]]
+[--c1-undemotion [C1_UNDEMOTION]] [--c1e-autopromote [C1E_AUTOPROMOTE]]
+[--cstate-prewake [CSTATE_PREWAKE]] [--governor [GOVERNOR]]
 
 Configure C-states on specified CPUs. All options can be used without a
 parameter, in which case the currently configured value(s) will be
@@ -359,9 +365,6 @@ OPTIONS *'pepc* cstates config'
    mean packages 1 to 3, and
 
 all packages.
-
-**--restore** *PATH*
-   Path to the file to restore C-state configuration from.
 
 **--enable** *[CSTATES]*
    Comma-separated list of C-states to enable. C-states should be
@@ -409,10 +412,80 @@ platform- specific hardware state, entered upon a Linux request..
    Set idle governor. Idle governor decides which C-state to request on
    an idle CPU. This option has global scope.
 
+COMMAND *'pepc* cstates save'
+=============================
+
+usage: pepc cstates save [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
+[--packages PACKAGES] [-o OUTFILE]
+
+Save all the modifiable C-state settings into a file. This file can
+later be used for restoring C-state settings with the 'pepc cstates
+restore' command.
+
+OPTIONS *'pepc* cstates save'
+=============================
+
+**-h**
+   Show this help message and exit.
+
+**-q**
+   Be quiet.
+
+**-d**
+   Print debugging information.
+
+**--cpus** *CPUS*
+   List of CPUs to save C-state information about. The list can include
+   individual CPU numbers and CPU number ranges. For example,
+   '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use
+   the special keyword 'all' to specify all CPUs. If the
+   CPUs/cores/packages were not specified, all CPUs will be used as the
+   default value.
+
+**--cores** *CORES*
+   List of cores to save C-state information about. The list can include
+   individual core numbers and core number ranges. For example,
+   '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
+   Use the special keyword
+
+**--packages** *PACKAGES*
+   List of packages to save C-state information about. The list can
+   include individual package numbers and package number ranges. For
+   example, '1-3' would mean packages 1 to 3, and '1,3' would mean
+   packages 1 and 3. Use the special keyword 'all' to specify all
+   packages.
+
+**-o** *OUTFILE*, **--outfile** *OUTFILE*
+   Name of the file to save the settings to.
+
+COMMAND *'pepc* cstates restore'
+================================
+
+usage: pepc cstates restore [-h] [-q] [-d] [-f INFILE]
+
+Restore C-state settings from a file previously created with the 'pepc
+cstates save' command.
+
+OPTIONS *'pepc* cstates restore'
+================================
+
+**-h**
+   Show this help message and exit.
+
+**-q**
+   Be quiet.
+
+**-d**
+   Print debugging information.
+
+**-f** *INFILE*, **--from** *INFILE*
+   Name of the file restore the settings from (use "-" to read from the
+   standard output.
+
 COMMAND *'pepc* pstates'
 ========================
 
-usage: pepc pstates [-h] [-q] [-d] {info,config} ...
+usage: pepc pstates [-h] [-q] [-d] {info,config,save,restore} ...
 
 Various commands related to P-states (CPU performance states).
 
@@ -437,11 +510,17 @@ FURTHER SUB-COMMANDS *'pepc pstates'*
 **pepc pstates** *config*
    Configure P-states.
 
+**pepc pstates** *save*
+   Save P-states settings.
+
+**pepc pstates** *restore*
+   Restore P-states settings.
+
 COMMAND *'pepc* pstates info'
 =============================
 
 usage: pepc pstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--save PATH] [--min-freq] [--max-freq]
+[--packages PACKAGES] [--yaml] [--min-freq] [--max-freq]
 [--min-freq-limit] [--max-freq-limit] [--base-freq] [--min-freq-hw]
 [--max-freq-hw] [--min-oper-freq] [--max-eff-freq] [--turbo]
 [--max-turbo-freq] [--min-uncore-freq] [--max-uncore-freq]
@@ -484,10 +563,8 @@ OPTIONS *'pepc* pstates info'
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
 
-**--save** *PATH*
-   Instead of printing the P-states information, save it to a file in
-   YAML format. The file can used to restore the settings with option
-   '--restore'.
+**--yaml**
+   Print information in YAML format.
 
 **--min-freq**
    Get min. CPU frequency. Minimum CPU frequency is the lowest frequency
@@ -645,12 +722,12 @@ COMMAND *'pepc* pstates config'
 ===============================
 
 usage: pepc pstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--restore PATH] [--min-freq [MIN_FREQ]]
-[--max-freq [MAX_FREQ]] [--min-freq-hw [MIN_FREQ_HW]] [--max-freq-hw
-[MAX_FREQ_HW]] [--turbo [TURBO]] [--min-uncore-freq [MIN_UNCORE_FREQ]]
-[--max-uncore-freq [MAX_UNCORE_FREQ]] [--epp [EPP]] [--epp-policy
-[EPP_POLICY]] [--epb [EPB]] [--epb-policy [EPB_POLICY]]
-[--intel-pstate-mode [INTEL_PSTATE_MODE]] [--governor [GOVERNOR]]
+[--packages PACKAGES] [--min-freq [MIN_FREQ]] [--max-freq [MAX_FREQ]]
+[--min-freq-hw [MIN_FREQ_HW]] [--max-freq-hw [MAX_FREQ_HW]] [--turbo
+[TURBO]] [--min-uncore-freq [MIN_UNCORE_FREQ]] [--max-uncore-freq
+[MAX_UNCORE_FREQ]] [--epp [EPP]] [--epp-policy [EPP_POLICY]] [--epb
+[EPB]] [--epb-policy [EPB_POLICY]] [--intel-pstate-mode
+[INTEL_PSTATE_MODE]] [--governor [GOVERNOR]]
 
 Configure P-states on specified CPUs. All options can be used without a
 parameter, in which case the currently configured value(s) will be
@@ -687,9 +764,6 @@ OPTIONS *'pepc* pstates config'
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
-
-**--restore** *PATH*
-   Path to the file to restore P-state configuration from.
 
 **--min-freq** *[MIN_FREQ]*
    Set min. CPU frequency. Minimum CPU frequency is the lowest frequency
@@ -783,6 +857,77 @@ OPTIONS *'pepc* pstates config'
    P-state to select on a CPU depending on CPU business and other
    factors. This option has CPU scope.
 
+COMMAND *'pepc* pstates save'
+=============================
+
+usage: pepc pstates save [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
+[--packages PACKAGES] [-o OUTFILE]
+
+Save all the modifiable P-state settings into a file. This file can
+later be used for restoring P-state settings with the 'pepc pstates
+restore' command.
+
+OPTIONS *'pepc* pstates save'
+=============================
+
+**-h**
+   Show this help message and exit.
+
+**-q**
+   Be quiet.
+
+**-d**
+   Print debugging information.
+
+**--cpus** *CPUS*
+   List of CPUs to save P-state information about. The list can include
+   individual CPU numbers and CPU number ranges. For example,
+   '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use
+   the special keyword 'all' to specify all CPUs. If the
+   CPUs/cores/packages were not specified, all CPUs will be used as the
+   default value.
+
+**--cores** *CORES*
+   List of cores to save P-state information about. The list can include
+   individual core numbers and core number ranges. For example,
+   '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
+   Use the special keyword
+
+**--packages** *PACKAGES*
+   List of packages to save P-state information about. The list can
+   include individual package numbers and package number ranges. For
+   example, '1-3' would mean packages 1 to 3, and '1,3' would mean
+   packages 1 and 3. Use the special keyword 'all' to specify all
+   packages.
+
+**-o** *OUTFILE*, **--outfile** *OUTFILE*
+   Name of the file to save the settings to (printed to standard output
+   by default).
+
+COMMAND *'pepc* pstates restore'
+================================
+
+usage: pepc pstates restore [-h] [-q] [-d] [-f INFILE]
+
+Restore P-state settings from a file previously created with the 'pepc
+pstates save' command.
+
+OPTIONS *'pepc* pstates restore'
+================================
+
+**-h**
+   Show this help message and exit.
+
+**-q**
+   Be quiet.
+
+**-d**
+   Print debugging information.
+
+**-f** *INFILE*, **--from** *INFILE*
+   Name of the file restore the settings from (use "-" to read from the
+   standard output.
+
 COMMAND *'pepc* aspm'
 =====================
 
@@ -852,6 +997,58 @@ OPTIONS *'pepc* aspm config'
 **--policy** *[POLICY]*
    the PCI ASPM policy to set, use "default" to set the Linux default
    policy.
+
+COMMAND *'pepc* topology'
+=========================
+
+usage: pepc topology [-h] [-q] [-d] {info} ...
+
+Various commands related to CPU topology.
+
+OPTIONS *'pepc* topology'
+=========================
+
+**-h**
+   Show this help message and exit.
+
+**-q**
+   Be quiet.
+
+**-d**
+   Print debugging information.
+
+FURTHER SUB-COMMANDS *'pepc topology'*
+======================================
+
+**pepc topology** *info*
+   Print CPU topology.
+
+COMMAND *'pepc* topology info'
+==============================
+
+usage: pepc topology info [-h] [-q] [-d] [--order ORDER]
+
+Print CPU topology information. Note, the topology information for some
+offline CPUs may be unavailable, in these cases the number will be
+substituted with "?".
+
+OPTIONS *'pepc* topology info'
+==============================
+
+**-h**
+   Show this help message and exit.
+
+**-q**
+   Be quiet.
+
+**-d**
+   Print debugging information.
+
+**--order** *ORDER*
+   By default, the topology table is printed in CPU number order. Use
+   this option to print it in a different order (e.g., core or package
+   number order). Here are the supported order names: package, die,
+   node, core, cpu.
 
 AUTHORS
 =======

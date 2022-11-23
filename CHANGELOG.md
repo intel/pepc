@@ -5,13 +5,18 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.3.29] - 2022-11-23
+### Fixed
  - Fix 'pepc pstates config/info --epp' option: it incorrectly assumed that EPP
    is per-package, even though it is per-CPU.
  - Fix kernel 'DEBUG_LOCKS_WARN_ON' warning caused by wult drivers.
 ### Added
  - Add 'pepc [pc]state info --yaml' option.
  - Add 'topology info' command that prints CPU topology information.
-### Removed
 ### Changed
  - Remove '--save' and '--restore' option, add 'pepc [pc]states save/restore'
    sub-commands instead.
