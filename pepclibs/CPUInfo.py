@@ -183,6 +183,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         * 'package_to_dies()'
         * 'package_to_nodes()'
         * 'cores_to_cpus()'
+        * 'modules_to_cpus()'
         * 'dies_to_cpus()'
         * 'nodes_to_cpus()'
         * 'packages_to_cpus()'
@@ -662,6 +663,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 cpus.append(cpu)
 
         return cpus
+
+    def modules_to_cpus(self, modules="all", order="CPU"):
+        """Returns list of online CPU numbers belonging to modules 'modules'."""
+        return self._get_level_nums("CPU", "module", modules, order=order)
 
     def dies_to_cpus(self, dies="all", packages="all", order="CPU"):
         """
