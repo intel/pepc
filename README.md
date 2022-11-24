@@ -116,8 +116,8 @@ We do not provide Ubuntu/Debian packages, so you'll need to use the 'pip' instal
 Install the following dependencies, though.
 
 ```
-sudo apt install -y rsync libssl-dev util-linux procps
-sudo apt install -y python3 python3-colorama python3-paramiko python3-argcomplete
+sudo apt install -y rsync libssl-dev util-linux procps python3 git
+sudo apt install -y python3-pip python3-colorama python3-paramiko python3-argcomplete
 ```
 
 ## Installing with 'pip'
