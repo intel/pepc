@@ -9,6 +9,10 @@ inlinefiles:
   filename: die.txt
   readonly: true
   separator: ':'
+- separator: ':'
+  readonly: true
+  dirname: CPUInfo/module-info
+  filename: module.txt
 msrs:
   addresses:
   - 432

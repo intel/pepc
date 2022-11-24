@@ -5,10 +5,14 @@ commands:
 - command: lscpu
   dirname: CPUInfo/lscpu
 inlinefiles:
-- dirname: CPUInfo/die-info
-  filename: die.txt
+- separator: ':'
   readonly: true
-  separator: ':'
+  dirname: CPUInfo/die-info
+  filename: die.txt
+- separator: ':'
+  readonly: true
+  dirname: CPUInfo/module-info
+  filename: module.txt
 msrs:
   addresses:
   - 432
@@ -24,7 +28,7 @@ msrs:
   - 430
   - 430
   - 430
-  dirname: CPUInfo/msr
-  filename: msr.txt
   separator1: ':'
   separator2: '|'
+  dirname: CPUInfo/msr
+  filename: msr.txt

@@ -7,13 +7,15 @@ On-line CPU(s) list:             0-223
 Vendor ID:                       GenuineIntel
 BIOS Vendor ID:                  Intel(R) Corporation
 Model name:                      Intel(R) Xeon(R) Platinum 8480+
-BIOS Model name:                 Intel(R) Xeon(R) Platinum 8480+
+BIOS Model name:                 Intel(R) Xeon(R) Platinum 8480+  CPU @ 2.0GHz
+BIOS CPU family:                 179
 CPU family:                      6
 Model:                           143
 Thread(s) per core:              2
 Core(s) per socket:              56
 Socket(s):                       2
 Stepping:                        6
+CPU(s) scaling MHz:              52%
 CPU max MHz:                     3800.0000
 CPU min MHz:                     800.0000
 BogoMIPS:                        4000.00
@@ -31,6 +33,7 @@ Vulnerability L1tf:              Not affected
 Vulnerability Mds:               Not affected
 Vulnerability Meltdown:          Not affected
 Vulnerability Mmio stale data:   Not affected
+Vulnerability Retbleed:          Not affected
 Vulnerability Spec store bypass: Mitigation; Speculative Store Bypass disabled via prctl
 Vulnerability Spectre v1:        Mitigation; usercopy/swapgs barriers and __user pointer sanitization
 Vulnerability Spectre v2:        Mitigation; Enhanced IBRS, IBPB conditional, RSB filling

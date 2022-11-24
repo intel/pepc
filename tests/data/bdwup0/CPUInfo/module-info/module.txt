@@ -1,0 +1,16 @@
+/sys/devices/system/cpu/cpu7/cache/index2/id:3
+/sys/devices/system/cpu/cpu7/cache/index2/shared_cpu_list:3,7
+/sys/devices/system/cpu/cpu5/cache/index2/id:1
+/sys/devices/system/cpu/cpu5/cache/index2/shared_cpu_list:1,5
+/sys/devices/system/cpu/cpu3/cache/index2/id:3
+/sys/devices/system/cpu/cpu3/cache/index2/shared_cpu_list:3,7
+/sys/devices/system/cpu/cpu1/cache/index2/id:1
+/sys/devices/system/cpu/cpu1/cache/index2/shared_cpu_list:1,5
+/sys/devices/system/cpu/cpu6/cache/index2/id:2
+/sys/devices/system/cpu/cpu6/cache/index2/shared_cpu_list:2,6
+/sys/devices/system/cpu/cpu4/cache/index2/id:0
+/sys/devices/system/cpu/cpu4/cache/index2/shared_cpu_list:0,4
+/sys/devices/system/cpu/cpu2/cache/index2/id:2
+/sys/devices/system/cpu/cpu2/cache/index2/shared_cpu_list:2,6
+/sys/devices/system/cpu/cpu0/cache/index2/id:0
+/sys/devices/system/cpu/cpu0/cache/index2/shared_cpu_list:0,4

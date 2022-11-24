@@ -38,6 +38,6 @@ Vulnerability Mmio stale data:   Not affected
 Vulnerability Retbleed:          Not affected
 Vulnerability Spec store bypass: Mitigation; Speculative Store Bypass disabled via prctl
 Vulnerability Spectre v1:        Mitigation; usercopy/swapgs barriers and __user pointer sanitization
-Vulnerability Spectre v2:        Mitigation; Enhanced IBRS, IBPB conditional, RSB filling
+Vulnerability Spectre v2:        Mitigation; Enhanced IBRS, IBPB conditional, RSB filling, PBRSB-eIBRS SW sequence
 Vulnerability Srbds:             Not affected
 Vulnerability Tsx async abort:   Not affected
