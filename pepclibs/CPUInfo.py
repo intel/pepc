@@ -539,7 +539,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             if not tline["online"]:
                 cpus.append(tline["CPU"])
 
-        return sorted(cpus)
+        return cpus
 
     def get_cpu_levels(self, cpu):
         """
