@@ -638,10 +638,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
         """
-        Returns list of online CPU numbers belonging to cores 'cores' in packages 'packages'. The
-        'cores' and 'packages' arguments are similar to the 'packages' argument in
-        'normalize_packages()'. The 'order' argument is the same as in 'get_cpus()'. By default, the
-        result sorted in ascending order.
+        Returns list of online CPU numbers belonging to cores 'cores' in packages 'packages'.
+
+        Note: core numbers are per-package.
         """
 
         by_core = self._get_level_nums("CPU", "core", cores, order=order)
@@ -656,10 +655,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def dies_to_cpus(self, dies="all", packages="all", order="CPU"):
         """
-        Returns list of online CPU numbers belonging to dies 'dies' in packages 'packages'. The
-        'dies' and 'packages' arguments are similar to the 'packages' argument in
-        'normalize_packages()'. The 'order' argument is the same as in 'get_cpus()'. By default, the
-        result sorted in ascending order.
+        Returns list of online CPU numbers belonging to dies 'dies' in packages 'packages'.
+
+        Note: die numbers are per-package.
         """
 
         by_die = self._get_level_nums("CPU", "die", dies, order=order)
@@ -673,20 +671,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         return cpus
 
     def nodes_to_cpus(self, nodes="all", order="CPU"):
-        """
-        Returns list of online CPU numbers belonging to nodes 'nodes'. The 'nodes' arguments is
-        similar to the 'packages' argument in 'normalize_packages()'. The 'order' argument is the
-        same as in 'get_cpus()'. By default, the result sorted in ascending order.
-        """
-
+        """Returns list of online CPU numbers belonging to nodes 'nodes'."""
         return self._get_level_nums("CPU", "node", nodes, order=order)
 
     def packages_to_cpus(self, packages="all", order="CPU"):
-        """
-        Returns list of online CPU numbers belonging to packages 'packages'. The 'packages' argument
-        is similar to the one in 'normalize_packages()'. The 'order' argument is the same as in
-        'get_cpus()'. By default, the result sorted in ascending order.
-        """
+        """Returns list of online CPU numbers belonging to packages 'packages'."""
         return self._get_level_nums("CPU", "package", packages, order=order)
 
     def get_offline_cpus_count(self):
