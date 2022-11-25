@@ -110,7 +110,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
 
         return osinfo
 
-    def _get_osname(self):
+    def get_osname(self):
         """Returns the OS name of the SUT."""
 
         if self._osname:
@@ -137,7 +137,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
         """
 
         if not osname:
-            osname = self._get_osname()
+            osname = self.get_osname()
 
         if osname not in _PKGINFO:
             return None
@@ -160,7 +160,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
 
         msg = f"failed to find tool '{tool}'{self._pman.hostmsg}"
 
-        osname = self._get_osname()
+        osname = self.get_osname()
 
         pkgname = self.tool_to_pkg(Path(tool).name, osname=osname)
         if pkgname:
