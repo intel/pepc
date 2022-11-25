@@ -523,16 +523,15 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return self._get_level_nums("die", "package", package, order=order)
 
-    def get_nodes(self, package=0, order="node"):
+    def get_nodes(self, order="node"):
         """
-        Returns list of node numbers in package 'package'. The returned list is sorted in ascending
-        order.
+        Returns list of node numbers sorted in ascending order.
 
         Important: if a node has all CPUs offline, the node number will not be included in the
         returned list.
         """
 
-        return self._get_level_nums("node", "package", package, order=order)
+        return self._get_level_nums("node", "node", "all", order=order)
 
     def get_packages(self, order="package"):
         """
