@@ -2,7 +2,7 @@
 PEPC
 ====
 
-:Date:   Manual
+:Date:   2022-11-25
 
 .. contents::
    :depth: 3
@@ -50,7 +50,7 @@ OPTIONS
 **-K** *PRIVKEY*, **--priv-key** *PRIVKEY*
    Path to the private SSH key that should be used for logging into the
    remote host. By default the key is automatically found from standard
-   paths like
+   paths like '~/.ssh'.
 
 **-T** *TIMEOUT*, **--timeout** *TIMEOUT*
    SSH connect timeout in seconds, default is 8.
@@ -187,7 +187,7 @@ OPTIONS *'pepc* cpu-hotplug offline'
    Offline core siblings, making sure there is only one logical CPU per
    core is left online. The sibling CPUs will be searched for among the
    CPUs selected with '--cpus', '--cores', and '--packages'. Therefore,
-   specifying '--cpus all --ht-siblings' will effectively disable
+   specifying '--cpus all --ht- siblings' will effectively disable
    hyper-threading on Intel CPUs.
 
 COMMAND *'pepc* cstates'
@@ -287,7 +287,7 @@ OPTIONS *'pepc* cstates info'
    Get package C-state limit. The deepest package C-state the platform
    is allowed to enter. The package C-state limit is configured via MSR
    {MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This
-   model- specific register can be locked by the BIOS, in which case the
+   model-specific register can be locked by the BIOS, in which case the
    package C-state limit can only be read, but cannot be modified. This
    option has package scope.
 
@@ -362,19 +362,18 @@ OPTIONS *'pepc* cstates config'
 **--packages** *PACKAGES*
    List of packages to configure. The list can include individual
    package numbers and package number ranges. For example, '1-3' would
-   mean packages 1 to 3, and
-
-all packages.
+   mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the
+   special keyword 'all' to specify all packages.
 
 **--enable** *[CSTATES]*
    Comma-separated list of C-states to enable. C-states should be
    specified by name (e.g., 'C1'). Use 'all' to specify all the
    available Linux C-states (this is the default). Note, there is a
-   difference between Linux C-states (e.g.,
-
-platforms). The former is what Linux can request, and on Intel hardware
-this is usually about various 'mwait' instruction hints. The latter are
-platform- specific hardware state, entered upon a Linux request..
+   difference between Linux C-states (e.g., 'C6') and hardware C-states
+   (e.g., Core C6 or Package C6 on many Intel platforms). The former is
+   what Linux can request, and on Intel hardware this is usually about
+   various 'mwait' instruction hints. The latter are platform-specific
+   hardware state, entered upon a Linux request..
 
 **--disable** *[CSTATES]*
    Similar to '--enable', but specifies the list of C-states to disable.
@@ -383,7 +382,7 @@ platform- specific hardware state, entered upon a Linux request..
    Set package C-state limit. The deepest package C-state the platform
    is allowed to enter. The package C-state limit is configured via MSR
    {MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This
-   model- specific register can be locked by the BIOS, in which case the
+   model-specific register can be locked by the BIOS, in which case the
    package C-state limit can only be read, but cannot be modified. This
    option has package scope.
 
@@ -446,14 +445,13 @@ OPTIONS *'pepc* cstates save'
    List of cores to save C-state information about. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword
+   Use the special keyword 'all' to specify all cores.
 
 **--packages** *PACKAGES*
    List of packages to save C-state information about. The list can
    include individual package numbers and package number ranges. For
    example, '1-3' would mean packages 1 to 3, and '1,3' would mean
-   packages 1 and 3. Use the special keyword 'all' to specify all
-   packages.
+   packages 1 and 3. Use the special keyword
 
 **-o** *OUTFILE*, **--outfile** *OUTFILE*
    Name of the file to save the settings to.
@@ -891,14 +889,13 @@ OPTIONS *'pepc* pstates save'
    List of cores to save P-state information about. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword
+   Use the special keyword 'all' to specify all cores.
 
 **--packages** *PACKAGES*
    List of packages to save P-state information about. The list can
    include individual package numbers and package number ranges. For
    example, '1-3' would mean packages 1 to 3, and '1,3' would mean
-   packages 1 and 3. Use the special keyword 'all' to specify all
-   packages.
+   packages 1 and 3. Use the special keyword
 
 **-o** *OUTFILE*, **--outfile** *OUTFILE*
    Name of the file to save the settings to (printed to standard output
@@ -1047,8 +1044,8 @@ OPTIONS *'pepc* topology info'
 **--order** *ORDER*
    By default, the topology table is printed in CPU number order. Use
    this option to print it in a different order (e.g., core or package
-   number order). Here are the supported order names: package, die,
-   node, core, cpu.
+   number order). Here are the supported order names: cpu, core, die,
+   node, package.
 
 AUTHORS
 =======
@@ -1057,7 +1054,9 @@ AUTHORS
 
    Artem Bityutskiy
 
-dedekind1@gmail.com
+::
+
+   dedekind1@gmail.com
 
 DISTRIBUTION
 ============

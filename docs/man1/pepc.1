@@ -1,4 +1,4 @@
-.TH PEPC "1" Manual
+.TH PEPC "1" "2022\-11\-25" "pepc" "Generated Python Manual"
 .SH NAME
 pepc
 .SH SYNOPSIS
@@ -30,14 +30,11 @@ Name of the host to run the command on.
 
 .TP
 \fB\-U\fR \fI\,USERNAME\/\fR, \fB\-\-username\fR \fI\,USERNAME\/\fR
-Name of the user to use for logging into the remote host over SSH. The default
-user name is 'root'.
+Name of the user to use for logging into the remote host over SSH. The default user name is 'root'.
 
 .TP
 \fB\-K\fR \fI\,PRIVKEY\/\fR, \fB\-\-priv\-key\fR \fI\,PRIVKEY\/\fR
-Path to the private SSH key that should be used for logging into the remote
-host. By default the key is automatically found from standard paths like
-'~/.ssh'.
+Path to the private SSH key that should be used for logging into the remote host. By default the key is automatically found from standard paths like '~/.ssh'.
 
 .TP
 \fB\-T\fR \fI\,TIMEOUT\/\fR, \fB\-\-timeout\fR \fI\,TIMEOUT\/\fR
@@ -50,26 +47,27 @@ Force coloring of the text output.
 .SH
 COMMANDS
 .TP
-\fBpepc\fR \fI\,cpu-hotplug\/\fR
+\fBpepc\fR \fI\,cpu\-hotplug\/\fR
 CPU online/offline commands.
 .TP
 \fBpepc\fR \fI\,cstates\/\fR
-CPU C-state commands.
+CPU C\-state commands.
 .TP
 \fBpepc\fR \fI\,pstates\/\fR
-P-state commands.
+P\-state commands.
 .TP
 \fBpepc\fR \fI\,aspm\/\fR
 PCI ASPM commands.
 .TP
 \fBpepc\fR \fI\,topology\/\fR
 CPU topology commands.
-.SH COMMAND \fI\,'pepc cpu-hotplug'\/\fR
-usage: pepc cpu-hotplug [-h] [-q] [-d] {info,online,offline} ...
+
+.SH COMMAND \fI\,'pepc cpu\-hotplug'\/\fR
+usage: pepc cpu\-hotplug [\-h] [\-q] [\-d] {info,online,offline} ...
 
 CPU online/offline commands.
 
-.SH OPTIONS \fI\,'pepc cpu-hotplug'\/\fR
+.SH OPTIONS \fI\,'pepc cpu\-hotplug'\/\fR
 .TP
 \fB\-h\fR
 Show this help message and exit.
@@ -83,22 +81,23 @@ Be quiet.
 Print debugging information.
 
 .SH
-FURTHER SUB-COMMANDS \fI\,'pepc cpu-hotplug'\/\fR
+FURTHER SUB-COMMANDS \fI\,'pepc cpu\-hotplug'\/\fR
 .TP
-\fBpepc cpu-hotplug\fR \fI\,info\/\fR
+\fBpepc cpu\-hotplug\fR \fI\,info\/\fR
 List online and offline CPUs.
 .TP
-\fBpepc cpu-hotplug\fR \fI\,online\/\fR
+\fBpepc cpu\-hotplug\fR \fI\,online\/\fR
 Bring CPUs online.
 .TP
-\fBpepc cpu-hotplug\fR \fI\,offline\/\fR
+\fBpepc cpu\-hotplug\fR \fI\,offline\/\fR
 Bring CPUs offline.
-.SH COMMAND \fI\,'pepc cpu-hotplug info'\/\fR
-usage: pepc cpu-hotplug info [-h] [-q] [-d]
+
+.SH COMMAND \fI\,'pepc cpu\-hotplug info'\/\fR
+usage: pepc cpu\-hotplug info [\-h] [\-q] [\-d]
 
 List online and offline CPUs.
 
-.SH OPTIONS \fI\,'pepc cpu-hotplug info'\/\fR
+.SH OPTIONS \fI\,'pepc cpu\-hotplug info'\/\fR
 .TP
 \fB\-h\fR
 Show this help message and exit.
@@ -111,12 +110,12 @@ Be quiet.
 \fB\-d\fR
 Print debugging information.
 
-.SH COMMAND \fI\,'pepc cpu-hotplug online'\/\fR
-usage: pepc cpu-hotplug online [-h] [-q] [-d] [--cpus CPUS]
+.SH COMMAND \fI\,'pepc cpu\-hotplug online'\/\fR
+usage: pepc cpu\-hotplug online [\-h] [\-q] [\-d] [\-\-cpus CPUS]
 
 Bring CPUs online.
 
-.SH OPTIONS \fI\,'pepc cpu-hotplug online'\/\fR
+.SH OPTIONS \fI\,'pepc cpu\-hotplug online'\/\fR
 .TP
 \fB\-h\fR
 Show this help message and exit.
@@ -131,16 +130,14 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to online. The list can include individual CPU numbers and CPU
-number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8,
-and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+List of CPUs to online. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
 
-.SH COMMAND \fI\,'pepc cpu-hotplug offline'\/\fR
-usage: pepc cpu-hotplug offline [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--ht-siblings]
+.SH COMMAND \fI\,'pepc cpu\-hotplug offline'\/\fR
+usage: pepc cpu\-hotplug offline [\-h] [\-q] [\-d] [\-\-cpus CPUS] [\-\-cores CORES] [\-\-packages PACKAGES] [\-\-ht\-siblings]
 
 Bring CPUs offline.
 
-.SH OPTIONS \fI\,'pepc cpu-hotplug offline'\/\fR
+.SH OPTIONS \fI\,'pepc cpu\-hotplug offline'\/\fR
 .TP
 \fB\-h\fR
 Show this help message and exit.
@@ -155,9 +152,7 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to offline. The list can include individual CPU numbers and CPU
-number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8,
-and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+List of CPUs to offline. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
@@ -169,13 +164,11 @@ Same as '\-\-cpus', but specifies list of packages.
 
 .TP
 \fB\-\-ht\-siblings\fR
-Offline core siblings, making sure there is only one logical CPU per core is
-left online. The sibling CPUs will be searched for among the CPUs selected
-with '\-\-cpus', '\-\-cores', and '\-\-packages'. Therefore, specifying '\-\-cpus all
-\-\-ht\-siblings' will effectively disable hyper\-threading on Intel CPUs.
+Offline core siblings, making sure there is only one logical CPU per core is left online. The sibling CPUs will be searched for among the CPUs selected with '\-\-cpus', '\-\-cores', and '\-\-packages'. Therefore, specifying '\-\-cpus all \-\-ht\-
+siblings' will effectively disable hyper\-threading on Intel CPUs.
 
 .SH COMMAND \fI\,'pepc cstates'\/\fR
-usage: pepc cstates [-h] [-q] [-d] {info,config,save,restore} ...
+usage: pepc cstates [\-h] [\-q] [\-d] {info,config,save,restore} ...
 
 Various commands related to CPU C\-states.
 
@@ -196,19 +189,20 @@ Print debugging information.
 FURTHER SUB-COMMANDS \fI\,'pepc cstates'\/\fR
 .TP
 \fBpepc cstates\fR \fI\,info\/\fR
-Get CPU C-states information.
+Get CPU C\-states information.
 .TP
 \fBpepc cstates\fR \fI\,config\/\fR
-Configure C-states.
+Configure C\-states.
 .TP
 \fBpepc cstates\fR \fI\,save\/\fR
-Save C-states settings.
+Save C\-states settings.
 .TP
 \fBpepc cstates\fR \fI\,restore\/\fR
-Restore C-states settings.
+Restore C\-states settings.
+
 .SH COMMAND \fI\,'pepc cstates info'\/\fR
-usage: pepc cstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--yaml] [--cstates [CATATES]] [--pkg-cstate-limit] [--c1-demotion] [--c1-undemotion] [--c1e-autopromote] [--cstate-prewake] [--idle-driver]
-                         [--governor]
+usage: pepc cstates info [\-h] [\-q] [\-d] [\-\-cpus CPUS] [\-\-cores CORES] [\-\-packages PACKAGES] [\-\-yaml] [\-\-cstates [CATATES]] [\-\-pkg\-cstate\-limit] [\-\-c1\-demotion] [\-\-c1\-undemotion] [\-\-c1e\-autopromote] [\-\-cstate\-prewake] [\-\-idle\-driver]
+                         [\-\-governor]
 
 Get information about C\-states on specified CPUs. By default, prints all information for all CPUs. Remember, this is information about the C\-states that Linux can request, they are not necessarily the same as the C\-states supported by the underlying hardware.
 
@@ -227,25 +221,18 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to get information about. The list can include individual CPU
-numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1
-to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
-CPUs. If the CPUs/cores/packages were not specified, all CPUs will be used as
-the default value.
+List of CPUs to get information about. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+If the CPUs/cores/packages were not specified, all CPUs will be used as the default value.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
-List of cores to get information about. The list can include individual core
-numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores
-1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+List of cores to get information about. The list can include individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
 cores.
 
 .TP
 \fB\-\-packages\fR \fI\,PACKAGES\/\fR
-List of packages to get information about. The list can include individual
-package numbers and package number ranges. For example, '1\-3' would mean
-packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special
-keyword 'all' to specify all packages.
+List of packages to get information about. The list can include individual package numbers and package number ranges. For example, '1\-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special keyword 'all' to
+specify all packages.
 
 .TP
 \fB\-\-yaml\fR
@@ -253,59 +240,43 @@ Print information in YAML format.
 
 .TP
 \fB\-\-cstates\fR \fI\,[CATATES]\/\fR
-Comma\-separated list of C\-states to get information about (all C\-states by
-default). C\-states should be specified by name (e.g., 'C1'). Use 'all' to
-specify all the available Linux C\-states (this is the default). Note, there is
-a difference between Linux C\-states (e.g., 'C6') and hardware C\-states (e.g.,
-Core C6 or Package C6 on many Intel platforms). The former is what Linux can
-request, and on Intel hardware this is usually about various 'mwait'
-instruction hints. The latter are platform\-specific hardware state, entered
-upon a Linux request..
+Comma\-separated list of C\-states to get information about (all C\-states by default). C\-states should be specified by name (e.g., 'C1'). Use 'all' to specify all the available Linux C\-states (this is the default). Note, there is a
+difference between Linux C\-states (e.g., 'C6') and hardware C\-states (e.g., Core C6 or Package C6 on many Intel platforms). The former is what Linux can request, and on Intel hardware this is usually about various 'mwait' instruction
+hints. The latter are platform\-specific hardware state, entered upon a Linux request..
 
 .TP
 \fB\-\-pkg\-cstate\-limit\fR
-Get package C\-state limit. The deepest package C\-state the platform is allowed
-to enter. The package C\-state limit is configured via MSR
-{MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This model\-
-specific register can be locked by the BIOS, in which case the package C\-state
-limit can only be read, but cannot be modified. This option has package scope.
+Get package C\-state limit. The deepest package C\-state the platform is allowed to enter. The package C\-state limit is configured via MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This model\-specific register can be
+locked by the BIOS, in which case the package C\-state limit can only be read, but cannot be modified. This option has package scope.
 
 .TP
 \fB\-\-c1\-demotion\fR
-Get current setting for c1 demotion. Allow/disallow the CPU to demote C6/C7
-requests to C1. This option has core scope.
+Get current setting for c1 demotion. Allow/disallow the CPU to demote C6/C7 requests to C1. This option has core scope.
 
 .TP
 \fB\-\-c1\-undemotion\fR
-Get current setting for c1 undemotion. Allow/disallow the CPU to un\-demote
-previously demoted requests back from C1 to C6/C7. This option has core scope.
+Get current setting for c1 undemotion. Allow/disallow the CPU to un\-demote previously demoted requests back from C1 to C6/C7. This option has core scope.
 
 .TP
 \fB\-\-c1e\-autopromote\fR
-Get current setting for c1E autopromote. When enabled, the CPU automatically
-converts all C1 requests to C1E requests. This CPU feature is controlled by
-MSR 0x1fc, bit 1. This option has package scope.
+Get current setting for c1E autopromote. When enabled, the CPU automatically converts all C1 requests to C1E requests. This CPU feature is controlled by MSR 0x1fc, bit 1. This option has package scope.
 
 .TP
 \fB\-\-cstate\-prewake\fR
-Get current setting for c\-state prewake. When enabled, the CPU will start
-exiting the C6 idle state in advance, prior to the next local APIC timer
-event. This CPU feature is controlled by MSR 0x1fc, bit 30. This option has
-package scope.
+Get current setting for c\-state prewake. When enabled, the CPU will start exiting the C6 idle state in advance, prior to the next local APIC timer event. This CPU feature is controlled by MSR 0x1fc, bit 30. This option has package
+scope.
 
 .TP
 \fB\-\-idle\-driver\fR
-Get idle driver. Idle driver is responsible for enumerating and requesting the
-C\-states available on the platform. This option has global scope.
+Get idle driver. Idle driver is responsible for enumerating and requesting the C\-states available on the platform. This option has global scope.
 
 .TP
 \fB\-\-governor\fR
-Get idle governor. Idle governor decides which C\-state to request on an idle
-CPU. This option has global scope.
+Get idle governor. Idle governor decides which C\-state to request on an idle CPU. This option has global scope.
 
 .SH COMMAND \fI\,'pepc cstates config'\/\fR
-usage: pepc cstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--enable [CSTATES]] [--disable [CSTATES]] [--pkg-cstate-limit [PKG_CSTATE_LIMIT]] [--c1-demotion [C1_DEMOTION]]
-                           [--c1-undemotion [C1_UNDEMOTION]] [--c1e-autopromote [C1E_AUTOPROMOTE]] [--cstate-prewake [CSTATE_PREWAKE]] [--governor [GOVERNOR]]
+usage: pepc cstates config [\-h] [\-q] [\-d] [\-\-cpus CPUS] [\-\-cores CORES] [\-\-packages PACKAGES] [\-\-enable [CSTATES]] [\-\-disable [CSTATES]] [\-\-pkg\-cstate\-limit [PKG_CSTATE_LIMIT]] [\-\-c1\-demotion [C1_DEMOTION]]
+                           [\-\-c1\-undemotion [C1_UNDEMOTION]] [\-\-c1e\-autopromote [C1E_AUTOPROMOTE]] [\-\-cstate\-prewake [CSTATE_PREWAKE]] [\-\-governor [GOVERNOR]]
 
 Configure C\-states on specified CPUs. All options can be used without a parameter, in which case the currently configured value(s) will be printed.
 
@@ -324,34 +295,23 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to configure. The list can include individual CPU numbers and CPU
-number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8,
-and 10 to 12. Use the special keyword 'all' to specify all CPUs. If the
-CPUs/cores/packages were not specified, all CPUs will be used as the default
-value.
+List of CPUs to configure. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs. If the
+CPUs/cores/packages were not specified, all CPUs will be used as the default value.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
-List of cores to configure. The list can include individual core numbers and
-core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4,
-cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all cores.
+List of cores to configure. The list can include individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all cores.
 
 .TP
 \fB\-\-packages\fR \fI\,PACKAGES\/\fR
-List of packages to configure. The list can include individual package numbers
-and package number ranges. For example, '1\-3' would mean packages 1 to 3, and
-'1,3' would mean packages 1 and 3. Use the special keyword 'all' to specify
-all packages.
+List of packages to configure. The list can include individual package numbers and package number ranges. For example, '1\-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special keyword 'all' to specify all
+packages.
 
 .TP
 \fB\-\-enable\fR \fI\,[CSTATES]\/\fR
-Comma\-separated list of C\-states to enable. C\-states should be specified by
-name (e.g., 'C1'). Use 'all' to specify all the available Linux C\-states (this
-is the default). Note, there is a difference between Linux C\-states (e.g.,
-'C6') and hardware C\-states (e.g., Core C6 or Package C6 on many Intel
-platforms). The former is what Linux can request, and on Intel hardware this
-is usually about various 'mwait' instruction hints. The latter are platform\-
-specific hardware state, entered upon a Linux request..
+Comma\-separated list of C\-states to enable. C\-states should be specified by name (e.g., 'C1'). Use 'all' to specify all the available Linux C\-states (this is the default). Note, there is a difference between Linux C\-states (e.g., 'C6')
+and hardware C\-states (e.g., Core C6 or Package C6 on many Intel platforms). The former is what Linux can request, and on Intel hardware this is usually about various 'mwait' instruction hints. The latter are platform\-specific hardware
+state, entered upon a Linux request..
 
 .TP
 \fB\-\-disable\fR \fI\,[CSTATES]\/\fR
@@ -359,43 +319,32 @@ Similar to '\-\-enable', but specifies the list of C\-states to disable.
 
 .TP
 \fB\-\-pkg\-cstate\-limit\fR \fI\,[PKG_CSTATE_LIMIT]\/\fR
-Set package C\-state limit. The deepest package C\-state the platform is allowed
-to enter. The package C\-state limit is configured via MSR
-{MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This model\-
-specific register can be locked by the BIOS, in which case the package C\-state
-limit can only be read, but cannot be modified. This option has package scope.
+Set package C\-state limit. The deepest package C\-state the platform is allowed to enter. The package C\-state limit is configured via MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} (MSR_PKG_CST_CONFIG_CONTROL). This model\-specific register can be
+locked by the BIOS, in which case the package C\-state limit can only be read, but cannot be modified. This option has package scope.
 
 .TP
 \fB\-\-c1\-demotion\fR \fI\,[C1_DEMOTION]\/\fR
-Enable or disable c1 demotion. Allow/disallow the CPU to demote C6/C7 requests
-to C1. Use "on" or "off". This option has core scope.
+Enable or disable c1 demotion. Allow/disallow the CPU to demote C6/C7 requests to C1. Use "on" or "off". This option has core scope.
 
 .TP
 \fB\-\-c1\-undemotion\fR \fI\,[C1_UNDEMOTION]\/\fR
-Enable or disable c1 undemotion. Allow/disallow the CPU to un\-demote
-previously demoted requests back from C1 to C6/C7. Use "on" or "off". This
-option has core scope.
+Enable or disable c1 undemotion. Allow/disallow the CPU to un\-demote previously demoted requests back from C1 to C6/C7. Use "on" or "off". This option has core scope.
 
 .TP
 \fB\-\-c1e\-autopromote\fR \fI\,[C1E_AUTOPROMOTE]\/\fR
-Enable or disable c1E autopromote. When enabled, the CPU automatically
-converts all C1 requests to C1E requests. This CPU feature is controlled by
-MSR 0x1fc, bit 1. Use "on" or "off". This option has package scope.
+Enable or disable c1E autopromote. When enabled, the CPU automatically converts all C1 requests to C1E requests. This CPU feature is controlled by MSR 0x1fc, bit 1. Use "on" or "off". This option has package scope.
 
 .TP
 \fB\-\-cstate\-prewake\fR \fI\,[CSTATE_PREWAKE]\/\fR
-Enable or disable c\-state prewake. When enabled, the CPU will start exiting
-the C6 idle state in advance, prior to the next local APIC timer event. This
-CPU feature is controlled by MSR 0x1fc, bit 30. Use "on" or "off". This option
-has package scope.
+Enable or disable c\-state prewake. When enabled, the CPU will start exiting the C6 idle state in advance, prior to the next local APIC timer event. This CPU feature is controlled by MSR 0x1fc, bit 30. Use "on" or "off". This option has
+package scope.
 
 .TP
 \fB\-\-governor\fR \fI\,[GOVERNOR]\/\fR
-Set idle governor. Idle governor decides which C\-state to request on an idle
-CPU. This option has global scope.
+Set idle governor. Idle governor decides which C\-state to request on an idle CPU. This option has global scope.
 
 .SH COMMAND \fI\,'pepc cstates save'\/\fR
-usage: pepc cstates save [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [-o OUTFILE]
+usage: pepc cstates save [\-h] [\-q] [\-d] [\-\-cpus CPUS] [\-\-cores CORES] [\-\-packages PACKAGES] [\-o OUTFILE]
 
 Save all the modifiable C\-state settings into a file. This file can later be used for restoring C\-state settings with the 'pepc cstates restore' command.
 
@@ -414,32 +363,25 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to save C\-state information about. The list can include
-individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12'
-would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all'
-to specify all CPUs. If the CPUs/cores/packages were not specified, all CPUs
-will be used as the default value.
+List of CPUs to save C\-state information about. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify
+all CPUs. If the CPUs/cores/packages were not specified, all CPUs will be used as the default value.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
-List of cores to save C\-state information about. The list can include
-individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12'
-would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword
-'all' to specify all cores.
+List of cores to save C\-state information about. The list can include individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to
+specify all cores.
 
 .TP
 \fB\-\-packages\fR \fI\,PACKAGES\/\fR
-List of packages to save C\-state information about. The list can include
-individual package numbers and package number ranges. For example, '1\-3' would
-mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special
-keyword 'all' to specify all packages.
+List of packages to save C\-state information about. The list can include individual package numbers and package number ranges. For example, '1\-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special keyword
+'all' to specify all packages.
 
 .TP
 \fB\-o\fR \fI\,OUTFILE\/\fR, \fB\-\-outfile\fR \fI\,OUTFILE\/\fR
 Name of the file to save the settings to.
 
 .SH COMMAND \fI\,'pepc cstates restore'\/\fR
-usage: pepc cstates restore [-h] [-q] [-d] [-f INFILE]
+usage: pepc cstates restore [\-h] [\-q] [\-d] [\-f INFILE]
 
 Restore C\-state settings from a file previously created with the 'pepc cstates save' command.
 
@@ -458,11 +400,10 @@ Print debugging information.
 
 .TP
 \fB\-f\fR \fI\,INFILE\/\fR, \fB\-\-from\fR \fI\,INFILE\/\fR
-Name of the file restore the settings from (use "\-" to read from the standard
-output.
+Name of the file restore the settings from (use "\-" to read from the standard output.
 
 .SH COMMAND \fI\,'pepc pstates'\/\fR
-usage: pepc pstates [-h] [-q] [-d] {info,config,save,restore} ...
+usage: pepc pstates [\-h] [\-q] [\-d] {info,config,save,restore} ...
 
 Various commands related to P\-states (CPU performance states).
 
@@ -483,20 +424,21 @@ Print debugging information.
 FURTHER SUB-COMMANDS \fI\,'pepc pstates'\/\fR
 .TP
 \fBpepc pstates\fR \fI\,info\/\fR
-Get P-states information.
+Get P\-states information.
 .TP
 \fBpepc pstates\fR \fI\,config\/\fR
-Configure P-states.
+Configure P\-states.
 .TP
 \fBpepc pstates\fR \fI\,save\/\fR
-Save P-states settings.
+Save P\-states settings.
 .TP
 \fBpepc pstates\fR \fI\,restore\/\fR
-Restore P-states settings.
+Restore P\-states settings.
+
 .SH COMMAND \fI\,'pepc pstates info'\/\fR
-usage: pepc pstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--yaml] [--min-freq] [--max-freq] [--min-freq-limit] [--max-freq-limit] [--base-freq] [--min-freq-hw] [--max-freq-hw] [--min-oper-freq]
-                         [--max-eff-freq] [--turbo] [--max-turbo-freq] [--min-uncore-freq] [--max-uncore-freq] [--min-uncore-freq-limit] [--max-uncore-freq-limit] [--hwp] [--epp] [--epp-policy] [--epb] [--epb-policy] [--driver]
-                         [--intel-pstate-mode] [--governor]
+usage: pepc pstates info [\-h] [\-q] [\-d] [\-\-cpus CPUS] [\-\-cores CORES] [\-\-packages PACKAGES] [\-\-yaml] [\-\-min\-freq] [\-\-max\-freq] [\-\-min\-freq\-limit] [\-\-max\-freq\-limit] [\-\-base\-freq] [\-\-min\-freq\-hw] [\-\-max\-freq\-hw] [\-\-min\-oper\-freq]
+                         [\-\-max\-eff\-freq] [\-\-turbo] [\-\-max\-turbo\-freq] [\-\-min\-uncore\-freq] [\-\-max\-uncore\-freq] [\-\-min\-uncore\-freq\-limit] [\-\-max\-uncore\-freq\-limit] [\-\-hwp] [\-\-epp] [\-\-epp\-policy] [\-\-epb] [\-\-epb\-policy] [\-\-driver]
+                         [\-\-intel\-pstate\-mode] [\-\-governor]
 
 Get P\-states information for specified CPUs. By default, prints all information for all CPUs.
 
@@ -515,25 +457,18 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to get information about. The list can include individual CPU
-numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1
-to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
-CPUs. If the CPUs/cores/packages were not specified, all CPUs will be used as
-the default value.
+List of CPUs to get information about. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+If the CPUs/cores/packages were not specified, all CPUs will be used as the default value.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
-List of cores to get information about. The list can include individual core
-numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores
-1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+List of cores to get information about. The list can include individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
 cores.
 
 .TP
 \fB\-\-packages\fR \fI\,PACKAGES\/\fR
-List of packages to get information about. The list can include individual
-package numbers and package number ranges. For example, '1\-3' would mean
-packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special
-keyword 'all' to specify all packages.
+List of packages to get information about. The list can include individual package numbers and package number ranges. For example, '1\-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special keyword 'all' to
+specify all packages.
 
 .TP
 \fB\-\-yaml\fR
@@ -541,171 +476,113 @@ Print information in YAML format.
 
 .TP
 \fB\-\-min\-freq\fR
-Get min. CPU frequency. Minimum CPU frequency is the lowest frequency the
-operating system configured the CPU to run at (via sysfs knobs). The default
-unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example
-"900MHz"). The following special values are supported: "min" \- minimum CPU
-frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \-
-base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via
-Linux sysfs), "eff", "lfm", "Pn" \- maximum CPU efficiency frequency. This
-option has CPU scope.
+Get min. CPU frequency. Minimum CPU frequency is the lowest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz").
+The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
+"lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\fR
-Get max. CPU frequency. Maximum CPU frequency is the highest frequency the
-operating system configured the CPU to run at (via sysfs knobs). The default
-unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example
-"900MHz"). The following special values are supported: "min" \- minimum CPU
-frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \-
-base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via
-Linux sysfs), "eff", "lfm", "Pn" \- maximum CPU efficiency frequency. This
-option has CPU scope.
+Get max. CPU frequency. Maximum CPU frequency is the highest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz").
+The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
+"lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
 
 .TP
 \fB\-\-min\-freq\-limit\fR
-Get min. supported CPU frequency. Minimum supported CPU frequency is the
-lowest frequency supported by the operating system (reported via sysfs knobs).
-This option has CPU scope.
+Get min. supported CPU frequency. Minimum supported CPU frequency is the lowest frequency supported by the operating system (reported via sysfs knobs). This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\-limit\fR
-Get max. supported CPU frequency. Maximum supported CPU frequency is the
-maximum CPU frequency supported by the operating system (reported via sysfs
-knobs). This option has CPU scope.
+Get max. supported CPU frequency. Maximum supported CPU frequency is the maximum CPU frequency supported by the operating system (reported via sysfs knobs). This option has CPU scope.
 
 .TP
 \fB\-\-base\-freq\fR
-Get base CPU frequency. Base CPU frequency is the highest sustainable CPU
-frequency. This frequency is also referred to as "guaranteed frequency", HFM
-(High Frequency Mode), or P1. The base frequency is acquired from a sysfs file
-of from an MSR register, if the sysfs file does not exist. This option has CPU
-scope.
+Get base CPU frequency. Base CPU frequency is the highest sustainable CPU frequency. This frequency is also referred to as "guaranteed frequency", HFM (High Frequency Mode), or P1. The base frequency is acquired from a sysfs file of
+from an MSR register, if the sysfs file does not exist. This option has CPU scope.
 
 .TP
 \fB\-\-min\-freq\-hw\fR
-Get min. CPU frequency (OS bypass). Minimum frequency the CPU is configured by
-the OS to run at. This value is read directly from the MSR(s), bypassing the
-OS. This option has CPU scope.
+Get min. CPU frequency (OS bypass). Minimum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\-hw\fR
-Get max. CPU frequency (OS bypass). Maximum frequency the CPU is configured by
-the OS to run at. This value is read directly from the MSR(s), bypassing the
-OS. This option has CPU scope.
+Get max. CPU frequency (OS bypass). Maximum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
 
 .TP
 \fB\-\-min\-oper\-freq\fR
-Get min. CPU operating frequency. Minimum operating frequency is the lowest
-possible frequency the CPU can operate at. Depending on the CPU model, this
-frequency may or may not be directly available to the operating system, but
-the platform may use it in certain situations (e.g., in some C\-states). This
-frequency is also referred to as Pm. Min. operating frequency is acquired from
-an MSR register, bypassing the OS. This option has CPU scope.
+Get min. CPU operating frequency. Minimum operating frequency is the lowest possible frequency the CPU can operate at. Depending on the CPU model, this frequency may or may not be directly available to the operating system, but the
+platform may use it in certain situations (e.g., in some C\-states). This frequency is also referred to as Pm. Min. operating frequency is acquired from an MSR register, bypassing the OS. This option has CPU scope.
 
 .TP
 \fB\-\-max\-eff\-freq\fR
-Get max. CPU efficiency frequency. Maximum efficiency frequency is the most
-energy efficient CPU frequency. This frequency is also referred to as LFM (Low
-Frequency Mode) or Pn. Max. efficiency frequency is acquired from an MSR
+Get max. CPU efficiency frequency. Maximum efficiency frequency is the most energy efficient CPU frequency. This frequency is also referred to as LFM (Low Frequency Mode) or Pn. Max. efficiency frequency is acquired from an MSR
 register, bypassing the OS. This option has CPU scope.
 
 .TP
 \fB\-\-turbo\fR
-Get current setting for turbo. When turbo is enabled, the CPUs can
-automatically run at a frequency greater than base frequency. Turbo on/off
-status is acquired and modified via sysfs knobs. This option has global scope.
+Get current setting for turbo. When turbo is enabled, the CPUs can automatically run at a frequency greater than base frequency. Turbo on/off status is acquired and modified via sysfs knobs. This option has global scope.
 
 .TP
 \fB\-\-max\-turbo\-freq\fR
-Get max. CPU turbo frequency. Maximum 1\-core turbo frequency is the highest
-frequency a single CPU can operate at. This frequency is also referred to as
-max. 1\-core turbo and P01. It is acquired from an MSR register, bypassing the
-OS. This option has CPU scope.
+Get max. CPU turbo frequency. Maximum 1\-core turbo frequency is the highest frequency a single CPU can operate at. This frequency is also referred to as max. 1\-core turbo and P01. It is acquired from an MSR register, bypassing the OS.
+This option has CPU scope.
 
 .TP
 \fB\-\-min\-uncore\-freq\fR
-Get min. uncore frequency. Minimum uncore frequency is the lowest frequency
-the operating system configured the uncore to run at. The default unit is
-"Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The
-following special values are supported: "min" \- minimum uncore frequency
-supported by the OS (via Linux sysfs files), "max" \- maximum uncore frequency
-supported by the OS (via Linux sysfs). This option has die scope.
+Get min. uncore frequency. Minimum uncore frequency is the lowest frequency the operating system configured the uncore to run at. The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The
+following special values are supported: "min" \- minimum uncore frequency supported by the OS (via Linux sysfs files), "max" \- maximum uncore frequency supported by the OS (via Linux sysfs). This option has die scope.
 
 .TP
 \fB\-\-max\-uncore\-freq\fR
-Get max. uncore frequency. Maximum uncore frequency is the highest frequency
-the operating system configured the uncore to run at. The default unit is
-"Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The
-following special values are supported: "min" \- minimum uncore frequency
-supported by the OS (via Linux sysfs files), "max" \- maximum uncore frequency
-supported by the OS (via Linux sysfs). This option has die scope.
+Get max. uncore frequency. Maximum uncore frequency is the highest frequency the operating system configured the uncore to run at. The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The
+following special values are supported: "min" \- minimum uncore frequency supported by the OS (via Linux sysfs files), "max" \- maximum uncore frequency supported by the OS (via Linux sysfs). This option has die scope.
 
 .TP
 \fB\-\-min\-uncore\-freq\-limit\fR
-Get min. supported uncore frequency. Minimum supported uncore frequency is the
-lowest uncore frequency supported by the operating system. This option has die
-scope.
+Get min. supported uncore frequency. Minimum supported uncore frequency is the lowest uncore frequency supported by the operating system. This option has die scope.
 
 .TP
 \fB\-\-max\-uncore\-freq\-limit\fR
-Get max. supported uncore frequency. Maximum supported uncore frequency is the
-highest uncore frequency supported by the operating system. This option has
-die scope.
+Get max. supported uncore frequency. Maximum supported uncore frequency is the highest uncore frequency supported by the operating system. This option has die scope.
 
 .TP
 \fB\-\-hwp\fR
-Get current setting for hardware power management. When hardware power
-management is enabled, CPUs can automatically scale their frequency without
-active OS involvement. This option has global scope.
+Get current setting for hardware power management. When hardware power management is enabled, CPUs can automatically scale their frequency without active OS involvement. This option has global scope.
 
 .TP
 \fB\-\-epp\fR
-Get energy Performance Preference. Energy Performance Preference (EPP) is a
-hint to the CPU on energy efficiency vs performance. EPP has an effect only
-when the CPU is in the hardware power management (HWP) mode. This option has
-CPU scope.
+Get energy Performance Preference. Energy Performance Preference (EPP) is a hint to the CPU on energy efficiency vs performance. EPP has an effect only when the CPU is in the hardware power management (HWP) mode. This option has CPU
+scope.
 
 .TP
 \fB\-\-epp\-policy\fR
-Get EPP policy. EPP policy is a name, such as 'performance', which Linux maps
-to an EPP value, which may depend on the platform. This option has CPU scope.
+Get EPP policy. EPP policy is a name, such as 'performance', which Linux maps to an EPP value, which may depend on the platform. This option has CPU scope.
 
 .TP
 \fB\-\-epb\fR
-Get energy Performance Bias. Energy Performance Bias (EPB) is a hint to the
-CPU on energy efficiency vs performance. Value 0 means maximum performance,
-value 15 means maximum energy efficiency. EPP may have an effect in both HWP
-enabled and disabled modes (HWP stands for Hardware Power Management). This
-option has CPU scope.
+Get energy Performance Bias. Energy Performance Bias (EPB) is a hint to the CPU on energy efficiency vs performance. Value 0 means maximum performance, value 15 means maximum energy efficiency. EPP may have an effect in both HWP enabled
+and disabled modes (HWP stands for Hardware Power Management). This option has CPU scope.
 
 .TP
 \fB\-\-epb\-policy\fR
-Get EPB policy. EPB policy is a name, such as 'performance', which Linux maps
-to an EPB value, which may depend on the platform. This option has CPU scope.
+Get EPB policy. EPB policy is a name, such as 'performance', which Linux maps to an EPB value, which may depend on the platform. This option has CPU scope.
 
 .TP
 \fB\-\-driver\fR
-Get CPU frequency driver. CPU frequency driver enumerates and requests the
-P\-states available on the platform. This option has global scope.
+Get CPU frequency driver. CPU frequency driver enumerates and requests the P\-states available on the platform. This option has global scope.
 
 .TP
 \fB\-\-intel\-pstate\-mode\fR
-Get operation mode of 'intel_pstate' driver. The 'intel_pstate' driver has 3
-operation modes: 'active', 'passive' and 'off'. The main difference between
-the active and passive mode is in what frequency governors are used \- the
-generic Linux governors (passive mode) or the custom, built\-in 'intel_pstate'
-driver governors (active mode). This option has global scope.
+Get operation mode of 'intel_pstate' driver. The 'intel_pstate' driver has 3 operation modes: 'active', 'passive' and 'off'. The main difference between the active and passive mode is in what frequency governors are used \- the generic
+Linux governors (passive mode) or the custom, built\-in 'intel_pstate' driver governors (active mode). This option has global scope.
 
 .TP
 \fB\-\-governor\fR
-Get CPU frequency governor. CPU frequency governor decides which P\-state to
-select on a CPU depending on CPU business and other factors. This option has
-CPU scope.
+Get CPU frequency governor. CPU frequency governor decides which P\-state to select on a CPU depending on CPU business and other factors. This option has CPU scope.
 
 .SH COMMAND \fI\,'pepc pstates config'\/\fR
-usage: pepc pstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [--min-freq [MIN_FREQ]] [--max-freq [MAX_FREQ]] [--min-freq-hw [MIN_FREQ_HW]] [--max-freq-hw [MAX_FREQ_HW]] [--turbo [TURBO]]
-                           [--min-uncore-freq [MIN_UNCORE_FREQ]] [--max-uncore-freq [MAX_UNCORE_FREQ]] [--epp [EPP]] [--epp-policy [EPP_POLICY]] [--epb [EPB]] [--epb-policy [EPB_POLICY]] [--intel-pstate-mode [INTEL_PSTATE_MODE]]
-                           [--governor [GOVERNOR]]
+usage: pepc pstates config [\-h] [\-q] [\-d] [\-\-cpus CPUS] [\-\-cores CORES] [\-\-packages PACKAGES] [\-\-min\-freq [MIN_FREQ]] [\-\-max\-freq [MAX_FREQ]] [\-\-min\-freq\-hw [MIN_FREQ_HW]] [\-\-max\-freq\-hw [MAX_FREQ_HW]] [\-\-turbo [TURBO]]
+                           [\-\-min\-uncore\-freq [MIN_UNCORE_FREQ]] [\-\-max\-uncore\-freq [MAX_UNCORE_FREQ]] [\-\-epp [EPP]] [\-\-epp\-policy [EPP_POLICY]] [\-\-epb [EPB]] [\-\-epb\-policy [EPB_POLICY]] [\-\-intel\-pstate\-mode [INTEL_PSTATE_MODE]]
+                           [\-\-governor [GOVERNOR]]
 
 Configure P\-states on specified CPUs. All options can be used without a parameter, in which case the currently configured value(s) will be printed.
 
@@ -724,125 +601,82 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to configure P\-States on. The list can include individual CPU
-numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1
-to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
-CPUs. If the CPUs/cores/packages were not specified, all CPUs will be used as
-the default value.
+List of CPUs to configure P\-States on. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all CPUs.
+If the CPUs/cores/packages were not specified, all CPUs will be used as the default value.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
-List of cores to configure P\-States on. The list can include individual core
-numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores
-1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+List of cores to configure P\-States on. The list can include individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
 cores.
 
 .TP
 \fB\-\-packages\fR \fI\,PACKAGES\/\fR
-List of packages to configure P\-States on. The list can include individual
-package numbers and package number ranges. For example, '1\-3' would mean
-packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special
-keyword 'all' to specify all packages.
+List of packages to configure P\-States on. The list can include individual package numbers and package number ranges. For example, '1\-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special keyword 'all' to
+specify all packages.
 
 .TP
 \fB\-\-min\-freq\fR \fI\,[MIN_FREQ]\/\fR
-Set min. CPU frequency. Minimum CPU frequency is the lowest frequency the
-operating system configured the CPU to run at (via sysfs knobs). The default
-unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example
-"900MHz"). The following special values are supported: "min" \- minimum CPU
-frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \-
-base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via
-Linux sysfs), "eff", "lfm", "Pn" \- maximum CPU efficiency frequency. This
-option has CPU scope.
+Set min. CPU frequency. Minimum CPU frequency is the lowest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz").
+The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
+"lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\fR \fI\,[MAX_FREQ]\/\fR
-Set max. CPU frequency. Maximum CPU frequency is the highest frequency the
-operating system configured the CPU to run at (via sysfs knobs). The default
-unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example
-"900MHz"). The following special values are supported: "min" \- minimum CPU
-frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \-
-base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via
-Linux sysfs), "eff", "lfm", "Pn" \- maximum CPU efficiency frequency. This
-option has CPU scope.
+Set max. CPU frequency. Maximum CPU frequency is the highest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz").
+The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
+"lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
 
 .TP
 \fB\-\-min\-freq\-hw\fR \fI\,[MIN_FREQ_HW]\/\fR
-Set min. CPU frequency (OS bypass). Minimum frequency the CPU is configured by
-the OS to run at. This value is read directly from the MSR(s), bypassing the
-OS. This option has CPU scope.
+Set min. CPU frequency (OS bypass). Minimum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\-hw\fR \fI\,[MAX_FREQ_HW]\/\fR
-Set max. CPU frequency (OS bypass). Maximum frequency the CPU is configured by
-the OS to run at. This value is read directly from the MSR(s), bypassing the
-OS. This option has CPU scope.
+Set max. CPU frequency (OS bypass). Maximum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
 
 .TP
 \fB\-\-turbo\fR \fI\,[TURBO]\/\fR
-Enable or disable turbo. When turbo is enabled, the CPUs can automatically run
-at a frequency greater than base frequency. Turbo on/off status is acquired
-and modified via sysfs knobs. Use "on" or "off". This option has global scope.
+Enable or disable turbo. When turbo is enabled, the CPUs can automatically run at a frequency greater than base frequency. Turbo on/off status is acquired and modified via sysfs knobs. Use "on" or "off". This option has global scope.
 
 .TP
 \fB\-\-min\-uncore\-freq\fR \fI\,[MIN_UNCORE_FREQ]\/\fR
-Set min. uncore frequency. Minimum uncore frequency is the lowest frequency
-the operating system configured the uncore to run at. The default unit is
-"Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The
-following special values are supported: "min" \- minimum uncore frequency
-supported by the OS (via Linux sysfs files), "max" \- maximum uncore frequency
-supported by the OS (via Linux sysfs). This option has die scope.
+Set min. uncore frequency. Minimum uncore frequency is the lowest frequency the operating system configured the uncore to run at. The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The
+following special values are supported: "min" \- minimum uncore frequency supported by the OS (via Linux sysfs files), "max" \- maximum uncore frequency supported by the OS (via Linux sysfs). This option has die scope.
 
 .TP
 \fB\-\-max\-uncore\-freq\fR \fI\,[MAX_UNCORE_FREQ]\/\fR
-Set max. uncore frequency. Maximum uncore frequency is the highest frequency
-the operating system configured the uncore to run at. The default unit is
-"Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The
-following special values are supported: "min" \- minimum uncore frequency
-supported by the OS (via Linux sysfs files), "max" \- maximum uncore frequency
-supported by the OS (via Linux sysfs). This option has die scope.
+Set max. uncore frequency. Maximum uncore frequency is the highest frequency the operating system configured the uncore to run at. The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz"). The
+following special values are supported: "min" \- minimum uncore frequency supported by the OS (via Linux sysfs files), "max" \- maximum uncore frequency supported by the OS (via Linux sysfs). This option has die scope.
 
 .TP
 \fB\-\-epp\fR \fI\,[EPP]\/\fR
-Set energy Performance Preference. Energy Performance Preference (EPP) is a
-hint to the CPU on energy efficiency vs performance. EPP has an effect only
-when the CPU is in the hardware power management (HWP) mode. This option has
-CPU scope.
+Set energy Performance Preference. Energy Performance Preference (EPP) is a hint to the CPU on energy efficiency vs performance. EPP has an effect only when the CPU is in the hardware power management (HWP) mode. This option has CPU
+scope.
 
 .TP
 \fB\-\-epp\-policy\fR \fI\,[EPP_POLICY]\/\fR
-Set EPP policy. EPP policy is a name, such as 'performance', which Linux maps
-to an EPP value, which may depend on the platform. This option has CPU scope.
+Set EPP policy. EPP policy is a name, such as 'performance', which Linux maps to an EPP value, which may depend on the platform. This option has CPU scope.
 
 .TP
 \fB\-\-epb\fR \fI\,[EPB]\/\fR
-Set energy Performance Bias. Energy Performance Bias (EPB) is a hint to the
-CPU on energy efficiency vs performance. Value 0 means maximum performance,
-value 15 means maximum energy efficiency. EPP may have an effect in both HWP
-enabled and disabled modes (HWP stands for Hardware Power Management). This
-option has CPU scope.
+Set energy Performance Bias. Energy Performance Bias (EPB) is a hint to the CPU on energy efficiency vs performance. Value 0 means maximum performance, value 15 means maximum energy efficiency. EPP may have an effect in both HWP enabled
+and disabled modes (HWP stands for Hardware Power Management). This option has CPU scope.
 
 .TP
 \fB\-\-epb\-policy\fR \fI\,[EPB_POLICY]\/\fR
-Set EPB policy. EPB policy is a name, such as 'performance', which Linux maps
-to an EPB value, which may depend on the platform. This option has CPU scope.
+Set EPB policy. EPB policy is a name, such as 'performance', which Linux maps to an EPB value, which may depend on the platform. This option has CPU scope.
 
 .TP
 \fB\-\-intel\-pstate\-mode\fR \fI\,[INTEL_PSTATE_MODE]\/\fR
-Set operation mode of 'intel_pstate' driver. The 'intel_pstate' driver has 3
-operation modes: 'active', 'passive' and 'off'. The main difference between
-the active and passive mode is in what frequency governors are used \- the
-generic Linux governors (passive mode) or the custom, built\-in 'intel_pstate'
-driver governors (active mode). This option has global scope.
+Set operation mode of 'intel_pstate' driver. The 'intel_pstate' driver has 3 operation modes: 'active', 'passive' and 'off'. The main difference between the active and passive mode is in what frequency governors are used \- the generic
+Linux governors (passive mode) or the custom, built\-in 'intel_pstate' driver governors (active mode). This option has global scope.
 
 .TP
 \fB\-\-governor\fR \fI\,[GOVERNOR]\/\fR
-Set CPU frequency governor. CPU frequency governor decides which P\-state to
-select on a CPU depending on CPU business and other factors. This option has
-CPU scope.
+Set CPU frequency governor. CPU frequency governor decides which P\-state to select on a CPU depending on CPU business and other factors. This option has CPU scope.
 
 .SH COMMAND \fI\,'pepc pstates save'\/\fR
-usage: pepc pstates save [-h] [-q] [-d] [--cpus CPUS] [--cores CORES] [--packages PACKAGES] [-o OUTFILE]
+usage: pepc pstates save [\-h] [\-q] [\-d] [\-\-cpus CPUS] [\-\-cores CORES] [\-\-packages PACKAGES] [\-o OUTFILE]
 
 Save all the modifiable P\-state settings into a file. This file can later be used for restoring P\-state settings with the 'pepc pstates restore' command.
 
@@ -861,33 +695,25 @@ Print debugging information.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
-List of CPUs to save P\-state information about. The list can include
-individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12'
-would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all'
-to specify all CPUs. If the CPUs/cores/packages were not specified, all CPUs
-will be used as the default value.
+List of CPUs to save P\-state information about. The list can include individual CPU numbers and CPU number ranges. For example, '1\-4,7,8,10\-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify
+all CPUs. If the CPUs/cores/packages were not specified, all CPUs will be used as the default value.
 
 .TP
 \fB\-\-cores\fR \fI\,CORES\/\fR
-List of cores to save P\-state information about. The list can include
-individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12'
-would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword
-'all' to specify all cores.
+List of cores to save P\-state information about. The list can include individual core numbers and core number ranges. For example, '1\-4,7,8,10\-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to
+specify all cores.
 
 .TP
 \fB\-\-packages\fR \fI\,PACKAGES\/\fR
-List of packages to save P\-state information about. The list can include
-individual package numbers and package number ranges. For example, '1\-3' would
-mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special
-keyword 'all' to specify all packages.
+List of packages to save P\-state information about. The list can include individual package numbers and package number ranges. For example, '1\-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the special keyword
+'all' to specify all packages.
 
 .TP
 \fB\-o\fR \fI\,OUTFILE\/\fR, \fB\-\-outfile\fR \fI\,OUTFILE\/\fR
-Name of the file to save the settings to (printed to standard output by
-default).
+Name of the file to save the settings to (printed to standard output by default).
 
 .SH COMMAND \fI\,'pepc pstates restore'\/\fR
-usage: pepc pstates restore [-h] [-q] [-d] [-f INFILE]
+usage: pepc pstates restore [\-h] [\-q] [\-d] [\-f INFILE]
 
 Restore P\-state settings from a file previously created with the 'pepc pstates save' command.
 
@@ -906,11 +732,10 @@ Print debugging information.
 
 .TP
 \fB\-f\fR \fI\,INFILE\/\fR, \fB\-\-from\fR \fI\,INFILE\/\fR
-Name of the file restore the settings from (use "\-" to read from the standard
-output.
+Name of the file restore the settings from (use "\-" to read from the standard output.
 
 .SH COMMAND \fI\,'pepc aspm'\/\fR
-usage: pepc aspm [-h] [-q] [-d] {info,config} ...
+usage: pepc aspm [\-h] [\-q] [\-d] {info,config} ...
 
 Manage Active State Power Management configuration.
 
@@ -935,8 +760,9 @@ Get PCI ASPM information.
 .TP
 \fBpepc aspm\fR \fI\,config\/\fR
 Change PCI ASPM configuration.
+
 .SH COMMAND \fI\,'pepc aspm info'\/\fR
-usage: pepc aspm info [-h] [-q] [-d]
+usage: pepc aspm info [\-h] [\-q] [\-d]
 
 Get information about current PCI ASPM configuration.
 
@@ -954,7 +780,7 @@ Be quiet.
 Print debugging information.
 
 .SH COMMAND \fI\,'pepc aspm config'\/\fR
-usage: pepc aspm config [-h] [-q] [-d] [--policy [POLICY]]
+usage: pepc aspm config [\-h] [\-q] [\-d] [\-\-policy [POLICY]]
 
 Change PCI ASPM configuration.
 
@@ -976,7 +802,7 @@ Print debugging information.
 the PCI ASPM policy to set, use "default" to set the Linux default policy.
 
 .SH COMMAND \fI\,'pepc topology'\/\fR
-usage: pepc topology [-h] [-q] [-d] {info} ...
+usage: pepc topology [\-h] [\-q] [\-d] {info} ...
 
 Various commands related to CPU topology.
 
@@ -998,8 +824,9 @@ FURTHER SUB-COMMANDS \fI\,'pepc topology'\/\fR
 .TP
 \fBpepc topology\fR \fI\,info\/\fR
 Print CPU topology.
+
 .SH COMMAND \fI\,'pepc topology info'\/\fR
-usage: pepc topology info [-h] [-q] [-d] [--order ORDER]
+usage: pepc topology info [\-h] [\-q] [\-d] [\-\-order ORDER]
 
 Print CPU topology information. Note, the topology information for some offline CPUs may be unavailable, in these cases the number will be substituted with "?".
 
@@ -1018,14 +845,13 @@ Print debugging information.
 
 .TP
 \fB\-\-order\fR \fI\,ORDER\/\fR
-By default, the topology table is printed in CPU number order. Use this option
-to print it in a different order (e.g., core or package number order). Here
-are the supported order names: package, die, node, core, cpu.
+By default, the topology table is printed in CPU number order. Use this option to print it in a different order (e.g., core or package number order). Here are the supported order names: cpu, core, die, node, package.
 
 .SH AUTHORS
 .nf
 Artem Bityutskiy
-.fi.nf
+.fi
+.nf
 dedekind1@gmail.com
 .fi
 

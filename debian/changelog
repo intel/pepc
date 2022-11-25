@@ -1,3 +1,9 @@
+pepc (1.3.30) unstable; urgency=low
+
+  * Fix regression introduced in 1.3.29: setting CPU frequency sometimes fails.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 25 Nov 2022 00:00:00 +0200
+
 pepc (1.3.29) unstable; urgency=low
 
   * Fix 'pepc pstates config/info --epp' option: it incorrectly assumed that EPP

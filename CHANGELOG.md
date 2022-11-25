@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix regression introduced in 1.3.29: setting CPU frequency sometimes fails.
 ### Added
 ### Removed
 ### Changed
+
+## [1.3.30] - 2022-11-25
+### Fixed
+ - Fix regression introduced in 1.3.29: setting CPU frequency sometimes fails.
 
 ## [1.3.29] - 2022-11-23
 ### Fixed
