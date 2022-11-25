@@ -29,14 +29,15 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._msr:
             self._msr.start_transaction()
 
-        for pname, pval in spinfo.items():
-            self._pcsobj.set_props({pname : pval}, cpus=cpus)
-            if self._pcsprint:
-                self._pcsprint.print_props((pname,), cpus, skip_ro=True, skip_unsupported=False,
-                                          action="set to")
+        self._pcsobj.set_props(spinfo, cpus=cpus)
 
         if self._msr:
             self._msr.commit_transaction()
+
+        if self._pcsprint:
+            for pname in spinfo:
+                self._pcsprint.print_props((pname,), cpus, skip_ro=True, skip_unsupported=False,
+                                           action="set to")
 
     @staticmethod
     def _validate_loaded_data(ydict, known_ykeys):
