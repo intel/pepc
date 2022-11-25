@@ -237,14 +237,12 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def _sort_topology(self, topology):
         """Sorts the topology list."""
 
-        # We are going to store 4 versions of the table, sorted in different order. The package and
-        # CPU orders are obvious. Package and CPU numbers are global, so this is the easy case.
-        # Note and core numbers are not necessarily global, therefore we always first sort by
-        # package.
-        sorting_map = {"CPU"     : ("CPU", "package"),
+        # We are going to store 5 versions of the table, sorted in different order. Note, core and
+        # die numbers are per-package, therefore we always sort them by package first.
+        sorting_map = {"CPU"     : ("CPU", ),
                        "core"    : ("package", "core", "CPU"),
                        "die"     : ("package", "die", "CPU"),
-                       "node"    : ("package", "node", "CPU"),
+                       "node"    : ("node", "CPU"),
                        "package" : ("package", "CPU")}
 
         def sort_func(tline):
@@ -333,8 +331,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 		  {'CPU': 3,  'core': 6, 'die': 0, 'node': 1, 'package': 1, 'online': True},
 		  {'CPU': 11, 'core': 6, 'die': 0, 'node': 1, 'package': 1, 'online': True},
 
-        Here is the topology table in CPU order. It'll be sorted by CPU number and then package
-        number.
+        Here is the topology table in CPU order.
 
 		  {'CPU': 0,  'core': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
 		  {'CPU': 1,  'core': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
