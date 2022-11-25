@@ -583,34 +583,19 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         raise Error(f"unsupported scope name \"{level}\"")
 
     def package_to_cpus(self, package, order="CPU"):
-        """
-        Same as 'packages_to_cpus()', but for a single package 'package'.
-        """
+        """Return list of cpu numbers belonging to package 'package', sorted by 'order'."""
         return self._get_level_nums("CPU", "package", (package,), order=order)
 
     def package_to_cores(self, package, order="core"):
-        """
-        Returns list of cores numbers belonging to package 'package'. The 'order' argument can be
-        one of:
-           * "node" - sort in ascending node order.
-           * "core" - sort in ascending core order (same as default).
-        """
+        """Similar to 'package_to_cpus()', but for cores."""
         return self._get_level_nums("core", "package", (package,), order=order)
 
     def package_to_dies(self, package, order="die"):
-        """
-        Returns list of die numbers belonging to package 'package'. The 'order' argument can
-        only be "die", and it exists only for compatibility with other methods, such as
-        'package_to_cores()'.
-        """
+        """Similar to 'package_to_cpus()', but for dies."""
         return self._get_level_nums("die", "package", (package,), order=order)
 
     def package_to_nodes(self, package, order="node"):
-        """
-        Returns list of NUMA node numbers belonging to package 'package'. The 'order' argument can
-        only be "node", and it exists only for compatibility with other methods, such as
-        'package_to_cores()'.
-        """
+        """Similar to 'package_to_cpus()', but for nodes."""
         return self._get_level_nums("node", "package", (package,), order=order)
 
     def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
