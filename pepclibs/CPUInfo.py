@@ -490,57 +490,35 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._toggle_cpus_online(cpus, False)
 
     def get_cpus(self, order="CPU"):
-        """
-        Returns list of online CPU numbers. The numbers are sorted in ascending order by default.
-        The 'order' argument can be one of:
-          * "package" - sort in ascending package order.
-          * "node" - sort in ascending node order.
-          * "core" - sort in ascending core order.
-          * "CPU" - sort in ascending CPU order (same as default).
-        """
-
+        """Returns list of online CPU numbers."""
         return self._get_level_nums("CPU", "CPU", "all", order=order)
 
     def get_cores(self, package=0, order="core"):
         """
-        Returns list of cores numbers in package 'package'. The returned list is sorted in ascending
-        order.
-
-        Important: if a core has all CPUs offline, the core number will not be included in the
-        returned list.
+        Returns list of core numbers in package 'package', only cores containing at least one online
+        CPU will be included.
         """
-
         return self._get_level_nums("core", "package", package, order=order)
 
     def get_dies(self, package=0, order="die"):
         """
-        Returns list of dies numbers in package 'package'. The returned list is sorted in ascending
-        order.
-
-        Important: if a die has all CPUs offline, the die number will not be included in the
-        returned list.
+        Returns list of die numbers in package 'package', only dies containing at least one online
+        CPU will be included.
         """
-
         return self._get_level_nums("die", "package", package, order=order)
 
     def get_nodes(self, order="node"):
         """
-        Returns list of node numbers sorted in ascending order.
-
-        Important: if a node has all CPUs offline, the node number will not be included in the
-        returned list.
+        Returns list of node numbers, only nodes containing at least one online CPU will be
+        included.
         """
-
         return self._get_level_nums("node", "node", "all", order=order)
 
     def get_packages(self, order="package"):
         """
-        Returns list of package numbers sorted in ascending order.
-
-        Important: if a package has all CPUs offline, the package number will not be included in the
-        returned list.
+        Returns list of package numbers, only packages containing at least one online CPU will be
+        included.
         """
-
         return self._get_level_nums("package", "package", "all", order=order)
 
     def get_offline_cpus(self):
