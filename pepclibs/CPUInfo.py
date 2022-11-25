@@ -596,10 +596,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         levels = self.get_cpu_levels(cpu)
         if level == "package":
             return self.package_to_cpus(levels[level])
+        if level == "node":
+            return self.nodes_to_cpus(levels[level])
         if level == "die":
             return self.dies_to_cpus(dies=levels[level], packages=levels["package"])
-        if level == "node":
-            return self.nodes_to_cpus(nodes=levels[level], packages=levels["package"])
         if level == "core":
             return self.cores_to_cpus(cores=levels[level], packages=levels["package"])
 
@@ -672,23 +672,14 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return cpus
 
-    def nodes_to_cpus(self, nodes="all", packages="all", order="CPU"):
+    def nodes_to_cpus(self, nodes="all", order="CPU"):
         """
-        Returns list of online CPU numbers belonging to nodes 'nodes' in packages 'packages'. The
-        'nodes' and 'packages' arguments are similar to the 'packages' argument in
-        'normalize_packages()'. The 'order' argument is the same as in 'get_cpus()'. By default, the
-        result sorted in ascending order.
+        Returns list of online CPU numbers belonging to nodes 'nodes'. The 'nodes' arguments is
+        similar to the 'packages' argument in 'normalize_packages()'. The 'order' argument is the
+        same as in 'get_cpus()'. By default, the result sorted in ascending order.
         """
 
-        by_node = self._get_level_nums("CPU", "node", nodes, order=order)
-        by_package = set(self._get_level_nums("CPU", "package", packages))
-
-        cpus = []
-        for cpu in by_node:
-            if cpu in by_package:
-                cpus.append(cpu)
-
-        return cpus
+        return self._get_level_nums("CPU", "node", nodes, order=order)
 
     def packages_to_cpus(self, packages="all", order="CPU"):
         """
