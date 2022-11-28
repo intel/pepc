@@ -67,14 +67,16 @@ if [ $# -eq 1 ]; then
     new_ver="$1"; shift
     # Validate the new version.
     printf "%s" "$new_ver" | grep -q -x "$VERSION_REGEX" ||
-            fatal "please, provide new version in X.Y.Z format"
-else
+           fatal "please, provide new version in X.Y.Z format"
+elif [ $# -eq 0 ]; then
     # The new version was not provided, increment the current version umber.
     sed_regex="^_VERSION = \"$VERSION_REGEX\"$"
     ver_start="$(sed -n -e "s/$sed_regex/\1.\2./p" "$PEPC_FILE")"
     ver_end="$(sed -n -e "s/$sed_regex/\3/p" "$PEPC_FILE")"
     ver_end="$(($ver_end+1))"
     new_ver="$ver_start$ver_end"
+else
+    usage
 fi
 
 echo "New version: $new_ver"
