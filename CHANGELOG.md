@@ -5,7 +5,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix regression introduced in 1.3.29: 'pepc cstates info --pkg-cstate-limit'
+   did not print anything when on some systems.
 ### Added
+ - Add '--cpus', '--cores' and '--packages' options to 'pepc topology info'
+   command.
 ### Removed
 ### Changed
 
