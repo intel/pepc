@@ -2,7 +2,7 @@
 PEPC
 ====
 
-:Date:   2022-11-25
+:Date:   2022-11-28
 
 .. contents::
    :depth: 3
@@ -1023,7 +1023,8 @@ FURTHER SUB-COMMANDS *'pepc topology'*
 COMMAND *'pepc* topology info'
 ==============================
 
-usage: pepc topology info [-h] [-q] [-d] [--order ORDER]
+usage: pepc topology info [-h] [-q] [-d] [--order ORDER] [--cpus CPUS]
+[--cores CORES] [--packages PACKAGES]
 
 Print CPU topology information. Note, the topology information for some
 offline CPUs may be unavailable, in these cases the number will be
@@ -1046,6 +1047,26 @@ OPTIONS *'pepc* topology info'
    this option to print it in a different order (e.g., core or package
    number order). Here are the supported order names: cpu, core, die,
    node, package.
+
+**--cpus** *CPUS*
+   List of CPUs to print topology information for. The list can include
+   individual CPU numbers and CPU number ranges. For example,
+   '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use
+   the special keyword 'all' to specify all CPUs. If the
+   CPUs/cores/packages were not specified, all CPUs will be used as the
+   default value.
+
+**--cores** *CORES*
+   List of cores to print topology information for. The list can include
+   individual core numbers and core number ranges. For example,
+   '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
+   Use the special keyword 'all' to specify all cores.
+
+**--packages** *PACKAGES*
+   List of packages to print topology information for. The list can
+   include individual package numbers and package number ranges. For
+   example, '1-3' would mean packages 1 to 3, and '1,3' would mean
+   packages 1 and 3. Use the special keyword
 
 AUTHORS
 =======
