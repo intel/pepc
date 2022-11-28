@@ -267,26 +267,22 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def get_topology(self, order="CPU"):
         """
         Build and return the topology list. The topology includes dictionaries, one dictionary per
-        CPU. Some key points for each dictionary entry.
-          * CPU     - Unique CPU number.
-
-          * core    - Uniques core number within its package.
+        CPU. Each dictionary includes the following keys.
+          * CPU     - CPU number.
+                    - Globally unique.
+          * core    - Core number.
+                    - Per-package numbering, not globally unique.
                     - There can be gaps in the numbering.
-                    - When CPU is offline the value is 'None'.
+          * die     - Die number.
+                    - Per-package numbering, not globally unique.
+          * node    - NUMA node number.
+                    - Globally unique.
+          * package - Package number.
+                    - Globally unique.
+          * online  - CPU online status.
+                    - 'True' if the CPU is online, 'False' when the CPU is offline.
 
-          * die     - Uniques die number within its package.
-                    - When CPU is offline the value is 'None'.
-
-          * node    - Non-uniform memory access (NUMA node).
-                    - Unique node number.
-                    - When CPU is offline the value is 'None'.
-
-          * package - Also called socket.
-                    - Unique package number.
-                    - When CPU is offline the value is 'None'.
-
-          * online  - CPU online status, 'True' if online, 'False' when offline.
-                    - When 'False' core, die, node and package are 'None'.
+        Note, when a CPU is offline, its core, die, node and package numbers are 'None'.
 
         Example topology list for the following hypothetical system:
           * 2 packages, numbers 0, 1.
