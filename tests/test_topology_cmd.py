@@ -13,6 +13,7 @@
 import pytest
 from common import get_pman, run_pepc, build_params
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs import CPUInfo
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec):
@@ -20,8 +21,11 @@ def get_params(hostspec):
 
     emul_modules = ["CPUInfo"]
 
-    with get_pman(hostspec, modules=emul_modules) as pman:
+    with get_pman(hostspec, modules=emul_modules) as pman, \
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         params = build_params(pman)
+
+        params["cpus"] = cpuinfo.normalize_cpus("all", offlined_ok=True)
 
         yield params
 
@@ -30,6 +34,7 @@ def test_topology_info(params):
 
     good_options = [
         "",
+        f"--cpus 0-{params['cpus'][-1]} --cores all --packages all",
         "--order cpu",
         "--order core",
         "--order node",

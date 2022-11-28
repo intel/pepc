@@ -442,6 +442,13 @@ def build_arguments_parser():
                supported order names: {orders}."""
     subpars2.add_argument("--order", help=text, default="CPU")
 
+    text = f"""List of CPUs to print topology information for. {cpu_list_dflt_txt}."""
+    subpars2.add_argument("--cpus", help=text)
+    text = f"""List of cores to print topology information for. {core_list_txt}."""
+    subpars2.add_argument("--cores", help=text)
+    text = f"""List of packages to print topology information for. {pkg_list_txt}."""
+    subpars2.add_argument("--packages", help=text)
+
     if argcomplete:
         argcomplete.autocomplete(parser)
 

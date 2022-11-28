@@ -13,6 +13,7 @@ This module includes the "topology" 'pepc' command implementation.
 import logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
+from pepctool import _PepcCommon
 
 _LOG = logging.getLogger()
 
@@ -49,7 +50,9 @@ def topology_info_command(args, pman):
     headers = [name[0].upper() + name[1:] for name in colnames]
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        _LOG.info(fmt, *headers)
+        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=None)
 
+        _LOG.info(fmt, *headers)
         for tline in cpuinfo.get_topology(order=order):
-            _LOG.info(fmt, *_format_row(tline, colnames))
+            if not cpus or tline["CPU"] in cpus:
+                _LOG.info(fmt, *_format_row(tline, colnames))
