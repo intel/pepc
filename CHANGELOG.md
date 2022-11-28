@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix regression introduced in 1.3.29: 'pepc cstates config --pkg-cstate-limit'
+   did not print anything on some systems.
 ### Added
 ### Removed
 ### Changed
@@ -12,7 +14,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [1.3.31] - 2022-11-28
 ### Fixed
  - Fix regression introduced in 1.3.29: 'pepc cstates info --pkg-cstate-limit'
-   did not print anything when on some systems.
+   did not print anything on some systems.
 ### Added
  - Add '--cpus', '--cores' and '--packages' options to 'pepc topology info'
    command.
