@@ -30,16 +30,22 @@ def check_tuned_presence(pman):
         except Error as err:
             _LOG.warning("failed to check for 'tuned' presence:\n%s", err.indent(2))
 
-def get_cpus(args, cpuinfo, default_cpus="all"):
+def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
     """
-    Get list of CPUs based on requested packages, cores and CPUs. If no CPUs, cores and packages are
-    requested, returns 'default_cpus'.
+    Get list of CPUs based on requested packages, cores and CPUs numbers. If no CPUs, cores and
+    packages are requested, returns 'default_cpus'.
+
+    By default, requested offlined CPUs are not allowed and will cause an exception. Use
+    'offlined_ok=True' to allow offlined CPUs. When the argument is "all", all online CPUs are
+    included and no exception is raised for offline CPUs, with 'offlined_ok=True' "all" will include
+    online and offline CPUs. For package and core 'offlined_ok=True' does nothing, due to offline
+    CPUs not having a package and core number.
     """
 
     cpus = []
 
     if args.cpus:
-        cpus += cpuinfo.normalize_cpus(cpus=args.cpus)
+        cpus += cpuinfo.normalize_cpus(cpus=args.cpus, offlined_ok=offlined_ok)
 
     if args.cores:
         packages = args.packages
@@ -53,6 +59,6 @@ def get_cpus(args, cpuinfo, default_cpus="all"):
         cpus += cpuinfo.packages_to_cpus(packages=args.packages)
 
     if not cpus and default_cpus is not None:
-        cpus = cpuinfo.normalize_cpus(default_cpus)
+        return cpuinfo.normalize_cpus(default_cpus, offlined_ok=offlined_ok)
 
     return Trivial.list_dedup(cpus)
