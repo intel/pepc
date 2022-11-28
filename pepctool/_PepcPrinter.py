@@ -199,6 +199,41 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return aggr_pinfo
 
+    @staticmethod
+    def _adjust_aggr_pinfo_pcs_limit(aggr_pinfo):
+        """
+        The aggregate properties information dictionary 'aggr_pinfo' includes the 'pkg_cstate_limit'
+        property. This property is read/write in case the corresponding MSR is unlocked, and it is
+        R/O if the MSR is locked. The goal of this method is to remove all the "locked" CPUs from
+        the 'pkg_cstate_limit' key of 'aggr_pinfo'.
+        """
+
+        pcsl_info = aggr_pinfo["pkg_cstate_limit"].get("pkg_cstate_limit", None)
+        lock_info = aggr_pinfo["pkg_cstate_limit"].get("pkg_cstate_limit_locked", None)
+        if not pcsl_info or not lock_info:
+            # The 'pkg_cstate_limit' property is not supported, nothing to do.
+            return aggr_pinfo
+
+        locked_cpus = set(lock_info.get("on", []))
+        new_pcsl_info = {}
+
+        for key, cpus in pcsl_info.items():
+            new_cpus = []
+            for cpu in cpus:
+                if cpu not in locked_cpus:
+                    new_cpus.append(cpu)
+            if new_cpus:
+                new_pcsl_info[key] = new_cpus
+
+        if new_pcsl_info:
+            # Assign the new 'pkg_cstate_limit' property value and get rid of the
+            # 'pkg_cstate_limit_locked' property.
+            aggr_pinfo["pkg_cstate_limit"] = {"pkg_cstate_limit" : new_pcsl_info}
+        else:
+            del aggr_pinfo["pkg_cstate_limit"]
+
+        return aggr_pinfo
+
     def print_props(self, pnames="all", cpus="all", skip_ro=False, skip_unsupported=True,
                     action=None):
         """
@@ -231,12 +266,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         if skip_ro and "pkg_cstate_limit" in aggr_pinfo:
             # Special case: the package C-state limit option is read-write in general, but if it is
-            # locked, it is effectively read-only. Check for this condition.
-            locked = aggr_pinfo["pkg_cstate_limit"].get("pkg_cstate_limit_locked", None)
-            if locked:
-                del aggr_pinfo["pkg_cstate_limit"]
-            elif locked is not None:
-                del aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit_locked"]
+            # locked, it is effectively read-only. Since 'skip_ro' is 'True', we need to adjust
+            # 'aggr_pinfo'.
+            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo)
 
         if self._fmt == "human":
             self._print_aggr_pinfo_human(aggr_pinfo, skip_unsupported=skip_unsupported,
