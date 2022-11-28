@@ -229,7 +229,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         pinfo_iter = self._pcsobj.get_props(pnames, cpus=cpus)
         aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, spnames=spnames)
 
-        if "pkg_cstate_limit" in aggr_pinfo:
+        if skip_ro and "pkg_cstate_limit" in aggr_pinfo:
             # Special case: the package C-state limit option is read-write in general, but if it is
             # locked, it is effectively read-only. Check for this condition.
             locked = aggr_pinfo["pkg_cstate_limit"].get("pkg_cstate_limit_locked", None)
