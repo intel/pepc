@@ -40,7 +40,7 @@ def test_topology_info(params):
         "--order core",
         "--order node",
         "--order die",
-        "--order package"
+        "--order PaCkAgE"
     ]
 
     for option in good_options:
@@ -48,7 +48,7 @@ def test_topology_info(params):
 
     bad_options = [
         "--order cpu,node",
-        "--order packages"
+        "--order Packages"
         "--order HELLO_WORLD"
     ]
 

@@ -35,12 +35,12 @@ def topology_info_command(args, pman):
     colnames = CPUInfo.LEVELS
 
     order = args.order
-    if order == "cpu":
-        order = "CPU"
-
-    if order not in CPUInfo.LEVELS:
-        orders = ", ".join([lvl.lower() for lvl in CPUInfo.LEVELS])
-        raise Error(f"unknown order '{args.order}', use one of: {orders}")
+    for lvl in CPUInfo.LEVELS:
+        if order.lower() == lvl.lower():
+            order = lvl
+            break
+    else:
+        raise Error(f"invalid order '{order}', use one of: {', '.join(CPUInfo.LEVELS)}")
 
     offlined_ok = not args.online_only
 
