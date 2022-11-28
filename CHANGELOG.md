@@ -7,6 +7,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
 ### Added
  - Add '--online-only' option to 'pepc topology info' command.
+ - Add '--columns' option to 'pepc topology info' command.
 ### Removed
 ### Changed
  - Change 'pepc topology info' option '--order' to be case insensitive.
