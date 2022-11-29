@@ -1,7 +1,14 @@
+pepc (1.3.32) unstable; urgency=low
+
+  * Fix regression introduced in 1.3.29: 'pepc cstates config --pkg-cstate-limit'
+    did not print anything on some systems.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Tue, 29 Nov 2022 00:00:00 +0200
+
 pepc (1.3.31) unstable; urgency=low
 
   * Fix regression introduced in 1.3.29: 'pepc cstates info --pkg-cstate-limit'
-    did not print anything when on some systems.
+    did not print anything on some systems.
   * Add '--cpus', '--cores' and '--packages' options to 'pepc topology info'
     command.
 

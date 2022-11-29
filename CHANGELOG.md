@@ -5,11 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix regression introduced in 1.3.29: 'pepc cstates config --pkg-cstate-limit'
-   did not print anything on some systems.
 ### Added
 ### Removed
 ### Changed
+
+## [1.3.32] - 2022-11-29
+### Fixed
+ - Fix regression introduced in 1.3.29: 'pepc cstates config --pkg-cstate-limit'
+   did not print anything on some systems.
 
 ## [1.3.31] - 2022-11-28
 ### Fixed
