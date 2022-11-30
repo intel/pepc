@@ -691,32 +691,32 @@ class PStates(_PCStatesBase.PCStatesBase):
         if pname.startswith("epp"):
             obj = self._get_eppobj()
             return getattr(obj, f"get_cpu_{pname}")(cpu, True)
-
         if pname.startswith("epb"):
             obj = self._get_epbobj()
             return getattr(obj, f"get_cpu_{pname}")(cpu)
+        if pname == "max_eff_freq":
+            return self._get_max_eff_freq(cpu)
+        if pname == "hwp":
+            return self._get_cpu_hwp(cpu)
+        if pname == "min_oper_freq":
+            return self._get_min_oper_freq(cpu)
+        if pname == "max_turbo_freq":
+            return self._get_max_turbo_freq(cpu)
+        if pname.endswith("_hw"):
+            return self._get_cpu_freq_hw(pname, cpu)
 
+        # Properties above have their own cache. Properties below use PStates module cache.
         if self._pcache.is_cached(pname, cpu):
             return self._pcache.get(pname, cpu)
 
         if "fname" in prop:
             val = self._get_cpu_prop_value_sysfs(prop, cpu)
-        elif pname == "min_oper_freq":
-            val = self._get_min_oper_freq(cpu)
-        elif pname == "max_eff_freq":
-            val = self._get_max_eff_freq(cpu)
-        elif pname == "hwp":
-            val = self._get_cpu_hwp(cpu)
-        elif pname == "max_turbo_freq":
-            val = self._get_max_turbo_freq(cpu)
         elif pname == "turbo":
             val = self._get_cpu_turbo(cpu)
         elif pname == "driver":
             val = self._get_driver(cpu)
         elif pname == "intel_pstate_mode":
             val = self._get_intel_pstate_mode(pname, cpu)
-        elif pname.endswith("_hw"):
-            val = self._get_cpu_freq_hw(pname, cpu)
         else:
             raise Error(f"BUG: unsupported property '{pname}'")
 
