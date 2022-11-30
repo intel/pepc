@@ -622,6 +622,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             return self.nodes_to_cpus(levels[level])
         if level == "die":
             return self.dies_to_cpus(dies=levels[level], packages=levels["package"])
+        if level == "module":
+            return self.modules_to_cpus(levels[level])
         if level == "core":
             return self.cores_to_cpus(cores=levels[level], packages=levels["package"])
 
