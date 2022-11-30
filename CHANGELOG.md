@@ -8,6 +8,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
  - Add '--online-only' option to 'pepc topology info' command.
  - Add '--columns' option to 'pepc topology info' command.
+ - Add 'module' level support to the 'CPUInfo.py' module.
 ### Removed
 ### Changed
  - Change 'pepc topology info' option '--order' to be case insensitive.
