@@ -30,8 +30,8 @@ _CT_NEHALEMS = (CPUInfo.INTEL_FAM6_NEHALEM,   CPUInfo.INTEL_FAM6_NEHALEM_G,
                 CPUInfo.INTEL_FAM6_NEHALEM_EP)
 _CT_SILVERMONTS = (CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D, )
 
-_CT_CPUS = CPUInfo.ROCKETLAKES +  \
-           CPUInfo.ALDERLAKES +   \
+_CT_CPUS = CPUInfo.ALDERLAKES +   \
+           CPUInfo.ROCKETLAKES +  \
            CPUInfo.TIGERLAKES +   \
            CPUInfo.LAKEFIELDS +   \
            _CT_ICELAKES +         \

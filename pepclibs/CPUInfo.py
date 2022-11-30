@@ -36,10 +36,10 @@ INTEL_FAM6_NEHALEM_EP = 0x1A           # Nehalem 2S Xeon.
 INTEL_FAM6_NEHALEM_EX = 0x2E           # Nehalem 4S Xeon.
 
 # Clients.
-INTEL_FAM6_ROCKETLAKE = 0xA7           # Rocket lake client.
 INTEL_FAM6_ALDERLAKE = 0x97            # Alder Lake client.
 INTEL_FAM6_ALDERLAKE_L = 0x9A          # Alder Lake mobile.
 INTEL_FAM6_ALDERLAKE_N = 0xBE          # Alder Lake mobile.
+INTEL_FAM6_ROCKETLAKE = 0xA7           # Rocket Lake client.
 INTEL_FAM6_TIGERLAKE = 0x8D            # Tiger Lake client.
 INTEL_FAM6_TIGERLAKE_L = 0x8C          # Tiger Lake mobile.
 INTEL_FAM6_LAKEFIELD = 0x8A            # Lakefield client.
@@ -92,10 +92,10 @@ INTEL_FAM6_XEON_PHI_KNL = 0x57         # Knights Landing.
 #
 EMRS =         (INTEL_FAM6_EMERALDRAPIDS_X,)
 SPRS =         (INTEL_FAM6_SAPPHIRERAPIDS_X,)
-ROCKETLAKES =  (INTEL_FAM6_ROCKETLAKE,)
 ALDERLAKES =   (INTEL_FAM6_ALDERLAKE,
                 INTEL_FAM6_ALDERLAKE_L,
                 INTEL_FAM6_ALDERLAKE_N,)
+ROCKETLAKES =  (INTEL_FAM6_ROCKETLAKE,)
 TIGERLAKES =   (INTEL_FAM6_TIGERLAKE,
                 INTEL_FAM6_TIGERLAKE_L,)
 LAKEFIELDS =   (INTEL_FAM6_LAKEFIELD,)
