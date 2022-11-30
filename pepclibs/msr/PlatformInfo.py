@@ -39,7 +39,9 @@ _EFREQ_CPUS = CPUInfo.GOLDMONTS +    \
               CPUInfo.SPRS +         \
               CPUInfo.EMRS +         \
               CPUInfo.ROCKETLAKES +  \
-              CPUInfo.ALDERLAKES
+              CPUInfo.ALDERLAKES +   \
+              CPUInfo.RAPTORLAKES +  \
+              CPUInfo.METEORLAKES
 
 
 # CPU models supporting the "minimum operating ratio" feature.
@@ -58,7 +60,9 @@ _MIN_OPER_RATIO_CPUS = CPUInfo.GOLDMONTS +                  \
                        CPUInfo.SPRS +                       \
                        CPUInfo.EMRS +                       \
                        CPUInfo.ROCKETLAKES +                \
-                       CPUInfo.ALDERLAKES
+                       CPUInfo.ALDERLAKES +                 \
+                       CPUInfo.RAPTORLAKES +                \
+                       CPUInfo.METEORLAKES
 
 # CPU models supporting the "maximum non-turbo ratio" feature.
 _BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS

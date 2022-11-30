@@ -36,6 +36,11 @@ INTEL_FAM6_NEHALEM_EP = 0x1A           # Nehalem 2S Xeon.
 INTEL_FAM6_NEHALEM_EX = 0x2E           # Nehalem 4S Xeon.
 
 # Clients.
+INTEL_FAM6_METEORLAKE = 0xAC           # Meteor Lake client.
+INTEL_FAM6_METEORLAKE_L = 0xAA         # Meteor Lake mobile.
+INTEL_FAM6_RAPTORLAKE_P = 0xBA         # Raptor Lake mobile.
+INTEL_FAM6_RAPTORLAKE_S = 0xBF         # Raptor Lake client.
+INTEL_FAM6_RAPTORLAKE = 0xB7           # Raptor Lake client.
 INTEL_FAM6_ALDERLAKE = 0x97            # Alder Lake client.
 INTEL_FAM6_ALDERLAKE_L = 0x9A          # Alder Lake mobile.
 INTEL_FAM6_ALDERLAKE_N = 0xBE          # Alder Lake mobile.
@@ -92,6 +97,11 @@ INTEL_FAM6_XEON_PHI_KNL = 0x57         # Knights Landing.
 #
 EMRS =         (INTEL_FAM6_EMERALDRAPIDS_X,)
 SPRS =         (INTEL_FAM6_SAPPHIRERAPIDS_X,)
+METEORLAKES =  (INTEL_FAM6_METEORLAKE,
+                INTEL_FAM6_METEORLAKE_L,)
+RAPTORLAKES =  (INTEL_FAM6_RAPTORLAKE,
+                INTEL_FAM6_RAPTORLAKE_P,
+                INTEL_FAM6_RAPTORLAKE_S,)
 ALDERLAKES =   (INTEL_FAM6_ALDERLAKE,
                 INTEL_FAM6_ALDERLAKE_L,
                 INTEL_FAM6_ALDERLAKE_N,)
