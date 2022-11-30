@@ -24,9 +24,9 @@ def _format_row(tline, colnames):
     res = []
     for name in colnames:
         if tline[name] is not None:
-            res += [str(tline[name])]
+            res.append(str(tline[name]))
         else:
-            res += ["?"]
+            res.append("?")
 
     return res
 
