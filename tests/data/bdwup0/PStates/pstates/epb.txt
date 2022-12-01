@@ -1,0 +1,8 @@
+/sys/devices/system/cpu/cpu0/power/energy_perf_bias:4
+/sys/devices/system/cpu/cpu1/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu2/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu3/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu4/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu5/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu6/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu7/power/energy_perf_bias:6

@@ -12,3 +12,7 @@ inlinefiles:
   filename: uncore.txt
   readonly: false
   separator: ':'
+- dirname: PStates/pstates
+  filename: epb.txt
+  separator: ':'
+  readonly: false
