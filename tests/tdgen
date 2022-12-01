@@ -137,7 +137,14 @@ PStatesData = {
           "separator": ":",
           "readonly": False,
           "dirname": "pstates",
-          "filename": "uncore.txt"}]
+          "filename": "uncore.txt"},
+          {"command" : r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
+                       r"'.*cpu([[:digit:]]+)/power/energy_perf_bias' -type f -exec " \
+                       r"printf '%s' {}: \; -exec grep . {} \;",
+          "separator": ":",
+          "readonly": False,
+          "dirname": "pstates",
+          "filename": "epb.txt"}]
     }
 
 SystemctlData = {
