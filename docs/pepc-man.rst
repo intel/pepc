@@ -2,7 +2,7 @@
 PEPC
 ====
 
-:Date:   2022-11-29
+:Date:   2022-12-02
 
 .. contents::
    :depth: 3
@@ -1024,7 +1024,8 @@ COMMAND *'pepc* topology info'
 ==============================
 
 usage: pepc topology info [-h] [-q] [-d] [--order ORDER] [--cpus CPUS]
-[--cores CORES] [--packages PACKAGES]
+[--cores CORES] [--packages PACKAGES] [--online-only] [--columns
+COLUMNS]
 
 Print CPU topology information. Note, the topology information for some
 offline CPUs may be unavailable, in these cases the number will be
@@ -1045,8 +1046,8 @@ OPTIONS *'pepc* topology info'
 **--order** *ORDER*
    By default, the topology table is printed in CPU number order. Use
    this option to print it in a different order (e.g., core or package
-   number order). Here are the supported order names: cpu, core, die,
-   node, package.
+   number order). Here are the supported order names: cpu, core, module,
+   die, node, package.
 
 **--cpus** *CPUS*
    List of CPUs to print topology information for. The list can include
@@ -1067,6 +1068,15 @@ OPTIONS *'pepc* topology info'
    include individual package numbers and package number ranges. For
    example, '1-3' would mean packages 1 to 3, and '1,3' would mean
    packages 1 and 3. Use the special keyword
+
+**--online-only**
+   Include only online CPUs. By default offline and online CPUs are
+   included.
+
+**--columns** *COLUMNS*
+   By default, the topology columns are CPU, core, module, die, node,
+   package. Use this option to select topology columns names and order
+   (e.g.,'--columns Package,Core,CPU').
 
 AUTHORS
 =======

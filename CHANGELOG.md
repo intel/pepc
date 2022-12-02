@@ -6,11 +6,15 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+### Removed
+### Changed
+
+## [1.3.33] - 2022-12-02
+### Added
  - Add '--online-only' option to 'pepc topology info' command.
  - Add '--columns' option to 'pepc topology info' command.
  - Add 'module' level support to the 'CPUInfo.py' module.
  - Add Raptor and Meteor Lake support.
-### Removed
 ### Changed
  - Change 'pepc topology info' option '--order' to be case insensitive.
 

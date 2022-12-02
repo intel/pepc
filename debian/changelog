@@ -1,3 +1,13 @@
+pepc (1.3.33) unstable; urgency=low
+
+  * Add '--online-only' option to 'pepc topology info' command.
+  * Add '--columns' option to 'pepc topology info' command.
+  * Add 'module' level support to the 'CPUInfo.py' module.
+  * Add Raptor and Meteor Lake support.
+  * Change 'pepc topology info' option '--order' to be case insensitive.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 02 Dec 2022 00:00:00 +0200
+
 pepc (1.3.32) unstable; urgency=low
 
   * Fix regression introduced in 1.3.29: 'pepc cstates config --pkg-cstate-limit'
