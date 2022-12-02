@@ -22,7 +22,8 @@ def is_root():
     try:
         return os.getuid() == 0 or os.geteuid() == 0
     except OSError as err:
-        raise Error(f"failed to get process UID: {err}") from None
+        msg = Error(err).indent(2)
+        raise Error(f"failed to get process UID:\n{msg}") from None
 
 def get_pid():
     """Return current process ID."""
@@ -30,7 +31,8 @@ def get_pid():
     try:
         return os.getpid()
     except OSError as err:
-        raise Error(f"failed to get own PID: {err}") from None
+        msg = Error(err).indent(2)
+        raise Error(f"failed to get own PID:\n{msg}") from None
 
 def get_pgid(pid):
     """Return process group ID of a process with PID 'pid'."""
@@ -38,7 +40,8 @@ def get_pgid(pid):
     try:
         return os.getpgid(pid)
     except OSError as err:
-        raise Error(f"failed to get group ID of process with PID {pid}: {err}") from None
+        msg = Error(err).indent(2)
+        raise Error(f"failed to get group ID of process with PID {pid}:\n{msg}") from None
 
 def get_username(uid=None):
     """Return username of current process."""
@@ -47,12 +50,14 @@ def get_username(uid=None):
         if uid is None:
             uid = os.getuid()
     except OSError as err:
-        raise Error(f"failed to detect user name of current process:\n{err}") from None
+        msg = Error(err).indent(2)
+        raise Error(f"failed to detect user name of current process:\n{msg}") from None
 
     try:
         return pwd.getpwuid(uid).pw_name
     except KeyError as err:
-        raise Error(f"failed to get user name for UID {uid}:\n{err}") from None
+        msg = Error(err).indent(2)
+        raise Error(f"failed to get user name for UID {uid}:\n{msg}") from None
 
 def str_to_int(snum, what="value"):
     """

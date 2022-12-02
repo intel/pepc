@@ -16,13 +16,14 @@ class Error(Exception):
     def __init__(self, msg, *args, errno=None):
         """The constructor."""
 
+        msg = str(msg)
         super().__init__(msg)
         if errno is not None:
             self.errno = errno
         if args:
-            self.msg = str(msg) % tuple(args)
+            self.msg = msg % tuple(args)
         else:
-            self.msg = str(msg)
+            self.msg = msg
 
     def indent(self, indent):
         """

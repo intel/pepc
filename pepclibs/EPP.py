@@ -233,7 +233,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
                 return epp
 
             # Writing to the sysfs file failed, provide a meaningful error message.
-            msg = f"failed to set EPP to {epp}{self._pman.hostmsg}: {err}"
+            msg = f"failed to set EPP to {epp}{self._pman.hostmsg}:\n{err.indent(2)}"
 
             try:
                 policies = self._get_cpu_epp_policies(cpu)

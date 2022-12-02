@@ -426,19 +426,22 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             chan = self.ssh.get_transport().open_session(timeout=self.connection_timeout)
         except BaseException as err:
+            msg = Error(err).indent(2)
             raise Error(f"cannot create a new SSH session for running the following "
-                        f"command{self.hostmsg}:\n{cmd}\nThe error is: {err}") from err
+                        f"command{self.hostmsg}:\n{cmd}\nThe error is:\n{msg}") from err
 
         try:
             chan.exec_command(cmd)
         except BaseException as err:
+            msg = Error(err).indent(2)
             raise Error(f"cannot execute the following command in a new SSH session"
-                        f"{self.hostmsg}:\n{cmd}\nThe error is: {err}") from err
+                        f"{self.hostmsg}:\n{cmd}\nThe error is:\n{msg}") from err
 
         try:
             stdin = chan.makefile("wb")
         except BaseException as err:
-            raise Error(f"failed to create the stdin file-like object: {err}") from err
+            msg = Error(err).indent(2)
+            raise Error(f"failed to create the stdin file-like object:\n{msg}") from err
 
         streams = (stdin, chan.recv, chan.recv_stderr)
         return SSHProcess(self, chan, command, cmd, shell, streams)
@@ -692,8 +695,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             pman.run_verify(f"{cmd} -- {src} {dst}")
-        except LocalProcessManager.Error as err:
-            raise Error(f"failed to copy files '{src}' to '{dst}':\n{err}") from err
+        except Error as err:
+            raise Error(f"failed to copy files '{src}' to '{dst}':\n{err.indent(2)}") from err
 
     def get(self, remote_path, local_path):
         """
@@ -719,7 +722,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             self._sftp = self.ssh.open_sftp()
         except BaseException as err:
-            raise Error(f"failed to establish SFTP session with {self.hostname}:\n{err}") from err
+            msg = Error(err).indent(2)
+            raise Error(f"failed to establish SFTP session with {self.hostname}:\n{msg}") from err
 
         return self._sftp
 
@@ -738,13 +742,15 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             try:
                 data = fobj._orig_fread_(size=size)
             except BaseException as err:
-                raise Error(f"failed to read from '{fobj._orig_fpath_}': {err}") from err
+                msg = Error(err).indent(2)
+                raise Error(f"failed to read from '{fobj._orig_fpath_}':\n{msg}") from err
 
             if "b" not in fobj._orig_fmode_:
                 try:
                     data = data.decode("utf8")
                 except UnicodeError as err:
-                    raise Error(f"failed to decode data read from '{fobj._orig_fpath_}':\n{err}") \
+                    msg = Error(err).indent(2)
+                    raise Error(f"failed to decode data read from '{fobj._orig_fpath_}':\n{msg}") \
                           from None
 
             return data
@@ -760,16 +766,20 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 try:
                     data = data.encode("utf8")
                 except UnicodeError as err:
-                    raise Error(f"{errmsg}: failed to encode data before writing:\n{err}") from None
+                    msg = Error(err).indent(2)
+                    raise Error(f"{errmsg}: failed to encode data before writing:\n{msg}") from None
                 except AttributeError as err:
-                    raise Error(f"{errmsg}: the data to write must be a string:\n{err}") from None
+                    msg = Error(err).indent(2)
+                    raise Error(f"{errmsg}: the data to write must be a string:\n{msg}") from None
 
             try:
                 return fobj._orig_fwrite_(data)
             except PermissionError as err:
-                raise ErrorPermissionDenied(f"{errmsg}{err}") from None
+                msg = Error(err).indent(2)
+                raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
             except BaseException as err:
-                raise Error(f"{errmsg}{err}") from err
+                msg = Error(err).indent(2)
+                raise Error(f"{errmsg}\n{msg}") from err
 
         def get_err_prefix(fobj, method):
             """Return the error message prefix."""
@@ -782,11 +792,14 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             fobj = sftp.file(path, mode)
         except PermissionError as err:
-            raise ErrorPermissionDenied(f"{errmsg}{err}") from None
+            msg = Error(err).indent(2)
+            raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
         except FileNotFoundError as err:
-            raise ErrorNotFound(f"{errmsg}{err}") from None
+            msg = Error(err).indent(2)
+            raise ErrorNotFound(f"{errmsg}\n{msg}") from None
         except BaseException as err:
-            raise Error(f"{errmsg}{err}") from err
+            msg = Error(err).indent(2)
+            raise Error(f"{errmsg}\n{msg}") from err
 
         # Save the path and the mode in the object.
         fobj._orig_fpath_ = path
@@ -821,7 +834,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
             config = paramiko.SSHConfig()
             for cfgfile in cfgfiles:
-                with open(cfgfile, "r") as fobj:
+                with open(cfgfile, "r", encoding="utf8") as fobj:
                     config.parse(fobj)
 
             cfg = config.lookup(hostname)
@@ -941,11 +954,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                              key_filename=key_filename, timeout=self.connection_timeout,
                              password=self.password, allow_agent=False, look_for_keys=look_for_keys)
         except paramiko.AuthenticationException as err:
+            msg = Error(err).indent(2)
             raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
-                               f"'{self.username}':\n{err}") from err
+                               f"'{self.username}':\n{msg}") from err
         except BaseException as err:
+            msg = Error(err).indent(2)
             raise ErrorConnect(f"cannot establish TCP connection to {self._vhostname} with "
-                               f"{timeout} secs time-out:\n{err}") from err
+                               f"{timeout} secs time-out:\n{msg}") from err
 
     def close(self):
         """Close the SSH connection."""

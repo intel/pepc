@@ -10,8 +10,7 @@
 This module implements a process manager for running and monitoring local processes.
 """
 
-# pylint: disable=no-member
-# pylint: disable=protected-access
+# pylint: disable=arguments-differ
 
 import os
 import time
@@ -45,7 +44,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
             try:
                 return self._streams[streamid].read(4096)
             except Exception as err:
-                if err.errno == errno.EAGAIN:
+                if getattr(err, "errno", None) == errno.EAGAIN:
                     continue
                 raise
 
@@ -132,17 +131,18 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             if stdin and isinstance(stdin, str):
                 fname = stdin
-                stdin = open(fname, "r")
+                stdin = open(fname, "r", encoding="utf8")
 
             if stdout and isinstance(stdout, str):
                 fname = stdout
-                stdout = open(fname, "w+")
+                stdout = open(fname, "w+", encoding="utf8")
 
             if stderr and isinstance(stderr, str):
                 fname = stderr
-                stderr = open(fname, "w+")
+                stderr = open(fname, "w+", encoding="utf8")
         except OSError as err:
-            raise Error("cannot open file '%s': %s" % (fname, err)) from None
+            msg = Error(err).indent(2)
+            raise Error(f"cannot open file '{fname}':\n{msg}") from None
 
         if not stdin:
             stdin = subprocess.PIPE
@@ -186,7 +186,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         # pylint: disable=unused-argument,arguments-differ
         if cwd:
-            cwd_msg = "\nWorking directory: %s" % cwd
+            cwd_msg = f"\nWorking directory: {cwd}"
         else:
             cwd_msg = ""
         _LOG.debug("running the following local command asynchronously (shell %s, newgrp %s):\n"
@@ -214,7 +214,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         # pylint: disable=unused-argument,arguments-differ
         if cwd:
-            cwd_msg = "\nWorking directory: %s" % cwd
+            cwd_msg = f"\nWorking directory: {cwd}"
         else:
             cwd_msg = ""
         _LOG.debug("running the following local command (shell %s, newgrp %s):\n%s%s",
@@ -282,7 +282,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             stdout, _ = self.run_verify(cmd)
         except Error as err:
-            raise Error(f"failed to copy files '{src}' to '{dst}':\n{err}") from err
+            msg = Error(err).indent(2)
+            raise Error(f"failed to copy files '{src}' to '{dst}':\n{msg}") from err
 
         self._rsync_debug_log(stdout)
 
@@ -295,17 +296,20 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         def get_err_prefix(fobj, method):
             """Return the error message prefix."""
-            return "method '%s()' failed for %s" % (method, fobj.name)
+            return f"method '{method}()' failed for {fobj.name}"
 
         errmsg = f"cannot open file '{path}' with mode '{mode}': "
         try:
-            fobj = open(path, mode) # pylint: disable=consider-using-with
+            fobj = open(path, mode, encoding="utf8") # pylint: disable=consider-using-with
         except PermissionError as err:
-            raise ErrorPermissionDenied(f"{errmsg}{err}") from None
+            msg = Error(err).indent(2)
+            raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
         except FileNotFoundError as err:
-            raise ErrorNotFound(f"{errmsg}{err}") from None
+            msg = Error(err).indent(2)
+            raise ErrorNotFound(f"{errmsg}\n{msg}") from None
         except OSError as err:
-            raise Error(f"{errmsg}{err}") from None
+            msg = Error(err).indent(2)
+            raise Error(f"{errmsg}\n{msg}") from None
 
         # Make sure I/O methods raise 'ErrorPermissionDenied' on 'PermissionError'.
         fobj = ClassHelpers.WrapExceptions(fobj, methods=("write", "flush", "close"),
@@ -328,7 +332,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             if not exist_ok:
                 raise ErrorExists(f"path '{dirpath}' already exists") from None
         except OSError as err:
-            raise Error(f"failed to create directory '{dirpath}':\n{err}") from None
+            msg = Error(err).indent(2)
+            raise Error(f"failed to create directory '{dirpath}':\n{msg}") from None
 
     @staticmethod
     def lsdir(path, must_exist=True):
@@ -347,14 +352,16 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             entries = {entry : None for entry in os.listdir(path)}
         except OSError as err:
-            raise Error(f"failed to get list of files in '{path}':\n{err}") from None
+            msg = Error(err).indent(2)
+            raise Error(f"failed to get list of files in '{path}':\n{msg}") from None
 
         # For each directory entry, get its file type and ctime. Fill the entry dictionary value.
         for entry in entries:
             try:
                 stinfo = path.joinpath(entry).lstat()
             except OSError as err:
-                raise Error(f"'stat()' failed for '{entry}':\n{err}") from None
+                msg = Error(err).indent(2)
+                raise Error(f"'stat()' failed for '{entry}':\n{msg}") from None
 
             entries[entry] = {"name": entry, "ctime": stinfo.st_ctime, "mode": stinfo.st_mode}
 
@@ -368,7 +375,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             return Path(path).exists()
         except OSError as err:
-            raise Error(f"failed to check if '{path}' exists: {err}") from None
+            msg = Error(err).indent(2)
+            raise Error(f"failed to check if '{path}' exists:\n{msg}") from None
 
     @staticmethod
     def is_file(path):
@@ -377,7 +385,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             return Path(path).is_file()
         except OSError as err:
-            raise Error(f"failed to check if '{path}' exists and it is a regular file: {err}") \
+            msg = Error(err).indent(2)
+            raise Error(f"failed to check if '{path}' exists and it is a regular file:\n{msg}") \
                         from None
 
     @staticmethod
@@ -387,7 +396,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             return Path(path).is_dir()
         except OSError as err:
-            raise Error(f"failed to check if '{path}' exists and it is a directory: {err}") \
+            msg = Error(err).indent(2)
+            raise Error(f"failed to check if '{path}' exists and it is a directory:\n{msg}") \
                         from None
 
     @staticmethod
@@ -397,8 +407,9 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             return Path(path).is_file() and os.access(path, os.X_OK)
         except OSError as err:
-            raise Error(f"failed to check if '{path}' exists and it is an executable file: {err}") \
-                        from None
+            msg = Error(err).indent(2)
+            raise Error(f"failed to check if '{path}' exists and it is an executable file:\n" \
+                        f"{msg}") from None
 
     @staticmethod
     def is_socket(path):
@@ -407,8 +418,9 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             return Path(path).is_socket()
         except OSError as err:
-            raise Error(f"failed to check if '{path}' exists and it is a Unix socket file: {err}") \
-                        from None
+            msg = Error(err).indent(2)
+            raise Error(f"failed to check if '{path}' exists and it is a Unix socket file:\n" \
+                        f"{msg}") from None
 
     @staticmethod
     def get_mtime(path):
@@ -419,7 +431,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except FileNotFoundError:
             raise ErrorNotFound(f"'{path}' does not exist") from None
         except OSError as err:
-            raise Error(f"'stat()' failed for '{path}':\n{err}") from None
+            msg = Error(err).indent(2)
+            raise Error(f"'stat()' failed for '{path}':\n{msg}") from None
 
     @staticmethod
     def rmtree(path):
@@ -447,7 +460,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 if retry:
                     retry -= 1
                     continue
-                raise Error(f"failed to remove {path}: {err}") from err
+                msg = Error(err).indent(2)
+                raise Error(f"failed to remove {path}:\n{msg}") from err
             break
 
     @staticmethod
@@ -460,7 +474,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             rpath = Path(path).resolve()
         except OSError as err:
-            raise Error(f"failed to get real path for '{path}': {err}") from None
+            msg = Error(err).indent(2)
+            raise Error(f"failed to get real path for '{path}':\n{msg}") from None
 
         if must_exist and not rpath.exists():
             raise ErrorNotFound(f"path '{rpath}' does not exist")
@@ -479,7 +494,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             path = tempfile.mkdtemp(prefix=prefix, dir=basedir)
         except OSError as err:
-            raise Error(f"failed to create a temporary directory: {err}") from err
+            msg = Error(err).indent(2)
+            raise Error(f"failed to create a temporary directory:\n{msg}") from err
 
         _LOG.debug("created a temporary directory '%s'", path)
         return Path(path)

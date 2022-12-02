@@ -270,7 +270,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
             except Error as err:
                 raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU {cpu}:\n"
                             f"failed to write to file '{path}'{self._pman.hostmsg}:\n"
-                            f"{err}") from err
+                            f"{err.indent(2)}") from err
 
     def write(self, regaddr, regval, cpus="all", sname="CPU"):
         """
@@ -375,7 +375,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
             self._msr_drv = KernelModule.KernelModule(drvname, pman=self._pman)
             loaded = self._msr_drv.is_loaded()
         except Error as err:
-            raise Error(f"{msg}\n{err}") from err
+            raise Error(f"{msg}\n{err.indent(2)}") from err
 
         if loaded:
             raise Error(msg)
@@ -385,7 +385,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
             self._unload_msr_drv = True
             FSHelpers.wait_for_a_file(dev_path, timeout=1, pman=self._pman)
         except Error as err:
-            raise Error(f"{msg}\n{err}") from err
+            raise Error(f"{msg}\n{err.indent(2)}") from err
 
     def __init__(self, pman=None, cpuinfo=None, enable_cache=True):
         """

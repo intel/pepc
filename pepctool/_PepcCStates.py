@@ -136,7 +136,8 @@ def cstates_save_command(args, pman):
                 # pylint: disable=consider-using-with
                 fobj = open(args.outfile, "w", encoding="utf-8")
             except OSError as err:
-                raise Error(f"failed to open file '{args.outfile}':\n  {err}") from None
+                msg = Error(err).indent(2)
+                raise Error(f"failed to open file '{args.outfile}':\n{msg}") from None
 
             stack.enter_context(fobj)
 

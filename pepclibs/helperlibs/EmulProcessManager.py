@@ -34,11 +34,12 @@ def populate_rw_file(path, data):
     if not path.parent.exists():
         path.parent.mkdir(parents=True)
 
-    with open(path, "w") as fobj:
+    with open(path, "w", encoding="utf-8") as fobj:
         try:
             fobj.write(data)
         except OSError as err:
-            raise Error(f"failed to write into file '{path}':\n{err}") from err
+            msg = Error(err).indent(2)
+            raise Error(f"failed to write into file '{path}':\n{msg}") from err
 
 def _populate_sparse_file(path, data):
     """Create sparse file 'path' and write sparse data 'data' into it."""
@@ -52,7 +53,8 @@ def _populate_sparse_file(path, data):
                 fobj.seek(offset)
                 fobj.write(value)
     except OSError as err:
-        raise Error(f"failed to prepare sparse file '{path}':\n{err}") from err
+        msg = Error(err).indent(2)
+        raise Error(f"failed to prepare sparse file '{path}':\n{msg}") from err
 
 class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     """
@@ -227,18 +229,24 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # Disabling buffering is only allowed in binary mode.
         if "b" in mode:
             buffering = 0
+            encoding = None
         else:
             buffering = -1
+            encoding = "utf8"
 
         errmsg = f"cannot open file '{path}' with mode '{mode}': "
         try:
-            fobj = open(tmppath, mode, buffering=buffering)  # pylint: disable=consider-using-with
+            # pylint: disable=consider-using-with
+            fobj = open(tmppath, mode, buffering=buffering, encoding=encoding)
         except PermissionError as err:
-            raise ErrorPermissionDenied(f"{errmsg}{err}") from None
+            msg = Error(err).indent(2)
+            raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
         except FileNotFoundError as err:
-            raise ErrorNotFound(f"{errmsg}{err}") from None
+            msg = Error(err).indent(2)
+            raise ErrorNotFound(f"{errmsg}\n{msg}") from None
         except OSError as err:
-            raise Error(f"{errmsg}{err}") from None
+            msg = Error(err).indent(2)
+            raise Error(f"{errmsg}\n{msg}") from None
 
         # Make sure methods of 'fobj' always raise the 'Error' exceptions.
         fobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
@@ -279,9 +287,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         for cmdinfo in cmdinfos:
             commandpath = datapath / cmdinfo["dirname"]
 
-            with open(commandpath / "stdout.txt") as fobj:
+            with open(commandpath / "stdout.txt", encoding="utf8") as fobj:
                 stdout = fobj.readlines()
-            with open(commandpath / "stderr.txt") as fobj:
+            with open(commandpath / "stderr.txt", encoding="utf8") as fobj:
                 stderr = fobj.readlines()
 
             self._cmds[cmdinfo["command"]] = (stdout, stderr)
@@ -295,7 +303,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         for finfo in finfos:
             filepath = datapath / finfo["dirname"] / finfo["filename"]
 
-            with open(filepath, "r") as fobj:
+            with open(filepath, "r", encoding="utf8") as fobj:
                 lines = fobj.readlines()
 
             for line in lines:
@@ -327,7 +335,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         for finfo in finfos:
             filepath = datapath / finfo["dirname"] / finfo["filename"]
 
-            with open(filepath, "r") as fobj:
+            with open(filepath, "r", encoding="utf8") as fobj:
                 lines = fobj.readlines()
 
             for line in lines:
@@ -345,10 +353,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         datapath = datapath / msrinfo["dirname"] / msrinfo["filename"]
 
         try:
-            with open(datapath, "r") as fobj:
+            with open(datapath, "r", encoding="utf8") as fobj:
                 lines = fobj.readlines()
         except OSError as err:
-            raise Error(f"failed to read emulated MSR data from file '{datapath}':\n{err}") from err
+            msg = Error(err).indent(2)
+            raise Error(f"failed to read emulated MSR data from file '{datapath}':\n{msg}") from err
 
         sep1 = msrinfo["separator1"]
         sep2 = msrinfo["separator2"]

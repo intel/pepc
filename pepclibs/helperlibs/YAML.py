@@ -112,15 +112,18 @@ def _load(path, included, render=None):
             try:
                 fobj = open(path, "r", encoding="utf-8") # pylint: disable=consider-using-with
             except OSError as err:
-                raise Error(f"failed to open file '{path}':\n{err}") from None
+                msg = Error(err).indent(2)
+                raise Error(f"failed to open file '{path}':\n{msg}") from None
         contents = fobj
 
     try:
         loaded = yaml.safe_load(contents)
     except (TypeError, ValueError, yaml.YAMLError) as err:
-        raise Error(f"failed to parse YAML file '{path}':\n{err}") from None
+        msg = Error(err).indent(2)
+        raise Error(f"failed to parse YAML file '{path}':\n{msg}") from None
     except OSError as err:
-        raise Error(f"failed to read YAML file '{path}':\n{err}") from None
+        msg = Error(err).indent(2)
+        raise Error(f"failed to read YAML file '{path}':\n{msg}") from None
     finally:
         if fobj and fobj is not path:
             fobj.close()
@@ -140,7 +143,8 @@ def _load(path, included, render=None):
             try:
                 value = Path(value)
             except TypeError as err:
-                raise Error(f"bad include statement in YAML file at '{path}': {err}") from None
+                msg = Error(err).indent(2)
+                raise Error(f"bad include statement in YAML file at '{path}':\n{msg}") from None
 
             if not value.is_absolute():
                 value = path.parent / value
