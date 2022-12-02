@@ -747,7 +747,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
             if "b" not in fobj._orig_fmode_:
                 try:
-                    data = data.decode("utf8")
+                    data = data.decode("utf-8")
                 except UnicodeError as err:
                     msg = Error(err).indent(2)
                     raise Error(f"failed to decode data read from '{fobj._orig_fpath_}':\n{msg}") \
@@ -764,7 +764,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             errmsg = f"failed to write to '{fobj._orig_fpath_}': "
             if "b" not in fobj._orig_fmode_:
                 try:
-                    data = data.encode("utf8")
+                    data = data.encode("utf-8")
                 except UnicodeError as err:
                     msg = Error(err).indent(2)
                     raise Error(f"{errmsg}: failed to encode data before writing:\n{msg}") from None
@@ -834,7 +834,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
             config = paramiko.SSHConfig()
             for cfgfile in cfgfiles:
-                with open(cfgfile, "r", encoding="utf8") as fobj:
+                with open(cfgfile, "r", encoding="utf-8") as fobj:
                     config.parse(fobj)
 
             cfg = config.lookup(hostname)

@@ -131,15 +131,15 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             if stdin and isinstance(stdin, str):
                 fname = stdin
-                stdin = open(fname, "r", encoding="utf8")
+                stdin = open(fname, "r", encoding="utf-8")
 
             if stdout and isinstance(stdout, str):
                 fname = stdout
-                stdout = open(fname, "w+", encoding="utf8")
+                stdout = open(fname, "w+", encoding="utf-8")
 
             if stderr and isinstance(stderr, str):
                 fname = stderr
-                stderr = open(fname, "w+", encoding="utf8")
+                stderr = open(fname, "w+", encoding="utf-8")
         except OSError as err:
             msg = Error(err).indent(2)
             raise Error(f"cannot open file '{fname}':\n{msg}") from None
@@ -300,7 +300,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         errmsg = f"cannot open file '{path}' with mode '{mode}': "
         try:
-            fobj = open(path, mode, encoding="utf8") # pylint: disable=consider-using-with
+            fobj = open(path, mode, encoding="utf-8") # pylint: disable=consider-using-with
         except PermissionError as err:
             msg = Error(err).indent(2)
             raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None

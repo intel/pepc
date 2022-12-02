@@ -232,7 +232,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             encoding = None
         else:
             buffering = -1
-            encoding = "utf8"
+            encoding = "utf-8"
 
         errmsg = f"cannot open file '{path}' with mode '{mode}': "
         try:
@@ -287,9 +287,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         for cmdinfo in cmdinfos:
             commandpath = datapath / cmdinfo["dirname"]
 
-            with open(commandpath / "stdout.txt", encoding="utf8") as fobj:
+            with open(commandpath / "stdout.txt", encoding="utf-8") as fobj:
                 stdout = fobj.readlines()
-            with open(commandpath / "stderr.txt", encoding="utf8") as fobj:
+            with open(commandpath / "stderr.txt", encoding="utf-8") as fobj:
                 stderr = fobj.readlines()
 
             self._cmds[cmdinfo["command"]] = (stdout, stderr)
@@ -303,7 +303,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         for finfo in finfos:
             filepath = datapath / finfo["dirname"] / finfo["filename"]
 
-            with open(filepath, "r", encoding="utf8") as fobj:
+            with open(filepath, "r", encoding="utf-8") as fobj:
                 lines = fobj.readlines()
 
             for line in lines:
@@ -335,7 +335,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         for finfo in finfos:
             filepath = datapath / finfo["dirname"] / finfo["filename"]
 
-            with open(filepath, "r", encoding="utf8") as fobj:
+            with open(filepath, "r", encoding="utf-8") as fobj:
                 lines = fobj.readlines()
 
             for line in lines:
@@ -353,7 +353,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         datapath = datapath / msrinfo["dirname"] / msrinfo["filename"]
 
         try:
-            with open(datapath, "r", encoding="utf8") as fobj:
+            with open(datapath, "r", encoding="utf-8") as fobj:
                 lines = fobj.readlines()
         except OSError as err:
             msg = Error(err).indent(2)
