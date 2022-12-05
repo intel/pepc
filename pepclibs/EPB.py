@@ -50,6 +50,10 @@ class EPB(ClassHelpers.SimpleCloseContext):
         * Get the list of available EPB policies: 'get_cpu_epb_policies()'.
     """
 
+# ------------------------------------------------------------------------------------------------ #
+# Get EPB policies.
+# ------------------------------------------------------------------------------------------------ #
+
     def get_epb_policies(self, cpus="all"):
         """Yield (CPU number, List of supported EPB policy names) pairs for CPUs in 'cpus'."""
 
@@ -62,6 +66,10 @@ class EPB(ClassHelpers.SimpleCloseContext):
 
         # In theory, EPB policies may be different for different CPU.
         return list(_EPB_POLICIES)
+
+# ------------------------------------------------------------------------------------------------ #
+# EPB policy handling.
+# ------------------------------------------------------------------------------------------------ #
 
     def _cpu_epb_to_policy(self, cpu, epb): # pylint: disable=unused-argument
         """Return policy name for EPB value 'epb' on CPU 'cpu'."""
@@ -100,6 +108,10 @@ class EPB(ClassHelpers.SimpleCloseContext):
 
         return self._cpu_epb_to_policy(cpu, epb)
 
+# ------------------------------------------------------------------------------------------------ #
+# Get EPB through MSR (OS bypass).
+# ------------------------------------------------------------------------------------------------ #
+
     def get_epb(self, cpus="all"):
         """
         Yield (CPU number, EPB) pairs for CPUs in 'cpus'. The 'cpus' argument is the same as in
@@ -115,6 +127,10 @@ class EPB(ClassHelpers.SimpleCloseContext):
         for _, epb in self.get_epb(cpus=(cpu, )):
             pass
         return epb
+
+# ------------------------------------------------------------------------------------------------ #
+# Set EPB through MSR (OS bypass).
+# ------------------------------------------------------------------------------------------------ #
 
     def set_epb(self, epb, cpus="all"):
         """
@@ -142,6 +158,8 @@ class EPB(ClassHelpers.SimpleCloseContext):
         """Similar to 'set_epb()', but for a single CPU 'cpu'."""
 
         self.set_epb(epb, cpus=(cpu,))
+
+# ------------------------------------------------------------------------------------------------ #
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
