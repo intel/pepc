@@ -7,6 +7,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
 ### Added
 ### Removed
+ - Remove 'pepc pstates' option '--epb-policy'.
 ### Changed
 
 ## [1.3.34] - 2022-12-09
