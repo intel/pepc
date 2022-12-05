@@ -62,6 +62,21 @@ class EPB(ClassHelpers.SimpleCloseContext):
                                                           msr=msr)
         return self._epb_msr
 
+    @staticmethod
+    def _validate_epb_value(what, val, policy_ok=False):
+        """
+        Validate EPB value and raise appropriate exception. When 'policy_ok=True' also validate
+        against accepted EPB policies.
+        """
+
+        if Trivial.is_int(val):
+            Trivial.validate_value_in_range(int(val), _EPB_MIN, _EPB_MAX, what=what)
+        elif not policy_ok:
+            raise ErrorNotSupported(f"{what} must be an integer within [{_EPB_MIN},{_EPB_MAX}]")
+        elif val not in _EPB_POLICIES:
+            policies = ", ".join(_EPB_POLICIES)
+            raise ErrorNotSupported(f"{what} must be one of the following EPB policies: {policies}")
+
 # ------------------------------------------------------------------------------------------------ #
 # Get EPB through MSR (OS bypass).
 # ------------------------------------------------------------------------------------------------ #
@@ -98,32 +113,37 @@ class EPB(ClassHelpers.SimpleCloseContext):
 # Set EPB through MSR (OS bypass).
 # ------------------------------------------------------------------------------------------------ #
 
+    def _set_cpu_epb_in_msr(self, epb, cpu):
+        """Set EPB for CPU 'cpu' in MSR."""
+
+        _epb = self._get_epbobj()
+
+        try:
+            _epb.write_cpu_feature("epb", epb, cpu)
+        except Error as err:
+            raise type(err)(f"failed to set EPB HW{self._pman.hostmsg}:\n{err.indent(2)}") from err
+
     def set_epb_hw(self, epb, cpus="all"):
         """
-        Set EPB for CPUs in 'cpus'. The arguments are as follows.
-          * epb - the EPB value to set. Can be an integer, a string representing an integer, or one
-                  of the EPB policy names.
+        Set EPB for CPUs in 'cpus'. The EPB value is set via MSR. The arguments are as follows.
+          * epb - the EPB value to set. Can be an integer or string representing an integer.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
                    comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
                    7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
         """
 
-        if Trivial.is_int(epb):
-            Trivial.validate_value_in_range(int(epb), _EPB_MIN, _EPB_MAX, what="EPB value")
-        else:
-            epb_policy = epb.lower()
-            if epb_policy not in _EPB_POLICIES:
-                policy_names = ", ".join(_EPB_POLICIES)
-                raise Error(f"EPB policy '{epb}' is not supported{self._pman.hostmsg}, please "
-                            f"provide one of the following EPB policy names: {policy_names}")
-            epb = _EPB_POLICIES[epb_policy]
+        self._validate_epb_value("EPB HW value", epb)
 
-        self._get_epbobj().write_feature("epb", int(epb), cpus=cpus)
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            self._set_cpu_epb_in_msr(epb, cpu)
 
     def set_cpu_epb_hw(self, epb, cpu):
         """Similar to 'set_epb_hw()', but for a single CPU 'cpu'."""
 
-        self.set_epb_hw(epb, cpus=(cpu,))
+        self._validate_epb_value("EPB HW value", epb)
+
+        cpu = self._cpuinfo.normalize_cpu(cpu)
+        self._set_cpu_epb_in_msr(epb, cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 
