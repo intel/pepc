@@ -66,21 +66,33 @@ class EPB(ClassHelpers.SimpleCloseContext):
 # Get EPB through MSR (OS bypass).
 # ------------------------------------------------------------------------------------------------ #
 
+    def _get_cpu_epb_from_msr(self, cpu):
+        """Get EPB for CPU 'cpu' from MSR."""
+
+        _epb = self._get_epbobj()
+
+        try:
+            return _epb.read_cpu_feature("epb", cpu)
+        except ErrorNotSupported:
+            return None
+
     def get_epb_hw(self, cpus="all"):
         """
-        Yield (CPU number, EPB) pairs for CPUs in 'cpus'. The 'cpus' argument is the same as in
-        'set_epb_hw()'.
+        Yield (CPU number, EPB value) pairs for CPUs in 'cpus'. The EPB value is read via MSR.
+        The arguments are as follows.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
         """
 
-        yield from self._get_epbobj().read_feature("epb", cpus=cpus)
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            yield (cpu, self._get_cpu_epb_from_msr(cpu))
 
     def get_cpu_epb_hw(self, cpu):
         """Similar to 'get_epb_hw()', but for a single CPU 'cpu'."""
 
-        epb = None
-        for _, epb in self.get_epb_hw(cpus=(cpu, )):
-            pass
-        return epb
+        cpu = self._cpuinfo.normalize_cpu(cpu)
+        return self._get_cpu_epb_from_msr(cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 # Set EPB through MSR (OS bypass).
