@@ -25,10 +25,10 @@ from pepclibs.msr import MSR, EnergyPerfBias
 # Note, we do not expose the values to the user because they are platform-specific (not in current
 # implementation, but this may change in the future).
 _EPB_POLICIES = {"performance": 0,
-                 "balance_performance": 4,
+                 "balance-performance": 4,
                  "normal": 6,
-                 "balance_powersave": 8,
-                 "powersave": 15}
+                 "balance-power": 8,
+                 "power": 15}
 
 # The minimum and maximum EPB values.
 _EPB_MIN, _EPB_MAX = 0, 15
