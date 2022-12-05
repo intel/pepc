@@ -228,23 +228,6 @@ PROPS = {
         "sname": "CPU",
         "writable" : True,
     },
-    "epb_policy" : {
-        "name" : "EPB policy",
-        "help" : """EPB policy is a name, such as 'performance', which Linux maps to an EPB value,
-                    which may depend on the platform.""",
-        "type" : "str",
-        "sname": "CPU",
-        "writable" : True,
-        "subprops" : {
-            "epb_policies" : {
-                "name" : "Available EPB policies",
-                "help" : "Available Linux EPB policy names.",
-                "type" : "list[str]",
-                "writable" : False,
-                "sname": "global",
-            },
-        },
-    },
     "driver" : {
         "name" : "CPU frequency driver",
         "help" : """CPU frequency driver enumerates and requests the P-states available on the
@@ -691,9 +674,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         if pname.startswith("epp"):
             obj = self._get_eppobj()
             return getattr(obj, f"get_cpu_{pname}")(cpu, True)
-        if pname.startswith("epb"):
-            obj = self._get_epbobj()
-            return getattr(obj, f"get_cpu_{pname}")(cpu)
+        if pname == "epb":
+            return self._get_epbobj().get_cpu_epb(cpu)
         if pname == "max_eff_freq":
             return self._get_max_eff_freq(cpu)
         if pname == "hwp":
@@ -1072,7 +1054,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             if pname.startswith("epp"):
                 self._get_eppobj().set_epp(val, cpus=cpus)
-            elif pname.startswith("epb"):
+            elif pname == "epb":
                 self._get_epbobj().set_epb(val, cpus=cpus)
             else:
                 self._set_prop_value(pname, val, cpus)

@@ -64,10 +64,7 @@ def _set_and_verify_data(params):
         yield "epp", 0
         yield "epp", 128
 
-    if is_prop_supported("epb_policy", pinfo):
-        yield "epb_policy", pinfo["epb_policy"]["epb_policies"][0]
-        yield "epb_policy", pinfo["epb_policy"]["epb_policies"][-1]
-    elif is_prop_supported("epb", pinfo):
+    if is_prop_supported("epb", pinfo):
         yield "epb", 0
         yield "epb", 15
 

@@ -120,7 +120,7 @@ def pstates_save_command(args, pman):
         for pname, pinfo in psobj.props.items():
             if not pinfo["writable"]:
                 continue
-            if pname in {"epb_policy", "epp_policy"}:
+            if pname in {"epp_policy"}:
                 # Do not save/restorey EPB/EPP policy, because they are covered by the "epp" and
                 # "epp" properties.
                 continue
