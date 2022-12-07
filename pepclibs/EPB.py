@@ -46,6 +46,22 @@ class EPB(ClassHelpers.SimpleCloseContext):
         * Get/set EPB through MSR: 'get_cpu_epb_hw()', 'set_cpu_epb_hw()'.
     """
 
+    def _get_msrobj(self):
+        """Returns an 'MSR.MSR()' object."""
+
+        if not self._msr:
+            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
+        return self._msr
+
+    def _get_epbobj(self):
+        """Returns an 'EnergyPerfBias.EnergyPerfBias()' object."""
+
+        if not self._epb_msr:
+            msr = self._get_msrobj()
+            self._epb_msr = EnergyPerfBias.EnergyPerfBias(pman=self._pman, cpuinfo=self._cpuinfo,
+                                                          msr=msr)
+        return self._epb_msr
+
 # ------------------------------------------------------------------------------------------------ #
 # Get EPB through MSR (OS bypass).
 # ------------------------------------------------------------------------------------------------ #
@@ -56,7 +72,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         'set_epb_hw()'.
         """
 
-        yield from self._epb_msr.read_feature("epb", cpus=cpus)
+        yield from self._get_epbobj().read_feature("epb", cpus=cpus)
 
     def get_cpu_epb_hw(self, cpu):
         """Similar to 'get_epb_hw()', but for a single CPU 'cpu'."""
@@ -90,7 +106,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
                             f"provide one of the following EPB policy names: {policy_names}")
             epb = _EPB_POLICIES[epb_policy]
 
-        self._epb_msr.write_feature("epb", int(epb), cpus=cpus)
+        self._get_epbobj().write_feature("epb", int(epb), cpus=cpus)
 
     def set_cpu_epb_hw(self, epb, cpu):
         """Similar to 'set_epb_hw()', but for a single CPU 'cpu'."""
@@ -128,12 +144,6 @@ class EPB(ClassHelpers.SimpleCloseContext):
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
             raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. "
                                     f"Only Intel CPUs are supported.")
-
-        if not self._msr:
-            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
-
-        self._epb_msr = EnergyPerfBias.EnergyPerfBias(pman=self._pman, cpuinfo=self._cpuinfo,
-                                                      msr=self._msr)
 
     def close(self):
         """Uninitialize the class object."""
