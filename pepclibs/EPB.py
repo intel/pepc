@@ -16,7 +16,7 @@ CPUs.
 
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
-from pepclibs import CPUInfo
+from pepclibs import CPUInfo, _PropsCache
 from pepclibs.msr import MSR, EnergyPerfBias
 
 # EPB policy names, from the following Linux kernel file: arch/x86/kernel/cpu/intel_epb.c
@@ -146,13 +146,16 @@ class EPB(ClassHelpers.SimpleCloseContext):
     def _read_cpu_epb_from_sysfs(self, cpu):
         """Reads EPB for CPU 'cpu' from sysfs."""
 
+        if self._pcache.is_cached("epb", cpu):
+            return self._pcache.get("epb", cpu)
+
         try:
             with self._pman.open(self._sysfs_epb_path % cpu, "r") as fobj:
                 val = fobj.read().strip()
         except ErrorNotFound:
             val = None
 
-        return val
+        return self._pcache.add("epb", cpu, int(val))
 
     def get_epb(self, cpus="all"):
         """
@@ -185,8 +188,15 @@ class EPB(ClassHelpers.SimpleCloseContext):
         except Error as err:
             raise type(err)(f"failed to set EPB{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-        if not Trivial.is_int(epb) and not self._epb_policies[epb]:
-            self._epb_policies[epb] = self._read_cpu_epb_from_sysfs(cpu)
+        # Setting EPB to policy name will not read back the name, rather the numeric value.
+        # E.g. "performance" EPB might be "0".
+        if not Trivial.is_int(epb):
+            if not self._epb_policies[epb]:
+                self._epb_policies[epb] = int(self._read_cpu_epb_from_sysfs(cpu))
+
+            self._pcache.add("epb", cpu, self._epb_policies[epb])
+        else:
+            self._pcache.add("epb", cpu, int(epb))
 
     def set_epb(self, epb, cpus="all"):
         """
@@ -241,6 +251,10 @@ class EPB(ClassHelpers.SimpleCloseContext):
 
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+
+        # The per-CPU cache for sysfs data. MSR implements its own caching.
+        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
+                                              enable_cache=enable_cache)
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
             raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. "
