@@ -702,7 +702,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._get_min_oper_freq(cpu)
         if pname == "max_turbo_freq":
             return self._get_max_turbo_freq(cpu)
-        if pname.endswith("_hw"):
+        if pname.endswith("_freq_hw"):
             return self._get_cpu_freq_hw(pname, cpu)
 
         # Properties above have their own cache. Properties below use PStates module cache.
