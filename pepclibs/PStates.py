@@ -219,11 +219,12 @@ PROPS = {
         },
     },
     "epb" : {
-        "name" : "Energy Performance Bias",
-        "help" : """Energy Performance Bias (EPB) is a hint to the CPU on energy efficiency vs
-                    performance. Value 0 means maximum performance, value 15 means maximum energy
-                    efficiency. EPP may have an effect in both HWP enabled and disabled modes (HWP
-                    stands for Hardware Power Management).""",
+        "name" : "EPB via Linux sysfs",
+        "help" : """Energy Performance Bias is a hint to the CPU on energy efficiency vs
+                    performance. Value can be a number 0-15 (maximum performance to maximum
+                    energy efficiency), or a policy name, that will be translated to numeric value.
+                    EPB may have an effect in both HWP enabled and disabled modes (HWP stands for
+                    Hardware Power Management). """,
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
@@ -675,7 +676,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             obj = self._get_eppobj()
             return getattr(obj, f"get_cpu_{pname}")(cpu, True)
         if pname == "epb":
-            return self._get_epbobj().get_cpu_epb_hw(cpu)
+            return self._get_epbobj().get_cpu_epb(cpu)
         if pname == "max_eff_freq":
             return self._get_max_eff_freq(cpu)
         if pname == "hwp":
@@ -1055,7 +1056,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             if pname.startswith("epp"):
                 self._get_eppobj().set_epp(val, cpus=cpus)
             elif pname == "epb":
-                self._get_epbobj().set_epb_hw(val, cpus=cpus)
+                self._get_epbobj().set_epb(val, cpus=cpus)
             else:
                 self._set_prop_value(pname, val, cpus)
 
