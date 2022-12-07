@@ -14,7 +14,7 @@ This module provides a capability of reading and changing EPB (Energy Performanc
 CPUs.
 """
 
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, EnergyPerfBias
@@ -41,8 +41,10 @@ class EPB(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Multiple CPUs.
+        * Get EPB through sysfs: 'get_epb()'.
         * Get/set EPB through MSR: 'get_epb_hw()', 'set_epb_hw()'.
     2. Single CPU.
+        * Get EPB through sysfs: 'get_cpu_epb()'.
         * Get/set EPB through MSR: 'get_cpu_epb_hw()', 'set_cpu_epb_hw()'.
     """
 
@@ -146,6 +148,39 @@ class EPB(ClassHelpers.SimpleCloseContext):
         self._set_cpu_epb_in_msr(epb, cpu)
 
 # ------------------------------------------------------------------------------------------------ #
+# Get EPB through sysfs.
+# ------------------------------------------------------------------------------------------------ #
+
+    def _read_cpu_epb_from_sysfs(self, cpu):
+        """Reads EPB for CPU 'cpu' from sysfs."""
+
+        try:
+            with self._pman.open(self._sysfs_epb_path % cpu, "r") as fobj:
+                val = fobj.read().strip()
+        except ErrorNotFound:
+            val = None
+
+        return val
+
+    def get_epb(self, cpus="all"):
+        """
+        Yield (CPU number, EPB value) pairs for CPUs in 'cpus'. The EPB value is read via sysfs.
+        The arguments are as follows.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+        """
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            yield (cpu, self._read_cpu_epb_from_sysfs(cpu))
+
+    def get_cpu_epb(self, cpu):
+        """Similar to 'get_epb()', but for a single CPU 'cpu'."""
+
+        cpu = self._cpuinfo.normalize_cpu(cpu)
+        return self._read_cpu_epb_from_sysfs(cpu)
+
+# ------------------------------------------------------------------------------------------------ #
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
@@ -166,6 +201,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         self._close_msr = msr is None
 
         self._epb_msr = None
+        self._sysfs_epb_path = "/sys/devices/system/cpu/cpu%d/power/energy_perf_bias"
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
