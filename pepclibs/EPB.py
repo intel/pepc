@@ -46,7 +46,6 @@ class EPB(ClassHelpers.SimpleCloseContext):
         * Get the list of available EPB policies: 'get_epb_policies()'.
     2. Single CPU.
         * Get/set EPB: 'get_cpu_epb()', 'set_cpu_epb()'.
-        * Check if the CPU supports EPB: 'is_epb_supported()'
         * Get EPB policy name: 'get_cpu_epb_policy()'.
         * Get the list of available EPB policies: 'get_cpu_epb_policies()'.
     """
@@ -63,11 +62,6 @@ class EPB(ClassHelpers.SimpleCloseContext):
 
         # In theory, EPB policies may be different for different CPU.
         return list(_EPB_POLICIES)
-
-    def is_epb_supported(self, cpu):
-        """Returns 'True' if EPB is supported, on CPU 'cpu', otherwise returns 'False'."""
-
-        return self._epb_msr.is_cpu_feature_supported("epb", cpu)
 
     def _cpu_epb_to_policy(self, cpu, epb): # pylint: disable=unused-argument
         """Return policy name for EPB value 'epb' on CPU 'cpu'."""
