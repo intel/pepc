@@ -192,7 +192,7 @@ class ReqCStates(ClassHelpers.SimpleCloseContext):
                                    f"{self._pman.hostmsg}, which may be why there is no idle " \
                                    f"driver."
 
-            raise Error(msg)
+            raise ErrorNotSupported(msg)
 
         # At this point 'files' contains the list of files we'll have to read. Something like this:
         # [

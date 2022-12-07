@@ -15,7 +15,7 @@ This module provides API for printing P-state and C-state properties.
 import sys
 import logging
 from pepclibs.helperlibs import ClassHelpers, Human, YAML
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = logging.getLogger()
 
@@ -406,7 +406,13 @@ class CStatesPrinter(_PropsPrinter):
             spnames = {"disable", "latency", "residency"}
 
         csinfo_iter = self._pcsobj.get_cstates_info(csnames=csnames, cpus=cpus)
-        aggr_rcsinfo = self._build_aggr_pinfo(csinfo_iter, spnames=spnames)
+
+        try:
+            aggr_rcsinfo = self._build_aggr_pinfo(csinfo_iter, spnames=spnames)
+        except ErrorNotSupported as err:
+            _LOG.warning(err)
+            _LOG.info("C-states are not supported")
+            return
 
         if self._fmt == "human":
             self._print_aggr_rcsinfo_human(aggr_rcsinfo, action=action)
