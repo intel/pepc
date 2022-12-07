@@ -9,6 +9,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
  - Remove 'pepc pstates' option '--epb-policy'.
 ### Changed
+ - Change 'pepc pstates' option '--epb' use sysfs instead of MSR.
 
 ## [1.3.34] - 2022-12-09
 ### Fixed
