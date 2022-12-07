@@ -229,6 +229,16 @@ PROPS = {
         "sname": "CPU",
         "writable" : True,
     },
+    "epb_hw" : {
+        "name" : "EPB via MSR 0x1B0",
+        "help" : """Energy Performance Bias is a hint to the CPU on energy efficiency vs
+                    performance. Value can be a number 0-15 (maximum performance to maximum energy
+                    efficiency). EPB may have an effect in both HWP enabled and disabled modes (HWP
+                    stands for Hardware Power Management).""",
+        "type" : "int",
+        "sname": "CPU",
+        "writable" : True,
+    },
     "driver" : {
         "name" : "CPU frequency driver",
         "help" : """CPU frequency driver enumerates and requests the P-states available on the
@@ -677,6 +687,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return getattr(obj, f"get_cpu_{pname}")(cpu, True)
         if pname == "epb":
             return self._get_epbobj().get_cpu_epb(cpu)
+        if pname == "epb_hw":
+            return self._get_epbobj().get_cpu_epb_hw(cpu)
         if pname == "max_eff_freq":
             return self._get_max_eff_freq(cpu)
         if pname == "hwp":
@@ -1057,6 +1069,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._get_eppobj().set_epp(val, cpus=cpus)
             elif pname == "epb":
                 self._get_epbobj().set_epb(val, cpus=cpus)
+            elif pname == "epb_hw":
+                self._get_epbobj().set_epb_hw(val, cpus=cpus)
             else:
                 self._set_prop_value(pname, val, cpus)
 
