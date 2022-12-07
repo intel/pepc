@@ -684,11 +684,11 @@ class PStates(_PCStatesBase.PCStatesBase):
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
         if pname == "epp":
-            return self._get_eppobj().get_cpu_epp(cpu, True)
+            return self._get_eppobj().get_cpu_epp(cpu)
         if pname == "epp_policy":
-            return self._get_eppobj().get_cpu_epp_policy(cpu, True)
+            return self._get_eppobj().get_cpu_epp_policy(cpu)
         if pname == "epp_policies":
-            return self._get_eppobj().get_cpu_epp_policies(cpu, True)
+            return self._get_eppobj().get_cpu_epp_policies(cpu)
         if pname == "epb":
             return self._get_epbobj().get_cpu_epb(cpu)
         if pname == "epb_hw":
