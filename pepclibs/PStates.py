@@ -1005,14 +1005,6 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _set_prop_value(self, pname, val, cpus):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
 
-        if pname.startswith("epp"):
-            self._get_eppobj().set_epp(val, cpus=cpus)
-            return
-
-        if pname.startswith("epb"):
-            self._get_epbobj().set_epb(val, cpus=cpus)
-            return
-
         # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
         # 'False' for every CPU number that was not yet modified by the scope-aware '_pcache.add()'
         # method.
@@ -1078,7 +1070,12 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # Were already set.
                 continue
 
-            self._set_prop_value(pname, val, cpus)
+            if pname.startswith("epp"):
+                self._get_eppobj().set_epp(val, cpus=cpus)
+            elif pname.startswith("epb"):
+                self._get_epbobj().set_epb(val, cpus=cpus)
+            else:
+                self._set_prop_value(pname, val, cpus)
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
