@@ -19,16 +19,8 @@ from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR, EnergyPerfBias
 
-# EPB policy to EPB value map. The names are from the following Linux kernel header file:
-#   arch/x86/include/asm/msr-index.h
-#
-# Note, we do not expose the values to the user because they are platform-specific (not in current
-# implementation, but this may change in the future).
-_EPB_POLICIES = {"performance": 0,
-                 "balance-performance": 4,
-                 "normal": 6,
-                 "balance-power": 8,
-                 "power": 15}
+# EPB policy names, from the following Linux kernel file: arch/x86/kernel/cpu/intel_epb.c
+_EPB_POLICIES = ("performance", "balance-performance", "normal", "balance-power", "power")
 
 # The minimum and maximum EPB values.
 _EPB_MIN, _EPB_MAX = 0, 15
@@ -193,6 +185,9 @@ class EPB(ClassHelpers.SimpleCloseContext):
         except Error as err:
             raise type(err)(f"failed to set EPB{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
+        if not Trivial.is_int(epb) and not self._epb_policies[epb]:
+            self._epb_policies[epb] = self._read_cpu_epb_from_sysfs(cpu)
+
     def set_epb(self, epb, cpus="all"):
         """
         Set EPB for CPU in 'cpus'. The EPB value is written via sysfs. The arguments are as follows.
@@ -237,6 +232,8 @@ class EPB(ClassHelpers.SimpleCloseContext):
         self._close_msr = msr is None
 
         self._epb_msr = None
+        # EPB policy to EPB value dictionary.
+        self._epb_policies = {name : None for name in _EPB_POLICIES}
         self._sysfs_epb_path = "/sys/devices/system/cpu/cpu%d/power/energy_perf_bias"
 
         if not self._pman:
