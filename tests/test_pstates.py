@@ -68,6 +68,10 @@ def _set_and_verify_data(params):
         yield "epb", 0
         yield "epb", 15
 
+    if is_prop_supported("epb_hw", pinfo):
+        yield "epb_hw", 0
+        yield "epb_hw", 15
+
     if is_prop_supported("governor", pinfo):
         yield "governor", pinfo["governor"]["governors"][0]
         yield "governor", pinfo["governor"]["governors"][-1]
