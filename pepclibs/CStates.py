@@ -13,6 +13,7 @@ This module provides C-state management API.
 
 import re
 import logging
+import contextlib
 from pathlib import Path
 from pepclibs import _PropsCache
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
@@ -143,6 +144,16 @@ class ReqCStates(ClassHelpers.SimpleCloseContext):
         for normalized_name, name in zip(csnames, csinfo):
             self._cache[cpu][normalized_name] = csinfo[name]
 
+    def _get_cmdline(self):
+        """Get kernel boot parameters."""
+
+        try:
+            with self._pman.open("/proc/cmdline", "r") as fobj:
+                return fobj.read().strip()
+        except Error as err:
+            raise Error(f"failed to read kernel boot parameters{self._pman.hostmsg}\n"
+                        f"{err.indent(2)}") from err
+
     def _read_fpaths_and_values(self, cpus):
         """
         This is a helper for '_read_cstates_info()' which extracts all the required sysfs data from
@@ -162,7 +173,26 @@ class ReqCStates(ClassHelpers.SimpleCloseContext):
               fr"-regex '.*cpu({cpus_regex})/cpuidle/state({indexes_regex})/[^/]+'"
         files, _ = self._pman.run_verify(cmd, join=False)
         if not files:
-            raise Error(f"failed to find C-state files in '{self._sysfs_base}'{self._pman.hostmsg}")
+            msg = f"failed to find C-state files in '{self._sysfs_base}'{self._pman.hostmsg}."
+
+            # Try to give helpful hints for the following cases.
+            # * There is no idle driver.
+            # * There is a kernel boot parameter like 'idle=poll'.
+            with contextlib.suppress(Error):
+                with CStates(pman=self._pman, rcsobj=self) as csobj:
+                    drvname = csobj.get_cpu_prop("idle_driver", 0)["idle_driver"]["idle_driver"]
+                    if drvname == "none":
+                        msg += f"\n  There is no idle driver in use{self._pman.hostmsg}, which " \
+                               f"may be why Linux C-states support was not found."
+
+                        cmdline = self._get_cmdline()
+                        idleoption = [item for item in cmdline.split() if "idle=" in item]
+                        if idleoption:
+                            msg += f"\n  You have the '{idleoption[0]}' kernel boot parameter" \
+                                   f"{self._pman.hostmsg}, which may be why there is no idle " \
+                                   f"driver."
+
+            raise Error(msg)
 
         # At this point 'files' contains the list of files we'll have to read. Something like this:
         # [
