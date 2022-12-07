@@ -41,28 +41,28 @@ class EPB(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Multiple CPUs.
-        * Get/set EPB: 'get_epb()', 'set_epb()'.
+        * Get/set EPB through MSR: 'get_epb_hw()', 'set_epb_hw()'.
     2. Single CPU.
-        * Get/set EPB: 'get_cpu_epb()', 'set_cpu_epb()'.
+        * Get/set EPB through MSR: 'get_cpu_epb_hw()', 'set_cpu_epb_hw()'.
     """
 
 # ------------------------------------------------------------------------------------------------ #
 # Get EPB through MSR (OS bypass).
 # ------------------------------------------------------------------------------------------------ #
 
-    def get_epb(self, cpus="all"):
+    def get_epb_hw(self, cpus="all"):
         """
         Yield (CPU number, EPB) pairs for CPUs in 'cpus'. The 'cpus' argument is the same as in
-        'set_epb()'.
+        'set_epb_hw()'.
         """
 
         yield from self._epb_msr.read_feature("epb", cpus=cpus)
 
-    def get_cpu_epb(self, cpu):
-        """Similar to 'get_epb()', but for a single CPU 'cpu'."""
+    def get_cpu_epb_hw(self, cpu):
+        """Similar to 'get_epb_hw()', but for a single CPU 'cpu'."""
 
         epb = None
-        for _, epb in self.get_epb(cpus=(cpu, )):
+        for _, epb in self.get_epb_hw(cpus=(cpu, )):
             pass
         return epb
 
@@ -70,7 +70,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
 # Set EPB through MSR (OS bypass).
 # ------------------------------------------------------------------------------------------------ #
 
-    def set_epb(self, epb, cpus="all"):
+    def set_epb_hw(self, epb, cpus="all"):
         """
         Set EPB for CPUs in 'cpus'. The arguments are as follows.
           * epb - the EPB value to set. Can be an integer, a string representing an integer, or one
@@ -92,10 +92,10 @@ class EPB(ClassHelpers.SimpleCloseContext):
 
         self._epb_msr.write_feature("epb", int(epb), cpus=cpus)
 
-    def set_cpu_epb(self, epb, cpu):
-        """Similar to 'set_epb()', but for a single CPU 'cpu'."""
+    def set_cpu_epb_hw(self, epb, cpu):
+        """Similar to 'set_epb_hw()', but for a single CPU 'cpu'."""
 
-        self.set_epb(epb, cpus=(cpu,))
+        self.set_epb_hw(epb, cpus=(cpu,))
 
 # ------------------------------------------------------------------------------------------------ #
 

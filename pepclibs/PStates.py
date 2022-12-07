@@ -675,7 +675,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             obj = self._get_eppobj()
             return getattr(obj, f"get_cpu_{pname}")(cpu, True)
         if pname == "epb":
-            return self._get_epbobj().get_cpu_epb(cpu)
+            return self._get_epbobj().get_cpu_epb_hw(cpu)
         if pname == "max_eff_freq":
             return self._get_max_eff_freq(cpu)
         if pname == "hwp":
@@ -1055,7 +1055,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             if pname.startswith("epp"):
                 self._get_eppobj().set_epp(val, cpus=cpus)
             elif pname == "epb":
-                self._get_epbobj().set_epb(val, cpus=cpus)
+                self._get_epbobj().set_epb_hw(val, cpus=cpus)
             else:
                 self._set_prop_value(pname, val, cpus)
 
