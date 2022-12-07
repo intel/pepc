@@ -87,6 +87,10 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         return self._pcache.add("supported", cpu, val)
 
+# ------------------------------------------------------------------------------------------------ #
+# Get EPP policies through sysfs.
+# ------------------------------------------------------------------------------------------------ #
+
     def _get_cpu_epp_policies(self, cpu, not_supported_ok=False):
         """Implements 'get_cpu_epp_policies()'."""
 
@@ -123,6 +127,10 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._get_cpu_epp_policies(cpu, not_supported_ok=not_supported_ok)
+
+# ------------------------------------------------------------------------------------------------ #
+# Get EPP policy through sysfs or MSR.
+# ------------------------------------------------------------------------------------------------ #
 
     def _get_cpu_epp_policy_from_sysfs(self, cpu):
         """
@@ -184,6 +192,10 @@ class EPP(ClassHelpers.SimpleCloseContext):
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._get_cpu_epp_policy(cpu, not_supported_ok=not_supported_ok)
 
+# ------------------------------------------------------------------------------------------------ #
+# Get EPP through MSR.
+# ------------------------------------------------------------------------------------------------ #
+
     def _get_cpu_epp(self, cpu, not_supported_ok=False):
         """Implements 'get_cpu_epp()'."""
 
@@ -215,6 +227,10 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._get_cpu_epp(cpu, not_supported_ok=not_supported_ok)
+
+# ------------------------------------------------------------------------------------------------ #
+# Set EPP through sysfs or MSR.
+# ------------------------------------------------------------------------------------------------ #
 
     def _set_cpu_epp_via_sysfs(self, epp, cpu):
         """Set EPP to 'epp' for CPU 'cpu' via the sysfs file."""
@@ -290,6 +306,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         self._set_cpu_epp(epp, cpu)
+
+# ------------------------------------------------------------------------------------------------ #
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
