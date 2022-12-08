@@ -37,14 +37,16 @@ class EPP(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Multiple CPUs.
-        * Get/set EPP: 'get_epp()', 'set_epp()'.
-        * Get EPP policy name: 'get_epp_policy()'.
-        * Get the list of available EPP policies: 'get_epp_policies()'.
+        * Get EPP through MSR: 'get_epp()'.
+        * Set EPP through MSR or sysfs: 'set_epp()'.
+        * Get EPP policy name through MSR or sysfs: 'get_epp_policy()'.
+        * Get the list of available EPP policies through sysfs: 'get_epp_policies()'.
     2. Single CPU.
-        * Get/set EPP: 'get_cpu_epp()', 'set_cpu_epp()'.
-        * Check if the CPU supports EPP: 'is_epp_supported()'
-        * Get EPP policy name: 'get_cpu_epp_policy()'.
-        * Get the list of available EPP policies: 'get_cpu_epp_policies()'.
+        * Get EPP through MSR: 'get_cpu_epp()'.
+        * Set EPP through MSR or sysfs: 'set_cpu_epp()'.
+        * Get EPP policy name through MSR or sysfs: 'get_cpu_epp_policy()'.
+        * Get the list of available EPP policies through sysfs: 'get_cpu_epp_policies()'.
+        * Check if the CPU supports EPP via sysfs or MSR: 'is_epp_supported()'
     """
 
     def _get_msr(self):
