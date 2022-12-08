@@ -37,12 +37,12 @@ class EPP(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Multiple CPUs.
-        * Get EPP through MSR: 'get_epp()'.
+        * Get EPP through MSR: 'get_epp_hw()'.
         * Set EPP through MSR or sysfs: 'set_epp()'.
         * Get EPP policy name through MSR or sysfs: 'get_epp_policy()'.
         * Get the list of available EPP policies through sysfs: 'get_epp_policies()'.
     2. Single CPU.
-        * Get EPP through MSR: 'get_cpu_epp()'.
+        * Get EPP through MSR: 'get_cpu_epp_hw()'.
         * Set EPP through MSR or sysfs: 'set_cpu_epp()'.
         * Get EPP policy name through MSR or sysfs: 'get_cpu_epp_policy()'.
         * Get the list of available EPP policies through sysfs: 'get_cpu_epp_policies()'.
@@ -163,7 +163,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
             return f"unknown EPP={policy}"
 
         # The kernel does not support EPP sysfs knobs. Try to figure the policy out.
-        epp = self._get_cpu_epp(cpu)
+        epp = self._read_cpu_epp_hw(cpu)
         if epp is None:
             return None
         if epp in self._epp_rmap:
@@ -192,8 +192,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
 # Get EPP through MSR.
 # ------------------------------------------------------------------------------------------------ #
 
-    def _get_cpu_epp(self, cpu):
-        """Implements 'get_cpu_epp()'."""
+    def _read_cpu_epp_hw(self, cpu):
+        """Read EPP for CPU 'cpu' from MSR."""
 
         # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
         hwpreq = self._get_hwpreq()
@@ -205,20 +205,23 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except ErrorNotSupported:
             return None
 
-    def get_epp(self, cpus="all"):
+    def get_epp_hw(self, cpus="all"):
         """
-        Yield (CPU number, EPP) pairs for CPUs in 'cpus'. The arguments are as follows:
-          * cpus - the same as in 'set_epp()'.
+        Yield (CPU number, EPP value) pairs for CPUs in 'cpus'. The EPP value is read via MSR.
+        The arguments are as follows.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
         """
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._get_cpu_epp(cpu))
+            yield (cpu, self._read_cpu_epp_hw(cpu))
 
-    def get_cpu_epp(self, cpu):
-        """Similar to 'get_epp()', but for a single CPU 'cpu'."""
+    def get_cpu_epp_hw(self, cpu):
+        """Similar to 'get_epp_hw()', but for a single CPU 'cpu'."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._get_cpu_epp(cpu)
+        return self._read_cpu_epp_hw(cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 # Set EPP through sysfs or MSR.
