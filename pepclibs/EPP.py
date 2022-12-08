@@ -12,14 +12,10 @@ This module provides a capability of reading and changing EPP (Energy Performanc
 Intel CPUs.
 """
 
-import logging
-from pepclibs import _PropsCache
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
-from pepclibs import CPUInfo
+from pepclibs import CPUInfo, _PropsCache
 from pepclibs.msr import MSR, HWPRequest, HWPRequestPkg
-
-_LOG = logging.getLogger()
 
 # The fall-back EPP policy to EPP value map.
 #
