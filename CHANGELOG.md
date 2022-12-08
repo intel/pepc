@@ -9,6 +9,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
    'pepc pstates info' crashed with a 'ValueError'.
 ### Added
  - Add option '--epb-hw' to 'pepc pstates', similar to '--epb' but backed by MSR.
+ - Add option '--epp-hw' to 'pepc pstates', similar to '--epp' but backed by MSR.
 ### Removed
  - Remove 'pepc pstates' option '--epb-policy'.
 ### Changed
