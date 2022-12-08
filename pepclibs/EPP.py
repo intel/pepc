@@ -37,12 +37,12 @@ class EPP(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Multiple CPUs.
-        * Get EPP through MSR: 'get_epp_hw()'.
+        * Get/set EPP through MSR: 'get_epp_hw()', 'set_epp_hw()'.
         * Set EPP through MSR or sysfs: 'set_epp()'.
         * Get EPP policy name through MSR or sysfs: 'get_epp_policy()'.
         * Get the list of available EPP policies through sysfs: 'get_epp_policies()'.
     2. Single CPU.
-        * Get EPP through MSR: 'get_cpu_epp_hw()'.
+        * Get/set EPP through MSR: 'get_cpu_epp_hw()', 'set_cpu_epp_hw()'.
         * Set EPP through MSR or sysfs: 'set_cpu_epp()'.
         * Get EPP policy name through MSR or sysfs: 'get_cpu_epp_policy()'.
         * Get the list of available EPP policies through sysfs: 'get_cpu_epp_policies()'.
@@ -73,6 +73,26 @@ class EPP(ClassHelpers.SimpleCloseContext):
             self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
                                                            msr=msr)
         return self._hwpreq_pkg
+
+    def _validate_epp_value(self, val, policy_ok=False):
+        """
+        Validate EPP value. When 'policy_ok=True' will not raise exception if not a numeric value.
+        """
+
+        if Trivial.is_int(val):
+            Trivial.validate_value_in_range(int(val), _EPP_MIN, _EPP_MAX, what="EPP value")
+        elif not policy_ok:
+            raise ErrorNotSupported(f"EPP value must be an integer within [{_EPP_MIN},{_EPP_MAX}]")
+        else:
+            policies = self._get_cpu_epp_policies(0)
+            if not policies:
+                raise ErrorNotSupported(f"No EPP policies supported{self._pman.hostmsg}, please " \
+                                        f"use instead an integer within [{_EPP_MIN},{_EPP_MAX}]")
+
+            if val not in policies:
+                policies = ", ".join(policies)
+                raise ErrorNotSupported(f"EPP value must be one of the following EPP policies: " \
+                                        f"{policies}, or integer within [{_EPP_MIN},{_EPP_MAX}]")
 
     def is_epp_supported(self, cpu):
         """Returns 'True' if EPP is supported, on CPU 'cpu', otherwise returns 'False'."""
@@ -301,6 +321,43 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         self._set_cpu_epp(epp, cpu)
+
+# ------------------------------------------------------------------------------------------------ #
+# Set EPP through MSR.
+# ------------------------------------------------------------------------------------------------ #
+
+    def _write_cpu_epp_hw(self, epp, cpu):
+        """Write EPP 'epp' for CPU 'cpu' to MSR."""
+
+        hwpreq = self._get_hwpreq()
+        hwpreq.disable_cpu_feature_pkg_control("epp", cpu)
+
+        try:
+            hwpreq.write_cpu_feature("epp", epp, cpu)
+        except Error as err:
+            raise type(err)(f"failed to set EPP HW{self._pman.hostmsg}:\n{err.indent(2)}") from err
+
+    def set_epp_hw(self, epp, cpus="all"):
+        """
+        Set EPP for CPUs in 'cpus'. The EPP value is set via MSR. The arguments are as follows.
+          * epp - the EPP value to set. Can be an integer or string representing an integer.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+        """
+
+        self._validate_epp_value(epp)
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            self._write_cpu_epp_hw(epp, cpu)
+
+    def set_cpu_epp_hw(self, epp, cpu):
+        """Similar to 'set_epp_hw()', but for a single CPU 'cpu'."""
+
+        self._validate_epp_value(epp)
+
+        cpu = self._cpuinfo.normalize_cpu(cpu)
+        self._write_cpu_epp_hw(epp, cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 
