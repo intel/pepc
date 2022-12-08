@@ -57,10 +57,7 @@ def _set_and_verify_data(params):
         yield "turbo", "off"
         yield "turbo", "on"
 
-    if is_prop_supported("epp_policy", pinfo):
-        yield "epp_policy", pinfo["epp_policy"]["epp_policies"][0]
-        yield "epp_policy", pinfo["epp_policy"]["epp_policies"][-1]
-    elif is_prop_supported("epp", pinfo):
+    if is_prop_supported("epp", pinfo):
         yield "epp", 0
         yield "epp", 128
 
@@ -99,11 +96,6 @@ def test_pstates_set_and_verify(params):
     """This test verifies that 'get_props()' returns same values set by 'set_props()'."""
 
     for pname, value in _set_and_verify_data(params):
-        if pname == "epp_policy" and value == "default":
-            # Setting an option to "default" will not read back "default", rather the default
-            # system value. E.g. "default" EPP Policy might be "powersaver".
-            continue
-
         sname = params["psobj"].props[pname]["sname"]
         siblings = params["siblings"][sname]
 

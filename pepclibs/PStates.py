@@ -202,23 +202,6 @@ PROPS = {
         "sname": "CPU",
         "writable" : True,
     },
-    "epp_policy" : {
-        "name" : "EPP policy",
-        "help" : """EPP policy is a name, such as 'performance', which Linux maps to an EPP value,
-                    which may depend on the platform.""",
-        "type" : "str",
-        "sname": "CPU",
-        "writable" : True,
-        "subprops" : {
-            "epp_policies" : {
-                "name" : "Available EPP policies",
-                "help" : "Available Linux EPP policy names.",
-                "type" : "list[str]",
-                "sname": "global",
-                "writable" : False,
-            },
-        },
-    },
     "epp_hw" : {
         "name" : f"EPP (via MSR {HWPRequest.MSR_HWP_REQUEST:#x})",
         "help" : f"""Energy Performance Preference is a hint to the CPU on energy efficiency vs
@@ -693,10 +676,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if pname == "epp":
             return self._get_eppobj().get_cpu_epp_hw(cpu)
-        if pname == "epp_policy":
-            return self._get_eppobj().get_cpu_epp_policy(cpu)
-        if pname == "epp_policies":
-            return self._get_eppobj().get_cpu_epp_policies(cpu)
         if pname == "epp_hw":
             return self._get_eppobj().get_cpu_epp_hw(cpu)
         if pname == "epb":
@@ -1080,8 +1059,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                 continue
 
             if pname == "epp":
-                self._get_eppobj().set_epp(val, cpus=cpus)
-            elif pname == "epp_policy":
                 self._get_eppobj().set_epp(val, cpus=cpus)
             elif pname == "epp_hw":
                 self._get_eppobj().set_epp_hw(val, cpus=cpus)

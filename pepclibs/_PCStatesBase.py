@@ -230,8 +230,8 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
           ... etc ... }
 
         So each property has the (main) value, and possibly sub-properties, which provide additional
-        read-only information related to the property. For example, the 'epp_policy' property comes
-        with the 'epp_policies' sub-property. Most properties have no sub-properties.
+        read-only information related to the property. For example, the 'governor' property comes
+        with the 'governors' sub-property. Most properties have no sub-properties.
 
         If a property is not supported, its value will be 'None'.
 

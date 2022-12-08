@@ -120,10 +120,7 @@ def pstates_save_command(args, pman):
         for pname, pinfo in psobj.props.items():
             if not pinfo["writable"]:
                 continue
-            if pname in {"epp_policy"}:
-                # Do not save/restorey EPB/EPP policy, because they are covered by the "epp" and
-                # "epp" properties.
-                continue
+
             pnames.append(pname)
 
         psprint.print_props(pnames=pnames, cpus=cpus, skip_ro=True, skip_unsupported=True)
