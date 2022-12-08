@@ -194,10 +194,11 @@ PROPS = {
         "writable" : False,
     },
     "epp" : {
-        "name" : "Energy Performance Preference",
-        "help" : """Energy Performance Preference (EPP) is a hint to the CPU on energy efficiency vs
-                    performance. EPP has an effect only when the CPU is in the hardware power
-                    management (HWP) mode.""",
+        "name" : "EPP (via sysfs)",
+        "help" : """Energy Performance Preference is a hint to the CPU on energy efficiency vs
+                    performance. EPP value is a number in range of 0-255 (maximum energy efficiency
+                    to maximum performance), or a policy name. The value is read from or written
+                    to the 'energy_performance_preference' Linux sysfs file.""",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
@@ -675,7 +676,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
         if pname == "epp":
-            return self._get_eppobj().get_cpu_epp_hw(cpu)
+            return self._get_eppobj().get_cpu_epp(cpu)
         if pname == "epp_hw":
             return self._get_eppobj().get_cpu_epp_hw(cpu)
         if pname == "epb":
