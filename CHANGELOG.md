@@ -12,6 +12,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Add option '--epp-hw' to 'pepc pstates', similar to '--epp' but backed by MSR.
 ### Removed
  - Remove 'pepc pstates' option '--epb-policy'.
+ - Remove 'pepc pstates' option '--epp-policy'.
 ### Changed
  - Change 'pepc pstates' option '--epb' use sysfs instead of MSR.
 
