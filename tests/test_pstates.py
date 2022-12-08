@@ -64,6 +64,10 @@ def _set_and_verify_data(params):
         yield "epp", 0
         yield "epp", 128
 
+    if is_prop_supported("epp_hw", pinfo):
+        yield "epp_hw", 0
+        yield "epp_hw", 255
+
     if is_prop_supported("epb", pinfo):
         yield "epb", 0
         yield "epb", 15

@@ -20,7 +20,7 @@ from pepclibs import _PCStatesBase
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs import KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.msr import EnergyPerfBias
+from pepclibs.msr import EnergyPerfBias, HWPRequest, HWPRequestPkg
 
 _LOG = logging.getLogger()
 
@@ -219,6 +219,18 @@ PROPS = {
             },
         },
     },
+    "epp_hw" : {
+        "name" : f"EPP (via MSR {HWPRequest.MSR_HWP_REQUEST:#x})",
+        "help" : f"""Energy Performance Preference is a hint to the CPU on energy efficiency vs
+                    performance. EPP value is a number in range of 0-255 (maximum energy efficiency
+                    to maximum performance). When package control is enabled the value is read from
+                    MSR {HWPRequestPkg.MSR_HWP_REQUEST_PKG:#x}, but when written package control is
+                    disabled and value is written to MSR {HWPRequest.MSR_HWP_REQUEST:#x}, both
+                    require the 'msr' Linux kernel driver.""",
+        "type" : "int",
+        "sname": "CPU",
+        "writable" : True,
+    },
     "epb" : {
         "name" : "EPB (via sysfs)",
         "help" : """Energy Performance Bias is a hint to the CPU on energy efficiency vs
@@ -362,8 +374,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Returns an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq:
-            from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
-
             msr = self._get_msr()
             self._hwpreq = HWPRequest.HWPRequest(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
@@ -373,8 +383,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Returns an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq_pkg:
-            from pepclibs.msr import HWPRequestPkg # pylint: disable=import-outside-toplevel
-
             msr = self._get_msr()
             self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
                                                            msr=msr)
@@ -689,6 +697,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._get_eppobj().get_cpu_epp_policy(cpu)
         if pname == "epp_policies":
             return self._get_eppobj().get_cpu_epp_policies(cpu)
+        if pname == "epp_hw":
+            return self._get_eppobj().get_cpu_epp_hw(cpu)
         if pname == "epb":
             return self._get_epbobj().get_cpu_epb(cpu)
         if pname == "epb_hw":
@@ -1073,6 +1083,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._get_eppobj().set_epp(val, cpus=cpus)
             elif pname == "epp_policy":
                 self._get_eppobj().set_epp(val, cpus=cpus)
+            elif pname == "epp_hw":
+                self._get_eppobj().set_epp_hw(val, cpus=cpus)
             elif pname == "epb":
                 self._get_epbobj().set_epb(val, cpus=cpus)
             elif pname == "epb_hw":
