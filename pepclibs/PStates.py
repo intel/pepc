@@ -683,9 +683,12 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
-        if pname.startswith("epp"):
-            obj = self._get_eppobj()
-            return getattr(obj, f"get_cpu_{pname}")(cpu, True)
+        if pname == "epp":
+            return self._get_eppobj().get_cpu_epp(cpu, True)
+        if pname == "epp_policy":
+            return self._get_eppobj().get_cpu_epp_policy(cpu, True)
+        if pname == "epp_policies":
+            return self._get_eppobj().get_cpu_epp_policies(cpu, True)
         if pname == "epb":
             return self._get_epbobj().get_cpu_epb(cpu)
         if pname == "epb_hw":
@@ -1066,7 +1069,9 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # Were already set.
                 continue
 
-            if pname.startswith("epp"):
+            if pname == "epp":
+                self._get_eppobj().set_epp(val, cpus=cpus)
+            elif pname == "epp_policy":
                 self._get_eppobj().set_epp(val, cpus=cpus)
             elif pname == "epb":
                 self._get_epbobj().set_epb(val, cpus=cpus)
