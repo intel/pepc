@@ -65,7 +65,10 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         return self._is_smth(unit, "failed")
 
     def stop_ntp(self):
-        """Stop NPT services. The services can later be re-enabled with 'restore_ntp()'."""
+        """
+        Stop NPT services and return the list of stopped services' names. The services can later be
+        re-enabled with 'restore_ntp()'.
+        """
 
         services = ("ntpd", "ntpdate", "sntp", "systemd-timesyncd", "chronyd")
         self._saved_ntp_services = []
@@ -75,12 +78,20 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
                 self._start(service, False)
                 self._saved_ntp_services.append(service)
 
+        return self._saved_ntp_services
+
     def restore_ntp(self):
-        """Restore NTP services to the state they had been before 'stop_ntp()' was called."""
+        """
+        Restore NTP services to the state they had been before 'stop_ntp()' was called. Returns the
+        list of restored services' names.
+        """
 
         if self._saved_ntp_services:
             self._start(self._saved_ntp_services, True)
+
+        restored_ntp_services = self._saved_ntp_services
         self._saved_ntp_services = None
+        return restored_ntp_services
 
     def stop_timers(self):
         """
