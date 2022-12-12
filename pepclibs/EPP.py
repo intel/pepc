@@ -39,12 +39,10 @@ class EPP(ClassHelpers.SimpleCloseContext):
     1. Multiple CPUs.
         * Get/set EPP through MSR: 'get_epp_hw()', 'set_epp_hw()'.
         * Set EPP through sysfs: 'set_epp()'.
-        * Get EPP policy name through MSR or sysfs: 'get_epp_policy()'.
         * Get the list of available EPP policies through sysfs: 'get_epp_policies()'.
     2. Single CPU.
         * Get/set EPP through MSR: 'get_cpu_epp_hw()', 'set_cpu_epp_hw()'.
         * Set EPP through sysfs: 'set_cpu_epp()'.
-        * Get EPP policy name through MSR or sysfs: 'get_cpu_epp_policy()'.
         * Get the list of available EPP policies through sysfs: 'get_cpu_epp_policies()'.
         * Check if the CPU supports EPP via sysfs or MSR: 'is_epp_supported()'
     """
@@ -144,69 +142,6 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._get_cpu_epp_policies(cpu)
-
-# ------------------------------------------------------------------------------------------------ #
-# Get EPP policy through sysfs or MSR.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _get_cpu_epp_policy_from_sysfs(self, cpu):
-        """
-        Returns EPP policy name for CPU 'cpu' by reading it from sysfs. Returns 'None' if the kernel
-        does not support EPP policy.
-        """
-
-        try:
-            policy = self._pman.read(self._sysfs_epp_path % cpu).strip()
-        except ErrorNotFound:
-            return None
-
-        return policy
-
-    def _get_cpu_epp_policy(self, cpu):
-        """Returns EPP policy for CPU 'cpu'."""
-
-        policies = self._get_cpu_epp_policies(cpu)
-        if policies is None:
-            return None
-
-        if self._pcache.is_cached("epp_policy", cpu):
-            policy = self._pcache.get("epp_policy", cpu)
-        else:
-            policy = self._get_cpu_epp_policy_from_sysfs(cpu)
-            self._pcache.add("epp_policy", cpu, policy)
-
-        if policy in policies:
-            return policy
-
-        if policy is not None:
-            # We got a direct EPP value instead.
-            return f"unknown EPP={policy}"
-
-        # The kernel does not support EPP sysfs knobs. Try to figure the policy out.
-        epp = self._read_cpu_epp_hw(cpu)
-        if epp is None:
-            return None
-        if epp in self._epp_rmap:
-            return self._epp_rmap[epp]
-
-        raise Error(f"unknown policy name for EPP value {epp} on CPU {cpu}{self._pman.hostmsg}")
-
-    def get_epp_policy(self, cpus="all"):
-        """
-        Yield (CPU number, EPP policy name) pairs for CPUs in 'cpus'.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
-        """
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._get_cpu_epp_policy(cpu))
-
-    def get_cpu_epp_policy(self, cpu):
-        """Similar to 'get_epp_policy()', but for a single CPU 'cpu'."""
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._get_cpu_epp_policy(cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 # Get EPP through MSR.
