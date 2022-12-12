@@ -16,10 +16,11 @@ import logging
 import contextlib
 from pathlib import Path
 from pepclibs import _PropsCache
+from pepclibs import _PCStatesBase
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs import KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs import _PCStatesBase
+from pepclibs.msr import EnergyPerfBias
 
 _LOG = logging.getLogger()
 
@@ -219,22 +220,22 @@ PROPS = {
         },
     },
     "epb" : {
-        "name" : "EPB via Linux sysfs",
+        "name" : "EPB (via sysfs)",
         "help" : """Energy Performance Bias is a hint to the CPU on energy efficiency vs
-                    performance. Value can be a number 0-15 (maximum performance to maximum
-                    energy efficiency), or a policy name, that will be translated to numeric value.
-                    EPB may have an effect in both HWP enabled and disabled modes (HWP stands for
-                    Hardware Power Management). """,
+                    performance. EBP value is a number in range of 0-15 (maximum performance to
+                    maximum energy efficiency), or a policy name. The value is read from or written
+                    to the 'energy_perf_bias' Linux sysfs file.""",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
     },
     "epb_hw" : {
-        "name" : "EPB via MSR 0x1B0",
-        "help" : """Energy Performance Bias is a hint to the CPU on energy efficiency vs
-                    performance. Value can be a number 0-15 (maximum performance to maximum energy
-                    efficiency). EPB may have an effect in both HWP enabled and disabled modes (HWP
-                    stands for Hardware Power Management).""",
+        "name" : f"EPB (via MSR {EnergyPerfBias.MSR_ENERGY_PERF_BIAS:#x})",
+        "help" : f"""Energy Performance Bias is a hint to the CPU on energy efficiency vs
+                     performance. EBP value is a number in range of 0-15 (maximum performance to
+                     maximum energy efficiency). The value is read from or written to MSR
+                     {EnergyPerfBias.MSR_ENERGY_PERF_BIAS:#x}, which requires the 'msr' Linux kernel
+                     driver.""",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
