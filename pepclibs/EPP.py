@@ -17,15 +17,6 @@ from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo, _PropsCache
 from pepclibs.msr import MSR, HWPRequest, HWPRequestPkg
 
-# The fall-back EPP policy to EPP value map.
-#
-# Note, we do not expose the values to the user because they are platform-specific (even though in
-# current implementation they are not, but we can improve this later).
-_EPP_POLICIES = {"performance": 0,
-                 "balance_performance": 0x80,
-                 "balance_power": 0xC0,
-                 "power": 0xFF}
-
 # The minimum and maximum EPP values.
 _EPP_MIN, _EPP_MAX = 0, 0xFF
 
@@ -42,7 +33,6 @@ class EPP(ClassHelpers.SimpleCloseContext):
     2. Single CPU.
         * Get/set EPP through MSR: 'get_cpu_epp_hw()', 'set_cpu_epp_hw()'.
         * Get/set EPP through sysfs: 'get_cpu_epp()', 'set_cpu_epp()'.
-        * Check if the CPU supports EPP via sysfs or MSR: 'is_epp_supported()'
     """
 
     def _get_msr(self):
@@ -103,19 +93,6 @@ class EPP(ClassHelpers.SimpleCloseContext):
                 policies = ", ".join(policies)
                 raise ErrorNotSupported(f"EPP value must be one of the following EPP policies: " \
                                         f"{policies}, or integer within [{_EPP_MIN},{_EPP_MAX}]")
-
-    def is_epp_supported(self, cpu):
-        """Returns 'True' if EPP is supported, on CPU 'cpu', otherwise returns 'False'."""
-
-        if self._pcache.is_cached("supported", cpu):
-            return self._pcache.get("supported", cpu)
-
-        if self._pman.exists(self._sysfs_epp_path % cpu):
-            val = True
-        else:
-            val = self._get_hwpreq().is_cpu_feature_supported("epp", cpu)
-
-        return self._pcache.add("supported", cpu, val)
 
 # ------------------------------------------------------------------------------------------------ #
 # Get EPP through sysfs.
@@ -294,7 +271,6 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         self._hwpreq = None
         self._hwpreq_pkg = None
-        self._epp_rmap = {code:name for name, code in _EPP_POLICIES.items()}
 
         sysfs_base = "/sys/devices/system/cpu/cpufreq/policy%d"
         self._sysfs_epp_path = sysfs_base + "/energy_performance_preference"
