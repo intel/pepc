@@ -38,11 +38,11 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
     1. Multiple CPUs.
         * Get/set EPP through MSR: 'get_epp_hw()', 'set_epp_hw()'.
-        * Set EPP through sysfs: 'set_epp()'.
+        * Get/set EPP through sysfs: 'get_epp()', 'set_epp()'.
         * Get the list of available EPP policies through sysfs: 'get_epp_policies()'.
     2. Single CPU.
         * Get/set EPP through MSR: 'get_cpu_epp_hw()', 'set_cpu_epp_hw()'.
-        * Set EPP through sysfs: 'set_cpu_epp()'.
+        * Get/set EPP through sysfs: 'get_cpu_epp()', 'set_cpu_epp()'.
         * Get the list of available EPP policies through sysfs: 'get_cpu_epp_policies()'.
         * Check if the CPU supports EPP via sysfs or MSR: 'is_epp_supported()'
     """
@@ -142,6 +142,45 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._get_cpu_epp_policies(cpu)
+
+# ------------------------------------------------------------------------------------------------ #
+# Get EPP through sysfs.
+# ------------------------------------------------------------------------------------------------ #
+
+    def _read_cpu_epp(self, cpu):
+        """Read EPP for CPU 'cpu' from sysfs. Returns the numeric value."""
+
+        try:
+            with self._pman.open(self._sysfs_epp_path % cpu, "r") as fobj:
+                epp = fobj.read().strip()
+        except ErrorNotFound:
+            return None
+
+        if Trivial.is_int(epp):
+            return int(epp)
+
+        if epp in _EPP_POLICIES.keys():
+            return _EPP_POLICIES[epp]
+
+        raise Error(f"unknown EPP value for policy name '{epp}' on CPU {cpu}{self._pman.hostmsg}")
+
+    def get_epp(self, cpus="all"):
+        """
+        Yield (CPU number, EPP value) pairs for CPUs in 'cpus'. The EPP value is read via sysfs.
+        The arguments are as follows.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+        """
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            yield (cpu, self._read_cpu_epp(cpu))
+
+    def get_cpu_epp(self, cpu):
+        """Similar to 'get_epp()', but for a single CPU 'cpu'."""
+
+        cpu = self._cpuinfo.normalize_cpu(cpu)
+        return self._read_cpu_epp(cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 # Get EPP through MSR.
