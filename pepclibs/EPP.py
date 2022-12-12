@@ -38,12 +38,12 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
     1. Multiple CPUs.
         * Get/set EPP through MSR: 'get_epp_hw()', 'set_epp_hw()'.
-        * Set EPP through MSR or sysfs: 'set_epp()'.
+        * Set EPP through sysfs: 'set_epp()'.
         * Get EPP policy name through MSR or sysfs: 'get_epp_policy()'.
         * Get the list of available EPP policies through sysfs: 'get_epp_policies()'.
     2. Single CPU.
         * Get/set EPP through MSR: 'get_cpu_epp_hw()', 'set_cpu_epp_hw()'.
-        * Set EPP through MSR or sysfs: 'set_cpu_epp()'.
+        * Set EPP through sysfs: 'set_cpu_epp()'.
         * Get EPP policy name through MSR or sysfs: 'get_cpu_epp_policy()'.
         * Get the list of available EPP policies through sysfs: 'get_cpu_epp_policies()'.
         * Check if the CPU supports EPP via sysfs or MSR: 'is_epp_supported()'
@@ -244,68 +244,21 @@ class EPP(ClassHelpers.SimpleCloseContext):
         return self._read_cpu_epp_hw(cpu)
 
 # ------------------------------------------------------------------------------------------------ #
-# Set EPP through sysfs or MSR.
+# Set EPP through sysfs.
 # ------------------------------------------------------------------------------------------------ #
 
-    def _set_cpu_epp_via_sysfs(self, epp, cpu):
-        """Set EPP to 'epp' for CPU 'cpu' via the sysfs file."""
+    def _write_cpu_epp(self, epp, cpu):
+        """Write EPP 'epp' for CPU 'cpu' to sysfs."""
 
         try:
             with self._pman.open(self._sysfs_epp_path % cpu, "r+") as fobj:
-                fobj.write(str(epp))
-        except ErrorNotFound:
-            return None
+                fobj.write(epp)
         except Error as err:
-            # We noticed that in some kernel version writing the same EPP value to the sysfs file
-            # fails. This may be a kernel bug, but here is a work-around.
-            if str(epp) == self._get_cpu_epp_policy_from_sysfs(cpu):
-                return epp
-
-            # Writing to the sysfs file failed, provide a meaningful error message.
-            msg = f"failed to set EPP to {epp}{self._pman.hostmsg}:\n{err.indent(2)}"
-
-            try:
-                policies = self._get_cpu_epp_policies(cpu)
-                policies = ", ".join(policies)
-                msg += f"\nEPP must be an integer from 0 to 255 or one of: {policies}"
-            except Error:
-                pass
-
-            raise Error(msg) from err
-
-        return epp
-
-    def _set_cpu_epp(self, epp, cpu):
-        """Implements 'set_cpu_epp()'."""
-
-        if not self.is_epp_supported(cpu):
-            raise Error(f"CPU {cpu} does not support EPP")
-
-        if Trivial.is_int(epp):
-            Trivial.validate_value_in_range(int(epp), _EPP_MIN, _EPP_MAX, what="EPP")
-        else:
-            policies = self._get_cpu_epp_policies(cpu)
-            policy = epp.lower()
-            if policy not in policies:
-                policy_names = ", ".join(self.get_cpu_epp_policies(cpu))
-                raise Error(f"EPP policy '{epp}' is not supported{self._pman.hostmsg}, please "
-                            f"provide one of the following EPP policy names: {policy_names}")
-
-        if self._set_cpu_epp_via_sysfs(epp, cpu) == epp:
-            # EPP was successfully set via sysfs.
-            self._pcache.add("epp_policy", cpu, epp)
-            return
-
-        # Could not set EPP via sysfs because the running Linux kernel does not support it. Try to
-        # set it via the MSR.
-        hwpreq = self._get_hwpreq()
-        hwpreq.disable_cpu_feature_pkg_control("epp", cpu)
-
-        hwpreq.write_cpu_feature("epp", epp, cpu)
+            raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
     def set_epp(self, epp, cpus="all"):
         """
-        Set EPP for CPUs in 'cpus'. The arguments are as follows.
+        Set EPP for CPU in 'cpus'. The EPP value is written via sysfs. The arguments are as follows.
           * epp - the EPP value to set. Can be an integer, a string representing an integer, or one
                   of the EPP policy names.
           * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
@@ -313,14 +266,18 @@ class EPP(ClassHelpers.SimpleCloseContext):
                    7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
         """
 
+        self._validate_epp_value(epp, policy_ok=True)
+
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            self._set_cpu_epp(epp, cpu)
+            self._write_cpu_epp(str(epp), cpu)
 
     def set_cpu_epp(self, epp, cpu):
         """Similar to 'set_epp()', but for a single CPU 'cpu'."""
 
+        self._validate_epp_value(epp, policy_ok=True)
+
         cpu = self._cpuinfo.normalize_cpu(cpu)
-        self._set_cpu_epp(epp, cpu)
+        self._write_cpu_epp(str(epp), cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 # Set EPP through MSR.
