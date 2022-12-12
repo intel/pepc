@@ -300,7 +300,11 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         errmsg = f"cannot open file '{path}' with mode '{mode}': "
         try:
-            fobj = open(path, mode, encoding="utf-8") # pylint: disable=consider-using-with
+            # Binary mode doesn't take an encoding argument.
+            if "b" in mode:
+                fobj = open(path, mode) # pylint: disable=consider-using-with,unspecified-encoding
+            else:
+                fobj = open(path, mode, encoding="utf-8") # pylint: disable=consider-using-with
         except PermissionError as err:
             msg = Error(err).indent(2)
             raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
