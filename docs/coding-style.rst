@@ -85,3 +85,33 @@ string parts, even if it is not necessary.
 
  f"my long f-string {variable}"
  "no variables in this part"
+
+Code separators
+===============
+
+To separate and categorize functions we sometimes use separators, these help to distinguish
+functions that have the same overarching theme. Here is an example:
+
+::
+
+   # ------------------------------------------------------------------------------------------------ #
+   # Getting functions.
+   # ------------------------------------------------------------------------------------------------ #
+
+      def get_cpu_turbo(self, cpu):
+         ...
+
+      def get_cpu_frequency(self, cpu):
+         ...
+
+   # ------------------------------------------------------------------------------------------------ #
+   # Setting functions.
+   # ------------------------------------------------------------------------------------------------ #
+
+      def set_cpu_turbo(self, cpu):
+         ...
+
+      def set_cpu_frequency(self, cpu):
+         ...
+
+   # ------------------------------------------------------------------------------------------------ #
