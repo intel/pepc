@@ -150,13 +150,16 @@ class EPP(ClassHelpers.SimpleCloseContext):
     def _read_cpu_epp(self, cpu):
         """Read EPP for CPU 'cpu' from sysfs."""
 
+        if self._pcache.is_cached("epp", cpu):
+            return self._pcache.get("epp", cpu)
+
         try:
             with self._pman.open(self._sysfs_epp_path % cpu, "r") as fobj:
                 epp = fobj.read().strip()
         except ErrorNotFound:
             epp = None
 
-        return epp
+        return self._pcache.add("epp", cpu, epp)
 
     def get_epp(self, cpus="all"):
         """
@@ -223,6 +226,17 @@ class EPP(ClassHelpers.SimpleCloseContext):
                 fobj.write(epp)
         except Error as err:
             raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
+
+        # Setting some options will not read back the same value. E.g. "default" EPP might be
+        # "balance_performance", "0" might be "powersave".
+        try:
+            val = self._aliases[epp]
+        except KeyError:
+            with self._pman.open(self._sysfs_epp_path % cpu, "r") as fobj:
+                self._aliases[epp] = fobj.read().strip()
+            val = self._aliases[epp]
+
+        return self._pcache.add("epp", cpu, val)
 
     def set_epp(self, epp, cpus="all"):
         """
@@ -322,6 +336,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         # caching.
         self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
                                               enable_cache=enable_cache)
+        self._aliases = {}
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
             raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. "
