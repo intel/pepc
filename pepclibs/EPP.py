@@ -39,11 +39,9 @@ class EPP(ClassHelpers.SimpleCloseContext):
     1. Multiple CPUs.
         * Get/set EPP through MSR: 'get_epp_hw()', 'set_epp_hw()'.
         * Get/set EPP through sysfs: 'get_epp()', 'set_epp()'.
-        * Get the list of available EPP policies through sysfs: 'get_epp_policies()'.
     2. Single CPU.
         * Get/set EPP through MSR: 'get_cpu_epp_hw()', 'set_cpu_epp_hw()'.
         * Get/set EPP through sysfs: 'get_cpu_epp()', 'set_cpu_epp()'.
-        * Get the list of available EPP policies through sysfs: 'get_cpu_epp_policies()'.
         * Check if the CPU supports EPP via sysfs or MSR: 'is_epp_supported()'
     """
 
@@ -72,6 +70,20 @@ class EPP(ClassHelpers.SimpleCloseContext):
                                                            msr=msr)
         return self._hwpreq_pkg
 
+    def _get_available_policies(self, cpu):
+        """Returns list of available EPP policies read from sysfs."""
+
+        if not self._epp_policies:
+            try:
+                with self._pman.open(self._sysfs_epp_policies_path % cpu, "r") as fobj:
+                    line = fobj.read().strip()
+
+                self._epp_policies = Trivial.split_csv_line(line, sep=" ")
+            except Error:
+                self._epp_policies = None
+
+        return self._epp_policies
+
     def _validate_epp_value(self, val, policy_ok=False):
         """
         Validate EPP value. When 'policy_ok=True' will not raise exception if not a numeric value.
@@ -82,7 +94,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         elif not policy_ok:
             raise ErrorNotSupported(f"EPP value must be an integer within [{_EPP_MIN},{_EPP_MAX}]")
         else:
-            policies = self._get_cpu_epp_policies(0)
+            policies = self._get_available_policies(0)
             if not policies:
                 raise ErrorNotSupported(f"No EPP policies supported{self._pman.hostmsg}, please " \
                                         f"use instead an integer within [{_EPP_MIN},{_EPP_MAX}]")
@@ -104,44 +116,6 @@ class EPP(ClassHelpers.SimpleCloseContext):
             val = self._get_hwpreq().is_cpu_feature_supported("epp", cpu)
 
         return self._pcache.add("supported", cpu, val)
-
-# ------------------------------------------------------------------------------------------------ #
-# Get EPP policies through sysfs.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _get_cpu_epp_policies(self, cpu):
-        """Implements 'get_cpu_epp_policies()'."""
-
-        if not self.is_epp_supported(cpu):
-            return None
-
-        if self._pcache.is_cached("epp_policies", cpu):
-            return self._pcache.get("epp_policies", cpu)
-
-        # Prefer using the names from the Linux kernel.
-        path = self._sysfs_epp_policies_path % cpu
-        line = self._pman.read(path, must_exist=False).strip()
-        if line is None:
-            policies = list(_EPP_POLICIES)
-        else:
-            policies = Trivial.split_csv_line(line, sep=" ")
-
-        return self._pcache.add("epp_policies", cpu, policies)
-
-    def get_epp_policies(self, cpus="all"):
-        """
-        Yield (CPU number, List of supported EPP policy names) pairs for CPUs in 'cpus'.
-          * cpus - same as in 'get_epp_policy()'.
-        """
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield cpu, self._get_cpu_epp_policies(cpu)
-
-    def get_cpu_epp_policies(self, cpu):
-        """Return a list of all EPP policy names for CPU 'cpu."""
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._get_cpu_epp_policies(cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 # Get EPP through sysfs.
@@ -337,6 +311,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
         self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
                                               enable_cache=enable_cache)
         self._aliases = {}
+        # List of available EPP policies according to sysfs.
+        self._epp_policies = None
 
         if self._cpuinfo.info["vendor"] != "GenuineIntel":
             raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. "
