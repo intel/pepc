@@ -148,21 +148,15 @@ class EPP(ClassHelpers.SimpleCloseContext):
 # ------------------------------------------------------------------------------------------------ #
 
     def _read_cpu_epp(self, cpu):
-        """Read EPP for CPU 'cpu' from sysfs. Returns the numeric value."""
+        """Read EPP for CPU 'cpu' from sysfs."""
 
         try:
             with self._pman.open(self._sysfs_epp_path % cpu, "r") as fobj:
                 epp = fobj.read().strip()
         except ErrorNotFound:
-            return None
+            epp = None
 
-        if Trivial.is_int(epp):
-            return int(epp)
-
-        if epp in _EPP_POLICIES.keys():
-            return _EPP_POLICIES[epp]
-
-        raise Error(f"unknown EPP value for policy name '{epp}' on CPU {cpu}{self._pman.hostmsg}")
+        return epp
 
     def get_epp(self, cpus="all"):
         """

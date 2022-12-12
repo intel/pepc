@@ -199,7 +199,7 @@ PROPS = {
                     performance. EPP value is a number in range of 0-255 (maximum energy efficiency
                     to maximum performance), or a policy name. The value is read from or written
                     to the 'energy_performance_preference' Linux sysfs file.""",
-        "type" : "int",
+        "type" : "str",
         "sname": "CPU",
         "writable" : True,
     },

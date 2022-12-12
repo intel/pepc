@@ -58,8 +58,8 @@ def _set_and_verify_data(params):
         yield "turbo", "on"
 
     if is_prop_supported("epp", pinfo):
-        yield "epp", 0
-        yield "epp", 128
+        yield "epp", "1"
+        yield "epp", "254"
 
     if is_prop_supported("epp_hw", pinfo):
         yield "epp_hw", 0
