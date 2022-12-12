@@ -44,6 +44,71 @@ All class attributes must be defined at the top of the constructor.
          self._something = None
          self._foo = None
 
+Class 'close()' method
+======================
+
+When 'close()' is needed
+++++++++++++++++++++++++
+
+If your class creates objects that have a 'close()' method, the class should implement the 'close()'
+method. Example:::
+
+ class Blah:
+     ....
+     def __init__(self):
+         """Reasonable docstring."""
+         self._pman = ProcessManager.get_pman()
+
+     def close(self):
+         """Uninitialize the object."""
+         ClassHelpers.close(self, close_attrs=("_pman", ))
+
+Notice that we use 'ClassHelpers.close()', which takes care of situations when the '_pman' attribute
+was not initialized or does not even exist yet.
+
+If your class references an object that has a 'close()' method, your class also needs a 'close()'
+method. In practice, this is not necessary in most cases, but this does help in some situations.
+Example:::
+
+ class Blah:
+     ....
+     def __init__(self, pman):
+         """Reasonable docstring."""
+         self._pman = pman
+
+     def close(self):
+         """Uninitialize the object."""
+         ClassHelpers.close(self, unref_attrs=("_pman", ))
+
+'close()': base class vs child
+++++++++++++++++++++++++++++++
+
+Put the 'close()' method to the same class where the attribute is defined. If the base class defines
+the attribute that has to be closed, put 'close()' to the base class. Do this even if the attribute
+is actually initialized in the child class. Example:::
+
+ class Base:
+     ....
+     def __init__(self):
+         """Reasonable docstring."""
+         self._pman = None
+
+     def close(self):
+         """Uninitialize the object."""
+         ClassHelpers.close(self, unref_attrs=("_pman", ))
+
+ class Child(Base):
+     ....
+     def __init__(self):
+         """Reasonable docstring."""
+         self._something_else = Create()
+
+     def close(self):
+         """Uninitialize the object."""
+
+         super().close()
+         ClassHelpers.close(self, close_attrs=("_something_else", ))
+
 Functions starting with "validate\_"
 ====================================
 
@@ -56,7 +121,7 @@ Examples:
 * ``validate_governor_name()``
 
 MSR modules
-============
+===========
 
 This section is specific to "pepclibs/msr/" modules.
 
