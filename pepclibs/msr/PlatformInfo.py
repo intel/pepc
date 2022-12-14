@@ -21,48 +21,47 @@ _LOG = logging.getLogger()
 MSR_PLATFORM_INFO = 0xCE
 
 # CPU models supporting the "maximum efficiency ratio" feature.
-_EFREQ_CPUS = CPUInfo.GOLDMONTS +    \
-              CPUInfo.TREMONTS +     \
-              CPUInfo.PHIS +         \
-              CPUInfo.NEHALEMS +     \
-              CPUInfo.WESTMERES +    \
-              CPUInfo.SANDYBRIDGES + \
-              CPUInfo.IVYBRIDGES +   \
-              CPUInfo.HASWELLS +     \
-              CPUInfo.BROADWELLS +   \
-              CPUInfo.SKYLAKES +     \
-              CPUInfo.CANNONLAKES +  \
-              CPUInfo.KABYLAKES +    \
-              CPUInfo.COMETLAKES +   \
-              CPUInfo.ICELAKES +     \
-              CPUInfo.TIGERLAKES +   \
+_EFREQ_CPUS = CPUInfo.EMRS +         \
               CPUInfo.SPRS +         \
-              CPUInfo.EMRS +         \
-              CPUInfo.ROCKETLAKES +  \
-              CPUInfo.ALDERLAKES +   \
+              CPUInfo.METEORLAKES +  \
               CPUInfo.RAPTORLAKES +  \
-              CPUInfo.METEORLAKES
-
+              CPUInfo.ALDERLAKES +   \
+              CPUInfo.ROCKETLAKES +  \
+              CPUInfo.TIGERLAKES +   \
+              CPUInfo.ICELAKES +     \
+              CPUInfo.COMETLAKES +   \
+              CPUInfo.KABYLAKES +    \
+              CPUInfo.CANNONLAKES +  \
+              CPUInfo.SKYLAKES +     \
+              CPUInfo.BROADWELLS +   \
+              CPUInfo.HASWELLS +     \
+              CPUInfo.IVYBRIDGES +   \
+              CPUInfo.SANDYBRIDGES + \
+              CPUInfo.WESTMERES +    \
+              CPUInfo.NEHALEMS +     \
+              CPUInfo.TREMONTS +     \
+              CPUInfo.GOLDMONTS +    \
+              CPUInfo.PHIS
 
 # CPU models supporting the "minimum operating ratio" feature.
-_MIN_OPER_RATIO_CPUS = CPUInfo.GOLDMONTS +                  \
-                       CPUInfo.TREMONTS +                   \
-                       CPUInfo.PHIS +                       \
-                       (CPUInfo.INTEL_FAM6_IVYBRIDGE, ) +   \
-                       CPUInfo.HASWELLS +                   \
-                       CPUInfo.BROADWELLS +                 \
-                       CPUInfo.SKYLAKES +                   \
-                       CPUInfo.CANNONLAKES +                \
-                       CPUInfo.KABYLAKES +                  \
-                       CPUInfo.COMETLAKES +                 \
-                       CPUInfo.ICELAKES +                   \
-                       CPUInfo.TIGERLAKES +                 \
-                       CPUInfo.SPRS +                       \
-                       CPUInfo.EMRS +                       \
-                       CPUInfo.ROCKETLAKES +                \
-                       CPUInfo.ALDERLAKES +                 \
-                       CPUInfo.RAPTORLAKES +                \
-                       CPUInfo.METEORLAKES
+_MIN_OPER_RATIO_CPUS = CPUInfo.METEORLAKES +               \
+                       CPUInfo.RAPTORLAKES +               \
+                       CPUInfo.ALDERLAKES +                \
+                       CPUInfo.ROCKETLAKES +               \
+                       CPUInfo.EMRS +                      \
+                       CPUInfo.SPRS +                      \
+                       CPUInfo.TIGERLAKES +                \
+                       CPUInfo.ICELAKES +                  \
+                       CPUInfo.COMETLAKES +                \
+                       CPUInfo.KABYLAKES +                 \
+                       CPUInfo.CANNONLAKES +               \
+                       CPUInfo.SKYLAKES +                  \
+                       CPUInfo.BROADWELLS +                \
+                       CPUInfo.HASWELLS +                  \
+                       (CPUInfo.INTEL_FAM6_IVYBRIDGE, ) +  \
+                       CPUInfo.TREMONTS +                  \
+                       CPUInfo.GOLDMONTS +                 \
+                       CPUInfo.PHIS
 
 # CPU models supporting the "maximum non-turbo ratio" feature.
 _BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS
