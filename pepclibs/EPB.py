@@ -72,7 +72,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
             raise ErrorNotSupported(f"{what} must be one of the following EPB policies: {policies}")
 
 # ------------------------------------------------------------------------------------------------ #
-# Get EPB through MSR (OS bypass).
+# Get EPB through MSR.
 # ------------------------------------------------------------------------------------------------ #
 
     def _get_cpu_epb_from_msr(self, cpu):
@@ -104,7 +104,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         return self._get_cpu_epb_from_msr(cpu)
 
 # ------------------------------------------------------------------------------------------------ #
-# Set EPB through MSR (OS bypass).
+# Set EPB through MSR.
 # ------------------------------------------------------------------------------------------------ #
 
     def _set_cpu_epb_in_msr(self, epb, cpu):
