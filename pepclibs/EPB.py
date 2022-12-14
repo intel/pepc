@@ -76,8 +76,8 @@ class EPB(ClassHelpers.SimpleCloseContext):
 # Get EPB through MSR.
 # ------------------------------------------------------------------------------------------------ #
 
-    def _get_cpu_epb_from_msr(self, cpu):
-        """Get EPB for CPU 'cpu' from MSR."""
+    def _read_cpu_epb_hw(self, cpu):
+        """Read EPB for CPU 'cpu' from MSR."""
 
         _epb = self._get_epbobj()
 
@@ -96,20 +96,20 @@ class EPB(ClassHelpers.SimpleCloseContext):
         """
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._get_cpu_epb_from_msr(cpu))
+            yield (cpu, self._read_cpu_epb_hw(cpu))
 
     def get_cpu_epb_hw(self, cpu):
         """Similar to 'get_epb_hw()', but for a single CPU 'cpu'."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._get_cpu_epb_from_msr(cpu)
+        return self._read_cpu_epb_hw(cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 # Set EPB through MSR.
 # ------------------------------------------------------------------------------------------------ #
 
-    def _set_cpu_epb_in_msr(self, epb, cpu):
-        """Set EPB for CPU 'cpu' in MSR."""
+    def _write_cpu_epb_hw(self, epb, cpu):
+        """Write EPB 'epb' for CPU 'cpu' to MSR."""
 
         _epb = self._get_epbobj()
 
@@ -130,7 +130,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         self._validate_epb_value(epb)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            self._set_cpu_epb_in_msr(epb, cpu)
+            self._write_cpu_epb_hw(epb, cpu)
 
     def set_cpu_epb_hw(self, epb, cpu):
         """Similar to 'set_epb_hw()', but for a single CPU 'cpu'."""
@@ -138,14 +138,14 @@ class EPB(ClassHelpers.SimpleCloseContext):
         self._validate_epb_value(epb)
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
-        self._set_cpu_epb_in_msr(epb, cpu)
+        self._write_cpu_epb_hw(epb, cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 # Get EPB through sysfs.
 # ------------------------------------------------------------------------------------------------ #
 
-    def _read_cpu_epb_from_sysfs(self, cpu):
-        """Reads EPB for CPU 'cpu' from sysfs."""
+    def _read_cpu_epb(self, cpu):
+        """Read EPB for CPU 'cpu' from sysfs."""
 
         if self._pcache.is_cached("epb", cpu):
             return self._pcache.get("epb", cpu)
@@ -168,20 +168,20 @@ class EPB(ClassHelpers.SimpleCloseContext):
         """
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._read_cpu_epb_from_sysfs(cpu))
+            yield (cpu, self._read_cpu_epb(cpu))
 
     def get_cpu_epb(self, cpu):
         """Similar to 'get_epb()', but for a single CPU 'cpu'."""
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._read_cpu_epb_from_sysfs(cpu)
+        return self._read_cpu_epb(cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 # Set EPB through sysfs.
 # ------------------------------------------------------------------------------------------------ #
 
-    def _write_cpu_epb_to_sysfs(self, epb, cpu):
-        """Write EPB for CPU 'cpu' to sysfs."""
+    def _write_cpu_epb(self, epb, cpu):
+        """Write EPB 'epb' for CPU 'cpu' to sysfs."""
 
         try:
             with self._pman.open(self._sysfs_epb_path % cpu, "r+") as fobj:
@@ -193,7 +193,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         # E.g. "performance" EPB might be "0".
         if not Trivial.is_int(epb):
             if not self._epb_policies[epb]:
-                self._epb_policies[epb] = int(self._read_cpu_epb_from_sysfs(cpu))
+                self._epb_policies[epb] = int(self._read_cpu_epb(cpu))
 
             self._pcache.add("epb", cpu, self._epb_policies[epb])
         else:
@@ -212,7 +212,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         self._validate_epb_value(epb, policy_ok=True)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            self._write_cpu_epb_to_sysfs(str(epb), cpu)
+            self._write_cpu_epb(str(epb), cpu)
 
     def set_cpu_epb(self, epb, cpu):
         """Similar to 'set_epb()', but for a single CPU 'cpu'."""
@@ -220,7 +220,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         self._validate_epb_value(epb, policy_ok=True)
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
-        self._write_cpu_epb_to_sysfs(str(epb), cpu)
+        self._write_cpu_epb(str(epb), cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 
