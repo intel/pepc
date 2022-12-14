@@ -7,6 +7,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
  - Fix regression introduced in 1.3.34: 'pepc cstates info' and
    'pepc pstates info' crashed with a 'ValueError'.
+ - Fix '--epb' error when system does not support EPB.
 ### Added
  - Add option '--epb-hw' to 'pepc pstates', similar to '--epb' but backed by MSR.
  - Add option '--epp-hw' to 'pepc pstates', similar to '--epp' but backed by MSR.
