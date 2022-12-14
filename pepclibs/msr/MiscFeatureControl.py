@@ -24,29 +24,28 @@ MSR_MISC_FEATURE_CONTROL = 0x1A4
 # CPU models that support only the 'l2_hw_prefetcher' and 'dcu_hw_prefetcher' features.
 _L2_AND_DCU_CPUS = CPUInfo.TREMONTS +  \
                    CPUInfo.GOLDMONTS + \
-                   (CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D,) + \
-                   CPUInfo.PHIS
+                   CPUInfo.PHIS +      \
+                   (CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D,)
 
 # CPU models that support 'l2_hw_prefetcher', 'l1_adj_prefetcher', 'dcu_hw_prefetcher', and
 # 'dcu_ip_prefetcher' prefetchers.
-_ALL_PREFETCHERS_CPUS = CPUInfo.NEHALEMS +     \
-                        CPUInfo.WESTMERES +    \
-                        CPUInfo.SANDYBRIDGES + \
-                        CPUInfo.IVYBRIDGES +   \
-                        CPUInfo.HASWELLS +     \
-                        CPUInfo.BROADWELLS +   \
-                        CPUInfo.SKYLAKES +     \
-                        CPUInfo.CANNONLAKES +  \
-                        CPUInfo.KABYLAKES +    \
-                        CPUInfo.COMETLAKES +   \
-                        CPUInfo.ICELAKES +     \
-                        CPUInfo.TIGERLAKES +   \
-                        CPUInfo.SPRS +         \
-                        CPUInfo.ROCKETLAKES +  \
-                        CPUInfo.ALDERLAKES +   \
-                        CPUInfo.RAPTORLAKES +  \
+_ALL_PREFETCHERS_CPUS = CPUInfo.METEORLAKES +  \
                         CPUInfo.EMRS +         \
-                        CPUInfo.METEORLAKES
+                        CPUInfo.RAPTORLAKES +  \
+                        CPUInfo.ALDERLAKES +   \
+                        CPUInfo.ROCKETLAKES +  \
+                        CPUInfo.SPRS +         \
+                        CPUInfo.TIGERLAKES +   \
+                        CPUInfo.ICELAKES +     \
+                        CPUInfo.COMETLAKES +   \
+                        CPUInfo.KABYLAKES +    \
+                        CPUInfo.CANNONLAKES +  \
+                        CPUInfo.SKYLAKES +     \
+                        CPUInfo.BROADWELLS +   \
+                        CPUInfo.HASWELLS +     \
+                        CPUInfo.IVYBRIDGES +   \
+                        CPUInfo.SANDYBRIDGES + \
+                        CPUInfo.WESTMERES
 
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
