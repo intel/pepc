@@ -34,43 +34,43 @@ MSR_PKG_CST_CONFIG_CONTROL = 0xE2
 #
 # Xeons.
 #
-# Ivy Bridge Xeon (Ivy Town).
-_IVT_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
-                       "aliases" : {"PC6": "PC6R"},
+# Ice Lake Xeons.
+_ICX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
+                       "aliases" : {"PC6N": "PC6"},
                        "bits"    : (2, 0)}
-# Haswell Xeon package C-state limits.
-_HSX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unlimited": 7},
-                       "bits"    : (2, 0)}
-# Broadwell-D Xeon.
-_BDWD_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
-                        "bits"    : (3, 0)}
-# Sky/Cascade/Cooper/Sapphire/Emerald Rapids Lake Xeon, Skylake-D Xeon, Knights Mill/Landing Xeon
-# Phi.
+# Emerald Rapids, Sapphire Rapids, Cooper Lake, Cascade Lake, Sky Lake Xeons. Knights Mill and
+# Knights Landing Xeon Phis.
 _SKX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
                        "aliases" : {"PC6": "PC6R"},
                        "bits"    : (2, 0)}
-# Ice Lake Xeon.
-_ICX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
-                       "aliases" : {"PC6N": "PC6"},
+# Broadwell-D Xeon.
+_BDWD_PKG_CST_LIMITS = {"codes"  : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
+                        "bits"   : (3, 0)}
+# Broadwell and Haswell Xeons.
+_HSX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unlimited": 7},
+                       "bits"    : (2, 0)}
+# Ivy Bridge Xeon (Ivy Town).
+_IVT_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
+                       "aliases" : {"PC6": "PC6R"},
                        "bits"    : (2, 0)}
 
 #
 # Atom-based micro servers.
 #
-# Denverton SoC (Goldmont).
-_DNV_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC6": 1},
-                       "bits"    : (3, 0)}
 # Snow Ridge SoC (Tremont).
 _SNR_PKG_CST_LIMITS = {"codes"   : {"PC0": 0},
+                       "bits"    : (3, 0)}
+# Denverton SoC (Goldmont).
+_DNV_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC6": 1},
                        "bits"    : (3, 0)}
 
 #
 # Clients.
 #
-_CLIENT_PC7S_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5},
-                           "bits" : (3, 0)}
 _CLIENT_PC10_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5,
                            "PC8": 6, "PC9": 7, "PC10": 8},
+                           "bits" : (3, 0)}
+_CLIENT_PC7S_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5},
                            "bits" : (3, 0)}
 
 # CPU ID -> Package C-state limit map.
@@ -87,11 +87,11 @@ _PKG_CST_LIMITS = {
         CPUInfo.INTEL_FAM6_HASWELL_X:        _HSX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_IVYBRIDGE_X:      _IVT_PKG_CST_LIMITS,
         # Xeon Phi.
-        CPUInfo.INTEL_FAM6_XEON_PHI_KNL:     _SKX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_XEON_PHI_KNM:     _SKX_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_XEON_PHI_KNL:     _SKX_PKG_CST_LIMITS,
         # Atom microservers.
-        CPUInfo.INTEL_FAM6_GOLDMONT_D:       _DNV_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_TREMONT_D:        _SNR_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_GOLDMONT_D:       _DNV_PKG_CST_LIMITS,
         # Clients.
         # Deepest: PC10.
         CPUInfo.INTEL_FAM6_ROCKETLAKE:       _CLIENT_PC10_CST_LIMITS,
