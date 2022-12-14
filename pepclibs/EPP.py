@@ -95,6 +95,78 @@ class EPP(ClassHelpers.SimpleCloseContext):
                                         f"{policies}, or integer within [{_EPP_MIN},{_EPP_MAX}]")
 
 # ------------------------------------------------------------------------------------------------ #
+# Get EPP through MSR.
+# ------------------------------------------------------------------------------------------------ #
+
+    def _read_cpu_epp_hw(self, cpu):
+        """Read EPP for CPU 'cpu' from MSR."""
+
+        # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
+        hwpreq = self._get_hwpreq()
+        if hwpreq.is_cpu_feature_pkg_controlled("epp", cpu):
+            hwpreq = self._get_hwpreq_pkg()
+
+        try:
+            return hwpreq.read_cpu_feature("epp", cpu)
+        except ErrorNotSupported:
+            return None
+
+    def get_epp_hw(self, cpus="all"):
+        """
+        Yield (CPU number, EPP value) pairs for CPUs in 'cpus'. The EPP value is read via MSR.
+        The arguments are as follows.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+        """
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            yield (cpu, self._read_cpu_epp_hw(cpu))
+
+    def get_cpu_epp_hw(self, cpu):
+        """Similar to 'get_epp_hw()', but for a single CPU 'cpu'."""
+
+        cpu = self._cpuinfo.normalize_cpu(cpu)
+        return self._read_cpu_epp_hw(cpu)
+
+# ------------------------------------------------------------------------------------------------ #
+# Set EPP through MSR.
+# ------------------------------------------------------------------------------------------------ #
+
+    def _write_cpu_epp_hw(self, epp, cpu):
+        """Write EPP 'epp' for CPU 'cpu' to MSR."""
+
+        hwpreq = self._get_hwpreq()
+        hwpreq.disable_cpu_feature_pkg_control("epp", cpu)
+
+        try:
+            hwpreq.write_cpu_feature("epp", epp, cpu)
+        except Error as err:
+            raise type(err)(f"failed to set EPP HW{self._pman.hostmsg}:\n{err.indent(2)}") from err
+
+    def set_epp_hw(self, epp, cpus="all"):
+        """
+        Set EPP for CPUs in 'cpus'. The EPP value is set via MSR. The arguments are as follows.
+          * epp - the EPP value to set. Can be an integer or string representing an integer.
+          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
+                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
+                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+        """
+
+        self._validate_epp_value(epp)
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            self._write_cpu_epp_hw(epp, cpu)
+
+    def set_cpu_epp_hw(self, epp, cpu):
+        """Similar to 'set_epp_hw()', but for a single CPU 'cpu'."""
+
+        self._validate_epp_value(epp)
+
+        cpu = self._cpuinfo.normalize_cpu(cpu)
+        self._write_cpu_epp_hw(epp, cpu)
+
+# ------------------------------------------------------------------------------------------------ #
 # Get EPP through sysfs.
 # ------------------------------------------------------------------------------------------------ #
 
@@ -129,41 +201,6 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         return self._read_cpu_epp(cpu)
-
-# ------------------------------------------------------------------------------------------------ #
-# Get EPP through MSR.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _read_cpu_epp_hw(self, cpu):
-        """Read EPP for CPU 'cpu' from MSR."""
-
-        # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
-        hwpreq = self._get_hwpreq()
-        if hwpreq.is_cpu_feature_pkg_controlled("epp", cpu):
-            hwpreq = self._get_hwpreq_pkg()
-
-        try:
-            return hwpreq.read_cpu_feature("epp", cpu)
-        except ErrorNotSupported:
-            return None
-
-    def get_epp_hw(self, cpus="all"):
-        """
-        Yield (CPU number, EPP value) pairs for CPUs in 'cpus'. The EPP value is read via MSR.
-        The arguments are as follows.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
-        """
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._read_cpu_epp_hw(cpu))
-
-    def get_cpu_epp_hw(self, cpu):
-        """Similar to 'get_epp_hw()', but for a single CPU 'cpu'."""
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._read_cpu_epp_hw(cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 # Set EPP through sysfs.
@@ -211,43 +248,6 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         self._write_cpu_epp(str(epp), cpu)
-
-# ------------------------------------------------------------------------------------------------ #
-# Set EPP through MSR.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _write_cpu_epp_hw(self, epp, cpu):
-        """Write EPP 'epp' for CPU 'cpu' to MSR."""
-
-        hwpreq = self._get_hwpreq()
-        hwpreq.disable_cpu_feature_pkg_control("epp", cpu)
-
-        try:
-            hwpreq.write_cpu_feature("epp", epp, cpu)
-        except Error as err:
-            raise type(err)(f"failed to set EPP HW{self._pman.hostmsg}:\n{err.indent(2)}") from err
-
-    def set_epp_hw(self, epp, cpus="all"):
-        """
-        Set EPP for CPUs in 'cpus'. The EPP value is set via MSR. The arguments are as follows.
-          * epp - the EPP value to set. Can be an integer or string representing an integer.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
-        """
-
-        self._validate_epp_value(epp)
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            self._write_cpu_epp_hw(epp, cpu)
-
-    def set_cpu_epp_hw(self, epp, cpu):
-        """Similar to 'set_epp_hw()', but for a single CPU 'cpu'."""
-
-        self._validate_epp_value(epp)
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        self._write_cpu_epp_hw(epp, cpu)
 
 # ------------------------------------------------------------------------------------------------ #
 
