@@ -57,19 +57,20 @@ class EPB(ClassHelpers.SimpleCloseContext):
         return self._epb_msr
 
     @staticmethod
-    def _validate_epb_value(what, val, policy_ok=False):
+    def _validate_epb_value(val, policy_ok=False):
         """
         Validate EPB value and raise appropriate exception. When 'policy_ok=True' also validate
         against accepted EPB policies.
         """
 
         if Trivial.is_int(val):
-            Trivial.validate_value_in_range(int(val), _EPB_MIN, _EPB_MAX, what=what)
+            Trivial.validate_value_in_range(int(val), _EPB_MIN, _EPB_MAX, what="EPB value")
         elif not policy_ok:
-            raise ErrorNotSupported(f"{what} must be an integer within [{_EPB_MIN},{_EPB_MAX}]")
+            raise ErrorNotSupported(f"EPB value must be an integer within [{_EPB_MIN},{_EPB_MAX}]")
         elif val not in _EPB_POLICIES:
             policies = ", ".join(_EPB_POLICIES)
-            raise ErrorNotSupported(f"{what} must be one of the following EPB policies: {policies}")
+            raise ErrorNotSupported(f"EPB value must be one of the following EPB policies: " \
+                                    f"{policies}, or integer within [{_EPB_MIN},{_EPB_MAX}]")
 
 # ------------------------------------------------------------------------------------------------ #
 # Get EPB through MSR.
@@ -126,7 +127,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
                    7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
         """
 
-        self._validate_epb_value("EPB HW value", epb)
+        self._validate_epb_value(epb)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             self._set_cpu_epb_in_msr(epb, cpu)
@@ -134,7 +135,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
     def set_cpu_epb_hw(self, epb, cpu):
         """Similar to 'set_epb_hw()', but for a single CPU 'cpu'."""
 
-        self._validate_epb_value("EPB HW value", epb)
+        self._validate_epb_value(epb)
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         self._set_cpu_epb_in_msr(epb, cpu)
@@ -208,7 +209,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
                    7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
         """
 
-        self._validate_epb_value("EPB value", epb, policy_ok=True)
+        self._validate_epb_value(epb, policy_ok=True)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             self._write_cpu_epb_to_sysfs(str(epb), cpu)
@@ -216,7 +217,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
     def set_cpu_epb(self, epb, cpu):
         """Similar to 'set_epb()', but for a single CPU 'cpu'."""
 
-        self._validate_epb_value("EPB value", epb, policy_ok=True)
+        self._validate_epb_value(epb, policy_ok=True)
 
         cpu = self._cpuinfo.normalize_cpu(cpu)
         self._write_cpu_epb_to_sysfs(str(epb), cpu)
