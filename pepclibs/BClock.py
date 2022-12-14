@@ -62,8 +62,8 @@ _BCLK_100MHZ = {
         CPUInfo.INTEL_FAM6_GOLDMONT_D,
         # Other.
         CPUInfo.INTEL_FAM6_ICELAKE_NNPI,
-        CPUInfo.INTEL_FAM6_XEON_PHI_KNL,
         CPUInfo.INTEL_FAM6_XEON_PHI_KNM,
+        CPUInfo.INTEL_FAM6_XEON_PHI_KNL,
 }
 
 def get_bclk(pman, cpu=0, cpuinfo=None, msr=None):
