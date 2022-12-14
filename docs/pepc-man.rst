@@ -2,7 +2,7 @@
 PEPC
 ====
 
-:Date:   2022-12-09
+:Date:   2022-12-14
 
 .. contents::
    :depth: 3
@@ -523,7 +523,7 @@ usage: pepc pstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
 [--max-freq-hw] [--min-oper-freq] [--max-eff-freq] [--turbo]
 [--max-turbo-freq] [--min-uncore-freq] [--max-uncore-freq]
 [--min-uncore-freq-limit] [--max-uncore-freq-limit] [--hwp] [--epp]
-[--epp-policy] [--epb] [--epb-policy] [--driver] [--intel-pstate-mode]
+[--epp-hw] [--epb] [--epb-hw] [--driver] [--intel-pstate-mode]
 [--governor]
 
 Get P-states information for specified CPUs. By default, prints all
@@ -676,27 +676,35 @@ OPTIONS *'pepc* pstates info'
    scope.
 
 **--epp**
-   Get energy Performance Preference. Energy Performance Preference
-   (EPP) is a hint to the CPU on energy efficiency vs performance. EPP
-   has an effect only when the CPU is in the hardware power management
-   (HWP) mode. This option has CPU scope.
+   Get EPP (via sysfs). Energy Performance Preference is a hint to the
+   CPU on energy efficiency vs performance. EPP value is a number in
+   range of 0-255 (maximum energy efficiency to maximum performance), or
+   a policy name. The value is read from or written to the
+   'energy_performance_preference' Linux sysfs file. This option has CPU
+   scope.
 
-**--epp-policy**
-   Get EPP policy. EPP policy is a name, such as 'performance', which
-   Linux maps to an EPP value, which may depend on the platform. This
-   option has CPU scope.
+**--epp-hw**
+   Get EPP (via MSR 0x774). Energy Performance Preference is a hint to
+   the CPU on energy efficiency vs performance. EPP value is a number in
+   range of 0-255 (maximum energy efficiency to maximum performance).
+   When package control is enabled the value is read from MSR 0x772, but
+   when written package control is disabled and value is written to MSR
+   0x774, both require the 'msr' Linux kernel driver. This option has
+   CPU scope.
 
 **--epb**
-   Get energy Performance Bias. Energy Performance Bias (EPB) is a hint
-   to the CPU on energy efficiency vs performance. Value 0 means maximum
-   performance, value 15 means maximum energy efficiency. EPP may have
-   an effect in both HWP enabled and disabled modes (HWP stands for
-   Hardware Power Management). This option has CPU scope.
+   Get EPB (via sysfs). Energy Performance Bias is a hint to the CPU on
+   energy efficiency vs performance. EBP value is a number in range of
+   0-15 (maximum performance to maximum energy efficiency), or a policy
+   name. The value is read from or written to the 'energy_perf_bias'
+   Linux sysfs file. This option has CPU scope.
 
-**--epb-policy**
-   Get EPB policy. EPB policy is a name, such as 'performance', which
-   Linux maps to an EPB value, which may depend on the platform. This
-   option has CPU scope.
+**--epb-hw**
+   Get EPB (via MSR 0x1b0). Energy Performance Bias is a hint to the CPU
+   on energy efficiency vs performance. EBP value is a number in range
+   of 0-15 (maximum performance to maximum energy efficiency). The value
+   is read from or written to MSR 0x1b0, which requires the 'msr' Linux
+   kernel driver. This option has CPU scope.
 
 **--driver**
    Get CPU frequency driver. CPU frequency driver enumerates and
@@ -723,9 +731,9 @@ usage: pepc pstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
 [--packages PACKAGES] [--min-freq [MIN_FREQ]] [--max-freq [MAX_FREQ]]
 [--min-freq-hw [MIN_FREQ_HW]] [--max-freq-hw [MAX_FREQ_HW]] [--turbo
 [TURBO]] [--min-uncore-freq [MIN_UNCORE_FREQ]] [--max-uncore-freq
-[MAX_UNCORE_FREQ]] [--epp [EPP]] [--epp-policy [EPP_POLICY]] [--epb
-[EPB]] [--epb-policy [EPB_POLICY]] [--intel-pstate-mode
-[INTEL_PSTATE_MODE]] [--governor [GOVERNOR]]
+[MAX_UNCORE_FREQ]] [--epp [EPP]] [--epp-hw [EPP_HW]] [--epb [EPB]]
+[--epb-hw [EPB_HW]] [--intel-pstate-mode [INTEL_PSTATE_MODE]]
+[--governor [GOVERNOR]]
 
 Configure P-states on specified CPUs. All options can be used without a
 parameter, in which case the currently configured value(s) will be
@@ -820,27 +828,35 @@ OPTIONS *'pepc* pstates config'
    Linux sysfs). This option has die scope.
 
 **--epp** *[EPP]*
-   Set energy Performance Preference. Energy Performance Preference
-   (EPP) is a hint to the CPU on energy efficiency vs performance. EPP
-   has an effect only when the CPU is in the hardware power management
-   (HWP) mode. This option has CPU scope.
+   Set EPP (via sysfs). Energy Performance Preference is a hint to the
+   CPU on energy efficiency vs performance. EPP value is a number in
+   range of 0-255 (maximum energy efficiency to maximum performance), or
+   a policy name. The value is read from or written to the
+   'energy_performance_preference' Linux sysfs file. This option has CPU
+   scope.
 
-**--epp-policy** *[EPP_POLICY]*
-   Set EPP policy. EPP policy is a name, such as 'performance', which
-   Linux maps to an EPP value, which may depend on the platform. This
-   option has CPU scope.
+**--epp-hw** *[EPP_HW]*
+   Set EPP (via MSR 0x774). Energy Performance Preference is a hint to
+   the CPU on energy efficiency vs performance. EPP value is a number in
+   range of 0-255 (maximum energy efficiency to maximum performance).
+   When package control is enabled the value is read from MSR 0x772, but
+   when written package control is disabled and value is written to MSR
+   0x774, both require the 'msr' Linux kernel driver. This option has
+   CPU scope.
 
 **--epb** *[EPB]*
-   Set energy Performance Bias. Energy Performance Bias (EPB) is a hint
-   to the CPU on energy efficiency vs performance. Value 0 means maximum
-   performance, value 15 means maximum energy efficiency. EPP may have
-   an effect in both HWP enabled and disabled modes (HWP stands for
-   Hardware Power Management). This option has CPU scope.
+   Set EPB (via sysfs). Energy Performance Bias is a hint to the CPU on
+   energy efficiency vs performance. EBP value is a number in range of
+   0-15 (maximum performance to maximum energy efficiency), or a policy
+   name. The value is read from or written to the 'energy_perf_bias'
+   Linux sysfs file. This option has CPU scope.
 
-**--epb-policy** *[EPB_POLICY]*
-   Set EPB policy. EPB policy is a name, such as 'performance', which
-   Linux maps to an EPB value, which may depend on the platform. This
-   option has CPU scope.
+**--epb-hw** *[EPB_HW]*
+   Set EPB (via MSR 0x1b0). Energy Performance Bias is a hint to the CPU
+   on energy efficiency vs performance. EBP value is a number in range
+   of 0-15 (maximum performance to maximum energy efficiency). The value
+   is read from or written to MSR 0x1b0, which requires the 'msr' Linux
+   kernel driver. This option has CPU scope.
 
 **--intel-pstate-mode** *[INTEL_PSTATE_MODE]*
    Set operation mode of 'intel_pstate' driver. The 'intel_pstate'

@@ -5,6 +5,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.3.35] - 2022-12-14
+### Fixed
  - Fix regression introduced in 1.3.34: 'pepc cstates info' and
    'pepc pstates info' crashed with 'ValueError' in some cases.
  - Fix error when the '--epb' opiton is used on a system that does not support

@@ -1,3 +1,19 @@
+pepc (1.3.35) unstable; urgency=low
+
+  * Fix regression introduced in 1.3.34: 'pepc cstates info' and
+    'pepc pstates info' crashed with 'ValueError' in some cases.
+  * Fix error when the '--epb' opiton is used on a system that does not support
+    EPB.
+  * Add Grand Ridge SoC support.
+  * Add '--epb-hw' and '--epp-hw' options of 'pepc pstates', they can be used to
+    access EPB/EPP via the MSR registers (instead of accessing via sysfs).
+  * Remove the '--epb-policy' and '--epp-policy' options of 'pepc pstates'. Now
+    policy can be specified using the '--epb' and '--epp' options.
+  * Change '--epb' and '--epp' options of 'pepc pstates': use sysfs instead of
+    MSR. Access via MSR is now done using the '--epb-hw' and '--epp-hw' options.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 14 Dec 2022 00:00:00 +0200
+
 pepc (1.3.34) unstable; urgency=low
 
   * pepc cstates: do not fail on systems that have no C-states.
