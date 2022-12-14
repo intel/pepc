@@ -6,6 +6,7 @@
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Niklas Neronin <niklas.neronin@intel.com>
 
 """
 This module provides a capability of reading and changing EPP (Energy Performance Preference) on
