@@ -57,7 +57,7 @@ _IVT_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "u
 #
 # Atom-based micro servers.
 #
-# Snow Ridge SoC (Tremont).
+# Grand Ridge (Cresmont) and Snow Ridge (Tremont) SoCs.
 _SNR_PKG_CST_LIMITS = {"codes"   : {"PC0": 0},
                        "bits"    : (3, 0)}
 # Denverton SoC (Goldmont).
@@ -90,6 +90,7 @@ _PKG_CST_LIMITS = {
         CPUInfo.INTEL_FAM6_XEON_PHI_KNM:     _SKX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_XEON_PHI_KNL:     _SKX_PKG_CST_LIMITS,
         # Atom microservers.
+        CPUInfo.INTEL_FAM6_GRANDRIDGE:       _SNR_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_TREMONT_D:        _SNR_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_GOLDMONT_D:       _DNV_PKG_CST_LIMITS,
         # Clients.

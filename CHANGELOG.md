@@ -10,6 +10,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Fix error when the '--epb' opiton is used on a system that does not support
    EPB.
 ### Added
+ - Add Grand Ridge SoC support.
  - Add '--epb-hw' and '--epp-hw' options of 'pepc pstates', they can be used to
    access EPB/EPP via the MSR registers (instead of accessing via sysfs).
 ### Removed

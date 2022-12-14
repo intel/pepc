@@ -58,6 +58,7 @@ _BCLK_100MHZ = {
         CPUInfo.INTEL_FAM6_ATOM_GOLDMONT,
         CPUInfo.INTEL_FAM6_ATOM_GOLDMONT_PLUS,
         # Atom microservers.
+        CPUInfo.INTEL_FAM6_GRANDRIDGE,
         CPUInfo.INTEL_FAM6_TREMONT_D,
         CPUInfo.INTEL_FAM6_GOLDMONT_D,
         # Other.
