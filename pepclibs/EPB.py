@@ -6,6 +6,7 @@
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Niklas Neronin <niklas.neronin@intel.com>
 #
 # Parts of the code was contributed by Len Brown <len.brown@intel.com>.
 
