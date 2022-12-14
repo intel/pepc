@@ -6,17 +6,18 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
  - Fix regression introduced in 1.3.34: 'pepc cstates info' and
-   'pepc pstates info' crashed with a 'ValueError'.
- - Fix '--epb' error when system does not support EPB.
+   'pepc pstates info' crashed with 'ValueError' in some cases.
+ - Fix error when the '--epb' opiton is used on a system that does not support
+   EPB.
 ### Added
- - Add option '--epb-hw' to 'pepc pstates', similar to '--epb' but backed by MSR.
- - Add option '--epp-hw' to 'pepc pstates', similar to '--epp' but backed by MSR.
+ - Add '--epb-hw' and '--epp-hw' options of 'pepc pstates', they can be used to
+   access EPB/EPP via the MSR registers (instead of accessing via sysfs).
 ### Removed
- - Remove 'pepc pstates' option '--epb-policy'.
- - Remove 'pepc pstates' option '--epp-policy'.
+ - Remove the '--epb-policy' and '--epp-policy' options of 'pepc pstates'. Now
+   policy can be specified using the '--epb' and '--epp' options.
 ### Changed
- - Change 'pepc pstates' option '--epb' use sysfs instead of MSR.
- - Change 'pepc pstates' option '--epp' use sysfs instead of MSR.
+ - Change '--epb' and '--epp' options of 'pepc pstates': use sysfs instead of
+   MSR. Access via MSR is now done using the '--epb-hw' and '--epp-hw' options.
 
 ## [1.3.34] - 2022-12-09
 ### Fixed
