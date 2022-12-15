@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.3.36] - 2022-12-15
+### Fixed
+ - Fix self-tests: they used real sysfs instead of emulated data in some cases.
+
 ## [1.3.35] - 2022-12-14
 ### Fixed
  - Fix regression introduced in 1.3.34: 'pepc cstates info' and
