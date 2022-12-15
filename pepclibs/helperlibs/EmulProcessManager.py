@@ -159,7 +159,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         for split in cmd.split():
             if Path(basepath / split).exists():
                 return split
-            for strip_chr in ("'", "\""):
+            for strip_chr in ("'/", "\"/"):
                 if Path(basepath / split.strip(strip_chr)).exists():
                     return split.strip(strip_chr)
 
