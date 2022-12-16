@@ -577,7 +577,7 @@ def main():
         args = parse_arguments()
 
         if not getattr(args, "func", None):
-            _LOG.error("please, provide arguments, run '%s -h' for help.", _OWN_NAME)
+            _LOG.error("please, run '%s -h' for help", _OWN_NAME)
             return -1
 
         # pylint: disable=no-member
