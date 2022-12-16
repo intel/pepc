@@ -13,6 +13,7 @@ pepc - Power, Energy, and Performance Configuration tool for Linux.
 import sys
 import logging
 import argparse
+from pathlib import Path
 
 try:
     import argcomplete
@@ -20,7 +21,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager
+from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, PStates, CPUInfo
 
@@ -33,12 +34,35 @@ _OWN_NAME = "pepc"
 _LOG = logging.getLogger()
 Logging.setup_logger(prefix=_OWN_NAME)
 
+DATASET_OPTIONS = [
+    {
+        "short" : "-D",
+        "long" : "--dataset",
+        "argcomplete" : None,
+        "kwargs" : {
+            "dest" : "dataset",
+            "help" : f"""This option is for debugging and testing purposes only, it defines the
+                         dataset that will be used to emulate a host for running the command.
+                         Please, specify dataset name, it will be searched for in the following
+                         locations:
+                         {ProjectFiles.get_project_data_search_descr('pepc', 'tests/data')}."""
+        },
+    },
+]
+
 class PepcArgsParser(ArgParse.ArgsParser):
     """
     The default argument parser does not allow defining "global" options, so that they are present
-    in every subcommand. In our case we want the SSH options to be available everywhere. This class
-    add the capability.
+    in every subcommand. For example we want the SSH options to be available everywhere.
     """
+
+    def add_dataset_options(self):
+        """Add dataset options to argument parser."""
+
+        for opt in DATASET_OPTIONS:
+            arg = self.add_argument(opt["short"], opt["long"], **opt["kwargs"])
+            if opt["argcomplete"] and argcomplete:
+                arg.completer = getattr(argcomplete.completers, opt["argcomplete"])
 
     def _check_unknow_args(self, args, uargs, gargs): # pylint: disable=no-self-use
         """
@@ -70,9 +94,14 @@ class PepcArgsParser(ArgParse.ArgsParser):
             return args
 
         self._check_unknow_args(args, uargs, ArgParse.SSH_OPTIONS)
+        self._check_unknow_args(args, uargs, DATASET_OPTIONS)
 
         if uargs:
             raise Error(f"unrecognized option(s): {' '.join(uargs)}")
+
+        if args.dataset and args.hostname != "localhost":
+            raise Error("can't use dataset on remote host")
+
         return args
 
 def build_arguments_parser():
@@ -94,6 +123,7 @@ def build_arguments_parser():
     parser = PepcArgsParser(description=text, prog=_OWN_NAME, ver=_VERSION)
 
     ArgParse.add_ssh_options(parser)
+    parser.add_dataset_options()
 
     text = "Force coloring of the text output."
     parser.add_argument("--force-color", action="store_true", help=text)
@@ -579,6 +609,40 @@ def aspm_config_command(args, pman):
 
     _PepcASPM.aspm_config_command(args, pman)
 
+def _get_emul_pman(args):
+    """
+    Configure and return an 'EmulProcessManager' object for the dataset specified with the '-D'
+    option.
+    """
+
+    from pepclibs.helperlibs import EmulProcessManager
+
+    name = args.dataset
+    path = ProjectFiles.find_project_data(_OWN_NAME, f"tests/data/{name}",
+                                          descr=f"{_OWN_NAME} dataset")
+
+    required_cmd_modules = {
+        "aspm" : ["ASPM", "Systemctl"],
+        "cstates" : ["CPUInfo", "CStates", "Systemctl"],
+        "pstates" : ["CPUInfo", "PStates", "Systemctl"],
+        "topology" : ["CPUInfo"],
+        "cpu_hotplug" : ["CPUInfo", "CPUOnline", "Systemctl"],
+    }
+
+    for cmd, _modules in required_cmd_modules.items():
+        if cmd in args.func.__name__:
+            modules = _modules
+            break
+    else:
+        raise Error(f"BUG: No modules specified for '{args.func.__name__}()'")
+
+    pman = EmulProcessManager.EmulProcessManager(hostname=name)
+
+    for module in modules:
+        pman.init_testdata(module, path)
+
+    return pman
+
 def main():
     """Script entry point."""
 
@@ -593,9 +657,14 @@ def main():
         if args.hostname == "localhost":
             args.username = args.privkey = args.timeout = None
 
-        with ProcessManager.get_pman(args.hostname, username=args.username,
-                                     privkeypath=args.privkey, timeout=args.timeout) as pman:
-            args.func(args, pman)
+        if args.dataset:
+            with _get_emul_pman(args) as pman:
+                args.func(args, pman)
+        else:
+            with ProcessManager.get_pman(args.hostname, username=args.username,
+                                         privkeypath=args.privkey, timeout=args.timeout) as pman:
+                args.func(args, pman)
+
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
         return -1
