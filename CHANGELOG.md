@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix 'pepc' crash on some system when it is run without arguments.
 ### Added
 ### Removed
 ### Changed
@@ -17,7 +18,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
  - Fix regression introduced in 1.3.34: 'pepc cstates info' and
    'pepc pstates info' crashed with 'ValueError' in some cases.
- - Fix error when the '--epb' opiton is used on a system that does not support
+ - Fix error when the '--epb' option is used on a system that does not support
    EPB.
 ### Added
  - Add Grand Ridge SoC support.
