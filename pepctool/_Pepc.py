@@ -39,14 +39,13 @@ class PepcArgsParser(ArgParse.ArgsParser):
     add the capability.
     """
 
-    def parse_args(self, *args, **kwargs): # pylint: disable=no-member
-        """Parse unknown arguments from ArgParse class."""
+    def _check_unknow_args(self, args, uargs, gargs): # pylint: disable=no-self-use
+        """
+        Check unknown arguments 'uargs' for global arguments 'gargs' and add them to 'args'.
+        This is a workaround for implementing global arguments.
+        """
 
-        args, uargs = super().parse_known_args(*args, **kwargs)
-        if not uargs:
-            return args
-
-        for opt in ArgParse.SSH_OPTIONS:
+        for opt in gargs:
             if opt.short in uargs:
                 optname = opt.short
             elif opt.long in uargs:
@@ -61,6 +60,15 @@ class PepcArgsParser(ArgParse.ArgsParser):
             setattr(args, opt.kwargs["dest"], uargs[val_idx])
             uargs.remove(uargs[val_idx])
             uargs.remove(optname)
+
+    def parse_args(self, *args, **kwargs): # pylint: disable=no-member
+        """Parse unknown arguments from ArgParse class."""
+
+        args, uargs = super().parse_known_args(*args, **kwargs)
+        if not uargs:
+            return args
+
+        self._check_unknow_args(args, uargs, ArgParse.SSH_OPTIONS)
 
         if uargs:
             raise Error(f"unrecognized option(s): {' '.join(uargs)}")
