@@ -10,6 +10,7 @@
 pepc - Power, Energy, and Performance Configuration tool for Linux.
 """
 
+import os
 import sys
 import logging
 import argparse
@@ -42,10 +43,12 @@ DATASET_OPTIONS = [
         "kwargs" : {
             "dest" : "dataset",
             "help" : f"""This option is for debugging and testing purposes only, it defines the
-                         dataset that will be used to emulate a host for running the command.
-                         Please, specify dataset name, it will be searched for in the following
-                         locations:
-                         {ProjectFiles.get_project_data_search_descr('pepc', 'tests/data')}."""
+                         dataset that will be used to emulate a host for running the command on.
+                         Please, specify dataset path or name. In the latter case, it will be
+                         searched for in the following locations:
+                         {ProjectFiles.get_project_data_search_descr('pepc', 'tests/data')}.
+                         Use 'all' to specify all available datasets.
+                         """
         },
     },
 ]
@@ -53,7 +56,7 @@ DATASET_OPTIONS = [
 class PepcArgsParser(ArgParse.ArgsParser):
     """
     The default argument parser does not allow defining "global" options, so that they are present
-    in every subcommand. For example we want the SSH options to be available everywhere.
+    in every subcommand. For example, we want the SSH options to be available everywhere.
     """
 
     def add_dataset_options(self):
@@ -609,17 +612,34 @@ def aspm_config_command(args, pman):
 
     _PepcASPM.aspm_config_command(args, pman)
 
-def _get_emul_pman(args):
+def _get_next_dataset(dataset):
+    """
+    Yield path for each dataset specified with the '-D' option, where 'name' is the dataset name,
+    'path' is the path to the dataset and 'all' all datasets in 'tests/data'.
+    """
+
+    if Path(dataset).is_dir():
+        yield Path(dataset)
+    elif dataset == "all":
+        base = ProjectFiles.find_project_data(_OWN_NAME, "tests/data", f"{_OWN_NAME} datasets")
+        for name in os.listdir(base):
+            _LOG.info("\n======= emulation:%s =======", name)
+            yield Path(f"{base}/{name}")
+    else:
+        base = ProjectFiles.find_project_data(_OWN_NAME, "tests/data", f"{_OWN_NAME} datasets")
+        path = Path(base / dataset)
+        if not path.is_dir():
+            raise Error(f"couldn't find dataset '{dataset}', '{path}' doesn't exist")
+
+        yield path
+
+def _get_emul_pman(args, path):
     """
     Configure and return an 'EmulProcessManager' object for the dataset specified with the '-D'
     option.
     """
 
     from pepclibs.helperlibs import EmulProcessManager
-
-    name = args.dataset
-    path = ProjectFiles.find_project_data(_OWN_NAME, f"tests/data/{name}",
-                                          descr=f"{_OWN_NAME} dataset")
 
     required_cmd_modules = {
         "aspm" : ["ASPM", "Systemctl"],
@@ -636,7 +656,7 @@ def _get_emul_pman(args):
     else:
         raise Error(f"BUG: No modules specified for '{args.func.__name__}()'")
 
-    pman = EmulProcessManager.EmulProcessManager(hostname=name)
+    pman = EmulProcessManager.EmulProcessManager(hostname=path.name)
 
     for module in modules:
         pman.init_testdata(module, path)
@@ -658,8 +678,9 @@ def main():
             args.username = args.privkey = args.timeout = None
 
         if args.dataset:
-            with _get_emul_pman(args) as pman:
-                args.func(args, pman)
+            for path in _get_next_dataset(args.dataset):
+                with _get_emul_pman(args, path) as pman:
+                    args.func(args, pman)
         else:
             with ProcessManager.get_pman(args.hostname, username=args.username,
                                          privkeypath=args.privkey, timeout=args.timeout) as pman:
