@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.3.38] - 2022-12-16
+### Fixed
+ - Revert changes in 1.3.37 due to them breaking dependent projects.
+
 ## [1.3.37] - 2022-12-16
 ### Fixed
  - Fix 'pepc' crash on some system when it is run without arguments.
