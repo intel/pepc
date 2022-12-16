@@ -6,6 +6,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add '-D'/'--dataset' option to 'pepc', it defines the dataset that will be
+   used to emulate a host for running the command on.
 ### Removed
 ### Changed
 
