@@ -158,8 +158,8 @@ class ArgsParser(argparse.ArgumentParser):
             opts = [opt.strip(")'") for opt in opts.split(", ")]
             suggestion = DamerauLevenshtein.closest_match(offending, opts)
             if suggestion:
-                message = "bad argument '%s', use '%s -h'.\n\nThe most similar argument is\n" \
-                          "        %s" % (offending, self.prog, suggestion)
+                message = f"bad argument '{offending}', use '{self.prog} -h'.\n\nThe most " \
+                          f"similar argument is\n        {suggestion}"
 
         super().error(message)
 
@@ -235,19 +235,19 @@ def parse_int_list(nums, ints=False, dedup=False, sort=False):
         if "-" in elts:
             elts = Trivial.split_csv_line(elts, sep="-")
             if len(elts) != 2:
-                raise Error("bad range '%s', should be two integers separated by '-'" % elts)
+                raise Error(f"bad range '{elts}', should be two integers separated by '-'")
         else:
             elts = [elts]
 
         for elt in elts:
             if not Trivial.is_int(elt):
-                raise Error("bad number '%s', should be an integer" % elt)
+                raise Error(f"bad number '{elt}', should be an integer")
 
         elts = [int(elt) for elt in elts]
         if len(elts) > 1:
             if elts[0] > elts[1]:
-                raise Error("bad range %d-%d, the first number should be smaller than thesecond"
-                            % (elts[0], elts[1]))
+                raise Error(f"bad range {elts[0]}-{elts[1]}, the first number should be smaller " \
+                            f"than thesecond")
             result += range(elts[0], elts[1] + 1)
         else:
             result += elts
