@@ -127,12 +127,26 @@ class ArgsParser(argparse.ArgumentParser):
     def parse_args(self, *args, **kwargs): # pylint: disable=signature-differs
         """Verify that '-d' and '-q' are not used at the same time."""
 
-        args = super().parse_args(*args, **kwargs)
+        if not args:
+            return None
 
+        args = super().parse_args(*args, **kwargs)
         if args.quiet and args.debug:
             raise Error("-q and -d cannot be used together")
 
         return args
+
+    def parse_known_args(self, *args, **kwargs): # pylint: disable=signature-differs
+        """Verify that '-d' and '-q' are not used at the same time."""
+
+        if not args and not kwargs:
+            return None, None
+
+        args, uargs = super().parse_known_args(*args, **kwargs)
+        if args.quiet and args.debug:
+            raise Error("-q and -d cannot be used together")
+
+        return args, uargs
 
     def add_subparsers(self, *args, **kwargs):
         """
