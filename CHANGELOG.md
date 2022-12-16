@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix 'pepc' crash on some system when it is run without arguments.
 ### Added
 ### Removed
 ### Changed
+
+## [1.3.39] - 2022-12-16
+### Fixed
+ - Fix 'pepc' crash on some system when it is run without arguments.
 
 ## [1.3.38] - 2022-12-16
 ### Fixed

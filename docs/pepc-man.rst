@@ -17,8 +17,7 @@ SYNOPSIS
 ========
 
 **pepc** [-h] [-q] [-d] [--version] [-H HOSTNAME] [-U USERNAME] [-K
-PRIVKEY] [-T TIMEOUT] [--force-color]
-{cpu-hotplug,cstates,pstates,aspm,topology} ...
+PRIVKEY] [-T TIMEOUT] [--force-color] ...
 
 DESCRIPTION
 ===========
