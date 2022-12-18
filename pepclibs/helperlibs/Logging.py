@@ -302,3 +302,26 @@ def setup_logger(prefix=None, loglevel=None, colored=None, info_stream=sys.stdou
     logger.warn_once = types.MethodType(_warn_once, logger)
 
     return logger
+
+def setup_stdout_logging(toolname, logs_path):
+    """
+    Configure the logger to mirror all stdout and stderr messages to the log file in the 'logs_path'
+    directory.
+    """
+
+    # Configure the logger to print to both the console and the log file.
+    try:
+        logs_path.mkdir(exist_ok=True)
+    except OSError as err:
+        msg = Error(err).indent(2)
+        raise Error(f"cannot create log directory '{logs_path}':\n{msg}") from None
+    logfile = logs_path / f"{toolname}.log.txt"
+
+    try:
+        with logfile.open("w+") as fobj:
+            fobj.write(f"Command line: {' '.join(sys.argv)}\n")
+    except OSError as err:
+        msg = Error(err).indent(2)
+        raise Error(f"failed to write command line to '{logfile}':\n{msg}") from None
+
+    setup_logger(toolname, info_logfile=logfile, error_logfile=logfile)
