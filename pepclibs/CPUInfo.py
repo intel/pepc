@@ -165,7 +165,8 @@ _CPU_DESCR = {INTEL_FAM6_EMERALDRAPIDS_X:  "Emerald Rapids Xeon",
               INTEL_FAM6_ALDERLAKE:        "Alder Lake client",
               INTEL_FAM6_ALDERLAKE_L:      "Alder Lake mobile",
               INTEL_FAM6_ALDERLAKE_N:      "Alder Lake mobile",
-              INTEL_FAM6_TREMONT_D:        "Tremont Atom (Snow Ridge)"}
+              INTEL_FAM6_TREMONT_D:        "Tremont Atom (Snow Ridge)",
+              INTEL_FAM6_SKYLAKE_X:        "Sky/Cascade/Cooper Lake"}
 
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
 LEVELS = ("CPU", "core", "module", "die", "node", "package")
