@@ -275,8 +275,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         for cpu in cpus:
             if not self._features[fname]["supported"][cpu]:
-                raise ErrorNotSupported(f"CPU {cpu} does not support feature '{fname}' on:\n"
-                                        f"{self._cpuinfo.cpudescr}{self._pman.hostmsg}")
+                raise ErrorNotSupported(f"CPU {cpu} does not support "
+                                        f"{self._features[fname]['name']}{self._pman.hostmsg}")
 
     def check_cpu_feature_supported(self, fname, cpu):
         """Same as 'check_feature_supported()' but for a single CPU."""
