@@ -630,7 +630,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                 continue
             if isinstance(stream, list):
                 stream = "".join(stream)
-            msg += "%s\n" % stream.strip()
+            msg += f"{stream.strip()}\n"
 
         if not startmsg:
             startmsg = ""
@@ -645,7 +645,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         result = f"{startmsg}\n{cmd}"
         if msg:
-            result += "\n\n%s" % msg.strip()
+            result += f"\n\n{msg.strip()}"
         return result
 
     def open(self, path, mode):
