@@ -852,7 +852,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 freq = Human.parse_freq(val, name=Human.untitle(self._props[pname]["name"]))
 
         if not freq:
-            raise ErrorNotSupported(f"'{val} is not supported{self._pman.hostmsg}")
+            raise ErrorNotSupported(f"'{val}' is not supported{self._pman.hostmsg}")
 
         return freq
 
