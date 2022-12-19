@@ -43,9 +43,9 @@ class WrapExceptions:
         # pylint: disable=protected-access
         errno = getattr(err, "errno", None)
         if self._we_get_err_prefix:
-            msg = "%s: %s" % (self._we_get_err_prefix(self._obj, name), err)
+            msg = f"{self._we_get_err_prefix(self._obj, name)}: {err}"
             return self._target_exception(msg, errno=errno)
-        return self._target_exception("method '%s()' failed: %s" % (name, err), errno=errno)
+        return self._target_exception(f"method '{name}()' failed: {err}", errno=errno)
         # pylint: enable=protected-access
 
     def _wrap(self, name):
@@ -124,7 +124,7 @@ class WrapExceptions:
 
         if hasattr(self._obj, "__iter__"):
             return self
-        raise self._target_exception("object of type '%s' is not iterable" % type(self._obj))
+        raise self._target_exception(f"object of type '{type(self._obj)}' is not iterable")
 
     def __next__(self):
         """Next iteration."""
