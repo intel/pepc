@@ -49,9 +49,9 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
 
         if not self._pman.is_file(path):
             if self._pman.is_dir(path.parent):
-                raise ErrorNotSupported(f"CPU '{cpu}' on host {self._pman.hostname}' does not "
-                                        f"support onlining/offlining")
-            raise Error(f"CPU '{cpu}' does not exist on host '{self._pman.hostname}'")
+                raise ErrorNotSupported(f"CPU {cpu} does not support onlining/offlining"
+                                        f"{self._pman.hostmsg}")
+            raise Error(f"CPU {cpu} does not exist{self._pman.hostmsg}")
 
     def _get_online(self, path):
         """Read the 'online' sysfs file at 'path'."""
@@ -60,7 +60,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             state = fobj.read().strip()
         if state in ("0", "1"):
             return state
-        raise Error("unexpected value '{state}' in '{path}' on host '{self._pman.hostname}'")
+        raise Error(f"unexpected value '{state}' in '{path}'{self._pman.hostmsg}")
 
     def _get_path(self, cpu):
         """Build and return path to the 'online' sysfs file for CPU number 'cpu'."""
