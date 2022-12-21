@@ -6,10 +6,7 @@
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""
-This module is a collection of miscellaneous high level functions that are helpful for tools that
-use 'statscollectlib' modules.
-"""
+"""This module is a collection of miscellaneous functions that interact with project paths."""
 
 import os
 import sys
@@ -18,7 +15,7 @@ from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
 def find_project_data(prjname, subpath, descr=None):
     """
-    Search for project 'prgname' data. The data are searched for in the 'subpath' sub-path of
+    Search for project 'prjname' data. The data are searched for in the 'subpath' sub-path of
     the following directories (and in the following order).
       * in the directory the of the running process (sys.argv[0]/<subpath>).
       * in the directory specified by the '<prjname>_DATA_PATH' environment variable.
@@ -35,7 +32,7 @@ def find_project_data(prjname, subpath, descr=None):
 
     paths.append(Path(sys.argv[0]).parent)
 
-    path = os.environ.get("WULT_DATA_PATH".upper())
+    path = os.environ.get(f"{prjname}_DATA_PATH".upper())
     if path:
         paths.append(Path(path))
 
