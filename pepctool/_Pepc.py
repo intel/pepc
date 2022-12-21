@@ -13,6 +13,7 @@ pepc - Power, Energy, and Performance Configuration tool for Linux.
 import sys
 import logging
 import argparse
+
 try:
     import argcomplete
 except ImportError:
@@ -46,10 +47,10 @@ class PepcArgsParser(ArgParse.ArgsParser):
         """
 
         for opt in gargs:
-            if opt.short in uargs:
-                optname = opt.short
-            elif opt.long in uargs:
-                optname = opt.long
+            if opt["short"] in uargs:
+                optname = opt["short"]
+            elif opt["long"] in uargs:
+                optname = opt["long"]
             else:
                 continue
 
@@ -57,7 +58,7 @@ class PepcArgsParser(ArgParse.ArgsParser):
             if len(uargs) <= val_idx or uargs[val_idx].startswith("-"):
                 raise Error(f"value required for argument '{optname}'")
 
-            setattr(args, opt.kwargs["dest"], uargs[val_idx])
+            setattr(args, opt["kwargs"]["dest"], uargs[val_idx])
             uargs.remove(uargs[val_idx])
             uargs.remove(optname)
 

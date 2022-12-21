@@ -13,7 +13,6 @@ This module contains helpers related to parsing command-line arguments.
 import sys
 import types
 import argparse
-from collections import namedtuple
 
 try:
     import argcomplete
@@ -24,22 +23,50 @@ except ImportError:
 from pepclibs.helperlibs import DamerauLevenshtein, Trivial
 from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
 
-SSHOptions = namedtuple("SSHOptions", ["short", "long", "argcomplete", "kwargs"])
-SSH_OPTIONS = (SSHOptions("-H", "--host", None,
-                          {"dest" : "hostname", "default" : "localhost",
-                           "help" : "Name of the host to run the command on."}),
-               SSHOptions("-U", "--username", None,
-                          {"dest" : "username", "default" : "root",
-                           "help" : "Name of the user to use for logging into the remote host over "
-                                    " SSH. The default user name is 'root'."}),
-               SSHOptions("-K", "--priv-key", "FilesCompleter",
-                          {"dest" : "privkey",
-                           "help" : "Path to the private SSH key that should be used for logging "
-                                    "into the remote host. By default the key is automatically "
-                                    "found from standard paths like '~/.ssh'."}),
-               SSHOptions("-T", "--timeout", None,
-                          {"dest" : "timeout", "default" : 8,
-                           "help" : "SSH connect timeout in seconds, default is 8."}))
+SSH_OPTIONS = [
+    {
+        "short" : "-H",
+        "long" : "--host",
+        "argcomplete" : None,
+        "kwargs" : {
+            "dest" : "hostname",
+            "default" : "localhost",
+            "help" : "Name of the host to run the command on."
+        },
+    },
+    {
+        "short" : "-U",
+        "long" : "--username",
+        "argcomplete" : None,
+        "kwargs" : {
+            "dest" : "username",
+            "default" : "root",
+            "help" : "Name of the user to use for logging into the remote host over SSH. The "
+                     "default user name is 'root'."
+        },
+    },
+    {
+        "short" : "-K",
+        "long" : "--priv-key",
+        "argcomplete" : "FilesCompleter",
+        "kwargs" : {
+            "dest" : "privkey",
+            "help" : "Path to the private SSH key that should be used for logging into the remote "
+                     "host. By default the key is automatically found from standard paths like "
+                     "'~/.ssh'."
+        },
+    },
+    {
+        "short" : "-T",
+        "long" : "--timeout",
+        "argcomplete" : None,
+        "kwargs" : {
+            "dest" : "timeout",
+            "default" : 8,
+            "help" : "SSH connect timeout in seconds, default is 8."
+        },
+    },
+]
 
 def add_ssh_options(parser):
     """
@@ -47,9 +74,9 @@ def add_ssh_options(parser):
     """
 
     for opt in SSH_OPTIONS:
-        arg = parser.add_argument(opt.short, opt.long, **opt.kwargs)
-        if opt.argcomplete and argcomplete:
-            arg.completer = getattr(argcomplete.completers, opt.argcomplete)
+        arg = parser.add_argument(opt["short"], opt["long"], **opt["kwargs"])
+        if opt["argcomplete"] and argcomplete:
+            arg.completer = getattr(argcomplete.completers, opt["argcomplete"])
 
 class OrderedArg(argparse.Action):
     """
@@ -185,10 +212,10 @@ class SSHOptsAwareArgsParser(ArgsParser):
 
         ssh_opts = set()
         for opt in SSH_OPTIONS:
-            if opt.long:
-                ssh_opts.add(opt.long)
-            if opt.short:
-                ssh_opts.add(opt.short)
+            if "short" in opt:
+                ssh_opts.add(opt["short"])
+            if "long" in opt:
+                ssh_opts.add(opt["long"])
 
         ssh_arg_idx = -1
         ssh_args = []
