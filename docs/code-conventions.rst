@@ -10,6 +10,9 @@ Code conventions
 Class attribute definitions
 ===========================
 
+Attributes definition
++++++++++++++++++++++
+
 All class attributes must be defined at the top of the constructor.
 
 *Do*:::
@@ -26,7 +29,7 @@ All class attributes must be defined at the top of the constructor.
          self._foo = None
 
          self._validate_input_args()
-         self._do_somthing_else()
+         self._do_something_else()
 
 *Don't*:::
 
@@ -39,10 +42,39 @@ All class attributes must be defined at the top of the constructor.
          self._arg2 = arg2
 
          self._validate_input_args()
-         self._do_somthing_else()
+         self._do_something_else()
 
          self._something = None
          self._foo = None
+
+Storing input arguments
++++++++++++++++++++++++
+
+If you need to store some or all input argument value in attributes, make attribute names to be the
+same as the argument names, but prepend them with "_" (unless you want them to be public
+attributes).
+
+Try to define the attributes in the order matching the arguments order.
+
+*Do*:::
+
+ class Blah:
+     ....
+     def __init__(self, unload, pman):
+         """Reasonable docstring."""
+
+         self._unload = unload
+         self._pman = pman
+
+*Don't*:::
+
+ class Blah:
+     ....
+     def __init__(self, unload, pman):
+         """Reasonable docstring."""
+
+         self._my_pman = pman
+         self._my_unload = unload
 
 Class 'close()' method
 ======================
