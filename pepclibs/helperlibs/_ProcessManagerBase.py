@@ -591,7 +591,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         try:
             # Try to resolve tool name to the OS package name.
-            with ToolChecker.ToolChecker(pman=self) as tchk:
+            with ToolChecker.ToolChecker(self) as tchk:
                 pkgname = tchk.tool_to_pkg(toolname)
         except BaseException as err: # pylint: disable=broad-except
             _LOG.debug("failed to format the command package suggestion: %s", err)

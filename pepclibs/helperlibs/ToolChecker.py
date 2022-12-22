@@ -15,7 +15,7 @@ meaningful OS package installation suggestion if it is not installed.
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
+from pepclibs.helperlibs import ClassHelpers
 
 #
 # Tools information dictionary. Maps tool names to OS package names.
@@ -168,21 +168,17 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
 
         raise ErrorNotFound(msg)
 
-    def __init__(self, pman=None):
+    def __init__(self, pman):
         """
         The class constructor. The arguments are as follows.
           * pman - the process manager object that defines the host to check for the tools on.
         """
 
         self._pman = pman
-        self._close_pman = pman is None
         self._osname = None
         # Tools name to tool path cache.
         self._cache = {}
 
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_pman",))
+        ClassHelpers.close(self, unref_attrs=("_pman",))
