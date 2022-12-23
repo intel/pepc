@@ -51,9 +51,6 @@ def get_pman(hostspec, modules=None):
     pman = ProcessManager.get_pman(hostspec, username=username)
 
     if datapath and modules is not None:
-        if not isinstance(modules, list):
-            modules = [modules]
-
         for module in modules:
             pman.init_testdata(module, datapath)
 
