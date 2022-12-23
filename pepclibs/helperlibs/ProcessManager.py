@@ -83,7 +83,6 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=N
         from pepclibs.helperlibs import EmulProcessManager
 
         pman = EmulProcessManager.EmulProcessManager(hostname=hostname)
-        pman.init_testdata("CPUInfo", datapath)
     else:
         from pepclibs.helperlibs import SSHProcessManager
 
