@@ -2,7 +2,7 @@
 PEPC
 ====
 
-:Date:   2022-12-16
+:Date:   2022-12-23
 
 .. contents::
    :depth: 3
@@ -17,7 +17,8 @@ SYNOPSIS
 ========
 
 **pepc** [-h] [-q] [-d] [--version] [-H HOSTNAME] [-U USERNAME] [-K
-PRIVKEY] [-T TIMEOUT] [--force-color] ...
+PRIVKEY] [-T TIMEOUT] [--force-color]
+{cpu-hotplug,cstates,pstates,aspm,topology} ...
 
 DESCRIPTION
 ===========

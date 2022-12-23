@@ -1,3 +1,9 @@
+pepc (1.3.40) unstable; urgency=low
+
+  * Minor changes required for the 'wult' project.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 23 Dec 2022 00:00:00 +0200
+
 pepc (1.3.39) unstable; urgency=low
 
   * Fix 'pepc' crash on some system when it is run without arguments.

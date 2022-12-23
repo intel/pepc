@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.3.40] - 2022-12-23
+### Changed
+ - Minor changes required for the 'wult' project.
+
 ## [1.3.39] - 2022-12-16
 ### Fixed
  - Fix 'pepc' crash on some system when it is run without arguments.
