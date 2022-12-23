@@ -45,11 +45,6 @@ def get_pman(hostspec, modules=None):
         dataset = hostspec.split(":", maxsplit=2)[1]
         datapath = _get_datapath(dataset)
 
-        for module in modules:
-            if not Path(datapath / f"{module}.yaml").exists():
-                assert False, f"bad dataset {dataset}: missing data for emulating the '{module}' " \
-                              f"module"
-
     elif hostspec != "localhost":
         username = "root"
 
