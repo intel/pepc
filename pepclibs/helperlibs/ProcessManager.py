@@ -28,7 +28,7 @@ def _check_for_none(hostname, **kwargs):
             raise Error(f"BUG: get_pman: hostname is '{hostname}', but argument '{name}' is not "
                         f"'None'. Instead, it is '{val}'")
 
-def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=None):
+def get_pman(hostname, username=None, privkeypath=None, timeout=None):
     """
     Creates and returns a process manager object for host 'hostname'. At the moment there are
     basically 3 possibilities.
@@ -39,23 +39,22 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=N
             which will connect to local host over SSH and manage processes over a local SSH
             connection. This is a less efficient way of managing processes, but may be useful for,
             say, debugging purposes.
-     2. 'datapath' is 'None' and 'hostname' is not "localhost". Create and return an
+     2. 'hostname' starts with "emulation". Create and return an 'EmulProcessManager' object. This
+        object is used for testing purposes only.
+     3. 'hostname' is not "localhost" and does not start with "emulation". Create and return an
         'SSHProcessManager' object, which will be connected to the 'hostname' host over SSH and
         will manage processes on the 'hostname' host over SSH.
-     3. 'datapath' is not 'None'. Create and return an 'EmulProcessManager' object. This object is
-        used for testing purposes only.
+
 
     The arguments are as follows.
       * hostname - the host name to create a process manager object for.
       * username - the user name to use for logging into the 'hostname' host over SSH.
       * privkeypath - path to SSH private key to use for logging into the host.
       * timeout - the SSH connection time out in seconds.
-      * datapath - path to the emulation data. Ignored if 'hostname' is "localhost".
 
     The 'hostname' argument is used for all types of process managers. The 'username',
     'privkeypath', and 'timeout' arguments are used only for 'SSHProcessManager'. Have to be 'None'
-    for everything else. The 'datapath' argument is used only for the 'EmulProcessManager' process
-    manager, and it defines the emulated host data. Must be 'None' for everything else.
+    for everything else.
 
     Notes.
     1. The preferred way of using this method is with the 'with' statement:
@@ -73,13 +72,12 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None, datapath=N
     # pylint: disable=import-outside-toplevel
 
     if hostname == "localhost" and username is None:
-        _check_for_none(hostname, username=username, privkeypath=privkeypath, timeout=timeout,
-                        datapath=datapath)
+        _check_for_none(hostname, username=username, privkeypath=privkeypath, timeout=timeout)
 
         from pepclibs.helperlibs import LocalProcessManager
 
         pman = LocalProcessManager.LocalProcessManager()
-    elif datapath is not None:
+    elif hostname.startswith("emulation"):
         from pepclibs.helperlibs import EmulProcessManager
 
         pman = EmulProcessManager.EmulProcessManager(hostname=hostname)

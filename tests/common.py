@@ -53,7 +53,7 @@ def get_pman(hostspec, modules=None):
     elif hostspec != "localhost":
         username = "root"
 
-    pman = ProcessManager.get_pman(hostspec, username=username, datapath=datapath)
+    pman = ProcessManager.get_pman(hostspec, username=username)
 
     if datapath and modules is not None:
         if not isinstance(modules, list):
