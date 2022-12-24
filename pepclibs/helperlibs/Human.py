@@ -30,7 +30,7 @@ def bytesize(size, precision=1, sep=""):
         return "1 byte"
 
     if size < 512:
-        return f"{size} bytes"
+        return "%d bytes" % size
 
     for unit in _SIZE_UNITS:
         size /= 1024.0
@@ -38,9 +38,10 @@ def bytesize(size, precision=1, sep=""):
             break
 
     if precision <= 0:
-        return f"{size}{sep}{unit}"
+        return "%d%s%s" % (int(size), sep, unit)
 
-    return f"{size:.{precision}f} {unit}"
+    pattern = "%%.%df %%s" % int(precision)
+    return pattern % (size, unit)
 # pylint: enable=undefined-loop-variable
 
 def parse_bytesize(size):
@@ -62,8 +63,8 @@ def parse_bytesize(size):
     try:
         return int(float(size) * multiplier)
     except ValueError:
-        raise Error(f"cannot interpret bytes count '{orig_size}', please provide a number and "
-                    f"possibly the unit: {', '.join(_SIZE_UNITS)}") from None
+        raise Error("cannot interpret bytes count '%s', please provide a number and "
+                    "possibly the unit: %s" % (orig_size, ", ".join(_SIZE_UNITS))) from None
 
 def largenum(value, sep="", unit=None):
     """
@@ -78,7 +79,7 @@ def largenum(value, sep="", unit=None):
             if value < 1000:
                 break
 
-    result = f"{value:.1f}"
+    result = "%.1f" % value
     result = result.rstrip("0").rstrip(".")
     if scaler:
         result += sep + scaler
@@ -103,18 +104,18 @@ def duration(seconds, s=True, ms=False):
 
     result = ""
     if days:
-        result += f"{days} days "
+        result += "%d days " % days
     if hours:
-        result += f"{hours}h "
+        result += "%dh " % hours
     if mins:
-        result += f"{mins}m "
+        result += "%dm " % mins
     if s or seconds < 60:
         if ms or seconds < 1 or (msecs and seconds < 10):
-            result += f"{secs + float(msecs) / 1000:.6f}"
+            result += "%f" % (secs + float(msecs) / 1000)
             result = result.rstrip("0").rstrip(".")
             result += "s"
         elif secs:
-            result += f"{secs:.6f}s"
+            result += "%ds " % secs
 
     return result.strip()
 
@@ -131,7 +132,7 @@ def duration_ns(value, sep=""):
             if value < 1000:
                 break
 
-    result = f"{value:.6f}"
+    result = "%f" % value
     result = result.rstrip("0").rstrip(".")
     if not scaler:
         scaler = "ns"
