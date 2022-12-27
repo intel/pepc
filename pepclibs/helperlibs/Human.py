@@ -19,7 +19,7 @@ _SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "EiB"]
 _LARGENUM_UNITS = ["k", "M", "G", "T", "E"]
 _NSTIME_UNITS = ["us", "ms", "s"]
 
-# pylint: disable=undefined-loop-variable
+# pylint: disable=undefined-loop-variable, consider-using-f-string
 def bytesize(size, precision=1, sep=""):
     """
 	Transform size in bytes into a human-readable form. The 'precision' argument can be use to
