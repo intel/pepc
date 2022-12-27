@@ -17,11 +17,11 @@ def find_project_data(prjname, subpath, descr=None):
     """
     Search for project 'prjname' data. The data are searched for in the 'subpath' sub-path of
     the following directories (and in the following order).
-      * in the directory the of the running process (sys.argv[0]/<subpath>).
+      * in the directory the of the running process.
       * in the directory specified by the '<prjname>_DATA_PATH' environment variable.
-      * $HOME/.local/share/<prjname>/, if it exists.
-      * /usr/local/share/<prjname>/, if it exists.
-      * /usr/share/<prjname>/, if it exists.
+      * in '$HOME/.local/share/<prjname>/', if it exists.
+      * in '/usr/local/share/<prjname>/', if it exists.
+      * in '/usr/share/<prjname>/', if it exists.
 
     The 'descr' argument is a human-readable description of 'subpath', which will be used in the
     error message if error is raised.
@@ -59,5 +59,4 @@ def find_project_data(prjname, subpath, descr=None):
     searched = [str(s) for s in searched]
     dirs = " * " + "\n * ".join(searched)
 
-    raise ErrorNotFound(f"cannot find {descr}, searched in the following directories on local "
-                        f"host:\n{dirs}")
+    raise ErrorNotFound(f"cannot find {descr}, searched in the following locations:\n{dirs}")
