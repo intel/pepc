@@ -885,7 +885,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         self.hostmsg = f" on host '{hostname}'"
         if not timeout:
             timeout = 60
-        self.connection_timeout = timeout
+        self.connection_timeout = float(timeout)
         if port is None:
             port = 22
         self.port = port
