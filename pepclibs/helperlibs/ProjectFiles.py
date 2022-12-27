@@ -61,3 +61,44 @@ def find_project_data(prjname, subpath, descr=None):
     dirs = " * " + "\n * ".join(searched)
 
     raise ErrorNotFound(f"cannot find {descr}, searched in the following locations:\n{dirs}")
+
+def find_project_executable(prjname, executable):
+    """
+    Search for an executable file 'executable' belonging to the 'prjname' project. The executable is
+    searched for in the following locations (and in the following order).
+      * in the paths defined by the 'PATH' environment variable.
+      * in the directory the of the running process.
+      * in the directory specified by the '<prjname>_HELPERSPATH' environment variable.
+      * in '$HOME/.local/bin/', if it exists.
+      * in '/usr/local/bin/', if it exists.
+      * in '/usr/bin', if it exists.
+    """
+
+    from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
+
+    with LocalProcessManager.LocalProcessManager() as lpman:
+        exe_path = lpman.which(executable, must_find=False)
+        if exe_path:
+            return exe_path
+
+    searched = ["$PATH"]
+    paths = [Path(sys.argv[0]).parent]
+
+    name = prjname.replace("-", "_").upper()
+    path = os.environ.get(f"{name}_HELPERSPATH")
+    if path:
+        paths.append(Path(path))
+
+    paths.append(Path.home() / Path(".local/bin"))
+    paths.append(Path("/usr/local/bin"))
+    paths.append(Path("/usr/bin"))
+
+    for path in paths:
+        exe_path = path / executable
+        if exe_path.exists():
+            return exe_path
+        searched.append(str(path))
+
+    dirs = " * " + "\n * ".join(searched)
+    raise ErrorNotFound(f"cannot find the '{executable}' program, searched in the "
+                        f"following locations:\n{dirs}")
