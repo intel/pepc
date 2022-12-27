@@ -32,7 +32,8 @@ def find_project_data(prjname, subpath, descr=None):
 
     paths.append(Path(sys.argv[0]).parent)
 
-    path = os.environ.get(f"{prjname}_DATA_PATH".upper())
+    name = prjname.replace("-", "_").upper()
+    path = os.environ.get(f"{name}_DATA_PATH")
     if path:
         paths.append(Path(path))
 
