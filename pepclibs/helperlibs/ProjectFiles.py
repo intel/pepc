@@ -31,7 +31,7 @@ def get_project_helpers_envvar(prjname):
     name = prjname.replace("-", "_").upper()
     return f"{name}_HELPERSPATH"
 
-def find_project_data(prjname, subpath, descr=None):
+def find_project_data(prjname, subpath, what=None):
     """
     Search for project 'prjname' data. The data are searched for in the 'subpath' sub-path of
     the following directories (and in the following order).
@@ -41,8 +41,8 @@ def find_project_data(prjname, subpath, descr=None):
       * in '/usr/local/share/<prjname>/', if it exists.
       * in '/usr/share/<prjname>/', if it exists.
 
-    The 'descr' argument is a human-readable description of 'subpath', which will be used in the
-    error message if error is raised.
+    The 'what' argument is a human-readable description of 'subpath' (or what is searched for),
+    which will be used in the error message if an error occurs.
     """
 
     searched = []
@@ -72,12 +72,12 @@ def find_project_data(prjname, subpath, descr=None):
             return path
         searched.append(path)
 
-    if not descr:
-        descr = f"'{subpath}'"
+    if not what:
+        what = f"'{subpath}'"
     searched = [str(s) for s in searched]
     dirs = " * " + "\n * ".join(searched)
 
-    raise ErrorNotFound(f"cannot find {descr}, searched in the following locations:\n{dirs}")
+    raise ErrorNotFound(f"cannot find {what}, searched in the following locations:\n{dirs}")
 
 def find_project_helper(prjname, helper):
     """
