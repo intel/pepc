@@ -79,6 +79,21 @@ def find_project_data(prjname, subpath, what=None):
 
     raise ErrorNotFound(f"cannot find {what}, searched in the following locations:\n{dirs}")
 
+def get_project_data_search_descr(prjname, subpath):
+    """
+    This method returns a human-readable string describing the locations the 'find_project_data()'
+    function looks for the data at.
+    """
+
+    envvar = get_project_data_envvar(prjname)
+    paths = (f"{Path(sys.argv[0]).parent}/{subpath}",
+             f"${envvar}/{subpath}",
+             f"$HOME/.local/share/{prjname}/{subpath}",
+             f"/usr/local/share/{prjname}/{subpath}",
+             f"/usr/share/{prjname}/{subpath}")
+
+    return ", ".join(paths)
+
 def find_project_helper(prjname, helper):
     """
     Search for a helper program 'helper' belonging to the 'prjname' project. The helper program is
