@@ -13,6 +13,24 @@ import sys
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
+def get_project_data_envvar(prjname):
+    """
+    Return the name of the environment variable that points to the data location of project
+    'prjname'.
+    """
+
+    name = prjname.replace("-", "_").upper()
+    return f"{name}_DATA_PATH"
+
+def get_project_helpers_envvar(prjname):
+    """
+    Return the name of the environment variable that points to the helper programs location of
+    project 'prjname'.
+    """
+
+    name = prjname.replace("-", "_").upper()
+    return f"{name}_HELPERSPATH"
+
 def find_project_data(prjname, subpath, descr=None):
     """
     Search for project 'prjname' data. The data are searched for in the 'subpath' sub-path of
@@ -32,8 +50,7 @@ def find_project_data(prjname, subpath, descr=None):
 
     paths.append(Path(sys.argv[0]).parent)
 
-    name = prjname.replace("-", "_").upper()
-    path = os.environ.get(f"{name}_DATA_PATH")
+    path = os.environ.get(get_project_data_envvar(prjname))
     if path:
         paths.append(Path(path))
 
@@ -84,8 +101,7 @@ def find_project_executable(prjname, executable):
     searched = ["$PATH"]
     paths = [Path(sys.argv[0]).parent]
 
-    name = prjname.replace("-", "_").upper()
-    path = os.environ.get(f"{name}_HELPERSPATH")
+    path = os.environ.get(get_project_helpers_envvar(prjname))
     if path:
         paths.append(Path(path))
 
