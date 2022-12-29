@@ -42,8 +42,6 @@ def pytest_generate_tests(metafunc):
     hostname = metafunc.config.getoption("hostname")
     dataset = metafunc.config.getoption("dataset")
 
-    print(f"Test parameters: hostname: {hostname}, dataset: '{dataset}'")
-
     if hostname != "emulation":
         metafunc.parametrize("hostspec", [hostname], scope="module")
     else:
@@ -67,3 +65,5 @@ def pytest_configure(config):
 
         if not path.exists():
             raise pytest.exit(f"Did not find dataset '{dataset}'.")
+
+    print(f"Test parameters: hostname: {hostname}, dataset: '{dataset}'")
