@@ -68,7 +68,7 @@ def cstates_config_command(args, pman):
     # Options to print (excluding '--enable' and '--disable').
     print_opts = []
 
-    opts =  getattr(args, "oargs", {})
+    opts = getattr(args, "oargs", {})
     for optname, optval in opts.items():
         if optname in {"enable", "disable"}:
             enable_opts[optname] = optval
@@ -92,7 +92,7 @@ def cstates_config_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        csprint =  _PepcPrinter.CStatesPrinter(csobj, cpuinfo)
+        csprint = _PepcPrinter.CStatesPrinter(csobj, cpuinfo)
         stack.enter_context(csprint)
 
         all_cstates_printed = False
@@ -173,7 +173,7 @@ def cstates_restore_command(args, pman):
         csobj = CStates.CStates(pman=pman, msr=None, cpuinfo=cpuinfo)
         stack.enter_context(csobj)
 
-        csprint =  _PepcPrinter.CStatesPrinter(csobj, cpuinfo)
+        csprint = _PepcPrinter.CStatesPrinter(csobj, cpuinfo)
         stack.enter_context(csprint)
 
         csset = _PepcSetter.CStatesSetter(csobj, cpuinfo, csprint, msr=msr)

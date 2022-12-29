@@ -56,7 +56,7 @@ def pstates_config_command(args, pman):
     # Options to print.
     print_opts = []
 
-    opts =  getattr(args, "oargs", {})
+    opts = getattr(args, "oargs", {})
     for optname, optval in opts.items():
         if optval is None:
             print_opts.append(optname)
@@ -78,7 +78,7 @@ def pstates_config_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        psprint =  _PepcPrinter.PStatesPrinter(psobj, cpuinfo)
+        psprint = _PepcPrinter.PStatesPrinter(psobj, cpuinfo)
         stack.enter_context(psprint)
 
         if print_opts:
@@ -142,7 +142,7 @@ def pstates_restore_command(args, pman):
         psobj = PStates.PStates(pman=pman, msr=None, cpuinfo=cpuinfo)
         stack.enter_context(psobj)
 
-        psprint =  _PepcPrinter.PStatesPrinter(psobj, cpuinfo)
+        psprint = _PepcPrinter.PStatesPrinter(psobj, cpuinfo)
         stack.enter_context(psprint)
 
         psset = _PepcSetter.PStatesSetter(psobj, cpuinfo, psprint, msr=msr)
