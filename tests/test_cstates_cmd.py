@@ -110,15 +110,17 @@ def test_cstates_config(params):
 
     if params["pinfo"]["pkg_cstate_limit"]["pkg_cstate_limit_locked"] == "off":
         pc = params["pinfo"]["pkg_cstate_limit"]["pkg_cstate_limits"][0]
-        good_options += ["--pkg-cstate-limit", f"--pkg-cstate-limit {pc}"]
+        good_options += ["--pkg-cstate-limit",
+                         f"--pkg-cstate-limit {pc.upper()}",
+                         f"--pkg-cstate-limit {pc.lower()}"]
     if is_prop_supported("c1_demotion", params["pinfo"]):
-        good_options += ["--c1-demotion", "--c1-demotion on", "--c1-demotion off"]
+        good_options += ["--c1-demotion", "--c1-demotion on", "--c1-demotion OFF"]
     if is_prop_supported("c1_undemotion", params["pinfo"]):
-        good_options += ["--c1-undemotion", "--c1-undemotion on", "--c1-undemotion off"]
+        good_options += ["--c1-undemotion", "--c1-undemotion on", "--c1-undemotion OFF"]
     if is_prop_supported("c1e_autopromote", params["pinfo"]):
-        good_options += ["--c1e-autopromote", "--c1e-autopromote on", "--c1e-autopromote off"]
+        good_options += ["--c1e-autopromote", "--c1e-autopromote on", "--c1e-autopromote OFF"]
     if is_prop_supported("cstate_prewake", params["pinfo"]):
-        good_options += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake off"]
+        good_options += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake OFF"]
 
     for option in good_options:
         for scope in scope_options["good"]:
