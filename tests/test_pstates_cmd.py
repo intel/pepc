@@ -147,8 +147,8 @@ def _get_config_options(params):
         bad_options += ["--intel-pstate-mode Dagny"]
 
     if is_prop_supported("turbo", params["pinfo"]):
-        good_options += ["--turbo", "--turbo enable", "--turbo off"]
-        bad_options += ["--turbo 1", "--turbo OFF"]
+        good_options += ["--turbo", "--turbo enable", "--turbo OFF"]
+        bad_options += ["--turbo 1"]
 
     options["config_global"] = { "good" : good_options, "bad" : bad_options }
 
