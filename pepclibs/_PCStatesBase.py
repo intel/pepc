@@ -48,13 +48,19 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         value corresponding to 'val'.
         """
 
-        vals = {True, False, "on", "off", "enable", "disable"}
-        if val not in vals:
-            name = Human.untitle(prop["name"])
-            use = ", ".join([str(val1) for val1 in vals])
-            raise Error(f"bad value '{val}' for {name}, use one of: {use}")
+        if val in (True, False):
+            return val
 
-        return val in {True, "on", "enable"}
+        val = val.lower()
+        if val in ("on", "enable"):
+            return True
+
+        if val in ("off", "disable"):
+            return False
+
+        name = Human.untitle(prop["name"])
+        raise Error(f"bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
+                    f"disable")
 
     def _validate_governor_name(self, name):
         """Validate P-state or C-state governor name 'name'."""
