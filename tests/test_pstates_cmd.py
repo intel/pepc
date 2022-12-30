@@ -124,7 +124,7 @@ def _get_config_options(params):
     bad_options = []
 
     if is_prop_supported("governor", params["pinfo"]):
-        good_options += ["--governor powersave"]
+        good_options += ["--governor", "--governor powersave"]
         bad_options += ["--governor savepower"]
 
     if is_prop_supported("epp", params["pinfo"]):
@@ -141,7 +141,9 @@ def _get_config_options(params):
     bad_options = []
 
     if is_prop_supported("intel_pstate_mode", params["pinfo"]):
-        good_options += ["--intel-pstate-mode off", "--intel-pstate-mode passive"]
+        good_options += ["--intel-pstate-mode",
+                         "--intel-pstate-mode off",
+                         "--intel-pstate-mode passive"]
         bad_options += ["--intel-pstate-mode Dagny"]
 
     if is_prop_supported("turbo", params["pinfo"]):
