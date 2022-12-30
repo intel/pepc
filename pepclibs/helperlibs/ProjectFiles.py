@@ -73,12 +73,13 @@ def find_project_data(prjname, subpath, pman=None, what=None):
                 return path
             searched.append(path)
 
-    if not what:
-        what = f"'{subpath}'"
-    searched = [str(s) for s in searched]
-    dirs = " * " + "\n * ".join(searched)
+        if not what:
+            what = f"'{subpath}'"
+        searched = [str(s) for s in searched]
+        dirs = " * " + "\n * ".join(searched)
 
-    raise ErrorNotFound(f"cannot find {what}, searched in the following locations:\n{dirs}")
+        raise ErrorNotFound(f"cannot find {what}{wpman.hostmsg}, searched in the following "
+                            f"locations:\n{dirs}")
 
 def get_project_data_search_descr(prjname, subpath):
     """
@@ -140,6 +141,6 @@ def find_project_helper(prjname, helper, pman=None):
                 return exe_path
             searched.append(str(path))
 
-    dirs = " * " + "\n * ".join(searched)
-    raise ErrorNotFound(f"cannot find the '{helper}' program, searched in the following "
-                        f"locations:\n{dirs}")
+        dirs = " * " + "\n * ".join(searched)
+        raise ErrorNotFound(f"cannot find the '{helper}' program{wpman.hostmsg}, searched in the "
+                            f"following locations:\n{dirs}")
