@@ -33,16 +33,19 @@ def get_project_helpers_envvar(prjname):
 
 def find_project_data(prjname, subpath, what=None):
     """
-    Search for project 'prjname' data. The data are searched for in the 'subpath' sub-path of
-    the following directories (and in the following order).
+    Search for project 'prjname' data. The arguments are as follows.
+      * prjname - name of the project the data belongs to.
+      * subpath - the sub-path of the data in the data project installation base directory.
+      * what - human-readable description of 'subpath' (or what is searched for), which will be used
+               in the error message if an error occurs.
+
+    The data are searched for in the 'subpath' sub-path of the following directories (and in the
+    following order).
       * in the directory the of the running program.
       * in the directory specified by the '<prjname>_DATA_PATH' environment variable.
       * in '$HOME/.local/share/<prjname>/', if it exists.
       * in '/usr/local/share/<prjname>/', if it exists.
       * in '/usr/share/<prjname>/', if it exists.
-
-    The 'what' argument is a human-readable description of 'subpath' (or what is searched for),
-    which will be used in the error message if an error occurs.
     """
 
     searched = []
@@ -82,7 +85,7 @@ def find_project_data(prjname, subpath, what=None):
 def get_project_data_search_descr(prjname, subpath):
     """
     This method returns a human-readable string describing the locations the 'find_project_data()'
-    function looks for the data at.
+    function looks for the data at. The arguments are the same as in 'find_project_data()'.
     """
 
     envvar = get_project_data_envvar(prjname)
@@ -96,8 +99,12 @@ def get_project_data_search_descr(prjname, subpath):
 
 def find_project_helper(prjname, helper):
     """
-    Search for a helper program 'helper' belonging to the 'prjname' project. The helper program is
-    searched for in the following locations (and in the following order).
+    Search for a helper program 'helper' belonging to the 'prjname' project. The arguments are as
+    follows:
+      * prjname - name of the project the helper program belongs to.
+      * helper - the helper program to find.
+
+    The helper program is searched for in the following locations (and in the following order).
       * in the paths defined by the 'PATH' environment variable.
       * in the directory the of the running program.
       * in the directory specified by the '<prjname>_HELPERSPATH' environment variable.
