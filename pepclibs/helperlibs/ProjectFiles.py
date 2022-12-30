@@ -47,6 +47,7 @@ def find_project_data(prjname, subpath, pman=None, what=None):
       * in the directory the of the running program.
       * in the directory specified by the '<prjname>_DATA_PATH' environment variable.
       * in '$HOME/.local/share/<prjname>/', if it exists.
+      * in '$HOME/share/<prjname>/', if it exists.
       * in '/usr/local/share/<prjname>/', if it exists.
       * in '/usr/share/<prjname>/', if it exists.
     """
@@ -64,7 +65,7 @@ def find_project_data(prjname, subpath, pman=None, what=None):
         homedir = wpman.get_homedir()
         paths.append(homedir / Path(f".local/share/{prjname}"))
         paths.append(Path(f"/usr/local/share/{prjname}"))
-        paths.append(Path(f"/usr/share/{prjname}"))
+        paths.append( Path(f"/usr/share/{prjname}"))
 
         for path in paths:
             path /= subpath
@@ -110,6 +111,7 @@ def find_project_helper(prjname, helper, pman=None):
       * in the directory the of the running program.
       * in the directory specified by the '<prjname>_HELPERSPATH' environment variable.
       * in '$HOME/.local/bin/', if it exists.
+      * in '$HOME/bin/', if it exists.
       * in '/usr/local/bin/', if it exists.
       * in '/usr/bin', if it exists.
     """
@@ -128,6 +130,7 @@ def find_project_helper(prjname, helper, pman=None):
 
         homedir = wpman.get_homedir()
         paths.append(homedir / Path(".local/bin"))
+        paths.append(homedir / Path("bin"))
         paths.append(Path("/usr/local/bin"))
         paths.append(Path("/usr/bin"))
 
