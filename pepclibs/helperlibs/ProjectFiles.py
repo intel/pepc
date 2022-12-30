@@ -11,6 +11,7 @@
 import os
 import sys
 from pathlib import Path
+from pepclibs.helperlibs import ProcessManager
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
 def get_project_data_envvar(prjname):
@@ -31,11 +32,13 @@ def get_project_helpers_envvar(prjname):
     name = prjname.replace("-", "_").upper()
     return f"{name}_HELPERSPATH"
 
-def find_project_data(prjname, subpath, what=None):
+def find_project_data(prjname, subpath, pman=None, what=None):
     """
     Search for project 'prjname' data. The arguments are as follows.
       * prjname - name of the project the data belongs to.
       * subpath - the sub-path of the data in the data project installation base directory.
+      * pman - the process manager object for the host to find the data on (local host by
+               default).
       * what - human-readable description of 'subpath' (or what is searched for), which will be used
                in the error message if an error occurs.
 
@@ -57,23 +60,17 @@ def find_project_data(prjname, subpath, what=None):
     if path:
         paths.append(Path(path))
 
-    for path in paths:
-        path /= subpath
-        if path.exists():
-            return path
-        searched.append(path)
+    with ProcessManager.pman_or_local(pman) as wpman:
+        homedir = wpman.get_homedir()
+        paths.append(homedir / Path(f".local/share/{prjname}"))
+        paths.append(Path(f"/usr/local/share/{prjname}"))
+        paths.append(Path(f"/usr/share/{prjname}"))
 
-    path = Path.home() / Path(f".local/share/{prjname}/{subpath}")
-    if path.exists():
-        return path
-
-    searched.append(path)
-
-    for path in (Path(f"/usr/local/share/{prjname}"), Path(f"/usr/share/{prjname}")):
-        path /= subpath
-        if path.exists():
-            return path
-        searched.append(path)
+        for path in paths:
+            path /= subpath
+            if wpman.exists(path):
+                return path
+            searched.append(path)
 
     if not what:
         what = f"'{subpath}'"
@@ -97,14 +94,18 @@ def get_project_data_search_descr(prjname, subpath):
 
     return ", ".join(paths)
 
-def find_project_helper(prjname, helper):
+def find_project_helper(prjname, helper, pman=None):
     """
     Search for a helper program 'helper' belonging to the 'prjname' project. The arguments are as
     follows:
       * prjname - name of the project the helper program belongs to.
       * helper - the helper program to find.
+      * pman - the process manager object for the host to find the helper on (local host by
+               default).
 
     The helper program is searched for in the following locations (and in the following order).
+    The data are searched for in the 'subpath' sub-path of the following directories (and in the
+    following order).
       * in the paths defined by the 'PATH' environment variable.
       * in the directory the of the running program.
       * in the directory specified by the '<prjname>_HELPERSPATH' environment variable.
@@ -113,29 +114,28 @@ def find_project_helper(prjname, helper):
       * in '/usr/bin', if it exists.
     """
 
-    from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
-
-    with LocalProcessManager.LocalProcessManager() as lpman:
-        exe_path = lpman.which(helper, must_find=False)
+    with ProcessManager.pman_or_local(pman) as wpman:
+        exe_path = wpman.which(helper, must_find=False)
         if exe_path:
             return exe_path
 
-    searched = ["$PATH"]
-    paths = [Path(sys.argv[0]).parent]
+        searched = ["$PATH"]
+        paths = [Path(sys.argv[0]).parent]
 
-    path = os.environ.get(get_project_helpers_envvar(prjname))
-    if path:
-        paths.append(Path(path))
+        path = os.environ.get(get_project_helpers_envvar(prjname))
+        if path:
+            paths.append(Path(path))
 
-    paths.append(Path.home() / Path(".local/bin"))
-    paths.append(Path("/usr/local/bin"))
-    paths.append(Path("/usr/bin"))
+        homedir = wpman.get_homedir()
+        paths.append(homedir / Path(".local/bin"))
+        paths.append(Path("/usr/local/bin"))
+        paths.append(Path("/usr/bin"))
 
-    for path in paths:
-        exe_path = path / helper
-        if exe_path.exists():
-            return exe_path
-        searched.append(str(path))
+        for path in paths:
+            exe_path = path / helper
+            if pman.is_exe():
+                return exe_path
+            searched.append(str(path))
 
     dirs = " * " + "\n * ".join(searched)
     raise ErrorNotFound(f"cannot find the '{helper}' program, searched in the following "
