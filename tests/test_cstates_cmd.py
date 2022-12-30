@@ -106,8 +106,11 @@ def test_cstates_config(params):
         "--enable all",
         "--disable all",
         f"--enable {params['cstates'][-1]}",
-        f"--disable {params['cstates'][-1]}",
-        "--pkg-cstate-limit"]
+        f"--disable {params['cstates'][-1]}"]
+
+    if params["pinfo"]["pkg_cstate_limit"]["pkg_cstate_limit_locked"] == "off":
+        pc = params["pinfo"]["pkg_cstate_limit"]["pkg_cstate_limits"][0]
+        good_options += ["--pkg-cstate-limit", f"--pkg-cstate-limit {pc}"]
     if is_prop_supported("c1_demotion", params["pinfo"]):
         good_options += ["--c1-demotion", "--c1-demotion on", "--c1-demotion off"]
     if is_prop_supported("c1_undemotion", params["pinfo"]):
