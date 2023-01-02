@@ -314,7 +314,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             from pepclibs import EPP # pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
-            self._eppobj = EPP.EPP(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr,
+            hwpreq = self._get_hwpreq()
+            self._eppobj = EPP.EPP(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr, hwpreq=hwpreq,
                                    enable_cache=self._enable_cache)
 
         return self._eppobj
