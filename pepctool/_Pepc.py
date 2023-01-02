@@ -621,12 +621,12 @@ def _get_next_dataset(dataset):
     if Path(dataset).is_dir():
         yield Path(dataset)
     elif dataset == "all":
-        base = ProjectFiles.find_project_data(_OWN_NAME, "tests/data", f"{_OWN_NAME} datasets")
+        base = ProjectFiles.find_project_data(_OWN_NAME, "tests/data", what=f"{_OWN_NAME} datasets")
         for name in os.listdir(base):
             _LOG.info("\n======= emulation:%s =======", name)
             yield Path(f"{base}/{name}")
     else:
-        base = ProjectFiles.find_project_data(_OWN_NAME, "tests/data", f"{_OWN_NAME} datasets")
+        base = ProjectFiles.find_project_data(_OWN_NAME, "tests/data", what=f"{_OWN_NAME} datasets")
         path = Path(base / dataset)
         if not path.is_dir():
             raise Error(f"couldn't find dataset '{dataset}', '{path}' doesn't exist")
