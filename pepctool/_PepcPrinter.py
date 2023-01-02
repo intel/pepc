@@ -240,7 +240,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Read and print properties. The arguments are as follows.
           * pnames - names of the property to read and print (all properties by default).
           * cpus - CPU numbers to read and print the property for (all CPUs by default).
-          * skip_unsupported - if 'True', unsupported properties are sikpped. Otherwise a "property
+          * skip_unsupported - if 'True', unsupported properties are skipped. Otherwise a "property
                                is not supported" message is printed.
           * skip_ro - if 'False', read-only properties and sub-properties information will be
                       printed, otherwise they will be skipped.
@@ -283,7 +283,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
         Initialize a class instance. The arguments are as follows.
           * pcsobj - a 'PStates' or 'CStates' object to print the properties for.
-          * cpuinfo - a 'CPUInfo' object corresponging to the host the properties are read from.
+          * cpuinfo - a 'CPUInfo' object corresponding to the host the properties are read from.
           * fobj - a file object to print the output to (standard output by default).
           * fmt - the printing format.
 

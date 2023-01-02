@@ -65,7 +65,7 @@ def find_project_data(prjname, subpath, pman=None, what=None):
         homedir = wpman.get_homedir()
         paths.append(homedir / Path(f".local/share/{prjname}"))
         paths.append(Path(f"/usr/local/share/{prjname}"))
-        paths.append( Path(f"/usr/share/{prjname}"))
+        paths.append(Path(f"/usr/share/{prjname}"))
 
         for path in paths:
             path /= subpath

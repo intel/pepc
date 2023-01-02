@@ -167,7 +167,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def _rebase_cmd(self, cmd):
         """
-        Modify command 'cmd' so that it is run against emulted files. Returns 'None' if the command
+        Modify command 'cmd' so that it is run against emulated files. Returns 'None' if the command
         doesn't include any paths, or paths are not emulated.
         """
 

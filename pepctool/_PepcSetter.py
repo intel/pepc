@@ -85,7 +85,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         """
         Initialize a class instance. The arguments are as follows.
           * pcsobj - a 'PStates' or 'CStates' object to print the properties for.
-          * cpuinfo - a 'CPUInfo' object corresponging to the host the properties are read from.
+          * cpuinfo - a 'CPUInfo' object corresponding to the host the properties are read from.
           * pcsprint - a 'PStatesPrinter' or 'CStatesPrinter' class instance to use for reading and
                        printing the properties after they were set.
           * msr - an optional 'MSR.MSR()' object which will be used for transactions.
@@ -101,7 +101,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         ClassHelpers.close(self, unref_attrs=("_msr", "_pcsprint", "_cpuinfo", "_pcsobj"))
 
 class PStatesSetter(_PropsSetter):
-    """This class provides API for changing P-states propertie."""
+    """This class provides API for changing P-states properties."""
 
     def restore(self, infile):
         """
@@ -120,7 +120,7 @@ class PStatesSetter(_PropsSetter):
         self._restore_props(ydict)
 
 class CStatesSetter(_PropsSetter):
-    """This class provides API for changing P-states propertie."""
+    """This class provides API for changing P-states properties."""
 
     def set_cstates(self, csnames="all", cpus="all", enable=True):
         """
