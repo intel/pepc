@@ -401,7 +401,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
         """
 
-        self._check_level(order, name="order")
+        self._validate_level(order, name="order")
 
         if self._topology:
             return self._topology[order]
@@ -437,7 +437,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._sort_topology(topology)
         return self._topology[order]
 
-    def _check_level(self, lvl, name="level"):
+    def _validate_level(self, lvl, name="level"):
         """Validate that 'lvl' is a valid level name."""
 
         if lvl not in self._lvl2idx:
@@ -488,9 +488,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if order is None:
             order = sublvl
 
-        self._check_level(sublvl)
-        self._check_level(lvl)
-        self._check_level(order, name="order")
+        self._validate_level(sublvl)
+        self._validate_level(lvl)
+        self._validate_level(order, name="order")
 
         if self._lvl2idx[lvl] < self._lvl2idx[sublvl]:
             raise Error(f"bad level order, cannot get {sublvl}s from level '{lvl}'")
