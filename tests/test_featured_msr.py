@@ -311,30 +311,30 @@ def test_msr_is_feature_supported(params):
     _test_msr_is_feature_supported_good(params)
     _test_msr_is_feature_supported_bad(params)
 
-def _test_msr_check_feature_supported_good(params):
-    """Test 'check_feature_supported()' method for good option values."""
+def _test_msr_validate_feature_supported_good(params):
+    """Test 'validate_feature_supported()' method for good option values."""
 
     for msr in _get_msr_feature_objs(params):
         supported = []
         for name, _ in _get_msr_feature_test_params(msr, params):
-            msr.check_feature_supported(name)
+            msr.validate_feature_supported(name)
             supported.append(name)
         for name, _ in _get_msr_feature_test_params(msr, params, supported_only=False):
             if name in supported:
                 continue
             with pytest.raises(Error):
-                msr.check_feature_supported(name)
+                msr.validate_feature_supported(name)
 
-def _test_msr_check_feature_supported_bad(params):
-    """Test 'check_feature_supported()' method for bad option values."""
+def _test_msr_validate_feature_supported_bad(params):
+    """Test 'validate_feature_supported()' method for bad option values."""
 
     for msr in _get_msr_feature_objs(params):
         for name in _get_bad_feature_names():
             with pytest.raises(Error):
                 msr.is_feature_supported(name)
 
-def test_msr_check_feature_supported(params):
-    """Test 'check_feature_supported()' method."""
+def test_msr_validate_feature_supported(params):
+    """Test 'validate_feature_supported()' method."""
 
-    _test_msr_check_feature_supported_good(params)
-    _test_msr_check_feature_supported_bad(params)
+    _test_msr_validate_feature_supported_good(params)
+    _test_msr_validate_feature_supported_bad(params)

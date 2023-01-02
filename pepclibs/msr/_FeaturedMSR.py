@@ -39,13 +39,13 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
        * Read/write feature: 'read_feature()', 'write_feature()'.
        * Enable/disable a feature: 'enable_feature()'.
        * Check if feature is enabled: 'is_feature_enabled()'.
-       * Check if feature is supported: 'is_feature_supported()', check_feature_supported()'.
+       * Check if feature is supported: 'is_feature_supported()', validate_feature_supported()'.
     2. Single CPU.
        * Read/write feature: 'read_cpu_feature()', 'write_cpu_feature()'.
        * Enable/disable a feature: 'cpu_enable_feature()'.
        * Check if feature is enabled: 'is_cpu_feature_enabled()'.
        * Check if feature is supported: 'is_cpu_feature_supported()',
-                                        'check_cpu_feature_supported()'.
+                                        'validate_cpu_feature_supported()'.
     """
 
     def _normalize_feature_value(self, feature, val):
@@ -99,7 +99,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         _LOG.debug("read feature '%s' from CPU(s) %s%s",
                    fname, Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._pman.hostmsg)
 
-        self.check_feature_supported(fname, cpus=cpus)
+        self.validate_feature_supported(fname, cpus=cpus)
 
         get_method = getattr(self, f"_get_{fname}", None)
         if get_method:
@@ -138,7 +138,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
           * enabled - 'True' if the feature is enabled, 'False' otherwise.
         """
 
-        self.check_feature_supported(fname, cpus=cpus)
+        self.validate_feature_supported(fname, cpus=cpus)
 
         if self._features[fname]["type"] != "bool":
             raise Error(f"feature '{fname}' is not boolean, use 'read_feature()' instead")
@@ -174,7 +174,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         _LOG.debug("set feature '%s' to value %s on CPU(s) %s%s", fname, val,
                    Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._pman.hostmsg)
 
-        self.check_feature_supported(fname, cpus=cpus)
+        self.validate_feature_supported(fname, cpus=cpus)
 
         val = self._normalize_feature_value(fname, val)
 
@@ -212,7 +212,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                    'read_feature()').
         """
 
-        self.check_feature_supported(fname, cpus=cpus)
+        self.validate_feature_supported(fname, cpus=cpus)
 
         if self._features[fname]["type"] != "bool":
             name = self._features[fname]["name"]
@@ -243,12 +243,12 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     def is_feature_supported(self, fname, cpus="all"):
         """
-        Same as 'check_feature_supported()', except return 'False' if exception was raised,
+        Same as 'validate_feature_supported()', except return 'False' if exception was raised,
         otherwise returns 'True'.
         """
 
         try:
-            self.check_feature_supported(fname, cpus)
+            self.validate_feature_supported(fname, cpus)
             return True
         except ErrorNotSupported:
             return False
@@ -258,11 +258,11 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         return self.is_feature_supported(fname, cpus=(cpu, ))
 
-    def check_feature_supported(self, fname, cpus="all"):
+    def validate_feature_supported(self, fname, cpus="all"):
         """
-        Check if a feature is supported by all CPUs in 'cpus'.
-          * fname - name of the feature to check.
-          * cpus - the CPUs to check the feature for (same as in 'read_feature()').
+        Validate if a feature is supported by all CPUs in 'cpus'.
+          * fname - name of the feature to validate.
+          * cpus - the CPUs to validate the feature for (same as in 'read_feature()').
 
         Raises 'ErrorNotSupported' exception if the feature is not supported by a CPU in 'cpus'.
         """
@@ -278,10 +278,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                 raise ErrorNotSupported(f"CPU {cpu} does not support "
                                         f"{self._features[fname]['name']}{self._pman.hostmsg}")
 
-    def check_cpu_feature_supported(self, fname, cpu):
-        """Same as 'check_feature_supported()' but for a single CPU."""
+    def validate_cpu_feature_supported(self, fname, cpu):
+        """Same as 'validate_feature_supported()' but for a single CPU."""
 
-        self.check_feature_supported(fname, cpus=(cpu, ))
+        self.validate_feature_supported(fname, cpus=(cpu, ))
 
     def _init_supported_flag(self):
         """Initialize the 'supported' flag for all features."""
