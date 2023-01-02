@@ -144,3 +144,20 @@ def find_project_helper(prjname, helper, pman=None):
         dirs = " * " + "\n * ".join(searched)
         raise ErrorNotFound(f"cannot find the '{helper}' program{wpman.hostmsg}, searched in the "
                             f"following locations:\n{dirs}")
+
+def get_project_helpers_search_descr(prjname):
+    """
+    This method returns a human-readable string describing the locations the 'find_project_helper()'
+    function looks for the helper at. The argument is the same as in 'find_project_helper()'.
+    """
+
+    envvar = get_project_helpers_envvar(prjname)
+    paths = ("All paths in $PATH"
+             f"{Path(sys.argv[0]).parent}",
+             f"${envvar}",
+             "$HOME/.local/bin",
+             "$HOME/bin",
+             "/usr/local/bin",
+             "/usr/bin")
+
+    return ", ".join(paths)
