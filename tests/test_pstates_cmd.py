@@ -90,17 +90,21 @@ def _get_config_options(params):
             "--min-freq --max-freq",
             "--min-freq min",
             "--max-freq min",
-            "--max-freq lfm",
-            "--max-freq eff",
-            "--max-freq base",
-            "--max-freq hfm",
             "--max-freq max",
-            "--min-freq lfm",
-            "--min-freq eff",
-            "--min-freq base",
-            "--min-freq hfm",
             "--min-freq min --max-freq max",
             "--max-freq max --min-freq min"]
+        if is_prop_supported("max_eff_freq", params["pinfo"]):
+            good_options += [
+                "--max-freq lfm",
+                "--max-freq eff",
+                "--min-freq lfm",
+                "--min-freq eff"]
+        if is_prop_supported("base_freq", params["pinfo"]):
+            good_options += [
+                "--max-freq base",
+                "--max-freq hfm",
+                "--min-freq base",
+                "--min-freq hfm"]
 
         bad_options += [
             "--min-freq 1000ghz",
