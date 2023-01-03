@@ -27,66 +27,46 @@ def get_params(hostspec):
         params = common.build_params(pman)
 
         params["cpuonline"] = cpuonline
-        allcpus = cpuinfo.get_cpus()
-        params["online"] = allcpus
-        medidx = int(len(allcpus)/2)
-        params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
+        params["cpuinfo"] = cpuinfo
 
-        if not common.is_emulated(pman):
-            params["cpu_onl_status"] = {}
-            for cpu in params["online"]:
-                params["cpu_onl_status"][cpu] = cpuonline.is_online(cpu)
-
+        params["online"] = cpuinfo.get_cpus()
+        params["offline"] = cpuinfo.get_offline_cpus()
         yield params
-
-def _restore_cpus_onl_status(params):
-    """Restore CPUs to the original online/offline status."""
-
-    if common.is_emulated(params["pman"]):
-        # Emulated data does not change the original CPU online status.
-        return
-
-    for cpu, onl_status in params["cpu_onl_status"].items():
-        if onl_status is True:
-            params["cpuonline"].online(cpu, skip_unsupported=True)
-        else:
-            params["cpuonline"].offline(cpu, skip_unsupported=True)
 
 def test_cpuonline_good(params):
     """Test public methods of 'CPUOnline' class with good option values."""
 
-    onl = params["cpuonline"]
-
-    # Note: When using "all" or 'None' as 'cpus' argument value to 'online()' or 'offline()'
-    # methods, offlined CPUs will be eventually read using 'lscpu' command. The output of
-    # 'lscpu' command is emulated, but changed offline/online CPUs is not reflected to the
-    # output.
-    onl.online(cpus="all")
-    for cpu in params["online"]:
-        assert onl.is_online(cpu)
-
-    if common.is_emulated(params["pman"]):
-        _restore_cpus_onl_status(params)
+    if not common.is_emulated(params["pman"]):
+        # On real hardware some CPUs might not support offlining/onlining.
         return
 
-    if params["testcpus"].count(0):
-        params["testcpus"].remove(0)
+    onl = params["cpuonline"]
+    cpuinfo = params["cpuinfo"]
 
-    onl.offline(cpus=params["testcpus"])
-    for cpu in params["testcpus"]:
-        assert not onl.is_online(cpu)
+    # We need to initialize the topology, otherwise the topology will be re-created instead of
+    # updated.
+    cpuinfo.get_topology(levels=("CPU", ))
+    # Skip first online CPU, because CPU 0 does not support offlining.
+    onl.offline(cpus=params["online"][1:])
+    offline = set(params["online"][1:])
+    # When a CPU is offlined/onlined, CPUInfo topology should reflect the changes.
+    for tline in cpuinfo.get_topology():
+        if tline["CPU"] in offline:
+            raise Error(f"CPU{tline['CPU']} was not updated in 'CPUInfo._topology'")
 
-    onl.online(params["online"], skip_unsupported=True)
+    onl.online(cpus="all")
+    onl.offline(cpus=params["offline"])
+
     for cpu in params["online"]:
         assert onl.is_online(cpu)
-
-    onl.offline(cpus=params["online"], skip_unsupported=True)
+    for cpu in params["offline"]:
+        assert not onl.is_online(cpu)
 
 def test_cpuonline_bad(params):
     """Test public methods of 'CPUOnline' class with bad option values."""
 
     onl = params["cpuonline"]
-    bad_cpus = [-1, "one", True, params["online"][-1] + 1]
+    bad_cpus = [-1, "one", True, 99999]
 
     with pytest.raises(Error):
         onl.online(cpus=[0], skip_unsupported=False)
@@ -105,5 +85,3 @@ def test_cpuonline_bad(params):
     for cpu in bad_cpus:
         with pytest.raises(Error):
             onl.is_online(cpu)
-
-    _restore_cpus_onl_status(params)
