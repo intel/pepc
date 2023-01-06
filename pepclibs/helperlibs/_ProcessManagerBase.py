@@ -20,10 +20,9 @@ import logging
 import threading
 import contextlib
 from pathlib import Path
-from operator import itemgetter
 from collections import namedtuple
 from pepclibs.helperlibs import Human, Trivial, ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorExists
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 _LOG = logging.getLogger()
 
@@ -700,149 +699,6 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         raise ErrorNotFound(f"python interpreter was not found{self.hostmsg}.\n"
                             f"Checked the following paths:{paths_descr}")
 
-    def mkdir(self, dirpath, parents=False, exist_ok=False):
-        """
-        Create a directory. The a arguments are as follows.
-          * dirpath - path to the directory to create.
-          * parents - if 'True', the parent directories are created as well.
-          * exist_ok - if the directory already exists, this method raises an exception if
-                       'exist_ok' is 'True', and it returns without an error if 'exist_ok' is
-                       'False'.
-        """
-
-        if self.shell_test(dirpath, "-e"):
-            if exist_ok:
-                return
-            raise ErrorExists(f"path '{dirpath}' already exists{self.hostmsg}")
-
-        cmd = "mkdir"
-        if parents:
-            cmd += " -p"
-        cmd += f" -- '{dirpath}'"
-        self.run_verify(cmd)
-
-    def lsdir(self, path, must_exist=True):
-        """
-        For each directory entry in 'path', yield the ('name', 'path', 'mode') tuple, where 'name'
-        is the direntry name, 'path' is full directory entry path, and 'mode' is the
-        'os.lstat().st_mode' value for the directory entry.
-
-        The directory entries are yielded in ctime (creation time) order.
-
-        If 'path' does not exist, this function raises an exception. However, this behavior can be
-        changed with the 'must_exist' argument. If 'must_exist' is 'False, this function just
-        returns and does not yield anything.
-        """
-
-        path = Path(path)
-
-        if not must_exist and not self.exists(path):
-            return
-
-        # A small python program to get the list of directories with some metadata.
-        python_path = self.get_python_path()
-        cmd = f"""{python_path} -c 'import os
-path = "{path}"
-for entry in os.listdir(path):
-    stinfo = os.lstat(os.path.join(path, entry))
-    print(entry, stinfo.st_mode, stinfo.st_ctime)'"""
-
-        stdout, _ = self.run_verify(cmd, shell=True)
-
-        entries = {}
-        for line in stdout.splitlines():
-            entry, mode, ctime = Trivial.split_csv_line(line.strip(), sep=" ")
-            entries[entry] = {"name": entry, "ctime": float(ctime), "mode": int(mode)}
-
-        for einfo in sorted(entries.values(), key=itemgetter("ctime"), reverse=True):
-            yield (einfo["name"], path / einfo["name"], einfo["mode"])
-
-    def exists(self, path):
-        """Returns 'True' if path 'path' exists."""
-        return self.shell_test(path, "-e")
-
-    def is_file(self, path):
-        """Returns 'True' if path 'path' exists an it is a regular file."""
-        return self.shell_test(path, "-f")
-
-    def is_dir(self, path):
-        """Returns 'True' if path 'path' exists an it is a directory."""
-        return self.shell_test(path, "-d")
-
-    def is_exe(self, path):
-        """Returns 'True' if path 'path' exists an it is an executable file."""
-        return self.shell_test(path, "-x")
-
-    def is_socket(self, path):
-        """Returns 'True' if path 'path' exists an it is a Unix socket file."""
-        return self.shell_test(path, "-S")
-
-    def get_mtime(self, path):
-        """Returns the modification time of a file or directory at path 'path'."""
-
-        python_path = self.get_python_path()
-        cmd = f"{python_path} -c 'import os; print(os.stat(\"{path}\").st_mtime)'"
-        try:
-            stdout, _ = self.run_verify(cmd)
-        except Error as err:
-            if "FileNotFoundError" in str(err):
-                raise ErrorNotFound(f"'{path}' does not exist{self.hostmsg}") from None
-            raise
-
-        mtime = stdout.strip()
-        if not Trivial.is_float(mtime):
-            raise Error(f"got erroneous modification time of '{path}'{self.hostmsg}:\n{mtime}")
-        return float(mtime)
-
-    def mkdtemp(self, prefix=None, basedir=None):
-        """
-        Create a temporary directory and return its path. The arguments are as follows.
-          * prefix - specifies the temporary directory name prefix.
-          * basedir - path to the base directory where the temporary directory should be created.
-        """
-
-        cmd = "mktemp -d -t '"
-        if prefix:
-            cmd += prefix
-        cmd += "XXXXXX'"
-        if basedir:
-            cmd += " -p '{basedir}'"
-
-        path = self.run_verify(cmd)[0].strip()
-        if not path:
-            raise Error(f"cannot create a temporary directory{self.hostmsg}, the following command "
-                        f"returned an empty string:\n{cmd}")
-
-        _LOG.debug("created a temporary directory '%s'%s", path, self.hostmsg)
-        return Path(path)
-
-    def rmtree(self, path):
-        """
-        Recursively remove a file or directory at path 'path'. If 'path' is a symlink, the link is
-        removed, but the target of the link does not get removed.
-        """
-
-        self.run_verify(f"rm -rf -- '{path}'")
-
-    def abspath(self, path, must_exist=True):
-        """
-        Returns absolute real path for 'path'. The arguments are as follows.
-          * path - the path to resolve into the absolute real (no symlinks) path.
-          * must_exist - if 'path' does not exist, raise and exception when 'must_exist' is 'True',
-                         otherwise returns the 'path' value.
-        """
-
-        python_path = self.get_python_path()
-        cmd = f"{python_path} -c 'from pathlib import Path; print(Path(\"{path}\").resolve())'"
-        stdout, _ = self.run_verify(cmd)
-
-        rpath = stdout.strip()
-
-        if must_exist and not self.exists(rpath):
-            raise ErrorNotFound(f"path '{rpath}' does not exist")
-
-        return Path(rpath)
-
     def shell_test(self, path, opt):
         """
         Run the shell 'test' command against path 'path'. The 'opt' argument specifies the 'test'
@@ -865,14 +721,106 @@ for entry in os.listdir(path):
 
         return exitcode == 0
 
+    def mkdir(self, dirpath, parents=False, exist_ok=False):
+        """
+        Create a directory. The a arguments are as follows.
+          * dirpath - path to the directory to create.
+          * parents - if 'True', the parent directories are created as well.
+          * exist_ok - if the directory already exists, this method raises an exception if
+                       'exist_ok' is 'True', and it returns without an error if 'exist_ok' is
+                       'False'.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.mkdir")
+
+    def lsdir(self, path, must_exist=True):
+        """
+        For each directory entry in 'path', yield the ('name', 'path', 'mode') tuple, where 'name'
+        is the direntry name, 'path' is full directory entry path, and 'mode' is the
+        'os.lstat().st_mode' value for the directory entry.
+
+        The directory entries are yielded in ctime (creation time) order.
+
+        If 'path' does not exist, this function raises an exception. However, this behavior can be
+        changed with the 'must_exist' argument. If 'must_exist' is 'False, this function just
+        returns and does not yield anything.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.lsdir")
+
+    def exists(self, path):
+        """Returns 'True' if path 'path' exists."""
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.exists")
+
+    def is_file(self, path):
+        """Returns 'True' if path 'path' exists an it is a regular file."""
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.is_file")
+
+    def is_dir(self, path):
+        """Returns 'True' if path 'path' exists an it is a directory."""
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.is_dir")
+
+    def is_exe(self, path):
+        """Returns 'True' if path 'path' exists an it is an executable file."""
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.is_exe")
+
+    def is_socket(self, path):
+        """Returns 'True' if path 'path' exists an it is a Unix socket file."""
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.is_socket")
+
+    def get_mtime(self, path):
+        """Returns the modification time of a file or directory at path 'path'."""
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.get_mtime")
+
+    def rmtree(self, path):
+        """
+        Recursively remove a file or directory at path 'path'. If 'path' is a symlink, the link is
+        removed, but the target of the link does not get removed.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.rmtree")
+
+    def abspath(self, path, must_exist=True):
+        """
+        Returns absolute real path for 'path'. The arguments are as follows.
+          * path - the path to resolve into the absolute real (no symlinks) path.
+          * must_exist - if 'path' does not exist, raise and exception when 'must_exist' is 'True',
+                         otherwise returns the 'path' value.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.abspath")
+
+    def mkdtemp(self, prefix=None, basedir=None):
+        """
+        Create a temporary directory and return its path. The arguments are as follows.
+          * prefix - specifies the temporary directory name prefix.
+          * basedir - path to the base directory where the temporary directory should be created.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.mkdtemp")
+
     def get_homedir(self):
         """Return return the home directory path for the logged in user."""
 
-        try:
-            return Path(self.run_verify("echo $HOME")[0].strip())
-        except ErrorNotFound:
-            # See commentaries in 'shell_test()', this is a similar case.
-            return Path(self.run_verify("sh -c -l \"echo $HOME\"")[0].strip())
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.get_homedir")
 
     def which(self, program, must_find=True):
         """
@@ -883,45 +831,8 @@ for entry in os.listdir(path):
                         found, otherwise returns 'None' without raising the exception.
         """
 
-        def raise_or_return(): # pylint: disable=useless-return
-            """This helper is called when the 'program' program was not found."""
-
-            if must_find:
-                raise ErrorNotFound(f"program '{program}' was not found in $PATH{self.hostmsg}")
-            return None
-
-        if self._which_cmd is None:
-            which_cmds = ("which", "command -v")
-        else:
-            which_cmds = (self._which_cmd,)
-
-        for which_cmd in which_cmds:
-            cmd = f"{which_cmd} -- '{program}'"
-            try:
-                stdout, stderr, exitcode = self.run(cmd)
-            except ErrorNotFound:
-                if which_cmd != which_cmds[-1]:
-                    # We have more commands to try.
-                    continue
-                raise
-            else:
-                self._which_cmd = which_cmd
-                break
-
-        if not exitcode:
-            # Which could return several paths. They may contain aliases.
-            for line in stdout.strip().splitlines():
-                line = line.strip()
-                if not line.startswith("alias"):
-                    return Path(line)
-            return raise_or_return()
-
-        # The 'which' tool exits with status 1 when the program is not found. Any other error code
-        # is an real failure.
-        if exitcode != 1:
-            raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
-
-        return raise_or_return()
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("ProcessManagerBase.which")
 
     def __init__(self):
         """Initialize a class instance."""
