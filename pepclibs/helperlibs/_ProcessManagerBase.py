@@ -678,8 +678,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
     def get_python_path(self):
         """
-        Some FS operations have to execute python scripts on the remote host. This method finds and
-        returns python interpreter path.
+        Some FS operations have to execute python scripts. This method finds and returns python
+        interpreter path.
         """
 
         if self._python_path:
