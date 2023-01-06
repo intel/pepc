@@ -816,6 +816,14 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         fobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
         return fobj
 
+    def time_time(self):
+        """
+        Return the time in seconds since the epoch as a floating point number (just as the standard
+        python 'time.time()' function).
+        """
+
+        return float(self.run_verify("date +%s")[0].strip())
+
     def mkdir(self, dirpath, parents=False, exist_ok=False):
         """
         Create a directory. The a arguments are as follows.

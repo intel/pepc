@@ -324,6 +324,14 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
 
     @staticmethod
+    def time_time():
+        """
+        Return the time in seconds since the epoch as a floating point number (just as the standard
+        python 'time.time()' function).
+        """
+        return time.time()
+
+    @staticmethod
     def mkdir(dirpath, parents=False, exist_ok=False):
         """
         Create a directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdir()' for more
