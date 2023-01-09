@@ -2,7 +2,7 @@
 PEPC
 ====
 
-:Date:   2022-12-23
+:Date:   2023-01-09
 
 .. contents::
    :depth: 3
@@ -17,7 +17,7 @@ SYNOPSIS
 ========
 
 **pepc** [-h] [-q] [-d] [--version] [-H HOSTNAME] [-U USERNAME] [-K
-PRIVKEY] [-T TIMEOUT] [--force-color]
+PRIVKEY] [-T TIMEOUT] [-D DATASET] [--force-color]
 {cpu-hotplug,cstates,pstates,aspm,topology} ...
 
 DESCRIPTION
@@ -54,6 +54,16 @@ OPTIONS
 
 **-T** *TIMEOUT*, **--timeout** *TIMEOUT*
    SSH connect timeout in seconds, default is 8.
+
+**-D** *DATASET*, **--dataset** *DATASET*
+   This option is for debugging and testing purposes only, it defines
+   the dataset that will be used to emulate a host for running the
+   command on. Please, specify dataset path or name. In the latter case,
+   it will be searched for in the following locations:
+   /home/abityuts/powerlab/git/pepc/pepctool/tests/data,
+   $PEPC_DATA_PATH/tests/data, $HOME/.local/share/pepc/tests/data,
+   /usr/local/share/pepc/tests/data, /usr/share/pepc/tests/data. Use
+   'all' to specify all available datasets.
 
 **--force-color**
    Force coloring of the text output.
