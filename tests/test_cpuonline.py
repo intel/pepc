@@ -81,9 +81,6 @@ def test_cpuonline_good(params):
         assert onl.is_online(cpu)
 
     onl.offline(cpus=params["cpus"], skip_unsupported=True)
-    onl.restore()
-    for cpu in params["cpus"]:
-        assert onl.is_online(cpu)
 
 def test_cpuonline_bad(params):
     """Test public methods of 'CPUOnline' class with bad option values."""

@@ -23,11 +23,9 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
     This class provides API for onlining and offlining CPUs.
 
     Public methods overview.
-
       * 'online()'
       * 'offline()'
       * 'is_online()'
-      * 'restore()'
     """
 
     def _get_cpuinfo(self):
@@ -120,8 +118,6 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             if self._get_online(path) != data:
                 raise Error(f"failed to {state_str} CPU{cpu}")
 
-            self._save([cpu], state == "1")
-
     def online(self, cpus="all", skip_unsupported=False):
         """
         Bring CPUs in 'cpus' online. The arguments are as follows.
@@ -153,18 +149,6 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             # CPU is online.
             return True
 
-    def _save(self, cpus, state):
-        """Update saved online/offline state 'state' on CPUs 'cpus'."""
-
-        for cpu in cpus:
-            self._saved_states[int(cpu)] = state
-
-    def restore(self):
-        """Restore the original CPU states."""
-
-        for cpu, state in reversed(self._saved_states.items()):
-            self._toggle([cpu], state, False)
-
     def __init__(self, progress=None, pman=None, cpuinfo=None):
         """
         The class constructor. The arguments are as follows.
@@ -184,20 +168,13 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             progress = logging.DEBUG
 
         self._loglevel = progress
-        self._saved_states = {}
         self._sysfs_base = Path("/sys/devices/system/cpu")
         self._reload_cpuinfo = False
-        self.restore_on_close = False
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
 
     def close(self):
         """Uninitialize the class object."""
-
-        if getattr(self, "_pman", None):
-            if getattr(self, "restore_on_close", None) and \
-               getattr(self, "_saved_states", None):
-                self.restore()
 
         ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman",))
