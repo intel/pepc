@@ -13,7 +13,7 @@ This module provides an API to get CPU information.
 import re
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
-from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers
+from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers, Human
 
 # CPU model numbers.
 #
@@ -879,7 +879,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=False)
         for cpu in cpus:
             if cpu not in allcpus:
-                cpus_str = ", ".join([str(cpu) for cpu in sorted(allcpus)])
+                cpus_str = Human.rangify(allcpus)
                 raise Error(f"CPU{cpu} is not available{self._pman.hostmsg}, available CPUs are: "
                             f"{cpus_str}")
 
@@ -905,7 +905,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         dies = ArgParse.parse_int_list(dies, ints=True, dedup=True)
         for die in dies:
             if die not in pkg_dies:
-                dies_str = ", ".join([str(pkg) for pkg in sorted(pkg_dies)])
+                dies_str = Human.rangify(pkg_dies)
                 raise Error(f"die '{die}' is not available in package "
                             f"'{package}'{self._pman.hostmsg}, available dies are: {dies_str}")
 
@@ -930,8 +930,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         packages = ArgParse.parse_int_list(packages, ints=True, dedup=True)
         for pkg in packages:
             if pkg not in allpkgs:
-                pkgs_str = ", ".join([str(pkg) for pkg in sorted(allpkgs)])
-                raise Error(f"package '{pkg}' not available{self._pman.hostmsg}, available "
+                pkgs_str = Human.rangify(allpkgs)
+                raise Error(f"package '{pkg}' is not available{self._pman.hostmsg}, available "
                             f"packages are: {pkgs_str}")
 
         return packages
