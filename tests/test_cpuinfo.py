@@ -79,41 +79,16 @@ def _get_bad_orders():
     for order in "CPUS", "CORE", "nodes", "pkg":
         yield order
 
-def _get_cpuinfos_cpus_offlined(cpuinfo, pattern):
-    """Yield the 'CPUInfo' object with different patterns of offlined CPUs."""
-
-    online_cpus = set()
-    offline_cpus = set()
-
-    for cpu in cpuinfo.get_cpus():
-        if pattern(cpu):
-            online_cpus.add(cpu)
-        else:
-            offline_cpus.add(cpu)
-
-    cpuinfo.mark_cpus_online(online_cpus)
-    cpuinfo.mark_cpus_offline(offline_cpus)
-
-    return cpuinfo
-
 def _get_emulated_cpuinfos(pman):
-    """
-    Yield the 'CPUInfo' objects with emulated testdata. The testdata is modified with different
-    permutations that we want to test with.
-    """
+    """Yield the 'CPUInfo' objects with emulated testdata."""
 
-    # Offline CPUs with following patterns.
-    # 1. All CPUs online.
-    # 2. Odd CPUs offline.
-    # 3. All but first CPU offline.
-    for pattern in (lambda x: True, lambda x: not(x % 2), lambda x: x == 0):
-        with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-            yield _get_cpuinfos_cpus_offlined(cpuinfo, pattern)
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+        yield cpuinfo
 
-            if cpuinfo.info["model"] == CPUInfo.INTEL_FAM6_ICELAKE_X:
-                # Yield CPUInfo object with unknown CPU model number.
-                cpuinfo.info["model"] = 255
-                yield cpuinfo
+        if cpuinfo.info["model"] == CPUInfo.INTEL_FAM6_ICELAKE_X:
+            # Yield CPUInfo object with unknown CPU model number.
+            cpuinfo.info["model"] = 255
+            yield cpuinfo
 
 def _get_cpuinfos(params):
     """

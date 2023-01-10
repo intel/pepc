@@ -217,9 +217,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         A. By cores: 'cpus_div_cores()'.
         B. By dies: 'cpus_div_dies()'.
         C. By packages: 'cpus_div_packages()'.
-    7. Mark CPUs online/offline.
-        * 'mark_cpus_online()'
-        * 'mark_cpus_offline()'
     """
 
     def get_topology(self, order="CPU"):
@@ -526,25 +523,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                             f"Valid {lvl} numbers are: {valid_nums_str}")
 
         return list(result)
-
-    def _toggle_cpus_online(self, cpus, online):
-        """Mark CPUs 'cpus' online status to 'online' in internal topology dictionary."""
-
-        cpus = self.normalize_cpus(cpus, offlined_ok=True)
-        topology = self._get_topology(order="CPU")
-        for cpu in cpus:
-            topology[cpu]["online"] = online
-
-        self._sort_topology(topology)
-        return self._topology["CPU"]
-
-    def mark_cpus_online(self, cpus):
-        """Mark CPUs 'cpus' as online in internal topology dictionary."""
-        self._toggle_cpus_online(cpus, True)
-
-    def mark_cpus_offline(self, cpus):
-        """Same as 'mark_cpus_online()' but mark CPUs as offline."""
-        self._toggle_cpus_online(cpus, False)
 
     def get_cpus(self, order="CPU"):
         """Returns list of online CPU numbers."""
