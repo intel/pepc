@@ -13,7 +13,7 @@
 import random
 import pytest
 import common
-from pepclibs import CPUInfo
+from pepclibs import CPUInfo, CPUOnline
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -83,8 +83,22 @@ def _get_bad_orders():
 def _get_emulated_cpuinfos(pman):
     """Yield the 'CPUInfo' objects with emulated testdata."""
 
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+    # Offline CPUs with following patterns.
+    # 1. All CPUs online.
+    # 2. Odd CPUs offline.
+    # 3. All but first CPU offline.
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
+
+        # By default all CPUs are online on emulated data.
         yield cpuinfo
+
+        for pattern in (lambda x: not(x % 2), lambda x: x == 0):
+            cpus = [cpu for cpu in cpuinfo.get_cpus() if not pattern(cpu)]
+
+            cpuonline.offline(cpus=cpus)
+            yield cpuinfo
+            cpuonline.online(cpus=cpus)
 
         if cpuinfo.info["model"] == CPUInfo.INTEL_FAM6_ICELAKE_X:
             # Yield CPUInfo object with unknown CPU model number.
