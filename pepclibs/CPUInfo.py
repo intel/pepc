@@ -13,7 +13,7 @@ This module provides an API to get CPU information.
 import re
 import copy
 from pathlib import Path
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers, Human
 
 # CPU model numbers.
@@ -338,64 +338,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         str_of_ranges = self._pman.read(path, must_exist=must_exist).strip()
         return ArgParse.parse_int_list(str_of_ranges, ints=True)
 
-    def _get_cpu_module(self, cpu):
-        """
-        Returns the module number for CPU number in 'cpu'. If number can't be resolved returns
-        'None'.
-        """
-
-        if cpu in self._module_cache:
-            return self._module_cache[cpu]
-
-        sysfs_base = Path(f"/sys/devices/system/cpu/cpu{cpu}/cache/index2/")
-
-        # All CPUs in a module share the same L2 cache, so we use L2 cache ID for the module number.
-        module_id_path = sysfs_base / "id"
-        try:
-            module = self._pman.read(module_id_path)
-        except ErrorNotFound:
-            return None
-
-        module = int(module)
-
-        # Get the list of CPUs belonging to the same module.
-        cpus = self._pman.read(sysfs_base / "shared_cpu_list")
-        cpus = ArgParse.parse_int_list(cpus, ints=True)
-
-        for cpunum in cpus:
-            self._module_cache[cpunum] = module
-
-        return module
-
-    def _get_cpu_die(self, cpu):
-        """
-        Returns the die number for CPU number in 'cpu'. If number can't be resolved returns 'None'.
-        """
-
-        if cpu in self._die_cache:
-            return self._die_cache[cpu]
-
-        sysfs_base = Path(self._topology_sysfs_base % cpu)
-
-        # Get the CPU die number.
-        die_id_path = sysfs_base / "die_id"
-        try:
-            die = self._pman.read(die_id_path)
-        except ErrorNotFound:
-            return None
-
-        die = int(die)
-
-        # Get the list of CPUs belonging to the same die.
-        cpus = self._pman.read(sysfs_base / "die_cpus_list")
-        cpus = ArgParse.parse_int_list(cpus, ints=True)
-
-        # Save the list of CPUs in the case.
-        for cpunum in cpus:
-            self._die_cache[cpunum] = die
-
-        return die
-
     def _sort_topology(self, topology):
         """Sorts the topology list."""
 
@@ -425,40 +367,100 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         for lvl, skeys in sorting_map.items():
             self._topology[lvl] = sorted(topology, key=sort_func)
 
+    def _add_core_and_package_numbers(self, tinfo):
+        """Adds core and package numbers to 'tinfo'."""
+
+        def _get_number(start, lines, index):
+            """Check that line with index 'index' starts with 'start', and return its value."""
+
+            try:
+                line = lines[index]
+            except IndexError:
+                raise Error(f"there are to few lines in '/proc/cpuinfo' for CPU '{cpu}'") from None
+
+            if not line.startswith(start):
+                raise Error(f"line {index + 1} for CPU {cpu} in '/proc/cpuinfo' is not \"{start}\"")
+
+            return Trivial.str_to_int(line.partition(":")[2], what=start)
+
+        info = {}
+        for data in self._pman.read("/proc/cpuinfo").strip().split("\n\n"):
+            lines = data.split("\n")
+            cpu = _get_number("processor", lines, 0)
+            info[cpu] = lines
+
+        for cpu in self._get_online_cpus():
+            if cpu not in info:
+                raise Error(f"CPU {cpu} is missing from '/proc/cpuinfo'")
+
+            lines = info[cpu]
+            tinfo[cpu]["package"] = _get_number("physical id", lines, 9)
+            tinfo[cpu]["core"] = _get_number("core id", lines, 11)
+
+    def _add_module_numbers(self, tinfo):
+        """Adds module numbers to 'tinfo'."""
+
+        for cpu in self._get_online_cpus():
+            if "module" in tinfo[cpu]:
+                continue
+
+            base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
+            data = self._pman.read(base / "cache/index2/id")
+            module = Trivial.str_to_int(data, "module number")
+            siblings = self._read_range(base / "cache/index2/shared_cpu_list")
+            for sibling in siblings:
+                tinfo[sibling]["module"] = module
+
+    def _add_die_numbers(self, tinfo):
+        """Adds die numbers to 'tinfo'."""
+
+        for cpu in self._get_online_cpus():
+            if "die" in tinfo[cpu]:
+                continue
+
+            base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
+            data = self._pman.read(base / "topology/die_id")
+            die = Trivial.str_to_int(data, "die number")
+            siblings = self._read_range(base / "topology/die_cpus_list")
+            for sibling in siblings:
+                tinfo[sibling]["die"] = die
+
+    def _add_node_numbers(self, tinfo):
+        """Adds NUMA node numbers to 'tinfo'."""
+
+        nodes = self._read_range("/sys/devices/system/node/online")
+        for node in nodes:
+            cpus = self._read_range(f"/sys/devices/system/node/node{node}/cpulist")
+            for cpu in cpus:
+                tinfo[cpu]["node"] = node
+
     def _get_topology(self, order="CPU"):
         """Build and return topology list, refer to 'get_topology()' for more information."""
 
         if self._topology:
             return self._topology[order]
 
-        # Note, we could just walk sysfs, but 'lscpu' is faster.
-        cmd = "lscpu --physical --all -p=socket,node,core,cpu,online"
-        lines, _ = self._pman.run_verify(cmd, join=False)
+        # Remove cached online CPUs, this will make '_get_online_cpus()' re-read the sysfs file.
+        self._cpus = None
+        tinfo = {cpu : {"CPU" : cpu} for cpu in self._get_all_cpus()}
 
-        topology = []
-        for line in lines:
-            if line.startswith("#"):
-                continue
+        self._add_core_and_package_numbers(tinfo)
+        self._add_module_numbers(tinfo)
+        self._add_die_numbers(tinfo)
+        self._add_node_numbers(tinfo)
 
-            # Each line has comma-separated integers for socket, node, core and CPU. For example:
-            # 1,1,9,61,Y. In case of offline CPU, the final element is going to be "N", for example:
-            # ,-,,61,N. Note, only the "CPU" level is known for offline CPUs.
-            vals = line.strip().split(",")
+        for cpu in self._get_online_cpus():
+            tinfo[cpu]["online"] = True
 
-            tline = {lvl : None for lvl in LEVELS}
+        for cpu in self.get_offline_cpus():
+            tinfo[cpu]["online"] = False
+            tinfo[cpu]["core"] = None
+            tinfo[cpu]["module"] = None
+            tinfo[cpu]["die"] = None
+            tinfo[cpu]["node"] = None
+            tinfo[cpu]["package"] = None
 
-            tline["online"] = vals[-1] == "Y"
-            tline["CPU"] = int(vals[3])
-
-            if tline["online"]:
-                tline["core"] = int(vals[2])
-                tline["module"] = self._get_cpu_module(tline["CPU"])
-                tline["die"] = self._get_cpu_die(tline["CPU"])
-                tline["node"] = int(vals[1])
-                tline["package"] = int(vals[0])
-
-            topology.append(tline)
-
+        topology = list(tinfo.values())
         self._sort_topology(topology)
         return self._topology[order]
 
@@ -1092,10 +1094,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         # The CPU topology sysfs directory path pattern.
         self._topology_sysfs_base = "/sys/devices/system/cpu/cpu%d/topology/"
-        # A CPU number -> die/module number cache. Used only when building the topology dictionary,
-        # helps reading less sysfs files.
-        self._die_cache = {}
-        self._module_cache = {}
 
         # List of online and offline CPUs.
         self._all_cpus = None
