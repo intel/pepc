@@ -17,7 +17,7 @@ import types
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers, YAML
+from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers, YAML, Human
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
@@ -83,6 +83,55 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self._basepath = super().mkdtemp(prefix=f"emulprocs_{pid}_")
 
         return self._basepath
+
+    def _set_read_method(self, fobj, path):
+        """
+        Some sysfs files are not static, meaning they can change depending on other file. This
+        method replaces 'read()' method with custom method to ensure the emulated sysfs file
+        behavior is same as in real hardware.
+        """
+
+        def _online_read(self):
+            """
+            This function emulates '/sys/devices/system/cpu/online' file by using CPU specific
+            online files.
+
+            Example:
+            '/sys/devices/system/cpu/cpu0/online' > "1"
+            '/sys/devices/system/cpu/cpu1/online' > "1"
+            '/sys/devices/system/cpu/cpu2/online' > "0"
+            '/sys/devices/system/cpu/cpu3/online' > "1"
+
+            '/sys/devices/system/cpu/online' > "0-1,3"
+            """
+
+            online = []
+            for dirname in self._base_path.iterdir():
+                if not dirname.name.startswith("cpu"):
+                    continue
+
+                cpunum = dirname.name[3:]
+                if not Trivial.is_int(cpunum):
+                    continue
+
+                try:
+                    with open(dirname / "online", "r", encoding="utf-8") as fobj:
+                        data = fobj.read().strip()
+                except FileNotFoundError:
+                    # CPU 0 does not have a "online" file, but it is online. So, we assume the same
+                    # for any other CPU that has a folder but no "online" file.
+                    online.append(cpunum)
+                    continue
+
+                if data == "1":
+                    online.append(cpunum)
+
+            return Human.rangify(online)
+
+        if path.endswith("cpu/online"):
+            fobj._base_path = self._get_basepath() / "sys" / "devices" / "system" / "cpu"
+            fobj._orig_read = fobj.read
+            fobj.read = types.MethodType(_online_read, fobj)
 
     def _set_write_method(self, fobj, path, mode):
         """
@@ -270,6 +319,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         path = str(path)
         if path in self._ro_files:
             fobj = self._open_ro(path, mode)
+            self._set_read_method(fobj, path)
         else:
             fobj = self._open_rw(path, mode)
             self._set_write_method(fobj, path, mode)
