@@ -54,7 +54,15 @@ CPUInfoData = {
          "separator": ":",
          "readonly":  True,
          "dirname":   "module-info",
-         "filename":  "module.txt"}],
+         "filename":  "module.txt"},
+        # Command for reading online CPUs and all CPUs, from the following files:
+        # * /sys/devices/system/cpu/online
+        # * /sys/devices/system/cpu/present
+        {"command": r"grep . /sys/devices/system/cpu/online /sys/devices/system/cpu/present",
+         "separator": ":",
+         "readonly":  True,
+         "dirname":   "cpu-info",
+         "filename":  "cpu.txt"}],
     "msrs" :
         {"addresses": [
             EnergyPerfBias.MSR_ENERGY_PERF_BIAS,
