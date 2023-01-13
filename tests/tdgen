@@ -31,6 +31,9 @@ CPUInfoData = {
          "dirname": "lscpu-topology"},
         {"command": "lscpu",
          "dirname": "lscpu"}],
+    "files" : [
+        {"path": "/proc/cpuinfo",
+         "readonly": True}],
     "inlinefiles" : [
         # Command for reading die info from the following files:
         # * /sys/devices/system/cpu/cpu*/topology/die_id
@@ -266,6 +269,22 @@ def collect_msrs(msrinfo, pman, outdir):
 
             fobj.write(line + "\n")
 
+def copy_file(pman, src, outdir):
+    """
+    Copy file contents. The arguments are as follows.
+      * pman - the process manager object that defines the remote host to read the files from.
+      * src - path to the source file.
+      * outdir - the destination to save 'src'.
+    """
+
+    dst = Path(outdir / src.lstrip("/"))
+    os.makedirs(dst.parent, exist_ok=True)
+
+    try:
+        pman.get(src, dst)
+    except Error as err:
+        LOG.notice(err)
+
 def generate_config_file(modname, testdata, outdir):
     """Generate configuration file for python module name 'modname' from testdata 'testdata'."""
 
@@ -301,6 +320,10 @@ def main():
                     for cmdinfo in testdata["commands"]:
                         collect_cmd_output(cmdinfo, pman, datapath)
                         cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
+
+                if "files" in testdata:
+                    for file in testdata["files"]:
+                        copy_file(pman, file["path"], datapath)
 
                 for section in ("directories", "inlinefiles"):
                     if section not in testdata:
