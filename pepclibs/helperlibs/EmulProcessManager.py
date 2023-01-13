@@ -389,6 +389,24 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             path = self._get_basepath() / path.lstrip("/")
             _populate_sparse_file(path, data)
 
+    def _init_files(self, finfos, datapath, module):
+        """Initialize plain files, which are just copies of the original files."""
+
+        for finfo in finfos:
+            src = datapath / module / finfo["path"].lstrip("/")
+
+            try:
+                with open(src, "r", encoding="utf-8") as fobj:
+                    data = fobj.read()
+            except ErrorNotFound:
+                continue
+
+            if finfo.get("readonly"):
+                self._ro_files[finfo["path"]] = data
+            else:
+                path = self._get_basepath() / finfo["path"].lstrip("/")
+                populate_rw_file(path, data)
+
     def init_testdata(self, module, datapath):
         """Initialize the testdata for module 'module' from directory 'datapath'."""
 
@@ -410,6 +428,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         if "msrs" in config:
             self._init_msrs(config["msrs"], datapath)
+
+        if "files" in config:
+            self._init_files(config["files"], datapath, module)
 
         self.datapath = datapath
 
