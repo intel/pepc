@@ -62,7 +62,17 @@ CPUInfoData = {
          "separator": ":",
          "readonly":  True,
          "dirname":   "cpu-info",
-         "filename":  "cpu.txt"}],
+         "filename":  "cpu.txt"},
+        # Command for reading node info from the following files:
+        # * /sys/devices/system/node/node*/cpulist.
+        # * /sys/devices/system/node/online
+        {"command": r"find /sys/devices/system/node -type f -regextype posix-extended -regex " \
+                    r"'.*online|.*node([[:digit:]]+)/cpulist' -type f -exec " \
+                    r"printf '%s' {}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly":  True,
+         "dirname":   "node-info",
+         "filename":  "node.txt"}],
     "msrs" :
         {"addresses": [
             EnergyPerfBias.MSR_ENERGY_PERF_BIAS,
