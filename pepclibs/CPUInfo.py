@@ -532,6 +532,13 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_cpus(self, order="CPU"):
         """Returns list of online CPU numbers."""
+
+        if order == "CPU":
+            if not self._cpus:
+                self._cpus = self._read_range("/sys/devices/system/cpu/online")
+
+            return self._cpus.copy()
+
         return self._get_level_nums("CPU", "CPU", "all", order=order)
 
     def get_cores(self, package=0, order="core"):
@@ -1012,6 +1019,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         # List of online and offline CPUs.
         self._all_cpus = None
+        # List of online CPUs.
+        self._cpus = None
 
         # General CPU information.
         self.info = None
