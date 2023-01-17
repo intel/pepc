@@ -586,12 +586,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def get_offline_cpus(self):
         """Returns list of offline CPU numbers sorted in ascending order."""
 
-        cpus = []
-        for tline in self._get_topology(order="CPU"):
-            if not tline["online"]:
-                cpus.append(tline["CPU"])
-
-        return cpus
+        cpus = self._get_all_cpus()
+        online_cpus = set(self.get_cpus(order="CPU"))
+        return list(cpu for cpu in cpus if cpu not in online_cpus)
 
     def get_cpu_levels(self, cpu):
         """
