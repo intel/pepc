@@ -44,6 +44,19 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                                         f"{self._pman.hostmsg}")
             raise Error(f"CPU {cpu} does not exist{self._pman.hostmsg}")
 
+    def _validate_hotplugged_cpus(self, cpus, state):
+        """Validate that CPUs 'cpus' state is the same in sysfs."""
+
+        if state:
+            valid = set(self._cpuinfo.get_cpus())
+        else:
+            valid = set(self._cpuinfo.get_offline_cpus())
+
+        for cpu in cpus:
+            if cpu not in valid:
+                state_str = "online" if state else "offline"
+                raise Error(f"failed to {state_str} CPU{cpu}")
+
     def _get_online(self, path):
         """Read the 'online' sysfs file at 'path'."""
 
@@ -83,6 +96,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("CPUs to %s: %s", state_str, ", ".join([str(cpu) for cpu in cpus]))
 
+        toggled = []
         for cpu in cpus:
             path = self._get_path(cpu)
 
@@ -106,11 +120,11 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                     fobj.write(data)
             except Error as err:
                 raise Error(f"failed to {state_str} CPU{cpu}:\n{err.indent(2)}") from err
+            toggled.append(cpu)
 
-            if self._get_online(path) != data:
-                raise Error(f"failed to {state_str} CPU{cpu}")
-
+        if toggled:
             cpuinfo.cpus_hotplugged()
+            self._validate_hotplugged_cpus(toggled, online)
 
     def online(self, cpus="all", skip_unsupported=False):
         """
