@@ -575,7 +575,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """
 
         if _is_uncore_prop(prop):
-            levels = self._cpuinfo.get_cpu_levels(cpu)
+            levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
             pkg = levels["package"]
             die = levels["die"]
             return self._sysfs_base_uncore / f"package_{pkg:02d}_die_{die:02d}" / prop["fname"]
@@ -749,7 +749,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """
 
         if _is_uncore_prop(prop):
-            levels = self._cpuinfo.get_cpu_levels(cpu)
+            levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
             pkg = levels["package"]
             die = levels["die"]
             what = f"package {pkg} die {die}"

@@ -53,7 +53,7 @@ def topology_info_command(args, pman):
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         cpus = _PepcCommon.get_cpus(args, cpuinfo, offlined_ok=offlined_ok)
-        topology = cpuinfo.get_topology(order=order)
+        topology = cpuinfo.get_topology(levels=colnames, order=order)
 
         if offlined_ok:
             # Offline CPUs are not present in 'topology' list. Thus, we add them to the list with

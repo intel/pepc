@@ -236,10 +236,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         * By packages: 'cpus_div_packages()'.
     """
 
-    def get_topology(self, order="CPU"):
+    def get_topology(self, levels=None, order="CPU"):
         """
         Build and return copy of internal topology list. The topology includes dictionaries, one
-        dictionary per CPU. Each dictionary includes the following keys.
+        dictionary per CPU. By default each dictionary includes the following keys.
           * CPU     - CPU number.
                     - Globally unique.
           * core    - Core number.
@@ -255,7 +255,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
           * package - Package number.
                     - Globally unique.
 
-        Note, when a CPU is offline, its core, die, node and package numbers are 'None'.
+        The 'levels' agreement can be used for limiting the levels this method initializes. Partial
+        topology initialization is faster than full initialization. By default ('levels=None'), all
+        levels are initialized.
 
         Example topology list for the following hypothetical system:
           * 2 packages, numbers 0, 1.
@@ -327,8 +329,14 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1},
         """
 
+        if not levels:
+            levels = LEVELS
+        else:
+            for lvl in levels:
+                self._validate_level(lvl, name="topology level")
+
         self._validate_level(order, name="order")
-        topology = self._get_topology(order=order)
+        topology = self._get_topology(levels=levels, order=order)
         return copy.deepcopy(topology)
 
     def _read_range(self, path, must_exist=True):
@@ -416,22 +424,36 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 with suppress(KeyError):
                     tinfo[cpu]["node"] = node
 
-    def _get_topology(self, order="CPU"):
+    def _get_topology(self, levels, order="CPU"):
         """Build and return topology list, refer to 'get_topology()' for more information."""
 
-        if self._topology:
+        levels = set(levels)
+        levels.update(set(self._sorting_map[order]))
+
+        levels -= self._initialized_levels
+        if not levels:
             return self._topology[order]
 
-        tinfo = {cpu : {"CPU" : cpu} for cpu in self._get_online_cpus(update=True)}
+        if not self._topology:
+            tinfo = {cpu : {"CPU" : cpu} for cpu in self._get_online_cpus(update=True)}
+        else:
+            tinfo = {tline["CPU"] : tline for tline in self._topology["CPU"]}
 
-        self._add_core_and_package_numbers(tinfo)
-        self._add_module_numbers(tinfo)
-        self._add_die_numbers(tinfo)
-        self._add_node_numbers(tinfo)
+        if "package" in levels or "core" in levels:
+            self._add_core_and_package_numbers(tinfo)
+            levels.update({"package", "core"})
+        if "module" in levels:
+            self._add_module_numbers(tinfo)
+        if "die" in levels:
+            self._add_die_numbers(tinfo)
+        if "node" in levels:
+            self._add_node_numbers(tinfo)
 
         topology = list(tinfo.values())
-        for level in LEVELS:
-            self._sort_topology(topology, level)
+        self._initialized_levels.update(levels)
+        for level in self._initialized_levels:
+            if level not in self._topology:
+                self._sort_topology(topology, level)
 
         return self._topology[order]
 
@@ -499,7 +521,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         result = {}
         valid_nums = set()
 
-        for tline in self._get_topology(order=order):
+        for tline in self._get_topology(levels=(lvl, sublvl), order=order):
             valid_nums.add(tline[lvl])
             if nums == "all" or tline[lvl] in nums:
                 result[tline[sublvl]] = None
@@ -580,23 +602,25 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         online_cpus = set(self._get_online_cpus())
         return list(cpu for cpu in cpus if cpu not in online_cpus)
 
-    def get_cpu_levels(self, cpu):
+    def get_cpu_levels(self, cpu, levels=None):
         """
-        Returns a dictionary of levels an online CPU 'cpu' belongs to. Example for CPU 16:
-            {"package": 0, "die": 1, "node": 1, "core" : 5, "CPU": 16}
+        Returns a dictionary of levels an online CPU 'cpu' belongs to. By default all levels are
+        included.
         """
 
         cpu = Trivial.str_to_int(cpu, what="CPU number")
+        if not levels:
+            levels = LEVELS
 
         tline = None
-        for tline in self._get_topology(order="CPU"):
+        for tline in self._get_topology(levels=levels):
             if cpu == tline["CPU"]:
                 break
         else:
             raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}")
 
         result = {}
-        for lvl in LEVELS:
+        for lvl in levels:
             result[lvl] = tline[lvl]
         return result
 
@@ -616,7 +640,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if level == "global":
             return self.get_cpus()
 
-        levels = self.get_cpu_levels(cpu)
+        levels = self.get_cpu_levels(cpu, levels=(level, "package"))
         if level == "package":
             return self.package_to_cpus(levels[level])
         if level == "node":
@@ -750,7 +774,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         cpu2index = {} # CPU number -> core siblings index map.
         core = pkg = index = None
 
-        for tline in self._get_topology(order="core"):
+        for tline in self._get_topology(levels=("CPU", "core", "package"), order="core"):
             cpu = tline["CPU"]
             if tline["core"] != core or tline["package"] != pkg:
                 core = tline["core"]
@@ -1050,6 +1074,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         # The topology dictionary. See 'get_topology()' for more information.
         self._topology = {}
+        # Stores all initialized topology levels.
+        self._initialized_levels = set()
         # We are going to sort topology by level, this map specifies how each is sorted. Note, core
         # and die numbers are per-package, therefore we always sort them by package first.
         self._sorting_map = {"CPU"     : ("CPU", ),

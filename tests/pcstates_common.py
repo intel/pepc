@@ -35,7 +35,7 @@ def get_siblings(cpuinfo, cpu=0):
      * cpu - the CPU whose siblings we return.
     """
 
-    levels = cpuinfo.get_cpu_levels(cpu)
+    levels = cpuinfo.get_cpu_levels(cpu, levels=("core", "die", "package"))
 
     siblings = {}
     siblings["global"] = cpuinfo.get_cpus()
