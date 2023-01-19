@@ -351,6 +351,32 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         skeys = self._sorting_map[order]
         self._topology[order] = sorted(topology, key=lambda tline: tuple(tline[s] for s in skeys))
 
+    def _update_topology(self):
+        """Update topology information with online/offline CPUs."""
+
+        curr_online_cpus = set(self._get_online_cpus())
+        prev_online_cpus = {tline["CPU"] for tline in self._topology["CPU"]}
+        onlined = list(curr_online_cpus - prev_online_cpus)
+
+        tinfo = {cpu : {"CPU" : cpu} for cpu in onlined}
+        for tline in self._topology["CPU"]:
+            if tline["CPU"] in curr_online_cpus:
+                tinfo[tline["CPU"]] = tline
+
+        if "package" in self._initialized_levels or "core" in self._initialized_levels:
+            self._add_core_and_package_numbers(tinfo)
+        if "module" in self._initialized_levels:
+            self._add_module_numbers(tinfo)
+        if "die" in self._initialized_levels:
+            self._add_die_numbers(tinfo)
+        if "node" in self._initialized_levels:
+            self._add_node_numbers(tinfo)
+
+        topology = list(tinfo.values())
+        for order in self._initialized_levels:
+            self._sort_topology(topology, order)
+        self._must_update_topology = False
+
     def _add_core_and_package_numbers(self, tinfo):
         """Adds core and package numbers to 'tinfo'."""
 
@@ -429,6 +455,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         levels = set(levels)
         levels.update(set(self._sorting_map[order]))
+
+        if self._must_update_topology and self._topology:
+            self._update_topology()
 
         levels -= self._initialized_levels
         if not levels:
@@ -601,6 +630,12 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         cpus = self._get_all_cpus()
         online_cpus = set(self._get_online_cpus())
         return list(cpu for cpu in cpus if cpu not in online_cpus)
+
+    def cpus_hotplugged(self):
+        """This method informs CPUInfo to update online/offline CPUs and topology lists."""
+
+        self._cpus = None
+        self._must_update_topology = True
 
     def get_cpu_levels(self, cpu, levels=None):
         """
@@ -1076,6 +1111,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._topology = {}
         # Stores all initialized topology levels.
         self._initialized_levels = set()
+        # This flag notifies '_get_topology()' that some CPUs have been offlined/onlined.
+        self._must_update_topology = False
         # We are going to sort topology by level, this map specifies how each is sorted. Note, core
         # and die numbers are per-package, therefore we always sort them by package first.
         self._sorting_map = {"CPU"     : ("CPU", ),
