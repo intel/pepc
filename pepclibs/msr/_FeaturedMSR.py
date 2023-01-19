@@ -188,7 +188,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         if set_method:
             set_method(val, cpus=cpus)
         else:
-            self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus, sname=finfo["sname"])
+            self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus, sname=finfo["wsname"])
 
     def write_cpu_feature(self, fname, val, cpu):
         """
@@ -322,6 +322,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
             if "writable" not in finfo:
                 finfo["writable"] = True
+
+            if "wsname" not in finfo:
+                finfo["wsname"] = finfo["sname"]
 
             if "vals" in finfo:
                 # Build the reverse dictionary for 'vals'.
