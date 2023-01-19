@@ -18,18 +18,6 @@ from pepctool import _PepcCommon
 
 _LOG = logging.getLogger()
 
-def _format_row(tline, colnames):
-    """Format and return a list of 'colnames' values from 'tline' dictionary."""
-
-    res = []
-    for name in colnames:
-        if tline[name] is not None:
-            res.append(str(tline[name]))
-        else:
-            res.append("?")
-
-    return res
-
 def topology_info_command(args, pman):
     """Implements the 'topology info' command."""
 
@@ -65,8 +53,17 @@ def topology_info_command(args, pman):
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         cpus = _PepcCommon.get_cpus(args, cpuinfo, offlined_ok=offlined_ok)
+        topology = cpuinfo.get_topology(order=order)
+
+        if offlined_ok:
+            # Offline CPUs are not present in 'topology' list. Thus, we add them to the list with
+            # "?" as level number.
+            for cpu in cpuinfo.get_offline_cpus():
+                tline = {name : "?" for name in colnames}
+                tline["CPU"] = cpu
+                topology.append(tline)
 
         _LOG.info(fmt, *headers)
-        for tline in cpuinfo.get_topology(order=order):
+        for tline in topology:
             if tline["CPU"] in cpus:
-                _LOG.info(fmt, *_format_row(tline, colnames))
+                _LOG.info(fmt, *[str(tline[name]) for name in colnames])

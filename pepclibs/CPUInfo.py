@@ -13,6 +13,7 @@ This module provides an API to get CPU information.
 import re
 import copy
 from pathlib import Path
+from contextlib import suppress
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers, Human
 
@@ -253,8 +254,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                     - Globally unique.
           * package - Package number.
                     - Globally unique.
-          * online  - CPU online status.
-                    - 'True' if the CPU is online, 'False' when the CPU is offline.
 
         Note, when a CPU is offline, its core, die, node and package numbers are 'None'.
 
@@ -268,22 +267,22 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         Here is the topology table in package order. It is sorted by package and CPU.
 
-		  {'CPU': 0,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 2,  'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 4,  'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 6,  'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 8,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 10, 'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 12, 'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 14, 'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 1,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 3,  'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 5,  'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 7,  'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 9,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 11, 'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 13, 'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 0,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 2,  'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 4,  'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 6,  'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 8,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 10, 'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 12, 'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 14, 'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 1,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 3,  'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 5,  'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 7,  'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 9,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 11, 'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 13, 'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1},
 
         The topology tables in node/die order will look the same (in this particular example). They
         are sorted by package number, then node/die number, then CPU number.
@@ -291,41 +290,41 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         Here is the topology table in core order. It'll be sorted by package number, and then core
         number, then CPU number.
 
-		  {'CPU': 0,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 8,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 4,  'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 12, 'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 6,  'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 14, 'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 2,  'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 10, 'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 1,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 9,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 5,  'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 13, 'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 7,  'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 3,  'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 11, 'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 0,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 8,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 4,  'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 12, 'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 6,  'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 14, 'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 2,  'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 10, 'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 1,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 9,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 5,  'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 13, 'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 7,  'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 3,  'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 11, 'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1},
 
         Here is the topology table in CPU order.
 
-		  {'CPU': 0,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 1,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 2,  'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 3,  'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 4,  'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 5,  'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 6,  'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 7,  'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 8,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 9,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 10, 'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 11, 'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 12, 'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 13, 'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1, 'online': True},
-		  {'CPU': 14, 'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0, 'online': True},
-		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1, 'online': True},
+		  {'CPU': 0,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 1,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 2,  'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 3,  'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 4,  'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 5,  'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 6,  'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 7,  'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 8,  'core': 0, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 9,  'core': 0, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 10, 'core': 6, 'module': 5, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 11, 'core': 6, 'module': 5, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 12, 'core': 1, 'module': 0, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 13, 'core': 1, 'module': 0, 'die': 0, 'node': 1, 'package': 1},
+		  {'CPU': 14, 'core': 5, 'module': 4, 'die': 0, 'node': 0, 'package': 0},
+		  {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1},
         """
 
         self._validate_level(order, name="order")
@@ -353,16 +352,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         def sort_func(tline):
             """
             The sorting function. It receives a topology line and returns the sorting key for
-            'sorted()'. The returned key is a tuple with numbers, and 'sorted()' method will sort by
-            the these returned tuples.
-
-            The first element of the returned tuples is a bit tricky. For online CPUs, it'll be
-            'True', and for offline CPUs it'll be 'False'. This will make sure that topology lines
-            corresponding to offline CPUs will always go last.
+            'sorted()'. The returned key is a list of level numbers, and 'sorted()' method will
+            sort by these returned lists.
             """
 
-            vals = (tline[skey] for skey in skeys) # pylint: disable=undefined-loop-variable
-            return (not tline["online"], *vals)
+            return tuple(tline[skey] for skey in skeys) # pylint: disable=undefined-loop-variable
 
         for lvl, skeys in sorting_map.items():
             self._topology[lvl] = sorted(topology, key=sort_func)
@@ -409,7 +403,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             module = Trivial.str_to_int(data, "module number")
             siblings = self._read_range(base / "cache/index2/shared_cpu_list")
             for sibling in siblings:
-                tinfo[sibling]["module"] = module
+                # Suppress 'KeyError' in case the 'shared_cpu_list' file included an offline CPU.
+                with suppress(KeyError):
+                    tinfo[sibling]["module"] = module
 
     def _add_die_numbers(self, tinfo):
         """Adds die numbers to 'tinfo'."""
@@ -423,7 +419,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             die = Trivial.str_to_int(data, "die number")
             siblings = self._read_range(base / "topology/die_cpus_list")
             for sibling in siblings:
-                tinfo[sibling]["die"] = die
+                # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
+                with suppress(KeyError):
+                    tinfo[sibling]["die"] = die
 
     def _add_node_numbers(self, tinfo):
         """Adds NUMA node numbers to 'tinfo'."""
@@ -432,7 +430,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         for node in nodes:
             cpus = self._read_range(f"/sys/devices/system/node/node{node}/cpulist")
             for cpu in cpus:
-                tinfo[cpu]["node"] = node
+                # Suppress 'KeyError' in case the 'cpulist' file included an offline CPU.
+                with suppress(KeyError):
+                    tinfo[cpu]["node"] = node
 
     def _get_topology(self, order="CPU"):
         """Build and return topology list, refer to 'get_topology()' for more information."""
@@ -440,25 +440,12 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if self._topology:
             return self._topology[order]
 
-        # Remove cached online CPUs, this will make '_get_online_cpus()' re-read the sysfs file.
-        self._cpus = None
-        tinfo = {cpu : {"CPU" : cpu} for cpu in self._get_all_cpus()}
+        tinfo = {cpu : {"CPU" : cpu} for cpu in self._get_online_cpus(update=True)}
 
         self._add_core_and_package_numbers(tinfo)
         self._add_module_numbers(tinfo)
         self._add_die_numbers(tinfo)
         self._add_node_numbers(tinfo)
-
-        for cpu in self._get_online_cpus():
-            tinfo[cpu]["online"] = True
-
-        for cpu in self.get_offline_cpus():
-            tinfo[cpu]["online"] = False
-            tinfo[cpu]["core"] = None
-            tinfo[cpu]["module"] = None
-            tinfo[cpu]["die"] = None
-            tinfo[cpu]["node"] = None
-            tinfo[cpu]["package"] = None
 
         topology = list(tinfo.values())
         self._sort_topology(topology)
@@ -529,9 +516,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         valid_nums = set()
 
         for tline in self._get_topology(order=order):
-            if not tline["online"]:
-                continue
-
             valid_nums.add(tline[lvl])
             if nums == "all" or tline[lvl] in nums:
                 result[tline[sublvl]] = None
@@ -626,9 +610,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 break
         else:
             raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}")
-
-        if not tline["online"]:
-            raise Error(f"CPU {cpu} is offline{self._pman.hostmsg}, cannot get its topology")
 
         result = {}
         for lvl in LEVELS:
@@ -787,21 +768,17 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         for tline in self._get_topology(order="core"):
             cpu = tline["CPU"]
-            if not tline["online"]:
-                cpu2index[cpu] = None
-            else:
-                if tline["core"] != core or tline["package"] != pkg:
-                    core = tline["core"]
-                    pkg = tline["package"]
-                    index = 0
-                cpu2index[cpu] = index
-                index += 1
+            if tline["core"] != core or tline["package"] != pkg:
+                core = tline["core"]
+                pkg = tline["package"]
+                index = 0
+            cpu2index[cpu] = index
+            index += 1
 
         result = []
         indexes = set(indexes)
         for cpu in cpus:
-            index = cpu2index[cpu]
-            if index is not None and index in indexes:
+            if cpu in cpu2index and cpu2index[cpu] in indexes:
                 result.append(cpu)
 
         return result
