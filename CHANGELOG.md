@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix 'pepc cstates config --pkg-cstate-limit' option, it did not work
+   correctly in some cases because we made wrong assumptions about MSR scope.
 ### Added
 ### Removed
 ### Changed
