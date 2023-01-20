@@ -601,7 +601,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             {"package": 0, "die": 1, "node": 1, "core" : 5, "CPU": 16}
         """
 
-        cpu = self.normalize_cpu(cpu)
+        cpu = Trivial.str_to_int(cpu, what="CPU number")
 
         tline = None
         for tline in self._get_topology(order="CPU"):
