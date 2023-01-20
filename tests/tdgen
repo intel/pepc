@@ -29,8 +29,6 @@ CPUInfoData = {
     "prepare-cmds" : [
         "pepc cpu-hotplug online --cpus all"],
     "commands" : [
-        {"command": "lscpu --physical --all -p=socket,node,core,cpu,online",
-         "dirname": "lscpu-topology"},
         {"command": "lscpu",
          "dirname": "lscpu"}],
     "files" : [
