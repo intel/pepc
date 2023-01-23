@@ -153,11 +153,11 @@ class EPB(ClassHelpers.SimpleCloseContext):
 
         try:
             with self._pman.open(self._sysfs_epb_path % cpu, "r") as fobj:
-                val = fobj.read().strip()
+                val = int(fobj.read().strip())
         except ErrorNotFound:
             val = None
 
-        return self._pcache.add("epb", cpu, int(val))
+        return self._pcache.add("epb", cpu, val)
 
     def get_epb(self, cpus="all"):
         """
