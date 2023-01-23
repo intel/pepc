@@ -11,6 +11,7 @@ This module provides an API to get CPU information.
 """
 
 import re
+import copy
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers, Human
@@ -221,97 +222,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         * 'mark_cpus_offline()'
     """
 
-    def _get_cpu_module(self, cpu):
-        """
-        Returns the module number for CPU number in 'cpu'. If number can't be resolved returns
-        'None'.
-        """
-
-        if cpu in self._module_cache:
-            return self._module_cache[cpu]
-
-        sysfs_base = Path(f"/sys/devices/system/cpu/cpu{cpu}/cache/index2/")
-
-        # All CPUs in a module share the same L2 cache, so we use L2 cache ID for the module number.
-        module_id_path = sysfs_base / "id"
-        try:
-            module = self._pman.read(module_id_path)
-        except ErrorNotFound:
-            return None
-
-        module = int(module)
-
-        # Get the list of CPUs belonging to the same module.
-        cpus = self._pman.read(sysfs_base / "shared_cpu_list")
-        cpus = ArgParse.parse_int_list(cpus, ints=True)
-
-        for cpunum in cpus:
-            self._module_cache[cpunum] = module
-
-        return module
-
-    def _get_cpu_die(self, cpu):
-        """
-        Returns the die number for CPU number in 'cpu'. If number can't be resolved returns 'None'.
-        """
-
-        if cpu in self._die_cache:
-            return self._die_cache[cpu]
-
-        sysfs_base = Path(self._topology_sysfs_base % cpu)
-
-        # Get the CPU die number.
-        die_id_path = sysfs_base / "die_id"
-        try:
-            die = self._pman.read(die_id_path)
-        except ErrorNotFound:
-            return None
-
-        die = int(die)
-
-        # Get the list of CPUs belonging to the same die.
-        cpus = self._pman.read(sysfs_base / "die_cpus_list")
-        cpus = ArgParse.parse_int_list(cpus, ints=True)
-
-        # Save the list of CPUs in the case.
-        for cpunum in cpus:
-            self._die_cache[cpunum] = die
-
-        return die
-
-    def _sort_topology(self, topology):
-        """Sorts the topology list."""
-
-        # We are going to store 5 versions of the table, sorted in different order. Note, core and
-        # die numbers are per-package, therefore we always sort them by package first.
-        sorting_map = {"CPU"     : ("CPU", ),
-                       "core"    : ("package", "core", "CPU"),
-                       "module"  : ("module", "CPU"),
-                       "die"     : ("package", "die", "CPU"),
-                       "node"    : ("node", "CPU"),
-                       "package" : ("package", "CPU")}
-
-        def sort_func(tline):
-            """
-            The sorting function. It receives a topology line and returns the sorting key for
-            'sorted()'. The returned key is a tuple with numbers, and 'sorted()' method will sort by
-            the these returned tuples.
-
-            The first element of the returned tuples is a bit tricky. For online CPUs, it'll be
-            'True', and for offline CPUs it'll be 'False'. This will make sure that topology lines
-            corresponding to offline CPUs will always go last.
-            """
-
-            vals = (tline[skey] for skey in skeys) # pylint: disable=undefined-loop-variable
-            return (not tline["online"], *vals)
-
-        for lvl, skeys in sorting_map.items():
-            self._topology[lvl] = sorted(topology, key=sort_func)
-
     def get_topology(self, order="CPU"):
         """
-        Build and return the topology list. The topology includes dictionaries, one dictionary per
-        CPU. Each dictionary includes the following keys.
+        Build and return copy of internal topology list. The topology includes dictionaries, one
+        dictionary per CPU. Each dictionary includes the following keys.
           * CPU     - CPU number.
                     - Globally unique.
           * core    - Core number.
@@ -402,6 +316,98 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """
 
         self._validate_level(order, name="order")
+        topology = self._get_topology(order=order)
+        return copy.deepcopy(topology)
+
+    def _get_cpu_module(self, cpu):
+        """
+        Returns the module number for CPU number in 'cpu'. If number can't be resolved returns
+        'None'.
+        """
+
+        if cpu in self._module_cache:
+            return self._module_cache[cpu]
+
+        sysfs_base = Path(f"/sys/devices/system/cpu/cpu{cpu}/cache/index2/")
+
+        # All CPUs in a module share the same L2 cache, so we use L2 cache ID for the module number.
+        module_id_path = sysfs_base / "id"
+        try:
+            module = self._pman.read(module_id_path)
+        except ErrorNotFound:
+            return None
+
+        module = int(module)
+
+        # Get the list of CPUs belonging to the same module.
+        cpus = self._pman.read(sysfs_base / "shared_cpu_list")
+        cpus = ArgParse.parse_int_list(cpus, ints=True)
+
+        for cpunum in cpus:
+            self._module_cache[cpunum] = module
+
+        return module
+
+    def _get_cpu_die(self, cpu):
+        """
+        Returns the die number for CPU number in 'cpu'. If number can't be resolved returns 'None'.
+        """
+
+        if cpu in self._die_cache:
+            return self._die_cache[cpu]
+
+        sysfs_base = Path(self._topology_sysfs_base % cpu)
+
+        # Get the CPU die number.
+        die_id_path = sysfs_base / "die_id"
+        try:
+            die = self._pman.read(die_id_path)
+        except ErrorNotFound:
+            return None
+
+        die = int(die)
+
+        # Get the list of CPUs belonging to the same die.
+        cpus = self._pman.read(sysfs_base / "die_cpus_list")
+        cpus = ArgParse.parse_int_list(cpus, ints=True)
+
+        # Save the list of CPUs in the case.
+        for cpunum in cpus:
+            self._die_cache[cpunum] = die
+
+        return die
+
+    def _sort_topology(self, topology):
+        """Sorts the topology list."""
+
+        # We are going to store 5 versions of the table, sorted in different order. Note, core and
+        # die numbers are per-package, therefore we always sort them by package first.
+        sorting_map = {"CPU"     : ("CPU", ),
+                       "core"    : ("package", "core", "CPU"),
+                       "module"  : ("module", "CPU"),
+                       "die"     : ("package", "die", "CPU"),
+                       "node"    : ("node", "CPU"),
+                       "package" : ("package", "CPU")}
+
+        def sort_func(tline):
+            """
+            The sorting function. It receives a topology line and returns the sorting key for
+            'sorted()'. The returned key is a tuple with numbers, and 'sorted()' method will sort by
+            the these returned tuples.
+
+            The first element of the returned tuples is a bit tricky. For online CPUs, it'll be
+            'True', and for offline CPUs it'll be 'False'. This will make sure that topology lines
+            corresponding to offline CPUs will always go last.
+            """
+
+            vals = (tline[skey] for skey in skeys) # pylint: disable=undefined-loop-variable
+            return (not tline["online"], *vals)
+
+        for lvl, skeys in sorting_map.items():
+            self._topology[lvl] = sorted(topology, key=sort_func)
+
+    def _get_topology(self, order="CPU"):
+        """Build and return topology list, refer to 'get_topology()' for more information."""
 
         if self._topology:
             return self._topology[order]
@@ -501,7 +507,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         result = {}
         valid_nums = set()
 
-        for tline in self.get_topology(order=order):
+        for tline in self._get_topology(order=order):
             if not tline["online"]:
                 continue
 
@@ -525,7 +531,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Mark CPUs 'cpus' online status to 'online' in internal topology dictionary."""
 
         cpus = self.normalize_cpus(cpus, offlined_ok=True)
-        topology = self.get_topology(order="CPU")
+        topology = self._get_topology(order="CPU")
         for cpu in cpus:
             topology[cpu]["online"] = online
 
@@ -583,7 +589,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Returns list of offline CPU numbers sorted in ascending order."""
 
         cpus = []
-        for tline in self.get_topology(order="CPU"):
+        for tline in self._get_topology(order="CPU"):
             if not tline["online"]:
                 cpus.append(tline["CPU"])
 
@@ -598,7 +604,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         cpu = self.normalize_cpu(cpu)
 
         tline = None
-        for tline in self.get_topology(order="CPU"):
+        for tline in self._get_topology(order="CPU"):
             if cpu == tline["CPU"]:
                 break
         else:
