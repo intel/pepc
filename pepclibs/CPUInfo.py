@@ -316,6 +316,12 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         topology = self._get_topology(order=order)
         return copy.deepcopy(topology)
 
+    def _read_range(self, path, must_exist=True):
+        """Read number range string from path 'path', and return it as a list of integers."""
+
+        str_of_ranges = self._pman.read(path, must_exist=must_exist)
+        return ArgParse.parse_int_list(str_of_ranges, ints=True)
+
     def _get_cpu_module(self, cpu):
         """
         Returns the module number for CPU number in 'cpu'. If number can't be resolved returns
@@ -562,6 +568,13 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         included.
         """
         return self._get_level_nums("package", "package", "all", order=order)
+
+    def _get_all_cpus(self):
+        """Returns list of online and offline CPU numbers sorted in ascending order."""
+
+        if not self._all_cpus:
+            self._all_cpus = self._read_range("/sys/devices/system/cpu/present")
+        return self._all_cpus
 
     def get_offline_cpus(self):
         """Returns list of offline CPU numbers sorted in ascending order."""
@@ -996,6 +1009,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         # helps reading less sysfs files.
         self._die_cache = {}
         self._module_cache = {}
+
+        # List of online and offline CPUs.
+        self._all_cpus = None
 
         # General CPU information.
         self.info = None
