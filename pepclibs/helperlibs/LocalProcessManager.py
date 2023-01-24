@@ -16,6 +16,7 @@ import os
 import time
 import shlex
 import errno
+import shutil
 import logging
 import subprocess
 from pathlib import Path
@@ -453,8 +454,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         for more information.
         """
 
-        import shutil # pylint: disable=import-outside-toplevel
-
         path = Path(path)
 
         # Sometimes shutil.rmtree() fails to remove non empty directory, in such case, retry few
@@ -516,6 +515,16 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def get_homedir():
         """Return return the home directory of the current user."""
         return Path("~").expanduser()
+
+    @staticmethod
+    def get(src, dst):
+        """Copy a file or directory from 'src' to 'dst'."""
+
+        try:
+            shutil.copy(src, dst)
+        except (OSError, shutil.Error) as err:
+            msg = Error(err).indent(2)
+            raise Error(f"failed to copy files '{src}' to '{dst}':\n{msg}") from err
 
     @staticmethod
     def which(program, must_find=True):
