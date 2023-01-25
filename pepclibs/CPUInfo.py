@@ -337,29 +337,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         str_of_ranges = self._pman.read(path, must_exist=must_exist).strip()
         return ArgParse.parse_int_list(str_of_ranges, ints=True)
 
-    def _sort_topology(self, topology):
-        """Sorts the topology list."""
+    def _sort_topology(self, topology, order):
+        """Sorts and save the topology list by 'order' in sorting map"""
 
-        # We are going to store 5 versions of the table, sorted in different order. Note, core and
-        # die numbers are per-package, therefore we always sort them by package first.
-        sorting_map = {"CPU"     : ("CPU", ),
-                       "core"    : ("package", "core", "CPU"),
-                       "module"  : ("module", "CPU"),
-                       "die"     : ("package", "die", "CPU"),
-                       "node"    : ("node", "CPU"),
-                       "package" : ("package", "CPU")}
-
-        def sort_func(tline):
-            """
-            The sorting function. It receives a topology line and returns the sorting key for
-            'sorted()'. The returned key is a list of level numbers, and 'sorted()' method will
-            sort by these returned lists.
-            """
-
-            return tuple(tline[skey] for skey in skeys) # pylint: disable=undefined-loop-variable
-
-        for lvl, skeys in sorting_map.items():
-            self._topology[lvl] = sorted(topology, key=sort_func)
+        skeys = self._sorting_map[order]
+        self._topology[order] = sorted(topology, key=lambda tline: tuple(tline[s] for s in skeys))
 
     def _add_core_and_package_numbers(self, tinfo):
         """Adds core and package numbers to 'tinfo'."""
@@ -448,7 +430,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._add_node_numbers(tinfo)
 
         topology = list(tinfo.values())
-        self._sort_topology(topology)
+        for level in LEVELS:
+            self._sort_topology(topology, level)
+
         return self._topology[order]
 
     def _validate_level(self, lvl, name="level"):
@@ -1066,6 +1050,14 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         # The topology dictionary. See 'get_topology()' for more information.
         self._topology = {}
+        # We are going to sort topology by level, this map specifies how each is sorted. Note, core
+        # and die numbers are per-package, therefore we always sort them by package first.
+        self._sorting_map = {"CPU"     : ("CPU", ),
+                             "core"    : ("package", "core", "CPU"),
+                             "module"  : ("module", "CPU"),
+                             "die"     : ("package", "die", "CPU"),
+                             "node"    : ("node", "CPU"),
+                             "package" : ("package", "CPU")}
 
         # Level name to its index number.
         self._lvl2idx = {lvl : idx for idx, lvl in enumerate(LEVELS)}
