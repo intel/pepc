@@ -67,9 +67,9 @@ def _test_cpuhotplug_online_good(params):
 
     good_options = ["--cpus all"]
     if len(params["online"]) > 2:
-        good_options += ["--cpus 1"]
+        good_options += [f"--cpus {params['online'][1]}"]
     if len(params["online"]) > 3:
-        good_options += ["--cpus 1-2"]
+        good_options += [f"--cpus {params['online'][1]}-{params['online'][2]}"]
 
     for option in good_options:
         common.run_pepc(f"cpu-hotplug online {option}", pman)
@@ -119,9 +119,9 @@ def _test_cpuhotplug_offline_good(params):
     if len(params["online"]) > 1:
         good_options += [f"--cpus {params['online'][-1]}"]
     if len(params["online"]) > 2:
-        good_options += ["--cpus 1"]
+        good_options += [f"--cpus {params['online'][1]}"]
     if len(params["online"]) > 3:
-        good_options += ["--cpus 1-2"]
+        good_options += [f"--cpus {params['online'][1]}-{params['online'][2]}"]
     if len(params["cores"][0]) > 2:
         good_options += [f"--packages 0 --cores {params['cores'][0][1]}"]
     if len(params["cores"][0]) > 3:
