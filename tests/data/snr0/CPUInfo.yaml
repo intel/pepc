@@ -4,15 +4,26 @@ commands:
   dirname: CPUInfo/lscpu-topology
 - command: lscpu
   dirname: CPUInfo/lscpu
+files:
+- path: /proc/cpuinfo
+  readonly: true
 inlinefiles:
-- dirname: CPUInfo/die-info
+- separator: ':'
+  readonly: true
+  dirname: CPUInfo/die-info
   filename: die.txt
+- separator: ':'
   readonly: true
-  separator: ':'
-- dirname: CPUInfo/module-info
+  dirname: CPUInfo/module-info
   filename: module.txt
+- separator: ':'
   readonly: true
-  separator: ':'
+  dirname: CPUInfo/cpu-info
+  filename: cpu.txt
+- separator: ':'
+  readonly: true
+  dirname: CPUInfo/node-info
+  filename: node.txt
 msrs:
   addresses:
   - 432
@@ -28,7 +39,7 @@ msrs:
   - 430
   - 430
   - 430
-  dirname: CPUInfo/msr
-  filename: msr.txt
   separator1: ':'
   separator2: '|'
+  dirname: CPUInfo/msr
+  filename: msr.txt

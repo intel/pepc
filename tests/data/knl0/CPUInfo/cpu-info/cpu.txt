@@ -1,0 +1,2 @@
+/sys/devices/system/cpu/online:0-271
+/sys/devices/system/cpu/present:0-271

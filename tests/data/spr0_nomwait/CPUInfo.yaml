@@ -4,6 +4,9 @@ commands:
   dirname: CPUInfo/lscpu-topology
 - command: lscpu
   dirname: CPUInfo/lscpu
+files:
+- path: /proc/cpuinfo
+  readonly: true
 inlinefiles:
 - separator: ':'
   readonly: true
@@ -13,6 +16,14 @@ inlinefiles:
   readonly: true
   dirname: CPUInfo/module-info
   filename: module.txt
+- separator: ':'
+  readonly: true
+  dirname: CPUInfo/cpu-info
+  filename: cpu.txt
+- separator: ':'
+  readonly: true
+  dirname: CPUInfo/node-info
+  filename: node.txt
 msrs:
   addresses:
   - 432
