@@ -285,7 +285,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
         regval_bytes = None
 
         for cpu in cpus:
-            self._pcache.remove(regaddr, cpu)
+            self._pcache.remove(regaddr, cpu, sname=sname)
 
         # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
         # 'False' for every CPU number that was not yet modified by the scope-aware '_pcache.add()'
