@@ -187,8 +187,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         finfo = self._features["pkg_cstate_limit"]
 
-        for cpu, code in self._msr.read_bits(self.regaddr, finfo["bits"], cpus=cpus,
-                                             sname=finfo["sname"]):
+        for cpu, code in self._msr.read_bits(self.regaddr, finfo["bits"], cpus=cpus):
             if code not in finfo["rvals"]:
                 # No exact match. The limit is the closest lower known number. For example, if the
                 # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the
@@ -214,7 +213,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         finfo = self._features["pkg_cstate_limit"]
         regvals = {}
 
-        for cpu, regval in self._msr.read(self.regaddr, cpus=cpus, sname=finfo["sname"]):
+        for cpu, regval in self._msr.read(self.regaddr, cpus=cpus):
             if self._msr.get_bits(regval, self._features["locked"]["bits"]):
                 raise Error(f"cannot set package C-state limit{self._pman.hostmsg} for CPU "
                             f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
@@ -229,7 +228,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             regvals[new_regval].append(cpu)
 
         for regval, regval_cpus in regvals.items():
-            self._msr.write(self.regaddr, regval, regval_cpus, sname=finfo["sname"])
+            self._msr.write(self.regaddr, regval, regval_cpus)
 
     def _init_features_dict_pkg_cstate_limit(self):
         """Initialize the 'pkg_cstate_limit' information in the 'self._features' dictionary."""
