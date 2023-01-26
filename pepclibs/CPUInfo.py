@@ -227,7 +227,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         B. Single package/CPU/etc.
             * 'normalize_cpu()'
             * 'normalize_package()'
-    6. "Divide" list of CPUs.
+    6. Select CPUs by sibling index.
+        * 'select_core_siblings()'
+    7. "Divide" list of CPUs.
         A. By cores: 'cpus_div_cores()'.
         B. By dies: 'cpus_div_dies()'.
         C. By packages: 'cpus_div_packages()'.
@@ -738,6 +740,67 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def get_packages_count(self):
         """Returns packages count."""
         return len(self.get_packages())
+
+    def select_core_siblings(self, indexes, cpus):
+        """
+        Select only core siblings from 'cpus' and return the result. The arguments are as follows.
+        * cpus - list of CPU numbers to select core siblings from. The returned result is always a
+                subset of CPU numbers from 'cpus'.
+        * indexes - "indexes" of core siblings to select.
+
+        Example.
+
+        Suppose the system has 4 cores, and each core has 2 CPUs.
+        * core 0 includes CPUs 0, 4
+        * core 1 includes CPUs 1, 5
+        * core 2 includes CPUs 2, 6
+        * core 4 includes CPUs 3, 7
+
+        CPUs 0 and 4, 1 and 5, 2 and 6, 3 and 7 are core siblings.
+        CPUs 0, 1, 2, and 3 are core siblings with index 0.
+        CPUs 4, 5, 6, and 7 are core siblings with index 1.
+
+        Suppose the input 'cpus' argument is '[1, 4, 5, 2]'. The following cores will be selected:
+        1, 0 and 2.
+
+        In order to select first core siblings from 'cpus', provide 'indexes=[0]'. The result will
+        be: '[2, 0, 1]'.
+
+        In order to select second core siblings from 'cpus', provide 'indexes=[1]'. The result will
+        be: '[5, 4, 6]'.
+
+        If 'indexes=[0,1]', the result will be the same as 'cpus': '[2, 0, 5, 4, 1, 6]'
+
+        Note: the index of a CPU inside the core depends on the online status of all CPUs inside the
+              core. For example, a core with 3 CPUs 0, 1 and 2, when each of the CPUs are online
+              their CPU number corresponds to their index, but say we offline CPU 1, then CPU 2 will
+              have index 1 instead of 2.
+        """
+
+        indexes = ArgParse.parse_int_list(indexes, ints=True, dedup=True)
+
+        result = []
+        seen_siblings = set()
+        for cpu in cpus:
+            if cpu in seen_siblings:
+                continue
+
+            levels = self.get_cpu_levels(cpu)
+            siblings = self.cores_to_cpus(cores=levels["core"], packages=levels["package"])
+            for index in indexes:
+                try:
+                    sibling = siblings[index]
+                except IndexError as err:
+                    count = len(siblings)
+                    raise Error(f"can't get core sibling with index {index} for core " \
+                                f"{levels['core']} in package {levels['package']}" \
+                                f"{self._pman.hostmsg}, the core has only {count} online CPU") \
+                                from err
+
+                result.append(sibling)
+            seen_siblings.update(siblings)
+
+        return result
 
     def cpus_div_cores(self, cpus):
         """

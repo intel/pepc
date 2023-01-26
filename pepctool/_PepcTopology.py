@@ -55,6 +55,8 @@ def topology_info_command(args, pman):
         raise Error(f"invalid order '{order}', use one of: {', '.join(CPUInfo.LEVELS)}")
 
     offlined_ok = not args.online_only
+    if offlined_ok and args.core_siblings:
+        raise Error("'--core-siblings' must be used with '--online-only'")
 
     # Create format string, example: '%7s    %3s    %4s    %4s    %3s'.
     fmt = "    ".join([f"%{len(name)}s" for name in colnames])

@@ -132,6 +132,14 @@ def _add_cpu_subset_arguments(subpars, fmt):
                Use the special keyword 'all' to specify all packages."""
     subpars.add_argument("--packages", help=text)
 
+    text = fmt % "core sibling indices" # pylint: disable=consider-using-f-string
+    text += """ The list can include individual core sibling indices or index ranges. For example,
+               core x includes CPUs 3 and 4, '0' would mean CPU 3 and '1' would mean CPU 4. This
+               option can only be used to reference online CPUs, because Linux does not provide
+               topology information for offline CPUs. In the previous example if CPU 3 was offline,
+               then '0' would mean CPU 4."""
+    subpars.add_argument("--core-siblings", help=text)
+
 def build_arguments_parser():
     """A helper function which parses the input arguments."""
 

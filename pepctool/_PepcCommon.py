@@ -58,7 +58,17 @@ def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
     if args.packages and not args.cores:
         cpus += cpuinfo.packages_to_cpus(packages=args.packages)
 
-    if not cpus and default_cpus is not None:
-        return cpuinfo.normalize_cpus(default_cpus, offlined_ok=offlined_ok)
+    if not cpus:
+        if args.core_siblings:
+            raise Error("'--core-siblings' cannot be used without one of '--cpus', '--cores' or " \
+                        "'--packages'")
+
+        if default_cpus is not None:
+            return cpuinfo.normalize_cpus(default_cpus, offlined_ok=offlined_ok)
+
+        return cpus
+
+    if args.core_siblings:
+        return cpuinfo.select_core_siblings(args.core_siblings, cpus)
 
     return Trivial.list_dedup(cpus)
