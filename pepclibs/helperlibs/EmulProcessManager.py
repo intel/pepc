@@ -84,10 +84,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         return self._basepath
 
-    def _sysfs_write(self, fobj, path, mode):
+    def _set_write_method(self, fobj, path, mode):
         """
-        Sysfs files needs special handling when written to. This method ensure the emulated sysfs
-        file behavior is same as in real hardware.
+        Sysfs files needs special handling when written to. This method replaces 'write()' method
+        with custom method to ensure the emulated sysfs file behavior is same as in real hardware.
         """
 
         def _aspm_write(self, data):
@@ -272,7 +272,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             fobj = self._open_ro(path, mode)
         else:
             fobj = self._open_rw(path, mode)
-            self._sysfs_write(fobj, path, mode)
+            self._set_write_method(fobj, path, mode)
 
         self._msr_seek(fobj, path)
         self._ofiles[path] = fobj
