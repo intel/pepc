@@ -765,13 +765,10 @@ class PStates(_PCStatesBase.PCStatesBase):
         prefix = pname[0:3]
         # The corresponding 'MSR_HWP_REQUEST' feature name.
         fname = f"{prefix}_perf"
-        prop = self._props[pname]
 
         hwpreq = self._get_hwpreq()
         hwpreq.disable_cpu_feature_pkg_control(fname, cpu)
-
         hwpreq.write_cpu_feature(fname, int(freq // 100000000), cpu)
-        self._pcache.add(pname, cpu, freq, sname=prop["sname"])
 
     def _write_freq_prop_value_to_sysfs(self, pname, freq, cpu):
         """
