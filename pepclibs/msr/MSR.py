@@ -10,6 +10,11 @@
 """
 This module provides a capability for reading and writing to read and write CPU Model Specific
 Registers. This module has been designed and implemented for Intel CPUs.
+
+Terminology.
+  * MSR scope. MSR scope is defined by the "observability" of MSR writes. For example, if modifying
+    an MSR register from CPU X makes the modification visible on all core siblings, the MSR has core
+    scope. If the modification is visible on all package siblings, the MSR has package scope.
 """
 
 import logging
@@ -42,14 +47,15 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
     Public methods overview.
 
-    1. Multiple CPUs.
+    1. Multi-CPU I/O.
         * Read/write entire MSR: 'read()', 'write()'.
         * Read/write MSR bits range: 'read_bits()', 'write_bits()'.
-    2. Single CPU.
+    2. Single-CPU I/O.
         * Read/write entire MSR: 'read_cpu()', 'write_cpu()'.
         * Read/write MSR bits range: 'read_cpu_bits()', 'write_cpu_bits()'.
-    3. CPU-independent, involve no MSR read/write.
+    3. Miscellaneous helpers.
         * Get/set bits from/in a user-provided MSR value: 'get_bits()', 'set_bits()'.
+        * Set MSR scope: 'set_msr_scope()'.
     """
 
     def _add_for_transation(self, regaddr, regval, cpu):
@@ -105,6 +111,43 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         self._transaction_buffer.clear()
         self._in_transaction = False
+
+    def _get_msr_scope(self, regaddr):
+        """Return scope name for MSR at 'regaddr'."""
+
+        try:
+            return self._regscopes[regaddr]
+        except KeyError:
+            return "CPU"
+
+    def set_msr_scope(self, regaddr, sname):
+        """
+        Set MSR register scope. By default the scope is assumed to be "CPU", but if an MSR has a
+        larger scope (say, "package"), it is beneficial to inform about this via this method,
+        becuase it will reduce the amount of MSR I/O and improve efficiency.
+        """
+
+        if sname not in self._scopes:
+            snames = ", ".join(self._scopes)
+            raise Error(f"bad MSR scope name {sname}, use one of: {snames}")
+
+        if regaddr not in self._regscopes:
+            self._regscopes[regaddr] = sname
+            return
+
+        if self._regscopes[regaddr] == sname:
+            return
+
+        cur_sname = self._regscopes[regaddr]
+        if self._scopes[cur_sname] < self._scopes[sname]:
+            # If MSR scope is being increased, there is probably a bug. Refuse doing this.
+            raise Error(f"refusing to increase scope of MSR {regaddr:#x} from '{cur_sname}' to "
+                        f"'{sname}'")
+
+        # The simplest way of adjusting the cached data to MSR scope changes is to just remove
+        # cached data for all CPUs. This can be achieved by specifying any CPU and global scope.
+        self._pcache.remove(regaddr, 0, sname="global")
+        self._regscopes[regaddr] = sname
 
     def _normalize_bits(self, bits):
         """Validate and normalize bits range 'bits'."""
@@ -421,6 +464,12 @@ class MSR(ClassHelpers.SimpleCloseContext):
         # MSR registers' size in bits and bytes.
         self.regbits = 64
         self.regbytes = self.regbits // 8
+
+        # All scope names and their order index.
+        self._scopes = {sname : idx for idx, sname in enumerate(SCOPES)}
+
+        # MSR scopes dictionary. Keys are register addresses, values are scope names.
+        self._regscopes = {}
 
         self._msr_drv = None
         self._unload_msr_drv = False
