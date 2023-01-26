@@ -31,6 +31,9 @@ MLC_SPACIAL = 1
 DCU_STREAMER = 2
 DCU_IP = 3
 
+# Supported scope names. Should match level names in the 'CPUInfo' module.
+SCOPES = ("CPU", "core", "module", "die", "node", "package", "global")
+
 _LOG = logging.getLogger()
 
 class MSR(ClassHelpers.SimpleCloseContext):

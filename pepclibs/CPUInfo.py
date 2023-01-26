@@ -169,7 +169,7 @@ _CPU_DESCR = {INTEL_FAM6_EMERALDRAPIDS_X:  "Emerald Rapids Xeon",
               INTEL_FAM6_TREMONT_D:        "Tremont Atom (Snow Ridge)",
               INTEL_FAM6_SKYLAKE_X:        "Sky/Cascade/Cooper Lake"}
 
-# The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
+# The levels names. Should match scope names in the 'MSR', 'CStates' and 'PStates' modules.
 LEVELS = ("CPU", "core", "module", "die", "node", "package")
 
 class CPUInfo(ClassHelpers.SimpleCloseContext):
