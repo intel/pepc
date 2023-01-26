@@ -53,13 +53,17 @@ class PropsCache():
 
     def remove(self, pname, cpu, sname="CPU"):
         """
-        Removes '(pname, cpu)' and all the other items sharing the same scope from the cache.
+        Remove '(pname, cpu)' and all the other items sharing the same scope from the cache.
           * pname - name of the property.
           * cpu - an integer CPU number.
           * sname - name of scope (e.g. "package", "core").
         """
 
         if not self._enable_cache:
+            return
+
+        if sname == "global":
+            del self._cache[pname]
             return
 
         cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
