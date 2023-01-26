@@ -124,7 +124,6 @@ FEATURES = {
     "pkg_cstate_limit" : {
         "name" : "Package C-state limit",
         "sname": "package",
-        "wsname": "core",
         "help" : """The deepest package C-state the platform is allowed to enter. The package
                     C-state limit is configured via MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                     (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
@@ -230,7 +229,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             regvals[new_regval].append(cpu)
 
         for regval, regval_cpus in regvals.items():
-            self._msr.write(self.regaddr, regval, regval_cpus, sname=finfo["wsname"])
+            self._msr.write(self.regaddr, regval, regval_cpus, sname=finfo["sname"])
 
     def _init_features_dict_pkg_cstate_limit(self):
         """Initialize the 'pkg_cstate_limit' information in the 'self._features' dictionary."""
