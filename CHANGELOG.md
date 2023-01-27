@@ -9,6 +9,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.3.43] - 2023-01-27
+
 ## [1.3.42] - 2023-01-20
 ### Fixed
  - Fix 'pepc cstates config --pkg-cstate-limit' option, it did not work
