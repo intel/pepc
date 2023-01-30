@@ -460,6 +460,17 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     def init_testdata(self, module, datapath):
         """Initialize the testdata for module 'module' from directory 'datapath'."""
 
+        if module in self._modules:
+            return
+
+        if module == "CPUInfo":
+            # CPUInfo uses '/sys/devices/system/cpu/online' file, on emulated system the file is
+            # constructed using per-CPU '/sys/devices/system/cpu/cpu*/online' files that belong to
+            # CPUOnline.
+            self.init_testdata("CPUOnline", datapath)
+
+        self._modules.add(module)
+
         confpath = datapath / f"{module}.yaml"
         if not confpath.exists():
             raise ErrorNotSupported(f"testdata configuration for module '{module}' not found " \
@@ -555,6 +566,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self._ro_files = {}
         self._cmds = {}
         self._basepath = None
+        # Set of all modules that were initialized.
+        self._modules = set()
 
     def close(self):
         """Stop emulation."""
