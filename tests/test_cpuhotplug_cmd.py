@@ -23,12 +23,12 @@ def get_params(hostspec):
 
     with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as onl:
+         CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
         params = common.build_params(pman)
 
-        params["onl"] = onl
+        params["cpuonline"] = cpuonline
 
-        params["cpus"] = cpuinfo.get_cpus()
+        params["online"] = cpuinfo.get_cpus()
         params["packages"] = cpuinfo.get_packages()
         params["cores"] = {}
         for pkg in params["packages"]:
@@ -36,8 +36,8 @@ def get_params(hostspec):
 
         if not common.is_emulated(pman):
             params["cpu_onl_status"] = {}
-            for cpu in params["cpus"]:
-                params["cpu_onl_status"][cpu] = onl.is_online(cpu)
+            for cpu in params["online"]:
+                params["cpu_onl_status"][cpu] = cpuonline.is_online(cpu)
 
         yield params
 
@@ -50,9 +50,9 @@ def _restore_cpus_onl_status(params):
 
     for cpu, onl_status in params["cpu_onl_status"].items():
         if onl_status is True:
-            params["onl"].online(cpu, skip_unsupported=True)
+            params["cpuonline"].online(cpu, skip_unsupported=True)
         else:
-            params["onl"].offline(cpu, skip_unsupported=True)
+            params["cpuonline"].offline(cpu, skip_unsupported=True)
 
 def test_cpuhotplug_info(params):
     """Test 'pepc cpu-hotplug info' command."""
@@ -66,9 +66,9 @@ def _test_cpuhotplug_online_good(params):
     pman = params["pman"]
 
     good_options = ["--cpus all"]
-    if len(params["cpus"]) > 2:
+    if len(params["online"]) > 2:
         good_options += ["--cpus 1"]
-    if len(params["cpus"]) > 3:
+    if len(params["online"]) > 3:
         good_options += ["--cpus 1-2"]
 
     for option in good_options:
@@ -116,11 +116,11 @@ def _test_cpuhotplug_offline_good(params):
         f"--packages 0 --cores {params['cores'][0][0]}",
         f"--packages 0 --cores {params['cores'][0][-1]}"]
 
-    if len(params["cpus"]) > 1:
-        good_options += [f"--cpus {params['cpus'][-1]}"]
-    if len(params["cpus"]) > 2:
+    if len(params["online"]) > 1:
+        good_options += [f"--cpus {params['online'][-1]}"]
+    if len(params["online"]) > 2:
         good_options += ["--cpus 1"]
-    if len(params["cpus"]) > 3:
+    if len(params["online"]) > 3:
         good_options += ["--cpus 1-2"]
     if len(params["cores"][0]) > 2:
         good_options += [f"--packages 0 --cores {params['cores'][0][1]}"]
@@ -141,7 +141,7 @@ def _test_cpuhotplug_offline_bad(params):
     pman = params["pman"]
 
     bad_options = ["--cpus 0"]
-    if len(params["cpus"]) > 5:
+    if len(params["online"]) > 5:
         bad_options += ["--cpus 0-4"]
 
     for option in bad_options:
