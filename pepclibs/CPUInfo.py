@@ -869,9 +869,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                        for offlined CPUs.
         """
 
-        allcpus = self.get_cpus()
         if offlined_ok:
-            allcpus += self.get_offline_cpus()
+            allcpus = self._get_all_cpus()
+        else:
+            allcpus = self.get_cpus()
 
         if cpus == "all":
             return allcpus
