@@ -75,6 +75,7 @@ def _test_cpuhotplug_online_bad(params):
 
     bad_options = [
         "",
+        "--cpus all --core-siblings 0",
         "--packages 0 --cores all",
         f"--packages 0 --cores {params['cores'][0][0]}",
         f"--packages 0 --cores {params['cores'][0][-1]}",

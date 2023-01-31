@@ -11,7 +11,7 @@
 """Test module for 'pepc' project 'topology' command."""
 
 import pytest
-from common import get_pman, run_pepc, build_params
+from common import get_pman, run_pepc, build_params, is_emulated
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 
@@ -25,6 +25,7 @@ def get_params(hostspec):
          CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         params = build_params(pman)
 
+        params["cpuinfo"] = cpuinfo
         params["cpus"] = cpuinfo.normalize_cpus("all", offlined_ok=True)
 
         yield params
@@ -43,15 +44,26 @@ def test_topology_info(params):
         "--order PaCkAgE"
     ]
 
-    for option in good_options:
-        run_pepc(f"topology info {option}", params["pman"])
-
     bad_options = [
         "--order cpu,node",
         "--order Packages",
         "--order HELLO_WORLD",
         "--columns Alfredo"
     ]
+
+    if is_emulated(params["pman"]):
+        good_options += ["--cpus all --core-siblings 0 --online-only"]
+
+    try:
+        cores = len(params["cpuinfo"].cores_to_cpus(cores="1", packages="0"))
+        good_options += [f"--online-only --package 0 --core-siblings 0-{cores - 1}"]
+        bad_options += [f"--online-only --package 0 --core-siblings {cores}"]
+    except Error:
+        # There might not be a core 1 on the system.
+        pass
+
+    for option in good_options:
+        run_pepc(f"topology info {option}", params["pman"])
 
     for option in bad_options:
         run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
