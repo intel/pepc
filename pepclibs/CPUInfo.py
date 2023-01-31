@@ -522,11 +522,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if nums == "all":
             return list(result)
 
-        for num in nums:
-            if num not in valid_nums:
-                valid_nums_str = ", ".join([str(num) for num in valid_nums])
-                raise Error(f"{lvl} {num} does not exist{self._pman.hostmsg}.\n"
-                            f"Valid {lvl} numbers are: {valid_nums_str}")
+        if not nums.issubset(valid_nums):
+            valid = Human.rangify(valid_nums)
+            invalid = Human.rangify(nums - valid_nums)
+            raise Error(f"{lvl} {invalid} do not exist{self._pman.hostmsg}, valid {lvl} numbers " \
+                        f"are: {valid}")
 
         return list(result)
 
