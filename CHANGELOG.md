@@ -6,7 +6,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add '--core-siblings' option to all 'pepc' commands.
 ### Removed
+ - Remove the '--ht-siblings' options of 'pepc cpu-hotplug offline'. The
+   functionally can now be replicated with option '--core-siblings 1'.
 ### Changed
 
 ## [1.3.45] - 2023-02-03
