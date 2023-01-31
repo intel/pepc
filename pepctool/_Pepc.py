@@ -107,20 +107,33 @@ class PepcArgsParser(ArgParse.ArgsParser):
 
         return args
 
+def _add_cpu_subset_arguments(subpars, fmt):
+    """
+    Add CPU subset arguments, argument 'fmt' should include '%s' that will be replaced by the subset
+    name.
+    """
+
+    text = fmt % "CPUs" # pylint: disable=consider-using-f-string
+    text += """ The list can include individual CPU numbers and CPU number ranges. For example,
+               '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special
+               keyword 'all' to specify all CPUs. If the CPUs/cores/packages were not specified,
+               all CPUs will be used as the default value."""
+    subpars.add_argument("--cpus", help=text)
+
+    text = fmt % "cores" # pylint: disable=consider-using-f-string
+    text += """ The list can include individual core numbers and core number ranges. For example,
+               '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special
+               keyword 'all' to specify all cores"""
+    subpars.add_argument("--cores", help=text)
+
+    text = fmt % "packages" # pylint: disable=consider-using-f-string
+    text += """ The list can include individual package numbers and package number ranges. For
+               example, '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3.
+               Use the special keyword 'all' to specify all packages"""
+    subpars.add_argument("--packages", help=text)
+
 def build_arguments_parser():
     """A helper function which parses the input arguments."""
-
-    cpu_list_txt = """The list can include individual CPU numbers and CPU number ranges. For
-                      example, '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12.
-                      Use the special keyword 'all' to specify all CPUs"""
-    cpu_list_dflt_txt = f"""{cpu_list_txt}. If the CPUs/cores/packages were not specified, all CPUs
-                           will be used as the default value"""
-    core_list_txt = """The list can include individual core numbers and core number ranges. For
-                       example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-                       Use the special keyword 'all' to specify all cores"""
-    pkg_list_txt = """The list can include individual package numbers and package number ranges. For
-                      example, '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
-                      3. Use the special keyword 'all' to specify all packages"""
 
     text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
     parser = PepcArgsParser(description=text, prog=_OWN_NAME, ver=_VERSION)
@@ -156,7 +169,9 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("online", help=text, description=text)
     subpars2.set_defaults(func=cpu_hotplug_online_command)
 
-    text = f"""List of CPUs to online. {cpu_list_txt}."""
+    text = """List of CPUs to online. The list can include individual CPU numbers and CPU number
+              ranges. For example, '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12.
+              Use the special keyword 'all' to specify all CPUs."""
     subpars2.add_argument("--cpus", help=text)
     subpars2.add_argument("--cores", help=argparse.SUPPRESS)
     subpars2.add_argument("--packages", help=argparse.SUPPRESS)
@@ -168,12 +183,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("offline", help=text, description=text)
     subpars2.set_defaults(func=cpu_hotplug_offline_command)
 
-    text = f"""List of CPUs to offline. {cpu_list_txt}."""
-    subpars2.add_argument("--cpus", help=text)
-    text = """Same as '--cpus', but specifies list of cores."""
-    subpars2.add_argument("--cores", help=text)
-    text = """Same as '--cpus', but specifies list of packages."""
-    subpars2.add_argument("--packages", help=text)
+    _add_cpu_subset_arguments(subpars2, "List of %s to offline.")
     text = """Offline core siblings, making sure there is only one logical CPU per core is
               left online. The sibling CPUs will be searched for among the CPUs selected with
               '--cpus', '--cores', and '--packages'. Therefore, specifying '--cpus all
@@ -208,14 +218,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=cstates_info_command)
 
-    text = f"""List of CPUs to get information about. {cpu_list_dflt_txt}."""
-    subpars2.add_argument("--cpus", help=text)
-
-    text = f"""List of cores to get information about. {core_list_txt}."""
-    subpars2.add_argument("--cores", help=text)
-
-    text = f"""List of packages to get information about. {pkg_list_txt}."""
-    subpars2.add_argument("--packages", help=text)
+    _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
@@ -247,14 +250,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=cstates_config_command)
 
-    text = f"""List of CPUs to configure. {cpu_list_dflt_txt}."""
-    subpars2.add_argument("--cpus", help=text)
-
-    text = f"""List of cores to configure. {core_list_txt}."""
-    subpars2.add_argument("--cores", help=text)
-
-    text = f"""List of packages to configure. {pkg_list_txt}."""
-    subpars2.add_argument("--packages", help=text)
+    _add_cpu_subset_arguments(subpars2, "List of %s to configure.")
 
     text = f"""Comma-separated list of C-states to enable. {cst_list_text}."""
     subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
@@ -297,14 +293,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("save", help=text, description=descr)
     subpars2.set_defaults(func=cstates_save_command)
 
-    text = f"""List of CPUs to save C-state information about. {cpu_list_dflt_txt}."""
-    subpars2.add_argument("--cpus", help=text)
-
-    text = f"""List of cores to save C-state information about. {core_list_txt}."""
-    subpars2.add_argument("--cores", help=text)
-
-    text = f"""List of packages to save C-state information about. {pkg_list_txt}."""
-    subpars2.add_argument("--packages", help=text)
+    _add_cpu_subset_arguments(subpars2, "List of %s to save C-state information about.")
 
     text = "Name of the file to save the settings to."
     subpars2.add_argument("-o", "--outfile", help=text)
@@ -340,14 +329,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=pstates_info_command)
 
-    text = f"""List of CPUs to get information about. {cpu_list_dflt_txt}."""
-    subpars2.add_argument("--cpus", help=text)
-
-    text = f"""List of cores to get information about. {core_list_txt}."""
-    subpars2.add_argument("--cores", help=text)
-
-    text = f"""List of packages to get information about. {pkg_list_txt}."""
-    subpars2.add_argument("--packages", help=text)
+    _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
@@ -374,14 +356,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=pstates_config_command)
 
-    text = f"""List of CPUs to configure P-States on. {cpu_list_dflt_txt}."""
-    subpars2.add_argument("--cpus", help=text)
-
-    text = f"""List of cores to configure P-States on. {core_list_txt}."""
-    subpars2.add_argument("--cores", help=text)
-
-    text = f"""List of packages to configure P-States on. {pkg_list_txt}."""
-    subpars2.add_argument("--packages", help=text)
+    _add_cpu_subset_arguments(subpars2, "List of %s to configure P-States on.")
 
     for name, pinfo in PStates.PROPS.items():
         if not pinfo.get("writable"):
@@ -417,14 +392,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("save", help=text, description=descr)
     subpars2.set_defaults(func=pstates_save_command)
 
-    text = f"""List of CPUs to save P-state information about. {cpu_list_dflt_txt}."""
-    subpars2.add_argument("--cpus", help=text)
-
-    text = f"""List of cores to save P-state information about. {core_list_txt}."""
-    subpars2.add_argument("--cores", help=text)
-
-    text = f"""List of packages to save P-state information about. {pkg_list_txt}."""
-    subpars2.add_argument("--packages", help=text)
+    _add_cpu_subset_arguments(subpars2, "List of %s to save P-state information about.")
 
     text = "Name of the file to save the settings to (printed to standard output by default)."
     subpars2.add_argument("-o", "--outfile", help=text, default="-")
@@ -484,12 +452,7 @@ def build_arguments_parser():
                supported order names: {orders}."""
     subpars2.add_argument("--order", help=text, default="CPU")
 
-    text = f"""List of CPUs to print topology information for. {cpu_list_dflt_txt}."""
-    subpars2.add_argument("--cpus", help=text)
-    text = f"""List of cores to print topology information for. {core_list_txt}."""
-    subpars2.add_argument("--cores", help=text)
-    text = f"""List of packages to print topology information for. {pkg_list_txt}."""
-    subpars2.add_argument("--packages", help=text)
+    _add_cpu_subset_arguments(subpars2, "List of %s to print topology information for.")
 
     text = """Include only online CPUs. By default offline and online CPUs are included."""
     subpars2.add_argument("--online-only", action='store_true', help=text)
