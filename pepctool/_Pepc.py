@@ -184,11 +184,6 @@ def build_arguments_parser():
     subpars2.set_defaults(func=cpu_hotplug_offline_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to offline.")
-    text = """Offline core siblings, making sure there is only one logical CPU per core is
-              left online. The sibling CPUs will be searched for among the CPUs selected with
-              '--cpus', '--cores', and '--packages'. Therefore, specifying '--cpus all
-              --ht-siblings' will effectively disable hyper-threading on Intel CPUs."""
-    subpars2.add_argument("--ht-siblings", action="store_true", help=text)
 
     #
     # Create parser for the 'cstates' command.
