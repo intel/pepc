@@ -5,13 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix 'pepc cstates config --pkg-cstate-limit' option, take 2. The fix in
-   version 1.3.42 did not work in some cases.
 ### Added
 ### Removed
 ### Changed
 
 ## [1.3.43] - 2023-01-27
+### Fixed
+ - Fix 'pepc cstates config --pkg-cstate-limit' option, take 2. The fix in
+   version 1.3.42 did not work in some cases.
 
 ## [1.3.42] - 2023-01-20
 ### Fixed
