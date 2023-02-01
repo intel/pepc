@@ -598,10 +598,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             self._all_cpus = self._read_range("/sys/devices/system/cpu/present")
         return self._all_cpus
 
-    def _get_online_cpus(self):
+    def _get_online_cpus(self, update=False):
         """Returns list of online CPU numbers sorted in ascending order."""
 
-        if not self._cpus:
+        if not self._cpus or update:
             self._cpus = self._read_range("/sys/devices/system/cpu/online")
         return self._cpus
 
