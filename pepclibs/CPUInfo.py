@@ -364,11 +364,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 tinfo[tline["CPU"]] = tline
 
         if "package" in self._initialized_levels or "core" in self._initialized_levels:
-            self._add_core_and_package_numbers(tinfo)
+            self._add_core_and_package_numbers(tinfo, onlined)
         if "module" in self._initialized_levels:
-            self._add_module_numbers(tinfo)
+            self._add_module_numbers(tinfo, onlined)
         if "die" in self._initialized_levels:
-            self._add_die_numbers(tinfo)
+            self._add_die_numbers(tinfo, onlined)
         if "node" in self._initialized_levels:
             self._add_node_numbers(tinfo)
 
@@ -377,8 +377,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             self._sort_topology(topology, order)
         self._must_update_topology = False
 
-    def _add_core_and_package_numbers(self, tinfo):
-        """Adds core and package numbers to 'tinfo'."""
+    def _add_core_and_package_numbers(self, tinfo, cpus):
+        """Adds core and package numbers for CPUs 'cpus' to 'tinfo'."""
 
         def _get_number(start, lines, index):
             """Check that line with index 'index' starts with 'start', and return its value."""
@@ -399,7 +399,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             cpu = _get_number("processor", lines, 0)
             info[cpu] = lines
 
-        for cpu in self._get_online_cpus():
+        for cpu in cpus:
             if cpu not in info:
                 raise Error(f"CPU {cpu} is missing from '/proc/cpuinfo'")
 
@@ -407,10 +407,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             tinfo[cpu]["package"] = _get_number("physical id", lines, 9)
             tinfo[cpu]["core"] = _get_number("core id", lines, 11)
 
-    def _add_module_numbers(self, tinfo):
-        """Adds module numbers to 'tinfo'."""
+    def _add_module_numbers(self, tinfo, cpus):
+        """Adds module numbers for CPUs 'cpus' to 'tinfo'"""
 
-        for cpu in self._get_online_cpus():
+        for cpu in cpus:
             if "module" in tinfo[cpu]:
                 continue
 
@@ -423,10 +423,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 with suppress(KeyError):
                     tinfo[sibling]["module"] = module
 
-    def _add_die_numbers(self, tinfo):
-        """Adds die numbers to 'tinfo'."""
+    def _add_die_numbers(self, tinfo, cpus):
+        """Adds die numbers for CPUs 'cpus' to 'tinfo'"""
 
-        for cpu in self._get_online_cpus():
+        for cpu in cpus:
             if "die" in tinfo[cpu]:
                 continue
 
@@ -468,13 +468,14 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         else:
             tinfo = {tline["CPU"] : tline for tline in self._topology["CPU"]}
 
+        cpus = self._get_online_cpus()
         if "package" in levels or "core" in levels:
-            self._add_core_and_package_numbers(tinfo)
+            self._add_core_and_package_numbers(tinfo, cpus)
             levels.update({"package", "core"})
         if "module" in levels:
-            self._add_module_numbers(tinfo)
+            self._add_module_numbers(tinfo, cpus)
         if "die" in levels:
-            self._add_die_numbers(tinfo)
+            self._add_die_numbers(tinfo, cpus)
         if "node" in levels:
             self._add_node_numbers(tinfo)
 
