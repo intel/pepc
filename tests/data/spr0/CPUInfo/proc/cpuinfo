@@ -6270,5 +6270,3 @@ cache_alignment	: 64
 address sizes	: 52 bits physical, 57 bits virtual
 power management:
 
-:
-
