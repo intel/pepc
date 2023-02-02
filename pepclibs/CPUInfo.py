@@ -534,10 +534,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Returns list of online CPU numbers."""
 
         if order == "CPU":
-            if not self._cpus:
-                self._cpus = self._read_range("/sys/devices/system/cpu/online")
-
-            return self._cpus.copy()
+            return self._get_online_cpus().copy()
 
         return self._get_level_nums("CPU", "CPU", "all", order=order)
 
@@ -583,11 +580,18 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             self._all_cpus = self._read_range("/sys/devices/system/cpu/present")
         return self._all_cpus
 
+    def _get_online_cpus(self):
+        """Returns list of online CPU numbers sorted in ascending order."""
+
+        if not self._cpus:
+            self._cpus = self._read_range("/sys/devices/system/cpu/online")
+        return self._cpus
+
     def get_offline_cpus(self):
         """Returns list of offline CPU numbers sorted in ascending order."""
 
         cpus = self._get_all_cpus()
-        online_cpus = set(self.get_cpus(order="CPU"))
+        online_cpus = set(self._get_online_cpus())
         return list(cpu for cpu in cpus if cpu not in online_cpus)
 
     def get_cpu_levels(self, cpu):
@@ -715,7 +719,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_cpus_count(self):
         """Returns count of online CPUs."""
-        return len(self.get_cpus())
+        return len(self._get_online_cpus())
 
     def get_packages_count(self):
         """Returns packages count."""
@@ -988,7 +992,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             cpuinfo["flags"] = {}
             # In current implementation we assume all CPUs have the same flags. But ideally, we
             # should read the flags for each CPU from '/proc/cpuinfo', instead of using 'lscpu'.
-            for cpu in self.get_cpus():
+            for cpu in self._get_online_cpus():
                 cpuinfo["flags"][cpu] = cpuflags
 
         return cpuinfo
