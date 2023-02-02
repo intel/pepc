@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [1.3.44] - 2023-02-02
+### Changed
  - Improved 'Systemctl' module to check if the 'systemctl' tool is installed.
 
 ## [1.3.43] - 2023-01-27

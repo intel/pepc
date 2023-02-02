@@ -1,3 +1,9 @@
+pepc (1.3.44) unstable; urgency=low
+
+  * Improved 'Systemctl' module to check if the 'systemctl' tool is installed.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 02 Feb 2023 00:00:00 +0200
+
 pepc (1.3.43) unstable; urgency=low
 
   * Fix 'pepc cstates config --pkg-cstate-limit' option, take 2. The fix in
