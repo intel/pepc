@@ -28,11 +28,11 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
             units = [units]
 
         for unit in units:
-            self._pman.run_verify(f"systemctl {action} -- '{unit}'")
+            self._pman.run_verify(f"{self._systemctl_path} {action} -- '{unit}'")
             if self.is_active(unit) != start:
                 status = None
                 try:
-                    status, _ = self._pman.run_verify(f"systemctl status -- '{unit}'")
+                    status, _ = self._pman.run_verify(f"{self._systemctl_path} status -- '{unit}'")
                 except Error:
                     pass
 
@@ -44,7 +44,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
     def _is_smth(self, unit, what):
         """Check if a unit is active/failed or not."""
 
-        output, _, _ = self._pman.run(f"systemctl is-{what} -- '{unit}'")
+        output, _, _ = self._pman.run(f"{self._systemctl_path} is-{what} -- '{unit}'")
         output = output.strip()
         return output == what
 
@@ -99,7 +99,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         the list of timers that were stopped.
         """
 
-        cmd = "systemctl list-timers"
+        cmd = f"{self._systemctl_path} list-timers"
         timers = [part for part in self._pman.run_verify(cmd)[0].split() if part.endswith(".timer")]
         if timers:
             self._start(timers, False)
@@ -122,12 +122,15 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
 
         self._pman = pman
         self._close_pman = pman is None
+        self._systemctl_path = None
 
         self._saved_timers = None
         self._saved_ntp_services = None
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
+
+        self._systemctl_path = self._pman.which("systemctl")
 
     def close(self):
         """Uninitialize the class object."""
