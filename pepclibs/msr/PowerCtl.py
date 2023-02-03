@@ -22,7 +22,10 @@ _LOG = logging.getLogger()
 MSR_POWER_CTL = 0x1FC
 
 # CPU models supporting the C-state pre-wake feature.
-_CSTATE_PREWAKE_CPUS = (CPUInfo.INTEL_FAM6_EMERALDRAPIDS_X,
+_CSTATE_PREWAKE_CPUS = (
+                        CPUInfo.INTEL_FAM6_GRANITERAPIDS_X,
+                        CPUInfo.INTEL_FAM6_GRANITERAPIDS_D,
+                        CPUInfo.INTEL_FAM6_EMERALDRAPIDS_X,
                         CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X,
                         CPUInfo.INTEL_FAM6_ICELAKE_X,
                         CPUInfo.INTEL_FAM6_ICELAKE_D,

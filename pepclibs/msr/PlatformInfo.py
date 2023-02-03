@@ -21,9 +21,10 @@ _LOG = logging.getLogger()
 MSR_PLATFORM_INFO = 0xCE
 
 # CPU models supporting the "maximum efficiency ratio" feature.
-_EFREQ_CPUS = CPUInfo.EMRS +         \
-              CPUInfo.SPRS +         \
+_EFREQ_CPUS = CPUInfo.GNRS +         \
+              CPUInfo.EMRS +         \
               CPUInfo.METEORLAKES +  \
+              CPUInfo.SPRS +         \
               CPUInfo.RAPTORLAKES +  \
               CPUInfo.ALDERLAKES +   \
               CPUInfo.ROCKETLAKES +  \
@@ -45,12 +46,13 @@ _EFREQ_CPUS = CPUInfo.EMRS +         \
               CPUInfo.PHIS
 
 # CPU models supporting the "minimum operating ratio" feature.
-_MIN_OPER_RATIO_CPUS = CPUInfo.METEORLAKES +               \
+_MIN_OPER_RATIO_CPUS = CPUInfo.GNRS +                      \
+                       CPUInfo.EMRS +                      \
+                       CPUInfo.METEORLAKES +               \
+                       CPUInfo.SPRS +                      \
                        CPUInfo.RAPTORLAKES +               \
                        CPUInfo.ALDERLAKES +                \
                        CPUInfo.ROCKETLAKES +               \
-                       CPUInfo.EMRS +                      \
-                       CPUInfo.SPRS +                      \
                        CPUInfo.TIGERLAKES +                \
                        CPUInfo.ICELAKES +                  \
                        CPUInfo.COMETLAKES +                \

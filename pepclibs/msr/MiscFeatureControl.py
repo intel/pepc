@@ -30,7 +30,8 @@ _L2_AND_DCU_CPUS = CPUInfo.CRESMONTS + \
 
 # CPU models that support 'l2_hw_prefetcher', 'l1_adj_prefetcher', 'dcu_hw_prefetcher', and
 # 'dcu_ip_prefetcher' prefetchers.
-_ALL_PREFETCHERS_CPUS = CPUInfo.METEORLAKES +  \
+_ALL_PREFETCHERS_CPUS = CPUInfo.GNRS +         \
+                        CPUInfo.METEORLAKES +  \
                         CPUInfo.EMRS +         \
                         CPUInfo.RAPTORLAKES +  \
                         CPUInfo.ALDERLAKES +   \

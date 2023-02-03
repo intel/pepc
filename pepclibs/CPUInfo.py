@@ -19,6 +19,8 @@ from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHel
 # CPU model numbers.
 #
 # Xeons.
+INTEL_FAM6_GRANITERAPIDS_X = 0xAD      # Granite Rapids Xeon.
+INTEL_FAM6_GRANITERAPIDS_D = 0xAE      # Granite Rapids Xeon D.
 INTEL_FAM6_EMERALDRAPIDS_X = 0xCF      # Emerald Rapids Xeon.
 INTEL_FAM6_SAPPHIRERAPIDS_X = 0x8F     # Sapphire Rapids Xeon.
 INTEL_FAM6_ICELAKE_X = 0x6A            # Ice Lake Xeon.
@@ -97,6 +99,8 @@ INTEL_FAM6_XEON_PHI_KNL = 0x57         # Knights Landing.
 #
 # Various handy combinations of CPU models.
 #
+GNRS =         (INTEL_FAM6_GRANITERAPIDS_X,
+                INTEL_FAM6_GRANITERAPIDS_D)
 EMRS =         (INTEL_FAM6_EMERALDRAPIDS_X,)
 SPRS =         (INTEL_FAM6_SAPPHIRERAPIDS_X,)
 METEORLAKES =  (INTEL_FAM6_METEORLAKE,
@@ -161,7 +165,10 @@ PHIS =         (INTEL_FAM6_XEON_PHI_KNL,
 
 # CPU model description. Note, we keep only relatively new CPUs here, because for released CPUs
 # model name is available from the OS.
-_CPU_DESCR = {INTEL_FAM6_EMERALDRAPIDS_X:  "Emerald Rapids Xeon",
+_CPU_DESCR = {
+              INTEL_FAM6_GRANITERAPIDS_X:  "Granite Rapids Xeon",
+              INTEL_FAM6_GRANITERAPIDS_D:  "Granite Rapids Xeon D",
+              INTEL_FAM6_EMERALDRAPIDS_X:  "Emerald Rapids Xeon",
               INTEL_FAM6_SAPPHIRERAPIDS_X: "Sapphire Rapids Xeon",
               INTEL_FAM6_ALDERLAKE:        "Alder Lake client",
               INTEL_FAM6_ALDERLAKE_L:      "Alder Lake mobile",
