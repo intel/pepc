@@ -792,8 +792,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                     sibling = siblings[index]
                 except IndexError as err:
                     count = len(siblings)
-                    raise Error(f"can't get core sibling with index {index} for core " \
-                                f"{levels['core']} in package {levels['package']}" \
+                    raise Error(f"can't get core sibling with index {index} for core "
+                                f"{levels['core']} in package {levels['package']}"
                                 f"{self._pman.hostmsg}, the core has only {count} online CPU") \
                                 from err
 
