@@ -778,7 +778,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """
 
         indexes = ArgParse.parse_int_list(indexes, ints=True, dedup=False)
-        cpus = self.normalize_cpus(cpus, offlined_ok=False)
+        cpus = self.normalize_cpus(cpus, offlined_ok=True)
 
         cpu2index = {} # CPU number -> core siblings index map.
         core = index = None
