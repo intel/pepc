@@ -230,9 +230,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     6. Select CPUs by sibling index.
         * 'select_core_siblings()'
     7. "Divide" list of CPUs.
-        A. By cores: 'cpus_div_cores()'.
-        B. By dies: 'cpus_div_dies()'.
-        C. By packages: 'cpus_div_packages()'.
+        * By cores: 'cpus_div_cores()'.
+        * By dies: 'cpus_div_dies()'.
+        * By packages: 'cpus_div_packages()'.
     """
 
     def get_topology(self, order="CPU"):
