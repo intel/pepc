@@ -741,7 +741,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Returns packages count."""
         return len(self.get_packages())
 
-    def select_core_siblings(self, indexes, cpus):
+    def select_core_siblings(self, cpus, indexes):
         """
         Select only core siblings from 'cpus' and return the result. The arguments are as follows.
         * cpus - list of CPU numbers to select core siblings from. The returned result is always a

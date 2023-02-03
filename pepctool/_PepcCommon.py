@@ -69,6 +69,6 @@ def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
         return cpus
 
     if args.core_siblings:
-        return cpuinfo.select_core_siblings(args.core_siblings, cpus)
+        return cpuinfo.select_core_siblings(cpus, args.core_siblings)
 
     return Trivial.list_dedup(cpus)
