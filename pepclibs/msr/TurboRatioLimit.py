@@ -24,44 +24,39 @@ MSR_TURBO_RATIO_LIMIT = 0x1AD
 # CPU models that include core turbo ratios in the MSR (as apposed to group turbo ratio). "CT" in
 # the names stands for "Core Turbo".
 #
-_CT_SKYLAKES = (CPUInfo.INTEL_FAM6_ICELAKE,   CPUInfo.INTEL_FAM6_ICELAKE_L)
-_CT_ICELAKES = (CPUInfo.INTEL_FAM6_SKYLAKE_L, CPUInfo.INTEL_FAM6_SKYLAKE)
-_CT_NEHALEMS = (CPUInfo.INTEL_FAM6_NEHALEM,   CPUInfo.INTEL_FAM6_NEHALEM_G,
-                CPUInfo.INTEL_FAM6_NEHALEM_EP)
-_CT_SILVERMONTS = (CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D, )
-
 _CT_CPUS = CPUInfo.METEORLAKES +  \
            CPUInfo.RAPTORLAKES +  \
            CPUInfo.ALDERLAKES +   \
            CPUInfo.ROCKETLAKES +  \
            CPUInfo.TIGERLAKES +   \
            CPUInfo.LAKEFIELDS +   \
-           _CT_ICELAKES +         \
-           _CT_SKYLAKES +         \
+           CPUInfo.ICL_CLIENTS +  \
+           CPUInfo.SKL_CLIENTS +  \
            CPUInfo.COMETLAKES +   \
            CPUInfo.KABYLAKES +    \
+           CPUInfo.CANNONLAKES +    \
            CPUInfo.BROADWELLS +   \
+           (CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D, ) + \
            CPUInfo.HASWELLS +     \
            CPUInfo.IVYBRIDGES +   \
            CPUInfo.SANDYBRIDGES + \
-           _CT_NEHALEMS +         \
-           _CT_SILVERMONTS
+           (CPUInfo.INTEL_FAM6_NEHALEM,
+            CPUInfo.INTEL_FAM6_NEHALEM_G,
+            CPUInfo.INTEL_FAM6_NEHALEM_EP)
 
 # CPU models that include group turbo ratios in the MSR. "GT" in the names stands for "Group
 # Turbo". In this case MSR 0x1AE should be decoded to get count of cores in a group. In SDM, this
 # MSR is named 'MSR_TURBO_GROUP_CORECNT' for Atom CPUs and 'MSR_TURBO_RATIO_LIMIT_CORES' for "big
 # core" CPUs. The same MSR is called 'MSR_TURBO_RATIO_LIMIT1' for CPUs that do not have groups in
 # 'MSR_TURBO_RATIO_LIMIT'.
-_GT_CPUS = (CPUInfo.INTEL_FAM6_GRANITERAPIDS_X,
-            CPUInfo.INTEL_FAM6_GRANITERAPIDS_D,
-            CPUInfo.INTEL_FAM6_EMERALDRAPIDS_X,
-            CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X,
-            CPUInfo.INTEL_FAM6_ICELAKE_X,
-            CPUInfo.INTEL_FAM6_ICELAKE_D,
-            CPUInfo.INTEL_FAM6_SKYLAKE_X,
-            CPUInfo.INTEL_FAM6_GRANDRIDGE,
-            CPUInfo.INTEL_FAM6_TREMONT_D,
-            CPUInfo.INTEL_FAM6_GOLDMONT_D,
+_GT_CPUS = CPUInfo.GNRS + \
+           (CPUInfo.INTEL_FAM6_GRANDRIDGE,) + \
+           CPUInfo.EMRS + \
+           CPUInfo.SPRS + \
+           (CPUInfo.INTEL_FAM6_TREMONT_D,) +  \
+           CPUInfo.ICXES + \
+           CPUInfo.SKXES + \
+           (CPUInfo.INTEL_FAM6_GOLDMONT_D,
             CPUInfo.INTEL_FAM6_ATOM_GOLDMONT,
             CPUInfo.INTEL_FAM6_ATOM_GOLDMONT_PLUS,)
 
