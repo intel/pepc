@@ -786,16 +786,16 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 continue
 
             levels = self.get_cpu_levels(cpu)
-            siblings = self.cores_to_cpus(cores=levels["core"], packages=levels["package"])
+            core = levels["core"]
+            package = levels["package"]
+            siblings = self.cores_to_cpus(cores=core, packages=package)
             for index in indexes:
                 try:
                     sibling = siblings[index]
-                except IndexError as err:
-                    count = len(siblings)
-                    raise Error(f"can't get core sibling with index {index} for core "
-                                f"{levels['core']} in package {levels['package']}"
-                                f"{self._pman.hostmsg}, the core has only {count} online CPU") \
-                                from err
+                except IndexError:
+                    raise Error(f"can't get core sibling with index {index} for core {core} in "
+                                f"package {package}{self._pman.hostmsg}, the core has only "
+                                f"{len(siblings)} online CPU(s)") from None
 
                 result.append(sibling)
             seen_siblings.update(siblings)
