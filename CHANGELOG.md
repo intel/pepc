@@ -6,12 +6,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add partial Granite Rapids Xeon support.
 ### Removed
 ### Changed
 
 ## [1.3.44] - 2023-02-02
 ### Changed
- - Improved 'Systemctl' module to check if the 'systemctl' tool is installed.
+ - Improve 'Systemctl' module to check if the 'systemctl' tool is installed.
 
 ## [1.3.43] - 2023-01-27
 ### Fixed
