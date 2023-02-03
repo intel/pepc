@@ -777,28 +777,29 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
               have index 1 instead of 2.
         """
 
-        indexes = ArgParse.parse_int_list(indexes, ints=True, dedup=True)
+        indexes = ArgParse.parse_int_list(indexes, ints=True, dedup=False)
+        cpus = self.normalize_cpus(cpus, offlined_ok=False)
+
+        cpu2index = {} # CPU number -> core siblings index map.
+        core = index = None
+
+        for tline in self._get_topology(order="core"):
+            cpu = tline["CPU"]
+            if not tline["online"]:
+                cpu2index[cpu] = None
+            else:
+                if tline["core"] != core:
+                    core = tline["core"]
+                    index = 0
+                cpu2index[cpu] = index
+                index += 1
 
         result = []
-        seen_siblings = set()
+        indexes = set(indexes)
         for cpu in cpus:
-            if cpu in seen_siblings:
-                continue
-
-            levels = self.get_cpu_levels(cpu)
-            core = levels["core"]
-            package = levels["package"]
-            siblings = self.cores_to_cpus(cores=core, packages=package)
-            for index in indexes:
-                try:
-                    sibling = siblings[index]
-                except IndexError:
-                    raise Error(f"can't get core sibling with index {index} for core {core} in "
-                                f"package {package}{self._pman.hostmsg}, the core has only "
-                                f"{len(siblings)} online CPU(s)") from None
-
-                result.append(sibling)
-            seen_siblings.update(siblings)
+            index = cpu2index[cpu]
+            if index is not None and index in indexes:
+                result.append(cpu)
 
         return result
 
