@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Add partial Granite Rapids Xeon support.
 ### Removed
 ### Changed
+
+## [1.3.45] - 2023-02-03
+### Added
+ - Add partial Granite Rapids Xeon support.
 
 ## [1.3.44] - 2023-02-02
 ### Changed

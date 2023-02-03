@@ -2,7 +2,7 @@
 PEPC
 ====
 
-:Date:   2023-02-02
+:Date:   2023-02-03
 
 .. contents::
    :depth: 3
@@ -192,13 +192,13 @@ OPTIONS *'pepc* cpu-hotplug offline'
    List of cores to offline. The list can include individual core
    numbers and core number ranges. For example, '1-4,7,8,10-12' would
    mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword
-   'all' to specify all cores
+   'all' to specify all cores.
 
 **--packages** *PACKAGES*
    List of packages to offline. The list can include individual package
    numbers and package number ranges. For example, '1-3' would mean
    packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the
-   special keyword 'all' to specify all packages
+   special keyword 'all' to specify all packages.
 
 COMMAND *'pepc* cstates'
 ========================
@@ -271,13 +271,13 @@ OPTIONS *'pepc* cstates info'
    List of cores to get information about. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all cores
+   Use the special keyword 'all' to specify all cores.
 
 **--packages** *PACKAGES*
    List of packages to get information about. The list can include
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
-   3. Use the special keyword 'all' to specify all packages
+   3. Use the special keyword 'all' to specify all packages.
 
 **--yaml**
    Print information in YAML format.
@@ -367,13 +367,13 @@ OPTIONS *'pepc* cstates config'
    List of cores to configure. The list can include individual core
    numbers and core number ranges. For example, '1-4,7,8,10-12' would
    mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword
-   'all' to specify all cores
+   'all' to specify all cores.
 
 **--packages** *PACKAGES*
    List of packages to configure. The list can include individual
    package numbers and package number ranges. For example, '1-3' would
    mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the
-   special keyword 'all' to specify all packages
+   special keyword 'all' to specify all packages.
 
 **--enable** *[CSTATES]*
    Comma-separated list of C-states to enable. C-states should be
@@ -455,7 +455,7 @@ OPTIONS *'pepc* cstates save'
    List of cores to save C-state information about. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all cores
+   Use the special keyword 'all' to specify all cores.
 
 **--packages** *PACKAGES*
    List of packages to save C-state information about. The list can
@@ -563,13 +563,13 @@ OPTIONS *'pepc* pstates info'
    List of cores to get information about. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all cores
+   Use the special keyword 'all' to specify all cores.
 
 **--packages** *PACKAGES*
    List of packages to get information about. The list can include
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
-   3. Use the special keyword 'all' to specify all packages
+   3. Use the special keyword 'all' to specify all packages.
 
 **--yaml**
    Print information in YAML format.
@@ -773,13 +773,13 @@ OPTIONS *'pepc* pstates config'
    List of cores to configure P-States on. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all cores
+   Use the special keyword 'all' to specify all cores.
 
 **--packages** *PACKAGES*
    List of packages to configure P-States on. The list can include
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
-   3. Use the special keyword 'all' to specify all packages
+   3. Use the special keyword 'all' to specify all packages.
 
 **--min-freq** *[MIN_FREQ]*
    Set min. CPU frequency. Minimum CPU frequency is the lowest frequency
@@ -915,7 +915,7 @@ OPTIONS *'pepc* pstates save'
    List of cores to save P-state information about. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all cores
+   Use the special keyword 'all' to specify all cores.
 
 **--packages** *PACKAGES*
    List of packages to save P-state information about. The list can
@@ -1087,7 +1087,7 @@ OPTIONS *'pepc* topology info'
    List of cores to print topology information for. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all cores
+   Use the special keyword 'all' to specify all cores.
 
 **--packages** *PACKAGES*
    List of packages to print topology information for. The list can
