@@ -18,56 +18,30 @@ from pepclibs.msr import MSR
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 # CPUs with 100Mhz bus clock.
-_BCLK_100MHZ = {
-        # Xeons.
-        CPUInfo.INTEL_FAM6_GRANITERAPIDS_X,
-        CPUInfo.INTEL_FAM6_GRANITERAPIDS_D,
-        CPUInfo.INTEL_FAM6_EMERALDRAPIDS_X,
-        CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X,
-        CPUInfo.INTEL_FAM6_ICELAKE_X,
-        CPUInfo.INTEL_FAM6_ICELAKE_D,
-        CPUInfo.INTEL_FAM6_SKYLAKE_X,
-        CPUInfo.INTEL_FAM6_BROADWELL_X,
-        CPUInfo.INTEL_FAM6_BROADWELL_D,
-        CPUInfo.INTEL_FAM6_BROADWELL_G,
-        CPUInfo.INTEL_FAM6_HASWELL_X,
-        CPUInfo.INTEL_FAM6_HASWELL_G,
-        CPUInfo.INTEL_FAM6_IVYBRIDGE_X,
-        CPUInfo.INTEL_FAM6_SANDYBRIDGE_X,
-        # Clients.
-        CPUInfo.INTEL_FAM6_ALDERLAKE,
-        CPUInfo.INTEL_FAM6_ALDERLAKE_L,
-        CPUInfo.INTEL_FAM6_ROCKETLAKE,
-        CPUInfo.INTEL_FAM6_LAKEFIELD,
-        CPUInfo.INTEL_FAM6_TIGERLAKE,
-        CPUInfo.INTEL_FAM6_TIGERLAKE_L,
-        CPUInfo.INTEL_FAM6_ICELAKE_L,
-        CPUInfo.INTEL_FAM6_COMETLAKE,
-        CPUInfo.INTEL_FAM6_COMETLAKE_L,
-        CPUInfo.INTEL_FAM6_KABYLAKE_L,
-        CPUInfo.INTEL_FAM6_KABYLAKE,
-        CPUInfo.INTEL_FAM6_CANNONLAKE_L,
-        CPUInfo.INTEL_FAM6_SKYLAKE,
-        CPUInfo.INTEL_FAM6_SKYLAKE_L,
-        CPUInfo.INTEL_FAM6_BROADWELL,
-        CPUInfo.INTEL_FAM6_HASWELL,
-        CPUInfo.INTEL_FAM6_HASWELL_L,
-        CPUInfo.INTEL_FAM6_IVYBRIDGE,
-        CPUInfo.INTEL_FAM6_SANDYBRIDGE,
-        # Atoms.
-        CPUInfo.INTEL_FAM6_ATOM_TREMONT,
-        CPUInfo.INTEL_FAM6_ATOM_TREMONT_L,
-        CPUInfo.INTEL_FAM6_ATOM_GOLDMONT,
-        CPUInfo.INTEL_FAM6_ATOM_GOLDMONT_PLUS,
-        # Atom microservers.
-        CPUInfo.INTEL_FAM6_GRANDRIDGE,
-        CPUInfo.INTEL_FAM6_TREMONT_D,
-        CPUInfo.INTEL_FAM6_GOLDMONT_D,
-        # Other.
-        CPUInfo.INTEL_FAM6_ICELAKE_NNPI,
-        CPUInfo.INTEL_FAM6_XEON_PHI_KNM,
-        CPUInfo.INTEL_FAM6_XEON_PHI_KNL,
-}
+_BCLK_100MHZ = CPUInfo.GNRS +         \
+               CPUInfo.EMRS +         \
+               CPUInfo.METEORLAKES +  \
+               CPUInfo.SPRS +         \
+               CPUInfo.RAPTORLAKES +  \
+               CPUInfo.ALDERLAKES +   \
+               CPUInfo.ROCKETLAKES +  \
+               CPUInfo.TIGERLAKES +   \
+               CPUInfo.LAKEFIELDS +   \
+               CPUInfo.ICELAKES +     \
+               CPUInfo.COMETLAKES +   \
+               CPUInfo.KABYLAKES +    \
+               CPUInfo.CANNONLAKES +  \
+               CPUInfo.SKYLAKES +     \
+               CPUInfo.BROADWELLS +   \
+               CPUInfo.HASWELLS +     \
+               CPUInfo.IVYBRIDGES +   \
+               CPUInfo.SANDYBRIDGES + \
+               CPUInfo.CRESMONTS +    \
+               CPUInfo.TREMONTS +     \
+               CPUInfo.GOLDMONTS +    \
+               CPUInfo.PHIS
+
+_BCLK_100MHZ_SET = set(_BCLK_100MHZ)
 
 def get_bclk(pman, cpu=0, cpuinfo=None, msr=None):
     """
@@ -92,7 +66,7 @@ def get_bclk(pman, cpu=0, cpuinfo=None, msr=None):
             raise Error(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. Only Intel "
                         f"CPUs are supported.")
 
-        if cpuinfo.info["model"] in _BCLK_100MHZ:
+        if cpuinfo.info["model"] in _BCLK_100MHZ_SET:
             bclk = 100.0
         else:
             if not msr:
