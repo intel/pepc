@@ -2,7 +2,7 @@
 PEPC
 ====
 
-:Date:   2023-02-03
+:Date:   2023-02-06
 
 .. contents::
    :depth: 3
@@ -165,7 +165,7 @@ COMMAND *'pepc* cpu-hotplug offline'
 ====================================
 
 usage: pepc cpu-hotplug offline [-h] [-q] [-d] [--cpus CPUS] [--cores
-CORES] [--packages PACKAGES]
+CORES] [--packages PACKAGES] [--core-siblings CORE_SIBLINGS]
 
 Bring CPUs offline.
 
@@ -199,6 +199,14 @@ OPTIONS *'pepc* cpu-hotplug offline'
    numbers and package number ranges. For example, '1-3' would mean
    packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the
    special keyword 'all' to specify all packages.
+
+**--core-siblings** *CORE_SIBLINGS*
+   List of core sibling indices to offline. The list can include
+   individual core sibling indices or index ranges. For example, core x
+   includes CPUs 3 and 4, '0' would mean CPU 3 and '1' would mean CPU 4.
+   This option can only be used to reference online CPUs, because Linux
+   does not provide topology information for offline CPUs. In the
+   previous example if CPU 3 was offline, then '0' would mean CPU 4.
 
 COMMAND *'pepc* cstates'
 ========================
@@ -238,9 +246,10 @@ COMMAND *'pepc* cstates info'
 =============================
 
 usage: pepc cstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--yaml] [--cstates [CATATES]]
-[--pkg-cstate-limit] [--c1-demotion] [--c1-undemotion]
-[--c1e-autopromote] [--cstate-prewake] [--idle-driver] [--governor]
+[--packages PACKAGES] [--core-siblings CORE_SIBLINGS] [--yaml]
+[--cstates [CATATES]] [--pkg-cstate-limit] [--c1-demotion]
+[--c1-undemotion] [--c1e-autopromote] [--cstate-prewake] [--idle-driver]
+[--governor]
 
 Get information about C-states on specified CPUs. By default, prints all
 information for all CPUs. Remember, this is information about the
@@ -278,6 +287,14 @@ OPTIONS *'pepc* cstates info'
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
+
+**--core-siblings** *CORE_SIBLINGS*
+   List of core sibling indices to get information about. The list can
+   include individual core sibling indices or index ranges. For example,
+   core x includes CPUs 3 and 4, '0' would mean CPU 3 and '1' would mean
+   CPU 4. This option can only be used to reference online CPUs, because
+   Linux does not provide topology information for offline CPUs. In the
+   previous example if CPU 3 was offline, then '0' would mean CPU 4.
 
 **--yaml**
    Print information in YAML format.
@@ -335,10 +352,11 @@ COMMAND *'pepc* cstates config'
 ===============================
 
 usage: pepc cstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--enable [CSTATES]] [--disable [CSTATES]]
-[--pkg-cstate-limit [PKG_CSTATE_LIMIT]] [--c1-demotion [C1_DEMOTION]]
-[--c1-undemotion [C1_UNDEMOTION]] [--c1e-autopromote [C1E_AUTOPROMOTE]]
-[--cstate-prewake [CSTATE_PREWAKE]] [--governor [GOVERNOR]]
+[--packages PACKAGES] [--core-siblings CORE_SIBLINGS] [--enable
+[CSTATES]] [--disable [CSTATES]] [--pkg-cstate-limit [PKG_CSTATE_LIMIT]]
+[--c1-demotion [C1_DEMOTION]] [--c1-undemotion [C1_UNDEMOTION]]
+[--c1e-autopromote [C1E_AUTOPROMOTE]] [--cstate-prewake
+[CSTATE_PREWAKE]] [--governor [GOVERNOR]]
 
 Configure C-states on specified CPUs. All options can be used without a
 parameter, in which case the currently configured value(s) will be
@@ -374,6 +392,14 @@ OPTIONS *'pepc* cstates config'
    package numbers and package number ranges. For example, '1-3' would
    mean packages 1 to 3, and '1,3' would mean packages 1 and 3. Use the
    special keyword 'all' to specify all packages.
+
+**--core-siblings** *CORE_SIBLINGS*
+   List of core sibling indices to configure. The list can include
+   individual core sibling indices or index ranges. For example, core x
+   includes CPUs 3 and 4, '0' would mean CPU 3 and '1' would mean CPU 4.
+   This option can only be used to reference online CPUs, because Linux
+   does not provide topology information for offline CPUs. In the
+   previous example if CPU 3 was offline, then '0' would mean CPU 4.
 
 **--enable** *[CSTATES]*
    Comma-separated list of C-states to enable. C-states should be
@@ -425,7 +451,7 @@ COMMAND *'pepc* cstates save'
 =============================
 
 usage: pepc cstates save [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [-o OUTFILE]
+[--packages PACKAGES] [--core-siblings CORE_SIBLINGS] [-o OUTFILE]
 
 Save all the modifiable C-state settings into a file. This file can
 later be used for restoring C-state settings with the 'pepc cstates
@@ -462,6 +488,15 @@ OPTIONS *'pepc* cstates save'
    include individual package numbers and package number ranges. For
    example, '1-3' would mean packages 1 to 3, and '1,3' would mean
    packages 1 and 3. Use the special keyword
+
+**--core-siblings** *CORE_SIBLINGS*
+   List of core sibling indices to save C-state information about. The
+   list can include individual core sibling indices or index ranges. For
+   example, core x includes CPUs 3 and 4, '0' would mean CPU 3 and '1'
+   would mean CPU 4. This option can only be used to reference online
+   CPUs, because Linux does not provide topology information for offline
+   CPUs. In the previous example if CPU 3 was offline, then '0' would
+   mean CPU 4.
 
 **-o** *OUTFILE*, **--outfile** *OUTFILE*
    Name of the file to save the settings to.
@@ -528,13 +563,13 @@ COMMAND *'pepc* pstates info'
 =============================
 
 usage: pepc pstates info [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--yaml] [--min-freq] [--max-freq]
-[--min-freq-limit] [--max-freq-limit] [--base-freq] [--min-freq-hw]
-[--max-freq-hw] [--min-oper-freq] [--max-eff-freq] [--turbo]
-[--max-turbo-freq] [--min-uncore-freq] [--max-uncore-freq]
-[--min-uncore-freq-limit] [--max-uncore-freq-limit] [--hwp] [--epp]
-[--epp-hw] [--epb] [--epb-hw] [--driver] [--intel-pstate-mode]
-[--governor]
+[--packages PACKAGES] [--core-siblings CORE_SIBLINGS] [--yaml]
+[--min-freq] [--max-freq] [--min-freq-limit] [--max-freq-limit]
+[--base-freq] [--min-freq-hw] [--max-freq-hw] [--min-oper-freq]
+[--max-eff-freq] [--turbo] [--max-turbo-freq] [--min-uncore-freq]
+[--max-uncore-freq] [--min-uncore-freq-limit] [--max-uncore-freq-limit]
+[--hwp] [--epp] [--epp-hw] [--epb] [--epb-hw] [--driver]
+[--intel-pstate-mode] [--governor]
 
 Get P-states information for specified CPUs. By default, prints all
 information for all CPUs.
@@ -570,6 +605,14 @@ OPTIONS *'pepc* pstates info'
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
+
+**--core-siblings** *CORE_SIBLINGS*
+   List of core sibling indices to get information about. The list can
+   include individual core sibling indices or index ranges. For example,
+   core x includes CPUs 3 and 4, '0' would mean CPU 3 and '1' would mean
+   CPU 4. This option can only be used to reference online CPUs, because
+   Linux does not provide topology information for offline CPUs. In the
+   previous example if CPU 3 was offline, then '0' would mean CPU 4.
 
 **--yaml**
    Print information in YAML format.
@@ -738,12 +781,12 @@ COMMAND *'pepc* pstates config'
 ===============================
 
 usage: pepc pstates config [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [--min-freq [MIN_FREQ]] [--max-freq [MAX_FREQ]]
-[--min-freq-hw [MIN_FREQ_HW]] [--max-freq-hw [MAX_FREQ_HW]] [--turbo
-[TURBO]] [--min-uncore-freq [MIN_UNCORE_FREQ]] [--max-uncore-freq
-[MAX_UNCORE_FREQ]] [--epp [EPP]] [--epp-hw [EPP_HW]] [--epb [EPB]]
-[--epb-hw [EPB_HW]] [--intel-pstate-mode [INTEL_PSTATE_MODE]]
-[--governor [GOVERNOR]]
+[--packages PACKAGES] [--core-siblings CORE_SIBLINGS] [--min-freq
+[MIN_FREQ]] [--max-freq [MAX_FREQ]] [--min-freq-hw [MIN_FREQ_HW]]
+[--max-freq-hw [MAX_FREQ_HW]] [--turbo [TURBO]] [--min-uncore-freq
+[MIN_UNCORE_FREQ]] [--max-uncore-freq [MAX_UNCORE_FREQ]] [--epp [EPP]]
+[--epp-hw [EPP_HW]] [--epb [EPB]] [--epb-hw [EPB_HW]]
+[--intel-pstate-mode [INTEL_PSTATE_MODE]] [--governor [GOVERNOR]]
 
 Configure P-states on specified CPUs. All options can be used without a
 parameter, in which case the currently configured value(s) will be
@@ -780,6 +823,14 @@ OPTIONS *'pepc* pstates config'
    individual package numbers and package number ranges. For example,
    '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and
    3. Use the special keyword 'all' to specify all packages.
+
+**--core-siblings** *CORE_SIBLINGS*
+   List of core sibling indices to configure P-States on. The list can
+   include individual core sibling indices or index ranges. For example,
+   core x includes CPUs 3 and 4, '0' would mean CPU 3 and '1' would mean
+   CPU 4. This option can only be used to reference online CPUs, because
+   Linux does not provide topology information for offline CPUs. In the
+   previous example if CPU 3 was offline, then '0' would mean CPU 4.
 
 **--min-freq** *[MIN_FREQ]*
    Set min. CPU frequency. Minimum CPU frequency is the lowest frequency
@@ -885,7 +936,7 @@ COMMAND *'pepc* pstates save'
 =============================
 
 usage: pepc pstates save [-h] [-q] [-d] [--cpus CPUS] [--cores CORES]
-[--packages PACKAGES] [-o OUTFILE]
+[--packages PACKAGES] [--core-siblings CORE_SIBLINGS] [-o OUTFILE]
 
 Save all the modifiable P-state settings into a file. This file can
 later be used for restoring P-state settings with the 'pepc pstates
@@ -922,6 +973,15 @@ OPTIONS *'pepc* pstates save'
    include individual package numbers and package number ranges. For
    example, '1-3' would mean packages 1 to 3, and '1,3' would mean
    packages 1 and 3. Use the special keyword
+
+**--core-siblings** *CORE_SIBLINGS*
+   List of core sibling indices to save P-state information about. The
+   list can include individual core sibling indices or index ranges. For
+   example, core x includes CPUs 3 and 4, '0' would mean CPU 3 and '1'
+   would mean CPU 4. This option can only be used to reference online
+   CPUs, because Linux does not provide topology information for offline
+   CPUs. In the previous example if CPU 3 was offline, then '0' would
+   mean CPU 4.
 
 **-o** *OUTFILE*, **--outfile** *OUTFILE*
    Name of the file to save the settings to (printed to standard output
@@ -1050,8 +1110,8 @@ COMMAND *'pepc* topology info'
 ==============================
 
 usage: pepc topology info [-h] [-q] [-d] [--order ORDER] [--cpus CPUS]
-[--cores CORES] [--packages PACKAGES] [--online-only] [--columns
-COLUMNS]
+[--cores CORES] [--packages PACKAGES] [--core-siblings CORE_SIBLINGS]
+[--online-only] [--columns COLUMNS]
 
 Print CPU topology information. Note, the topology information for some
 offline CPUs may be unavailable, in these cases the number will be
@@ -1094,6 +1154,15 @@ OPTIONS *'pepc* topology info'
    include individual package numbers and package number ranges. For
    example, '1-3' would mean packages 1 to 3, and '1,3' would mean
    packages 1 and 3. Use the special keyword
+
+**--core-siblings** *CORE_SIBLINGS*
+   List of core sibling indices to print topology information for. The
+   list can include individual core sibling indices or index ranges. For
+   example, core x includes CPUs 3 and 4, '0' would mean CPU 3 and '1'
+   would mean CPU 4. This option can only be used to reference online
+   CPUs, because Linux does not provide topology information for offline
+   CPUs. In the previous example if CPU 3 was offline, then '0' would
+   mean CPU 4.
 
 **--online-only**
    Include only online CPUs. By default offline and online CPUs are

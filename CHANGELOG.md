@@ -5,6 +5,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.3.46] - 2023-02-06
+### Fixed
  - Fix 'pepc [pc]states config' failure on systems that do not have the
    'systemct' tool installed (e.g., some Yocto-based systems).
 ### Added
@@ -12,7 +18,6 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
  - Remove the '--ht-siblings' option of 'pepc cpu-hotplug offline'. The
    '--core-siblings' option should be used instead.
-### Changed
 
 ## [1.3.45] - 2023-02-03
 ### Added
