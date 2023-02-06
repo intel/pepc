@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix 'pepc [pc]states config' failure on systems that do not have the
+   'systemct' tool installed (e.g., some Yocto-based systems).
 ### Added
  - Add '--core-siblings' option to all 'pepc' commands.
 ### Removed
