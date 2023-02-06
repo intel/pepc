@@ -110,7 +110,7 @@ cache_alignment	: 64
 address sizes	: 46 bits physical, 48 bits virtual
 power management:
 
-rocessor	: 4
+processor	: 4
 vendor_id	: GenuineIntel
 cpu family	: 6
 model		: 86
