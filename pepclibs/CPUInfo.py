@@ -335,7 +335,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def _read_range(self, path, must_exist=True):
         """Read number range string from path 'path', and return it as a list of integers."""
 
-        str_of_ranges = self._pman.read(path, must_exist=must_exist)
+        str_of_ranges = self._pman.read(path, must_exist=must_exist).strip()
         return ArgParse.parse_int_list(str_of_ranges, ints=True)
 
     def _get_cpu_module(self, cpu):
