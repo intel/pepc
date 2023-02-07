@@ -10,6 +10,7 @@
 
 """Tests for the public methods of the 'CPUInfo' module."""
 
+import random
 import pytest
 import common
 from pepclibs import CPUInfo
@@ -495,3 +496,46 @@ def test_cpuinfo_div(params):
 
     for cpuinfo in _get_cpuinfos(params):
         _test_cpuinfo_div(cpuinfo)
+
+def test_core_siblings(params):
+    """Test 'select_core_siblings()'."""
+
+    for cpuinfo in _get_cpuinfos(params):
+        topology = cpuinfo.get_topology(order="core")
+
+        # We get the CPU siblings count for the first core in the topology list. Depending on how
+        # many CPUs the core has, will determine the index we use for testing.
+        index = 0
+        for tline in topology[1:]:
+            if tline["package"] != topology[0]["package"] or tline["core"] != topology[0]["core"]:
+                break
+            index += 1
+
+        # 'l1' - input list, random 50% of the online CPUs. There can be duplicates.
+        l1 = random.choices(cpuinfo.get_cpus(), k=int(cpuinfo.get_cpus_count() / 2))
+        # 'l2' - output list, returned by 'select_core_siblings()' with 'l1' as input.
+        l2 = cpuinfo.select_core_siblings(l1, index)
+
+        # Here we test that the 'l2' is a subset of the 'l1' and in the same order. But first we
+        # must dedup 'l1', because 'select_core_siblings()' does not return duplicates. Secondly we
+        # remove values from 'l1' that are not in 'l2'.
+        l1 = list(dict.fromkeys(l1))
+        l1 = [x for x in l1 if x in l2]
+        assert l1 == l2, "list retured by 'select_core_siblings()' is not a subset of input " \
+                         "list and in the same order"
+
+        # Here we verify that the index of the returned CPUs is 'index'.
+        l2 = set(l2)
+        core = pkg = i = None
+        for tline in topology:
+            cpu = tline["CPU"]
+            if tline["core"] != core or tline["package"] != pkg:
+                core = tline["core"]
+                pkg = tline["package"]
+                i = 0
+            else:
+                i += 1
+
+            if cpu in l2:
+                assert index == i, f"CPU {cpu} is not sibling index {index}, in core {core} "\
+                                   f"package {pkg}"
