@@ -747,7 +747,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """
         Select only core siblings from 'cpus' and return the result. The arguments are as follows.
         * cpus - list of CPU numbers to select core siblings from. The returned result is always a
-                subset of CPU numbers from 'cpus'.
+                 subset of CPU numbers from 'cpus'.
         * indexes - "indexes" of core siblings to select.
 
         Example.
@@ -766,12 +766,12 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         1, 0 and 2.
 
         In order to select first core siblings from 'cpus', provide 'indexes=[0]'. The result will
-        be: '[2, 0, 1]'.
+        be: '[1, 2]'.
 
         In order to select second core siblings from 'cpus', provide 'indexes=[1]'. The result will
-        be: '[5, 4, 6]'.
+        be: '[4, 5]'.
 
-        If 'indexes=[0,1]', the result will be the same as 'cpus': '[2, 0, 5, 4, 1, 6]'
+        If 'indexes=[0,1]', the result will be the same as 'cpus': '[1, 4, 5, 2]'
 
         Note: the index of a CPU inside the core depends on the online status of all CPUs inside the
               core. For example, a core with 3 CPUs 0, 1 and 2, when each of the CPUs are online
