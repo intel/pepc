@@ -783,15 +783,16 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         cpus = self.normalize_cpus(cpus, offlined_ok=True)
 
         cpu2index = {} # CPU number -> core siblings index map.
-        core = index = None
+        core = pkg = index = None
 
         for tline in self._get_topology(order="core"):
             cpu = tline["CPU"]
             if not tline["online"]:
                 cpu2index[cpu] = None
             else:
-                if tline["core"] != core:
+                if tline["core"] != core or tline["package"] != pkg:
                     core = tline["core"]
+                    pkg = tline["package"]
                     index = 0
                 cpu2index[cpu] = index
                 index += 1
