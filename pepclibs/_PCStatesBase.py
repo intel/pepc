@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 #          Antti Laakso <antti.laakso@linux.intel.com>
+#          Niklas Neronin <niklas.neronin@intel.com>
 
 """
 This module provides the base class for 'PState' and 'CState' classes.
