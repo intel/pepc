@@ -8,6 +8,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Column 'Die' is excluded from 'pepc pstates info' default columns, on one
+   die per package systems.
+ - Column 'Module' is excluded from 'pepc pstates info' default columns, on one
+   core per module systems.
 
 ## [1.3.46] - 2023-02-06
 ### Fixed
