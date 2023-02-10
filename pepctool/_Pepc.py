@@ -450,13 +450,13 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=topology_info_command)
 
+    _add_cpu_subset_arguments(subpars2, "List of %s to print topology information for.")
+
     orders = ", ".join([lvl.lower() for lvl in CPUInfo.LEVELS])
     text = f"""By default, the topology table is printed in CPU number order. Use this option to
                print it in a different order (e.g., core or package number order). Here are the
                supported order names: {orders}."""
     subpars2.add_argument("--order", help=text, default="CPU")
-
-    _add_cpu_subset_arguments(subpars2, "List of %s to print topology information for.")
 
     text = """Include only online CPUs. By default offline and online CPUs are included."""
     subpars2.add_argument("--online-only", action='store_true', help=text)
