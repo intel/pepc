@@ -462,8 +462,9 @@ def build_arguments_parser():
     subpars2.add_argument("--online-only", action='store_true', help=text)
 
     columns = ", ".join(CPUInfo.LEVELS)
-    text = f"""By default, the topology columns are {columns}. Use this option to select topology
-               columns names and order (e.g.,'--columns Package,Core,CPU')."""
+    text = f"""By default, the topology columns are {columns}, "die" and "module" columns are not
+               printed if there is only one die per package and no modules. Use this option to
+               select topology columns names and order (e.g. '--columns Package,Core,CPU')."""
     subpars2.add_argument("--columns", help=text, default=None)
 
     if argcomplete:

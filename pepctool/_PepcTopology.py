@@ -18,12 +18,44 @@ from pepctool import _PepcCommon
 
 _LOG = logging.getLogger()
 
+def _get_default_colnames(cpuinfo):
+    """
+    Return 'CPUInfo.LEVELS' with the following exceptions:
+     * If there is one die per package, exclude "die".
+     * If there is one core per module, exclude "module".
+    """
+
+    colnames = list(CPUInfo.LEVELS)
+
+    module = None
+    for tline in cpuinfo.get_topology(levels=("core", "module", "package"), order="module"):
+        if module != tline["module"]:
+            module = tline["module"]
+            core = tline["core"]
+            package = tline["package"]
+        elif core != tline["core"] or package != tline["package"]:
+            break
+    else:
+        colnames.remove("module")
+
+    package = None
+    for tline in cpuinfo.get_topology(levels=("die", "package"), order="package"):
+        if package != tline["package"]:
+            die = tline["die"]
+            package = tline["package"]
+        elif die != tline["die"]:
+            break
+    else:
+        colnames.remove("die")
+
+    return colnames
+
 def topology_info_command(args, pman):
     """Implements the 'topology info' command."""
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         if args.columns is None:
-            colnames = CPUInfo.LEVELS
+            colnames = _get_default_colnames(cpuinfo)
         else:
             colnames = []
             for colname in Trivial.split_csv_line(args.columns):
