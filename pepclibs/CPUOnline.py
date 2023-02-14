@@ -75,6 +75,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
         """Implements onlining and offlining."""
 
         cpuinfo = self._get_cpuinfo()
+        cpuinfo.cpus_hotplugged()
 
         if online:
             data = "1"
