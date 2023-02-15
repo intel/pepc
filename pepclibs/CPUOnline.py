@@ -94,6 +94,10 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                 cpus = cpuinfo.get_offline_cpus()
             else:
                 cpus = cpuinfo.get_cpus()
+
+            if not cpus:
+                _LOG.log(self._loglevel, "All CPUs are already %s", state_str)
+                return
         else:
             cpus = cpuinfo.normalize_cpus(cpus, offlined_ok=True)
 
