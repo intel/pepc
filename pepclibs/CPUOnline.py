@@ -81,10 +81,12 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             data = "1"
             state_str = "online"
             action_str = "Onlining"
+            ready_cpus = set(cpuinfo.get_cpus())
         else:
             data = "0"
             state_str = "offline"
             action_str = "Offlining"
+            ready_cpus = set(cpuinfo.get_offline_cpus())
 
         if cpus == "all":
             skip_unsupported = True
@@ -109,8 +111,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                 _LOG.info(err)
                 continue
 
-            state = self._get_online(path)
-            if data == state:
+            if cpu in ready_cpus:
                 _LOG.log(self._loglevel, "CPU%d is already %s, skipping", cpu, state_str)
                 continue
 
