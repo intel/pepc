@@ -101,18 +101,17 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
 
         toggled = []
         for cpu in cpus:
-            path = self._get_path(cpu)
+            if cpu in ready_cpus:
+                _LOG.log(self._loglevel, "CPU%d is already %s, skipping", cpu, state_str)
+                continue
 
+            path = self._get_path(cpu)
             try:
                 self._verify_path(cpu, path)
             except ErrorNotSupported as err:
                 if not skip_unsupported:
                     raise
                 _LOG.info(err)
-                continue
-
-            if cpu in ready_cpus:
-                _LOG.log(self._loglevel, "CPU%d is already %s, skipping", cpu, state_str)
                 continue
 
             _LOG.log(self._loglevel, "%s CPU%d", action_str, cpu)

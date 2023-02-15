@@ -68,9 +68,6 @@ def test_cpuonline_bad(params):
     onl = params["cpuonline"]
     bad_cpus = [-1, "one", True, 99999]
 
-    with pytest.raises(Error):
-        onl.online(cpus=[0], skip_unsupported=False)
-
     for cpu in bad_cpus:
         with pytest.raises(Error):
             onl.online(cpus=[cpu])
