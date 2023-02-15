@@ -354,13 +354,13 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def _update_topology(self):
         """Update topology information with online/offline CPUs."""
 
-        curr_online_cpus = set(self._get_online_cpus())
-        prev_online_cpus = {tline["CPU"] for tline in self._topology["CPU"]}
-        onlined = list(curr_online_cpus - prev_online_cpus)
+        new_online_cpus = set(self._get_online_cpus())
+        old_online_cpus = {tline["CPU"] for tline in self._topology["CPU"]}
+        onlined = list(new_online_cpus - old_online_cpus)
 
         tinfo = {cpu : {"CPU" : cpu} for cpu in onlined}
         for tline in self._topology["CPU"]:
-            if tline["CPU"] in curr_online_cpus:
+            if tline["CPU"] in new_online_cpus:
                 tinfo[tline["CPU"]] = tline
 
         if "package" in self._initialized_levels or "core" in self._initialized_levels:
