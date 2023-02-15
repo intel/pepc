@@ -356,25 +356,27 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         new_online_cpus = set(self._get_online_cpus())
         old_online_cpus = {tline["CPU"] for tline in self._topology["CPU"]}
-        onlined = list(new_online_cpus - old_online_cpus)
+        if new_online_cpus != old_online_cpus:
+            onlined = list(new_online_cpus - old_online_cpus)
 
-        tinfo = {cpu : {"CPU" : cpu} for cpu in onlined}
-        for tline in self._topology["CPU"]:
-            if tline["CPU"] in new_online_cpus:
-                tinfo[tline["CPU"]] = tline
+            tinfo = {cpu : {"CPU" : cpu} for cpu in onlined}
+            for tline in self._topology["CPU"]:
+                if tline["CPU"] in new_online_cpus:
+                    tinfo[tline["CPU"]] = tline
 
-        if "package" in self._initialized_levels or "core" in self._initialized_levels:
-            self._add_core_and_package_numbers(tinfo, onlined)
-        if "module" in self._initialized_levels:
-            self._add_module_numbers(tinfo, onlined)
-        if "die" in self._initialized_levels:
-            self._add_die_numbers(tinfo, onlined)
-        if "node" in self._initialized_levels:
-            self._add_node_numbers(tinfo)
+            if "package" in self._initialized_levels or "core" in self._initialized_levels:
+                self._add_core_and_package_numbers(tinfo, onlined)
+            if "module" in self._initialized_levels:
+                self._add_module_numbers(tinfo, onlined)
+            if "die" in self._initialized_levels:
+                self._add_die_numbers(tinfo, onlined)
+            if "node" in self._initialized_levels:
+                self._add_node_numbers(tinfo)
 
-        topology = list(tinfo.values())
-        for order in self._initialized_levels:
-            self._sort_topology(topology, order)
+            topology = list(tinfo.values())
+            for order in self._initialized_levels:
+                self._sort_topology(topology, order)
+
         self._must_update_topology = False
 
     def _add_core_and_package_numbers(self, tinfo, cpus):
@@ -456,7 +458,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         levels = set(levels)
         levels.update(set(self._sorting_map[order]))
 
-        if self._must_update_topology and self._topology:
+        if self._must_update_topology:
             self._update_topology()
 
         levels -= self._initialized_levels
@@ -636,7 +638,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """This method informs CPUInfo to update online/offline CPUs and topology lists."""
 
         self._cpus = None
-        self._must_update_topology = True
+        if self._topology:
+            self._must_update_topology = True
 
     def get_cpu_levels(self, cpu, levels=None):
         """
