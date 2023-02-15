@@ -258,10 +258,6 @@ class EPB(ClassHelpers.SimpleCloseContext):
         self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
                                               enable_cache=enable_cache)
 
-        if self._cpuinfo.info["vendor"] != "GenuineIntel":
-            raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. "
-                                    f"Only Intel CPUs are supported.")
-
     def close(self):
         """Uninitialize the class object."""
 
