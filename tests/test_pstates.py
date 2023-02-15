@@ -140,6 +140,10 @@ def test_pstates_frequency_set_order(params):
     See 'PStates._validate_and_set_freq()' docstring, for more information.
     """
 
+    if params["cpuinfo"].info["vendor"] != "GenuineIntel":
+        # BClock is only supported on "GenuineIntel" CPU vendors.
+        return
+
     # When Turbo is disabled the max frequency may be limited.
     if is_prop_supported("turbo", params["pinfo"]):
         sname = params["psobj"].props["turbo"]["sname"]
