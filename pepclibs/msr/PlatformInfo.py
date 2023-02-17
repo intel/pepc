@@ -118,6 +118,7 @@ class PlatformInfo(_FeaturedMSR.FeaturedMSR):
         self._features = FEATURES
         self.regaddr = MSR_PLATFORM_INFO
         self.regname = "MSR_PLATFORM_INFO"
+        self.vendor = "GenuineIntel"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

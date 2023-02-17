@@ -114,6 +114,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         self._features = FEATURES
         self.regaddr = MSR_FSB_FREQ
         self.regname = "MSR_FSB_FREQ"
+        self.vendor = "GenuineIntel"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

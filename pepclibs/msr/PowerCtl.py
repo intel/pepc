@@ -75,6 +75,7 @@ class PowerCtl(_FeaturedMSR.FeaturedMSR):
         self._features = FEATURES
         self.regaddr = MSR_POWER_CTL
         self.regname = "MSR_POWER_CTL"
+        self.vendor = "GenuineIntel"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
