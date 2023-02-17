@@ -67,6 +67,9 @@ def get_params(hostspec):
         params["feature_classes"] = []
         for modname in _MSR_MODULES:
             msr_feature_class = getattr(import_module(f"pepclibs.msr.{modname}"), modname)
+            if msr_feature_class.vendor != cpuinfo.info["vendor"]:
+                continue
+
             params["feature_classes"].append(msr_feature_class)
             with msr_feature_class(pman=pman) as msr:
                 for name, finfo in msr._features.items(): # pylint: disable=protected-access
@@ -77,5 +80,8 @@ def get_params(hostspec):
                     if msr.regaddr not in params["msrs"]:
                         params["msrs"][msr.regaddr] = {}
                     params["msrs"][msr.regaddr].update({name : finfo})
+
+        if not params["feature_classes"]:
+            pytest.skip("No supported MSRs to use for testing", allow_module_level=True)
 
         yield params
