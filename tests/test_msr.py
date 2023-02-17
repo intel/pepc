@@ -74,7 +74,7 @@ def _test_msr_read_good(params):
     """Test 'read()' method for good option values."""
 
     for msr in msr_common.get_msr_objs(params):
-        for tp in  _get_msr_test_params(params):
+        for tp in _get_msr_test_params(params):
             msr.set_msr_scope(tp["addr"], tp["sname"])
             for cpu, _ in msr.read(tp["addr"], cpus=params["testcpus"]):
                 assert cpu in params["testcpus"]
@@ -105,7 +105,7 @@ def _test_msr_write_good(params):
     """Test 'write()' method for good option values."""
 
     for msr in msr_common.get_msr_objs(params):
-        for tp in  _get_msr_test_params(params, include_ro=False):
+        for tp in _get_msr_test_params(params, include_ro=False):
             msr.set_msr_scope(tp["addr"], tp["sname"])
             val = msr.read_cpu(tp["addr"], params["testcpus"][0])
             mask = _bits_to_mask(tp["bits"])
@@ -140,7 +140,7 @@ def _test_msr_write_bad(params):
 
     for msr in msr_common.get_msr_objs(params):
         msr.set_msr_scope(tp["addr"], tp["sname"])
-        for tp in  _get_msr_test_params(params, include_rw=False):
+        for tp in _get_msr_test_params(params, include_rw=False):
             # Writes to Turbo MSRs pass, skip them.
             if tp["addr"] in (MSR_TURBO_RATIO_LIMIT, MSR_TURBO_RATIO_LIMIT1):
                 continue
@@ -160,7 +160,7 @@ def _test_msr_read_cpu_good(params):
     """Test the 'read_cpu()' method for good option values."""
 
     for msr in msr_common.get_msr_objs(params):
-        for tp in  _get_msr_test_params(params):
+        for tp in _get_msr_test_params(params):
             msr.set_msr_scope(tp["addr"], tp["sname"])
             for cpu in _get_good_msr_cpu_nums(params):
                 msr.read_cpu(tp["addr"], cpu=cpu)
