@@ -92,12 +92,13 @@ class TurboRatioLimit(_FeaturedMSR.FeaturedMSR):
     information on Intel platforms.
     """
 
+    regaddr = MSR_TURBO_RATIO_LIMIT
+    regname = "MSR_TURBO_RATIO_LIMIT"
+
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
         self._features = FEATURES
-        self.regaddr = MSR_TURBO_RATIO_LIMIT
-        self.regname = "MSR_TURBO_RATIO_LIMIT"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

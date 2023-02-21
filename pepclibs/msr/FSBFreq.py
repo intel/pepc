@@ -88,6 +88,9 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
     information on some Intel platforms.
     """
 
+    regaddr = MSR_FSB_FREQ
+    regname = "MSR_FSB_FREQ"
+
     def _init_features_dict_fsb(self):
         """Initialize the 'fsb' feature information in the 'self._features' dictionary."""
 
@@ -112,8 +115,6 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self._features = FEATURES
-        self.regaddr = MSR_FSB_FREQ
-        self.regname = "MSR_FSB_FREQ"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

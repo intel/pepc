@@ -40,12 +40,13 @@ class PMEnable(_FeaturedMSR.FeaturedMSR):
     many Intel platforms.
     """
 
+    regaddr = MSR_PM_ENABLE
+    regname = "MSR_PM_ENABLE"
+
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
         self._features = FEATURES
-        self.regaddr = MSR_PM_ENABLE
-        self.regname = "MSR_PM_ENABLE"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

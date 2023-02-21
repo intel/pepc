@@ -57,12 +57,13 @@ class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
     on many Intel platforms.
     """
 
+    regaddr = MSR_HWP_REQUEST_PKG
+    regname = "MSR_HWP_REQUEST_PKG"
+
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
         self._features = FEATURES
-        self.regaddr = MSR_HWP_REQUEST_PKG
-        self.regname = "MSR_HWP_REQUEST_PKG"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

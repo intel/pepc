@@ -112,12 +112,13 @@ class PlatformInfo(_FeaturedMSR.FeaturedMSR):
     information on Intel platforms.
     """
 
+    regaddr = MSR_PLATFORM_INFO
+    regname = "MSR_PLATFORM_INFO"
+
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
         self._features = FEATURES
-        self.regaddr = MSR_PLATFORM_INFO
-        self.regname = "MSR_PLATFORM_INFO"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

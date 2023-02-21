@@ -100,6 +100,9 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
     various CPU prefetchers on many Intel platforms.
     """
 
+    regaddr = MSR_MISC_FEATURE_CONTROL
+    regname = "MSR_MISC_FEATURE_CONTROL"
+
     def _init_features_dict_bits(self):
         """Initialize the 'bits' key in the 'self._features' dictionary."""
 
@@ -126,8 +129,6 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self._features = FEATURES
-        self.regaddr = MSR_MISC_FEATURE_CONTROL
-        self.regname = "MSR_MISC_FEATURE_CONTROL"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

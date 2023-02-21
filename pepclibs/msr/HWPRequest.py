@@ -99,6 +99,9 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
     many Intel platforms.
     """
 
+    regaddr = MSR_HWP_REQUEST
+    regname = "MSR_HWP_REQUEST"
+
     def is_cpu_feature_pkg_controlled(self, fname, cpu):
         """
         Returns 'True' if an HWP feature is controlled by 'MSR_HWP_REQUEST_PKG' or 'False' if it is
@@ -141,8 +144,6 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self._features = FEATURES
-        self.regaddr = MSR_HWP_REQUEST
-        self.regname = "MSR_HWP_REQUEST"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

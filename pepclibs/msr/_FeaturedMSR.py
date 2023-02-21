@@ -48,6 +48,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                                         'validate_cpu_feature_supported()'.
     """
 
+    regaddr = None
+    regname = None
+
     def _normalize_feature_value(self, feature, val):
         """
         Check that 'val' is a valid value fore feature 'feature' and converts it to a value suitable
@@ -433,8 +436,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         self.features = {}
         # The private version of the 'self.features' dictionary.
         self._features = {}
-        self.regaddr = None
-        self.regname = None
 
         self._set_baseclass_attributes()
         self._features = copy.deepcopy(self._features)

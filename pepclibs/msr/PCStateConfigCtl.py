@@ -172,6 +172,9 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     register found on many Intel platforms.
     """
 
+    regaddr = MSR_PKG_CST_CONFIG_CONTROL
+    regname = "MSR_PKG_CST_CONFIG_CONTROL"
+
     def _get_pkg_cstate_limit(self, cpus="all"):
         """
         Get package C-state limit for CPUs in 'cpus'. For every CPU in 'cpus', yields a tuple of
@@ -259,8 +262,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self._features = FEATURES
-        self.regaddr = MSR_PKG_CST_CONFIG_CONTROL
-        self.regname = "MSR_PKG_CST_CONFIG_CONTROL"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

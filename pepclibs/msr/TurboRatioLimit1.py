@@ -46,12 +46,13 @@ class TurboRatioLimit1(_FeaturedMSR.FeaturedMSR):
     cores).
     """
 
+    regaddr = MSR_TURBO_RATIO_LIMIT1
+    regname = "MSR_TURBO_RATIO_LIMIT1"
+
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
         self._features = FEATURES
-        self.regaddr = MSR_TURBO_RATIO_LIMIT1
-        self.regname = "MSR_TURBO_RATIO_LIMIT1"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
