@@ -588,9 +588,8 @@ class CStates(_PCStatesBase.PCStatesBase):
     def _get_pkg_cstate_limit(self, pname, cpu):
         """Return the 'pname' sub-property for the 'pkg_cstate_limit' property."""
 
-        pcstatectl = self._get_pcstatectl()
-
         try:
+            pcstatectl = self._get_pcstatectl()
             pkg_cstate_limit_props = pcstatectl.read_cpu_feature("pkg_cstate_limit", cpu)
         except ErrorNotSupported:
             return None
@@ -602,12 +601,12 @@ class CStates(_PCStatesBase.PCStatesBase):
         Read property 'pname' from the corresponding MSR register on CPU 'cpu' and return its value.
         """
 
-        if pname in PowerCtl.FEATURES:
-            module = self._get_powerctl()
-        else:
-            module = self._get_pcstatectl()
-
         try:
+            if pname in PowerCtl.FEATURES:
+                module = self._get_powerctl()
+            else:
+                module = self._get_pcstatectl()
+
             return module.read_cpu_feature(pname, cpu)
         except ErrorNotSupported:
             return None
