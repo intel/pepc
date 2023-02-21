@@ -42,6 +42,7 @@ class PMEnable(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_PM_ENABLE
     regname = "MSR_PM_ENABLE"
+    vendor = "GenuineIntel"
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""

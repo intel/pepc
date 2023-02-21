@@ -114,6 +114,7 @@ class PlatformInfo(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_PLATFORM_INFO
     regname = "MSR_PLATFORM_INFO"
+    vendor = "GenuineIntel"
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""

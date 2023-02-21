@@ -94,6 +94,7 @@ class TurboRatioLimit(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_TURBO_RATIO_LIMIT
     regname = "MSR_TURBO_RATIO_LIMIT"
+    vendor = "GenuineIntel"
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""

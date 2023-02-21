@@ -50,6 +50,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     regaddr = None
     regname = None
+    vendor = None
 
     def _normalize_feature_value(self, feature, val):
         """
@@ -449,7 +450,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         if not self._msr:
             self._msr = MSR.MSR(pman=self._pman, cpuinfo=self._cpuinfo)
 
-        if self._cpuinfo.info["vendor"] != "GenuineIntel":
+        if self._cpuinfo.info["vendor"] != self.vendor:
             raise ErrorNotSupported(f"unsupported {self._cpuinfo.cpudescr}{self._pman.hostmsg}, "
                                     f"model-specific register {self.regaddr:#x} ({self.regname}) "
                                     f"is available only on Intel CPUs.")

@@ -90,6 +90,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_FSB_FREQ
     regname = "MSR_FSB_FREQ"
+    vendor = "GenuineIntel"
 
     def _init_features_dict_fsb(self):
         """Initialize the 'fsb' feature information in the 'self._features' dictionary."""

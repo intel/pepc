@@ -59,6 +59,7 @@ class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_HWP_REQUEST_PKG
     regname = "MSR_HWP_REQUEST_PKG"
+    vendor = "GenuineIntel"
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""

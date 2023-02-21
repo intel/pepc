@@ -71,6 +71,7 @@ class PowerCtl(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_POWER_CTL
     regname = "MSR_POWER_CTL"
+    vendor = "GenuineIntel"
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""

@@ -102,6 +102,7 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_MISC_FEATURE_CONTROL
     regname = "MSR_MISC_FEATURE_CONTROL"
+    vendor = "GenuineIntel"
 
     def _init_features_dict_bits(self):
         """Initialize the 'bits' key in the 'self._features' dictionary."""

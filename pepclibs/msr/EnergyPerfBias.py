@@ -42,6 +42,7 @@ class EnergyPerfBias(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_ENERGY_PERF_BIAS
     regname = "MSR_ENERGY_PERF_BIAS"
+    vendor = "GenuineIntel"
 
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""

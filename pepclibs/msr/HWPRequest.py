@@ -101,6 +101,7 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_HWP_REQUEST
     regname = "MSR_HWP_REQUEST"
+    vendor = "GenuineIntel"
 
     def is_cpu_feature_pkg_controlled(self, fname, cpu):
         """
