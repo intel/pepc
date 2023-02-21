@@ -435,7 +435,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         self._features = {}
         self.regaddr = None
         self.regname = None
-        self.vendor = None
 
         self._set_baseclass_attributes()
         self._features = copy.deepcopy(self._features)
@@ -449,7 +448,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         if not self._msr:
             self._msr = MSR.MSR(pman=self._pman, cpuinfo=self._cpuinfo)
 
-        if self._cpuinfo.info["vendor"] != self.vendor:
+        if self._cpuinfo.info["vendor"] != "GenuineIntel":
             raise ErrorNotSupported(f"unsupported {self._cpuinfo.cpudescr}{self._pman.hostmsg}, "
                                     f"model-specific register {self.regaddr:#x} ({self.regname}) "
                                     f"is available only on Intel CPUs.")

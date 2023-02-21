@@ -52,7 +52,6 @@ class TurboRatioLimit1(_FeaturedMSR.FeaturedMSR):
         self._features = FEATURES
         self.regaddr = MSR_TURBO_RATIO_LIMIT1
         self.regname = "MSR_TURBO_RATIO_LIMIT1"
-        self.vendor = "GenuineIntel"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
