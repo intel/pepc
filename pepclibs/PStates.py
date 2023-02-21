@@ -313,8 +313,12 @@ class PStates(_PCStatesBase.PCStatesBase):
         if not self._eppobj:
             from pepclibs import EPP # pylint: disable=import-outside-toplevel
 
+            try:
+                hwpreq = self._get_hwpreq()
+            except ErrorNotSupported:
+                hwpreq = None
+
             msr = self._get_msr()
-            hwpreq = self._get_hwpreq()
             self._eppobj = EPP.EPP(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr, hwpreq=hwpreq,
                                    enable_cache=self._enable_cache)
 
@@ -449,9 +453,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_base_freq(self, cpu):
         """Read base frequency from 'MSR_PLATFORM_INFO' and return it."""
 
-        platinfo = self._get_platinfo()
-
         try:
+            platinfo = self._get_platinfo()
             ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
         except ErrorNotSupported:
             return None
@@ -462,9 +465,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_max_eff_freq(self, cpu):
         """Read max. efficiency frequency from 'MSR_PLATFORM_INFO' and return it."""
 
-        platinfo = self._get_platinfo()
-
         try:
+            platinfo = self._get_platinfo()
             ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
         except ErrorNotSupported:
             return None
@@ -475,9 +477,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_min_oper_freq(self, cpu):
         """Read the minimum operating frequency from 'MSR_PLATFORM_INFO' and return it."""
 
-        platinfo = self._get_platinfo()
-
         try:
+            platinfo = self._get_platinfo()
             ratio = platinfo.read_cpu_feature("min_oper_ratio", cpu)
         except ErrorNotSupported:
             return None
@@ -496,7 +497,10 @@ class PStates(_PCStatesBase.PCStatesBase):
         Read and return the maximum turbo frequency for CPU 'cpu' from 'MSR_TURBO_RATIO_LIMIT'.
         """
 
-        trl = self._get_trl()
+        try:
+            trl = self._get_trl()
+        except ErrorNotSupported:
+            return None
 
         try:
             ratio = trl.read_cpu_feature("max_1c_turbo_ratio", cpu)
@@ -561,8 +565,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         Returns "on" if HWP is enabled, "off" if it is disabled, and 'None' if it is not supported.
         """
 
-        pmenable = self._get_pmenable()
         try:
+            pmenable = self._get_pmenable()
             enabled = pmenable.is_cpu_feature_enabled("hwp", cpu)
         except ErrorNotSupported:
             return None
@@ -654,7 +658,11 @@ class PStates(_PCStatesBase.PCStatesBase):
         # The corresponding 'MSR_HWP_REQUEST' feature name.
         fname = f"{prefix}_perf"
 
-        hwpreq = self._get_hwpreq()
+        try:
+            hwpreq = self._get_hwpreq()
+        except ErrorNotSupported:
+            return None
+
         if hwpreq.is_cpu_feature_pkg_controlled(fname, cpu):
             hwpreq = self._get_hwpreq_pkg()
 
