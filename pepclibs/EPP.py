@@ -108,7 +108,11 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """Read EPP for CPU 'cpu' from MSR."""
 
         # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
-        hwpreq = self._get_hwpreq()
+        try:
+            hwpreq = self._get_hwpreq()
+        except ErrorNotSupported:
+            return None
+
         if hwpreq.is_cpu_feature_pkg_controlled("epp", cpu):
             hwpreq = self._get_hwpreq_pkg()
 
