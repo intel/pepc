@@ -83,10 +83,8 @@ class EPB(ClassHelpers.SimpleCloseContext):
     def _read_cpu_epb_hw(self, cpu):
         """Read EPB for CPU 'cpu' from MSR."""
 
-        _epb = self._get_epbobj()
-
         try:
-            return _epb.read_cpu_feature("epb", cpu)
+            return self._get_epbobj().read_cpu_feature("epb", cpu)
         except ErrorNotSupported:
             return None
 
