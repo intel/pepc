@@ -293,10 +293,6 @@ class EPP(ClassHelpers.SimpleCloseContext):
         # List of available EPP policies according to sysfs.
         self._epp_policies = None
 
-        if self._cpuinfo.info["vendor"] != "GenuineIntel":
-            raise ErrorNotSupported(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. "
-                                    f"Only Intel CPUs are supported.")
-
     def close(self):
         """Uninitialize the class object."""
 
