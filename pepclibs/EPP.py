@@ -16,7 +16,6 @@ Intel CPUs.
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo, _PropsCache
-from pepclibs.msr import MSR, HWPRequest, HWPRequestPkg
 
 # The minimum and maximum EPP values.
 _EPP_MIN, _EPP_MAX = 0, 0xFF
@@ -40,6 +39,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """Returns an 'MSR.MSR()' object."""
 
         if not self._msr:
+            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
+
             self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
         return self._msr
 
@@ -47,6 +48,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """Returns an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq:
+            from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
+
             msr = self._get_msr()
             self._hwpreq = HWPRequest.HWPRequest(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
@@ -56,6 +59,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """Returns an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq_pkg:
+            from pepclibs.msr import HWPRequestPkg # pylint: disable=import-outside-toplevel
+
             msr = self._get_msr()
             self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
                                                            msr=msr)
