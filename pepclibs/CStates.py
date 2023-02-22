@@ -571,7 +571,7 @@ class CStates(_PCStatesBase.PCStatesBase):
     def _get_powerctl(self):
         """Return an instance of 'PowerCtl' class."""
 
-        if self._powerctl is None:
+        if not self._powerctl:
             msr = self._get_msr()
             self._powerctl = PowerCtl.PowerCtl(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
         return self._powerctl
@@ -579,7 +579,7 @@ class CStates(_PCStatesBase.PCStatesBase):
     def _get_pcstatectl(self):
         """Return an instance of 'PCStateConfigCtl' class."""
 
-        if self._pcstatectl is None:
+        if not self._pcstatectl:
             msr = self._get_msr()
             self._pcstatectl = PCStateConfigCtl.PCStateConfigCtl(pman=self._pman,
                                                                  cpuinfo=self._cpuinfo, msr=msr)
