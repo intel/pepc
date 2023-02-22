@@ -18,7 +18,6 @@ CPUs.
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo, _PropsCache
-from pepclibs.msr import MSR, EnergyPerfBias
 
 # EPB policy names, from the following Linux kernel file: arch/x86/kernel/cpu/intel_epb.c
 _EPB_POLICIES = ("performance", "balance-performance", "normal", "balance-power", "power")
@@ -45,6 +44,8 @@ class EPB(ClassHelpers.SimpleCloseContext):
         """Returns an 'MSR.MSR()' object."""
 
         if not self._msr:
+            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
+
             self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
         return self._msr
 
@@ -52,6 +53,8 @@ class EPB(ClassHelpers.SimpleCloseContext):
         """Returns an 'EnergyPerfBias.EnergyPerfBias()' object."""
 
         if not self._epb_msr:
+            from pepclibs.msr import EnergyPerfBias # pylint: disable=import-outside-toplevel
+
             msr = self._get_msrobj()
             self._epb_msr = EnergyPerfBias.EnergyPerfBias(pman=self._pman, cpuinfo=self._cpuinfo,
                                                           msr=msr)
