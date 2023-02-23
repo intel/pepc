@@ -5,10 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - When reading unsupported MSRs 'pepc' tool will treat them as "not supported",
-   instead of erroring.
 ### Added
 ### Removed
+### Changed
+
+## [1.4.0] - 2023-02-23
+### Fixed
+ - When reading unsupported MSRs 'pepc' tool will treat them as "not supported",
+   instead of erroring.
 ### Changed
  - Column 'Die' is excluded from 'pepc pstates info' default columns, on one
    die per package systems.

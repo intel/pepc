@@ -1,4 +1,4 @@
-.TH PEPC "1" "2023\-02\-06" "pepc" "Generated Python Manual"
+.TH PEPC "1" "2023\-02\-23" "pepc" "Generated Python Manual"
 .SH NAME
 pepc
 .SH SYNOPSIS
@@ -868,7 +868,7 @@ FURTHER SUB-COMMANDS \fI\,'pepc topology'\/\fR
 Print CPU topology.
 
 .SH COMMAND \fI\,'pepc topology info'\/\fR
-usage: pepc topology info [\-h] [\-q] [\-d] [\-\-order ORDER] [\-\-cpus CPUS] [\-\-cores CORES] [\-\-packages PACKAGES] [\-\-core\-siblings CORE_SIBLINGS] [\-\-online\-only] [\-\-columns COLUMNS]
+usage: pepc topology info [\-h] [\-q] [\-d] [\-\-cpus CPUS] [\-\-cores CORES] [\-\-packages PACKAGES] [\-\-core\-siblings CORE_SIBLINGS] [\-\-order ORDER] [\-\-online\-only] [\-\-columns COLUMNS]
 
 Print CPU topology information. Note, the topology information for some offline CPUs may be unavailable, in these cases the number will be substituted with "?".
 
@@ -884,10 +884,6 @@ Be quiet.
 .TP
 \fB\-d\fR
 Print debugging information.
-
-.TP
-\fB\-\-order\fR \fI\,ORDER\/\fR
-By default, the topology table is printed in CPU number order. Use this option to print it in a different order (e.g., core or package number order). Here are the supported order names: cpu, core, module, die, node, package.
 
 .TP
 \fB\-\-cpus\fR \fI\,CPUS\/\fR
@@ -910,12 +906,17 @@ List of core sibling indices to print topology information for. The list can inc
 can only be used to reference online CPUs, because Linux does not provide topology information for offline CPUs. In the previous example if CPU 3 was offline, then '0' would mean CPU 4.
 
 .TP
+\fB\-\-order\fR \fI\,ORDER\/\fR
+By default, the topology table is printed in CPU number order. Use this option to print it in a different order (e.g., core or package number order). Here are the supported order names: cpu, core, module, die, node, package.
+
+.TP
 \fB\-\-online\-only\fR
 Include only online CPUs. By default offline and online CPUs are included.
 
 .TP
 \fB\-\-columns\fR \fI\,COLUMNS\/\fR
-By default, the topology columns are CPU, core, module, die, node, package. Use this option to select topology columns names and order (e.g.,'\-\-columns Package,Core,CPU').
+By default, the topology columns are CPU, core, module, die, node, package, "die" and "module" columns are not printed if there is only one die per package and no modules. Use this option to select topology columns names and order (e.g.
+'\-\-columns Package,Core,CPU').
 
 .SH AUTHORS
 .nf
