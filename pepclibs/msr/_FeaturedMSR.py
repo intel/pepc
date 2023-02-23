@@ -414,6 +414,17 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument,no-self-use
         raise Error("BUG: sub-class did not define the '_set_baseclass_attributes()' method")
 
+    def __new__(cls, **kwargs):
+        """The class constructor."""
+
+        # When 'cpuinfo' argument is passed, optimize by validating that the CPU vendor is
+        # supported, before initializing the entire class.
+        if "cpuinfo" in kwargs and cls.vendor != kwargs["cpuinfo"].info["vendor"]:
+            raise ErrorNotSupported(f"unsupported MSR {cls.regaddr:#x} ({cls.regname}), it's only "
+                                    f"available on {cls.vendor} CPUs.")
+
+        return super(FeaturedMSR, cls).__new__(cls)
+
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
         The class constructor. The argument are as follows.
@@ -446,14 +457,12 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+            if self._cpuinfo.info["vendor"] != self.vendor:
+                raise ErrorNotSupported(f"unsupported MSR {self.regaddr:#x} ({self.regname}), it's "
+                                        f"only available on {self.vendor} CPUs.")
 
         if not self._msr:
             self._msr = MSR.MSR(pman=self._pman, cpuinfo=self._cpuinfo)
-
-        if self._cpuinfo.info["vendor"] != self.vendor:
-            raise ErrorNotSupported(f"unsupported {self._cpuinfo.cpudescr}{self._pman.hostmsg}, "
-                                    f"model-specific register {self.regaddr:#x} ({self.regname}) "
-                                    f"is available only on Intel CPUs.")
 
         self._init_features_dict()
 
