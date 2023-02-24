@@ -981,10 +981,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if offlined_ok:
             allcpus = self._get_all_cpus()
         else:
-            allcpus = self.get_cpus()
+            allcpus = self._get_online_cpus()
 
         if cpus == "all":
-            return allcpus
+            return allcpus.copy()
 
         allcpus = set(allcpus)
         cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=False)
