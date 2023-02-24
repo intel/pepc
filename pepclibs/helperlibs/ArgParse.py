@@ -250,34 +250,31 @@ def parse_int_list(nums, ints=False, dedup=False, sort=False):
         return None
 
     if isinstance(nums, int):
-        nums = str(nums)
-    if isinstance(nums, str):
+        nums = [nums]
+    elif isinstance(nums, str):
         nums = Trivial.split_csv_line(nums)
-    if not Trivial.is_iterable(nums):
+    elif not Trivial.is_iterable(nums):
         nums = [nums]
 
     result = []
     for elts in nums:
-        elts = str(elts)
-        if "-" in elts:
-            elts = Trivial.split_csv_line(elts, sep="-")
-            if len(elts) != 2:
-                raise Error(f"bad range '{elts}', should be two integers separated by '-'")
-        else:
-            elts = [elts]
+        if type(elts) is int: # pylint: disable=unidiomatic-typecheck
+            result.append(elts)
+        elif isinstance(elts, str):
+            if "-" in elts:
+                elts = [Trivial.str_to_int(val) for val in elts.split("-") if val]
+                if len(elts) != 2:
+                    raise Error(f"bad range '{elts}', should be two integers separated by '-'")
 
-        for elt in elts:
-            if not Trivial.is_int(elt):
-                raise Error(f"bad number '{elt}', should be an integer")
+                if elts[0] > elts[1]:
+                    raise Error(f"bad range {elts[0]}-{elts[1]}, the first number should be " \
+                                f"smaller than thesecond")
 
-        elts = [int(elt) for elt in elts]
-        if len(elts) > 1:
-            if elts[0] > elts[1]:
-                raise Error(f"bad range {elts[0]}-{elts[1]}, the first number should be smaller " \
-                            f"than thesecond")
-            result += range(elts[0], elts[1] + 1)
+                result += range(elts[0], elts[1] + 1)
+            else:
+                result.append(Trivial.str_to_int(elts))
         else:
-            result += elts
+            raise Error(f"bad data '{elts}', should be an integer or string")
 
     if dedup:
         result = Trivial.list_dedup(result)
