@@ -354,7 +354,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def _update_topology(self):
         """Update topology information with online/offline CPUs."""
 
-        new_online_cpus = set(self._get_online_cpus())
+        new_online_cpus = self._get_online_cpus()
         old_online_cpus = {tline["CPU"] for tline in self._topology["CPU"]}
         if new_online_cpus != old_online_cpus:
             onlined = list(new_online_cpus - old_online_cpus)
@@ -574,7 +574,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Returns list of online CPU numbers."""
 
         if order == "CPU":
-            return self._get_online_cpus().copy()
+            return sorted(self._get_online_cpus())
 
         return self._get_level_nums("CPU", "CPU", "all", order=order)
 
@@ -614,24 +614,24 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         return self._get_level_nums("package", "package", "all", order=order)
 
     def _get_all_cpus(self):
-        """Returns list of online and offline CPU numbers sorted in ascending order."""
+        """Returns set of online and offline CPU numbers."""
 
         if not self._all_cpus:
-            self._all_cpus = self._read_range("/sys/devices/system/cpu/present")
+            self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
         return self._all_cpus
 
     def _get_online_cpus(self, update=False):
-        """Returns list of online CPU numbers sorted in ascending order."""
+        """Returns set of online CPU numbers."""
 
         if not self._cpus or update:
-            self._cpus = self._read_range("/sys/devices/system/cpu/online")
+            self._cpus = set(self._read_range("/sys/devices/system/cpu/online"))
         return self._cpus
 
     def get_offline_cpus(self):
         """Returns list of offline CPU numbers sorted in ascending order."""
 
         cpus = self._get_all_cpus()
-        online_cpus = set(self._get_online_cpus())
+        online_cpus = self._get_online_cpus()
         return list(cpu for cpu in cpus if cpu not in online_cpus)
 
     def cpus_hotplugged(self):
@@ -984,9 +984,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             allcpus = self._get_online_cpus()
 
         if cpus == "all":
-            return allcpus.copy()
+            return sorted(allcpus)
 
-        allcpus = set(allcpus)
         cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=False)
         for cpu in cpus:
             if cpu not in allcpus:
@@ -1132,9 +1131,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         # The CPU topology sysfs directory path pattern.
         self._topology_sysfs_base = "/sys/devices/system/cpu/cpu%d/topology/"
 
-        # List of online and offline CPUs.
+        # Set of online and offline CPUs.
         self._all_cpus = None
-        # List of online CPUs.
+        # Set of online CPUs.
         self._cpus = None
 
         # General CPU information.
