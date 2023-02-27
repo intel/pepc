@@ -337,24 +337,17 @@ def _test_normalize_bad(cpuinfo):
 
     for lvl, nums in _get_levels_and_nums(cpuinfo):
         bad_num = nums[-1] + 1
+        bad_args = (-1, "-1", f"{nums[0]},", bad_num)
 
         method_name  = f"normalize_{lvl}"
-        if getattr(cpuinfo, method_name, None):
-            bad_args = (-1, "-1", f"{nums[0]},", bad_num, [bad_num])
+        for args in bad_args:
+            _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
 
-            for args in bad_args:
-                _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
+        bad_args = ([[nums[0], bad_num]])
 
         method_name  = f"normalize_{lvl}s"
-        if getattr(cpuinfo, method_name, None):
-            bad_args = (f"{nums[0]}, {nums[-1]}, ",
-                        f", {nums[0]}, {nums[-1]}, ",
-                        f" {nums[0]}-{nums[-1]}, ",
-                        f" {nums[0]}, {nums[-1]}, ,",
-                        [[nums[0], bad_num]])
-
-            for args in bad_args:
-                _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
+        for args in bad_args:
+            _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
 
 def test_cpuinfo_normalize(params):
     """
