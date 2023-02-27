@@ -495,7 +495,7 @@ def test_core_siblings(params):
         # 'l1' - input list, random 50% of the online CPUs. There can be duplicates.
         l1 = random.choices(cpuinfo.get_cpus(), k=int(cpuinfo.get_cpus_count() / 2))
         # 'l2' - output list, returned by 'select_core_siblings()' with 'l1' as input.
-        l2 = cpuinfo.select_core_siblings(l1, index)
+        l2 = cpuinfo.select_core_siblings(l1, [index])
 
         # Here we test that the 'l2' is a subset of the 'l1' and in the same order. But first we
         # must dedup 'l1', because 'select_core_siblings()' does not return duplicates. Secondly we
