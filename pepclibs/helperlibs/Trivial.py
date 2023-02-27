@@ -183,14 +183,7 @@ def is_iterable(value):
 def list_dedup(elts):
     """Return list of unique elements in 'elts'."""
 
-    seen = set()
-    new_elts = []
-    for elt in elts:
-        if elt not in seen:
-            new_elts.append(elt)
-            seen.add(elt)
-
-    return new_elts
+    return list(dict.fromkeys(elts))
 
 def split_csv_line(csv_line, sep=",", dedup=False):
     """
