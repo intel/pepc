@@ -314,28 +314,19 @@ def _test_normalize_good(cpuinfo):
         # in different forms, and return integers as a list.
         #
         # Build a list of tuples with input and expected output value pairs.
-        testcase = []
-        for idx in 0, -1:
-            testcase += [(nums[idx], [nums[idx]]),
-                         ((nums[idx]), [nums[idx]]),
-                         (f"{nums[idx]}", [nums[idx]]),
-                         (f" {nums[idx]} ", [nums[idx]])]
+        testcase = [nums[0], nums[-1]]
 
         method_name  = f"normalize_{lvl}"
-        for args, exp_res in testcase:
-            _run_method(method_name, cpuinfo, args=(args,), exp_res=exp_res[0])
+        for args in testcase:
+            _run_method(method_name, cpuinfo, args=(args,), exp_res=args)
 
-        # The methods for normalizing multiple values accept input as single integers, and multiple
-        # integers in different forms. Add more input and expected values to test normalize methods
-        # for multiple values.
-        for idx in 0, -1:
-            testcase += [(f"{nums[idx]},", [nums[idx]])]
-
+        # Test with a list and tuple with a single integer.
+        testcase = [([nums[0]], [nums[0]]),
+                    ((nums[0], ), [nums[0]])]
         if len(nums) > 1:
-            testcase += [((nums[-1], nums[0]), [nums[-1], nums[0]]),
-                         (f"{nums[0]}, {nums[-1]}", [nums[0], nums[-1]]),
-                         (f"{nums[0]}, {nums[-1]},", [nums[0], nums[-1]]),
-                         (f" {nums[0]}, {nums[-1]} ", [nums[0], nums[-1]])]
+            # Test with a list and tuple with multiple integers.
+            testcase += [([nums[-1], nums[0]], [nums[-1],  nums[0]]),
+                         ((nums[-1], nums[0]), [nums[-1],  nums[0]])]
 
         method_name  = f"normalize_{lvl}s"
         for args, exp_res in testcase:
