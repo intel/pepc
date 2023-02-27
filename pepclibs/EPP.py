@@ -125,9 +125,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """
         Yield (CPU number, EPP value) pairs for CPUs in 'cpus'. The EPP value is read via MSR.
         The arguments are as follows.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
         """
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
@@ -158,9 +156,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """
         Set EPP for CPUs in 'cpus'. The EPP value is set via MSR. The arguments are as follows.
           * epp - the EPP value to set. Can be an integer or string representing an integer.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
         """
 
         self._validate_epp_value(epp)
@@ -198,9 +194,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """
         Yield (CPU number, EPP value) pairs for CPUs in 'cpus'. The EPP value is read via sysfs.
         The arguments are as follows.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
         """
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
@@ -241,9 +235,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         Set EPP for CPU in 'cpus'. The EPP value is written via sysfs. The arguments are as follows.
           * epp - the EPP value to set. Can be an integer, a string representing an integer, or one
                   of the EPP policy names.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
         """
 
         self._validate_epp_value(epp, policy_ok=True)

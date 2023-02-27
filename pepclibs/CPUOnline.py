@@ -134,9 +134,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
     def online(self, cpus="all", skip_unsupported=False):
         """
         Bring CPUs in 'cpus' online. The arguments are as follows.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. Value 'all' mean "all CPUs".
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
           * skip_unsupported - by default, if a CPU in 'cpus' does not support onlining/offlining,
                                this method raises 'ErrorNotSupported()'. If 'skip_unsupported' is
                                'True', the CPU is just skipped without raising an exception.

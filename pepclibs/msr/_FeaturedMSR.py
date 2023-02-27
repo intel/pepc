@@ -91,9 +91,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         Read the MSR on CPUs in 'cpus', extract the values of the 'fname' feature, and yield the
         result. The arguments are as follows.
           * fname - name of the feature to read.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
 
         The yielded tuples are '(cpunum, val)'.
           * cpunum - the CPU number the MSR was read from.

@@ -220,9 +220,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
         all the properties. The arguments are as follows.
           * pnames - list or an iterable collection of properties to read and yield the values for.
                      These properties will be read for every CPU in 'cpus'.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. Value 'all' mean "all CPUs" (default).
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
 
         The yielded 'pinfo' dictionaries have the following format.
 

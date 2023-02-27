@@ -208,9 +208,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
         """
         Read an MSR on CPUs 'cpus' and yield the result. The arguments are as follows.
           * regaddr - address of the MSR to read.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. 'None' and 'all' mean "all CPUs" (default).
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
 
         Yields tuples of '(cpu, regval)'.
           * cpu - the CPU number the MSR was read from.
