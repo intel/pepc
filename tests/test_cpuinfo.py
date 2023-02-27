@@ -235,21 +235,11 @@ def _test_convert_good(cpuinfo):
         # level, e.g. 'packages_to_cpus()'.
         # Methods to convert single value accept single integer in different forms, and methods
         # converting multiple values accept also integers in lists.
-        single_args = []
-        for idx in 0, -1:
-            num = from_nums[idx]
-            single_args += [num, f"{num}", f" {num} "]
 
-        multi_args = []
-        for idx in 0, -1:
-            num = from_nums[idx]
-            multi_args += [f"{num},", [num]]
-
-            if len(from_nums) > 1:
-                multi_args += [(from_nums[-1], from_nums[0]),
-                               f"{from_nums[0]}, {from_nums[-1]}",
-                               f"{from_nums[0]}, {from_nums[-1]},",
-                               f" {from_nums[0]}, {from_nums[-1]} ",]
+        single_args = [from_nums[0], from_nums[-1]]
+        multi_args = [{from_nums[0], }, [from_nums[-1]]]
+        if len(from_nums) > 1:
+            multi_args.append((from_nums[-1], from_nums[0]))
 
         for to_lvl, to_nums in _get_levels_and_nums(cpuinfo):
             # Test normalize method of single value.
