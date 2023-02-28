@@ -12,7 +12,7 @@ Misc. helpers shared between various 'pepc' commands.
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
-from pepclibs.helperlibs import Systemctl, Trivial
+from pepclibs.helperlibs import Systemctl, Trivial, ArgParse
 
 _LOG = logging.getLogger()
 
@@ -30,6 +30,16 @@ def check_tuned_presence(pman):
     except Error as err:
         _LOG.warning("failed to check for 'tuned' presence:\n%s", err.indent(2))
 
+def parse_cpus_string(string):
+    """
+    Parse string of comma-separated numbers and number ranges, and return them as a list of
+    integers.
+    """
+
+    if string == "all":
+        return string
+    return ArgParse.parse_int_list(string, ints=True, dedup=True)
+
 def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
     """
     Get list of CPUs based on requested packages, cores and CPUs numbers. If no CPUs, cores and
@@ -45,23 +55,24 @@ def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
     cpus = []
 
     if args.cpus:
-        cpus += cpuinfo.normalize_cpus(cpus=args.cpus, offlined_ok=offlined_ok)
+        cpus += cpuinfo.normalize_cpus(cpus=parse_cpus_string(args.cpus), offlined_ok=offlined_ok)
 
     if args.cores:
-        packages = args.packages
+        packages = parse_cpus_string(args.packages)
         if not packages:
             if cpuinfo.get_packages_count() != 1:
                 raise Error("'--cores' must be used with '--packages'")
             packages = (0,)
-        cpus += cpuinfo.cores_to_cpus(cores=args.cores, packages=packages)
+
+        cpus += cpuinfo.cores_to_cpus(cores=parse_cpus_string(args.cores), packages=packages)
 
     if args.packages and not args.cores:
-        cpus += cpuinfo.packages_to_cpus(packages=args.packages)
+        cpus += cpuinfo.packages_to_cpus(packages=parse_cpus_string(args.packages))
 
     if not cpus and default_cpus is not None:
-        cpus = cpuinfo.normalize_cpus(default_cpus, offlined_ok=offlined_ok)
+        cpus = cpuinfo.normalize_cpus(parse_cpus_string(default_cpus), offlined_ok=offlined_ok)
 
     if args.core_siblings:
-        return cpuinfo.select_core_siblings(cpus, args.core_siblings)
+        return cpuinfo.select_core_siblings(cpus, parse_cpus_string(args.core_siblings))
 
     return Trivial.list_dedup(cpus)

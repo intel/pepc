@@ -42,7 +42,7 @@ def cpu_hotplug_online_command(args, pman):
         raise Error("please, specify the CPUs to online")
 
     with CPUOnline.CPUOnline(progress=logging.INFO, pman=pman) as onl:
-        onl.online(cpus=args.cpus)
+        onl.online(cpus=_PepcCommon.parse_cpus_string(args.cpus))
 
 def cpu_hotplug_offline_command(args, pman):
     """Implements the 'cpu-hotplug offline' command."""

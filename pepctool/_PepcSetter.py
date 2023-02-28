@@ -12,6 +12,7 @@ This module provides API for changing P-state and C-state properties.
 """
 
 import sys
+from pepctool import _PepcCommon
 from pepclibs.helperlibs import ClassHelpers, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -72,7 +73,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
         for pname, pinfos in ydict.items():
             for pinfo in pinfos:
-                cpus = pinfo["cpus"]
+                cpus = _PepcCommon.parse_cpus_string(pinfo["cpus"])
                 self._pcsobj.set_props({pname : pinfo["value"]}, cpus=cpus)
                 if self._pcsprint:
                     self._pcsprint.print_props((pname,), cpus, skip_ro=True, skip_unsupported=False,
@@ -145,7 +146,7 @@ class CStatesSetter(_PropsSetter):
 
         for csname, yvals in ydict.items():
             for yval in yvals:
-                cpus = yval["cpus"]
+                cpus = _PepcCommon.parse_cpus_string(yval["cpus"])
                 value = yval["value"]
                 if value == "on":
                     self._pcsobj.enable_cstates(csname, cpus=cpus)
