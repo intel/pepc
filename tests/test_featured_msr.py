@@ -148,7 +148,7 @@ def _test_msr_read_feature_bad(params):
                     assert cpu in params["testcpus"]
             with pytest.raises(Error):
                 for bad_cpu in msr_common.get_bad_cpu_nums(params):
-                    for cpu, val in msr.read_feature(name, cpus=bad_cpu):
+                    for cpu, val in msr.read_feature(name, cpus=[bad_cpu]):
                         _check_feature_val(val, name, msr)
                         assert cpu in params["testcpus"]
 
