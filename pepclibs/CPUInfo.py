@@ -548,7 +548,12 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             raise Error(f"bad level order, cannot get {sublvl}s from level '{lvl}'")
 
         if nums != "all":
-            nums = set(ArgParse.parse_int_list(nums, ints=True, dedup=True, sort=True))
+            # Valid 'nums' should be an integer or a collection of integers. At this point, just
+            # turn 'nums' into a set. Possible non-integers in the set will be detected later.
+            try:
+                nums = set(nums)
+            except TypeError:
+                nums = set([nums])
 
         result = {}
         valid_nums = set()
@@ -807,7 +812,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
               have index 1 instead of 2.
         """
 
-        indexes = ArgParse.parse_int_list(indexes, ints=True, dedup=False)
         cpus = self.normalize_cpus(cpus, offlined_ok=True)
 
         cpu2index = {} # CPU number -> core siblings index map.
@@ -970,9 +974,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def normalize_cpus(self, cpus, offlined_ok=False):
         """
         Validate CPU numbers in 'cpus' and return a normalized list. The arguments are as follows.
-          * cpus - list of CPUs and CPU ranges. This can be either a list or a string containing a
-                   comma-separated list. For example, "0-4,7,8,10-12" would mean CPUs 0 to 4, CPUs
-                   7, 8, and 10 to 12. Value 'all' mean "all CPUs".
+          * cpus - collection of integer CPU numbers to normalize. Special value 'all' means
+                   "all CPUs".
           * offlined - by default, offlined CPUs are considered as not available and are not allowed
                        to be in 'cpus' (will cause an exception). Use 'offlined_ok=True' to allow
                        for offlined CPUs.
@@ -986,8 +989,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if cpus == "all":
             return sorted(allcpus)
 
-        cpus = ArgParse.parse_int_list(cpus, ints=True, dedup=True, sort=False)
+        cpus = Trivial.list_dedup(cpus)
         for cpu in cpus:
+            if type(cpu) is not int: # pylint: disable=unidiomatic-typecheck
+                raise Error(f"'{cpu}' is not an integer, CPU numbers must be integers")
+
             if cpu not in allcpus:
                 cpus_str = Human.rangify(allcpus)
                 raise Error(f"CPU{cpu} is not available{self._pman.hostmsg}, available CPUs are: "
@@ -999,9 +1005,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """
         Validate die numbers in 'dies' for package 'package' and return the normalized list. The
         arguments are as follows.
-          * dies - similar to 'packages' in 'normalize_packages()', but contains die numbers.
+          * dies - collection of integer die numbers to normalize. Special value 'all' means
+                   "all diess".
           * package - package number to validate the 'dies' against: all numbers in 'dies' should be
-            valid die numbers in package number 'package'.
+                      valid die numbers in package number 'package'.
 
         Returns a list of integer die numbers.
         """
@@ -1012,8 +1019,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             return pkg_dies
 
         pkg_dies = set(pkg_dies)
-        dies = ArgParse.parse_int_list(dies, ints=True, dedup=True)
+        dies = Trivial.list_dedup(dies)
         for die in dies:
+            if type(die) is not int: # pylint: disable=unidiomatic-typecheck
+                raise Error(f"'{die}' is not an integer, die numbers must be integers")
+
             if die not in pkg_dies:
                 dies_str = Human.rangify(pkg_dies)
                 raise Error(f"die '{die}' is not available in package "
@@ -1023,12 +1033,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def normalize_packages(self, packages):
         """
-        Validate package numbers in 'packages' and return the normalized list. The input package
-        numbers may be integers or strings containing integer numbers. It may also be a string with
-        comma-separated package numbers and ranges. This is similar to the 'cpus' argument in
-        'normalize_cpus()'.
-
-        Returns a list of integer package numbers.
+        Validate package numbers in 'packages' and return the normalized list. The arguments are
+        as follows.
+          * packages - collection of integer package numbers to normalize. Special value 'all' means
+                       "all packages".
         """
 
         allpkgs = self.get_packages()
@@ -1037,8 +1045,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             return allpkgs
 
         allpkgs = set(allpkgs)
-        packages = ArgParse.parse_int_list(packages, ints=True, dedup=True)
+        packages = Trivial.list_dedup(packages)
         for pkg in packages:
+            if type(pkg) is not int: # pylint: disable=unidiomatic-typecheck
+                raise Error(f"'{pkg}' is not an integer, package numbers must be integers")
+
             if pkg not in allpkgs:
                 pkgs_str = Human.rangify(allpkgs)
                 raise Error(f"package '{pkg}' is not available{self._pman.hostmsg}, available "
