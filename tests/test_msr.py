@@ -131,7 +131,7 @@ def _test_msr_write_bad(params):
         val = msr.read_cpu(tp["addr"], params["testcpus"][0])
         for bad_cpu in msr_common.get_bad_cpu_nums(params):
             with pytest.raises(Error):
-                msr.write(tp["addr"], val, cpus=bad_cpu)
+                msr.write_cpu(tp["addr"], val, bad_cpu)
 
     # Following test will expect failure when writing to readonly MSR. On emulated host, such writes
     # don't fail.
@@ -245,7 +245,7 @@ def _test_msr_read_bits_bad(params):
 
         bad_bits = (msr.regbits + 1, 0)
         with pytest.raises(Error):
-            for cpu1, _ in msr.read_bits(tp["addr"], bad_bits, cpus=cpu):
+            for cpu1, _ in msr.read_bits(tp["addr"], bad_bits, cpus=[cpu]):
                 assert cpu == cpu1
 
 def test_msr_read_bits(params):
