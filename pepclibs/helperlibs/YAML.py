@@ -59,13 +59,17 @@ def dump(data, path, float_format=None, skip_none=False):
     if float_format:
         yaml.add_representer(float, represent_float)
 
-    if hasattr(path, "write"):
-        yaml.dump(data, path, default_flow_style=False, sort_keys=False)
-        _LOG.debug("wrote YAML file at '%s'", path.name)
-    else:
-        with open(path, "w", encoding="utf-8") as fobj:
-            yaml.dump(data, fobj, default_flow_style=False, sort_keys=False)
-        _LOG.debug("wrote YAML file at '%s'", path)
+    try:
+        if hasattr(path, "write"):
+            yaml.dump(data, path, default_flow_style=False, sort_keys=False)
+            _LOG.debug("wrote YAML file at '%s'", path.name)
+        else:
+            with open(path, "w", encoding="utf-8") as fobj:
+                yaml.dump(data, fobj, default_flow_style=False, sort_keys=False)
+            _LOG.debug("wrote YAML file at '%s'", path)
+    except OSError as err:
+        msg = Error(err).indent(2)
+        raise Error(f"failed to write YAML file '{path}:{msg}") from err
 
 def _load(path, included, render=None):
     """
