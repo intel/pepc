@@ -472,7 +472,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
           * stderr - similar to 'stdin', but for standard error.
 
         Note, there is only one interactive shell process at the moment, so only one asynchronous
-        process an run in an interactive shell at a time.
+        process can run in an interactive shell at a time.
 
         Returns the process object.
         """
