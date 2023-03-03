@@ -215,8 +215,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         arguments are as follows.
           * timeout - the maximum time in seconds to wait for the process to exit . If it does not
                       exit, this function returns 'None' as the exit code. The 'timeout' argument
-                      must be a positive floating point number. By default it is 1 hour. If
-                      'timeout' is '0', then this method will just check process status, grab its
+                      must be a positive floating point number. By default it is 'TIMEOUT' seconds.
+                      If 'timeout' is '0', then this method will just check process status, grab its
                       output, if any, and return immediately. Note, this method saves the used
                       timeout in 'self.timeout'.
           * capture_output - whether the output of the process should be captured. If it is 'False',
