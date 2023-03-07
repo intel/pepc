@@ -30,10 +30,10 @@ if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
 
 _VERSION = "1.4.1"
-_OWN_NAME = "pepc"
+TOOLNAME = "pepc"
 
 _LOG = logging.getLogger()
-Logging.setup_logger(prefix=_OWN_NAME)
+Logging.setup_logger(prefix=TOOLNAME)
 
 DATASET_OPTIONS = [
     {
@@ -144,7 +144,7 @@ def build_arguments_parser():
     """A helper function which parses the input arguments."""
 
     text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
-    parser = PepcArgsParser(description=text, prog=_OWN_NAME, ver=_VERSION)
+    parser = PepcArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
 
     ArgParse.add_ssh_options(parser)
     parser.add_dataset_options()
@@ -293,7 +293,7 @@ def build_arguments_parser():
     #
     text = "Save C-states settings."
     descr = f"""Save all the modifiable C-state settings into a file. This file can later be used
-                for restoring C-state settings with the '{_OWN_NAME} cstates restore' command."""
+                for restoring C-state settings with the '{TOOLNAME} cstates restore' command."""
     subpars2 = subparsers2.add_parser("save", help=text, description=descr)
     subpars2.set_defaults(func=cstates_save_command)
 
@@ -307,7 +307,7 @@ def build_arguments_parser():
     #
     text = "Restore C-states settings."
     descr = f"""Restore C-state settings from a file previously created with the
-               '{_OWN_NAME} cstates save' command."""
+               '{TOOLNAME} cstates save' command."""
     subpars2 = subparsers2.add_parser("restore", help=text, description=descr)
     subpars2.set_defaults(func=cstates_restore_command)
 
@@ -392,7 +392,7 @@ def build_arguments_parser():
     #
     text = "Save P-states settings."
     descr = f"""Save all the modifiable P-state settings into a file. This file can later be used
-                for restoring P-state settings with the '{_OWN_NAME} pstates restore' command."""
+                for restoring P-state settings with the '{TOOLNAME} pstates restore' command."""
     subpars2 = subparsers2.add_parser("save", help=text, description=descr)
     subpars2.set_defaults(func=pstates_save_command)
 
@@ -406,7 +406,7 @@ def build_arguments_parser():
     #
     text = "Restore P-states settings."
     descr = f"""Restore P-state settings from a file previously created with the
-               '{_OWN_NAME} pstates save' command."""
+               '{TOOLNAME} pstates save' command."""
     subpars2 = subparsers2.add_parser("restore", help=text, description=descr)
     subpars2.set_defaults(func=pstates_restore_command)
 
@@ -589,12 +589,12 @@ def _get_next_dataset(dataset):
     if Path(dataset).is_dir():
         yield Path(dataset)
     elif dataset == "all":
-        base = ProjectFiles.find_project_data(_OWN_NAME, "tests/data", what=f"{_OWN_NAME} datasets")
+        base = ProjectFiles.find_project_data(TOOLNAME, "tests/data", what=f"{TOOLNAME} datasets")
         for name in os.listdir(base):
             _LOG.info("\n======= emulation:%s =======", name)
             yield Path(f"{base}/{name}")
     else:
-        base = ProjectFiles.find_project_data(_OWN_NAME, "tests/data", what=f"{_OWN_NAME} datasets")
+        base = ProjectFiles.find_project_data(TOOLNAME, "tests/data", what=f"{TOOLNAME} datasets")
         path = Path(base / dataset)
         if not path.is_dir():
             raise Error(f"couldn't find dataset '{dataset}', '{path}' doesn't exist")
@@ -638,7 +638,7 @@ def main():
         args = parse_arguments()
 
         if not getattr(args, "func", None):
-            _LOG.error("please, run '%s -h' for help", _OWN_NAME)
+            _LOG.error("please, run '%s -h' for help", TOOLNAME)
             return -1
 
         # pylint: disable=no-member
