@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Antti Laakso <antti.laakso@linux.intel.com>
@@ -11,15 +11,10 @@
 
 """Common bits for the 'pepc' tests."""
 
-import sys
-import logging
 from pathlib import Path
-from pepclibs.helperlibs import ProcessManager
+from pepclibs.helperlibs import ProcessManager, TestRunner
 from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied, Error
 from pepctool import _Pepc
-
-logging.basicConfig(level=logging.DEBUG)
-_LOG = logging.getLogger()
 
 def _get_datapath(dataset):
     """Return path to test data for the dataset 'dataset'."""
@@ -84,34 +79,4 @@ def run_pepc(arguments, pman, exp_exc=None):
                   considered to be a failure.
     """
 
-    cmd = f"{_Pepc.__file__} {arguments}"
-    _LOG.debug("running: %s", cmd)
-    sys.argv = cmd.split()
-    try:
-        args = _Pepc.parse_arguments()
-        ret = args.func(args, pman)
-    except Exception as err: # pylint: disable=broad-except
-        if exp_exc is None:
-            err_type = type(err)
-            errmsg = f"command 'pepc {arguments}' raised the following exception:\n" \
-                     f"- {type(err).__name__}({err})"
-
-            if pman.is_remote and err_type in _WARN_ONLY and _WARN_ONLY[err_type] in arguments:
-                _LOG.warning(errmsg)
-                return None
-
-            assert False, errmsg
-
-        if isinstance(err, exp_exc):
-            return None
-
-        assert False, f"command 'pepc {arguments}' raised the following exception:\n" \
-                      f"- {type(err).__name__}({err})\n" \
-                      f"but it was expected to raise the following exception:\n" \
-                      f"- {exp_exc.__name__}"
-
-    if exp_exc is not None:
-        assert False, f"command 'pepc {arguments}' did not raise the following exception type:\n" \
-                      f"- {exp_exc.__name__}"
-
-    return ret
+    TestRunner.run_tool(_Pepc, arguments, pman, exp_exc, _WARN_ONLY)
