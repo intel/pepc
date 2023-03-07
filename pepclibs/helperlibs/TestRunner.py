@@ -43,7 +43,7 @@ def run_tool(tool, arguments, pman, exp_exc=None, warn_only=None):
             errmsg = f"command '{tool.TOOLNAME} {arguments}' raised the following exception:\n" \
                      f"- {type(err).__name__}({err})"
 
-            if pman.is_remote and err_type in warn_only and warn_only[err_type] in arguments:
+            if err_type in warn_only and warn_only[err_type] in arguments:
                 _LOG.warning(errmsg)
                 return None
 
