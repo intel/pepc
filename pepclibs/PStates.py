@@ -44,7 +44,7 @@ _UNCORE_FREQ_VALS_HELP = """The default unit is "Hz", but "kHz", "MHz", and "GHz
 # 'PStates.props'.
 PROPS = {
     "min_freq" : {
-        "name" : "Min. CPU frequency",
+        "name" : "Min. CPU frequency via sysfs",
         "help" : f"""Minimum CPU frequency is the lowest frequency the operating system configured
                      the CPU to run at (via sysfs knobs). {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
@@ -53,7 +53,7 @@ PROPS = {
         "writable" : True,
     },
     "max_freq" : {
-        "name" : "Max. CPU frequency",
+        "name" : "Max. CPU frequency via sysfs",
         "help" : f"""Maximum CPU frequency is the highest frequency the operating system configured
                     the CPU to run at (via sysfs knobs). {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
@@ -91,7 +91,7 @@ PROPS = {
         "writable" : False,
     },
     "min_freq_hw" : {
-        "name" : "Min. CPU frequency (OS bypass)",
+        "name" : "Min. CPU frequency via MSR",
         "help" : """Minimum frequency the CPU is configured by the OS to run at. This value is
                     read directly from the MSR(s), bypassing the OS.""",
         "unit" : "Hz",
@@ -100,7 +100,7 @@ PROPS = {
         "writable" : True,
     },
     "max_freq_hw" : {
-        "name" : "Max. CPU frequency (OS bypass)",
+        "name" : "Max. CPU frequency via MSR",
         "help" : """Maximum frequency the CPU is configured by the OS to run at. This value is
                     read directly from the MSR(s), bypassing the OS.""",
         "unit" : "Hz",
@@ -194,7 +194,7 @@ PROPS = {
         "writable" : False,
     },
     "epp" : {
-        "name" : "EPP (via sysfs)",
+        "name" : "EPP via sysfs",
         "help" : """Energy Performance Preference is a hint to the CPU on energy efficiency vs
                     performance. EPP value is a number in range of 0-255 (maximum energy efficiency
                     to maximum performance), or a policy name. The value is read from or written
@@ -204,7 +204,7 @@ PROPS = {
         "writable" : True,
     },
     "epp_hw" : {
-        "name" : f"EPP (via MSR {HWPRequest.MSR_HWP_REQUEST:#x})",
+        "name" : "EPP via MSR",
         "help" : f"""Energy Performance Preference is a hint to the CPU on energy efficiency vs
                     performance. EPP value is a number in range of 0-255 (maximum energy efficiency
                     to maximum performance). When package control is enabled the value is read from
@@ -216,7 +216,7 @@ PROPS = {
         "writable" : True,
     },
     "epb" : {
-        "name" : "EPB (via sysfs)",
+        "name" : "EPB via sysfs",
         "help" : """Energy Performance Bias is a hint to the CPU on energy efficiency vs
                     performance. EBP value is a number in range of 0-15 (maximum performance to
                     maximum energy efficiency), or a policy name. The value is read from or written
@@ -226,7 +226,7 @@ PROPS = {
         "writable" : True,
     },
     "epb_hw" : {
-        "name" : f"EPB (via MSR {EnergyPerfBias.MSR_ENERGY_PERF_BIAS:#x})",
+        "name" : "EPB via MSR",
         "help" : f"""Energy Performance Bias is a hint to the CPU on energy efficiency vs
                      performance. EBP value is a number in range of 0-15 (maximum performance to
                      maximum energy efficiency). The value is read from or written to MSR
