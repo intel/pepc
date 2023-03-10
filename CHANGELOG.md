@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix 'pepc pstates' crash on old, pre-HWP systems.
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.1] - 2023-03-10
+### Fixed
+ - Fix 'pepc pstates' crash on old, pre-HWP systems.
 
 ## [1.4.0] - 2023-02-23
 ### Fixed
