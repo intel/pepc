@@ -15,12 +15,13 @@ import sys
 logging.basicConfig(level=logging.DEBUG)
 _LOG = logging.getLogger()
 
-def run_tool(tool, arguments, pman, exp_exc=None, warn_only=None):
+def run_tool(tool, arguments, pman=None, exp_exc=None, warn_only=None):
     """
     Run pepc command and verify the outcome. The arguments are as follows.
     * tool - the main Python module of the tool to run.
     * arguments - the arguments to run the command with, e.g. 'pstate info --cpus 0-43'.
-    * pman - the process manager object that defines the host to run the measurements on.
+    * pman - optionally provide a process manager object to pass to the tool and tell it which host
+             to run the tests on.
     * exp_exc - the expected exception, by default, any exception is considered to be a failure.
                 But when set if the command did not raise the expected exception then the test is
                 considered to be a failure.
@@ -36,7 +37,10 @@ def run_tool(tool, arguments, pman, exp_exc=None, warn_only=None):
     sys.argv = cmd.split()
     try:
         args = tool.parse_arguments()
-        ret = args.func(args, pman)
+        if pman:
+            ret = args.func(args, pman)
+        else:
+            ret = args.func(args)
     except Exception as err: # pylint: disable=broad-except
         if exp_exc is None:
             err_type = type(err)
