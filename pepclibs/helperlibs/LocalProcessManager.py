@@ -316,13 +316,15 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(err).indent(2)
             raise Error(f"{errmsg}\n{msg}") from None
 
+        # First make sure all methods raise only the 'Error' exception. Order is important here,
+        # because we are about to re-wrap exceptions of returned 'ClassHelpers.WrapExceptions'
+        # object.
+        fobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
         # Make sure I/O methods raise 'ErrorPermissionDenied' on 'PermissionError'.
-        fobj = ClassHelpers.WrapExceptions(fobj, methods=("write", "flush", "close"),
+        return ClassHelpers.WrapExceptions(fobj, methods=("write", "flush", "close"),
                                            exceptions=(PermissionError,),
                                            target_exception=ErrorPermissionDenied,
                                            get_err_prefix=get_err_prefix)
-        # Make sure all methods raise only the 'Error' exception.
-        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
 
     @staticmethod
     def time_time():
