@@ -42,13 +42,10 @@ DATASET_OPTIONS = [
         "argcomplete" : None,
         "kwargs" : {
             "dest" : "dataset",
-            "help" : f"""This option is for debugging and testing purposes only, it defines the
-                         dataset that will be used to emulate a host for running the command on.
-                         Please, specify dataset path or name. In the latter case, it will be
-                         searched for in the following locations:
-                         {ProjectFiles.get_project_data_search_descr('pepc', 'tests/data')}.
-                         Use 'all' to specify all available datasets.
-                         """
+            "help" : """This option is for debugging and testing purposes only, it defines the
+                        dataset that will be used to emulate a host for running the command on.
+                        Please, specify dataset path, name or "all" to specify all available
+                        datasets."""
         },
     },
 ]
