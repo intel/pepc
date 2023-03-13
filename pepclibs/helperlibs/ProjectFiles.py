@@ -109,7 +109,7 @@ def find_project_helper(prjname, helper, pman=None):
     The data are searched for in the 'subpath' sub-path of the following directories (and in the
     following order).
       * in the paths defined by the 'PATH' environment variable.
-      * in the directory the of the running program.
+      * in the directory of the running program.
       * in the directory specified by the '<prjname>_HELPERSPATH' environment variable.
       * in '$HOME/.local/bin/', if it exists.
       * in '$HOME/bin/', if it exists.
