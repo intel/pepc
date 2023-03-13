@@ -311,8 +311,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("restore", help=text, description=descr)
     subpars2.set_defaults(func=cstates_restore_command)
 
-    text = """Name of the file restore the settings from (use "-" to read from the standard
-              output."""
+    text = """Name of the file from which to restore the settings from, use "-" to read from the
+              standard output."""
     subpars2.add_argument("-f", "--from", dest="infile", help=text)
 
     #
@@ -410,8 +410,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("restore", help=text, description=descr)
     subpars2.set_defaults(func=pstates_restore_command)
 
-    text = """Name of the file restore the settings from (use "-" to read from the standard
-              output."""
+    text = """Name of the file from which to restore the settings from, use "-" to read from the
+              standard output."""
     subpars2.add_argument("-f", "--from", dest="infile", help=text)
 
     #
@@ -432,7 +432,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr)
     subpars2.set_defaults(func=aspm_config_command)
 
-    text = """the PCI ASPM policy to set, use "default" to set the Linux default policy."""
+    text = """The PCI ASPM policy to set, use "default" to set the Linux default policy."""
     subpars2.add_argument("--policy", nargs="?", help=text)
 
     #
