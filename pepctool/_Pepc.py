@@ -235,14 +235,11 @@ def build_arguments_parser():
     for name, pinfo in CStates.PROPS.items():
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
-            text = "Get current setting for "
+            text = f"Get current setting for {Human.untitle(pinfo['name'])}."
         else:
-            text = "Get "
+            text = f"Get {Human.untitle(pinfo['name'])}."
 
         option = f"--{name.replace('_', '-')}"
-        name = Human.untitle(pinfo["name"])
-        text += f"""{name}. {pinfo["help"]} This option has {pinfo["sname"]} scope."""
-
         subpars2.add_argument(option, action="store_true", help=text)
 
     #
@@ -274,16 +271,11 @@ def build_arguments_parser():
 
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
-            text = "Enable or disable "
-            choices = " Use \"on\" or \"off\"."
+            text = f"Enable or disable {Human.untitle(pinfo['name'])}, use \"on\" or \"off\"."
         else:
-            text = "Set "
-            choices = ""
+            text = f"Set {Human.untitle(pinfo['name'])}."
 
         option = f"--{name.replace('_', '-')}"
-        name = Human.untitle(pinfo["name"])
-        text += f"""{name}. {pinfo["help"]}{choices} This option has {pinfo["sname"]} scope."""
-
         kwargs["help"] = text
         kwargs["action"] = ArgParse.OrderedArg
         subpars2.add_argument(option, **kwargs)
@@ -341,14 +333,11 @@ def build_arguments_parser():
     for name, pinfo in PStates.PROPS.items():
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
-            text = "Get current setting for "
+            text = f"Get current setting for {Human.untitle(pinfo['name'])}."
         else:
-            text = "Get "
+            text = f"Get {Human.untitle(pinfo['name'])}."
 
         option = f"--{name.replace('_', '-')}"
-        name = Human.untitle(pinfo["name"])
-        text += f"""{name}. {pinfo["help"]} This option has {pinfo["sname"]} scope."""
-
         subpars2.add_argument(option, action="store_true", help=text)
 
     #
@@ -372,17 +361,11 @@ def build_arguments_parser():
 
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
-            text = "Enable or disable "
-            choices = " Use \"on\" or \"off\"."
+            text = f"Enable or disable {Human.untitle(pinfo['name'])}, use \"on\" or \"off\"."
         else:
-            text = "Set "
-            choices = ""
+            text = f"Set {Human.untitle(pinfo['name'])}."
 
         option = f"--{name.replace('_', '-')}"
-        name = Human.untitle(pinfo["name"])
-        text += f"""{name}. {pinfo["help"]}{choices} This option has {pinfo["sname"]}
-                    scope."""
-
         kwargs["help"] = text
         kwargs["action"] = ArgParse.OrderedArg
         subpars2.add_argument(option, **kwargs)
