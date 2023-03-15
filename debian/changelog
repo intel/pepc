@@ -1,3 +1,9 @@
+pepc (1.4.3) unstable; urgency=low
+
+  * Add package C-states support for Granite Rapids Xeon.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 15 Mar 2023 00:00:00 +0200
+
 pepc (1.4.2) unstable; urgency=low
 
   * Fix errors handling regression introduced in v1.4.1.
