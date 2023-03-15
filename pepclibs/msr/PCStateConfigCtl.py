@@ -34,7 +34,11 @@ MSR_PKG_CST_CONFIG_CONTROL = 0xE2
 #
 # Xeons.
 #
-# Ice Lake Xeons.
+# Granite Rapids Xeon.
+_GNR_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6": 2},
+                       "aliases" : {"PC6N": "PC6"},
+                       "bits"    : (2, 0)}
+# Ice Lake Xeon.
 _ICX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
                        "aliases" : {"PC6N": "PC6"},
                        "bits"    : (2, 0)}
@@ -76,6 +80,8 @@ _CLIENT_PC7S_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "
 # CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
         # Xeons.
+        CPUInfo.INTEL_FAM6_GRANITERAPIDS_X:  _GNR_PKG_CST_LIMITS,
+        CPUInfo.INTEL_FAM6_GRANITERAPIDS_D:  _GNR_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_EMERALDRAPIDS_X:  _SKX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_SAPPHIRERAPIDS_X: _SKX_PKG_CST_LIMITS,
         CPUInfo.INTEL_FAM6_ICELAKE_X:        _ICX_PKG_CST_LIMITS,
