@@ -8,6 +8,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Refine package C-states support for Granite Rapids Xeon.
 
 ## [1.4.3] - 2023-03-15
 ### Added
