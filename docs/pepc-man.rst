@@ -473,21 +473,20 @@ OPTIONS *'pepc* cstates save'
    List of CPUs to save C-state information about. The list can include
    individual CPU numbers and CPU number ranges. For example,
    '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use
-   the special keyword 'all' to specify all CPUs. If the
-   CPUs/cores/packages were not specified, all CPUs will be used as the
-   default value.
+   the special keyword
 
 **--cores** *CORES*
    List of cores to save C-state information about. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all cores.
+   Use the special keyword
 
 **--packages** *PACKAGES*
    List of packages to save C-state information about. The list can
    include individual package numbers and package number ranges. For
    example, '1-3' would mean packages 1 to 3, and '1,3' would mean
-   packages 1 and 3. Use the special keyword
+   packages 1 and 3. Use the special keyword 'all' to specify all
+   packages.
 
 **--core-siblings** *CORE_SIBLINGS*
    List of core sibling indices to save C-state information about. The
@@ -958,21 +957,20 @@ OPTIONS *'pepc* pstates save'
    List of CPUs to save P-state information about. The list can include
    individual CPU numbers and CPU number ranges. For example,
    '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use
-   the special keyword 'all' to specify all CPUs. If the
-   CPUs/cores/packages were not specified, all CPUs will be used as the
-   default value.
+   the special keyword
 
 **--cores** *CORES*
    List of cores to save P-state information about. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all cores.
+   Use the special keyword
 
 **--packages** *PACKAGES*
    List of packages to save P-state information about. The list can
    include individual package numbers and package number ranges. For
    example, '1-3' would mean packages 1 to 3, and '1,3' would mean
-   packages 1 and 3. Use the special keyword
+   packages 1 and 3. Use the special keyword 'all' to specify all
+   packages.
 
 **--core-siblings** *CORE_SIBLINGS*
    List of core sibling indices to save P-state information about. The
@@ -1133,21 +1131,20 @@ OPTIONS *'pepc* topology info'
    List of CPUs to print topology information for. The list can include
    individual CPU numbers and CPU number ranges. For example,
    '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use
-   the special keyword 'all' to specify all CPUs. If the
-   CPUs/cores/packages were not specified, all CPUs will be used as the
-   default value.
+   the special keyword
 
 **--cores** *CORES*
    List of cores to print topology information for. The list can include
    individual core numbers and core number ranges. For example,
    '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all cores.
+   Use the special keyword
 
 **--packages** *PACKAGES*
    List of packages to print topology information for. The list can
    include individual package numbers and package number ranges. For
    example, '1-3' would mean packages 1 to 3, and '1,3' would mean
-   packages 1 and 3. Use the special keyword
+   packages 1 and 3. Use the special keyword 'all' to specify all
+   packages.
 
 **--core-siblings** *CORE_SIBLINGS*
    List of core sibling indices to print topology information for. The
@@ -1172,7 +1169,7 @@ OPTIONS *'pepc* topology info'
    By default, the topology columns are CPU, core, module, die, node,
    package, "die" and "module" columns are not printed if there is only
    one die per package and no modules. Use this option to select
-   topology columns names and order (e.g.
+   topology columns names and order (e.g. '--columns Package,Core,CPU').
 
 AUTHORS
 =======
