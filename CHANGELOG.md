@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Split 'pepc' manual page on multiple per-command pages.
+ - Improve manual pages.
+ - Simplify '--help' output.
 
 ## [1.4.6] - 2023-03-15
 
