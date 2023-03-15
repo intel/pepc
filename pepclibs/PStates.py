@@ -20,7 +20,6 @@ from pepclibs import _PCStatesBase
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs import KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.msr import HWPRequest, HWPRequestPkg
 
 _LOG = logging.getLogger()
 
@@ -280,6 +279,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Returns an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq:
+            from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
+
             msr = self._get_msr()
             self._hwpreq = HWPRequest.HWPRequest(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
@@ -289,6 +290,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Returns an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq_pkg:
+            from pepclibs.msr import HWPRequestPkg # pylint: disable=import-outside-toplevel
+
             msr = self._get_msr()
             self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
                                                            msr=msr)
