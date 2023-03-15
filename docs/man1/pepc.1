@@ -1,4 +1,4 @@
-.TH PEPC "1" "2023\-03\-10" "pepc" "Generated Python Manual"
+.TH PEPC "1" "2023\-03\-15" "pepc" "Generated Python Manual"
 .SH NAME
 pepc
 .SH SYNOPSIS
@@ -423,7 +423,7 @@ Print debugging information.
 
 .TP
 \fB\-f\fR \fI\,INFILE\/\fR, \fB\-\-from\fR \fI\,INFILE\/\fR
-Name of the file restore the settings from (use "\-" to read from the standard output.
+Name of the file from which to restore the settings from, use "\-" to read from the standard output.
 
 .SH COMMAND \fI\,'pepc pstates'\/\fR
 usage: pepc pstates [\-h] [\-q] [\-d] {info,config,save,restore} ...
@@ -504,15 +504,15 @@ Print information in YAML format.
 
 .TP
 \fB\-\-min\-freq\fR
-Get min. CPU frequency. Minimum CPU frequency is the lowest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz").
-The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
-"lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
+Get min. CPU frequency via sysfs. Minimum CPU frequency is the lowest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example
+"900MHz"). The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux
+sysfs), "eff", "lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\fR
-Get max. CPU frequency. Maximum CPU frequency is the highest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz").
-The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
-"lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
+Get max. CPU frequency via sysfs. Maximum CPU frequency is the highest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example
+"900MHz"). The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux
+sysfs), "eff", "lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
 
 .TP
 \fB\-\-min\-freq\-limit\fR
@@ -529,11 +529,11 @@ from an MSR register, if the sysfs file does not exist. This option has CPU scop
 
 .TP
 \fB\-\-min\-freq\-hw\fR
-Get min. CPU frequency (OS bypass). Minimum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
+Get min. CPU frequency via MSR. Minimum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\-hw\fR
-Get max. CPU frequency (OS bypass). Maximum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
+Get max. CPU frequency via MSR. Maximum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
 
 .TP
 \fB\-\-min\-oper\-freq\fR
@@ -578,23 +578,23 @@ Get current setting for hardware power management. When hardware power managemen
 
 .TP
 \fB\-\-epp\fR
-Get EPP (via sysfs). Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is a number in range of 0\-255 (maximum energy efficiency to maximum performance), or a policy name. The value is read
+Get EPP via sysfs. Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is a number in range of 0\-255 (maximum energy efficiency to maximum performance), or a policy name. The value is read
 from or written to the 'energy_performance_preference' Linux sysfs file. This option has CPU scope.
 
 .TP
 \fB\-\-epp\-hw\fR
-Get EPP (via MSR 0x774). Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is a number in range of 0\-255 (maximum energy efficiency to maximum performance). When package control is enabled
-the value is read from MSR 0x772, but when written package control is disabled and value is written to MSR 0x774, both require the 'msr' Linux kernel driver. This option has CPU scope.
+Get EPP via MSR. Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is a number in range of 0\-255 (maximum energy efficiency to maximum performance). When package control is enabled the
+value is read from MSR 0x772, but when written package control is disabled and value is written to MSR 0x774, both require the 'msr' Linux kernel driver. This option has CPU scope.
 
 .TP
 \fB\-\-epb\fR
-Get EPB (via sysfs). Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a number in range of 0\-15 (maximum performance to maximum energy efficiency), or a policy name. The value is read from
-or written to the 'energy_perf_bias' Linux sysfs file. This option has CPU scope.
+Get EPB via sysfs. Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a number in range of 0\-15 (maximum performance to maximum energy efficiency), or a policy name. The value is read from or
+written to the 'energy_perf_bias' Linux sysfs file. This option has CPU scope.
 
 .TP
 \fB\-\-epb\-hw\fR
-Get EPB (via MSR 0x1b0). Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a number in range of 0\-15 (maximum performance to maximum energy efficiency). The value is read from or written to
-MSR 0x1b0, which requires the 'msr' Linux kernel driver. This option has CPU scope.
+Get EPB via MSR. Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a number in range of 0\-15 (maximum performance to maximum energy efficiency). The value is read from or written to MSR
+0x1b0, which requires the 'msr' Linux kernel driver. This option has CPU scope.
 
 .TP
 \fB\-\-driver\fR
@@ -651,23 +651,23 @@ be used to reference online CPUs, because Linux does not provide topology inform
 
 .TP
 \fB\-\-min\-freq\fR \fI\,[MIN_FREQ]\/\fR
-Set min. CPU frequency. Minimum CPU frequency is the lowest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz").
-The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
-"lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
+Set min. CPU frequency via sysfs. Minimum CPU frequency is the lowest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example
+"900MHz"). The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux
+sysfs), "eff", "lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\fR \fI\,[MAX_FREQ]\/\fR
-Set max. CPU frequency. Maximum CPU frequency is the highest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example "900MHz").
-The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux sysfs), "eff",
-"lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
+Set max. CPU frequency via sysfs. Maximum CPU frequency is the highest frequency the operating system configured the CPU to run at (via sysfs knobs). The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for example
+"900MHz"). The following special values are supported: "min" \- minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm", "base", "P1" \- base CPU frequency, "max" \- maximum CPU frequency supported by the OS (via Linux
+sysfs), "eff", "lfm", "Pn" \- maximum CPU efficiency frequency. This option has CPU scope.
 
 .TP
 \fB\-\-min\-freq\-hw\fR \fI\,[MIN_FREQ_HW]\/\fR
-Set min. CPU frequency (OS bypass). Minimum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
+Set min. CPU frequency via MSR. Minimum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
 
 .TP
 \fB\-\-max\-freq\-hw\fR \fI\,[MAX_FREQ_HW]\/\fR
-Set max. CPU frequency (OS bypass). Maximum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
+Set max. CPU frequency via MSR. Maximum frequency the CPU is configured by the OS to run at. This value is read directly from the MSR(s), bypassing the OS. This option has CPU scope.
 
 .TP
 \fB\-\-turbo\fR \fI\,[TURBO]\/\fR
@@ -685,23 +685,23 @@ following special values are supported: "min" \- minimum uncore frequency suppor
 
 .TP
 \fB\-\-epp\fR \fI\,[EPP]\/\fR
-Set EPP (via sysfs). Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is a number in range of 0\-255 (maximum energy efficiency to maximum performance), or a policy name. The value is read
+Set EPP via sysfs. Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is a number in range of 0\-255 (maximum energy efficiency to maximum performance), or a policy name. The value is read
 from or written to the 'energy_performance_preference' Linux sysfs file. This option has CPU scope.
 
 .TP
 \fB\-\-epp\-hw\fR \fI\,[EPP_HW]\/\fR
-Set EPP (via MSR 0x774). Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is a number in range of 0\-255 (maximum energy efficiency to maximum performance). When package control is enabled
-the value is read from MSR 0x772, but when written package control is disabled and value is written to MSR 0x774, both require the 'msr' Linux kernel driver. This option has CPU scope.
+Set EPP via MSR. Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is a number in range of 0\-255 (maximum energy efficiency to maximum performance). When package control is enabled the
+value is read from MSR 0x772, but when written package control is disabled and value is written to MSR 0x774, both require the 'msr' Linux kernel driver. This option has CPU scope.
 
 .TP
 \fB\-\-epb\fR \fI\,[EPB]\/\fR
-Set EPB (via sysfs). Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a number in range of 0\-15 (maximum performance to maximum energy efficiency), or a policy name. The value is read from
-or written to the 'energy_perf_bias' Linux sysfs file. This option has CPU scope.
+Set EPB via sysfs. Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a number in range of 0\-15 (maximum performance to maximum energy efficiency), or a policy name. The value is read from or
+written to the 'energy_perf_bias' Linux sysfs file. This option has CPU scope.
 
 .TP
 \fB\-\-epb\-hw\fR \fI\,[EPB_HW]\/\fR
-Set EPB (via MSR 0x1b0). Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a number in range of 0\-15 (maximum performance to maximum energy efficiency). The value is read from or written to
-MSR 0x1b0, which requires the 'msr' Linux kernel driver. This option has CPU scope.
+Set EPB via MSR. Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a number in range of 0\-15 (maximum performance to maximum energy efficiency). The value is read from or written to MSR
+0x1b0, which requires the 'msr' Linux kernel driver. This option has CPU scope.
 
 .TP
 \fB\-\-intel\-pstate\-mode\fR \fI\,[INTEL_PSTATE_MODE]\/\fR
@@ -774,7 +774,7 @@ Print debugging information.
 
 .TP
 \fB\-f\fR \fI\,INFILE\/\fR, \fB\-\-from\fR \fI\,INFILE\/\fR
-Name of the file restore the settings from (use "\-" to read from the standard output.
+Name of the file from which to restore the settings from, use "\-" to read from the standard output.
 
 .SH COMMAND \fI\,'pepc aspm'\/\fR
 usage: pepc aspm [\-h] [\-q] [\-d] {info,config} ...
@@ -841,7 +841,7 @@ Print debugging information.
 
 .TP
 \fB\-\-policy\fR \fI\,[POLICY]\/\fR
-the PCI ASPM policy to set, use "default" to set the Linux default policy.
+The PCI ASPM policy to set, use "default" to set the Linux default policy.
 
 .SH COMMAND \fI\,'pepc topology'\/\fR
 usage: pepc topology [\-h] [\-q] [\-d] {info} ...

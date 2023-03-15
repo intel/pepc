@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix errors handling regression introduced in v1.4.1.
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.2] - 2023-03-15
+### Fixed
+ - Fix errors handling regression introduced in v1.4.1.
 
 ## [1.4.1] - 2023-03-10
 ### Fixed
