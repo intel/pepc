@@ -349,27 +349,30 @@ class CStatesPrinter(_PropsPrinter):
 
         for csname, csinfo in aggr_rcsinfo.items():
             for key, kinfo in csinfo.items():
-                for val, cpus in kinfo.items():
-                    if key == "disable":
+                if key == "disable":
+                    for val, cpus in kinfo.items():
                         val = "off" if val else "on"
                         self._print_val_msg(val, name=csname, cpus=cpus, action=action)
-                    else:
-                        if key == "latency":
-                            name = "expected latency"
-                        elif key == "residency":
-                            name = "target residency"
-                        else:
-                            continue
+                    break
 
-                        # The first line starts with C-state name, align the second line nicely
-                        # using the prefix. The end result is expected to be like this:
-                        #
-                        # POLL: 'on' for CPUs 0-15
-                        # POLL: 'off' for CPUs 16-31
-                        #       - expected latency: '0' us
-                        prefix = " " * (len(csname) + 2) + "- "
-                        suffix = " us"
-                        self._print_val_msg(val, name=name, prefix=prefix, suffix=suffix)
+            for key, kinfo in csinfo.items():
+                for val, cpus in kinfo.items():
+                    if key == "latency":
+                        name = "expected latency"
+                    elif key == "residency":
+                        name = "target residency"
+                    else:
+                        continue
+
+                    # The first line starts with C-state name, align the second line nicely using
+                    # the prefix. The end result is expected to be like this:
+                    #
+                    # POLL: 'on' for CPUs 0-15
+                    # POLL: 'off' for CPUs 16-31
+                    #       - expected latency: '0' us
+                    prefix = " " * (len(csname) + 2) + "- "
+                    suffix = " us"
+                    self._print_val_msg(val, name=name, prefix=prefix, suffix=suffix)
 
     def _print_aggr_rcsinfo_yaml(self, aggr_rcsinfo):
         """Print the aggregate C-states information in YAML format."""
