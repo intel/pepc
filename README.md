@@ -56,13 +56,11 @@ computer system.
 # What is supported
 
 Pepc supports the following features:
-* C-states: discovering and configuring.
-* P-states: discovering and configuring.
-* CPU hotplug: onlining and offlining CPUs.
-* ASPM: discovering and configuring.
-* CPU topology: discovering.
-
-Please, refer to the [man page](docs/pepc-man.rst) for details.
+* C-states: discovering and configuring. [Manual](docs/pepc-cstates.rst)
+* P-states: discovering and configuring. [Manual](docs/pepc-pstates.rst)
+* CPU hotplug: onlining and offlining CPUs. [Manual](docs/pepc-cpu-hotplug.rst)
+* ASPM: discovering and configuring. [Manual](docs/pepc-aspm.rst)
+* CPU topology: discovering. [Manual](docs/pepc-topology.rst)
 
 Some of the features are hardware-independent, but some are hardware-specific.
 

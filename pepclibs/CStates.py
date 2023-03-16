@@ -32,29 +32,22 @@ _LOG = logging.getLogger()
 PROPS = {
     "pkg_cstate_limit" : {
         "name" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["name"],
-        "help" : PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["help"],
         "type" : "str",
         "sname": PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["sname"],
         "writable" : True,
         "subprops" : {
             "pkg_cstate_limit_locked" : {
                 "name" : "Package C-state limit lock",
-                "help" : """Whether the package C-state limit in MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
-                            (MSR_PKG_CST_CONFIG_CONTROL) is locked and cannot be modified.""",
                 "type" : "bool",
                 "writable" : False,
             },
             "pkg_cstate_limits" : {
                 "name" : "Available package C-state limits",
-                "help" : """List of package C-state names which can be used for limiting the deepest
-                            package C-state the platform is allowed to enter.""",
                 "type" : "list[str]",
                 "writable" : False,
             },
             "pkg_cstate_limit_aliases" : {
                 "name" : "Package C-state limit aliases",
-                "help" : """Some package C-states have multiple names, and this is a dictionary
-                            mapping aliases to the name.""",
                 "type" : "dict[str,str]",
                 "writable" : False,
             },
@@ -62,51 +55,42 @@ PROPS = {
     },
     "c1_demotion" : {
         "name" : PCStateConfigCtl.FEATURES["c1_demotion"]["name"],
-        "help" : PCStateConfigCtl.FEATURES["c1_demotion"]["help"],
         "type" : PCStateConfigCtl.FEATURES["c1_demotion"]["type"],
         "sname": PCStateConfigCtl.FEATURES["c1_demotion"]["sname"],
         "writable" : True,
     },
     "c1_undemotion" : {
         "name" : PCStateConfigCtl.FEATURES["c1_undemotion"]["name"],
-        "help" : PCStateConfigCtl.FEATURES["c1_undemotion"]["help"],
         "type" : PCStateConfigCtl.FEATURES["c1_undemotion"]["type"],
         "sname": PCStateConfigCtl.FEATURES["c1_undemotion"]["sname"],
         "writable" : True,
     },
     "c1e_autopromote" : {
         "name" : PowerCtl.FEATURES["c1e_autopromote"]["name"],
-        "help" : PowerCtl.FEATURES["c1e_autopromote"]["help"],
         "type" : PowerCtl.FEATURES["c1e_autopromote"]["type"],
         "sname": PowerCtl.FEATURES["c1e_autopromote"]["sname"],
         "writable" : True,
     },
     "cstate_prewake" : {
         "name" : PowerCtl.FEATURES["cstate_prewake"]["name"],
-        "help" : PowerCtl.FEATURES["cstate_prewake"]["help"],
         "type" : PowerCtl.FEATURES["cstate_prewake"]["type"],
         "sname": PowerCtl.FEATURES["cstate_prewake"]["sname"],
         "writable" : True,
     },
     "idle_driver" : {
         "name" : "Idle driver",
-        "help" : """Idle driver is responsible for enumerating and requesting the C-states
-                    available on the platform.""",
         "type" : "str",
         "sname": "global",
         "writable" : False,
     },
     "governor" : {
         "name" : "Idle governor",
-        "help" : "Idle governor decides which C-state to request on an idle CPU.",
         "type" : "str",
         "sname": "global",
         "writable" : True,
         "subprops" : {
             "governors" : {
                 "name" : "Available idle governors",
-                "help" : """Idle governors decide which C-state to request on an idle CPU.
-                            Different governors implement different selection policy.""",
                 "type" : "list[str]",
                 "sname": "global",
                 "writable" : False,

@@ -39,7 +39,8 @@ Pepc Python libraries
 
 %install
 %py3_install
-install -pDm644 docs/man1/pepc.1 %{buildroot}/%{_mandir}/man1/pepc.1
+mkdir -p %{buildroot}/%{_mandir}/man1/pepc
+install -pDm644 docs/man1/*.1 %{buildroot}/%{_mandir}/man1/pepc
 
 %check
 %if %{with tests}
@@ -50,7 +51,7 @@ install -pDm644 docs/man1/pepc.1 %{buildroot}/%{_mandir}/man1/pepc.1
 %doc README.md
 %license debian/LICENSE.md
 %{_bindir}/pepc
-%{_mandir}/man1/pepc.1*
+%{_mandir}/man1/pepc/pepc-*.1
 
 %files -n python3-%{name}
 %{python3_sitelib}/pepclibs
@@ -59,6 +60,9 @@ install -pDm644 docs/man1/pepc.1 %{buildroot}/%{_mandir}/man1/pepc.1
 
 # Date format: date "+%a %b %d %Y"
 %changelog
+* Thu Mar 16 2023 Niklas Neronin <niklas.neronin@linux.intel.com> - 1.4.6
+- Update man pages.
+
 * Fri Jun 24 2022 Artem Bityutskiy <artem.bityutskiy@linux.intel.com> - 1.3.9-1
 - Add RPM packaging support.
 

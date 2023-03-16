@@ -21,9 +21,13 @@ SPEC_FILE="$BASEDIR/rpm/pepc.spec"
 # The CHANGELOG.md file path.
 CHANGELOG_FILE="$BASEDIR/CHANGELOG.md"
 
-# Documentation file paths.
-PEPC_MAN_FILE="$BASEDIR/docs/man1/pepc.1"
-PEPC_RST_FILE="$BASEDIR/docs/pepc-man.rst"
+# Documentation directory and files.
+PEPC_MAN_DIR="$BASEDIR/docs/man1"
+PEPC_RST_FILES="$BASEDIR/docs/pepc-pstates.rst
+                $BASEDIR/docs/pepc-cstates.rst
+                $BASEDIR/docs/pepc-aspm.rst
+                $BASEDIR/docs/pepc-topology.rst
+                $BASEDIR/docs/pepc-cpu-hotplug.rst"
 
 # Path to the script converting CHANGELOG.md into debian changelog.
 CHANGELOG_MD_TO_DEBIAN="$BASEDIR/misc/changelog_md_to_debian"
@@ -107,12 +111,10 @@ sed -i -e "s/^_VERSION = \"$VERSION_REGEX\"$/_VERSION = \"$new_ver\"/" "$PEPC_FI
 # Change RPM package version.
 sed -i -e "s/^Version:\(\s\+\)$VERSION_REGEX$/Version:\1$new_ver/" "$SPEC_FILE"
 
-# Update the man page.
-argparse-manpage --pyfile "$PEPC_FILE" --function build_arguments_parser \
-                 --project-name 'pepc' --author 'Artem Bityutskiy' \
-                 --author-email 'dedekind1@gmail.com' --output "$PEPC_MAN_FILE" \
-                 --url 'https://github.com/intel/pepc'
-pandoc --toc -t man -s "$PEPC_MAN_FILE" -t rst -o "$PEPC_RST_FILE"
+# Update the man pages.
+for file in $PEPC_RST_FILES; do
+    pandoc -f rst -s "$file" -t man -o "${PEPC_MAN_DIR}/$(basename "$file" ".rst").1"
+done
 
 # Commit the changes.
 git -C "$BASEDIR" commit -a -s -m "Release version $new_ver"

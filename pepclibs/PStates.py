@@ -20,22 +20,8 @@ from pepclibs import _PCStatesBase
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs import KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.msr import EnergyPerfBias, HWPRequest, HWPRequestPkg
 
 _LOG = logging.getLogger()
-
-_CPU_FREQ_VALS_HELP = """The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used (for
-                         example "900MHz"). The following special values are supported: "min" -
-                         minimum CPU frequency supported by the OS (via Linux sysfs files), "hfm",
-                         "base", "P1" - base CPU frequency, "max" - maximum CPU frequency supported
-                         by the OS (via Linux sysfs), "eff", "lfm", "Pn" - maximum CPU efficiency
-                         frequency"""
-
-_UNCORE_FREQ_VALS_HELP = """The default unit is "Hz", but "kHz", "MHz", and "GHz" can also be used
-                            (for example "900MHz"). The following special values are supported:
-                            "min" - minimum uncore frequency supported by the OS (via Linux sysfs
-                            files), "max" - maximum uncore frequency supported by the OS (via Linux
-                            sysfs)"""
 
 # This dictionary describes the CPU properties this module supports.
 #
@@ -45,8 +31,6 @@ _UNCORE_FREQ_VALS_HELP = """The default unit is "Hz", but "kHz", "MHz", and "GHz
 PROPS = {
     "min_freq" : {
         "name" : "Min. CPU frequency via sysfs",
-        "help" : f"""Minimum CPU frequency is the lowest frequency the operating system configured
-                     the CPU to run at (via sysfs knobs). {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -54,8 +38,6 @@ PROPS = {
     },
     "max_freq" : {
         "name" : "Max. CPU frequency via sysfs",
-        "help" : f"""Maximum CPU frequency is the highest frequency the operating system configured
-                    the CPU to run at (via sysfs knobs). {_CPU_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -63,8 +45,6 @@ PROPS = {
     },
     "min_freq_limit" : {
         "name" : "Min. supported CPU frequency",
-        "help" : """Minimum supported CPU frequency is the lowest frequency supported by the
-                    operating system (reported via sysfs knobs).""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -72,8 +52,6 @@ PROPS = {
     },
     "max_freq_limit" : {
         "name" : "Max. supported CPU frequency",
-        "help" : """Maximum supported CPU frequency is the maximum CPU frequency supported by the
-                    operating system (reported via sysfs knobs).""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -81,10 +59,6 @@ PROPS = {
     },
     "base_freq" : {
         "name" : "Base CPU frequency",
-        "help" : """Base CPU frequency is the highest sustainable CPU frequency. This frequency is
-                    also referred to as \"guaranteed frequency\", HFM (High Frequency Mode), or P1.
-                    The base frequency is acquired from a sysfs file of from an MSR register, if
-                    the sysfs file does not exist.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -92,8 +66,6 @@ PROPS = {
     },
     "min_freq_hw" : {
         "name" : "Min. CPU frequency via MSR",
-        "help" : """Minimum frequency the CPU is configured by the OS to run at. This value is
-                    read directly from the MSR(s), bypassing the OS.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -101,8 +73,6 @@ PROPS = {
     },
     "max_freq_hw" : {
         "name" : "Max. CPU frequency via MSR",
-        "help" : """Maximum frequency the CPU is configured by the OS to run at. This value is
-                    read directly from the MSR(s), bypassing the OS.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -110,11 +80,6 @@ PROPS = {
     },
     "min_oper_freq" : {
         "name" : "Min. CPU operating frequency",
-        "help" : """Minimum operating frequency is the lowest possible frequency the CPU can operate
-                    at. Depending on the CPU model, this frequency may or may not be directly
-                    available to the operating system, but the platform may use it in certain
-                    situations (e.g., in some C-states). This frequency is also referred to as Pm.
-                    Min. operating frequency is acquired from an MSR register, bypassing the OS.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -122,9 +87,6 @@ PROPS = {
     },
     "max_eff_freq" : {
         "name" : "Max. CPU efficiency frequency",
-        "help" : """Maximum efficiency frequency is the most energy efficient CPU frequency. This
-                    frequency is also referred to as LFM (Low Frequency Mode) or Pn. Max. efficiency
-                    frequency is acquired from an MSR register, bypassing the OS.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -132,18 +94,12 @@ PROPS = {
     },
     "turbo" : {
         "name" : "Turbo",
-        "help" : """When turbo is enabled, the CPUs can automatically run at a frequency greater
-                    than base frequency. Turbo on/off status is acquired and modified via sysfs
-                    knobs.""",
         "type" : "bool",
         "sname": "global",
         "writable" : True,
     },
     "max_turbo_freq" : {
         "name" : "Max. CPU turbo frequency",
-        "help" : """Maximum 1-core turbo frequency is the highest frequency a single CPU can operate
-                    at. This frequency is also referred to as max. 1-core turbo and P01. It is
-                    acquired from an MSR register, bypassing the OS.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
@@ -151,8 +107,6 @@ PROPS = {
     },
     "min_uncore_freq" : {
         "name" : "Min. uncore frequency",
-        "help" : f"""Minimum uncore frequency is the lowest frequency the operating system
-                     configured the uncore to run at. {_UNCORE_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
@@ -160,8 +114,6 @@ PROPS = {
     },
     "max_uncore_freq" : {
         "name" : "Max. uncore frequency",
-        "help" : f"""Maximum uncore frequency is the highest frequency the operating system
-                     configured the uncore to run at. {_UNCORE_FREQ_VALS_HELP}.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
@@ -169,8 +121,6 @@ PROPS = {
     },
     "min_uncore_freq_limit" : {
         "name" : "Min. supported uncore frequency",
-        "help" : """Minimum supported uncore frequency is the lowest uncore frequency supported by
-                    the operating system. """,
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
@@ -178,8 +128,6 @@ PROPS = {
     },
     "max_uncore_freq_limit" : {
         "name" : "Max. supported uncore frequency",
-        "help" : """Maximum supported uncore frequency is the highest uncore frequency supported by
-                    the operating system.""",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
@@ -187,86 +135,54 @@ PROPS = {
     },
     "hwp" : {
         "name" : "Hardware power management",
-        "help" : """When hardware power management is enabled, CPUs can automatically scale their
-                    frequency without active OS involvement.""",
         "type" : "bool",
         "sname": "global",
         "writable" : False,
     },
     "epp" : {
         "name" : "EPP via sysfs",
-        "help" : """Energy Performance Preference is a hint to the CPU on energy efficiency vs
-                    performance. EPP value is a number in range of 0-255 (maximum energy efficiency
-                    to maximum performance), or a policy name. The value is read from or written
-                    to the 'energy_performance_preference' Linux sysfs file.""",
         "type" : "str",
         "sname": "CPU",
         "writable" : True,
     },
     "epp_hw" : {
         "name" : "EPP via MSR",
-        "help" : f"""Energy Performance Preference is a hint to the CPU on energy efficiency vs
-                    performance. EPP value is a number in range of 0-255 (maximum energy efficiency
-                    to maximum performance). When package control is enabled the value is read from
-                    MSR {HWPRequestPkg.MSR_HWP_REQUEST_PKG:#x}, but when written package control is
-                    disabled and value is written to MSR {HWPRequest.MSR_HWP_REQUEST:#x}, both
-                    require the 'msr' Linux kernel driver.""",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
     },
     "epb" : {
         "name" : "EPB via sysfs",
-        "help" : """Energy Performance Bias is a hint to the CPU on energy efficiency vs
-                    performance. EBP value is a number in range of 0-15 (maximum performance to
-                    maximum energy efficiency), or a policy name. The value is read from or written
-                    to the 'energy_perf_bias' Linux sysfs file.""",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
     },
     "epb_hw" : {
         "name" : "EPB via MSR",
-        "help" : f"""Energy Performance Bias is a hint to the CPU on energy efficiency vs
-                     performance. EBP value is a number in range of 0-15 (maximum performance to
-                     maximum energy efficiency). The value is read from or written to MSR
-                     {EnergyPerfBias.MSR_ENERGY_PERF_BIAS:#x}, which requires the 'msr' Linux kernel
-                     driver.""",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
     },
     "driver" : {
         "name" : "CPU frequency driver",
-        "help" : """CPU frequency driver enumerates and requests the P-states available on the
-                    platform.""",
         "type" : "str",
         "sname": "global",
         "writable" : False,
     },
     "intel_pstate_mode" : {
         "name" : "Operation mode of 'intel_pstate' driver",
-        "help" : """The 'intel_pstate' driver has 3 operation modes: 'active', 'passive' and 'off'.
-                    The main difference between the active and passive mode is in what frequency
-                    governors are used - the generic Linux governors (passive mode) or the custom,
-                    built-in 'intel_pstate' driver governors (active mode).""",
         "type" : "str",
         "sname": "global",
         "writable" : True,
     },
     "governor" : {
         "name" : "CPU frequency governor",
-        "help" : """CPU frequency governor decides which P-state to select on a CPU depending
-                    on CPU business and other factors.""",
         "type" : "str",
         "sname": "CPU",
         "writable" : True,
         "subprops" : {
             "governors" : {
                 "name" : "Available CPU frequency governors",
-                "help" : """CPU frequency governors decide which P-state to select on a CPU
-                            depending on CPU business and other factors. Different governors
-                            implement different selection policy.""",
                 "type" : "list[str]",
                 "sname": "global",
                 "writable" : False,
@@ -363,6 +279,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Returns an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq:
+            from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
+
             msr = self._get_msr()
             self._hwpreq = HWPRequest.HWPRequest(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
@@ -372,6 +290,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Returns an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq_pkg:
+            from pepclibs.msr import HWPRequestPkg # pylint: disable=import-outside-toplevel
+
             msr = self._get_msr()
             self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
                                                            msr=msr)
