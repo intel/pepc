@@ -359,8 +359,13 @@ class CStatesPrinter(_PropsPrinter):
                 for val, cpus in kinfo.items():
                     if key == "latency":
                         name = "expected latency"
+                        suffix = " us"
                     elif key == "residency":
                         name = "target residency"
+                        suffix = " us"
+                    elif key == "desc":
+                        name = "description"
+                        suffix = None
                     else:
                         continue
 
@@ -371,7 +376,6 @@ class CStatesPrinter(_PropsPrinter):
                     # POLL: 'off' for CPUs 16-31
                     #       - expected latency: '0' us
                     prefix = " " * (len(csname) + 2) + "- "
-                    suffix = " us"
                     self._print_val_msg(val, name=name, prefix=prefix, suffix=suffix)
 
     def _print_aggr_rcsinfo_yaml(self, aggr_rcsinfo):
@@ -406,7 +410,7 @@ class CStatesPrinter(_PropsPrinter):
         if skip_ro:
             spnames = {"disable"}
         else:
-            spnames = {"disable", "latency", "residency"}
+            spnames = {"disable", "latency", "residency", "desc"}
 
         csinfo_iter = self._pcsobj.get_cstates_info(csnames=csnames, cpus=cpus)
 
