@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.7] - 2023-03-16
+### Changed
  - pepc cstates info: print C-state description in addition to latency and
    target residency.
 

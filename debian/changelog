@@ -1,12 +1,19 @@
+pepc (1.4.7) unstable; urgency=low
+
+  * pepc cstates info: print C-state description in addition to latency and
+    target residency.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 16 Mar 2023 00:00:00 +0200
+
 pepc (1.4.6) unstable; urgency=low
 
-
+  * No user-visible changes. Technical release.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 15 Mar 2023 00:00:00 +0200
 
 pepc (1.4.5) unstable; urgency=low
 
-
+  * No user-visible changes. Technical release.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 15 Mar 2023 00:00:00 +0200
 
