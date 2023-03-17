@@ -87,7 +87,7 @@ def cstates_config_command(args, pman):
         msr = MSR.MSR(pman, cpuinfo=cpuinfo)
         stack.enter_context(msr)
 
-        csobj = CStates.CStates(pman=pman, msr=None, cpuinfo=cpuinfo)
+        csobj = CStates.CStates(pman=pman, msr=msr, cpuinfo=cpuinfo)
         stack.enter_context(csobj)
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
@@ -170,7 +170,7 @@ def cstates_restore_command(args, pman):
         msr = MSR.MSR(pman, cpuinfo=cpuinfo)
         stack.enter_context(msr)
 
-        csobj = CStates.CStates(pman=pman, msr=None, cpuinfo=cpuinfo)
+        csobj = CStates.CStates(pman=pman, msr=msr, cpuinfo=cpuinfo)
         stack.enter_context(csobj)
 
         csprint = _PepcPrinter.CStatesPrinter(csobj, cpuinfo)
