@@ -198,8 +198,11 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                 # No exact match. The limit is the closest lower known number. For example, if the
                 # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the
                 # limit is PC6.
+                #
+                # On some platforms code 0 is "unlimited" (e.g., Denverton). Do not resolve unkown
+                # numbers to "unlimited".
                 for cde in sorted(finfo["rvals"], reverse=True):
-                    if cde <= code:
+                    if cde <= code and finfo["rvals"][cde] != "unlimited":
                         code = cde
                         break
                 else:
