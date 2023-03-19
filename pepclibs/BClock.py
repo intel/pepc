@@ -36,7 +36,7 @@ _BCLK_100MHZ = CPUInfo.GNRS +         \
                CPUInfo.HASWELLS +     \
                CPUInfo.IVYBRIDGES +   \
                CPUInfo.SANDYBRIDGES + \
-               CPUInfo.CRESMONTS +    \
+               CPUInfo.CRESTMONTS +   \
                CPUInfo.TREMONTS +     \
                CPUInfo.GOLDMONTS +    \
                CPUInfo.PHIS

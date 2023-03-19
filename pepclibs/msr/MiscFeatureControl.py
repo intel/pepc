@@ -22,9 +22,9 @@ _LOG = logging.getLogger()
 MSR_MISC_FEATURE_CONTROL = 0x1A4
 
 # CPU models that support only the 'l2_hw_prefetcher' and 'dcu_hw_prefetcher' features.
-_L2_AND_DCU_CPUS = CPUInfo.CRESMONTS + \
-                   CPUInfo.TREMONTS +  \
-                   CPUInfo.GOLDMONTS + \
+_L2_AND_DCU_CPUS = CPUInfo.CRESTMONTS + \
+                   CPUInfo.TREMONTS +   \
+                   CPUInfo.GOLDMONTS +  \
                    (CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D,) + \
                    CPUInfo.PHIS
 

@@ -40,7 +40,7 @@ _EFREQ_CPUS = CPUInfo.GNRS +         \
               CPUInfo.SANDYBRIDGES + \
               CPUInfo.WESTMERES +    \
               CPUInfo.NEHALEMS +     \
-              CPUInfo.CRESMONTS +    \
+              CPUInfo.CRESTMONTS +   \
               CPUInfo.TREMONTS +     \
               CPUInfo.GOLDMONTS +    \
               CPUInfo.PHIS
@@ -62,7 +62,7 @@ _MIN_OPER_RATIO_CPUS = CPUInfo.GNRS +                      \
                        CPUInfo.BROADWELLS +                \
                        CPUInfo.HASWELLS +                  \
                        (CPUInfo.INTEL_FAM6_IVYBRIDGE, ) +  \
-                       CPUInfo.CRESMONTS +                 \
+                       CPUInfo.CRESTMONTS +                \
                        CPUInfo.TREMONTS +                  \
                        CPUInfo.GOLDMONTS +                 \
                        CPUInfo.PHIS

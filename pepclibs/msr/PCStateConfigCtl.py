@@ -57,7 +57,7 @@ _IVT_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "u
 #
 # Atom-based micro servers.
 #
-# Grand Ridge (Cresmont) and Snow Ridge (Tremont) SoCs.
+# Grand Ridge (Crestmont) and Snow Ridge (Tremont) SoCs.
 _SNR_PKG_CST_LIMITS = {"codes"   : {"PC2": 2, "unlimited": 0},
                        "bits"    : (3, 0)}
 # Denverton SoC (Goldmont).
