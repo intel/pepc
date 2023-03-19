@@ -203,15 +203,18 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                 # numbers to "unlimited".
                 for cde in sorted(finfo["rvals"], reverse=True):
                     if cde <= code and finfo["rvals"][cde] != "unlimited":
-                        code = cde
+                        limit = finfo["rvals"][cde]
                         break
                 else:
-                    known_codes = ", ".join([str(cde) for cde in finfo["rvals"]])
-                    raise Error(f"unexpected package C-state limit code '{code}' read from "
-                                f"'{self.regname}' MSR ({self.regaddr}) on CPU {cpu}"
-                                f"{self._pman.hostmsg}, known codes are: {known_codes}")
+                    known_codes = [f"{cde} ({lmt})" for cde, lmt in finfo["rvals"].items()]
+                    _LOG.warn_once("unexpected package C-state limit code '%d' read from '%s' MSR "
+                                   "(%#x) on CPU %d%s. Known codes are: %s", code, self.regname,
+                                   self.regaddr, cpu, self._pman.hostmsg, ", ".join(known_codes))
+                    limit = str(code)
+            else:
+                limit = finfo["rvals"][code]
 
-            res = {"pkg_cstate_limit" : finfo["rvals"][code],
+            res = {"pkg_cstate_limit" : limit,
                    "pkg_cstate_limits" : list(finfo["vals"].keys()),
                    "pkg_cstate_limit_aliases" : finfo["aliases"]}
             yield (cpu, res)
