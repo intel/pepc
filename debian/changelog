@@ -1,3 +1,12 @@
+pepc (1.4.8) unstable; urgency=low
+
+  * Fixed Denverton and Snow Ridge package C-state limits.
+  * Split 'pepc' manual page on multiple per-command pages.
+  * Improve manual pages.
+  * Simplify '--help' output.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Sun, 19 Mar 2023 00:00:00 +0200
+
 pepc (1.4.7) unstable; urgency=low
 
   * pepc cstates info: print C-state description in addition to latency and
