@@ -89,10 +89,10 @@ echo "New version: $new_ver"
 printf "%s" "$new_ver" | grep -q -x "$VERSION_REGEX" ||
          fatal "please, provide new version in X.Y.Z format"
 
-# Make sure that the current branch is 'master' or 'release'.
+# Make sure that the current branch is 'main' or 'release'.
 current_branch="$(git -C "$BASEDIR" branch | sed -n -e '/^*/ s/^* //p')"
-if [ "$current_branch" != "master" -a "$current_branch" != "release" ]; then
-	fatal "current branch is '$current_branch' but must be 'master' or 'release'"
+if [ "$current_branch" != "main" -a "$current_branch" != "release" ]; then
+	fatal "current branch is '$current_branch' but must be 'main' or 'release'"
 fi
 
 # Remind the maintainer about various important things.
@@ -127,8 +127,8 @@ release_name="Version $new_ver"
 printf "%s\n" "Signing tag $tag_name"
 git -C "$BASEDIR" tag -m "$release_name" -s "$tag_name"
 
-if [ "$current_branch" = "master" ]; then
-    branchnames="master and release brances"
+if [ "$current_branch" = "main" ]; then
+    branchnames="main and release brances"
 else
     branchnames="release branch"
 fi
@@ -143,19 +143,19 @@ EOF
 
 for remote in "origin" "upstream" "public"; do
     echo "git push $remote $tag_name"
-    if [ "$current_branch" = "master" ]; then
-        echo "git push $remote master:master"
-        echo "git push $remote master:release"
+    if [ "$current_branch" = "main" ]; then
+        echo "git push $remote main:main"
+        echo "git push $remote main:release"
     else
         echo "git push public release:release"
     fi
 done
 
-if [ "$current_branch" != "master" ]; then
+if [ "$current_branch" != "main" ]; then
     echo
-    echo "Then merge the release branch back to master, and run the following commands:"
+    echo "Then merge the release branch back to main, and run the following commands:"
 
     for remote in "origin" "upstream" "public"; do
-        echo "git push $remote master:master"
+        echo "git push $remote main:main"
     done
 fi
