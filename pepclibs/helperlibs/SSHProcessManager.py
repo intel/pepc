@@ -559,7 +559,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         if cwd:
             if not shell:
-                raise Error("cannot set working directory to '{cwd}' - using shell is disallowed")
+                raise Error(f"cannot set working directory to '{cwd}' - using shell is disallowed")
             cwd_msg = f"\nWorking directory: {cwd}"
         else:
             cwd_msg = ""
@@ -957,7 +957,7 @@ for entry in os.listdir(path):
             cmd += prefix
         cmd += "XXXXXX'"
         if basedir:
-            cmd += " -p '{basedir}'"
+            cmd += f" -p '{basedir}'"
 
         path = self.run_verify(cmd)[0].strip()
         if not path:

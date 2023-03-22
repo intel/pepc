@@ -155,7 +155,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
         orig_bits = bits
         try:
             if not Trivial.is_int(orig_bits[0]) or not Trivial.is_int(orig_bits[1]):
-                raise Error("bad bits range '{bits}', must be a list or tuple of 2 integers")
+                raise Error(f"bad bits range '{bits}', must be a list or tuple of 2 integers")
 
             bits = (int(orig_bits[0]), int(orig_bits[1]))
 
@@ -168,7 +168,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
                 raise Error(f"too many bits in ({bits[0]}, {bits[1]}), MSRs only have "
                             f"{self.regbits} bits")
         except TypeError:
-            raise Error("bad bits range '{bits}', must be a list or tuple of 2 integers") from None
+            raise Error(f"bad bits range '{bits}', must be a list or tuple of 2 integers") from None
 
         return bits
 
