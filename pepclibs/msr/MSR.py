@@ -62,7 +62,8 @@ class MSR(ClassHelpers.SimpleCloseContext):
         """Add CPU 'cpu' MSR at 'regaddr' with its value 'regval' to the transaction buffer."""
 
         if not self._enable_cache:
-            return
+            raise Error("transactions support requires caching to be enabled, see 'enable_cache' "
+                        "argument of the 'MSR.MSR()' constructor.")
 
         if cpu not in self._transaction_buffer:
             self._transaction_buffer[cpu] = {}
@@ -75,12 +76,12 @@ class MSR(ClassHelpers.SimpleCloseContext):
         to the actual hardware on 'commit_transaction()'.
         """
 
+        if not self._enable_cache:
+            _LOG.debug("transactions support requires caching to be enabled")
+            return
+
         if self._in_transaction:
             raise Error("cannot start a transaction, it has already started")
-
-        if not self._enable_cache:
-            raise Error("transactions support requires caching to be enabled (see 'enable_cache' "
-                        "argument of the 'MSR.MSR()' constructor.")
 
         self._in_transaction = True
 
@@ -89,6 +90,9 @@ class MSR(ClassHelpers.SimpleCloseContext):
         Commit the transaction. Write all the MSR registers that have been modified after
         'start_transaction()'.
         """
+
+        if not self._enable_cache:
+            return
 
         if not self._in_transaction:
             raise Error("cannot commit a transaction, it did not start")
