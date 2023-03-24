@@ -209,16 +209,16 @@ currently configured value(s) will be printed.
    Set maximum uncore frequency (details in 'max_uncore_freq_').
 
 **--epp** *[EPP]*
-   Set EPP via sysfs) (details in 'epp_').
+   Set EPP via sysfs (details in 'epp_').
 
 **--epp-hw** *[EPP_HW]*
-   Set EPP via MSR 0x774) (details in 'epp_hw_').
+   Set EPP via MSR (details in 'epp_hw_').
 
 **--epb** *[EPB]*
-   Set EPB via sysfs) (details in 'epb_').
+   Set EPB via sysfs (details in 'epb_').
 
 **--epb-hw** *[EPB_HW]*
-   Set EPB via MSR 0x1b0) (details in 'epb_hw_').
+   Set EPB via MSR (details in 'epb_hw_').
 
 **--intel-pstate-mode** *[INTEL_PSTATE_MODE]*
    Set operation mode of 'intel_pstate' driver (details in 'intel_pstate_mode_').
