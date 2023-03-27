@@ -48,25 +48,24 @@ def _find_msr_scope(args, cpuinfo, msr):
                 cpus.add(cpu)
 
     # Find common scope shared by all the modified CPUs.
+    scopes = []
     if len(cpus) == 1:
-        scopes = ["CPU"]
-    else:
-        topology = cpuinfo.get_topology()
-        tinfo = cpuinfo.get_cpu_levels(args.cpu)
+        scopes.append("CPU")
 
-        scopes = []
-        for scope in ("core", "module", "die", "node", "package"):
-            for tline in topology:
-                if tline["CPU"] in cpus:
-                    if tline[scope] != tinfo[scope]:
-                        break
-                elif tline[scope] == tinfo[scope]:
-                    # Scopes 'core' and 'die' are per-package.
-                    if scope in {"core", "die"} and tline["package"] != tinfo["package"]:
-                        continue
+    topology = cpuinfo.get_topology()
+    tinfo = cpuinfo.get_cpu_levels(args.cpu)
+    for scope in ("core", "module", "die", "node", "package"):
+        for tline in topology:
+            if tline["CPU"] in cpus:
+                if tline[scope] != tinfo[scope]:
                     break
-            else:
-                scopes.append(scope)
+            elif tline[scope] == tinfo[scope]:
+                # Scopes 'core' and 'die' are per-package.
+                if scope in {"core", "die"} and tline["package"] != tinfo["package"]:
+                    continue
+                break
+        else:
+            scopes.append(scope)
 
     # Restore the changed CPUs to their initial values. Due to them all sharing the same scope, only
     # 'args.cpu' needs to be write to.
