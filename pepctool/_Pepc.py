@@ -209,22 +209,14 @@ def build_arguments_parser():
     subparsers2.required = True
 
     cst_list_text = """C-states should be specified by name (e.g., 'C1'). Use 'all' to specify all
-                       the available Linux C-states (this is the default). Note, there is a
-                       difference between Linux C-states (e.g., 'C6') and hardware C-states (e.g.,
-                       Core C6 or Package C6 on many Intel platforms). The former is what Linux can
-                       request, and on Intel hardware this is usually about various 'mwait'
-                       instruction hints. The latter are platform-specific hardware state, entered
-                       upon a Linux request."""
+                       the available Linux C-states (this is the default)."""
 
     #
     # Create parser for the 'cstates info' command.
     #
     text = "Get CPU C-states information."
     descr = """Get information about C-states on specified CPUs. By default, prints all information
-               for all CPUs. Remember, this is information about the C-states that Linux can
-               request, they are not necessarily the same as the C-states supported by the
-               underlying hardware. Please, refer to 'pepc-cstates' manual page for more
-               information."""
+               for all CPUs. Please, refer to 'pepc-cstates' manual page for more information."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr)
     subpars2.set_defaults(func=cstates_info_command)
 
