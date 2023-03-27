@@ -61,12 +61,15 @@ _FSB_CODES = {
     CPUInfo.INTEL_FAM6_ATOM_AIRMONT:         _AIRMONT_FSB_CODES,
 }
 
+# MSR_FSB_FREQ features have core scope, except for the following CPU models.
+_MODULE_SCOPE_CPUS = (CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS)
+
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the # notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
     "fsb" : {
         "name" : "Bus clock speed (megahertz)",
-        "sname": "package",
+        "sname": None,
         "help" : f"""Platform bus clock speed (FSB) in megahertz, as indicated by MSR
                      {MSR_FSB_FREQ:#x} (MSR_FSB_FREQ).""",
         "cpumodels" : tuple(_FSB_CODES.keys()),
@@ -109,6 +112,15 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
+        model = self._cpuinfo.info["model"]
+
+        if model in _MODULE_SCOPE_CPUS:
+            sname = "module"
+        else:
+            sname = "core"
+
+        for finfo in self.features.values():
+            finfo["sname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
