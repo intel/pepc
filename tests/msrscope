@@ -54,7 +54,7 @@ def _find_msr_scope(args, cpuinfo, msr):
 
     topology = cpuinfo.get_topology()
     tinfo = cpuinfo.get_cpu_levels(args.cpu)
-    for scope in ("core", "module", "die", "node", "package"):
+    for scope in ("core", "module", "die", "package"):
         for tline in topology:
             if tline["CPU"] in cpus:
                 if tline[scope] != tinfo[scope]:
