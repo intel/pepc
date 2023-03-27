@@ -147,8 +147,9 @@ def main():
                 _LOG.info("The scope for MSR %#x bits %s is %s.", args.regaddr, ":".join(args.bits),
                           scopes[0])
             elif scopes:
-                _LOG.info("These are the possible scopes for MSR %#x bits %s: %s.", args.regaddr,
-                          ":".join(args.bits), ", ".join(scopes))
+                _LOG.info("The possible scopes for MSR %#x bits %s are %s.\nThese scopes are "
+                          "identical%s.", args.regaddr, ":".join(args.bits), ", ".join(scopes),
+                          pman.hostmsg)
             else:
                 # Probably a new scope that we are not aware of.
                 _LOG.info("Could not determine the scope for MSR %#x bits %s.\nPlease, contact "
