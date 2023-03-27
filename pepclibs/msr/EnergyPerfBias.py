@@ -12,6 +12,7 @@ many Intel platforms.
 """
 
 import logging
+from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
 
 _LOG = logging.getLogger()
@@ -19,12 +20,16 @@ _LOG = logging.getLogger()
 # The Energy Performance Bias Model Specific Register.
 MSR_ENERGY_PERF_BIAS = 0x1B0
 
+# MSR_ENERGY_PERF_BIAS features have CPU scope, except for the following CPU models.
+_CORE_SCOPE_CPUS = CPUInfo.SILVERMONTS
+_PACKAGE_SCOPE_CPUS = (CPUInfo.WESTMERES + CPUInfo.SANDYBRIDGES)
+
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
     "epb" : {
         "name" : "Energy Performance Bias",
-        "sname": "CPU",
+        "sname": None,
         "help" : """Energy Performance Bias is a hint to the CPU about the power and performance
                     preference. Value 0 indicates highest performance and value 15 indicates
                     maximum energy savings.""",
@@ -48,6 +53,17 @@ class EnergyPerfBias(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
+        model = self._cpuinfo.info["model"]
+
+        if model in _CORE_SCOPE_CPUS:
+            sname = "core"
+        elif model in _PACKAGE_SCOPE_CPUS:
+            sname = "package"
+        else:
+            sname = "CPU"
+
+        for finfo in self.features.values():
+            finfo["sname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
