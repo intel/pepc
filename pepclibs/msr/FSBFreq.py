@@ -22,13 +22,6 @@ _LOG = logging.getLogger()
 MSR_FSB_FREQ = 0xCD
 
 # Core 2 clients.
-_CORE2_FSB_CODES = {"codes" : {100    : 0b101, 133.33 : 0b001,
-                               166.67 : 0b011, 200    : 0b010,
-                               266.67 : 0b000, 333.33 : 0b100,
-                               400    : 0b110},
-                    "bits": (2, 0)}
-
-# Core 2 clients.
 _CORE2_FSB_CODES = {"codes" : {"100"    : 0b101, "133.33" : 0b001,
                                "166.67" : 0b011, "200"    : 0b010,
                                "266.67" : 0b000, "333.33" : 0b100,
