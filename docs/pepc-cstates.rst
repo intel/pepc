@@ -90,12 +90,12 @@ Get information about C-states on specified CPUs. By default, prints all informa
    Print information in YAML format.
 
 **--cstates** *[CATATES]*
-   Comma-separated list of C-states to get information about (all C-states by default). C-states
-   should be specified by name (e.g., 'C1'). Use 'all' to specify all the available Linux C-states
-   (this is the default). Note, there is a difference between Linux C-states (e.g., 'C6') and
-   hardware C-states (e.g., Core C6 or Package C6 on many Intel platforms). The former is what Linux
-   can request, and on Intel hardware this is usually about various 'mwait' instruction hints. The
-   latter are platform-specific hardware state, entered upon a Linux request.
+   Comma-separated list of C-states to get information about. C-states should be specified by name
+   (e.g., 'C1'). Use 'all' to specify all the available Linux C-states (this is the default). Note,
+   there is a difference between Linux C-states (e.g., 'C6') and hardware C-states (e.g., Core C6 or
+   Package C6 on many Intel platforms). The former is what Linux can request, and on Intel hardware
+   this is usually about various 'mwait' instruction hints. The latter are platform-specific
+   hardware state, entered upon a Linux request.
 
 **--pkg-cstate-limit**
    Get package C-state limit (details in 'pkg_cstate_limit_').
