@@ -16,7 +16,7 @@ Some naming conventions:
  * pinfo - a properties dictionary in the format returned by 'PStates.get_props()' or
            'CStates.get_props()'. Check 'get_props()' docstring for more information.
  * pname - name of a property, see 'PROPS["name"]' in 'PStates' and 'CStates'.
- * sname - property scope name (matches names in 'MSR.SCOPES' and 'CPUInfo.LEVELS).
+ * sname - name of a scope from the allowed list of scope names in 'CPUInfo.LEVELS'.
  * <sname> siblings - all CPUs sharing the same <sname>. E.g. "package siblings" means all CPUs
                       sharing the same package, "CPU 6 core siblings" means all CPUs sharing the
                       same core as CPU 6.
