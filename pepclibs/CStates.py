@@ -163,7 +163,7 @@ class ReqCStates(ClassHelpers.SimpleCloseContext):
             # * There is no idle driver.
             # * There is a kernel boot parameter like 'idle=poll'.
             with contextlib.suppress(Error):
-                with CStates(pman=self._pman, rcsobj=self) as csobj:
+                with CStates(pman=self._pman, cpuinfo=self._cpuinfo, rcsobj=self) as csobj:
                     drvname = csobj.get_cpu_prop("idle_driver", 0)["idle_driver"]["idle_driver"]
                     if drvname == "none":
                         msg += f"\n  There is no idle driver in use{self._pman.hostmsg}, which " \
