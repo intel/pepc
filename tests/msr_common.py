@@ -71,7 +71,7 @@ def get_params(hostspec):
                 continue
 
             params["feature_classes"].append(msr_feature_class)
-            with msr_feature_class(pman=pman) as msr:
+            with msr_feature_class(pman=pman, cpuinfo=cpuinfo) as msr:
                 for name, finfo in msr._features.items(): # pylint: disable=protected-access
                     if not msr.is_feature_supported(name):
                         continue
