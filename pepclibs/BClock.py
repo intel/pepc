@@ -14,34 +14,9 @@ This module provides a capability for discovering bus clock speed (FSB speed) on
 """
 
 from pepclibs import CPUInfo
-from pepclibs.msr import MSR
+from pepclibs.msr import MSR, FSBFreq
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-# CPUs with 100Mhz bus clock.
-_BCLK_100MHZ = CPUInfo.GNRS +         \
-               CPUInfo.EMRS +         \
-               CPUInfo.METEORLAKES +  \
-               CPUInfo.SPRS +         \
-               CPUInfo.RAPTORLAKES +  \
-               CPUInfo.ALDERLAKES +   \
-               CPUInfo.ROCKETLAKES +  \
-               CPUInfo.TIGERLAKES +   \
-               CPUInfo.LAKEFIELDS +   \
-               CPUInfo.ICELAKES +     \
-               CPUInfo.COMETLAKES +   \
-               CPUInfo.KABYLAKES +    \
-               CPUInfo.CANNONLAKES +  \
-               CPUInfo.SKYLAKES +     \
-               CPUInfo.BROADWELLS +   \
-               CPUInfo.HASWELLS +     \
-               CPUInfo.IVYBRIDGES +   \
-               CPUInfo.SANDYBRIDGES + \
-               CPUInfo.CRESTMONTS +   \
-               CPUInfo.TREMONTS +     \
-               CPUInfo.GOLDMONTS +    \
-               CPUInfo.PHIS
-
-_BCLK_100MHZ_SET = set(_BCLK_100MHZ)
 
 def get_bclk(pman, cpu=0, cpuinfo=None, msr=None):
     """
@@ -66,22 +41,16 @@ def get_bclk(pman, cpu=0, cpuinfo=None, msr=None):
             raise Error(f"unsupported vendor {cpuinfo.info['vendor']}{pman.hostmsg}. Only Intel "
                         f"CPUs are supported.")
 
-        if cpuinfo.info["model"] in _BCLK_100MHZ_SET:
-            bclk = 100.0
-        else:
-            if not msr:
-                msr = MSR.MSR(pman, cpuinfo=cpuinfo)
-                close_msr = True
+        if not msr:
+            msr = MSR.MSR(pman, cpuinfo=cpuinfo)
+            close_msr = True
 
-            # Some platforms provide bus clock via 'MSR_FSB_FREQ'.
-            from pepclibs.msr import FSBFreq # pylint: disable=import-outside-toplevel
-
+        try:
             fsbfreq = FSBFreq.FSBFreq(pman=pman, cpuinfo=cpuinfo, msr=msr)
-            try:
-                bclk = fsbfreq.read_cpu_feature("fsb", cpu)
-            except ErrorNotSupported:
-                # Fall back to 133.33 clock speed.
-                bclk = 133.33
+            bclk = fsbfreq.read_cpu_feature("fsb", cpu)
+        except ErrorNotSupported:
+            # Fall back to 100MHz clock speed.
+            bclk = 100.0
     finally:
         if close_msr:
             msr.close()
