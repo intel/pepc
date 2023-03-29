@@ -7,6 +7,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
 ### Added
  - Add '--bus-clock' option to 'pepc pstates info' command.
+ - Extend split_csv_line() in Trivial.py.
 ### Removed
 ### Changed
 

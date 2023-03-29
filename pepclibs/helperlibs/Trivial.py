@@ -185,14 +185,26 @@ def list_dedup(elts):
 
     return list(dict.fromkeys(elts))
 
-def split_csv_line(csv_line, sep=",", dedup=False):
+def split_csv_line(csv_line, sep=",", dedup=False, keep_empty=False):
     """
-    Split a comma-separated values line and return the list of the comma separated values. The 'sep'
-    argument can be used to change the separator from comma to something else. If 'dedup' is 'True',
-    this function removes duplicated elements from the returned list.
+    Split a comma-separated values line and return the list of the comma separated values. The
+    arguments are as follows.
+      * csv_line - the string to split.
+      * sep - the separator character.
+      * dedup - if 'True', remove duplicated elements from the returned list.
+      * keep_empty - if 'True', keep empty values. E.g. split_csv_line(",cpu0", keep_empty=True)
+                     would return ["", "cpu0"].
     """
 
-    result = [val.strip() for val in csv_line.strip(sep).split(sep) if val]
+    result = []
+    if not keep_empty:
+        csv_line = csv_line.strip(sep)
+
+    for val in csv_line.split(sep):
+        if not val and not keep_empty:
+            continue
+        result.append(val.strip())
+
     if dedup:
         return list_dedup(result)
     return result
