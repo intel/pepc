@@ -110,6 +110,9 @@ Get P-states information for specified CPUs. By default, prints all information 
 **--max-freq-hw**
    Get maximum CPU frequency (OS bypass) (details in 'max_freq_hw_').
 
+**--bus-clock**
+   Get bus clock speed (details in 'bus_clock_').
+
 **--min-oper-freq**
    Get minimum CPU operating frequency (details in 'min_oper_freq_').
 
@@ -541,6 +544,34 @@ Scope
 -----
 
 This property has **CPU** scope.
+
+----------------------------------------------------------------------------------------------------
+
+bus_clock
+=========
+
+bus_clock - Bus clock speed.
+
+Synopsis
+--------
+
+pepc pstates *info* [**--bus-clock**]
+
+Description
+-----------
+
+Bus clock refers to how quickly the system bus can move data from one computer component to the
+other.
+
+Source
+------
+MSR_FSB_FREQ (**0xCD**), bits **2:0**. For platforms that don't support MSR_FSB_FREQ, **100.0MHz**
+is used.
+
+Scope
+-----
+
+This property has **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
