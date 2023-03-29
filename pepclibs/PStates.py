@@ -78,6 +78,13 @@ PROPS = {
         "sname": "CPU",
         "writable" : True,
     },
+    "bus_clock" : {
+        "name" : "Bus clock speed",
+        "unit" : "MHz",
+        "type" : "float",
+        "sname": "package",
+        "writable" : False,
+    },
     "min_oper_freq" : {
         "name" : "Min. CPU operating frequency",
         "unit" : "Hz",
@@ -631,6 +638,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._get_min_oper_freq(cpu)
         if pname == "max_turbo_freq":
             return self._get_max_turbo_freq(cpu)
+        if pname == "bus_clock":
+            return self._get_bclk(cpu)
         if pname.endswith("_freq_hw"):
             return self._get_cpu_freq_hw(pname, cpu)
 
