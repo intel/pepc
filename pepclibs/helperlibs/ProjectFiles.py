@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -32,6 +32,57 @@ def get_project_helpers_envvar(prjname):
     name = prjname.replace("-", "_").upper()
     return f"{name}_HELPERSPATH"
 
+def search_project_data(basepath, subpath, pman=None, what=None, env_var=None):
+    """
+    Helper function for 'find_project_data()'. Arguments are the same as in 'find_project_data()'
+    except for the following:
+     * basepath - a directory which will be added to the searched paths that are not defined by an
+                  environment variable or in the directory of the running program. For details,
+                  see the searched path list below.
+     * env_var - the name of an environment variable which, if set, dictates the second path to
+                 search.
+
+    The data are searched for in the 'subpath' sub-path of the following directories (and in the
+    following order).
+      * in the directory the of the running program.
+      * in the directory specified by the 'env_var' environment variable.
+      * in '$HOME/.local/share/<basepath>/', if it exists.
+      * in '$HOME/share/<basepath>/', if it exists.
+      * in '/usr/local/share/<basepath>/', if it exists.
+      * in '/usr/share/<basepath>/', if it exists.
+    """
+
+    searched = []
+    paths = []
+
+    paths.append(Path(sys.argv[0]).parent)
+
+    if env_var:
+        path = os.environ.get(env_var)
+        if path:
+            paths.append(Path(path))
+
+    with ProcessManager.pman_or_local(pman) as wpman:
+        homedir = wpman.get_homedir()
+        paths.append(homedir / Path(f".local/share/{basepath}"))
+        paths.append(homedir / Path(f"share/{basepath}"))
+        paths.append(Path(f"/usr/local/share/{basepath}"))
+        paths.append(Path(f"/usr/share/{basepath}"))
+
+        for path in paths:
+            path /= subpath
+            if wpman.exists(path):
+                return path
+            searched.append(path)
+
+        if not what:
+            what = f"'{subpath}'"
+        searched = [str(s) for s in searched]
+        dirs = " * " + "\n * ".join(searched)
+
+        raise ErrorNotFound(f"cannot find {what}{wpman.hostmsg}, searched in the following "
+                            f"locations:\n{dirs}")
+
 def find_project_data(prjname, subpath, pman=None, what=None):
     """
     Search for project 'prjname' data. The arguments are as follows.
@@ -52,35 +103,8 @@ def find_project_data(prjname, subpath, pman=None, what=None):
       * in '/usr/share/<prjname>/', if it exists.
     """
 
-    searched = []
-    paths = []
-
-    paths.append(Path(sys.argv[0]).parent)
-
-    path = os.environ.get(get_project_data_envvar(prjname))
-    if path:
-        paths.append(Path(path))
-
-    with ProcessManager.pman_or_local(pman) as wpman:
-        homedir = wpman.get_homedir()
-        paths.append(homedir / Path(f".local/share/{prjname}"))
-        paths.append(homedir / Path(f"share/{prjname}"))
-        paths.append(Path(f"/usr/local/share/{prjname}"))
-        paths.append(Path(f"/usr/share/{prjname}"))
-
-        for path in paths:
-            path /= subpath
-            if wpman.exists(path):
-                return path
-            searched.append(path)
-
-        if not what:
-            what = f"'{subpath}'"
-        searched = [str(s) for s in searched]
-        dirs = " * " + "\n * ".join(searched)
-
-        raise ErrorNotFound(f"cannot find {what}{wpman.hostmsg}, searched in the following "
-                            f"locations:\n{dirs}")
+    return search_project_data(prjname, subpath, pman, what,
+                              env_var=get_project_data_envvar(prjname))
 
 def get_project_data_search_descr(prjname, subpath):
     """
