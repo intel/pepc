@@ -76,6 +76,8 @@ def _verify_value_type(pname, ptype, value):
         ret = isinstance(value, int)
     elif ptype == "str":
         ret = isinstance(value, str)
+    elif ptype == "float":
+        ret = isinstance(value, float)
     elif ptype == "list[str]":
         ret = isinstance(value, list) and all(isinstance(item, str) for item in value)
     elif ptype == "bool":
