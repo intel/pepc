@@ -118,7 +118,7 @@ def _set_freq_pairs(params, min_pname, max_pname):
     min_limit = params["pinfo"][f"{min_pname}_limit"][f"{min_pname}_limit"]
     max_limit = params["pinfo"][f"{max_pname}_limit"][f"{max_pname}_limit"]
 
-    bclk_MHz = BClock.get_bclk(params["pman"], cpu=0, cpuinfo=params["cpuinfo"])
+    bclk_MHz = BClock.get_bclk(params["pman"], cpu=0)
     bclk_Hz = int(bclk_MHz * 1000000)
     a_quarter = int((max_limit - min_limit) / 4)
     increment = a_quarter - a_quarter % bclk_Hz

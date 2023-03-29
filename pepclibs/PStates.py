@@ -252,17 +252,16 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._epbobj
 
-    def _get_bclk(self, cpu):
+    def _get_fsbfreq(self):
         """Discover bus clock speed."""
 
-        if cpu not in self._bclk:
-            from pepclibs import BClock # pylint: disable=import-outside-toplevel
+        if not self._fsbfreq:
+            from pepclibs.msr import FSBFreq # pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
-            self._bclk[cpu] = BClock.get_bclk(self._pman, cpu=cpu, cpuinfo=self._cpuinfo, msr=msr)
-            _LOG.debug("CPU %d: bus clock speed: %fMHz", cpu, self._bclk[cpu])
+            self._fsbfreq = FSBFreq.FSBFreq(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
-        return self._bclk[cpu]
+        return self._fsbfreq
 
     def _get_pmenable(self):
         """Returns an 'PMEnable.PMEnable()' object."""
@@ -318,6 +317,18 @@ class PStates(_PCStatesBase.PCStatesBase):
             self._trl = TurboRatioLimit.TurboRatioLimit(pman=self._pman, cpuinfo=self._cpuinfo,
                                                         msr=msr)
         return self._trl
+
+    def _get_bclk(self, cpu):
+        """Read bus clock speed from 'MSR_FSB_FREQ' and return it."""
+
+        try:
+            fsbfreq = self._get_fsbfreq()
+        except ErrorNotSupported:
+            # Fall back to 100MHz clock speed.
+            return 100.0
+
+        from pepclibs import BClock # pylint: disable=import-outside-toplevel
+        return BClock.get_bclk(self._pman, fsbfreq=fsbfreq, cpu=cpu)
 
     def __is_uncore_freq_supported(self):
         """Implements '_is_uncore_freq_supported()'."""
@@ -1032,7 +1043,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         self._eppobj = None
         self._epbobj = None
-        self._bclk = {}
+        self._fsbfreq = None
         self._pmenable = None
         self._hwpreq = None
         self._hwpreq_pkg = None
@@ -1065,8 +1076,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._unload_ufreq_drv = None
             self._ufreq_drv = None
 
-        close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_hwpreq","_hwpreq_pkg", "_platinfo",
-                       "_trl", "_pcache", )
+        close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_hwpreq", "_hwpreq_pkg", "_platinfo",
+                       "_trl", "_pcache", "_fsbfreq")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
