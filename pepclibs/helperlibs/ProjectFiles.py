@@ -64,6 +64,7 @@ def find_project_data(prjname, subpath, pman=None, what=None):
     with ProcessManager.pman_or_local(pman) as wpman:
         homedir = wpman.get_homedir()
         paths.append(homedir / Path(f".local/share/{prjname}"))
+        paths.append(homedir / Path(f"share/{prjname}"))
         paths.append(Path(f"/usr/local/share/{prjname}"))
         paths.append(Path(f"/usr/share/{prjname}"))
 
