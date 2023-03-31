@@ -30,11 +30,14 @@ _LOG = logging.getLogger()
 # While this dictionary is user-visible and can be used, it is not recommended, because it is not
 # complete. This dictionary is extended by 'CStates' objects. Use the full dictionary via
 # 'CStates.props'.
+#
+# Some properties have scope name set to 'None' because the scope may be different for different
+# systems. In such cases, the scope can be obtained via 'CStates.get_sname()'.
 PROPS = {
     "pkg_cstate_limit" : {
         "name" : "Package C-state limit",
         "type" : "str",
-        "sname": "package",
+        "sname": None,
         "writable" : True,
         "subprops" : {
             "pkg_cstate_limit_locked" : {
@@ -60,13 +63,13 @@ PROPS = {
     "c1_demotion" : {
         "name" : "C1 demotion",
         "type" : "bool",
-        "sname": "core",
+        "sname": None,
         "writable" : True,
     },
     "c1_undemotion" : {
         "name" : "C1 undemotion",
         "type" : "bool",
-        "sname": "core",
+        "sname": None,
         "writable" : True,
     },
     "c1e_autopromote" : {
@@ -683,6 +686,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for pname, val in inprops.items():
+            self._set_sname(pname)
             self._validate_cpus_vs_scope(self._props[pname], cpus)
 
             if pname == "governor":
@@ -690,6 +694,25 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         for pname, val in inprops.items():
             self._set_prop_value(pname, val, cpus)
+
+    def _set_sname(self, pname):
+        """Set scope "sname" for property 'pname'."""
+
+        if self._props[pname]["sname"]:
+            return
+
+        if pname in PCStateConfigCtl.FEATURES:
+            finfo = self._get_pcstatectl().features
+            self._props["c1_demotion"]["sname"] = finfo["c1_demotion"]["sname"]
+            self._props["c1_undemotion"]["sname"] = finfo["c1_undemotion"]["sname"]
+
+            self._props["pkg_cstate_limit"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
+            subprops = self._props["pkg_cstate_limit"]["subprops"]
+            subprops["pkg_cstate_limits"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
+            subprops["pkg_cstate_limit_aliases"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
+            subprops["pkg_cstate_limit_locked"]["sname"] = finfo["locked"]["sname"]
+        else:
+            raise Error(f"BUG: could not get scope for property '{pname}'")
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""

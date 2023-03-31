@@ -42,10 +42,19 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
     This is a base class for the 'PState' and 'CState' classes.
     """
 
+    def _set_sname(self, pname):
+        """Set scope "sname" for property 'pname'."""
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("PCStatesBase._set_sname")
+
     def get_sname(self, pname):
         """Get scope "sname" for property 'pname'."""
 
         try:
+            if not self._props[pname]["sname"]:
+                self._set_sname(pname)
+
             return self._props[pname]["sname"]
         except KeyError as err:
             raise Error(f"Property '{pname}' does not exist") from err

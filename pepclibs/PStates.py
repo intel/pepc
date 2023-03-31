@@ -29,6 +29,9 @@ _LOG = logging.getLogger()
 # While this dictionary is user-visible and can be used, it is not recommended, because it is not
 # complete. This dictionary is extended by 'PStates' objects. Use the full dictionary via
 # 'PStates.props'.
+#
+# Some properties have scope name set to 'None' because the scope may be different for different
+# systems. In such cases, the scope can be obtained via 'PStates.get_sname()'.
 PROPS = {
     "min_freq" : {
         "name" : "Min. CPU frequency via sysfs",
@@ -83,7 +86,7 @@ PROPS = {
         "name" : "Bus clock speed",
         "unit" : "MHz",
         "type" : "float",
-        "sname": "package",
+        "sname": None,
         "writable" : False,
     },
     "min_oper_freq" : {
@@ -168,7 +171,7 @@ PROPS = {
     "epb_hw" : {
         "name" : "EPB via MSR",
         "type" : "int",
-        "sname": "CPU",
+        "sname": None,
         "writable" : True,
     },
     "driver" : {
@@ -978,6 +981,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for pname, val in inprops.items():
+            self._set_sname(pname)
             self._validate_cpus_vs_scope(self._props[pname], cpus)
 
             if pname == "governor":
@@ -1012,6 +1016,20 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._get_epbobj().set_epb_hw(val, cpus=cpus)
             else:
                 self._set_prop_value(pname, val, cpus)
+
+    def _set_sname(self, pname):
+        """Set scope "sname" for property 'pname'."""
+
+        if self._props[pname]["sname"]:
+            return
+
+        if pname == "epb_hw":
+            _epb = self._get_epbobj()._get_epbobj() # pylint: disable=protected-access
+            self._props[pname]["sname"] = _epb.features["epb"]["sname"]
+        elif pname == "bus_clock":
+            self._props[pname]["sname"] = self._get_fsbfreq().features["fsb"]["sname"]
+        else:
+            raise Error(f"BUG: couldn't get scope for property '{pname}'")
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
