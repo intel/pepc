@@ -26,7 +26,7 @@ def pstates_info_command(args, pman):
     pnames = []
 
     for optname in PStates.PROPS:
-        if getattr(args, f"{optname}"):
+        if getattr(args, optname):
             pnames.append(optname)
 
     # The output format to use.
