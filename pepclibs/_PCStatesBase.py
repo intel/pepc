@@ -369,9 +369,9 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             mapping_name = "relation between CPUs and packages"
 
         errmsg = f"{name} has {sname} scope, so the list of CPUs must include all CPUs " \
-                f"in one or multiple {sname}s.\n" \
-                f"However, the following CPUs do not comprise full {sname}(s): {rem_cpus_str}\n" \
-                f"Here is the {mapping_name}{self._pman.hostmsg}:{mapping}"
+                 f"in one or multiple {sname}s.\n" \
+                 f"However, the following CPUs do not comprise full {sname}(s): {rem_cpus_str}\n" \
+                 f"Here is the {mapping_name}{self._pman.hostmsg}:{mapping}"
 
         raise Error(errmsg)
 
