@@ -977,17 +977,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for pname, val in inprops.items():
-            prop = self._props[pname]
+            self._validate_cpus_vs_scope(self._props[pname], cpus)
 
             if pname == "governor":
                 self._validate_governor_name(val)
-
-            if pname == "intel_pstate_mode":
+            elif pname == "intel_pstate_mode":
                 self._validate_intel_pstate_mode(val)
-
-            self._validate_cpus_vs_scope(prop, cpus)
-
-            if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
+            elif _is_uncore_prop(self._props[pname]) and not self._is_uncore_freq_supported():
                 raise Error(self._uncore_errmsg)
 
         # Setting frequency may be tricky, because there are ordering constraints, so it is done
