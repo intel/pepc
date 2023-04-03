@@ -166,11 +166,6 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
             # Every features should include the 'subprops' sub-dictionary.
             if "subprops" not in prop:
                 prop["subprops"] = {}
-            else:
-                # Propagate the 'sname' key to sub-properties.
-                for subprop in prop["subprops"].values():
-                    if "sname" not in subprop:
-                        subprop["sname"] = prop["sname"]
 
         self._props = copy.deepcopy(self.props)
 

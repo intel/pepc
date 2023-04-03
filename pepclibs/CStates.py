@@ -39,16 +39,19 @@ PROPS = {
             "pkg_cstate_limit_locked" : {
                 "name" : "Package C-state limit lock",
                 "type" : "bool",
+                "sname": PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["sname"],
                 "writable" : False,
             },
             "pkg_cstate_limits" : {
                 "name" : "Available package C-state limits",
                 "type" : "list[str]",
+                "sname": PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["sname"],
                 "writable" : False,
             },
             "pkg_cstate_limit_aliases" : {
                 "name" : "Package C-state limit aliases",
                 "type" : "dict[str,str]",
+                "sname": PCStateConfigCtl.FEATURES["pkg_cstate_limit"]["sname"],
                 "writable" : False,
             },
         },
