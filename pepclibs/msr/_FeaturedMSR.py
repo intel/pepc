@@ -447,9 +447,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         # The private version of the 'self.features' dictionary.
         self._features = {}
 
-        self._set_baseclass_attributes()
-        self._features = copy.deepcopy(self.features)
-
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
 
@@ -462,6 +459,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         if not self._msr:
             self._msr = MSR.MSR(pman=self._pman, cpuinfo=self._cpuinfo)
 
+        self._set_baseclass_attributes()
+        self._features = copy.deepcopy(self.features)
         self._init_features_dict()
 
     def close(self):
