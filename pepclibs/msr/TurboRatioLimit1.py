@@ -53,7 +53,7 @@ class TurboRatioLimit1(_FeaturedMSR.FeaturedMSR):
     def _set_baseclass_attributes(self):
         """Set the attributes the superclass requires."""
 
-        self._features = FEATURES
+        self.features = FEATURES
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

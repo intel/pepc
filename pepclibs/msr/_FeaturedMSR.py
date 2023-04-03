@@ -448,7 +448,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         self._features = {}
 
         self._set_baseclass_attributes()
-        self._features = copy.deepcopy(self._features)
+        self._features = copy.deepcopy(self.features)
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
