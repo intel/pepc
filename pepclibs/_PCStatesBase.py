@@ -160,14 +160,13 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
     def _init_props_dict(self, props):
         """Initialize the 'props' dictionary."""
 
-        self.props = copy.deepcopy(props)
-
-        for prop in self.props.values():
+        for prop in props.values():
             # Every features should include the 'subprops' sub-dictionary.
             if "subprops" not in prop:
                 prop["subprops"] = {}
 
-        self._props = copy.deepcopy(self.props)
+        self._props = copy.deepcopy(props)
+        self.props = props
 
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
