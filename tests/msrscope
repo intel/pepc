@@ -42,7 +42,12 @@ def _find_msr_scope(args, cpuinfo, msr):
     # Set CPU 'args.cpu' to different values and record all CPUs which values have changed. The
     # should be set to min. 2 values, this prevents the value being set to the same value.
     for value in args.values:
+        value = int(value)
         msr.write_bits(args.regaddr, args.bits, value, cpus=(args.cpu, ))
+        if value != msr.read_cpu_bits(args.regaddr, args.bits, args.cpu):
+            raise Error(f"failed to write value '{value}' to MSR 0x{args.regaddr:x} bits "
+                        f"{':'.join(args.bits)}")
+
         for cpu, val in msr.read_bits(args.regaddr, args.bits):
             if info[cpu] != val:
                 cpus.add(cpu)
