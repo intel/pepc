@@ -23,7 +23,7 @@ _MSR_MODULES = (
 # Following features are safe for testing on real HW. The bits of each feature can be written to any
 # value.
 _SAFE_TO_SET_FEATURES = ("epb", "epp", "pkg_control", "c1e_autopromote", "cstate_prewake",
-                         "c1_demotion", "c1_undemotion", "l2_hw_prefetcher", "l1_adj_prefetcher")
+                         "c1_demotion", "c1_undemotion", "l2_hw_prefetcher", "l2_adj_prefetcher")
                          # dcu_hw_prefetcher was removed due to the value changing state randomly.
                          # The issue could be caused by old firmware on our test systems.
 

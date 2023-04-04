@@ -28,7 +28,7 @@ _L2_AND_DCU_CPUS = CPUInfo.CRESTMONTS + \
                    (CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D,) + \
                    CPUInfo.PHIS
 
-# CPU models that support 'l2_hw_prefetcher', 'l1_adj_prefetcher', 'dcu_hw_prefetcher', and
+# CPU models that support 'l2_hw_prefetcher', 'l2_adj_prefetcher', 'dcu_hw_prefetcher', and
 # 'dcu_ip_prefetcher' prefetchers.
 _ALL_PREFETCHERS_CPUS = CPUInfo.GNRS +         \
                         CPUInfo.METEORLAKES +  \
@@ -61,7 +61,7 @@ FEATURES = {
         "vals" : { "on" : 0, "off" : 1},
         "bits" : None,
     },
-    "l1_adj_prefetcher" : {
+    "l2_adj_prefetcher" : {
         "name" : "L2 adjacent cache line prefetcher",
         "sname": "core",
         "help" : """Enable/disable the L2 adjacent cache lines prefetcher, which fetches cache
@@ -114,7 +114,7 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
             self._features["dcu_hw_prefetcher"]["bits"] = (0, 0)
         else:
             self._features["l2_hw_prefetcher"]["bits"]  = (0, 0)
-            self._features["l1_adj_prefetcher"]["bits"] = (1, 1)
+            self._features["l2_adj_prefetcher"]["bits"] = (1, 1)
             self._features["dcu_hw_prefetcher"]["bits"] = (2, 2)
             self._features["dcu_ip_prefetcher"]["bits"] = (3, 3)
 
