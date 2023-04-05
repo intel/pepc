@@ -42,6 +42,14 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
     This is a base class for the 'PState' and 'CState' classes.
     """
 
+    def get_sname(self, pname):
+        """Get scope "sname" for property 'pname'."""
+
+        try:
+            return self._props[pname]["sname"]
+        except KeyError as err:
+            raise Error(f"Property '{pname}' does not exist") from err
+
     @staticmethod
     def _normalize_bool_type_value(prop, val):
         """
