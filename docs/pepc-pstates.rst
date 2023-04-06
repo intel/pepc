@@ -571,7 +571,8 @@ is used.
 Scope
 -----
 
-This property has **package** scope.
+This property has **package** scope. With the following exception, Silvermonts and Airmonts have
+**module** scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -974,7 +975,8 @@ MSR_ENERGY_PERF_BIAS (**0x1B0**), bits **3:0**.
 Scope
 -----
 
-This property has **CPU** scope.
+This property has **CPU** scope. With the following exceptions, Silvermonts have **core** scope,
+Westmeres and Sandybridges have **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
