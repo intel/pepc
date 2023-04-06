@@ -15,6 +15,9 @@ Terminology.
   * MSR scope. MSR scope is defined by the "observability" of MSR writes. For example, if modifying
     an MSR register from CPU X makes the modification visible on all core siblings, the MSR has core
     scope. If the modification is visible on all package siblings, the MSR has package scope.
+  * MSR feature scope, defines the scope for specific bit/bits inside a MSR. Some MSR can be hybrid
+    for example, on Knights Mill MSR_MISC_FEATURE_CONTROL bit 0 has core scope and bit 1 has module
+    scope.
 """
 
 import logging
