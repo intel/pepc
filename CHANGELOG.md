@@ -5,6 +5,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix scope for PStates properties 'epb_hw', 'bus_clock' and CStates
+   properties 'c1_demotion', 'c1_undemotion', 'pkg_cstate_limit'. The scope
+   for these properties is different on different systems.
+ - Fix scope for various MSR-based features, such as EPB, and C1 demotion:
+   it is platform-dependent and was incorrect for some platforms
+   (e.g., Knights Landing).
 ### Added
  - Add '--bus-clock' option to 'pepc pstates info' command.
  - Extend split_csv_line() in Trivial.py.
