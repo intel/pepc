@@ -264,15 +264,15 @@ locked by the BIOS, in which case the package C\-state limit can only be read, b
 
 .TP
 \fB\-\-c1\-demotion\fR
-Get current setting for c1 demotion. Allow/disallow the CPU to demote C6/C7 requests to C1. This option has core scope.
+Get current setting for C1 demotion. Allow/disallow the CPU to demote C6/C7 requests to C1. This option has core scope.
 
 .TP
 \fB\-\-c1\-undemotion\fR
-Get current setting for c1 undemotion. Allow/disallow the CPU to un\-demote previously demoted requests back from C1 to C6/C7. This option has core scope.
+Get current setting for C1 undemotion. Allow/disallow the CPU to un\-demote previously demoted requests back from C1 to C6/C7. This option has core scope.
 
 .TP
 \fB\-\-c1e\-autopromote\fR
-Get current setting for c1E autopromote. When enabled, the CPU automatically converts all C1 requests to C1E requests. This CPU feature is controlled by MSR 0x1fc, bit 1. This option has package scope.
+Get current setting for C1E autopromote. When enabled, the CPU automatically converts all C1 requests to C1E requests. This CPU feature is controlled by MSR 0x1fc, bit 1. This option has package scope.
 
 .TP
 \fB\-\-cstate\-prewake\fR
@@ -342,15 +342,15 @@ locked by the BIOS, in which case the package C\-state limit can only be read, b
 
 .TP
 \fB\-\-c1\-demotion\fR \fI\,[C1_DEMOTION]\/\fR
-Enable or disable c1 demotion. Allow/disallow the CPU to demote C6/C7 requests to C1. Use "on" or "off". This option has core scope.
+Enable or disable C1 demotion. Allow/disallow the CPU to demote C6/C7 requests to C1. Use "on" or "off". This option has core scope.
 
 .TP
 \fB\-\-c1\-undemotion\fR \fI\,[C1_UNDEMOTION]\/\fR
-Enable or disable c1 undemotion. Allow/disallow the CPU to un\-demote previously demoted requests back from C1 to C6/C7. Use "on" or "off". This option has core scope.
+Enable or disable C1 undemotion. Allow/disallow the CPU to un\-demote previously demoted requests back from C1 to C6/C7. Use "on" or "off". This option has core scope.
 
 .TP
 \fB\-\-c1e\-autopromote\fR \fI\,[C1E_AUTOPROMOTE]\/\fR
-Enable or disable c1E autopromote. When enabled, the CPU automatically converts all C1 requests to C1E requests. This CPU feature is controlled by MSR 0x1fc, bit 1. Use "on" or "off". This option has package scope.
+Enable or disable C1E autopromote. When enabled, the CPU automatically converts all C1 requests to C1E requests. This CPU feature is controlled by MSR 0x1fc, bit 1. Use "on" or "off". This option has package scope.
 
 .TP
 \fB\-\-cstate\-prewake\fR \fI\,[CSTATE_PREWAKE]\/\fR

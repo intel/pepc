@@ -101,16 +101,16 @@ Get information about C-states on specified CPUs. By default, prints all informa
    Get package C-state limit (details in 'pkg_cstate_limit_').
 
 **--c1-demotion**
-   Get current setting for c1 demotion (details in 'c1_demotion_').
+   Get current setting for C1 demotion (details in 'c1_demotion_').
 
 **--c1-undemotion**
-   Get current setting for c1 undemotion (details in 'c1_undemotion_').
+   Get current setting for C1 undemotion (details in 'c1_undemotion_').
 
 **--c1e-autopromote**
-   Get current setting for c1E autopromote (details in 'c1e_autopromote_').
+   Get current setting for C1E autopromote (details in 'c1e_autopromote_').
 
 **--cstate-prewake**
-   Get current setting for c-state prewake (details in 'cstate_prewake_').
+   Get current setting for C-state prewake (details in 'cstate_prewake_').
 
 **--idle-driver**
    Get idle driver (details in 'idle_driver_').
@@ -163,16 +163,16 @@ currently configured value(s) will be printed.
    Set package C-state limit (details in 'pkg_cstate_limit_').
 
 **--c1-demotion** *[C1_DEMOTION]*
-   Enable or disable c1 demotion (details in 'c1_demotion_').
+   Enable or disable C1 demotion (details in 'c1_demotion_').
 
 **--c1-undemotion** *[C1_UNDEMOTION]*
-   Enable or disable c1 undemotion (details in 'c1_undemotion_').
+   Enable or disable C1 undemotion (details in 'c1_undemotion_').
 
 **--c1e-autopromote** *[C1E_AUTOPROMOTE]*
-   Enable or disable c1E autopromote (details in 'c1e_autopromote_').
+   Enable or disable C1E autopromote (details in 'c1e_autopromote_').
 
 **--cstate-prewake** *[CSTATE_PREWAKE]*
-   Enable or disable c-state prewake (details in 'cstate_prewake_').
+   Enable or disable C-state prewake (details in 'cstate_prewake_').
 
 **--governor** *[GOVERNOR]*
    Set idle governor (details in 'governor_').
