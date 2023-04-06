@@ -255,7 +255,8 @@ Refer to 'PCStateConfigCtl.py' for all platforms and bits.
 Scope
 -----
 
-This option has **package** scope.
+This option has **core** scope. With the following exceptions, Silvermonts and Airmonts have
+**module** scope, Xeon Phis have **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -283,7 +284,8 @@ MSR_PKG_CST_CONFIG_CONTROL (**0xE2**), bit **26**.
 Scope
 -----
 
-This option has **core** scope.
+This option has **core** scope. With the following exceptions, Silvermonts and Airmonts have
+**module** scope, Xeon Phis have **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -312,7 +314,8 @@ MSR_PKG_CST_CONFIG_CONTROL (**0xE2**), bit **28**.
 Scope
 -----
 
-This option has **core** scope.
+This option has **core** scope. With the following exceptions, Silvermonts and Airmonts have
+**module** scope, Xeon Phis have **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
