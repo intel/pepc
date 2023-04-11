@@ -16,7 +16,7 @@ import logging
 from pathlib import Path
 from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg, MiscFeatureControl
 from pepclibs.msr import PlatformInfo, PowerCtl, PCStateConfigCtl, PMEnable, TurboRatioLimit
-from pepclibs.msr import TurboRatioLimit1
+from pepclibs.msr import TurboRatioLimit1, PackagePowerLimit
 from pepclibs.helperlibs import ArgParse, Logging, ProcessManager, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -87,7 +87,8 @@ CPUInfoData = {
             TurboRatioLimit.MSR_TURBO_RATIO_LIMIT,
             TurboRatioLimit1.MSR_TURBO_RATIO_LIMIT1,
             TurboRatioLimit1.MSR_TURBO_GROUP_CORECNT,
-            TurboRatioLimit1.MSR_TURBO_RATIO_LIMIT_CORES],
+            TurboRatioLimit1.MSR_TURBO_RATIO_LIMIT_CORES,
+            PackagePowerLimit.MSR_PKG_POWER_LIMIT],
          "separator1": ":",
          "separator2": "|",
          "dirname":   "msr",
