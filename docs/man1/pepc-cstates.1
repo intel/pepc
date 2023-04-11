@@ -99,8 +99,7 @@ mean CPU 4.
 Print information in YAML format.
 .TP
 \f[B]--cstates\f[R] \f[I][CATATES]\f[R]
-Comma-separated list of C-states to get information about (all C-states
-by default).
+Comma-separated list of C-states to get information about.
 C-states should be specified by name (e.g., \[aq]C1\[aq]).
 Use \[aq]all\[aq] to specify all the available Linux C-states (this is
 the default).
@@ -127,7 +126,7 @@ Get current setting for C1E autopromote (details in
 \[aq]c1e_autopromote\[aq]).
 .TP
 \f[B]--cstate-prewake\f[R]
-Get current setting for c-state prewake (details in
+Get current setting for C-state prewake (details in
 \[aq]cstate_prewake\[aq]).
 .TP
 \f[B]--idle-driver\f[R]
@@ -205,7 +204,7 @@ Enable or disable C1E autopromote (details in
 \[aq]c1e_autopromote\[aq]).
 .TP
 \f[B]--cstate-prewake\f[R] \f[I][CSTATE_PREWAKE]\f[R]
-Enable or disable c-state prewake (details in \[aq]cstate_prewake\[aq]).
+Enable or disable C-state prewake (details in \[aq]cstate_prewake\[aq]).
 .TP
 \f[B]--governor\f[R] \f[I][GOVERNOR]\f[R]
 Set idle governor (details in \[aq]governor\[aq]).
@@ -290,7 +289,9 @@ For example, Xeons typically do not support anything deeper than PC6.
 Refer to \[aq]PCStateConfigCtl.py\[aq] for all platforms and bits.
 .SS Scope
 .PP
-This option has \f[B]package\f[R] scope.
+This option has \f[B]core\f[R] scope.
+With the following exceptions, Silvermonts and Airmonts have
+\f[B]module\f[R] scope, Xeon Phis have \f[B]package\f[R] scope.
 .PP
    *   *   *   *   *
 .SS c1_demotion
@@ -313,6 +314,8 @@ MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]), bit \f[B]26\f[R].
 .SS Scope
 .PP
 This option has \f[B]core\f[R] scope.
+With the following exceptions, Silvermonts and Airmonts have
+\f[B]module\f[R] scope, Xeon Phis have \f[B]package\f[R] scope.
 .PP
    *   *   *   *   *
 .SS c1_undemotion
@@ -335,6 +338,8 @@ MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]), bit \f[B]28\f[R].
 .SS Scope
 .PP
 This option has \f[B]core\f[R] scope.
+With the following exceptions, Silvermonts and Airmonts have
+\f[B]module\f[R] scope, Xeon Phis have \f[B]package\f[R] scope.
 .PP
    *   *   *   *   *
 .SS c1e_autopromote

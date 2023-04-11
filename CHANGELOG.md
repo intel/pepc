@@ -5,6 +5,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.4.9] - 2023-04-11
+### Fixed
  - Fix scope for PStates properties 'epb_hw', 'bus_clock' and CStates
    properties 'c1_demotion', 'c1_undemotion', 'pkg_cstate_limit'. The scope
    for these properties is different on different systems.
@@ -14,8 +20,6 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
  - Add '--bus-clock' option to 'pepc pstates info' command.
  - Extend split_csv_line() in Trivial.py.
-### Removed
-### Changed
 
 ## [1.4.8] - 2023-03-19
 ### Fixed

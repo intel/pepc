@@ -123,6 +123,9 @@ Get minimum CPU frequency (OS bypass) (details in
 Get maximum CPU frequency (OS bypass) (details in
 \[aq]max_freq_hw\[aq]).
 .TP
+\f[B]--bus-clock\f[R]
+Get bus clock speed (details in \[aq]bus_clock\[aq]).
+.TP
 \f[B]--min-oper-freq\f[R]
 Get minimum CPU operating frequency (details in
 \[aq]min_oper_freq\[aq]).
@@ -239,16 +242,16 @@ Set minimum uncore frequency (details in \[aq]min_uncore_freq\[aq]).
 Set maximum uncore frequency (details in \[aq]max_uncore_freq\[aq]).
 .TP
 \f[B]--epp\f[R] \f[I][EPP]\f[R]
-Set EPP via sysfs) (details in \[aq]epp\[aq]).
+Set EPP via sysfs (details in \[aq]epp\[aq]).
 .TP
 \f[B]--epp-hw\f[R] \f[I][EPP_HW]\f[R]
-Set EPP via MSR 0x774) (details in \[aq]epp_hw\[aq]).
+Set EPP via MSR (details in \[aq]epp_hw\[aq]).
 .TP
 \f[B]--epb\f[R] \f[I][EPB]\f[R]
-Set EPB via sysfs) (details in \[aq]epb\[aq]).
+Set EPB via sysfs (details in \[aq]epb\[aq]).
 .TP
 \f[B]--epb-hw\f[R] \f[I][EPB_HW]\f[R]
-Set EPB via MSR 0x1b0) (details in \[aq]epb_hw\[aq]).
+Set EPB via MSR (details in \[aq]epb_hw\[aq]).
 .TP
 \f[B]--intel-pstate-mode\f[R] \f[I][INTEL_PSTATE_MODE]\f[R]
 Set operation mode of \[aq]intel_pstate\[aq] driver (details in
@@ -545,6 +548,28 @@ MSR_HWP_REQUEST (\f[B]0x774\f[R]), bits \f[B]15:8\f[R].
 .SS Scope
 .PP
 This property has \f[B]CPU\f[R] scope.
+.PP
+   *   *   *   *   *
+.SS bus_clock
+.PP
+bus_clock - Bus clock speed.
+.SS Synopsis
+.PP
+pepc pstates \f[I]info\f[R] [\f[B]--bus-clock\f[R]]
+.SS Description
+.PP
+Bus clock refers to how quickly the system bus can move data from one
+computer component to the other.
+.SS Source
+.PP
+MSR_FSB_FREQ (\f[B]0xCD\f[R]), bits \f[B]2:0\f[R].
+For platforms that don\[aq]t support MSR_FSB_FREQ, \f[B]100.0MHz\f[R] is
+used.
+.SS Scope
+.PP
+This property has \f[B]package\f[R] scope.
+With the following exception, Silvermonts and Airmonts have
+\f[B]module\f[R] scope.
 .PP
    *   *   *   *   *
 .SS min_oper_freq
@@ -866,6 +891,8 @@ MSR_ENERGY_PERF_BIAS (\f[B]0x1B0\f[R]), bits \f[B]3:0\f[R].
 .SS Scope
 .PP
 This property has \f[B]CPU\f[R] scope.
+With the following exceptions, Silvermonts have \f[B]core\f[R] scope,
+Westmeres and Sandybridges have \f[B]package\f[R] scope.
 .PP
    *   *   *   *   *
 .SS driver
