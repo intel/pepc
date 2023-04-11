@@ -83,4 +83,4 @@ def run_pepc(arguments, pman, exp_exc=None):
     if pman.is_remote:
         warn_only = _WARN_ONLY
 
-    TestRunner.run_tool(_Pepc, arguments, pman, exp_exc, warn_only)
+    TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman, exp_exc, warn_only)

@@ -15,10 +15,11 @@ import sys
 logging.basicConfig(level=logging.DEBUG)
 _LOG = logging.getLogger()
 
-def run_tool(tool, arguments, pman=None, exp_exc=None, warn_only=None):
+def run_tool(tool, toolname, arguments, pman=None, exp_exc=None, warn_only=None):
     """
     Run pepc command and verify the outcome. The arguments are as follows.
     * tool - the main Python module of the tool to run.
+    * toolname - the name of the tool to run, used in error messages.
     * arguments - the arguments to run the command with, e.g. 'pstate info --cpus 0-43'.
     * pman - optionally provide a process manager object to pass to the tool and tell it which host
              to run the tests on.
@@ -44,7 +45,7 @@ def run_tool(tool, arguments, pman=None, exp_exc=None, warn_only=None):
     except Exception as err: # pylint: disable=broad-except
         if exp_exc is None:
             err_type = type(err)
-            errmsg = f"command '{tool.TOOLNAME} {arguments}' raised the following exception:\n" \
+            errmsg = f"command '{toolname} {arguments}' raised the following exception:\n" \
                      f"- {type(err).__name__}({err})"
 
             if err_type in warn_only and warn_only[err_type] in arguments:
@@ -56,12 +57,12 @@ def run_tool(tool, arguments, pman=None, exp_exc=None, warn_only=None):
         if isinstance(err, exp_exc):
             return None
 
-        assert False, f"command '{tool.TOOLNAME} {arguments}' raised the following exception:\n" \
+        assert False, f"command '{toolname} {arguments}' raised the following exception:\n" \
                       f"- {type(err).__name__}({err})\nbut it was expected to raise the following" \
                       f"exception:\n- {exp_exc.__name__}"
 
     if exp_exc is not None:
-        assert False, f"command '{tool.TOOLNAME} {arguments}' did not raise the following " \
+        assert False, f"command '{toolname} {arguments}' did not raise the following " \
                       f"exception type:\n- {exp_exc.__name__}"
 
     return ret
