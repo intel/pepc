@@ -16,7 +16,7 @@ from setuptools import setup, find_packages
 def get_version(filename):
     """Fetch the project version number."""
 
-    with open(filename, "r") as fobj:
+    with open(filename, "r", encoding="utf-8") as fobj:
         for line in fobj:
             matchobj = re.match(r'^_VERSION = "(\d+.\d+.\d+)"$', line)
             if matchobj:
