@@ -53,7 +53,11 @@ class MSR(ClassHelpers.SimpleCloseContext):
     2. Single-CPU I/O.
         * Read/write entire MSR: 'read_cpu()', 'write_cpu()'.
         * Read/write MSR bits range: 'read_cpu_bits()', 'write_cpu_bits()'.
-    3. Miscellaneous helpers.
+    3. Transactions support.
+        * Start a transaction: start_transaction().
+        * Flush the transaction buffer: flush_transaction().
+        * Commit the transaction: commit_transaction().
+    4. Miscellaneous helpers.
         * Get/set bits from/in a user-provided MSR value: 'get_bits()', 'set_bits()'.
     """
 
