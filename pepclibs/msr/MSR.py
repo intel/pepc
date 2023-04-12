@@ -102,6 +102,9 @@ class MSR(ClassHelpers.SimpleCloseContext):
         if not self._in_transaction:
             raise Error("cannot commit a transaction, it did not start")
 
+        if self._transaction_buffer:
+            _LOG.debug("flushing MSR transaction buffer")
+
         for cpu, to_write in self._transaction_buffer.items():
             # Write all the dirty data.
             path = Path(f"/dev/cpu/{cpu}/msr")
@@ -129,6 +132,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         self.flush_transaction()
         self._in_transaction = False
+        _LOG.debug("MSR transaction has been committed")
 
     def _normalize_bits(self, bits):
         """Validate and normalize bits range 'bits'."""
