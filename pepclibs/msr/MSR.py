@@ -89,10 +89,11 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         self._in_transaction = True
 
-    def commit_transaction(self):
+    def flush_transaction(self):
         """
-        Commit the transaction. Write all the MSR registers that have been modified after
-        'start_transaction()'.
+        Flush the transaction buffer. Write all the buffered data to the MSR registers. If there are
+        multiple writes to the same MSR register, they will be merged into a single write operation.
+        The transaction does not stop after flushing.
         """
 
         if not self._enable_cache:
@@ -118,6 +119,15 @@ class MSR(ClassHelpers.SimpleCloseContext):
                                     f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         self._transaction_buffer.clear()
+
+    def commit_transaction(self):
+        """
+        Commit the transaction. Write all the buffered data to the MSR registers and close the
+        transaction. Note, there is no atomicity guarantee, this is not like a database transaction,
+        this is just an optimization to reduce the amount of MSR I/O.
+        """
+
+        self.flush_transaction()
         self._in_transaction = False
 
     def _normalize_bits(self, bits):
