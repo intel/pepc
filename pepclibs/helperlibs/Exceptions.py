@@ -62,6 +62,9 @@ class ErrorNotSupported(Error):
 class ErrorPermissionDenied(Error):
     """Something was not found."""
 
+class ErrorVerifyFailed(Error):
+    """Verification failed."""
+
 class ErrorConnect(Error):
     """Failed to connect to a remote host."""
 
