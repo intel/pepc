@@ -106,6 +106,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         get_method = getattr(self, f"_get_{fname}", None)
         if get_method:
             yield from get_method(cpus=cpus)
+        elif hasattr(self, "_get_feature"):
+            yield from self._get_feature(fname, cpus=cpus)
         else:
             bits = self._features[fname]["bits"]
             for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus,
@@ -189,6 +191,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         set_method = getattr(self, f"_set_{fname}", None)
         if set_method:
             set_method(val, cpus=cpus)
+        elif hasattr(self, "_set_feature"):
+            yield from self._set_feature(fname, val, cpus=cpus)
         else:
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus, sname=finfo["sname"])
 
