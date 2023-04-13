@@ -192,7 +192,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         if set_method:
             set_method(val, cpus=cpus)
         elif hasattr(self, "_set_feature"):
-            yield from self._set_feature(fname, val, cpus=cpus)
+            self._set_feature(fname, val, cpus=cpus)
         else:
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus, sname=finfo["sname"])
 
