@@ -421,7 +421,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             return Path(path).is_file() and os.access(path, os.X_OK)
         except OSError as err:
             msg = Error(err).indent(2)
-            raise Error(f"failed to check if '{path}' exists and it is an executable file:\n" \
+            raise Error(f"failed to check if '{path}' exists and it is an executable file:\n"
                         f"{msg}") from None
 
     @staticmethod
@@ -432,7 +432,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             return Path(path).is_socket()
         except OSError as err:
             msg = Error(err).indent(2)
-            raise Error(f"failed to check if '{path}' exists and it is a Unix socket file:\n" \
+            raise Error(f"failed to check if '{path}' exists and it is a Unix socket file:\n"
                         f"{msg}") from None
 
     @staticmethod

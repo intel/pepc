@@ -267,7 +267,7 @@ def parse_int_list(nums, ints=False, dedup=False, sort=False):
                     raise Error(f"bad range '{elts}', should be two integers separated by '-'")
 
                 if elts[0] > elts[1]:
-                    raise Error(f"bad range {elts[0]}-{elts[1]}, the first number should be " \
+                    raise Error(f"bad range {elts[0]}-{elts[1]}, the first number should be "
                                 f"smaller than thesecond")
 
                 result += range(elts[0], elts[1] + 1)

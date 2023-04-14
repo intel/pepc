@@ -362,7 +362,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 split = line.split(sep)
 
                 if len(split) != 2:
-                    raise Error(f"unexpected line format, expected <path>{sep}<value>, received\n" \
+                    raise Error(f"unexpected line format, expected <path>{sep}<value>, received\n"
                                 f"{line}")
 
                 # Create file in temporary directory. For example:
@@ -417,7 +417,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             split = line.split(sep1)
 
             if len(split) != 2:
-                raise Error(f"unexpected line format in file '{datapath}', expected <path>{sep1}" \
+                raise Error(f"unexpected line format in file '{datapath}', expected <path>{sep1}"
                             f"<reg_value_pairs>, received\n{line}")
 
             path = split[0].strip()
@@ -428,7 +428,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 regaddr, regval = reg_val_pair.split(sep2)
 
                 if len(split) != 2:
-                    raise Error(f"unexpected register-value format in file '{datapath}', " \
+                    raise Error(f"unexpected register-value format in file '{datapath}', "
                                 f"expected <regaddr>{sep2}<value>, received\n{line}")
 
                 regaddr = int(regaddr)
@@ -474,7 +474,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         confpath = datapath / f"{module}.yaml"
         if not confpath.exists():
-            raise ErrorNotSupported(f"testdata configuration for module '{module}' not found " \
+            raise ErrorNotSupported(f"testdata configuration for module '{module}' not found "
                                     f"({confpath}).")
 
         config = YAML.load(confpath)

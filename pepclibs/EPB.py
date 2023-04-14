@@ -73,7 +73,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
             raise ErrorNotSupported(f"EPB value must be an integer within [{_EPB_MIN},{_EPB_MAX}]")
         elif val not in _EPB_POLICIES:
             policies = ", ".join(_EPB_POLICIES)
-            raise ErrorNotSupported(f"EPB value must be one of the following EPB policies: " \
+            raise ErrorNotSupported(f"EPB value must be one of the following EPB policies: "
                                     f"{policies}, or integer within [{_EPB_MIN},{_EPB_MAX}]")
 
 # ------------------------------------------------------------------------------------------------ #

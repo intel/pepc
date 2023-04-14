@@ -34,8 +34,8 @@ def cpu_hotplug_online_command(args, pman):
     """Implements the 'cpu-hotplug online' command."""
 
     if args.cores or args.packages or args.core_siblings:
-        raise Error("'--cores', '--packages' and '--core-siblings' options are not supported for " \
-                    "'online' commands. This is because the Linux kernel does not provide " \
+        raise Error("'--cores', '--packages' and '--core-siblings' options are not supported for "
+                    "'online' commands. This is because the Linux kernel does not provide "
                     "topology information for offline CPUs.")
 
     if not args.cpus:

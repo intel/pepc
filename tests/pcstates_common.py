@@ -89,7 +89,7 @@ def _verify_value_type(pname, ptype, value):
         assert False, f"Unknown '{pname}' property datatype: {ptype}"
 
     assert ret, f"Property '{pname}' value '{value}' has the wrong datatype. Should be " \
-                  f"'{ptype}' but returns type '{type(value)}'"
+                f"'{ptype}' but returns type '{type(value)}'"
 
 def verify_props_value_type(props, pinfo):
     """

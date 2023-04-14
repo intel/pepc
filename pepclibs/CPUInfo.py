@@ -571,7 +571,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if not nums.issubset(valid_nums):
             valid = Human.rangify(valid_nums)
             invalid = Human.rangify(nums - valid_nums)
-            raise Error(f"{lvl} {invalid} do not exist{self._pman.hostmsg}, valid {lvl} numbers " \
+            raise Error(f"{lvl} {invalid} do not exist{self._pman.hostmsg}, valid {lvl} numbers "
                         f"are: {valid}")
 
         return list(result)

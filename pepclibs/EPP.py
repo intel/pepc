@@ -92,12 +92,12 @@ class EPP(ClassHelpers.SimpleCloseContext):
         else:
             policies = self._get_available_policies(0)
             if not policies:
-                raise ErrorNotSupported(f"No EPP policies supported{self._pman.hostmsg}, please " \
+                raise ErrorNotSupported(f"No EPP policies supported{self._pman.hostmsg}, please "
                                         f"use instead an integer within [{_EPP_MIN},{_EPP_MAX}]")
 
             if val not in policies:
                 policies = ", ".join(policies)
-                raise ErrorNotSupported(f"EPP value must be one of the following EPP policies: " \
+                raise ErrorNotSupported(f"EPP value must be one of the following EPP policies: "
                                         f"{policies}, or integer within [{_EPP_MIN},{_EPP_MAX}]")
 
 # ------------------------------------------------------------------------------------------------ #
