@@ -19,7 +19,7 @@ class Error(Exception):
         msg = str(msg)
         super().__init__(msg)
 
-        for key, val in kwargs:
+        for key, val in kwargs.items():
             setattr(self, key, val)
 
         if args:
