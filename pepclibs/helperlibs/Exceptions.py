@@ -13,13 +13,15 @@ Exception types used by all the modules in this package.
 class Error(Exception):
     """The base class for all exceptions raised by this project."""
 
-    def __init__(self, msg, *args, errno=None):
+    def __init__(self, msg, *args, **kwargs):
         """The constructor."""
 
         msg = str(msg)
         super().__init__(msg)
-        if errno is not None:
-            self.errno = errno
+
+        for key, val in kwargs:
+            setattr(self, key, val)
+
         if args:
             self.msg = msg % tuple(args)
         else:
