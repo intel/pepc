@@ -1,3 +1,10 @@
+pepc (1.4.10) unstable; urgency=low
+
+  * Fix a crash in RHEL, which has an empty newline in '/etc/release'  * do not
+    choke on it.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 14 Apr 2023 00:00:00 +0200
+
 pepc (1.4.9) unstable; urgency=low
 
   * Fix scope for PStates properties 'epb_hw', 'bus_clock' and CStates

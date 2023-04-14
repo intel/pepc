@@ -5,11 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix a crash in RHEL, which has an empty newline in '/etc/release' - do not
-   choke on it.
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.10] - 2023-04-14
+### Fixed
+ - Fix a crash in RHEL, which has an empty newline in '/etc/release' - do not
+   choke on it.
 
 ## [1.4.9] - 2023-04-11
 ### Fixed
