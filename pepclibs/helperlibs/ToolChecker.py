@@ -12,10 +12,13 @@ This module provides a capability of checking if a tool is installed on a Linux 
 meaningful OS package installation suggestion if it is not installed.
 """
 
+import logging
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 from pepclibs.helperlibs import ClassHelpers
+
+_LOG = logging.getLogger()
 
 #
 # Tools information dictionary. Maps tool names to OS package names.
@@ -98,8 +101,19 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
             with contextlib.suppress(self._pman.Error):
                 with self._pman.open(path, "r") as fobj:
                     for line in fobj:
-                        key, val = line.rstrip().split("=")
-                        osinfo[key] = val.strip('"')
+                        line = line.strip()
+                        if not line:
+                            continue
+                        if line.startswith("#"):
+                            continue
+
+                        split_line = line.split("=")
+                        if len(split_line) != 2:
+                            _LOG.warning("unexpected line in '%s'%s:\n%s\nExpected lines have have "
+                                         "'key=value' format.", path, self._pman.hostmsg, line)
+                            continue
+
+                        osinfo[split_line[0]] = split_line[1].strip('"')
             if osinfo:
                 break
 
