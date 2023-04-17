@@ -10,7 +10,8 @@ Build-Depends: debhelper (>= 12),
                python3-py,
                python3-iniconfig,
                python3-exceptiongroup,
-               python3-pluggy
+               python3-pluggy,
+               python3-yaml
 Standards-Version: 3.9.8
 Homepage: https://intelpedia.intel.com/ServerPowerLab/Pepc
 X-Python3-Version: >= 3.7
