@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.4.11] - 2023-04-17
+### Fixed
+ - Fix Debian build dependency for pytests to run in build environment.
+
 ## [1.4.10] - 2023-04-14
 ### Fixed
  - Fix a crash in RHEL, which has an empty newline in '/etc/release' - do not
