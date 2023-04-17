@@ -5,11 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix Debian build dependency for pytests to run in build environment
-   (take 2).
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.12] - 2023-04-17
+### Fixed
+ - Fix Debian build dependency for pytests to run in build environment
+   (take 2).
 
 ## [1.4.11] - 2023-04-17
 ### Fixed

@@ -1,3 +1,10 @@
+pepc (1.4.12) unstable; urgency=low
+
+  * Fix Debian build dependency for pytests to run in build environment
+    (take 2).
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Mon, 17 Apr 2023 00:00:00 +0200
+
 pepc (1.4.11) unstable; urgency=low
 
   * Fix Debian build dependency for pytests to run in build environment.
