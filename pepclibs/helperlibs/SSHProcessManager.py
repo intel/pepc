@@ -875,8 +875,11 @@ for entry in os.listdir(path):
 
         entries = {}
         for line in stdout.splitlines():
-            entry, mode, ctime = Trivial.split_csv_line(line.strip(), sep=" ")
-            entries[entry] = {"name": entry, "ctime": float(ctime), "mode": int(mode)}
+            entry = Trivial.split_csv_line(line.strip(), sep=" ")
+            if len(entry) != 3:
+                raise Error(f"BUG: failed to list directory '{path}': received the following "
+                            f"unexpected line:\n{line}\nExpected line format: 'entry mode ctime'")
+            entries[entry[0]] = {"name": entry[0], "ctime": float(entry[2]), "mode": int(entry[1])}
 
         for einfo in sorted(entries.values(), key=itemgetter("ctime"), reverse=True):
             yield (einfo["name"], path / einfo["name"], einfo["mode"])
