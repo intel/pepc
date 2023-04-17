@@ -349,7 +349,12 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
             for cpu in cpus:
                 self._pcache.remove(regaddr, cpu, sname=sname)
-                new_val = self._read_cpu(regaddr, cpu)
+
+            for cpu in cpus:
+                if self._pcache.is_cached(regaddr, cpu):
+                    continue
+
+                new_val = self.read_cpu(regaddr, cpu, sname=sname)
                 if new_val != regval:
                     err_msg = f"verification failed for MSR '{regaddr:#x}' on CPU {cpu}\n" \
                               f"{self._pman.hostmsg}: wrote '{regval:#x}', read back '{new_val:#x}'"
