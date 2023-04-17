@@ -71,11 +71,12 @@ class WrapExceptions:
         follows.
           * obj - the object to intercept and translate exceptions for.
           * methods - list of methods to intercept exceptions for. All non-private methods by
-            default.
+                      default.
           * exceptions - list of exceptions to intercept and translate.
           * target_exception - the target exception type to translate to ('Error' by default).
           * get_err_prefix - a method which will be called when forming the exception message.
-            Should return a string, which will be used as the exception message prefix.
+                             Should return a string, which will be used as the exception message
+                             prefix.
 
         The purpose of this class is to translate exceptions raised by methods of 'obj' to the
         'target_exception' type.
@@ -101,7 +102,7 @@ class WrapExceptions:
                 continue
 
             # If the attribute is not a private attribute and it is a function, then wrap it.
-            if (name[0] != "_" and hasattr(value, "__call__")):
+            if name[0] != "_" and hasattr(value, "__call__"):
                 self._wrap(name)
             # But we want to wrap iteration methods.
             elif name in {"__next__", "__iter__"}:
