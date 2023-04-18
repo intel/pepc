@@ -42,8 +42,8 @@ class WrapExceptions:
 
         # pylint: disable=protected-access
         errno = getattr(err, "errno", None)
-        if self._we_get_err_prefix:
-            msg = f"{self._we_get_err_prefix(self._obj, name)}: {err}"
+        if self._get_err_prefix:
+            msg = f"{self._get_err_prefix(self._obj, name)}: {err}"
             return self._target_exception(msg, errno=errno)
         return self._target_exception(f"method '{name}()' failed: {err}", errno=errno)
         # pylint: enable=protected-access
@@ -59,7 +59,7 @@ class WrapExceptions:
             except self._target_exception:
                 # Do not override the exception if it already has the 'self._target_exception' type.
                 raise
-            except self._we_exceptions as err:
+            except self._exceptions as err:
                 raise self._get_exception(name, err) from err
 
         setattr(self, name, types.MethodType(wrapper, self))
@@ -90,8 +90,8 @@ class WrapExceptions:
 
         self._target_exception = target_exception
         self._obj = obj
-        self._we_exceptions = exceptions
-        self._we_get_err_prefix = get_err_prefix
+        self._exceptions = exceptions
+        self._get_err_prefix = get_err_prefix
 
         if not methods:
             methods = dir(obj)
