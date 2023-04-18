@@ -747,8 +747,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                     data = data.decode("utf-8")
                 except UnicodeError as err:
                     msg = Error(err).indent(2)
-                    raise Error(f"failed to decode data read from '{fobj._orig_fpath_}':\n{msg}") \
-                          from None
+                    errmsg = get_err_prefix(fobj._obj, "read")
+                    raise Error(f"{errmsg}: failed to decode data after reading:\n{msg}") from None
 
             return data
 
@@ -758,16 +758,17 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             support only binary mode).
             """
 
-            errmsg = f"failed to write to '{fobj._orig_fpath_}': "
             if "b" not in fobj._orig_fmode_:
                 try:
                     data = data.encode("utf-8")
                 except UnicodeError as err:
                     msg = Error(err).indent(2)
-                    raise Error(f"{errmsg}: failed to encode data before writing:\n{msg}") from None
+                    errmsg = get_err_prefix(fobj, "write")
+                    raise Error(f"{errmsg}:\n{msg}\nFailed to encode data before writing") from None
                 except AttributeError as err:
                     msg = Error(err).indent(2)
-                    raise Error(f"{errmsg}: the data to write must be a string:\n{msg}") from None
+                    errmsg = get_err_prefix(fobj, "write")
+                    raise Error(f"{errmsg}:\n{msg}\nThe data to write must be a string") from None
 
             return fobj._orig_fwrite_(data)
 

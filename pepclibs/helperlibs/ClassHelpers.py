@@ -40,10 +40,11 @@ class WrapExceptions:
         method 'name'.
         """
 
+        errmsg = Error(err).indent(2)
         if self._get_err_prefix:
-            msg = f"{self._get_err_prefix(self._obj, name)}: {err}"
+            msg = f"{self._get_err_prefix(self._obj, name)}:\n{errmsg}"
         else:
-            msg = f"method '{name}()' failed: {err}"
+            msg = f"method '{name}()' failed:\n{errmsg}"
 
         errno = getattr(err, "errno", None)
         return target_exception(msg, errno=errno)
