@@ -102,7 +102,7 @@ class WrapExceptions:
                 continue
 
             # If the attribute is not a private attribute and it is a function, then wrap it.
-            if name[0] != "_" and hasattr(value, "__call__"):
+            if not name.startswith("_") and hasattr(value, "__call__"):
                 self._wrap(name)
             # But we want to wrap iteration methods.
             elif name in {"__next__", "__iter__"}:
