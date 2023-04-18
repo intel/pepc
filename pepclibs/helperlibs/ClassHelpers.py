@@ -12,7 +12,7 @@ Miscellaneous common helpers for class objects.
 
 import types
 import logging
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNotFound
 
 _LOG = logging.getLogger()
 
@@ -34,19 +34,19 @@ class SimpleCloseContext():
 class WrapExceptions:
     """This class allows for wrapping objects in order to intercept their exceptions."""
 
-    def _get_exception(self, name, err):
+    def _get_exception(self, name, err, target_exception):
         """
-        Format and return an 'self._target_exception' exception object for exception 'err' happened
-        in method 'name'.
+        Format and return a 'target_exception' exception object for exception 'err' happened in
+        method 'name'.
         """
 
-        # pylint: disable=protected-access
-        errno = getattr(err, "errno", None)
         if self._get_err_prefix:
             msg = f"{self._get_err_prefix(self._obj, name)}: {err}"
-            return self._target_exception(msg, errno=errno)
-        return self._target_exception(f"method '{name}()' failed: {err}", errno=errno)
-        # pylint: enable=protected-access
+        else:
+            msg = f"method '{name}()' failed: {err}"
+
+        errno = getattr(err, "errno", None)
+        return target_exception(msg, errno=errno)
 
     def _wrap(self, name):
         """Wrap the 'name' method."""
@@ -56,53 +56,44 @@ class WrapExceptions:
 
             try:
                 return getattr(self._obj, name)(*args, **kwargs)
-            except self._target_exception:
-                # Do not override the exception if it already has the 'self._target_exception' type.
+            except Error:
+                # Do not translate exceptions that are already based on 'Error'.
                 raise
-            except self._exceptions as err:
-                raise self._get_exception(name, err) from err
+            except PermissionError as err:
+                raise self._get_exception(name, err, ErrorPermissionDenied) from err
+            except FileNotFoundError as err:
+                raise self._get_exception(name, err, ErrorNotFound) from err
+            except Exception as err:
+                raise self._get_exception(name, err, Error) from err
 
         setattr(self, name, types.MethodType(wrapper, self))
 
-    def __init__(self, obj, methods=None, exceptions=None, target_exception=None,
-                 get_err_prefix=None):
+    def __init__(self, obj, get_err_prefix=None):
         """
-        Intercept and translate exceptions 'exceptions' for object 'obj'. The arguments are as
-        follows.
+        Intercept and translate exceptions of object 'obj' to exceptions defined in 'Exceptions.py'.
+        The arguments are as follows.
           * obj - the object to intercept and translate exceptions for.
-          * methods - list of methods to intercept exceptions for. All non-private methods by
-                      default.
-          * exceptions - list of exceptions to intercept and translate.
-          * target_exception - the target exception type to translate to ('Error' by default).
           * get_err_prefix - a method which will be called when forming the exception message.
                              Should return a string, which will be used as the exception message
                              prefix.
 
-        The purpose of this class is to translate exceptions raised by methods of 'obj' to the
-        'target_exception' type.
+        The translation is as follows.
+           * PermissionError -> ErrorPermissionDenied
+           * FileNotFoundError -> ErrorNotFound
+           * If source exception is based on 'Exception', translate to 'Error', otherwise do not
+             translate.
         """
 
-        if not exceptions:
-            exceptions = (Exception, )
-
-        if not target_exception:
-            target_exception = Error
-
-        self._target_exception = target_exception
         self._obj = obj
-        self._exceptions = exceptions
         self._get_err_prefix = get_err_prefix
 
-        if not methods:
-            methods = dir(obj)
-
-        for name in methods:
-            value = getattr(obj, name, None)
-            if not value:
+        for name in dir(obj):
+            attr = getattr(obj, name, None)
+            if not attr:
                 continue
 
             # If the attribute is not a private attribute and it is a function, then wrap it.
-            if not name.startswith("_") and hasattr(value, "__call__"):
+            if not name.startswith("_") and hasattr(attr, "__call__"):
                 self._wrap(name)
             # But we want to wrap iteration methods.
             elif name in {"__next__", "__iter__"}:

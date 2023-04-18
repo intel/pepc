@@ -316,12 +316,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(err).indent(2)
             raise Error(f"{errmsg}\n{msg}") from None
 
-        # Make sure I/O methods raise 'ErrorPermissionDenied' on 'PermissionError'.
-        fobj = ClassHelpers.WrapExceptions(fobj, methods=("write", "flush", "close"),
-                                           exceptions=(PermissionError,),
-                                           target_exception=ErrorPermissionDenied,
-                                           get_err_prefix=get_err_prefix)
-        # Make sure all methods raise only the 'Error' exception.
+        # Make sure all file methods raise only exceptions derived from 'Error'.
         return ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
 
     @staticmethod
