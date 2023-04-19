@@ -813,8 +813,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         fobj.write = types.MethodType(_write_, fobj)
 
         # Make sure methods of 'fobj' always raise the 'Error' exception.
-        fobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
-        return fobj
+        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
 
     def time_time(self):
         """
