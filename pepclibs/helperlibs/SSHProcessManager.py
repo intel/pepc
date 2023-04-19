@@ -798,7 +798,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except FileNotFoundError as err:
             msg = Error(err).indent(2)
             raise ErrorNotFound(f"{errmsg}\n{msg}") from None
-        except BaseException as err:
+        except Exception as err:
             msg = Error(err).indent(2)
             raise Error(f"{errmsg}\n{msg}") from err
 
