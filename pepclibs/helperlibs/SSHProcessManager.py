@@ -740,11 +740,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             support only binary mode).
             """
 
-            try:
-                data = fobj._orig_fread_(size=size)
-            except BaseException as err:
-                msg = Error(err).indent(2)
-                raise Error(f"failed to read from '{fobj._orig_fpath_}':\n{msg}") from err
+            data = fobj._orig_fread_(size=size)
 
             if "b" not in fobj._orig_fmode_:
                 try:
@@ -773,14 +769,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                     msg = Error(err).indent(2)
                     raise Error(f"{errmsg}: the data to write must be a string:\n{msg}") from None
 
-            try:
-                return fobj._orig_fwrite_(data)
-            except PermissionError as err:
-                msg = Error(err).indent(2)
-                raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
-            except BaseException as err:
-                msg = Error(err).indent(2)
-                raise Error(f"{errmsg}\n{msg}") from err
+            return fobj._orig_fwrite_(data)
 
         def get_err_prefix(fobj, method):
             """Return the error message prefix."""
