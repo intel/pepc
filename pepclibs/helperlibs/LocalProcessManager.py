@@ -297,9 +297,9 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         def get_err_prefix(fobj, method):
             """Return the error message prefix."""
-            return f"method '{method}()' failed for {fobj.name}"
+            return f"method '{method}()' failed for file '{fobj.name}'"
 
-        errmsg = f"cannot open file '{path}' with mode '{mode}': "
+        errmsg = f"failed to open file '{path}' with mode '{mode}': "
         try:
             # Binary mode doesn't take an encoding argument.
             if "b" in mode:

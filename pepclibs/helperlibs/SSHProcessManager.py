@@ -789,7 +789,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         path = str(path) # In case it is a pathlib.Path() object.
         sftp = self._get_sftp()
 
-        errmsg = f"failed to open file '{path}' on {self.hostname} via SFTP: "
+        errmsg = f"failed to open file '{path}' with mode '{mode}' on {self.hostname} via SFTP: "
         try:
             fobj = sftp.file(path, mode)
         except PermissionError as err:
