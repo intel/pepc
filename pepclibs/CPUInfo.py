@@ -73,7 +73,6 @@ INTEL_FAM6_NEHALEM = 0x1E              # Nehalem client.
 INTEL_FAM6_CORE2_MEROM = 0x0F          # Intel Core 2.
 
 # Atoms.
-INTEL_FAM6_GRANDRIDGE = 0xB6           # Grand Ridge, Logansville.
 INTEL_FAM6_ATOM_TREMONT = 0x96         # Elkhart Lake.
 INTEL_FAM6_ATOM_TREMONT_L = 0x9C       # Jasper Lake.
 INTEL_FAM6_ATOM_GOLDMONT = 0x5C        # Apollo Lake.
@@ -89,6 +88,7 @@ INTEL_FAM6_ATOM_BONNELL_MID = 0x26     # Silverthorne, Lincroft.
 INTEL_FAM6_ATOM_BONNELL = 0x1C         # Diamondville, Pineview.
 
 # Atom microservers.
+INTEL_FAM6_GRANDRIDGE = 0xB6           # Grand Ridge, Logansville.
 INTEL_FAM6_TREMONT_D = 0x86            # Snow Ridge, Jacobsville.
 INTEL_FAM6_GOLDMONT_D = 0x5F           # Denverton, Harrisonville.
 INTEL_FAM6_ATOM_SILVERMONT_D = 0x4D    # Avaton, Rangely.
