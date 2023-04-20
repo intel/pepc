@@ -21,6 +21,7 @@ from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHel
 # CPU model numbers.
 #
 # Xeons.
+INTEL_FAM6_SIERRAFOREST_X = 0xAF       # Sierra Forrest Xeon.
 INTEL_FAM6_GRANITERAPIDS_X = 0xAD      # Granite Rapids Xeon.
 INTEL_FAM6_GRANITERAPIDS_D = 0xAE      # Granite Rapids Xeon D.
 INTEL_FAM6_EMERALDRAPIDS_X = 0xCF      # Emerald Rapids Xeon.
@@ -156,7 +157,8 @@ NEHALEMS =     (INTEL_FAM6_NEHALEM,
                 INTEL_FAM6_NEHALEM_EP,
                 INTEL_FAM6_NEHALEM_EX)
 
-CRESTMONTS =    (INTEL_FAM6_GRANDRIDGE,)
+CRESTMONTS =    (INTEL_FAM6_GRANDRIDGE,
+                 INTEL_FAM6_SIERRAFOREST_X)
 TREMONTS =     (INTEL_FAM6_ATOM_TREMONT,
                 INTEL_FAM6_ATOM_TREMONT_L,
                 INTEL_FAM6_TREMONT_D,)

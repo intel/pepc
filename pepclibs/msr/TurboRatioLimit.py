@@ -50,7 +50,7 @@ _CT_CPUS = CPUInfo.METEORLAKES +  \
 # core" CPUs. The same MSR is called 'MSR_TURBO_RATIO_LIMIT1' for CPUs that do not have groups in
 # 'MSR_TURBO_RATIO_LIMIT'.
 _GT_CPUS = CPUInfo.GNRS + \
-           (CPUInfo.INTEL_FAM6_GRANDRIDGE,) + \
+           CPUInfo.CRESTMONTS + \
            CPUInfo.EMRS + \
            CPUInfo.SPRS + \
            (CPUInfo.INTEL_FAM6_TREMONT_D,) +  \
