@@ -491,9 +491,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        if getattr(self, "_msr_drv", None):
-            if self._unload_msr_drv:
-                self._msr_drv.unload()
-            self._msr_drv = None
+        if self._unload_msr_drv:
+            self._msr_drv.unload()
 
-        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman",))
+        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman", "_msr_drv",))
