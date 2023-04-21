@@ -227,12 +227,11 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         else:
             stderr = subprocess.PIPE
 
-        proc = self._do_run_async(command, stdout=stdout, stderr=stderr, cwd=cwd, shell=shell,
-                                  bufsize=bufsize, env=env, newgrp=newgrp)
-
-        # Wait for the command to finish and handle the time-out situation.
-        result = proc.wait(capture_output=capture_output, output_fobjs=output_fobjs,
-                           timeout=timeout, join=join)
+        with self._do_run_async(command, stdout=stdout, stderr=stderr, cwd=cwd, shell=shell,
+                                bufsize=bufsize, env=env, newgrp=newgrp) as proc:
+            # Wait for the command to finish and handle the time-out situation.
+            result = proc.wait(capture_output=capture_output, output_fobjs=output_fobjs,
+                               timeout=timeout, join=join)
 
         if result.exitcode is None:
             msg = self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout)
