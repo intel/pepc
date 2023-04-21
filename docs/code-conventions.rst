@@ -168,3 +168,15 @@ Examples:
 
 * ``read_feature(blah, cpus)`` - read a feature for multiple CPUs
 * ``read_cpu_feature(blah, cpu)`` - read a feature for a single CPU
+
+Exception messages
+==================
+
+Exception messages should start with lower case letter (except for acronyms and names), and end
+without dot.
+
+Examples:
+
+* ``raise Error("Prop is wrong.")`` - incorrect, dot at the end and starts with upper case
+* ``raise Error("property is undefined")`` - correct
+* ``raise Error("CPU does not exist")`` - correct, can start with upper case if a acronym or name
