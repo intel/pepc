@@ -363,13 +363,6 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         if shell:
             self._read_pid()
 
-    def close(self):
-        """Free allocated resources."""
-
-        self._dbg("close()")
-        ClassHelpers.close(self, close_attrs=("pobj",))
-        super().close()
-
     def __init__(self, pman, pobj, cmd, real_cmd, shell, streams):
         """
         Initialize a class instance. The arguments are the same as in 'ProcessBase.__init__()'.
@@ -392,6 +385,13 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         if shell:
             self._read_pid()
+
+    def close(self):
+        """Free allocated resources."""
+
+        self._dbg("close()")
+        ClassHelpers.close(self, close_attrs=("pobj",))
+        super().close()
 
 class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """
