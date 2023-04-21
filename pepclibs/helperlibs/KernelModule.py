@@ -122,23 +122,18 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
         if not name:
             raise Error("BUG: no driver name provided")
 
-        if dmesg is None:
-            dmesg = True
-
         self._pman = pman
         self.name = name
-        self._dmesg_obj = None
+        self._dmesg_obj = dmesg
 
         self._close_pman = pman is None
-        self._close_dmesg_obj = False
+        self._close_dmesg_obj = dmesg is None
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
-        if isinstance(dmesg, Dmesg.Dmesg):
-            self._dmesg_obj = dmesg
-        elif dmesg:
+
+        if not self._dmesg_obj:
             self._dmesg_obj = Dmesg.Dmesg(pman=self._pman)
-            self._close_dmesg = True
 
     def close(self):
         """Stop the measurements."""
