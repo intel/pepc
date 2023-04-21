@@ -235,7 +235,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             if self._msr.get_bits(regval, self._features["locked"]["bits"]):
                 raise Error(f"cannot set package C-state limit{self._pman.hostmsg} for CPU "
                             f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
-                            f"depending on the vendor, there is a BIOS knob to unlock it.")
+                            f"depending on the vendor, there is a BIOS knob to unlock it")
 
             new_regval = self._msr.set_bits(regval, finfo["bits"], limit)
             if regval == new_regval:

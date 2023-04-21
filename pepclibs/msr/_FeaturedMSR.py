@@ -397,7 +397,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         # supported, before initializing the entire class.
         if "cpuinfo" in kwargs and cls.vendor != kwargs["cpuinfo"].info["vendor"]:
             raise ErrorNotSupported(f"unsupported MSR {cls.regaddr:#x} ({cls.regname}), it's only "
-                                    f"available on {cls.vendor} CPUs.")
+                                    f"available on {cls.vendor} CPUs")
 
         return super(FeaturedMSR, cls).__new__(cls)
 
@@ -429,7 +429,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
             if self._cpuinfo.info["vendor"] != self.vendor:
                 raise ErrorNotSupported(f"unsupported MSR {self.regaddr:#x} ({self.regname}), it's "
-                                        f"only available on {self.vendor} CPUs.")
+                                        f"only available on {self.vendor} CPUs")
 
         if not self._msr:
             self._msr = MSR.MSR(pman=self._pman, cpuinfo=self._cpuinfo)

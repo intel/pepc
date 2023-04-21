@@ -601,7 +601,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             what = f"'{toolname}' program"
 
         return ErrorNotFound(f"cannot execute the following command{self.hostmsg}:\n{cmd}\n"
-                             f"The error is: {errmsg}\nTry to install the {what}{self.hostmsg}.")
+                             f"The error is: {errmsg}\nTry to install the {what}{self.hostmsg}")
 
     def get_cmd_failure_msg(self, cmd, stdout, stderr, exitcode, timeout=None, startmsg=None):
         """

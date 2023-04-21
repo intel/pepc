@@ -475,7 +475,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         confpath = datapath / f"{module}.yaml"
         if not confpath.exists():
             raise ErrorNotSupported(f"testdata configuration for module '{module}' not found "
-                                    f"({confpath}).")
+                                    f"({confpath})")
 
         config = YAML.load(confpath)
 

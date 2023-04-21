@@ -66,7 +66,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         if not self._enable_cache:
             raise Error("transactions support requires caching to be enabled, see 'enable_cache' "
-                        "argument of the 'MSR.MSR()' constructor.")
+                        "argument of the 'MSR.MSR()' constructor")
 
         if cpu not in self._transaction_buffer:
             self._transaction_buffer[cpu] = {}
