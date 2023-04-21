@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Initial (may be not fully correct) Sierra Forrest platform support.
 ### Removed
 ### Changed
+
+## [1.4.13] - 2023-04-21
+### Added
+ - Initial (may be not fully correct) Sierra Forrest platform support.
 
 ## [1.4.12] - 2023-04-17
 ### Fixed
