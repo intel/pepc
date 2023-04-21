@@ -57,7 +57,7 @@ class PCStatesBase(ClassHelpers.SimpleCloseContext):
 
             return self._props[pname]["sname"]
         except KeyError as err:
-            raise Error(f"Property '{pname}' does not exist") from err
+            raise Error(f"property '{pname}' does not exist") from err
 
     @staticmethod
     def _normalize_bool_type_value(prop, val):
