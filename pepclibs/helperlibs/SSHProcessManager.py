@@ -390,7 +390,6 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         """Free allocated resources."""
 
         self._dbg("close()")
-        ClassHelpers.close(self, close_attrs=("pobj",))
         super().close()
 
 class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
