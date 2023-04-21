@@ -300,7 +300,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         formats = {"human", "yaml"}
         if self._fmt not in formats:
             formats = ", ".join(formats)
-            raise Error("unsupported format '{self._fmt}', supported formats are: {formats}")
+            raise Error(f"unsupported format '{self._fmt}', supported formats are: {formats}")
 
     def close(self):
         """Uninitialize the class object."""
