@@ -1094,14 +1094,11 @@ class PStates(_PCStatesBase.PCStatesBase):
     def close(self):
         """Uninitialize the class object."""
 
-        if getattr(self, "_ufreq_drv", None):
-            if getattr(self, "_unload_ufreq_drv", None):
-                self._ufreq_drv.unload()
-                self._unload_ufreq_drv = None
-            self._ufreq_drv = None
+        if self._unload_ufreq_drv:
+            self._ufreq_drv.unload()
 
         close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_hwpreq", "_hwpreq_pkg", "_platinfo",
-                       "_trl", "_pcache", "_fsbfreq")
+                       "_trl", "_pcache", "_fsbfreq", "_ufreq_drv")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
