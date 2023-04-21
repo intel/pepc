@@ -254,5 +254,5 @@ class EPB(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_epb_msr", "_msr", "_cpuinfo", "_pman")
+        close_attrs = ("_epb_msr", "_msr", "_cpuinfo", "_pman", "_pcache")
         ClassHelpers.close(self, close_attrs=close_attrs)

@@ -494,4 +494,4 @@ class MSR(ClassHelpers.SimpleCloseContext):
         if self._unload_msr_drv:
             self._msr_drv.unload()
 
-        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman", "_msr_drv",))
+        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman", "_msr_drv", "_pcache",))
