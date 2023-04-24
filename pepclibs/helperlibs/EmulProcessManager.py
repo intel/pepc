@@ -299,9 +299,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             raise Error(f"{errmsg}\n{msg}") from None
 
         # Make sure methods of 'fobj' always raise the 'Error' exceptions.
-        fobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
-        self._ofiles[path] = fobj
-        return fobj
+        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
 
     def _open_ro(self, path, mode): # pylint: disable=unused-argument
         """Return an emulated read-only file object using a 'StringIO' object."""
