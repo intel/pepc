@@ -573,7 +573,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     def close(self):
         """Stop emulation."""
 
-        if getattr(self, "_files", None):
+        if getattr(self, "_ofiles", None):
             for _, fobj in self._ofiles.items():
                 fobj.close()
             self._ofiles = None
