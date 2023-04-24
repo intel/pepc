@@ -1170,7 +1170,7 @@ for entry in os.listdir(path):
                    "object ID: %s", self._vhostname, self.port, self.username, self.privkeypath,
                    id(self))
 
-        if getattr(self, "_intsh", None):
+        if self._intsh:
             with contextlib.suppress(BaseException):
                 self._intsh.pobj.send("exit\n")
 
