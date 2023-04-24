@@ -324,7 +324,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self._set_write_method(fobj, path, mode)
 
         self._msr_seek(fobj, path)
-        self._ofiles[path] = fobj
         return fobj
 
     def _init_commands(self, cmdinfos, datapath):
@@ -559,8 +558,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self.is_remote = False
 
         self.datapath = None
-        # Opened files.
-        self._ofiles = {}
         # Data for emulated read-only files.
         self._ro_files = {}
         self._cmds = {}
@@ -570,9 +567,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def close(self):
         """Stop emulation."""
-
-        for _, fobj in self._ofiles.items():
-            fobj.close()
 
         if self._basepath:
             with contextlib.suppress(Error):
