@@ -43,7 +43,7 @@ def extract_full_lines(text):
     """
 
     full, partial = [], ""
-    for line_match in re.finditer("(.*\n)|(.+$)", text):
+    for line_match in re.finditer("(.*[\n\r])|(.+$)", text):
         if line_match.group(2):
             partial = line_match.group(2)
             break
