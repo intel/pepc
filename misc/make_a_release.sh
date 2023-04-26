@@ -141,13 +141,13 @@ To finish the release:
 The commands would be:
 EOF
 
-for remote in "origin" "upstream" "public"; do
+for remote in "origin" "upstream" "public" "svos"; do
     echo "git push $remote $tag_name"
     if [ "$current_branch" = "main" ]; then
         echo "git push $remote main:main"
         echo "git push $remote main:release"
     else
-        echo "git push public release:release"
+        echo "git push $remote release:release"
     fi
 done
 
@@ -155,7 +155,7 @@ if [ "$current_branch" != "main" ]; then
     echo
     echo "Then merge the release branch back to main, and run the following commands:"
 
-    for remote in "origin" "upstream" "public"; do
+    for remote in "origin" "upstream" "public" "svos"; do
         echo "git push $remote main:main"
     done
 fi
