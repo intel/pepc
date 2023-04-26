@@ -124,8 +124,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     implementation is based on 'Popen()'.
     """
 
-    def _do_run_async(self, command, cwd=None, shell=True, stdin=None, stdout=None, stderr=None,
-                      bufsize=0, env=None, newgrp=False):
+    def _run_async(self, command, cwd=None, shell=True, stdin=None, stdout=None, stderr=None,
+                   bufsize=0, env=None, newgrp=False):
         """Implements 'run_async()'."""
 
         # pylint: disable=consider-using-with
@@ -196,8 +196,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         # Allow for 'command' to be a 'pathlib.Path' object which Paramiko does not accept.
         command = str(command)
 
-        return self._do_run_async(command, cwd=cwd, shell=shell, stdin=stdin, stdout=stdout,
-                                  stderr=stderr, bufsize=bufsize, env=env, newgrp=newgrp)
+        return self._run_async(command, cwd=cwd, shell=shell, stdin=stdin, stdout=stdout,
+                               stderr=stderr, bufsize=bufsize, env=env, newgrp=newgrp)
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
             output_fobjs=(None, None), cwd=None, shell=True, intsh=None, bufsize=0, env=None,
@@ -227,8 +227,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         else:
             stderr = subprocess.PIPE
 
-        with self._do_run_async(command, stdout=stdout, stderr=stderr, cwd=cwd, shell=shell,
-                                bufsize=bufsize, env=env, newgrp=newgrp) as proc:
+        with self._run_async(command, stdout=stdout, stderr=stderr, cwd=cwd, shell=shell,
+                             bufsize=bufsize, env=env, newgrp=newgrp) as proc:
             # Wait for the command to finish and handle the time-out situation.
             result = proc.wait(capture_output=capture_output, output_fobjs=output_fobjs,
                                timeout=timeout, join=join)
