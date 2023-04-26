@@ -390,7 +390,11 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         """Free allocated resources."""
 
         self._dbg("close()")
-        super().close()
+
+        # If this is the special interactive shell process - do not close it. It'll be closed in
+        # 'SSHProcessManager.close()' instead.
+        if not self._marker:
+            super().close()
 
 class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """
@@ -595,14 +599,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             intsh = shell
 
         # Execute the command on the remote host.
-        proc = self._run_async(command, cwd=cwd, shell=shell, intsh=intsh)
-        chan = proc.pobj
-        if mix_output:
-            chan.set_combine_stderr(True)
+        with self._run_async(command, cwd=cwd, shell=shell, intsh=intsh) as proc:
+            if mix_output:
+                proc.pobj.set_combine_stderr(True)
 
-        # Wait for the command to finish and handle the time-out situation.
-        result = proc.wait(timeout=timeout, capture_output=capture_output,
-                           output_fobjs=output_fobjs, join=join)
+            # Wait for the command to finish and handle the time-out situation.
+            result = proc.wait(timeout=timeout, capture_output=capture_output,
+                               output_fobjs=output_fobjs, join=join)
 
         if result.exitcode is None:
             msg = self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout)
