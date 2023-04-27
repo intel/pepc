@@ -215,7 +215,22 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         try:
             with self._pman.open(self._sysfs_epp_path % cpu, "r+") as fobj:
-                fobj.write(epp)
+                try:
+                    fobj.write(epp)
+                except Error as err:
+                    if epp.isdigit() or "Invalid argument" not in str(err):
+                        raise
+
+                    # This is a workaround for unexpected kernel behavior that was observed in
+                    # kernel version 6.2 running 'intel_pstate' in passive mode. This is probably a
+                    # minor kernel bug. Writing the same policy string twice fails with an "Invalid
+                    # argument" error. This does not happen when using numeric EPP values, only
+                    # policy names. The work-around is to read the file back, and if it already
+                    # contains the same policy, then treat this as "success".
+                    fobj.seek(0)
+                    if epp != fobj.read().strip():
+                        raise
+
         except Error as err:
             raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
