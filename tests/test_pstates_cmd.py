@@ -250,22 +250,23 @@ def test_pstates_save_restore(params):
     run_pepc(f"pstates save -o {state_path}", pman)
     state = YAML.load(state_path)
 
+    cpus = Human.rangify(params["cpus"])
     state_modified = copy.deepcopy(state)
-    for pname, pinfos in state_modified.items():
-        for pinfo in pinfos:
-            if pname in ("min_freq", "max_freq"):
-                pinfo["value"] = state["min_freq"][0]["value"]
+    for pname in state_modified.keys():
+        if pname in ("min_freq", "max_freq"):
+            val = state["min_freq"][0]["value"]
+        elif pname.endswith("_uncore_freq"):
+            val = state["min_uncore_freq"][0]["value"]
+        elif pname in "epb":
+            val = int((state[pname][0]["value"] + 1) / 2)
+        elif state[pname][0]["value"] == "on":
+            val = "off"
+        elif state[pname][0]["value"] == "off":
+            val = "on"
+        else:
+            continue
 
-            if pname.endswith("_uncore_freq"):
-                pinfo["value"] = state["min_uncore_freq"][0]["value"]
-
-            if pname == "epb":
-                pinfo["value"] = int((pinfo["value"] + 1) / 2)
-
-            if pinfo["value"] == "on":
-                pinfo["value"] = "off"
-            elif pinfo["value"] == "off":
-                pinfo["value"] = "on"
+        state_modified[pname] = [{"value" : val, "cpus" : cpus}]
 
     state_modified_path = tmp_path / f"state_modified.{hostname}"
     YAML.dump(state_modified, state_modified_path)
