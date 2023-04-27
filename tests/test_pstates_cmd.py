@@ -257,7 +257,9 @@ def test_pstates_save_restore(params):
             val = state["min_freq"][0]["value"]
         elif pname.endswith("_uncore_freq"):
             val = state["min_uncore_freq"][0]["value"]
-        elif pname in "epb":
+        elif pname in ("epb", "epb_hw"):
+            # Restoring 'epb' will also modify 'epb_hw' and vise versa. Thus, if one is changed,
+            # both have to be changed.
             val = int((state[pname][0]["value"] + 1) / 2)
         elif state[pname][0]["value"] == "on":
             val = "off"
