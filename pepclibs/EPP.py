@@ -228,20 +228,22 @@ class EPP(ClassHelpers.SimpleCloseContext):
                     # policy names. The work-around is to read the file back, and if it already
                     # contains the same policy, then treat this as "success".
                     fobj.seek(0)
-                    if epp != fobj.read().strip():
+                    val = fobj.read().strip()
+                    if epp != val:
                         raise
 
+                    self._aliases[epp] = val
+                else:
+                    # Setting some options will not read back the same value. E.g. "default" EPP
+                    # might be "balance_performance", "0" might be "powersave".
+                    try:
+                        val = self._aliases[epp]
+                    except KeyError:
+                        fobj.seek(0)
+                        self._aliases[epp] = fobj.read().strip()
+                        val = self._aliases[epp]
         except Error as err:
             raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
-
-        # Setting some options will not read back the same value. E.g. "default" EPP might be
-        # "balance_performance", "0" might be "powersave".
-        try:
-            val = self._aliases[epp]
-        except KeyError:
-            with self._pman.open(self._sysfs_epp_path % cpu, "r") as fobj:
-                self._aliases[epp] = fobj.read().strip()
-            val = self._aliases[epp]
 
         return self._pcache.add("epp", cpu, val)
 
