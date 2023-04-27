@@ -89,10 +89,13 @@ def _get_config_options(params):
             "--max-freq",
             "--min-freq --max-freq",
             "--min-freq min",
-            "--max-freq min",
-            "--max-freq max",
-            "--min-freq min --max-freq max",
-            "--max-freq max --min-freq min"]
+            "--max-freq min"]
+        if is_prop_supported("turbo", params["pinfo"]) and \
+            params["pinfo"]["turbo"]["turbo"] == "on":
+            good_options += [
+                "--max-freq max",
+                "--min-freq min --max-freq max",
+                "--max-freq max --min-freq min"]
         if is_prop_supported("max_eff_freq", params["pinfo"]):
             good_options += [
                 "--max-freq lfm",
