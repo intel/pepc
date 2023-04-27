@@ -261,6 +261,15 @@ def test_pstates_save_restore(params):
             # Restoring 'epb' will also modify 'epb_hw' and vise versa. Thus, if one is changed,
             # both have to be changed.
             val = int((state[pname][0]["value"] + 1) / 2)
+        if pname == "min_freq_hw" and is_prop_supported("min_oper_freq", params["pinfo"]):
+            # In most cases MSR and sysfs will modify each other, but min. CPU frequency is an
+            # exception. Because sysfs min. limit is min. efficient frequency (e.g., the optimal
+            # point between performance and the lowest power drain), while MSRs min. limit is min.
+            # operating frequency (e.g., the lowest power drain that the CPU can operate at). This
+            # means that the MSR value can be different from the sysfs value, and in this case MSR
+            # will not update the sysfs value. Thus, we test that the sysfs property is set first,
+            # and then the MSR property. Otherwise the sysfs property will overwrite the MSR value.
+            val = params["pinfo"]["min_oper_freq"]["min_oper_freq"]
         elif state[pname][0]["value"] == "on":
             val = "off"
         elif state[pname][0]["value"] == "off":
