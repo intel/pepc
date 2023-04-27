@@ -1,3 +1,10 @@
+pepc (1.4.14) unstable; urgency=low
+
+  * Minor change related to process output parsing. Needed for the 'wult'
+    project.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 27 Apr 2023 00:00:00 +0200
+
 pepc (1.4.13) unstable; urgency=low
 
   * Initial (may be not fully correct) Sierra Forrest platform support.
