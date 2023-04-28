@@ -200,14 +200,10 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
 
         finfo = self._features[fname]
 
-        # Power clamp / enable bits are boolean variables which may not
-        # be possible to be modified on certain platforms (e.g. on
-        # Cascade Lake processors the pkg_power_limit1_enable bit appears
-        # stuck at 'on', but the others can be modified.) Because of this,
-        # we set verify='True', so that we detect if the modification of
-        # the bit was successful or not. If the read-back verification is
-        # failed, an exception is raised from the write_bits() and it
-        # gets reported to upper layers.
+        # On some platforms the "enable" and "clamp" bits cannot be modified. For example, we
+        # observed that on a Cascade Lake Xeon CPU: the 'enable' bit cannot be cleared (set to
+        # "off"). The MSR write operation succeeds, but the bit does not change (says "on"). Pass
+        # 'verify=True' to detect if the change was successful.
         if fname.endswith("_clamp") or fname.endswith("_enable"):
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, verify=True,
                                  sname=finfo["sname"])
