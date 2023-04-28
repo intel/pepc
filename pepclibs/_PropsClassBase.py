@@ -44,7 +44,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _set_sname(self, pname):
         """Set scope "sname" for property 'pname'."""
 
-        # pylint: disable=unused-argument,no-self-use
+        if self._props[pname]["sname"]:
+            return
+
         return _bug_method_not_defined("PCStatesBase._set_sname")
 
     def get_sname(self, pname):
