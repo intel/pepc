@@ -120,6 +120,25 @@ class PStatesSetter(_PropsSetter):
 
         self._restore_props(ydict)
 
+class PowerSetter(_PropsSetter):
+    """This class provides API for changing power settings."""
+
+    def restore(self, infile):
+        """
+        Load and set properties from a YAML file. The arguments are as follows:
+          * infile - path to the properties YAML file ("-" means standard input).
+        """
+
+        if infile == "-":
+            infile = sys.stdin
+
+        ydict = YAML.load(infile)
+
+        known_ykeys = set(self._pcsobj.props)
+        self._validate_loaded_data(ydict, known_ykeys)
+
+        self._restore_props(ydict)
+
 class CStatesSetter(_PropsSetter):
     """This class provides API for changing P-states properties."""
 

@@ -309,6 +309,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 class PStatesPrinter(_PropsPrinter):
     """This class provides API for printing P-states information."""
 
+class PowerPrinter(_PropsPrinter):
+    """This class provides API for printing power information."""
+
 class CStatesPrinter(_PropsPrinter):
     """This class provides API for printing C-states information."""
 

@@ -25,7 +25,7 @@ except ImportError:
 
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CStates, PStates, CPUInfo
+from pepclibs import CStates, PStates, Power, CPUInfo
 
 if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
@@ -404,6 +404,100 @@ def build_arguments_parser():
     subpars2.add_argument("-f", "--from", dest="infile", help=text)
 
     #
+    # Create parser for the 'power' command.
+    #
+    text = "Power commands."
+    descr = """Various commands related to power configuration. Please refer to
+               'pepc-power' manual page for more information."""
+    subpars = subparsers.add_parser("power", help=text, description=descr)
+    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subparsers2.required = True
+
+    #
+    # Create parser for the 'power info' command.
+    #
+    text = "Get power information."
+    descr = """Get power information for specified CPUs. By default, prints all information for
+               all CPUs. Please, refer to 'pepc-power' manual page for more information."""
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr)
+    subpars2.set_defaults(func=power_info_command)
+
+    _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
+
+    text = """Print information in YAML format."""
+    subpars2.add_argument("--yaml", action="store_true", help=text)
+
+    for name, pinfo in Power.PROPS.items():
+        if pinfo["type"] == "bool":
+            # This is a binary "on/off" type of features.
+            text = f"Get current setting for {Human.untitle(pinfo['name'])}."
+        else:
+            text = f"Get {Human.untitle(pinfo['name'])}."
+
+        option = f"--{name.replace('_', '-')}"
+        subpars2.add_argument(option, action="store_true", help=text)
+
+    #
+    # Create parser for the 'power config' command.
+    #
+    text = """Configure power settings."""
+    descr = """Configure power settings on specified CPUs. All options can be used without
+               a parameter, in which case the currently configured value(s) will be printed.
+               Please, refer to 'pepc-power' manual page for more information."""
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr)
+    subpars2.set_defaults(func=power_config_command)
+
+    _add_cpu_subset_arguments(subpars2, "List of %s to configure power settings on.")
+
+    for name, pinfo in Power.PROPS.items():
+        if not pinfo.get("writable"):
+            continue
+
+        kwargs = {}
+        kwargs["default"] = argparse.SUPPRESS
+        kwargs["nargs"] = "?"
+
+        if pinfo["type"] == "bool":
+            # This is a binary "on/off" type of features.
+            text = f"Enable or disable {Human.untitle(pinfo['name'])}, use \"on\" or \"off\"."
+        else:
+            text = f"Set {Human.untitle(pinfo['name'])}."
+
+        option = f"--{name.replace('_', '-')}"
+        kwargs["help"] = text
+        kwargs["action"] = ArgParse.OrderedArg
+        subpars2.add_argument(option, **kwargs)
+
+    #
+    # Create parser for the 'power save' command.
+    #
+    text = "Save power settings."
+    descr = f"""Save all the modifiable power settings into a file. This file can later be used
+                for restoring power settings with the '{TOOLNAME} power restore' command.
+                Please, refer to 'pepc-power' manual page for more information."""
+    subpars2 = subparsers2.add_parser("save", help=text, description=descr)
+    subpars2.set_defaults(func=power_save_command)
+
+    _add_cpu_subset_arguments(subpars2, "List of %s to save power information about.")
+
+    text = "Name of the file to save the settings to (printed to standard output by default)."
+    subpars2.add_argument("-o", "--outfile", help=text, default="-")
+
+    #
+    # Create parser for the 'power restore' command.
+    #
+    text = "Restore power settings."
+    descr = f"""Restore power settings from a file previously created with the
+               '{TOOLNAME} power save' command. Please, refer to 'pepc-power' manual page for
+               more information."""
+    subpars2 = subparsers2.add_parser("restore", help=text, description=descr)
+    subpars2.set_defaults(func=power_restore_command)
+
+    text = """Name of the file from which to restore the settings from, use "-" to read from the
+              standard output."""
+    subpars2.add_argument("-f", "--from", dest="infile", help=text)
+
+    #
     # Create parser for the 'aspm' command.
     #
     text = "PCI ASPM commands."
@@ -561,6 +655,34 @@ def pstates_restore_command(args, pman):
 
     _PepcPStates.pstates_restore_command(args, pman)
 
+def power_info_command(args, pman):
+    """Implements the 'power info' command."""
+
+    from pepctool import _PepcPower
+
+    _PepcPower.power_info_command(args, pman)
+
+def power_config_command(args, pman):
+    """Implements the 'power config' command."""
+
+    from pepctool import _PepcPower
+
+    _PepcPower.power_config_command(args, pman)
+
+def power_save_command(args, pman):
+    """Implements the 'power save' command."""
+
+    from pepctool import _PepcPower
+
+    _PepcPower.power_save_command(args, pman)
+
+def power_restore_command(args, pman):
+    """Implements the 'power restore' command."""
+
+    from pepctool import _PepcPower
+
+    _PepcPower.power_restore_command(args, pman)
+
 def aspm_info_command(args, pman):
     """Implements the 'aspm info'. command"""
 
@@ -608,6 +730,7 @@ def _get_emul_pman(args, path):
         "aspm" : ["ASPM", "Systemctl"],
         "cstates" : ["CPUInfo", "CStates", "Systemctl"],
         "pstates" : ["CPUInfo", "PStates", "Systemctl"],
+        "power" : ["CPUInfo", "Power"],
         "topology" : ["CPUInfo"],
         "cpu_hotplug" : ["CPUInfo", "CPUOnline", "Systemctl"],
     }
