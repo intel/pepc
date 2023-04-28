@@ -967,16 +967,10 @@ class PStates(_PCStatesBase.PCStatesBase):
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
 
-    def set_props(self, inprops, cpus="all"):
-        """Refer to 'set_props() in '_PCStatesBase' class."""
-
-        inprops = self._normalize_inprops(inprops)
-        cpus = self._cpuinfo.normalize_cpus(cpus)
+    def _set_props(self, inprops, cpus):
+        """Refer to '_PropsClassBase.PropsClassBase._set_props()'."""
 
         for pname, val in inprops.items():
-            self._set_sname(pname)
-            self._validate_cpus_vs_scope(self._props[pname], cpus)
-
             if pname == "governor":
                 self._validate_governor_name(val)
             elif pname == "intel_pstate_mode":

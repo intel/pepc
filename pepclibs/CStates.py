@@ -675,18 +675,11 @@ class CStates(_PCStatesBase.PCStatesBase):
             else:
                 raise Error(f"BUG: undefined property '{pname}'")
 
-    def set_props(self, inprops, cpus="all"):
-        """Refer to 'set_props() in '_PCStatesBase' class."""
+    def _set_props(self, inprops, cpus):
+        """Refer to '_PropsClassBase.PropsClassBase._set_props()'."""
 
-        inprops = self._normalize_inprops(inprops)
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-
-        for pname, val in inprops.items():
-            self._set_sname(pname)
-            self._validate_cpus_vs_scope(self._props[pname], cpus)
-
-            if pname == "governor":
-                self._validate_governor_name(val)
+        if "governor" in inprops:
+            self._validate_governor_name(inprops["governor"])
 
         for pname, val in inprops.items():
             self._set_prop_value(pname, val, cpus)

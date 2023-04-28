@@ -289,6 +289,17 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         raise Error(errmsg)
 
+    def _set_props(self, inprops, cpus):
+        """
+        Implements 'set_props()'. The arguments are as follows.
+          * inprops - normalized and partially validated version for 'inprops' in passed to
+                      'set_props()'.
+          * cpus - same as in 'set_props()', but normalized and validated.
+        """
+
+        # pylint: disable=unused-argument,no-self-use
+        return _bug_method_not_defined("PCStatesBase.set_props")
+
     def set_props(self, inprops, cpus="all"):
         """
         Set multiple properties described by 'inprops' to values also provided in 'inprops'.
@@ -307,8 +318,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
            * False, "off", "disable" for disabling the feature.
         """
 
-        # pylint: disable=unused-argument,no-self-use
-        return _bug_method_not_defined("PCStatesBase.set_props")
+        inprops = self._normalize_inprops(inprops)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+
+        for pname in inprops:
+            self._set_sname(pname)
+            self._validate_cpus_vs_scope(self._props[pname], cpus)
+
+        self._set_props(inprops, cpus)
 
     def set_prop(self, pname, val, cpus):
         """Same as 'set_props()', but for a single property."""
