@@ -504,18 +504,14 @@ class CStates(_PCStatesBase.PCStatesBase):
     This class provides C-state management API.
 
     Public methods overview.
-
-    1. Enable multiple disable C-states for multiple CPUs via Linux sysfs interfaces:
+    1. All the get/set property methods defined by the '_PropsClassBase.PropsClassBase' base class
+       (refer to its docstring for more information).
+    2. Enable or disable multiple C-states for multiple CPUs via Linux sysfs interfaces:
        'enable_cstates()', 'disable_cstates()'.
-    2. Get C-state(s) information.
+    3. Get C-state(s) information.
        * For multiple CPUs and multiple C-states: get_cstates_info().
        * For single CPU and multiple C-states: 'get_cpu_cstates_info()'.
        * For single CPU and a single C-state:  'get_cpu_cstate_info()'.
-    3. Get/set C-state properties.
-       * For multiple properties and multiple CPUs: 'get_props()', 'set_props()'.
-       * For single property and multiple CPUs: 'set_prop()'.
-       * For multiple properties and single CPU: 'get_cpu_props()', 'set_cpu_props()'.
-       * For single property and single CPU: 'get_cpu_prop()', 'set_cpu_prop()'.
     """
 
     def _get_rcsobj(self):

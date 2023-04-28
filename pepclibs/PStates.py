@@ -213,15 +213,8 @@ def _is_uncore_prop(prop):
 
 class PStates(_PCStatesBase.PCStatesBase):
     """
-    This class provides API for managing platform settings related to P-states.
-
-    Public methods overview.
-
-    Get/set P-state properties for:
-       * multiple properties and multiple CPUs: 'get_props()', 'set_props()'.
-       * single property and multiple CPUs: 'set_prop()'.
-       * multiple properties and single CPU: 'get_cpu_props()', 'set_cpu_props()'.
-       * single property and single CPU: 'get_cpu_prop()', 'set_cpu_prop()'.
+    This class provides API for managing platform settings related to P-states. Refer to
+    '_PropsClassBase.PropsClassBase' docstring for public methods overvew.
     """
 
     def _get_msr(self):
