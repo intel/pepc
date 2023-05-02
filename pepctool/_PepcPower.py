@@ -43,7 +43,8 @@ def power_info_command(args, pman):
             # When printing all the options, skip the unsupported ones as they add clutter.
             skip_unsupported = True
 
-        pprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=skip_unsupported)
+        if not pprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=skip_unsupported):
+            _LOG.info("No power properties supported%s.", pman.hostmsg)
 
 def power_config_command(args, pman):
     """Implements the 'power config' command."""
@@ -123,7 +124,8 @@ def power_save_command(args, pman):
 
             pnames.append(pname)
 
-        psprint.print_props(pnames=pnames, cpus=cpus, skip_ro=True, skip_unsupported=True)
+        if not psprint.print_props(pnames=pnames, cpus=cpus, skip_ro=True, skip_unsupported=True):
+            _LOG.info("No writable power properties supported%s.", pman.hostmsg)
 
 def power_restore_command(args, pman):
     """Implements the 'power restore' command."""
