@@ -790,7 +790,7 @@ Minimum supported uncore frequency is the lowest uncore frequency supported by t
 Source
 ------
 
-"/sys/devices/system/cpu/intel_uncore_frequency/package\_\ **00**\ _die\_\ **01**\ 
+"/sys/devices/system/cpu/intel_uncore_frequency/package\_\ **00**\ _die\_\ **01**\
 /initial_min_freq_khz", '**00**' is replaced with desired package number and '**01**' with desired
 die number.
 
@@ -891,7 +891,7 @@ This property has **CPU** scope.
 epp_hw
 ======
 
-epp_hw - Energy Performance Preference 
+epp_hw - Energy Performance Preference
 
 Synopsis
 --------
@@ -953,7 +953,7 @@ This property has **CPU** scope.
 epb_hw
 ======
 
-epb_hw - Energy Performance Preference 
+epb_hw - Energy Performance Preference
 
 Synopsis
 --------
