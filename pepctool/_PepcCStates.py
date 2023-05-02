@@ -38,11 +38,12 @@ def cstates_info_command(args, pman):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         skip_unsupported = False
+        printed = 0
         if not pnames and args.csnames == "default":
             # No options were specified. Print all the information. Skip the unsupported ones as
             # they add clutter.
-            csprint.print_cstates(csnames="all", cpus=cpus)
-            csprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True)
+            printed += csprint.print_cstates(csnames="all", cpus=cpus)
+            printed += csprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True)
         else:
             if args.csnames != "default":
                 # args.csname is "default" if '--csnames' option was not specified, and 'None' if it
@@ -50,10 +51,14 @@ def cstates_info_command(args, pman):
                 csnames = args.csnames
                 if args.csnames is None:
                     csnames = "all"
-                csprint.print_cstates(csnames=csnames, cpus=cpus)
+                printed += csprint.print_cstates(csnames=csnames, cpus=cpus)
 
             if pnames:
-                csprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=skip_unsupported)
+                printed += csprint.print_props(pnames=pnames, cpus=cpus,
+                                               skip_unsupported=skip_unsupported)
+
+        if not printed:
+            _LOG.info("No C-states properties supported%s.", pman.hostmsg)
 
 def cstates_config_command(args, pman):
     """Implements the 'cstates config' command."""
@@ -146,7 +151,8 @@ def cstates_save_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        csprint.print_cstates(csnames="all", cpus=cpus, skip_ro=True)
+        printed = 0
+        printed += csprint.print_cstates(csnames="all", cpus=cpus, skip_ro=True)
 
         # We'll only include writable properties.
         pnames = []
@@ -154,7 +160,11 @@ def cstates_save_command(args, pman):
             if pinfo["writable"]:
                 pnames.append(pname)
 
-        csprint.print_props(pnames=pnames, cpus=cpus, skip_ro=True, skip_unsupported=True)
+        printed += csprint.print_props(pnames=pnames, cpus=cpus, skip_ro=True,
+                                       skip_unsupported=True)
+
+        if not printed:
+            _LOG.info("No writable C-states properties supported%s.", pman.hostmsg)
 
 def cstates_restore_command(args, pman):
     """Implements the 'cstates restore' command."""
