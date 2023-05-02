@@ -43,7 +43,8 @@ def pstates_info_command(args, pman):
             # When printing all the options, skip the unsupported ones as they add clutter.
             skip_unsupported = True
 
-        psprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=skip_unsupported)
+        if not psprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=skip_unsupported):
+            _LOG.info("No P-states properties supported%s.", pman.hostmsg)
 
 def pstates_config_command(args, pman):
     """Implements the 'pstates config' command."""
@@ -123,7 +124,8 @@ def pstates_save_command(args, pman):
 
             pnames.append(pname)
 
-        psprint.print_props(pnames=pnames, cpus=cpus, skip_ro=True, skip_unsupported=True)
+        if not psprint.print_props(pnames=pnames, cpus=cpus, skip_ro=True, skip_unsupported=True):
+            _LOG.info("No writable P-states properties supported%s.", pman.hostmsg)
 
 def pstates_restore_command(args, pman):
     """Implements the 'pstates restore' command."""
