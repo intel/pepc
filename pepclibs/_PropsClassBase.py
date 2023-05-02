@@ -13,10 +13,10 @@ This module provides the base class for classes implementing properties, such as
 'CState' classes.
 
 Naming conventions:
- * props - dictionary describing the properties, see 'PROPS' in 'PStates' and 'CStates'.
- * pinfo - a properties dictionary in the format returned by 'PStates.get_props()' or
-           'CStates.get_props()'. Check 'get_props()' docstring for more information.
- * pname - name of a property, see 'PROPS["name"]' in 'PStates' and 'CStates'.
+ * props - dictionary describing the properties. As an example, check 'PROPS' in 'PStates' and
+           'CStates'.
+ * pinfo - a properties dictionary in the format returned described in 'PropsClassBase.get_props()'.
+ * pname - name of a property.
  * sname - name of a scope from the allowed list of scope names in 'CPUInfo.LEVELS'.
  * <sname> siblings - all CPUs sharing the same <sname>. E.g. "package siblings" means all CPUs
                       sharing the same package, "CPU 6 core siblings" means all CPUs sharing the
@@ -50,7 +50,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if self._props[pname]["sname"]:
             return
 
-        return _bug_method_not_defined("PCStatesBase._set_sname")
+        return _bug_method_not_defined("PropsClassBase._set_sname")
 
     def get_sname(self, pname):
         """Get scope "sname" for property 'pname'."""
@@ -91,11 +91,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pnames_str = ", ".join(set(self._props))
             raise ErrorNotSupported(f"property '{pname}' is not supported{self._pman.hostmsg}, use "
                                     f"one of the following: {pnames_str}")
+
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
 
         # pylint: disable=unused-argument,no-self-use
-        return _bug_method_not_defined("PCStatesBase._get_cpu_prop_value")
+        return _bug_method_not_defined("PropsClassBase._get_cpu_prop_value")
 
     def _get_cpu_subprop_value(self, pname, subpname, cpu):
         """Returns sup-property 'subpname' of property 'pname' for CPU 'cpu'."""
@@ -303,7 +304,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument,no-self-use
-        return _bug_method_not_defined("PCStatesBase.set_props")
+        return _bug_method_not_defined("PropsClassBase.set_props")
 
     def set_props(self, inprops, cpus="all"):
         """
