@@ -176,6 +176,9 @@ SystemctlData = {
          "ignore_exitcode": True}],
     }
 
+PowerData = {
+    }
+
 MODULE_TESTDATA = {
     "CPUInfo" : CPUInfoData,
     "ASPM" : ASPMData,
@@ -183,6 +186,7 @@ MODULE_TESTDATA = {
     "CStates" : CStatesData,
     "PStates" : PStatesData,
     "Systemctl" : SystemctlData,
+    "Power" : PowerData,
     }
 
 def build_arguments_parser():
