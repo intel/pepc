@@ -90,6 +90,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         props = self._pcsobj.props
 
+        printed = 0
         for pname, pinfo in aggr_pinfo.items():
             for key, kinfo in pinfo.items():
                 for val, cpus in kinfo.items():
@@ -108,6 +109,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                         # is the same as in the (parent) property, which has already been printed.
                         prop = props[pname]["subprops"][key]
                         self._print_prop_human(prop, val, cpus=cpus, action=action)
+                    printed += 1
+
+        return printed
 
     def _yaml_dump(self, info):
         """Dump dictionary 'info' in YAML format."""
@@ -136,6 +140,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                     yaml_pinfo[key].append({"value" : val, "cpus" : Human.rangify(cpus)})
 
         self._yaml_dump(yaml_pinfo)
+        return len(yaml_pinfo)
 
     @staticmethod
     def _build_aggr_pinfo(pinfo_iter, spnames="all"):
@@ -247,6 +252,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
           * action - an optional action word to include into the messages (nothing by default). For
                      example, if 'action' is "set to", the messages will be like "property <pname>
                      set to <value>". Applicable only to the "human" format.
+        Returns the printed properties count.
         """
 
         if pnames == "all":
@@ -271,13 +277,12 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo)
 
         if self._fmt == "human":
-            self._print_aggr_pinfo_human(aggr_pinfo, skip_unsupported=skip_unsupported,
-                                         action=action)
-        else:
-            if action is not None:
-                raise Error("'action' must be 'None' when printing in YAML format")
+            return self._print_aggr_pinfo_human(aggr_pinfo, skip_unsupported=skip_unsupported,
+                                                action=action)
+        if action is not None:
+            raise Error("'action' must be 'None' when printing in YAML format")
 
-            self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
+        return self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
 
     def __init__(self, pcsobj, cpuinfo, fobj=None, fmt="human"):
         """
@@ -350,6 +355,7 @@ class CStatesPrinter(_PropsPrinter):
     def _print_aggr_rcsinfo_human(self, aggr_rcsinfo, action=None):
         """Print the aggregate C-states information in the "human" format."""
 
+        printed = 0
         for csname, csinfo in aggr_rcsinfo.items():
             for key, kinfo in csinfo.items():
                 if key == "disable":
@@ -380,6 +386,9 @@ class CStatesPrinter(_PropsPrinter):
                     #       - expected latency: '0' us
                     prefix = " " * (len(csname) + 2) + "- "
                     self._print_val_msg(val, name=name, prefix=prefix, suffix=suffix)
+            printed += 1
+
+        return printed
 
     def _print_aggr_rcsinfo_yaml(self, aggr_rcsinfo):
         """Print the aggregate C-states information in YAML format."""
@@ -398,6 +407,7 @@ class CStatesPrinter(_PropsPrinter):
                     yaml_rcsinfo[csname].append({"value" : val, "cpus" : Human.rangify(cpus)})
 
         self._yaml_dump(yaml_rcsinfo)
+        return len(yaml_rcsinfo)
 
     def print_cstates(self, csnames="all", cpus="all", skip_ro=False, action=None):
         """
@@ -408,6 +418,7 @@ class CStatesPrinter(_PropsPrinter):
           * action - an optional action word to include into the messages (nothing by default). For
                      example, if 'action' is "set to", the messages will be like "property <pname>
                      set to <value>". Applicable only to the "human" format.
+        Returns the printed requestable C-states count.
         """
 
         if skip_ro:
@@ -422,12 +433,12 @@ class CStatesPrinter(_PropsPrinter):
         except ErrorNotSupported as err:
             _LOG.warning(err)
             _LOG.info("C-states are not supported")
-            return
+            return 0
 
         if self._fmt == "human":
-            self._print_aggr_rcsinfo_human(aggr_rcsinfo, action=action)
-        else:
-            if action is not None:
-                raise Error("'action' must be 'None' when printing in YAML format")
+            return self._print_aggr_rcsinfo_human(aggr_rcsinfo, action=action)
 
-            self._print_aggr_rcsinfo_yaml(aggr_rcsinfo)
+        if action is not None:
+            raise Error("'action' must be 'None' when printing in YAML format")
+
+        return self._print_aggr_rcsinfo_yaml(aggr_rcsinfo)
