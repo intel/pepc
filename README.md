@@ -49,18 +49,20 @@ computer system.
 * Artem Bityutskiy <dedekind1@gmail.com> - original author, project maintainer.
 * Antti Laakso <antti.laakso@linux.intel.com> - contributor, project maintainer.
 * Niklas Neronin <niklas.neronin@intel.com> - contributor.
+* Tero Kristo <tero.kristo@intel.com> - contributor.
 * Adam Hawley <adam.james.hawley@intel.com> - contributor.
 * Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com> - contributor.
 * Juha Haapakorpi <juha.haapakorpi@intel.com> - contributor.
 
 # What is supported
 
-Pepc supports the following features:
-* C-states: discovering and configuring. [Manual](docs/pepc-cstates.rst)
-* P-states: discovering and configuring. [Manual](docs/pepc-pstates.rst)
-* CPU hotplug: onlining and offlining CPUs. [Manual](docs/pepc-cpu-hotplug.rst)
-* ASPM: discovering and configuring. [Manual](docs/pepc-aspm.rst)
-* CPU topology: discovering. [Manual](docs/pepc-topology.rst)
+Pepc supports discovering and configuring the following features.
+* C-states: [documentation](docs/pepc-cstates.rst)
+* P-states: [documentation](docs/pepc-pstates.rst)
+* Power: [documentation](docs/pepc-power.rst)
+* CPU onlining and offlining: [documentation](docs/pepc-cpu-hotplug.rst)
+* ASPM: [documentation](docs/pepc-aspm.rst)
+* CPU topology: [documentation](docs/pepc-topology.rst)
 
 Some of the features are hardware-independent, but some are hardware-specific.
 
