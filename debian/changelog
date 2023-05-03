@@ -1,3 +1,9 @@
+pepc (1.4.15) unstable; urgency=low
+
+  * New 'pepc power' command. Currently supports only RAPL package power.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 03 May 2023 00:00:00 +0200
+
 pepc (1.4.14) unstable; urgency=low
 
   * Minor change related to process output parsing. Needed for the 'wult'

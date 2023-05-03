@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - New 'pepc power' command. Currently supports only RAPL package power.
 ### Removed
 ### Changed
+
+## [1.4.15] - 2023-05-03
+### Added
+ - New 'pepc power' command. Currently supports only RAPL package power.
 
 ## [1.4.14] - 2023-04-27
 ### Changed
