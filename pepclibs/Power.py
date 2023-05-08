@@ -23,6 +23,13 @@ _LOG = logging.getLogger()
 # complete. This dictionary is extended by 'Power' objects. Use the full dictionary via
 # 'Power.props'.
 PROPS = {
+    "tdp" : {
+        "name" : "TDP",
+        "unit" : "W",
+        "type" : "float",
+        "sname": "package",
+        "writable" : False,
+    },
     "ppl1_hw" : {
         "name" : "RAPL PPL1 via MSR",
         "unit" : "W",
@@ -105,6 +112,18 @@ class Power(_PropsClassBase.PropsClassBase):
 
         return self._pplobj
 
+    def _get_ppiobj(self):
+        """Returns a 'PackagePowerInfo.PackagePowerInfo()' object."""
+
+        if not self._ppiobj:
+            from pepclibs.msr import PackagePowerInfo # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            self._ppiobj = PackagePowerInfo.PackagePowerInfo(pman=self._pman,
+                                                             cpuinfo=self._cpuinfo, msr=msr)
+
+        return self._ppiobj
+
     @staticmethod
     def _pname2fname(pname):
         """Get 'PackagePowerLimit' class feature name by property name."""
@@ -121,8 +140,11 @@ class Power(_PropsClassBase.PropsClassBase):
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
-        fname = self._pname2fname(pname)
-        return self._get_pplobj().read_cpu_feature(fname, cpu)
+        if pname.startswith("ppl"):
+            fname = self._pname2fname(pname)
+            return self._get_pplobj().read_cpu_feature(fname, cpu)
+
+        return self._get_ppiobj().read_cpu_feature(pname, cpu)
 
     def _set_prop_value(self, pname, val, cpus):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
@@ -156,6 +178,7 @@ class Power(_PropsClassBase.PropsClassBase):
 
         super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr)
         self._pplobj = None
+        self._ppiobj = None
         self._enable_cache = enable_cache
 
         self._init_props_dict(PROPS)
@@ -163,6 +186,6 @@ class Power(_PropsClassBase.PropsClassBase):
     def close(self):
         """Uninitialize the class object."""
 
-        ClassHelpers.close(self, close_attrs=("_pplobj",))
+        ClassHelpers.close(self, close_attrs=("_pplobj", "_ppiobj",))
 
         super().close()
