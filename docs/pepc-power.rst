@@ -89,6 +89,9 @@ Get information about power on specified CPUs. By default, prints all informatio
 **--yaml**
    Print information in YAML format.
 
+**--tdp**
+   Get CPU package thermal design power (details in 'tdp_')
+
 **--ppl1-hw**
    Get RAPL package power limit #1 value via MSR (details in 'ppl1_hw_').
 
@@ -205,6 +208,33 @@ Restore power settings from a file previously created with the 'pepc power save'
 ==========
 Properties
 ==========
+
+tdp
+===
+
+tdp - CPU package thermal design power
+
+Synopsis
+--------
+
+| pepc power *info* [**--tdp**]
+
+Description
+-----------
+
+CPU package thermal design power in Watts.
+
+Source
+------
+
+MSR_PKG_POWER_INFO (**0x614**), bits **14:0**.
+
+Scope
+-----
+
+This option has **package** scope.
+
+----------------------------------------------------------------------------------------------------
 
 ppl1_hw
 =======
