@@ -19,7 +19,7 @@ from pepclibs import CPUInfo
 _MSR_MODULES = (
     "PMEnable", "MiscFeatureControl", "HWPRequest", "EnergyPerfBias", "FSBFreq", "HWPRequestPkg",
     "PCStateConfigCtl", "PlatformInfo", "PowerCtl", "TurboRatioLimit1", "TurboRatioLimit",
-    "PackagePowerLimit")
+    "PackagePowerLimit", "PackagePowerInfo")
 
 # Following features are safe for testing on real HW. The bits of each feature can be written to any
 # value.
