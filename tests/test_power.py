@@ -52,7 +52,7 @@ def _set_and_verify_data(params):
 
     pinfo = params["pinfo"]
 
-    bool_pnames_pat = {"1_en_hw", "1_clen_hw", "2_en_hw", "2_clen_hw"}
+    bool_pnames_pat = {"1_en", "1_clen", "2_en", "2_clen"}
 
     for pat in bool_pnames_pat:
         pname = f"ppl{pat}"
@@ -64,7 +64,7 @@ def _set_and_verify_data(params):
             yield pname, val
             yield pname, pinfo[pname][pname]
 
-    power_pnames_pat = {"1_hw", "2_hw", "1", "2"}
+    power_pnames_pat = {"1", "2"}
 
     # For power limits, test with current value - 1W, and current value.
     for pat in power_pnames_pat:

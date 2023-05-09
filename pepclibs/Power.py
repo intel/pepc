@@ -30,52 +30,52 @@ PROPS = {
         "sname": "package",
         "writable" : False,
     },
-    "ppl1_hw" : {
+    "ppl1" : {
         "name" : "RAPL PPL1 via MSR",
         "unit" : "W",
         "type" : "float",
         "sname": "package",
         "writable" : True,
     },
-    "ppl1_enable_hw" : {
+    "ppl1_enable" : {
         "name" : "RAPL PPL1 enable via MSR",
         "type" : "bool",
         "sname": "package",
         "writable" : True,
     },
-    "ppl1_clamp_hw" : {
+    "ppl1_clamp" : {
         "name" : "RAPL PPL1 clamping via MSR",
         "type" : "bool",
         "sname": "package",
         "writable" : True,
     },
-    "ppl1_window_hw" : {
+    "ppl1_window" : {
         "name" : "RAPL PPL1 time window via MSR",
         "unit" : "s",
         "type" : "float",
         "sname": "package",
         "writable" : False,
     },
-    "ppl2_hw" : {
+    "ppl2" : {
         "name" : "RAPL PPL2 via MSR",
         "unit" : "W",
         "type" : "float",
         "sname": "package",
         "writable" : True,
     },
-    "ppl2_enable_hw" : {
+    "ppl2_enable" : {
         "name" : "RAPL PPL2 enable via MSR",
         "type" : "bool",
         "sname": "package",
         "writable" : True,
     },
-    "ppl2_clamp_hw" : {
+    "ppl2_clamp" : {
         "name" : "RAPL PPL2 clamping via MSR",
         "type" : "bool",
         "sname": "package",
         "writable" : True,
     },
-    "ppl2_window_hw" : {
+    "ppl2_window" : {
         "name" : "RAPL PPL2 time window via MSR",
         "unit" : "s",
         "type" : "float",
@@ -128,9 +128,7 @@ class Power(_PropsClassBase.PropsClassBase):
     def _pname2fname(pname):
         """Get 'PackagePowerLimit' class feature name by property name."""
 
-        fname = pname.replace("ppl1_", "limit1_")
-        fname = fname.replace("ppl2_", "limit2_")
-        return fname.replace("_hw", "")
+        return pname.replace("ppl", "limit")
 
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""

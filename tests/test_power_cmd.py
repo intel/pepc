@@ -96,8 +96,8 @@ def test_power_config(params):
 
     good_options = []
 
-    cfg_pnames_bool = {"-enable-hw", "-clamp-hw"}
-    cfg_pnames_limit = {"-hw"}
+    cfg_pnames_bool = {"-enable", "-clamp"}
+    cfg_pnames_limit = {""}
 
     for index in range(1, 3):
         for pat in cfg_pnames_bool:

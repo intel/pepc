@@ -92,29 +92,29 @@ Get information about power on specified CPUs. By default, prints all informatio
 **--tdp**
    Get CPU package thermal design power (details in 'tdp_')
 
-**--ppl1-hw**
-   Get RAPL package power limit #1 value via MSR (details in 'ppl1_hw_').
+**--ppl1**
+   Get RAPL package power limit #1 value via MSR (details in 'ppl1_').
 
-**--ppl1-enable-hw**
-   Get RAPL package power limit #1 enable status via MSR (details in 'ppl1_enable_hw_').
+**--ppl1-enable**
+   Get RAPL package power limit #1 enable status via MSR (details in 'ppl1_enable_').
 
-**--ppl1-clamp-hw**
-   Get RAPL package power limit #1 clamping enable status via MSR (details in 'ppl1_clamp_hw_')
+**--ppl1-clamp**
+   Get RAPL package power limit #1 clamping enable status via MSR (details in 'ppl1_clamp_')
 
-**--ppl1-window-hw**
-   Get RAPL package power limit #1 window size via MSR (details in 'ppl1_window_hw_').
+**--ppl1-window**
+   Get RAPL package power limit #1 window size via MSR (details in 'ppl1_window_').
 
-**--ppl2-hw**
-   Get RAPL package power limit #2 value via MSR (details in 'ppl2_hw_').
+**--ppl2**
+   Get RAPL package power limit #2 value via MSR (details in 'ppl2_').
 
-**--ppl2-enable-hw**
-   Get RAPL package power limit #2 enable status via MSR (details in 'ppl2_enable_hw_').
+**--ppl2-enable**
+   Get RAPL package power limit #2 enable status via MSR (details in 'ppl2_enable_').
 
-**--ppl2-clamp-hw**
-   Get RAPL package power limit #2 clamping enable status via MSR (details in 'ppl2_clamp_hw_')
+**--ppl2-clamp**
+   Get RAPL package power limit #2 clamping enable status via MSR (details in 'ppl2_clamp_')
 
-**--ppl2-window-hw**
-   Get RAPL package power limit #2 window size via MSR (details in 'ppl2_window_hw_').
+**--ppl2-window**
+   Get RAPL package power limit #2 window size via MSR (details in 'ppl2_window_').
 
 Subcommand *'config'*
 =====================
@@ -145,23 +145,23 @@ currently configured value(s) will be printed.
    does not provide topology information for offline CPUs. In the previous example if CPU 3 was
    offline, then '0' would mean CPU 4.
 
-**--ppl1-hw**
-   Set RAPL package power limit #1 value via MSR (details in 'ppl1_hw_').
+**--ppl1**
+   Set RAPL package power limit #1 value via MSR (details in 'ppl1_').
 
-**--ppl1-enable-hw**
-   Enable or disable RAPL package power limit #1 via MSR (details in 'ppl1_enable_hw_').
+**--ppl1-enable**
+   Enable or disable RAPL package power limit #1 via MSR (details in 'ppl1_enable_').
 
-**--ppl1-clamp-hw**
-   Enable or disable RAPL package power limit #1 clamping via MSR (details in 'pppl1_clamp_hw_')
+**--ppl1-clamp**
+   Enable or disable RAPL package power limit #1 clamping via MSR (details in 'pppl1_clamp_')
 
-**--ppl2-hw**
-   Set RAPL package power limit #2 value via MSR (details in 'ppl2_hw_').
+**--ppl2**
+   Set RAPL package power limit #2 value via MSR (details in 'ppl2_').
 
-**--ppl2-enable-hw**
-   Enable or disable RAPL package power limit #2 via MSR (details in 'pppl2_enable_hw_').
+**--ppl2-enable**
+   Enable or disable RAPL package power limit #2 via MSR (details in 'pppl2_enable_').
 
-**--ppl2-clamp-hw**
-   Enable or disable RAPL package power limit #2 clamping via MSR (details in 'ppl2_clamp_hw_')
+**--ppl2-clamp**
+   Enable or disable RAPL package power limit #2 clamping via MSR (details in 'ppl2_clamp_')
 
 Subcommand *'save'*
 ===================
@@ -236,16 +236,16 @@ This option has **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
-ppl1_hw
-=======
+ppl1
+====
 
-ppl1_hw - RAPL package power limit #1 value in Watts
+ppl1 - RAPL package power limit #1 value in Watts
 
 Synopsis
 --------
 
-| pepc power *info* [**--ppl1-hw**]
-| pepc power *config* [**--ppl1-hw**\ =<value>]
+| pepc power *info* [**--ppl1**]
+| pepc power *config* [**--ppl1**\ =<value>]
 
 Description
 -----------
@@ -264,16 +264,16 @@ This option has **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
-ppl1_enable_hw
-==============
+ppl1_enable
+===========
 
-ppl1_enable_hw - Enable or disable RAPL package power limit #1
+ppl1_enable - Enable or disable RAPL package power limit #1
 
 Synopsis
 --------
 
-| pepc power *info* [**--ppl1-enable-hw**]
-| pepc power *config* [**--ppl1-enable-hw**\ =<value>]
+| pepc power *info* [**--ppl1-enable**]
+| pepc power *config* [**--ppl1-enable**\ =<value>]
 
 Description
 -----------
@@ -292,16 +292,16 @@ This option has **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
-ppl1_clamp_hw
-=============
+ppl1_clamp
+==========
 
-ppl1_clamp_hw - Enable or disable package power clamping for limit #1
+ppl1_clamp - Enable or disable package power clamping for limit #1
 
 Synopsis
 --------
 
-| pepc power *info* [**--ppl1-clamp-hw**]
-| pepc power *config* [**--ppl1-clamp-hw**\ =<value>]
+| pepc power *info* [**--ppl1-clamp**]
+| pepc power *config* [**--ppl1-clamp**\ =<value>]
 
 Description
 -----------
@@ -320,15 +320,15 @@ This option has **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
-ppl1_window_hw
-==============
+ppl1_window
+===========
 
-ppl1_window_hw - RAPL package power limit #1 window size in seconds
+ppl1_window - RAPL package power limit #1 window size in seconds
 
 Synopsis
 --------
 
-| pepc power *info* [**--ppl1-window-hw**]
+| pepc power *info* [**--ppl1-window**]
 
 Description
 -----------
@@ -347,16 +347,16 @@ This option has **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
-ppl2_hw
-=======
+ppl2
+====
 
-ppl2_hw - RAPL package power limit #2 value in Watts
+ppl2 - RAPL package power limit #2 value in Watts
 
 Synopsis
 --------
 
-| pepc power *info* [**--ppl2-hw**]
-| pepc power *config* [**--ppl2-hw**\ =<value>]
+| pepc power *info* [**--ppl2**]
+| pepc power *config* [**--ppl2**\ =<value>]
 
 Description
 -----------
@@ -375,16 +375,16 @@ This option has **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
-ppl2_enable_hw
-==============
+ppl2_enable
+===========
 
-ppl2_enable_hw - Enable or disable RAPL package power limit #2
+ppl2_enable - Enable or disable RAPL package power limit #2
 
 Synopsis
 --------
 
-| pepc power *info* [**--ppl2-enable-hw**]
-| pepc power *config* [**--ppl2-enable-hw**\ =<value>]
+| pepc power *info* [**--ppl2-enable**]
+| pepc power *config* [**--ppl2-enable**\ =<value>]
 
 Description
 -----------
@@ -403,16 +403,16 @@ This option has **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
-ppl2_clamp_hw
-=============
+ppl2_clamp
+==========
 
-ppl2_clamp_hw - Enable or disable package power clamping for limit #2
+ppl2_clamp - Enable or disable package power clamping for limit #2
 
 Synopsis
 --------
 
-| pepc power *info* [**--ppl2-clamp-hw**]
-| pepc power *config* [**--ppl2-clamp-hw**\ =<value>]
+| pepc power *info* [**--ppl2-clamp**]
+| pepc power *config* [**--ppl2-clamp**\ =<value>]
 
 Description
 -----------
@@ -431,15 +431,15 @@ This option has **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 
-ppl2_window_hw
-==============
+ppl2_window
+===========
 
-ppl2_window_hw - RAPL package power limit #2 window size in seconds
+ppl2_window - RAPL package power limit #2 window size in seconds
 
 Synopsis
 --------
 
-| pepc power *info* [**--ppl2-window-hw**]
+| pepc power *info* [**--ppl2-window**]
 
 Description
 -----------
