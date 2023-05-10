@@ -6,8 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add '--tdp' option to 'pepc power info', for reading CPU package TDP.
+ - Add 'pepc power' manual page.
 ### Removed
 ### Changed
+ - Rename 'pepc power' options by removing the '-hw' part from them.
+ - Install manual pages when using 'pip install'.
 
 ## [1.4.15] - 2023-05-03
 ### Added
