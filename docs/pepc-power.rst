@@ -152,13 +152,13 @@ currently configured value(s) will be printed.
    Enable or disable RAPL package power limit #1 via MSR (details in 'ppl1_enable_').
 
 **--ppl1-clamp**
-   Enable or disable RAPL package power limit #1 clamping via MSR (details in 'pppl1_clamp_')
+   Enable or disable RAPL package power limit #1 clamping via MSR (details in 'ppl1_clamp_')
 
 **--ppl2**
    Set RAPL package power limit #2 value via MSR (details in 'ppl2_').
 
 **--ppl2-enable**
-   Enable or disable RAPL package power limit #2 via MSR (details in 'pppl2_enable_').
+   Enable or disable RAPL package power limit #2 via MSR (details in 'ppl2_enable_').
 
 **--ppl2-clamp**
    Enable or disable RAPL package power limit #2 clamping via MSR (details in 'ppl2_clamp_')
