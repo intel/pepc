@@ -11,6 +11,8 @@
 """The standard python packaging script."""
 
 import re
+import os
+from pathlib import Path
 from setuptools import setup, find_packages
 
 def get_version(filename):
@@ -23,6 +25,28 @@ def get_version(filename):
                 return matchobj.group(1)
     return None
 
+def get_data_files(installdir, subdir, exclude=None):
+    """
+    When the task is to include all files in the 'subdir' directory to the package and install them
+    under the 'installdir' directory, this function can be used to generate the list of files
+    suitable for the 'data_files' setup parameter.
+    """
+
+    files_dict = {}
+    for root, _, files in os.walk(subdir):
+        for fname in files:
+            fname = Path(f"{root}/{fname}")
+
+            if exclude and str(fname) in exclude:
+                continue
+
+            key = str(Path(installdir) / fname.relative_to(subdir).parent)
+            if key not in files_dict:
+                files_dict[key] = []
+            files_dict[key].append(str(fname))
+
+    return list(files_dict.items())
+
 setup(
     name="pepc",
     description="""Power, Energy, and Performance configuration tool""",
@@ -32,6 +56,7 @@ setup(
     version=get_version("pepctool/_Pepc.py"),
     scripts=["pepc"],
     packages=find_packages(exclude=["test*"]),
+    data_files=get_data_files("man/man1", "docs/man1"),
     long_description="""A tool configuring various power and performance aspects of a Linux
                         system.""",
     install_requires=["paramiko", "pyyaml", "colorama", "argcomplete"],
