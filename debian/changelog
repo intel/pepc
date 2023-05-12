@@ -1,3 +1,12 @@
+pepc (1.4.16) unstable; urgency=low
+
+  * Add '--tdp' option to 'pepc power info', for reading CPU package TDP.
+  * Add 'pepc power' manual page.
+  * Rename 'pepc power' options by removing the '-hw' part from them.
+  * Install manual pages when using 'pip install'.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 12 May 2023 00:00:00 +0200
+
 pepc (1.4.15) unstable; urgency=low
 
   * New 'pepc power' command. Currently supports only RAPL package power.
