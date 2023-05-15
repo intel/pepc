@@ -122,7 +122,7 @@ _PKG_CST_LIMITS = {
 }
 
 # MSR_PKG_CST_CONFIG_CONTROL features have core scope, except for the following CPU models.
-_MODULE_SCOPE_CPUS = (CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS)
+_MODULE_SCOPE_CPUS = CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS
 _PACKAGE_SCOPE_CPUS = CPUInfo.PHIS
 
 # Map of features available on various CPU models. Please, refer to the notes for

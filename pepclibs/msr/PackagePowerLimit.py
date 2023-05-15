@@ -234,6 +234,6 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
     def close(self):
         """Uninitialize the class object."""
 
-        ClassHelpers.close(self, close_attrs=("_unitobj"))
+        ClassHelpers.close(self, close_attrs=("_unitobj",))
 
         super().close()
