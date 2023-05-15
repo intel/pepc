@@ -50,7 +50,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if self._props[pname]["sname"]:
             return
 
-        return _bug_method_not_defined("PropsClassBase._set_sname")
+        _bug_method_not_defined("PropsClassBase._set_sname")
 
     def get_sname(self, pname):
         """Get scope "sname" for property 'pname'."""
