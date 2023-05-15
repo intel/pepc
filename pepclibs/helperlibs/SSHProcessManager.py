@@ -1000,9 +1000,9 @@ for entry in os.listdir(path):
                     # We have more commands to try.
                     continue
                 raise
-            else:
-                self._which_cmd = which_cmd
-                break
+
+            self._which_cmd = which_cmd
+            break
 
         if not exitcode:
             # Which could return several paths. They may contain aliases.
