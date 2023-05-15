@@ -95,7 +95,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase._get_cpu_prop_value")
 
     def _get_cpu_subprop_value(self, pname, subpname, cpu):
@@ -303,7 +303,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
           * cpus - same as in 'set_props()', but normalized and validated.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase.set_props")
 
     def set_props(self, inprops, cpus="all"):

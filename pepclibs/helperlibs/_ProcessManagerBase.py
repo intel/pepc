@@ -78,7 +78,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         data.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessBase._fetch_stream_data")
 
     def _stream_fetcher(self, streamid):
@@ -205,7 +205,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessBase._wait")
 
     def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(None, None),
@@ -326,8 +326,6 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         """
         Check if the process is still running. If it is, return 'None', else return exit status.
         """
-
-        # pylint: disable=no-self-use
         return _bug_method_not_defined("ProcessBase.poll")
 
     def get_cmd_failure_msg(self, stdout, stderr, exitcode, timeout=None, startmsg=None):
@@ -477,7 +475,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Returns the process object.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.run_async")
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
@@ -514,7 +512,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         parts of the returned tuple will be empty strings.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.run")
 
     def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
@@ -524,7 +522,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         failed.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.run_verify")
 
     @staticmethod
@@ -572,7 +570,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
           * s - preserve device nodes and others special files.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.rsync")
 
     def _command_not_found(self, cmd, errmsg, toolname=None):
@@ -653,7 +651,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         the builtin Python 'open()' function.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.open")
 
     def read(self, path, must_exist=True):
@@ -731,7 +729,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                        'False'.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.mkdir")
 
     def lsdir(self, path, must_exist=True):
@@ -747,43 +745,43 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         returns and does not yield anything.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.lsdir")
 
     def exists(self, path):
         """Returns 'True' if path 'path' exists."""
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.exists")
 
     def is_file(self, path):
         """Returns 'True' if path 'path' exists an it is a regular file."""
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.is_file")
 
     def is_dir(self, path):
         """Returns 'True' if path 'path' exists an it is a directory."""
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.is_dir")
 
     def is_exe(self, path):
         """Returns 'True' if path 'path' exists an it is an executable file."""
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.is_exe")
 
     def is_socket(self, path):
         """Returns 'True' if path 'path' exists an it is a Unix socket file."""
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.is_socket")
 
     def get_mtime(self, path):
         """Returns the modification time of a file or directory at path 'path'."""
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.get_mtime")
 
     def rmtree(self, path):
@@ -792,7 +790,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         removed, but the target of the link does not get removed.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.rmtree")
 
     def abspath(self, path, must_exist=True):
@@ -803,7 +801,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                          otherwise returns the 'path' value.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.abspath")
 
     def mkdtemp(self, prefix=None, basedir=None):
@@ -813,13 +811,13 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
           * basedir - path to the base directory where the temporary directory should be created.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.mkdtemp")
 
     def get_homedir(self):
         """Return return the home directory path for the logged in user."""
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.get_homedir")
 
     def which(self, program, must_find=True):
@@ -831,7 +829,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                         found, otherwise returns 'None' without raising the exception.
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.which")
 
     def __init__(self):

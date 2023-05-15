@@ -387,7 +387,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         sub-class, and then will mangle it (e.g., add the "supported" flag).
         """
 
-        # pylint: disable=unused-argument,no-self-use
+        # pylint: disable=unused-argument
         raise Error("BUG: sub-class did not define the '_set_baseclass_attributes()' method")
 
     def __new__(cls, **kwargs):

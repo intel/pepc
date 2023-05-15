@@ -65,7 +65,7 @@ class PepcArgsParser(ArgParse.ArgsParser):
             if opt["argcomplete"] and argcomplete:
                 arg.completer = getattr(argcomplete.completers, opt["argcomplete"])
 
-    def _check_unknow_args(self, args, uargs, gargs): # pylint: disable=no-self-use
+    def _check_unknow_args(self, args, uargs, gargs):
         """
         Check unknown arguments 'uargs' for global arguments 'gargs' and add them to 'args'.
         This is a workaround for implementing global arguments.
