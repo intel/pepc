@@ -270,7 +270,7 @@ def _test_msr_write_bits_bad(params):
                 msr.write_bits(tp["addr"], tp["bits"], val, cpus=[bad_cpu], sname=tp["sname"])
 
         bits_cnt = (tp["bits"][0] - tp["bits"][1]) + 1
-        bad_val = (1 << bits_cnt)
+        bad_val = 1 << bits_cnt
         with pytest.raises(Error):
             msr.write_bits(tp["addr"], tp["bits"], bad_val, cpus=[cpu], sname=tp["sname"])
 
@@ -346,7 +346,7 @@ def _test_msr_write_cpu_bits_bad(params):
                 msr.write_cpu_bits(tp["addr"], tp["bits"], val, bad_cpu, sname=tp["sname"])
 
         bits_cnt = (tp["bits"][0] - tp["bits"][1]) + 1
-        bad_val = (1 << bits_cnt)
+        bad_val = 1 << bits_cnt
         with pytest.raises(Error):
             msr.write_cpu_bits(tp["addr"], tp["bits"], bad_val, cpu, sname=tp["sname"])
 
