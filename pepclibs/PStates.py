@@ -329,7 +329,9 @@ class PStates(_PCStatesBase.PCStatesBase):
             fsbfreq = self._get_fsbfreq()
         except ErrorNotSupported:
             # Fall back to 100MHz clock speed.
-            return 100.0
+            if self._cpuinfo.info["vendor"] == "GenuineIntel":
+                return 100.0
+            return None
 
         from pepclibs import BClock # pylint: disable=import-outside-toplevel
         return BClock.get_bclk(self._pman, fsbfreq=fsbfreq, cpu=cpu)
@@ -395,6 +397,9 @@ class PStates(_PCStatesBase.PCStatesBase):
             return None
 
         bclk = self._get_bclk(cpu)
+        if bclk is None:
+            return bclk
+
         return int(ratio * bclk * 1000 * 1000)
 
     def _get_max_eff_freq(self, cpu):
@@ -407,6 +412,9 @@ class PStates(_PCStatesBase.PCStatesBase):
             return None
 
         bclk = self._get_bclk(cpu)
+        if bclk is None:
+            return bclk
+
         return int(ratio * bclk * 1000 * 1000)
 
     def _get_min_oper_freq(self, cpu):
@@ -425,6 +433,9 @@ class PStates(_PCStatesBase.PCStatesBase):
             return None
 
         bclk = self._get_bclk(cpu)
+        if bclk is None:
+            return bclk
+
         return int(ratio * bclk * 1000 * 1000)
 
     def _get_max_turbo_freq(self, cpu):
@@ -452,6 +463,9 @@ class PStates(_PCStatesBase.PCStatesBase):
                 return None
 
         bclk = self._get_bclk(cpu)
+        if bclk is None:
+            return bclk
+
         return int(ratio * bclk * 1000 * 1000)
 
     def _read_int(self, path):
