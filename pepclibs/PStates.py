@@ -789,6 +789,10 @@ class PStates(_PCStatesBase.PCStatesBase):
                 freq = self._get_cpu_prop_value("base_freq", cpu)
             elif val in {"eff", "lfm", "Pn"}:
                 freq = self._get_cpu_prop_value("max_eff_freq", cpu)
+                if not freq:
+                    # Max. efficiency frequency may not be supported by the platform. Fall back to
+                    # the minimum frequency in this case.
+                    freq = self._get_cpu_prop_value("min_freq_limit", cpu)
             elif val == "Pm":
                 freq = self._get_cpu_prop_value("min_oper_freq", cpu)
             else:
