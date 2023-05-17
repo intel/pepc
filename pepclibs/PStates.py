@@ -729,6 +729,35 @@ class PStates(_PCStatesBase.PCStatesBase):
         hwpreq.disable_cpu_feature_pkg_control(fname, cpu)
         hwpreq.write_cpu_feature(fname, int(freq // 100000000), cpu)
 
+    def _handle_write_and_read_freq_mismatch(self, pname, prop, freq, read_freq, cpu, path):
+        """
+        This is a helper function fo '_write_freq_prop_value_to_sysfs()' and it is called when there
+        is a mismatch between what was written to a frequency sysfs file and what was read back.
+        """
+
+        name = Human.untitle(pname)
+        what = self._get_num_str(prop, cpu)
+        short_freq = Human.largenum(freq, unit="Hz")
+        msg = f"failed to set {name} to {short_freq} for {what}: wrote '{freq // 1000}' to " \
+              f"'{path}', but read '{read_freq // 1000}' back."
+
+        bclk = None
+        with contextlib.suppress(Error):
+            bclk = self._get_bclk(cpu)
+
+        if bclk and freq % (bclk * 1000000):
+            msg += f"\nConsider using frequency value aligned to {bclk}MHz."
+        elif pname == "max_freq":
+            with contextlib.suppress(Error):
+                if self._get_cpu_turbo(cpu) == "off":
+                    base_freq = self._get_cpu_prop_value("base_freq", cpu)
+                    if base_freq and freq > base_freq:
+                        base_freq = Human.largenum(base_freq, unit="Hz")
+                        msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and " \
+                               f"this may be the limiting factor."
+
+        raise Error(msg)
+
     def _write_freq_prop_value_to_sysfs(self, pname, freq, cpu):
         """
         Write frequency value 'freq' of a CPU frequency property 'pname' to the corresponding sysfs
@@ -761,28 +790,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             time.sleep(0.1)
             count -= 1
 
-        name = Human.untitle(prop["name"])
-        what = self._get_num_str(prop, cpu)
-        short_freq = Human.largenum(freq, unit="Hz")
-        msg = f"failed to set {name} to {short_freq} for {what}: wrote '{freq // 1000}' to " \
-              f"'{path}', but read '{read_freq // 1000}' back."
-
-        bclk = None
-        with contextlib.suppress(Error):
-            bclk = self._get_bclk(cpu)
-
-        if bclk and freq % (bclk * 1000000):
-            msg += f"\nConsider using frequency value aligned to {bclk}MHz."
-        elif pname == "max_freq":
-            with contextlib.suppress(Error):
-                if self._get_cpu_turbo(cpu) == "off":
-                    base_freq = self._get_cpu_prop_value("base_freq", cpu)
-                    if base_freq and freq > base_freq:
-                        base_freq = Human.largenum(base_freq, unit="Hz")
-                        msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and " \
-                               f"this may be the limiting factor."
-
-        raise Error(msg)
+        self._handle_write_and_read_freq_mismatch(pname, prop, freq, read_freq, cpu, path)
 
     def _parse_freq(self, pname, val, cpu, uncore=False):
         """Turn a user-provided CPU or uncore frequency property value to hertz."""
