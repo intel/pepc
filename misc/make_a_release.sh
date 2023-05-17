@@ -35,7 +35,7 @@ CHANGELOG_MD_TO_DEBIAN="$BASEDIR/misc/changelog_md_to_debian"
 PREPARE_CHENGELOG_MD="$BASEDIR/misc/prepare_changelog_md"
 
 fatal() {
-        printf "Error: %s\n" "$1" >&2
+        printf "$PROG: error: %s\n" "$1" >&2
         exit 1
 }
 
