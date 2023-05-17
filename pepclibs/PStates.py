@@ -740,8 +740,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         name = Human.untitle(pname)
         what = self._get_num_str(prop, cpu)
         short_freq = Human.largenum(freq, unit="Hz")
-        msg = f"failed to set {name} to {short_freq} for {what}: wrote '{freq // 1000}' to " \
-              f"'{path}', but read '{read_freq // 1000}' back."
+        msg = f"failed to set {name} to {short_freq} for {what}{self._pman.hostmsg}: wrote " \
+              f"'{freq // 1000}' to '{path}', but read '{read_freq // 1000}' back."
 
         with contextlib.suppress(Error):
             bclk = self._get_bclk(cpu)
