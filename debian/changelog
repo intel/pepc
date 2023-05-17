@@ -1,3 +1,11 @@
+pepc (1.4.17) unstable; urgency=low
+
+  * Add workaround for inconsistent CPU frequency driver behavior on AMD
+    systems. This fixes 'pepc pstates config --max-freq max' failure on AMD
+    systems.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 17 May 2023 00:00:00 +0200
+
 pepc (1.4.16) unstable; urgency=low
 
   * Add '--tdp' option to 'pepc power info', for reading CPU package TDP.

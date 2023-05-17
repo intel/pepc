@@ -5,12 +5,15 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Add workaround for inconsistent CPU frequency driver behavior on AMD
-   systems. This fixes 'pepc pstates config --max-freq max' failure on AMD
-   systems.
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.17] - 2023-05-17
+### Fixed
+ - Add workaround for inconsistent CPU frequency driver behavior on AMD
+   systems. This fixes 'pepc pstates config --max-freq max' failure on AMD
+   systems.
 
 ## [1.4.16] - 2023-05-12
 ### Added
