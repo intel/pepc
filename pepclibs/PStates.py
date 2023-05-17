@@ -735,28 +735,43 @@ class PStates(_PCStatesBase.PCStatesBase):
         is a mismatch between what was written to a frequency sysfs file and what was read back.
         """
 
+        raise_error = True
+
         name = Human.untitle(pname)
         what = self._get_num_str(prop, cpu)
         short_freq = Human.largenum(freq, unit="Hz")
         msg = f"failed to set {name} to {short_freq} for {what}: wrote '{freq // 1000}' to " \
               f"'{path}', but read '{read_freq // 1000}' back."
 
-        bclk = None
         with contextlib.suppress(Error):
             bclk = self._get_bclk(cpu)
+            if bclk and freq % (bclk * 1000000):
+                msg += f"\nHint: consider using frequency value aligned to {bclk}MHz."
 
-        if bclk and freq % (bclk * 1000000):
-            msg += f"\nConsider using frequency value aligned to {bclk}MHz."
-        elif pname == "max_freq":
-            with contextlib.suppress(Error):
-                if self._get_cpu_turbo(cpu) == "off":
-                    base_freq = self._get_cpu_prop_value("base_freq", cpu)
-                    if base_freq and freq > base_freq:
-                        base_freq = Human.largenum(base_freq, unit="Hz")
-                        msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and " \
-                               f"this may be the limiting factor."
+            if pname == "max_freq":
+                base_freq = self._get_cpu_prop_value("base_freq", cpu)
+                turbo = self._get_cpu_turbo(cpu)
 
-        raise Error(msg)
+                if base_freq and freq > base_freq and turbo == "off":
+                    base_freq = Human.largenum(base_freq, unit="Hz")
+                    msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and this " \
+                           f"may be the limiting factor."
+
+                if self._cpuinfo.info["vendor"] == "AuthenticAMD":
+                    # This is a limited quirk for an AMD system. It does not allow setting max.
+                    # frequency to any value above base frequency. At the moment we do not support
+                    # reqding base frequency for AMD systems, so we only support the
+                    # 'freq == max_freq_limit' case. But it should really be 'if freq > base_freq'.
+                    max_freq_limit = self._get_cpu_prop_value("max_freq_limit", cpu)
+                    driver = self._get_cpu_prop_value("driver", cpu)
+                    if freq == max_freq_limit and driver == "acpi-cpufreq":
+                        msg += "\nThis is expected 'acpi-cpufreq' driver behavior on AMD systems."
+                        raise_error = False
+
+        if raise_error:
+            raise Error(msg)
+
+        _LOG.debug(msg)
 
     def _write_freq_prop_value_to_sysfs(self, pname, freq, cpu):
         """
