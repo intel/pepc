@@ -777,7 +777,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             with contextlib.suppress(Error):
                 if self._get_cpu_turbo(cpu) == "off":
                     base_freq = self._get_cpu_prop_value("base_freq", cpu)
-                    if freq > base_freq:
+                    if base_freq and freq > base_freq:
                         base_freq = Human.largenum(base_freq, unit="Hz")
                         msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and " \
                                f"this may be the limiting factor."
