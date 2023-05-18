@@ -10,13 +10,16 @@
 This module provides python API to the systemctl tool.
 """
 
+import logging
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
+
+_LOG = logging.getLogger()
 
 class Systemctl(ClassHelpers.SimpleCloseContext):
     """This module provides python API to the systemctl tool."""
 
-    def _start(self, units, start):
+    def _start(self, units, start, save=False):
         """Start or stop the 'units' systemd units."""
 
         if start:
@@ -29,17 +32,28 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
 
         for unit in units:
             self._pman.run_verify(f"{self._systemctl_path} {action} -- '{unit}'")
-            if self.is_active(unit) != start:
-                status = None
-                try:
-                    status, _ = self._pman.run_verify(f"{self._systemctl_path} status -- '{unit}'")
-                except Error:
-                    pass
 
-                msg = f"failed to {action} systemd unit '{unit}'"
-                if status:
-                    msg += f", here is its current status:\n{status}"
-                raise Error(msg)
+            if self.is_active(unit) == start:
+                if save:
+                    if unit not in self._saved_units:
+                        self._saved_units[unit] = action
+                    elif self._saved_units[unit] != action:
+                        _LOG.warning("systemd unit '%s' state is already saved as '%s'",
+                                     unit, self._saved_units[unit])
+                continue
+
+            # The error path: unit state did not change.
+            status = None
+            try:
+                status, _ = self._pman.run_verify(f"{self._systemctl_path} status -- '{unit}'")
+            except Error:
+                pass
+
+            msg = f"failed to {action} systemd unit '{unit}'"
+            if status:
+                msg += f", here is its current status:\n{status}"
+
+            raise Error(msg)
 
     def _is_smth(self, unit, what):
         """Check if a unit is active/failed or not."""
@@ -48,18 +62,33 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         output = output.strip()
         return output == what
 
-    def start(self, units):
+    def start(self, units, save=False):
         """Start systemd unit(s). The arguments are as follows.
           * units - unit name or a collection of unit names to start.
+          * save - if 'True', save the process state and restore it in the 'restore()' method.
         """
-        self._start(units, True)
 
-    def stop(self, units):
+        self._start(units, True, save=save)
+
+    def stop(self, units, save=False):
         """
         Stop systemd unit(s). The arguments are as follows.
           * units - unit name or a collection of unit names to stop.
+          * save - if 'True', save the process state and restore it in the 'restore()' method.
         """
-        self._start(units, False)
+
+        self._start(units, False, save=save)
+
+    def restore(self):
+        """Restore saved units' state."""
+
+        if not self._saved_units:
+            _LOG.debug("nothin to restore")
+            return
+
+        for unit, action in self._saved_units.items():
+            start = action == "start"
+            self._start(unit, start)
 
     def is_active(self, unit):
         """Returns 'True' if a systemd 'unit' is active (started) and 'False' otherwise."""
@@ -131,6 +160,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
 
         self._saved_timers = None
         self._saved_ntp_services = None
+        self._saved_units = {}
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
