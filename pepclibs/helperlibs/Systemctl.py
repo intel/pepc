@@ -49,11 +49,16 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         return output == what
 
     def start(self, units):
-        """Start systemd unit(s) 'units'."""
+        """Start systemd unit(s). The arguments are as follows.
+          * units - unit name or a collection of unit names to start.
+        """
         self._start(units, True)
 
     def stop(self, units):
-        """Stop a systemd unit(s) 'units'."""
+        """
+        Stop systemd unit(s). The arguments are as follows.
+          * units - unit name or a collection of unit names to stop.
+        """
         self._start(units, False)
 
     def is_active(self, unit):
