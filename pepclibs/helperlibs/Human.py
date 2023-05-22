@@ -328,11 +328,31 @@ def rangify(numbers):
 
     return ",".join(range_strs)
 
-def untitle(word):
-    """Does the opposite to the 'title()' method of python strings."""
+def untitle(sentence):
+    """
+    Return 'sentence' but with the first letter in the first word modified from capital to small.
+    This function includes some heuristics to avoid un-capitalizing words like "C1" or "C-state".
+    """
+
+    # Seprate out the first word by splitting the sentence. If the word include a hyphen, separate
+    # out the first part. E.g., "C-state residency" will become just "C".
+    word = sentence
+    for separator in (" ", "-"):
+        split = word.split(separator)
+        if len(split) < 1:
+            return sentence
+        word = split[0]
+        if len(word) < 2:
+            return sentence
 
     # Do nothing if the first character is lowercase or if both first and second characters are
     # upper case, which would mean this 'word' is an abbreviation, such as "DNA".
     if word[0].islower() or word[1].isupper():
-        return word
-    return word[0].lower() + word[1:]
+        return sentence
+
+    # Do nothing if there are digits in the word.
+    for char in word:
+        if char.isdigit():
+            return sentence
+
+    return sentence[0].lower() + sentence[1:]
