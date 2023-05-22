@@ -303,10 +303,13 @@ def copy_file(pman, src, outdir):
     dst = Path(outdir / src.lstrip("/"))
     os.makedirs(dst.parent, exist_ok=True)
 
-    try:
-        pman.get(src, dst)
-    except Error as err:
-        LOG.notice(err)
+    # In some cases '/proc/cpuinfo' is not fully copied when using 'scp' or 'rsync'.
+    res = pman.run(f"cat {src}")
+    if res.exitcode != 0:
+        LOG.notice("running command 'cat %s' failed and returned '%s'", src, res.exitcode)
+
+    with open(dst, "w") as fobj:
+        fobj.write(res.stdout)
 
 def generate_config_file(modname, testdata, outdir):
     """Generate configuration file for python module name 'modname' from testdata 'testdata'."""
