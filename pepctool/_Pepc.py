@@ -167,7 +167,7 @@ def build_arguments_parser():
     #
     text = """List online and offline CPUs."""
     descr = "List online and offline CPUs. " + man_msg
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cpu_hotplug_info_command)
 
     #
@@ -175,7 +175,7 @@ def build_arguments_parser():
     #
     text = """Bring CPUs online."""
     descr = "Bring CPUs online. " + man_msg
-    subpars2 = subparsers2.add_parser("online", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("online", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cpu_hotplug_online_command)
 
     text = """List of CPUs to online. The list can include individual CPU numbers and CPU number
@@ -191,7 +191,7 @@ def build_arguments_parser():
     #
     text = """Bring CPUs offline."""
     descr = "Bring CPUs offline. " + man_msg
-    subpars2 = subparsers2.add_parser("offline", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("offline", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cpu_hotplug_offline_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to offline.")
@@ -214,7 +214,7 @@ def build_arguments_parser():
     #
     text = "Get CPU C-states information."
     descr = "Get information about C-states on specified CPUs. " + man_msg
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cstates_info_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
@@ -243,7 +243,7 @@ def build_arguments_parser():
     text = "Configure C-states."
     descr = """Configure C-states on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
-    subpars2 = subparsers2.add_parser("config", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cstates_config_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure.")
@@ -282,7 +282,7 @@ def build_arguments_parser():
     descr = f"""Save all the modifiable C-state settings into a file. This file can later be used
                 for restoring C-state settings with the '{TOOLNAME} cstates restore' command. """ \
                 + man_msg
-    subpars2 = subparsers2.add_parser("save", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cstates_save_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to save C-state information about.")
@@ -296,7 +296,7 @@ def build_arguments_parser():
     text = "Restore C-states settings."
     descr = f"""Restore C-state settings from a file previously created with the
                '{TOOLNAME} cstates save' command. """ + man_msg
-    subpars2 = subparsers2.add_parser("restore", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("restore", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cstates_restore_command)
 
     text = """Name of the file from which to restore the settings from, use "-" to read from the
@@ -319,7 +319,7 @@ def build_arguments_parser():
     text = "Get P-states information."
     descr = """Get P-states information for specified CPUs. By default, prints all information for
                all CPUs. """ + man_msg
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=pstates_info_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
@@ -343,7 +343,7 @@ def build_arguments_parser():
     text = """Configure P-states."""
     descr = """Configure P-states on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
-    subpars2 = subparsers2.add_parser("config", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=pstates_config_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure P-States on.")
@@ -374,7 +374,7 @@ def build_arguments_parser():
     descr = f"""Save all the modifiable P-state settings into a file. This file can later be used
                 for restoring P-state settings with the '{TOOLNAME} pstates restore' command. """ \
                 + man_msg
-    subpars2 = subparsers2.add_parser("save", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=pstates_save_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to save P-state information about.")
@@ -388,7 +388,7 @@ def build_arguments_parser():
     text = "Restore P-states settings."
     descr = f"""Restore P-state settings from a file previously created with the
                '{TOOLNAME} pstates save' command. """ + man_msg
-    subpars2 = subparsers2.add_parser("restore", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("restore", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=pstates_restore_command)
 
     text = """Name of the file from which to restore the settings from, use "-" to read from the
@@ -411,7 +411,7 @@ def build_arguments_parser():
     text = "Get power information."
     descr = """Get power information for specified CPUs. By default, prints all information for
                all CPUs. """ + man_msg
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=power_info_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
@@ -436,7 +436,7 @@ def build_arguments_parser():
     descr = """Configure power settings on specified CPUs. All options can be used without
                a parameter, in which case the currently configured value(s) will be printed. """ \
                + man_msg
-    subpars2 = subparsers2.add_parser("config", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=power_config_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure power settings on.")
@@ -468,7 +468,7 @@ def build_arguments_parser():
     descr = f"""Save all the modifiable power settings into a file. This file can later be used
                 for restoring power settings with the '{TOOLNAME} power restore' command. """ \
                 + man_msg
-    subpars2 = subparsers2.add_parser("save", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=power_save_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to save power information about.")
@@ -482,7 +482,7 @@ def build_arguments_parser():
     text = "Restore power settings."
     descr = f"""Restore power settings from a file previously created with the
                '{TOOLNAME} power save' command. """ + man_msg
-    subpars2 = subparsers2.add_parser("restore", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("restore", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=power_restore_command)
 
     text = """Name of the file from which to restore the settings from, use "-" to read from the
@@ -501,12 +501,12 @@ def build_arguments_parser():
 
     text = "Get PCI ASPM information."
     descr = "Get information about current PCI ASPM configuration. " + man_msg
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=aspm_info_command)
 
     text = "Change PCI ASPM configuration."
     descr = "Change PCI ASPM configuration. " + man_msg
-    subpars2 = subparsers2.add_parser("config", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=aspm_config_command)
 
     text = """The PCI ASPM policy to set, use "default" to set the Linux default policy."""
@@ -526,7 +526,7 @@ def build_arguments_parser():
     descr = """Print CPU topology information. Note, the topology information for some offline CPUs
                may be unavailable, in these cases the number will be substituted with "?". Please,
                refer to 'pepc-topology' manual page for more information."""
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr)
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=topology_info_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to print topology information for.")
