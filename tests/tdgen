@@ -42,9 +42,9 @@ CPUInfoData = {
                     r"'.*cpu([[:digit:]]+)/topology/die_(id|cpus_list)' -type f -exec printf " \
                     r"'%s' {}: \; -exec grep . {} \;",
          "separator": ":",
-         "readonly":  True,
-         "dirname":   "die-info",
-         "filename":  "die.txt"},
+         "readonly": True,
+         "dirname": "die-info",
+         "filename": "die.txt"},
         # Command for reading module info from the following files:
         # * /sys/devices/system/cpu/cpu*/cache/index2/id
         # * /sys/devices/system/cpu/cpu*/cache/index2/shared_cpus_list
@@ -52,17 +52,17 @@ CPUInfoData = {
                     r"'.*cpu([[:digit:]]+)/cache/index2/(id|shared_cpu_list)' -type f -exec " \
                     r"printf '%s' {}: \; -exec grep . {} \;",
          "separator": ":",
-         "readonly":  True,
-         "dirname":   "module-info",
-         "filename":  "module.txt"},
+         "readonly": True,
+         "dirname": "module-info",
+         "filename": "module.txt"},
         # Command for reading online CPUs and all CPUs, from the following files:
         # * /sys/devices/system/cpu/online
         # * /sys/devices/system/cpu/present
         {"command": r"grep . /sys/devices/system/cpu/online /sys/devices/system/cpu/present",
          "separator": ":",
-         "readonly":  True,
-         "dirname":   "cpu-info",
-         "filename":  "cpu.txt"},
+         "readonly": True,
+         "dirname": "cpu-info",
+         "filename": "cpu.txt"},
         # Command for reading node info from the following files:
         # * /sys/devices/system/node/node*/cpulist.
         # * /sys/devices/system/node/online
@@ -70,9 +70,9 @@ CPUInfoData = {
                     r"'.*online|.*node([[:digit:]]+)/cpulist' -type f -exec " \
                     r"printf '%s' {}: \; -exec grep . {} \;",
          "separator": ":",
-         "readonly":  True,
-         "dirname":   "node-info",
-         "filename":  "node.txt"}],
+         "readonly": True,
+         "dirname": "node-info",
+         "filename": "node.txt"}],
     "msrs" :
         {"addresses": [
             EnergyPerfBias.MSR_ENERGY_PERF_BIAS,
@@ -91,8 +91,8 @@ CPUInfoData = {
             PackagePowerLimit.MSR_PKG_POWER_LIMIT],
          "separator1": ":",
          "separator2": "|",
-         "dirname":   "msr",
-         "filename":  "msr.txt"}
+         "dirname": "msr",
+         "filename": "msr.txt"}
     }
 
 ASPMData = {
@@ -100,9 +100,9 @@ ASPMData = {
         {"command": r"find /sys/module/pcie_aspm/parameters/policy -type f -exec printf '%s' {}: " \
                     r"\; -exec grep . {} \;",
          "separator": ":",
-         "readonly":  False,
-         "dirname":   "aspm-info",
-         "filename":  "aspm.txt"}]
+         "readonly": False,
+         "dirname": "aspm-info",
+         "filename": "aspm.txt"}]
     }
 
 CPUOnlineData = {
@@ -112,14 +112,14 @@ CPUOnlineData = {
         {"command": r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
                     r"'.*cpu([[:digit:]]+)/online' -exec printf '%s' {}: \; -exec grep . {} \;",
          "separator": ":",
-         "readonly":  False,
-         "dirname":   "cpuonline-info",
-         "filename":  "cpuonline.txt"}],
+         "readonly": False,
+         "dirname": "cpuonline-info",
+         "filename": "cpuonline.txt"}],
     "directories" : [
         {"command": r"find /sys/devices/system/cpu -type d -regextype posix-extended -regex " \
                     r"'.*cpu([[:digit:]]+)'",
-         "dirname":   "cpuonline-info",
-         "filename":  "cpuonline-dirs.txt"}],
+         "dirname": "cpuonline-info",
+         "filename": "cpuonline-dirs.txt"}],
     }
 
 CStatesData = {
@@ -153,20 +153,20 @@ PStatesData = {
          "readonly": False,
          "dirname": "pstates",
          "filename": "intel_pstates.txt"},
-         {"command" : r"find /sys/devices/system/cpu/intel_uncore_frequency -type f -regextype " \
-                      r"posix-extended -regex '.*package_([[:digit:]]+)_die_([[:digit:]]+)/[^/]+'" \
-                      r" -exec printf '%s'{}: \; -exec grep . {} \;",
-          "separator": ":",
-          "readonly": False,
-          "dirname": "pstates",
-          "filename": "uncore.txt"},
-          {"command" : r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
-                       r"'.*cpu([[:digit:]]+)/power/energy_perf_bias' -type f -exec " \
-                       r"printf '%s' {}: \; -exec grep . {} \;",
-          "separator": ":",
-          "readonly": False,
-          "dirname": "pstates",
-          "filename": "epb.txt"}]
+        {"command" : r"find /sys/devices/system/cpu/intel_uncore_frequency -type f -regextype " \
+                     r"posix-extended -regex '.*package_([[:digit:]]+)_die_([[:digit:]]+)/[^/]+'" \
+                     r" -exec printf '%s'{}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly": False,
+         "dirname": "pstates",
+         "filename": "uncore.txt"},
+        {"command" : r"find /sys/devices/system/cpu -type f -regextype posix-extended -regex " \
+                     r"'.*cpu([[:digit:]]+)/power/energy_perf_bias' -type f -exec " \
+                     r"printf '%s' {}: \; -exec grep . {} \;",
+         "separator": ":",
+         "readonly": False,
+         "dirname": "pstates",
+         "filename": "epb.txt"}]
     }
 
 SystemctlData = {
