@@ -89,6 +89,11 @@ Get P-states information for specified CPUs. By default, prints all information 
 **--yaml**
    Print information in YAML format.
 
+**--override-cpu-model**
+   This option is for debugging and testing purposes only. Provide the CPU model number which the
+   tool treats the target system CPU as. For example, use 0x8F to treat the target system as
+   Sapphire Rapids Xeon.
+
 **--min-freq**
    Get minimum CPU frequency (details in 'min_freq_').
 
@@ -189,6 +194,11 @@ currently configured value(s) will be printed.
    and '1' would mean CPU 4. This option can only be used to reference online CPUs, because Linux
    does not provide topology information for offline CPUs. In the previous example if CPU 3 was
    offline, then '0' would mean CPU 4.
+
+**--override-cpu-model**
+   This option is for debugging and testing purposes only. Provide the CPU model number which the
+   tool treats the target system CPU as. For example, use 0x8F to treat the target system as
+   Sapphire Rapids Xeon.
 
 **--min-freq** *[MIN_FREQ]*
    Set minimum CPU frequency (details in 'min_freq_').
