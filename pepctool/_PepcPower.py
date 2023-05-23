@@ -32,9 +32,19 @@ def power_info_command(args, pman):
     # The output format to use.
     fmt = "yaml" if args.yaml else "human"
 
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         Power.Power(pman=pman, cpuinfo=cpuinfo) as pobj, \
-         _PepcPrinter.PowerPrinter(pobj, cpuinfo, fmt=fmt) as pprint:
+    with contextlib.ExitStack() as stack:
+        cpuinfo = CPUInfo.CPUInfo(pman=pman)
+        stack.enter_context(cpuinfo)
+
+        if args.override_cpu_model:
+            _PepcCommon.override_cpu_model(cpuinfo, args.override_cpu_model)
+
+        pobj = Power.Power(pman=pman, cpuinfo=cpuinfo)
+        stack.enter_context(pobj)
+
+        pprint = _PepcPrinter.CStatesPrinter(pobj, cpuinfo, fmt=fmt)
+        stack.enter_context(pprint)
+
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         skip_unsupported = False
@@ -70,6 +80,9 @@ def power_config_command(args, pman):
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
+
+        if args.override_cpu_model:
+            _PepcCommon.override_cpu_model(cpuinfo, args.override_cpu_model)
 
         msr = MSR.MSR(pman, cpuinfo=cpuinfo)
         stack.enter_context(msr)

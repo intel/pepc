@@ -419,6 +419,7 @@ def build_arguments_parser():
     descr = """Get power information for specified CPUs. By default, prints all information for
                all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2.add_argument("--override-cpu-model", help=override, default=None)
     subpars2.set_defaults(func=power_info_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
@@ -444,6 +445,7 @@ def build_arguments_parser():
                a parameter, in which case the currently configured value(s) will be printed. """ \
                + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
+    subpars2.add_argument("--override-cpu-model", help=override, default=None)
     subpars2.set_defaults(func=power_config_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure power settings on.")
