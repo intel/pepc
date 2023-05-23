@@ -89,6 +89,11 @@ Get information about C-states on specified CPUs. By default, prints all informa
 **--yaml**
    Print information in YAML format.
 
+**--override-cpu-model**
+   This option is for debugging and testing purposes only. Provide the CPU model number which the
+   tool treats the target system CPU as. For example, use 0x8F to treat the target system as
+   Sapphire Rapids Xeon.
+
 **--cstates** *[CATATES]*
    Comma-separated list of C-states to get information about. C-states should be specified by name
    (e.g., 'C1'). Use 'all' to specify all the available Linux C-states (this is the default). Note,
@@ -147,6 +152,11 @@ currently configured value(s) will be printed.
    and '1' would mean CPU 4. This option can only be used to reference online CPUs, because Linux
    does not provide topology information for offline CPUs. In the previous example if CPU 3 was
    offline, then '0' would mean CPU 4.
+
+**--override-cpu-model**
+   This option is for debugging and testing purposes only. Provide the CPU model number which the
+   tool treats the target system CPU as. For example, use 0x8F to treat the target system as
+   Sapphire Rapids Xeon.
 
 **--enable** *[CSTATES]*
    Comma-separated list of C-states to enable. C-states should be specified by name (e.g., 'C1').

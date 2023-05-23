@@ -141,6 +141,9 @@ def _add_cpu_subset_arguments(subpars, fmt):
 def build_arguments_parser():
     """A helper function which parses the input arguments."""
 
+    override = """This option is for debugging and testing purposes only. Provide the CPU model
+                  number which the tool treats the target system CPU as"""
+
     text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
     parser = PepcArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
 
@@ -215,6 +218,7 @@ def build_arguments_parser():
     text = "Get CPU C-states information."
     descr = "Get information about C-states on specified CPUs. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2.add_argument("--override-cpu-model", help=override, default=None)
     subpars2.set_defaults(func=cstates_info_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
@@ -244,6 +248,7 @@ def build_arguments_parser():
     descr = """Configure C-states on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
+    subpars2.add_argument("--override-cpu-model", help=override, default=None)
     subpars2.set_defaults(func=cstates_config_command)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure.")

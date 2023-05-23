@@ -32,9 +32,19 @@ def cstates_info_command(args, pman):
     # The output format to use.
     fmt = "yaml" if args.yaml else "human"
 
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj, \
-         _PepcPrinter.CStatesPrinter(csobj, cpuinfo, fmt=fmt) as csprint:
+    with contextlib.ExitStack() as stack:
+        cpuinfo = CPUInfo.CPUInfo(pman=pman)
+        stack.enter_context(cpuinfo)
+
+        if args.override_cpu_model:
+            _PepcCommon.override_cpu_model(cpuinfo, args.override_cpu_model)
+
+        csobj = CStates.CStates(pman=pman, cpuinfo=cpuinfo)
+        stack.enter_context(csobj)
+
+        csprint = _PepcPrinter.CStatesPrinter(csobj, cpuinfo, fmt=fmt)
+        stack.enter_context(csprint)
+
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         skip_unsupported = False
@@ -88,6 +98,9 @@ def cstates_config_command(args, pman):
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
+
+        if args.override_cpu_model:
+            _PepcCommon.override_cpu_model(cpuinfo, args.override_cpu_model)
 
         msr = MSR.MSR(pman, cpuinfo=cpuinfo)
         stack.enter_context(msr)
