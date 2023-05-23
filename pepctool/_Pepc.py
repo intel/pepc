@@ -230,9 +230,9 @@ def build_arguments_parser():
     for name, pinfo in CStates.PROPS.items():
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
-            text = f"Get current setting for {Human.untitle(pinfo['name'])}."
+            text = f"Get current setting for {Human.uncapitalize(pinfo['name'])}."
         else:
-            text = f"Get {Human.untitle(pinfo['name'])}."
+            text = f"Get {Human.uncapitalize(pinfo['name'])}."
 
         option = f"--{name.replace('_', '-')}"
         subpars2.add_argument(option, action="store_true", help=text)
@@ -266,9 +266,9 @@ def build_arguments_parser():
 
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
-            text = f"Enable or disable {Human.untitle(pinfo['name'])}, use \"on\" or \"off\"."
+            text = f"Enable or disable {Human.uncapitalize(pinfo['name'])}, use \"on\" or \"off\"."
         else:
-            text = f"Set {Human.untitle(pinfo['name'])}."
+            text = f"Set {Human.uncapitalize(pinfo['name'])}."
 
         option = f"--{name.replace('_', '-')}"
         kwargs["help"] = text
@@ -330,9 +330,9 @@ def build_arguments_parser():
     for name, pinfo in PStates.PROPS.items():
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
-            text = f"Get current setting for {Human.untitle(pinfo['name'])}."
+            text = f"Get current setting for {Human.uncapitalize(pinfo['name'])}."
         else:
-            text = f"Get {Human.untitle(pinfo['name'])}."
+            text = f"Get {Human.uncapitalize(pinfo['name'])}."
 
         option = f"--{name.replace('_', '-')}"
         subpars2.add_argument(option, action="store_true", help=text)
@@ -358,9 +358,9 @@ def build_arguments_parser():
 
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
-            text = f"Enable or disable {Human.untitle(pinfo['name'])}, use \"on\" or \"off\"."
+            text = f"Enable or disable {Human.uncapitalize(pinfo['name'])}, use \"on\" or \"off\"."
         else:
-            text = f"Set {Human.untitle(pinfo['name'])}."
+            text = f"Set {Human.uncapitalize(pinfo['name'])}."
 
         option = f"--{name.replace('_', '-')}"
         kwargs["help"] = text
@@ -422,9 +422,9 @@ def build_arguments_parser():
     for name, pinfo in Power.PROPS.items():
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
-            text = f"Get current setting for {Human.untitle(pinfo['name'])}."
+            text = f"Get current setting for {Human.uncapitalize(pinfo['name'])}."
         else:
-            text = f"Get {Human.untitle(pinfo['name'])}."
+            text = f"Get {Human.uncapitalize(pinfo['name'])}."
 
         option = f"--{name.replace('_', '-')}"
         subpars2.add_argument(option, action="store_true", help=text)
@@ -451,9 +451,9 @@ def build_arguments_parser():
 
         if pinfo["type"] == "bool":
             # This is a binary "on/off" type of features.
-            text = f"Enable or disable {Human.untitle(pinfo['name'])}, use \"on\" or \"off\"."
+            text = f"Enable or disable {Human.uncapitalize(pinfo['name'])}, use \"on\" or \"off\"."
         else:
-            text = f"Set {Human.untitle(pinfo['name'])}."
+            text = f"Set {Human.uncapitalize(pinfo['name'])}."
 
         option = f"--{name.replace('_', '-')}"
         kwargs["help"] = text

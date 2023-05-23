@@ -80,7 +80,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if val in ("off", "disable"):
             return False
 
-        name = Human.untitle(prop["name"])
+        name = Human.uncapitalize(prop["name"])
         raise Error(f"bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
                     f"disable")
 
@@ -194,7 +194,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
             prop = self._props[pname]
             if not prop["writable"]:
-                name = Human.untitle(prop["name"])
+                name = Human.uncapitalize(prop["name"])
                 raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
 
             if pname in result:
@@ -233,7 +233,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             if all_cpus.issubset(cpus):
                 return
 
-            name = Human.untitle(prop["name"])
+            name = Human.uncapitalize(prop["name"])
             missing_cpus = all_cpus - set(cpus)
             raise Error(f"{name} has {sname} scope, so the list of CPUs must include all CPUs.\n"
                         f"However, the following CPUs are missing from the list: {missing_cpus}")
@@ -278,7 +278,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
                 mapping += f"\n{clist_str}"
 
-        name = Human.untitle(prop["name"])
+        name = Human.uncapitalize(prop["name"])
         rem_cpus_str = Human.rangify(rem_cpus)
 
         if sname == "core":

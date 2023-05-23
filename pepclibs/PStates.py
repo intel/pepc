@@ -737,7 +737,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise_error = True
 
-        name = Human.untitle(pname)
+        name = Human.uncapitalize(pname)
         what = self._get_num_str(prop, cpu)
         short_freq = Human.largenum(freq, unit="Hz")
         msg = f"failed to set {name} to {short_freq} for {what}{self._pman.hostmsg}: wrote " \
@@ -815,7 +815,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif val == "max":
                 freq = self._get_cpu_prop_value("max_uncore_freq_limit", cpu)
             else:
-                freq = Human.parse_freq(val, name=Human.untitle(self._props[pname]["name"]))
+                freq = Human.parse_freq(val, name=Human.uncapitalize(self._props[pname]["name"]))
         else:
             if val == "min":
                 freq = self._get_cpu_prop_value("min_freq_limit", cpu)
@@ -832,7 +832,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif val == "Pm":
                 freq = self._get_cpu_prop_value("min_oper_freq", cpu)
             else:
-                freq = Human.parse_freq(val, name=Human.untitle(self._props[pname]["name"]))
+                freq = Human.parse_freq(val, name=Human.uncapitalize(self._props[pname]["name"]))
 
         if not freq:
             raise ErrorNotSupported(f"'{val}' is not supported{self._pman.hostmsg}")
@@ -894,7 +894,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             cur_max_freq = self._get_cpu_prop_value(max_freq_key, cpu)
 
             if not cur_min_freq:
-                name = Human.untitle(self._props[max_freq_key]["name"])
+                name = Human.uncapitalize(self._props[max_freq_key]["name"])
                 raise ErrorNotSupported(f"CPU {cpu} does not support min. and {name}"
                                         f"{self._pman.hostmsg}")
 
@@ -907,7 +907,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                     continue
 
                 if val < min_limit or val > max_limit:
-                    name = Human.untitle(self._props[pname]["name"])
+                    name = Human.uncapitalize(self._props[pname]["name"])
                     val = Human.largenum(val, unit="Hz")
                     min_limit = Human.largenum(min_limit, unit="Hz")
                     max_limit = Human.largenum(max_limit, unit="Hz")
@@ -916,8 +916,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             if new_min_freq and new_max_freq:
                 if new_min_freq > new_max_freq:
-                    name_min = Human.untitle(self._props[min_freq_key]["name"])
-                    name_max = Human.untitle(self._props[max_freq_key]["name"])
+                    name_min = Human.uncapitalize(self._props[min_freq_key]["name"])
+                    name_max = Human.uncapitalize(self._props[max_freq_key]["name"])
                     new_min_freq = Human.largenum(new_min_freq, unit="Hz")
                     new_max_freq = Human.largenum(new_max_freq, unit="Hz")
                     raise Error(f"can't set {name_min} to {new_min_freq} and {name_max} to "
@@ -931,7 +931,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                         write_func(max_freq_key, new_max_freq, cpu)
             elif not new_max_freq:
                 if new_min_freq > cur_max_freq:
-                    name = Human.untitle(self._props[min_freq_key]["name"])
+                    name = Human.uncapitalize(self._props[min_freq_key]["name"])
                     new_min_freq = Human.largenum(new_min_freq, unit="Hz")
                     cur_max_freq = Human.largenum(cur_max_freq, unit="Hz")
                     raise Error(f"can't set {name} of {what} to {new_min_freq} - it is higher than "
@@ -940,7 +940,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                     write_func(min_freq_key, new_min_freq, cpu)
             elif not new_min_freq:
                 if new_max_freq < cur_min_freq:
-                    name = Human.untitle(self._props[max_freq_key]["name"])
+                    name = Human.uncapitalize(self._props[max_freq_key]["name"])
                     new_max_freq = Human.largenum(new_max_freq, unit="Hz")
                     cur_min_freq = Human.largenum(cur_min_freq, unit="Hz")
                     raise Error(f"can't set {name} of {what} to {new_max_freq} - it is lower than "

@@ -328,7 +328,7 @@ def rangify(numbers):
 
     return ",".join(range_strs)
 
-def untitle(sentence):
+def uncapitalize(sentence):
     """
     Return 'sentence' but with the first letter in the first word modified from capital to small.
     This function includes some heuristics to avoid un-capitalizing words like "C1" or "C-state".
