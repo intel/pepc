@@ -83,11 +83,11 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         """Restore saved units' state."""
 
         if not self._saved_units:
-            _LOG.debug("nothin to restore")
+            _LOG.debug("nothing to restore")
             return
 
         for unit, action in self._saved_units.items():
-            start = action == "start"
+            start = action == "stop"
             self._start(unit, start)
 
     def is_active(self, unit):
