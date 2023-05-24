@@ -96,6 +96,9 @@ def test_cstates_info(params):
     for cstate in params["cstates"]:
         run_pepc(f"cstates info --cpus 0 --cstates {cstate}", pman)
 
+    # Treat the target system as Sapphire Rapids Xeon.
+    run_pepc("cstates info --override-cpu-model 0x8F", pman)
+
 def test_cstates_config(params):
     """Test 'pepc cstates config' command."""
 

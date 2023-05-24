@@ -88,6 +88,9 @@ def test_power_info(params):
     for option in scope_options["bad"]:
         run_pepc(f"power info {option}", pman, exp_exc=Error)
 
+    # Treat the target system as Sapphire Rapids Xeon.
+    run_pepc("power info --override-cpu-model 0x8F", pman)
+
 def test_power_config(params):
     """Test 'pepc power config' command."""
 

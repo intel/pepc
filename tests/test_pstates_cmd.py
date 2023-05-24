@@ -173,6 +173,9 @@ def test_pstates_info(params):
     for option in scope_options["bad"]:
         run_pepc(f"pstates info {option}", pman, exp_exc=Error)
 
+    # Treat the target system as Sapphire Rapids Xeon.
+    run_pepc("pstates info --override-cpu-model 0x8F", pman)
+
 def _test_pstates_config_good(params):
     """Test 'pepc pstates config' command with good argument values."""
 
