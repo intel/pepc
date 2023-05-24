@@ -6,6 +6,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add '--override-cpu-model' option to 'pepc power/pstates/cstates'.
+   This options can be used for overriding the CPU model.
 ### Removed
 ### Changed
 
