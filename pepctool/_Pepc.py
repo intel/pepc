@@ -743,8 +743,12 @@ def _get_emul_pman(args, path):
 
     pman = EmulProcessManager.EmulProcessManager(hostname=path.name)
 
-    for module in modules:
-        pman.init_testdata(module, path)
+    try:
+        for module in modules:
+            pman.init_testdata(module, path)
+    except Error:
+        pman.close()
+        raise
 
     return pman
 
