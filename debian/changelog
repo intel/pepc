@@ -1,3 +1,10 @@
+pepc (1.4.18) unstable; urgency=low
+
+  * Add '--override-cpu-model' option to 'pepc power/pstates/cstates'.
+    This options can be used for overriding the CPU model.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 25 May 2023 00:00:00 +0200
+
 pepc (1.4.17) unstable; urgency=low
 
   * Add workaround for inconsistent CPU frequency driver behavior on AMD

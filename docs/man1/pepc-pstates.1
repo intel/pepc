@@ -112,6 +112,13 @@ mean CPU 4.
 \f[B]--yaml\f[R]
 Print information in YAML format.
 .TP
+\f[B]--override-cpu-model\f[R]
+This option is for debugging and testing purposes only.
+Provide the CPU model number which the tool treats the target system CPU
+as.
+For example, use 0x8F to treat the target system as Sapphire Rapids
+Xeon.
+.TP
 \f[B]--min-freq\f[R]
 Get minimum CPU frequency (details in \[aq]min_freq\[aq]).
 .TP
@@ -231,6 +238,13 @@ This option can only be used to reference online CPUs, because Linux
 does not provide topology information for offline CPUs.
 In the previous example if CPU 3 was offline, then \[aq]0\[aq] would
 mean CPU 4.
+.TP
+\f[B]--override-cpu-model\f[R]
+This option is for debugging and testing purposes only.
+Provide the CPU model number which the tool treats the target system CPU
+as.
+For example, use 0x8F to treat the target system as Sapphire Rapids
+Xeon.
 .TP
 \f[B]--min-freq\f[R] \f[I][MIN_FREQ]\f[R]
 Set minimum CPU frequency (details in \[aq]min_freq\[aq]).
