@@ -13,7 +13,7 @@ This module provides API for managing platform settings related to power.
 import logging
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = logging.getLogger()
 
@@ -138,11 +138,14 @@ class Power(_PropsClassBase.PropsClassBase):
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
-        if pname.startswith("ppl"):
-            fname = self._pname2fname(pname)
-            return self._get_pplobj().read_cpu_feature(fname, cpu)
+        try:
+            if pname.startswith("ppl"):
+                fname = self._pname2fname(pname)
+                return self._get_pplobj().read_cpu_feature(fname, cpu)
 
-        return self._get_ppiobj().read_cpu_feature(pname, cpu)
+            return self._get_ppiobj().read_cpu_feature(pname, cpu)
+        except ErrorNotSupported:
+            return None
 
     def _set_prop_value(self, pname, val, cpus):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
