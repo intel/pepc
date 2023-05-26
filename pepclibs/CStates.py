@@ -75,13 +75,13 @@ PROPS = {
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
         "type" : "bool",
-        "sname": "core",
+        "sname": "package",
         "writable" : True,
     },
     "cstate_prewake" : {
         "name" : "C-state prewake",
         "type" : "bool",
-        "sname": "core",
+        "sname": "package",
         "writable" : True,
     },
     "idle_driver" : {
