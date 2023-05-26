@@ -188,6 +188,10 @@ def _add_config_subcommand_options(props, subpars):
         kwargs["nargs"] = "?"
         kwargs["help"] = _get_config_subcommand_prop_help_text(pinfo)
         kwargs["action"] = ArgParse.OrderedArg
+
+        if pinfo["type"] == "bool":
+            kwargs["metavar"] = "on/off"
+
         option = f"--{name.replace('_', '-')}"
         subpars.add_argument(option, **kwargs)
 
