@@ -28,12 +28,18 @@ _CSTATE_PREWAKE_CPUS = (CPUInfo.CPUS["GRANITERAPIDS_X"]["model"],
                         CPUInfo.CPUS["SAPPHIRERAPIDS_X"]["model"],
                         CPUInfo.CPUS["ICELAKE_X"]["model"],
                         CPUInfo.CPUS["ICELAKE_D"]["model"],
-                        CPUInfo.CPUS["BROADWELL_X"]["model"],
                         CPUInfo.CPUS["SKYLAKE_X"]["model"],
+                        CPUInfo.CPUS["BROADWELL_X"]["model"],
                         CPUInfo.CPUS["HASWELL_X"]["model"],
-                        CPUInfo.CPUS["IVYBRIDGE_X"]["model"])
+                        CPUInfo.CPUS["IVYBRIDGE_X"]["model"],)
 
-# Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
+# CPU models supporting the LTR feature.
+LTR_CPUS = (CPUInfo.CPUS["GRANITERAPIDS_X"]["model"],
+            CPUInfo.CPUS["EMERALDRAPIDS_X"]["model"],
+            CPUInfo.CPUS["SAPPHIRERAPIDS_X"]["model"],
+            CPUInfo.CPUS["ICELAKE_X"]["model"],)
+
+# Description of CPU features controlled by the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 #
 # Note: while the "C-state prewake" feature available on many CPUs, in practice it works only on
@@ -57,6 +63,16 @@ FEATURES = {
         "type" : "bool",
         "vals" : {"on" : 0, "off" : 1},
         "bits" : (30, 30),
+    },
+    "ltr" : {
+        "name" : "LTR (Latency Tolerance Reporting)",
+        "sname": "package",
+        "help" : """When enabled, the CPU will take LTR constraints into account when making power
+                    management decisions, such as selecting package C-state.""",
+        "cpumodels" : LTR_CPUS,
+        "type" : "bool",
+        "vals" : { "on" : 0, "off" : 1},
+        "bits" : (35, 35),
     },
 }
 
