@@ -138,6 +138,27 @@ def _add_cpu_subset_arguments(subpars, fmt):
                then '0' would mean CPU 4."""
     subpars.add_argument("--core-siblings", help=text)
 
+def _get_mechanism_str(pinfo):
+    """"Format and return the mechanism of accessing a property."""
+
+    _map = {"sysfs": "syfs", "msr" : "MSR"}
+
+    mech = pinfo.get("mechanisms", None)
+    if not mech:
+        return ""
+
+    for mname in mech:
+        if mname not in _map:
+            raise Error(f"BUG: unsupported property mechanism '{mname}'")
+
+    if len(mech) == 1:
+        return f" via {_map[mech[0]]}"
+
+    if len(mech) == 2:
+        return f" via {_map[mech[0]]} or {_map[mech[1]]} as fall-back method"
+
+    return ""
+
 def _get_info_subcommand_prop_help_text(pinfo):
     """
     Format and return the "info" sub-command help text for a property described by 'pinfo'.
@@ -145,11 +166,11 @@ def _get_info_subcommand_prop_help_text(pinfo):
 
     if pinfo["type"] == "bool":
         # This is a binary "on/off" type of features.
-        text = f"Get current setting for {Human.uncapitalize(pinfo['name'])}."
+        text = f"Check if {Human.uncapitalize(pinfo['name'])} is enabled or disabled"
     else:
-        text = f"Get {Human.uncapitalize(pinfo['name'])}."
+        text = f"Get {Human.uncapitalize(pinfo['name'])}"
 
-    return text
+    return text + _get_mechanism_str(pinfo) + "."
 
 def _add_info_subcommand_options(props, subpars):
     """
@@ -168,11 +189,11 @@ def _get_config_subcommand_prop_help_text(pinfo):
 
     if pinfo["type"] == "bool":
         # This is a binary "on/off" type of features.
-        text = f"Enable or disable {Human.uncapitalize(pinfo['name'])}, use \"on\" or \"off\"."
+        text = f"Enable or disable {Human.uncapitalize(pinfo['name'])}"
     else:
-        text = f"Set {Human.uncapitalize(pinfo['name'])}."
+        text = f"Set {Human.uncapitalize(pinfo['name'])}"
 
-    return text
+    return text + _get_mechanism_str(pinfo) + "."
 
 def _add_config_subcommand_options(props, subpars):
     """

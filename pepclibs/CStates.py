@@ -39,6 +39,7 @@ PROPS = {
         "type" : "str",
         "sname": None,
         "writable" : True,
+        "mechanisms" : ("msr", ),
         "subprops" : {
             "pkg_cstate_limit_locked" : {
                 "name" : "Package C-state limit lock",
@@ -65,36 +66,42 @@ PROPS = {
         "type" : "bool",
         "sname": None,
         "writable" : True,
+        "mechanisms" : ("msr", ),
     },
     "c1_undemotion" : {
         "name" : "C1 undemotion",
         "type" : "bool",
         "sname": None,
         "writable" : True,
+        "mechanisms" : ("msr", ),
     },
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
         "type" : "bool",
         "sname": "package",
         "writable" : True,
+        "mechanisms" : ("msr", ),
     },
     "cstate_prewake" : {
         "name" : "C-state prewake",
         "type" : "bool",
         "sname": "package",
         "writable" : True,
+        "mechanisms" : ("msr", ),
     },
     "idle_driver" : {
         "name" : "Idle driver",
         "type" : "str",
         "sname": "global",
         "writable" : False,
+        "mechanisms" : ("sysfs", ),
     },
     "governor" : {
         "name" : "Idle governor",
         "type" : "str",
         "sname": "global",
         "writable" : True,
+        "mechanisms" : ("sysfs", ),
         "subprops" : {
             "governors" : {
                 "name" : "Available idle governors",

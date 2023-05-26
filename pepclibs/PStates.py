@@ -34,18 +34,20 @@ _LOG = logging.getLogger()
 # systems. In such cases, the scope can be obtained via 'PStates.get_sname()'.
 PROPS = {
     "min_freq" : {
-        "name" : "Min. CPU frequency via sysfs",
+        "name" : "Min. CPU frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
+        "mechanisms" : ("sysfs", ),
     },
     "max_freq" : {
-        "name" : "Max. CPU frequency via sysfs",
+        "name" : "Max. CPU frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
+        "mechanisms" : ("sysfs", ),
     },
     "min_freq_limit" : {
         "name" : "Min. supported CPU frequency",
@@ -53,6 +55,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
+        "mechanisms" : ("sysfs", ),
     },
     "max_freq_limit" : {
         "name" : "Max. supported CPU frequency",
@@ -60,6 +63,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
+        "mechanisms" : ("sysfs", ),
     },
     "base_freq" : {
         "name" : "Base CPU frequency",
@@ -67,20 +71,23 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
+        "mechanisms" : ("sysfs", "msr"),
     },
     "min_freq_hw" : {
-        "name" : "Min. CPU frequency via MSR",
+        "name" : "Min. CPU frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
+        "mechanisms" : ("msr", ),
     },
     "max_freq_hw" : {
-        "name" : "Max. CPU frequency via MSR",
+        "name" : "Max. CPU frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
+        "mechanisms" : ("msr", ),
     },
     "bus_clock" : {
         "name" : "Bus clock speed",
@@ -88,6 +95,7 @@ PROPS = {
         "type" : "float",
         "sname": None,
         "writable" : False,
+        "mechanisms" : ("msr", ),
     },
     "min_oper_freq" : {
         "name" : "Min. CPU operating frequency",
@@ -95,6 +103,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
+        "mechanisms" : ("msr", ),
     },
     "max_eff_freq" : {
         "name" : "Max. CPU efficiency frequency",
@@ -102,12 +111,14 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
+        "mechanisms" : ("msr", ),
     },
     "turbo" : {
         "name" : "Turbo",
         "type" : "bool",
         "sname": "global",
         "writable" : True,
+        "mechanisms" : ("sysfs", ),
     },
     "max_turbo_freq" : {
         "name" : "Max. CPU turbo frequency",
@@ -115,6 +126,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
+        "mechanisms" : ("msr", ),
     },
     "min_uncore_freq" : {
         "name" : "Min. uncore frequency",
@@ -122,6 +134,7 @@ PROPS = {
         "type" : "int",
         "sname": "die",
         "writable" : True,
+        "mechanisms" : ("sysfs", ),
     },
     "max_uncore_freq" : {
         "name" : "Max. uncore frequency",
@@ -129,6 +142,7 @@ PROPS = {
         "type" : "int",
         "sname": "die",
         "writable" : True,
+        "mechanisms" : ("sysfs", ),
     },
     "min_uncore_freq_limit" : {
         "name" : "Min. supported uncore frequency",
@@ -136,6 +150,7 @@ PROPS = {
         "type" : "int",
         "sname": "die",
         "writable" : False,
+        "mechanisms" : ("sysfs", ),
     },
     "max_uncore_freq_limit" : {
         "name" : "Max. supported uncore frequency",
@@ -143,54 +158,63 @@ PROPS = {
         "type" : "int",
         "sname": "die",
         "writable" : False,
+        "mechanisms" : ("sysfs", ),
     },
     "hwp" : {
         "name" : "Hardware power management",
         "type" : "bool",
         "sname": "global",
         "writable" : False,
+        "mechanisms" : ("msr", ),
     },
     "epp" : {
-        "name" : "EPP via sysfs",
+        "name" : "EPP",
         "type" : "str",
         "sname": "CPU",
         "writable" : True,
+        "mechanisms" : ("sysfs", ),
     },
     "epp_hw" : {
-        "name" : "EPP via MSR",
+        "name" : "EPP",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
+        "mechanisms" : ("msr", ),
     },
     "epb" : {
-        "name" : "EPB via sysfs",
+        "name" : "EPB",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
+        "mechanisms" : ("sysfs", ),
     },
     "epb_hw" : {
-        "name" : "EPB via MSR",
+        "name" : "EPB",
         "type" : "int",
         "sname": None,
         "writable" : True,
+        "mechanisms" : ("msr", ),
     },
     "driver" : {
         "name" : "CPU frequency driver",
         "type" : "str",
         "sname": "global",
         "writable" : False,
+        "mechanisms" : ("sysfs", ),
     },
     "intel_pstate_mode" : {
         "name" : "Operation mode of 'intel_pstate' driver",
         "type" : "str",
         "sname": "global",
         "writable" : True,
+        "mechanisms" : ("sysfs", ),
     },
     "governor" : {
         "name" : "CPU frequency governor",
         "type" : "str",
         "sname": "CPU",
         "writable" : True,
+        "mechanisms" : ("sysfs", ),
         "subprops" : {
             "governors" : {
                 "name" : "Available CPU frequency governors",

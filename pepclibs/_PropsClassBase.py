@@ -351,10 +351,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _init_props_dict(self, props):
         """Initialize the 'props' dictionary."""
 
-        for prop in props.values():
+        for pinfo in props.values():
             # Every features should include the 'subprops' sub-dictionary.
-            if "subprops" not in prop:
-                prop["subprops"] = {}
+            if "subprops" not in pinfo:
+                pinfo["subprops"] = {}
+
+            # Propagate the "mechanisms" key to sub-propeties.
+            if "mechanisms" in pinfo:
+                for subpinfo in pinfo["subprops"].values():
+                    subpinfo["mechanisms"] = pinfo["mechanisms"]
 
         self._props = copy.deepcopy(props)
         self.props = props
