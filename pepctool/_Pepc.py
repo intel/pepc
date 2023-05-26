@@ -271,8 +271,9 @@ def build_arguments_parser():
     text = "Get CPU C-states information."
     descr = "Get information about C-states on specified CPUs. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
     subpars2.set_defaults(func=cstates_info_command)
+
+    subpars2.add_argument("--override-cpu-model", help=override, default=None)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
@@ -293,8 +294,9 @@ def build_arguments_parser():
     descr = """Configure C-states on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
     subpars2.set_defaults(func=cstates_config_command)
+
+    subpars2.add_argument("--override-cpu-model", help=override, default=None)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure.")
 
@@ -353,8 +355,9 @@ def build_arguments_parser():
     descr = """Get P-states information for specified CPUs. By default, prints all information for
                all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
     subpars2.set_defaults(func=pstates_info_command)
+
+    subpars2.add_argument("--override-cpu-model", help=override, default=None)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
@@ -370,8 +373,9 @@ def build_arguments_parser():
     descr = """Configure P-states on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
     subpars2.set_defaults(func=pstates_config_command)
+
+    subpars2.add_argument("--override-cpu-model", help=override, default=None)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure P-States on.")
 
@@ -422,8 +426,9 @@ def build_arguments_parser():
     descr = """Get power information for specified CPUs. By default, prints all information for
                all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
     subpars2.set_defaults(func=power_info_command)
+
+    subpars2.add_argument("--override-cpu-model", help=override, default=None)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
@@ -440,8 +445,9 @@ def build_arguments_parser():
                a parameter, in which case the currently configured value(s) will be printed. """ \
                + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
     subpars2.set_defaults(func=power_config_command)
+
+    subpars2.add_argument("--override-cpu-model", help=override, default=None)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure power settings on.")
 
