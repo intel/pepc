@@ -44,8 +44,7 @@ FEATURES = {
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
         "sname": "package",
-        "help" : f"""When enabled, the CPU automatically converts all C1 requests to C1E requests.
-                     This CPU feature is controlled by MSR {MSR_POWER_CTL:#x}, bit 1.""",
+        "help" : "When enabled, the CPU automatically converts all C1 requests to C1E requests.",
         "type" : "bool",
         "vals" : {"on" : 1, "off" : 0},
         "bits" : (1, 1),
@@ -53,9 +52,8 @@ FEATURES = {
     "cstate_prewake" : {
         "name" : "C-state prewake",
         "sname": "package",
-        "help" : f"""When enabled, the CPU will start exiting the C6 idle state in advance, prior to
-                     the next local APIC timer event. This CPU feature is controlled by MSR
-                     {MSR_POWER_CTL:#x}, bit 30.""",
+        "help" : """When enabled, the CPU will start exiting the C6 idle state in advance, prior to
+                    the next local APIC timer event.""",
         "cpumodels" : _CSTATE_PREWAKE_CPUS,
         "type" : "bool",
         "vals" : { "on" : 0, "off" : 1},

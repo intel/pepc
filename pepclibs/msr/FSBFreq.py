@@ -70,8 +70,7 @@ FEATURES = {
     "fsb" : {
         "name" : "Bus clock speed (megahertz)",
         "sname": None,
-        "help" : f"""Platform bus clock speed (FSB) in megahertz, as indicated by MSR
-                     {MSR_FSB_FREQ:#x} (MSR_FSB_FREQ).""",
+        "help" : "Platform bus clock speed (FSB) in megahertz",
         "cpumodels" : tuple(_FSB_CODES.keys()),
         "type"      : "float",
         "writable"  : False,
