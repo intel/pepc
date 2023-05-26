@@ -138,6 +138,59 @@ def _add_cpu_subset_arguments(subpars, fmt):
                then '0' would mean CPU 4."""
     subpars.add_argument("--core-siblings", help=text)
 
+def _get_info_subcommand_prop_help_text(pinfo):
+    """
+    Format and return the "info" sub-command help text for a property described by 'pinfo'.
+    """
+
+    if pinfo["type"] == "bool":
+        # This is a binary "on/off" type of features.
+        text = f"Get current setting for {Human.uncapitalize(pinfo['name'])}."
+    else:
+        text = f"Get {Human.uncapitalize(pinfo['name'])}."
+
+    return text
+
+def _add_info_subcommand_options(props, subpars):
+    """
+    Add options for all properties in 'props' to for the "info" subcommand.
+    """
+
+    for name, pinfo in props.items():
+        text = _get_info_subcommand_prop_help_text(pinfo)
+        option = f"--{name.replace('_', '-')}"
+        subpars.add_argument(option, action="store_true", help=text)
+
+def _get_config_subcommand_prop_help_text(pinfo):
+    """
+    Format and return the "info" sub-command help text for a property described by 'pinfo'.
+    """
+
+    if pinfo["type"] == "bool":
+        # This is a binary "on/off" type of features.
+        text = f"Enable or disable {Human.uncapitalize(pinfo['name'])}, use \"on\" or \"off\"."
+    else:
+        text = f"Set {Human.uncapitalize(pinfo['name'])}."
+
+    return text
+
+def _add_config_subcommand_options(props, subpars):
+    """
+    Add options for all properties in 'props' to for the "config" sub-command.
+    """
+
+    for name, pinfo in props.items():
+        if not pinfo["writable"]:
+            continue
+
+        kwargs = {}
+        kwargs["default"] = argparse.SUPPRESS
+        kwargs["nargs"] = "?"
+        kwargs["help"] = _get_config_subcommand_prop_help_text(pinfo)
+        kwargs["action"] = ArgParse.OrderedArg
+        option = f"--{name.replace('_', '-')}"
+        subpars.add_argument(option, **kwargs)
+
 def build_arguments_parser():
     """A helper function which parses the input arguments."""
 
@@ -231,15 +284,7 @@ def build_arguments_parser():
     subpars2.add_argument("--cstates", dest="csnames", metavar="CATATES", nargs="?", help=text,
                           default="default")
 
-    for name, pinfo in CStates.PROPS.items():
-        if pinfo["type"] == "bool":
-            # This is a binary "on/off" type of features.
-            text = f"Get current setting for {Human.uncapitalize(pinfo['name'])}."
-        else:
-            text = f"Get {Human.uncapitalize(pinfo['name'])}."
-
-        option = f"--{name.replace('_', '-')}"
-        subpars2.add_argument(option, action="store_true", help=text)
+    _add_info_subcommand_options(CStates.PROPS, subpars2)
 
     #
     # Create parser for the 'cstates config' command.
@@ -261,24 +306,7 @@ def build_arguments_parser():
     subpars2.add_argument("--disable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
                           nargs="?")
 
-    for name, pinfo in CStates.PROPS.items():
-        if not pinfo["writable"]:
-            continue
-
-        kwargs = {}
-        kwargs["default"] = argparse.SUPPRESS
-        kwargs["nargs"] = "?"
-
-        if pinfo["type"] == "bool":
-            # This is a binary "on/off" type of features.
-            text = f"Enable or disable {Human.uncapitalize(pinfo['name'])}, use \"on\" or \"off\"."
-        else:
-            text = f"Set {Human.uncapitalize(pinfo['name'])}."
-
-        option = f"--{name.replace('_', '-')}"
-        kwargs["help"] = text
-        kwargs["action"] = ArgParse.OrderedArg
-        subpars2.add_argument(option, **kwargs)
+    _add_config_subcommand_options(CStates.PROPS, subpars2)
 
     #
     # Create parser for the 'cstates save' command.
@@ -333,15 +361,7 @@ def build_arguments_parser():
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
-    for name, pinfo in PStates.PROPS.items():
-        if pinfo["type"] == "bool":
-            # This is a binary "on/off" type of features.
-            text = f"Get current setting for {Human.uncapitalize(pinfo['name'])}."
-        else:
-            text = f"Get {Human.uncapitalize(pinfo['name'])}."
-
-        option = f"--{name.replace('_', '-')}"
-        subpars2.add_argument(option, action="store_true", help=text)
+    _add_info_subcommand_options(PStates.PROPS, subpars2)
 
     #
     # Create parser for the 'pstates config' command.
@@ -355,24 +375,7 @@ def build_arguments_parser():
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure P-States on.")
 
-    for name, pinfo in PStates.PROPS.items():
-        if not pinfo.get("writable"):
-            continue
-
-        kwargs = {}
-        kwargs["default"] = argparse.SUPPRESS
-        kwargs["nargs"] = "?"
-
-        if pinfo["type"] == "bool":
-            # This is a binary "on/off" type of features.
-            text = f"Enable or disable {Human.uncapitalize(pinfo['name'])}, use \"on\" or \"off\"."
-        else:
-            text = f"Set {Human.uncapitalize(pinfo['name'])}."
-
-        option = f"--{name.replace('_', '-')}"
-        kwargs["help"] = text
-        kwargs["action"] = ArgParse.OrderedArg
-        subpars2.add_argument(option, **kwargs)
+    _add_config_subcommand_options(PStates.PROPS, subpars2)
 
     #
     # Create parser for the 'pstates save' command.
@@ -427,15 +430,7 @@ def build_arguments_parser():
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
-    for name, pinfo in Power.PROPS.items():
-        if pinfo["type"] == "bool":
-            # This is a binary "on/off" type of features.
-            text = f"Get current setting for {Human.uncapitalize(pinfo['name'])}."
-        else:
-            text = f"Get {Human.uncapitalize(pinfo['name'])}."
-
-        option = f"--{name.replace('_', '-')}"
-        subpars2.add_argument(option, action="store_true", help=text)
+    _add_info_subcommand_options(Power.PROPS, subpars2)
 
     #
     # Create parser for the 'power config' command.
@@ -450,24 +445,7 @@ def build_arguments_parser():
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure power settings on.")
 
-    for name, pinfo in Power.PROPS.items():
-        if not pinfo.get("writable"):
-            continue
-
-        kwargs = {}
-        kwargs["default"] = argparse.SUPPRESS
-        kwargs["nargs"] = "?"
-
-        if pinfo["type"] == "bool":
-            # This is a binary "on/off" type of features.
-            text = f"Enable or disable {Human.uncapitalize(pinfo['name'])}, use \"on\" or \"off\"."
-        else:
-            text = f"Set {Human.uncapitalize(pinfo['name'])}."
-
-        option = f"--{name.replace('_', '-')}"
-        kwargs["help"] = text
-        kwargs["action"] = ArgParse.OrderedArg
-        subpars2.add_argument(option, **kwargs)
+    _add_config_subcommand_options(Power.PROPS, subpars2)
 
     #
     # Create parser for the 'power save' command.
