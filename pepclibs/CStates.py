@@ -631,7 +631,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         if pname == "pkg_cstate_limit_locked":
             return self._read_prop_value_from_msr("locked", cpu)
 
-        if pname in {"c1_demotion", "c1_undemotion", "c1e_autopromote", "cstate_prewake"}:
+        if prop["mechanisms"][0] == "msr":
             return self._read_prop_value_from_msr(pname, cpu)
 
         if self._pcache.is_cached(pname, cpu):
