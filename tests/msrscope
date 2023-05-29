@@ -30,27 +30,27 @@ VERSION = "0.1"
 _LOG = logging.getLogger()
 Logging.setup_logger(prefix=TOOLNAME)
 
-def _find_msr_scope(args, cpuinfo, msr):
+def _find_msr_scope(cpuinfo, msr, regaddr, bits, values, cpu):
     """Tries to figure out the scope of an MSR."""
 
     info = {}
     # Collect initial values for all online CPUs.
-    for cpu, val in msr.read_bits(args.regaddr, args.bits):
-        info[cpu] = val
+    for _cpu, val in msr.read_bits(regaddr, bits):
+        info[_cpu] = val
 
     cpus = set()
     # Set CPU 'args.cpu' to different values and record all CPUs which values have changed. The
     # should be set to min. 2 values, this prevents the value being set to the same value.
-    for value in args.values:
+    for value in values:
         value = int(value)
-        msr.write_bits(args.regaddr, args.bits, value, cpus=(args.cpu, ))
-        if value != msr.read_cpu_bits(args.regaddr, args.bits, args.cpu):
-            raise Error(f"failed to write value '{value}' to MSR 0x{args.regaddr:x} bits "
-                        f"{':'.join(args.bits)}")
+        msr.write_bits(regaddr, bits, value, cpus=(cpu, ))
+        if value != msr.read_cpu_bits(regaddr, bits, cpu):
+            raise Error(f"failed to write value '{value}' to MSR 0x{regaddr:x} bits "
+                        f"{':'.join(bits)}")
 
-        for cpu, val in msr.read_bits(args.regaddr, args.bits):
-            if info[cpu] != val:
-                cpus.add(cpu)
+        for _cpu, val in msr.read_bits(regaddr, bits):
+            if info[_cpu] != val:
+                cpus.add(_cpu)
 
     # Find common scope shared by all the modified CPUs.
     scopes = []
@@ -58,7 +58,7 @@ def _find_msr_scope(args, cpuinfo, msr):
         scopes.append("CPU")
 
     topology = cpuinfo.get_topology()
-    tinfo = cpuinfo.get_cpu_levels(args.cpu)
+    tinfo = cpuinfo.get_cpu_levels(cpu)
     for scope in ("core", "module", "die", "package"):
         for tline in topology:
             if tline["CPU"] in cpus:
@@ -74,9 +74,9 @@ def _find_msr_scope(args, cpuinfo, msr):
 
     # Restore the changed CPUs to their initial values. Due to them all sharing the same scope, only
     # 'args.cpu' needs to be write to.
-    msr.write_bits(args.regaddr, args.bits, info[args.cpu], cpus=(args.cpu, ))
-    val = msr.read_cpu_bits(args.regaddr, args.bits, args.cpu)
-    _LOG.debug("initial value was '%d' and value after test is '%d'.", info[args.cpu], val)
+    msr.write_bits(regaddr, bits, info[cpu], cpus=(cpu, ))
+    val = msr.read_cpu_bits(regaddr, bits, cpu)
+    _LOG.debug("initial value was '%d' and value after test is '%d'.", info[cpu], val)
 
     return scopes
 
@@ -147,7 +147,7 @@ def main():
 
             cpuinfo.normalize_cpu(args.cpu)
 
-            scopes = _find_msr_scope(args, cpuinfo, msr)
+            scopes = _find_msr_scope(cpuinfo, msr, args.regaddr, args.bits, args.values, args.cpu)
             if len(scopes) == 1:
                 _LOG.info("The scope for MSR %#x bits %s is %s.", args.regaddr, ":".join(args.bits),
                           scopes[0])
