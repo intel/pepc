@@ -80,6 +80,37 @@ def _find_msr_scope(cpuinfo, msr, regaddr, bits, values, cpu):
 
     return scopes
 
+def _test_specific_msr(pman, cpuinfo, msr, args):
+    """Test a specific MSR register."""
+
+    # Argument 'regaddr' can either be an decimal or hex.
+    try:
+        args.regaddr = int(args.regaddr)
+    except (ValueError, TypeError):
+        try:
+            args.regaddr = int(args.regaddr, 16)
+        except (ValueError, TypeError):
+            raise Error("please supply register addres in decimal or hex") from None
+
+    args.bits = args.bits.split(":")
+    if len(args.bits) != 2:
+        raise Error("please supply bits in the following format \"h:l\"")
+
+    cpuinfo.normalize_cpu(args.cpu)
+
+    scopes = _find_msr_scope(cpuinfo, msr, args.regaddr, args.bits, args.values, args.cpu)
+
+    if len(scopes) == 1:
+        _LOG.info("The scope for MSR %#x bits %s is %s.",
+                  args.regaddr, ":".join(args.bits), scopes[0])
+    elif scopes:
+        _LOG.info("The possible scopes for MSR %#x bits %s are %s.\nThese scopes are identical%s.",
+                  args.regaddr, ":".join(args.bits), ", ".join(scopes), pman.hostmsg)
+    else:
+        # Probably a new scope that we are not aware of.
+        _LOG.info("Could not determine the scope for MSR %#x bits %s.\nPlease, contact project "
+                  "maintainers.", args.regaddr, ":".join(args.bits))
+
 def _build_arguments_parser():
     """A helper function which parses the input arguments."""
 
@@ -132,33 +163,7 @@ def main():
             if cpuinfo.get_offline_cpus_count():
                 raise Error("please online all CPUs")
 
-            # Argument 'regaddr' can either be an decimal or hex.
-            try:
-                args.regaddr = int(args.regaddr)
-            except (ValueError, TypeError):
-                try:
-                    args.regaddr = int(args.regaddr, 16)
-                except (ValueError, TypeError):
-                    raise Error("please supply register addres in decimal or hex") from None
-
-            args.bits = args.bits.split(":")
-            if len(args.bits) != 2:
-                raise Error("please supply bits in the following format \"h:l\"")
-
-            cpuinfo.normalize_cpu(args.cpu)
-
-            scopes = _find_msr_scope(cpuinfo, msr, args.regaddr, args.bits, args.values, args.cpu)
-            if len(scopes) == 1:
-                _LOG.info("The scope for MSR %#x bits %s is %s.", args.regaddr, ":".join(args.bits),
-                          scopes[0])
-            elif scopes:
-                _LOG.info("The possible scopes for MSR %#x bits %s are %s.\nThese scopes are "
-                          "identical%s.", args.regaddr, ":".join(args.bits), ", ".join(scopes),
-                          pman.hostmsg)
-            else:
-                # Probably a new scope that we are not aware of.
-                _LOG.info("Could not determine the scope for MSR %#x bits %s.\nPlease, contact "
-                          "project maintainers.", args.regaddr, ":".join(args.bits))
+            _test_specific_msr(pman, cpuinfo, msr, args)
 
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
