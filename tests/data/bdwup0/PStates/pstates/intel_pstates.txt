@@ -1,6 +1,6 @@
+/sys/devices/system/cpu/intel_pstate/max_perf_pct:100
+/sys/devices/system/cpu/intel_pstate/min_perf_pct:21
 /sys/devices/system/cpu/intel_pstate/no_turbo:0
 /sys/devices/system/cpu/intel_pstate/num_pstates:31
 /sys/devices/system/cpu/intel_pstate/status:passive
 /sys/devices/system/cpu/intel_pstate/turbo_pct:14
-/sys/devices/system/cpu/intel_pstate/max_perf_pct:100
-/sys/devices/system/cpu/intel_pstate/min_perf_pct:21

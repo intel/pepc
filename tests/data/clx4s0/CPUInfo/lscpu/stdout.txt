@@ -38,6 +38,6 @@ Vulnerability Mmio stale data:   Mitigation; Clear CPU buffers; SMT vulnerable
 Vulnerability Retbleed:          Mitigation; Enhanced IBRS
 Vulnerability Spec store bypass: Mitigation; Speculative Store Bypass disabled via prctl
 Vulnerability Spectre v1:        Mitigation; usercopy/swapgs barriers and __user pointer sanitization
-Vulnerability Spectre v2:        Mitigation; Enhanced IBRS, IBPB conditional, RSB filling
+Vulnerability Spectre v2:        Mitigation; Enhanced / Automatic IBRS, IBPB conditional, RSB filling, PBRSB-eIBRS SW sequence
 Vulnerability Srbds:             Not affected
 Vulnerability Tsx async abort:   Mitigation; TSX disabled

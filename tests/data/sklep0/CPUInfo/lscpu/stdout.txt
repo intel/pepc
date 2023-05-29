@@ -15,7 +15,7 @@ Thread(s) per core:              2
 Core(s) per socket:              26
 Socket(s):                       2
 Stepping:                        4
-CPU(s) scaling MHz:              55%
+CPU(s) scaling MHz:              56%
 CPU max MHz:                     3700.0000
 CPU min MHz:                     1000.0000
 BogoMIPS:                        4200.00
@@ -38,6 +38,6 @@ Vulnerability Mmio stale data:   Mitigation; Clear CPU buffers; SMT vulnerable
 Vulnerability Retbleed:          Mitigation; IBRS
 Vulnerability Spec store bypass: Mitigation; Speculative Store Bypass disabled via prctl
 Vulnerability Spectre v1:        Mitigation; usercopy/swapgs barriers and __user pointer sanitization
-Vulnerability Spectre v2:        Mitigation; IBRS, IBPB conditional, RSB filling, PBRSB-eIBRS Not affected
+Vulnerability Spectre v2:        Mitigation; IBRS, IBPB conditional, STIBP conditional, RSB filling, PBRSB-eIBRS Not affected
 Vulnerability Srbds:             Not affected
 Vulnerability Tsx async abort:   Mitigation; Clear CPU buffers; SMT vulnerable

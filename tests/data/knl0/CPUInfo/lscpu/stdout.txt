@@ -15,10 +15,10 @@ Thread(s) per core:              4
 Core(s) per socket:              68
 Socket(s):                       1
 Stepping:                        1
-CPU(s) scaling MHz:              63%
+CPU(s) scaling MHz:              76%
 CPU max MHz:                     1600.0000
 CPU min MHz:                     1000.0000
-BogoMIPS:                        2793.73
+BogoMIPS:                        2793.55
 Flags:                           fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl est tm2 ssse3 fma cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch ring3mwait cpuid_fault epb pti ibrs ibpb fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms avx512f rdseed adx avx512pf avx512er avx512cd xsaveopt dtherm ida arat pln pts
 L1d cache:                       2.1 MiB (68 instances)
 L1i cache:                       2.1 MiB (68 instances)
@@ -30,10 +30,10 @@ Vulnerability Itlb multihit:     Not affected
 Vulnerability L1tf:              Not affected
 Vulnerability Mds:               Vulnerable: Clear CPU buffers attempted, no microcode; SMT mitigated
 Vulnerability Meltdown:          Mitigation; PTI
-Vulnerability Mmio stale data:   Not affected
+Vulnerability Mmio stale data:   Unknown: No mitigations
 Vulnerability Retbleed:          Not affected
 Vulnerability Spec store bypass: Not affected
 Vulnerability Spectre v1:        Mitigation; usercopy/swapgs barriers and __user pointer sanitization
-Vulnerability Spectre v2:        Mitigation; Retpolines, IBPB conditional, IBRS_FW, STIBP disabled, RSB filling
+Vulnerability Spectre v2:        Mitigation; Retpolines, IBPB conditional, IBRS_FW, STIBP disabled, RSB filling, PBRSB-eIBRS Not affected
 Vulnerability Srbds:             Not affected
 Vulnerability Tsx async abort:   Not affected

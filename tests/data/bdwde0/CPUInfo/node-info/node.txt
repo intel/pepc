@@ -1,2 +1,2 @@
-/sys/devices/system/node/node0/cpulist:0-15
 /sys/devices/system/node/online:0
+/sys/devices/system/node/node0/cpulist:0-15
