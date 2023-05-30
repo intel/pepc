@@ -185,7 +185,7 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
 
     # pylint: disable=import-outside-toplevel
     from pepclibs.msr import EnergyPerfBias, HWPRequest, PowerCtl, PCStateConfigCtl
-    from pepclibs.msr import PackagePowerLimit, MiscFeatureControl
+    from pepclibs.msr import PackagePowerLimit, MiscFeatureControl, PMEnable
 
     cpu = cpuinfo.normalize_cpu(args.cpu)
     with EnergyPerfBias.EnergyPerfBias(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
@@ -235,6 +235,10 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
         _find_feature_scope(cpuinfo, fmsr, "l2_adj_prefetcher", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "dcu_hw_prefetcher", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "dcu_ip_prefetcher", ("off", "on"), cpu)
+
+    with PMEnable.PMEnable(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+        with contextlib.suppress(Error):
+            _find_feature_scope(cpuinfo, fmsr, "hwp", ("off", "on"), cpu)
 
 def _build_arguments_parser():
     """A helper function which parses the input arguments."""
