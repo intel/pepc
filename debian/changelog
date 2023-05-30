@@ -1,3 +1,10 @@
+pepc (1.4.19) unstable; urgency=low
+
+  * Fix '--cstate-prewake' and '--c1e-autopromote' options scope: was "core",
+    should be "package".
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Tue, 30 May 2023 00:00:00 +0200
+
 pepc (1.4.18) unstable; urgency=low
 
   * Add '--override-cpu-model' option to 'pepc power/pstates/cstates'.

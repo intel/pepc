@@ -5,11 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix '--cstate-prewake' and '--c1e-autopromote' options scope: was "core",
-   should be "package".
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.19] - 2023-05-30
+### Fixed
+ - Fix '--cstate-prewake' and '--c1e-autopromote' options scope: was "core",
+   should be "package".
 
 ## [1.4.18] - 2023-05-25
 ### Added
