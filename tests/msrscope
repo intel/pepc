@@ -185,6 +185,7 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
 
     # pylint: disable=import-outside-toplevel
     from pepclibs.msr import EnergyPerfBias, HWPRequest, PowerCtl, PCStateConfigCtl
+    from pepclibs.msr import PackagePowerLimit
 
     cpu = cpuinfo.normalize_cpu(args.cpu)
     with EnergyPerfBias.EnergyPerfBias(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
@@ -215,6 +216,19 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
         if fmsr.read_cpu_feature("locked", cpu) == "off":
             limits = fmsr.read_cpu_feature("pkg_cstate_limit", cpu)["pkg_cstate_limits"]
             _find_feature_scope(cpuinfo, fmsr, "pkg_cstate_limit", limits[:2], cpu)
+
+    with PackagePowerLimit.PackagePowerLimit(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+        with contextlib.suppress(Error):
+            limit = fmsr.read_cpu_feature("limit1", cpu)
+            _find_feature_scope(cpuinfo, fmsr, "limit1", (limit - 1, limit + 1), cpu)
+            _find_feature_scope(cpuinfo, fmsr, "limit1_enable", ("off", "on"), cpu)
+            _find_feature_scope(cpuinfo, fmsr, "limit1_clamp", ("off", "on"), cpu)
+
+        with contextlib.suppress(Error):
+            limit = fmsr.read_cpu_feature("limit2", cpu)
+            _find_feature_scope(cpuinfo, fmsr, "limit2", (limit - 1, limit + 1), cpu)
+            _find_feature_scope(cpuinfo, fmsr, "limit2_enable", ("off", "on"), cpu)
+            _find_feature_scope(cpuinfo, fmsr, "limit2_clamp", ("off", "on"), cpu)
 
 def _build_arguments_parser():
     """A helper function which parses the input arguments."""
