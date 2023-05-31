@@ -197,6 +197,9 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
             perf = fmsr.read_cpu_feature("max_perf", cpu)
             _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf , perf + 1), cpu)
 
+    with EnergyPerfBias.EnergyPerfBias(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+        _find_feature_scope(cpuinfo, fmsr, "epb", (4, 8), cpu)
+
 def _build_arguments_parser():
     """A helper function which parses the input arguments."""
 
