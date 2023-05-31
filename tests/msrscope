@@ -30,6 +30,30 @@ VERSION = "0.1"
 _LOG = logging.getLogger()
 Logging.setup_logger(prefix=TOOLNAME)
 
+def _get_possible_scopes(cpuinfo, cpu, siblings):
+    """Find all scopes shared by all the sibling CPUs."""
+
+    scopes = []
+    if len(siblings) == 1:
+        scopes.append("CPU")
+
+    topology = cpuinfo.get_topology()
+    tinfo = cpuinfo.get_cpu_levels(cpu)
+    for scope in ("core", "module", "die", "package"):
+        for tline in topology:
+            if tline["CPU"] in siblings:
+                if tline[scope] != tinfo[scope]:
+                    break
+            elif tline[scope] == tinfo[scope]:
+                # Scopes 'core' and 'die' are per-package.
+                if scope in {"core", "die"} and tline["package"] != tinfo["package"]:
+                    continue
+                break
+        else:
+            scopes.append(scope)
+
+    return scopes
+
 def _find_msr_scope(cpuinfo, msr, regaddr, bits, values, cpu):
     """Tries to figure out the scope of an MSR."""
 
@@ -52,25 +76,7 @@ def _find_msr_scope(cpuinfo, msr, regaddr, bits, values, cpu):
             if info[_cpu] != val:
                 cpus.add(_cpu)
 
-    # Find common scope shared by all the modified CPUs.
-    scopes = []
-    if len(cpus) == 1:
-        scopes.append("CPU")
-
-    topology = cpuinfo.get_topology()
-    tinfo = cpuinfo.get_cpu_levels(cpu)
-    for scope in ("core", "module", "die", "package"):
-        for tline in topology:
-            if tline["CPU"] in cpus:
-                if tline[scope] != tinfo[scope]:
-                    break
-            elif tline[scope] == tinfo[scope]:
-                # Scopes 'core' and 'die' are per-package.
-                if scope in {"core", "die"} and tline["package"] != tinfo["package"]:
-                    continue
-                break
-        else:
-            scopes.append(scope)
+    scopes = _get_possible_scopes(cpuinfo, cpu, cpus)
 
     # Restore the changed CPUs to their initial values. Due to them all sharing the same scope, only
     # 'args.cpu' needs to be write to.
