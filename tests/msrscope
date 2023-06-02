@@ -151,8 +151,10 @@ def _find_feature_scope(cpuinfo, fmsr, fname, values, cpu):
         fmsr.write_feature(fname, value, cpus=(cpu, ))
         rval = fmsr.read_cpu_feature(fname, cpu)
         if rval != value and (fname != "pkg_cstate_limit" or value != rval["pkg_cstate_limit"]):
-            raise Error(f"failed to write value '{value}' to MSR 0x{fmsr.regaddr:x} bits "
-                        f"{fmsr.features[fname]['bits'][0]}:{fmsr.features[fname]['bits'][1]}")
+            _LOG.warning("failed to write '%s' value '%s' to MSR %#x %d:%d", fname, str(value),
+                         fmsr.regaddr, fmsr.features[fname]["bits"][0],
+                         fmsr.features[fname]["bits"][1])
+            return
 
         for _cpu, val in fmsr.read_feature(fname):
             if info[_cpu] != val:
