@@ -142,14 +142,14 @@ class ArgsParser(argparse.ArgumentParser):
         super().__init__(*args, **kwargs)
 
         text = "Show this help message and exit."
-        self.add_argument("-h", dest="help", action="help", help=text)
+        self.add_argument("-h", "--help", dest="help", action="help", help=text)
         text = "Be quiet."
-        self.add_argument("-q", dest="quiet", action="store_true", help=text)
+        self.add_argument("-q", "--quiet", dest="quiet", action="store_true", help=text)
         text = "Print debugging information."
-        self.add_argument("-d", dest="debug", action="store_true", help=text)
+        self.add_argument("-d", "--debug", dest="debug", action="store_true", help=text)
         if version:
             text = "Print version and exit."
-            self.add_argument("--version", action="version", help=text, version=version)
+            self.add_argument("-v", "--version", action="version", help=text, version=version)
 
     def parse_args(self, *args, **kwargs): # pylint: disable=signature-differs
         """Verify that '-d' and '-q' are not used at the same time."""
