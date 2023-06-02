@@ -49,12 +49,15 @@ _ALL_PREFETCHERS_CPUS = CPUInfo.GNRS +         \
                         CPUInfo.SANDYBRIDGES + \
                         CPUInfo.WESTMERES
 
+# 'l2_hw_prefetcher' feature has core scope, except for the following CPU models.
+_MODULE_SCOPE_L2_HW_PREFETCHER = CPUInfo.TREMONTS + CPUInfo.PHIS + CPUInfo.GOLDMONTS
+
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
     "l2_hw_prefetcher" : {
         "name" : "L2 hardware prefetcher",
-        "sname": "core",
+        "sname": None,
         "help" : """Enable/disable the L2 cache hardware prefetcher.""",
         "cpumodels" : _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
         "type" : "bool",
@@ -130,6 +133,12 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
+        model = self._cpuinfo.info["model"]
+
+        if model in _MODULE_SCOPE_L2_HW_PREFETCHER:
+            self.features["l2_hw_prefetcher"]["sname"] = "module"
+        else:
+            self.features["l2_hw_prefetcher"]["sname"] = "core"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
