@@ -14,7 +14,7 @@ import pytest
 import common
 from pcstates_common import get_siblings, verify_props_value_type, is_prop_supported
 from pepclibs import CPUInfo, Power
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 def _get_enable_cache_param():
     """Yield each dataset with a bool. Used for toggling Power 'enable_cache'."""
@@ -29,19 +29,16 @@ def get_params(hostspec, request):
     emul_modules = ["CPUInfo", "Power"]
     enable_cache = request.param
 
-    try:
-        with common.get_pman(hostspec, modules=emul_modules) as pman, \
-             CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-             Power.Power(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
-            params = common.build_params(pman)
+    with common.get_pman(hostspec, modules=emul_modules) as pman, \
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         Power.Power(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
+        params = common.build_params(pman)
 
-            params["siblings"] = get_siblings(cpuinfo, cpu=0)
-            params["pobj"] = pobj
-            params["pinfo"] = pobj.get_cpu_props(pobj.props, 0)
+        params["siblings"] = get_siblings(cpuinfo, cpu=0)
+        params["pobj"] = pobj
+        params["pinfo"] = pobj.get_cpu_props(pobj.props, 0)
 
-            yield params
-    except ErrorNotSupported:
-        pytest.skip("Data not yet available for platform.")
+        yield params
 
 def _set_and_verify_data(params):
     """

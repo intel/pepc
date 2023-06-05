@@ -14,7 +14,7 @@ import copy
 import pytest
 from common import get_pman, run_pepc, build_params
 from pcstates_common import is_prop_supported
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 from pepclibs.helperlibs import Human, YAML, TestRunner
 from pepclibs import CPUInfo, Power
 from pepctool import _Pepc
@@ -25,26 +25,23 @@ def get_params(hostspec, tmp_path_factory):
 
     emul_modules = ["CPUInfo", "Power"]
 
-    try:
-        with get_pman(hostspec, modules=emul_modules) as pman, \
-             CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-             Power.Power(pman=pman, cpuinfo=cpuinfo) as pobj:
-            params = build_params(pman)
-            params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
+    with get_pman(hostspec, modules=emul_modules) as pman, \
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         Power.Power(pman=pman, cpuinfo=cpuinfo) as pobj:
+        params = build_params(pman)
+        params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
-            params["pobj"] = pobj
-            params["pinfo"] = pobj.get_cpu_props(pobj.props, 0)
+        params["pobj"] = pobj
+        params["pinfo"] = pobj.get_cpu_props(pobj.props, 0)
 
-            allcpus = cpuinfo.get_cpus()
-            params["cpus"] = allcpus
-            params["packages"] = cpuinfo.get_packages()
-            params["cores"] = {}
-            for pkg in params["packages"]:
-                params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+        allcpus = cpuinfo.get_cpus()
+        params["cpus"] = allcpus
+        params["packages"] = cpuinfo.get_packages()
+        params["cores"] = {}
+        for pkg in params["packages"]:
+            params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
 
-            yield params
-    except ErrorNotSupported:
-        pytest.skip("Data not yet available for platform.")
+        yield params
 
 def _get_scope_options(params):
     """Return dictionary of good and bad scope options to be used for testing."""
