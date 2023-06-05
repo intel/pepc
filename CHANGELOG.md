@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix scope for CStates properties 'cstate_prewake', 'c1e_autopromote'.
+   The scope for these properties is die on Cascade Lake AP.
 ### Added
 ### Removed
 ### Changed
