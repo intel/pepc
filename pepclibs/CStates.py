@@ -78,14 +78,14 @@ PROPS = {
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
         "type" : "bool",
-        "sname": "package",
+        "sname": None,
         "writable" : True,
         "mechanisms" : ("msr", ),
     },
     "cstate_prewake" : {
         "name" : "C-state prewake",
         "type" : "bool",
-        "sname": "package",
+        "sname": None,
         "writable" : True,
         "mechanisms" : ("msr", ),
     },
@@ -707,6 +707,10 @@ class CStates(_PCStatesBase.PCStatesBase):
             subprops["pkg_cstate_limits"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
             subprops["pkg_cstate_limit_aliases"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
             subprops["pkg_cstate_limit_locked"]["sname"] = finfo["locked"]["sname"]
+        elif pname in PowerCtl.FEATURES:
+            finfo = self._get_powerctl().features
+            self._props["c1e_autopromote"]["sname"] = finfo["c1e_autopromote"]["sname"]
+            self._props["cstate_prewake"]["sname"] = finfo["cstate_prewake"]["sname"]
         else:
             raise Error(f"BUG: could not get scope for property '{pname}'")
 

@@ -42,7 +42,7 @@ _CSTATE_PREWAKE_CPUS = (CPUInfo.INTEL_FAM6_GRANITERAPIDS_X,
 FEATURES = {
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
-        "sname": "package",
+        "sname": None,
         "help" : "When enabled, the CPU automatically converts all C1 requests to C1E requests.",
         "type" : "bool",
         "vals" : {"on" : 1, "off" : 0},
@@ -50,7 +50,7 @@ FEATURES = {
     },
     "cstate_prewake" : {
         "name" : "C-state prewake",
-        "sname": "package",
+        "sname": None,
         "help" : """When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                     the next local APIC timer event.""",
         "cpumodels" : _CSTATE_PREWAKE_CPUS,
@@ -74,6 +74,17 @@ class PowerCtl(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
+        model = self._cpuinfo.info["model"]
+
+        # MSR_POWER_CTL features have package scope, except for Cascade Lake AP, which has two dies,
+        # and the features have die scope.
+        if model == CPUInfo.INTEL_FAM6_SKYLAKE_X and len(self._cpuinfo.get_dies(package=0)) > 1:
+            sname = "die"
+        else:
+            sname = "package"
+
+        for finfo in self.features.values():
+            finfo["sname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
