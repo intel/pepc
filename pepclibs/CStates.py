@@ -528,6 +528,30 @@ class CStates(_PCStatesBase.PCStatesBase):
             self._rcsobj = ReqCStates(self._pman, cpuinfo=self._cpuinfo)
         return self._rcsobj
 
+    def _get_msr(self):
+        """Returns an 'MSR.MSR()' object."""
+
+        if not self._msr:
+            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
+        return self._msr
+
+    def _get_powerctl(self):
+        """Return an instance of 'PowerCtl' class."""
+
+        if not self._powerctl:
+            msr = self._get_msr()
+            self._powerctl = PowerCtl.PowerCtl(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
+        return self._powerctl
+
+    def _get_pcstatectl(self):
+        """Return an instance of 'PCStateConfigCtl' class."""
+
+        if not self._pcstatectl:
+            msr = self._get_msr()
+            self._pcstatectl = PCStateConfigCtl.PCStateConfigCtl(pman=self._pman,
+                                                                 cpuinfo=self._cpuinfo, msr=msr)
+        return self._pcstatectl
+
     def get_cstates_info(self, cpus="all", csnames="all"):
         """Same as 'ReqCStates.get_cstates_info()'."""
 
@@ -552,30 +576,6 @@ class CStates(_PCStatesBase.PCStatesBase):
         """Same as 'ReqCStates.disable_cstates()'."""
 
         return self._get_rcsobj().disable_cstates(csnames=csnames, cpus=cpus)
-
-    def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
-
-        if not self._msr:
-            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
-        return self._msr
-
-    def _get_powerctl(self):
-        """Return an instance of 'PowerCtl' class."""
-
-        if not self._powerctl:
-            msr = self._get_msr()
-            self._powerctl = PowerCtl.PowerCtl(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
-        return self._powerctl
-
-    def _get_pcstatectl(self):
-        """Return an instance of 'PCStateConfigCtl' class."""
-
-        if not self._pcstatectl:
-            msr = self._get_msr()
-            self._pcstatectl = PCStateConfigCtl.PCStateConfigCtl(pman=self._pman,
-                                                                 cpuinfo=self._cpuinfo, msr=msr)
-        return self._pcstatectl
 
     def _get_pkg_cstate_limit(self, pname, cpu):
         """Return the 'pname' sub-property for the 'pkg_cstate_limit' property."""
