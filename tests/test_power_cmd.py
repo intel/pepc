@@ -118,9 +118,9 @@ def test_power_config(params):
         for pat in cfg_pnames_limit:
             prop = f"ppl{index}{pat}"
             valname = prop.replace("-", "_")
-            val = params["pinfo"][valname][valname]
-            newval = val - 1
             if is_prop_supported(valname, params["pinfo"]):
+                val = params["pinfo"][valname][valname]
+                newval = val - 1
                 good_options += [f"--{prop} {newval}", f"--{prop} {val}"]
 
     for option in good_options:
