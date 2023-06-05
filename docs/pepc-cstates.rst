@@ -225,7 +225,8 @@ Subcommand *'restore'*
 Restore C-state settings from a file previously created with the 'pepc cstates save' command.
 
 **-f** *INFILE*, **--from** *INFILE*
-   Name of the file restore the settings from (use "-" to read from the standard output.
+   Name of the file from which to restore the settings from, use "-" to read from the standard
+   output.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -371,7 +372,7 @@ Synopsis
 Description
 -----------
 
-When enabled, the CPU will start exiting the **C6*** idle state in advance, prior to the next local
+When enabled, the CPU will start exiting the **C6** idle state in advance, prior to the next local
 APIC timer event.
 
 Source

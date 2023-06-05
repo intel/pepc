@@ -211,7 +211,8 @@ Subcommand *'restore'*
 Restore power settings from a file previously created with the 'pepc power save' command.
 
 **-f** *INFILE*, **--from** *INFILE*
-   Name of the file restore the settings from (use "-" to read from the standard output.
+   Name of the file from which to restore the settings from, use "-" to read from the standard
+   output.
 
 ----------------------------------------------------------------------------------------------------
 
