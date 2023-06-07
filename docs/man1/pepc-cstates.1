@@ -283,8 +283,8 @@ Restore C-state settings from a file previously created with the
 \[aq]pepc cstates save\[aq] command.
 .TP
 \f[B]-f\f[R] \f[I]INFILE\f[R], \f[B]--from\f[R] \f[I]INFILE\f[R]
-Name of the file restore the settings from (use \[dq]-\[dq] to read from
-the standard output.
+Name of the file from which to restore the settings from, use
+\[dq]-\[dq] to read from the standard output.
 .PP
    *   *   *   *   *
 .SH Properties
@@ -404,7 +404,7 @@ pepc cstates \f[I]info\f[R] [\f[B]--cstate-prewake\f[R]]
 pepc cstates \f[I]config\f[R] [\f[B]--cstate-prewake\f[R]=<value>]
 .SS Description
 .PP
-When enabled, the CPU will start exiting the \f[B]C6\f[R]* idle state in
+When enabled, the CPU will start exiting the \f[B]C6\f[R] idle state in
 advance, prior to the next local APIC timer event.
 .SS Source
 .PP
