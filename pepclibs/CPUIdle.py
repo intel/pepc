@@ -298,51 +298,6 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
             yield cpu, csinfo
 
-    def _toggle_cstates(self, csnames="all", cpus="all", enable=True):
-        """
-        Enable or disable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
-          * csnames - same as in 'get_cstates_info()'.
-          * cpus - same as in 'get_cstates_info()'.
-          * enabled - if 'True', the specified C-states should be enabled on the specified CPUS,
-                      otherwise disabled.
-        """
-
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-        csnames = self._normalize_csnames(csnames)
-
-        toggled = {}
-        for cpu, csinfo in self._get_cstates_info(csnames, cpus):
-            for csname, cstate in csinfo.items():
-                self._toggle_cstate(cpu, cstate["index"], enable)
-
-                if cpu not in toggled:
-                    toggled[cpu] = {"csnames" : []}
-                toggled[cpu]["csnames"].append(csname)
-
-                # Update the cached data.
-                self._cache[cpu][csname]["disable"] = not enable
-
-        return toggled
-
-    def enable_cstates(self, csnames="all", cpus="all"):
-        """
-        Enable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
-          * cpus - same as in 'get_cstates_info()'.
-          * csnames - same as in 'get_cstates_info()'.
-
-        Returns a dictionary of the following structure:
-          { cpunum: { "csnames" : [ cstate1, cstate2, ...]}}
-            * cpunum - integer CPU number.
-            * [cstate1, cstate2, ...] - list of C-states names enabled for CPU 'cpunum'.
-        """
-
-        return self._toggle_cstates(csnames, cpus, True)
-
-    def disable_cstates(self, csnames="all", cpus="all"):
-        """Similar to 'enable_cstates()', but disables instead of enabling."""
-
-        return self._toggle_cstates(csnames, cpus, False)
-
     def get_cstates_info(self, cpus="all", csnames="all"):
         """
         Yield information about C-states specified in 'csnames' for CPUs specified in 'cpus'.
@@ -388,6 +343,51 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         for _, csinfo in self.get_cstates_info(cpus=(cpu,), csnames=(csname,)):
             pass
         return csinfo
+
+    def _toggle_cstates(self, csnames="all", cpus="all", enable=True):
+        """
+        Enable or disable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
+          * csnames - same as in 'get_cstates_info()'.
+          * cpus - same as in 'get_cstates_info()'.
+          * enabled - if 'True', the specified C-states should be enabled on the specified CPUS,
+                      otherwise disabled.
+        """
+
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+        csnames = self._normalize_csnames(csnames)
+
+        toggled = {}
+        for cpu, csinfo in self._get_cstates_info(csnames, cpus):
+            for csname, cstate in csinfo.items():
+                self._toggle_cstate(cpu, cstate["index"], enable)
+
+                if cpu not in toggled:
+                    toggled[cpu] = {"csnames" : []}
+                toggled[cpu]["csnames"].append(csname)
+
+                # Update the cached data.
+                self._cache[cpu][csname]["disable"] = not enable
+
+        return toggled
+
+    def enable_cstates(self, csnames="all", cpus="all"):
+        """
+        Enable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
+          * cpus - same as in 'get_cstates_info()'.
+          * csnames - same as in 'get_cstates_info()'.
+
+        Returns a dictionary of the following structure:
+          { cpunum: { "csnames" : [ cstate1, cstate2, ...]}}
+            * cpunum - integer CPU number.
+            * [cstate1, cstate2, ...] - list of C-states names enabled for CPU 'cpunum'.
+        """
+
+        return self._toggle_cstates(csnames, cpus, True)
+
+    def disable_cstates(self, csnames="all", cpus="all"):
+        """Similar to 'enable_cstates()', but disables instead of enabling."""
+
+        return self._toggle_cstates(csnames, cpus, False)
 
     def __init__(self, pman=None, cpuinfo=None):
         """
