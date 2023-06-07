@@ -179,7 +179,7 @@ class ReqCStates(ClassHelpers.SimpleCloseContext):
             with contextlib.suppress(Error):
                 with CStates(pman=self._pman, cpuinfo=self._cpuinfo, rcsobj=self) as csobj:
                     drvname = csobj.get_cpu_prop("idle_driver", 0)["idle_driver"]["idle_driver"]
-                    if drvname == "none":
+                    if not drvname:
                         msg += f"\n  There is no idle driver in use{self._pman.hostmsg}, which " \
                                f"may be why Linux C-states support was not found."
 
