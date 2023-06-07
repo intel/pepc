@@ -17,7 +17,7 @@ import logging
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs import CPUInfo, CStates
 
 _LOG = logging.getLogger()
@@ -325,6 +325,9 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
+        if not self.get_idle_driver():
+            raise ErrorNotSupported(f"There is no idle driver in use{self._pman.hostmsg}")
+
         csnames = self._normalize_csnames(csnames)
         yield from self._get_cstates_info(csnames, cpus)
 
@@ -344,6 +347,24 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             pass
         return csinfo
 
+    def get_idle_driver(self):
+        """Get the CPUIdle driver currently used by the kernel."""
+
+        if "idle_driver" not in self._cache:
+            path = self._sysfs_base / "cpuidle" / "current_driver"
+            try:
+                self._cache["current_driver"] = self._pman.read(path).strip()
+            except ErrorNotFound:
+                self._cache["current_driver"] = None
+
+                for opt in self._get_cmdline().split():
+                    if opt == "cpuidle.off=1" or opt.startswith("idle="):
+                        _LOG.debug("'%s' kernel boot parameter is set%s, which may be why there is "
+                                   "no idle driver.", opt, self._pman.hostmsg)
+                        break
+
+        return self._cache["current_driver"]
+
     def _toggle_cstates(self, csnames="all", cpus="all", enable=True):
         """
         Enable or disable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
@@ -352,6 +373,9 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
           * enabled - if 'True', the specified C-states should be enabled on the specified CPUS,
                       otherwise disabled.
         """
+
+        if not self.get_idle_driver():
+            raise ErrorNotSupported(f"There is no idle driver in use{self._pman.hostmsg}")
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
         csnames = self._normalize_csnames(csnames)
@@ -403,7 +427,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         self._close_cpuinfo = cpuinfo is None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
-        # Write-through, per-CPU C-states information cache.
+        # Write-through, Linux "cpuidle" subsystem information cache.
         self._cache = {}
 
         if not self._pman:
