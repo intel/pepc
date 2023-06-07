@@ -230,6 +230,9 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
+        if pname == "idle_driver":
+            return self._get_cpuidle().get_idle_driver()
+
         if pname in {"pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"}:
             return self._get_pkg_cstate_limit(pname, cpu)
 
@@ -325,7 +328,6 @@ class CStates(_PCStatesBase.PCStatesBase):
         super()._init_props_dict(PROPS)
 
         # These properties are backed by a sysfs file.
-        self._props["idle_driver"]["fname"] = "current_driver"
         self._props["governor"]["fname"] = "current_governor"
         self._props["governor"]["subprops"]["governors"]["fname"] = "available_governors"
 
