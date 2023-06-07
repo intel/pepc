@@ -418,6 +418,22 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
         return self._toggle_cstates(csnames, cpus, False)
 
+    def set_current_governor(self, governor):
+        """Set current idle driver governor."""
+
+        governors = self.get_available_governors()
+        if governor not in governors:
+            governors = ", ".join(governors)
+            raise Error(f"bad governor name '{governor}', use one of: {governors}")
+
+        path = self._sysfs_base / "cpuidle" / "current_governor"
+        try:
+            with self._pman.open(path, "r+") as fobj:
+                fobj.write(governor)
+        except Error as err:
+            raise type(err)(f"failed to set 'governor'{self._pman.hostmsg}:\n{err.indent(2)}") \
+                            from err
+
     def __init__(self, pman=None, cpuinfo=None):
         """
         The class constructor. The arguments are as follows.
