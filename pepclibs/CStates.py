@@ -233,6 +233,12 @@ class CStates(_PCStatesBase.PCStatesBase):
         if pname == "idle_driver":
             return self._get_cpuidle().get_idle_driver()
 
+        if pname == "governor":
+            return self._get_cpuidle().get_current_governor()
+
+        if pname == "governors":
+            return self._get_cpuidle().get_available_governors()
+
         if pname in {"pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"}:
             return self._get_pkg_cstate_limit(pname, cpu)
 
@@ -264,6 +270,10 @@ class CStates(_PCStatesBase.PCStatesBase):
             self._get_pcstatectl().write_feature(pname, val, cpus=cpus)
             return
 
+        if pname == "governor":
+            self._get_cpuidle().set_current_governor(val)
+            return
+
         # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
         # 'False' for every CPU number that was not yet modified by the scope-aware '_pcache.add()'
         # method.
@@ -292,9 +302,6 @@ class CStates(_PCStatesBase.PCStatesBase):
 
     def _set_props(self, inprops, cpus):
         """Refer to '_PropsClassBase.PropsClassBase._set_props()'."""
-
-        if "governor" in inprops:
-            self._validate_governor_name(inprops["governor"])
 
         for pname, val in inprops.items():
             self._set_prop_value(pname, val, cpus)
@@ -326,10 +333,6 @@ class CStates(_PCStatesBase.PCStatesBase):
         """Initialize the 'props' dictionary."""
 
         super()._init_props_dict(PROPS)
-
-        # These properties are backed by a sysfs file.
-        self._props["governor"]["fname"] = "current_governor"
-        self._props["governor"]["subprops"]["governors"]["fname"] = "available_governors"
 
     def __init__(self, pman=None, cpuinfo=None, cpuidle=None, msr=None, enable_cache=True):
         """
