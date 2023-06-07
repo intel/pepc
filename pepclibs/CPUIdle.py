@@ -14,11 +14,10 @@ This module provides a capability of reading and changing CPUIdle on Intel CPUs.
 
 import re
 import logging
-import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
-from pepclibs import CPUInfo, CStates
+from pepclibs import CPUInfo
 
 _LOG = logging.getLogger()
 
@@ -81,25 +80,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         files, _ = self._pman.run_verify(cmd, join=False)
         if not files:
             msg = f"failed to find C-state files in '{self._sysfs_base}'{self._pman.hostmsg}."
-
-            # Try to give helpful hints for the following cases.
-            # * There is no idle driver.
-            # * There is a kernel boot parameter like 'idle=poll'.
-            with contextlib.suppress(Error):
-                with CStates.CStates(pman=self._pman, cpuinfo=self._cpuinfo, cpuidle=self) as csobj:
-                    drvname = csobj.get_cpu_prop("idle_driver", 0)["idle_driver"]["idle_driver"]
-                    if not drvname:
-                        msg += f"\n  There is no idle driver in use{self._pman.hostmsg}, which " \
-                               f"may be why Linux C-states support was not found."
-
-                        cmdline = self._get_cmdline()
-                        idleoption = [item for item in cmdline.split() if "idle=" in item]
-                        if idleoption:
-                            msg += f"\n  You have the '{idleoption[0]}' kernel boot parameter" \
-                                   f"{self._pman.hostmsg}, which may be why there is no idle " \
-                                   f"driver."
-
-            raise ErrorNotSupported(msg)
+            raise ErrorNotFound(msg)
 
         # At this point 'files' contains the list of files we'll have to read. Something like this:
         # [
