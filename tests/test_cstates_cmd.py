@@ -44,9 +44,10 @@ def get_params(hostspec, tmp_path_factory):
         params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
 
         params["cstates"] = []
-        for _, csinfo in csobj.get_cstates_info(cpus=[params["testcpus"][0]]):
-            for csname in csinfo:
-                params["cstates"].append(csname)
+        if is_prop_supported("idle_driver", params["pinfo"]):
+            for _, csinfo in csobj.get_cstates_info(cpus=[params["testcpus"][0]]):
+                for csname in csinfo:
+                    params["cstates"].append(csname)
 
         yield params
 
@@ -105,11 +106,12 @@ def test_cstates_config(params):
     pman = params["pman"]
     scope_options = _get_scope_options(params)
 
-    good_options = [
-        "--enable all",
-        "--disable all",
-        f"--enable {params['cstates'][-1]}",
-        f"--disable {params['cstates'][-1]}"]
+    good_options = []
+    if is_prop_supported("idle_driver", params["pinfo"]):
+        good_options += ["--enable all",
+                         "--disable all",
+                         f"--enable {params['cstates'][-1]}",
+                         f"--disable {params['cstates'][-1]}"]
 
     if is_prop_supported("pkg_cstate_limit", params["pinfo"]):
         good_options += ["--pkg-cstate-limit"]

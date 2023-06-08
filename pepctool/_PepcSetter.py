@@ -12,9 +12,10 @@ This module provides API for changing P-state and C-state properties.
 """
 
 import sys
+import contextlib
 from pepctool import _PepcCommon
 from pepclibs.helperlibs import ClassHelpers, YAML
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
     """This class provides API for changing P-state and C-state properties."""
@@ -185,9 +186,10 @@ class CStatesSetter(_PropsSetter):
         """
 
         csnames = set()
-        for _, csinfo in self._pcsobj.get_cstates_info(csnames="all", cpus="all"):
-            for csname in csinfo:
-                csnames.add(csname)
+        with contextlib.suppress(ErrorNotSupported):
+            for _, csinfo in self._pcsobj.get_cstates_info(csnames="all", cpus="all"):
+                for csname in csinfo:
+                    csnames.add(csname)
 
         if infile == "-":
             infile = sys.stdin
