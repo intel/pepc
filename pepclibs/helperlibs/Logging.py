@@ -235,9 +235,9 @@ def setup_logger(prefix=None, loglevel=None, colored=None, info_stream=sys.stdou
 
     if not loglevel:
         # Change log level names.
-        if "-q" in sys.argv:
+        if "-q" in sys.argv or "--quiet" in sys.argv:
             loglevel = WARNING
-        elif "-d" in sys.argv:
+        elif "-d" in sys.argv or "--debug" in sys.argv:
             loglevel = DEBUG
         else:
             loglevel = INFO
