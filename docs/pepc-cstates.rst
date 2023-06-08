@@ -94,7 +94,7 @@ Get information about C-states on specified CPUs. By default, prints all informa
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
 
-**--cstates** *[CATATES]*
+**--cstates** *[CSTATES]*
    Comma-separated list of C-states to get information about. C-states should be specified by name
    (e.g., 'C1'). Use 'all' to specify all the available Linux C-states (this is the default). Note,
    there is a difference between Linux C-states (e.g., 'C6') and hardware C-states (e.g., Core C6 or

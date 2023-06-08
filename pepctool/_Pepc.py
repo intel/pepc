@@ -307,7 +307,7 @@ def build_arguments_parser():
 
     text = f"""Comma-separated list of C-states to get information about (all C-states by default).
                {cst_list_text}."""
-    subpars2.add_argument("--cstates", dest="csnames", metavar="CATATES", nargs="?", help=text,
+    subpars2.add_argument("--cstates", dest="csnames", metavar="CSTATES", nargs="?", help=text,
                           default="default")
 
     _add_info_subcommand_options(CStates.PROPS, subpars2)
