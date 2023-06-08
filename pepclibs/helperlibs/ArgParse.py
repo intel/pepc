@@ -151,15 +151,27 @@ class ArgsParser(argparse.ArgumentParser):
             text = "Print version and exit."
             self.add_argument("-v", "--version", action="version", help=text, version=version)
 
-    def parse_args(self, *args, **kwargs): # pylint: disable=signature-differs
-        """Verify that '-d' and '-q' are not used at the same time."""
-
-        args = super().parse_args(*args, **kwargs)
+    def _validate_args(self, args):
+        """Validate arguments 'args' for conflicting arguments."""
 
         if args.quiet and args.debug:
             raise Error("-q and -d cannot be used together")
 
+    def parse_args(self, *args, **kwargs): # pylint: disable=signature-differs
+        """Verify that '-d' and '-q' are not used at the same time."""
+
+        args = super().parse_args(*args, **kwargs)
+        self._validate_args(args)
+
         return args
+
+    def parse_known_args(self, *args, **kwargs):
+        """Verify that '-d' and '-q' are not used at the same time."""
+
+        args, uargs = super().parse_known_args(*args, **kwargs)
+        self._validate_args(args)
+
+        return args, uargs
 
     def add_subparsers(self, *args, **kwargs):
         """
