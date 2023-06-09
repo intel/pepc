@@ -328,6 +328,18 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             pass
         return csinfo
 
+    def get_available_governors(self):
+        """Get list of available idle driver governors."""
+
+        if not self.get_idle_driver():
+            return None
+
+        if "available_governors" not in self._cache:
+            path = self._sysfs_base / "cpuidle" / "available_governors"
+            self._cache["available_governors"] = self._pman.read(path).strip().split()
+
+        return self._cache["available_governors"]
+
     def get_idle_driver(self):
         """Get the CPUIdle driver currently used by the kernel."""
 
