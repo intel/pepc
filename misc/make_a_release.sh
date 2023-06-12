@@ -83,7 +83,7 @@ else
     usage
 fi
 
-echo "New version: $new_ver"
+echo "New pepc version: $new_ver"
 
 # Validate the new version.
 printf "%s" "$new_ver" | grep -q -x "$VERSION_REGEX" ||
@@ -104,7 +104,6 @@ ask_question "Did you update 'CHANGELOG.md'"
 # Update debian changelog.
 "$CHANGELOG_MD_TO_DEBIAN" -o "$BASEDIR/debian/changelog" -p "pepc" -n "Artem Bityutskiy" \
                           -e "artem.bityutskiy@intel.com" "$CHANGELOG_FILE"
-
 
 # Change the tool version.
 sed -i -e "s/^_VERSION = \"$VERSION_REGEX\"$/_VERSION = \"$new_ver\"/" "$PEPC_FILE"
