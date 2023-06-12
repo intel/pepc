@@ -9,6 +9,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.4.21] - 2023-06-12
+
 ## [1.4.20] - 2023-06-07
 ### Fixed
  - Fix scope for CStates properties 'cstate_prewake', 'c1e_autopromote'.
