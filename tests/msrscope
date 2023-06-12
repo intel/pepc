@@ -73,10 +73,12 @@ def _find_msr_scope(pman, cpuinfo, msr, regaddr, bits, values, cpu):
         info[_cpu] = val
 
     cpus = set()
-    # Set CPU 'args.cpu' to different values and record all CPUs which values have changed. The
-    # should be set to min. 2 values, this prevents the value being set to the same value.
+    # Set CPU 'args.cpu' MSR to a different value and record all CPUs which values have changed.
     for value in values:
         value = int(value)
+        if value == info[cpu]:
+            continue
+
         msr.write_bits(regaddr, bits, value, cpus=(cpu, ))
         if value != msr.read_cpu_bits(regaddr, bits, cpu):
             raise Error(f"failed to write value '{value}' to MSR 0x{regaddr:x} bits "
@@ -85,6 +87,7 @@ def _find_msr_scope(pman, cpuinfo, msr, regaddr, bits, values, cpu):
         for _cpu, val in msr.read_bits(regaddr, bits):
             if info[_cpu] != val:
                 cpus.add(_cpu)
+        break
 
     scopes = _get_possible_scopes(cpuinfo, cpu, cpus)
 
@@ -148,9 +151,11 @@ def _find_feature_scope(cpuinfo, fmsr, fname, values, cpu):
         info[_cpu] = val
 
     cpus = set()
-    # Set CPU 'args.cpu' to different values and record all CPUs which values have changed. The
-    # should be set to min. 2 values, this prevents the value being set to the same value.
+    # Set CPU 'args.cpu' feature to a different value and record all CPUs which values have changed.
     for value in values:
+        if value == info[cpu]:
+            continue
+
         fmsr.write_feature(fname, value, cpus=(cpu, ))
         rval = fmsr.read_cpu_feature(fname, cpu)
         if rval != value and (fname != "pkg_cstate_limit" or value != rval["pkg_cstate_limit"]):
@@ -162,6 +167,7 @@ def _find_feature_scope(cpuinfo, fmsr, fname, values, cpu):
         for _cpu, val in fmsr.read_feature(fname):
             if info[_cpu] != val:
                 cpus.add(_cpu)
+        break
 
     # Find common scope shared by all the modified CPUs.
     scopes = _get_possible_scopes(cpuinfo, cpu, cpus)
