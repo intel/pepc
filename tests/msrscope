@@ -120,6 +120,9 @@ def _test_specific_msr(pman, cpuinfo, msr, args):
     if len(args.bits) != 2:
         raise Error("please supply bits in the following format \"h:l\"")
 
+    if args.values[0] == args.values[1]:
+        raise Error("please supply 2 unique values")
+
     cpuinfo.normalize_cpu(args.cpu)
     _find_msr_scope(pman, cpuinfo, msr, args.regaddr, args.bits, args.values, args.cpu)
 
