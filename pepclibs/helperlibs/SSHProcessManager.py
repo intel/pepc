@@ -645,7 +645,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             ssh_opts += f" -o \"IdentityFile={self.privkeypath}\""
         return ssh_opts
 
-    def rsync(self, src, dst, opts="-rlpD", remotesrc=False, remotedst=False):
+    def rsync(self, src, dst, opts="-rlD", remotesrc=False, remotedst=False):
         """
         Copy data from path 'src' to path 'dst' using the 'rsync' tool with options specified in
         'opts'. Refer to '_ProcessManagerBase.rsync() for more information.

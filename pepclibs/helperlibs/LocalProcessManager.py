@@ -261,7 +261,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         raise Error(self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout))
 
-    def rsync(self, src, dst, opts="-rlpD", remotesrc=False, remotedst=False):
+    def rsync(self, src, dst, opts="-rlD", remotesrc=False, remotedst=False):
         """
         Copy data from path 'src' to path 'dst' using the 'rsync' tool with options specified in
         'opts'. Refer to '_ProcessManagerBase.rsync() for more information.

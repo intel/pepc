@@ -546,7 +546,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         if stdout and _LOG.getEffectiveLevel() == logging.DEBUG:
             _LOG.debug("rsync output:\n%s", stdout)
 
-    def rsync(self, src, dst, opts="-rlpD", remotesrc=False, remotedst=False):
+    def rsync(self, src, dst, opts="-rlD", remotesrc=False, remotedst=False):
         """
         Copy data from path 'src' to path 'dst' using the 'rsync' tool with options specified in
         'opts'. The arguments are as follows.
@@ -566,8 +566,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         The default options in 'opts' are the following.
           * r - recursive.
           * l - copy symlinks as symlinks.
-          * p - preserve permission.
-          * s - preserve device nodes and others special files.
+          * D - preserve device nodes and others special files.
         """
 
         # pylint: disable=unused-argument
