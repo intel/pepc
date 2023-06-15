@@ -1,6 +1,12 @@
+pepc (1.4.22) unstable; urgency=low
+
+  * Minor changes to support 'stats-collect' project.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 15 Jun 2023 00:00:00 +0200
+
 pepc (1.4.21) unstable; urgency=low
 
-
+  * Minor updates in self-tests.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Mon, 12 Jun 2023 00:00:00 +0200
 
