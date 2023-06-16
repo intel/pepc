@@ -311,7 +311,7 @@ def setup_stdout_logging(toolname, logs_path):
 
     # Configure the logger to print to both the console and the log file.
     try:
-        logs_path.mkdir(exist_ok=True)
+        logs_path.mkdir(parents=True, exist_ok=True)
     except OSError as err:
         msg = Error(err).indent(2)
         raise Error(f"cannot create log directory '{logs_path}':\n{msg}") from None
