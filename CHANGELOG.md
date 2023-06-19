@@ -8,6 +8,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Add Niklas Neronin to project maintainers.
 
 ## [1.4.23] - 2023-06-16
 ### Changed
