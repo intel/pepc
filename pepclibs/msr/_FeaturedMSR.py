@@ -279,10 +279,25 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
+        supported_cpus = []
+        unsupported_cpus = []
         for cpu in cpus:
-            if not self._features[fname]["supported"][cpu]:
-                raise ErrorNotSupported(f"CPU {cpu} does not support "
-                                        f"{self._features[fname]['name']}{self._pman.hostmsg}")
+            if self._features[fname]["supported"][cpu]:
+                supported_cpus.append(cpu)
+            else:
+                unsupported_cpus.append(cpu)
+
+        if unsupported_cpus:
+            if not supported_cpus:
+                raise ErrorNotSupported(f"{self._features[fname]['name']} is not supported on "
+                                        f"{self._cpuinfo.cpudescr}")
+
+            supported_cpus = Human.rangify(supported_cpus)
+            unsupported_cpus = Human.rangify(unsupported_cpus)
+            raise ErrorNotSupported(f"{self._features[fname]['name']} is not supported on CPUs "
+                                    f"{unsupported_cpus}.\n{self._cpuinfo.cpudescr} supports "
+                                    f"{self._features[fname]['name']} only on the following CPUs: "
+                                    f"{supported_cpus}")
 
     def validate_cpu_feature_supported(self, fname, cpu):
         """Same as 'validate_feature_supported()' but for a single CPU."""
