@@ -92,9 +92,6 @@ def cstates_config_command(args, pman):
         else:
             set_opts[optname] = optval
 
-    if enable_opts or set_opts:
-        _PepcCommon.check_tuned_presence(pman)
-
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
@@ -137,6 +134,9 @@ def cstates_config_command(args, pman):
 
         if set_opts:
             csset.set_props(set_opts, cpus=cpus)
+
+    if enable_opts or set_opts:
+        _PepcCommon.check_tuned_presence(pman)
 
 def cstates_save_command(args, pman):
     """Implements the 'cstates save' command."""

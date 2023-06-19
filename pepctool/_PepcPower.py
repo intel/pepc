@@ -74,9 +74,6 @@ def power_config_command(args, pman):
         else:
             set_opts[optname] = optval
 
-    if set_opts:
-        _PepcCommon.check_tuned_presence(pman)
-
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
@@ -102,6 +99,9 @@ def power_config_command(args, pman):
             psset = _PepcSetter.PowerSetter(pobj, cpuinfo, psprint, msr=msr)
             stack.enter_context(psset)
             psset.set_props(set_opts, cpus=cpus)
+
+    if set_opts:
+        _PepcCommon.check_tuned_presence(pman)
 
 def power_save_command(args, pman):
     """Implements the 'power save' command."""
