@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.24] - 2023-06-23
+### Changed
  - Improve error messages about unsupported features.
  - Add Niklas Neronin to project maintainers.
 
