@@ -13,10 +13,14 @@ This module provides an API to get CPU information.
 
 import re
 import copy
+import logging
 from pathlib import Path
 from contextlib import suppress
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers, Human
+from pepclibs.helperlibs import KernelVersion
+
+_LOG = logging.getLogger()
 
 # CPU model numbers.
 #
@@ -1112,6 +1116,16 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             # should read the flags for each CPU from '/proc/cpuinfo', instead of using 'lscpu'.
             for cpu in self._get_online_cpus():
                 cpuinfo["flags"][cpu] = cpuflags
+
+        if self._pman.exists("/sys/devices/cpu_atom/cpus"):
+            cpuinfo["hybrid"] = True
+        else:
+            cpuinfo["hybrid"] = False
+            with suppress(Error):
+                kver = KernelVersion.get_kver(pman=self._pman)
+                if KernelVersion.kver_lt(kver, "5.13"):
+                    _LOG.warning("kernel v%s does not support hybrid CPU topology. The minimum "
+                                 "required kernel version is v5.13.", kver)
 
         return cpuinfo
 
