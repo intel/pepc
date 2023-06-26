@@ -650,6 +650,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """This method informs CPUInfo to update online/offline CPUs and topology lists."""
 
         self._cpus = None
+        self._hybrid_cpus = None
         if self._topology:
             self._must_update_topology = True
 
@@ -1072,6 +1073,22 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Same as 'normalize_packages()', but for a single package number."""
         return self.normalize_packages([package])[0]
 
+    def get_hybrid_cpu_topology(self):
+        """
+        Returns Atom/Core CPU list on hybrid CPUs, otherwise returns 'None'.
+        If the kernel does not support hybrid CPU topology, this function will return 'None'
+        """
+
+        if self.info["hybrid"] is False:
+            return None
+
+        if not self._hybrid_cpus:
+            self._hybrid_cpus = {}
+            for arch in ("atom", "core"):
+                self._hybrid_cpus[arch] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
+
+        return self._hybrid_cpus
+
     def _get_cpu_info(self):
         """Get general CPU information (model, architecture, etc)."""
 
@@ -1163,6 +1180,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._all_cpus = None
         # Set of online CPUs.
         self._cpus = None
+        # Dictionary of Atom/Core CPUs.
+        self._hybrid_cpus = None
 
         # General CPU information.
         self.info = None
