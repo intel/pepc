@@ -87,6 +87,21 @@ def topology_info_command(args, pman):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, offlined_ok=offlined_ok)
         topology = cpuinfo.get_topology(levels=colnames, order=order)
 
+        if args.hybrid:
+            if not cpuinfo.info["hybrid"]:
+                _LOG.warning("%s is not a hybrid CPU", cpuinfo.cpudescr)
+            else:
+                colnames.append("hybrid")
+                headers.append("Hybrid")
+                fmt += "    %6s"
+
+                performance_cores = set(cpuinfo.get_hybrid_cpu_topology()["core"])
+                for tline in topology:
+                    if tline["CPU"] in performance_cores:
+                        tline["hybrid"] = "P-core"
+                    else:
+                        tline["hybrid"] = "E-core"
+
         if offlined_ok:
             # Offline CPUs are not present in 'topology' list. Thus, we add them to the list with
             # "?" as level number.

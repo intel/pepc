@@ -564,6 +564,9 @@ def build_arguments_parser():
                select topology columns names and order (e.g. '--columns Package,Core,CPU')."""
     subpars2.add_argument("--columns", help=text, default=None)
 
+    text = """Include E-core/P-core information when running on a hybrid system."""
+    subpars2.add_argument("--hybrid", action='store_true', help=text)
+
     if argcomplete:
         argcomplete.autocomplete(parser)
 
