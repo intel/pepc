@@ -18,13 +18,8 @@ Disable pytest log capturing and print logs to console instead
 Run for a single emulation dataset, instead of all (default)
 * ```pytest -D bdwup0```
 
-# Collected testdata
-Testdata is collected using the 'tdgen' -tool.
-By default, testdata is collected with BIOS settings documented in SUT wiki:
-https://intelpedia.intel.com/ServerPowerLab/Hardware/SUTs.
+# Test data
 
-## Exception are:
-
+Special cases:
 * 'spr0_nomwait' has '```idle=nomwait```' boot parameter.
-
 * 'bdwex0_noidle' has '```cpuidle.off=1```' boot parameter.
