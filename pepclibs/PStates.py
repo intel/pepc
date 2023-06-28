@@ -409,6 +409,25 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._uncore_freq_supported = self.__is_uncore_freq_supported()
         return self._uncore_freq_supported
 
+    def _get_cpu_perf_to_freq_factor(self, cpu):
+        """
+        In HWP mode, the OS can affect CPU frequency via HWP registers, such as 'IA32_HWP_REQUEST'.
+        However, these HWP registers work in terms of performance, not in terms of frequency. On
+        many CPUs, the performance is just frequency in 100MHz. However, on hybrid CPUs like
+        Alder Lake, the performance must be scaled by ~7.8740157. In general, future CPUs may have
+        use a different formula.
+
+        Return integer factor, so that CPU performance multiplied by this factor results in CPU
+        frequency in Hz.
+        """
+
+        if self._cpuinfo.info["hybrid"]:
+            pcore_cpus = set(self._cpuinfo.get_hybrid_cpu_topology()["pcore"])
+            if cpu in pcore_cpus:
+                return 78740157
+
+        return 100000000
+
     def _get_base_freq(self, cpu):
         """Read base frequency from 'MSR_PLATFORM_INFO' and return it."""
 
@@ -643,9 +662,12 @@ class PStates(_PCStatesBase.PCStatesBase):
             _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, prefix)
             return None
 
-        # Convert the performance to frequency in Hz.
-        freq = perf * 100000000
-        return freq
+        freq = perf * self._get_cpu_perf_to_freq_factor(cpu)
+        bclk = int(self._get_bclk(cpu))
+        # Round the frequency down to bus clock.
+        # * Why rounding? The assumption is that CPU frequency changes on bus clock increments.
+        # * Why rounding down? Following how Linux 'intel_pstate' driver rounds.
+        return freq - (freq % bclk)
 
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
@@ -747,9 +769,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         # The corresponding 'MSR_HWP_REQUEST' feature name.
         fname = f"{prefix}_perf"
 
+        factor = self._get_cpu_perf_to_freq_factor(cpu)
+        # Round the resulting performance the same way as Linux 'intel_pstate' driver does it.
+        perf = int((freq + factor - 1) / factor)
+
         hwpreq = self._get_hwpreq()
         hwpreq.disable_cpu_feature_pkg_control(fname, cpu)
-        hwpreq.write_cpu_feature(fname, int(freq // 100000000), cpu)
+        hwpreq.write_cpu_feature(fname, perf, cpu)
 
     def _handle_write_and_read_freq_mismatch(self, pname, prop, freq, read_freq, cpu, path):
         """
