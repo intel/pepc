@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Add 'pepc topology --hybrid' option.
 ### Removed
 ### Changed
+
+## [1.4.25] - 2023-06-28
+### Added
+ - Add 'pepc topology --hybrid' option.
 
 ## [1.4.24] - 2023-06-23
 ### Changed
