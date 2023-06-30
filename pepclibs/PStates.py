@@ -16,10 +16,8 @@ import time
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs import _PropsCache
-from pepclibs import _PCStatesBase
-from pepclibs.helperlibs import Trivial
-from pepclibs.helperlibs import KernelModule, FSHelpers, Human, ClassHelpers
+from pepclibs import _PropsCache, _PCStatesBase
+from pepclibs.helperlibs import Trivial, KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 
 _LOG = logging.getLogger()
