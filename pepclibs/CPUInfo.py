@@ -1075,7 +1075,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_hybrid_cpu_topology(self):
         """
-        Returns Atom/Core CPU list on hybrid CPUs, otherwise returns 'None'.
+        Returns P-core/E-core CPU list on hybrid CPUs, otherwise returns 'None'.
         If the kernel does not support hybrid CPU topology, this function will return 'None'
         """
 
@@ -1084,8 +1084,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         if not self._hybrid_cpus:
             self._hybrid_cpus = {}
-            for arch in ("atom", "core"):
-                self._hybrid_cpus[arch] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
+            for arch, name in {"atom" : "ecore", "core" : "pcore"}:
+                self._hybrid_cpus[name] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
 
         return self._hybrid_cpus
 
@@ -1180,7 +1180,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._all_cpus = None
         # Set of online CPUs.
         self._cpus = None
-        # Dictionary of Atom/Core CPUs.
+        # Dictionary of P-core/E-core CPUs.
         self._hybrid_cpus = None
 
         # General CPU information.

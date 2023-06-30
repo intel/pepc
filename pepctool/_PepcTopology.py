@@ -95,7 +95,7 @@ def topology_info_command(args, pman):
                 headers.append("Hybrid")
                 fmt += "    %6s"
 
-                performance_cores = set(cpuinfo.get_hybrid_cpu_topology()["core"])
+                performance_cores = set(cpuinfo.get_hybrid_cpu_topology()["pcore"])
                 for tline in topology:
                     if tline["CPU"] in performance_cores:
                         tline["hybrid"] = "P-core"
