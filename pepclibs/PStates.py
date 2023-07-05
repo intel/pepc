@@ -89,7 +89,7 @@ PROPS = {
     },
     "bus_clock" : {
         "name" : "Bus clock speed",
-        "unit" : "MHz",
+        "unit" : "Hz",
         "type" : "float",
         "sname": None,
         "writable" : False,
@@ -345,17 +345,18 @@ class PStates(_PCStatesBase.PCStatesBase):
         return self._trl
 
     def _get_bclk(self, cpu):
-        """Read bus clock speed from 'MSR_FSB_FREQ' and return it."""
+        """Read bus clock speed from 'MSR_FSB_FREQ' and return it in Hz."""
 
         try:
             bclk = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
         except ErrorNotSupported:
             # Fall back to 100MHz clock speed.
             if self._cpuinfo.info["vendor"] == "GenuineIntel":
-                return 100.0
+                return 100000000.0
             return None
 
-        return bclk
+        # Convert MHz to Hz.
+        return bclk * 1000000.0
 
     def __is_uncore_freq_supported(self):
         """Implements '_is_uncore_freq_supported()'."""
@@ -421,7 +422,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if bclk is None:
             return bclk
 
-        return int(ratio * bclk * 1000 * 1000)
+        return int(ratio * bclk)
 
     def _get_max_eff_freq(self, cpu):
         """Read max. efficiency frequency from 'MSR_PLATFORM_INFO' and return it."""
@@ -436,7 +437,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if bclk is None:
             return bclk
 
-        return int(ratio * bclk * 1000 * 1000)
+        return int(ratio * bclk)
 
     def _get_min_oper_freq(self, cpu):
         """Read the minimum operating frequency from 'MSR_PLATFORM_INFO' and return it."""
@@ -457,7 +458,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if bclk is None:
             return bclk
 
-        return int(ratio * bclk * 1000 * 1000)
+        return int(ratio * bclk)
 
     def _get_max_turbo_freq(self, cpu):
         """
@@ -487,7 +488,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if bclk is None:
             return bclk
 
-        return int(ratio * bclk * 1000 * 1000)
+        return int(ratio * bclk)
 
     def _read_int(self, path):
         """Read an integer from file 'path' via the process manager."""
@@ -766,8 +767,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         with contextlib.suppress(Error):
             bclk = self._get_bclk(cpu)
-            if bclk and freq % (bclk * 1000000):
-                msg += f"\nHint: consider using frequency value aligned to {bclk}MHz."
+            if bclk and freq % bclk:
+                msg += f"\nHint: consider using frequency value aligned to {bclk // 1000000}MHz."
 
             base_freq = self._get_cpu_prop_value("base_freq", cpu)
             turbo = self._get_cpu_turbo(cpu)
