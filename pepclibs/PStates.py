@@ -348,15 +348,14 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Read bus clock speed from 'MSR_FSB_FREQ' and return it."""
 
         try:
-            fsbfreq = self._get_fsbfreq()
+            bclk = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
         except ErrorNotSupported:
             # Fall back to 100MHz clock speed.
             if self._cpuinfo.info["vendor"] == "GenuineIntel":
                 return 100.0
             return None
 
-        from pepclibs import BClock # pylint: disable=import-outside-toplevel
-        return BClock.get_bclk(self._pman, fsbfreq=fsbfreq, cpu=cpu)
+        return bclk
 
     def __is_uncore_freq_supported(self):
         """Implements '_is_uncore_freq_supported()'."""
