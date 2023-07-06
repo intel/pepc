@@ -1084,7 +1084,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         if not self._hybrid_cpus:
             self._hybrid_cpus = {}
-            for arch, name in {"atom" : "ecore", "core" : "pcore"}:
+            for arch, name in (("atom", "ecore"), ("core", "pcore")):
                 self._hybrid_cpus[name] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
 
         return self._hybrid_cpus
