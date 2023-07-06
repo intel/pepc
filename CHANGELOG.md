@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix '--min-freq-hw' and '--max-freq-hw' options on hybrid CPUs.
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.26] - 2023-07-06
+### Fixed
+ - Fix '--min-freq-hw' and '--max-freq-hw' options on hybrid CPUs.
 
 ## [1.4.25] - 2023-06-28
 ### Added
