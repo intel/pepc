@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix crash intoduced in v1.4.26, which occurred when running 'pepc'
+   commands on hybrid CPUs.
 ### Added
 ### Removed
 ### Changed
