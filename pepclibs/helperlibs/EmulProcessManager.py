@@ -511,8 +511,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     def is_file(self, path):
         """Return 'True' if path 'path' exists an it is a regular file."""
 
-        path = Path(self._get_basepath() / str(path).lstrip("/"))
-        return super().is_file(path)
+        emul_path = Path(self._get_basepath() / str(path).lstrip("/"))
+        return super().is_file(emul_path) or path in self._ro_files
 
     def is_dir(self, path):
         """Return 'True' if path 'path' exists an it is a directory."""
