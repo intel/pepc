@@ -35,9 +35,7 @@ CPUInfoData = {
         {"path": "/proc/cpuinfo",
          "readonly": True}],
     "inlinefiles" : [
-        # Command for reading die info from the following files:
-        # * /sys/devices/system/cpu/cpu*/topology/die_id
-        # * /sys/devices/system/cpu/cpu*/topology/die_cpus_list
+        # Command for reading die info.
         {"command": r"grep -H '.*' "
                     r"/sys/devices/system/cpu/cpu[0-9]*/topology/die_id "
                     r"/sys/devices/system/cpu/cpu[0-9]*/topology/die_cpus_list",
@@ -45,9 +43,7 @@ CPUInfoData = {
          "readonly": True,
          "dirname": "die-info",
          "filename": "die.txt"},
-        # Command for reading module info from the following files:
-        # * /sys/devices/system/cpu/cpu*/cache/index2/id
-        # * /sys/devices/system/cpu/cpu*/cache/index2/shared_cpus_list
+        # Command for reading module info.
         {"command": r"grep -H '.*' "
                     r"/sys/devices/system/cpu/cpu[0-9]*/cache/index[0-9]/id "
                     r"/sys/devices/system/cpu/cpu[0-9]*/cache/index[0-9]/shared_cpu_list",
@@ -55,9 +51,7 @@ CPUInfoData = {
          "readonly": True,
          "dirname": "module-info",
          "filename": "module.txt"},
-        # Command for reading online CPUs and all CPUs, from the following files:
-        # * /sys/devices/system/cpu/online
-        # * /sys/devices/system/cpu/present
+        # Command for reading online CPUs and all CPUs.
         {"command": r"grep -H '.*' "
                     r"/sys/devices/system/cpu/online "
                     r"/sys/devices/system/cpu/present",
@@ -65,9 +59,7 @@ CPUInfoData = {
          "readonly": True,
          "dirname": "cpu-info",
          "filename": "cpu.txt"},
-        # Command for reading node info from the following files:
-        # * /sys/devices/system/node/node*/cpulist.
-        # * /sys/devices/system/node/online
+        # Command for reading node info.
         {"command": r"grep -H '.*' "
                     r"/sys/devices/system/node/online "
                     r"/sys/devices/system/node/node[0-9]/cpulist",
