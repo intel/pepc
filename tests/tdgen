@@ -66,7 +66,15 @@ CPUInfoData = {
          "separator": ":",
          "readonly": True,
          "dirname": "node-info",
-         "filename": "node.txt"}],
+         "filename": "node.txt"},
+        # Command for reading hybrid topology info.
+        {"command": r"grep -H '.*' "
+                    r"/sys/devices/cpu_atom/cpus "
+                    r"/sys/devices/cpu_core/cpus",
+         "separator": ":",
+         "readonly": True,
+         "dirname": "hybrid-info",
+         "filename": "hybrid.txt"}],
     "msrs" :
         {"addresses": [
             EnergyPerfBias.MSR_ENERGY_PERF_BIAS,
