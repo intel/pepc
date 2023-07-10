@@ -181,6 +181,8 @@ PHIS =         (INTEL_FAM6_XEON_PHI_KNL,
 # CPU model description. Note, we keep only relatively new CPUs here, because for released CPUs
 # model name is available from the OS.
 _CPU_DESCR = {
+              INTEL_FAM6_GRANDRIDGE:       "Grand Ridge",
+              INTEL_FAM6_SIERRAFOREST_X:   "Sierra Forest Xeon",
               INTEL_FAM6_GRANITERAPIDS_X:  "Granite Rapids Xeon",
               INTEL_FAM6_GRANITERAPIDS_D:  "Granite Rapids Xeon D",
               INTEL_FAM6_EMERALDRAPIDS_X:  "Emerald Rapids Xeon",
@@ -188,8 +190,9 @@ _CPU_DESCR = {
               INTEL_FAM6_ALDERLAKE:        "Alder Lake client",
               INTEL_FAM6_ALDERLAKE_L:      "Alder Lake mobile",
               INTEL_FAM6_ALDERLAKE_N:      "Alder Lake mobile",
-              INTEL_FAM6_TREMONT_D:        "Tremont Atom (Snow Ridge)",
-              INTEL_FAM6_SKYLAKE_X:        "Sky/Cascade/Cooper Lake"}
+              INTEL_FAM6_TREMONT_D:        "Snow Ridge",
+              INTEL_FAM6_SKYLAKE_X:        "Sky/Cascade/Cooper Lake",
+}
 
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
 LEVELS = ("CPU", "core", "module", "die", "node", "package")
