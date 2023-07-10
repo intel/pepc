@@ -34,15 +34,15 @@ _CT_CPUS = CPUInfo.METEORLAKES +  \
            CPUInfo.SKL_CLIENTS +  \
            CPUInfo.COMETLAKES +   \
            CPUInfo.KABYLAKES +    \
-           CPUInfo.CANNONLAKES +    \
+           CPUInfo.CANNONLAKES +  \
            CPUInfo.BROADWELLS +   \
-           (CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D, ) + \
+           (CPUInfo.CPUS["ATOM_SILVERMONT_D"]["model"], ) + \
            CPUInfo.HASWELLS +     \
            CPUInfo.IVYBRIDGES +   \
            CPUInfo.SANDYBRIDGES + \
-           (CPUInfo.INTEL_FAM6_NEHALEM,
-            CPUInfo.INTEL_FAM6_NEHALEM_G,
-            CPUInfo.INTEL_FAM6_NEHALEM_EP)
+           (CPUInfo.CPUS["NEHALEM"]["model"],
+            CPUInfo.CPUS["NEHALEM_G"]["model"],
+            CPUInfo.CPUS["NEHALEM_EP"]["model"])
 
 # CPU models that include group turbo ratios in the MSR. "GT" in the names stands for "Group
 # Turbo". In this case MSR 0x1AE should be decoded to get count of cores in a group. In SDM, this
@@ -53,12 +53,12 @@ _GT_CPUS = CPUInfo.GNRS + \
            CPUInfo.CRESTMONTS + \
            CPUInfo.EMRS + \
            CPUInfo.SPRS + \
-           (CPUInfo.INTEL_FAM6_TREMONT_D,) +  \
+           (CPUInfo.CPUS["TREMONT_D"]["model"],) +  \
            CPUInfo.ICXES + \
            CPUInfo.SKXES + \
-           (CPUInfo.INTEL_FAM6_GOLDMONT_D,
-            CPUInfo.INTEL_FAM6_ATOM_GOLDMONT,
-            CPUInfo.INTEL_FAM6_ATOM_GOLDMONT_PLUS,)
+           (CPUInfo.CPUS["GOLDMONT_D"]["model"],
+            CPUInfo.CPUS["ATOM_GOLDMONT"]["model"],
+            CPUInfo.CPUS["ATOM_GOLDMONT_PLUS"]["model"],)
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
 # notes for '_FeaturedMSR.FEATURES' for more comments.

@@ -61,7 +61,7 @@ _MIN_OPER_RATIO_CPUS = CPUInfo.GNRS +                      \
                        CPUInfo.SKYLAKES +                  \
                        CPUInfo.BROADWELLS +                \
                        CPUInfo.HASWELLS +                  \
-                       (CPUInfo.INTEL_FAM6_IVYBRIDGE, ) +  \
+                       (CPUInfo.CPUS["IVYBRIDGE"]["model"], ) +  \
                        CPUInfo.CRESTMONTS +                \
                        CPUInfo.TREMONTS +                  \
                        CPUInfo.GOLDMONTS +                 \

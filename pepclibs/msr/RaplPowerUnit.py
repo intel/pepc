@@ -95,7 +95,7 @@ class RaplPowerUnit(_FeaturedMSR.FeaturedMSR):
 
         for cpu, val in self._msr.read_bits(self.regaddr, finfo["bits"], cpus):
             if fname == "energy_units" and \
-                self._cpuinfo.info["model"] == CPUInfo.INTEL_FAM6_ATOM_SILVERMONT:
+                self._cpuinfo.info["model"] == CPUInfo.CPUS["ATOM_SILVERMONT"]["model"]:
                 val = pow(2, val) / 1000000
             else:
                 val = 1 / pow(2, val)

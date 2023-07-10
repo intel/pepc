@@ -25,7 +25,7 @@ MSR_MISC_FEATURE_CONTROL = 0x1A4
 _L2_AND_DCU_CPUS = CPUInfo.CRESTMONTS + \
                    CPUInfo.TREMONTS +   \
                    CPUInfo.GOLDMONTS +  \
-                   (CPUInfo.INTEL_FAM6_ATOM_SILVERMONT_D,) + \
+                   (CPUInfo.CPUS["ATOM_SILVERMONT_D"]["model"],) + \
                    CPUInfo.PHIS
 
 # CPU models that support 'l2_hw_prefetcher', 'l2_adj_prefetcher', 'dcu_hw_prefetcher', and

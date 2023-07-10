@@ -22,176 +22,378 @@ from pepclibs.helperlibs import KernelVersion
 
 _LOG = logging.getLogger()
 
-# CPU model numbers.
-#
-# Xeons.
-INTEL_FAM6_SIERRAFOREST_X = 0xAF       # Sierra Forrest Xeon.
-INTEL_FAM6_GRANITERAPIDS_X = 0xAD      # Granite Rapids Xeon.
-INTEL_FAM6_GRANITERAPIDS_D = 0xAE      # Granite Rapids Xeon D.
-INTEL_FAM6_EMERALDRAPIDS_X = 0xCF      # Emerald Rapids Xeon.
-INTEL_FAM6_SAPPHIRERAPIDS_X = 0x8F     # Sapphire Rapids Xeon.
-INTEL_FAM6_ICELAKE_X = 0x6A            # Ice Lake Xeon.
-INTEL_FAM6_ICELAKE_D = 0x6C            # Ice Lake Xeon D.
-INTEL_FAM6_SKYLAKE_X = 0x55            # Skylake, Cascade Lake, and Cooper Lake Xeon.
-INTEL_FAM6_BROADWELL_X = 0x4F          # Broadwell Xeon.
-INTEL_FAM6_BROADWELL_G = 0x47          # Broadwell Xeon with Graphics.
-INTEL_FAM6_BROADWELL_D = 0x56          # Broadwell Xeon-D.
-INTEL_FAM6_HASWELL_X = 0x3F            # Haswell Xeon.
-INTEL_FAM6_HASWELL_G = 0x46            # Haswell Xeon with Graphics.
-INTEL_FAM6_IVYBRIDGE_X = 0x3E          # Ivy Town Xeon.
-INTEL_FAM6_SANDYBRIDGE_X = 0x2D        # SandyBridge Xeon.
-INTEL_FAM6_WESTMERE_EP = 0x2C          # Westmere 2S Xeon.
-INTEL_FAM6_WESTMERE_EX = 0x2F          # Westmere 4S Xeon.
-INTEL_FAM6_NEHALEM_EP = 0x1A           # Nehalem 2S Xeon.
-INTEL_FAM6_NEHALEM_EX = 0x2E           # Nehalem 4S Xeon.
-
-# Clients.
-INTEL_FAM6_METEORLAKE = 0xAC           # Meteor Lake client.
-INTEL_FAM6_METEORLAKE_L = 0xAA         # Meteor Lake mobile.
-INTEL_FAM6_RAPTORLAKE_P = 0xBA         # Raptor Lake mobile.
-INTEL_FAM6_RAPTORLAKE_S = 0xBF         # Raptor Lake client.
-INTEL_FAM6_RAPTORLAKE = 0xB7           # Raptor Lake client.
-INTEL_FAM6_ALDERLAKE = 0x97            # Alder Lake client.
-INTEL_FAM6_ALDERLAKE_L = 0x9A          # Alder Lake mobile.
-INTEL_FAM6_ALDERLAKE_N = 0xBE          # Alder Lake mobile.
-INTEL_FAM6_ROCKETLAKE = 0xA7           # Rocket Lake client.
-INTEL_FAM6_TIGERLAKE = 0x8D            # Tiger Lake client.
-INTEL_FAM6_TIGERLAKE_L = 0x8C          # Tiger Lake mobile.
-INTEL_FAM6_LAKEFIELD = 0x8A            # Lakefield client.
-INTEL_FAM6_COMETLAKE = 0xA5            # Comet Lake client.
-INTEL_FAM6_COMETLAKE_L = 0xA6          # Comet Lake mobile.
-INTEL_FAM6_KABYLAKE = 0x9E             # Kaby Lake client.
-INTEL_FAM6_KABYLAKE_L = 0x8E           # Kaby Lake mobile.
-INTEL_FAM6_ICELAKE = 0x7D              # IceLake client.
-INTEL_FAM6_ICELAKE_L = 0x7E            # Ice Lake mobile.
-INTEL_FAM6_CANNONLAKE_L = 0x66         # Cannonlake mobile.
-INTEL_FAM6_SKYLAKE = 0x5E              # Skylake client.
-INTEL_FAM6_SKYLAKE_L = 0x4E            # Skylake mobile.
-INTEL_FAM6_BROADWELL = 0x3D            # Broadwell client.
-INTEL_FAM6_HASWELL = 0x3C              # Haswell client.
-INTEL_FAM6_HASWELL_L = 0x45            # Haswell mobile.
-INTEL_FAM6_IVYBRIDGE = 0x3A            # IvyBridge client.
-INTEL_FAM6_SANDYBRIDGE = 0x2A          # SandyBridge client.
-INTEL_FAM6_WESTMERE = 0x25             # Westmere client.
-INTEL_FAM6_NEHALEM_G = 0x1F            # Nehalem client with graphics (Auburndale, Havendale).
-INTEL_FAM6_NEHALEM = 0x1E              # Nehalem client.
-INTEL_FAM6_CORE2_MEROM = 0x0F          # Intel Core 2.
-
-# Atoms.
-INTEL_FAM6_ATOM_TREMONT = 0x96         # Elkhart Lake.
-INTEL_FAM6_ATOM_TREMONT_L = 0x9C       # Jasper Lake.
-INTEL_FAM6_ATOM_GOLDMONT = 0x5C        # Apollo Lake.
-INTEL_FAM6_ATOM_GOLDMONT_PLUS = 0x7A   # Gemini Lake.
-INTEL_FAM6_ATOM_AIRMONT = 0x4C         # Cherry Trail, Braswell.
-INTEL_FAM6_ATOM_SILVERMONT = 0x37      # Bay Trail, Valleyview.
-INTEL_FAM6_ATOM_SILVERMONT_MID = 0x4A  # Merriefield.
-INTEL_FAM6_ATOM_SILVERMONT_MID1 = 0x5A # Moorefield.
-INTEL_FAM6_ATOM_SALTWELL = 0x36        # Cedarview.
-INTEL_FAM6_ATOM_SALTWELL_MID = 0x27    # Penwell.
-INTEL_FAM6_ATOM_SALTWELL_TABLET = 0x35 # Cloverview.
-INTEL_FAM6_ATOM_BONNELL_MID = 0x26     # Silverthorne, Lincroft.
-INTEL_FAM6_ATOM_BONNELL = 0x1C         # Diamondville, Pineview.
-
-# Atom microservers.
-INTEL_FAM6_GRANDRIDGE = 0xB6           # Grand Ridge, Logansville.
-INTEL_FAM6_TREMONT_D = 0x86            # Snow Ridge, Jacobsville.
-INTEL_FAM6_GOLDMONT_D = 0x5F           # Denverton, Harrisonville.
-INTEL_FAM6_ATOM_SILVERMONT_D = 0x4D    # Avaton, Rangely.
-
-# Other.
-INTEL_FAM6_ICELAKE_NNPI = 0x9D         # Ice Lake Neural Network Processor.
-INTEL_FAM6_XEON_PHI_KNM = 0x85         # Knights Mill.
-INTEL_FAM6_XEON_PHI_KNL = 0x57         # Knights Landing.
+CPUS = {
+    # Xeons.
+    "SIERRAFOREST_X" : {
+        "model"    : 0xAF,
+        "codename" : "Sierra Forest Xeon",
+    },
+    "GRANITERAPIDS_X" : {
+        "model"    : 0xAD,
+        "codename" : "Granite Rapids Xeon",
+    },
+    "GRANITERAPIDS_D" : {
+        "model"    : 0xAE,
+        "codename" : "Granite Rapids Xeon D",
+    },
+    "EMERALDRAPIDS_X" : {
+        "model"    : 0xCF,
+        "codename" : "Emerald Rapids Xeon",
+    },
+    "SAPPHIRERAPIDS_X" : {
+        "model"    : 0x8F,
+        "codename" : "Sapphire Rapids Xeon",
+    },
+    "ICELAKE_X" : {
+        "model"    : 0x6A,
+        "codename" : "Ice Lake Xeon",
+    },
+    "ICELAKE_D" : {
+        "model"    : 0x6C,
+        "codename" : "Ice Lake Xeon D",
+    },
+    "SKYLAKE_X" : {
+        "model"    : 0x55,
+        "codename" : "Skylake, Cascade Lake, or Cooper Lake Xeon",
+    },
+    "BROADWELL_X" : {
+        "model"    : 0x4F,
+        "codename" : "Broadwell Xeon",
+    },
+    "BROADWELL_G" : {
+        "model"    : 0x47,
+        "codename" : "Broadwell Xeon with Graphics",
+    },
+    "BROADWELL_D" : {
+        "model"    : 0x56,
+        "codename" : "Broadwell Xeon-D",
+    },
+    "HASWELL_X" : {
+        "model"    : 0x3F,
+        "codename" : "Haswell Xeon",
+    },
+    "HASWELL_G" : {
+        "model"    : 0x46,
+        "codename" : "Haswell Xeon with Graphics",
+    },
+    "IVYBRIDGE_X" : {
+        "model"    : 0x3E,
+        "codename" : "Ivy Town Xeon",
+    },
+    "SANDYBRIDGE_X" : {
+        "model"    : 0x2D,
+        "codename" : "SandyBridge Xeon",
+    },
+    "WESTMERE_EP" : {
+        "model"    : 0x2C,
+        "codename" : "Westmere 2S Xeon",
+    },
+    "WESTMERE_EX" : {
+        "model"    : 0x2F,
+        "codename" : "Westmere 4S Xeon",
+    },
+    "NEHALEM_EP" : {
+        "model"    : 0x1A,
+        "codename" : "Nehalem 2S Xeon",
+    },
+    "NEHALEM_EX" : {
+        "model"    : 0x2E,
+        "codename" : "Nehalem 4S Xeon",
+    },
+    # Clients.
+    "METEORLAKE" : {
+        "model"    : 0xAC,
+        "codename" : "Meteor Lake client",
+    },
+    "METEORLAKE_L" : {
+        "model"    : 0xAA,
+        "codename" : "Meteor Lake mobile",
+    },
+    "RAPTORLAKE_P" : {
+        "model"    : 0xBA,
+        "codename" : "Raptor Lake mobile",
+    },
+    "RAPTORLAKE_S" : {
+        "model"    : 0xBF,
+        "codename" : "Raptor Lake client",
+    },
+    "RAPTORLAKE" : {
+        "model"    : 0xB7,
+        "codename" : "Raptor Lake client",
+    },
+    "ALDERLAKE" : {
+        "model"    : 0x97,
+        "codename" : "Alder Lake client",
+    },
+    "ALDERLAKE_L" : {
+        "model"    : 0x9A,
+        "codename" : "Alder Lake mobile",
+    },
+    "ALDERLAKE_N" : {
+        "model"    : 0xBE,
+        "codename" : "Alder Lake mobile",
+    },
+    "ROCKETLAKE" : {
+        "model"    : 0xA7,
+        "codename" : "Rocket Lake client",
+    },
+    "TIGERLAKE" : {
+        "model"    : 0x8D,
+        "codename" : "Tiger Lake client",
+    },
+    "TIGERLAKE_L" : {
+        "model"    : 0x8C,
+        "codename" : "Tiger Lake mobile",
+    },
+    "LAKEFIELD" : {
+        "model"    : 0x8A,
+        "codename" : "Lakefield client",
+    },
+    "COMETLAKE" : {
+        "model"    : 0xA5,
+        "codename" : "Comet Lake client",
+    },
+    "COMETLAKE_L" : {
+        "model"    : 0xA6,
+        "codename" : "Comet Lake mobile",
+    },
+    "KABYLAKE" : {
+        "model"    : 0x9E,
+        "codename" : "Kaby Lake client",
+    },
+    "KABYLAKE_L" : {
+        "model"    : 0x8E,
+        "codename" : "Kaby Lake mobile",
+    },
+    "ICELAKE" : {
+        "model"    : 0x7D,
+        "codename" : "IceLake client",
+    },
+    "ICELAKE_L" : {
+        "model"    : 0x7E,
+        "codename" : "Ice Lake mobile",
+    },
+    "CANNONLAKE_L" : {
+        "model"    : 0x66,
+        "codename" : "Cannonlake mobile",
+    },
+    "SKYLAKE" : {
+        "model"    : 0x5E,
+        "codename" : "Skylake client",
+    },
+    "SKYLAKE_L" : {
+        "model"    : 0x4E,
+        "codename" : "Skylake mobile",
+    },
+    "BROADWELL" : {
+        "model"    : 0x3D,
+        "codename" : "Broadwell client",
+    },
+    "HASWELL" : {
+        "model"    : 0x3C,
+        "codename" : "Haswell client",
+    },
+    "HASWELL_L" : {
+        "model"    : 0x45,
+        "codename" : "Haswell mobile",
+    },
+    "IVYBRIDGE" : {
+        "model"    : 0x3A,
+        "codename" : "IvyBridge client",
+    },
+    "SANDYBRIDGE" : {
+        "model"    : 0x2A,
+        "codename" : "SandyBridge client",
+    },
+    "WESTMERE" : {
+        "model"    : 0x25,
+        "codename" : "Westmere client",
+    },
+    "NEHALEM_G" : {
+        "model"    : 0x1F,
+        "codename" : "Nehalem client with graphics (Auburndale, Havendale)",
+    },
+    "NEHALEM" : {
+        "model"    : 0x1E,
+        "codename" : "Nehalem client",
+    },
+    "CORE2_MEROM" : {
+        "model"    : 0x0F,
+        "codename" : "Intel Core 2",
+    },
+    # Atoms.
+    "ATOM_TREMONT" : {
+        "model"    : 0x96,
+        "codename" : "Elkhart Lake",
+    },
+    "ATOM_TREMONT_L" : {
+        "model"    : 0x9C,
+        "codename" : "Jasper Lake",
+    },
+    "ATOM_GOLDMONT" : {
+        "model"    : 0x5C,
+        "codename" : "Apollo Lake",
+    },
+    "ATOM_GOLDMONT_PLUS" : {
+        "model"    : 0x7A,
+        "codename" : "Gemini Lake",
+    },
+    "ATOM_AIRMONT" : {
+        "model"    : 0x4C,
+        "codename" : "Cherry Trail, Braswell",
+    },
+    "ATOM_SILVERMONT" : {
+        "model"    : 0x37,
+        "codename" : "Bay Trail, Valleyview",
+    },
+    "ATOM_SILVERMONT_MID" : {
+        "model"    : 0x4A,
+        "codename" : "Merriefield",
+    },
+    "ATOM_SILVERMONT_MID1" : {
+        "model"    : 0x5A,
+        "codename" : "Moorefield",
+    },
+    "ATOM_SALTWELL" : {
+        "model"    : 0x36,
+        "codename" : "Cedarview",
+    },
+    "ATOM_SALTWELL_MID" : {
+        "model"    : 0x27,
+        "codename" : "Penwell",
+    },
+    "ATOM_SALTWELL_TABLET" : {
+        "model"    : 0x35,
+        "codename" : "Cloverview",
+    },
+    "ATOM_BONNELL_MID" : {
+        "model"    : 0x26,
+        "codename" : "Silverthorne, Lincroft",
+    },
+    "ATOM_BONNELL" : {
+        "model"    : 0x1C,
+        "codename" : "Diamondville, Pineview",
+    },
+    # Atom microservers.
+    "GRANDRIDGE" : {
+        "model"    : 0xB6,
+        "codename" : "Grand Ridge, Logansville",
+    },
+    "TREMONT_D" : {
+        "model"    : 0x86,
+        "codename" : "Snow Ridge, Jacobsville",
+    },
+    "GOLDMONT_D" : {
+        "model"    : 0x5F,
+        "codename" : "Denverton, Harrisonville",
+    },
+    "ATOM_SILVERMONT_D" : {
+        "model"    : 0x4D,
+        "codename" : "Avaton, Rangely",
+    },
+    # Other.
+    "ICELAKE_NNPI" : {
+        "model"    : 0x9D,
+        "codename" : "Ice Lake Neural Network Processor",
+    },
+    "XEON_PHI_KNM" : {
+        "model"    : 0x85,
+        "codename" : "Knights Mill",
+    },
+    "XEON_PHI_KNL" : {
+        "model"    : 0x57,
+        "codename" : "Knights Landing", },
+}
 
 #
 # Various handy combinations of CPU models.
 #
-GNRS =         (INTEL_FAM6_GRANITERAPIDS_X,
-                INTEL_FAM6_GRANITERAPIDS_D)
-EMRS =         (INTEL_FAM6_EMERALDRAPIDS_X,)
-METEORLAKES =  (INTEL_FAM6_METEORLAKE,
-                INTEL_FAM6_METEORLAKE_L,)
-SPRS =         (INTEL_FAM6_SAPPHIRERAPIDS_X,)
-RAPTORLAKES =  (INTEL_FAM6_RAPTORLAKE,
-                INTEL_FAM6_RAPTORLAKE_P,
-                INTEL_FAM6_RAPTORLAKE_S,)
-ALDERLAKES =   (INTEL_FAM6_ALDERLAKE,
-                INTEL_FAM6_ALDERLAKE_L,
-                INTEL_FAM6_ALDERLAKE_N,)
-ROCKETLAKES =  (INTEL_FAM6_ROCKETLAKE,)
-TIGERLAKES =   (INTEL_FAM6_TIGERLAKE,
-                INTEL_FAM6_TIGERLAKE_L,)
-LAKEFIELDS =   (INTEL_FAM6_LAKEFIELD,)
-ICELAKES =     (INTEL_FAM6_ICELAKE,
-                INTEL_FAM6_ICELAKE_L,
-                INTEL_FAM6_ICELAKE_D,
-                INTEL_FAM6_ICELAKE_X,)
-ICL_CLIENTS =  (INTEL_FAM6_ICELAKE,
-                INTEL_FAM6_ICELAKE_L,)
-ICXES       =  (INTEL_FAM6_ICELAKE_D,
-                INTEL_FAM6_ICELAKE_X,)
-COMETLAKES =   (INTEL_FAM6_COMETLAKE,
-                INTEL_FAM6_COMETLAKE_L,)
-KABYLAKES =    (INTEL_FAM6_KABYLAKE,
-                INTEL_FAM6_KABYLAKE_L,)
-CANNONLAKES =  (INTEL_FAM6_CANNONLAKE_L,)
-SKYLAKES =     (INTEL_FAM6_SKYLAKE,
-                INTEL_FAM6_SKYLAKE_L,
-                INTEL_FAM6_SKYLAKE_X,)
-SKL_CLIENTS =  (INTEL_FAM6_SKYLAKE,
-                INTEL_FAM6_SKYLAKE_L)
-SKXES =        (INTEL_FAM6_SKYLAKE_X,)
-BROADWELLS =   (INTEL_FAM6_BROADWELL,
-                INTEL_FAM6_BROADWELL_G,
-                INTEL_FAM6_BROADWELL_D,
-                INTEL_FAM6_BROADWELL_X,)
-HASWELLS =     (INTEL_FAM6_HASWELL,
-                INTEL_FAM6_HASWELL_L,
-                INTEL_FAM6_HASWELL_G,
-                INTEL_FAM6_HASWELL_X,)
-IVYBRIDGES =   (INTEL_FAM6_IVYBRIDGE,
-                INTEL_FAM6_IVYBRIDGE_X,)
-SANDYBRIDGES = (INTEL_FAM6_SANDYBRIDGE,
-                INTEL_FAM6_SANDYBRIDGE_X,)
-WESTMERES =    (INTEL_FAM6_WESTMERE,
-                INTEL_FAM6_WESTMERE_EP,
-                INTEL_FAM6_WESTMERE_EX,)
-NEHALEMS =     (INTEL_FAM6_NEHALEM,
-                INTEL_FAM6_NEHALEM_G,
-                INTEL_FAM6_NEHALEM_EP,
-                INTEL_FAM6_NEHALEM_EX)
+GNRS =         (CPUS["GRANITERAPIDS_X"]["model"],
+                CPUS["GRANITERAPIDS_D"]["model"])
+EMRS =         (CPUS["EMERALDRAPIDS_X"]["model"],)
+METEORLAKES =  (CPUS["METEORLAKE"]["model"],
+                CPUS["METEORLAKE_L"]["model"],)
+SPRS =         (CPUS["SAPPHIRERAPIDS_X"]["model"],)
+RAPTORLAKES =  (CPUS["RAPTORLAKE"]["model"],
+                CPUS["RAPTORLAKE_P"]["model"],
+                CPUS["RAPTORLAKE_S"]["model"],)
+ALDERLAKES =   (CPUS["ALDERLAKE"]["model"],
+                CPUS["ALDERLAKE_L"]["model"],
+                CPUS["ALDERLAKE_N"]["model"],)
+ROCKETLAKES =  (CPUS["ROCKETLAKE"]["model"],)
+TIGERLAKES =   (CPUS["TIGERLAKE"]["model"],
+                CPUS["TIGERLAKE_L"]["model"],)
+LAKEFIELDS =   (CPUS["LAKEFIELD"]["model"],)
+ICELAKES =     (CPUS["ICELAKE"]["model"],
+                CPUS["ICELAKE_L"]["model"],
+                CPUS["ICELAKE_D"]["model"],
+                CPUS["ICELAKE_X"]["model"],)
+ICL_CLIENTS =  (CPUS["ICELAKE"]["model"],
+                CPUS["ICELAKE_L"]["model"],)
+ICXES       =  (CPUS["ICELAKE_D"]["model"],
+                CPUS["ICELAKE_X"]["model"],)
+COMETLAKES =   (CPUS["COMETLAKE"]["model"],
+                CPUS["COMETLAKE_L"]["model"],)
+KABYLAKES =    (CPUS["KABYLAKE"]["model"],
+                CPUS["KABYLAKE_L"]["model"],)
+CANNONLAKES =  (CPUS["CANNONLAKE_L"]["model"],)
+SKYLAKES =     (CPUS["SKYLAKE"]["model"],
+                CPUS["SKYLAKE_L"]["model"],
+                CPUS["SKYLAKE_X"]["model"],)
+SKL_CLIENTS =  (CPUS["SKYLAKE"]["model"],
+                CPUS["SKYLAKE_L"]["model"])
+SKXES =        (CPUS["SKYLAKE_X"]["model"],)
+BROADWELLS =   (CPUS["BROADWELL"]["model"],
+                CPUS["BROADWELL_G"]["model"],
+                CPUS["BROADWELL_D"]["model"],
+                CPUS["BROADWELL_X"]["model"],)
+HASWELLS =     (CPUS["HASWELL"]["model"],
+                CPUS["HASWELL_L"]["model"],
+                CPUS["HASWELL_G"]["model"],
+                CPUS["HASWELL_X"]["model"],)
+IVYBRIDGES =   (CPUS["IVYBRIDGE"]["model"],
+                CPUS["IVYBRIDGE_X"]["model"],)
+SANDYBRIDGES = (CPUS["SANDYBRIDGE"]["model"],
+                CPUS["SANDYBRIDGE_X"]["model"],)
+WESTMERES =    (CPUS["WESTMERE"]["model"],
+                CPUS["WESTMERE_EP"]["model"],
+                CPUS["WESTMERE_EX"]["model"],)
+NEHALEMS =     (CPUS["NEHALEM"]["model"],
+                CPUS["NEHALEM_G"]["model"],
+                CPUS["NEHALEM_EP"]["model"],
+                CPUS["NEHALEM_EX"]["model"])
 
-CRESTMONTS =    (INTEL_FAM6_GRANDRIDGE,
-                 INTEL_FAM6_SIERRAFOREST_X)
-TREMONTS =     (INTEL_FAM6_ATOM_TREMONT,
-                INTEL_FAM6_ATOM_TREMONT_L,
-                INTEL_FAM6_TREMONT_D,)
-GOLDMONTS =    (INTEL_FAM6_ATOM_GOLDMONT,
-                INTEL_FAM6_GOLDMONT_D,
-                INTEL_FAM6_ATOM_GOLDMONT_PLUS,)
-AIRMONTS =     (INTEL_FAM6_ATOM_AIRMONT,)
-SILVERMONTS =  (INTEL_FAM6_ATOM_SILVERMONT,
-                INTEL_FAM6_ATOM_SILVERMONT_MID,
-                INTEL_FAM6_ATOM_SILVERMONT_MID1,
-                INTEL_FAM6_ATOM_SILVERMONT_D,)
+CRESTMONTS =   (CPUS["GRANDRIDGE"]["model"],
+                CPUS["SIERRAFOREST_X"]["model"])
+TREMONTS =     (CPUS["ATOM_TREMONT"]["model"],
+                CPUS["ATOM_TREMONT_L"]["model"],
+                CPUS["TREMONT_D"]["model"],)
+GOLDMONTS =    (CPUS["ATOM_GOLDMONT"]["model"],
+                CPUS["GOLDMONT_D"]["model"],
+                CPUS["ATOM_GOLDMONT_PLUS"]["model"],)
+AIRMONTS =     (CPUS["ATOM_AIRMONT"]["model"],)
+SILVERMONTS =  (CPUS["ATOM_SILVERMONT"]["model"],
+                CPUS["ATOM_SILVERMONT_MID"]["model"],
+                CPUS["ATOM_SILVERMONT_MID1"]["model"],
+                CPUS["ATOM_SILVERMONT_D"]["model"],)
 
-PHIS =         (INTEL_FAM6_XEON_PHI_KNL,
-                INTEL_FAM6_XEON_PHI_KNM,)
+PHIS =         (CPUS["XEON_PHI_KNL"]["model"],
+                CPUS["XEON_PHI_KNM"]["model"],)
 
 # CPU model description. Note, we keep only relatively new CPUs here, because for released CPUs
 # model name is available from the OS.
 _CPU_DESCR = {
-              INTEL_FAM6_GRANDRIDGE:       "Grand Ridge",
-              INTEL_FAM6_SIERRAFOREST_X:   "Sierra Forest Xeon",
-              INTEL_FAM6_GRANITERAPIDS_X:  "Granite Rapids Xeon",
-              INTEL_FAM6_GRANITERAPIDS_D:  "Granite Rapids Xeon D",
-              INTEL_FAM6_EMERALDRAPIDS_X:  "Emerald Rapids Xeon",
-              INTEL_FAM6_SAPPHIRERAPIDS_X: "Sapphire Rapids Xeon",
-              INTEL_FAM6_ALDERLAKE:        "Alder Lake client",
-              INTEL_FAM6_ALDERLAKE_L:      "Alder Lake mobile",
-              INTEL_FAM6_ALDERLAKE_N:      "Alder Lake mobile",
-              INTEL_FAM6_TREMONT_D:        "Snow Ridge",
-              INTEL_FAM6_SKYLAKE_X:        "Sky/Cascade/Cooper Lake",
+              CPUS["GRANDRIDGE"]["model"]:       "Grand Ridge",
+              CPUS["SIERRAFOREST_X"]["model"]:   "Sierra Forest Xeon",
+              CPUS["GRANITERAPIDS_X"]["model"]:  "Granite Rapids Xeon",
+              CPUS["GRANITERAPIDS_D"]["model"]:  "Granite Rapids Xeon D",
+              CPUS["EMERALDRAPIDS_X"]["model"]:  "Emerald Rapids Xeon",
+              CPUS["SAPPHIRERAPIDS_X"]["model"]: "Sapphire Rapids Xeon",
+              CPUS["ALDERLAKE"]["model"]:        "Alder Lake client",
+              CPUS["ALDERLAKE_L"]["model"]:      "Alder Lake mobile",
+              CPUS["ALDERLAKE_N"]["model"]:      "Alder Lake mobile",
+              CPUS["TREMONT_D"]["model"]:        "Snow Ridge",
+              CPUS["SKYLAKE_X"]["model"]:        "Sky/Cascade/Cooper Lake",
 }
 
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
