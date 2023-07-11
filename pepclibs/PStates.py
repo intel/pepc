@@ -364,13 +364,36 @@ class PStates(_PCStatesBase.PCStatesBase):
         if self._pman.exists(self._sysfs_base_uncore):
             return True
 
-        drvname = "intel_uncore_frequency"
-        msg = f"Uncore frequency operations are not supported{self._pman.hostmsg}. Here are the " \
-              f"possible reasons:\n" \
-              f" 1. the hardware does not support uncore frequency management.\n" \
-              f" 2. the '{drvname}' driver does not support this hardware.\n" \
-              f" 3. the '{drvname}' driver is not enabled. Try to compile the kernel with " \
-              f"the 'CONFIG_INTEL_UNCORE_FREQ_CONTROL' option."
+        from pepclibs.msr import UncoreRatioLimit # pylint: disable=import-outside-toplevel
+
+        cpumodel = self._cpuinfo.info["model"]
+
+        # If the CPU supports MSR_UNCORE_RATIO_LIMIT, the uncore frequency driver is
+        # "intel_uncore_frequency".
+        if cpumodel in UncoreRatioLimit.FEATURES["max_ratio"]["cpumodels"]:
+            drvname = "intel_uncore_frequency"
+            kopt = "CONFIG_INTEL_UNCORE_FREQ_CONTROL"
+            msr_addr = UncoreRatioLimit.MSR_UNCORE_RATIO_LIMIT
+
+            msg = f"Uncore frequency operations are not supported{self._pman.hostmsg}. Here are " \
+                  f"the possible reasons:\n" \
+                  f" 1. the '{drvname}' driver is not enabled. Try to compile the kernel " \
+                  f"with the '{kopt}' option.\n" \
+                  f" 2. the kernel is old and does not have the '{drvname}' driver.\n" \
+                  f"Address these issues or contact project maintainers and request" \
+                  f"implementing uncore frequency support via MSR {msr_addr:#x}"
+        else:
+            drvname = "intel_uncore_frequency_tpmi"
+            kopt = "CONFIG_INTEL_UNCORE_FREQ_CONTROL_TPMI"
+
+            msg = f"Uncore frequency operations are not supported{self._pman.hostmsg}. Here are " \
+                  f"the possible reasons:\n" \
+                  f" 1. the hardware does not support uncore frequency management.\n" \
+                  f" 2. the '{drvname}' driver does not support this hardware.\n" \
+                  f" 3. the kernel is old and does not have the '{drvname}' driver. This driver " \
+                  f"is supported since kernel version 6.5.\n" \
+                  f" 4. the '{drvname}' driver is not enabled. Try to compile the kernel " \
+                  f"with the '{kopt}' option"
 
         try:
             self._ufreq_drv = KernelModule.KernelModule(drvname, pman=self._pman)
