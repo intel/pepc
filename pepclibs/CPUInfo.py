@@ -380,22 +380,6 @@ SILVERMONTS =  (CPUS["ATOM_SILVERMONT"]["model"],
 PHIS =         (CPUS["XEON_PHI_KNL"]["model"],
                 CPUS["XEON_PHI_KNM"]["model"],)
 
-# CPU model description. Note, we keep only relatively new CPUs here, because for released CPUs
-# model name is available from the OS.
-_CPU_DESCR = {
-              CPUS["GRANDRIDGE"]["model"]:       "Grand Ridge",
-              CPUS["SIERRAFOREST_X"]["model"]:   "Sierra Forest Xeon",
-              CPUS["GRANITERAPIDS_X"]["model"]:  "Granite Rapids Xeon",
-              CPUS["GRANITERAPIDS_D"]["model"]:  "Granite Rapids Xeon D",
-              CPUS["EMERALDRAPIDS_X"]["model"]:  "Emerald Rapids Xeon",
-              CPUS["SAPPHIRERAPIDS_X"]["model"]: "Sapphire Rapids Xeon",
-              CPUS["ALDERLAKE"]["model"]:        "Alder Lake client",
-              CPUS["ALDERLAKE_L"]["model"]:      "Alder Lake mobile",
-              CPUS["ALDERLAKE_N"]["model"]:      "Alder Lake mobile",
-              CPUS["TREMONT_D"]["model"]:        "Snow Ridge",
-              CPUS["SKYLAKE_X"]["model"]:        "Sky/Cascade/Cooper Lake",
-}
-
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
 LEVELS = ("CPU", "core", "module", "die", "node", "package")
 
@@ -1351,6 +1335,23 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return cpuinfo
 
+    def _get_cpu_description(self):
+        """Build and return a string identifying and describing the processor."""
+
+        if "Genuine Intel" in self.info["modelname"]:
+            # Pre-release firmware on Intel CPU describes them as "Genuine Intel", which is not very
+            # helpful.
+            cpudescr = f"Intel processor model {self.info['model']:#x}"
+
+            for info in CPUS.values():
+                if info["model"] == self.info["model"]:
+                    cpudescr += f" (codename: {info['codename']})"
+                    break
+        else:
+            cpudescr = self.info["modelname"]
+
+        return cpudescr
+
     def __init__(self, pman=None):
         """
         The class constructor. The arguments are as follows.
@@ -1397,13 +1398,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             self._pman = LocalProcessManager.LocalProcessManager()
 
         self.info = self._get_cpu_info()
-
-        if "Genuine Intel" in self.info["modelname"]:
-            modelname = _CPU_DESCR.get(self.info["model"], self.info["modelname"])
-        else:
-            modelname = self.info["modelname"]
-
-        self.cpudescr = f"{modelname} (model {self.info['model']:#x})"
+        self.cpudescr = self._get_cpu_description()
 
     def close(self):
         """Uninitialize the class object."""
