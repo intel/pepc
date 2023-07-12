@@ -221,12 +221,9 @@ class EPP(ClassHelpers.SimpleCloseContext):
                     if epp.isdigit() or "Invalid argument" not in str(err):
                         raise
 
-                    # This is a workaround for unexpected kernel behavior that was observed in
-                    # kernel version 6.2 running 'intel_pstate' in passive mode. This is probably a
-                    # minor kernel bug. Writing the same policy string twice fails with an "Invalid
-                    # argument" error. This does not happen when using numeric EPP values, only
-                    # policy names. The work-around is to read the file back, and if it already
-                    # contains the same policy, then treat this as "success".
+                    # This is a workaround for a kernel bug, which has been fixed in v6.5:
+                    #   03f44ffb3d5be cpufreq: intel_pstate: Fix energy_performance_preference for
+                    #                 passive
                     fobj.seek(0)
                     val = fobj.read().strip()
                     if epp != val:
