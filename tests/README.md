@@ -21,4 +21,5 @@ Run for a single emulation dataset, instead of all (default)
 # Test data
 
 Special cases:
+* 'spr2_nomwait' has '```idle=nomwait```' boot parameter.
 * 'bdwex0_noidle' has '```cpuidle.off=1```' boot parameter.
