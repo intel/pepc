@@ -88,7 +88,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def _print_aggr_pinfo_human(self, aggr_pinfo, skip_unsupported=False, action=None):
         """Print the aggregate properties information in the "human" format."""
 
-        props = self._pcsobj.props
+        props = self._pobj.props
 
         printed = 0
         for pname, pinfo in aggr_pinfo.items():
@@ -256,7 +256,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
 
         if pnames == "all":
-            pnames = list(self._pcsobj.props)
+            pnames = list(self._pobj.props)
         if cpus == "all":
             cpus = self._cpuinfo.get_cpus()
 
@@ -267,7 +267,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         else:
             spnames = "all"
 
-        pinfo_iter = self._pcsobj.get_props(pnames, cpus=cpus)
+        pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
         aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, spnames=spnames)
 
         if skip_ro and "pkg_cstate_limit" in aggr_pinfo:
@@ -284,10 +284,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
 
-    def __init__(self, pcsobj, cpuinfo, fobj=None, fmt="human"):
+    def __init__(self, pobj, cpuinfo, fobj=None, fmt="human"):
         """
         Initialize a class instance. The arguments are as follows.
-          * pcsobj - a 'PStates', 'CStates' or 'Power' object to print the properties for.
+          * obj - a 'PStates', 'CStates' or 'Power' object to print the properties for.
           * cpuinfo - a 'CPUInfo' object corresponding to the host the properties are read from.
           * fobj - a file object to print the output to (standard output by default).
           * fmt - the printing format.
@@ -297,7 +297,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
           * yaml - print in YAML format.
         """
 
-        self._pcsobj = pcsobj
+        self._pobj = pobj
         self._cpuinfo = cpuinfo
         self._fobj = fobj
         self._fmt = fmt
@@ -309,7 +309,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, unref_attrs=("_fobj", "_cpuinfo", "_pcsobj"))
+        ClassHelpers.close(self, unref_attrs=("_fobj", "_cpuinfo", "_pobj"))
 
 class PStatesPrinter(_PropsPrinter):
     """This class provides API for printing P-states information."""
@@ -426,7 +426,7 @@ class CStatesPrinter(_PropsPrinter):
         else:
             spnames = {"disable", "latency", "residency", "desc"}
 
-        csinfo_iter = self._pcsobj.get_cstates_info(csnames=csnames, cpus=cpus)
+        csinfo_iter = self._pobj.get_cstates_info(csnames=csnames, cpus=cpus)
 
         try:
             aggr_rcsinfo = self._build_aggr_pinfo(csinfo_iter, spnames=spnames)
