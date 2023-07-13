@@ -63,7 +63,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             cpus = self._fmt_cpus(cpus)
             sfx = f" for {cpus}"
 
-        msg = f"{prop['name']}: "
+        msg = f" - {prop['name']}: "
 
         if prefix is not None:
             msg = prefix + msg
@@ -85,8 +85,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         msg += f"{val}{sfx}"
         self._print(msg)
 
-    def _print_aggr_pinfo_human(self, aggr_pinfo, skip_unsupported=False, action=None):
-        """Print the aggregate properties information in the "human" format."""
+    def _print_aggr_pinfo_group(self, aggr_pinfo, skip_unsupported=False, action=None):
+        """Print the aggregate properties information grouped by source."""
 
         props = self._pobj.props
 
@@ -111,6 +111,25 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                         self._print_prop_human(prop, val, cpus=cpus, action=action)
                     printed += 1
 
+        return printed
+
+    def _print_aggr_pinfo_human(self, aggr_pinfo, skip_unsupported=False, action=None):
+        """Print properties grouped by source, e.g. MSR, sysfs, in the "human" format."""
+
+        sorted_pinfo = {}
+        for pname, info in aggr_pinfo.items():
+            for source in self._pobj.props[pname]["mechanisms"]:
+                if source not in sorted_pinfo:
+                    sorted_pinfo[source] = {pname : info}
+                else:
+                    sorted_pinfo[source][pname] = info
+
+        printed = 0
+        for source, pinfos in sorted_pinfo.items():
+            if pinfos:
+                self._print(f"Source: {source}")
+                printed += self._print_aggr_pinfo_group(pinfos, skip_unsupported=skip_unsupported,
+                                                        action=action)
         return printed
 
     def _yaml_dump(self, info):
