@@ -42,7 +42,7 @@ def pstates_info_command(args, pman):
         psobj = PStates.PStates(pman=pman, cpuinfo=cpuinfo)
         stack.enter_context(psobj)
 
-        psprint = _PepcPrinter.CStatesPrinter(psobj, cpuinfo, fmt=fmt)
+        psprint = _PepcPrinter.PStatesPrinter(psobj, cpuinfo, fmt=fmt)
         stack.enter_context(psprint)
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")

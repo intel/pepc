@@ -42,7 +42,7 @@ def power_info_command(args, pman):
         pobj = Power.Power(pman=pman, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
-        pprint = _PepcPrinter.CStatesPrinter(pobj, cpuinfo, fmt=fmt)
+        pprint = _PepcPrinter.PowerPrinter(pobj, cpuinfo, fmt=fmt)
         stack.enter_context(pprint)
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
