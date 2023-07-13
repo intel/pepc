@@ -225,21 +225,12 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if cpus == "all":
             cpus = self._cpuinfo.get_cpus()
 
-        if skip_ro:
-            # Package C-state limit lock status will be needed to check if 'pkg_cstate_limit'
-            # property is effectively read-only.
-            spnames = ("pkg_cstate_limit_locked",)
-        else:
-            spnames = "all"
+        # All sub-properties are assumed to be read-only. Therefore, when read-only properties
+        # should be skipped, set 'spnames' to 'None', which means "do not include sub-properties".
+        spnames = None if skip_ro else "all"
 
         pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
         aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, spnames=spnames)
-
-        if skip_ro and "pkg_cstate_limit" in aggr_pinfo:
-            # Special case: the package C-state limit option is read-write in general, but if it is
-            # locked, it is effectively read-only. Since 'skip_ro' is 'True', we need to adjust
-            # 'aggr_pinfo'.
-            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo) # pylint: disable=no-member
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, skip_unsupported=skip_unsupported,
@@ -408,6 +399,41 @@ class CStatesPrinter(_PropsPrinter):
 
         self._yaml_dump(yaml_rcsinfo)
         return len(yaml_rcsinfo)
+
+    def print_props(self, pnames="all", cpus="all", skip_ro=False, skip_unsupported=True,
+                    action=None):
+        """
+        Read and print properties. The arguments are the same as in '_PropsPrinter.print_props()'.
+        """
+
+        if pnames == "all":
+            pnames = list(self._pobj.props)
+        if cpus == "all":
+            cpus = self._cpuinfo.get_cpus()
+
+        if skip_ro:
+            # Package C-state limit lock status will be needed to check if 'pkg_cstate_limit'
+            # property is effectively read-only.
+            spnames = ("pkg_cstate_limit_locked",)
+        else:
+            spnames = "all"
+
+        pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
+        aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, spnames=spnames)
+
+        if skip_ro and "pkg_cstate_limit" in aggr_pinfo:
+            # Special case: the package C-state limit option is read-write in general, but if it is
+            # locked, it is effectively read-only. Since 'skip_ro' is 'True', we need to adjust
+            # 'aggr_pinfo'.
+            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo)
+
+        if self._fmt == "human":
+            return self._print_aggr_pinfo_human(aggr_pinfo, skip_unsupported=skip_unsupported,
+                                                action=action)
+        if action is not None:
+            raise Error("'action' must be 'None' when printing in YAML format")
+
+        return self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
 
     def print_cstates(self, csnames="all", cpus="all", skip_ro=False, action=None):
         """
