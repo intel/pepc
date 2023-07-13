@@ -9,7 +9,7 @@
 #         Antti Laakso <antti.laakso@intel.com>
 
 """
-This module provides API for printing P-state and C-state properties.
+This module provides API for printing properties.
 """
 
 import sys
@@ -86,7 +86,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         self._print(msg)
 
     def _print_aggr_pinfo_human(self, aggr_pinfo, skip_unsupported=False, action=None):
-        """Print the aggregate C-state or P-state properties information in the "human" format."""
+        """Print the aggregate properties information in the "human" format."""
 
         props = self._pcsobj.props
 
@@ -123,7 +123,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         YAML.dump(info, fobj)
 
     def _print_aggr_pinfo_yaml(self, aggr_pinfo, skip_unsupported=False):
-        """Print the aggregate C-state or P-state properties information in YAML format."""
+        """Print the aggregate properties information in YAML format."""
 
         yaml_pinfo = {}
 
@@ -287,7 +287,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def __init__(self, pcsobj, cpuinfo, fobj=None, fmt="human"):
         """
         Initialize a class instance. The arguments are as follows.
-          * pcsobj - a 'PStates' or 'CStates' object to print the properties for.
+          * pcsobj - a 'PStates', 'CStates' or 'Power' object to print the properties for.
           * cpuinfo - a 'CPUInfo' object corresponding to the host the properties are read from.
           * fobj - a file object to print the output to (standard output by default).
           * fmt - the printing format.
