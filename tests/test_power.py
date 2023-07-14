@@ -49,7 +49,7 @@ def _set_and_verify_data(params):
 
     pinfo = params["pinfo"]
 
-    bool_pnames_pat = {"1_en", "1_clen", "2_en", "2_clen"}
+    bool_pnames_pat = {"1_enable", "1_clamp", "2_enable", "2_clamp"}
 
     for pat in bool_pnames_pat:
         pname = f"ppl{pat}"
