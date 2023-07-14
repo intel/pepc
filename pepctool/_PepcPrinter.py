@@ -85,8 +85,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         msg += f"{val}{sfx}"
         self._print(msg)
 
-    def _do_print_aggr_pinfo_human(self, aggr_pinfo, skip_unsupported=False, action=None,
-                                   prefix=None):
+    def _do_print_aggr_pinfo_human(self, aggr_pinfo, action=None, prefix=None):
         """A helper for '_print_aggr_pinfo_human()' implementing the printing part."""
 
         props = self._pobj.props
@@ -94,20 +93,16 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         printed = 0
         for pname, pinfo in aggr_pinfo.items():
             for val, cpus in pinfo.items():
-                if skip_unsupported and val is None:
-                    continue
-
                 self._print_prop_human(props[pname], val, cpus=cpus, action=action, prefix=prefix)
                 printed += 1
 
         return printed
 
-    def _print_aggr_pinfo_human(self, aggr_pinfo, group=False, skip_unsupported=False, action=None):
+    def _print_aggr_pinfo_human(self, aggr_pinfo, group=False, action=None):
         """
         Print properties in the "human" format. The arguments are as follows.
           * aggr_pinfo - the aggregate properties information dictionary.
           * group - whether to group properties by the source (sysfs, MSR, etc) when printing.
-          * skip_unsupported - same as in 'print_props()'.
           * action - same as in 'print_props()'.
         """
 
@@ -128,9 +123,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         for source, pinfos in grouped.items():
             if source:
                 self._print(f"Source: {self._pobj.source_to_human(source)}")
-            printed += self._do_print_aggr_pinfo_human(pinfos,
-                                                       skip_unsupported=skip_unsupported,
-                                                       action=action, prefix=prefix)
+            printed += self._do_print_aggr_pinfo_human(pinfos, action=action, prefix=prefix)
         return printed
 
     def _yaml_dump(self, info):
@@ -142,7 +135,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         YAML.dump(info, fobj)
 
-    def _print_aggr_pinfo_yaml(self, aggr_pinfo, skip_unsupported=False):
+    def _print_aggr_pinfo_yaml(self, aggr_pinfo):
         """Print the aggregate properties information in YAML format."""
 
         yaml_pinfo = {}
@@ -150,8 +143,6 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         for pname, pinfo in aggr_pinfo.items():
             for val, cpus in pinfo.items():
                 if val is None:
-                    if skip_unsupported:
-                        continue
                     val = "not supported"
 
                 if pname not in yaml_pinfo:
@@ -247,9 +238,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, skip_unsupported)
 
         if self._fmt == "human":
-            return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
-                                                skip_unsupported=skip_unsupported, action=action)
-        return self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
+            return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
+        return self._print_aggr_pinfo_yaml(aggr_pinfo)
 
     def __init__(self, pobj, cpuinfo, fobj=None, fmt="human"):
         """
@@ -440,9 +430,8 @@ class CStatesPrinter(_PropsPrinter):
             aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo, cpus)
 
         if self._fmt == "human":
-            return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
-                                                skip_unsupported=skip_unsupported, action=action)
-        return self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
+            return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
+        return self._print_aggr_pinfo_yaml(aggr_pinfo)
 
     def _build_aggr_rcsinfo(self, csinfo_iter, keys):
         """
