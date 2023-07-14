@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.28] - 2023-07-14
+### Changed
  - Change 'info' sub-command output format, the properties are now
    grouped by their source.
 
