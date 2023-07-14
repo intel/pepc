@@ -93,15 +93,12 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         printed = 0
         for pname, pinfo in aggr_pinfo.items():
-            for key, kinfo in pinfo.items():
-                for val, cpus in kinfo.items():
-                    if key in props:
-                        if skip_unsupported and val is None:
-                            continue
+            for val, cpus in pinfo.items():
+                if skip_unsupported and val is None:
+                    continue
 
-                        self._print_prop_human(props[pname], val, cpus=cpus, action=action,
-                                               prefix=prefix)
-                        printed += 1
+                self._print_prop_human(props[pname], val, cpus=cpus, action=action, prefix=prefix)
+                printed += 1
 
         return printed
 
@@ -150,17 +147,16 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         yaml_pinfo = {}
 
-        for pinfo in aggr_pinfo.values():
-            for key, kinfo in pinfo.items():
-                for val, cpus in kinfo.items():
-                    if val is None:
-                        if skip_unsupported:
-                            continue
-                        val = "not supported"
+        for pname, pinfo in aggr_pinfo.items():
+            for val, cpus in pinfo.items():
+                if val is None:
+                    if skip_unsupported:
+                        continue
+                    val = "not supported"
 
-                    if key not in yaml_pinfo:
-                        yaml_pinfo[key] = []
-                    yaml_pinfo[key].append({"value" : val, "cpus" : Human.rangify(cpus)})
+                if pname not in yaml_pinfo:
+                    yaml_pinfo[pname] = []
+                yaml_pinfo[pname].append({"value" : val, "cpus" : Human.rangify(cpus)})
 
         self._yaml_dump(yaml_pinfo)
         return len(yaml_pinfo)
@@ -173,10 +169,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         The aggregate properties dictionary has the following format.
 
-        { property1_name : { property1_name : { value1 : [ list of CPUs having value1 ],
-                                                value2 : [ list of CPUs having value2 ],
-                                                ... and so on for all values ...
-                                              },
+        { property1_name : { value1 : [ list of CPUs having value1 ],
+                             value2 : [ list of CPUs having value2 ],
+                             ... and so on for all values ...
                            },
           ... and so on for all properties ...
         },
@@ -192,9 +187,6 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         for cpu, pinfo in pinfo_iter:
             for pname, val in pinfo.items():
-                if pname not in aggr_pinfo:
-                    aggr_pinfo[pname] = {}
-
                 # Make sure 'val' is "hashable" and can be used as a dictionary key.
                 if isinstance(val, list):
                     if not val:
@@ -205,12 +197,12 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                         continue
                     val = ", ".join(f"{k}={v}" for k, v in val.items())
 
-                if pname not in aggr_pinfo[pname]:
-                    aggr_pinfo[pname][pname] = {}
-                if val not in aggr_pinfo[pname][pname]:
-                    aggr_pinfo[pname][pname][val] = []
-
-                aggr_pinfo[pname][pname][val].append(cpu)
+                if pname not in aggr_pinfo:
+                    aggr_pinfo[pname] = {val : [cpu]}
+                elif val not in aggr_pinfo[pname]:
+                    aggr_pinfo[pname][val] = [cpu]
+                else:
+                    aggr_pinfo[pname][val].append(cpu)
 
         return aggr_pinfo
 
