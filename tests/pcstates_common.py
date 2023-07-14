@@ -20,9 +20,7 @@ def is_prop_supported(pname, pinfo):
                 'CStates.get_props()'. Check 'get_props()' docstring for more information.
     """
 
-    if pname in pinfo:
-        return pinfo[pname].get(pname) is not None
-    return False
+    return pinfo[pname].get(pname) is not None
 
 def get_siblings(cpuinfo, cpu=0):
     """
