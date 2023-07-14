@@ -91,8 +91,7 @@ def _verify_value_type(pname, ptype, value):
 
 def verify_props_value_type(props, pinfo):
     """
-    This function test 'get_props()' return type for all supported properties and subproperties
-    on the system.
+    This function test 'get_props()' return type for all supported properties on the system.
 
     The argument are as follows.
      * props - dictionary describing the properties.
@@ -104,7 +103,3 @@ def verify_props_value_type(props, pinfo):
             continue
 
         _verify_value_type(pname, props[pname]["type"], pinfo[pname][pname])
-
-        for subpname in props[pname]["subprops"]:
-            _verify_value_type(subpname, props[pname]["subprops"][subpname]["type"],
-                               pinfo[pname][subpname])

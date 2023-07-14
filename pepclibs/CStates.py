@@ -183,7 +183,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         return self._get_cpuidle().disable_cstates(csnames=csnames, cpus=cpus)
 
     def _get_pkg_cstate_limit(self, pname, cpu):
-        """Return the 'pname' sub-property for the 'pkg_cstate_limit' property."""
+        """Return 'pkg_cstate_limit' related 'pname' property."""
 
         try:
             pcstatectl = self._get_pcstatectl()

@@ -95,23 +95,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         for pname, pinfo in aggr_pinfo.items():
             for key, kinfo in pinfo.items():
                 for val, cpus in kinfo.items():
-                    # Distinguish between properties and sub-properties.
                     if key in props:
                         if skip_unsupported and val is None:
                             continue
+
                         self._print_prop_human(props[pname], val, cpus=cpus, action=action,
                                                prefix=prefix)
-                    else:
-                        if val is None:
-                            # Just skip unsupported sub-property instead of printing something like
-                            # "Package C-state limit aliases: not supported on CPUs 0-11".
-                            continue
-
-                        # Print sub-properties with a prefix and exclude CPU information, because it
-                        # is the same as in the (parent) property, which has already been printed.
-                        prop = props[pname]["subprops"][key]
-                        self._print_prop_human(prop, val, cpus=cpus, action=action, prefix=prefix)
-                    printed += 1
+                        printed += 1
 
         return printed
 
@@ -176,31 +166,25 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         return len(yaml_pinfo)
 
     @staticmethod
-    def _build_aggr_pinfo(pinfo_iter, spnames="all"):
+    def _build_aggr_pinfo(pinfo_iter):
         """
         Build the aggregate properties dictionary. The arguments are as follows.
           * pinfo_iter - an iterator yielding '(cpu, pinfo)' tuples.
-          * spnames - names of sub-properties of the 'pname' property that should also be printed.
-                      Value "all" will include all sub-properties and value 'None' won't include
-                      any.
 
         The aggregate properties dictionary has the following format.
 
-        { property1_name: { property1_name: { value1 : [ list of CPUs having value1],
-                                                value2 : [ list of CPUs having value2],
-                                                ... and so on of all values ...},
-                            subprop1_name:  { value1 : [ list of CPUs having value1],
-                                                value2 : [ list of CPUs having value2]
-                                                ... and so on of all values ...},
-                            ... and so on for all sub-properties ...},
-            ... and so on for all properties ... }
+        { property1_name : { property1_name : { value1 : [ list of CPUs having value1 ],
+                                                value2 : [ list of CPUs having value2 ],
+                                                ... and so on for all values ...
+                                              },
+                           },
+          ... and so on for all properties ...
+        },
 
-            * property1_name - the first property name (e.g., 'pkg_cstate_limit').
-            * subprop1_name - the first sub-property name (e.g., 'pkg_cstate_limit_lock').
-            * value1, value2, etc - all the different values for the property/sub-property
-                                    (e.g., 'True' or 'True')
+          * property1_name - the first property name (e.g., 'pkg_cstate_limit').
+          * value1, value2, etc - all the different values for the property.
 
-        In other words, the aggregate dictionary mapping of property/sub-property values to the list
+        In other words, the aggregate dictionary mapping of property values to the list
         of CPUs having these values.
         """
 
@@ -211,12 +195,6 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 if pname not in aggr_pinfo:
                     aggr_pinfo[pname] = {}
                 for key, val in pinfo[pname].items():
-                    if key != pname:
-                        if spnames is None:
-                            continue
-                        if spnames != "all" and key not in spnames:
-                            continue
-
                     # Make sure 'val' is "hashable" and can be used as a dictionary key.
                     if isinstance(val, list):
                         if not val:
@@ -258,8 +236,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
           * cpus - CPU numbers to read and print the property for (all CPUs by default).
           * skip_unsupported - if 'True', unsupported properties are skipped. Otherwise a "property
                                is not supported" message is printed.
-          * skip_ro - if 'False', read-only properties and sub-properties information will be
-                      printed, otherwise they will be skipped.
+          * skip_ro - if 'False', read-only properties information will be printed, otherwise they
+                      will be skipped.
           * action - an optional action word to include into the messages (nothing by default). For
                      example, if 'action' is "set to", the messages will be like "property <pname>
                      set to <value>". Applicable only to the "human" format.
@@ -268,13 +246,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         group = pnames == "all"
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-
-        # All sub-properties are assumed to be read-only. Therefore, when read-only properties
-        # should be skipped, set 'spnames' to 'None', which means "do not include sub-properties".
-        spnames = None if skip_ro else "all"
-
         pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
-        aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, spnames=spnames)
+        aggr_pinfo = self._build_aggr_pinfo(pinfo_iter)
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
@@ -460,13 +433,8 @@ class CStatesPrinter(_PropsPrinter):
 
         group = pnames == "all"
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-
-        # All sub-properties are assumed to be read-only. Therefore, when read-only properties
-        # should be skipped, set 'spnames' to 'None', which means "do not include sub-properties".
-        spnames = None if skip_ro else "all"
-
         pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
-        aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, spnames=spnames)
+        aggr_pinfo = self._build_aggr_pinfo(pinfo_iter)
 
         if skip_ro and "pkg_cstate_limit" in aggr_pinfo:
             # Special case: the package C-state limit option is read-write in general, but if it is

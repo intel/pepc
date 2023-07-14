@@ -108,12 +108,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase._get_cpu_prop_value")
 
-    def _get_cpu_subprop_value(self, pname, subpname, cpu):
-        """Returns sup-property 'subpname' of property 'pname' for CPU 'cpu'."""
-
-        subprop = self._props[pname]["subprops"][subpname]
-        return self._get_cpu_prop_value(subpname, cpu, prop=subprop)
-
     def _get_cpu_props(self, pnames, cpu):
         """Returns all properties in 'pnames' for CPU 'cpu'."""
 
@@ -129,16 +123,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 continue
             _LOG.debug("CPU %d: %s = %s", cpu, pname, pinfo[pname][pname])
 
-            # Get all the sub-properties.
-            for subpname in self._props[pname]["subprops"]:
-                if pinfo[pname][pname] is not None:
-                    # Get the 'subpname' sub-property.
-                    pinfo[pname][subpname] = self._get_cpu_subprop_value(pname, subpname, cpu)
-                else:
-                    # The property is not supported, so all sub-properties are not supported either.
-                    pinfo[pname][subpname] = None
-                _LOG.debug("CPU %d: %s = %s", cpu, subpname, pinfo[pname][subpname])
-
         return pinfo
 
     def get_props(self, pnames, cpus="all"):
@@ -152,18 +136,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         The yielded 'pinfo' dictionaries have the following format.
 
-        { property1_name: { property1_name : property1_value,
-                            subprop1_key : subprop1_value,
-                            subprop2_key : subprop2_value,
-                            ... etc for every key ...},
-          property2_name: { property2_name : property2_value,
-                            subprop1_key : subprop2_value,
-                            ... etc ...},
+        { property1_name : { property1_name : property1_value},
+          property2_name : { property2_name : property2_value},
           ... etc ... }
-
-        So each property has the (main) value, and possibly sub-properties, which provide additional
-        read-only information related to the property. For example, the 'governor' property comes
-        with the 'governors' sub-property. Most properties have no sub-properties.
 
         If a property is not supported, its value will be 'None'.
 
@@ -360,16 +335,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def _init_props_dict(self, props):
         """Initialize the 'props' dictionary."""
-
-        for pinfo in props.values():
-            # Every features should include the 'subprops' sub-dictionary.
-            if "subprops" not in pinfo:
-                pinfo["subprops"] = {}
-
-            # Propagate the "mechanisms" key to sub-propeties.
-            if "mechanisms" in pinfo:
-                for subpinfo in pinfo["subprops"].values():
-                    subpinfo["mechanisms"] = pinfo["mechanisms"]
 
         self._props = copy.deepcopy(props)
         self.props = props
