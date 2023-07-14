@@ -74,8 +74,8 @@ def _set_and_verify_data(params):
         yield "epb_hw", 15
 
     if is_prop_supported("governor", pinfo):
-        yield "governor", pinfo["governor"]["governors"][0]
-        yield "governor", pinfo["governor"]["governors"][-1]
+        yield "governor", pinfo["governors"]["governors"][0]
+        yield "governor", pinfo["governors"]["governors"][-1]
 
     freq_pairs = (("min_freq", "max_freq"), ("min_uncore_freq", "max_uncore_freq"))
     for pname_min, pname_max in freq_pairs:

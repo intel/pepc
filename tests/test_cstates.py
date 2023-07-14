@@ -55,8 +55,8 @@ def _set_and_verify_data(params):
             yield pname, "off"
 
     if is_prop_supported("governor", pinfo):
-        yield "governor", pinfo["governor"]["governors"][0]
-        yield "governor", pinfo["governor"]["governors"][-1]
+        yield "governor", pinfo["governors"]["governors"][0]
+        yield "governor", pinfo["governors"]["governors"][-1]
 
 def test_cstates_set_and_verify(params):
     """This test verifies that 'get_props()' returns same values set by 'set_props()'."""

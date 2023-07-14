@@ -213,14 +213,13 @@ PROPS = {
         "sname": "CPU",
         "writable" : True,
         "mechanisms" : ("sysfs", ),
-        "subprops" : {
-            "governors" : {
-                "name" : "Available CPU frequency governors",
-                "type" : "list[str]",
-                "sname": "global",
-                "writable" : False,
-            },
-        },
+    },
+    "governors" : {
+        "name" : "Available CPU frequency governors",
+        "type" : "list[str]",
+        "sname": "global",
+        "writable" : False,
+        "mechanisms" : ("sysfs", ),
     },
 }
 
@@ -1145,7 +1144,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._props["min_uncore_freq_limit"]["fname"] = "initial_min_freq_khz"
         self._props["max_uncore_freq_limit"]["fname"] = "initial_max_freq_khz"
         self._props["governor"]["fname"] = "scaling_governor"
-        self._props["governor"]["subprops"]["governors"]["fname"] = "scaling_available_governors"
+        self._props["governors"]["fname"] = "scaling_available_governors"
 
         # Some of the sysfs files may not exist, in which case they can be acquired using the
         # "getter" function. E.g., the "base_frequency" file is specific to the 'intel_pstate'

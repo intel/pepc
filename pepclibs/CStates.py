@@ -98,14 +98,13 @@ PROPS = {
         "sname": "global",
         "writable" : True,
         "mechanisms" : ("sysfs", ),
-        "subprops" : {
-            "governors" : {
-                "name" : "Available idle governors",
-                "type" : "list[str]",
-                "sname": "global",
-                "writable" : False,
-            },
-        },
+    },
+    "governors" : {
+        "name" : "Available idle governors",
+        "type" : "list[str]",
+        "sname": "global",
+        "writable" : False,
+        "mechanisms" : ("sysfs", ),
     },
 }
 
