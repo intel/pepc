@@ -127,7 +127,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         printed = 0
         for source, pinfos in sorted_pinfo.items():
             if pinfos:
-                self._print(f"Source: {source}")
+                self._print(f"Source: {self._pobj.mechanism_to_human(source)}")
                 printed += self._print_aggr_pinfo_group(pinfos, skip_unsupported=skip_unsupported,
                                                         action=action)
         return printed

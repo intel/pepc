@@ -41,6 +41,17 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     Base class for higher level classes implementing properties (e.g. 'CStates' or 'PStates').
     """
 
+    @staticmethod
+    def mechanism_to_human(mechanism):
+        """Translates and returns mechanism to human redable format."""
+
+        if mechanism == "sysfs":
+            return "Linux sysfs file-system"
+        if mechanism == "msr":
+            return "Model Specific Register (MSR)"
+
+        raise Error(f"unknown mechanisms '{mechanism}', known mechanisms are 'msr' and 'sysfs'")
+
     def _set_sname(self, pname):
         """
         Set scope "sname" for property 'pname'. This method is useful in cases where property scope
