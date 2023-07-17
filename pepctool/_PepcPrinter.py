@@ -332,9 +332,8 @@ class CStatesPrinter(_PropsPrinter):
             return aggr_pinfo
 
         locked_cpus = set()
-        # Get all locked CPUs.
-        for cpu, pinfo in self._pobj.get_props(("pkg_cstate_limit", ), cpus=cpus):
-            if pinfo["pkg_cstate_limit"]["pkg_cstate_limit_lock"] == "on":
+        for cpu, pinfo in self._pobj.get_props(("pkg_cstate_limit_lock", ), cpus=cpus):
+            if pinfo["pkg_cstate_limit_lock"]["pkg_cstate_limit_lock"] == "on":
                 locked_cpus.add(cpu)
 
         if not locked_cpus:

@@ -36,30 +36,29 @@ PROPS = {
         "sname": None,
         "writable" : True,
         "mechanisms" : ("msr", ),
-        "subprops" : {
-            "pkg_cstate_limit_lock" : {
-                "name" : "Package C-state limit lock",
-                "type" : "bool",
-                "sname": None,
-                "writable" : False,
-            },
-            "pkg_cstate_limits" : {
-                "name" : "Available package C-state limits",
-                "type" : "list[str]",
-                # Conceptually this is per-package, but in practice it is global on all current
-                # platforms.
-                "sname": "global",
-                "writable" : False,
-            },
-            "pkg_cstate_limit_aliases" : {
-                "name" : "Package C-state limit aliases",
-                "type" : "dict[str,str]",
-                # Conceptually this is per-package, but in practice it is global on all current
-                # platforms.
-                "sname": "global",
-                "writable" : False,
-            },
-        },
+    },
+    "pkg_cstate_limit_lock" : {
+        "name" : "Package C-state limit lock",
+        "type" : "bool",
+        "sname": None,
+        "writable" : False,
+        "mechanisms" : ("msr", ),
+    },
+    "pkg_cstate_limits" : {
+        "name" : "Available package C-state limits",
+        "type" : "list[str]",
+        # Conceptually this is per-package, but in practice it is global on all current platforms.
+        "sname": "global",
+        "writable" : False,
+        "mechanisms" : ("msr", ),
+    },
+    "pkg_cstate_limit_aliases" : {
+        "name" : "Package C-state limit aliases",
+        "type" : "dict[str,str]",
+        # Conceptually this is per-package, but in practice it is global on all current platforms.
+        "sname": "global",
+        "writable" : False,
+        "mechanisms" : ("msr", ),
     },
     "c1_demotion" : {
         "name" : "C1 demotion",
@@ -272,8 +271,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             self._props["c1_undemotion"]["sname"] = finfo["c1_undemotion"]["sname"]
 
             self._props["pkg_cstate_limit"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
-            subprops = self._props["pkg_cstate_limit"]["subprops"]
-            subprops["pkg_cstate_limit_lock"]["sname"] = finfo["lock"]["sname"]
+            self._props["pkg_cstate_limit_lock"]["sname"] = finfo["lock"]["sname"]
         elif pname in PowerCtl.FEATURES:
             finfo = self._get_powerctl().features
             self._props["c1e_autopromote"]["sname"] = finfo["c1e_autopromote"]["sname"]
