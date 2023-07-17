@@ -498,10 +498,29 @@ class CStatesPrinter(_PropsPrinter):
             spnames = {"disable", "latency", "residency", "desc"}
 
         group = csnames == "all"
-        csinfo_iter = self._pobj.get_cstates_info(csnames=csnames, cpus=cpus)
 
+        aggr_rcsinfo = {}
         try:
-            aggr_rcsinfo = self._build_aggr_pinfo(csinfo_iter, spnames=spnames)
+            # C-states info 'csinfo' has the following format:
+            #
+            # { "POLL" : {"disable" : True, "latency" : 0, "residency" : 0, ... },
+            #   "C1E"  : {"disable" : False, "latency" : 2, "residency" : 1, ... },
+            #   ... }
+            for cpu, csinfo in self._pobj.get_cstates_info(csnames=csnames, cpus=cpus):
+                for pname, values in csinfo.items():
+                    if pname not in aggr_rcsinfo:
+                        aggr_rcsinfo[pname] = {}
+
+                    for name, val in values.items():
+                        if name not in spnames or val is None:
+                            continue
+
+                        if name not in aggr_rcsinfo[pname]:
+                            aggr_rcsinfo[pname][name] = {val : [cpu]}
+                        elif val not in aggr_rcsinfo[pname][name]:
+                            aggr_rcsinfo[pname][name][val] = [cpu]
+                        else:
+                            aggr_rcsinfo[pname][name][val].append(cpu)
         except ErrorNotSupported as err:
             _LOG.warning(err)
             _LOG.info("C-states are not supported")
