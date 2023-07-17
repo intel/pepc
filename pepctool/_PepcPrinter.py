@@ -223,6 +223,20 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return aggr_pinfo
 
+    def _normalize_pnames(self, pnames, skip_ro=False):
+        """Validate property names in 'pnames' and return a normalized list."""
+
+        if pnames == "all":
+            pnames = list(self._pobj.props)
+        else:
+            for pname in pnames:
+                if pname not in self._pobj.props:
+                    raise Error(f"unknown property name '{pname}'")
+
+        if not skip_ro:
+            return pnames
+        return [pname for pname in pnames if self._pobj.props[pname]["writable"]]
+
     def print_props(self, pnames="all", cpus="all", skip_ro=False, skip_unsupported=True,
                     action=None):
         """
@@ -239,8 +253,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Returns the printed properties count.
         """
 
-        if pnames == "all":
-            pnames = list(self._pobj.props)
+        pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
         if cpus == "all":
             cpus = self._cpuinfo.get_cpus()
 
@@ -425,8 +438,7 @@ class CStatesPrinter(_PropsPrinter):
         Read and print properties. The arguments are the same as in '_PropsPrinter.print_props()'.
         """
 
-        if pnames == "all":
-            pnames = list(self._pobj.props)
+        pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
         if cpus == "all":
             cpus = self._cpuinfo.get_cpus()
 
