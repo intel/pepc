@@ -162,10 +162,12 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         return len(yaml_pinfo)
 
     @staticmethod
-    def _build_aggr_pinfo(pinfo_iter):
+    def _build_aggr_pinfo(pinfo_iter, skip_unsupported):
         """
         Build the aggregate properties dictionary. The arguments are as follows.
           * pinfo_iter - an iterator yielding '(cpu, pinfo)' tuples.
+          * skip_unsupported - if 'True', the resulting aggregate dictionary will not include
+                               unsupported properties.
 
         The aggregate properties dictionary has the following format.
 
@@ -187,6 +189,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         for cpu, pinfo in pinfo_iter:
             for pname, val in pinfo.items():
+                if skip_unsupported and val is None:
+                    continue
+
                 # Make sure 'val' is "hashable" and can be used as a dictionary key.
                 if isinstance(val, list):
                     if not val:
@@ -226,8 +231,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Read and print properties. The arguments are as follows.
           * pnames - names of the property to read and print (all properties by default).
           * cpus - CPU numbers to read and print the property for (all CPUs by default).
-          * skip_unsupported - if 'True', unsupported properties are skipped. Otherwise a "property
-                               is not supported" message is printed.
+          * skip_unsupported - if 'True', unsupported properties are skipped. Otherwise
+                               "not supported" is printed.
           * skip_ro - if 'False', read-only properties information will be printed, otherwise they
                       will be skipped.
           * action - an optional action word to include into the messages (nothing by default). For
@@ -239,7 +244,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         group = pnames == "all"
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
         pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
-        aggr_pinfo = self._build_aggr_pinfo(pinfo_iter)
+        aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, skip_unsupported)
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
@@ -426,7 +431,7 @@ class CStatesPrinter(_PropsPrinter):
         group = pnames == "all"
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
         pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
-        aggr_pinfo = self._build_aggr_pinfo(pinfo_iter)
+        aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, skip_unsupported)
 
         if skip_ro and "pkg_cstate_limit" in aggr_pinfo:
             # Special case: the package C-state limit option is read-write in general, but if it is
