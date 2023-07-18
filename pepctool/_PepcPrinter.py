@@ -254,8 +254,6 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        if cpus == "all":
-            cpus = self._cpuinfo.get_cpus()
 
         # All sub-properties are assumed to be read-only. Therefore, when read-only properties
         # should be skipped, set 'spnames' to 'None', which means "do not include sub-properties".
@@ -439,8 +437,6 @@ class CStatesPrinter(_PropsPrinter):
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        if cpus == "all":
-            cpus = self._cpuinfo.get_cpus()
 
         if skip_ro:
             # Package C-state limit lock status will be needed to check if 'pkg_cstate_limit'
