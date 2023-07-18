@@ -165,16 +165,8 @@ def cstates_save_command(args, pman):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         printed = 0
-        printed += csprint.print_cstates(csnames="all", cpus=cpus, skip_ro=True)
-
-        # We'll only include writable properties.
-        pnames = []
-        for pname, pinfo in csobj.props.items():
-            if pinfo["writable"]:
-                pnames.append(pname)
-
-        printed += csprint.print_props(pnames=pnames, cpus=cpus, skip_ro=True,
-                                       skip_unsupported=True)
+        printed += csprint.print_cstates(cpus=cpus, skip_ro=True)
+        printed += csprint.print_props(cpus=cpus, skip_ro=True, skip_unsupported=True)
 
         if not printed:
             _LOG.info("No writable C-states properties supported%s.", pman.hostmsg)

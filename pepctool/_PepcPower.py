@@ -129,15 +129,7 @@ def power_save_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        # We'll only include writable properties.
-        pnames = []
-        for pname, pinfo in pobj.props.items():
-            if not pinfo["writable"]:
-                continue
-
-            pnames.append(pname)
-
-        if not psprint.print_props(pnames=pnames, cpus=cpus, skip_ro=True, skip_unsupported=True):
+        if not psprint.print_props(cpus=cpus, skip_ro=True, skip_unsupported=True):
             _LOG.info("No writable power properties supported%s.", pman.hostmsg)
 
 def power_restore_command(args, pman):
