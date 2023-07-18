@@ -27,7 +27,7 @@ import copy
 import logging
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Human, ClassHelpers, LocalProcessManager
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported, Error
+from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
 
@@ -96,12 +96,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                     f"disable")
 
     def _validate_pname(self, pname):
-        """Raise an error if a property 'pname' is not supported."""
+        """Raise an exception if property 'pname' is unknown."""
 
         if pname not in self._props:
             pnames_str = ", ".join(set(self._props))
-            raise ErrorNotSupported(f"property '{pname}' is not supported{self._pman.hostmsg}, use "
-                                    f"one of the following: {pnames_str}")
+            raise Error(f"unknown property name '{pname}', known properties are: {pnames_str}")
 
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
