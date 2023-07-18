@@ -280,9 +280,6 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
                                                 skip_unsupported=skip_unsupported, action=action)
-        if action is not None:
-            raise Error("'action' must be 'None' when printing in YAML format")
-
         return self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
 
     def __init__(self, pobj, cpuinfo, fobj=None, fmt="human"):
@@ -468,9 +465,6 @@ class CStatesPrinter(_PropsPrinter):
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
                                                 skip_unsupported=skip_unsupported, action=action)
-        if action is not None:
-            raise Error("'action' must be 'None' when printing in YAML format")
-
         return self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
 
     def print_cstates(self, csnames="all", cpus="all", skip_ro=False, action=None):
@@ -501,8 +495,5 @@ class CStatesPrinter(_PropsPrinter):
 
         if self._fmt == "human":
             return self._print_aggr_rcsinfo_human(aggr_rcsinfo, action=action)
-
-        if action is not None:
-            raise Error("'action' must be 'None' when printing in YAML format")
 
         return self._print_aggr_rcsinfo_yaml(aggr_rcsinfo)
