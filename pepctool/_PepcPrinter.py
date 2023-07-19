@@ -322,9 +322,10 @@ class PowerPrinter(_PropsPrinter):
 class CStatesPrinter(_PropsPrinter):
     """This class provides API for printing C-states information."""
 
-    @staticmethod
-    def _adjust_aggr_pinfo_pcs_limit(aggr_pinfo):
+    def _adjust_aggr_pinfo_pcs_limit(self, aggr_pinfo, cpus):
         """
+        This function handles 'pkg_cstate_limit' edge case when read-only properties are skipped.
+
         The aggregate properties information dictionary 'aggr_pinfo' includes the 'pkg_cstate_limit'
         property. This property is read/write in case the corresponding MSR is unlocked, and it is
         R/O if the MSR is locked. The goal of this method is to remove all the "locked" CPUs from
@@ -336,22 +337,31 @@ class CStatesPrinter(_PropsPrinter):
             # The 'pkg_cstate_limit' property is not supported, nothing to do.
             return aggr_pinfo
 
-        lock_info = aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit_locked"]
-        if "on" not in lock_info:
+        locked_cpus = set()
+        # Get all locked CPUs.
+        for cpu, pinfo in self._pobj.get_props(("pkg_cstate_limit", ), cpus=cpus):
+            if pinfo["pkg_cstate_limit"]["pkg_cstate_limit_locked"] == "on":
+                locked_cpus.add(cpu)
+
+        if not locked_cpus:
             # There are no locked CPUs, nothing to do.
             return aggr_pinfo
 
-        locked_cpus = set(lock_info["on"])
         new_pcsl_info = {}
-        for key, cpus in pcsl_info.items():
+        for key, _cpus in pcsl_info.items():
             new_cpus = []
-            for cpu in cpus:
+            for cpu in _cpus:
                 if cpu not in locked_cpus:
                     new_cpus.append(cpu)
             if new_cpus:
                 new_pcsl_info[key] = new_cpus
 
-        aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"] = new_pcsl_info
+        if new_pcsl_info:
+            aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"] = new_pcsl_info
+        else:
+            # All CPUs are locked, "pkg_cstate_limit" is considered read-only, and is removed.
+            del aggr_pinfo["pkg_cstate_limit"]
+
         return aggr_pinfo
 
     def _print_val_msg(self, val, name=None, cpus=None, prefix=None, suffix=None, action=None):
@@ -452,12 +462,9 @@ class CStatesPrinter(_PropsPrinter):
         group = pnames == "all"
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
 
-        if skip_ro:
-            # Package C-state limit lock status will be needed to check if 'pkg_cstate_limit'
-            # property is effectively read-only. It will be deleted later after the check is done.
-            spnames = ("pkg_cstate_limit_locked",)
-        else:
-            spnames = "all"
+        # All sub-properties are assumed to be read-only. Therefore, when read-only properties
+        # should be skipped, set 'spnames' to 'None', which means "do not include sub-properties".
+        spnames = None if skip_ro else "all"
 
         pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
         aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, spnames=spnames)
@@ -466,16 +473,7 @@ class CStatesPrinter(_PropsPrinter):
             # Special case: the package C-state limit option is read-write in general, but if it is
             # locked, it is effectively read-only. Since 'skip_ro' is 'True', we need to adjust
             # 'aggr_pinfo'.
-            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo)
-
-            if "pkg_cstate_limit_locked" in aggr_pinfo["pkg_cstate_limit"]:
-                # The "pkg_cstate_limit_locked" sub-property is not needed any longer.
-                del aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit_locked"]
-
-            if not aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"]:
-                # Empty sub-dictionary indicates that package C-state limit is locked for all CPUs.
-                # So "pkg_cstate_limit" is considered as read-only, and should be removed.
-                del aggr_pinfo["pkg_cstate_limit"]
+            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo, cpus)
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
