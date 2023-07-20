@@ -63,7 +63,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             cpus = self._fmt_cpus(cpus)
             sfx = f" for {cpus}"
 
-        msg = f" - {prop['name']}: "
+        msg = f"{prop['name']}: "
 
         if prefix is not None:
             msg = prefix + msg
@@ -91,6 +91,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         props = self._pobj.props
 
         printed = 0
+        prefix = " - "
         for pname, pinfo in aggr_pinfo.items():
             for key, kinfo in pinfo.items():
                 for val, cpus in kinfo.items():
@@ -98,7 +99,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                     if key in props:
                         if skip_unsupported and val is None:
                             continue
-                        self._print_prop_human(props[pname], val, cpus=cpus, action=action)
+                        self._print_prop_human(props[pname], val, cpus=cpus, action=action,
+                                               prefix=prefix)
                     else:
                         if val is None:
                             # Just skip unsupported sub-property instead of printing something like
@@ -108,7 +110,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                         # Print sub-properties with a prefix and exclude CPU information, because it
                         # is the same as in the (parent) property, which has already been printed.
                         prop = props[pname]["subprops"][key]
-                        self._print_prop_human(prop, val, cpus=cpus, action=action)
+                        self._print_prop_human(prop, val, cpus=cpus, action=action, prefix=prefix)
                     printed += 1
 
         return printed
