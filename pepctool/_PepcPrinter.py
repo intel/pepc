@@ -114,7 +114,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         return printed
 
     def _print_aggr_pinfo_human(self, aggr_pinfo, skip_unsupported=False, action=None):
-        """Print properties grouped by source, e.g. MSR, sysfs, in the "human" format."""
+        """Print properties in the "human" format."""
 
         sorted_pinfo = {}
         for pname, info in aggr_pinfo.items():
