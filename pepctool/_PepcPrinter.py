@@ -85,13 +85,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         msg += f"{val}{sfx}"
         self._print(msg)
 
-    def _print_aggr_pinfo_group(self, aggr_pinfo, skip_unsupported=False, action=None):
-        """Print the aggregate properties information grouped by source."""
+    def _do_print_aggr_pinfo_human(self, aggr_pinfo, skip_unsupported=False, action=None,
+                                   prefix=None):
+        """A helper for '_print_aggr_pinfo_human()' implementing the printing part."""
 
         props = self._pobj.props
 
         printed = 0
-        prefix = " - "
         for pname, pinfo in aggr_pinfo.items():
             for key, kinfo in pinfo.items():
                 for val, cpus in kinfo.items():
@@ -127,11 +127,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                     sorted_pinfo[source][pname] = info
 
         printed = 0
+        prefix = " - "
         for source, pinfos in sorted_pinfo.items():
             if pinfos:
                 self._print(f"Source: {self._pobj.mechanism_to_human(source)}")
-                printed += self._print_aggr_pinfo_group(pinfos, skip_unsupported=skip_unsupported,
-                                                        action=action)
+                printed += self._do_print_aggr_pinfo_human(pinfos,
+                                                           skip_unsupported=skip_unsupported,
+                                                           action=action, prefix=prefix)
         return printed
 
     def _yaml_dump(self, info):
