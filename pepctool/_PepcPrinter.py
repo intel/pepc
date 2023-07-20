@@ -116,7 +116,12 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         return printed
 
     def _print_aggr_pinfo_human(self, aggr_pinfo, skip_unsupported=False, action=None):
-        """Print properties in the "human" format."""
+        """
+        Print properties in the "human" format. The arguments are as follows.
+          * aggr_pinfo - the aggregate properties information dictionary.
+          * skip_unsupported - same as in 'print_props()'.
+          * action - same as in 'print_props()'.
+        """
 
         sorted_pinfo = {}
         for pname, info in aggr_pinfo.items():
