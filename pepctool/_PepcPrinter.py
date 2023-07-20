@@ -123,17 +123,17 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
           * action - same as in 'print_props()'.
         """
 
-        sorted_pinfo = {}
+        grouped = {}
         for pname, info in aggr_pinfo.items():
             for source in self._pobj.props[pname]["mechanisms"]:
-                if source not in sorted_pinfo:
-                    sorted_pinfo[source] = {pname : info}
+                if source not in grouped:
+                    grouped[source] = {pname : info}
                 else:
-                    sorted_pinfo[source][pname] = info
+                    grouped[source][pname] = info
 
         printed = 0
         prefix = " - "
-        for source, pinfos in sorted_pinfo.items():
+        for source, pinfos in grouped.items():
             if pinfos:
                 self._print(f"Source: {self._pobj.mechanism_to_human(source)}")
                 printed += self._do_print_aggr_pinfo_human(pinfos,
