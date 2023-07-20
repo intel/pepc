@@ -22,12 +22,11 @@ _LOG = logging.getLogger()
 def pstates_info_command(args, pman):
     """Implements the 'pstates info' command."""
 
-    # Options to print.
-    pnames = []
-
-    for optname in PStates.PROPS:
-        if getattr(args, optname):
-            pnames.append(optname)
+    # The options to print.
+    if not hasattr(args, "oargs"):
+        pnames = "all"
+    else:
+        pnames = list(getattr(args, "oargs"))
 
     # The output format to use.
     fmt = "yaml" if args.yaml else "human"

@@ -178,9 +178,14 @@ def _add_info_subcommand_options(props, subpars):
     """
 
     for name, pinfo in props.items():
-        text = _get_info_subcommand_prop_help_text(pinfo)
+        kwargs = {}
+        kwargs["default"] = argparse.SUPPRESS
+        kwargs["nargs"] = 0
+        kwargs["help"] = _get_info_subcommand_prop_help_text(pinfo)
+        kwargs["action"] = ArgParse.OrderedArg
+
         option = f"--{name.replace('_', '-')}"
-        subpars.add_argument(option, action="store_true", help=text)
+        subpars.add_argument(option, **kwargs)
 
 def _get_config_subcommand_prop_help_text(pinfo):
     """

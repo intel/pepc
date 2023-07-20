@@ -22,12 +22,11 @@ _LOG = logging.getLogger()
 def cstates_info_command(args, pman):
     """Implements the 'cstates info' command."""
 
-    # Options to print.
-    pnames = []
-
-    for optname in CStates.PROPS:
-        if getattr(args, f"{optname}"):
-            pnames.append(optname)
+    # The options to print.
+    if not hasattr(args, "oargs"):
+        pnames = "all"
+    else:
+        pnames = list(getattr(args, "oargs"))
 
     # The output format to use.
     fmt = "yaml" if args.yaml else "human"
