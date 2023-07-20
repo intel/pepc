@@ -348,13 +348,7 @@ class CStatesPrinter(_PropsPrinter):
             if new_cpus:
                 new_pcsl_info[key] = new_cpus
 
-        if new_pcsl_info:
-            # Assign the new 'pkg_cstate_limit' property value and get rid of the
-            # 'pkg_cstate_limit_locked' property.
-            aggr_pinfo["pkg_cstate_limit"] = {"pkg_cstate_limit" : new_pcsl_info}
-        else:
-            del aggr_pinfo["pkg_cstate_limit"]
-
+        aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"] = new_pcsl_info
         return aggr_pinfo
 
     def _print_val_msg(self, val, name=None, cpus=None, prefix=None, suffix=None, action=None):
@@ -457,7 +451,7 @@ class CStatesPrinter(_PropsPrinter):
 
         if skip_ro:
             # Package C-state limit lock status will be needed to check if 'pkg_cstate_limit'
-            # property is effectively read-only.
+            # property is effectively read-only. It will be deleted later after the check is done.
             spnames = ("pkg_cstate_limit_locked",)
         else:
             spnames = "all"
@@ -470,6 +464,15 @@ class CStatesPrinter(_PropsPrinter):
             # locked, it is effectively read-only. Since 'skip_ro' is 'True', we need to adjust
             # 'aggr_pinfo'.
             aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo)
+
+            if "pkg_cstate_limit_locked" in aggr_pinfo["pkg_cstate_limit"]:
+                # The "pkg_cstate_limit_locked" sub-property is not needed any longer.
+                del aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit_locked"]
+
+            if not aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"]:
+                # Empty sub-dictionary indicates that package C-state limit is locked for all CPUs.
+                # So "pkg_cstate_limit" is considered as read-only, and should be removed.
+                del aggr_pinfo["pkg_cstate_limit"]
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
