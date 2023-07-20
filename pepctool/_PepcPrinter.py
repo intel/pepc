@@ -115,30 +115,35 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return printed
 
-    def _print_aggr_pinfo_human(self, aggr_pinfo, skip_unsupported=False, action=None):
+    def _print_aggr_pinfo_human(self, aggr_pinfo, group=False, skip_unsupported=False, action=None):
         """
         Print properties in the "human" format. The arguments are as follows.
           * aggr_pinfo - the aggregate properties information dictionary.
+          * group - whether to group properties by the source (sysfs, MSR, etc) when printing.
           * skip_unsupported - same as in 'print_props()'.
           * action - same as in 'print_props()'.
         """
 
         grouped = {}
-        for pname, info in aggr_pinfo.items():
-            for source in self._pobj.props[pname]["mechanisms"]:
-                if source not in grouped:
-                    grouped[source] = {pname : info}
-                else:
-                    grouped[source][pname] = info
+        if not group:
+            prefix = None
+            grouped = {None : aggr_pinfo}
+        else:
+            prefix = " - "
+            for pname, info in aggr_pinfo.items():
+                for source in self._pobj.props[pname]["mechanisms"]:
+                    if source not in grouped:
+                        grouped[source] = {pname : info}
+                    else:
+                        grouped[source][pname] = info
 
         printed = 0
-        prefix = " - "
         for source, pinfos in grouped.items():
-            if pinfos:
+            if source:
                 self._print(f"Source: {self._pobj.mechanism_to_human(source)}")
-                printed += self._do_print_aggr_pinfo_human(pinfos,
-                                                           skip_unsupported=skip_unsupported,
-                                                           action=action, prefix=prefix)
+            printed += self._do_print_aggr_pinfo_human(pinfos,
+                                                       skip_unsupported=skip_unsupported,
+                                                       action=action, prefix=prefix)
         return printed
 
     def _yaml_dump(self, info):
@@ -262,6 +267,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Returns the printed properties count.
         """
 
+        orig_pnames = pnames
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
 
         # All sub-properties are assumed to be read-only. Therefore, when read-only properties
@@ -272,8 +278,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, spnames=spnames)
 
         if self._fmt == "human":
-            return self._print_aggr_pinfo_human(aggr_pinfo, skip_unsupported=skip_unsupported,
-                                                action=action)
+            group = orig_pnames == "all"
+            return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
+                                                skip_unsupported=skip_unsupported, action=action)
         if action is not None:
             raise Error("'action' must be 'None' when printing in YAML format")
 
@@ -445,6 +452,7 @@ class CStatesPrinter(_PropsPrinter):
         Read and print properties. The arguments are the same as in '_PropsPrinter.print_props()'.
         """
 
+        group = pnames == "all"
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
 
         if skip_ro:
@@ -464,8 +472,8 @@ class CStatesPrinter(_PropsPrinter):
             aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo)
 
         if self._fmt == "human":
-            return self._print_aggr_pinfo_human(aggr_pinfo, skip_unsupported=skip_unsupported,
-                                                action=action)
+            return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
+                                                skip_unsupported=skip_unsupported, action=action)
         if action is not None:
             raise Error("'action' must be 'None' when printing in YAML format")
 
