@@ -405,19 +405,19 @@ class CStatesPrinter(_PropsPrinter):
                 self._print_val_msg(val, name=csname, cpus=cpus, action=action)
 
             for key, kinfo in csinfo.items():
-                for val, cpus in kinfo.items():
-                    if key == "latency":
-                        name = "expected latency"
-                        suffix = " us"
-                    elif key == "residency":
-                        name = "target residency"
-                        suffix = " us"
-                    elif key == "desc":
-                        name = "description"
-                        suffix = None
-                    else:
-                        continue
+                if key == "latency":
+                    name = "expected latency"
+                    suffix = " us"
+                elif key == "residency":
+                    name = "target residency"
+                    suffix = " us"
+                elif key == "desc":
+                    name = "description"
+                    suffix = None
+                else:
+                    continue
 
+                for val, cpus in kinfo.items():
                     self._print_val_msg(val, name=name, prefix=" - ", suffix=suffix)
 
         return printed
