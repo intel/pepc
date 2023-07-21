@@ -420,14 +420,7 @@ class CStatesPrinter(_PropsPrinter):
                     else:
                         continue
 
-                    # The first line starts with C-state name, align the second line nicely using
-                    # the prefix. The end result is expected to be like this:
-                    #
-                    # POLL: 'on' for CPUs 0-15
-                    # POLL: 'off' for CPUs 16-31
-                    #       - expected latency: '0' us
-                    prefix = " " * (len(csname) + 2) + "- "
-                    self._print_val_msg(val, name=name, prefix=prefix, suffix=suffix)
+                    self._print_val_msg(val, name=name, prefix=" - ", suffix=suffix)
             printed += 1
 
         return printed
