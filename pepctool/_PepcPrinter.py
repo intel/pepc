@@ -395,12 +395,14 @@ class CStatesPrinter(_PropsPrinter):
 
         printed = 0
         for csname, csinfo in aggr_rcsinfo.items():
-            for key, kinfo in csinfo.items():
-                if key == "disable":
-                    for val, cpus in kinfo.items():
-                        val = "off" if val else "on"
-                        self._print_val_msg(val, name=csname, cpus=cpus, action=action)
-                    break
+            if "disable" not in csinfo:
+                # Do not print the C-state if it's enabled/disabled status is unknown.
+                continue
+
+            printed += 1
+            for val, cpus in csinfo["disable"].items():
+                val = "off" if val else "on"
+                self._print_val_msg(val, name=csname, cpus=cpus, action=action)
 
             for key, kinfo in csinfo.items():
                 for val, cpus in kinfo.items():
@@ -417,7 +419,6 @@ class CStatesPrinter(_PropsPrinter):
                         continue
 
                     self._print_val_msg(val, name=name, prefix=" - ", suffix=suffix)
-            printed += 1
 
         return printed
 
