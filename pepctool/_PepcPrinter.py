@@ -324,8 +324,6 @@ class CStatesPrinter(_PropsPrinter):
 
     def _adjust_aggr_pinfo_pcs_limit(self, aggr_pinfo, cpus):
         """
-        This function handles 'pkg_cstate_limit' edge case when read-only properties are skipped.
-
         The aggregate properties information dictionary 'aggr_pinfo' includes the 'pkg_cstate_limit'
         property. This property is read/write in case the corresponding MSR is unlocked, and it is
         R/O if the MSR is locked. The goal of this method is to remove all the "locked" CPUs from
@@ -333,7 +331,7 @@ class CStatesPrinter(_PropsPrinter):
         """
 
         pcsl_info = aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"]
-        if pcsl_info.keys() == {None, }:
+        if set(pcsl_info) == { None }:
             # The 'pkg_cstate_limit' property is not supported, nothing to do.
             return aggr_pinfo
 
