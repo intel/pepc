@@ -390,8 +390,21 @@ class CStatesPrinter(_PropsPrinter):
         msg += f"{val}{sfx}"
         self._print(msg)
 
-    def _print_aggr_rcsinfo_human(self, aggr_rcsinfo, action=None):
-        """Print the aggregate C-states information in the "human" format."""
+    def _print_aggr_rcsinfo_human(self, aggr_rcsinfo, group=False, action=None):
+        """
+        Print the aggregate C-states information in "human" format. The arguments are as follows.
+          * aggr_rcsinfo - the aggregate C-states information dictionary.
+          * group - whether to group properties by the source (sysfs, MSR, etc) when printing.
+          * action - same as in 'print_props()'.
+        """
+
+        if not group:
+            prefix = None
+            sub_prefix = " - "
+        else:
+            prefix = " - "
+            sub_prefix = "    - "
+            self._print(f"Source: {self._pobj.mechanism_to_human('sysfs')}")
 
         printed = 0
         for csname, csinfo in aggr_rcsinfo.items():
@@ -402,7 +415,7 @@ class CStatesPrinter(_PropsPrinter):
             printed += 1
             for val, cpus in csinfo["disable"].items():
                 val = "off" if val else "on"
-                self._print_val_msg(val, name=csname, cpus=cpus, action=action)
+                self._print_val_msg(val, name=csname, cpus=cpus, action=action, prefix=prefix)
 
             for key, kinfo in csinfo.items():
                 if key == "latency":
@@ -418,7 +431,7 @@ class CStatesPrinter(_PropsPrinter):
                     continue
 
                 for val, cpus in kinfo.items():
-                    self._print_val_msg(val, name=name, prefix=" - ", suffix=suffix)
+                    self._print_val_msg(val, name=name, prefix=sub_prefix, suffix=suffix)
 
         return printed
 
@@ -485,6 +498,7 @@ class CStatesPrinter(_PropsPrinter):
         else:
             spnames = {"disable", "latency", "residency", "desc"}
 
+        group = csnames == "all"
         csinfo_iter = self._pobj.get_cstates_info(csnames=csnames, cpus=cpus)
 
         try:
@@ -495,6 +509,6 @@ class CStatesPrinter(_PropsPrinter):
             return 0
 
         if self._fmt == "human":
-            return self._print_aggr_rcsinfo_human(aggr_rcsinfo, action=action)
+            return self._print_aggr_rcsinfo_human(aggr_rcsinfo, group=group, action=action)
 
         return self._print_aggr_rcsinfo_yaml(aggr_rcsinfo)
