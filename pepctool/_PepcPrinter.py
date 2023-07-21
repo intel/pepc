@@ -337,9 +337,12 @@ class CStatesPrinter(_PropsPrinter):
             # The 'pkg_cstate_limit' property is not supported, nothing to do.
             return aggr_pinfo
 
-        locked_cpus = set(lock_info.get("on", []))
-        new_pcsl_info = {}
+        if "on" not in lock_info:
+            # There are no locked CPUs, nothing to do.
+            return aggr_pinfo
 
+        locked_cpus = set(lock_info["on"])
+        new_pcsl_info = {}
         for key, cpus in pcsl_info.items():
             new_cpus = []
             for cpu in cpus:
