@@ -347,6 +347,11 @@ class CStatesPrinter(_PropsPrinter):
             # There are no locked CPUs, nothing to do.
             return aggr_pinfo
 
+        if len(locked_cpus) == len(cpus):
+            # All CPUs are locked, "pkg_cstate_limit" is considered read-only, and is removed.
+            del aggr_pinfo["pkg_cstate_limit"]
+            return aggr_pinfo
+
         new_pcsl_info = {}
         for key, _cpus in pcsl_info.items():
             new_cpus = []
@@ -356,12 +361,7 @@ class CStatesPrinter(_PropsPrinter):
             if new_cpus:
                 new_pcsl_info[key] = new_cpus
 
-        if new_pcsl_info:
-            aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"] = new_pcsl_info
-        else:
-            # All CPUs are locked, "pkg_cstate_limit" is considered read-only, and is removed.
-            del aggr_pinfo["pkg_cstate_limit"]
-
+        aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"] = new_pcsl_info
         return aggr_pinfo
 
     def _print_val_msg(self, val, name=None, cpus=None, prefix=None, suffix=None, action=None):
