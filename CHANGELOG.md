@@ -8,6 +8,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Group propeties by source only when printing all properties. This
+   partially reverts grouping introduced in version 1.4.28.
 
 ## [1.4.28] - 2023-07-14
 ### Changed
