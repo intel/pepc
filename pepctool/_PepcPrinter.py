@@ -331,12 +331,12 @@ class CStatesPrinter(_PropsPrinter):
         the 'pkg_cstate_limit' key of 'aggr_pinfo'.
         """
 
-        pcsl_info = aggr_pinfo["pkg_cstate_limit"].get("pkg_cstate_limit", None)
-        lock_info = aggr_pinfo["pkg_cstate_limit"].get("pkg_cstate_limit_locked", None)
-        if not pcsl_info or not lock_info:
+        pcsl_info = aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"]
+        if pcsl_info.keys() == {None, }:
             # The 'pkg_cstate_limit' property is not supported, nothing to do.
             return aggr_pinfo
 
+        lock_info = aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit_locked"]
         if "on" not in lock_info:
             # There are no locked CPUs, nothing to do.
             return aggr_pinfo
