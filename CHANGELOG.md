@@ -13,6 +13,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Change '--cstates' option output format, the properties are now
    grouped by their source.
  - Move "governors" from '--governor' option, to it own option '--governors'.
+ - Move package C-state limit lock, limits and alises from option
+   '--pkg-cstate-limit', to their own options: '--pkg-cstate-limit-lock',
+   '--pkg-cstate-limits' and '--pkg-cstate-limit-aliases'.
 
 ## [1.4.28] - 2023-07-14
 ### Changed
