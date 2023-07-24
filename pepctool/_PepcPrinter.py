@@ -197,7 +197,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             ... and so on for all properties ... }
 
             * property1_name - the first property name (e.g., 'pkg_cstate_limit').
-            * subprop1_name - the first sub-property name (e.g., 'pkg_cstate_limit_locked').
+            * subprop1_name - the first sub-property name (e.g., 'pkg_cstate_limit_lock').
             * value1, value2, etc - all the different values for the property/sub-property
                                     (e.g., 'True' or 'True')
 
@@ -325,7 +325,7 @@ class CStatesPrinter(_PropsPrinter):
         """
         The aggregate properties information dictionary 'aggr_pinfo' includes the 'pkg_cstate_limit'
         property. This property is read/write in case the corresponding MSR is unlocked, and it is
-        R/O if the MSR is locked. The goal of this method is to remove all the "locked" CPUs from
+        R/O if the MSR is locked. The goal of this method is to remove all the "lock" CPUs from
         the 'pkg_cstate_limit' key of 'aggr_pinfo'.
         """
 
@@ -337,7 +337,7 @@ class CStatesPrinter(_PropsPrinter):
         locked_cpus = set()
         # Get all locked CPUs.
         for cpu, pinfo in self._pobj.get_props(("pkg_cstate_limit", ), cpus=cpus):
-            if pinfo["pkg_cstate_limit"]["pkg_cstate_limit_locked"] == "on":
+            if pinfo["pkg_cstate_limit"]["pkg_cstate_limit_lock"] == "on":
                 locked_cpus.add(cpu)
 
         if not locked_cpus:

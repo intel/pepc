@@ -52,10 +52,10 @@ def _get_msr_feature_test_params(msr, params, include_ro=True, include_rw=True,
         if not msr.is_feature_supported(name) and supported_only:
             continue
 
-        # The 'pkg_cstate_limit' has a dependency to 'locked' feature. If 'locked' feature is
+        # The 'pkg_cstate_limit' has a dependency to 'lock' feature. If 'lock' feature is
         # enabled, then 'pkg_cstate_limit' not included.
         if name == "pkg_cstate_limit" and \
-            (msr.is_feature_supported("locked") and msr.is_cpu_feature_enabled("locked", 0)):
+            (msr.is_feature_supported("lock") and msr.is_cpu_feature_enabled("lock", 0)):
             continue
 
         if not msr_common.is_safe_to_set(name, params["hostname"]):

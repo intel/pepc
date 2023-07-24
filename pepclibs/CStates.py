@@ -37,7 +37,7 @@ PROPS = {
         "writable" : True,
         "mechanisms" : ("msr", ),
         "subprops" : {
-            "pkg_cstate_limit_locked" : {
+            "pkg_cstate_limit_lock" : {
                 "name" : "Package C-state limit lock",
                 "type" : "bool",
                 "sname": "package",
@@ -226,8 +226,8 @@ class CStates(_PCStatesBase.PCStatesBase):
         if pname in {"pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"}:
             return self._get_pkg_cstate_limit(pname, cpu)
 
-        if pname == "pkg_cstate_limit_locked":
-            return self._read_prop_value_from_msr("locked", cpu)
+        if pname == "pkg_cstate_limit_lock":
+            return self._read_prop_value_from_msr("lock", cpu)
 
         if prop["mechanisms"][0] == "msr":
             return self._read_prop_value_from_msr(pname, cpu)
@@ -272,7 +272,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             subprops = self._props["pkg_cstate_limit"]["subprops"]
             subprops["pkg_cstate_limits"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
             subprops["pkg_cstate_limit_aliases"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
-            subprops["pkg_cstate_limit_locked"]["sname"] = finfo["locked"]["sname"]
+            subprops["pkg_cstate_limit_lock"]["sname"] = finfo["lock"]["sname"]
         elif pname in PowerCtl.FEATURES:
             finfo = self._get_powerctl().features
             self._props["c1e_autopromote"]["sname"] = finfo["c1e_autopromote"]["sname"]
