@@ -267,7 +267,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Returns the printed properties count.
         """
 
-        orig_pnames = pnames
+        group = pnames == "all"
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
 
         # All sub-properties are assumed to be read-only. Therefore, when read-only properties
@@ -278,7 +278,6 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, spnames=spnames)
 
         if self._fmt == "human":
-            group = orig_pnames == "all"
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
                                                 skip_unsupported=skip_unsupported, action=action)
         if action is not None:
