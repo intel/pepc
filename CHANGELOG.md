@@ -12,6 +12,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
    partially reverts grouping introduced in version 1.4.28.
  - Change '--cstates' option output format, the properties are now
    grouped by their source.
+ - Move "governors" from '--governor' option, to it own option '--governors'.
 
 ## [1.4.28] - 2023-07-14
 ### Changed
