@@ -191,26 +191,26 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         aggr_pinfo = {}
 
         for cpu, pinfo in pinfo_iter:
-            for pname in pinfo:
+            for pname, val in pinfo.items():
                 if pname not in aggr_pinfo:
                     aggr_pinfo[pname] = {}
-                for key, val in pinfo[pname].items():
-                    # Make sure 'val' is "hashable" and can be used as a dictionary key.
-                    if isinstance(val, list):
-                        if not val:
-                            continue
-                        val = ", ".join(val)
-                    elif isinstance(val, dict):
-                        if not val:
-                            continue
-                        val = ", ".join(f"{k}={v}" for k, v in val.items())
 
-                    if key not in aggr_pinfo[pname]:
-                        aggr_pinfo[pname][key] = {}
-                    if val not in aggr_pinfo[pname][key]:
-                        aggr_pinfo[pname][key][val] = []
+                # Make sure 'val' is "hashable" and can be used as a dictionary key.
+                if isinstance(val, list):
+                    if not val:
+                        continue
+                    val = ", ".join(val)
+                elif isinstance(val, dict):
+                    if not val:
+                        continue
+                    val = ", ".join(f"{k}={v}" for k, v in val.items())
 
-                    aggr_pinfo[pname][key][val].append(cpu)
+                if pname not in aggr_pinfo[pname]:
+                    aggr_pinfo[pname][pname] = {}
+                if val not in aggr_pinfo[pname][pname]:
+                    aggr_pinfo[pname][pname][val] = []
+
+                aggr_pinfo[pname][pname][val].append(cpu)
 
         return aggr_pinfo
 
@@ -298,14 +298,14 @@ class CStatesPrinter(_PropsPrinter):
         the 'pkg_cstate_limit' key of 'aggr_pinfo'.
         """
 
-        pcsl_info = aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"]
+        pcsl_info = aggr_pinfo["pkg_cstate_limit"]
         if set(pcsl_info) == { None }:
             # The 'pkg_cstate_limit' property is not supported, nothing to do.
             return aggr_pinfo
 
         locked_cpus = set()
         for cpu, pinfo in self._pobj.get_props(("pkg_cstate_limit_lock", ), cpus=cpus):
-            if pinfo["pkg_cstate_limit_lock"]["pkg_cstate_limit_lock"] == "on":
+            if pinfo["pkg_cstate_limit_lock"] == "on":
                 locked_cpus.add(cpu)
 
         if not locked_cpus:
@@ -326,7 +326,7 @@ class CStatesPrinter(_PropsPrinter):
             if new_cpus:
                 new_pcsl_info[key] = new_cpus
 
-        aggr_pinfo["pkg_cstate_limit"]["pkg_cstate_limit"] = new_pcsl_info
+        aggr_pinfo["pkg_cstate_limit"] = new_pcsl_info
         return aggr_pinfo
 
     def _print_val_msg(self, val, name=None, cpus=None, prefix=None, suffix=None, action=None):

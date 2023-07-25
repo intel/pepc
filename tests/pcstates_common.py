@@ -20,7 +20,7 @@ def is_prop_supported(pname, pinfo):
                 'CStates.get_props()'. Check 'get_props()' docstring for more information.
     """
 
-    return pinfo[pname].get(pname) is not None
+    return pinfo[pname] is not None
 
 def get_siblings(cpuinfo, cpu=0):
     """
@@ -60,9 +60,9 @@ def set_and_verify(pcobj, pname, value, cpus):
     pcobj.set_prop(pname, value, cpus)
 
     for cpu, pinfo in pcobj.get_props((pname, ), cpus):
-        if pinfo[pname][pname] != value:
+        if pinfo[pname] != value:
             assert False, f"Failed to set property '{pname}' for CPU {cpu}\nSet to '{value}' and " \
-                          f"received '{pinfo[pname][pname]}'."
+                          f"received '{pinfo[pname]}'."
 
 def _verify_value_type(pname, ptype, value):
     """
@@ -102,4 +102,4 @@ def verify_props_value_type(props, pinfo):
         if not is_prop_supported(pname, pinfo):
             continue
 
-        _verify_value_type(pname, props[pname]["type"], pinfo[pname][pname])
+        _verify_value_type(pname, props[pname]["type"], pinfo[pname])

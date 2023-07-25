@@ -91,7 +91,7 @@ def _get_config_options(params):
             "--min-freq min",
             "--max-freq min"]
         if is_prop_supported("turbo", params["pinfo"]) and \
-            params["pinfo"]["turbo"]["turbo"] == "on":
+            params["pinfo"]["turbo"] == "on":
             good_options += [
                 "--max-freq max",
                 "--min-freq min --max-freq max",
@@ -272,7 +272,7 @@ def test_pstates_save_restore(params):
             # means that the MSR value can be different from the sysfs value, and in this case MSR
             # will not update the sysfs value. Thus, we test that the sysfs property is set first,
             # and then the MSR property. Otherwise the sysfs property will overwrite the MSR value.
-            val = params["pinfo"]["min_oper_freq"]["min_oper_freq"]
+            val = params["pinfo"]["min_oper_freq"]
         elif state[pname][0]["value"] == "on":
             val = "off"
         elif state[pname][0]["value"] == "off":

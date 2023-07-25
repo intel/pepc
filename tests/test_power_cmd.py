@@ -103,7 +103,7 @@ def test_power_config(params):
         for pat in cfg_pnames_bool:
             prop = f"ppl{index}{pat}"
             valname = prop.replace("-", "_")
-            val = params["pinfo"][valname][valname]
+            val = params["pinfo"][valname]
             if val == 'on':
                 newval = 'off'
             else:
@@ -116,7 +116,7 @@ def test_power_config(params):
             prop = f"ppl{index}{pat}"
             valname = prop.replace("-", "_")
             if is_prop_supported(valname, params["pinfo"]):
-                val = params["pinfo"][valname][valname]
+                val = params["pinfo"][valname]
                 newval = val - 1
                 good_options += [f"--{prop} {newval}", f"--{prop} {val}"]
 

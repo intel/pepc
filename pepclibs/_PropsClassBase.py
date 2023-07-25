@@ -114,14 +114,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         pinfo = {}
 
         for pname in pnames:
-            pinfo[pname] = {}
-
             # Get the 'pname' property.
-            pinfo[pname][pname] = self._get_cpu_prop_value(pname, cpu)
-            if pinfo[pname][pname] is None:
+            pinfo[pname] = self._get_cpu_prop_value(pname, cpu)
+            if pinfo[pname] is None:
                 _LOG.debug("CPU %d: %s is not supported", cpu, pname)
                 continue
-            _LOG.debug("CPU %d: %s = %s", cpu, pname, pinfo[pname][pname])
+            _LOG.debug("CPU %d: %s = %s", cpu, pname, pinfo[pname])
 
         return pinfo
 
@@ -136,8 +134,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         The yielded 'pinfo' dictionaries have the following format.
 
-        { property1_name : { property1_name : property1_value},
-          property2_name : { property2_name : property2_value},
+        { property1_name : property1_value,
+          property2_name : property2_value,
           ... etc ... }
 
         If a property is not supported, its value will be 'None'.

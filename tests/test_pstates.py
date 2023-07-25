@@ -74,14 +74,14 @@ def _set_and_verify_data(params):
         yield "epb_hw", 15
 
     if is_prop_supported("governor", pinfo):
-        yield "governor", pinfo["governors"]["governors"][0]
-        yield "governor", pinfo["governors"]["governors"][-1]
+        yield "governor", pinfo["governors"][0]
+        yield "governor", pinfo["governors"][-1]
 
     freq_pairs = (("min_freq", "max_freq"), ("min_uncore_freq", "max_uncore_freq"))
     for pname_min, pname_max in freq_pairs:
         if is_prop_supported(pname_min, pinfo):
-            min_limit = pinfo[f"{pname_min}_limit"][f"{pname_min}_limit"]
-            max_limit = pinfo[f"{pname_max}_limit"][f"{pname_max}_limit"]
+            min_limit = pinfo[f"{pname_min}_limit"]
+            max_limit = pinfo[f"{pname_max}_limit"]
 
             # Right now we do not know how the systems min. and max frequencies are configured, so
             # we have to be careful to avoid failures related to setting min. frequency higher than
@@ -115,8 +115,8 @@ def _set_freq_pairs(params, min_pname, max_pname):
     sname = params["psobj"].get_sname(min_pname)
     siblings = params["siblings"][sname]
 
-    min_limit = params["pinfo"][f"{min_pname}_limit"][f"{min_pname}_limit"]
-    max_limit = params["pinfo"][f"{max_pname}_limit"][f"{max_pname}_limit"]
+    min_limit = params["pinfo"][f"{min_pname}_limit"]
+    max_limit = params["pinfo"][f"{max_pname}_limit"]
 
     bclk_MHz = BClock.get_bclk(params["pman"], cpu=0)
     bclk_Hz = int(bclk_MHz * 1000000)
