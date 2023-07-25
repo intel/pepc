@@ -417,7 +417,7 @@ This option has **global** scope.
 governor
 ========
 
-governor - CPU frequency governor
+governor - Idle governor
 
 Synopsis
 --------
@@ -428,8 +428,7 @@ Synopsis
 Description
 -----------
 
-CPU frequency governor decides which P-state to select on a CPU depending on CPU business and other
-factors.
+Idle governor decides which C-state to request on an idle CPU.
 
 Source
 ------
