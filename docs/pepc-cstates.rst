@@ -105,6 +105,15 @@ Get information about C-states on specified CPUs. By default, prints all informa
 **--pkg-cstate-limit**
    Get package C-state limit (details in 'pkg_cstate_limit_').
 
+**--pkg-cstate-limits**
+   Get available package C-state limits (details in 'pkg_cstate_limits_').
+
+**--pkg-cstate-limit-lock**
+   Get package C-state limit lock (details in 'pkg_cstate_limit_lock_').
+
+**--pkg-cstate-limit-aliases**
+   Get package C-state limit aliases (details in 'pkg_cstate_limit_aliases_').
+
 **--c1-demotion**
    Get current setting for C1 demotion (details in 'c1_demotion_').
 
@@ -251,8 +260,8 @@ Description
 -----------
 
 The deepest package C-state the platform is allowed to enter. MSR_PKG_CST_CONFIG_CONTROL (**0xE2**)
-register can be locked by the BIOS, in which case the package C-state limit can only be read, but
-cannot be modified.
+register can be locked, in which case the package C-state limit can only be read, but cannot be
+modified, please refer to property **pkg_cstate_limit_lock**.
 
 Source
 ------
@@ -268,8 +277,92 @@ Refer to 'PCStateConfigCtl.py' for all platforms and bits.
 Scope
 -----
 
-This option has **core** scope. With the following exceptions, Silvermonts and Airmonts have
+This option has **core** scope. With the following exceptions: Silvermonts and Airmonts have
 **module** scope, Xeon Phis have **package** scope.
+
+----------------------------------------------------------------------------------------------------
+
+pkg_cstate_limits
+=================
+
+pkg_cstate_limits - Available package C-state limits
+
+Synopsis
+--------
+
+pepc cstates *info* [**--pkg-cstate-limits**]
+
+Description
+-----------
+
+All available package C-state limits.
+
+Source
+------
+
+Harcoded in 'PCStateConfigCtl.py' for platforms that we have verified.
+
+Scope
+-----
+
+This option has **global** scope.
+
+----------------------------------------------------------------------------------------------------
+
+pkg_cstate_limit_lock
+=====================
+
+pkg_cstate_limit_lock - Package C-state limit lock
+
+Synopsis
+--------
+
+pepc cstates *info* [**--pkg-cstate-limit-lock**]
+
+Description
+-----------
+
+Whether the package C-state limit can be modified. When 'True', property **'pkg_cstate_limit'** is
+read-only.
+
+Source
+------
+
+MSR_PKG_CST_CONFIG_CONTROL (**0xE2**)
+Refer to 'PCStateConfigCtl.py' for all platforms and bits.
+
+Scope
+-----
+
+This option has **package** scope.
+
+----------------------------------------------------------------------------------------------------
+
+
+pkg_cstate_limit_aliases
+========================
+
+pkg_cstate_limit_aliases - Package C-state limit aliases
+
+Synopsis
+--------
+
+pepc cstates *info* [**--pkg-cstate-limit-aliases**]
+
+Description
+-----------
+
+Package C-state limit aliases, for example on Ice Lakes 'PC6' is an alias for 'PC6R'.
+
+Source
+------
+
+Harcoded in 'PCStateConfigCtl.py' for platforms that we have verified.
+
+Scope
+-----
+
+This option has **global** scope.
 
 ----------------------------------------------------------------------------------------------------
 
