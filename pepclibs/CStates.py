@@ -40,19 +40,23 @@ PROPS = {
             "pkg_cstate_limit_lock" : {
                 "name" : "Package C-state limit lock",
                 "type" : "bool",
-                "sname": "package",
+                "sname": None,
                 "writable" : False,
             },
             "pkg_cstate_limits" : {
                 "name" : "Available package C-state limits",
                 "type" : "list[str]",
-                "sname": "package",
+                # Conceptually this is per-package, but in practice it is global on all current
+                # platforms.
+                "sname": "global",
                 "writable" : False,
             },
             "pkg_cstate_limit_aliases" : {
                 "name" : "Package C-state limit aliases",
                 "type" : "dict[str,str]",
-                "sname": "package",
+                # Conceptually this is per-package, but in practice it is global on all current
+                # platforms.
+                "sname": "global",
                 "writable" : False,
             },
         },
@@ -269,8 +273,6 @@ class CStates(_PCStatesBase.PCStatesBase):
 
             self._props["pkg_cstate_limit"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
             subprops = self._props["pkg_cstate_limit"]["subprops"]
-            subprops["pkg_cstate_limits"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
-            subprops["pkg_cstate_limit_aliases"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
             subprops["pkg_cstate_limit_lock"]["sname"] = finfo["lock"]["sname"]
         elif pname in PowerCtl.FEATURES:
             finfo = self._get_powerctl().features
