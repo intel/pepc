@@ -166,6 +166,9 @@ Get P-states information for specified CPUs. By default, prints all information 
 **--governor**
    Get CPU frequency governor (details in 'governor_').
 
+**--governors**
+   Get list of available CPU frequency governors (details in 'governors_').
+
 Subcommand *'config'*
 =====================
 

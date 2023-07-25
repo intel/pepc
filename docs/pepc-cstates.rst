@@ -71,7 +71,7 @@ Get information about C-states on specified CPUs. By default, prints all informa
 **--cores** *CORES*
    List of cores to get information about. The list can include individual core numbers and
    core number ranges. For example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to
-   1. Use the special keyword 'all' to specify all cores. This option has to be accompanied by
+   12. Use the special keyword 'all' to specify all cores. This option has to be accompanied by
    '--package' option, because core numbers are per-package
 
 **--packages** *PACKAGES*
@@ -123,6 +123,8 @@ Get information about C-states on specified CPUs. By default, prints all informa
 **--governor**
    Get idle governor (details in 'governor_').
 
+**--governors**
+   Get list of available idle governors (details in 'governors_').
 
 Subcommand *'config'*
 =====================
@@ -138,7 +140,7 @@ currently configured value(s) will be printed.
 **--cores** *CORES*
    List of cores to configure C-States on. The list can include individual core numbers and
    core number ranges. For example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to
-   12. Use the special keyword 'all' to specify all cores. This option has to be accompanied by
+   1.  Use the special keyword 'all' to specify all cores. This option has to be accompanied by
    '--package' option, because core numbers are per-package
 
 **--packages** *PACKAGES*
@@ -439,3 +441,31 @@ Scope
 -----
 
 This option has **global** scope.
+
+----------------------------------------------------------------------------------------------------
+
+governors
+=========
+
+governors - Available idle governors
+
+Synopsis
+--------
+
+pepc cstates *info* [**--governors**]
+
+Description
+-----------
+
+Idle governors decide which C-state to request on an idle CPU. Different governors implement
+different selection policy.
+
+Source
+------
+
+"/sys/devices/system/cpu/cpuidle/available_governors"
+
+Scope
+-----
+
+This property has **global** scope.
