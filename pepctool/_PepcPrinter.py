@@ -479,15 +479,15 @@ class CStatesPrinter(_PropsPrinter):
                                                 skip_unsupported=skip_unsupported, action=action)
         return self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
 
-    def _build_aggr_rcsinfo(self, csnames, cpus, spnames="all"):
+    def _build_aggr_rcsinfo(self, csnames, cpus, spnames):
         """
-        Build the aggregate requestable C-states information dictionary. The arguments are as follows.
-          * csnames - C-state names to print information about (all C-states by default).
-          * cpus - CPU numbers to read and print C-state information for (all CPUs by default).
-          * spnames - names of sub-properties of the 'pname' property that should also be printed.
-                      Value "all" will include all sub-properties and value 'None' won't include
-                      any.
-        This method is similar to '_build_aggr_pinfo()' and returns a dictionary of a similar structure.
+        Build the aggregate C-states information dictionary. The arguments are as follows.
+          * csnames - list of C-state names to print information about.
+          * cpus - CPU numbers to read and print C-state information for.
+          * spnames - list of sub-properties of the 'pname' property that should also be printed.
+
+        This method is similar to '_build_aggr_pinfo()' and returns a dictionary of a similar
+        structure.
         """
 
         aggr_rcsinfo = {}
@@ -534,7 +534,7 @@ class CStatesPrinter(_PropsPrinter):
         group = csnames == "all"
 
         try:
-            aggr_rcsinfo = self._build_aggr_rcsinfo(csnames, cpus, spnames=spnames)
+            aggr_rcsinfo = self._build_aggr_rcsinfo(csnames, cpus, spnames)
         except ErrorNotSupported as err:
             _LOG.warning(err)
             _LOG.info("C-states are not supported")
