@@ -141,7 +141,7 @@ def _add_cpu_subset_arguments(subpars, fmt):
 def _get_mechanism_str(pinfo):
     """"Format and return the mechanism of accessing a property."""
 
-    _map = {"sysfs": "syfs", "msr" : "MSR"}
+    _map = {"sysfs": "sysfs", "msr" : "MSR"}
 
     mech = pinfo.get("mechanisms", None)
     if not mech:
