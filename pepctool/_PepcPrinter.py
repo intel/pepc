@@ -236,42 +236,6 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return aggr_pinfo
 
-    def _build_aggr_rcsinfo(self, csnames, cpus, spnames="all"):
-        """
-        Build the aggregate requestable C-states information dictionary. The arguments are as follows.
-          * csnames - C-state names to print information about (all C-states by default).
-          * cpus - CPU numbers to read and print C-state information for (all CPUs by default).
-          * spnames - names of sub-properties of the 'pname' property that should also be printed.
-                      Value "all" will include all sub-properties and value 'None' won't include
-                      any.
-
-        This method is similar to '_build_aggr_pinfo()' and returns a dictionary of a similar structure.
-        """
-
-        aggr_rcsinfo = {}
-        # C-states info 'csinfo' has the following format:
-        #
-        # { "POLL" : {"disable" : True, "latency" : 0, "residency" : 0, ... },
-        #   "C1E"  : {"disable" : False, "latency" : 2, "residency" : 1, ... },
-        #   ... }
-        for cpu, csinfo in self._pobj.get_cstates_info(csnames=csnames, cpus=cpus):
-            for pname, values in csinfo.items():
-                if pname not in aggr_rcsinfo:
-                    aggr_rcsinfo[pname] = {}
-
-                for name, val in values.items():
-                    if name not in spnames or val is None:
-                        continue
-
-                    if name not in aggr_rcsinfo[pname]:
-                        aggr_rcsinfo[pname][name] = {val : [cpu]}
-                    elif val not in aggr_rcsinfo[pname][name]:
-                        aggr_rcsinfo[pname][name][val] = [cpu]
-                    else:
-                        aggr_rcsinfo[pname][name][val].append(cpu)
-
-        return aggr_rcsinfo
-
     def _normalize_pnames(self, pnames, skip_ro=False):
         """Validate property names in 'pnames' and return a normalized list."""
 
@@ -514,6 +478,41 @@ class CStatesPrinter(_PropsPrinter):
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group,
                                                 skip_unsupported=skip_unsupported, action=action)
         return self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
+
+    def _build_aggr_rcsinfo(self, csnames, cpus, spnames="all"):
+        """
+        Build the aggregate requestable C-states information dictionary. The arguments are as follows.
+          * csnames - C-state names to print information about (all C-states by default).
+          * cpus - CPU numbers to read and print C-state information for (all CPUs by default).
+          * spnames - names of sub-properties of the 'pname' property that should also be printed.
+                      Value "all" will include all sub-properties and value 'None' won't include
+                      any.
+        This method is similar to '_build_aggr_pinfo()' and returns a dictionary of a similar structure.
+        """
+
+        aggr_rcsinfo = {}
+        # C-states info 'csinfo' has the following format:
+        #
+        # { "POLL" : {"disable" : True, "latency" : 0, "residency" : 0, ... },
+        #   "C1E"  : {"disable" : False, "latency" : 2, "residency" : 1, ... },
+        #   ... }
+        for cpu, csinfo in self._pobj.get_cstates_info(csnames=csnames, cpus=cpus):
+            for pname, values in csinfo.items():
+                if pname not in aggr_rcsinfo:
+                    aggr_rcsinfo[pname] = {}
+
+                for name, val in values.items():
+                    if name not in spnames or val is None:
+                        continue
+
+                    if name not in aggr_rcsinfo[pname]:
+                        aggr_rcsinfo[pname][name] = {val : [cpu]}
+                    elif val not in aggr_rcsinfo[pname][name]:
+                        aggr_rcsinfo[pname][name][val] = [cpu]
+                    else:
+                        aggr_rcsinfo[pname][name][val].append(cpu)
+
+        return aggr_rcsinfo
 
     def print_cstates(self, csnames="all", cpus="all", skip_ro=False, action=None):
         """
