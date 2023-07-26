@@ -447,11 +447,12 @@ class CStatesPrinter(_PropsPrinter):
                                                 skip_unsupported=skip_unsupported, action=action)
         return self._print_aggr_pinfo_yaml(aggr_pinfo, skip_unsupported=skip_unsupported)
 
-    def _build_aggr_rcsinfo(self, csinfo_iter, spnames):
+    def _build_aggr_rcsinfo(self, csinfo_iter, keys):
         """
         Build the aggregate C-states information dictionary. The arguments are as follows.
           * csinfo_iter - an iterator yielding '(cpu, csinfo)' tuples.
-          * spnames - list of sub-properties of the 'pname' property that should also be printed.
+          * keys - C-state keys which should be included in the aggregate C-states dictionary.
+                   For example, "disable", "latency", "residency.
 
         This method is similar to '_build_aggr_pinfo()' and returns a dictionary of a similar
         structure.
@@ -469,7 +470,7 @@ class CStatesPrinter(_PropsPrinter):
                     aggr_rcsinfo[pname] = {}
 
                 for name, val in values.items():
-                    if name not in spnames or val is None:
+                    if name not in keys or val is None:
                         continue
 
                     if name not in aggr_rcsinfo[pname]:
@@ -494,15 +495,15 @@ class CStatesPrinter(_PropsPrinter):
         """
 
         if skip_ro:
-            spnames = {"disable"}
+            keys = {"disable"}
         else:
-            spnames = {"disable", "latency", "residency", "desc"}
+            keys = {"disable", "latency", "residency", "desc"}
 
         group = csnames == "all"
         csinfo_iter = self._pobj.get_cstates_info(csnames=csnames, cpus=cpus)
 
         try:
-            aggr_rcsinfo = self._build_aggr_rcsinfo(csinfo_iter, spnames)
+            aggr_rcsinfo = self._build_aggr_rcsinfo(csinfo_iter, keys)
         except ErrorNotSupported as err:
             _LOG.warning(err)
             _LOG.info("C-states are not supported")
