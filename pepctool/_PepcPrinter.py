@@ -179,8 +179,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def _build_aggr_pinfo(pinfo_iter, spnames="all"):
         """
         Build the aggregate properties dictionary. The arguments are as follows.
-          * pinfo_iter - an iterator yielding '(cpu, pinfo)' tuples, just like 'CStates.get_props()'
-                         of 'ReqCState.get_cstates_info()' do.
+          * pinfo_iter - an iterator yielding '(cpu, pinfo)' tuples.
           * spnames - names of sub-properties of the 'pname' property that should also be printed.
                       Value "all" will include all sub-properties and value 'None' won't include
                       any.
