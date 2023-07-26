@@ -42,15 +42,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     """
 
     @staticmethod
-    def mechanism_to_human(mechanism):
-        """Translates and returns mechanism to human redable format."""
+    def source_to_human(source):
+        """Translates and returns source to human redable format."""
 
-        if mechanism == "sysfs":
+        if source == "sysfs":
             return "Linux sysfs file-system"
-        if mechanism == "msr":
+        if source == "msr":
             return "Model Specific Register (MSR)"
 
-        raise Error(f"unknown mechanisms '{mechanism}', known mechanisms are 'msr' and 'sysfs'")
+        raise Error(f"unknown sources '{source}', known sources are 'msr' and 'sysfs'")
 
     def _set_sname(self, pname):
         """

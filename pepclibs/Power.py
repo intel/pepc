@@ -29,7 +29,7 @@ PROPS = {
         "type" : "float",
         "sname": "package",
         "writable" : False,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "ppl1" : {
         "name" : "RAPL PPL1",
@@ -37,21 +37,21 @@ PROPS = {
         "type" : "float",
         "sname": "package",
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "ppl1_enable" : {
         "name" : "RAPL PPL1",
         "type" : "bool",
         "sname": "package",
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "ppl1_clamp" : {
         "name" : "RAPL PPL1 clamping",
         "type" : "bool",
         "sname": "package",
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "ppl1_window" : {
         "name" : "RAPL PPL1 time window",
@@ -59,7 +59,7 @@ PROPS = {
         "type" : "float",
         "sname": "package",
         "writable" : False,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "ppl2" : {
         "name" : "RAPL PPL2",
@@ -67,21 +67,21 @@ PROPS = {
         "type" : "float",
         "sname": "package",
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "ppl2_enable" : {
         "name" : "RAPL PPL2",
         "type" : "bool",
         "sname": "package",
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "ppl2_clamp" : {
         "name" : "RAPL PPL2 clamping",
         "type" : "bool",
         "sname": "package",
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "ppl2_window" : {
         "name" : "RAPL PPL2 time window",
@@ -89,7 +89,7 @@ PROPS = {
         "type" : "float",
         "sname": "package",
         "writable" : False,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
 }
 

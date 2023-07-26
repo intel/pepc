@@ -35,14 +35,14 @@ PROPS = {
         "type" : "str",
         "sname": None,
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "pkg_cstate_limit_lock" : {
         "name" : "Package C-state limit lock",
         "type" : "bool",
         "sname": None,
         "writable" : False,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "pkg_cstate_limits" : {
         "name" : "Available package C-state limits",
@@ -50,7 +50,7 @@ PROPS = {
         # Conceptually this is per-package, but in practice it is global on all current platforms.
         "sname": "global",
         "writable" : False,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "pkg_cstate_limit_aliases" : {
         "name" : "Package C-state limit aliases",
@@ -58,56 +58,56 @@ PROPS = {
         # Conceptually this is per-package, but in practice it is global on all current platforms.
         "sname": "global",
         "writable" : False,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "c1_demotion" : {
         "name" : "C1 demotion",
         "type" : "bool",
         "sname": None,
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "c1_undemotion" : {
         "name" : "C1 undemotion",
         "type" : "bool",
         "sname": None,
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "c1e_autopromote" : {
         "name" : "C1E autopromote",
         "type" : "bool",
         "sname": None,
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "cstate_prewake" : {
         "name" : "C-state prewake",
         "type" : "bool",
         "sname": None,
         "writable" : True,
-        "mechanisms" : ("msr", ),
+        "sources" : ("msr", ),
     },
     "idle_driver" : {
         "name" : "Idle driver",
         "type" : "str",
         "sname": "global",
         "writable" : False,
-        "mechanisms" : ("sysfs", ),
+        "sources" : ("sysfs", ),
     },
     "governor" : {
         "name" : "Idle governor",
         "type" : "str",
         "sname": "global",
         "writable" : True,
-        "mechanisms" : ("sysfs", ),
+        "sources" : ("sysfs", ),
     },
     "governors" : {
         "name" : "Available idle governors",
         "type" : "list[str]",
         "sname": "global",
         "writable" : False,
-        "mechanisms" : ("sysfs", ),
+        "sources" : ("sysfs", ),
     },
 }
 
@@ -231,7 +231,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         if pname == "pkg_cstate_limit_lock":
             return self._read_prop_value_from_msr("lock", cpu)
 
-        if prop["mechanisms"][0] == "msr":
+        if prop["sources"][0] == "msr":
             return self._read_prop_value_from_msr(pname, cpu)
 
         raise Error(f"BUG: unsupported property '{pname}'")

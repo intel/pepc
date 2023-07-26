@@ -138,18 +138,18 @@ def _add_cpu_subset_arguments(subpars, fmt):
                then '0' would mean CPU 4."""
     subpars.add_argument("--core-siblings", help=text)
 
-def _get_mechanism_str(pinfo):
-    """"Format and return the mechanism of accessing a property."""
+def _get_source_str(pinfo):
+    """"Format and return the source of a property."""
 
     _map = {"sysfs": "sysfs", "msr" : "MSR"}
 
-    mech = pinfo.get("mechanisms", None)
+    mech = pinfo.get("sources", None)
     if not mech:
         return ""
 
     for mname in mech:
         if mname not in _map:
-            raise Error(f"BUG: unsupported property mechanism '{mname}'")
+            raise Error(f"BUG: unsupported property source '{mname}'")
 
     if len(mech) == 1:
         return f" via {_map[mech[0]]}"
@@ -170,7 +170,7 @@ def _get_info_subcommand_prop_help_text(pinfo):
     else:
         text = f"Get {Human.uncapitalize(pinfo['name'])}"
 
-    return text + _get_mechanism_str(pinfo) + "."
+    return text + _get_source_str(pinfo) + "."
 
 def _add_info_subcommand_options(props, subpars):
     """
@@ -198,7 +198,7 @@ def _get_config_subcommand_prop_help_text(pinfo):
     else:
         text = f"Set {Human.uncapitalize(pinfo['name'])}"
 
-    return text + _get_mechanism_str(pinfo) + "."
+    return text + _get_source_str(pinfo) + "."
 
 def _add_config_subcommand_options(props, subpars):
     """

@@ -118,7 +118,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         else:
             prefix = " - "
             for pname, info in aggr_pinfo.items():
-                for source in self._pobj.props[pname]["mechanisms"]:
+                for source in self._pobj.props[pname]["sources"]:
                     if source not in grouped:
                         grouped[source] = {pname : info}
                     else:
@@ -127,7 +127,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         printed = 0
         for source, pinfos in grouped.items():
             if source:
-                self._print(f"Source: {self._pobj.mechanism_to_human(source)}")
+                self._print(f"Source: {self._pobj.source_to_human(source)}")
             printed += self._do_print_aggr_pinfo_human(pinfos,
                                                        skip_unsupported=skip_unsupported,
                                                        action=action, prefix=prefix)
@@ -367,7 +367,7 @@ class CStatesPrinter(_PropsPrinter):
         else:
             prefix = " - "
             sub_prefix = "    - "
-            self._print(f"Source: {self._pobj.mechanism_to_human('sysfs')}")
+            self._print(f"Source: {self._pobj.source_to_human('sysfs')}")
 
         printed = 0
         for csname, csinfo in aggr_rcsinfo.items():
