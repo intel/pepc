@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
-#         Antti Laakso <antti.laakso@intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@intel.com>
+#          Niklas Neronin <niklas.neronin@intel.com>
 
 """
 This module provides API for printing properties.
