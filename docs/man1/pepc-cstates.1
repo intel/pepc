@@ -87,7 +87,7 @@ Use the special keyword \[aq]all\[aq] to specify all CPUs.
 List of cores to get information about.
 The list can include individual core numbers and core number ranges.
 For example, \[aq]1-4,7,8,10-12\[aq] would mean cores 1 to 4, cores 7,
-8, and 10 to 1.
+8, and 10 to 12.
 Use the special keyword \[aq]all\[aq] to specify all cores.
 This option has to be accompanied by \[aq]--package\[aq] option, because
 core numbers are per-package
@@ -135,6 +135,18 @@ request.
 \f[B]--pkg-cstate-limit\f[R]
 Get package C-state limit (details in \[aq]pkg_cstate_limit\[aq]).
 .TP
+\f[B]--pkg-cstate-limits\f[R]
+Get available package C-state limits (details in
+\[aq]pkg_cstate_limits\[aq]).
+.TP
+\f[B]--pkg-cstate-limit-lock\f[R]
+Get package C-state limit lock (details in
+\[aq]pkg_cstate_limit_lock\[aq]).
+.TP
+\f[B]--pkg-cstate-limit-aliases\f[R]
+Get package C-state limit aliases (details in
+\[aq]pkg_cstate_limit_aliases\[aq]).
+.TP
 \f[B]--c1-demotion\f[R]
 Get current setting for C1 demotion (details in \[aq]c1_demotion\[aq]).
 .TP
@@ -155,6 +167,9 @@ Get idle driver (details in \[aq]idle_driver\[aq]).
 .TP
 \f[B]--governor\f[R]
 Get idle governor (details in \[aq]governor\[aq]).
+.TP
+\f[B]--governors\f[R]
+Get list of available idle governors (details in \[aq]governors\[aq]).
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
 .PP
 Configure C-states on specified CPUs.
@@ -172,7 +187,7 @@ Use the special keyword \[aq]all\[aq] to specify all CPUs.
 List of cores to configure C-States on.
 The list can include individual core numbers and core number ranges.
 For example, \[aq]1-4,7,8,10-12\[aq] would mean cores 1 to 4, cores 7,
-8, and 10 to 12.
+8, and 10 to 1.
 Use the special keyword \[aq]all\[aq] to specify all cores.
 This option has to be accompanied by \[aq]--package\[aq] option, because
 core numbers are per-package
@@ -301,9 +316,9 @@ pepc cstates \f[I]config\f[R] [\f[B]--pkg-cstate-limit\f[R]=<value>]
 .SS Description
 .PP
 The deepest package C-state the platform is allowed to enter.
-MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]) register can be locked by
-the BIOS, in which case the package C-state limit can only be read, but
-cannot be modified.
+MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]) register can be locked, in
+which case the package C-state limit can only be read, but cannot be
+modified, please refer to property \f[B]pkg_cstate_limit_lock\f[R].
 .SS Source
 .PP
 MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R])
@@ -318,8 +333,65 @@ Refer to \[aq]PCStateConfigCtl.py\[aq] for all platforms and bits.
 .SS Scope
 .PP
 This option has \f[B]core\f[R] scope.
-With the following exceptions, Silvermonts and Airmonts have
+With the following exceptions: Silvermonts and Airmonts have
 \f[B]module\f[R] scope, Xeon Phis have \f[B]package\f[R] scope.
+.PP
+   *   *   *   *   *
+.SS pkg_cstate_limits
+.PP
+pkg_cstate_limits - Available package C-state limits
+.SS Synopsis
+.PP
+pepc cstates \f[I]info\f[R] [\f[B]--pkg-cstate-limits\f[R]]
+.SS Description
+.PP
+All available package C-state limits.
+.SS Source
+.PP
+Harcoded in \[aq]PCStateConfigCtl.py\[aq] for platforms that we have
+verified.
+.SS Scope
+.PP
+This option has \f[B]global\f[R] scope.
+.PP
+   *   *   *   *   *
+.SS pkg_cstate_limit_lock
+.PP
+pkg_cstate_limit_lock - Package C-state limit lock
+.SS Synopsis
+.PP
+pepc cstates \f[I]info\f[R] [\f[B]--pkg-cstate-limit-lock\f[R]]
+.SS Description
+.PP
+Whether the package C-state limit can be modified.
+When \[aq]True\[aq], property \f[B]\[aq]pkg_cstate_limit\[aq]\f[R] is
+read-only.
+.SS Source
+.PP
+MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]) Refer to
+\[aq]PCStateConfigCtl.py\[aq] for all platforms and bits.
+.SS Scope
+.PP
+This option has \f[B]package\f[R] scope.
+.PP
+   *   *   *   *   *
+.SS pkg_cstate_limit_aliases
+.PP
+pkg_cstate_limit_aliases - Package C-state limit aliases
+.SS Synopsis
+.PP
+pepc cstates \f[I]info\f[R] [\f[B]--pkg-cstate-limit-aliases\f[R]]
+.SS Description
+.PP
+Package C-state limit aliases, for example on Ice Lakes \[aq]PC6\[aq] is
+an alias for \[aq]PC6R\[aq].
+.SS Source
+.PP
+Harcoded in \[aq]PCStateConfigCtl.py\[aq] for platforms that we have
+verified.
+.SS Scope
+.PP
+This option has \f[B]global\f[R] scope.
 .PP
    *   *   *   *   *
 .SS c1_demotion
@@ -434,7 +506,7 @@ This option has \f[B]global\f[R] scope.
    *   *   *   *   *
 .SS governor
 .PP
-governor - CPU frequency governor
+governor - Idle governor
 .SS Synopsis
 .PP
 pepc cstates \f[I]info\f[R] [\f[B]--governor\f[R]]
@@ -444,11 +516,28 @@ pepc cstates \f[I]info\f[R] [\f[B]--governor\f[R]]
 pepc cstates \f[I]config\f[R] [\f[B]--governor\f[R]=<value>]
 .SS Description
 .PP
-CPU frequency governor decides which P-state to select on a CPU
-depending on CPU business and other factors.
+Idle governor decides which C-state to request on an idle CPU.
 .SS Source
 .PP
 \[dq]/sys/devices/system/cpu/cpuidle/scaling_governor\[dq]
 .SS Scope
 .PP
 This option has \f[B]global\f[R] scope.
+.PP
+   *   *   *   *   *
+.SS governors
+.PP
+governors - Available idle governors
+.SS Synopsis
+.PP
+pepc cstates \f[I]info\f[R] [\f[B]--governors\f[R]]
+.SS Description
+.PP
+Idle governors decide which C-state to request on an idle CPU.
+Different governors implement different selection policy.
+.SS Source
+.PP
+\[dq]/sys/devices/system/cpu/cpuidle/available_governors\[dq]
+.SS Scope
+.PP
+This property has \f[B]global\f[R] scope.

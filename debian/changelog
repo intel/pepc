@@ -1,3 +1,17 @@
+pepc (1.4.29) unstable; urgency=low
+
+  * Fix typo in 'pepc' tool sub-option 'config/info's help text.
+  * Group propeties by source only when printing all properties. This
+    partially reverts grouping introduced in version 1.4.28.
+  * Change '--cstates' option output format, the properties are now
+    grouped by their source.
+  * Move "governors" from '--governor' option, to it own option '--governors'.
+  * Move package C-state limit lock, limits and alises from option
+    '--pkg-cstate-limit', to their own options: '--pkg-cstate-limit-lock',
+    '--pkg-cstate-limits' and '--pkg-cstate-limit-aliases'.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Mon, 31 Jul 2023 00:00:00 +0200
+
 pepc (1.4.28) unstable; urgency=low
 
   * Change 'info' sub-command output format, the properties are now

@@ -5,9 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix typo in 'pepc' tool sub-option 'config/info's help text.
 ### Added
 ### Removed
+### Changed
+
+## [1.4.29] - 2023-07-31
+### Fixed
+ - Fix typo in 'pepc' tool sub-option 'config/info's help text.
 ### Changed
  - Group propeties by source only when printing all properties. This
    partially reverts grouping introduced in version 1.4.28.
