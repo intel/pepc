@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Prevent 'pepc pstates info' and 'pepc power info' from printing unsupported
+   properties when no properties are specified.
 ### Added
 ### Removed
 ### Changed
