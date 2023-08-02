@@ -24,7 +24,7 @@ def power_info_command(args, pman):
 
     # The options to print.
     if not hasattr(args, "oargs"):
-        pnames = "all"
+        pnames = None
     else:
         pnames = list(getattr(args, "oargs"))
     # The output format to use.
