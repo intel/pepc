@@ -22,11 +22,6 @@ _LOG = logging.getLogger()
 def power_info_command(args, pman):
     """Implements the 'power info' command."""
 
-    # The options to print.
-    if not hasattr(args, "oargs"):
-        pnames = None
-    else:
-        pnames = list(getattr(args, "oargs"))
     # The output format to use.
     fmt = "yaml" if args.yaml else "human"
 
@@ -45,13 +40,13 @@ def power_info_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        skip_unsupported = False
-        if not pnames:
-            pnames = "all"
-            # When printing all the options, skip the unsupported ones as they add clutter.
-            skip_unsupported = True
+        if not hasattr(args, "oargs"):
+            printed = pprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True)
+        else:
+            pnames = list(getattr(args, "oargs"))
+            printed = pprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=False)
 
-        if not pprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=skip_unsupported):
+        if not printed:
             _LOG.info("No power properties supported%s.", pman.hostmsg)
 
 def power_config_command(args, pman):

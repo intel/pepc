@@ -22,12 +22,6 @@ _LOG = logging.getLogger()
 def cstates_info_command(args, pman):
     """Implements the 'cstates info' command."""
 
-    # The options to print.
-    if not hasattr(args, "oargs"):
-        pnames = None
-    else:
-        pnames = list(getattr(args, "oargs"))
-
     # The output format to use.
     fmt = "yaml" if args.yaml else "human"
 
@@ -46,9 +40,8 @@ def cstates_info_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        skip_unsupported = False
         printed = 0
-        if not pnames and args.csnames == "default":
+        if not hasattr(args, "oargs") and args.csnames == "default":
             # No options were specified. Print all the information. Skip the unsupported ones as
             # they add clutter.
             printed += csprint.print_cstates(csnames="all", cpus=cpus)
@@ -62,9 +55,9 @@ def cstates_info_command(args, pman):
                     csnames = "all"
                 printed += csprint.print_cstates(csnames=csnames, cpus=cpus)
 
+            pnames = list(getattr(args, "oargs", []))
             if pnames:
-                printed += csprint.print_props(pnames=pnames, cpus=cpus,
-                                               skip_unsupported=skip_unsupported)
+                printed += csprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=False)
 
         if not printed:
             _LOG.info("No C-states properties supported%s.", pman.hostmsg)
