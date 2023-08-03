@@ -1037,7 +1037,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if self._get_cpu_prop_value("intel_pstate_mode", 0) is None:
             driver = self._get_cpu_prop_value("driver", 0)
             raise Error(f"can't set property 'intel_pstate_mode'{self._pman.hostmsg}:\n  "
-                        f"the CPU frequency driver is '{driver}', not 'inel_pstate'")
+                        f"the CPU frequency driver is '{driver}', not 'intel_pstate'")
 
         modes = ("active", "passive", "off")
         if mode not in modes:
