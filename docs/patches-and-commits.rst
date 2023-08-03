@@ -24,5 +24,5 @@ In many cases, specifying module name is sufficient. Examples:
 If the patch is just a cleanup, or a cosmetic change, you may specify it with a prefix too. But you
 can also just say this in the subject. Examples:
 
- * ``CStates: cosmetic: improve docstrting``
+ * ``CStates: cosmetic: improve docstring``
  * ``tests: cleanup and extend readme.txt``

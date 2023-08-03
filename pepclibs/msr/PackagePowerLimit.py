@@ -166,7 +166,7 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
         return self._time_units
 
     def _val_to_window(self, val):
-        """Helper method to convert a given bitfield to time window in seconds."""
+        """Helper method to convert a given bit field to time window in seconds."""
 
         y = self._msr.get_bits(val, (4, 0))
         z = self._msr.get_bits(val, (6, 5))

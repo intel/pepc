@@ -43,7 +43,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     @staticmethod
     def source_to_human(source):
-        """Translates and returns source to human redable format."""
+        """Translates and returns source to human readable format."""
 
         if source == "sysfs":
             return "Linux sysfs file-system"

@@ -66,9 +66,9 @@ Whenever possible, use double quotes. Do not use single quotes, unless you have 
 * ``mydict['element']``
 * ``if 'a' in data:``
 
-Possible exceptoins example:
+Possible exceptions example:
 
-* ``f"dictionary elemeht {mydict['element']}"``
+* ``f"dictionary element {mydict['element']}"``
 
 Splitting f-strings
 +++++++++++++++++++

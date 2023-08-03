@@ -269,7 +269,7 @@ def _build_arguments_parser():
     text = """Two unique values to set the MSR register to. After the test, the MSR will be restored
               to the values before the test."""
     parser.add_argument("--values", nargs=2, help=text, default=[0, 1])
-    text = """The CPU which MSR will be writen to, by default CPU 0."""
+    text = """The CPU which MSR will be written to, by default CPU 0."""
     parser.add_argument("--cpu", type=int, help=text, default=0)
 
     if argcomplete:

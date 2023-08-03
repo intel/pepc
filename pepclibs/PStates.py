@@ -235,7 +235,7 @@ def _is_uncore_prop(prop):
 class PStates(_PCStatesBase.PCStatesBase):
     """
     This class provides API for managing platform settings related to P-states. Refer to
-    '_PropsClassBase.PropsClassBase' docstring for public methods overvew.
+    '_PropsClassBase.PropsClassBase' docstring for public methods overview.
     """
 
     def _get_msr(self):
@@ -828,7 +828,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             if self._cpuinfo.info["vendor"] == "AuthenticAMD":
                 # This is a limited quirk for an AMD system. It does not allow setting max.frequency
-                # to any value above base frequency. At the moment we do not support reqding base
+                # to any value above base frequency. At the moment we do not support reading base
                 # frequency for AMD systems, so we only support the 'freq == max_freq_limit' case.
                 # But it should really be 'if freq > base_freq'.
                 max_freq_limit = self._get_cpu_prop_value("max_freq_limit", cpu)

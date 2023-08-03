@@ -300,7 +300,7 @@ All available package C-state limits.
 Source
 ------
 
-Harcoded in 'PCStateConfigCtl.py' for platforms that we have verified.
+Hardcoded in 'PCStateConfigCtl.py' for platforms that we have verified.
 
 Scope
 -----
@@ -357,7 +357,7 @@ Package C-state limit aliases, for example on Ice Lakes 'PC6' is an alias for 'P
 Source
 ------
 
-Harcoded in 'PCStateConfigCtl.py' for platforms that we have verified.
+Hardcoded in 'PCStateConfigCtl.py' for platforms that we have verified.
 
 Scope
 -----
