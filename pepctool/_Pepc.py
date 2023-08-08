@@ -311,7 +311,7 @@ def build_arguments_parser():
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
     text = f"""Comma-separated list of C-states to get information about (all C-states by default).
-               {cst_list_text}."""
+               {cst_list_text}"""
     subpars2.add_argument("--cstates", dest="csnames", metavar="CSTATES", nargs="?", help=text,
                           default="default")
 
@@ -330,7 +330,7 @@ def build_arguments_parser():
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure.")
 
-    text = f"""Comma-separated list of C-states to enable. {cst_list_text}."""
+    text = f"""Comma-separated list of C-states to enable. {cst_list_text}"""
     subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
                           nargs="?")
 
