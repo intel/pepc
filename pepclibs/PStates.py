@@ -818,13 +818,13 @@ class PStates(_PCStatesBase.PCStatesBase):
             if bclk and freq % bclk:
                 msg += f"\nHint: consider using frequency value aligned to {bclk // 1000000}MHz."
 
-            base_freq = self._get_cpu_prop_value("base_freq", cpu)
-            turbo = self._get_cpu_turbo(cpu)
+            if self._get_cpu_turbo(cpu) == "off":
+                base_freq = self._get_cpu_prop_value("base_freq", cpu)
 
-            if base_freq and freq > base_freq and turbo == "off":
-                base_freq = Human.largenum(base_freq, unit="Hz")
-                msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and this may " \
-                        f"be the limiting factor."
+                if base_freq and freq > base_freq:
+                    base_freq = Human.largenum(base_freq, unit="Hz")
+                    msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and this " \
+                           f"may be the limiting factor."
 
             if self._cpuinfo.info["vendor"] == "AuthenticAMD":
                 # This is a limited quirk for an AMD system. It does not allow setting max.frequency
