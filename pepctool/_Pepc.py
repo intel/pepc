@@ -26,6 +26,7 @@ except ImportError:
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, PStates, Power, CPUInfo
+from pepclibs._PropsClassBase import SOURCES
 
 if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
@@ -141,23 +142,21 @@ def _add_cpu_subset_arguments(subpars, fmt):
 def _get_source_str(pinfo):
     """"Format and return the source of a property."""
 
-    _map = {"sysfs": "sysfs", "msr" : "MSR"}
+    sources = []
+    try:
+        for key in pinfo["sources"]:
+            sources.append(SOURCES[key]["short"])
+    except KeyError:
+        raise Error(f"BUG: missing sources description for '{key}'") from None
 
-    mech = pinfo.get("sources", None)
-    if not mech:
-        return ""
+    num = len(sources)
+    if num == 1:
+        return f" via {sources[0]}"
+    if num == 2:
+        return f" via {sources[0]} or {sources[1]} as a fall-back method"
 
-    for mname in mech:
-        if mname not in _map:
-            raise Error(f"BUG: unsupported property source '{mname}'")
-
-    if len(mech) == 1:
-        return f" via {_map[mech[0]]}"
-
-    if len(mech) == 2:
-        return f" via {_map[mech[0]]} or {_map[mech[1]]} as fall-back method"
-
-    return ""
+    sources = ', '.join(sources[:-1]) + f" or {sources[-1]}"
+    return f" via {sources} as fall-back methods"
 
 def _get_info_subcommand_prop_help_text(pinfo):
     """
