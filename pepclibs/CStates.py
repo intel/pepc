@@ -51,7 +51,7 @@ PROPS = {
         # Conceptually this is per-package, but in practice it is global on all current platforms.
         "sname": "global",
         "writable" : False,
-        "sources" : ("msr", ),
+        "sources" : ("eds", ),
     },
     "pkg_cstate_limit_aliases" : {
         "name" : "Package C-state limit aliases",
@@ -59,7 +59,7 @@ PROPS = {
         # Conceptually this is per-package, but in practice it is global on all current platforms.
         "sname": "global",
         "writable" : False,
-        "sources" : ("msr", ),
+        "sources" : ("eds", ),
     },
     "c1_demotion" : {
         "name" : "C1 demotion",

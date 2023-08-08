@@ -45,6 +45,10 @@ SOURCES = {
         "short" : "MSR",
         "long"  : "Model Specific Register (MSR)",
     },
+    "eds" : {
+        "short" : "EDS",
+        "long"  : "External Design Specification (EDS)",
+    }
 }
 
 def _bug_method_not_defined(method_name):

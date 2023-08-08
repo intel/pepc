@@ -294,7 +294,7 @@ All available package C-state limits.
 Source
 ------
 
-Hardcoded in 'PCStateConfigCtl.py' for platforms that we have verified.
+External Design Specification (EDS)
 
 Scope
 -----
@@ -351,7 +351,7 @@ Package C-state limit aliases, for example on Ice Lakes 'PC6' is an alias for 'P
 Source
 ------
 
-Hardcoded in 'PCStateConfigCtl.py' for platforms that we have verified.
+External Design Specification (EDS)
 
 Scope
 -----
