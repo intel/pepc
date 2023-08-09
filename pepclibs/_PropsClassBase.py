@@ -36,6 +36,17 @@ from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
 
+SOURCES = {
+    "sysfs" : {
+        "short" : "sysfs",
+        "long"  : "Linux sysfs file-system",
+    },
+    "msr" : {
+        "short" : "MSR",
+        "long"  : "Model Specific Register (MSR)",
+    },
+}
+
 def _bug_method_not_defined(method_name):
     """Raise an error if the child class did not define the 'method_name' mandatory method."""
 
@@ -47,15 +58,13 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     """
 
     @staticmethod
-    def source_to_human(source):
-        """Translates and returns source to human readable format."""
+    def get_source_descr(source):
+        """Get source description. See 'SOURCES' dictionary."""
 
-        if source == "sysfs":
-            return "Linux sysfs file-system"
-        if source == "msr":
-            return "Model Specific Register (MSR)"
-
-        raise Error(f"unknown sources '{source}', known sources are 'msr' and 'sysfs'")
+        try:
+            return SOURCES[source]["long"]
+        except KeyError:
+            raise Error(f"BUG: missing source description for '{source}'") from None
 
     def _set_sname(self, pname):
         """
