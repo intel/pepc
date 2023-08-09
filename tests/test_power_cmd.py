@@ -13,7 +13,7 @@
 import copy
 import pytest
 from common import get_pman, run_pepc, build_params
-from pcstates_common import is_prop_supported
+from props_common import is_prop_supported
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 from pepclibs.helperlibs import Human, YAML, TestRunner
 from pepclibs import CPUInfo, Power

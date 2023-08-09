@@ -12,7 +12,7 @@
 
 import pytest
 import common
-from pcstates_common import get_siblings, verify_props_value_type, is_prop_supported
+from props_common import get_siblings, verify_props_value_type, is_prop_supported
 from pepclibs import CPUInfo, Power
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 

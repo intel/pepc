@@ -12,8 +12,8 @@
 
 import sys
 import random
-import pcstates_common
 import common
+from props_common import get_siblings
 from pepclibs import CPUInfo, PStates, CStates, _PropsCache
 from pepctool import _Pepc
 
@@ -44,7 +44,7 @@ def test_propscache_scope(hostspec):
          CPUInfo.CPUInfo(pman=pman) as cpuinfo:
 
         test_cpu = random.choice(cpuinfo.get_cpus())
-        siblings = pcstates_common.get_siblings(cpuinfo, cpu=test_cpu)
+        siblings = get_siblings(cpuinfo, cpu=test_cpu)
 
         pcache = _PropsCache.PropsCache(cpuinfo=cpuinfo, pman=pman)
 

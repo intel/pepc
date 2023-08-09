@@ -12,7 +12,7 @@
 
 import pytest
 import common
-from pcstates_common import get_siblings, set_and_verify, verify_props_value_type, is_prop_supported
+from props_common import get_siblings, set_and_verify, verify_props_value_type, is_prop_supported
 from pepclibs import CPUInfo, CStates
 
 def _get_enable_cache_param():
