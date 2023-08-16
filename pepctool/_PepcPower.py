@@ -41,10 +41,11 @@ def power_info_command(args, pman):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         if not hasattr(args, "oargs"):
-            printed = pprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True)
+            printed = pprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True, group=True)
         else:
             pnames = list(getattr(args, "oargs"))
-            printed = pprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=False)
+            printed = pprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=False,
+                                         group=False)
 
         if not printed:
             _LOG.info("No power properties supported%s.", pman.hostmsg)

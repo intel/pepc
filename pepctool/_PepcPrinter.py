@@ -103,7 +103,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
         Print properties in the "human" format. The arguments are as follows.
           * aggr_pinfo - the aggregate properties information dictionary.
-          * group - whether to group properties by the source (sysfs, MSR, etc) when printing.
+          * group - same as in 'print_props()'.
           * action - same as in 'print_props()'.
         """
 
@@ -218,7 +218,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         return [pname for pname in pnames if self._pobj.props[pname]["writable"]]
 
     def print_props(self, pnames="all", cpus="all", skip_ro=False, skip_unsupported=True,
-                    action=None):
+                    group=False, action=None):
         """
         Read and print properties. The arguments are as follows.
           * pnames - names of the property to read and print (all properties by default).
@@ -227,13 +227,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                                "not supported" is printed.
           * skip_ro - if 'False', read-only properties information will be printed, otherwise they
                       will be skipped.
+          * group - whether to group properties by the source (sysfs, MSR, etc) when printing.
           * action - an optional action word to include into the messages (nothing by default). For
                      example, if 'action' is "set to", the messages will be like "property <pname>
                      set to <value>". Applicable only to the "human" format.
         Returns the printed properties count.
         """
 
-        group = pnames == "all"
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
         pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
         aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, skip_unsupported)
@@ -353,7 +353,7 @@ class CStatesPrinter(_PropsPrinter):
         """
         Print the aggregate C-states information in "human" format. The arguments are as follows.
           * aggr_rcsinfo - the aggregate C-states information dictionary.
-          * group - whether to group properties by the source (sysfs, MSR, etc) when printing.
+          * group - same as in 'print_props()'.
           * action - same as in 'print_props()'.
         """
 
@@ -414,12 +414,11 @@ class CStatesPrinter(_PropsPrinter):
         return len(yaml_rcsinfo)
 
     def print_props(self, pnames="all", cpus="all", skip_ro=False, skip_unsupported=True,
-                    action=None):
+                    group=False, action=None):
         """
         Read and print properties. The arguments are the same as in '_PropsPrinter.print_props()'.
         """
 
-        group = pnames == "all"
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
         pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
         aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, skip_unsupported)
@@ -469,12 +468,13 @@ class CStatesPrinter(_PropsPrinter):
 
         return aggr_rcsinfo
 
-    def print_cstates(self, csnames="all", cpus="all", skip_ro=False, action=None):
+    def print_cstates(self, csnames="all", cpus="all", skip_ro=False, group=False, action=None):
         """
         Read and print information about requestable C-states. The arguments are as follows.
           * csnames - C-state names to print information about (all C-states by default).
           * cpus - CPU numbers to read and print C-state information for (all CPUs by default).
           * skip_ro - skip printing read-only information, print only modifiable information.
+          * group - whether to print the source information.
           * action - an optional action word to include into the messages (nothing by default). For
                      example, if 'action' is "set to", the messages will be like "property <pname>
                      set to <value>". Applicable only to the "human" format.
@@ -486,7 +486,6 @@ class CStatesPrinter(_PropsPrinter):
         else:
             keys = {"disable", "latency", "residency", "desc"}
 
-        group = csnames == "all"
         csinfo_iter = self._pobj.get_cstates_info(csnames=csnames, cpus=cpus)
 
         try:

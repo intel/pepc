@@ -44,8 +44,9 @@ def cstates_info_command(args, pman):
         if not hasattr(args, "oargs") and args.csnames == "default":
             # No options were specified. Print all the information. Skip the unsupported ones as
             # they add clutter.
-            printed += csprint.print_cstates(csnames="all", cpus=cpus)
-            printed += csprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True)
+            printed += csprint.print_cstates(csnames="all", cpus=cpus, group=True)
+            printed += csprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True,
+                                           group=True)
         else:
             if args.csnames != "default":
                 # args.csname is "default" if '--csnames' option was not specified, and 'None' if it
