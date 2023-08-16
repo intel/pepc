@@ -103,16 +103,10 @@ Get information about C-states on specified CPUs. By default, prints all informa
    hardware state, entered upon a Linux request.
 
 **--pkg-cstate-limit**
-   Get package C-state limit (details in 'pkg_cstate_limit_').
-
-**--pkg-cstate-limits**
-   Get available package C-state limits (details in 'pkg_cstate_limits_').
-
-**--pkg-cstate-limit-lock**
-   Get package C-state limit lock (details in 'pkg_cstate_limit_lock_').
-
-**--pkg-cstate-limit-aliases**
-   Get package C-state limit aliases (details in 'pkg_cstate_limit_aliases_').
+   Get package C-state limit (details in 'pkg_cstate_limit_'), available package C-state limits
+   (details in 'pkg_cstate_limits_'), package C-state limit lock (details in
+   'pkg_cstate_limit_lock_'), and package C-state limit aliases (details in
+   'pkg_cstate_limit_aliases_').
 
 **--c1-demotion**
    Get current setting for C1 demotion (details in 'c1_demotion_').

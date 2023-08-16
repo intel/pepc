@@ -12,7 +12,12 @@
 This module provides the base class for classes implementing properties, such as 'PState' and
 'CState' classes.
 
-Naming conventions:
+Terminology.
+ * sub-property - a property related to another (main) property so that the sub-property exists or
+                  makes sense only when the main property is supported by the platform.
+                  Sub-properties have to be read-only.
+
+Naming conventions.
  * props - dictionary describing the properties. As an example, check 'PROPS' in 'PStates' and
            'CStates'.
  * pinfo - a properties dictionary in the format returned described in 'PropsClassBase.get_props()'.

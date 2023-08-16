@@ -44,6 +44,7 @@ def pstates_info_command(args, pman):
             printed = psprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True)
         else:
             pnames = list(getattr(args, "oargs"))
+            pnames = _PepcCommon.expand_subprops(pnames, psobj.props)
             printed = psprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=False)
 
         if not printed:

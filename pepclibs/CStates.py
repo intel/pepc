@@ -36,6 +36,7 @@ PROPS = {
         "sname": None,
         "writable" : True,
         "sources" : ("msr", ),
+        "subprops" : ("pkg_cstate_limit_lock", "pkg_cstate_limits", "pkg_cstate_limit_aliases"),
     },
     "pkg_cstate_limit_lock" : {
         "name" : "Package C-state limit lock",

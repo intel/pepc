@@ -177,14 +177,24 @@ def _add_info_subcommand_options(props, subpars):
     Add options for all properties in 'props' to for the "info" subcommand.
     """
 
-    for name, pinfo in props.items():
+    spnames = set()
+    for pinfo in props.values():
+        for spname in pinfo.get("subprops", []):
+            spnames.add(spname)
+
+    for pname, pinfo in props.items():
+        if pname in spnames:
+            # Do not add a separate option for a sub-property. Sub-property information is printed
+            # along with the property information.
+            continue
+
         kwargs = {}
         kwargs["default"] = argparse.SUPPRESS
         kwargs["nargs"] = 0
         kwargs["help"] = _get_info_subcommand_prop_help_text(pinfo)
         kwargs["action"] = ArgParse.OrderedArg
 
-        option = f"--{name.replace('_', '-')}"
+        option = f"--{pname.replace('_', '-')}"
         subpars.add_argument(option, **kwargs)
 
 def _get_config_subcommand_prop_help_text(pinfo):

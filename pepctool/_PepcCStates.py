@@ -57,6 +57,7 @@ def cstates_info_command(args, pman):
                 printed += csprint.print_cstates(csnames=csnames, cpus=cpus)
 
             pnames = list(getattr(args, "oargs", []))
+            pnames = _PepcCommon.expand_subprops(pnames, csobj.props)
             if pnames:
                 printed += csprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=False)
 

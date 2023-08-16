@@ -44,6 +44,7 @@ def power_info_command(args, pman):
             printed = pprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True, group=True)
         else:
             pnames = list(getattr(args, "oargs"))
+            pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
             printed = pprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=False,
                                          group=False)
 

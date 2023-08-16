@@ -235,6 +235,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
+
         pinfo_iter = self._pobj.get_props(pnames, cpus=cpus)
         aggr_pinfo = self._build_aggr_pinfo(pinfo_iter, skip_unsupported)
 
