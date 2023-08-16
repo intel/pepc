@@ -16,12 +16,17 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
   - [Using 'pip'](#using-pip)
   - [Standalone version](#standalone-version)
   - [Tab completions](#tab-completions)
+- [Examples](#examples)
+  - [P-states](#p-states)
+  - [C-states](#c-states)
+  - [CPU hotplug](#cpu-hotplug)
+  - [CPU topology](#cpu-topology)
 - [FAQ](#faq)
 
 # Introduction
 
 Pepc stands for "Power, Energy, and Performance Configurator". This is a command-line tool for
-configuring various Linux and Hardware power management features.
+configuring CPU power management features.
 
 **IMPORTANT**: this is tool is for debug and research purposes only. It requires root permissions,
 and must only be used in an isolated lab environment, not in production.
@@ -31,18 +36,25 @@ and must only be used in an isolated lab environment, not in production.
 There are many Linux tools for configuring power management in Linux, and this sub-section tries to
 explain why we created yet another one.
 
-We develop, maintain, and use another project - [wult](https://github.com/intel/wult), and when we
-measure a computer system with 'wult', we often need to configure it, for example, enable or disable
-various C-states, limit CPU or uncore frequency, tweak hardware features like C1 demotion, and so on.
+We are doing a lot of work related to power and performance, such as measuring C-states latency
+using [wult](https://github.com/intel/wult), running various workloads and collectin power and
+performance statistics using [stats-collect](https://github.com/intel/stats-collect). We often
+need to configure various power and performance aspects of the system, for example, enable or
+disable C-states, limit CPU or uncore frequency, tweak hardware features like C1 demotion, and
+so on.
 
-This required us to use many different tools and sysfs interfaces. It was difficult and error-prone,
-until we created 'pepc', which supports everything we need for our research. For example, we can
-limit C-states for a specific CPU, or core, or package with just one simple command. We can enable
-or disable HW features without a need to remember MSR registers and bit numbers, and so on.
+Before 'pepc' was created, we had to use many different tools, such as 'cpupower' or 'lscpu',
+remember sysfs paths for various knobs, such a path to disable a C-state. This was difficult
+and error-prone. It was also not flexible enough for us. For example, disabling C1 only for one CPU
+module was a difficult task, because one has to first figure out what are the CPU numbers in that
+module, and then disable C1 on every CPU. And finally, many hardware features like C1 demotion
+requires knowledge of the MSR register and the bit number to toggle. The 'wrmsr' and 'rdmsr' are
+helpful tools, but they were not easy enough for us to use on a regular basis.
 
-This project provides the tool and various modules that other projects like 'wult' can use. For
-example, the 'CStates' module provides methods for discovering and manipulating C-states of a Linux
-computer system.
+We created 'pepc' to make power and performance configuration tasks easier. With pepc, we do not
+have to remember sysfs paths and platform-specific MSR (Model Spesific Register) numbers. The tool
+is flexible, supports many CPU models, well-structured, and also provides Python API for other
+python projects to use.
 
 # Authors and contributors
 
@@ -181,6 +193,306 @@ eval "$(register-python-argcomplete pepc)"
 
 You can put this line to your '.bashrc' file in order to have 'pepc' tab completions enabled by
 default.
+
+# Examples
+
+## P-states
+
+### Get all the genearlly interesting P-states information:
+
+```
+$ pepc pstates info
+Source: Linux sysfs file-system
+ - Min. CPU frequency: '1.2GHz' for CPUs 0-87 (all CPUs)
+ - Max. CPU frequency: '3.6GHz' for CPUs 0-87 (all CPUs)
+ - Min. supported CPU frequency: '1.2GHz' for CPUs 0-87 (all CPUs)
+ - Max. supported CPU frequency: '3.6GHz' for CPUs 0-87 (all CPUs)
+ - Base CPU frequency: '2.2GHz' for CPUs 0-87 (all CPUs)
+ - Turbo: 'on' for CPUs 0-87 (all CPUs)
+ - Min. uncore frequency: '1.2GHz' for CPUs 0-87 (all CPUs)
+ - Max. uncore frequency: '2.8GHz' for CPUs 0-87 (all CPUs)
+ - Min. supported uncore frequency: '1.2GHz' for CPUs 0-87 (all CPUs)
+ - Max. supported uncore frequency: '2.8GHz' for CPUs 0-87 (all CPUs)
+ - EPB: '7' for CPUs 0-87 (all CPUs)
+ - CPU frequency driver: intel_pstate
+ - Operation mode of 'intel_pstate' driver: 'passive' for CPUs 0-87 (all CPUs)
+ - CPU frequency governor: 'schedutil' for CPUs 0-87 (all CPUs)
+ - Available CPU frequency governors: conservative, ondemand, userspace, powersave, performance, schedutil
+Source: Model Specific Register (MSR)
+ - Base CPU frequency: '2.2GHz' for CPUs 0-87 (all CPUs)
+ - Bus clock speed: '100MHz' for CPUs 0-87 (all CPUs)
+ - Min. CPU operating frequency: '800MHz' for CPUs 0-87 (all CPUs)
+ - Max. CPU efficiency frequency: '1.2GHz' for CPUs 0-87 (all CPUs)
+ - Max. CPU turbo frequency: '3.6GHz' for CPUs 0-87 (all CPUs)
+ - EPB: '7' for CPUs 0-87 (all CPUs)
+```
+
+### Get base CPU frequency and CPU frequency driver name
+
+```
+$ pepc pstates info --base-freq --driver
+Base CPU frequency: '2.2GHz' for CPUs 0-87 (all CPUs)
+CPU frequency driver: intel_pstate
+```
+
+### Set min. and max. CPU frequency
+
+Limit CPU frequency reange to [1.5GHz, 2GHz] for all CPUs.
+
+```
+$ pepc pstates config --min-freq 1.5GHz --max-freq 2GHz
+Min. CPU frequency: set to '1.5GHz' for CPUs 0-87 (all CPUs)
+Max. CPU frequency: set to '2GHz' for CPUs 0-87 (all CPUs)
+```
+
+Verify it.
+
+```
+$ pepc pstates info --min-freq --max-freq
+Min. CPU frequency: '1.5GHz' for CPUs 0-87 (all CPUs)
+Max. CPU frequency: '2GHz' for CPUs 0-87 (all CPUs)
+```
+
+Lock CPU frequency to base frequency (HFM) for all CPUs in cores 0 and 4 of package 1.
+
+```
+pepc pstates config --min-freq base --max-freq base --packages 1 --cores 0,4
+Min. CPU frequency: set to '2.2GHz' for CPUs 1,9,45,53
+Max. CPU frequency: set to '2.2GHz' for CPUs 1,9,45,53
+```
+
+Verify it.
+
+```
+$ pepc pstates info --min-freq --max-freq
+Min. CPU frequency: '1.5GHz' for CPUs 0,2-8,10-44,46-52,54-87
+Min. CPU frequency: '2.2GHz' for CPUs 1,9,45,53
+Max. CPU frequency: '2GHz' for CPUs 0,2-8,10-44,46-52,54-87
+Max. CPU frequency: '2.2GHz' for CPUs 1,9,45,53
+```
+
+Unlock CPU frequency on all CPUs.
+
+```
+$ pepc pstates config --min-freq min --max-freq max
+Min. CPU frequency: set to '1.2GHz' for CPUs 0-87 (all CPUs)
+Max. CPU frequency: set to '3.6GHz' for CPUs 0-87 (all CPUs)
+```
+
+Verify it.
+
+```
+$ pepc pstates info --min-freq --max-freq
+Min. CPU frequency: '1.2GHz' for CPUs 0-87 (all CPUs)
+Max. CPU frequency: '3.6GHz' for CPUs 0-87 (all CPUs)
+```
+
+### Change Linux CPU frequency governor
+
+First, get the name of current governor and list of supported governors.
+
+```
+$ pepc pstates info --governor --governors
+CPU frequency governor: 'schedutil' for CPUs 0-87 (all CPUs)
+Available CPU frequency governors: conservative, ondemand, userspace, powersave, performance, schedutil
+```
+
+Switch to the "performance" governor.
+
+```
+$ pepc pstates config --governor performance
+CPU frequency governor: set to 'performance' for CPUs 0-87 (all CPUs)
+```
+
+Verify it.
+
+```
+$ pepc pstates info --governor
+CPU frequency governor: 'performance' for CPUs 0-87 (all CPUs)
+```
+
+## C-states
+
+### Get all the genearlly interesting C-states information
+
+```
+$ pepc cstates info
+Source: Linux sysfs file-system
+ - POLL: 'on' for CPUs 0-87 (all CPUs)
+    - description: CPUIDLE CORE POLL IDLE
+    - expected latency: 0 us
+    - target residency: 0 us
+ - C1: 'on' for CPUs 0-87 (all CPUs)
+    - description: MWAIT 0x00
+    - expected latency: 2 us
+    - target residency: 2 us
+ - C1E: 'on' for CPUs 0-87 (all CPUs)
+    - description: MWAIT 0x01
+    - expected latency: 10 us
+    - target residency: 20 us
+ - C3: 'off' for CPUs 0-87 (all CPUs)
+    - description: MWAIT 0x10
+    - expected latency: 40 us
+    - target residency: 100 us
+ - C6: 'on' for CPUs 0-87 (all CPUs)
+    - description: MWAIT 0x20
+    - expected latency: 133 us
+    - target residency: 400 us
+Source: Model Specific Register (MSR)
+ - Package C-state limit: 'PC6' for CPUs 0-87 (all CPUs)
+ - Package C-state limit lock: 'on' for CPUs 0-87 (all CPUs)
+ - Available package C-state limits: PC0, PC2, PC3, PC6, unlimited
+ - C1 demotion: 'off' for CPUs 0-87 (all CPUs)
+ - C1 undemotion: 'off' for CPUs 0-87 (all CPUs)
+ - C1E autopromote: 'off' for CPUs 0-87 (all CPUs)
+ - C-state prewake: 'on' for CPUs 0-87 (all CPUs)
+Source: Linux sysfs file-system
+ - Idle driver: intel_idle
+ - Idle governor: 'menu' for CPUs 0-87 (all CPUs)
+ - Available idle governors: menu
+```
+
+### Get information about C1 and package C-state limit
+
+```
+$ pepc cstates info --cstates C1 --pkg-cstate-limit
+C1: 'on' for CPUs 0-87 (all CPUs)
+ - description: MWAIT 0x00
+ - expected latency: 2 us
+ - target residency: 2 us
+Package C-state limit: 'PC6' for CPUs 0-87 (all CPUs)
+```
+
+### Toggle C-states
+
+Disable all C-states but POLL on all CPUs.
+
+```
+$ pepc cstates config --disable all --enable POLL
+POLL: set to 'off' for CPUs 0-87 (all CPUs)
+C1: set to 'off' for CPUs 0-87 (all CPUs)
+C1E: set to 'off' for CPUs 0-87 (all CPUs)
+C3: set to 'off' for CPUs 0-87 (all CPUs)
+C6: set to 'off' for CPUs 0-87 (all CPUs)
+POLL: set to 'on' for CPUs 0-87 (all CPUs)
+```
+
+Enable all C-states on all CPUs.
+
+```
+$ pepc cstates config --enable all
+POLL: set to 'on' for CPUs 0-87 (all CPUs)
+C1: set to 'on' for CPUs 0-87 (all CPUs)
+C1E: set to 'on' for CPUs 0-87 (all CPUs)
+C3: set to 'on' for CPUs 0-87 (all CPUs)
+C6: set to 'on' for CPUs 0-87 (all CPUs)
+```
+
+Disable C1E and C6 on package 1.
+
+```
+$ pepc cstates config --disable C1E,C6 --packages 1
+C1E: set to 'off' for CPUs 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65,67,69,71,73,75,77,79,81,83,85,87 (package 1)
+C6: set to 'off' for CPUs 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65,67,69,71,73,75,77,79,81,83,85,87 (package 1)
+```
+
+### Configure package C-state limit
+
+Get package C-state limit information.
+
+```
+$ pepc cstates info --pkg-cstate-limit --pkg-cstate-limit-lock
+Package C-state limit: 'PC6' for CPUs 0-87 (all CPUs)
+Package C-state limit lock: 'on' for CPUs 0-87 (all CPUs)
+```
+
+Since package C-state limit MSR is not locked, we can modify the limit. Set the deepest
+allowed package C-state to PC0 on all packages.
+
+```
+$ pepc cstates config --pkg-cstate-limit PC0 --packages all
+Package C-state limit set to 'PC0' for CPUs 0-87 (all CPUs)
+```
+
+## CPU hotplug
+
+### Online/offline certain CPUs
+
+First, check the current online/offline situation.
+
+```
+$ pepc cpu-hotplug info
+The following CPUs are online: 0-87
+No offline CPUs
+```
+
+Offline CPUs 5,6,7,8 and CPU 87.
+
+```
+$ pepc cpu-hotplug offline --cpus 5-8,87
+Offlining CPU5
+Offlining CPU6
+Offlining CPU7
+Offlining CPU8
+Offlining CPU87
+```
+
+### Online all CPUs
+
+```
+$ pepc cpu-hotplug online --cpus all
+Onlining CPU5
+Onlining CPU6
+Onlining CPU7
+Onlining CPU8
+Onlining CPU87
+```
+
+### Disable hyperthreads by offlining core siblings
+
+Core siblings are CPUs withing one core. On Intel chips, there are the hyperthreads.
+If a system has two CPUs (execution units, hyperthreads) per core, then their core
+sibling inices are 0 and 1. To disable hyperthreads, offline all core siblings with
+index 1.
+
+
+```
+$ pepc cpu-hotplug offline --cpus all --core-siblings 1
+```
+
+Hint: use 'pepc topology info --columns core,cpu' to figure out the relation between
+core and CPU numbers.
+
+### Offline package 1
+
+On a multi-socket systems there are multiple CPU packages. You can offline all CPUs
+of a package to effectively "disable" it. Here is how to do it for package 1.
+
+```
+$ pepc cpu-hotplug offline --packages 1
+```
+
+## CPU topolgy
+
+### Print the topology table
+
+```
+$ pepc topology info
+CPU    Core    Node    Package
+  0       0       0          0
+  1       0       1          1
+  2       1       0          0
+  3       1       1          1
+
+... snip ...
+
+ 85      27       1          1
+ 86      28       0          0
+ 87      28       1          1
+```
+
+The table gives an idea about how CPU, core, NUMA node and package numbers are related
+to each other.
 
 # FAQ
 
