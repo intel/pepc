@@ -1,3 +1,9 @@
+pepc (1.4.31) unstable; urgency=low
+
+  * Fix 'pepc cstates config --cstates all' printing output.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 16 Aug 2023 00:00:00 +0200
+
 pepc (1.4.30) unstable; urgency=low
 
   * Prevent 'pepc pstates info' and 'pepc power info' from printing unsupported

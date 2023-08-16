@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix 'pepc cstates config --cstates all' printing output.
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.31] - 2023-08-16
+### Fixed
+ - Fix 'pepc cstates config --cstates all' printing output.
 
 ## [1.4.30] - 2023-08-14
 ### Fixed
