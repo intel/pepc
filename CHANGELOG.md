@@ -7,11 +7,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
 ### Added
 ### Removed
+### Changed
+
+## [1.4.32] - 2023-08-17
+### Removed
  - pepc cstates info: remove '--pkg-cstate-limits', '--pkg-cstate-limit-lock',
    and '--pkg-cstate-limit-aliases' options. Now this information is printed
    with '--pkg-cstate-limit' option. This effectively reverts the corresponding
    change in v1.4.29.
-### Changed
 
 ## [1.4.31] - 2023-08-16
 ### Fixed

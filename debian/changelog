@@ -1,3 +1,12 @@
+pepc (1.4.32) unstable; urgency=low
+
+  * pepc cstates info: remove '--pkg-cstate-limits', '--pkg-cstate-limit-lock',
+    and '--pkg-cstate-limit-aliases' options. Now this information is printed
+    with '--pkg-cstate-limit' option. This effectively reverts the corresponding
+    change in v1.4.29.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 17 Aug 2023 00:00:00 +0200
+
 pepc (1.4.31) unstable; urgency=low
 
   * Fix 'pepc cstates config --cstates all' printing output.
