@@ -352,15 +352,16 @@ Source: Linux sysfs file-system
  - Available idle governors: menu
 ```
 
-### Get information about C1 and package C-state limit
+### Get information about C1, C1E autopromote, and C1 demotion
 
 ```
-$ pepc cstates info --cstates C1 --pkg-cstate-limit
+$ pepc cstates info --cstates C1 --c1e-autopromote --c1-demotion
 C1: 'on' for CPUs 0-87 (all CPUs)
  - description: MWAIT 0x00
  - expected latency: 2 us
  - target residency: 2 us
-Package C-state limit: 'PC6' for CPUs 0-87 (all CPUs)
+C1E autopromote: 'off' for CPUs 0-87 (all CPUs)
+C1 demotion: 'off' for CPUs 0-87 (all CPUs)
 ```
 
 ### Toggle C-states
@@ -401,9 +402,10 @@ C6: set to 'off' for CPUs 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39
 Get package C-state limit information.
 
 ```
-$ pepc cstates info --pkg-cstate-limit --pkg-cstate-limit-lock
+$ pepc cstates info --pkg-cstate-limit
 Package C-state limit: 'PC6' for CPUs 0-87 (all CPUs)
-Package C-state limit lock: 'on' for CPUs 0-87 (all CPUs)
+Package C-state limit lock: 'off' for CPUs 0-87 (all CPUs)
+Available package C-state limits: PC0, PC2, PC3, PC6, unlimited
 ```
 
 Since package C-state limit MSR is not locked, we can modify the limit. Set the deepest
