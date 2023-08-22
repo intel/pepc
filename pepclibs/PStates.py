@@ -1021,6 +1021,11 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _set_intel_pstate_mode(self, cpu, mode):
         """Change mode of the CPU frequency driver 'intel_pstate'."""
 
+        # Setting 'intel_pstate' driver mode to "off" is only possible in non-HWP (legacy) mode.
+        if mode == "off" and self._get_cpu_prop_value("hwp", cpu) == "on":
+            raise ErrorNotSupported("'intel_pstate' driver does not support \"off\" mode when "
+                                    "hardware power management (HWP) is enabled")
+
         path = self._sysfs_base / "intel_pstate" / "status"
         try:
             self._write_prop_value_to_sysfs(self._props["intel_pstate_mode"], path, mode)
