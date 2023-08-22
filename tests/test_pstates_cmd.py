@@ -148,9 +148,15 @@ def _get_config_options(params):
     bad_options = []
 
     if is_prop_supported("intel_pstate_mode", params["pinfo"]):
+        # The "off" mode is not supported when HWP is enabled.
+        if is_prop_supported("hwp", params["pinfo"]) and params["pinfo"]["hwp"] == "off":
+            good_options += ["--intel-pstate-mode off"]
+
+        # Note, the last mode is intentionally something else but "off", because in "off" mode many
+        # options do not work. For example, switching turbo on/off does not work in the "off" mode.
         good_options += ["--intel-pstate-mode",
-                         "--intel-pstate-mode off",
                          "--intel-pstate-mode passive"]
+
         bad_options += ["--intel-pstate-mode Dagny"]
 
     if is_prop_supported("turbo", params["pinfo"]):
