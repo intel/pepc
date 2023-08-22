@@ -217,13 +217,11 @@ class EPP(ClassHelpers.SimpleCloseContext):
             with self._pman.open(self._sysfs_epp_path % cpu, "r+") as fobj:
                 try:
                     fobj.write(epp)
-                except Error as err:
-                    if epp.isdigit() or "Invalid argument" not in str(err):
-                        raise
-
+                except Error:
                     # This is a workaround for a kernel bug, which has been fixed in v6.5:
                     #   03f44ffb3d5be cpufreq: intel_pstate: Fix energy_performance_preference for
                     #                 passive
+                    # The bug is that write fails is the new value is the same as the current value.
                     fobj.seek(0)
                     val = fobj.read().strip()
                     if epp != val:
