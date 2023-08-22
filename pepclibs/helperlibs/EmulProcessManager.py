@@ -169,14 +169,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             if mode != "r+":
                 return
 
+            fobj._orig_write = fobj.write
+
             if path.endswith("pcie_aspm/parameters/policy"):
                 policies = fobj.read().strip()
                 fobj._policies = policies.replace("[", "").replace("]", "")
-                fobj._orig_write = fobj.write
                 fobj.write = types.MethodType(_aspm_write, fobj)
-
             else:
-                fobj._orig_write = fobj.write
                 fobj.write = types.MethodType(_truncate_write, fobj)
 
     def _msr_seek(self, fobj, path):
