@@ -8,7 +8,7 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module provides an API to get CPU information.
+This module provides API for getting CPU information.
 """
 
 import re
