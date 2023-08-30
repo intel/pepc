@@ -27,7 +27,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 _LOG = logging.getLogger()
 
 # The default process timeout in seconds.
-TIMEOUT = 4 * 60 * 60
+TIMEOUT = 24 * 60 * 60
 
 # Results of a process finished its execution.
 ProcResult = namedtuple("proc_result", ["stdout", "stderr", "exitcode"])
