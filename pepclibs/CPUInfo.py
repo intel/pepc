@@ -13,6 +13,7 @@ This module provides API for getting CPU information.
 
 import re
 import copy
+import json
 import logging
 from pathlib import Path
 from contextlib import suppress
@@ -389,8 +390,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     Public methods overview.
 
-    1. Get CPU topology information.
-        * 'get_topology()'
+    1. Get various CPU information.
+        * 'get_topology()' - CPU topology.
+        * 'get_cache_info()' - CPU cache.
     2. Get list of packages/cores/etc.
         * 'get_cpus()'
         * 'get_cores()'
@@ -1278,6 +1280,43 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return self._hybrid_cpus
 
+    def get_cache_info(self):
+        """
+        Returns a dictionary including CPU cache infomration. The dictionary keys and layout is
+        similar to what the following command provides: 'lscpu --json --caches'.
+        """
+
+        if self._cacheinfo:
+            return self._cacheinfo
+
+        cmd = "lscpu --caches --json --bytes"
+        stdout, _ = self._pman.run_verify(cmd)
+
+        try:
+            cacheinfo = json.loads(stdout)
+        except Exception as err:
+            msg = Error(err).indent(2)
+            raise Error(f"failed parse output of '{cmd}' command{self._pman.hostmsg}:\n{msg}\n"
+                        f"The output of the command was:\n{stdout}") from None
+
+        self._cacheinfo = {}
+
+        # Change dictionary structure from a list of dictionaries to a dictionary of dictionaries.
+        for info in cacheinfo["caches"]:
+            name = info["name"]
+            if name in self._cacheinfo:
+                raise Error(f"BUG: multiple caches with name '{name}'")
+
+            self._cacheinfo[name] = {}
+            # Turn size values from strings to integers amount bytes.
+            for key, val in info.items():
+                if Trivial.is_int(val):
+                    self._cacheinfo[name][key] = int(val)
+                else:
+                    self._cacheinfo[name][key] = val
+
+        return self._cacheinfo
+
     def _get_cpu_info(self):
         """Get general CPU information (model, architecture, etc)."""
 
@@ -1297,10 +1336,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                     (r"^Model name:\s*(.*)$", "modelname"),
                     (r"^Model name:.*@\s*(.*)GHz$", "basefreq"),
                     (r"^Stepping:\s*(.*)$", "stepping"),
-                    (r"^L1d cache:\s*(.*)$", "l1d"),
-                    (r"^L1i cache:\s*(.*)$", "l1i"),
-                    (r"^L2 cache:\s*(.*)$", "l2"),
-                    (r"^L3 cache:\s*(.*)$", "l3"),
                     (r"^Flags:\s*(.*)$", "flags"))
 
         for line in lscpu:
@@ -1393,6 +1428,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self.info = None
         # A short CPU description string.
         self.cpudescr = None
+
+        # CPU cache information dictionary.
+        self._cacheinfo = None
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
