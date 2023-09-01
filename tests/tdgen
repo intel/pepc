@@ -138,7 +138,7 @@ PStatesData = {
     "prepare-cmds" : [
         "modprobe intel_uncore_frequency",
         "modprobe msr",
-        "pepc pstates config --min-freq min --max-freq hfm --cpus all",
+        "pepc pstates config --min-freq min --max-freq max --cpus all",
         "pepc pstates config --min-uncore-freq min --max-uncore-freq max --cpus all",
         "pepc cstates config --enable all --cpus all"],
     "inlinefiles" : [
