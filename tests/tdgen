@@ -26,8 +26,6 @@ LOG = logging.getLogger()
 Logging.setup_logger(prefix=OWN_NAME)
 
 CPUInfoData = {
-    "prepare-cmds" : [
-        "pepc cpu-hotplug online --cpus all"],
     "commands" : [
         {"command": "lscpu",
          "dirname": "lscpu"}],
@@ -108,8 +106,6 @@ ASPMData = {
     }
 
 CPUOnlineData = {
-    "prepare-cmds" : [
-        "pepc cpu-hotplug online --cpus all"],
     "inlinefiles" : [
         {"command": r"grep -H '.*' "
                     r"/sys/devices/system/cpu/cpu[0-9]*/online",
@@ -336,6 +332,8 @@ def main():
             outdir = args.outdir
             if not outdir:
                 outdir = Path(pman.hostname)
+
+            pman.run_verify("pepc cpu-hotplug online --cpus all")
 
             for modname, testdata in MODULE_TESTDATA.items():
                 datapath = outdir / modname
