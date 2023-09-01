@@ -22,6 +22,10 @@ inlinefiles:
   readonly: true
   dirname: CPUInfo/node-info
   filename: node.txt
+- separator: ':'
+  readonly: true
+  dirname: CPUInfo/hybrid-info
+  filename: hybrid.txt
 msrs:
   addresses:
   - 432
@@ -37,6 +41,7 @@ msrs:
   - 430
   - 430
   - 430
+  - 1552
   separator1: ':'
   separator2: '|'
   dirname: CPUInfo/msr
