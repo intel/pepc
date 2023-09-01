@@ -356,8 +356,9 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
                 new_val = self.read_cpu(regaddr, cpu, sname=sname)
                 if new_val != regval:
-                    err_msg = f"verification failed for MSR '{regaddr:#x}' on CPU {cpu}\n" \
-                              f"{self._pman.hostmsg}: wrote '{regval:#x}', read back '{new_val:#x}'"
+                    err_msg = f"verification failed for MSR '{regaddr:#x}' on CPU {cpu}" \
+                              f"{self._pman.hostmsg}:\n  wrote '{regval:#x}', read back " \
+                              f"'{new_val:#x}'"
                     raise ErrorVerifyFailed(err_msg, cpu=cpu)
 
     def write_cpu(self, regaddr, regval, cpu, sname="CPU", verify=False):
