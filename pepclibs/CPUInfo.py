@@ -1195,7 +1195,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
             if cpu not in allcpus:
                 cpus_str = Human.rangify(allcpus)
-                raise Error(f"CPU{cpu} is not available{self._pman.hostmsg}, available CPUs are: "
+                raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}, available CPUs are: "
                             f"{cpus_str}")
 
         return cpus
