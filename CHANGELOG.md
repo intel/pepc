@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix 'pepc pstates info' output, group the properties by source.
 ### Added
  - Add new methods to 'CPUInfo' module to support 'wult' project needs.
 ### Removed
