@@ -41,7 +41,8 @@ def pstates_info_command(args, pman):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
         if not hasattr(args, "oargs"):
-            printed = psprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True)
+            printed = psprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True,
+                                          group=True)
         else:
             pnames = list(getattr(args, "oargs"))
             pnames = _PepcCommon.expand_subprops(pnames, psobj.props)
