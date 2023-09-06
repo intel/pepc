@@ -160,7 +160,34 @@ class Power(_PropsClassBase.PropsClassBase):
         """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
 
         fname = self._pname2fname(pname)
+        pinfo = self._props[pname]
+
         for cpu in cpus:
+            # RAPL contains min/max values for the PPL in an MSR register, however the register
+            # contents are unreliable so we derive ranges here from TDP.
+            if pname in ("ppl1", "ppl2"):
+                tdp = self._get_cpu_prop_value("tdp", cpu)
+
+                fval = float(val)
+
+                if pname == "ppl1":
+                    minval = tdp / 8
+                    maxval = tdp
+                    if fval > self._get_cpu_prop_value("ppl2", cpu):
+                        raise Error(f"{pinfo['name']} can't be higher than RAPL PPL2 for CPU{cpu}")
+                else:
+                    # For PPL2, use maxval as TDP * 3. Mehlow system has default value for PPL2 as
+                    # 210W, and TDP is 80W.
+                    minval = tdp / 8
+                    maxval = tdp * 3
+                    if fval < self._get_cpu_prop_value("ppl1", cpu):
+                        raise Error(f"{pinfo['name']} can't be lower than RAPL PPL1 for CPU{cpu}")
+
+                if fval > maxval or fval < minval:
+                    errmsg = f"value {val}W for {pinfo['name']} out of range ({minval}W-" \
+                             f"{maxval}W) for CPU{cpu}"
+                    raise Error(errmsg)
+
             self._get_pplobj().write_cpu_feature(fname, val, cpu)
 
     def _set_props(self, inprops, cpus):
