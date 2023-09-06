@@ -13,7 +13,7 @@ This module provides API for managing platform settings related to power.
 import logging
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 
 _LOG = logging.getLogger()
 
@@ -167,7 +167,16 @@ class Power(_PropsClassBase.PropsClassBase):
         """Refer to '_set_props() in '_PropsClassBase' class."""
 
         for pname, val in inprops.items():
-            self._set_prop_value(pname, val, cpus)
+            try:
+                self._set_prop_value(pname, val, cpus)
+            except ErrorVerifyFailed as err:
+                pinfo = self._props[pname]
+                if pname in ("ppl1_enable", "ppl2_enable"):
+                    state = "enab" if val else "disab"
+                    errmsg = f"failed to {state}le {pinfo['name']}. Keep in mind some platforms " \
+                             f"forbid {state}ling {pinfo['name']}."
+                    raise ErrorVerifyFailed(errmsg) from err
+                raise
 
     def _set_sname(self, pname):
         """Set scope "sname" for property 'pname'."""
