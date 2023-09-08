@@ -153,8 +153,9 @@ def test_cstates_config(params):
     bad_options = []
 
     if is_prop_supported("governor", params["pinfo"]):
+        good_options += ["--governor"]
         for governor in params["pinfo"]["governors"]:
-            good_options += ["--governor", f"--governor {governor}"]
+            good_options += [f"--governor {governor}"]
         bad_options += ["--governor reardenmetal"]
 
     for option in good_options:
