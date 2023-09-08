@@ -131,7 +131,9 @@ def _get_config_options(params):
     bad_options = []
 
     if is_prop_supported("governor", params["pinfo"]):
-        good_options += ["--governor", "--governor powersave"]
+        good_options += ["--governor"]
+        for governor in params["pinfo"]["governors"]:
+            good_options += [f"--governor {governor}"]
         bad_options += ["--governor savepower"]
 
     if is_prop_supported("epp", params["pinfo"]):
