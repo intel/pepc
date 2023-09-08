@@ -1,8 +1,0 @@
-/sys/devices/system/cpu/cpu7
-/sys/devices/system/cpu/cpu5
-/sys/devices/system/cpu/cpu3
-/sys/devices/system/cpu/cpu1
-/sys/devices/system/cpu/cpu6
-/sys/devices/system/cpu/cpu4
-/sys/devices/system/cpu/cpu2
-/sys/devices/system/cpu/cpu0

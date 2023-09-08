@@ -1,4 +1,4 @@
-/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/current_freq_khz:2200000
+/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/current_freq_khz:1600000
 /sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/initial_max_freq_khz:2400000
 /sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/initial_min_freq_khz:1200000
 /sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/max_freq_khz:2400000

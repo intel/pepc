@@ -4,10 +4,10 @@
 /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy0/related_cpus:0
 /sys/devices/system/cpu/cpufreq/policy0/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq:1459131
+/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy0/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy0/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy100/affected_cpus:100
@@ -19,7 +19,7 @@
 /sys/devices/system/cpu/cpufreq/policy100/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy100/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy100/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy100/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy100/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy100/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy100/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy101/affected_cpus:101
@@ -31,7 +31,7 @@
 /sys/devices/system/cpu/cpufreq/policy101/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy101/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy101/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy101/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy101/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy101/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy101/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy102/affected_cpus:102
@@ -40,10 +40,10 @@
 /sys/devices/system/cpu/cpufreq/policy102/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy102/related_cpus:102
 /sys/devices/system/cpu/cpufreq/policy102/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy102/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy102/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy102/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy102/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy102/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy102/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy102/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy102/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy103/affected_cpus:103
@@ -55,7 +55,7 @@
 /sys/devices/system/cpu/cpufreq/policy103/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy103/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy103/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy103/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy103/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy103/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy103/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy104/affected_cpus:104
@@ -67,7 +67,7 @@
 /sys/devices/system/cpu/cpufreq/policy104/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy104/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy104/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy104/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy104/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy104/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy104/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy105/affected_cpus:105
@@ -79,7 +79,7 @@
 /sys/devices/system/cpu/cpufreq/policy105/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy105/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy105/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy105/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy105/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy105/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy105/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy106/affected_cpus:106
@@ -88,10 +88,10 @@
 /sys/devices/system/cpu/cpufreq/policy106/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy106/related_cpus:106
 /sys/devices/system/cpu/cpufreq/policy106/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy106/scaling_cur_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy106/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy106/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy106/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy106/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy106/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy106/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy106/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy107/affected_cpus:107
@@ -103,7 +103,7 @@
 /sys/devices/system/cpu/cpufreq/policy107/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy107/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy107/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy107/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy107/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy107/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy107/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy108/affected_cpus:108
@@ -112,10 +112,10 @@
 /sys/devices/system/cpu/cpufreq/policy108/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy108/related_cpus:108
 /sys/devices/system/cpu/cpufreq/policy108/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy108/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy108/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy108/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy108/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy108/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy108/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy108/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy108/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy109/affected_cpus:109
@@ -124,10 +124,10 @@
 /sys/devices/system/cpu/cpufreq/policy109/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy109/related_cpus:109
 /sys/devices/system/cpu/cpufreq/policy109/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy109/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy109/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy109/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy109/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy109/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy109/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy109/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy109/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy10/affected_cpus:10
@@ -139,7 +139,7 @@
 /sys/devices/system/cpu/cpufreq/policy10/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy10/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy10/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy10/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy10/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy10/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy10/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy110/affected_cpus:110
@@ -151,7 +151,7 @@
 /sys/devices/system/cpu/cpufreq/policy110/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy110/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy110/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy110/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy110/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy110/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy110/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy111/affected_cpus:111
@@ -163,7 +163,7 @@
 /sys/devices/system/cpu/cpufreq/policy111/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy111/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy111/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy111/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy111/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy111/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy111/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy112/affected_cpus:112
@@ -172,10 +172,10 @@
 /sys/devices/system/cpu/cpufreq/policy112/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy112/related_cpus:112
 /sys/devices/system/cpu/cpufreq/policy112/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy112/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy112/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy112/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy112/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy112/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy112/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy112/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy112/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy113/affected_cpus:113
@@ -184,10 +184,10 @@
 /sys/devices/system/cpu/cpufreq/policy113/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy113/related_cpus:113
 /sys/devices/system/cpu/cpufreq/policy113/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy113/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy113/scaling_cur_freq:1200000
 /sys/devices/system/cpu/cpufreq/policy113/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy113/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy113/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy113/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy113/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy113/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy114/affected_cpus:114
@@ -196,10 +196,10 @@
 /sys/devices/system/cpu/cpufreq/policy114/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy114/related_cpus:114
 /sys/devices/system/cpu/cpufreq/policy114/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy114/scaling_cur_freq:1100000
+/sys/devices/system/cpu/cpufreq/policy114/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy114/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy114/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy114/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy114/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy114/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy114/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy115/affected_cpus:115
@@ -208,10 +208,10 @@
 /sys/devices/system/cpu/cpufreq/policy115/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy115/related_cpus:115
 /sys/devices/system/cpu/cpufreq/policy115/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy115/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy115/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy115/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy115/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy115/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy115/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy115/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy115/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy116/affected_cpus:116
@@ -223,7 +223,7 @@
 /sys/devices/system/cpu/cpufreq/policy116/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy116/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy116/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy116/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy116/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy116/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy116/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy117/affected_cpus:117
@@ -232,10 +232,10 @@
 /sys/devices/system/cpu/cpufreq/policy117/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy117/related_cpus:117
 /sys/devices/system/cpu/cpufreq/policy117/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy117/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy117/scaling_cur_freq:1200000
 /sys/devices/system/cpu/cpufreq/policy117/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy117/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy117/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy117/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy117/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy117/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy118/affected_cpus:118
@@ -247,7 +247,7 @@
 /sys/devices/system/cpu/cpufreq/policy118/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy118/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy118/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy118/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy118/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy118/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy118/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy119/affected_cpus:119
@@ -259,7 +259,7 @@
 /sys/devices/system/cpu/cpufreq/policy119/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy119/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy119/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy119/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy119/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy119/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy119/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy11/affected_cpus:11
@@ -271,7 +271,7 @@
 /sys/devices/system/cpu/cpufreq/policy11/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy11/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy11/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy11/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy11/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy11/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy11/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy120/affected_cpus:120
@@ -283,7 +283,7 @@
 /sys/devices/system/cpu/cpufreq/policy120/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy120/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy120/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy120/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy120/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy120/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy120/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy121/affected_cpus:121
@@ -295,7 +295,7 @@
 /sys/devices/system/cpu/cpufreq/policy121/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy121/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy121/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy121/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy121/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy121/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy121/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy122/affected_cpus:122
@@ -304,10 +304,10 @@
 /sys/devices/system/cpu/cpufreq/policy122/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy122/related_cpus:122
 /sys/devices/system/cpu/cpufreq/policy122/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy122/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy122/scaling_cur_freq:1300000
 /sys/devices/system/cpu/cpufreq/policy122/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy122/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy122/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy122/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy122/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy122/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy123/affected_cpus:123
@@ -319,7 +319,7 @@
 /sys/devices/system/cpu/cpufreq/policy123/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy123/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy123/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy123/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy123/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy123/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy123/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy124/affected_cpus:124
@@ -331,7 +331,7 @@
 /sys/devices/system/cpu/cpufreq/policy124/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy124/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy124/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy124/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy124/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy124/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy124/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy125/affected_cpus:125
@@ -343,7 +343,7 @@
 /sys/devices/system/cpu/cpufreq/policy125/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy125/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy125/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy125/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy125/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy125/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy125/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy126/affected_cpus:126
@@ -352,10 +352,10 @@
 /sys/devices/system/cpu/cpufreq/policy126/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy126/related_cpus:126
 /sys/devices/system/cpu/cpufreq/policy126/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy126/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy126/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy126/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy126/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy126/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy126/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy126/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy126/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy127/affected_cpus:127
@@ -367,7 +367,7 @@
 /sys/devices/system/cpu/cpufreq/policy127/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy127/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy127/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy127/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy127/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy127/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy127/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy128/affected_cpus:128
@@ -376,10 +376,10 @@
 /sys/devices/system/cpu/cpufreq/policy128/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy128/related_cpus:128
 /sys/devices/system/cpu/cpufreq/policy128/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy128/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy128/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy128/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy128/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy128/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy128/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy128/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy128/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy129/affected_cpus:129
@@ -391,7 +391,7 @@
 /sys/devices/system/cpu/cpufreq/policy129/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy129/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy129/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy129/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy129/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy129/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy129/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy12/affected_cpus:12
@@ -403,7 +403,7 @@
 /sys/devices/system/cpu/cpufreq/policy12/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy12/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy12/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy12/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy12/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy12/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy12/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy130/affected_cpus:130
@@ -415,7 +415,7 @@
 /sys/devices/system/cpu/cpufreq/policy130/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy130/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy130/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy130/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy130/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy130/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy130/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy131/affected_cpus:131
@@ -427,7 +427,7 @@
 /sys/devices/system/cpu/cpufreq/policy131/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy131/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy131/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy131/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy131/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy131/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy131/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy132/affected_cpus:132
@@ -439,7 +439,7 @@
 /sys/devices/system/cpu/cpufreq/policy132/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy132/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy132/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy132/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy132/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy132/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy132/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy133/affected_cpus:133
@@ -448,10 +448,10 @@
 /sys/devices/system/cpu/cpufreq/policy133/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy133/related_cpus:133
 /sys/devices/system/cpu/cpufreq/policy133/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy133/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy133/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy133/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy133/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy133/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy133/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy133/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy133/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy134/affected_cpus:134
@@ -463,7 +463,7 @@
 /sys/devices/system/cpu/cpufreq/policy134/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy134/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy134/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy134/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy134/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy134/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy134/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy135/affected_cpus:135
@@ -475,7 +475,7 @@
 /sys/devices/system/cpu/cpufreq/policy135/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy135/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy135/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy135/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy135/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy135/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy135/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy136/affected_cpus:136
@@ -484,10 +484,10 @@
 /sys/devices/system/cpu/cpufreq/policy136/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy136/related_cpus:136
 /sys/devices/system/cpu/cpufreq/policy136/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy136/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy136/scaling_cur_freq:1507221
 /sys/devices/system/cpu/cpufreq/policy136/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy136/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy136/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy136/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy136/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy136/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy137/affected_cpus:137
@@ -496,10 +496,10 @@
 /sys/devices/system/cpu/cpufreq/policy137/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy137/related_cpus:137
 /sys/devices/system/cpu/cpufreq/policy137/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy137/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy137/scaling_cur_freq:1400000
 /sys/devices/system/cpu/cpufreq/policy137/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy137/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy137/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy137/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy137/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy137/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy138/affected_cpus:138
@@ -511,7 +511,7 @@
 /sys/devices/system/cpu/cpufreq/policy138/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy138/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy138/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy138/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy138/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy138/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy138/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy139/affected_cpus:139
@@ -523,7 +523,7 @@
 /sys/devices/system/cpu/cpufreq/policy139/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy139/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy139/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy139/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy139/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy139/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy139/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy13/affected_cpus:13
@@ -535,7 +535,7 @@
 /sys/devices/system/cpu/cpufreq/policy13/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy13/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy13/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy13/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy13/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy13/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy13/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy140/affected_cpus:140
@@ -547,7 +547,7 @@
 /sys/devices/system/cpu/cpufreq/policy140/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy140/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy140/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy140/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy140/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy140/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy140/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy141/affected_cpus:141
@@ -559,7 +559,7 @@
 /sys/devices/system/cpu/cpufreq/policy141/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy141/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy141/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy141/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy141/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy141/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy141/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy142/affected_cpus:142
@@ -568,10 +568,10 @@
 /sys/devices/system/cpu/cpufreq/policy142/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy142/related_cpus:142
 /sys/devices/system/cpu/cpufreq/policy142/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy142/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy142/scaling_cur_freq:1400000
 /sys/devices/system/cpu/cpufreq/policy142/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy142/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy142/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy142/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy142/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy142/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy143/affected_cpus:143
@@ -583,7 +583,7 @@
 /sys/devices/system/cpu/cpufreq/policy143/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy143/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy143/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy143/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy143/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy143/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy143/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy144/affected_cpus:144
@@ -595,7 +595,7 @@
 /sys/devices/system/cpu/cpufreq/policy144/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy144/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy144/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy144/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy144/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy144/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy144/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy145/affected_cpus:145
@@ -607,7 +607,7 @@
 /sys/devices/system/cpu/cpufreq/policy145/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy145/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy145/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy145/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy145/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy145/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy145/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy146/affected_cpus:146
@@ -619,7 +619,7 @@
 /sys/devices/system/cpu/cpufreq/policy146/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy146/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy146/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy146/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy146/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy146/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy146/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy147/affected_cpus:147
@@ -628,10 +628,10 @@
 /sys/devices/system/cpu/cpufreq/policy147/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy147/related_cpus:147
 /sys/devices/system/cpu/cpufreq/policy147/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy147/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy147/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy147/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy147/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy147/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy147/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy147/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy147/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy148/affected_cpus:148
@@ -643,7 +643,7 @@
 /sys/devices/system/cpu/cpufreq/policy148/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy148/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy148/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy148/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy148/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy148/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy148/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy149/affected_cpus:149
@@ -655,7 +655,7 @@
 /sys/devices/system/cpu/cpufreq/policy149/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy149/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy149/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy149/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy149/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy149/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy149/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy14/affected_cpus:14
@@ -667,7 +667,7 @@
 /sys/devices/system/cpu/cpufreq/policy14/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy14/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy14/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy14/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy14/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy14/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy14/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy150/affected_cpus:150
@@ -679,7 +679,7 @@
 /sys/devices/system/cpu/cpufreq/policy150/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy150/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy150/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy150/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy150/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy150/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy150/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy151/affected_cpus:151
@@ -691,7 +691,7 @@
 /sys/devices/system/cpu/cpufreq/policy151/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy151/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy151/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy151/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy151/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy151/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy151/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy152/affected_cpus:152
@@ -703,7 +703,7 @@
 /sys/devices/system/cpu/cpufreq/policy152/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy152/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy152/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy152/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy152/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy152/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy152/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy153/affected_cpus:153
@@ -715,7 +715,7 @@
 /sys/devices/system/cpu/cpufreq/policy153/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy153/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy153/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy153/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy153/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy153/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy153/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy154/affected_cpus:154
@@ -727,7 +727,7 @@
 /sys/devices/system/cpu/cpufreq/policy154/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy154/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy154/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy154/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy154/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy154/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy154/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy155/affected_cpus:155
@@ -739,7 +739,7 @@
 /sys/devices/system/cpu/cpufreq/policy155/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy155/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy155/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy155/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy155/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy155/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy155/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy156/affected_cpus:156
@@ -748,10 +748,10 @@
 /sys/devices/system/cpu/cpufreq/policy156/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy156/related_cpus:156
 /sys/devices/system/cpu/cpufreq/policy156/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy156/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy156/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy156/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy156/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy156/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy156/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy156/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy156/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy157/affected_cpus:157
@@ -763,7 +763,7 @@
 /sys/devices/system/cpu/cpufreq/policy157/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy157/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy157/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy157/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy157/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy157/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy157/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy158/affected_cpus:158
@@ -775,7 +775,7 @@
 /sys/devices/system/cpu/cpufreq/policy158/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy158/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy158/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy158/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy158/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy158/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy158/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy159/affected_cpus:159
@@ -784,10 +784,10 @@
 /sys/devices/system/cpu/cpufreq/policy159/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy159/related_cpus:159
 /sys/devices/system/cpu/cpufreq/policy159/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy159/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy159/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy159/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy159/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy159/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy159/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy159/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy159/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy15/affected_cpus:15
@@ -799,7 +799,7 @@
 /sys/devices/system/cpu/cpufreq/policy15/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy15/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy15/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy15/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy15/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy15/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy15/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy160/affected_cpus:160
@@ -808,10 +808,10 @@
 /sys/devices/system/cpu/cpufreq/policy160/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy160/related_cpus:160
 /sys/devices/system/cpu/cpufreq/policy160/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy160/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy160/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy160/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy160/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy160/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy160/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy160/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy160/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy161/affected_cpus:161
@@ -820,10 +820,10 @@
 /sys/devices/system/cpu/cpufreq/policy161/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy161/related_cpus:161
 /sys/devices/system/cpu/cpufreq/policy161/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy161/scaling_cur_freq:1100000
+/sys/devices/system/cpu/cpufreq/policy161/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy161/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy161/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy161/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy161/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy161/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy161/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy162/affected_cpus:162
@@ -832,10 +832,10 @@
 /sys/devices/system/cpu/cpufreq/policy162/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy162/related_cpus:162
 /sys/devices/system/cpu/cpufreq/policy162/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy162/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy162/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy162/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy162/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy162/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy162/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy162/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy162/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy163/affected_cpus:163
@@ -844,10 +844,10 @@
 /sys/devices/system/cpu/cpufreq/policy163/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy163/related_cpus:163
 /sys/devices/system/cpu/cpufreq/policy163/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy163/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy163/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy163/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy163/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy163/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy163/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy163/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy163/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy164/affected_cpus:164
@@ -859,7 +859,7 @@
 /sys/devices/system/cpu/cpufreq/policy164/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy164/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy164/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy164/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy164/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy164/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy164/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy165/affected_cpus:165
@@ -871,7 +871,7 @@
 /sys/devices/system/cpu/cpufreq/policy165/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy165/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy165/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy165/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy165/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy165/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy165/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy166/affected_cpus:166
@@ -883,7 +883,7 @@
 /sys/devices/system/cpu/cpufreq/policy166/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy166/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy166/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy166/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy166/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy166/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy166/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy167/affected_cpus:167
@@ -892,10 +892,10 @@
 /sys/devices/system/cpu/cpufreq/policy167/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy167/related_cpus:167
 /sys/devices/system/cpu/cpufreq/policy167/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy167/scaling_cur_freq:1200000
+/sys/devices/system/cpu/cpufreq/policy167/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy167/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy167/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy167/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy167/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy167/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy167/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy168/affected_cpus:168
@@ -904,10 +904,10 @@
 /sys/devices/system/cpu/cpufreq/policy168/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy168/related_cpus:168
 /sys/devices/system/cpu/cpufreq/policy168/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy168/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy168/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy168/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy168/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy168/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy168/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy168/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy168/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy169/affected_cpus:169
@@ -916,10 +916,10 @@
 /sys/devices/system/cpu/cpufreq/policy169/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy169/related_cpus:169
 /sys/devices/system/cpu/cpufreq/policy169/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy169/scaling_cur_freq:1300000
+/sys/devices/system/cpu/cpufreq/policy169/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy169/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy169/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy169/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy169/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy169/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy169/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy16/affected_cpus:16
@@ -931,7 +931,7 @@
 /sys/devices/system/cpu/cpufreq/policy16/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy16/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy16/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy16/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy16/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy16/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy16/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy170/affected_cpus:170
@@ -943,7 +943,7 @@
 /sys/devices/system/cpu/cpufreq/policy170/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy170/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy170/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy170/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy170/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy170/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy170/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy171/affected_cpus:171
@@ -952,10 +952,10 @@
 /sys/devices/system/cpu/cpufreq/policy171/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy171/related_cpus:171
 /sys/devices/system/cpu/cpufreq/policy171/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy171/scaling_cur_freq:1396775
+/sys/devices/system/cpu/cpufreq/policy171/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy171/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy171/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy171/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy171/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy171/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy171/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy172/affected_cpus:172
@@ -967,7 +967,7 @@
 /sys/devices/system/cpu/cpufreq/policy172/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy172/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy172/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy172/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy172/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy172/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy172/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy173/affected_cpus:173
@@ -976,10 +976,10 @@
 /sys/devices/system/cpu/cpufreq/policy173/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy173/related_cpus:173
 /sys/devices/system/cpu/cpufreq/policy173/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy173/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy173/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy173/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy173/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy173/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy173/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy173/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy173/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy174/affected_cpus:174
@@ -991,7 +991,7 @@
 /sys/devices/system/cpu/cpufreq/policy174/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy174/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy174/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy174/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy174/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy174/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy174/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy175/affected_cpus:175
@@ -1003,7 +1003,7 @@
 /sys/devices/system/cpu/cpufreq/policy175/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy175/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy175/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy175/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy175/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy175/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy175/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy176/affected_cpus:176
@@ -1015,7 +1015,7 @@
 /sys/devices/system/cpu/cpufreq/policy176/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy176/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy176/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy176/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy176/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy176/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy176/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy177/affected_cpus:177
@@ -1027,7 +1027,7 @@
 /sys/devices/system/cpu/cpufreq/policy177/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy177/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy177/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy177/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy177/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy177/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy177/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy178/affected_cpus:178
@@ -1036,10 +1036,10 @@
 /sys/devices/system/cpu/cpufreq/policy178/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy178/related_cpus:178
 /sys/devices/system/cpu/cpufreq/policy178/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy178/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy178/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy178/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy178/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy178/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy178/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy178/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy178/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy179/affected_cpus:179
@@ -1051,7 +1051,7 @@
 /sys/devices/system/cpu/cpufreq/policy179/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy179/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy179/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy179/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy179/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy179/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy179/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy17/affected_cpus:17
@@ -1063,7 +1063,7 @@
 /sys/devices/system/cpu/cpufreq/policy17/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy17/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy17/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy17/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy17/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy17/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy17/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy180/affected_cpus:180
@@ -1075,7 +1075,7 @@
 /sys/devices/system/cpu/cpufreq/policy180/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy180/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy180/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy180/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy180/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy180/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy180/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy181/affected_cpus:181
@@ -1084,10 +1084,10 @@
 /sys/devices/system/cpu/cpufreq/policy181/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy181/related_cpus:181
 /sys/devices/system/cpu/cpufreq/policy181/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy181/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy181/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy181/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy181/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy181/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy181/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy181/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy181/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy182/affected_cpus:182
@@ -1096,10 +1096,10 @@
 /sys/devices/system/cpu/cpufreq/policy182/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy182/related_cpus:182
 /sys/devices/system/cpu/cpufreq/policy182/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy182/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy182/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy182/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy182/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy182/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy182/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy182/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy182/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy183/affected_cpus:183
@@ -1108,10 +1108,10 @@
 /sys/devices/system/cpu/cpufreq/policy183/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy183/related_cpus:183
 /sys/devices/system/cpu/cpufreq/policy183/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy183/scaling_cur_freq:1300000
+/sys/devices/system/cpu/cpufreq/policy183/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy183/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy183/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy183/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy183/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy183/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy183/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy184/affected_cpus:184
@@ -1123,7 +1123,7 @@
 /sys/devices/system/cpu/cpufreq/policy184/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy184/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy184/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy184/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy184/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy184/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy184/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy185/affected_cpus:185
@@ -1132,10 +1132,10 @@
 /sys/devices/system/cpu/cpufreq/policy185/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy185/related_cpus:185
 /sys/devices/system/cpu/cpufreq/policy185/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy185/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy185/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy185/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy185/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy185/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy185/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy185/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy185/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy186/affected_cpus:186
@@ -1144,10 +1144,10 @@
 /sys/devices/system/cpu/cpufreq/policy186/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy186/related_cpus:186
 /sys/devices/system/cpu/cpufreq/policy186/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy186/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy186/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy186/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy186/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy186/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy186/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy186/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy186/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy187/affected_cpus:187
@@ -1159,7 +1159,7 @@
 /sys/devices/system/cpu/cpufreq/policy187/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy187/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy187/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy187/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy187/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy187/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy187/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy188/affected_cpus:188
@@ -1171,7 +1171,7 @@
 /sys/devices/system/cpu/cpufreq/policy188/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy188/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy188/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy188/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy188/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy188/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy188/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy189/affected_cpus:189
@@ -1183,7 +1183,7 @@
 /sys/devices/system/cpu/cpufreq/policy189/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy189/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy189/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy189/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy189/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy189/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy189/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy18/affected_cpus:18
@@ -1195,7 +1195,7 @@
 /sys/devices/system/cpu/cpufreq/policy18/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy18/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy18/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy18/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy18/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy18/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy18/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy190/affected_cpus:190
@@ -1207,7 +1207,7 @@
 /sys/devices/system/cpu/cpufreq/policy190/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy190/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy190/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy190/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy190/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy190/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy190/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy191/affected_cpus:191
@@ -1216,10 +1216,10 @@
 /sys/devices/system/cpu/cpufreq/policy191/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy191/related_cpus:191
 /sys/devices/system/cpu/cpufreq/policy191/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy191/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy191/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy191/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy191/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy191/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy191/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy191/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy191/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy192/affected_cpus:192
@@ -1228,10 +1228,10 @@
 /sys/devices/system/cpu/cpufreq/policy192/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy192/related_cpus:192
 /sys/devices/system/cpu/cpufreq/policy192/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy192/scaling_cur_freq:1300000
+/sys/devices/system/cpu/cpufreq/policy192/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy192/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy192/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy192/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy192/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy192/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy192/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy193/affected_cpus:193
@@ -1240,10 +1240,10 @@
 /sys/devices/system/cpu/cpufreq/policy193/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy193/related_cpus:193
 /sys/devices/system/cpu/cpufreq/policy193/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy193/scaling_cur_freq:1200000
+/sys/devices/system/cpu/cpufreq/policy193/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy193/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy193/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy193/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy193/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy193/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy193/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy194/affected_cpus:194
@@ -1255,7 +1255,7 @@
 /sys/devices/system/cpu/cpufreq/policy194/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy194/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy194/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy194/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy194/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy194/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy194/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy195/affected_cpus:195
@@ -1267,7 +1267,7 @@
 /sys/devices/system/cpu/cpufreq/policy195/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy195/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy195/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy195/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy195/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy195/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy195/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy196/affected_cpus:196
@@ -1279,7 +1279,7 @@
 /sys/devices/system/cpu/cpufreq/policy196/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy196/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy196/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy196/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy196/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy196/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy196/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy197/affected_cpus:197
@@ -1288,10 +1288,10 @@
 /sys/devices/system/cpu/cpufreq/policy197/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy197/related_cpus:197
 /sys/devices/system/cpu/cpufreq/policy197/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy197/scaling_cur_freq:1100000
+/sys/devices/system/cpu/cpufreq/policy197/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy197/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy197/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy197/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy197/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy197/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy197/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy198/affected_cpus:198
@@ -1303,7 +1303,7 @@
 /sys/devices/system/cpu/cpufreq/policy198/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy198/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy198/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy198/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy198/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy198/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy198/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy199/affected_cpus:199
@@ -1315,7 +1315,7 @@
 /sys/devices/system/cpu/cpufreq/policy199/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy199/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy199/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy199/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy199/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy199/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy199/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy19/affected_cpus:19
@@ -1327,7 +1327,7 @@
 /sys/devices/system/cpu/cpufreq/policy19/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy19/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy19/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy19/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy19/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy19/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy19/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy1/affected_cpus:1
@@ -1339,7 +1339,7 @@
 /sys/devices/system/cpu/cpufreq/policy1/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy1/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy1/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy1/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy1/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy1/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy1/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy200/affected_cpus:200
@@ -1348,10 +1348,10 @@
 /sys/devices/system/cpu/cpufreq/policy200/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy200/related_cpus:200
 /sys/devices/system/cpu/cpufreq/policy200/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy200/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy200/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy200/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy200/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy200/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy200/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy200/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy200/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy201/affected_cpus:201
@@ -1360,10 +1360,10 @@
 /sys/devices/system/cpu/cpufreq/policy201/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy201/related_cpus:201
 /sys/devices/system/cpu/cpufreq/policy201/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy201/scaling_cur_freq:1100000
+/sys/devices/system/cpu/cpufreq/policy201/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy201/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy201/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy201/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy201/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy201/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy201/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy202/affected_cpus:202
@@ -1375,7 +1375,7 @@
 /sys/devices/system/cpu/cpufreq/policy202/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy202/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy202/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy202/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy202/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy202/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy202/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy203/affected_cpus:203
@@ -1384,10 +1384,10 @@
 /sys/devices/system/cpu/cpufreq/policy203/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy203/related_cpus:203
 /sys/devices/system/cpu/cpufreq/policy203/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy203/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy203/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy203/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy203/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy203/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy203/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy203/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy203/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy204/affected_cpus:204
@@ -1396,10 +1396,10 @@
 /sys/devices/system/cpu/cpufreq/policy204/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy204/related_cpus:204
 /sys/devices/system/cpu/cpufreq/policy204/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy204/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy204/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy204/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy204/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy204/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy204/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy204/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy204/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy205/affected_cpus:205
@@ -1408,10 +1408,10 @@
 /sys/devices/system/cpu/cpufreq/policy205/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy205/related_cpus:205
 /sys/devices/system/cpu/cpufreq/policy205/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy205/scaling_cur_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy205/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy205/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy205/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy205/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy205/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy205/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy205/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy206/affected_cpus:206
@@ -1423,7 +1423,7 @@
 /sys/devices/system/cpu/cpufreq/policy206/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy206/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy206/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy206/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy206/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy206/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy206/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy207/affected_cpus:207
@@ -1435,7 +1435,7 @@
 /sys/devices/system/cpu/cpufreq/policy207/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy207/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy207/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy207/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy207/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy207/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy207/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy208/affected_cpus:208
@@ -1444,10 +1444,10 @@
 /sys/devices/system/cpu/cpufreq/policy208/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy208/related_cpus:208
 /sys/devices/system/cpu/cpufreq/policy208/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy208/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy208/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy208/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy208/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy208/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy208/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy208/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy208/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy209/affected_cpus:209
@@ -1456,10 +1456,10 @@
 /sys/devices/system/cpu/cpufreq/policy209/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy209/related_cpus:209
 /sys/devices/system/cpu/cpufreq/policy209/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy209/scaling_cur_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy209/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy209/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy209/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy209/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy209/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy209/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy209/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy20/affected_cpus:20
@@ -1471,7 +1471,7 @@
 /sys/devices/system/cpu/cpufreq/policy20/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy20/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy20/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy20/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy20/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy20/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy20/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy210/affected_cpus:210
@@ -1480,10 +1480,10 @@
 /sys/devices/system/cpu/cpufreq/policy210/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy210/related_cpus:210
 /sys/devices/system/cpu/cpufreq/policy210/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy210/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy210/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy210/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy210/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy210/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy210/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy210/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy210/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy211/affected_cpus:211
@@ -1495,7 +1495,7 @@
 /sys/devices/system/cpu/cpufreq/policy211/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy211/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy211/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy211/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy211/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy211/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy211/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy212/affected_cpus:212
@@ -1507,7 +1507,7 @@
 /sys/devices/system/cpu/cpufreq/policy212/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy212/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy212/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy212/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy212/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy212/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy212/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy213/affected_cpus:213
@@ -1519,7 +1519,7 @@
 /sys/devices/system/cpu/cpufreq/policy213/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy213/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy213/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy213/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy213/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy213/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy213/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy214/affected_cpus:214
@@ -1531,7 +1531,7 @@
 /sys/devices/system/cpu/cpufreq/policy214/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy214/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy214/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy214/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy214/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy214/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy214/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy215/affected_cpus:215
@@ -1543,7 +1543,7 @@
 /sys/devices/system/cpu/cpufreq/policy215/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy215/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy215/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy215/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy215/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy215/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy215/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy216/affected_cpus:216
@@ -1555,7 +1555,7 @@
 /sys/devices/system/cpu/cpufreq/policy216/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy216/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy216/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy216/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy216/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy216/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy216/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy217/affected_cpus:217
@@ -1564,10 +1564,10 @@
 /sys/devices/system/cpu/cpufreq/policy217/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy217/related_cpus:217
 /sys/devices/system/cpu/cpufreq/policy217/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy217/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy217/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy217/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy217/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy217/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy217/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy217/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy217/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy218/affected_cpus:218
@@ -1579,7 +1579,7 @@
 /sys/devices/system/cpu/cpufreq/policy218/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy218/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy218/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy218/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy218/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy218/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy218/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy219/affected_cpus:219
@@ -1591,7 +1591,7 @@
 /sys/devices/system/cpu/cpufreq/policy219/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy219/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy219/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy219/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy219/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy219/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy219/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy21/affected_cpus:21
@@ -1603,7 +1603,7 @@
 /sys/devices/system/cpu/cpufreq/policy21/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy21/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy21/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy21/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy21/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy21/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy21/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy220/affected_cpus:220
@@ -1615,7 +1615,7 @@
 /sys/devices/system/cpu/cpufreq/policy220/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy220/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy220/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy220/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy220/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy220/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy220/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy221/affected_cpus:221
@@ -1627,7 +1627,7 @@
 /sys/devices/system/cpu/cpufreq/policy221/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy221/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy221/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy221/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy221/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy221/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy221/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy222/affected_cpus:222
@@ -1639,7 +1639,7 @@
 /sys/devices/system/cpu/cpufreq/policy222/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy222/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy222/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy222/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy222/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy222/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy222/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy223/affected_cpus:223
@@ -1651,7 +1651,7 @@
 /sys/devices/system/cpu/cpufreq/policy223/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy223/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy223/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy223/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy223/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy223/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy223/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy224/affected_cpus:224
@@ -1660,10 +1660,10 @@
 /sys/devices/system/cpu/cpufreq/policy224/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy224/related_cpus:224
 /sys/devices/system/cpu/cpufreq/policy224/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy224/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy224/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy224/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy224/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy224/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy224/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy224/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy224/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy225/affected_cpus:225
@@ -1672,10 +1672,10 @@
 /sys/devices/system/cpu/cpufreq/policy225/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy225/related_cpus:225
 /sys/devices/system/cpu/cpufreq/policy225/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy225/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy225/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy225/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy225/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy225/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy225/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy225/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy225/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy226/affected_cpus:226
@@ -1687,7 +1687,7 @@
 /sys/devices/system/cpu/cpufreq/policy226/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy226/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy226/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy226/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy226/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy226/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy226/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy227/affected_cpus:227
@@ -1696,10 +1696,10 @@
 /sys/devices/system/cpu/cpufreq/policy227/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy227/related_cpus:227
 /sys/devices/system/cpu/cpufreq/policy227/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy227/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy227/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy227/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy227/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy227/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy227/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy227/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy227/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy228/affected_cpus:228
@@ -1708,10 +1708,10 @@
 /sys/devices/system/cpu/cpufreq/policy228/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy228/related_cpus:228
 /sys/devices/system/cpu/cpufreq/policy228/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy228/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy228/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy228/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy228/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy228/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy228/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy228/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy228/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy229/affected_cpus:229
@@ -1720,10 +1720,10 @@
 /sys/devices/system/cpu/cpufreq/policy229/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy229/related_cpus:229
 /sys/devices/system/cpu/cpufreq/policy229/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy229/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy229/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy229/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy229/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy229/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy229/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy229/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy229/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy22/affected_cpus:22
@@ -1735,7 +1735,7 @@
 /sys/devices/system/cpu/cpufreq/policy22/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy22/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy22/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy22/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy22/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy22/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy22/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy230/affected_cpus:230
@@ -1747,7 +1747,7 @@
 /sys/devices/system/cpu/cpufreq/policy230/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy230/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy230/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy230/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy230/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy230/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy230/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy231/affected_cpus:231
@@ -1759,7 +1759,7 @@
 /sys/devices/system/cpu/cpufreq/policy231/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy231/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy231/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy231/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy231/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy231/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy231/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy232/affected_cpus:232
@@ -1768,10 +1768,10 @@
 /sys/devices/system/cpu/cpufreq/policy232/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy232/related_cpus:232
 /sys/devices/system/cpu/cpufreq/policy232/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy232/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy232/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy232/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy232/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy232/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy232/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy232/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy232/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy233/affected_cpus:233
@@ -1783,7 +1783,7 @@
 /sys/devices/system/cpu/cpufreq/policy233/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy233/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy233/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy233/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy233/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy233/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy233/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy234/affected_cpus:234
@@ -1792,10 +1792,10 @@
 /sys/devices/system/cpu/cpufreq/policy234/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy234/related_cpus:234
 /sys/devices/system/cpu/cpufreq/policy234/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy234/scaling_cur_freq:1100000
+/sys/devices/system/cpu/cpufreq/policy234/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy234/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy234/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy234/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy234/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy234/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy234/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy235/affected_cpus:235
@@ -1807,7 +1807,7 @@
 /sys/devices/system/cpu/cpufreq/policy235/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy235/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy235/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy235/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy235/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy235/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy235/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy236/affected_cpus:236
@@ -1819,7 +1819,7 @@
 /sys/devices/system/cpu/cpufreq/policy236/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy236/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy236/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy236/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy236/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy236/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy236/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy237/affected_cpus:237
@@ -1828,10 +1828,10 @@
 /sys/devices/system/cpu/cpufreq/policy237/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy237/related_cpus:237
 /sys/devices/system/cpu/cpufreq/policy237/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy237/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy237/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy237/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy237/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy237/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy237/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy237/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy237/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy238/affected_cpus:238
@@ -1843,7 +1843,7 @@
 /sys/devices/system/cpu/cpufreq/policy238/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy238/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy238/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy238/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy238/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy238/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy238/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy239/affected_cpus:239
@@ -1852,10 +1852,10 @@
 /sys/devices/system/cpu/cpufreq/policy239/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy239/related_cpus:239
 /sys/devices/system/cpu/cpufreq/policy239/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy239/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy239/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy239/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy239/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy239/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy239/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy239/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy239/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy23/affected_cpus:23
@@ -1867,7 +1867,7 @@
 /sys/devices/system/cpu/cpufreq/policy23/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy23/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy23/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy23/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy23/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy23/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy23/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy240/affected_cpus:240
@@ -1879,7 +1879,7 @@
 /sys/devices/system/cpu/cpufreq/policy240/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy240/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy240/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy240/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy240/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy240/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy240/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy241/affected_cpus:241
@@ -1891,7 +1891,7 @@
 /sys/devices/system/cpu/cpufreq/policy241/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy241/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy241/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy241/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy241/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy241/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy241/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy242/affected_cpus:242
@@ -1903,7 +1903,7 @@
 /sys/devices/system/cpu/cpufreq/policy242/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy242/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy242/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy242/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy242/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy242/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy242/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy243/affected_cpus:243
@@ -1915,7 +1915,7 @@
 /sys/devices/system/cpu/cpufreq/policy243/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy243/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy243/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy243/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy243/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy243/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy243/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy244/affected_cpus:244
@@ -1924,10 +1924,10 @@
 /sys/devices/system/cpu/cpufreq/policy244/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy244/related_cpus:244
 /sys/devices/system/cpu/cpufreq/policy244/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy244/scaling_cur_freq:1300000
+/sys/devices/system/cpu/cpufreq/policy244/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy244/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy244/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy244/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy244/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy244/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy244/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy245/affected_cpus:245
@@ -1939,7 +1939,7 @@
 /sys/devices/system/cpu/cpufreq/policy245/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy245/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy245/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy245/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy245/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy245/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy245/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy246/affected_cpus:246
@@ -1951,7 +1951,7 @@
 /sys/devices/system/cpu/cpufreq/policy246/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy246/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy246/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy246/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy246/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy246/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy246/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy247/affected_cpus:247
@@ -1960,10 +1960,10 @@
 /sys/devices/system/cpu/cpufreq/policy247/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy247/related_cpus:247
 /sys/devices/system/cpu/cpufreq/policy247/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy247/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy247/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy247/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy247/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy247/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy247/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy247/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy247/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy248/affected_cpus:248
@@ -1975,7 +1975,7 @@
 /sys/devices/system/cpu/cpufreq/policy248/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy248/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy248/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy248/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy248/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy248/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy248/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy249/affected_cpus:249
@@ -1987,7 +1987,7 @@
 /sys/devices/system/cpu/cpufreq/policy249/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy249/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy249/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy249/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy249/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy249/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy249/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy24/affected_cpus:24
@@ -1996,10 +1996,10 @@
 /sys/devices/system/cpu/cpufreq/policy24/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy24/related_cpus:24
 /sys/devices/system/cpu/cpufreq/policy24/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy24/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy24/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy24/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy24/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy24/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy24/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy24/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy24/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy250/affected_cpus:250
@@ -2011,7 +2011,7 @@
 /sys/devices/system/cpu/cpufreq/policy250/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy250/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy250/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy250/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy250/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy250/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy250/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy251/affected_cpus:251
@@ -2023,7 +2023,7 @@
 /sys/devices/system/cpu/cpufreq/policy251/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy251/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy251/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy251/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy251/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy251/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy251/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy252/affected_cpus:252
@@ -2032,10 +2032,10 @@
 /sys/devices/system/cpu/cpufreq/policy252/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy252/related_cpus:252
 /sys/devices/system/cpu/cpufreq/policy252/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy252/scaling_cur_freq:1200000
+/sys/devices/system/cpu/cpufreq/policy252/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy252/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy252/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy252/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy252/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy252/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy252/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy253/affected_cpus:253
@@ -2047,7 +2047,7 @@
 /sys/devices/system/cpu/cpufreq/policy253/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy253/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy253/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy253/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy253/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy253/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy253/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy254/affected_cpus:254
@@ -2056,10 +2056,10 @@
 /sys/devices/system/cpu/cpufreq/policy254/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy254/related_cpus:254
 /sys/devices/system/cpu/cpufreq/policy254/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy254/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy254/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy254/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy254/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy254/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy254/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy254/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy254/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy255/affected_cpus:255
@@ -2071,7 +2071,7 @@
 /sys/devices/system/cpu/cpufreq/policy255/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy255/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy255/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy255/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy255/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy255/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy255/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy256/affected_cpus:256
@@ -2083,7 +2083,7 @@
 /sys/devices/system/cpu/cpufreq/policy256/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy256/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy256/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy256/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy256/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy256/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy256/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy257/affected_cpus:257
@@ -2095,7 +2095,7 @@
 /sys/devices/system/cpu/cpufreq/policy257/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy257/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy257/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy257/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy257/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy257/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy257/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy258/affected_cpus:258
@@ -2104,10 +2104,10 @@
 /sys/devices/system/cpu/cpufreq/policy258/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy258/related_cpus:258
 /sys/devices/system/cpu/cpufreq/policy258/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy258/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy258/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy258/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy258/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy258/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy258/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy258/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy258/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy259/affected_cpus:259
@@ -2119,7 +2119,7 @@
 /sys/devices/system/cpu/cpufreq/policy259/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy259/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy259/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy259/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy259/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy259/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy259/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy25/affected_cpus:25
@@ -2131,7 +2131,7 @@
 /sys/devices/system/cpu/cpufreq/policy25/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy25/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy25/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy25/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy25/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy25/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy25/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy260/affected_cpus:260
@@ -2143,7 +2143,7 @@
 /sys/devices/system/cpu/cpufreq/policy260/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy260/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy260/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy260/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy260/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy260/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy260/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy261/affected_cpus:261
@@ -2155,7 +2155,7 @@
 /sys/devices/system/cpu/cpufreq/policy261/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy261/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy261/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy261/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy261/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy261/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy261/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy262/affected_cpus:262
@@ -2164,10 +2164,10 @@
 /sys/devices/system/cpu/cpufreq/policy262/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy262/related_cpus:262
 /sys/devices/system/cpu/cpufreq/policy262/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy262/scaling_cur_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy262/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy262/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy262/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy262/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy262/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy262/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy262/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy263/affected_cpus:263
@@ -2179,7 +2179,7 @@
 /sys/devices/system/cpu/cpufreq/policy263/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy263/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy263/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy263/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy263/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy263/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy263/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy264/affected_cpus:264
@@ -2188,10 +2188,10 @@
 /sys/devices/system/cpu/cpufreq/policy264/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy264/related_cpus:264
 /sys/devices/system/cpu/cpufreq/policy264/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy264/scaling_cur_freq:1100000
+/sys/devices/system/cpu/cpufreq/policy264/scaling_cur_freq:1570553
 /sys/devices/system/cpu/cpufreq/policy264/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy264/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy264/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy264/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy264/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy264/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy265/affected_cpus:265
@@ -2200,10 +2200,10 @@
 /sys/devices/system/cpu/cpufreq/policy265/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy265/related_cpus:265
 /sys/devices/system/cpu/cpufreq/policy265/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy265/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy265/scaling_cur_freq:1568778
 /sys/devices/system/cpu/cpufreq/policy265/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy265/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy265/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy265/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy265/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy265/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy266/affected_cpus:266
@@ -2212,10 +2212,10 @@
 /sys/devices/system/cpu/cpufreq/policy266/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy266/related_cpus:266
 /sys/devices/system/cpu/cpufreq/policy266/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy266/scaling_cur_freq:1100000
+/sys/devices/system/cpu/cpufreq/policy266/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy266/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy266/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy266/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy266/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy266/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy266/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy267/affected_cpus:267
@@ -2227,7 +2227,7 @@
 /sys/devices/system/cpu/cpufreq/policy267/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy267/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy267/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy267/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy267/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy267/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy267/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy268/affected_cpus:268
@@ -2239,7 +2239,7 @@
 /sys/devices/system/cpu/cpufreq/policy268/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy268/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy268/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy268/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy268/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy268/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy268/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy269/affected_cpus:269
@@ -2251,7 +2251,7 @@
 /sys/devices/system/cpu/cpufreq/policy269/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy269/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy269/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy269/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy269/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy269/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy269/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy26/affected_cpus:26
@@ -2260,10 +2260,10 @@
 /sys/devices/system/cpu/cpufreq/policy26/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy26/related_cpus:26
 /sys/devices/system/cpu/cpufreq/policy26/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy26/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy26/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy26/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy26/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy26/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy26/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy26/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy26/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy270/affected_cpus:270
@@ -2272,10 +2272,10 @@
 /sys/devices/system/cpu/cpufreq/policy270/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy270/related_cpus:270
 /sys/devices/system/cpu/cpufreq/policy270/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy270/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy270/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy270/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy270/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy270/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy270/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy270/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy270/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy271/affected_cpus:271
@@ -2284,10 +2284,10 @@
 /sys/devices/system/cpu/cpufreq/policy271/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy271/related_cpus:271
 /sys/devices/system/cpu/cpufreq/policy271/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy271/scaling_cur_freq:1403974
+/sys/devices/system/cpu/cpufreq/policy271/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy271/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy271/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy271/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy271/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy271/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy271/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy27/affected_cpus:27
@@ -2299,7 +2299,7 @@
 /sys/devices/system/cpu/cpufreq/policy27/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy27/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy27/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy27/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy27/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy27/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy27/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy28/affected_cpus:28
@@ -2311,7 +2311,7 @@
 /sys/devices/system/cpu/cpufreq/policy28/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy28/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy28/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy28/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy28/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy28/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy28/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy29/affected_cpus:29
@@ -2320,10 +2320,10 @@
 /sys/devices/system/cpu/cpufreq/policy29/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy29/related_cpus:29
 /sys/devices/system/cpu/cpufreq/policy29/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy29/scaling_cur_freq:1300000
+/sys/devices/system/cpu/cpufreq/policy29/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy29/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy29/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy29/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy29/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy29/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy29/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy2/affected_cpus:2
@@ -2332,10 +2332,10 @@
 /sys/devices/system/cpu/cpufreq/policy2/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy2/related_cpus:2
 /sys/devices/system/cpu/cpufreq/policy2/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy2/scaling_cur_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy2/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy2/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy2/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy2/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy2/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy2/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy2/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy30/affected_cpus:30
@@ -2344,10 +2344,10 @@
 /sys/devices/system/cpu/cpufreq/policy30/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy30/related_cpus:30
 /sys/devices/system/cpu/cpufreq/policy30/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy30/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy30/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy30/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy30/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy30/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy30/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy30/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy30/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy31/affected_cpus:31
@@ -2359,7 +2359,7 @@
 /sys/devices/system/cpu/cpufreq/policy31/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy31/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy31/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy31/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy31/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy31/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy31/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy32/affected_cpus:32
@@ -2371,7 +2371,7 @@
 /sys/devices/system/cpu/cpufreq/policy32/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy32/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy32/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy32/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy32/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy32/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy32/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy33/affected_cpus:33
@@ -2383,7 +2383,7 @@
 /sys/devices/system/cpu/cpufreq/policy33/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy33/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy33/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy33/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy33/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy33/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy33/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy34/affected_cpus:34
@@ -2395,7 +2395,7 @@
 /sys/devices/system/cpu/cpufreq/policy34/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy34/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy34/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy34/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy34/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy34/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy34/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy35/affected_cpus:35
@@ -2407,7 +2407,7 @@
 /sys/devices/system/cpu/cpufreq/policy35/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy35/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy35/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy35/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy35/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy35/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy35/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy36/affected_cpus:36
@@ -2419,7 +2419,7 @@
 /sys/devices/system/cpu/cpufreq/policy36/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy36/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy36/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy36/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy36/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy36/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy36/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy37/affected_cpus:37
@@ -2428,10 +2428,10 @@
 /sys/devices/system/cpu/cpufreq/policy37/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy37/related_cpus:37
 /sys/devices/system/cpu/cpufreq/policy37/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy37/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy37/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy37/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy37/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy37/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy37/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy37/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy37/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy38/affected_cpus:38
@@ -2443,7 +2443,7 @@
 /sys/devices/system/cpu/cpufreq/policy38/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy38/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy38/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy38/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy38/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy38/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy38/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy39/affected_cpus:39
@@ -2455,7 +2455,7 @@
 /sys/devices/system/cpu/cpufreq/policy39/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy39/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy39/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy39/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy39/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy39/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy39/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy3/affected_cpus:3
@@ -2467,7 +2467,7 @@
 /sys/devices/system/cpu/cpufreq/policy3/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy3/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy3/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy3/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy3/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy3/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy3/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy40/affected_cpus:40
@@ -2479,7 +2479,7 @@
 /sys/devices/system/cpu/cpufreq/policy40/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy40/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy40/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy40/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy40/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy40/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy40/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy41/affected_cpus:41
@@ -2488,10 +2488,10 @@
 /sys/devices/system/cpu/cpufreq/policy41/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy41/related_cpus:41
 /sys/devices/system/cpu/cpufreq/policy41/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy41/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy41/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy41/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy41/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy41/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy41/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy41/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy41/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy42/affected_cpus:42
@@ -2503,7 +2503,7 @@
 /sys/devices/system/cpu/cpufreq/policy42/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy42/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy42/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy42/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy42/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy42/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy42/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy43/affected_cpus:43
@@ -2515,7 +2515,7 @@
 /sys/devices/system/cpu/cpufreq/policy43/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy43/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy43/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy43/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy43/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy43/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy43/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy44/affected_cpus:44
@@ -2527,7 +2527,7 @@
 /sys/devices/system/cpu/cpufreq/policy44/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy44/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy44/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy44/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy44/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy44/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy44/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy45/affected_cpus:45
@@ -2536,10 +2536,10 @@
 /sys/devices/system/cpu/cpufreq/policy45/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy45/related_cpus:45
 /sys/devices/system/cpu/cpufreq/policy45/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy45/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy45/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy45/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy45/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy45/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy45/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy45/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy45/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy46/affected_cpus:46
@@ -2548,10 +2548,10 @@
 /sys/devices/system/cpu/cpufreq/policy46/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy46/related_cpus:46
 /sys/devices/system/cpu/cpufreq/policy46/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy46/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy46/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy46/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy46/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy46/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy46/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy46/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy46/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy47/affected_cpus:47
@@ -2563,7 +2563,7 @@
 /sys/devices/system/cpu/cpufreq/policy47/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy47/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy47/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy47/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy47/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy47/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy47/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy48/affected_cpus:48
@@ -2575,7 +2575,7 @@
 /sys/devices/system/cpu/cpufreq/policy48/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy48/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy48/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy48/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy48/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy48/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy48/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy49/affected_cpus:49
@@ -2587,7 +2587,7 @@
 /sys/devices/system/cpu/cpufreq/policy49/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy49/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy49/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy49/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy49/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy49/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy49/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy4/affected_cpus:4
@@ -2599,7 +2599,7 @@
 /sys/devices/system/cpu/cpufreq/policy4/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy4/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy4/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy4/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy4/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy50/affected_cpus:50
@@ -2611,7 +2611,7 @@
 /sys/devices/system/cpu/cpufreq/policy50/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy50/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy50/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy50/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy50/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy50/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy50/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy51/affected_cpus:51
@@ -2623,7 +2623,7 @@
 /sys/devices/system/cpu/cpufreq/policy51/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy51/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy51/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy51/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy51/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy51/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy51/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy52/affected_cpus:52
@@ -2635,7 +2635,7 @@
 /sys/devices/system/cpu/cpufreq/policy52/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy52/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy52/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy52/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy52/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy52/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy52/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy53/affected_cpus:53
@@ -2647,7 +2647,7 @@
 /sys/devices/system/cpu/cpufreq/policy53/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy53/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy53/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy53/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy53/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy53/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy53/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy54/affected_cpus:54
@@ -2659,7 +2659,7 @@
 /sys/devices/system/cpu/cpufreq/policy54/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy54/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy54/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy54/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy54/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy54/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy54/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy55/affected_cpus:55
@@ -2668,10 +2668,10 @@
 /sys/devices/system/cpu/cpufreq/policy55/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy55/related_cpus:55
 /sys/devices/system/cpu/cpufreq/policy55/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy55/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy55/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy55/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy55/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy55/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy55/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy55/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy55/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy56/affected_cpus:56
@@ -2683,7 +2683,7 @@
 /sys/devices/system/cpu/cpufreq/policy56/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy56/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy56/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy56/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy56/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy56/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy56/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy57/affected_cpus:57
@@ -2695,7 +2695,7 @@
 /sys/devices/system/cpu/cpufreq/policy57/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy57/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy57/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy57/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy57/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy57/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy57/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy58/affected_cpus:58
@@ -2707,7 +2707,7 @@
 /sys/devices/system/cpu/cpufreq/policy58/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy58/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy58/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy58/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy58/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy58/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy58/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy59/affected_cpus:59
@@ -2719,7 +2719,7 @@
 /sys/devices/system/cpu/cpufreq/policy59/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy59/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy59/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy59/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy59/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy59/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy59/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy5/affected_cpus:5
@@ -2731,7 +2731,7 @@
 /sys/devices/system/cpu/cpufreq/policy5/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy5/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy5/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy5/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy5/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy5/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy5/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy60/affected_cpus:60
@@ -2743,7 +2743,7 @@
 /sys/devices/system/cpu/cpufreq/policy60/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy60/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy60/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy60/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy60/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy60/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy60/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy61/affected_cpus:61
@@ -2752,10 +2752,10 @@
 /sys/devices/system/cpu/cpufreq/policy61/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy61/related_cpus:61
 /sys/devices/system/cpu/cpufreq/policy61/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy61/scaling_cur_freq:1100000
+/sys/devices/system/cpu/cpufreq/policy61/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy61/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy61/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy61/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy61/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy61/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy61/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy62/affected_cpus:62
@@ -2764,10 +2764,10 @@
 /sys/devices/system/cpu/cpufreq/policy62/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy62/related_cpus:62
 /sys/devices/system/cpu/cpufreq/policy62/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy62/scaling_cur_freq:1000000
+/sys/devices/system/cpu/cpufreq/policy62/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy62/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy62/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy62/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy62/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy62/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy62/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy63/affected_cpus:63
@@ -2779,7 +2779,7 @@
 /sys/devices/system/cpu/cpufreq/policy63/scaling_cur_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy63/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy63/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy63/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy63/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy63/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy63/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy64/affected_cpus:64
@@ -2791,7 +2791,7 @@
 /sys/devices/system/cpu/cpufreq/policy64/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy64/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy64/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy64/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy64/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy64/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy64/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy65/affected_cpus:65
@@ -2803,7 +2803,7 @@
 /sys/devices/system/cpu/cpufreq/policy65/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy65/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy65/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy65/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy65/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy65/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy65/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy66/affected_cpus:66
@@ -2812,10 +2812,10 @@
 /sys/devices/system/cpu/cpufreq/policy66/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy66/related_cpus:66
 /sys/devices/system/cpu/cpufreq/policy66/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy66/scaling_cur_freq:1383597
+/sys/devices/system/cpu/cpufreq/policy66/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy66/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy66/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy66/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy66/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy66/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy66/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy67/affected_cpus:67
@@ -2827,7 +2827,7 @@
 /sys/devices/system/cpu/cpufreq/policy67/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy67/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy67/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy67/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy67/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy67/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy67/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy68/affected_cpus:68
@@ -2839,7 +2839,7 @@
 /sys/devices/system/cpu/cpufreq/policy68/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy68/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy68/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy68/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy68/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy68/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy68/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy69/affected_cpus:69
@@ -2851,7 +2851,7 @@
 /sys/devices/system/cpu/cpufreq/policy69/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy69/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy69/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy69/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy69/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy69/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy69/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy6/affected_cpus:6
@@ -2863,7 +2863,7 @@
 /sys/devices/system/cpu/cpufreq/policy6/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy6/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy6/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy6/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy6/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy6/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy6/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy70/affected_cpus:70
@@ -2875,7 +2875,7 @@
 /sys/devices/system/cpu/cpufreq/policy70/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy70/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy70/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy70/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy70/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy70/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy70/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy71/affected_cpus:71
@@ -2887,7 +2887,7 @@
 /sys/devices/system/cpu/cpufreq/policy71/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy71/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy71/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy71/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy71/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy71/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy71/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy72/affected_cpus:72
@@ -2899,7 +2899,7 @@
 /sys/devices/system/cpu/cpufreq/policy72/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy72/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy72/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy72/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy72/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy72/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy72/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy73/affected_cpus:73
@@ -2911,7 +2911,7 @@
 /sys/devices/system/cpu/cpufreq/policy73/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy73/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy73/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy73/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy73/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy73/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy73/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy74/affected_cpus:74
@@ -2923,7 +2923,7 @@
 /sys/devices/system/cpu/cpufreq/policy74/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy74/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy74/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy74/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy74/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy74/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy74/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy75/affected_cpus:75
@@ -2935,7 +2935,7 @@
 /sys/devices/system/cpu/cpufreq/policy75/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy75/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy75/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy75/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy75/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy75/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy75/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy76/affected_cpus:76
@@ -2947,7 +2947,7 @@
 /sys/devices/system/cpu/cpufreq/policy76/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy76/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy76/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy76/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy76/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy76/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy76/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy77/affected_cpus:77
@@ -2959,7 +2959,7 @@
 /sys/devices/system/cpu/cpufreq/policy77/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy77/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy77/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy77/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy77/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy77/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy77/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy78/affected_cpus:78
@@ -2971,7 +2971,7 @@
 /sys/devices/system/cpu/cpufreq/policy78/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy78/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy78/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy78/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy78/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy78/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy78/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy79/affected_cpus:79
@@ -2983,7 +2983,7 @@
 /sys/devices/system/cpu/cpufreq/policy79/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy79/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy79/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy79/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy79/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy79/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy79/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy7/affected_cpus:7
@@ -2992,10 +2992,10 @@
 /sys/devices/system/cpu/cpufreq/policy7/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy7/related_cpus:7
 /sys/devices/system/cpu/cpufreq/policy7/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy7/scaling_cur_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy7/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy7/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy7/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy7/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy7/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy7/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy7/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy80/affected_cpus:80
@@ -3007,7 +3007,7 @@
 /sys/devices/system/cpu/cpufreq/policy80/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy80/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy80/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy80/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy80/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy80/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy80/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy81/affected_cpus:81
@@ -3019,7 +3019,7 @@
 /sys/devices/system/cpu/cpufreq/policy81/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy81/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy81/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy81/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy81/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy81/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy81/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy82/affected_cpus:82
@@ -3031,7 +3031,7 @@
 /sys/devices/system/cpu/cpufreq/policy82/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy82/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy82/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy82/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy82/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy82/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy82/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy83/affected_cpus:83
@@ -3043,7 +3043,7 @@
 /sys/devices/system/cpu/cpufreq/policy83/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy83/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy83/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy83/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy83/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy83/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy83/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy84/affected_cpus:84
@@ -3055,7 +3055,7 @@
 /sys/devices/system/cpu/cpufreq/policy84/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy84/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy84/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy84/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy84/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy84/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy84/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy85/affected_cpus:85
@@ -3067,7 +3067,7 @@
 /sys/devices/system/cpu/cpufreq/policy85/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy85/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy85/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy85/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy85/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy85/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy85/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy86/affected_cpus:86
@@ -3079,7 +3079,7 @@
 /sys/devices/system/cpu/cpufreq/policy86/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy86/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy86/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy86/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy86/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy86/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy86/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy87/affected_cpus:87
@@ -3091,7 +3091,7 @@
 /sys/devices/system/cpu/cpufreq/policy87/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy87/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy87/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy87/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy87/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy87/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy87/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy88/affected_cpus:88
@@ -3100,10 +3100,10 @@
 /sys/devices/system/cpu/cpufreq/policy88/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy88/related_cpus:88
 /sys/devices/system/cpu/cpufreq/policy88/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy88/scaling_cur_freq:1200000
+/sys/devices/system/cpu/cpufreq/policy88/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy88/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy88/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy88/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy88/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy88/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy88/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy89/affected_cpus:89
@@ -3115,7 +3115,7 @@
 /sys/devices/system/cpu/cpufreq/policy89/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy89/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy89/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy89/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy89/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy89/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy89/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy8/affected_cpus:8
@@ -3124,10 +3124,10 @@
 /sys/devices/system/cpu/cpufreq/policy8/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy8/related_cpus:8
 /sys/devices/system/cpu/cpufreq/policy8/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy8/scaling_cur_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy8/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy8/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy8/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy8/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy8/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy8/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy8/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy90/affected_cpus:90
@@ -3139,7 +3139,7 @@
 /sys/devices/system/cpu/cpufreq/policy90/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy90/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy90/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy90/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy90/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy90/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy90/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy91/affected_cpus:91
@@ -3148,10 +3148,10 @@
 /sys/devices/system/cpu/cpufreq/policy91/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy91/related_cpus:91
 /sys/devices/system/cpu/cpufreq/policy91/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy91/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy91/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy91/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy91/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy91/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy91/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy91/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy91/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy92/affected_cpus:92
@@ -3163,7 +3163,7 @@
 /sys/devices/system/cpu/cpufreq/policy92/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy92/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy92/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy92/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy92/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy92/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy92/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy93/affected_cpus:93
@@ -3172,10 +3172,10 @@
 /sys/devices/system/cpu/cpufreq/policy93/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy93/related_cpus:93
 /sys/devices/system/cpu/cpufreq/policy93/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy93/scaling_cur_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy93/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy93/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy93/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy93/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy93/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy93/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy93/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy94/affected_cpus:94
@@ -3184,10 +3184,10 @@
 /sys/devices/system/cpu/cpufreq/policy94/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy94/related_cpus:94
 /sys/devices/system/cpu/cpufreq/policy94/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy94/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy94/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy94/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy94/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy94/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy94/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy94/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy94/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy95/affected_cpus:95
@@ -3199,7 +3199,7 @@
 /sys/devices/system/cpu/cpufreq/policy95/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy95/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy95/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy95/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy95/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy95/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy95/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy96/affected_cpus:96
@@ -3211,7 +3211,7 @@
 /sys/devices/system/cpu/cpufreq/policy96/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy96/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy96/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy96/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy96/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy96/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy96/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy97/affected_cpus:97
@@ -3220,10 +3220,10 @@
 /sys/devices/system/cpu/cpufreq/policy97/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy97/related_cpus:97
 /sys/devices/system/cpu/cpufreq/policy97/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy97/scaling_cur_freq:1100000
+/sys/devices/system/cpu/cpufreq/policy97/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy97/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy97/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy97/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy97/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy97/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy97/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy98/affected_cpus:98
@@ -3232,10 +3232,10 @@
 /sys/devices/system/cpu/cpufreq/policy98/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy98/related_cpus:98
 /sys/devices/system/cpu/cpufreq/policy98/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy98/scaling_cur_freq:1200000
+/sys/devices/system/cpu/cpufreq/policy98/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy98/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy98/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy98/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy98/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy98/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy98/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy99/affected_cpus:99
@@ -3244,10 +3244,10 @@
 /sys/devices/system/cpu/cpufreq/policy99/cpuinfo_transition_latency:20000
 /sys/devices/system/cpu/cpufreq/policy99/related_cpus:99
 /sys/devices/system/cpu/cpufreq/policy99/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy99/scaling_cur_freq:1600000
+/sys/devices/system/cpu/cpufreq/policy99/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy99/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy99/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy99/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy99/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy99/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy99/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy9/affected_cpus:9
@@ -3259,6 +3259,6 @@
 /sys/devices/system/cpu/cpufreq/policy9/scaling_cur_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy9/scaling_driver:intel_cpufreq
 /sys/devices/system/cpu/cpufreq/policy9/scaling_governor:schedutil
-/sys/devices/system/cpu/cpufreq/policy9/scaling_max_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy9/scaling_max_freq:1600000
 /sys/devices/system/cpu/cpufreq/policy9/scaling_min_freq:1000000
 /sys/devices/system/cpu/cpufreq/policy9/scaling_setspeed:<unsupported>
