@@ -89,7 +89,7 @@ Get P-states information for specified CPUs. By default, prints all information 
 **--yaml**
    Print information in YAML format.
 
-**--override-cpu-model**
+**--override-cpu-model** *MODEL*
    This option is for debugging and testing purposes only. Provide the CPU model number which the
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
@@ -125,7 +125,7 @@ Get P-states information for specified CPUs. By default, prints all information 
    Get maximum CPU efficiency frequency (details in 'max_eff_freq_').
 
 **--turbo**
-   Get current setting for turbo (details in 'turbo_').
+   Check if turbo is enabled or disabled (details in 'turbo_').
 
 **--max-turbo-freq**
    Get maximum CPU turbo frequency (details in 'max_turbo_freq_').
@@ -143,7 +143,7 @@ Get P-states information for specified CPUs. By default, prints all information 
    Get maximum supported uncore frequency (details in 'max_uncore_freq_limit_').
 
 **--hwp**
-   Get current setting for hardware power management (details in 'hwp_').
+   Check if hardware power management is enabled or disabled (details in 'hwp_').
 
 **--epp**
    Get EPP via sysfs (details in 'epp_').
@@ -198,48 +198,48 @@ currently configured value(s) will be printed.
    does not provide topology information for offline CPUs. In the previous example if CPU 3 was
    offline, then '0' would mean CPU 4.
 
-**--override-cpu-model**
+**--override-cpu-model** *MODEL*
    This option is for debugging and testing purposes only. Provide the CPU model number which the
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
 
-**--min-freq** *[MIN_FREQ]*
+**--min-freq** *MIN_FREQ*
    Set minimum CPU frequency (details in 'min_freq_').
 
-**--max-freq** *[MAX_FREQ]*
+**--max-freq** *MAX_FREQ*
    Set maximum CPU frequency (details in 'max_freq_').
 
-**--min-freq-hw** *[MIN_FREQ_HW]*
+**--min-freq-hw** *MIN_FREQ*
    Set minimum CPU frequency (OS bypass) (details in 'min_freq_limit_').
 
-**--max-freq-hw** *[MAX_FREQ_HW]*
+**--max-freq-hw** *MAX_FREQ*
    Set maximum CPU frequency (OS bypass) (details in 'max_freq_limit_').
 
-**--turbo** *[TURBO]*
+**--turbo** *on|off*
    Enable or disable turbo (details in 'turbo_').
 
-**--min-uncore-freq** *[MIN_UNCORE_FREQ]*
+**--min-uncore-freq** *MIN_UNCORE_FREQ*
    Set minimum uncore frequency (details in 'min_uncore_freq_').
 
-**--max-uncore-freq** *[MAX_UNCORE_FREQ]*
+**--max-uncore-freq** *MAX_UNCORE_FREQ*
    Set maximum uncore frequency (details in 'max_uncore_freq_').
 
-**--epp** *[EPP]*
+**--epp** *EPP*
    Set EPP via sysfs (details in 'epp_').
 
-**--epp-hw** *[EPP_HW]*
+**--epp-hw** *EPP*
    Set EPP via MSR (details in 'epp_hw_').
 
-**--epb** *[EPB]*
+**--epb** *EPB*
    Set EPB via sysfs (details in 'epb_').
 
-**--epb-hw** *[EPB_HW]*
+**--epb-hw** *EPB*
    Set EPB via MSR (details in 'epb_hw_').
 
-**--intel-pstate-mode** *[INTEL_PSTATE_MODE]*
+**--intel-pstate-mode** *[MODE]*
    Set operation mode of 'intel_pstate' driver (details in 'intel_pstate_mode_').
 
-**--governor** *[GOVERNOR]*
+**--governor** *[NAME]*
    Set CPU frequency governor (details in 'governor_').
 
 Subcommand *'save'*
@@ -298,8 +298,8 @@ min_freq - Minimum CPU frequency
 Synopsis
 --------
 
-| pepc pstates *info* [**--min-freq**]
-| pepc pstates *config* [**--min-freq**\ =<value>]
+| pepc pstates *info* **--min-freq**
+| pepc pstates *config* **--min-freq**\ =<value>
 
 Description
 -----------
@@ -343,8 +343,8 @@ max_freq - Maximum CPU frequency
 Synopsis
 --------
 
-| pepc pstates *info* [**--max-freq**]
-| pepc pstates *config* [**--max-freq**\ =<value>]
+| pepc pstates *info* **--max-freq**
+| pepc pstates *config* **--max-freq**\ =<value>
 
 Description
 -----------
@@ -388,7 +388,7 @@ min_freq_limit - Minimum supported CPU frequency
 Synopsis
 --------
 
-pepc pstates *info* [**--min-freq-limit**]
+pepc pstates *info* **--min-freq-limit**
 
 Description
 -----------
@@ -416,7 +416,7 @@ max_freq_limit - Maximum supported CPU frequency
 Synopsis
 --------
 
-pepc pstates *info* [**--min-freq-limit**]
+pepc pstates *info* **--min-freq-limit**
 
 Description
 -----------
@@ -444,7 +444,7 @@ base_freq - Base CPU frequency
 Synopsis
 --------
 
-pepc pstates *info* [**--base-freq**]
+pepc pstates *info* **--base-freq**
 
 Description
 -----------
@@ -478,8 +478,8 @@ min_freq_hw - Minimum CPU frequency
 Synopsis
 --------
 
-| pepc pstates *info* [**--min-freq-hw**]
-| pepc pstates *config* [**--min-freq-hw**\ =<value>]
+| pepc pstates *info* **--min-freq-hw**
+| pepc pstates *config* **--min-freq-hw**\ =<value>
 
 Description
 -----------
@@ -523,8 +523,8 @@ max_freq_hw - Maximum CPU frequency
 Synopsis
 --------
 
-| pepc pstates *info* [**--max-freq-hw**]
-| pepc pstates *config* [**--max-freq-hw**\ =<value>]
+| pepc pstates *info* **--max-freq-hw**
+| pepc pstates *config* **--max-freq-hw**\ =<value>
 
 Description
 -----------
@@ -568,7 +568,7 @@ bus_clock - Bus clock speed.
 Synopsis
 --------
 
-pepc pstates *info* [**--bus-clock**]
+pepc pstates *info* **--bus-clock**
 
 Description
 -----------
@@ -597,7 +597,7 @@ min_oper_freq - Minimum CPU operating frequency
 Synopsis
 --------
 
-pepc pstates *info* [**--min-oper-freq**]
+pepc pstates *info* **--min-oper-freq**
 
 Description
 -----------
@@ -627,7 +627,7 @@ max_eff_freq - Maximum CPU efficiency frequency
 Synopsis
 --------
 
-pepc pstates *info* [**--max-eff-freq**]
+pepc pstates *info* **--max-eff-freq**
 
 Description
 -----------
@@ -655,8 +655,8 @@ turbo - Turbo
 Synopsis
 --------
 
-| pepc pstates *info* [**--turbo**]
-| pepc pstates *config* [**--turbo**\ =<value>]
+| pepc pstates *info* **--turbo**
+| pepc pstates *config* **--turbo**\ =<on|off>
 
 Description
 -----------
@@ -687,7 +687,7 @@ max_turbo_freq - Maximum CPU turbo frequency
 Synopsis
 --------
 
-| pepc pstates *info* [**--max-eff-freq**]
+| pepc pstates *info* **--max-eff-freq**
 
 Description
 -----------
@@ -715,8 +715,8 @@ min_uncore_freq - Minimum uncore frequency
 Synopsis
 --------
 
-| pepc pstates *info* [**--min-uncore-freq**]
-| pepc pstates *config* [**--min-uncore-freq**\ =<value>]
+| pepc pstates *info* **--min-uncore-freq**
+| pepc pstates *config* **--min-uncore-freq**\ =<value>
 
 Description
 -----------
@@ -754,8 +754,8 @@ max_uncore_freq - Maximum uncore frequency
 Synopsis
 --------
 
-| pepc pstates *info* [**--max-uncore-freq**]
-| pepc pstates *config* [**--max-uncore-freq**\ =<value>]
+| pepc pstates *info* **--max-uncore-freq**
+| pepc pstates *config* **--max-uncore-freq**\ =<value>
 
 Description
 -----------
@@ -793,7 +793,7 @@ min_uncore_freq_limit - Minimum supported uncore frequency
 Synopsis
 --------
 
-pepc pstates *info* [**--min-uncore-freq-limit**]
+pepc pstates *info* **--min-uncore-freq-limit**
 
 Description
 -----------
@@ -822,7 +822,7 @@ max_uncore_freq_limit - Maximum supported uncore frequency
 Synopsis
 --------
 
-pepc pstates *info* [**--max-uncore-freq-limit**]
+pepc pstates *info* **--max-uncore-freq-limit**
 
 Description
 -----------
@@ -851,7 +851,7 @@ hwp - Hardware power management
 Synopsis
 --------
 
-pepc pstates *info* [**--hwp**]
+pepc pstates *info* **--hwp**
 
 Description
 -----------
@@ -879,8 +879,8 @@ epp - Energy Performance Preference
 Synopsis
 --------
 
-| pepc pstates *info* [**--epp**]
-| pepc pstates *config* [**--epp**\ =<value>]
+| pepc pstates *info* **--epp**
+| pepc pstates *config* **--epp**\ =<value>
 
 Description
 -----------
@@ -909,8 +909,8 @@ epp_hw - Energy Performance Preference
 Synopsis
 --------
 
-| pepc pstates *info* [**--epp-hw**]
-| pepc pstates *config* [**--epp-hw**\ =<value>]
+| pepc pstates *info* **--epp-hw**
+| pepc pstates *config* **--epp-hw**\ =<value>
 
 Description
 -----------
@@ -941,8 +941,8 @@ epb - Energy Performance Bias
 Synopsis
 --------
 
-| pepc pstates *info* [**--epb**]
-| pepc pstates *config* [**--epb**\ =<value>]
+| pepc pstates *info* **--epb**
+| pepc pstates *config* **--epb**\ =<value>
 
 Description
 -----------
@@ -971,8 +971,8 @@ epb_hw - Energy Performance Preference
 Synopsis
 --------
 
-| pepc pstates *info* [**--epb-hw**]
-| pepc pstates *config* [**--epb-hw**\ =<value>]
+| pepc pstates *info* **--epb-hw**
+| pepc pstates *config* **--epb-hw**\ =<value>
 
 Description
 -----------
@@ -1001,7 +1001,7 @@ driver - CPU frequency driver
 Synopsis
 --------
 
-pepc pstates *info* [**--driver**]
+pepc pstates *info* **--driver**
 
 Description
 -----------
@@ -1029,8 +1029,8 @@ intel_pstate_mode - Operation mode of 'intel_pstate' driver
 Synopsis
 --------
 
-| pepc pstates *info* [**--intel-pstate-mode**]
-| pepc pstates *config* [**--intel-pstate-mode**\ =<value>]
+| pepc pstates *info* **--intel-pstate-mode**
+| pepc pstates *config* **--intel-pstate-mode**\ =<mode>
 
 Description
 -----------
@@ -1060,8 +1060,8 @@ governor - CPU frequency governor
 Synopsis
 --------
 
-| pepc pstates *info* [**--governor**]
-| pepc pstates *config* [**--governor**\ =<value>]
+| pepc pstates *info* **--governor**
+| pepc pstates *config* **--governor**\ =<name>
 
 Description
 -----------
@@ -1090,7 +1090,7 @@ governors - Available CPU frequency governors
 Synopsis
 --------
 
-pepc pstates *info* [**--governors**]
+pepc pstates *info* **--governors**
 
 Description
 -----------

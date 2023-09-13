@@ -68,5 +68,5 @@ Subcommand *'config'*
 
 Change PCI ASPM configuration.
 
-**--policy** *[POLICY]*
+**--policy** *NAME*
    The PCI ASPM policy to set, use "default" to set the Linux default policy.

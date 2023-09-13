@@ -89,7 +89,7 @@ Get information about C-states on specified CPUs. By default, prints all informa
 **--yaml**
    Print information in YAML format.
 
-**--override-cpu-model**
+**--override-cpu-model** *MODEL*
    This option is for debugging and testing purposes only. Provide the CPU model number which the
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
@@ -109,16 +109,16 @@ Get information about C-states on specified CPUs. By default, prints all informa
    'pkg_cstate_limit_aliases_').
 
 **--c1-demotion**
-   Get current setting for C1 demotion (details in 'c1_demotion_').
+   Check if C1 demotion is enabled or disabled (details in 'c1_demotion_').
 
 **--c1-undemotion**
-   Get current setting for C1 undemotion (details in 'c1_undemotion_').
+   Check if C1 undemotion is enabled or disabled (details in 'c1_undemotion_').
 
 **--c1e-autopromote**
-   Get current setting for C1E autopromote (details in 'c1e_autopromote_').
+   Check if C1E autopromote is enabled or disabled (details in 'c1e_autopromote_').
 
 **--cstate-prewake**
-   Get current setting for C-state prewake (details in 'cstate_prewake_').
+   Check if C-state prewake is enabled or disabled (details in 'cstate_prewake_').
 
 **--idle-driver**
    Get idle driver (details in 'idle_driver_').
@@ -158,12 +158,12 @@ currently configured value(s) will be printed.
    does not provide topology information for offline CPUs. In the previous example if CPU 3 was
    offline, then '0' would mean CPU 4.
 
-**--override-cpu-model**
+**--override-cpu-model** *MODEL*
    This option is for debugging and testing purposes only. Provide the CPU model number which the
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
 
-**--enable** *[CSTATES]*
+**--enable** *CSTATES*
    Comma-separated list of C-states to enable. C-states should be specified by name (e.g., 'C1').
    Use 'all' to specify all the available Linux C-states (this is the default). Note, there is a
    difference between Linux C-states (e.g., 'C6') and hardware C-states (e.g., Core C6 or Package C6
@@ -171,25 +171,25 @@ currently configured value(s) will be printed.
    usually about various 'mwait' instruction hints. The latter are platform-specific hardware state,
    entered upon a Linux request.
 
-**--disable** *[CSTATES]*
+**--disable** *CSTATES*
    Similar to '--enable', but specifies the list of C-states to disable.
 
-**--pkg-cstate-limit** *[PKG_CSTATE_LIMIT]*
+**--pkg-cstate-limit** *PKG_CSTATE_LIMIT*
    Set package C-state limit (details in 'pkg_cstate_limit_').
 
-**--c1-demotion** *[C1_DEMOTION]*
+**--c1-demotion** *on|off*
    Enable or disable C1 demotion (details in 'c1_demotion_').
 
-**--c1-undemotion** *[C1_UNDEMOTION]*
+**--c1-undemotion** *on|off*
    Enable or disable C1 undemotion (details in 'c1_undemotion_').
 
-**--c1e-autopromote** *[C1E_AUTOPROMOTE]*
+**--c1e-autopromote** *on|off*
    Enable or disable C1E autopromote (details in 'c1e_autopromote_').
 
-**--cstate-prewake** *[CSTATE_PREWAKE]*
+**--cstate-prewake** *on|off*
    Enable or disable C-state prewake (details in 'cstate_prewake_').
 
-**--governor** *[GOVERNOR]*
+**--governor** *NAME*
    Set idle governor (details in 'governor_').
 
 Subcommand *'save'*
@@ -247,8 +247,8 @@ pkg_cstate_limit - Package C-state limit
 Synopsis
 --------
 
-| pepc cstates *info* [**--pkg-cstate-limit**]
-| pepc cstates *config* [**--pkg-cstate-limit**\ =<value>]
+| pepc cstates *info* **--pkg-cstate-limit**
+| pepc cstates *config* **--pkg-cstate-limit**\ =<on|off>
 
 Description
 -----------
@@ -284,7 +284,7 @@ pkg_cstate_limits - Available package C-state limits
 Synopsis
 --------
 
-pepc cstates *info* [**--pkg-cstate-limits**]
+pepc cstates *info* **--pkg-cstate-limits**
 
 Description
 -----------
@@ -311,7 +311,7 @@ pkg_cstate_limit_lock - Package C-state limit lock
 Synopsis
 --------
 
-pepc cstates *info* [**--pkg-cstate-limit-lock**]
+pepc cstates *info* **--pkg-cstate-limit-lock**
 
 Description
 -----------
@@ -341,7 +341,7 @@ pkg_cstate_limit_aliases - Package C-state limit aliases
 Synopsis
 --------
 
-pepc cstates *info* [**--pkg-cstate-limit-aliases**]
+pepc cstates *info* **--pkg-cstate-limit-aliases**
 
 Description
 -----------
@@ -368,8 +368,8 @@ c1_demotion - C1 demotion
 Synopsis
 --------
 
-| pepc cstates *info* [**--c1-demotion**]
-| pepc cstates *config* [**--c1-demotion**\ =<value>]
+| pepc cstates *info* **--c1-demotion**
+| pepc cstates *config* **--c1-demotion**\ =<on|off>
 
 Description
 -----------
@@ -397,8 +397,8 @@ c1_demotion - C1 undemotion
 Synopsis
 --------
 
-| pepc cstates *info* [**--c1-undemotion**]
-| pepc cstates *config* [**--c1-undemotion**\ =<value>]
+| pepc cstates *info* **--c1-undemotion**
+| pepc cstates *config* **--c1-undemotion**\ =<on|off>
 
 Description
 -----------
@@ -427,8 +427,8 @@ c1e_autopromote - C1E autopromote
 Synopsis
 --------
 
-| pepc cstates *info* [**--c1e-autopromote**]
-| pepc cstates *config* [**--c1e-autopromote**\ =<value>]
+| pepc cstates *info* **--c1e-autopromote**
+| pepc cstates *config* **--c1e-autopromote**\ =<on|off>
 
 Description
 -----------
@@ -455,8 +455,8 @@ cstate_prewake - C-state prewake
 Synopsis
 --------
 
-| pepc cstates *info* [**--cstate-prewake**]
-| pepc cstates *config* [**--cstate-prewake**\ =<value>]
+| pepc cstates *info* **--cstate-prewake**
+| pepc cstates *config* **--cstate-prewake**\ =<on|off>
 
 Description
 -----------
@@ -484,7 +484,7 @@ idle_driver - Idle driver
 Synopsis
 --------
 
-pepc cstates *info* [**--idle-driver**]
+pepc cstates *info* **--idle-driver**
 
 Description
 -----------
@@ -511,8 +511,8 @@ governor - Idle governor
 Synopsis
 --------
 
-| pepc cstates *info* [**--governor**]
-| pepc cstates *config* [**--governor**\ =<value>]
+| pepc cstates *info* **--governor**
+| pepc cstates *config* **--governor**\ =<name>
 
 Description
 -----------
@@ -539,7 +539,7 @@ governors - Available idle governors
 Synopsis
 --------
 
-pepc cstates *info* [**--governors**]
+pepc cstates *info* **--governors**
 
 Description
 -----------

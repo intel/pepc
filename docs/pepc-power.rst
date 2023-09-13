@@ -89,7 +89,7 @@ Get information about power on specified CPUs. By default, prints all informatio
 **--yaml**
    Print information in YAML format.
 
-**--override-cpu-model**
+**--override-cpu-model** *MODEL*
    This option is for debugging and testing purposes only. Provide the CPU model number which the
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
@@ -150,27 +150,27 @@ currently configured value(s) will be printed.
    does not provide topology information for offline CPUs. In the previous example if CPU 3 was
    offline, then '0' would mean CPU 4.
 
-**--override-cpu-model**
+**--override-cpu-model** *MODEL*
    This option is for debugging and testing purposes only. Provide the CPU model number which the
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
 
-**--ppl1**
+**--ppl1** *PPL1*
    Set RAPL package power limit #1 value via MSR (details in 'ppl1_').
 
-**--ppl1-enable**
+**--ppl1-enable** *on|off*
    Enable or disable RAPL package power limit #1 via MSR (details in 'ppl1_enable_').
 
-**--ppl1-clamp**
+**--ppl1-clamp** *on|off*
    Enable or disable RAPL package power limit #1 clamping via MSR (details in 'ppl1_clamp_')
 
-**--ppl2**
+**--ppl2** *PPL2*
    Set RAPL package power limit #2 value via MSR (details in 'ppl2_').
 
-**--ppl2-enable**
+**--ppl2-enable** *on|off*
    Enable or disable RAPL package power limit #2 via MSR (details in 'ppl2_enable_').
 
-**--ppl2-clamp**
+**--ppl2-clamp** *on|off*
    Enable or disable RAPL package power limit #2 clamping via MSR (details in 'ppl2_clamp_')
 
 Subcommand *'save'*
@@ -255,8 +255,8 @@ ppl1 - RAPL package power limit #1 value in Watts
 Synopsis
 --------
 
-| pepc power *info* [**--ppl1**]
-| pepc power *config* [**--ppl1**\ =<value>]
+| pepc power *info* **--ppl1**
+| pepc power *config* **--ppl1**\ =<value>
 
 Description
 -----------
@@ -283,8 +283,8 @@ ppl1_enable - Enable or disable RAPL package power limit #1
 Synopsis
 --------
 
-| pepc power *info* [**--ppl1-enable**]
-| pepc power *config* [**--ppl1-enable**\ =<value>]
+| pepc power *info* **--ppl1-enable**
+| pepc power *config* **--ppl1-enable**\ =<on|off>
 
 Description
 -----------
@@ -311,8 +311,8 @@ ppl1_clamp - Enable or disable package power clamping for limit #1
 Synopsis
 --------
 
-| pepc power *info* [**--ppl1-clamp**]
-| pepc power *config* [**--ppl1-clamp**\ =<value>]
+| pepc power *info* **--ppl1-clamp**
+| pepc power *config* **--ppl1-clamp**\ =<on|off>
 
 Description
 -----------
@@ -339,7 +339,7 @@ ppl1_window - RAPL package power limit #1 window size in seconds
 Synopsis
 --------
 
-| pepc power *info* [**--ppl1-window**]
+| pepc power *info* **--ppl1-window**
 
 Description
 -----------
@@ -366,8 +366,8 @@ ppl2 - RAPL package power limit #2 value in Watts
 Synopsis
 --------
 
-| pepc power *info* [**--ppl2**]
-| pepc power *config* [**--ppl2**\ =<value>]
+| pepc power *info* **--ppl2**
+| pepc power *config* **--ppl2**\ =<value>
 
 Description
 -----------
@@ -394,8 +394,8 @@ ppl2_enable - Enable or disable RAPL package power limit #2
 Synopsis
 --------
 
-| pepc power *info* [**--ppl2-enable**]
-| pepc power *config* [**--ppl2-enable**\ =<value>]
+| pepc power *info* **--ppl2-enable**
+| pepc power *config* **--ppl2-enable**\ =<on|off>
 
 Description
 -----------
@@ -422,8 +422,8 @@ ppl2_clamp - Enable or disable package power clamping for limit #2
 Synopsis
 --------
 
-| pepc power *info* [**--ppl2-clamp**]
-| pepc power *config* [**--ppl2-clamp**\ =<value>]
+| pepc power *info* **--ppl2-clamp**
+| pepc power *config* **--ppl2-clamp**\ =<on|off>
 
 Description
 -----------
@@ -450,7 +450,7 @@ ppl2_window - RAPL package power limit #2 window size in seconds
 Synopsis
 --------
 
-| pepc power *info* [**--ppl2-window**]
+| pepc power *info* **--ppl2-window**
 
 Description
 -----------
