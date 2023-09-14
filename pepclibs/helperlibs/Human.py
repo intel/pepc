@@ -16,8 +16,6 @@ from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
 _SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "EiB"]
-_LARGENUM_UNITS = ["k", "M", "G", "T", "E"]
-_NSTIME_UNITS = ["us", "ms", "s"]
 
 # pylint: disable=undefined-loop-variable, consider-using-f-string
 def bytesize(size, precision=1, sep=""):
@@ -66,10 +64,12 @@ def parse_bytesize(size):
         raise Error("cannot interpret bytes count '%s', please provide a number and "
                     "possibly the unit: %s" % (orig_size, ", ".join(_SIZE_UNITS))) from None
 
+_LARGENUM_UNITS = ["k", "M", "G", "T", "E"]
+
 def largenum(value, sep="", unit=None):
     """
-    Transform a supposedly large integer into a human-readable form using suffixes like "K" (Kilo),
-    "M" (Mega), etc.
+    Transform a large integer to a human-readable form using SI prefixes like "k" (Kilo),
+    "M" (Mega), etc
     """
 
     scaler = None
@@ -118,6 +118,8 @@ def duration(seconds, s=True, ms=False):
             result += "%ds " % secs
 
     return result.strip()
+
+_NSTIME_UNITS = ["us", "ms", "s"]
 
 def duration_ns(value, sep=""):
     """
