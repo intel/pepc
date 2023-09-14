@@ -65,6 +65,69 @@ def parse_bytesize(size):
                     "possibly the unit: %s" % (orig_size, ", ".join(_SIZE_UNITS))) from None
 
 _LARGENUM_UNITS = ["k", "M", "G", "T", "E"]
+_SMALLNUM_UNITS = ["m", "u", "n"]
+_SIPFX_MAP = {
+    "E": 1000000000000000,
+    "T": 1000000000000,
+    "G": 1000000000,
+    "M": 1000000,
+    "k": 1000,
+    "m": 0.001,
+    "u": 0.000001,
+    "n": 0.000000001,
+}
+
+def num2si(value, unit=None, sep="", sipfx=None, decp=1):
+    """
+    Convert a number into a human-readable form using suffixes like "k" (Kilo), "M" (Mega), etc.
+    The arguments are as follows.
+      * value - an integer or floating point value to convert.
+      * unit - name of the unit, will be appended to the resulting number.
+      * sep - the separator string to use between the resulting number and its unit.
+      * sipfx - current SI prefix of 'value'.
+      * decp - maximum number of decimal places the result should include.
+
+    Return the result as a string.
+    """
+
+    if not Trivial.is_num(value):
+        raise Error("bad input - not a number")
+    if sep and not unit:
+        raise Error("please, specify the separator only if unit was specified")
+    if decp < 1 or decp > 8:
+        raise Error("please, specify at max. 8 decimal places")
+    if sipfx and sipfx not in _SIPFX_MAP:
+        prefixes = ", ".join(_SIPFX_MAP)
+        raise Error(f"bad SI prefix '{sipfx}', use one of: {prefixes}")
+
+    value = float(value)
+
+    if sipfx:
+        factor = _SIPFX_MAP[sipfx]
+        if value > 500 or value < 1:
+            value *= factor
+
+    pfx = None
+    if value > 500:
+        for pfx in _LARGENUM_UNITS:
+            value /= 1000.0
+            if value < 1000:
+                break
+    elif value < 1:
+        for pfx in _SMALLNUM_UNITS:
+            value *= 1000.0
+            if value >= 1:
+                break
+    else:
+        pfx = sipfx
+
+    result = f"%.{decp}f" % value
+    result = result.rstrip("0").rstrip(".")
+    if pfx:
+        result += sep + pfx
+    if unit:
+        result += unit
+    return result
 
 def largenum(value, sep="", unit=None):
     """
