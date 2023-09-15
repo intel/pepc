@@ -1,1 +1,1 @@
-BOOT_IMAGE=http://powerlab/pxelinux/node/spr2/custom-kernel/kernel initrd=http://powerlab/pxelinux/node/spr2/custom-kernel/initramfs.img root=UUID=c28011fe-2a02-4a37-a5e0-938a2d8fb228 ro  msr.allow_writes=1 idle=nomwait console=ttyS0,115200
+BOOT_IMAGE=http://powerlab/pxelinux/node/spr2/custom-kernel/kernel initrd=http://powerlab/pxelinux/node/spr2/custom-kernel/initramfs.img root=UUID=3ad678d0-d000-459d-8984-c075a2229e9f ro  msr.allow_writes=1 idle=nomwait console=ttyS0,115200

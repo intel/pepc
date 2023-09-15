@@ -5,7 +5,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 800.000
+cpu MHz		: 800.296
 cache size	: 55296 KB
 physical id	: 0
 siblings	: 72
@@ -733,7 +733,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 800.000
+cpu MHz		: 800.363
 cache size	: 55296 KB
 physical id	: 0
 siblings	: 72
@@ -957,7 +957,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 800.360
+cpu MHz		: 800.000
 cache size	: 55296 KB
 physical id	: 0
 siblings	: 72
@@ -1013,7 +1013,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 800.000
+cpu MHz		: 800.461
 cache size	: 55296 KB
 physical id	: 1
 siblings	: 72
@@ -1069,7 +1069,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 800.034
+cpu MHz		: 800.000
 cache size	: 55296 KB
 physical id	: 1
 siblings	: 72
@@ -2665,7 +2665,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 800.000
+cpu MHz		: 800.366
 cache size	: 55296 KB
 physical id	: 0
 siblings	: 72
@@ -2945,7 +2945,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 800.000
+cpu MHz		: 800.224
 cache size	: 55296 KB
 physical id	: 0
 siblings	: 72
@@ -3057,7 +3057,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 800.000
+cpu MHz		: 1865.111
 cache size	: 55296 KB
 physical id	: 1
 siblings	: 72
@@ -3197,7 +3197,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 800.601
+cpu MHz		: 800.000
 cache size	: 55296 KB
 physical id	: 1
 siblings	: 72
@@ -3225,7 +3225,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 2400.531
+cpu MHz		: 800.000
 cache size	: 55296 KB
 physical id	: 1
 siblings	: 72
@@ -3925,7 +3925,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Platinum 8360Y CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0xd000375
-cpu MHz		: 800.000
+cpu MHz		: 800.098
 cache size	: 55296 KB
 physical id	: 1
 siblings	: 72

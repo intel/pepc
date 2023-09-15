@@ -5,7 +5,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4555.537
+cpu MHz		: 4792.191
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -33,7 +33,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4556.114
+cpu MHz		: 800.000
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -61,7 +61,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4549.592
+cpu MHz		: 4500.862
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -89,7 +89,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4770.202
+cpu MHz		: 4636.663
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -117,7 +117,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4730.721
+cpu MHz		: 4502.254
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -145,7 +145,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 800.000
+cpu MHz		: 4779.042
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -201,7 +201,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4790.951
+cpu MHz		: 3091.522
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -257,7 +257,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 800.000
+cpu MHz		: 4500.570
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -285,7 +285,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4741.492
+cpu MHz		: 800.000
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -341,7 +341,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4564.945
+cpu MHz		: 800.000
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -369,7 +369,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4570.660
+cpu MHz		: 800.000
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -397,7 +397,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4501.463
+cpu MHz		: 4501.277
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16
@@ -425,7 +425,7 @@ model		: 158
 model name	: Intel(R) Xeon(R) E-2278G CPU @ 3.40GHz
 stepping	: 13
 microcode	: 0xf0
-cpu MHz		: 4764.020
+cpu MHz		: 4692.536
 cache size	: 16384 KB
 physical id	: 0
 siblings	: 16

@@ -593,7 +593,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 800.000
+cpu MHz		: 800.073
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -845,7 +845,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 1900.000
+cpu MHz		: 800.148
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -873,7 +873,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 800.211
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -901,7 +901,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 1409.266
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -929,7 +929,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 1811.202
+cpu MHz		: 1231.409
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -957,7 +957,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 800.000
+cpu MHz		: 1511.591
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -985,7 +985,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 1400.000
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -2469,7 +2469,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 1100.000
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -2553,7 +2553,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 800.000
+cpu MHz		: 800.479
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -2581,7 +2581,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 800.007
+cpu MHz		: 1817.610
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112

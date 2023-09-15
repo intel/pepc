@@ -25,9 +25,11 @@ L1d cache:                          3.4 MiB (72 instances)
 L1i cache:                          2.3 MiB (72 instances)
 L2 cache:                           90 MiB (72 instances)
 L3 cache:                           108 MiB (2 instances)
-NUMA node(s):                       2
-NUMA node0 CPU(s):                  0-35,72-107
-NUMA node1 CPU(s):                  36-71,108-143
+NUMA node(s):                       4
+NUMA node0 CPU(s):                  0-17,72-89
+NUMA node1 CPU(s):                  18-35,90-107
+NUMA node2 CPU(s):                  36-53,108-125
+NUMA node3 CPU(s):                  54-71,126-143
 Vulnerability Gather data sampling: Vulnerable: No microcode
 Vulnerability Itlb multihit:        Not affected
 Vulnerability L1tf:                 Not affected

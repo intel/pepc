@@ -5,7 +5,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7002501
-cpu MHz		: 1000.259
+cpu MHz		: 1000.000
 cache size	: 25344 KB
 physical id	: 0
 siblings	: 36
@@ -61,7 +61,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7002501
-cpu MHz		: 1000.000
+cpu MHz		: 1000.127
 cache size	: 25344 KB
 physical id	: 0
 siblings	: 36
@@ -397,7 +397,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7002501
-cpu MHz		: 1000.156
+cpu MHz		: 1000.000
 cache size	: 25344 KB
 physical id	: 0
 siblings	: 36
@@ -593,7 +593,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7002501
-cpu MHz		: 1200.419
+cpu MHz		: 1000.000
 cache size	: 25344 KB
 physical id	: 1
 siblings	: 36
@@ -649,7 +649,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7002501
-cpu MHz		: 1000.000
+cpu MHz		: 999.999
 cache size	: 25344 KB
 physical id	: 1
 siblings	: 36
@@ -985,7 +985,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7002501
-cpu MHz		: 1000.013
+cpu MHz		: 1000.000
 cache size	: 25344 KB
 physical id	: 1
 siblings	: 36
@@ -1517,7 +1517,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7002501
-cpu MHz		: 1000.000
+cpu MHz		: 999.987
 cache size	: 25344 KB
 physical id	: 1
 siblings	: 36
@@ -1573,7 +1573,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7002501
-cpu MHz		: 1000.185
+cpu MHz		: 1000.614
 cache size	: 25344 KB
 physical id	: 1
 siblings	: 36
@@ -1601,7 +1601,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7002501
-cpu MHz		: 1000.000
+cpu MHz		: 1000.125
 cache size	: 25344 KB
 physical id	: 1
 siblings	: 36
@@ -1629,7 +1629,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7002501
-cpu MHz		: 1000.000
+cpu MHz		: 2781.246
 cache size	: 25344 KB
 physical id	: 1
 siblings	: 36

@@ -1125,7 +1125,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 800.000
+cpu MHz		: 960.110
 cache size	: 107520 KB
 physical id	: 1
 siblings	: 80
@@ -1153,7 +1153,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 800.000
+cpu MHz		: 800.022
 cache size	: 107520 KB
 physical id	: 1
 siblings	: 80
@@ -1181,7 +1181,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 800.000
+cpu MHz		: 2188.642
 cache size	: 107520 KB
 physical id	: 1
 siblings	: 80
@@ -1629,7 +1629,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 809.725
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 1
 siblings	: 80
@@ -2273,7 +2273,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 1795.582
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 2
 siblings	: 80
@@ -3365,7 +3365,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 800.000
+cpu MHz		: 797.188
 cache size	: 107520 KB
 physical id	: 3
 siblings	: 80
@@ -5913,7 +5913,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 800.000
+cpu MHz		: 799.190
 cache size	: 107520 KB
 physical id	: 1
 siblings	: 80
@@ -6697,7 +6697,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 800.000
+cpu MHz		: 796.229
 cache size	: 107520 KB
 physical id	: 1
 siblings	: 80
@@ -6725,7 +6725,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 2131.061
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 2
 siblings	: 80
@@ -6781,7 +6781,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 788.093
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 2
 siblings	: 80
@@ -6809,7 +6809,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) Platinum 8460H
 stepping	: 8
 microcode	: 0x2b0004b1
-cpu MHz		: 2199.976
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 2
 siblings	: 80

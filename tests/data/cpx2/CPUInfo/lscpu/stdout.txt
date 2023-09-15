@@ -15,7 +15,7 @@ Thread(s) per core:                 2
 Core(s) per socket:                 18
 Socket(s):                          2
 Stepping:                           11
-CPU(s) scaling MHz:                 26%
+CPU(s) scaling MHz:                 27%
 CPU max MHz:                        3800.0000
 CPU min MHz:                        1000.0000
 BogoMIPS:                           5000.00
