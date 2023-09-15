@@ -129,27 +129,6 @@ def num2si(value, unit=None, sep="", sipfx=None, decp=1):
         result += unit
     return result
 
-def largenum(value, sep="", unit=None):
-    """
-    Transform a large integer to a human-readable form using SI prefixes like "k" (Kilo),
-    "M" (Mega), etc
-    """
-
-    scaler = None
-    if value >= 500:
-        for scaler in _LARGENUM_UNITS:
-            value /= 1000.0
-            if value < 1000:
-                break
-
-    result = "%.1f" % value
-    result = result.rstrip("0").rstrip(".")
-    if scaler:
-        result += sep + scaler
-    if unit:
-        result += unit
-    return result
-
 def duration(seconds, s=True, ms=False):
     """
     Transform duration in seconds to the human-readable format. The 's' and 'ms' arguments control
