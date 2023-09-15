@@ -809,7 +809,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         name = Human.uncapitalize(pname)
         what = self._get_num_str(prop, cpu)
-        short_freq = Human.largenum(freq, unit="Hz")
+        short_freq = Human.num2si(freq, unit="Hz")
         msg = f"failed to set {name} to {short_freq} for {what}{self._pman.hostmsg}: wrote " \
               f"'{freq // 1000}' to '{path}', but read '{read_freq // 1000}' back."
 
@@ -822,7 +822,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 base_freq = self._get_cpu_prop_value("base_freq", cpu)
 
                 if base_freq and freq > base_freq:
-                    base_freq = Human.largenum(base_freq, unit="Hz")
+                    base_freq = Human.num2si(base_freq, unit="Hz")
                     msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and this " \
                            f"may be the limiting factor."
 
@@ -978,9 +978,9 @@ class PStates(_PCStatesBase.PCStatesBase):
 
                 if val < min_limit or val > max_limit:
                     name = Human.uncapitalize(self._props[pname]["name"])
-                    val = Human.largenum(val, unit="Hz")
-                    min_limit = Human.largenum(min_limit, unit="Hz")
-                    max_limit = Human.largenum(max_limit, unit="Hz")
+                    val = Human.num2si(val, unit="Hz")
+                    min_limit = Human.num2si(min_limit, unit="Hz")
+                    max_limit = Human.num2si(max_limit, unit="Hz")
                     raise Error(f"{name} value of '{val}' for {what} is out of range, must be "
                                 f"within [{min_limit}, {max_limit}]")
 
@@ -988,8 +988,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 if new_min_freq > new_max_freq:
                     name_min = Human.uncapitalize(self._props[min_freq_key]["name"])
                     name_max = Human.uncapitalize(self._props[max_freq_key]["name"])
-                    new_min_freq = Human.largenum(new_min_freq, unit="Hz")
-                    new_max_freq = Human.largenum(new_max_freq, unit="Hz")
+                    new_min_freq = Human.num2si(new_min_freq, unit="Hz")
+                    new_max_freq = Human.num2si(new_max_freq, unit="Hz")
                     raise Error(f"can't set {name_min} to {new_min_freq} and {name_max} to "
                                 f"{new_max_freq} for {what}: minimum can't be greater than maximum")
                 if new_min_freq != cur_min_freq or new_max_freq != cur_max_freq:
@@ -1002,8 +1002,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif not new_max_freq:
                 if new_min_freq > cur_max_freq:
                     name = Human.uncapitalize(self._props[min_freq_key]["name"])
-                    new_min_freq = Human.largenum(new_min_freq, unit="Hz")
-                    cur_max_freq = Human.largenum(cur_max_freq, unit="Hz")
+                    new_min_freq = Human.num2si(new_min_freq, unit="Hz")
+                    cur_max_freq = Human.num2si(cur_max_freq, unit="Hz")
                     raise Error(f"can't set {name} of {what} to {new_min_freq} - it is higher than "
                                 f"currently configured maximum frequency of {cur_max_freq}")
                 if new_min_freq != cur_min_freq:
@@ -1011,8 +1011,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif not new_min_freq:
                 if new_max_freq < cur_min_freq:
                     name = Human.uncapitalize(self._props[max_freq_key]["name"])
-                    new_max_freq = Human.largenum(new_max_freq, unit="Hz")
-                    cur_min_freq = Human.largenum(cur_min_freq, unit="Hz")
+                    new_max_freq = Human.num2si(new_max_freq, unit="Hz")
+                    cur_min_freq = Human.num2si(cur_min_freq, unit="Hz")
                     raise Error(f"can't set {name} of {what} to {new_max_freq} - it is lower than "
                                 f"currently configured minimum frequency of {cur_min_freq}")
                 if new_max_freq != cur_max_freq:
