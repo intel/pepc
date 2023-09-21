@@ -192,6 +192,9 @@ currently configured value(s) will be printed.
 **--governor** *NAME*
    Set idle governor (details in 'governor_').
 
+**--pch-negotiation** *on|off*
+   Enable or disable PCH negotiation (details in 'pch_negotiation_').
+
 Subcommand *'save'*
 ===================
 
@@ -556,3 +559,34 @@ Scope
 -----
 
 This property has **global** scope.
+
+----------------------------------------------------------------------------------------------------
+
+pch_negotiation
+===============
+
+pch_negotiation - PCH negotiation
+
+Synopsis
+--------
+
+| pepc cstates *info* **--pch-negotiation**
+| pepc cstates *config* **--pch-negotiation**\ =<on|off>
+
+Description
+-----------
+
+When enabled, processor's PCU (Power Control Unit) informs PCH (Platform Controller Hub) about
+entering and exiting package C6 state (PC6). Depending on configuration, PCH may use this
+information to minimize its interactions with the processor. This may improve PC6 residency and
+drives idle power down.
+
+Source
+------
+
+MSR_POWER_CTL (**0x1FC**), bit **36**.
+
+Scope
+-----
+
+This option has **global** scope.

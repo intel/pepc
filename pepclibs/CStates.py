@@ -110,6 +110,13 @@ PROPS = {
         "mnames" : ("sysfs", ),
         "writable" : False,
     },
+    "pch_negotiation" : {
+        "name" : "PCH negotiation",
+        "type" : "bool",
+        "sname": None,
+        "writable" : True,
+        "mnames" : ("msr", ),
+    },
 }
 
 class CStates(_PCStatesBase.PCStatesBase):
@@ -272,6 +279,7 @@ class CStates(_PCStatesBase.PCStatesBase):
             finfo = self._get_powerctl().features
             self._props["c1e_autopromote"]["sname"] = finfo["c1e_autopromote"]["sname"]
             self._props["cstate_prewake"]["sname"] = finfo["cstate_prewake"]["sname"]
+            self._props["pch_negotiation"]["sname"] = finfo["pch_negotiation"]["sname"]
         else:
             raise Error(f"BUG: could not get scope for property '{pname}'")
 
