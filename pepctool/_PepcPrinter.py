@@ -76,7 +76,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             if unit:
                 val = Human.num2si(val, decp=2)
                 val = f"{val}{unit}"
-            if sfx:
+            if sfx and prop["type"] not in ("int", "float"):
                 val = f"'{val}'"
 
         if action is not None:
