@@ -74,8 +74,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         else:
             unit = prop.get("unit")
             if unit:
-                if val > 9999:
-                    val = Human.num2si(val)
+                val = Human.num2si(val, decp=2)
                 val = f"{val}{unit}"
             if sfx:
                 val = f"'{val}'"
