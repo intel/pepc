@@ -106,7 +106,10 @@ class WrapExceptions:
 
     def __exit__(self, exc_type, exc_value, traceback):
         """The context exit method."""
-        self.close()
+        try:
+            self.close()
+        except Exception as err:
+            _LOG.warning(err)
 
     def __getattr__(self, name):
         """Fall-back to the wrapped object attributes."""
