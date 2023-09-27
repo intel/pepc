@@ -11,9 +11,12 @@ This module contains misc. helper functions with the common theme of representin
 human-readable format, or turning human-oriented data into a machine format.
 """
 
+import logging
 from itertools import groupby
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
+
+_LOG = logging.getLogger()
 
 # The units this module supports.
 _SUPPORTED_UNITS = {
@@ -83,6 +86,29 @@ def parse_bytesize(size):
     except ValueError:
         raise Error("cannot interpret bytes count '%s', please provide a number and "
                     "possibly the unit: %s" % (orig_size, ", ".join(_SIZE_UNITS))) from None
+
+def separate_si_prefix(unit):
+    """
+    Split any SI-unit prefix from the base unit and return a tuple containing both. If 'unit' does
+    not contain any SI-unit prefixes, then returns the prefix as 'None'. Example behaviour:
+     * "kHz" -> "k", "Hz"
+     * "Hz" -> None, "Hz"
+    """
+
+    if len(unit) < 2:
+        return None, unit
+
+    sipfx = unit[0]
+    base_unit = unit[1:]
+
+    if sipfx not in _SIPFX_SCALERS:
+        return None, unit
+
+    if base_unit not in _SUPPORTED_UNITS:
+        _LOG.warning("unsupported unit '%s' was split into SI-prefix '%s' and base unit '%s'",
+                     unit, sipfx, base_unit)
+
+    return sipfx, base_unit
 
 def num2si(value, unit=None, sep="", sipfx=None, decp=1):
     """
