@@ -118,6 +118,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
                         fobj.seek(regaddr)
                         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                         fobj.write(regval_bytes)
+                        fobj.flush()
                         _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x%s",
                                    cpu, regaddr, regval, self._pman.hostmsg)
                     except Error as err:
@@ -299,6 +300,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
             try:
                 fobj.seek(regaddr)
                 fobj.write(regval_bytes)
+                fobj.flush()
                 _LOG.debug("CPU%d: MSR 0x%x: wrote 0x%x", cpu, regaddr, regval)
             except Error as err:
                 raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
