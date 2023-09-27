@@ -122,8 +122,8 @@ class MSR(ClassHelpers.SimpleCloseContext):
                                    cpu, regaddr, regval, self._pman.hostmsg)
                     except Error as err:
                         raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
-                                    f"{cpu}:\nfailed to write to file '{path}'"
-                                    f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+                                    f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
+                                    f"{err.indent(2)}") from err
 
         self._transaction_buffer.clear()
 
@@ -301,9 +301,8 @@ class MSR(ClassHelpers.SimpleCloseContext):
                 fobj.write(regval_bytes)
                 _LOG.debug("CPU%d: MSR 0x%x: wrote 0x%x", cpu, regaddr, regval)
             except Error as err:
-                raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU {cpu}:\n"
-                            f"failed to write to file '{path}'{self._pman.hostmsg}:\n"
-                            f"{err.indent(2)}") from err
+                raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
+                            f"{cpu}{self._pman.hostmsg} (file '{path}'):\n{err.indent(2)}") from err
 
     def write(self, regaddr, regval, cpus="all", sname="CPU", verify=False):
         """
