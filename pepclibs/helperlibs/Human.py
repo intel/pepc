@@ -162,6 +162,23 @@ def num2si(value, unit=None, sep="", sipfx=None, decp=1):
         result += unit
     return result
 
+def scale_si_val(val, unit):
+    """
+    Scale 'val' which has unit 'unit'. The data will be scaled so that the unit representing the
+    data does not contain any SI-unit prefix. Example behaviour:
+     * 5, "kHz" -> 5000
+     * 10, "ms" -> 0.01
+     * 10, "s" -> 10
+    """
+
+    prefix, _ = separate_si_prefix(unit)
+
+    if not prefix:
+        return val
+
+    scale_factor = _SIPFX_SCALERS[prefix]
+    return val * scale_factor
+
 def duration(seconds, s=True, ms=False):
     """
     Transform duration in seconds to the human-readable format. The 's' and 'ms' arguments control
