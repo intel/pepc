@@ -112,7 +112,7 @@ mean CPU 4.
 \f[B]--yaml\f[R]
 Print information in YAML format.
 .TP
-\f[B]--override-cpu-model\f[R]
+\f[B]--override-cpu-model\f[R] \f[I]MODEL\f[R]
 This option is for debugging and testing purposes only.
 Provide the CPU model number which the tool treats the target system CPU
 as.
@@ -156,7 +156,7 @@ Get maximum CPU efficiency frequency (details in
 \[aq]max_eff_freq\[aq]).
 .TP
 \f[B]--turbo\f[R]
-Get current setting for turbo (details in \[aq]turbo\[aq]).
+Check if turbo is enabled or disabled (details in \[aq]turbo\[aq]).
 .TP
 \f[B]--max-turbo-freq\f[R]
 Get maximum CPU turbo frequency (details in \[aq]max_turbo_freq\[aq]).
@@ -176,7 +176,7 @@ Get maximum supported uncore frequency (details in
 \[aq]max_uncore_freq_limit\[aq]).
 .TP
 \f[B]--hwp\f[R]
-Get current setting for hardware power management (details in
+Check if hardware power management is enabled or disabled (details in
 \[aq]hwp\[aq]).
 .TP
 \f[B]--epp\f[R]
@@ -243,53 +243,53 @@ does not provide topology information for offline CPUs.
 In the previous example if CPU 3 was offline, then \[aq]0\[aq] would
 mean CPU 4.
 .TP
-\f[B]--override-cpu-model\f[R]
+\f[B]--override-cpu-model\f[R] \f[I]MODEL\f[R]
 This option is for debugging and testing purposes only.
 Provide the CPU model number which the tool treats the target system CPU
 as.
 For example, use 0x8F to treat the target system as Sapphire Rapids
 Xeon.
 .TP
-\f[B]--min-freq\f[R] \f[I][MIN_FREQ]\f[R]
+\f[B]--min-freq\f[R] \f[I]MIN_FREQ\f[R]
 Set minimum CPU frequency (details in \[aq]min_freq\[aq]).
 .TP
-\f[B]--max-freq\f[R] \f[I][MAX_FREQ]\f[R]
+\f[B]--max-freq\f[R] \f[I]MAX_FREQ\f[R]
 Set maximum CPU frequency (details in \[aq]max_freq\[aq]).
 .TP
-\f[B]--min-freq-hw\f[R] \f[I][MIN_FREQ_HW]\f[R]
+\f[B]--min-freq-hw\f[R] \f[I]MIN_FREQ\f[R]
 Set minimum CPU frequency (OS bypass) (details in
 \[aq]min_freq_limit\[aq]).
 .TP
-\f[B]--max-freq-hw\f[R] \f[I][MAX_FREQ_HW]\f[R]
+\f[B]--max-freq-hw\f[R] \f[I]MAX_FREQ\f[R]
 Set maximum CPU frequency (OS bypass) (details in
 \[aq]max_freq_limit\[aq]).
 .TP
-\f[B]--turbo\f[R] \f[I][TURBO]\f[R]
+\f[B]--turbo\f[R] \f[I]on|off\f[R]
 Enable or disable turbo (details in \[aq]turbo\[aq]).
 .TP
-\f[B]--min-uncore-freq\f[R] \f[I][MIN_UNCORE_FREQ]\f[R]
+\f[B]--min-uncore-freq\f[R] \f[I]MIN_UNCORE_FREQ\f[R]
 Set minimum uncore frequency (details in \[aq]min_uncore_freq\[aq]).
 .TP
-\f[B]--max-uncore-freq\f[R] \f[I][MAX_UNCORE_FREQ]\f[R]
+\f[B]--max-uncore-freq\f[R] \f[I]MAX_UNCORE_FREQ\f[R]
 Set maximum uncore frequency (details in \[aq]max_uncore_freq\[aq]).
 .TP
-\f[B]--epp\f[R] \f[I][EPP]\f[R]
+\f[B]--epp\f[R] \f[I]EPP\f[R]
 Set EPP via sysfs (details in \[aq]epp\[aq]).
 .TP
-\f[B]--epp-hw\f[R] \f[I][EPP_HW]\f[R]
+\f[B]--epp-hw\f[R] \f[I]EPP\f[R]
 Set EPP via MSR (details in \[aq]epp_hw\[aq]).
 .TP
-\f[B]--epb\f[R] \f[I][EPB]\f[R]
+\f[B]--epb\f[R] \f[I]EPB\f[R]
 Set EPB via sysfs (details in \[aq]epb\[aq]).
 .TP
-\f[B]--epb-hw\f[R] \f[I][EPB_HW]\f[R]
+\f[B]--epb-hw\f[R] \f[I]EPB\f[R]
 Set EPB via MSR (details in \[aq]epb_hw\[aq]).
 .TP
-\f[B]--intel-pstate-mode\f[R] \f[I][INTEL_PSTATE_MODE]\f[R]
+\f[B]--intel-pstate-mode\f[R] \f[I][MODE]\f[R]
 Set operation mode of \[aq]intel_pstate\[aq] driver (details in
 \[aq]intel_pstate_mode\[aq]).
 .TP
-\f[B]--governor\f[R] \f[I][GOVERNOR]\f[R]
+\f[B]--governor\f[R] \f[I][NAME]\f[R]
 Set CPU frequency governor (details in \[aq]governor\[aq]).
 .SS Subcommand \f[I]\[aq]save\[aq]\f[R]
 .PP
@@ -349,11 +349,11 @@ Name of the file from which to restore the settings from, use
 min_freq - Minimum CPU frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--min-freq\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--min-freq\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--min-freq\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--min-freq\f[R]=<value>
 .SS Description
 .PP
 Minimum CPU frequency is the lowest frequency the OS configured the CPU
@@ -393,11 +393,11 @@ This property has \f[B]CPU\f[R] scope.
 max_freq - Maximum CPU frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--max-freq\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--max-freq\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--max-freq\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--max-freq\f[R]=<value>
 .SS Description
 .PP
 Maximum CPU frequency is the lowest frequency the OS configured the CPU
@@ -437,7 +437,7 @@ This property has \f[B]CPU\f[R] scope.
 min_freq_limit - Minimum supported CPU frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--min-freq-limit\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--min-freq-limit\f[R]
 .SS Description
 .PP
 Minimum supported CPU frequency is the minimum CPU frequency supported
@@ -456,7 +456,7 @@ This property has \f[B]CPU\f[R] scope.
 max_freq_limit - Maximum supported CPU frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--min-freq-limit\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--min-freq-limit\f[R]
 .SS Description
 .PP
 Maximum supported CPU frequency is the maximum CPU frequency supported
@@ -475,7 +475,7 @@ This property has \f[B]CPU\f[R] scope.
 base_freq - Base CPU frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--base-freq\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--base-freq\f[R]
 .SS Description
 .PP
 Base CPU frequency is the highest sustainable CPU frequency.
@@ -501,11 +501,11 @@ This property has \f[B]CPU\f[R] scope.
 min_freq_hw - Minimum CPU frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--min-freq-hw\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--min-freq-hw\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--min-freq-hw\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--min-freq-hw\f[R]=<value>
 .SS Description
 .PP
 Minimum frequency the CPU is configured to run at.
@@ -544,11 +544,11 @@ This property has \f[B]CPU\f[R] scope.
 max_freq_hw - Maximum CPU frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--max-freq-hw\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--max-freq-hw\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--max-freq-hw\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--max-freq-hw\f[R]=<value>
 .SS Description
 .PP
 Maximum frequency the CPU is configured to run at.
@@ -587,7 +587,7 @@ This property has \f[B]CPU\f[R] scope.
 bus_clock - Bus clock speed.
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--bus-clock\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--bus-clock\f[R]
 .SS Description
 .PP
 Bus clock refers to how quickly the system bus can move data from one
@@ -609,7 +609,7 @@ With the following exception, Silvermonts and Airmonts have
 min_oper_freq - Minimum CPU operating frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--min-oper-freq\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--min-oper-freq\f[R]
 .SS Description
 .PP
 Minimum operating frequency is the lowest possible frequency the CPU can
@@ -631,7 +631,7 @@ This property has \f[B]CPU\f[R] scope.
 max_eff_freq - Maximum CPU efficiency frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--max-eff-freq\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--max-eff-freq\f[R]
 .SS Description
 .PP
 Maximum efficiency frequency is the most energy efficient CPU frequency.
@@ -650,11 +650,11 @@ This property has \f[B]CPU\f[R] scope.
 turbo - Turbo
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--turbo\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--turbo\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--turbo\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--turbo\f[R]=<on|off>
 .SS Description
 .PP
 When turbo is enabled, the CPUs can automatically run at a frequency
@@ -676,7 +676,7 @@ This property has \f[B]global\f[R] scope.
 max_turbo_freq - Maximum CPU turbo frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--max-eff-freq\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--max-eff-freq\f[R]
 .SS Description
 .PP
 Maximum 1-core turbo frequency is the highest frequency a single CPU can
@@ -696,11 +696,11 @@ This property has \f[B]CPU\f[R] scope.
 min_uncore_freq - Minimum uncore frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--min-uncore-freq\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--min-uncore-freq\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--min-uncore-freq\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--min-uncore-freq\f[R]=<value>
 .SS Description
 .PP
 Minimum CPU frequency is the lowest frequency the OS configured the CPU
@@ -732,11 +732,11 @@ This property has \f[B]die\f[R] scope.
 max_uncore_freq - Maximum uncore frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--max-uncore-freq\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--max-uncore-freq\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--max-uncore-freq\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--max-uncore-freq\f[R]=<value>
 .SS Description
 .PP
 Maximum CPU frequency is the highest frequency the OS configured the CPU
@@ -768,7 +768,7 @@ This property has \f[B]die\f[R] scope.
 min_uncore_freq_limit - Minimum supported uncore frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--min-uncore-freq-limit\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--min-uncore-freq-limit\f[R]
 .SS Description
 .PP
 Minimum supported uncore frequency is the lowest uncore frequency
@@ -788,7 +788,7 @@ This property has \f[B]die\f[R] scope.
 max_uncore_freq_limit - Maximum supported uncore frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--max-uncore-freq-limit\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--max-uncore-freq-limit\f[R]
 .SS Description
 .PP
 Maximum supported uncore frequency is the highest uncore frequency
@@ -808,7 +808,7 @@ This property has \f[B]die\f[R] scope.
 hwp - Hardware power management
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--hwp\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--hwp\f[R]
 .SS Description
 .PP
 When hardware power management is enabled, CPUs can automatically scale
@@ -826,11 +826,11 @@ This property has \f[B]global\f[R] scope.
 epp - Energy Performance Preference
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--epp\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--epp\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--epp\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--epp\f[R]=<value>
 .SS Description
 .PP
 Energy Performance Preference is a hint to the CPU on energy efficiency
@@ -851,11 +851,11 @@ This property has \f[B]CPU\f[R] scope.
 epp_hw - Energy Performance Preference
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--epp-hw\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--epp-hw\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--epp-hw\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--epp-hw\f[R]=<value>
 .SS Description
 .PP
 Energy Performance Preference is a hint to the CPU on energy efficiency
@@ -880,11 +880,11 @@ This property has \f[B]CPU\f[R] scope.
 epb - Energy Performance Bias
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--epb\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--epb\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--epb\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--epb\f[R]=<value>
 .SS Description
 .PP
 Energy Performance Bias is a hint to the CPU on energy efficiency vs
@@ -905,11 +905,11 @@ This property has \f[B]CPU\f[R] scope.
 epb_hw - Energy Performance Preference
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--epb-hw\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--epb-hw\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--epb-hw\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--epb-hw\f[R]=<value>
 .SS Description
 .PP
 Energy Performance Bias is a hint to the CPU on energy efficiency vs
@@ -931,7 +931,7 @@ Westmeres and Sandybridges have \f[B]package\f[R] scope.
 driver - CPU frequency driver
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--driver\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--driver\f[R]
 .SS Description
 .PP
 CPU frequency driver enumerates and requests the P-states available on
@@ -950,11 +950,11 @@ This property has \f[B]global\f[R] scope.
 intel_pstate_mode - Operation mode of \[aq]intel_pstate\[aq] driver
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--intel-pstate-mode\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--intel-pstate-mode\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--intel-pstate-mode\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--intel-pstate-mode\f[R]=<mode>
 .SS Description
 .PP
 The \[aq]intel_pstate\[aq] driver has 3 operation modes:
@@ -977,11 +977,11 @@ This property has \f[B]global\f[R] scope.
 governor - CPU frequency governor
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--governor\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--governor\f[R]
 .PD 0
 .P
 .PD
-pepc pstates \f[I]config\f[R] [\f[B]--governor\f[R]=<value>]
+pepc pstates \f[I]config\f[R] \f[B]--governor\f[R]=<name>
 .SS Description
 .PP
 CPU frequency governor decides which P-state to select on a CPU
@@ -1000,7 +1000,7 @@ This property has \f[B]CPU\f[R] scope.
 governors - Available CPU frequency governors
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] [\f[B]--governors\f[R]]
+pepc pstates \f[I]info\f[R] \f[B]--governors\f[R]
 .SS Description
 .PP
 CPU frequency governors decide which P-state to select on a CPU

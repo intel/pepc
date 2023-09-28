@@ -1,3 +1,11 @@
+pepc (1.4.34) unstable; urgency=low
+
+  * Improve scaling printed values with SI prefixes (e.g., print 2.44ms instead
+    of 0.00244140625s.
+  * Improve readability by printing numeric values without using quotes.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 28 Sep 2023 00:00:00 +0200
+
 pepc (1.4.33) unstable; urgency=low
 
   * Fix 'pepc pstates info' output, group the properties by source.

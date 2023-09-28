@@ -112,7 +112,7 @@ mean CPU 4.
 \f[B]--yaml\f[R]
 Print information in YAML format.
 .TP
-\f[B]--override-cpu-model\f[R]
+\f[B]--override-cpu-model\f[R] \f[I]MODEL\f[R]
 This option is for debugging and testing purposes only.
 Provide the CPU model number which the tool treats the target system CPU
 as.
@@ -140,18 +140,19 @@ available package C-state limits (details in
 (details in \[aq]pkg_cstate_limit_aliases\[aq]).
 .TP
 \f[B]--c1-demotion\f[R]
-Get current setting for C1 demotion (details in \[aq]c1_demotion\[aq]).
+Check if C1 demotion is enabled or disabled (details in
+\[aq]c1_demotion\[aq]).
 .TP
 \f[B]--c1-undemotion\f[R]
-Get current setting for C1 undemotion (details in
+Check if C1 undemotion is enabled or disabled (details in
 \[aq]c1_undemotion\[aq]).
 .TP
 \f[B]--c1e-autopromote\f[R]
-Get current setting for C1E autopromote (details in
+Check if C1E autopromote is enabled or disabled (details in
 \[aq]c1e_autopromote\[aq]).
 .TP
 \f[B]--cstate-prewake\f[R]
-Get current setting for C-state prewake (details in
+Check if C-state prewake is enabled or disabled (details in
 \[aq]cstate_prewake\[aq]).
 .TP
 \f[B]--idle-driver\f[R]
@@ -201,14 +202,14 @@ does not provide topology information for offline CPUs.
 In the previous example if CPU 3 was offline, then \[aq]0\[aq] would
 mean CPU 4.
 .TP
-\f[B]--override-cpu-model\f[R]
+\f[B]--override-cpu-model\f[R] \f[I]MODEL\f[R]
 This option is for debugging and testing purposes only.
 Provide the CPU model number which the tool treats the target system CPU
 as.
 For example, use 0x8F to treat the target system as Sapphire Rapids
 Xeon.
 .TP
-\f[B]--enable\f[R] \f[I][CSTATES]\f[R]
+\f[B]--enable\f[R] \f[I]CSTATES\f[R]
 Comma-separated list of C-states to enable.
 C-states should be specified by name (e.g., \[aq]C1\[aq]).
 Use \[aq]all\[aq] to specify all the available Linux C-states (this is
@@ -221,27 +222,27 @@ usually about various \[aq]mwait\[aq] instruction hints.
 The latter are platform-specific hardware state, entered upon a Linux
 request.
 .TP
-\f[B]--disable\f[R] \f[I][CSTATES]\f[R]
+\f[B]--disable\f[R] \f[I]CSTATES\f[R]
 Similar to \[aq]--enable\[aq], but specifies the list of C-states to
 disable.
 .TP
-\f[B]--pkg-cstate-limit\f[R] \f[I][PKG_CSTATE_LIMIT]\f[R]
+\f[B]--pkg-cstate-limit\f[R] \f[I]PKG_CSTATE_LIMIT\f[R]
 Set package C-state limit (details in \[aq]pkg_cstate_limit\[aq]).
 .TP
-\f[B]--c1-demotion\f[R] \f[I][C1_DEMOTION]\f[R]
+\f[B]--c1-demotion\f[R] \f[I]on|off\f[R]
 Enable or disable C1 demotion (details in \[aq]c1_demotion\[aq]).
 .TP
-\f[B]--c1-undemotion\f[R] \f[I][C1_UNDEMOTION]\f[R]
+\f[B]--c1-undemotion\f[R] \f[I]on|off\f[R]
 Enable or disable C1 undemotion (details in \[aq]c1_undemotion\[aq]).
 .TP
-\f[B]--c1e-autopromote\f[R] \f[I][C1E_AUTOPROMOTE]\f[R]
+\f[B]--c1e-autopromote\f[R] \f[I]on|off\f[R]
 Enable or disable C1E autopromote (details in
 \[aq]c1e_autopromote\[aq]).
 .TP
-\f[B]--cstate-prewake\f[R] \f[I][CSTATE_PREWAKE]\f[R]
+\f[B]--cstate-prewake\f[R] \f[I]on|off\f[R]
 Enable or disable C-state prewake (details in \[aq]cstate_prewake\[aq]).
 .TP
-\f[B]--governor\f[R] \f[I][GOVERNOR]\f[R]
+\f[B]--governor\f[R] \f[I]NAME\f[R]
 Set idle governor (details in \[aq]governor\[aq]).
 .SS Subcommand \f[I]\[aq]save\[aq]\f[R]
 .PP
@@ -300,11 +301,11 @@ Name of the file from which to restore the settings from, use
 pkg_cstate_limit - Package C-state limit
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--pkg-cstate-limit\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--pkg-cstate-limit\f[R]
 .PD 0
 .P
 .PD
-pepc cstates \f[I]config\f[R] [\f[B]--pkg-cstate-limit\f[R]=<value>]
+pepc cstates \f[I]config\f[R] \f[B]--pkg-cstate-limit\f[R]=<on|off>
 .SS Description
 .PP
 The deepest package C-state the platform is allowed to enter.
@@ -334,7 +335,7 @@ With the following exceptions: Silvermonts and Airmonts have
 pkg_cstate_limits - Available package C-state limits
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--pkg-cstate-limits\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--pkg-cstate-limits\f[R]
 .SS Description
 .PP
 All available package C-state limits.
@@ -351,7 +352,7 @@ This option has \f[B]global\f[R] scope.
 pkg_cstate_limit_lock - Package C-state limit lock
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--pkg-cstate-limit-lock\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--pkg-cstate-limit-lock\f[R]
 .SS Description
 .PP
 Whether the package C-state limit can be modified.
@@ -371,7 +372,7 @@ This option has \f[B]package\f[R] scope.
 pkg_cstate_limit_aliases - Package C-state limit aliases
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--pkg-cstate-limit-aliases\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--pkg-cstate-limit-aliases\f[R]
 .SS Description
 .PP
 Package C-state limit aliases, for example on Ice Lakes \[aq]PC6\[aq] is
@@ -389,11 +390,11 @@ This option has \f[B]global\f[R] scope.
 c1_demotion - C1 demotion
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--c1-demotion\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--c1-demotion\f[R]
 .PD 0
 .P
 .PD
-pepc cstates \f[I]config\f[R] [\f[B]--c1-demotion\f[R]=<value>]
+pepc cstates \f[I]config\f[R] \f[B]--c1-demotion\f[R]=<on|off>
 .SS Description
 .PP
 Allow or disallow the CPU to demote \f[B]C6\f[R] or \f[B]C7\f[R]
@@ -413,11 +414,11 @@ With the following exceptions, Silvermonts and Airmonts have
 c1_demotion - C1 undemotion
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--c1-undemotion\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--c1-undemotion\f[R]
 .PD 0
 .P
 .PD
-pepc cstates \f[I]config\f[R] [\f[B]--c1-undemotion\f[R]=<value>]
+pepc cstates \f[I]config\f[R] \f[B]--c1-undemotion\f[R]=<on|off>
 .SS Description
 .PP
 Allow or disallow the CPU to un-demote previously demoted requests back
@@ -437,11 +438,11 @@ With the following exceptions, Silvermonts and Airmonts have
 c1e_autopromote - C1E autopromote
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--c1e-autopromote\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--c1e-autopromote\f[R]
 .PD 0
 .P
 .PD
-pepc cstates \f[I]config\f[R] [\f[B]--c1e-autopromote\f[R]=<value>]
+pepc cstates \f[I]config\f[R] \f[B]--c1e-autopromote\f[R]=<on|off>
 .SS Description
 .PP
 When enabled, the CPU automatically converts all \f[B]C1\f[R] requests
@@ -459,11 +460,11 @@ This option has \f[B]package\f[R] scope.
 cstate_prewake - C-state prewake
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--cstate-prewake\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--cstate-prewake\f[R]
 .PD 0
 .P
 .PD
-pepc cstates \f[I]config\f[R] [\f[B]--cstate-prewake\f[R]=<value>]
+pepc cstates \f[I]config\f[R] \f[B]--cstate-prewake\f[R]=<on|off>
 .SS Description
 .PP
 When enabled, the CPU will start exiting the \f[B]C6\f[R] idle state in
@@ -481,7 +482,7 @@ This option has \f[B]package\f[R] scope.
 idle_driver - Idle driver
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--idle-driver\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--idle-driver\f[R]
 .SS Description
 .PP
 Idle driver is responsible for enumerating and requesting the C-states
@@ -499,11 +500,11 @@ This option has \f[B]global\f[R] scope.
 governor - Idle governor
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--governor\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--governor\f[R]
 .PD 0
 .P
 .PD
-pepc cstates \f[I]config\f[R] [\f[B]--governor\f[R]=<value>]
+pepc cstates \f[I]config\f[R] \f[B]--governor\f[R]=<name>
 .SS Description
 .PP
 Idle governor decides which C-state to request on an idle CPU.
@@ -520,7 +521,7 @@ This option has \f[B]global\f[R] scope.
 governors - Available idle governors
 .SS Synopsis
 .PP
-pepc cstates \f[I]info\f[R] [\f[B]--governors\f[R]]
+pepc cstates \f[I]info\f[R] \f[B]--governors\f[R]
 .SS Description
 .PP
 Idle governors decide which C-state to request on an idle CPU.

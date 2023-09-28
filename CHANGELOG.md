@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.34] - 2023-09-28
+### Changed
  - Improve scaling printed values with SI prefixes (e.g., print 2.44ms instead
    of 0.00244140625s.
  - Improve readability by printing numeric values without using quotes.
