@@ -22,6 +22,11 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupport
 
 _LOG = logging.getLogger()
 
+# Special values for writable CPU frequency properties.
+_SPECIAL_FREQ_VALS = {"min", "max", "base", "hfm", "P1", "eff", "lfm", "Pn", "Pm"}
+# Special values for writable uncore frequency properties.
+_SPECIAL_UNCORE_FREQ_VALS = {"min", "max"}
+
 # This dictionary describes the CPU properties this module supports.
 #
 # While this dictionary is user-visible and can be used, it is not recommended, because it is not
@@ -38,6 +43,7 @@ PROPS = {
         "sname": "CPU",
         "writable" : True,
         "sources" : ("sysfs", ),
+        "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "max_freq" : {
         "name" : "Max. CPU frequency",
@@ -46,6 +52,7 @@ PROPS = {
         "sname": "CPU",
         "writable" : True,
         "sources" : ("sysfs", ),
+        "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "min_freq_limit" : {
         "name" : "Min. supported CPU frequency",
@@ -78,6 +85,7 @@ PROPS = {
         "sname": "CPU",
         "writable" : True,
         "sources" : ("msr", ),
+        "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "max_freq_hw" : {
         "name" : "Max. CPU frequency",
@@ -86,6 +94,7 @@ PROPS = {
         "sname": "CPU",
         "writable" : True,
         "sources" : ("msr", ),
+        "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "bus_clock" : {
         "name" : "Bus clock speed",
@@ -133,6 +142,7 @@ PROPS = {
         "sname": "die",
         "writable" : True,
         "sources" : ("sysfs", ),
+        "special_vals" : _SPECIAL_UNCORE_FREQ_VALS,
     },
     "max_uncore_freq" : {
         "name" : "Max. uncore frequency",
@@ -141,6 +151,7 @@ PROPS = {
         "sname": "die",
         "writable" : True,
         "sources" : ("sysfs", ),
+        "special_vals" : _SPECIAL_UNCORE_FREQ_VALS,
     },
     "min_uncore_freq_limit" : {
         "name" : "Min. supported uncore frequency",
