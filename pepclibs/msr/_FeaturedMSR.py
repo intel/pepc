@@ -52,13 +52,13 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
     regname = None
     vendor = None
 
-    def _normalize_feature_value(self, feature, val):
+    def _normalize_feature_value(self, fname, val):
         """
-        Check that 'val' is a valid value fore feature 'feature' and converts it to a value suitable
+        Check that 'val' is a valid value for feature 'fname' and converts it to a value suitable
         for writing the MSR register.
         """
 
-        finfo = self._features[feature]
+        finfo = self._features[fname]
 
         if not finfo.get("vals"):
             return val
