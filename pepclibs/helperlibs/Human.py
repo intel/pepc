@@ -267,11 +267,12 @@ def parse_duration(htime, default_unit="s", name=None):
     argument can be used to pass a name that will be used in error message.
     """
 
-    if isinstance(htime, (int, float)):
-        return htime
+    if Trivial.is_num(htime):
+        htime = f"{htime}{default_unit}"
 
     if name is None:
         name = "time"
+
     specs = {"d" : "days", "h" : "hours", "m" : "minutes", "s" : "seconds"}
     tokens = _tokenize(htime, specs, default_unit, name)
 
@@ -297,11 +298,12 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
       * ns - nanoseconds
     """
 
-    if isinstance(htime, (int, float)):
-        return htime
+    if Trivial.is_num(htime):
+        htime = f"{htime}{default_unit}"
 
     if name is None:
         name = "time"
+
     specs = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
     tokens = _tokenize(htime, specs, default_unit, name)
 
@@ -326,11 +328,12 @@ def parse_freq(hfreq, default_unit="Hz", name=None):
     used in error messages.
     """
 
-    if isinstance(hfreq, (int, float)):
-        return hfreq
+    if Trivial.is_num(hfreq):
+        hfreq = f"{hfreq}{default_unit}"
 
     if name is None:
         name = "frequency"
+
     specs = {"GHz" : "gigahertz", "MHz" : "megahertz", "kHz" : "kilohertz", "Hz" : "Hertz"}
     tokens = _tokenize(hfreq, specs, default_unit, name, multiple=False)
 
