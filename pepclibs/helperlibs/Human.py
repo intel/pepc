@@ -64,9 +64,9 @@ def parse_bytesize(size):
         raise Error("cannot interpret bytes count '%s', please provide a number and "
                     "possibly the unit: %s" % (orig_size, ", ".join(_SIZE_UNITS))) from None
 
-_LARGENUM_UNITS = ["k", "M", "G", "T", "E"]
-_SMALLNUM_UNITS = ["m", "u", "n"]
-_SIPFX_MAP = {
+_SIPFX_LARGE = ["k", "M", "G", "T", "E"]
+_SIPFX_SMALL = ["m", "u", "n"]
+_SIPFX_SCALERS = {
     "E": 1000000000000000,
     "T": 1000000000000,
     "G": 1000000000,
@@ -96,25 +96,25 @@ def num2si(value, unit=None, sep="", sipfx=None, decp=1):
         raise Error("please, specify the separator only if unit was specified")
     if decp < 1 or decp > 8:
         raise Error("please, specify at max. 8 decimal places")
-    if sipfx and sipfx not in _SIPFX_MAP:
-        prefixes = ", ".join(_SIPFX_MAP)
+    if sipfx and sipfx not in _SIPFX_SCALERS:
+        prefixes = ", ".join(_SIPFX_SCALERS)
         raise Error(f"bad SI prefix '{sipfx}', use one of: {prefixes}")
 
     value = float(value)
 
     if sipfx:
-        factor = _SIPFX_MAP[sipfx]
+        factor = _SIPFX_SCALERS[sipfx]
         if value > 500 or value < 1:
             value *= factor
 
     pfx = None
     if value > 500:
-        for pfx in _LARGENUM_UNITS:
+        for pfx in _SIPFX_LARGE:
             value /= 1000.0
             if value < 1000:
                 break
     elif value < 1:
-        for pfx in _SMALLNUM_UNITS:
+        for pfx in _SIPFX_SMALL:
             value *= 1000.0
             if value >= 1:
                 break
