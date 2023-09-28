@@ -58,7 +58,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
           * fname - name of the feature to validate.
           * cpus - the CPUs to validate the feature for (same as in 'read_feature()').
 
-        Raises 'ErrorNotSupported' exception if the feature is not supported by a CPU in 'cpus'.
+        Raise 'ErrorNotSupported' exception if the feature is not supported by a CPU in 'cpus'.
         """
 
         if fname not in self._features:
@@ -95,7 +95,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
     def is_feature_supported(self, fname, cpus="all"):
         """
         Same as 'validate_feature_supported()', except return 'False' if exception was raised,
-        otherwise returns 'True'.
+        otherwise return 'True'.
         """
 
         try:
@@ -215,7 +215,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
           * cpu - CPU number to read the feature from. Can be an integer or a string with an integer
                   number.
 
-        Returns 'True' if the feature is enabled, and 'False' otherwise.
+        Return 'True' if the feature is enabled, and 'False' otherwise.
         """
 
         enabled = None
