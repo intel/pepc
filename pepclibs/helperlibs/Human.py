@@ -238,7 +238,6 @@ def _tokenize(hval, specs, name, multiple=True):
     return tokens
 
 DURATION_SPECS = {"d" : "days", "h" : "hours", "m" : "minutes", "s" : "seconds"}
-DURATION_SPECS_DESCR = ", ".join([f"{key} - {val}" for key, val in DURATION_SPECS.items()])
 
 def parse_duration(htime, default_unit="s", name=None):
     """
@@ -276,7 +275,6 @@ def parse_duration(htime, default_unit="s", name=None):
     return result
 
 DURATION_NS_SPECS = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
-DURATION_NS_SPECS_DESCR = ", ".join([f"{key} - {val}" for key, val in DURATION_NS_SPECS.items()])
 
 def parse_duration_ns(htime, default_unit="ns", name=None):
     """
@@ -306,7 +304,6 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
     return result
 
 FREQ_SPECS = {"GHz" : "gigahertz", "MHz" : "megahertz", "kHz" : "kilohertz", "Hz" : "Hertz"}
-FREQ_SPECS_DESCR = ", ".join([f"{key} - {val}" for key, val in FREQ_SPECS.items()])
 
 def parse_freq(hfreq, default_unit="Hz", name=None):
     """
