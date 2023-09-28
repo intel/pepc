@@ -52,6 +52,63 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
     regname = None
     vendor = None
 
+    def validate_feature_supported(self, fname, cpus="all"):
+        """
+        Validate if a feature is supported by all CPUs in 'cpus'.
+          * fname - name of the feature to validate.
+          * cpus - the CPUs to validate the feature for (same as in 'read_feature()').
+
+        Raises 'ErrorNotSupported' exception if the feature is not supported by a CPU in 'cpus'.
+        """
+
+        if fname not in self._features:
+            features_str = ", ".join(set(self._features))
+            raise Error(f"unknown feature '{fname}', known features are: {features_str}")
+
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+
+        supported_cpus = []
+        unsupported_cpus = []
+        for cpu in cpus:
+            if self._features[fname]["supported"][cpu]:
+                supported_cpus.append(cpu)
+            else:
+                unsupported_cpus.append(cpu)
+
+        if unsupported_cpus:
+            if not supported_cpus:
+                raise ErrorNotSupported(f"{self._features[fname]['name']} is not supported on "
+                                        f"{self._cpuinfo.cpudescr}")
+
+            supported_cpus = Human.rangify(supported_cpus)
+            unsupported_cpus = Human.rangify(unsupported_cpus)
+            raise ErrorNotSupported(f"{self._features[fname]['name']} is not supported on CPUs "
+                                    f"{unsupported_cpus}.\n{self._cpuinfo.cpudescr} supports "
+                                    f"{self._features[fname]['name']} only on the following CPUs: "
+                                    f"{supported_cpus}")
+
+    def validate_cpu_feature_supported(self, fname, cpu):
+        """Same as 'validate_feature_supported()' but for a single CPU."""
+
+        self.validate_feature_supported(fname, cpus=(cpu, ))
+
+    def is_feature_supported(self, fname, cpus="all"):
+        """
+        Same as 'validate_feature_supported()', except return 'False' if exception was raised,
+        otherwise returns 'True'.
+        """
+
+        try:
+            self.validate_feature_supported(fname, cpus)
+            return True
+        except ErrorNotSupported:
+            return False
+
+    def is_cpu_feature_supported(self, fname, cpu):
+        """Same as 'is_feature_supported()' but for a single CPU."""
+
+        return self.is_feature_supported(fname, cpus=(cpu, ))
+
     def _normalize_feature_value(self, fname, val):
         """
         Check that 'val' is a valid value for feature 'fname' and converts it to a value suitable
@@ -246,63 +303,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         """
 
         self.enable_feature(fname, enable, cpus=(cpu,))
-
-    def is_feature_supported(self, fname, cpus="all"):
-        """
-        Same as 'validate_feature_supported()', except return 'False' if exception was raised,
-        otherwise returns 'True'.
-        """
-
-        try:
-            self.validate_feature_supported(fname, cpus)
-            return True
-        except ErrorNotSupported:
-            return False
-
-    def is_cpu_feature_supported(self, fname, cpu):
-        """Same as 'is_feature_supported()' but for a single CPU."""
-
-        return self.is_feature_supported(fname, cpus=(cpu, ))
-
-    def validate_feature_supported(self, fname, cpus="all"):
-        """
-        Validate if a feature is supported by all CPUs in 'cpus'.
-          * fname - name of the feature to validate.
-          * cpus - the CPUs to validate the feature for (same as in 'read_feature()').
-
-        Raises 'ErrorNotSupported' exception if the feature is not supported by a CPU in 'cpus'.
-        """
-
-        if fname not in self._features:
-            features_str = ", ".join(set(self._features))
-            raise Error(f"unknown feature '{fname}', known features are: {features_str}")
-
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-
-        supported_cpus = []
-        unsupported_cpus = []
-        for cpu in cpus:
-            if self._features[fname]["supported"][cpu]:
-                supported_cpus.append(cpu)
-            else:
-                unsupported_cpus.append(cpu)
-
-        if unsupported_cpus:
-            if not supported_cpus:
-                raise ErrorNotSupported(f"{self._features[fname]['name']} is not supported on "
-                                        f"{self._cpuinfo.cpudescr}")
-
-            supported_cpus = Human.rangify(supported_cpus)
-            unsupported_cpus = Human.rangify(unsupported_cpus)
-            raise ErrorNotSupported(f"{self._features[fname]['name']} is not supported on CPUs "
-                                    f"{unsupported_cpus}.\n{self._cpuinfo.cpudescr} supports "
-                                    f"{self._features[fname]['name']} only on the following CPUs: "
-                                    f"{supported_cpus}")
-
-    def validate_cpu_feature_supported(self, fname, cpu):
-        """Same as 'validate_feature_supported()' but for a single CPU."""
-
-        self.validate_feature_supported(fname, cpus=(cpu, ))
 
     def _init_supported_flag(self):
         """Initialize the 'supported' flag for all features."""
