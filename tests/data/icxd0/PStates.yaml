@@ -16,3 +16,7 @@ inlinefiles:
   readonly: false
   dirname: PStates/pstates
   filename: epb.txt
+- separator: ':'
+  readonly: true
+  dirname: PStates/pstates
+  filename: bios_limit.txt

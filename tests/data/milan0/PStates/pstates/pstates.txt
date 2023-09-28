@@ -1,6 +1,5 @@
 /sys/devices/system/cpu/cpufreq/policy0/affected_cpus:0
 /sys/devices/system/cpu/cpufreq/policy0/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy0/boost:0
 /sys/devices/system/cpu/cpufreq/policy0/cpb:1
 /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq:3737890
@@ -18,7 +17,6 @@
 /sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy100/affected_cpus:100
 /sys/devices/system/cpu/cpufreq/policy100/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy100/boost:0
 /sys/devices/system/cpu/cpufreq/policy100/cpb:1
 /sys/devices/system/cpu/cpufreq/policy100/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy100/cpuinfo_max_freq:3737890
@@ -28,7 +26,7 @@
 /sys/devices/system/cpu/cpufreq/policy100/related_cpus:100
 /sys/devices/system/cpu/cpufreq/policy100/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy100/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy100/scaling_cur_freq:2930009
+/sys/devices/system/cpu/cpufreq/policy100/scaling_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy100/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy100/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy100/scaling_max_freq:2800000
@@ -36,9 +34,8 @@
 /sys/devices/system/cpu/cpufreq/policy100/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy101/affected_cpus:101
 /sys/devices/system/cpu/cpufreq/policy101/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy101/boost:0
 /sys/devices/system/cpu/cpufreq/policy101/cpb:1
-/sys/devices/system/cpu/cpufreq/policy101/cpuinfo_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy101/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy101/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy101/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy101/cpuinfo_transition_latency:0
@@ -46,7 +43,7 @@
 /sys/devices/system/cpu/cpufreq/policy101/related_cpus:101
 /sys/devices/system/cpu/cpufreq/policy101/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy101/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy101/scaling_cur_freq:3721906
+/sys/devices/system/cpu/cpufreq/policy101/scaling_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy101/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy101/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy101/scaling_max_freq:2800000
@@ -54,7 +51,6 @@
 /sys/devices/system/cpu/cpufreq/policy101/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy102/affected_cpus:102
 /sys/devices/system/cpu/cpufreq/policy102/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy102/boost:0
 /sys/devices/system/cpu/cpufreq/policy102/cpb:1
 /sys/devices/system/cpu/cpufreq/policy102/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy102/cpuinfo_max_freq:3737890
@@ -72,7 +68,6 @@
 /sys/devices/system/cpu/cpufreq/policy102/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy103/affected_cpus:103
 /sys/devices/system/cpu/cpufreq/policy103/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy103/boost:0
 /sys/devices/system/cpu/cpufreq/policy103/cpb:1
 /sys/devices/system/cpu/cpufreq/policy103/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy103/cpuinfo_max_freq:3737890
@@ -90,7 +85,6 @@
 /sys/devices/system/cpu/cpufreq/policy103/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy104/affected_cpus:104
 /sys/devices/system/cpu/cpufreq/policy104/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy104/boost:0
 /sys/devices/system/cpu/cpufreq/policy104/cpb:1
 /sys/devices/system/cpu/cpufreq/policy104/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy104/cpuinfo_max_freq:3737890
@@ -108,9 +102,8 @@
 /sys/devices/system/cpu/cpufreq/policy104/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy105/affected_cpus:105
 /sys/devices/system/cpu/cpufreq/policy105/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy105/boost:0
 /sys/devices/system/cpu/cpufreq/policy105/cpb:1
-/sys/devices/system/cpu/cpufreq/policy105/cpuinfo_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy105/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy105/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy105/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy105/cpuinfo_transition_latency:0
@@ -118,7 +111,7 @@
 /sys/devices/system/cpu/cpufreq/policy105/related_cpus:105
 /sys/devices/system/cpu/cpufreq/policy105/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy105/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy105/scaling_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy105/scaling_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy105/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy105/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy105/scaling_max_freq:2800000
@@ -126,9 +119,8 @@
 /sys/devices/system/cpu/cpufreq/policy105/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy106/affected_cpus:106
 /sys/devices/system/cpu/cpufreq/policy106/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy106/boost:0
 /sys/devices/system/cpu/cpufreq/policy106/cpb:1
-/sys/devices/system/cpu/cpufreq/policy106/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy106/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy106/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy106/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy106/cpuinfo_transition_latency:0
@@ -136,7 +128,7 @@
 /sys/devices/system/cpu/cpufreq/policy106/related_cpus:106
 /sys/devices/system/cpu/cpufreq/policy106/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy106/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy106/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy106/scaling_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy106/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy106/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy106/scaling_max_freq:2800000
@@ -144,7 +136,6 @@
 /sys/devices/system/cpu/cpufreq/policy106/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy107/affected_cpus:107
 /sys/devices/system/cpu/cpufreq/policy107/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy107/boost:0
 /sys/devices/system/cpu/cpufreq/policy107/cpb:1
 /sys/devices/system/cpu/cpufreq/policy107/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy107/cpuinfo_max_freq:3737890
@@ -162,7 +153,6 @@
 /sys/devices/system/cpu/cpufreq/policy107/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy108/affected_cpus:108
 /sys/devices/system/cpu/cpufreq/policy108/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy108/boost:0
 /sys/devices/system/cpu/cpufreq/policy108/cpb:1
 /sys/devices/system/cpu/cpufreq/policy108/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy108/cpuinfo_max_freq:3737890
@@ -172,7 +162,7 @@
 /sys/devices/system/cpu/cpufreq/policy108/related_cpus:108
 /sys/devices/system/cpu/cpufreq/policy108/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy108/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy108/scaling_cur_freq:3100306
+/sys/devices/system/cpu/cpufreq/policy108/scaling_cur_freq:3720674
 /sys/devices/system/cpu/cpufreq/policy108/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy108/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy108/scaling_max_freq:2800000
@@ -180,7 +170,6 @@
 /sys/devices/system/cpu/cpufreq/policy108/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy109/affected_cpus:109
 /sys/devices/system/cpu/cpufreq/policy109/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy109/boost:0
 /sys/devices/system/cpu/cpufreq/policy109/cpb:1
 /sys/devices/system/cpu/cpufreq/policy109/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy109/cpuinfo_max_freq:3737890
@@ -190,7 +179,7 @@
 /sys/devices/system/cpu/cpufreq/policy109/related_cpus:109
 /sys/devices/system/cpu/cpufreq/policy109/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy109/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy109/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy109/scaling_cur_freq:1262571
 /sys/devices/system/cpu/cpufreq/policy109/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy109/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy109/scaling_max_freq:2800000
@@ -198,7 +187,6 @@
 /sys/devices/system/cpu/cpufreq/policy109/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy10/affected_cpus:10
 /sys/devices/system/cpu/cpufreq/policy10/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy10/boost:0
 /sys/devices/system/cpu/cpufreq/policy10/cpb:1
 /sys/devices/system/cpu/cpufreq/policy10/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy10/cpuinfo_max_freq:3737890
@@ -216,7 +204,6 @@
 /sys/devices/system/cpu/cpufreq/policy10/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy110/affected_cpus:110
 /sys/devices/system/cpu/cpufreq/policy110/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy110/boost:0
 /sys/devices/system/cpu/cpufreq/policy110/cpb:1
 /sys/devices/system/cpu/cpufreq/policy110/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy110/cpuinfo_max_freq:3737890
@@ -234,7 +221,6 @@
 /sys/devices/system/cpu/cpufreq/policy110/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy111/affected_cpus:111
 /sys/devices/system/cpu/cpufreq/policy111/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy111/boost:0
 /sys/devices/system/cpu/cpufreq/policy111/cpb:1
 /sys/devices/system/cpu/cpufreq/policy111/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy111/cpuinfo_max_freq:3737890
@@ -252,7 +238,6 @@
 /sys/devices/system/cpu/cpufreq/policy111/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy112/affected_cpus:112
 /sys/devices/system/cpu/cpufreq/policy112/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy112/boost:0
 /sys/devices/system/cpu/cpufreq/policy112/cpb:1
 /sys/devices/system/cpu/cpufreq/policy112/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy112/cpuinfo_max_freq:3737890
@@ -270,7 +255,6 @@
 /sys/devices/system/cpu/cpufreq/policy112/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy113/affected_cpus:113
 /sys/devices/system/cpu/cpufreq/policy113/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy113/boost:0
 /sys/devices/system/cpu/cpufreq/policy113/cpb:1
 /sys/devices/system/cpu/cpufreq/policy113/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy113/cpuinfo_max_freq:3737890
@@ -288,7 +272,6 @@
 /sys/devices/system/cpu/cpufreq/policy113/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy114/affected_cpus:114
 /sys/devices/system/cpu/cpufreq/policy114/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy114/boost:0
 /sys/devices/system/cpu/cpufreq/policy114/cpb:1
 /sys/devices/system/cpu/cpufreq/policy114/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy114/cpuinfo_max_freq:3737890
@@ -306,7 +289,6 @@
 /sys/devices/system/cpu/cpufreq/policy114/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy115/affected_cpus:115
 /sys/devices/system/cpu/cpufreq/policy115/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy115/boost:0
 /sys/devices/system/cpu/cpufreq/policy115/cpb:1
 /sys/devices/system/cpu/cpufreq/policy115/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy115/cpuinfo_max_freq:3737890
@@ -316,7 +298,7 @@
 /sys/devices/system/cpu/cpufreq/policy115/related_cpus:115
 /sys/devices/system/cpu/cpufreq/policy115/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy115/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy115/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy115/scaling_cur_freq:1496575
 /sys/devices/system/cpu/cpufreq/policy115/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy115/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy115/scaling_max_freq:2800000
@@ -324,7 +306,6 @@
 /sys/devices/system/cpu/cpufreq/policy115/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy116/affected_cpus:116
 /sys/devices/system/cpu/cpufreq/policy116/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy116/boost:0
 /sys/devices/system/cpu/cpufreq/policy116/cpb:1
 /sys/devices/system/cpu/cpufreq/policy116/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy116/cpuinfo_max_freq:3737890
@@ -342,7 +323,6 @@
 /sys/devices/system/cpu/cpufreq/policy116/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy117/affected_cpus:117
 /sys/devices/system/cpu/cpufreq/policy117/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy117/boost:0
 /sys/devices/system/cpu/cpufreq/policy117/cpb:1
 /sys/devices/system/cpu/cpufreq/policy117/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy117/cpuinfo_max_freq:3737890
@@ -360,7 +340,6 @@
 /sys/devices/system/cpu/cpufreq/policy117/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy118/affected_cpus:118
 /sys/devices/system/cpu/cpufreq/policy118/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy118/boost:0
 /sys/devices/system/cpu/cpufreq/policy118/cpb:1
 /sys/devices/system/cpu/cpufreq/policy118/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy118/cpuinfo_max_freq:3737890
@@ -378,7 +357,6 @@
 /sys/devices/system/cpu/cpufreq/policy118/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy119/affected_cpus:119
 /sys/devices/system/cpu/cpufreq/policy119/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy119/boost:0
 /sys/devices/system/cpu/cpufreq/policy119/cpb:1
 /sys/devices/system/cpu/cpufreq/policy119/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy119/cpuinfo_max_freq:3737890
@@ -396,7 +374,6 @@
 /sys/devices/system/cpu/cpufreq/policy119/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy11/affected_cpus:11
 /sys/devices/system/cpu/cpufreq/policy11/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy11/boost:0
 /sys/devices/system/cpu/cpufreq/policy11/cpb:1
 /sys/devices/system/cpu/cpufreq/policy11/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy11/cpuinfo_max_freq:3737890
@@ -414,7 +391,6 @@
 /sys/devices/system/cpu/cpufreq/policy11/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy120/affected_cpus:120
 /sys/devices/system/cpu/cpufreq/policy120/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy120/boost:0
 /sys/devices/system/cpu/cpufreq/policy120/cpb:1
 /sys/devices/system/cpu/cpufreq/policy120/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy120/cpuinfo_max_freq:3737890
@@ -432,7 +408,6 @@
 /sys/devices/system/cpu/cpufreq/policy120/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy121/affected_cpus:121
 /sys/devices/system/cpu/cpufreq/policy121/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy121/boost:0
 /sys/devices/system/cpu/cpufreq/policy121/cpb:1
 /sys/devices/system/cpu/cpufreq/policy121/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy121/cpuinfo_max_freq:3737890
@@ -450,7 +425,6 @@
 /sys/devices/system/cpu/cpufreq/policy121/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy122/affected_cpus:122
 /sys/devices/system/cpu/cpufreq/policy122/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy122/boost:0
 /sys/devices/system/cpu/cpufreq/policy122/cpb:1
 /sys/devices/system/cpu/cpufreq/policy122/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy122/cpuinfo_max_freq:3737890
@@ -468,7 +442,6 @@
 /sys/devices/system/cpu/cpufreq/policy122/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy123/affected_cpus:123
 /sys/devices/system/cpu/cpufreq/policy123/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy123/boost:0
 /sys/devices/system/cpu/cpufreq/policy123/cpb:1
 /sys/devices/system/cpu/cpufreq/policy123/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy123/cpuinfo_max_freq:3737890
@@ -486,7 +459,6 @@
 /sys/devices/system/cpu/cpufreq/policy123/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy124/affected_cpus:124
 /sys/devices/system/cpu/cpufreq/policy124/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy124/boost:0
 /sys/devices/system/cpu/cpufreq/policy124/cpb:1
 /sys/devices/system/cpu/cpufreq/policy124/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy124/cpuinfo_max_freq:3737890
@@ -504,7 +476,6 @@
 /sys/devices/system/cpu/cpufreq/policy124/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy125/affected_cpus:125
 /sys/devices/system/cpu/cpufreq/policy125/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy125/boost:0
 /sys/devices/system/cpu/cpufreq/policy125/cpb:1
 /sys/devices/system/cpu/cpufreq/policy125/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy125/cpuinfo_max_freq:3737890
@@ -522,7 +493,6 @@
 /sys/devices/system/cpu/cpufreq/policy125/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy126/affected_cpus:126
 /sys/devices/system/cpu/cpufreq/policy126/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy126/boost:0
 /sys/devices/system/cpu/cpufreq/policy126/cpb:1
 /sys/devices/system/cpu/cpufreq/policy126/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy126/cpuinfo_max_freq:3737890
@@ -540,7 +510,6 @@
 /sys/devices/system/cpu/cpufreq/policy126/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy127/affected_cpus:127
 /sys/devices/system/cpu/cpufreq/policy127/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy127/boost:0
 /sys/devices/system/cpu/cpufreq/policy127/cpb:1
 /sys/devices/system/cpu/cpufreq/policy127/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy127/cpuinfo_max_freq:3737890
@@ -558,7 +527,6 @@
 /sys/devices/system/cpu/cpufreq/policy127/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy12/affected_cpus:12
 /sys/devices/system/cpu/cpufreq/policy12/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy12/boost:0
 /sys/devices/system/cpu/cpufreq/policy12/cpb:1
 /sys/devices/system/cpu/cpufreq/policy12/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy12/cpuinfo_max_freq:3737890
@@ -576,7 +544,6 @@
 /sys/devices/system/cpu/cpufreq/policy12/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy13/affected_cpus:13
 /sys/devices/system/cpu/cpufreq/policy13/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy13/boost:0
 /sys/devices/system/cpu/cpufreq/policy13/cpb:1
 /sys/devices/system/cpu/cpufreq/policy13/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy13/cpuinfo_max_freq:3737890
@@ -594,9 +561,8 @@
 /sys/devices/system/cpu/cpufreq/policy13/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy14/affected_cpus:14
 /sys/devices/system/cpu/cpufreq/policy14/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy14/boost:0
 /sys/devices/system/cpu/cpufreq/policy14/cpb:1
-/sys/devices/system/cpu/cpufreq/policy14/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy14/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy14/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy14/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy14/cpuinfo_transition_latency:0
@@ -604,7 +570,7 @@
 /sys/devices/system/cpu/cpufreq/policy14/related_cpus:14
 /sys/devices/system/cpu/cpufreq/policy14/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy14/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy14/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy14/scaling_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy14/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy14/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy14/scaling_max_freq:2800000
@@ -612,9 +578,8 @@
 /sys/devices/system/cpu/cpufreq/policy14/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy15/affected_cpus:15
 /sys/devices/system/cpu/cpufreq/policy15/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy15/boost:0
 /sys/devices/system/cpu/cpufreq/policy15/cpb:1
-/sys/devices/system/cpu/cpufreq/policy15/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy15/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy15/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy15/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy15/cpuinfo_transition_latency:0
@@ -622,7 +587,7 @@
 /sys/devices/system/cpu/cpufreq/policy15/related_cpus:15
 /sys/devices/system/cpu/cpufreq/policy15/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy15/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy15/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy15/scaling_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy15/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy15/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy15/scaling_max_freq:2800000
@@ -630,7 +595,6 @@
 /sys/devices/system/cpu/cpufreq/policy15/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy16/affected_cpus:16
 /sys/devices/system/cpu/cpufreq/policy16/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy16/boost:0
 /sys/devices/system/cpu/cpufreq/policy16/cpb:1
 /sys/devices/system/cpu/cpufreq/policy16/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy16/cpuinfo_max_freq:3737890
@@ -648,7 +612,6 @@
 /sys/devices/system/cpu/cpufreq/policy16/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy17/affected_cpus:17
 /sys/devices/system/cpu/cpufreq/policy17/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy17/boost:0
 /sys/devices/system/cpu/cpufreq/policy17/cpb:1
 /sys/devices/system/cpu/cpufreq/policy17/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy17/cpuinfo_max_freq:3737890
@@ -666,7 +629,6 @@
 /sys/devices/system/cpu/cpufreq/policy17/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy18/affected_cpus:18
 /sys/devices/system/cpu/cpufreq/policy18/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy18/boost:0
 /sys/devices/system/cpu/cpufreq/policy18/cpb:1
 /sys/devices/system/cpu/cpufreq/policy18/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy18/cpuinfo_max_freq:3737890
@@ -684,7 +646,6 @@
 /sys/devices/system/cpu/cpufreq/policy18/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy19/affected_cpus:19
 /sys/devices/system/cpu/cpufreq/policy19/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy19/boost:0
 /sys/devices/system/cpu/cpufreq/policy19/cpb:1
 /sys/devices/system/cpu/cpufreq/policy19/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy19/cpuinfo_max_freq:3737890
@@ -702,9 +663,8 @@
 /sys/devices/system/cpu/cpufreq/policy19/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy1/affected_cpus:1
 /sys/devices/system/cpu/cpufreq/policy1/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy1/boost:0
 /sys/devices/system/cpu/cpufreq/policy1/cpb:1
-/sys/devices/system/cpu/cpufreq/policy1/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy1/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy1/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy1/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy1/cpuinfo_transition_latency:0
@@ -712,7 +672,7 @@
 /sys/devices/system/cpu/cpufreq/policy1/related_cpus:1
 /sys/devices/system/cpu/cpufreq/policy1/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy1/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy1/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy1/scaling_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy1/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy1/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy1/scaling_max_freq:2800000
@@ -720,7 +680,6 @@
 /sys/devices/system/cpu/cpufreq/policy1/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy20/affected_cpus:20
 /sys/devices/system/cpu/cpufreq/policy20/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy20/boost:0
 /sys/devices/system/cpu/cpufreq/policy20/cpb:1
 /sys/devices/system/cpu/cpufreq/policy20/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy20/cpuinfo_max_freq:3737890
@@ -738,7 +697,6 @@
 /sys/devices/system/cpu/cpufreq/policy20/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy21/affected_cpus:21
 /sys/devices/system/cpu/cpufreq/policy21/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy21/boost:0
 /sys/devices/system/cpu/cpufreq/policy21/cpb:1
 /sys/devices/system/cpu/cpufreq/policy21/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy21/cpuinfo_max_freq:3737890
@@ -756,7 +714,6 @@
 /sys/devices/system/cpu/cpufreq/policy21/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy22/affected_cpus:22
 /sys/devices/system/cpu/cpufreq/policy22/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy22/boost:0
 /sys/devices/system/cpu/cpufreq/policy22/cpb:1
 /sys/devices/system/cpu/cpufreq/policy22/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy22/cpuinfo_max_freq:3737890
@@ -774,7 +731,6 @@
 /sys/devices/system/cpu/cpufreq/policy22/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy23/affected_cpus:23
 /sys/devices/system/cpu/cpufreq/policy23/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy23/boost:0
 /sys/devices/system/cpu/cpufreq/policy23/cpb:1
 /sys/devices/system/cpu/cpufreq/policy23/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy23/cpuinfo_max_freq:3737890
@@ -792,7 +748,6 @@
 /sys/devices/system/cpu/cpufreq/policy23/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy24/affected_cpus:24
 /sys/devices/system/cpu/cpufreq/policy24/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy24/boost:0
 /sys/devices/system/cpu/cpufreq/policy24/cpb:1
 /sys/devices/system/cpu/cpufreq/policy24/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy24/cpuinfo_max_freq:3737890
@@ -810,7 +765,6 @@
 /sys/devices/system/cpu/cpufreq/policy24/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy25/affected_cpus:25
 /sys/devices/system/cpu/cpufreq/policy25/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy25/boost:0
 /sys/devices/system/cpu/cpufreq/policy25/cpb:1
 /sys/devices/system/cpu/cpufreq/policy25/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy25/cpuinfo_max_freq:3737890
@@ -828,7 +782,6 @@
 /sys/devices/system/cpu/cpufreq/policy25/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy26/affected_cpus:26
 /sys/devices/system/cpu/cpufreq/policy26/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy26/boost:0
 /sys/devices/system/cpu/cpufreq/policy26/cpb:1
 /sys/devices/system/cpu/cpufreq/policy26/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy26/cpuinfo_max_freq:3737890
@@ -846,7 +799,6 @@
 /sys/devices/system/cpu/cpufreq/policy26/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy27/affected_cpus:27
 /sys/devices/system/cpu/cpufreq/policy27/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy27/boost:0
 /sys/devices/system/cpu/cpufreq/policy27/cpb:1
 /sys/devices/system/cpu/cpufreq/policy27/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy27/cpuinfo_max_freq:3737890
@@ -864,7 +816,6 @@
 /sys/devices/system/cpu/cpufreq/policy27/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy28/affected_cpus:28
 /sys/devices/system/cpu/cpufreq/policy28/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy28/boost:0
 /sys/devices/system/cpu/cpufreq/policy28/cpb:1
 /sys/devices/system/cpu/cpufreq/policy28/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy28/cpuinfo_max_freq:3737890
@@ -882,7 +833,6 @@
 /sys/devices/system/cpu/cpufreq/policy28/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy29/affected_cpus:29
 /sys/devices/system/cpu/cpufreq/policy29/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy29/boost:0
 /sys/devices/system/cpu/cpufreq/policy29/cpb:1
 /sys/devices/system/cpu/cpufreq/policy29/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy29/cpuinfo_max_freq:3737890
@@ -900,9 +850,8 @@
 /sys/devices/system/cpu/cpufreq/policy29/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy2/affected_cpus:2
 /sys/devices/system/cpu/cpufreq/policy2/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy2/boost:0
 /sys/devices/system/cpu/cpufreq/policy2/cpb:1
-/sys/devices/system/cpu/cpufreq/policy2/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy2/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy2/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy2/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy2/cpuinfo_transition_latency:0
@@ -910,7 +859,7 @@
 /sys/devices/system/cpu/cpufreq/policy2/related_cpus:2
 /sys/devices/system/cpu/cpufreq/policy2/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy2/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy2/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy2/scaling_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy2/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy2/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy2/scaling_max_freq:2800000
@@ -918,7 +867,6 @@
 /sys/devices/system/cpu/cpufreq/policy2/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy30/affected_cpus:30
 /sys/devices/system/cpu/cpufreq/policy30/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy30/boost:0
 /sys/devices/system/cpu/cpufreq/policy30/cpb:1
 /sys/devices/system/cpu/cpufreq/policy30/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy30/cpuinfo_max_freq:3737890
@@ -936,7 +884,6 @@
 /sys/devices/system/cpu/cpufreq/policy30/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy31/affected_cpus:31
 /sys/devices/system/cpu/cpufreq/policy31/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy31/boost:0
 /sys/devices/system/cpu/cpufreq/policy31/cpb:1
 /sys/devices/system/cpu/cpufreq/policy31/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy31/cpuinfo_max_freq:3737890
@@ -954,7 +901,6 @@
 /sys/devices/system/cpu/cpufreq/policy31/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy32/affected_cpus:32
 /sys/devices/system/cpu/cpufreq/policy32/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy32/boost:0
 /sys/devices/system/cpu/cpufreq/policy32/cpb:1
 /sys/devices/system/cpu/cpufreq/policy32/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy32/cpuinfo_max_freq:3737890
@@ -972,7 +918,6 @@
 /sys/devices/system/cpu/cpufreq/policy32/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy33/affected_cpus:33
 /sys/devices/system/cpu/cpufreq/policy33/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy33/boost:0
 /sys/devices/system/cpu/cpufreq/policy33/cpb:1
 /sys/devices/system/cpu/cpufreq/policy33/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy33/cpuinfo_max_freq:3737890
@@ -990,7 +935,6 @@
 /sys/devices/system/cpu/cpufreq/policy33/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy34/affected_cpus:34
 /sys/devices/system/cpu/cpufreq/policy34/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy34/boost:0
 /sys/devices/system/cpu/cpufreq/policy34/cpb:1
 /sys/devices/system/cpu/cpufreq/policy34/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy34/cpuinfo_max_freq:3737890
@@ -1008,9 +952,8 @@
 /sys/devices/system/cpu/cpufreq/policy34/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy35/affected_cpus:35
 /sys/devices/system/cpu/cpufreq/policy35/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy35/boost:0
 /sys/devices/system/cpu/cpufreq/policy35/cpb:1
-/sys/devices/system/cpu/cpufreq/policy35/cpuinfo_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy35/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy35/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy35/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy35/cpuinfo_transition_latency:0
@@ -1018,7 +961,7 @@
 /sys/devices/system/cpu/cpufreq/policy35/related_cpus:35
 /sys/devices/system/cpu/cpufreq/policy35/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy35/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy35/scaling_cur_freq:2770980
+/sys/devices/system/cpu/cpufreq/policy35/scaling_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy35/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy35/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy35/scaling_max_freq:2800000
@@ -1026,7 +969,6 @@
 /sys/devices/system/cpu/cpufreq/policy35/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy36/affected_cpus:36
 /sys/devices/system/cpu/cpufreq/policy36/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy36/boost:0
 /sys/devices/system/cpu/cpufreq/policy36/cpb:1
 /sys/devices/system/cpu/cpufreq/policy36/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy36/cpuinfo_max_freq:3737890
@@ -1044,7 +986,6 @@
 /sys/devices/system/cpu/cpufreq/policy36/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy37/affected_cpus:37
 /sys/devices/system/cpu/cpufreq/policy37/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy37/boost:0
 /sys/devices/system/cpu/cpufreq/policy37/cpb:1
 /sys/devices/system/cpu/cpufreq/policy37/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy37/cpuinfo_max_freq:3737890
@@ -1062,9 +1003,8 @@
 /sys/devices/system/cpu/cpufreq/policy37/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy38/affected_cpus:38
 /sys/devices/system/cpu/cpufreq/policy38/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy38/boost:0
 /sys/devices/system/cpu/cpufreq/policy38/cpb:1
-/sys/devices/system/cpu/cpufreq/policy38/cpuinfo_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy38/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy38/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy38/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy38/cpuinfo_transition_latency:0
@@ -1072,7 +1012,7 @@
 /sys/devices/system/cpu/cpufreq/policy38/related_cpus:38
 /sys/devices/system/cpu/cpufreq/policy38/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy38/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy38/scaling_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy38/scaling_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy38/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy38/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy38/scaling_max_freq:2800000
@@ -1080,9 +1020,8 @@
 /sys/devices/system/cpu/cpufreq/policy38/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy39/affected_cpus:39
 /sys/devices/system/cpu/cpufreq/policy39/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy39/boost:0
 /sys/devices/system/cpu/cpufreq/policy39/cpb:1
-/sys/devices/system/cpu/cpufreq/policy39/cpuinfo_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy39/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy39/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy39/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy39/cpuinfo_transition_latency:0
@@ -1090,7 +1029,7 @@
 /sys/devices/system/cpu/cpufreq/policy39/related_cpus:39
 /sys/devices/system/cpu/cpufreq/policy39/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy39/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy39/scaling_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy39/scaling_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy39/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy39/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy39/scaling_max_freq:2800000
@@ -1098,9 +1037,8 @@
 /sys/devices/system/cpu/cpufreq/policy39/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy3/affected_cpus:3
 /sys/devices/system/cpu/cpufreq/policy3/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy3/boost:0
 /sys/devices/system/cpu/cpufreq/policy3/cpb:1
-/sys/devices/system/cpu/cpufreq/policy3/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy3/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy3/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy3/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy3/cpuinfo_transition_latency:0
@@ -1108,7 +1046,7 @@
 /sys/devices/system/cpu/cpufreq/policy3/related_cpus:3
 /sys/devices/system/cpu/cpufreq/policy3/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy3/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy3/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy3/scaling_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy3/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy3/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy3/scaling_max_freq:2800000
@@ -1116,9 +1054,8 @@
 /sys/devices/system/cpu/cpufreq/policy3/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy40/affected_cpus:40
 /sys/devices/system/cpu/cpufreq/policy40/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy40/boost:0
 /sys/devices/system/cpu/cpufreq/policy40/cpb:1
-/sys/devices/system/cpu/cpufreq/policy40/cpuinfo_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy40/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy40/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy40/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy40/cpuinfo_transition_latency:0
@@ -1126,7 +1063,7 @@
 /sys/devices/system/cpu/cpufreq/policy40/related_cpus:40
 /sys/devices/system/cpu/cpufreq/policy40/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy40/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy40/scaling_cur_freq:3718334
+/sys/devices/system/cpu/cpufreq/policy40/scaling_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy40/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy40/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy40/scaling_max_freq:2800000
@@ -1134,7 +1071,6 @@
 /sys/devices/system/cpu/cpufreq/policy40/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy41/affected_cpus:41
 /sys/devices/system/cpu/cpufreq/policy41/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy41/boost:0
 /sys/devices/system/cpu/cpufreq/policy41/cpb:1
 /sys/devices/system/cpu/cpufreq/policy41/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy41/cpuinfo_max_freq:3737890
@@ -1144,7 +1080,7 @@
 /sys/devices/system/cpu/cpufreq/policy41/related_cpus:41
 /sys/devices/system/cpu/cpufreq/policy41/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy41/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy41/scaling_cur_freq:3717709
+/sys/devices/system/cpu/cpufreq/policy41/scaling_cur_freq:1496340
 /sys/devices/system/cpu/cpufreq/policy41/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy41/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy41/scaling_max_freq:2800000
@@ -1152,7 +1088,6 @@
 /sys/devices/system/cpu/cpufreq/policy41/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy42/affected_cpus:42
 /sys/devices/system/cpu/cpufreq/policy42/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy42/boost:0
 /sys/devices/system/cpu/cpufreq/policy42/cpb:1
 /sys/devices/system/cpu/cpufreq/policy42/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy42/cpuinfo_max_freq:3737890
@@ -1170,7 +1105,6 @@
 /sys/devices/system/cpu/cpufreq/policy42/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy43/affected_cpus:43
 /sys/devices/system/cpu/cpufreq/policy43/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy43/boost:0
 /sys/devices/system/cpu/cpufreq/policy43/cpb:1
 /sys/devices/system/cpu/cpufreq/policy43/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy43/cpuinfo_max_freq:3737890
@@ -1188,7 +1122,6 @@
 /sys/devices/system/cpu/cpufreq/policy43/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy44/affected_cpus:44
 /sys/devices/system/cpu/cpufreq/policy44/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy44/boost:0
 /sys/devices/system/cpu/cpufreq/policy44/cpb:1
 /sys/devices/system/cpu/cpufreq/policy44/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy44/cpuinfo_max_freq:3737890
@@ -1206,7 +1139,6 @@
 /sys/devices/system/cpu/cpufreq/policy44/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy45/affected_cpus:45
 /sys/devices/system/cpu/cpufreq/policy45/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy45/boost:0
 /sys/devices/system/cpu/cpufreq/policy45/cpb:1
 /sys/devices/system/cpu/cpufreq/policy45/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy45/cpuinfo_max_freq:3737890
@@ -1224,9 +1156,8 @@
 /sys/devices/system/cpu/cpufreq/policy45/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy46/affected_cpus:46
 /sys/devices/system/cpu/cpufreq/policy46/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy46/boost:0
 /sys/devices/system/cpu/cpufreq/policy46/cpb:1
-/sys/devices/system/cpu/cpufreq/policy46/cpuinfo_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy46/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy46/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy46/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy46/cpuinfo_transition_latency:0
@@ -1234,7 +1165,7 @@
 /sys/devices/system/cpu/cpufreq/policy46/related_cpus:46
 /sys/devices/system/cpu/cpufreq/policy46/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy46/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy46/scaling_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy46/scaling_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy46/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy46/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy46/scaling_max_freq:2800000
@@ -1242,9 +1173,8 @@
 /sys/devices/system/cpu/cpufreq/policy46/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy47/affected_cpus:47
 /sys/devices/system/cpu/cpufreq/policy47/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy47/boost:0
 /sys/devices/system/cpu/cpufreq/policy47/cpb:1
-/sys/devices/system/cpu/cpufreq/policy47/cpuinfo_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy47/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy47/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy47/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy47/cpuinfo_transition_latency:0
@@ -1252,7 +1182,7 @@
 /sys/devices/system/cpu/cpufreq/policy47/related_cpus:47
 /sys/devices/system/cpu/cpufreq/policy47/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy47/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy47/scaling_cur_freq:2800000
+/sys/devices/system/cpu/cpufreq/policy47/scaling_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy47/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy47/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy47/scaling_max_freq:2800000
@@ -1260,7 +1190,6 @@
 /sys/devices/system/cpu/cpufreq/policy47/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy48/affected_cpus:48
 /sys/devices/system/cpu/cpufreq/policy48/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy48/boost:0
 /sys/devices/system/cpu/cpufreq/policy48/cpb:1
 /sys/devices/system/cpu/cpufreq/policy48/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy48/cpuinfo_max_freq:3737890
@@ -1278,7 +1207,6 @@
 /sys/devices/system/cpu/cpufreq/policy48/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy49/affected_cpus:49
 /sys/devices/system/cpu/cpufreq/policy49/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy49/boost:0
 /sys/devices/system/cpu/cpufreq/policy49/cpb:1
 /sys/devices/system/cpu/cpufreq/policy49/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy49/cpuinfo_max_freq:3737890
@@ -1296,7 +1224,6 @@
 /sys/devices/system/cpu/cpufreq/policy49/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy4/affected_cpus:4
 /sys/devices/system/cpu/cpufreq/policy4/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy4/boost:0
 /sys/devices/system/cpu/cpufreq/policy4/cpb:1
 /sys/devices/system/cpu/cpufreq/policy4/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy4/cpuinfo_max_freq:3737890
@@ -1314,7 +1241,6 @@
 /sys/devices/system/cpu/cpufreq/policy4/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy50/affected_cpus:50
 /sys/devices/system/cpu/cpufreq/policy50/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy50/boost:0
 /sys/devices/system/cpu/cpufreq/policy50/cpb:1
 /sys/devices/system/cpu/cpufreq/policy50/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy50/cpuinfo_max_freq:3737890
@@ -1332,7 +1258,6 @@
 /sys/devices/system/cpu/cpufreq/policy50/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy51/affected_cpus:51
 /sys/devices/system/cpu/cpufreq/policy51/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy51/boost:0
 /sys/devices/system/cpu/cpufreq/policy51/cpb:1
 /sys/devices/system/cpu/cpufreq/policy51/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy51/cpuinfo_max_freq:3737890
@@ -1350,7 +1275,6 @@
 /sys/devices/system/cpu/cpufreq/policy51/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy52/affected_cpus:52
 /sys/devices/system/cpu/cpufreq/policy52/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy52/boost:0
 /sys/devices/system/cpu/cpufreq/policy52/cpb:1
 /sys/devices/system/cpu/cpufreq/policy52/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy52/cpuinfo_max_freq:3737890
@@ -1368,7 +1292,6 @@
 /sys/devices/system/cpu/cpufreq/policy52/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy53/affected_cpus:53
 /sys/devices/system/cpu/cpufreq/policy53/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy53/boost:0
 /sys/devices/system/cpu/cpufreq/policy53/cpb:1
 /sys/devices/system/cpu/cpufreq/policy53/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy53/cpuinfo_max_freq:3737890
@@ -1386,7 +1309,6 @@
 /sys/devices/system/cpu/cpufreq/policy53/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy54/affected_cpus:54
 /sys/devices/system/cpu/cpufreq/policy54/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy54/boost:0
 /sys/devices/system/cpu/cpufreq/policy54/cpb:1
 /sys/devices/system/cpu/cpufreq/policy54/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy54/cpuinfo_max_freq:3737890
@@ -1404,7 +1326,6 @@
 /sys/devices/system/cpu/cpufreq/policy54/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy55/affected_cpus:55
 /sys/devices/system/cpu/cpufreq/policy55/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy55/boost:0
 /sys/devices/system/cpu/cpufreq/policy55/cpb:1
 /sys/devices/system/cpu/cpufreq/policy55/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy55/cpuinfo_max_freq:3737890
@@ -1422,7 +1343,6 @@
 /sys/devices/system/cpu/cpufreq/policy55/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy56/affected_cpus:56
 /sys/devices/system/cpu/cpufreq/policy56/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy56/boost:0
 /sys/devices/system/cpu/cpufreq/policy56/cpb:1
 /sys/devices/system/cpu/cpufreq/policy56/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy56/cpuinfo_max_freq:3737890
@@ -1440,7 +1360,6 @@
 /sys/devices/system/cpu/cpufreq/policy56/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy57/affected_cpus:57
 /sys/devices/system/cpu/cpufreq/policy57/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy57/boost:0
 /sys/devices/system/cpu/cpufreq/policy57/cpb:1
 /sys/devices/system/cpu/cpufreq/policy57/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy57/cpuinfo_max_freq:3737890
@@ -1458,7 +1377,6 @@
 /sys/devices/system/cpu/cpufreq/policy57/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy58/affected_cpus:58
 /sys/devices/system/cpu/cpufreq/policy58/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy58/boost:0
 /sys/devices/system/cpu/cpufreq/policy58/cpb:1
 /sys/devices/system/cpu/cpufreq/policy58/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy58/cpuinfo_max_freq:3737890
@@ -1476,7 +1394,6 @@
 /sys/devices/system/cpu/cpufreq/policy58/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy59/affected_cpus:59
 /sys/devices/system/cpu/cpufreq/policy59/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy59/boost:0
 /sys/devices/system/cpu/cpufreq/policy59/cpb:1
 /sys/devices/system/cpu/cpufreq/policy59/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy59/cpuinfo_max_freq:3737890
@@ -1494,7 +1411,6 @@
 /sys/devices/system/cpu/cpufreq/policy59/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy5/affected_cpus:5
 /sys/devices/system/cpu/cpufreq/policy5/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy5/boost:0
 /sys/devices/system/cpu/cpufreq/policy5/cpb:1
 /sys/devices/system/cpu/cpufreq/policy5/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy5/cpuinfo_max_freq:3737890
@@ -1512,7 +1428,6 @@
 /sys/devices/system/cpu/cpufreq/policy5/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy60/affected_cpus:60
 /sys/devices/system/cpu/cpufreq/policy60/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy60/boost:0
 /sys/devices/system/cpu/cpufreq/policy60/cpb:1
 /sys/devices/system/cpu/cpufreq/policy60/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy60/cpuinfo_max_freq:3737890
@@ -1530,7 +1445,6 @@
 /sys/devices/system/cpu/cpufreq/policy60/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy61/affected_cpus:61
 /sys/devices/system/cpu/cpufreq/policy61/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy61/boost:0
 /sys/devices/system/cpu/cpufreq/policy61/cpb:1
 /sys/devices/system/cpu/cpufreq/policy61/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy61/cpuinfo_max_freq:3737890
@@ -1548,7 +1462,6 @@
 /sys/devices/system/cpu/cpufreq/policy61/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy62/affected_cpus:62
 /sys/devices/system/cpu/cpufreq/policy62/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy62/boost:0
 /sys/devices/system/cpu/cpufreq/policy62/cpb:1
 /sys/devices/system/cpu/cpufreq/policy62/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy62/cpuinfo_max_freq:3737890
@@ -1566,7 +1479,6 @@
 /sys/devices/system/cpu/cpufreq/policy62/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy63/affected_cpus:63
 /sys/devices/system/cpu/cpufreq/policy63/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy63/boost:0
 /sys/devices/system/cpu/cpufreq/policy63/cpb:1
 /sys/devices/system/cpu/cpufreq/policy63/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy63/cpuinfo_max_freq:3737890
@@ -1584,7 +1496,6 @@
 /sys/devices/system/cpu/cpufreq/policy63/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy64/affected_cpus:64
 /sys/devices/system/cpu/cpufreq/policy64/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy64/boost:0
 /sys/devices/system/cpu/cpufreq/policy64/cpb:1
 /sys/devices/system/cpu/cpufreq/policy64/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy64/cpuinfo_max_freq:3737890
@@ -1602,9 +1513,8 @@
 /sys/devices/system/cpu/cpufreq/policy64/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy65/affected_cpus:65
 /sys/devices/system/cpu/cpufreq/policy65/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy65/boost:0
 /sys/devices/system/cpu/cpufreq/policy65/cpb:1
-/sys/devices/system/cpu/cpufreq/policy65/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy65/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy65/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy65/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy65/cpuinfo_transition_latency:0
@@ -1612,7 +1522,7 @@
 /sys/devices/system/cpu/cpufreq/policy65/related_cpus:65
 /sys/devices/system/cpu/cpufreq/policy65/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy65/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy65/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy65/scaling_cur_freq:2606929
 /sys/devices/system/cpu/cpufreq/policy65/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy65/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy65/scaling_max_freq:2800000
@@ -1620,7 +1530,6 @@
 /sys/devices/system/cpu/cpufreq/policy65/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy66/affected_cpus:66
 /sys/devices/system/cpu/cpufreq/policy66/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy66/boost:0
 /sys/devices/system/cpu/cpufreq/policy66/cpb:1
 /sys/devices/system/cpu/cpufreq/policy66/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy66/cpuinfo_max_freq:3737890
@@ -1638,7 +1547,6 @@
 /sys/devices/system/cpu/cpufreq/policy66/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy67/affected_cpus:67
 /sys/devices/system/cpu/cpufreq/policy67/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy67/boost:0
 /sys/devices/system/cpu/cpufreq/policy67/cpb:1
 /sys/devices/system/cpu/cpufreq/policy67/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy67/cpuinfo_max_freq:3737890
@@ -1656,7 +1564,6 @@
 /sys/devices/system/cpu/cpufreq/policy67/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy68/affected_cpus:68
 /sys/devices/system/cpu/cpufreq/policy68/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy68/boost:0
 /sys/devices/system/cpu/cpufreq/policy68/cpb:1
 /sys/devices/system/cpu/cpufreq/policy68/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy68/cpuinfo_max_freq:3737890
@@ -1674,7 +1581,6 @@
 /sys/devices/system/cpu/cpufreq/policy68/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy69/affected_cpus:69
 /sys/devices/system/cpu/cpufreq/policy69/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy69/boost:0
 /sys/devices/system/cpu/cpufreq/policy69/cpb:1
 /sys/devices/system/cpu/cpufreq/policy69/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy69/cpuinfo_max_freq:3737890
@@ -1692,7 +1598,6 @@
 /sys/devices/system/cpu/cpufreq/policy69/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy6/affected_cpus:6
 /sys/devices/system/cpu/cpufreq/policy6/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy6/boost:0
 /sys/devices/system/cpu/cpufreq/policy6/cpb:1
 /sys/devices/system/cpu/cpufreq/policy6/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy6/cpuinfo_max_freq:3737890
@@ -1710,7 +1615,6 @@
 /sys/devices/system/cpu/cpufreq/policy6/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy70/affected_cpus:70
 /sys/devices/system/cpu/cpufreq/policy70/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy70/boost:0
 /sys/devices/system/cpu/cpufreq/policy70/cpb:1
 /sys/devices/system/cpu/cpufreq/policy70/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy70/cpuinfo_max_freq:3737890
@@ -1728,7 +1632,6 @@
 /sys/devices/system/cpu/cpufreq/policy70/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy71/affected_cpus:71
 /sys/devices/system/cpu/cpufreq/policy71/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy71/boost:0
 /sys/devices/system/cpu/cpufreq/policy71/cpb:1
 /sys/devices/system/cpu/cpufreq/policy71/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy71/cpuinfo_max_freq:3737890
@@ -1746,7 +1649,6 @@
 /sys/devices/system/cpu/cpufreq/policy71/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy72/affected_cpus:72
 /sys/devices/system/cpu/cpufreq/policy72/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy72/boost:0
 /sys/devices/system/cpu/cpufreq/policy72/cpb:1
 /sys/devices/system/cpu/cpufreq/policy72/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy72/cpuinfo_max_freq:3737890
@@ -1764,7 +1666,6 @@
 /sys/devices/system/cpu/cpufreq/policy72/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy73/affected_cpus:73
 /sys/devices/system/cpu/cpufreq/policy73/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy73/boost:0
 /sys/devices/system/cpu/cpufreq/policy73/cpb:1
 /sys/devices/system/cpu/cpufreq/policy73/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy73/cpuinfo_max_freq:3737890
@@ -1782,7 +1683,6 @@
 /sys/devices/system/cpu/cpufreq/policy73/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy74/affected_cpus:74
 /sys/devices/system/cpu/cpufreq/policy74/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy74/boost:0
 /sys/devices/system/cpu/cpufreq/policy74/cpb:1
 /sys/devices/system/cpu/cpufreq/policy74/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy74/cpuinfo_max_freq:3737890
@@ -1800,9 +1700,8 @@
 /sys/devices/system/cpu/cpufreq/policy74/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy75/affected_cpus:75
 /sys/devices/system/cpu/cpufreq/policy75/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy75/boost:0
 /sys/devices/system/cpu/cpufreq/policy75/cpb:1
-/sys/devices/system/cpu/cpufreq/policy75/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy75/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy75/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy75/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy75/cpuinfo_transition_latency:0
@@ -1810,7 +1709,7 @@
 /sys/devices/system/cpu/cpufreq/policy75/related_cpus:75
 /sys/devices/system/cpu/cpufreq/policy75/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy75/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy75/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy75/scaling_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy75/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy75/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy75/scaling_max_freq:2800000
@@ -1818,9 +1717,8 @@
 /sys/devices/system/cpu/cpufreq/policy75/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy76/affected_cpus:76
 /sys/devices/system/cpu/cpufreq/policy76/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy76/boost:0
 /sys/devices/system/cpu/cpufreq/policy76/cpb:1
-/sys/devices/system/cpu/cpufreq/policy76/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy76/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy76/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy76/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy76/cpuinfo_transition_latency:0
@@ -1828,7 +1726,7 @@
 /sys/devices/system/cpu/cpufreq/policy76/related_cpus:76
 /sys/devices/system/cpu/cpufreq/policy76/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy76/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy76/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy76/scaling_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy76/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy76/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy76/scaling_max_freq:2800000
@@ -1836,9 +1734,8 @@
 /sys/devices/system/cpu/cpufreq/policy76/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy77/affected_cpus:77
 /sys/devices/system/cpu/cpufreq/policy77/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy77/boost:0
 /sys/devices/system/cpu/cpufreq/policy77/cpb:1
-/sys/devices/system/cpu/cpufreq/policy77/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy77/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy77/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy77/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy77/cpuinfo_transition_latency:0
@@ -1846,7 +1743,7 @@
 /sys/devices/system/cpu/cpufreq/policy77/related_cpus:77
 /sys/devices/system/cpu/cpufreq/policy77/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy77/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy77/scaling_cur_freq:1496746
+/sys/devices/system/cpu/cpufreq/policy77/scaling_cur_freq:3590778
 /sys/devices/system/cpu/cpufreq/policy77/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy77/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy77/scaling_max_freq:2800000
@@ -1854,7 +1751,6 @@
 /sys/devices/system/cpu/cpufreq/policy77/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy78/affected_cpus:78
 /sys/devices/system/cpu/cpufreq/policy78/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy78/boost:0
 /sys/devices/system/cpu/cpufreq/policy78/cpb:1
 /sys/devices/system/cpu/cpufreq/policy78/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy78/cpuinfo_max_freq:3737890
@@ -1864,7 +1760,7 @@
 /sys/devices/system/cpu/cpufreq/policy78/related_cpus:78
 /sys/devices/system/cpu/cpufreq/policy78/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy78/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy78/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy78/scaling_cur_freq:3604188
 /sys/devices/system/cpu/cpufreq/policy78/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy78/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy78/scaling_max_freq:2800000
@@ -1872,7 +1768,6 @@
 /sys/devices/system/cpu/cpufreq/policy78/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy79/affected_cpus:79
 /sys/devices/system/cpu/cpufreq/policy79/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy79/boost:0
 /sys/devices/system/cpu/cpufreq/policy79/cpb:1
 /sys/devices/system/cpu/cpufreq/policy79/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy79/cpuinfo_max_freq:3737890
@@ -1890,7 +1785,6 @@
 /sys/devices/system/cpu/cpufreq/policy79/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy7/affected_cpus:7
 /sys/devices/system/cpu/cpufreq/policy7/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy7/boost:0
 /sys/devices/system/cpu/cpufreq/policy7/cpb:1
 /sys/devices/system/cpu/cpufreq/policy7/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy7/cpuinfo_max_freq:3737890
@@ -1908,7 +1802,6 @@
 /sys/devices/system/cpu/cpufreq/policy7/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy80/affected_cpus:80
 /sys/devices/system/cpu/cpufreq/policy80/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy80/boost:0
 /sys/devices/system/cpu/cpufreq/policy80/cpb:1
 /sys/devices/system/cpu/cpufreq/policy80/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy80/cpuinfo_max_freq:3737890
@@ -1926,7 +1819,6 @@
 /sys/devices/system/cpu/cpufreq/policy80/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy81/affected_cpus:81
 /sys/devices/system/cpu/cpufreq/policy81/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy81/boost:0
 /sys/devices/system/cpu/cpufreq/policy81/cpb:1
 /sys/devices/system/cpu/cpufreq/policy81/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy81/cpuinfo_max_freq:3737890
@@ -1944,7 +1836,6 @@
 /sys/devices/system/cpu/cpufreq/policy81/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy82/affected_cpus:82
 /sys/devices/system/cpu/cpufreq/policy82/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy82/boost:0
 /sys/devices/system/cpu/cpufreq/policy82/cpb:1
 /sys/devices/system/cpu/cpufreq/policy82/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy82/cpuinfo_max_freq:3737890
@@ -1962,7 +1853,6 @@
 /sys/devices/system/cpu/cpufreq/policy82/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy83/affected_cpus:83
 /sys/devices/system/cpu/cpufreq/policy83/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy83/boost:0
 /sys/devices/system/cpu/cpufreq/policy83/cpb:1
 /sys/devices/system/cpu/cpufreq/policy83/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy83/cpuinfo_max_freq:3737890
@@ -1980,7 +1870,6 @@
 /sys/devices/system/cpu/cpufreq/policy83/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy84/affected_cpus:84
 /sys/devices/system/cpu/cpufreq/policy84/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy84/boost:0
 /sys/devices/system/cpu/cpufreq/policy84/cpb:1
 /sys/devices/system/cpu/cpufreq/policy84/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy84/cpuinfo_max_freq:3737890
@@ -1998,7 +1887,6 @@
 /sys/devices/system/cpu/cpufreq/policy84/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy85/affected_cpus:85
 /sys/devices/system/cpu/cpufreq/policy85/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy85/boost:0
 /sys/devices/system/cpu/cpufreq/policy85/cpb:1
 /sys/devices/system/cpu/cpufreq/policy85/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy85/cpuinfo_max_freq:3737890
@@ -2016,7 +1904,6 @@
 /sys/devices/system/cpu/cpufreq/policy85/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy86/affected_cpus:86
 /sys/devices/system/cpu/cpufreq/policy86/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy86/boost:0
 /sys/devices/system/cpu/cpufreq/policy86/cpb:1
 /sys/devices/system/cpu/cpufreq/policy86/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy86/cpuinfo_max_freq:3737890
@@ -2034,7 +1921,6 @@
 /sys/devices/system/cpu/cpufreq/policy86/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy87/affected_cpus:87
 /sys/devices/system/cpu/cpufreq/policy87/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy87/boost:0
 /sys/devices/system/cpu/cpufreq/policy87/cpb:1
 /sys/devices/system/cpu/cpufreq/policy87/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy87/cpuinfo_max_freq:3737890
@@ -2052,7 +1938,6 @@
 /sys/devices/system/cpu/cpufreq/policy87/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy88/affected_cpus:88
 /sys/devices/system/cpu/cpufreq/policy88/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy88/boost:0
 /sys/devices/system/cpu/cpufreq/policy88/cpb:1
 /sys/devices/system/cpu/cpufreq/policy88/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy88/cpuinfo_max_freq:3737890
@@ -2070,7 +1955,6 @@
 /sys/devices/system/cpu/cpufreq/policy88/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy89/affected_cpus:89
 /sys/devices/system/cpu/cpufreq/policy89/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy89/boost:0
 /sys/devices/system/cpu/cpufreq/policy89/cpb:1
 /sys/devices/system/cpu/cpufreq/policy89/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy89/cpuinfo_max_freq:3737890
@@ -2088,9 +1972,8 @@
 /sys/devices/system/cpu/cpufreq/policy89/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy8/affected_cpus:8
 /sys/devices/system/cpu/cpufreq/policy8/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy8/boost:0
 /sys/devices/system/cpu/cpufreq/policy8/cpb:1
-/sys/devices/system/cpu/cpufreq/policy8/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy8/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy8/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy8/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy8/cpuinfo_transition_latency:0
@@ -2098,7 +1981,7 @@
 /sys/devices/system/cpu/cpufreq/policy8/related_cpus:8
 /sys/devices/system/cpu/cpufreq/policy8/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy8/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy8/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy8/scaling_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy8/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy8/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy8/scaling_max_freq:2800000
@@ -2106,7 +1989,6 @@
 /sys/devices/system/cpu/cpufreq/policy8/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy90/affected_cpus:90
 /sys/devices/system/cpu/cpufreq/policy90/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy90/boost:0
 /sys/devices/system/cpu/cpufreq/policy90/cpb:1
 /sys/devices/system/cpu/cpufreq/policy90/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy90/cpuinfo_max_freq:3737890
@@ -2124,7 +2006,6 @@
 /sys/devices/system/cpu/cpufreq/policy90/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy91/affected_cpus:91
 /sys/devices/system/cpu/cpufreq/policy91/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy91/boost:0
 /sys/devices/system/cpu/cpufreq/policy91/cpb:1
 /sys/devices/system/cpu/cpufreq/policy91/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy91/cpuinfo_max_freq:3737890
@@ -2142,7 +2023,6 @@
 /sys/devices/system/cpu/cpufreq/policy91/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy92/affected_cpus:92
 /sys/devices/system/cpu/cpufreq/policy92/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy92/boost:0
 /sys/devices/system/cpu/cpufreq/policy92/cpb:1
 /sys/devices/system/cpu/cpufreq/policy92/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy92/cpuinfo_max_freq:3737890
@@ -2160,7 +2040,6 @@
 /sys/devices/system/cpu/cpufreq/policy92/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy93/affected_cpus:93
 /sys/devices/system/cpu/cpufreq/policy93/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy93/boost:0
 /sys/devices/system/cpu/cpufreq/policy93/cpb:1
 /sys/devices/system/cpu/cpufreq/policy93/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy93/cpuinfo_max_freq:3737890
@@ -2178,7 +2057,6 @@
 /sys/devices/system/cpu/cpufreq/policy93/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy94/affected_cpus:94
 /sys/devices/system/cpu/cpufreq/policy94/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy94/boost:0
 /sys/devices/system/cpu/cpufreq/policy94/cpb:1
 /sys/devices/system/cpu/cpufreq/policy94/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy94/cpuinfo_max_freq:3737890
@@ -2196,7 +2074,6 @@
 /sys/devices/system/cpu/cpufreq/policy94/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy95/affected_cpus:95
 /sys/devices/system/cpu/cpufreq/policy95/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy95/boost:0
 /sys/devices/system/cpu/cpufreq/policy95/cpb:1
 /sys/devices/system/cpu/cpufreq/policy95/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy95/cpuinfo_max_freq:3737890
@@ -2214,7 +2091,6 @@
 /sys/devices/system/cpu/cpufreq/policy95/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy96/affected_cpus:96
 /sys/devices/system/cpu/cpufreq/policy96/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy96/boost:0
 /sys/devices/system/cpu/cpufreq/policy96/cpb:1
 /sys/devices/system/cpu/cpufreq/policy96/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy96/cpuinfo_max_freq:3737890
@@ -2232,7 +2108,6 @@
 /sys/devices/system/cpu/cpufreq/policy96/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy97/affected_cpus:97
 /sys/devices/system/cpu/cpufreq/policy97/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy97/boost:0
 /sys/devices/system/cpu/cpufreq/policy97/cpb:1
 /sys/devices/system/cpu/cpufreq/policy97/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy97/cpuinfo_max_freq:3737890
@@ -2250,7 +2125,6 @@
 /sys/devices/system/cpu/cpufreq/policy97/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy98/affected_cpus:98
 /sys/devices/system/cpu/cpufreq/policy98/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy98/boost:0
 /sys/devices/system/cpu/cpufreq/policy98/cpb:1
 /sys/devices/system/cpu/cpufreq/policy98/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy98/cpuinfo_max_freq:3737890
@@ -2268,7 +2142,6 @@
 /sys/devices/system/cpu/cpufreq/policy98/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy99/affected_cpus:99
 /sys/devices/system/cpu/cpufreq/policy99/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy99/boost:0
 /sys/devices/system/cpu/cpufreq/policy99/cpb:1
 /sys/devices/system/cpu/cpufreq/policy99/cpuinfo_cur_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy99/cpuinfo_max_freq:3737890
@@ -2286,9 +2159,8 @@
 /sys/devices/system/cpu/cpufreq/policy99/scaling_setspeed:<unsupported>
 /sys/devices/system/cpu/cpufreq/policy9/affected_cpus:9
 /sys/devices/system/cpu/cpufreq/policy9/bios_limit:2800000
-/sys/devices/system/cpu/cpufreq/policy9/boost:0
 /sys/devices/system/cpu/cpufreq/policy9/cpb:1
-/sys/devices/system/cpu/cpufreq/policy9/cpuinfo_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy9/cpuinfo_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy9/cpuinfo_max_freq:3737890
 /sys/devices/system/cpu/cpufreq/policy9/cpuinfo_min_freq:1500000
 /sys/devices/system/cpu/cpufreq/policy9/cpuinfo_transition_latency:0
@@ -2296,7 +2168,7 @@
 /sys/devices/system/cpu/cpufreq/policy9/related_cpus:9
 /sys/devices/system/cpu/cpufreq/policy9/scaling_available_frequencies:2800000 2100000 1500000 
 /sys/devices/system/cpu/cpufreq/policy9/scaling_available_governors:conservative userspace powersave performance schedutil 
-/sys/devices/system/cpu/cpufreq/policy9/scaling_cur_freq:1500000
+/sys/devices/system/cpu/cpufreq/policy9/scaling_cur_freq:2800000
 /sys/devices/system/cpu/cpufreq/policy9/scaling_driver:acpi-cpufreq
 /sys/devices/system/cpu/cpufreq/policy9/scaling_governor:schedutil
 /sys/devices/system/cpu/cpufreq/policy9/scaling_max_freq:2800000
