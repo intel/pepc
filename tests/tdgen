@@ -167,7 +167,13 @@ PStatesData = {
          "separator": ":",
          "readonly": False,
          "dirname": "pstates",
-         "filename": "epb.txt"}]
+         "filename": "epb.txt"},
+        {"command" : r"grep -H '.*' "
+                     r"/sys/devices/system/cpu/cpu[0-9]*/cpufreq/bios_limit",
+         "separator": ":",
+         "readonly": True,
+         "dirname": "pstates",
+         "filename": "bios_limit.txt"}]
     }
 
 SystemctlData = {
