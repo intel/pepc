@@ -46,6 +46,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
        * Check if feature is enabled: 'is_cpu_feature_enabled()'.
        * Check if feature is supported: 'is_cpu_feature_supported()',
                                         'validate_cpu_feature_supported()'.
+    3. Message formatting helpers.
+       * Return string in form of 'MSR 0xABC bits (a:b)': msr_bits_str()
     """
 
     regaddr = None
@@ -108,6 +110,29 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         """Same as 'is_feature_supported()' but for a single CPU."""
 
         return self.is_feature_supported(fname, cpus=(cpu, ))
+
+    def _check_fname(self, fname):
+        """Check if feature 'fname' is known."""
+
+        if fname not in self._features:
+            features_str = ", ".join(set(self._features))
+            raise Error(f"unknown feature '{fname}', known features are: {features_str}")
+
+    def msr_bits_str(self, fname):
+        """
+        Return a string including MSR register address and bits range for feature 'fname'. The
+        returned string looks like 'MSR 0xABC bits (a:b)'.
+        """
+
+        self._check_fname(fname)
+
+        bits = self._features["fname"]["bits"]
+        if bits[0] == bits[1]:
+            bits_str = f"bit {bits[0]}"
+        else:
+            bits_str = f"bit {bits[0]:bits[1]}"
+
+        return f"MSR {self.regaddr:x} bits {bits_str}"
 
     def _normalize_feature_value(self, fname, val):
         """
