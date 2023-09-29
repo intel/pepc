@@ -20,8 +20,8 @@ _LOG = logging.getLogger()
 
 # The units this module supports.
 _SUPPORTED_UNITS = {
-    "s" : "second",
-    "Hz" : "hertz",
+    "s":  "second",
+    "Hz": "hertz",
     "W" : "watt",
 }
 
@@ -36,6 +36,16 @@ _SIPFX_SCALERS = {
     "m": 0.001,
     "u": 0.000001,
     "n": 0.000000001,
+}
+_SIPFX_FULLNAMES = {
+    "E": "exa",
+    "T": "tera",
+    "G": "giga",
+    "M": "mega",
+    "k": "kilo",
+    "m": "milli",
+    "u": "micro",
+    "n": "nano",
 }
 
 _SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "EiB"]
@@ -380,6 +390,88 @@ def parse_freq(hfreq, default_unit="Hz", name=None):
     if Trivial.is_int(freq):
         freq = int(freq)
     return freq
+
+def parse_human(hval, unit, target_unit=None, integer=True, name=None):
+    """
+    Convert a user-provided value 'hval' into an integer of float amount of 'unit' units (hertz,
+    seconds, etc). The arguments are as follows.
+      * hval - the value to convert. Can be a of a string, int, float type. If it is a string, may
+               include the unit.
+      * unit - the unit of 'hval', including any SI prefixes.
+      * target_unit - the unit of the result, including any SI prefixes (same 'unit' without a SI
+                      prefix by default).
+      * integer - if 'True', round the result to the nearest integer and return an 'int' type,
+                  otherwise return the result as a floating point number ('float' type).
+      * name - an optional name associated with the value, will be used only in case of an error for
+               formatting a nicer message.
+
+    Examples.
+      * 100,         unit="Hz",                    integer=False  -> 100.0
+      * 100,         unit="kHz",                   integer=True   -> 100000
+      * "100kHz",    unit="Hz", target_unit="kHz", integer=False  -> 100.0
+      * "100MHz",    unit="Hz", target_unit="kHz", integer=False  -> 100000.0
+      * "1m",        unit="s",  target_unit="s",   integer=True    -> 60
+      * "100s",      unit="s",  target_unit="ns",  integer=True    -> 100000000000
+      * "1us",       unit="s",  target_unit="ns",  integer=True    -> 1000
+      * "1h 10m 5s", unit="s",  target_unit="s",   integer=True    -> 4205
+      * "1h 10m 5s", unit="s",  target_unit="us",  integer=True    -> 4205000000
+      * "101ns",     unit="s",  target_unit="ns",  integer=True    -> 101
+      * "101ns",     unit="s",  target_unit="us",  integer=False   -> 0.101
+    """
+
+    sipfx, base_unit = separate_si_prefix(unit)
+    target_sipfx, target_base_unit = None, base_unit
+
+    if target_unit:
+        target_sipfx, target_base_unit = separate_si_prefix(target_unit)
+        if target_base_unit != base_unit:
+            raise Error(f"the target base unit has to be '{base_unit}', not '{target_base_unit}")
+
+    if Trivial.is_num(hval):
+        if sipfx:
+            hval = f"{hval}{sipfx}"
+        hval = f"{hval}{base_unit}"
+
+    # Create the specifiers dictionary.
+    specs = {}
+    scalers = {}
+    fullname = _SUPPORTED_UNITS.get(base_unit, base_unit)
+    for pfx, pfx_fullname in _SIPFX_FULLNAMES.items():
+        spec = f"{pfx}{base_unit}"
+        if fullname != base_unit:
+            specs[spec] = f"{pfx_fullname}{fullname}"
+        else:
+            specs[spec] = spec
+        scalers[spec] = _SIPFX_SCALERS[pfx]
+
+    # For time, allow day/hour/minute specifiers too.
+    if unit == "s":
+        specs["d"] = "day"
+        specs["h"] = "hour"
+        specs["m"] = "minute"
+        scalers["d"] = 24 * 60 * 60
+        scalers["h"] = 60 * 60
+        scalers["m"] = 60
+        # Allow for multiple specifiers for time, like in "1d 5h".
+        multiple = True
+    else:
+        multiple = False
+
+    specs[base_unit] = fullname
+    scalers[base_unit] = 1
+    tokens = _tokenize(hval, specs, name, multiple=multiple)
+
+    result = 0.0
+    for base_unit, val in tokens.items():
+        result += val * scalers[base_unit]
+
+    if target_sipfx:
+        result /= _SIPFX_SCALERS[target_sipfx]
+
+    if integer:
+        result = round(result)
+
+    return result
 
 def rangify(numbers):
     """
