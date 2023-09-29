@@ -887,7 +887,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         self._handle_write_and_read_freq_mismatch(pname, prop, freq, read_freq, cpu, path)
 
-    def _parse_freq(self, pname, val, cpu, uncore=False):
+    def _parse_freq(self, val, cpu, uncore=False):
         """Turn a user-provided CPU or uncore frequency property value to hertz."""
 
         if uncore:
@@ -896,8 +896,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif val == "max":
                 freq = self._get_cpu_prop_value("max_uncore_freq_limit", cpu)
             else:
-                name = name=Human.uncapitalize(self._props[pname]["name"])
-                freq = Human.parse_human(val, unit="Hz", integer=True, name=name)
+                freq = val
         else:
             if val == "min":
                 freq = self._get_cpu_prop_value("min_freq_limit", cpu)
@@ -914,8 +913,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif val == "Pm":
                 freq = self._get_cpu_prop_value("min_oper_freq", cpu)
             else:
-                name = Human.uncapitalize(self._props[pname]["name"])
-                freq = Human.parse_human(val, unit="Hz", name=name)
+                freq = val
 
         if not freq:
             raise ErrorNotSupported(f"'{val}' is not supported{self._pman.hostmsg}")
@@ -969,9 +967,9 @@ class PStates(_PCStatesBase.PCStatesBase):
             new_max_freq = None
 
             if min_freq_key in inprops:
-                new_min_freq = self._parse_freq(min_freq_key, inprops[min_freq_key], cpu, uncore)
+                new_min_freq = self._parse_freq(inprops[min_freq_key], cpu, uncore)
             if max_freq_key in inprops:
-                new_max_freq = self._parse_freq(max_freq_key, inprops[max_freq_key], cpu, uncore)
+                new_max_freq = self._parse_freq(inprops[max_freq_key], cpu, uncore)
 
             cur_min_freq = self._get_cpu_prop_value(min_freq_key, cpu)
             cur_max_freq = self._get_cpu_prop_value(max_freq_key, cpu)

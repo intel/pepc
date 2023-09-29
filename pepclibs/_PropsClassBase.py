@@ -31,7 +31,7 @@ Naming conventions.
 import copy
 import logging
 from pepclibs import CPUInfo
-from pepclibs.helperlibs import Human, ClassHelpers, LocalProcessManager
+from pepclibs.helperlibs import Trivial, Human, ClassHelpers, LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
@@ -204,6 +204,23 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
             if prop.get("type") == "bool":
                 val = self._normalize_bool_type_value(prop, val)
+
+            if "unit" in prop:
+                if Trivial.is_num(val):
+                    if prop["type"] == "int":
+                        val = Trivial.str_to_int(val)
+                    else:
+                        val = float(val)
+                else:
+                    special_vals = prop.get("special_vals", {})
+                    if val not in special_vals:
+                        # This property has a unit, and the value is not a number, nor it is one of
+                        # the special values. Presumably this is a value with a unit, such as
+                        # "100MHz" or something like that.
+                        is_integer = prop["type"] == "int"
+                        name = Human.uncapitalize(prop["name"])
+                        val = Human.parse_human(val, unit=prop["unit"], integer=is_integer,
+                                                name=name)
 
             result[pname] = val
 
