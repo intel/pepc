@@ -452,16 +452,16 @@ Description
 Base CPU frequency is the highest sustainable CPU frequency. This frequency is also referred to as
 "guaranteed frequency", **HFM** (High Frequency Mode), or **P1**.
 
-The base frequency is acquired from a sysfs file or from an MSR register, if the sysfs file does not
-exist.
+The base frequency is acquired from a sysfs file or from an MSR register, depending on platform and
+the CPU frequency driver.
 
 Source
 ------
 
 "/sys/devices/system/cpu/policy\ **0**\ /base_frequency", '**0**' is replaced with desired CPU
-number.
-
-If the sysfs path does not exists, falls back to MSR_PLATFORM_INFO **(0xCE)**, bits **15:8**.
+number. If the "base_frequency" file does not exist then either MSR_PLATFORM_INFO **(0xCE)**, bits
+**15:8** is used (Intel platforms) or the "/sys/devices/system/cpu/cpu\ **0**\ /cpufreq/bios_limit"
+sysfs file is used (non-Intel platforms, '**0**' is replaced with desired CPU number).
 
 Scope
 -----

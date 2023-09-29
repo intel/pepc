@@ -484,6 +484,12 @@ class PStates(_PCStatesBase.PCStatesBase):
         except ErrorNotSupported:
             pass
 
+        path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
+        try:
+            return self._read_int(path) * 1000
+        except ErrorNotFound:
+            pass
+
         return None
 
     def _get_max_eff_freq(self, cpu):
