@@ -896,7 +896,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif val == "max":
                 freq = self._get_cpu_prop_value("max_uncore_freq_limit", cpu)
             else:
-                freq = Human.parse_freq(val, name=Human.uncapitalize(self._props[pname]["name"]))
+                name = name=Human.uncapitalize(self._props[pname]["name"])
+                freq = Human.parse_human(val, unit="Hz", integer=True, name=name)
         else:
             if val == "min":
                 freq = self._get_cpu_prop_value("min_freq_limit", cpu)
@@ -913,7 +914,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif val == "Pm":
                 freq = self._get_cpu_prop_value("min_oper_freq", cpu)
             else:
-                freq = Human.parse_freq(val, name=Human.uncapitalize(self._props[pname]["name"]))
+                name = Human.uncapitalize(self._props[pname]["name"])
+                freq = Human.parse_human(val, unit="Hz", name=name)
 
         if not freq:
             raise ErrorNotSupported(f"'{val}' is not supported{self._pman.hostmsg}")
