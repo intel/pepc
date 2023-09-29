@@ -183,7 +183,7 @@ def duration_ns(value, sep=""):
     result += sep + scaler
     return result
 
-def _tokenize(hval, specs, name, multiple=True):
+def _tokenize(hval, specs, name=None, multiple=True):
     """
     Split human-provided value 'hval' according unit names in the 'specs' dictionary. Returns the
     dictionary of tokens.
@@ -199,6 +199,8 @@ def _tokenize(hval, specs, name, multiple=True):
 
     if name:
         name = f" {name}"
+    else:
+        name = ""
 
     tokens = {}
     rest = hval.lower()
@@ -260,7 +262,7 @@ def parse_duration(htime, default_unit="s", name=None):
         name = "time"
 
     specs = {"d" : "days", "h" : "hours", "m" : "minutes", "s" : "seconds"}
-    tokens = _tokenize(htime, specs, name)
+    tokens = _tokenize(htime, specs, name=name)
 
     days  = tokens.get("d", 0)
     hours = tokens.get("h", 0)
@@ -288,7 +290,7 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
         name = "time"
 
     specs = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
-    tokens = _tokenize(htime, specs, name)
+    tokens = _tokenize(htime, specs, name=name)
 
     ms = tokens.get("ms", 0)
     us = tokens.get("us", 0)
@@ -315,7 +317,7 @@ def parse_freq(hfreq, default_unit="Hz", name=None):
         name = "frequency"
 
     specs = {"GHz" : "gigahertz", "MHz" : "megahertz", "kHz" : "kilohertz", "Hz" : "Hertz"}
-    tokens = _tokenize(hfreq, specs, name, multiple=False)
+    tokens = _tokenize(hfreq, specs, name=name, multiple=False)
 
     scalers = {"Hz" : 1, "kHz" : 1000, "MHz" : 1000000, "GHz" : 1000000000}
 
