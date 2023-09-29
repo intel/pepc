@@ -328,6 +328,7 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
     """
     Similar to 'parse_duration()', but supports different specifiers and returns integer amount of
     nanoseconds. The supported specifiers are:
+      * s - seconds
       * ms - milliseconds
       * us - microseconds
       * ns - nanoseconds
@@ -339,13 +340,14 @@ def parse_duration_ns(htime, default_unit="ns", name=None):
     if name is None:
         name = "time"
 
-    specs = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds"}
+    specs = {"ms" : "milliseconds", "us" : "microseconds", "ns" : "nanoseconds", "s" : "seconds"}
     tokens = _tokenize(htime, specs, name=name)
 
     ms = tokens.get("ms", 0)
     us = tokens.get("us", 0)
     ns = tokens.get("ns", 0)
-    result = ms * 1000 * 1000 + us * 1000 + ns
+    s = tokens.get("s", 0)
+    result = s * 1000 * 1000 * 1000 + ms * 1000 * 1000 + us * 1000 + ns
 
     if Trivial.is_int(result):
         result = int(result)
