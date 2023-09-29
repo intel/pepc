@@ -110,14 +110,13 @@ def separate_si_prefix(unit):
 
     return sipfx, base_unit
 
-def num2si(value, unit=None, sep="", sipfx=None, decp=1):
+def num2si(value, unit=None, sep="", decp=1):
     """
     Convert a number into a human-readable form using suffixes like "k" (Kilo), "M" (Mega), etc.
     The arguments are as follows.
       * value - an integer or floating point value to convert.
-      * unit - name of the unit, will be appended to the resulting number.
+      * unit - the unit used with 'value', including any SI-prefixes.
       * sep - the separator string to use between the resulting number and its unit.
-      * sipfx - current SI prefix of 'value'.
       * decp - maximum number of decimal places the result should include.
 
     Return the result as a string.
@@ -129,10 +128,11 @@ def num2si(value, unit=None, sep="", sipfx=None, decp=1):
         raise Error("please, specify the separator only if unit was specified")
     if decp < 1 or decp > 8:
         raise Error("please, specify at max. 8 decimal places")
-    if sipfx and sipfx not in _SIPFX_SCALERS:
-        prefixes = ", ".join(_SIPFX_SCALERS)
-        raise Error(f"bad SI prefix '{sipfx}', use one of: {prefixes}")
 
+    if unit is None:
+        unit = ""
+
+    sipfx, base_unit = separate_si_prefix(unit)
     value = float(value)
 
     if sipfx:
@@ -158,8 +158,8 @@ def num2si(value, unit=None, sep="", sipfx=None, decp=1):
     result = result.rstrip("0").rstrip(".")
     if pfx:
         result += sep + pfx
-    if unit:
-        result += unit
+    if base_unit:
+        result += base_unit
     return result
 
 def scale_si_val(val, unit):
