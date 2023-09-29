@@ -15,6 +15,26 @@ from itertools import groupby
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
+# The units this module supports.
+_SUPPORTED_UNITS = {
+    "s" : "second",
+    "Hz" : "hertz",
+    "W" : "watt",
+}
+
+_SIPFX_LARGE = ["k", "M", "G", "T", "E"]
+_SIPFX_SMALL = ["m", "u", "n"]
+_SIPFX_SCALERS = {
+    "E": 1000000000000000,
+    "T": 1000000000000,
+    "G": 1000000000,
+    "M": 1000000,
+    "k": 1000,
+    "m": 0.001,
+    "u": 0.000001,
+    "n": 0.000000001,
+}
+
 _SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "EiB"]
 
 # pylint: disable=undefined-loop-variable, consider-using-f-string
@@ -63,19 +83,6 @@ def parse_bytesize(size):
     except ValueError:
         raise Error("cannot interpret bytes count '%s', please provide a number and "
                     "possibly the unit: %s" % (orig_size, ", ".join(_SIZE_UNITS))) from None
-
-_SIPFX_LARGE = ["k", "M", "G", "T", "E"]
-_SIPFX_SMALL = ["m", "u", "n"]
-_SIPFX_SCALERS = {
-    "E": 1000000000000000,
-    "T": 1000000000000,
-    "G": 1000000000,
-    "M": 1000000,
-    "k": 1000,
-    "m": 0.001,
-    "u": 0.000001,
-    "n": 0.000000001,
-}
 
 def num2si(value, unit=None, sep="", sipfx=None, decp=1):
     """
