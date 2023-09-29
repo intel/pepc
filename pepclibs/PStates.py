@@ -461,20 +461,30 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return 100000000
 
-    def _get_base_freq(self, cpu):
-        """Read base frequency from 'MSR_PLATFORM_INFO' and return it."""
+    def _get_base_freq(self, prop, cpu):
+        """
+        Determine the base frequency for a system and return it. Attempts to read the value from
+        sysfs files, and falls back to reading from MSR if this fails. If none of the provided
+        methods succeed, returns 'None'.
+        """
+
+        path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "base_frequency"
+        try:
+            return self._read_prop_value_from_sysfs(prop, path)
+        except ErrorNotFound:
+            pass
 
         try:
             platinfo = self._get_platinfo()
             ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
+
+            bclk = self._get_bclk(cpu)
+            if bclk is not None:
+                return int(ratio * bclk)
         except ErrorNotSupported:
-            return None
+            pass
 
-        bclk = self._get_bclk(cpu)
-        if bclk is None:
-            return bclk
-
-        return int(ratio * bclk)
+        return None
 
     def _get_max_eff_freq(self, cpu):
         """Read max. efficiency frequency from 'MSR_PLATFORM_INFO' and return it."""
@@ -620,22 +630,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return None
 
         path = self._get_sysfs_path(prop, cpu)
-        val = None
 
-        try:
-            val = self._read_prop_value_from_sysfs(prop, path)
-        except ErrorNotFound as err1:
-            _LOG.debug("can't read value of property '%s', path '%s' missing", prop["name"], path)
-
-            if "getter" in prop:
-                _LOG.debug("running the fallback function property '%s'", prop["name"])
-                try:
-                    val = prop["getter"](cpu)
-                except Error as err2:
-                    raise Error(f"{err1}\nThe fall-back method failed too:\n{err2.indent(2)}") \
-                                from err2
-
-        return val
+        return self._read_prop_value_from_sysfs(prop, path)
 
     def _get_driver(self, cpu):
         """Returns the CPU frequency driver."""
@@ -710,6 +706,9 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
+        # First handle the MSR-based properties. The 'MSR' module has its own caching,
+        # 'self._pcache' is not used for the MSR-based properties.
+
         if pname == "epp":
             return self._get_eppobj().get_cpu_epp(cpu)
         if pname == "epp_hw":
@@ -731,11 +730,20 @@ class PStates(_PCStatesBase.PCStatesBase):
         if pname.endswith("_freq_hw"):
             return self._get_cpu_freq_hw(pname, cpu)
 
-        # Properties above have their own cache. Properties below use PStates module cache.
+        # Use 'self._pcache' for properties below.
+        #
+        # Special case is the 'base_frequency' property. In some situations it is read from MSR,
+        # which means it can be in both MSR moule cache and in 'self._pcache'. But 'base_frequency'
+        # is read-only, so this double caching does no cause complications in property write path.
+        # We could improve the code so that all "getter" methods return a '(val, source)' tuple and
+        # avoid double caching, but it is not worth the trouble at this point.
+
         if self._pcache.is_cached(pname, cpu):
             return self._pcache.get(pname, cpu)
 
-        if "fname" in prop:
+        if "getter" in prop:
+            val = prop["getter"](prop, cpu)
+        elif "fname" in prop:
             val = self._get_cpu_prop_value_sysfs(prop, cpu)
         elif pname == "turbo":
             val = self._get_cpu_turbo(cpu)
@@ -1149,23 +1157,21 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         super()._init_props_dict(PROPS)
 
-        # These properties are backed by a sysfs file.
+        # Some properties are acquired from different sources, depending on configurations.
+        # Properties like this have a dedicated "getter" method.
+        self._props["base_freq"]["getter"] = self._get_base_freq
+
+        # Propeties backed by a single sysfs file.
         self._props["min_freq"]["fname"] = "scaling_min_freq"
         self._props["max_freq"]["fname"] = "scaling_max_freq"
         self._props["min_freq_limit"]["fname"] = "cpuinfo_min_freq"
         self._props["max_freq_limit"]["fname"] = "cpuinfo_max_freq"
-        self._props["base_freq"]["fname"] = "base_frequency"
         self._props["min_uncore_freq"]["fname"] = "min_freq_khz"
         self._props["max_uncore_freq"]["fname"] = "max_freq_khz"
         self._props["min_uncore_freq_limit"]["fname"] = "initial_min_freq_khz"
         self._props["max_uncore_freq_limit"]["fname"] = "initial_max_freq_khz"
         self._props["governor"]["fname"] = "scaling_governor"
         self._props["governors"]["fname"] = "scaling_available_governors"
-
-        # Some of the sysfs files may not exist, in which case they can be acquired using the
-        # "getter" function. E.g., the "base_frequency" file is specific to the 'intel_pstate'
-        # driver.
-        self._props["base_freq"]["getter"] = self._get_base_freq
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
