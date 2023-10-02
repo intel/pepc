@@ -19,7 +19,7 @@ from pepclibs.helperlibs.Exceptions import Error
 _LOG = logging.getLogger()
 
 # The units this module supports.
-_SUPPORTED_UNITS = {
+SUPPORTED_UNITS = {
     "s":  "second",
     "Hz": "hertz",
     "W" : "watt",
@@ -114,7 +114,7 @@ def separate_si_prefix(unit):
     if sipfx not in _SIPFX_SCALERS:
         return None, unit
 
-    if base_unit not in _SUPPORTED_UNITS:
+    if base_unit not in SUPPORTED_UNITS:
         _LOG.warning("unsupported unit '%s' was split into SI-prefix '%s' and base unit '%s'",
                      unit, sipfx, base_unit)
 
@@ -435,7 +435,7 @@ def parse_human(hval, unit, target_unit=None, integer=True, name=None):
     # Create the specifiers dictionary.
     specs = {}
     scalers = {}
-    fullname = _SUPPORTED_UNITS.get(base_unit, base_unit)
+    fullname = SUPPORTED_UNITS.get(base_unit, base_unit)
     for pfx, pfx_fullname in _SIPFX_FULLNAMES.items():
         spec = f"{pfx}{base_unit}"
         if fullname != base_unit:
