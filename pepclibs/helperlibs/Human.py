@@ -25,10 +25,11 @@ SUPPORTED_UNITS = {
     "W" : "watt",
 }
 
-_SIPFX_LARGE = ["k", "M", "G", "T", "E"]
+_SIPFX_LARGE = ["k", "M", "G", "T", "P", "E"]
 _SIPFX_SMALL = ["m", "u", "n"]
 _SIPFX_SCALERS = {
-    "E": 1000000000000000,
+    "E": 1000000000000000000,
+    "P": 1000000000000000,
     "T": 1000000000000,
     "G": 1000000000,
     "M": 1000000,
@@ -39,6 +40,7 @@ _SIPFX_SCALERS = {
 }
 _SIPFX_FULLNAMES = {
     "E": "exa",
+    "P": "peta",
     "T": "tera",
     "G": "giga",
     "M": "mega",
@@ -48,7 +50,7 @@ _SIPFX_FULLNAMES = {
     "n": "nano",
 }
 
-_SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "EiB"]
+_SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB"]
 
 # pylint: disable=undefined-loop-variable, consider-using-f-string
 def bytesize(size, precision=1, sep=""):
