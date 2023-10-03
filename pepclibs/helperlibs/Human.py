@@ -299,6 +299,46 @@ def _tokenize(hval, specs, name=None, multiple=True):
 
     return tokens
 
+def _tokenize_prepare(unit):
+    """
+    Prepare for tokenizing a humen-oriented value where the expected unit is 'unit'. Returns a tuple
+    of the following 3 elements.
+      * specs - the specifiers dictionary, suitable for passing to the '_tokenize()' function.
+      * scalers - the scalers dictionary, with key being the specifiers from 'specs' and values
+                  being the scaling factors.
+      * multiple - value of the 'multiple' argument that can be passed to '_tokenize()'.
+    """
+
+    # Create the specifiers dictionary.
+    specs = {}
+    scalers = {}
+    fullname = SUPPORTED_UNITS.get(unit, unit)
+    for pfx, pfx_fullname in _SIPFX_FULLNAMES.items():
+        spec = f"{pfx}{unit}"
+        if fullname != unit:
+            specs[spec] = f"{pfx_fullname}{fullname}"
+        else:
+            specs[spec] = spec
+        scalers[spec] = _SIPFX_SCALERS[pfx]
+
+    # For time, allow day/hour/minute specifiers too.
+    if unit == "s":
+        specs["d"] = "day"
+        specs["h"] = "hour"
+        specs["m"] = "minute"
+        scalers["d"] = 24 * 60 * 60
+        scalers["h"] = 60 * 60
+        scalers["m"] = 60
+        # Allow for multiple specifiers for time, like in "1d 5h".
+        multiple = True
+    else:
+        multiple = False
+
+    specs[unit] = fullname
+    scalers[unit] = 1
+
+    return specs, scalers, multiple
+
 def parse_human(hval, unit, target_unit=None, integer=True, name=None):
     """
     Convert a user-provided value 'hval' into an integer of float amount of 'unit' units (hertz,
@@ -340,33 +380,7 @@ def parse_human(hval, unit, target_unit=None, integer=True, name=None):
             hval = f"{hval}{sipfx}"
         hval = f"{hval}{base_unit}"
 
-    # Create the specifiers dictionary.
-    specs = {}
-    scalers = {}
-    fullname = SUPPORTED_UNITS.get(base_unit, base_unit)
-    for pfx, pfx_fullname in _SIPFX_FULLNAMES.items():
-        spec = f"{pfx}{base_unit}"
-        if fullname != base_unit:
-            specs[spec] = f"{pfx_fullname}{fullname}"
-        else:
-            specs[spec] = spec
-        scalers[spec] = _SIPFX_SCALERS[pfx]
-
-    # For time, allow day/hour/minute specifiers too.
-    if unit == "s":
-        specs["d"] = "day"
-        specs["h"] = "hour"
-        specs["m"] = "minute"
-        scalers["d"] = 24 * 60 * 60
-        scalers["h"] = 60 * 60
-        scalers["m"] = 60
-        # Allow for multiple specifiers for time, like in "1d 5h".
-        multiple = True
-    else:
-        multiple = False
-
-    specs[base_unit] = fullname
-    scalers[base_unit] = 1
+    specs, scalers, multiple = _tokenize_prepare(base_unit)
     tokens = _tokenize(hval, specs, name, multiple=multiple)
 
     result = 0.0
