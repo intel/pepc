@@ -50,7 +50,7 @@ _SIPFX_FULLNAMES = {
     "n": "nano",
 }
 
-_SIZE_UNITS = ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB"]
+_BYTESIZE_PREFIXES = ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB"]
 
 # pylint: disable=undefined-loop-variable, consider-using-f-string
 def bytesize(size, precision=1, sep=""):
@@ -65,7 +65,7 @@ def bytesize(size, precision=1, sep=""):
     if size < 512:
         return "%d bytes" % size
 
-    for unit in _SIZE_UNITS:
+    for unit in _BYTESIZE_PREFIXES:
         size /= 1024.0
         if size < 1024:
             break
@@ -87,7 +87,7 @@ def parse_bytesize(size):
     orig_size = size
     multiplier = 1
 
-    for idx, unit in enumerate(_SIZE_UNITS):
+    for idx, unit in enumerate(_BYTESIZE_PREFIXES):
         if size.lower().endswith(unit.lower()):
             multiplier = pow(1024, idx + 1)
             size = size[:-3]
@@ -97,7 +97,7 @@ def parse_bytesize(size):
         return int(float(size) * multiplier)
     except ValueError:
         raise Error("cannot interpret bytes count '%s', please provide a number and "
-                    "possibly the unit: %s" % (orig_size, ", ".join(_SIZE_UNITS))) from None
+                    "possibly the unit: %s" % (orig_size, ", ".join(_BYTESIZE_PREFIXES))) from None
 
 def separate_si_prefix(unit):
     """
