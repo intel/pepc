@@ -1,3 +1,9 @@
+pepc (1.4.35) unstable; urgency=low
+
+  * Add 'base_frequency' support for AMD systems.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 04 Oct 2023 00:00:00 +0200
+
 pepc (1.4.34) unstable; urgency=low
 
   * Improve scaling printed values with SI prefixes (e.g., print 2.44ms instead

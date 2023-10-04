@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Add 'base_frequency' support for AMD systems.
 ### Removed
 ### Changed
+
+## [1.4.35] - 2023-10-04
+### Added
+ - Add 'base_frequency' support for AMD systems.
 
 ## [1.4.34] - 2023-09-28
 ### Changed
