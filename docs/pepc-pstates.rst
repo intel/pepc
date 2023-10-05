@@ -721,7 +721,7 @@ Synopsis
 Description
 -----------
 
-Minimum CPU frequency is the lowest frequency the OS configured the CPU to run at, via sysfs knobs.
+Minimum uncore frequency is the lowest frequency the OS configured the CPU to run at, via sysfs knobs.
 
 The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
 (for example "900MHz").
@@ -729,9 +729,9 @@ The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also b
 The following special values are supported:
 
 "**min**"
-   Minimum CPU frequency supported (see 'min_freq_limit_').
+   Minimum uncore frequency supported (see 'min_freq_limit_').
 "**max**"
-   Maximum CPU frequency supported (see 'max_freq_limit_').
+   Maximum uncore frequency supported (see 'max_freq_limit_').
 "**mdl**"
    Middle uncore frequency between minimum and maximum rounded to nearest 100MHz.
 
@@ -762,7 +762,7 @@ Synopsis
 Description
 -----------
 
-Maximum CPU frequency is the highest frequency the OS configured the CPU to run at, via sysfs knobs.
+Maximum uncore frequency is the highest frequency the OS configured the CPU to run at, via sysfs knobs.
 
 The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
 (for example "900MHz").
@@ -770,9 +770,9 @@ The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also b
 The following special values are supported:
 
 "**min**"
-   Minimum CPU frequency supported (see 'min_freq_limit_').
+   Minimum uncore frequency supported (see 'min_freq_limit_').
 "**max**"
-   Maximum CPU frequency supported (see 'max_freq_limit_').
+   Maximum uncore frequency supported (see 'max_freq_limit_').
 "**mdl**"
    Middle uncore frequency between minimum and maximum rounded to nearest 100MHz.
 
