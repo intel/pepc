@@ -6,6 +6,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - pepc pstates: add "mdl" special uncore frequency value support.
 ### Removed
 ### Changed
 
