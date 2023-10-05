@@ -732,6 +732,8 @@ The following special values are supported:
    Minimum CPU frequency supported (see 'min_freq_limit_').
 "**max**"
    Maximum CPU frequency supported (see 'max_freq_limit_').
+"**mdl**"
+   Middle uncore frequency between minimum and maximum rounded to nearest 100MHz.
 
 Mechanism
 ---------
@@ -771,6 +773,8 @@ The following special values are supported:
    Minimum CPU frequency supported (see 'min_freq_limit_').
 "**max**"
    Maximum CPU frequency supported (see 'max_freq_limit_').
+"**mdl**"
+   Middle uncore frequency between minimum and maximum rounded to nearest 100MHz.
 
 Mechanism
 ---------

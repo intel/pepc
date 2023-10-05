@@ -15,6 +15,7 @@ This module provides P-state management API.
 import time
 import logging
 import contextlib
+from statistics import mean
 from pathlib import Path
 from pepclibs import _PropsCache, _PCStatesBase
 from pepclibs.helperlibs import Trivial, KernelModule, FSHelpers, Human, ClassHelpers
@@ -31,7 +32,7 @@ _LOG = logging.getLogger()
 # Special values for writable CPU frequency properties.
 _SPECIAL_FREQ_VALS = {"min", "max", "base", "hfm", "P1", "eff", "lfm", "Pn", "Pm"}
 # Special values for writable uncore frequency properties.
-_SPECIAL_UNCORE_FREQ_VALS = {"min", "max"}
+_SPECIAL_UNCORE_FREQ_VALS = {"min", "max", "mdl"}
 
 # This dictionary describes the CPU properties this module supports.
 #
@@ -915,6 +916,10 @@ class PStates(_PCStatesBase.PCStatesBase):
                 freq = self._get_cpu_prop_value("min_uncore_freq_limit", cpu)
             elif val == "max":
                 freq = self._get_cpu_prop_value("max_uncore_freq_limit", cpu)
+            elif val == "mdl":
+                min_freq = self._get_cpu_prop_value("min_uncore_freq_limit", cpu)
+                max_freq = self._get_cpu_prop_value("max_uncore_freq_limit", cpu)
+                freq = round(mean([min_freq, max_freq]), -2)
             else:
                 freq = val
         else:
