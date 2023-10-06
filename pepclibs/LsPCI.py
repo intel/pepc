@@ -98,6 +98,9 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
                     yield self._parse_dev_info(lines)
                 lines = [line]
 
+        if lines:
+            yield self._parse_dev_info(lines)
+
     def __init__(self, pman=None):
         """Class constructor."""
 
