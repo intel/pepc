@@ -20,9 +20,10 @@ _LOG = logging.getLogger()
 
 # The units this module supports.
 SUPPORTED_UNITS = {
-    "s":  "second",
-    "Hz": "hertz",
-    "W" : "watt",
+    "B"  : "byte",
+    "Hz" : "hertz",
+    "s"  : "second",
+    "W"  : "watt",
 }
 
 _SIPFX_LARGE = ["k", "M", "G", "T", "P", "E"]
@@ -51,6 +52,22 @@ _SIPFX_FULLNAMES = {
 }
 
 _BYTESIZE_PREFIXES = ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB"]
+_BYTESIZE_FULLNAMES = {
+    "Ei": "exbi",
+    "Pi": "pebi",
+    "Ti": "tebi",
+    "Gi": "gibi",
+    "Mi": "mebi",
+    "Ki": "kibi",
+}
+_BYTESIZE_SCALERS = {
+    "Ei": 1024*1024*1024*1024*1024*1024,
+    "Pi": 1024*1024*1024*1024*1024,
+    "Ti": 1024*1024*1024*1024,
+    "Gi": 1024*1024*1024,
+    "Mi": 1024*1024,
+    "Ki": 1024,
+}
 
 # pylint: disable=undefined-loop-variable, consider-using-f-string
 def bytesize(size, precision=1, sep=""):
@@ -76,28 +93,6 @@ def bytesize(size, precision=1, sep=""):
     pattern = "%%.%df %%s" % int(precision)
     return pattern % (size, unit)
 # pylint: enable=undefined-loop-variable
-
-def parse_bytesize(size):
-    """
-    This function does the opposite to what the 'bytesize()' function does - turns a
-    human-readable string describing a size in bytes into an integer amount of bytes.
-    """
-
-    size = str(size).strip()
-    orig_size = size
-    multiplier = 1
-
-    for idx, unit in enumerate(_BYTESIZE_PREFIXES):
-        if size.lower().endswith(unit.lower()):
-            multiplier = pow(1024, idx + 1)
-            size = size[:-3]
-            break
-
-    try:
-        return int(float(size) * multiplier)
-    except ValueError:
-        raise Error("cannot interpret bytes count '%s', please provide a number and "
-                    "possibly the unit: %s" % (orig_size, ", ".join(_BYTESIZE_PREFIXES))) from None
 
 def separate_si_prefix(unit):
     """
@@ -314,7 +309,9 @@ def _tokenize_prepare(unit):
     # Create the specifiers dictionary.
     specs = {}
     scalers = {}
+    multiple = False
     fullname = SUPPORTED_UNITS.get(unit, unit)
+
     for pfx, pfx_fullname in _SIPFX_FULLNAMES.items():
         spec = f"{pfx}{unit}"
         if fullname != unit:
@@ -323,8 +320,17 @@ def _tokenize_prepare(unit):
             specs[spec] = spec
         scalers[spec] = _SIPFX_SCALERS[pfx]
 
-    # For time, allow day/hour/minute specifiers too.
-    if unit == "s":
+    if unit == "B":
+        # For byte size, allow for "KiB" and so on.
+        for pfx, pfx_fullname in _BYTESIZE_FULLNAMES.items():
+            spec = f"{pfx}{unit}"
+            if fullname != unit:
+                specs[spec] = f"{pfx_fullname}{fullname}"
+            else:
+                specs[spec] = spec
+            scalers[spec] = _BYTESIZE_SCALERS[pfx]
+    elif unit == "s":
+        # For time, allow for day/hour/minute specifiers.
         specs["d"] = "day"
         specs["h"] = "hour"
         specs["m"] = "minute"
@@ -333,8 +339,6 @@ def _tokenize_prepare(unit):
         scalers["m"] = 60
         # Allow for multiple specifiers for time, like in "1d 5h".
         multiple = True
-    else:
-        multiple = False
 
     specs[unit] = fullname
     scalers[unit] = 1
