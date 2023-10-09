@@ -44,7 +44,7 @@ General options
 **-D** *DATASET*, **--dataset** *DATASET*
    This option is for debugging and testing purposes only, it defines the dataset that will be used
    to emulate a host for running the command on. This option is typically used when running 'pepc'
-   from the source directory, which includes datasets for many different systems.
+   from the source code directory, which includes datasets for many different systems.
 
    The argument can be the dataset path, 'all' to specify all available dataset or name in which
    case the following locations will be searched for.
