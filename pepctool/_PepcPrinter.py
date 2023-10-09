@@ -113,16 +113,16 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         else:
             prefix = " - "
             for pname, info in aggr_pinfo.items():
-                for source in self._pobj.props[pname]["sources"]:
-                    if source not in grouped:
-                        grouped[source] = {pname : info}
+                for method in self._pobj.props[pname]["methods"]:
+                    if method not in grouped:
+                        grouped[method] = {pname : info}
                     else:
-                        grouped[source][pname] = info
+                        grouped[method][pname] = info
 
         printed = 0
-        for source, pinfos in grouped.items():
-            if source:
-                self._print(f"Source: {self._pobj.get_source_descr(source)}")
+        for method, pinfos in grouped.items():
+            if method:
+                self._print(f"method: {self._pobj.get_method_descr(method)}")
             printed += self._do_print_aggr_pinfo_human(pinfos, action=action, prefix=prefix)
         return printed
 
@@ -226,7 +226,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                                "not supported" is printed.
           * skip_ro - if 'False', read-only properties information will be printed, otherwise they
                       will be skipped.
-          * group - whether to group properties by the source (sysfs, MSR, etc) when printing.
+          * group - whether to group properties by the method (e.g., "sysfs", "msr", etc) when
+                    printing.
           * action - an optional action word to include into the messages (nothing by default). For
                      example, if 'action' is "set to", the messages will be like "property <pname>
                      set to <value>". Applicable only to the "human" format.
@@ -363,7 +364,7 @@ class CStatesPrinter(_PropsPrinter):
         else:
             prefix = " - "
             sub_prefix = "    - "
-            self._print(f"Source: {self._pobj.get_source_descr('sysfs')}")
+            self._print(f"Source: {self._pobj.get_method_descr('sysfs')}")
 
         printed = 0
         for csname, csinfo in aggr_rcsinfo.items():
@@ -474,7 +475,7 @@ class CStatesPrinter(_PropsPrinter):
           * csnames - C-state names to print information about (all C-states by default).
           * cpus - CPU numbers to read and print C-state information for (all CPUs by default).
           * skip_ro - skip printing read-only information, print only modifiable information.
-          * group - whether to print the source information.
+          * group - whether to print information about the property read/write method.
           * action - an optional action word to include into the messages (nothing by default). For
                      example, if 'action' is "set to", the messages will be like "property <pname>
                      set to <value>". Applicable only to the "human" format.

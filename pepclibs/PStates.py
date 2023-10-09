@@ -42,7 +42,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
         "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "max_freq" : {
@@ -51,7 +51,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
         "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "min_freq_limit" : {
@@ -60,7 +60,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
     "max_freq_limit" : {
         "name" : "Max. supported CPU frequency",
@@ -68,7 +68,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
     "base_freq" : {
         "name" : "Base CPU frequency",
@@ -76,7 +76,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
-        "sources" : ("sysfs", "msr"),
+        "methods" : ("sysfs", "msr"),
     },
     "min_freq_hw" : {
         "name" : "Min. CPU frequency",
@@ -84,7 +84,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
-        "sources" : ("msr", ),
+        "methods" : ("msr", ),
         "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "max_freq_hw" : {
@@ -93,7 +93,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
-        "sources" : ("msr", ),
+        "methods" : ("msr", ),
         "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "bus_clock" : {
@@ -102,7 +102,7 @@ PROPS = {
         "type" : "float",
         "sname": None,
         "writable" : False,
-        "sources" : ("msr", ),
+        "methods" : ("msr", ),
     },
     "min_oper_freq" : {
         "name" : "Min. CPU operating frequency",
@@ -110,7 +110,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
-        "sources" : ("msr", ),
+        "methods" : ("msr", ),
     },
     "max_eff_freq" : {
         "name" : "Max. CPU efficiency frequency",
@@ -118,14 +118,14 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
-        "sources" : ("msr", ),
+        "methods" : ("msr", ),
     },
     "turbo" : {
         "name" : "Turbo",
         "type" : "bool",
         "sname": "global",
         "writable" : True,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
     "max_turbo_freq" : {
         "name" : "Max. CPU turbo frequency",
@@ -133,7 +133,7 @@ PROPS = {
         "type" : "int",
         "sname": "CPU",
         "writable" : False,
-        "sources" : ("msr", ),
+        "methods" : ("msr", ),
     },
     "min_uncore_freq" : {
         "name" : "Min. uncore frequency",
@@ -141,7 +141,7 @@ PROPS = {
         "type" : "int",
         "sname": "die",
         "writable" : True,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
         "special_vals" : _SPECIAL_UNCORE_FREQ_VALS,
     },
     "max_uncore_freq" : {
@@ -150,7 +150,7 @@ PROPS = {
         "type" : "int",
         "sname": "die",
         "writable" : True,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
         "special_vals" : _SPECIAL_UNCORE_FREQ_VALS,
     },
     "min_uncore_freq_limit" : {
@@ -159,7 +159,7 @@ PROPS = {
         "type" : "int",
         "sname": "die",
         "writable" : False,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
     "max_uncore_freq_limit" : {
         "name" : "Max. supported uncore frequency",
@@ -167,70 +167,70 @@ PROPS = {
         "type" : "int",
         "sname": "die",
         "writable" : False,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
     "hwp" : {
         "name" : "Hardware power management",
         "type" : "bool",
         "sname": "global",
         "writable" : False,
-        "sources" : ("msr", ),
+        "methods" : ("msr", ),
     },
     "epp" : {
         "name" : "EPP",
         "type" : "str",
         "sname": "CPU",
         "writable" : True,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
     "epp_hw" : {
         "name" : "EPP",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
-        "sources" : ("msr", ),
+        "methods" : ("msr", ),
     },
     "epb" : {
         "name" : "EPB",
         "type" : "int",
         "sname": "CPU",
         "writable" : True,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
     "epb_hw" : {
         "name" : "EPB",
         "type" : "int",
         "sname": None,
         "writable" : True,
-        "sources" : ("msr", ),
+        "methods" : ("msr", ),
     },
     "driver" : {
         "name" : "CPU frequency driver",
         "type" : "str",
         "sname": "global",
         "writable" : False,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
     "intel_pstate_mode" : {
         "name" : "Operation mode of 'intel_pstate' driver",
         "type" : "str",
         "sname": "global",
         "writable" : True,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
     "governor" : {
         "name" : "CPU frequency governor",
         "type" : "str",
         "sname": "CPU",
         "writable" : True,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
     "governors" : {
         "name" : "Available CPU frequency governors",
         "type" : "list[str]",
         "sname": "global",
         "writable" : False,
-        "sources" : ("sysfs", ),
+        "methods" : ("sysfs", ),
     },
 }
 
@@ -741,8 +741,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         # Special case is the 'base_frequency' property. In some situations it is read from MSR,
         # which means it can be in both MSR moule cache and in 'self._pcache'. But 'base_frequency'
         # is read-only, so this double caching does no cause complications in property write path.
-        # We could improve the code so that all "getter" methods return a '(val, source)' tuple and
-        # avoid double caching, but it is not worth the trouble at this point.
+        # We could improve the code so that all "getter" methods return a '(val, method)' tuple
+        # and avoid double caching, but it is not worth the trouble at this point.
 
         if self._pcache.is_cached(pname, cpu):
             return self._pcache.get(pname, cpu)
@@ -1163,8 +1163,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         super()._init_props_dict(PROPS)
 
-        # Some properties are acquired from different sources, depending on configurations.
-        # Properties like this have a dedicated "getter" method.
+        # Some properties are read/written to using different method (sysfs, msr, etc), depending on
+        # configurations. Properties like this have a dedicated "getter" method.
         self._props["base_freq"]["getter"] = self._get_base_freq
 
         # Propeties backed by a single sysfs file.

@@ -26,7 +26,7 @@ except ImportError:
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, PStates, Power, CPUInfo
-from pepclibs._PropsClassBase import SOURCES
+from pepclibs._PropsClassBase import METHODS
 
 if sys.version_info < (3,7):
     raise SystemExit("Error: this tool requires python version 3.7 or higher")
@@ -139,24 +139,24 @@ def _add_cpu_subset_arguments(subpars, fmt):
                then '0' would mean CPU 4."""
     subpars.add_argument("--core-siblings", help=text)
 
-def _get_source_str(pinfo):
-    """"Format and return the source of a property."""
+def _get_method_str(pinfo):
+    """"Format and return the "method" string for a property."""
 
-    sources = []
+    methods = []
     try:
-        for key in pinfo["sources"]:
-            sources.append(SOURCES[key]["short"])
+        for key in pinfo["methods"]:
+            methods.append(METHODS[key]["short"])
     except KeyError:
-        raise Error(f"BUG: missing sources description for '{key}'") from None
+        raise Error(f"BUG: missing methods description for '{key}'") from None
 
-    num = len(sources)
+    num = len(methods)
     if num == 1:
-        return f" via {sources[0]}"
+        return f" via {methods[0]}"
     if num == 2:
-        return f" via {sources[0]} or {sources[1]} as a fall-back method"
+        return f" via {methods[0]} or {methods[1]} as a fall-back method"
 
-    sources = ', '.join(sources[:-1]) + f" or {sources[-1]}"
-    return f" via {sources} as fall-back methods"
+    methods = ', '.join(methods[:-1]) + f" or {methods[-1]}"
+    return f" via {methods} as fall-back methods"
 
 def _get_info_subcommand_prop_help_text(pinfo):
     """
@@ -169,7 +169,7 @@ def _get_info_subcommand_prop_help_text(pinfo):
     else:
         text = f"Get {Human.uncapitalize(pinfo['name'])}"
 
-    return text + _get_source_str(pinfo) + "."
+    return text + _get_method_str(pinfo) + "."
 
 def _add_info_subcommand_options(props, subpars):
     """
@@ -207,7 +207,7 @@ def _get_config_subcommand_prop_help_text(pinfo):
     else:
         text = f"Set {Human.uncapitalize(pinfo['name'])}"
 
-    return text + _get_source_str(pinfo) + "."
+    return text + _get_method_str(pinfo) + "."
 
 def _add_config_subcommand_options(props, subpars):
     """

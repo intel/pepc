@@ -36,7 +36,7 @@ from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
 
-SOURCES = {
+METHODS = {
     "sysfs" : {
         "short" : "sysfs",
         "long"  : "Linux sysfs file-system",
@@ -62,13 +62,16 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     """
 
     @staticmethod
-    def get_source_descr(source):
-        """Get source description. See 'SOURCES' dictionary."""
+    def get_method_descr(method):
+        """
+        Get a string describing a property read/write method. See the 'METHODS' dictionary for more
+        information.
+        """
 
         try:
-            return SOURCES[source]["long"]
+            return METHODS[method]["long"]
         except KeyError:
-            raise Error(f"BUG: missing source description for '{source}'") from None
+            raise Error(f"BUG: missing method description for '{method}'") from None
 
     def _set_sname(self, pname):
         """
