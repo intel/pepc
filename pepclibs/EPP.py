@@ -28,11 +28,9 @@ class EPP(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Multiple CPUs.
-        * Get/set EPP through MSR: 'get_epp_hw()', 'set_epp_hw()'.
-        * Get/set EPP through sysfs: 'get_epp()', 'set_epp()'.
+        * Get/set EPP: 'get_epp()', 'set_epp()'.
     2. Single CPU.
-        * Get/set EPP through MSR: 'get_cpu_epp_hw()', 'set_cpu_epp_hw()'.
-        * Get/set EPP through sysfs: 'get_cpu_epp()', 'set_cpu_epp()'.
+        * Get/set EPP: 'get_cpu_epp()', 'set_cpu_epp()'.
     """
 
     def _get_msr(self):
@@ -80,6 +78,15 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         return self._epp_policies
 
+    @staticmethod
+    def _validate_method_name(method):
+        """Validate method name."""
+
+        mnames = {"sysfs", "msr"}
+        if method not in mnames:
+            mnames_str = ", ".join(mnames)
+            raise Error(f"BUG: bad method name '{method}', supported methods are: {mnames_str}")
+
     def _validate_epp_value(self, val, policy_ok=False):
         """
         Validate EPP value. When 'policy_ok=True' will not raise exception if not a numeric value.
@@ -100,11 +107,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
                 raise ErrorNotSupported(f"EPP value must be one of the following EPP policies: "
                                         f"{policies}, or integer within [{_EPP_MIN},{_EPP_MAX}]")
 
-# ------------------------------------------------------------------------------------------------ #
-# Get EPP through MSR.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _read_cpu_epp_hw(self, cpu):
+    def _read_cpu_epp_msr(self, cpu):
         """Read EPP for CPU 'cpu' from MSR."""
 
         # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
@@ -121,27 +124,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except ErrorNotSupported:
             return None
 
-    def get_epp_hw(self, cpus="all"):
-        """
-        Yield (CPU number, EPP value) pairs for CPUs in 'cpus'. The EPP value is read via MSR.
-        The arguments are as follows.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-        """
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._read_cpu_epp_hw(cpu))
-
-    def get_cpu_epp_hw(self, cpu):
-        """Similar to 'get_epp_hw()', but for a single CPU 'cpu'."""
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._read_cpu_epp_hw(cpu)
-
-# ------------------------------------------------------------------------------------------------ #
-# Set EPP through MSR.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _write_cpu_epp_hw(self, epp, cpu):
+    def _write_cpu_epp_msr(self, epp, cpu):
         """Write EPP 'epp' for CPU 'cpu' to MSR."""
 
         hwpreq = self._get_hwpreq()
@@ -152,31 +135,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except Error as err:
             raise type(err)(f"failed to set EPP HW{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-    def set_epp_hw(self, epp, cpus="all"):
-        """
-        Set EPP for CPUs in 'cpus'. The EPP value is set via MSR. The arguments are as follows.
-          * epp - the EPP value to set. Can be an integer or string representing an integer.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-        """
-
-        self._validate_epp_value(epp)
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            self._write_cpu_epp_hw(epp, cpu)
-
-    def set_cpu_epp_hw(self, epp, cpu):
-        """Similar to 'set_epp_hw()', but for a single CPU 'cpu'."""
-
-        self._validate_epp_value(epp)
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        self._write_cpu_epp_hw(epp, cpu)
-
-# ------------------------------------------------------------------------------------------------ #
-# Get EPP through sysfs.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _read_cpu_epp(self, cpu):
+    def _read_cpu_epp_sysfs(self, cpu):
         """Read EPP for CPU 'cpu' from sysfs."""
 
         if self._pcache.is_cached("epp", cpu, method="sysfs"):
@@ -190,27 +149,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         return self._pcache.add("epp", cpu, epp, method="sysfs")
 
-    def get_epp(self, cpus="all"):
-        """
-        Yield (CPU number, EPP value) pairs for CPUs in 'cpus'. The EPP value is read via sysfs.
-        The arguments are as follows.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-        """
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._read_cpu_epp(cpu))
-
-    def get_cpu_epp(self, cpu):
-        """Similar to 'get_epp()', but for a single CPU 'cpu'."""
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._read_cpu_epp(cpu)
-
-# ------------------------------------------------------------------------------------------------ #
-# Set EPP through sysfs.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _write_cpu_epp(self, epp, cpu):
+    def _write_cpu_epp_sysfs(self, epp, cpu):
         """Write EPP 'epp' for CPU 'cpu' to sysfs."""
 
         try:
@@ -242,28 +181,56 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         return self._pcache.add("epp", cpu, val, method="sysfs")
 
-    def set_epp(self, epp, cpus="all"):
+    def get_epp(self, cpus="all", method="sysfs"):
         """
-        Set EPP for CPU in 'cpus'. The EPP value is written via sysfs. The arguments are as follows.
-          * epp - the EPP value to set. Can be an integer, a string representing an integer, or one
-                  of the EPP policy names.
+        read EPP for CPUs 'cpus' using method 'method and yield (CPU number, EPP value) pairs. The
+        arguments are as follows.
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+          * method - name of the method to use (see '_PropsClassBase.METHODS').
         """
 
-        self._validate_epp_value(epp, policy_ok=True)
+        self._validate_method_name(method)
+
+        if method == "sysfs":
+            func = self._read_cpu_epp_sysfs
+        else:
+            func = self._read_cpu_epp_msr
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            self._write_cpu_epp(str(epp), cpu)
+            yield (cpu, func(cpu))
 
-    def set_cpu_epp(self, epp, cpu):
+    def get_cpu_epp(self, cpu, method="sysfs"):
+        """Similar to 'get_epp()', but for a single CPU 'cpu'."""
+
+        _, epp = next(self.get_epp(cpus=(cpu,), method=method))
+        return epp
+
+    def set_epp(self, epp, cpus="all", method="sysfs"):
+        """
+        Set EPP for CPU in 'cpus' using method 'method'. The arguments are as follows.
+          * epp - the EPP value to set. Can be an integer, a string representing an integer. If
+                  'method' is "sysfs", 'epp' can also be EPP policy name (e.g., "performance").
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+          * method - name of the method to use (see '_PropsClassBase.METHODS').
+        """
+
+        self._validate_method_name(method)
+
+        if method == "sysfs":
+            func = self._write_cpu_epp_sysfs
+            policy_ok = True
+        else:
+            func = self._write_cpu_epp_msr
+            policy_ok = False
+
+        self._validate_epp_value(epp, policy_ok=policy_ok)
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            func(str(epp), cpu)
+
+    def set_cpu_epp(self, epp, cpu, method):
         """Similar to 'set_epp()', but for a single CPU 'cpu'."""
-
-        self._validate_epp_value(epp, policy_ok=True)
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        self._write_cpu_epp(str(epp), cpu)
-
-# ------------------------------------------------------------------------------------------------ #
+        self.set_epp(epp, cpus=(cpu,), method=method)
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, hwpreq=None, enable_cache=True):
         """

@@ -712,13 +712,13 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
 
-        # First handle the MSR-based properties. The 'MSR' module has its own caching,
-        # 'self._pcache' is not used for the MSR-based properties.
+        # First handle the MSR-based properties. The 'MSR' and 'EPP' modules have their own
+        # caching,'self._pcache' is not used for the MSR-based properties.
 
         if pname == "epp":
-            return self._get_eppobj().get_cpu_epp(cpu)
+            return self._get_eppobj().get_cpu_epp(cpu, method="sysfs")
         if pname == "epp_hw":
-            return self._get_eppobj().get_cpu_epp_hw(cpu)
+            return self._get_eppobj().get_cpu_epp(cpu, method="msr")
         if pname == "epb":
             return self._get_epbobj().get_cpu_epb(cpu)
         if pname == "epb_hw":
@@ -1134,9 +1134,9 @@ class PStates(_PCStatesBase.PCStatesBase):
                 continue
 
             if pname == "epp":
-                self._get_eppobj().set_epp(val, cpus=cpus)
+                self._get_eppobj().set_epp(val, cpus=cpus, method="sysfs")
             elif pname == "epp_hw":
-                self._get_eppobj().set_epp_hw(val, cpus=cpus)
+                self._get_eppobj().set_epp(val, cpus=cpus, method="msr")
             elif pname == "epb":
                 self._get_epbobj().set_epb(val, cpus=cpus)
             elif pname == "epb_hw":
