@@ -235,7 +235,7 @@ Description
 
 CPU package thermal design power in Watts.
 
-Source
+Method
 ------
 
 MSR_PKG_POWER_INFO (**0x614**), bits **14:0**.
@@ -263,7 +263,7 @@ Description
 
 Average power usage limit of the package domain corresponding to time window #1.
 
-Source
+Method
 ------
 
 MSR_PKG_POWER_LIMIT (**0x610**), bits **14:0**.
@@ -291,7 +291,7 @@ Description
 
 Enable or disable RAPL package power limit #1.
 
-Source
+Method
 ------
 
 MSR_PKG_POWER_LIMIT (**0x610**), bit **15**.
@@ -319,7 +319,7 @@ Description
 
 Enable or disable package power clamping for limit #1.
 
-Source
+Method
 ------
 
 MSR_PKG_POWER_LIMIT (**0x610**), bit **16**.
@@ -346,7 +346,7 @@ Description
 
 RAPL package power limit #1 window size in seconds.
 
-Source
+Method
 ------
 
 MSR_PKG_POWER_LIMIT (**0x610**), bit **23:17**.
@@ -374,7 +374,7 @@ Description
 
 Average power usage limit of the package domain corresponding to time window #2.
 
-Source
+Method
 ------
 
 MSR_PKG_POWER_LIMIT (**0x610**), bits **46:32**.
@@ -402,7 +402,7 @@ Description
 
 Enable or disable RAPL package power limit #2.
 
-Source
+Method
 ------
 
 MSR_PKG_POWER_LIMIT (**0x610**), bit **47**.
@@ -430,7 +430,7 @@ Description
 
 Enable or disable package power clamping for limit #2.
 
-Source
+Method
 ------
 
 MSR_PKG_POWER_LIMIT (**0x610**), bit **48**.
@@ -457,7 +457,7 @@ Description
 
 RAPL package power limit #2 window size in seconds.
 
-Source
+Method
 ------
 
 MSR_PKG_POWER_LIMIT (**0x610**), bit **55:49**.
