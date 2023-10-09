@@ -9,7 +9,7 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module provides a capability of reading and changing CPUIdle on Intel CPUs.
+This class provides API for Linux "cpuidle" subsystem sysfs knobs.
 """
 
 import re
