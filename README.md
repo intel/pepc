@@ -219,7 +219,6 @@ Source: Linux sysfs file-system
  - CPU frequency governor: 'schedutil' for CPUs 0-87 (all CPUs)
  - Available CPU frequency governors: conservative, ondemand, userspace, powersave, performance, schedutil
 Source: Model Specific Register (MSR)
- - Base CPU frequency: '2.2GHz' for CPUs 0-87 (all CPUs)
  - Bus clock speed: '100MHz' for CPUs 0-87 (all CPUs)
  - Min. CPU operating frequency: '800MHz' for CPUs 0-87 (all CPUs)
  - Max. CPU efficiency frequency: '1.2GHz' for CPUs 0-87 (all CPUs)
