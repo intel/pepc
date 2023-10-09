@@ -33,11 +33,9 @@ class EPB(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Multiple CPUs.
-        * Get/set EPB through sysfs: 'get_epb()', 'set_epb()'.
-        * Get/set EPB through MSR: 'get_epb_hw()', 'set_epb_hw()'.
+        * Get/set EPB: 'get_epb()', 'set_epb()'.
     2. Single CPU.
-        * Get/set EPB through sysfs: 'get_cpu_epb()', 'set_cpu_epb()'.
-        * Get/set EPB through MSR: 'get_cpu_epb_hw()', 'set_cpu_epb_hw()'.
+        * Get/set EPB: 'get_cpu_epb()', 'set_cpu_epb()'.
     """
 
     def _get_msrobj(self):
@@ -61,6 +59,15 @@ class EPB(ClassHelpers.SimpleCloseContext):
         return self._epb_msr
 
     @staticmethod
+    def _validate_method_name(method):
+        """Validate method name."""
+
+        mnames = {"sysfs", "msr"}
+        if method not in mnames:
+            mnames_str = ", ".join(mnames)
+            raise Error(f"BUG: bad method name '{method}', supported methods are: {mnames_str}")
+
+    @staticmethod
     def _validate_epb_value(val, policy_ok=False):
         """
         Validate EPB value and raise appropriate exception. When 'policy_ok=True' also validate
@@ -76,11 +83,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
             raise ErrorNotSupported(f"EPB value must be one of the following EPB policies: "
                                     f"{policies}, or integer within [{_EPB_MIN},{_EPB_MAX}]")
 
-# ------------------------------------------------------------------------------------------------ #
-# Get EPB through MSR.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _read_cpu_epb_hw(self, cpu):
+    def _read_cpu_epb_msr(self, cpu):
         """Read EPB for CPU 'cpu' from MSR."""
 
         try:
@@ -88,27 +91,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         except ErrorNotSupported:
             return None
 
-    def get_epb_hw(self, cpus="all"):
-        """
-        Yield (CPU number, EPB value) pairs for CPUs in 'cpus'. The EPB value is read via MSR.
-        The arguments are as follows.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-        """
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._read_cpu_epb_hw(cpu))
-
-    def get_cpu_epb_hw(self, cpu):
-        """Similar to 'get_epb_hw()', but for a single CPU 'cpu'."""
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._read_cpu_epb_hw(cpu)
-
-# ------------------------------------------------------------------------------------------------ #
-# Set EPB through MSR.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _write_cpu_epb_hw(self, epb, cpu):
+    def _write_cpu_epb_msr(self, epb, cpu):
         """Write EPB 'epb' for CPU 'cpu' to MSR."""
 
         _epb = self._get_epbobj()
@@ -118,31 +101,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         except Error as err:
             raise type(err)(f"failed to set EPB HW{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-    def set_epb_hw(self, epb, cpus="all"):
-        """
-        Set EPB for CPUs in 'cpus'. The EPB value is set via MSR. The arguments are as follows.
-          * epb - the EPB value to set. Can be an integer or string representing an integer.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-        """
-
-        self._validate_epb_value(epb)
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            self._write_cpu_epb_hw(epb, cpu)
-
-    def set_cpu_epb_hw(self, epb, cpu):
-        """Similar to 'set_epb_hw()', but for a single CPU 'cpu'."""
-
-        self._validate_epb_value(epb)
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        self._write_cpu_epb_hw(epb, cpu)
-
-# ------------------------------------------------------------------------------------------------ #
-# Get EPB through sysfs.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _read_cpu_epb(self, cpu):
+    def _read_cpu_epb_sysfs(self, cpu):
         """Read EPB for CPU 'cpu' from sysfs."""
 
         if self._pcache.is_cached("epb", cpu, method="sysfs"):
@@ -156,27 +115,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
 
         return self._pcache.add("epb", cpu, val, method="sysfs")
 
-    def get_epb(self, cpus="all"):
-        """
-        Yield (CPU number, EPB value) pairs for CPUs in 'cpus'. The EPB value is read via sysfs.
-        The arguments are as follows.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-        """
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, self._read_cpu_epb(cpu))
-
-    def get_cpu_epb(self, cpu):
-        """Similar to 'get_epb()', but for a single CPU 'cpu'."""
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        return self._read_cpu_epb(cpu)
-
-# ------------------------------------------------------------------------------------------------ #
-# Set EPB through sysfs.
-# ------------------------------------------------------------------------------------------------ #
-
-    def _write_cpu_epb(self, epb, cpu):
+    def _write_cpu_epb_sysfs(self, epb, cpu):
         """Write EPB 'epb' for CPU 'cpu' to sysfs."""
 
         try:
@@ -189,34 +128,62 @@ class EPB(ClassHelpers.SimpleCloseContext):
         # E.g. "performance" EPB might be "0".
         if not Trivial.is_int(epb):
             if not self._epb_policies[epb]:
-                self._epb_policies[epb] = int(self._read_cpu_epb(cpu))
+                self._epb_policies[epb] = int(self._read_cpu_epb_sysfs(cpu))
 
             self._pcache.add("epb", cpu, self._epb_policies[epb], method="sysfs")
         else:
             self._pcache.add("epb", cpu, int(epb), method="sysfs")
 
-    def set_epb(self, epb, cpus="all"):
+    def get_epb(self, cpus="all", method="sysfs"):
         """
-        Set EPB for CPU in 'cpus'. The EPB value is written via sysfs. The arguments are as follows.
-          * epb - the EPB value to set. Can be an integer, a string representing an integer, or a
-                  EPB policy name.
+        Get EPB for CPUs 'cpus' using method 'method' and yield (CPU number, EPB value) pairs. The
+        arguments are as follows.
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+          * method - name of the method to use (see '_PropsClassBase.METHODS').
         """
 
-        self._validate_epb_value(epb, policy_ok=True)
+        self._validate_method_name(method)
+
+        if method == "sysfs":
+            func = self._read_cpu_epb_sysfs
+        else:
+            func = self._read_cpu_epb_msr
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            self._write_cpu_epb(str(epb), cpu)
+            yield (cpu, func(cpu))
 
-    def set_cpu_epb(self, epb, cpu):
+    def get_cpu_epb(self, cpu, method="sysfs"):
+        """Similar to 'get_epb()', but for a single CPU 'cpu'."""
+
+        _, epb = next(self.get_epb(cpus=(cpu,), method=method))
+        return epb
+
+    def set_epb(self, epb, cpus="all", method="sysfs"):
+        """
+        Set EPB for CPU in 'cpus' using method 'method'. The arguments are as follows.
+          * epb - the EPB value to set. Can be an integer, a string representing an integer. If
+                  'method' is "sysfs", 'epb' can also be EPB policy name (e.g., "performance").
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+          * method - name of the method to use (see '_PropsClassBase.METHODS').
+        """
+
+        self._validate_method_name(method)
+
+        if method == "sysfs":
+            func = self._write_cpu_epb_sysfs
+            policy_ok = True
+        else:
+            func = self._write_cpu_epb_msr
+            policy_ok = False
+
+        self._validate_epb_value(epb, policy_ok=policy_ok)
+
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            func(str(epb), cpu)
+
+    def set_cpu_epb(self, epb, cpu, method="sysfs"):
         """Similar to 'set_epb()', but for a single CPU 'cpu'."""
-
-        self._validate_epb_value(epb, policy_ok=True)
-
-        cpu = self._cpuinfo.normalize_cpu(cpu)
-        self._write_cpu_epb(str(epb), cpu)
-
-# ------------------------------------------------------------------------------------------------ #
+        self.set_epb(epb, cpus=(cpu,), method=method)
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
@@ -237,6 +204,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         self._close_msr = msr is None
 
         self._epb_msr = None
+
         # EPB policy to EPB value dictionary.
         self._epb_policies = {name : None for name in _EPB_POLICIES}
         self._sysfs_epb_path = "/sys/devices/system/cpu/cpu%d/power/energy_perf_bias"
