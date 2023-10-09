@@ -145,8 +145,8 @@ class EPB(ClassHelpers.SimpleCloseContext):
     def _read_cpu_epb(self, cpu):
         """Read EPB for CPU 'cpu' from sysfs."""
 
-        if self._pcache.is_cached("epb", cpu):
-            return self._pcache.get("epb", cpu)
+        if self._pcache.is_cached("epb", cpu, method="sysfs"):
+            return self._pcache.get("epb", cpu, method="sysfs")
 
         try:
             with self._pman.open(self._sysfs_epb_path % cpu, "r") as fobj:
@@ -154,7 +154,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound:
             val = None
 
-        return self._pcache.add("epb", cpu, val)
+        return self._pcache.add("epb", cpu, val, method="sysfs")
 
     def get_epb(self, cpus="all"):
         """
@@ -191,9 +191,9 @@ class EPB(ClassHelpers.SimpleCloseContext):
             if not self._epb_policies[epb]:
                 self._epb_policies[epb] = int(self._read_cpu_epb(cpu))
 
-            self._pcache.add("epb", cpu, self._epb_policies[epb])
+            self._pcache.add("epb", cpu, self._epb_policies[epb], method="sysfs")
         else:
-            self._pcache.add("epb", cpu, int(epb))
+            self._pcache.add("epb", cpu, int(epb), method="sysfs")
 
     def set_epb(self, epb, cpus="all"):
         """

@@ -179,8 +179,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
     def _read_cpu_epp(self, cpu):
         """Read EPP for CPU 'cpu' from sysfs."""
 
-        if self._pcache.is_cached("epp", cpu):
-            return self._pcache.get("epp", cpu)
+        if self._pcache.is_cached("epp", cpu, method="sysfs"):
+            return self._pcache.get("epp", cpu, method="sysfs")
 
         try:
             with self._pman.open(self._sysfs_epp_path % cpu, "r") as fobj:
@@ -188,7 +188,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound:
             epp = None
 
-        return self._pcache.add("epp", cpu, epp)
+        return self._pcache.add("epp", cpu, epp, method="sysfs")
 
     def get_epp(self, cpus="all"):
         """
@@ -240,7 +240,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except Error as err:
             raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-        return self._pcache.add("epp", cpu, val)
+        return self._pcache.add("epp", cpu, val, method="sysfs")
 
     def set_epp(self, epp, cpus="all"):
         """
