@@ -137,8 +137,8 @@ def _get_config_options(params):
         bad_options += ["--governor savepower"]
 
     if is_prop_supported("epp", params["pinfo"]):
-        good_options += ["--epp", "--epp 0", "--epp 128"]
-        bad_options += ["--epp 256"]
+        good_options += ["--epp", "--epp 0", "--epp 128", "--epp performance"]
+        bad_options += ["--epp 256", "--epp green_tree"]
 
     if is_prop_supported("epb", params["pinfo"]):
         good_options += ["--epb", "--epb 0", "--epb 15"]
