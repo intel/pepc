@@ -87,23 +87,23 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def _set_read_method(self, fobj, path):
         """
-        Some sysfs files are not static, meaning they can change depending on other file. This
-        method replaces 'read()' method with custom method to ensure the emulated sysfs file
-        behavior is same as in real hardware.
+        Contents of some read-only sysfs files can change depending on other files. Replace the
+        'read()' method of 'fobj' with a custom method in order to properly emulate the behavior of
+        a read-only file in 'path'.
         """
 
         def _online_read(self):
             """
-            This function emulates '/sys/devices/system/cpu/online' file by using CPU specific
-            online files.
+            Mimic the '/sys/devices/system/cpu/online' file. It contents depends on the per-CPU
+            online files. For example if the per-cpu files contain the following:
 
-            Example:
-            '/sys/devices/system/cpu/cpu0/online' > "1"
-            '/sys/devices/system/cpu/cpu1/online' > "1"
-            '/sys/devices/system/cpu/cpu2/online' > "0"
-            '/sys/devices/system/cpu/cpu3/online' > "1"
+            '/sys/devices/system/cpu/cpu0/online' : "1"
+            '/sys/devices/system/cpu/cpu1/online' : "1"
+            '/sys/devices/system/cpu/cpu2/online' : "0"
+            '/sys/devices/system/cpu/cpu3/online' : "1"
 
-            '/sys/devices/system/cpu/online' > "0-1,3"
+            The global file contains th following:
+            '/sys/devices/system/cpu/online' : "0-1,3"
             """
 
             online = []
@@ -136,15 +136,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def _set_write_method(self, fobj, path, mode):
         """
-        Sysfs files needs special handling when written to. This method replaces 'write()' method
-        with custom method to ensure the emulated sysfs file behavior is same as in real hardware.
+        Some files needs special handling when written to. Replace the 'write()' method of 'fobj'
+        with a custom method in order to properly emulate the behavior of the file in 'path'.
         """
 
         def _aspm_write(self, data):
             """
-            Method for writing and mimicking sysfs ASPM policy file update.
-            For example, writing "powersave" to the file will result in the following file contents:
-            "default performance [powersave] powersupersave"
+            Mimic the sysfs ASPM policy file behavior. For example, writing "powersave" to the file
+            results in the following file contents:
+                "default performance [powersave] powersupersave"
             """
 
             line = fobj._policies.replace(data, f"[{data}]")
@@ -153,9 +153,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         def _truncate_write(self, data):
             """
-            Method for writing and mimicking sysfs files.
-            For example, writing "Performance" to sysfs 'scaling_governor' file will result in the
-            file containing only "Performance", irrelevant what the file contained before writing.
+            Mimic behavior of most sysfs files: writing does not continue from the current file
+            offset, but instead, starts from file offset 0. For example, writing "performance" to
+            the 'scaling_governor' results in the file containing only "performance", regardless of
+            what the file contained before the write operation.
             """
 
             self.truncate(len(data))
@@ -178,19 +179,17 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             else:
                 fobj.write = types.MethodType(_truncate_write, fobj)
 
-    def _msr_seek(self, fobj, path):
+    def _set_seek_method(self, fobj, path):
         """
-        MSR files needs special handling when seeked. This method ensure the emulated behavior is
-        same as in real hardware.
+        Some files needs special handling for the 'seek()' syscal. Replace the 'seek()' method of
+        'fobj' with a custom method in order to properly emulate the behavior of the file in 'path'.
         """
 
         def _seek_offset(self, offset, whence=0):
             """
-            Method for mimicking MSR seek().
-            MSR register address are offset by 8 bytes, meaning register address 10 is 80 bytes from
-            start of file.
+            Mimic '/dev/msr/*' files' 'seek()' behavior. MSR register address are offset by 8 bytes,
+            meaning register address 10 is 80 bytes from start of file.
             """
-
             self._orig_seek(offset * 8, whence)
 
         if path.endswith("/msr"):
@@ -322,7 +321,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             fobj = self._open_rw(path, mode)
             self._set_write_method(fobj, path, mode)
 
-        self._msr_seek(fobj, path)
+        self._set_seek_method(fobj, path)
         return fobj
 
     def _init_commands(self, cmdinfos, datapath):
