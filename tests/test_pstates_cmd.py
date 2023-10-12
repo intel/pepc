@@ -141,8 +141,8 @@ def _get_config_options(params):
         bad_options += ["--epp 256", "--epp green_tree"]
 
     if is_prop_supported("epb", params["pinfo"]):
-        good_options += ["--epb", "--epb 0", "--epb 15"]
-        bad_options += ["--epb 16"]
+        good_options += ["--epb", "--epb 0", "--epb 15", "--epb performance"]
+        bad_options += ["--epb 16", "--epb green_tree"]
 
     options["config"] = { "good" : good_options, "bad" : bad_options }
 
