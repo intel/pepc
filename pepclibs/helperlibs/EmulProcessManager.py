@@ -140,6 +140,22 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         with a custom method in order to properly emulate the behavior of the file in 'path'.
         """
 
+        def _epb_write(self, data):
+            """
+            Mimic the sysfs 'energy_perf_bias' file behavior. In addition to supporting numbers, it
+            also supports policies.
+            """
+
+            policies = { "performance" : 0, "balance-performance" : 4, "normal" : 6,
+                        " balance-power" : 8, "power" : 15 }
+
+            key = data.strip()
+            if key in policies:
+                data = f"{policies[key]}\n"
+            self.truncate(len(data))
+            self.seek(0)
+            self._orig_write(data)
+
         def _aspm_write(self, data):
             """
             Mimic the sysfs ASPM policy file behavior. For example, writing "powersave" to the file
@@ -177,6 +193,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 policies = fobj.read().strip()
                 fobj._policies = policies.replace("[", "").replace("]", "")
                 fobj.write = types.MethodType(_aspm_write, fobj)
+            elif path.endswith("/energy_perf_bias"):
+                fobj.write = types.MethodType(_epb_write, fobj)
             else:
                 fobj.write = types.MethodType(_truncate_write, fobj)
 
