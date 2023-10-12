@@ -36,6 +36,13 @@ _SPECIAL_UNCORE_FREQ_VALS = {"min", "max"}
 # Some properties have scope name set to 'None' because the scope may be different for different
 # systems. In such cases, the scope can be obtained via 'PStates.get_sname()'.
 PROPS = {
+    "turbo" : {
+        "name" : "Turbo",
+        "type" : "bool",
+        "sname": "global",
+        "writable" : True,
+        "methods" : ("sysfs", ),
+    },
     "min_freq" : {
         "name" : "Min. CPU frequency",
         "unit" : "Hz",
@@ -119,13 +126,6 @@ PROPS = {
         "sname": "CPU",
         "writable" : False,
         "methods" : ("msr", ),
-    },
-    "turbo" : {
-        "name" : "Turbo",
-        "type" : "bool",
-        "sname": "global",
-        "writable" : True,
-        "methods" : ("sysfs", ),
     },
     "max_turbo_freq" : {
         "name" : "Max. CPU turbo frequency",
