@@ -148,6 +148,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             """
 
             line = fobj._policies.replace(data, f"[{data}]")
+            self.truncate(len(data))
             self.seek(0)
             self._orig_write(line)
 
