@@ -5,7 +5,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.198
+cpu MHz		: 800.626
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -33,7 +33,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 1800.000
+cpu MHz		: 1300.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -61,7 +61,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.000
+cpu MHz		: 1300.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -89,7 +89,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 1600.000
+cpu MHz		: 800.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -145,7 +145,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.000
+cpu MHz		: 800.257
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -173,7 +173,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 1300.000
+cpu MHz		: 800.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -397,7 +397,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.112
+cpu MHz		: 800.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -425,7 +425,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.000
+cpu MHz		: 1300.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -481,7 +481,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 801.236
+cpu MHz		: 1300.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -509,7 +509,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 1500.000
+cpu MHz		: 800.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -537,7 +537,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 1300.000
+cpu MHz		: 1700.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -649,7 +649,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.000
+cpu MHz		: 1297.081
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -677,7 +677,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 1300.000
+cpu MHz		: 800.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -705,7 +705,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 1200.000
+cpu MHz		: 800.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -845,7 +845,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.000
+cpu MHz		: 801.292
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -873,7 +873,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 797.230
+cpu MHz		: 1702.369
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -901,7 +901,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.000
+cpu MHz		: 1300.013
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -929,7 +929,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.000
+cpu MHz		: 1300.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -957,7 +957,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.000
+cpu MHz		: 1300.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40
@@ -1069,7 +1069,7 @@ model		: 108
 model name	: Intel(R) Xeon(R) D-2796NT CPU @ 2.00GHz
 stepping	: 1
 microcode	: 0x1000211
-cpu MHz		: 800.000
+cpu MHz		: 1600.000
 cache size	: 30720 KB
 physical id	: 0
 siblings	: 40

@@ -1,0 +1,12 @@
+/sys/devices/system/cpu/cpu0/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu10/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu11/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu1/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu2/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu3/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu4/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu5/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu6/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu7/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu8/cpufreq/bios_limit:2101000
+/sys/devices/system/cpu/cpu9/cpufreq/bios_limit:2101000

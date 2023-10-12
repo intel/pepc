@@ -16,3 +16,15 @@ inlinefiles:
   readonly: false
   dirname: PStates/pstates
   filename: epb.txt
+- separator: ':'
+  readonly: false
+  dirname: PStates/pstates
+  filename: epp.txt
+- separator: ':'
+  readonly: true
+  dirname: PStates/pstates
+  filename: epp_policies.txt
+- separator: ':'
+  readonly: true
+  dirname: PStates/pstates
+  filename: bios_limit.txt

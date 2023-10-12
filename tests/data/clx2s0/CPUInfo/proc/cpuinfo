@@ -5,7 +5,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.099
+cpu MHz		: 1000.246
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 48
@@ -329,7 +329,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.000
+cpu MHz		: 1000.100
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 48
@@ -410,7 +410,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.736
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 48
@@ -437,7 +437,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 2900.035
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 48
@@ -464,7 +464,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 999.998
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 48
@@ -1112,7 +1112,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.053
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 48
@@ -1139,7 +1139,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.000
+cpu MHz		: 997.322
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 48
@@ -1220,7 +1220,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.193
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 48
@@ -1652,7 +1652,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 999.998
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 48
@@ -1949,7 +1949,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.155
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 48
@@ -1976,7 +1976,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.176
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 48
@@ -2084,7 +2084,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.280
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 48
@@ -2192,7 +2192,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.174
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 48
@@ -2381,7 +2381,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.000
+cpu MHz		: 999.988
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 48
@@ -2462,7 +2462,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
 stepping	: 6
 microcode	: 0x4003302
-cpu MHz		: 1000.000
+cpu MHz		: 3302.132
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 48
