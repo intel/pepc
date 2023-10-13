@@ -39,7 +39,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
        * For a single CPU and a single C-state:  'get_cpu_cstate_info()'.
     """
 
-    def _add_to_cache(self, csinfo, cpu):
+    def _add_csinfo_to_cache(self, csinfo, cpu):
         """Add C-state information to the cache."""
 
         if cpu not in self._cache:
@@ -259,7 +259,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         if read_cpus:
             # Load their information into the cache.
             for cpu, csinfo in self._read_cstates_info(read_cpus):
-                self._add_to_cache(csinfo, cpu)
+                self._add_csinfo_to_cache(csinfo, cpu)
 
         # Yield the requested C-states information.
         for cpu in cpus:
