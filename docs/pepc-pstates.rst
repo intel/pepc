@@ -322,8 +322,8 @@ The following special values are supported:
 "**Pm**"
    Minimum CPU operating frequency (see 'min_oper_freq_').
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/policy\ **0**\ /scaling_min_freq", '**0**' is replaced with desired CPU
 number.
@@ -367,8 +367,8 @@ The following special values are supported:
 "**Pm**"
    Minimum CPU operating frequency (see 'min_oper_freq_').
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/policy\ **0**\ /scaling_max_freq", '**0**' is replaced with desired CPU
 number.
@@ -395,8 +395,8 @@ Description
 
 Minimum supported CPU frequency is the minimum CPU frequency supported by the OS.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/policy\ **0**\ /cpuinfo_min_freq", '**0**' is replaced with desired CPU
 number.
@@ -423,8 +423,8 @@ Description
 
 Maximum supported CPU frequency is the maximum CPU frequency supported by the OS.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/policy\ **0**\ /cpuinfo_max_freq", '**0**' is replaced with desired CPU
 number.
@@ -455,8 +455,8 @@ Base CPU frequency is the highest sustainable CPU frequency. This frequency is a
 The base frequency is acquired from a sysfs file or from an MSR register, depending on platform and
 the CPU frequency driver.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/policy\ **0**\ /base_frequency", '**0**' is replaced with desired CPU
 number. If the "base_frequency" file does not exist then either MSR_PLATFORM_INFO **(0xCE)**, bits
@@ -503,8 +503,8 @@ The following special values are supported:
 "**Pm**"
    Minimum CPU operating frequency (see 'min_oper_freq_').
 
-Method
-------
+Mechanism
+---------
 
 MSR_HWP_REQUEST (**0x774**), bits **7:0**.
 
@@ -548,8 +548,8 @@ The following special values are supported:
 "**Pm**"
    Minimum CPU operating frequency (see 'min_oper_freq_').
 
-Method
-------
+Mechanism
+---------
 
 MSR_HWP_REQUEST (**0x774**), bits **15:8**.
 
@@ -576,8 +576,8 @@ Description
 Bus clock refers to how quickly the system bus can move data from one computer component to the
 other.
 
-Method
-------
+Mechanism
+---------
 MSR_FSB_FREQ (**0xCD**), bits **2:0**. For platforms that don't support MSR_FSB_FREQ, **100.0MHz**
 is used.
 
@@ -607,8 +607,8 @@ the CPU model, this frequency may or may not be directly available to the OS, bu
 platform may use it in certain situations (e.g., in some C-states). This frequency is also referred
 to as **Pm**.
 
-Method
-------
+Mechanism
+---------
 
 MSR_PLATFORM_INFO (**0xCE**), bits **55:48**.
 
@@ -635,8 +635,8 @@ Description
 Maximum efficiency frequency is the most energy efficient CPU frequency. This frequency is also
 referred to as **LFM** (Low Frequency Mode) or **Pn**.
 
-Method
-------
+Mechanism
+---------
 
 MSR_PLATFORM_INFO (**0xCE**), bits **47:40**.
 
@@ -663,8 +663,8 @@ Description
 
 When turbo is enabled, the CPUs can automatically run at a frequency greater than base frequency.
 
-Method
-------
+Mechanism
+---------
 
 Location of the turbo knob in sysfs depends on the CPU frequency driver.
 
@@ -695,8 +695,8 @@ Description
 Maximum 1-core turbo frequency is the highest frequency a single CPU can operate at. This frequency
 is also referred to as max. 1-core turbo and P01.
 
-Method
-------
+Mechanism
+---------
 
 MSR_TURBO_RATIO_LIMIT (**0x1AD**), bits **7:0**.
 
@@ -733,8 +733,8 @@ The following special values are supported:
 "**max**"
    Maximum CPU frequency supported (see 'max_freq_limit_').
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/intel_uncore_frequency/package\_\ **00**\ _die\_\ **01**\ /min_freq_khz",
 '**00**' is replaced with desired package number and '**01**' with desired die number.
@@ -772,8 +772,8 @@ The following special values are supported:
 "**max**"
    Maximum CPU frequency supported (see 'max_freq_limit_').
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/intel_uncore_frequency/package\_\ **00**\ _die\_\ **01**\ /max_freq_khz",
 '**00**' is replaced with desired package number and '**01**' with desired die number.
@@ -800,8 +800,8 @@ Description
 
 Minimum supported uncore frequency is the lowest uncore frequency supported by the OS.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/intel_uncore_frequency/package\_\ **00**\ _die\_\ **01**\
 /initial_min_freq_khz", '**00**' is replaced with desired package number and '**01**' with desired
@@ -829,8 +829,8 @@ Description
 
 Maximum supported uncore frequency is the highest uncore frequency supported by the OS.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/intel_uncore_frequency/package\_\ **00**\ _die\_\ **01**\
 /initial_max_freq_khz", '**00**' is replaced with desired package number and '**01**' with desired
@@ -859,8 +859,8 @@ Description
 When hardware power management is enabled, CPUs can automatically scale their frequency without
 active OS involvement.
 
-Method
-------
+Mechanism
+---------
 
 MSR_PM_ENABLE (**0x770**), bit **0**.
 
@@ -888,8 +888,8 @@ Description
 Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is
 a number in range of 0-255 (maximum energy efficiency to maximum performance), or a policy name.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/cpufreq/policy\ **0**\ /energy_performance_preference", '**0**' is replaced
 with desired CPU number.
@@ -922,8 +922,8 @@ When package control is enabled the value is read from MSR_HWP_REQUEST_PKG 0x772
 package control is disabled and value is written to MSR_HWP_REQUEST 0x774, both require the 'msr'
 Linux kernel driver.
 
-Method
-------
+Mechanism
+---------
 
 MSR_HWP_REQUEST (**0x774**), bits **31:24**.
 
@@ -950,8 +950,8 @@ Description
 Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a
 number in range of 0-15 (maximum performance to maximum energy efficiency), or a policy name.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/cpu\ **0**\ /power/energy_perf_bias", '**0**' is replaced with desired CPU
 number.
@@ -980,8 +980,8 @@ Description
 Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a
 number in range of 0-15 (maximum performance to maximum energy efficiency).
 
-Method
-------
+Mechanism
+---------
 
 MSR_ENERGY_PERF_BIAS (**0x1B0**), bits **3:0**.
 
@@ -1008,8 +1008,8 @@ Description
 
 CPU frequency driver enumerates and requests the P-states available on the platform.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/cpufreq/policy\ **0**\ /scaling_driver", '**0**' is replaced with desired
 CPU number.
@@ -1040,8 +1040,8 @@ difference between the active and passive mode is in which frequency governors a
 generic Linux governors (passive mode) or the custom, built-in 'intel_pstate' driver governors
 (active mode).
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/intel_pstate/status"
 
@@ -1069,8 +1069,8 @@ Description
 CPU frequency governor decides which P-state to select on a CPU depending on CPU business and other
 factors.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/cpufreq/policy\ **0**\ /scaling_governor", '**0**' is replaced with desired
 CPU number.
@@ -1098,8 +1098,8 @@ Description
 CPU frequency governors decide which P-state to select on a CPU depending on CPU business and other
 factors. Different governors implement different selection policy.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/cpufreq/policy\ **0**\ /scaling_available_governors", '**0**' is replaced
 with desired CPU number.)

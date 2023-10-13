@@ -257,8 +257,8 @@ The deepest package C-state the platform is allowed to enter. MSR_PKG_CST_CONFIG
 register can be locked, in which case the package C-state limit can only be read, but cannot be
 modified, please refer to property **pkg_cstate_limit_lock**.
 
-Method
-------
+Mechanism
+---------
 
 MSR_PKG_CST_CONFIG_CONTROL (**0xE2**)
 
@@ -291,8 +291,8 @@ Description
 
 All available package C-state limits.
 
-Method
-------
+Mechanism
+---------
 
 External Design Specification (EDS)
 
@@ -319,8 +319,8 @@ Description
 Whether the package C-state limit can be modified. When 'True', property **'pkg_cstate_limit'** is
 read-only.
 
-Method
-------
+Mechanism
+---------
 
 MSR_PKG_CST_CONFIG_CONTROL (**0xE2**)
 Refer to 'PCStateConfigCtl.py' for all platforms and bits.
@@ -348,8 +348,8 @@ Description
 
 Package C-state limit aliases, for example on Ice Lakes 'PC6' is an alias for 'PC6R'.
 
-Method
-------
+Mechanism
+---------
 
 External Design Specification (EDS)
 
@@ -376,8 +376,8 @@ Description
 
 Allow or disallow the CPU to demote **C6** or **C7** requests to **C1**.
 
-Method
-------
+Mechanism
+---------
 
 MSR_PKG_CST_CONFIG_CONTROL (**0xE2**), bit **26**.
 
@@ -406,8 +406,8 @@ Description
 Allow or disallow the CPU to un-demote previously demoted requests back from **C1** to
 **C6** or **C7**.
 
-Method
-------
+Mechanism
+---------
 
 MSR_PKG_CST_CONFIG_CONTROL (**0xE2**), bit **28**.
 
@@ -435,8 +435,8 @@ Description
 
 When enabled, the CPU automatically converts all **C1** requests to **C1E** requests.
 
-Method
-------
+Mechanism
+---------
 
 MSR_POWER_CTL (**0x1FC**), bit **1**.
 
@@ -464,8 +464,8 @@ Description
 When enabled, the CPU will start exiting the **C6** idle state in advance, prior to the next local
 APIC timer event.
 
-Method
-------
+Mechanism
+---------
 
 MSR_POWER_CTL (**0x1FC**), bit **30**.
 
@@ -491,8 +491,8 @@ Description
 
 Idle driver is responsible for enumerating and requesting the C-states available on the platform.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/cpuidle/current_governor"
 
@@ -519,8 +519,8 @@ Description
 
 Idle governor decides which C-state to request on an idle CPU.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/cpuidle/scaling_governor"
 
@@ -547,8 +547,8 @@ Description
 Idle governors decide which C-state to request on an idle CPU. Different governors implement
 different selection policy.
 
-Method
-------
+Mechanism
+---------
 
 "/sys/devices/system/cpu/cpuidle/available_governors"
 
