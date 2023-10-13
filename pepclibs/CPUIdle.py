@@ -17,7 +17,7 @@ import logging
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
-from pepclibs import CPUInfo
+from pepclibs import CPUInfo, _PropsCache
 
 _LOG = logging.getLogger()
 
@@ -246,16 +246,18 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
     def _get_cstates_info(self, csnames, cpus):
         """Implements 'get_cstates_info()'. Yields ('cpu', 'csinfo') tuples."""
 
-        # Form list of CPUs that do not have their C-states information cached.
-        read_cpus = [cpu for cpu in cpus if cpu not in self._cache]
+        # Form list of CPUs that do not have their C-states information cached. The
+        # '_read_cstates_info()' method is more efficient reading information for multiple CPUs in
+        # one go.
+        read_cpus = [cpu for cpu in cpus if not self._pcache.is_cached("csinfo", cpu)]
         if read_cpus:
             # Load their information into the cache.
             for cpu, csinfo in self._read_cstates_info(read_cpus):
-                self._cache[cpu] = {"csinfo" : csinfo}
+                self._pcache.add("csinfo", cpu, csinfo)
 
         # Yield the requested C-states information.
         for cpu in cpus:
-            csinfo = self._cache[cpu]["csinfo"]
+            csinfo = self._pcache.get("csinfo", cpu)
             if csnames == "all":
                 csnames = csinfo.keys()
 
@@ -325,11 +327,14 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         if not self.get_idle_driver():
             return None
 
-        if "current_governor" not in self._cache:
+        try:
+            governor = self._pcache.get("current_governor", 0)
+        except ErrorNotFound:
             path = self._sysfs_base / "cpuidle" / "current_governor"
-            self._cache["current_governor"] = self._pman.read(path).strip()
+            governor = self._pman.read(path).strip()
+            self._pcache.add("current_governor", 0, governor)
 
-        return self._cache["current_governor"]
+        return governor
 
     def get_available_governors(self):
         """Get list of available idle driver governors."""
@@ -337,29 +342,35 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         if not self.get_idle_driver():
             return None
 
-        if "available_governors" not in self._cache:
+        try:
+            avail_governors = self._pcache.get("available_governors", 0)
+        except ErrorNotFound:
             path = self._sysfs_base / "cpuidle" / "available_governors"
-            self._cache["available_governors"] = self._pman.read(path).strip().split()
+            avail_governors = self._pman.read(path).strip().split()
+            self._pcache.add("available_governors", 0, avail_governors)
 
-        return self._cache["available_governors"]
+        return avail_governors
 
     def get_idle_driver(self):
         """Get the CPUIdle driver currently used by the kernel."""
 
-        if "idle_driver" not in self._cache:
+        try:
+            idle_driver = self._pcache.get("current_driver", 0)
+        except ErrorNotFound:
             path = self._sysfs_base / "cpuidle" / "current_driver"
             try:
-                self._cache["current_driver"] = self._pman.read(path).strip()
+                idle_driver = self._pman.read(path).strip()
             except ErrorNotFound:
-                self._cache["current_driver"] = None
-
+                idle_driver = None
                 for opt in self._get_cmdline().split():
                     if opt == "cpuidle.off=1" or opt.startswith("idle="):
                         _LOG.debug("'%s' kernel boot parameter is set%s, which may be why there is "
                                    "no idle driver.", opt, self._pman.hostmsg)
                         break
 
-        return self._cache["current_driver"]
+            self._pcache.add("current_driver", 0, idle_driver)
+
+        return idle_driver
 
     def _toggle_cstates(self, csnames="all", cpus="all", enable=True):
         """
@@ -386,7 +397,9 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                 toggled[cpu]["csnames"].append(csname)
 
                 # Update the cached data.
-                self._cache[cpu]["csinfo"][csname]["disable"] = not enable
+                csinfo = self._pcache.get("csinfo", cpu)
+                csinfo[csname]["disable"] = not enable
+                self._pcache.add("csinfo", cpu, csinfo)
 
         return toggled
 
@@ -439,14 +452,16 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         self._close_cpuinfo = cpuinfo is None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
-        # Write-through, Linux "cpuidle" subsystem information cache.
-        self._cache = {}
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
+        # Write-through, Linux "cpuidle" subsystem information cache.
+        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
+                                              enable_cache=True)
+
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman"))
+        ClassHelpers.close(self, close_attrs=("_pcache", "_cpuinfo", "_pman"))
