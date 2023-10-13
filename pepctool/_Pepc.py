@@ -49,6 +49,18 @@ _DATASET_OPTION = {
     },
 }
 
+_OVERRIDE_CPU_OPTION = {
+    "short": None,
+    "long":  "--override-cpu-model",
+    "argcomplete": None,
+    "kwargs": {
+        "metavar": "MODEL",
+        "dest": "override_cpu_model",
+        "help": """This option is for debugging and testing purposes only. Please, provide the CPU
+                   model number which the tool treats the target system CPU as."""
+    },
+}
+
 class PepcArgsParser(ArgParse.ArgsParser):
     """
     The default argument parser does not allow defining "global" options, so that they are present
@@ -58,7 +70,13 @@ class PepcArgsParser(ArgParse.ArgsParser):
     def add_option_from_dict(self, opt_info):
         """Add add an option from a dictionary describing the option."""
 
-        arg = self.add_argument(opt_info["short"], opt_info["long"], **opt_info["kwargs"])
+        args = []
+        if opt_info["short"]:
+            args.append(opt_info["short"])
+        if opt_info["long"]:
+            args.append(opt_info["long"])
+
+        arg = self.add_argument(*args, **opt_info["kwargs"])
         if opt_info["argcomplete"] and argcomplete:
             arg.completer = getattr(argcomplete.completers, opt_info["argcomplete"])
 
@@ -221,9 +239,6 @@ def _add_config_subcommand_options(props, subpars):
 def build_arguments_parser():
     """A helper function which parses the input arguments."""
 
-    override = """This option is for debugging and testing purposes only. Provide the CPU model
-                  number which the tool treats the target system CPU as"""
-
     text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
     parser = PepcArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
 
@@ -300,7 +315,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cstates_info_command)
 
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
+    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
@@ -323,7 +338,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cstates_config_command)
 
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
+    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure.")
 
@@ -384,7 +399,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=pstates_info_command)
 
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
+    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
@@ -402,7 +417,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=pstates_config_command)
 
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
+    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure P-States on.")
 
@@ -455,7 +470,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=power_info_command)
 
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
+    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
@@ -474,7 +489,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=power_config_command)
 
-    subpars2.add_argument("--override-cpu-model", help=override, default=None)
+    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure power settings on.")
 
