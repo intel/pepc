@@ -27,7 +27,7 @@ FEATURES = {
         "name" : "Min. CPU performance",
         "sname": "package",
         "help" : """The minimum desired CPU performance.""",
-        "cpuflags" : {"hwp"},
+        "cpuflags" : {"hwp", "hwp_pkg_req"},
         "type" : "int",
         "bits" : (7, 0),
     },
@@ -35,7 +35,7 @@ FEATURES = {
         "name" : "Max. CPU performance",
         "sname": "package",
         "help" : """The maximum desired CPU performance.""",
-        "cpuflags" : {"hwp"},
+        "cpuflags" : {"hwp", "hwp_pkg_req"},
         "type" : "int",
         "bits" : (15, 8),
     },
@@ -45,7 +45,7 @@ FEATURES = {
         "help" : """Energy Performance Preference is a hint to the CPU running in HWP mode about the
                     power and performance preference. Value 0 indicates highest performance and
                     value 255 indicates maximum energy savings.""",
-        "cpuflags" : {"hwp", "hwp_epp"},
+        "cpuflags" : {"hwp", "hwp_epp", "hwp_pkg_req"},
         "type" : "int",
         "bits" : (31, 24),
     },
