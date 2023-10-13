@@ -39,17 +39,6 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
        * For a single CPU and a single C-state:  'get_cpu_cstate_info()'.
     """
 
-    def _add_csinfo_to_cache(self, csinfo, cpu):
-        """Add C-state information to the cache."""
-
-        if cpu not in self._cache:
-            self._cache[cpu] = {}
-
-        # Normalize C-state names before adding them to the cache.
-        csnames = self._normalize_csnames(csinfo)
-        for normalized_name, name in zip(csnames, csinfo):
-            self._cache[cpu][normalized_name] = csinfo[name]
-
     def _get_cmdline(self):
         """Get kernel boot parameters."""
 
@@ -145,12 +134,12 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                             f"is missing.\nHere is all the collected information about the\n"
                             f"C-state:{cstate_info}")
 
-            name = cstate["name"]
+            csname = self._normalize_csname(cstate["name"])
             # Ensure the desired keys order.
-            csinfo[name] = {}
-            csinfo[name]["index"] = cstate["index"]
+            csinfo[csname] = {}
+            csinfo[csname]["index"] = cstate["index"]
             for key in CST_SYSFS_FNAMES:
-                csinfo[name][key] = cstate[key]
+                csinfo[csname][key] = cstate[key]
 
         fpaths, values = self._read_fpaths_and_values(cpus)
 
@@ -199,7 +188,11 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         yield cpu, csinfo
 
     @staticmethod
-    def _normalize_csnames(csnames):
+    def _normalize_csname(csname):
+        """Normalize C-state name 'csname'."""
+        return csname.upper()
+
+    def _normalize_csnames(self, csnames):
         """
         Normalize the the C-states list in 'csnames'. The arguments are as follows.
           * csnames - same as in 'get_cstates_info()'.
@@ -218,8 +211,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             raise Error("bad C-states list. Should either be a string or an iterable collection")
 
         csnames = Trivial.list_dedup(csnames)
-
-        return [csname.upper() for csname in csnames]
+        return [self._normalize_csname(csname) for csname in csnames]
 
     def _toggle_cstate(self, cpu, index, enable):
         """Enable or disable the 'index' C-state for CPU 'cpu'."""
@@ -259,23 +251,24 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         if read_cpus:
             # Load their information into the cache.
             for cpu, csinfo in self._read_cstates_info(read_cpus):
-                self._add_csinfo_to_cache(csinfo, cpu)
+                self._cache[cpu] = {"csinfo" : csinfo}
 
         # Yield the requested C-states information.
         for cpu in cpus:
+            csinfo = self._cache[cpu]["csinfo"]
             if csnames == "all":
-                csnames = self._cache[cpu].keys()
+                csnames = csinfo.keys()
 
-            csinfo = {}
+            result_csinfo = {}
             for csname in csnames:
-                if csname in self._cache[cpu]:
-                    csinfo[csname] = self._cache[cpu][csname]
-                else:
-                    csnames = ", ".join(csname for csname in self._cache[cpu])
+                try:
+                    result_csinfo[csname] = csinfo[csname].copy()
+                except KeyError:
+                    csnames = ", ".join(csname for csname in csinfo)
                     raise Error(f"bad C-state name '{csname}' for CPU {cpu}\n"
-                                f"Valid names are: {csnames}")
+                                f"Valid names are: {csnames}") from None
 
-            yield cpu, csinfo
+            yield cpu, result_csinfo
 
     def get_cstates_info(self, cpus="all", csnames="all"):
         """
@@ -393,7 +386,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                 toggled[cpu]["csnames"].append(csname)
 
                 # Update the cached data.
-                self._cache[cpu][csname]["disable"] = not enable
+                self._cache[cpu]["csinfo"][csname]["disable"] = not enable
 
         return toggled
 
