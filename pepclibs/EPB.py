@@ -60,7 +60,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         return self._epb_msr
 
     @staticmethod
-    def _validate_mechanism_name(mname):
+    def _validate_mname(mname):
         """Validate mechanism name 'mname'."""
 
         mnames = {"sysfs", "msr"}
@@ -145,7 +145,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
           * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
         """
 
-        self._validate_mechanism_name(mname)
+        self._validate_mname(mname)
 
         if mname == "sysfs":
             func = self._read_cpu_epb_sysfs
@@ -172,7 +172,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         Raise 'ErrorNotSupported' if the platform does not support EPB.
         """
 
-        self._validate_mechanism_name(mname)
+        self._validate_mname(mname)
 
         if mname == "sysfs":
             func = self._write_cpu_epb_sysfs

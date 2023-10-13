@@ -174,13 +174,31 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         return self._get_cpuidle().get_cpu_cstate_info(cpu, csname)
 
-    def enable_cstates(self, csnames="all", cpus="all"):
-        """Same as 'CPUIdle.enable_cstates()'."""
+    def enable_cstates(self, csnames="all", cpus="all", mnames=None):
+        """
+        Same as 'CPUIdle.enable_cstates()', except for the 'mnames' argument, which is has no
+        effect, only checked to to be 'sysfs' on 'None.
+        """
+
+        mnames = self._normalize_mnames(mnames, allow_readonly=False)
+        if "sysfs" not in mnames:
+            mnames = ", ".join(mnames)
+            raise ErrorNotSupported(f"cannot disable C-states, unsupported methods: {mnames}.\n"
+                                    f"Use the 'sysfs' method instead.")
 
         return self._get_cpuidle().enable_cstates(csnames=csnames, cpus=cpus)
 
-    def disable_cstates(self, csnames="all", cpus="all"):
-        """Same as 'CPUIdle.disable_cstates()'."""
+    def disable_cstates(self, csnames="all", cpus="all", mnames=None):
+        """
+        Same as 'CPUIdle.disable_cstates()', except for the 'mnames' argument, which is has no
+        effect, only checked to to be 'sysfs' on 'None.
+        """
+
+        mnames = self._normalize_mnames(mnames, allow_readonly=False)
+        if "sysfs" not in mnames:
+            mnames = ", ".join(mnames)
+            raise ErrorNotSupported(f"cannot disable C-states, unsupported methods: {mnames}.\n"
+                                    f"Use the 'sysfs' method instead.")
 
         return self._get_cpuidle().disable_cstates(csnames=csnames, cpus=cpus)
 
@@ -235,7 +253,7 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
-    def _set_prop(self, pname, val, cpus):
+    def _set_prop(self, pname, val, cpus, mnames=None):
         """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
 
         if pname in PowerCtl.FEATURES:

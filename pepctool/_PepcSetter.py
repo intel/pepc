@@ -220,6 +220,7 @@ class CStatesSetter(_PropsSetter):
           * enable - if 'True', enable C-states in 'csnames', otherwise disable them.
         """
 
+        # pylint: disable=unused-argument
         if enable:
             self._pobj.enable_cstates(csnames=csnames, cpus=cpus)
         else:

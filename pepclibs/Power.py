@@ -176,7 +176,7 @@ class Power(_PropsClassBase.PropsClassBase):
 
             self._get_pplobj().write_cpu_feature(fname, val, cpu)
 
-    def _set_prop(self, pname, val, cpus):
+    def _set_prop(self, pname, val, cpus, mnames=None):
         """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
 
         try:

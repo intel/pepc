@@ -1002,7 +1002,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
 
-    def set_freq_props(self, min_freq, max_freq, cpus, freq_type="core"):
+    def set_freq_props(self, min_freq, max_freq, cpus, freq_type="core", mnames=None):
         """
         Set minimum and maximum frequency properties. The arguments are as follows:
           * min_freq - minimum frequency value to set (can be in Human form, like 1GHz). Value
@@ -1071,11 +1071,13 @@ class PStates(_PCStatesBase.PCStatesBase):
             min_freq = self._normalize_inprop(min_freq_pname, min_freq)
             self._set_sname(min_freq_pname)
             self._validate_cpus_vs_scope(min_freq_pname, cpus)
+            self._normalize_mnames(mnames, pname=min_freq_pname, allow_readonly=False)
 
         if max_freq:
             max_freq = self._normalize_inprop(max_freq_pname, max_freq)
             self._set_sname(max_freq_pname)
             self._validate_cpus_vs_scope(max_freq_pname, cpus)
+            self._normalize_mnames(mnames, pname=max_freq_pname, allow_readonly=False)
 
         for cpu in cpus:
             new_min_freq = None
@@ -1146,7 +1148,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 if new_max_freq != cur_max_freq:
                     write_func(max_freq_pname, new_max_freq, cpu)
 
-    def _set_prop(self, pname, val, cpus):
+    def _set_prop(self, pname, val, cpus, mnames=None):
         """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
 
         if pname == "min_freq":

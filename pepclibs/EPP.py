@@ -80,7 +80,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         return self._epp_policies
 
     @staticmethod
-    def _validate_mechanism_name(mname):
+    def _validate_mname(mname):
         """Validate mechanism name 'mname'."""
 
         mnames = {"sysfs", "msr"}
@@ -192,7 +192,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
           * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
         """
 
-        self._validate_mechanism_name(mname)
+        self._validate_mname(mname)
 
         if mname == "sysfs":
             func = self._read_cpu_epp_sysfs
@@ -219,7 +219,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         Raise 'ErrorNotSupported' if the platform does not support EPP.
         """
 
-        self._validate_mechanism_name(mname)
+        self._validate_mname(mname)
 
         if mname == "sysfs":
             func = self._write_cpu_epp_sysfs

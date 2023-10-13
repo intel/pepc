@@ -66,17 +66,63 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     Base class for higher level classes implementing properties (e.g. 'CStates' or 'PStates').
     """
 
-    @staticmethod
-    def get_mechanism_descr(mname):
+    def get_mechanism_descr(self, mname):
         """
         Get a string describing a property mechanism 'mname'. See the 'MECHANISMS' dictionary for
         more information.
         """
 
         try:
-            return MECHANISMS[mname]["long"]
+            return self.mechanisms[mname]["long"]
         except KeyError:
             raise Error(f"BUG: missing mechanism description for '{mname}'") from None
+
+    def _validate_mname(self, mname, pname=None, allow_readonly=True):
+        """
+        Validate if mechanism 'mname'. The arguments are as follwos.
+          * mname - name of the mechanism to validate.
+          * pname - if provided, ensure that 'mname' is supported by property 'pname'.
+          * allow_readonly - if 'True', allow both read-only and read-write mechanisms, otherwise
+                             allow only read-write mechanisms.
+        """
+
+        if pname:
+            all_mnames = self._props[pname]["mnames"]
+        else:
+            all_mnames = self.mechanisms
+
+        if mname not in all_mnames:
+            mnames = ", ".join(all_mnames)
+            if pname:
+                name = self._props[pname]["name"]
+                raise ErrorNotSupported(f"cannot access {name} ({pname}) using the '{mname}' "
+                                        f"mechanism{self._pman.hostmsg}.\n"
+                                        f"Use one the following mechanism(s) instead: {mnames}.",
+                                        mname=mname)
+            raise ErrorNotSupported(f"unsupported mechanism '{mname}', supported mechanisms are: "
+                                    f"{mnames}.", mname=mname)
+
+        if not allow_readonly and self.mechanisms[mname]["readonly"]:
+            if pname:
+                name = self._props[pname]["name"]
+                raise Error(f"can't use read-only mechanism '{mname}' for modifying "
+                            f"{name} ({pname})\n")
+            raise Error(f"can't use read-only mechanism '{mname}'")
+
+    def _normalize_mnames(self, mnames, pname=None, allow_readonly=True):
+        """Validate and normalize mechanism names in 'mnames'."""
+
+        if mnames is None:
+            if pname:
+                mnames = self._props[pname]["mnames"]
+            else:
+                mnames = self.mechanisms
+            return list(mnames)
+
+        for mname in mnames:
+            self._validate_mname(mname, pname=pname, allow_readonly=allow_readonly)
+
+        return Trivial.list_dedup(mnames)
 
     def _set_sname(self, pname):
         """
@@ -309,42 +355,57 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         raise Error(errmsg)
 
-    def _set_prop(self, pname, val, cpus):
+    def _set_prop(self, pname, val, cpus, mnames=None):
         """Implements 'set_prop()'. The arguments are as the same as in 'set_prop()'."""
 
         # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase.set_prop")
 
-    def set_prop(self, pname, val, cpus):
+    def set_prop(self, pname, val, cpus, mnames=None):
         """
         Set property 'pname' to value 'val' for CPUs in 'cpus'. The arguments are as follows.
           * pname - name of the property to set.
           * val - value to set the property to.
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+          * mnames - list of mechanisms to use for setting the property (see
+                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
+                     specified in 'mnames'. Any mechanism is allowed by default.
 
         Properties of "bool" type have the following values:
            * True, "on", "enable" for enabling the feature.
            * False, "off", "disable" for disabling the feature.
         """
 
+        mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
         val = self._normalize_inprop(pname, val)
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
         self._set_sname(pname)
         self._validate_cpus_vs_scope(pname, cpus)
 
-        self._set_prop(pname, val, cpus)
+        self._set_prop(pname, val, cpus, mnames=mnames)
 
-    def set_cpu_prop(self, pname, val, cpu):
+    def set_cpu_prop(self, pname, val, cpu, mnames=None):
         """Same as 'set_prop()', but for a single CPU and a single property."""
 
-        self.set_prop(pname, val, (cpu,))
+        self.set_prop(pname, val, (cpu,), mnames=mnames)
 
     def _init_props_dict(self, props):
-        """Initialize the 'props' dictionary."""
+        """Initialize the 'props' and 'mechanisms' dictionaries."""
 
         self._props = copy.deepcopy(props)
         self.props = props
+
+        # Initialize the 'mechanisms' dictionery, which includes the mechanisms supported by the
+        # subclass.
+        seen = set()
+        for prop in self._props.values():
+            seen.update(prop["mnames"])
+
+        self.mechanisms = {}
+        for mname, minfo in MECHANISMS.items():
+            if mname in seen:
+                self.mechanisms[mname] = minfo
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
@@ -367,6 +428,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # Internal version of 'self.props'. Contains some data which we don't want to expose to the
         # user.
         self._props = None
+        # Dictionary describing all supported mechanisms. Same as 'MECHANISMS', but includes only
+        # the mechanisms that at least one property supports.
+        self.mechanisms = None
 
         # The write-through per-CPU properties cache. The properties that are backed by MSR/EPP/EPB
         # are not cached, because they implement their own caching.
