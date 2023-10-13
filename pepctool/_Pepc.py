@@ -37,20 +37,17 @@ TOOLNAME = "pepc"
 _LOG = logging.getLogger()
 Logging.setup_logger(prefix=TOOLNAME)
 
-DATASET_OPTIONS = [
-    {
-        "short" : "-D",
-        "long" : "--dataset",
-        "argcomplete" : None,
-        "kwargs" : {
-            "dest" : "dataset",
-            "help" : """This option is for debugging and testing purposes only, it defines the
-                        dataset that will be used to emulate a host for running the command on.
-                        Please, specify dataset path, name or "all" to specify all available
-                        datasets."""
-        },
+_DATASET_OPTION = {
+    "short": "-D",
+    "long":  "--dataset",
+    "argcomplete": None,
+    "kwargs": {
+        "dest": "dataset",
+        "help": """This option is for debugging and testing purposes only, it defines the dataset
+                   that will be used to emulate a host for running the command on. Please, specify
+                   dataset path, name or "all" to specify all available datasets."""
     },
-]
+}
 
 class PepcArgsParser(ArgParse.ArgsParser):
     """
@@ -58,18 +55,17 @@ class PepcArgsParser(ArgParse.ArgsParser):
     in every subcommand. For example, we want the SSH options to be available everywhere.
     """
 
-    def add_dataset_options(self):
-        """Add dataset options to argument parser."""
+    def add_option_from_dict(self, opt_info):
+        """Add add an option from a dictionary describing the option."""
 
-        for opt in DATASET_OPTIONS:
-            arg = self.add_argument(opt["short"], opt["long"], **opt["kwargs"])
-            if opt["argcomplete"] and argcomplete:
-                arg.completer = getattr(argcomplete.completers, opt["argcomplete"])
+        arg = self.add_argument(opt_info["short"], opt_info["long"], **opt_info["kwargs"])
+        if opt_info["argcomplete"] and argcomplete:
+            arg.completer = getattr(argcomplete.completers, opt_info["argcomplete"])
 
     def _check_unknow_args(self, args, uargs, gargs):
         """
-        Check unknown arguments 'uargs' for global arguments 'gargs' and add them to 'args'.
-        This is a workaround for implementing global arguments.
+        Check unknown arguments 'uargs' for global arguments 'gargs' and add them to 'args'. This is
+        a workaround for implementing global arguments.
         """
 
         for opt in gargs:
@@ -96,7 +92,7 @@ class PepcArgsParser(ArgParse.ArgsParser):
             return args
 
         self._check_unknow_args(args, uargs, ArgParse.SSH_OPTIONS)
-        self._check_unknow_args(args, uargs, DATASET_OPTIONS)
+        self._check_unknow_args(args, uargs, (_DATASET_OPTION,))
 
         if uargs:
             raise Error(f"unrecognized option(s): {' '.join(uargs)}")
@@ -115,8 +111,8 @@ def _add_cpu_subset_arguments(subpars, fmt):
     text = fmt % "CPUs" # pylint: disable=consider-using-f-string
     text += """ The list can include individual CPU numbers and CPU number ranges. For example,
                '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special
-               keyword 'all' to specify all CPUs. If the CPUs/cores/packages were not specified,
-               all CPUs will be used as the default value."""
+               keyword 'all' to specify all CPUs. If the CPUs/cores/packages were not specified, all
+               CPUs will be used as the default value."""
     subpars.add_argument("--cpus", help=text)
 
     text = fmt % "cores" # pylint: disable=consider-using-f-string
@@ -127,16 +123,16 @@ def _add_cpu_subset_arguments(subpars, fmt):
 
     text = fmt % "packages" # pylint: disable=consider-using-f-string
     text += """ The list can include individual package numbers and package number ranges. For
-               example, '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3.
-               Use the special keyword 'all' to specify all packages."""
+                example, '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3.
+                Use the special keyword 'all' to specify all packages."""
     subpars.add_argument("--packages", help=text)
 
     text = fmt % "core sibling indices" # pylint: disable=consider-using-f-string
     text += """ The list can include individual core sibling indices or index ranges. For example,
-               core x includes CPUs 3 and 4, '0' would mean CPU 3 and '1' would mean CPU 4. This
-               option can only be used to reference online CPUs, because Linux does not provide
-               topology information for offline CPUs. In the previous example if CPU 3 was offline,
-               then '0' would mean CPU 4."""
+                core x includes CPUs 3 and 4, '0' would mean CPU 3 and '1' would mean CPU 4. This
+                option can only be used to reference online CPUs, because Linux does not provide
+                topology information for offline CPUs. In the previous example if CPU 3 was offline,
+                then '0' would mean CPU 4."""
     subpars.add_argument("--core-siblings", help=text)
 
 def _get_mechanism_str(pinfo):
@@ -159,9 +155,7 @@ def _get_mechanism_str(pinfo):
     return f" via {mnames} as fall-back methods"
 
 def _get_info_subcommand_prop_help_text(pinfo):
-    """
-    Format and return the "info" sub-command help text for a property described by 'pinfo'.
-    """
+    """Format and return the "info" sub-command help text for a property described by 'pinfo'."""
 
     if pinfo["type"] == "bool":
         # This is a binary "on/off" type of features.
@@ -172,9 +166,7 @@ def _get_info_subcommand_prop_help_text(pinfo):
     return text + _get_mechanism_str(pinfo) + "."
 
 def _add_info_subcommand_options(props, subpars):
-    """
-    Add options for all properties in 'props' to for the "info" subcommand.
-    """
+    """Add options for all properties in 'props' to for the "info" subcommand."""
 
     spnames = set()
     for pinfo in props.values():
@@ -197,9 +189,7 @@ def _add_info_subcommand_options(props, subpars):
         subpars.add_argument(option, **kwargs)
 
 def _get_config_subcommand_prop_help_text(pinfo):
-    """
-    Format and return the "info" sub-command help text for a property described by 'pinfo'.
-    """
+    """Format and return the "info" sub-command help text for a property described by 'pinfo'."""
 
     if pinfo["type"] == "bool":
         # This is a binary "on/off" type of features.
@@ -210,9 +200,7 @@ def _get_config_subcommand_prop_help_text(pinfo):
     return text + _get_mechanism_str(pinfo) + "."
 
 def _add_config_subcommand_options(props, subpars):
-    """
-    Add options for all properties in 'props' to for the "config" sub-command.
-    """
+    """Add options for all properties in 'props' to for the "config" sub-command."""
 
     for name, pinfo in props.items():
         if not pinfo["writable"]:
@@ -240,7 +228,7 @@ def build_arguments_parser():
     parser = PepcArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
 
     ArgParse.add_ssh_options(parser)
-    parser.add_dataset_options()
+    parser.add_option_from_dict(_DATASET_OPTION)
 
     text = "Force coloring of the text output."
     parser.add_argument("--force-color", action="store_true", help=text)
