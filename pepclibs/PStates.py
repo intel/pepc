@@ -40,16 +40,16 @@ PROPS = {
         "name" : "Turbo",
         "type" : "bool",
         "sname": "global",
+        "mnames" : ("sysfs", ),
         "writable" : True,
-        "methods" : ("sysfs", ),
     },
     "min_freq" : {
         "name" : "Min. CPU frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("sysfs", ),
         "writable" : True,
-        "methods" : ("sysfs", ),
         "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "max_freq" : {
@@ -57,8 +57,8 @@ PROPS = {
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("sysfs", ),
         "writable" : True,
-        "methods" : ("sysfs", ),
         "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "min_freq_limit" : {
@@ -66,32 +66,32 @@ PROPS = {
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("sysfs", ),
         "writable" : False,
-        "methods" : ("sysfs", ),
     },
     "max_freq_limit" : {
         "name" : "Max. supported CPU frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("sysfs", ),
         "writable" : False,
-        "methods" : ("sysfs", ),
     },
     "base_freq" : {
         "name" : "Base CPU frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("sysfs", "msr"),
         "writable" : False,
-        "methods" : ("sysfs", "msr"),
     },
     "min_freq_hw" : {
         "name" : "Min. CPU frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("msr", ),
         "writable" : True,
-        "methods" : ("msr", ),
         "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "max_freq_hw" : {
@@ -99,8 +99,8 @@ PROPS = {
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("msr", ),
         "writable" : True,
-        "methods" : ("msr", ),
         "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "bus_clock" : {
@@ -108,40 +108,40 @@ PROPS = {
         "unit" : "Hz",
         "type" : "float",
         "sname": None,
+        "mnames" : ("msr", ),
         "writable" : False,
-        "methods" : ("msr", ),
     },
     "min_oper_freq" : {
         "name" : "Min. CPU operating frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("msr", ),
         "writable" : False,
-        "methods" : ("msr", ),
     },
     "max_eff_freq" : {
         "name" : "Max. CPU efficiency frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("msr", ),
         "writable" : False,
-        "methods" : ("msr", ),
     },
     "max_turbo_freq" : {
         "name" : "Max. CPU turbo frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("msr", ),
         "writable" : False,
-        "methods" : ("msr", ),
     },
     "min_uncore_freq" : {
         "name" : "Min. uncore frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
+        "mnames" : ("sysfs", ),
         "writable" : True,
-        "methods" : ("sysfs", ),
         "special_vals" : _SPECIAL_UNCORE_FREQ_VALS,
     },
     "max_uncore_freq" : {
@@ -149,8 +149,8 @@ PROPS = {
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
+        "mnames" : ("sysfs", ),
         "writable" : True,
-        "methods" : ("sysfs", ),
         "special_vals" : _SPECIAL_UNCORE_FREQ_VALS,
     },
     "min_uncore_freq_limit" : {
@@ -158,79 +158,79 @@ PROPS = {
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
+        "mnames" : ("sysfs", ),
         "writable" : False,
-        "methods" : ("sysfs", ),
     },
     "max_uncore_freq_limit" : {
         "name" : "Max. supported uncore frequency",
         "unit" : "Hz",
         "type" : "int",
         "sname": "die",
+        "mnames" : ("sysfs", ),
         "writable" : False,
-        "methods" : ("sysfs", ),
     },
     "hwp" : {
         "name" : "Hardware power management",
         "type" : "bool",
         "sname": "global",
+        "mnames" : ("msr", ),
         "writable" : False,
-        "methods" : ("msr", ),
     },
     "epp" : {
         "name" : "EPP",
         "type" : "str",
         "sname": "CPU",
+        "mnames" : ("sysfs", ),
         "writable" : True,
-        "methods" : ("sysfs", ),
     },
     "epp_hw" : {
         "name" : "EPP",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("msr", ),
         "writable" : True,
-        "methods" : ("msr", ),
     },
     "epb" : {
         "name" : "EPB",
         "type" : "int",
         "sname": "CPU",
+        "mnames" : ("sysfs", ),
         "writable" : True,
-        "methods" : ("sysfs", ),
     },
     "epb_hw" : {
         "name" : "EPB",
         "type" : "int",
         "sname": None,
+        "mnames" : ("msr", ),
         "writable" : True,
-        "methods" : ("msr", ),
     },
     "driver" : {
         "name" : "CPU frequency driver",
         "type" : "str",
         "sname": "global",
+        "mnames" : ("sysfs", ),
         "writable" : False,
-        "methods" : ("sysfs", ),
     },
     "intel_pstate_mode" : {
         "name" : "Operation mode of 'intel_pstate' driver",
         "type" : "str",
         "sname": "global",
+        "mnames" : ("sysfs", ),
         "writable" : True,
-        "methods" : ("sysfs", ),
     },
     "governor" : {
         "name" : "CPU frequency governor",
         "type" : "str",
         "sname": "CPU",
+        "mnames" : ("sysfs", ),
         "writable" : True,
-        "methods" : ("sysfs", ),
     },
     "governors" : {
         "name" : "Available CPU frequency governors",
         "type" : "list[str]",
         "sname": "global",
+        "mnames" : ("sysfs", ),
         "writable" : False,
-        "methods" : ("sysfs", ),
     },
 }
 
@@ -716,13 +716,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         # caching,'self._pcache' is not used for the MSR-based properties.
 
         if pname == "epp":
-            return self._get_eppobj().get_cpu_epp(cpu, method="sysfs")
+            return self._get_eppobj().get_cpu_epp(cpu, mname="sysfs")
         if pname == "epp_hw":
-            return self._get_eppobj().get_cpu_epp(cpu, method="msr")
+            return self._get_eppobj().get_cpu_epp(cpu, mname="msr")
         if pname == "epb":
-            return self._get_epbobj().get_cpu_epb(cpu, method="sysfs")
+            return self._get_epbobj().get_cpu_epb(cpu, mname="sysfs")
         if pname == "epb_hw":
-            return self._get_epbobj().get_cpu_epb(cpu, method="msr")
+            return self._get_epbobj().get_cpu_epb(cpu, mname="msr")
         if pname == "max_eff_freq":
             return self._get_max_eff_freq(cpu)
         if pname == "hwp":
@@ -741,7 +741,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         # Special case is the 'base_frequency' property. In some situations it is read from MSR,
         # which means it can be in both MSR moule cache and in 'self._pcache'. But 'base_frequency'
         # is read-only, so this double caching does no cause complications in property write path.
-        # We could improve the code so that all "getter" methods return a '(val, method)' tuple
+        # We could improve the code so that all "getter" methods return a '(val, mname)' tuple
         # and avoid double caching, but it is not worth the trouble at this point.
 
         if self._pcache.is_cached(pname, cpu):
@@ -1134,13 +1134,13 @@ class PStates(_PCStatesBase.PCStatesBase):
                 continue
 
             if pname == "epp":
-                self._get_eppobj().set_epp(val, cpus=cpus, method="sysfs")
+                self._get_eppobj().set_epp(val, cpus=cpus, mname="sysfs")
             elif pname == "epp_hw":
-                self._get_eppobj().set_epp(val, cpus=cpus, method="msr")
+                self._get_eppobj().set_epp(val, cpus=cpus, mname="msr")
             elif pname == "epb":
-                self._get_epbobj().set_epb(val, cpus=cpus, method="sysfs")
+                self._get_epbobj().set_epb(val, cpus=cpus, mname="sysfs")
             elif pname == "epb_hw":
-                self._get_epbobj().set_epb(val, cpus=cpus, method="msr")
+                self._get_epbobj().set_epb(val, cpus=cpus, mname="msr")
             else:
                 self._set_prop_value(pname, val, cpus)
 
@@ -1163,8 +1163,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         super()._init_props_dict(PROPS)
 
-        # Some properties are read/written to using different method (sysfs, msr, etc), depending on
-        # configurations. Properties like this have a dedicated "getter" method.
+        # Some properties are read/written to using different mechanisms ("sysfs", "msr", etc),
+        # depending on configurations. Properties like this have a dedicated "getter" method.
         self._props["base_freq"]["getter"] = self._get_base_freq
 
         # Propeties backed by a single sysfs file.

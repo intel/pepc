@@ -79,13 +79,13 @@ class EPP(ClassHelpers.SimpleCloseContext):
         return self._epp_policies
 
     @staticmethod
-    def _validate_method_name(method):
-        """Validate method name."""
+    def _validate_mechanism_name(mname):
+        """Validate mechanism name 'mname'."""
 
         mnames = {"sysfs", "msr"}
-        if method not in mnames:
-            mnames_str = ", ".join(mnames)
-            raise Error(f"BUG: bad method name '{method}', supported methods are: {mnames_str}")
+        if mname not in mnames:
+            mnames = ", ".join(mnames)
+            raise Error(f"BUG: bad mechanism name '{mname}', supported mechanisms are: {mnames}")
 
     def _validate_epp_value(self, val, policy_ok=False):
         """
@@ -138,8 +138,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
     def _read_cpu_epp_sysfs(self, cpu):
         """Read EPP for CPU 'cpu' from sysfs."""
 
-        if self._pcache.is_cached("epp", cpu, method="sysfs"):
-            return self._pcache.get("epp", cpu, method="sysfs")
+        if self._pcache.is_cached("epp", cpu, mname="sysfs"):
+            return self._pcache.get("epp", cpu, mname="sysfs")
 
         try:
             with self._pman.open(self._sysfs_epp_path % cpu, "r") as fobj:
@@ -147,7 +147,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound:
             epp = None
 
-        return self._pcache.add("epp", cpu, epp, method="sysfs")
+        return self._pcache.add("epp", cpu, epp, mname="sysfs")
 
     def _write_cpu_epp_sysfs(self, epp, cpu):
         """Write EPP 'epp' for CPU 'cpu' to sysfs."""
@@ -179,19 +179,19 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except Error as err:
             raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-        return self._pcache.add("epp", cpu, val, method="sysfs")
+        return self._pcache.add("epp", cpu, val, mname="sysfs")
 
-    def get_epp(self, cpus="all", method="sysfs"):
+    def get_epp(self, cpus="all", mname="sysfs"):
         """
-        read EPP for CPUs 'cpus' using method 'method and yield (CPU number, EPP value) pairs. The
-        arguments are as follows.
+        read EPP for CPUs 'cpus' using the 'mname' mechanism and yield (CPU number, EPP value)
+        pairs. The arguments are as follows.
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * method - name of the method to use (see '_PropsClassBase.METHODS').
+          * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
         """
 
-        self._validate_method_name(method)
+        self._validate_mechanism_name(mname)
 
-        if method == "sysfs":
+        if mname == "sysfs":
             func = self._read_cpu_epp_sysfs
         else:
             func = self._read_cpu_epp_msr
@@ -199,24 +199,24 @@ class EPP(ClassHelpers.SimpleCloseContext):
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield (cpu, func(cpu))
 
-    def get_cpu_epp(self, cpu, method="sysfs"):
+    def get_cpu_epp(self, cpu, mname="sysfs"):
         """Similar to 'get_epp()', but for a single CPU 'cpu'."""
 
-        _, epp = next(self.get_epp(cpus=(cpu,), method=method))
+        _, epp = next(self.get_epp(cpus=(cpu,), mname=mname))
         return epp
 
-    def set_epp(self, epp, cpus="all", method="sysfs"):
+    def set_epp(self, epp, cpus="all", mname="sysfs"):
         """
-        Set EPP for CPU in 'cpus' using method 'method'. The arguments are as follows.
+        Set EPP for CPU in 'cpus' using the 'mname' mechanism. The arguments are as follows.
           * epp - the EPP value to set. Can be an integer, a string representing an integer. If
-                  'method' is "sysfs", 'epp' can also be EPP policy name (e.g., "performance").
+                  'mname' is "sysfs", 'epp' can also be EPP policy name (e.g., "performance").
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * method - name of the method to use (see '_PropsClassBase.METHODS').
+          * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
         """
 
-        self._validate_method_name(method)
+        self._validate_mechanism_name(mname)
 
-        if method == "sysfs":
+        if mname == "sysfs":
             func = self._write_cpu_epp_sysfs
             policy_ok = True
         else:
@@ -228,9 +228,9 @@ class EPP(ClassHelpers.SimpleCloseContext):
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             func(str(epp), cpu)
 
-    def set_cpu_epp(self, epp, cpu, method):
+    def set_cpu_epp(self, epp, cpu, mname):
         """Similar to 'set_epp()', but for a single CPU 'cpu'."""
-        self.set_epp(epp, cpus=(cpu,), method=method)
+        self.set_epp(epp, cpus=(cpu,), mname=mname)
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, hwpreq=None, enable_cache=True):
         """

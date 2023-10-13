@@ -28,75 +28,75 @@ PROPS = {
         "unit" : "W",
         "type" : "float",
         "sname": "package",
+        "mnames" : ("msr", ),
         "writable" : False,
-        "methods" : ("msr", ),
     },
     "ppl1" : {
         "name" : "RAPL PPL1",
         "unit" : "W",
         "type" : "float",
         "sname": "package",
+        "mnames" : ("msr", ),
         "writable" : True,
-        "methods" : ("msr", ),
     },
     "ppl1_enable" : {
         "name" : "RAPL PPL1",
         "type" : "bool",
         "sname": "package",
+        "mnames" : ("msr", ),
         "writable" : True,
-        "methods" : ("msr", ),
     },
     "ppl1_clamp" : {
         "name" : "RAPL PPL1 clamping",
         "type" : "bool",
         "sname": "package",
+        "mnames" : ("msr", ),
         "writable" : True,
-        "methods" : ("msr", ),
     },
     "ppl1_window" : {
         "name" : "RAPL PPL1 time window",
         "unit" : "s",
         "type" : "float",
         "sname": "package",
+        "mnames" : ("msr", ),
         "writable" : False,
-        "methods" : ("msr", ),
     },
     "ppl2" : {
         "name" : "RAPL PPL2",
         "unit" : "W",
         "type" : "float",
         "sname": "package",
+        "mnames" : ("msr", ),
         "writable" : True,
-        "methods" : ("msr", ),
     },
     "ppl2_enable" : {
         "name" : "RAPL PPL2",
         "type" : "bool",
         "sname": "package",
+        "mnames" : ("msr", ),
         "writable" : True,
-        "methods" : ("msr", ),
     },
     "ppl2_clamp" : {
         "name" : "RAPL PPL2 clamping",
         "type" : "bool",
         "sname": "package",
+        "mnames" : ("msr", ),
         "writable" : True,
-        "methods" : ("msr", ),
     },
     "ppl2_window" : {
         "name" : "RAPL PPL2 time window",
         "unit" : "s",
         "type" : "float",
         "sname": "package",
+        "mnames" : ("msr", ),
         "writable" : False,
-        "methods" : ("msr", ),
     },
 }
 
 class Power(_PropsClassBase.PropsClassBase):
     """
     This class provides API for managing platform settings related to power. Refer to
-    '_PropsClassBase.PropsClassBase' docstring for public methods overview.
+    '_PropsClassBase.PropsClassBase' docstring for public mnames overview.
     """
 
     def _get_msr(self):

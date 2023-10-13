@@ -23,67 +23,69 @@ class PropsCache():
     write-through policy.
     """
 
-    def is_cached(self, pname, cpu, method=None):
+    def is_cached(self, pname, cpu, mname=None):
         """
-        Check if '(pname, cpu, method)' exists in the cache. Return 'True' if the item was found and
+        Check if '(pname, cpu, mname)' exists in the cache. Return 'True' if the item was found and
         'False' otherwise. The argument are as follows.
           * pname - name of the property.
           * cpu - an integer CPU number.
-          * method - optional method name for the property.
+          * mname - optional mechanism name for the property.
 
-        About the 'method' argument. A property may be obtained or modified using different methods,
-        for example via an MSR register of via a sysfs file. The 'method' argument can be used for
-        distinguishing between different methods. If 'method' is used for at least one cached
-        property, it has to be used for all the other cached proerties.
+        About the 'mname' argument. A property may be obtained or modified using different
+        mechanisms, for example via an MSR register of via a sysfs file. The 'mname' argument can be
+        used for distinguishing between different mechanisms. If 'mname' is used for at least one
+        cached property, it has to be used for all the other cached proerties.
         """
 
         if not self._enable_cache:
             return False
 
-        if method in self._cache and pname in self._cache[method] and \
-           cpu in self._cache[method][pname]:
+        if mname in self._cache and pname in self._cache[mname] and \
+           cpu in self._cache[mname][pname]:
             return True
         return False
 
-    def get(self, pname, cpu, method=None):
+    def get(self, pname, cpu, mname=None):
         """
         Look up the '(pname, cpu)' in the cache. Return the value if the item was found, raise
         'ErrorNotFound' otherwise. The argument are as follows.
           * pname - name of the property.
           * cpu - an integer CPU number.
-          * method - optional method name for the property (see a note in 'is_cached()' docstring).
+          * mname - optional mechanism name for the property (see a note in 'is_cached()'
+                    docstring).
         """
 
         try:
-            return self._cache[method][pname][cpu]
+            return self._cache[mname][pname][cpu]
         except KeyError:
             raise ErrorNotFound(f"{pname} is not cached for CPU {cpu}") from None
 
-    def remove(self, pname, cpu, sname="CPU", method=None):
+    def remove(self, pname, cpu, sname="CPU", mname=None):
         """
         Remove '(pname, cpu)' and all the other items sharing the same scope from the cache.
           * pname - name of the property.
           * cpu - an integer CPU number.
           * sname - name of scope (e.g. "package", "core").
-          * method - optional method name for the property (see a note in 'is_cached()' docstring).
+          * mname - optional mechanism name for the property (see a note in 'is_cached()'
+                    docstring).
         """
 
         if not self._enable_cache:
             return
 
         if sname == "global":
-            del self._cache[method][pname]
+            del self._cache[mname][pname]
             return
 
         cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
 
         for cpu in cpus: # pylint: disable=redefined-argument-from-local
             try:
-                del self._cache[method][pname][cpu]
+                del self._cache[mname][pname][cpu]
             except KeyError:
                 pass
 
-    def add(self, pname, cpu, val, sname="CPU", method=None):
+    def add(self, pname, cpu, val, sname="CPU", mname=None):
         """
         Add value 'val' for item '(pname, cpu)' to the cache. Add it also for each CPU sharing the
         same scope. The argument are as follows.
@@ -91,7 +93,8 @@ class PropsCache():
           * cpu - an integer CPU number.
           * val - value to get cached.
           * sname - name of scope (e.g. "package", "core").
-          * method - optional method name for the property (see a note in 'is_cached()' docstring).
+          * mname - optional mechanism name for the property (see a note in 'is_cached()'
+                    docstring).
 
         Return 'val'.
         """
@@ -99,20 +102,20 @@ class PropsCache():
         if not self._enable_cache:
             return val
 
-        if method is not None:
-            self._method_used = True
+        if mname is not None:
+            self._mechanism_used = True
 
-        if method is None and self._method_used:
-            raise Error("BUG: provide 'method' argument for all properties")
+        if mname is None and self._mechanism_used:
+            raise Error("BUG: provide 'mname' argument for all properties")
 
         cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
 
-        if method not in self._cache:
-            self._cache[method] = {}
-        if pname not in self._cache[method]:
-            self._cache[method][pname] = {}
+        if mname not in self._cache:
+            self._cache[mname] = {}
+        if pname not in self._cache[mname]:
+            self._cache[mname][pname] = {}
         for cpu in cpus: # pylint: disable=redefined-argument-from-local
-            self._cache[method][pname][cpu] = val
+            self._cache[mname][pname][cpu] = val
 
         return val
 
@@ -131,8 +134,8 @@ class PropsCache():
         self._cpuinfo = cpuinfo
         self._close_cpuinfo = cpuinfo is None
 
-        # 'True' if 'method' was provided for at least one property.
-        self._method_used = False
+        # 'True' if 'mname' was provided for at least one property.
+        self._mechanism_used = False
 
         if not self._cpuinfo:
             # 'pman' is only used to initialize 'cpuinfo' in this class.

@@ -59,13 +59,13 @@ class EPB(ClassHelpers.SimpleCloseContext):
         return self._epb_msr
 
     @staticmethod
-    def _validate_method_name(method):
-        """Validate method name."""
+    def _validate_mechanism_name(mname):
+        """Validate mechanism name 'mname'."""
 
         mnames = {"sysfs", "msr"}
-        if method not in mnames:
-            mnames_str = ", ".join(mnames)
-            raise Error(f"BUG: bad method name '{method}', supported methods are: {mnames_str}")
+        if mname not in mnames:
+            mnames = ", ".join(mnames)
+            raise Error(f"BUG: bad mechanism name '{mname}', supported mechanisms are: {mnames}")
 
     @staticmethod
     def _validate_epb_value(val, policy_ok=False):
@@ -104,8 +104,8 @@ class EPB(ClassHelpers.SimpleCloseContext):
     def _read_cpu_epb_sysfs(self, cpu):
         """Read EPB for CPU 'cpu' from sysfs."""
 
-        if self._pcache.is_cached("epb", cpu, method="sysfs"):
-            return self._pcache.get("epb", cpu, method="sysfs")
+        if self._pcache.is_cached("epb", cpu, mname="sysfs"):
+            return self._pcache.get("epb", cpu, mname="sysfs")
 
         try:
             with self._pman.open(self._sysfs_epb_path % cpu, "r") as fobj:
@@ -113,7 +113,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound:
             val = None
 
-        return self._pcache.add("epb", cpu, val, method="sysfs")
+        return self._pcache.add("epb", cpu, val, mname="sysfs")
 
     def _write_cpu_epb_sysfs(self, epb, cpu):
         """Write EPB 'epb' for CPU 'cpu' to sysfs."""
@@ -130,21 +130,21 @@ class EPB(ClassHelpers.SimpleCloseContext):
             if not self._epb_policies[epb]:
                 self._epb_policies[epb] = int(self._read_cpu_epb_sysfs(cpu))
 
-            self._pcache.add("epb", cpu, self._epb_policies[epb], method="sysfs")
+            self._pcache.add("epb", cpu, self._epb_policies[epb], mname="sysfs")
         else:
-            self._pcache.add("epb", cpu, int(epb), method="sysfs")
+            self._pcache.add("epb", cpu, int(epb), mname="sysfs")
 
-    def get_epb(self, cpus="all", method="sysfs"):
+    def get_epb(self, cpus="all", mname="sysfs"):
         """
-        Get EPB for CPUs 'cpus' using method 'method' and yield (CPU number, EPB value) pairs. The
-        arguments are as follows.
+        Get EPB for CPUs 'cpus' using the 'mname' mechanism and yield (CPU number, EPB value) pairs.
+        The arguments are as follows.
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * method - name of the method to use (see '_PropsClassBase.METHODS').
+          * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
         """
 
-        self._validate_method_name(method)
+        self._validate_mechanism_name(mname)
 
-        if method == "sysfs":
+        if mname == "sysfs":
             func = self._read_cpu_epb_sysfs
         else:
             func = self._read_cpu_epb_msr
@@ -152,24 +152,24 @@ class EPB(ClassHelpers.SimpleCloseContext):
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield (cpu, func(cpu))
 
-    def get_cpu_epb(self, cpu, method="sysfs"):
+    def get_cpu_epb(self, cpu, mname="sysfs"):
         """Similar to 'get_epb()', but for a single CPU 'cpu'."""
 
-        _, epb = next(self.get_epb(cpus=(cpu,), method=method))
+        _, epb = next(self.get_epb(cpus=(cpu,), mname=mname))
         return epb
 
-    def set_epb(self, epb, cpus="all", method="sysfs"):
+    def set_epb(self, epb, cpus="all", mname="sysfs"):
         """
-        Set EPB for CPU in 'cpus' using method 'method'. The arguments are as follows.
+        Set EPB for CPU in 'cpus' using the 'mname' mechanism. The arguments are as follows.
           * epb - the EPB value to set. Can be an integer, a string representing an integer. If
-                  'method' is "sysfs", 'epb' can also be EPB policy name (e.g., "performance").
+                  'mname' is "sysfs", 'epb' can also be EPB policy name (e.g., "performance").
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * method - name of the method to use (see '_PropsClassBase.METHODS').
+          * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
         """
 
-        self._validate_method_name(method)
+        self._validate_mechanism_name(mname)
 
-        if method == "sysfs":
+        if mname == "sysfs":
             func = self._write_cpu_epb_sysfs
             policy_ok = True
         else:
@@ -181,9 +181,9 @@ class EPB(ClassHelpers.SimpleCloseContext):
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             func(str(epb), cpu)
 
-    def set_cpu_epb(self, epb, cpu, method="sysfs"):
+    def set_cpu_epb(self, epb, cpu, mname="sysfs"):
         """Similar to 'set_epb()', but for a single CPU 'cpu'."""
-        self.set_epb(epb, cpus=(cpu,), method=method)
+        self.set_epb(epb, cpus=(cpu,), mname=mname)
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """

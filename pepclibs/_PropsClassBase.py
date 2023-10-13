@@ -36,7 +36,7 @@ from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
 
-METHODS = {
+MECHANISMS = {
     "sysfs" : {
         "short" : "sysfs",
         "long"  : "Linux sysfs file-system",
@@ -62,16 +62,16 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     """
 
     @staticmethod
-    def get_method_descr(method):
+    def get_mechanism_descr(mname):
         """
-        Get a string describing a property read/write method. See the 'METHODS' dictionary for more
-        information.
+        Get a string describing a property mechanism 'nname'. See the 'MECHANISMS' dictionary for
+        more information.
         """
 
         try:
-            return METHODS[method]["long"]
+            return MECHANISMS[mname]["long"]
         except KeyError:
-            raise Error(f"BUG: missing method description for '{method}'") from None
+            raise Error(f"BUG: missing mechanism description for '{mname}'") from None
 
     def _set_sname(self, pname):
         """
