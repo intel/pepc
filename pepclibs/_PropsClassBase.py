@@ -42,14 +42,17 @@ MECHANISMS = {
     "sysfs" : {
         "short" : "sysfs",
         "long"  : "Linux sysfs file-system",
+        "writable" : True,
     },
     "msr" : {
         "short" : "MSR",
         "long"  : "Model Specific Register (MSR)",
+        "writable" : True,
     },
     "eds" : {
         "short" : "EDS",
         "long"  : "External Design Specification (EDS)",
+        "writable" : False,
     }
 }
 
