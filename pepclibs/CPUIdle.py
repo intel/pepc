@@ -264,17 +264,15 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         # Yield the requested C-states information.
         for cpu in cpus:
             if csnames == "all":
-                names = self._cache[cpu].keys()
-            else:
-                names = csnames
+                csnames = self._cache[cpu].keys()
 
             csinfo = {}
-            for name in names:
-                if name in self._cache[cpu]:
-                    csinfo[name] = self._cache[cpu][name]
+            for csname in csnames:
+                if csname in self._cache[cpu]:
+                    csinfo[csname] = self._cache[cpu][csname]
                 else:
-                    csnames = ", ".join(name for name in self._cache[cpu])
-                    raise Error(f"bad C-state name '{name}' for CPU {cpu}\n"
+                    csnames = ", ".join(csname for csname in self._cache[cpu])
+                    raise Error(f"bad C-state name '{csname}' for CPU {cpu}\n"
                                 f"Valid names are: {csnames}")
 
             yield cpu, csinfo
