@@ -11,7 +11,7 @@ Misc. helpers shared between various 'pepc' commands.
 """
 
 import logging
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import Systemctl, Trivial, ArgParse
 
 _LOG = logging.getLogger()
@@ -122,3 +122,17 @@ def expand_subprops(pnames, props):
             expanded.append(spname)
 
     return expanded
+
+def parse_mechanisms(mechanisms, pobj):
+    """
+    Parse and validate a string of comma-separated mechanism names. Return the resulting mechanism
+    names list.
+    """
+
+    mnames = Trivial.split_csv_line(mechanisms, dedup=True)
+    for mname in mnames:
+        if mname not in pobj.mechanisms:
+            mnames = ", ".join(pobj.mechanisms)
+            raise ErrorNotSupported(f"mechanism '{mname}' is not supported. The supported " \
+                                    f"mechanisms are: {mnames}")
+    return mnames

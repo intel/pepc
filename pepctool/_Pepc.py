@@ -72,6 +72,18 @@ _LIST_MECHANISMS_OPTION = {
     },
 }
 
+_CONFIG_MECHANISMS_OPTION = {
+    "short": "-m",
+    "long":  "--mechanisms",
+    "argcomplete": None,
+    "kwargs": {
+        "dest": "mechanisms",
+        "help": """Comma-separated list of allowed mechanisms names (e.g., 'sysfs' or 'msr'). Use
+                   '--list-mechanisms' to get all names. By default, use the best available
+                   mechanism is used.""",
+    },
+}
+
 class PepcArgsParser(ArgParse.ArgsParser):
     """
     The default argument parser does not allow defining "global" options, so that they are present
@@ -327,6 +339,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=cstates_info_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
@@ -351,6 +364,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=cstates_config_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure.")
@@ -413,6 +427,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=pstates_info_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
@@ -432,6 +447,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=pstates_config_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure P-States on.")
@@ -486,6 +502,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=power_info_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
@@ -506,6 +523,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=power_config_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure power settings on.")

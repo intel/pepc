@@ -206,6 +206,13 @@ currently configured value(s) will be printed.
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
 
+**-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
+    Comma-separated list of mechanisms that are allowed to be used for configuring P-states. Use
+    '--list-mechanisms' to get the list of available mechanisms. Note, many options support only one
+    mechanism (e.g., 'sysfs'), some may support multiple (e.g., 'sysfs' and 'msr'). The mechanisms
+    are tried in the specified order. By default, all mechanisms are allowed and the most
+    preferred mechanisms will be tried first.
+
 **--list-mechanisms**
    List mechanisms available for configuring P-states.
 

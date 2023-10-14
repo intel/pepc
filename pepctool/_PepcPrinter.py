@@ -217,12 +217,14 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             return pnames
         return [pname for pname in pnames if self._pobj.props[pname]["writable"]]
 
-    def print_props(self, pnames="all", cpus="all", skip_ro=False, skip_unsupported=True,
-                    group=False, action=None):
+    def print_props(self, pnames="all", cpus="all", mnames=None, skip_ro=False,
+                    skip_unsupported=True, group=False, action=None):
         """
         Read and print properties. The arguments are as follows.
           * pnames - names of the property to read and print (all properties by default).
           * cpus - CPU numbers to read and print the property for (all CPUs by default).
+          * mnames - list of mechanism names allowed to be used for getting properties (default -
+                     all mechanisms are allowed).
           * skip_unsupported - if 'True', unsupported properties are skipped. Otherwise
                                "not supported" is printed.
           * skip_ro - if 'False', read-only properties information will be printed, otherwise they
@@ -418,8 +420,8 @@ class CStatesPrinter(_PropsPrinter):
         self._yaml_dump(yaml_rcsinfo)
         return len(yaml_rcsinfo)
 
-    def print_props(self, pnames="all", cpus="all", skip_ro=False, skip_unsupported=True,
-                    group=False, action=None):
+    def print_props(self, pnames="all", cpus="all", mnames=None, skip_ro=False,
+                    skip_unsupported=True, group=False, action=None):
         """
         Read and print properties. The arguments are the same as in '_PropsPrinter.print_props()'.
         """

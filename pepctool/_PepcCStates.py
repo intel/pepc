@@ -40,13 +40,17 @@ def cstates_info_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
+        mnames = None
+        if args.mechanisms:
+            mnames = _PepcCommon.parse_mechanisms(args.mechanisms, pobj)
+
         printed = 0
         if not hasattr(args, "oargs") and args.csnames == "default":
             # No options were specified. Print all the information. Skip the unsupported ones as
             # they add clutter.
             printed += csprint.print_cstates(csnames="all", cpus=cpus, group=True)
-            printed += csprint.print_props(pnames="all", cpus=cpus, skip_unsupported=True,
-                                           group=True)
+            printed += csprint.print_props(pnames="all", cpus=cpus, mnames=mnames,
+                                           skip_unsupported=True, group=True)
         else:
             if args.csnames != "default":
                 # args.csname is "default" if '--csnames' option was not specified, and 'None' if it
@@ -59,7 +63,8 @@ def cstates_info_command(args, pman):
             pnames = list(getattr(args, "oargs", []))
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
             if pnames:
-                printed += csprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=False)
+                printed += csprint.print_props(pnames=pnames, cpus=cpus, mnames=mnames,
+                                               skip_unsupported=False)
 
         if not printed:
             _LOG.info("No C-states properties supported%s.", pman.hostmsg)
@@ -101,6 +106,10 @@ def cstates_config_command(args, pman):
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
+        mnames = None
+        if args.mechanisms:
+            mnames = _PepcCommon.parse_mechanisms(args.mechanisms, pobj)
+
         csprint = _PepcPrinter.CStatesPrinter(pobj, cpuinfo)
         stack.enter_context(csprint)
 
@@ -115,7 +124,7 @@ def cstates_config_command(args, pman):
                 del enable_opts[optname]
 
         if print_opts:
-            csprint.print_props(pnames=print_opts, cpus=cpus, skip_unsupported=False)
+            csprint.print_props(pnames=print_opts, mnames=mnames, cpus=cpus, skip_unsupported=False)
 
         if set_opts or enable_opts:
             csset = _PepcSetter.CStatesSetter(pobj, cpuinfo, csprint, msr=msr)
@@ -124,10 +133,10 @@ def cstates_config_command(args, pman):
         if enable_opts:
             for optname, optval in enable_opts.items():
                 enable = optname == "enable"
-                csset.set_cstates(csnames=optval, cpus=cpus, enable=enable)
+                csset.set_cstates(csnames=optval, cpus=cpus, enable=enable, mnames=mnames)
 
         if set_opts:
-            csset.set_props(set_opts, cpus=cpus)
+            csset.set_props(set_opts, cpus=cpus, mnames=mnames)
 
     if enable_opts or set_opts:
         _PepcCommon.check_tuned_presence(pman)

@@ -21,7 +21,7 @@ from pepclibs.PStates import ErrorFreqOrder
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
     """This class provides API for changing P-state and C-state properties."""
 
-    def _set_prop(self, spinfo, pname, cpus):
+    def _set_prop(self, spinfo, pname, cpus, mnames):
         """Set property 'pname' and handle frequency properties ordering."""
 
         if pname not in spinfo:
@@ -42,25 +42,27 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             max_freq_pname = "max_uncore_freq"
             freq_type = "uncore"
         else:
-            self._pobj.set_prop(pname, spinfo[pname], cpus=cpus)
+            self._pobj.set_prop(pname, spinfo[pname], cpus=cpus, mnames=mnames)
             del spinfo[pname]
             return
 
         min_freq = spinfo.get(min_freq_pname)
         max_freq = spinfo.get(max_freq_pname)
 
-        self._pobj.set_freq_props(min_freq, max_freq, cpus, freq_type=freq_type)
+        self._pobj.set_freq_props(min_freq, max_freq, cpus, freq_type=freq_type, mnames=mnames)
 
         for fpname in (min_freq_pname, max_freq_pname):
             if fpname in spinfo:
                 del spinfo[fpname]
 
-    def set_props(self, spinfo, cpus="all"):
+    def set_props(self, spinfo, cpus="all", mnames=None):
         """
         Set properties for CPUs 'cpus'. The arguments are as follows.
           * spinfo - a dictionary defining names of the properties to set and the values to set the
                      properties to.
           * cpus - CPU numbers to set the property for (all CPUs by default).
+          * mnames - list of mechanism names allowed to be used for setting properties (default -
+                     all mechanisms are allowed).
         """
 
         if self._msr:
@@ -68,7 +70,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
         spinfo_copy = spinfo.copy()
         for pname in list(spinfo):
-            self._set_prop(spinfo_copy, pname, cpus)
+            self._set_prop(spinfo_copy, pname, cpus, mnames)
 
         if self._msr:
             self._msr.commit_transaction()
@@ -212,12 +214,14 @@ class PowerSetter(_PropsSetter):
 class CStatesSetter(_PropsSetter):
     """This class provides API for changing P-states properties."""
 
-    def set_cstates(self, csnames="all", cpus="all", enable=True):
+    def set_cstates(self, csnames="all", cpus="all", enable=True, mnames=None):
         """
         Enable or disable requestable C-states. The arguments are as follows.
           * csnames - C-state names to enable or disable (all C-states by default).
           * cpus - CPU numbers enable/disable C-states for (all CPUs by default).
           * enable - if 'True', enable C-states in 'csnames', otherwise disable them.
+          * mnames - list of mechanism names allowed to be used for setting properties (default -
+                     all mechanisms are allowed).
         """
 
         # pylint: disable=unused-argument
