@@ -94,6 +94,9 @@ Get information about power on specified CPUs. By default, prints all informatio
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
 
+**--list-mechanisms**
+   List mechanisms available for reading power information.
+
 **--tdp**
    Get CPU package thermal design power (details in 'tdp_')
 
@@ -154,6 +157,9 @@ currently configured value(s) will be printed.
    This option is for debugging and testing purposes only. Provide the CPU model number which the
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
+
+**--list-mechanisms**
+   List mechanisms available for configuring power.
 
 **--ppl1** *PPL1*
    Set RAPL package power limit #1 value via MSR (details in 'ppl1_').

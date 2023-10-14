@@ -61,6 +61,17 @@ _OVERRIDE_CPU_OPTION = {
     },
 }
 
+_LIST_MECHANISMS_OPTION = {
+    "short": None,
+    "long":  "--list-mechanisms",
+    "argcomplete": None,
+    "kwargs": {
+        "dest": "list_mechanisms",
+        "action": "store_true",
+        "help": """List all supported mechanisms.""",
+    },
+}
+
 class PepcArgsParser(ArgParse.ArgsParser):
     """
     The default argument parser does not allow defining "global" options, so that they are present
@@ -316,6 +327,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=cstates_info_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
@@ -339,6 +351,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=cstates_config_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure.")
 
@@ -400,6 +413,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=pstates_info_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
@@ -418,6 +432,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=pstates_config_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure P-States on.")
 
@@ -471,6 +486,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=power_info_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
 
@@ -490,6 +506,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=power_config_command)
 
     subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_cpu_subset_arguments(subpars2, "List of %s to configure power settings on.")
 
@@ -781,6 +798,33 @@ def _get_emul_pman(args, path):
 
     return pman
 
+def _list_mechanisms(args):
+    """Implement the '--list-mechanisms' option."""
+
+    fname = args.func.__name__
+    if fname.startswith("pstates_"):
+        props = PStates.PROPS
+    elif fname.startswith("cstates_"):
+        props = CStates.PROPS
+    elif fname.startswith("power_"):
+        props = Power.PROPS
+    else:
+        raise Error(f"BUG: unknown function '{fname}' for '--list-mechanisms'")
+
+    # Form a set of mechanisms used by properties in 'props'.
+    mnames = set()
+    for pinfo in props.values():
+        for mname in pinfo["mnames"]:
+            mnames.add(mname)
+
+    info = []
+    for mname, minfo in MECHANISMS.items():
+        if mname in mnames:
+            info.append(f"{mname} - {minfo['long']}")
+            mnames.remove(mname)
+
+    _LOG.info("* %s", "\n* ".join(info))
+
 def main():
     """Script entry point."""
 
@@ -795,7 +839,9 @@ def main():
         if args.hostname == "localhost":
             args.username = args.privkey = args.timeout = None
 
-        if args.dataset:
+        if getattr(args, "list_mechanisms", None):
+            _list_mechanisms(args)
+        elif args.dataset:
             for path in _get_next_dataset(args.dataset):
                 with _get_emul_pman(args, path) as pman:
                     args.func(args, pman)

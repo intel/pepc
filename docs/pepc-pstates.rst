@@ -94,6 +94,9 @@ Get P-states information for specified CPUs. By default, prints all information 
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
 
+**--list-mechanisms**
+   List mechanisms available for reading P-states information.
+
 **--min-freq**
    Get minimum CPU frequency (details in 'min_freq_').
 
@@ -202,6 +205,9 @@ currently configured value(s) will be printed.
    This option is for debugging and testing purposes only. Provide the CPU model number which the
    tool treats the target system CPU as. For example, use 0x8F to treat the target system as
    Sapphire Rapids Xeon.
+
+**--list-mechanisms**
+   List mechanisms available for configuring P-states.
 
 **--min-freq** *MIN_FREQ*
    Set minimum CPU frequency (details in 'min_freq_').
