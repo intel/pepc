@@ -31,7 +31,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._msr:
             self._msr.start_transaction()
 
-        self._pcsobj.set_props(spinfo, cpus=cpus)
+        self._pobj.set_props(spinfo, cpus=cpus)
 
         if self._msr:
             self._msr.commit_transaction()
@@ -75,7 +75,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         for pname, pinfos in ydict.items():
             for pinfo in pinfos:
                 cpus = _PepcCommon.parse_cpus_string(pinfo["cpus"])
-                self._pcsobj.set_props({pname : pinfo["value"]}, cpus=cpus)
+                self._pobj.set_props({pname : pinfo["value"]}, cpus=cpus)
                 if self._pcsprint:
                     self._pcsprint.print_props((pname,), cpus, skip_ro=True, skip_unsupported=False,
                                                action="restored to")
@@ -83,24 +83,24 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._msr:
             self._msr.commit_transaction()
 
-    def __init__(self, pcsobj, cpuinfo, pcsprint=None, msr=None):
+    def __init__(self, pobj, cpuinfo, pcsprint=None, msr=None):
         """
         Initialize a class instance. The arguments are as follows.
-          * pcsobj - a 'PStates' or 'CStates' object to print the properties for.
+          * pobj - a properties object (e.g., 'PStates') to print the properties for.
           * cpuinfo - a 'CPUInfo' object corresponding to the host the properties are read from.
           * pcsprint - a 'PStatesPrinter' or 'CStatesPrinter' class instance to use for reading and
                        printing the properties after they were set.
           * msr - an optional 'MSR.MSR()' object which will be used for transactions.
         """
 
-        self._pcsobj = pcsobj
+        self._pobj = pobj
         self._cpuinfo = cpuinfo
         self._pcsprint = pcsprint
         self._msr = msr
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, unref_attrs=("_msr", "_pcsprint", "_cpuinfo", "_pcsobj"))
+        ClassHelpers.close(self, unref_attrs=("_msr", "_pcsprint", "_cpuinfo", "_pobj"))
 
 class PStatesSetter(_PropsSetter):
     """This class provides API for changing P-states properties."""
@@ -116,7 +116,7 @@ class PStatesSetter(_PropsSetter):
 
         ydict = YAML.load(infile)
 
-        known_ykeys = set(self._pcsobj.props)
+        known_ykeys = set(self._pobj.props)
         self._validate_loaded_data(ydict, known_ykeys)
 
         self._restore_props(ydict)
@@ -135,7 +135,7 @@ class PowerSetter(_PropsSetter):
 
         ydict = YAML.load(infile)
 
-        known_ykeys = set(self._pcsobj.props)
+        known_ykeys = set(self._pobj.props)
         self._validate_loaded_data(ydict, known_ykeys)
 
         self._restore_props(ydict)
@@ -152,9 +152,9 @@ class CStatesSetter(_PropsSetter):
         """
 
         if enable:
-            self._pcsobj.enable_cstates(csnames=csnames, cpus=cpus)
+            self._pobj.enable_cstates(csnames=csnames, cpus=cpus)
         else:
-            self._pcsobj.disable_cstates(csnames=csnames, cpus=cpus)
+            self._pobj.disable_cstates(csnames=csnames, cpus=cpus)
 
         self._pcsprint.print_cstates(csnames=csnames, cpus=cpus, skip_ro=True, action="set to")
 
@@ -169,9 +169,9 @@ class CStatesSetter(_PropsSetter):
                 cpus = _PepcCommon.parse_cpus_string(yval["cpus"])
                 value = yval["value"]
                 if value == "on":
-                    self._pcsobj.enable_cstates(csname, cpus=cpus)
+                    self._pobj.enable_cstates(csname, cpus=cpus)
                 elif value == "off":
-                    self._pcsobj.disable_cstates(csname, cpus=cpus)
+                    self._pobj.disable_cstates(csname, cpus=cpus)
                 else:
                     raise Error(f"bad C-state {csname} on/off status value {value}, should be 'on' "
                                 f"or 'off'")
@@ -187,7 +187,7 @@ class CStatesSetter(_PropsSetter):
 
         csnames = set()
         with contextlib.suppress(ErrorNotSupported):
-            for _, csinfo in self._pcsobj.get_cstates_info(csnames="all", cpus="all"):
+            for _, csinfo in self._pobj.get_cstates_info(csnames="all", cpus="all"):
                 for csname in csinfo:
                     csnames.add(csname)
 
@@ -196,7 +196,7 @@ class CStatesSetter(_PropsSetter):
 
         ydict = YAML.load(infile)
 
-        known_ykeys = set(self._pcsobj.props)
+        known_ykeys = set(self._pobj.props)
         known_ykeys.update(csnames)
         self._validate_loaded_data(ydict, known_ykeys)
 
