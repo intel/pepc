@@ -13,10 +13,10 @@
 import copy
 import pytest
 from common import get_pman, run_pepc, build_params
-from props_common import is_prop_supported
+from props_common import get_siblings, is_prop_supported
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human, YAML
-from pepclibs import CPUInfo, PStates
+from pepclibs import CPUInfo, PStates, BClock
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec, tmp_path_factory):
@@ -30,11 +30,13 @@ def get_params(hostspec, tmp_path_factory):
         params = build_params(pman)
         params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
+        params["cpuinfo"] = cpuinfo
         params["cpus"] = cpuinfo.get_cpus()
         params["packages"] = cpuinfo.get_packages()
         params["cores"] = {}
         for pkg in params["packages"]:
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+        params["siblings"] = get_siblings(cpuinfo, cpu=0)
 
         params["psobj"] = psobj
         params["pinfo"] = psobj.get_cpu_props(psobj.props, 0)
@@ -303,3 +305,61 @@ def test_pstates_save_restore(params):
     run_pepc(f"pstates save -o {state_read_back_path}", pman)
     read_back = YAML.load(state_read_back_path)
     assert read_back == state, "restoring P-states configuration failed"
+
+def _set_freq_pairs(params, min_pname, max_pname):
+    """
+    Set min. and max frequencies to various values in order to verify that the 'PState' modules set
+    them correctly. The arguments 'min_pname' and 'max_pname' are the frequency property names.
+    """
+
+    sname = params["psobj"].get_sname(min_pname)
+    siblings = params["siblings"][sname]
+
+    min_limit = params["pinfo"][f"{min_pname}_limit"]
+    max_limit = params["pinfo"][f"{max_pname}_limit"]
+
+    bclk_MHz = BClock.get_bclk(params["pman"], cpu=0)
+    bclk_Hz = int(bclk_MHz * 1000000)
+    a_quarter = int((max_limit - min_limit) / 4)
+    increment = a_quarter - a_quarter % bclk_Hz
+
+    pman = params["pman"]
+    min_optname = f"--{min_pname.replace('_', '-')}"
+    max_optname = f"--{max_pname.replace('_', '-')}"
+    cpus_opt = f"--cpus {Human.rangify(siblings)}"
+
+    # [Min ------------------ Max ----------------------------------------------------------]
+    freq_opts = f"{min_optname} {min_limit} {max_optname} {min_limit + increment}"
+    run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
+
+    # [-------------------------------------------------------- Min -------------------- Max]
+    freq_opts = f"{min_optname} {max_limit - increment} {max_optname} {max_limit}"
+    run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
+
+    # [Min ------------------ Max ----------------------------------------------------------]
+    freq_opts = f"{min_optname} {min_limit} {max_optname} {min_limit + increment}"
+    run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
+
+def test_pstates_frequency_set_order(params):
+    """
+    Test min. and max frequency set order. We do not know how the systems min. and max frequencies
+    are configured, so we have to be careful when setting min. and max frequency simultaneously.
+
+    See 'PStates._validate_and_set_freq()' docstring, for more information.
+    """
+
+    if params["cpuinfo"].info["vendor"] != "GenuineIntel":
+        # BClock is only supported on "GenuineIntel" CPU vendors.
+        return
+
+    # When Turbo is disabled the max frequency may be limited.
+    if is_prop_supported("turbo", params["pinfo"]):
+        sname = params["psobj"].get_sname("turbo")
+        cpus = params["siblings"][sname]
+        params["psobj"].set_prop("turbo", "on", cpus)
+
+    if is_prop_supported("min_freq", params["pinfo"]):
+        _set_freq_pairs(params, "min_freq", "max_freq")
+
+    if is_prop_supported("min_uncore_freq", params["pinfo"]):
+        _set_freq_pairs(params, "min_uncore_freq", "max_uncore_freq")

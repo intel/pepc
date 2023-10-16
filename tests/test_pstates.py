@@ -13,7 +13,7 @@
 import pytest
 import common
 from props_common import get_siblings, is_prop_supported, set_and_verify, verify_props_value_type
-from pepclibs import CPUInfo, PStates, BClock
+from pepclibs import CPUInfo, PStates
 
 def _get_enable_cache_param():
     """Yield each dataset with a bool. Used for toggling PStates 'enable_cache'."""
@@ -105,53 +105,3 @@ def test_pstates_property_type(params):
     """This test verifies that 'get_props()' returns values of the correct type."""
 
     verify_props_value_type(params["psobj"].props, params["pinfo"])
-
-def _set_freq_pairs(params, min_pname, max_pname):
-    """
-    Set min. and max frequencies to various values in order to verify that the 'PState' modules set
-    them correctly. The arguments 'min_pname' and 'max_pname' are the frequency property names.
-    """
-
-    sname = params["psobj"].get_sname(min_pname)
-    siblings = params["siblings"][sname]
-
-    min_limit = params["pinfo"][f"{min_pname}_limit"]
-    max_limit = params["pinfo"][f"{max_pname}_limit"]
-
-    bclk_MHz = BClock.get_bclk(params["pman"], cpu=0)
-    bclk_Hz = int(bclk_MHz * 1000000)
-    a_quarter = int((max_limit - min_limit) / 4)
-    increment = a_quarter - a_quarter % bclk_Hz
-
-    # [Min ------------------ Max ----------------------------------------------------------]
-    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + increment}, siblings)
-
-    # [-------------------------------------------------------- Min -------------------- Max]
-    params["psobj"].set_props({min_pname : max_limit - increment, max_pname : max_limit}, siblings)
-
-    # [Min ------------------ Max ----------------------------------------------------------]
-    params["psobj"].set_props({min_pname : min_limit, max_pname : min_limit + increment}, siblings)
-
-def test_pstates_frequency_set_order(params):
-    """
-    Test min. and max frequency set order. We do not know how the systems min. and max frequencies
-    are configured, so we have to be careful when setting min. and max frequency simultaneously.
-
-    See 'PStates._validate_and_set_freq()' docstring, for more information.
-    """
-
-    if params["cpuinfo"].info["vendor"] != "GenuineIntel":
-        # BClock is only supported on "GenuineIntel" CPU vendors.
-        return
-
-    # When Turbo is disabled the max frequency may be limited.
-    if is_prop_supported("turbo", params["pinfo"]):
-        sname = params["psobj"].get_sname("turbo")
-        cpus = params["siblings"][sname]
-        params["psobj"].set_prop("turbo", "on", cpus)
-
-    if is_prop_supported("min_freq", params["pinfo"]):
-        _set_freq_pairs(params, "min_freq", "max_freq")
-
-    if is_prop_supported("min_uncore_freq", params["pinfo"]):
-        _set_freq_pairs(params, "min_uncore_freq", "max_uncore_freq")
