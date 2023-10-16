@@ -16,9 +16,44 @@ import contextlib
 from pepctool import _PepcCommon
 from pepclibs.helperlibs import ClassHelpers, YAML
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.PStates import ErrorFreqOrder
 
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
     """This class provides API for changing P-state and C-state properties."""
+
+    def _set_prop(self, spinfo, pname, cpus):
+        """Set property 'pname' and handle frequency properties ordering."""
+
+        if pname not in spinfo:
+            return
+
+        # Setting frequency may be tricky because there are ordering constraints, which is
+        # handled by 'set_freq_props()' method.
+        if pname in ("min_freq", "max_freq"):
+            min_freq_pname = "min_freq"
+            max_freq_pname = "max_freq"
+            freq_type = "core"
+        elif pname in ("min_freq_hw", "max_freq_hw"):
+            min_freq_pname = "min_freq_hw"
+            max_freq_pname = "max_freq_hw"
+            freq_type = "core_hw"
+        elif pname in ("min_uncore_freq", "max_uncore_freq"):
+            min_freq_pname = "min_uncore_freq"
+            max_freq_pname = "max_uncore_freq"
+            freq_type = "uncore"
+        else:
+            self._pobj.set_prop(pname, spinfo[pname], cpus=cpus)
+            del spinfo[pname]
+            return
+
+        min_freq = spinfo.get(min_freq_pname)
+        max_freq = spinfo.get(max_freq_pname)
+
+        self._pobj.set_freq_props(min_freq, max_freq, cpus, freq_type=freq_type)
+
+        for fpname in (min_freq_pname, max_freq_pname):
+            if fpname in spinfo:
+                del spinfo[fpname]
 
     def set_props(self, spinfo, cpus="all"):
         """
@@ -31,7 +66,9 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._msr:
             self._msr.start_transaction()
 
-        self._pobj.set_props(spinfo, cpus=cpus)
+        spinfo = spinfo.copy()
+        for pname in list(spinfo):
+            self._set_prop(spinfo, pname, cpus)
 
         if self._msr:
             self._msr.commit_transaction()
@@ -66,6 +103,38 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                     if key not in yval:
                         raise Error(f"did not find key '{key}' in the '{ykey}' sub-dictionary")
 
+    def _restore_prop(self, pname, val, cpus):
+        """Restore property 'pname' to value 'val' for CPUs 'cpus."""
+
+        try:
+            self._pobj.set_prop(pname, val, cpus=cpus)
+            return
+        except ErrorFreqOrder:
+            if pname not in {"min_freq", "max_freq", "min_freq_hw", "max_freq_hw",
+                             "min_uncore_freq", "max_uncore_freq"}:
+                raise
+
+        # Setting frequency may be tricky because there are ordering constraints.
+        if pname in {"min_freq", "max_freq"}:
+            min_freq_pname = "min_freq"
+            max_freq_pname = "max_freq"
+        elif pname in ("min_freq_hw", "max_freq_hw"):
+            min_freq_pname = "min_freq_hw"
+            max_freq_pname = "max_freq_hw"
+        elif pname in ("min_uncore_freq", "max_uncore_freq"):
+            min_freq_pname = "min_uncore_freq"
+            max_freq_pname = "max_uncore_freq"
+        else:
+            self._pobj.set_prop(pname, val, cpus=cpus)
+            return
+
+        if pname.startswith("min_"):
+            self._pobj.set_prop(max_freq_pname, "max", cpus=cpus)
+            self._pobj.set_prop(min_freq_pname, val, cpus=cpus)
+        elif pname.startswith("max_"):
+            self._pobj.set_prop(min_freq_pname, "min", cpus=cpus)
+            self._pobj.set_prop(max_freq_pname, val, cpus=cpus)
+
     def _restore_props(self, ydict):
         """Restore properties from a loaded YAML file and represented by 'ydict'."""
 
@@ -75,7 +144,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         for pname, pinfos in ydict.items():
             for pinfo in pinfos:
                 cpus = _PepcCommon.parse_cpus_string(pinfo["cpus"])
-                self._pobj.set_props({pname : pinfo["value"]}, cpus=cpus)
+                self._restore_prop(pname, pinfo["value"], cpus)
                 if self._pcsprint:
                     self._pcsprint.print_props((pname,), cpus, skip_ro=True, skip_unsupported=False,
                                                action="restored to")
