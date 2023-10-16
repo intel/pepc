@@ -26,7 +26,19 @@ class PropsCache():
     def is_cached(self, pname, cpu, mname=None):
         """
         Check if '(pname, cpu, mname)' exists in the cache. Return 'True' if the item was found and
-        'False' otherwise. The argument are as follows.
+        'False' otherwise. Arguments are the same as in 'get()'.
+        """
+
+        try:
+            self.get(pname, cpu, mname=mname)
+        except Error:
+            return False
+        return True
+
+    def get(self, pname, cpu, mname=None):
+        """
+        Look up the '(pname, cpu, mname)' in the cache. Return the value if the item was found,
+        raise 'ErrorNotFound' otherwise. The argument are as follows.
           * pname - name of the property.
           * cpu - an integer CPU number.
           * mname - optional mechanism name for the property.
@@ -38,22 +50,7 @@ class PropsCache():
         """
 
         if not self._enable_cache:
-            return False
-
-        if mname in self._cache and pname in self._cache[mname] and \
-           cpu in self._cache[mname][pname]:
-            return True
-        return False
-
-    def get(self, pname, cpu, mname=None):
-        """
-        Look up the '(pname, cpu)' in the cache. Return the value if the item was found, raise
-        'ErrorNotFound' otherwise. The argument are as follows.
-          * pname - name of the property.
-          * cpu - an integer CPU number.
-          * mname - optional mechanism name for the property (see a note in 'is_cached()'
-                    docstring).
-        """
+            raise ErrorNotFound("caching is disabled")
 
         try:
             return self._cache[mname][pname][cpu]
@@ -66,8 +63,7 @@ class PropsCache():
           * pname - name of the property.
           * cpu - an integer CPU number.
           * sname - name of scope (e.g. "package", "core").
-          * mname - optional mechanism name for the property (see a note in 'is_cached()'
-                    docstring).
+          * mname - optional mechanism name for the property (see a note in 'get()' docstring).
         """
 
         if not self._enable_cache:
@@ -93,8 +89,7 @@ class PropsCache():
           * cpu - an integer CPU number.
           * val - value to get cached.
           * sname - name of scope (e.g. "package", "core").
-          * mname - optional mechanism name for the property (see a note in 'is_cached()'
-                    docstring).
+          * mname - optional mechanism name for the property (see a note in 'get()' docstring).
 
         Return 'val'.
         """

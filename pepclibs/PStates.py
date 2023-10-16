@@ -751,7 +751,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         # We could improve the code so that all "getter" methods return a '(val, mname)' tuple
         # and avoid double caching, but it is not worth the trouble at this point.
 
-        if self._pcache.is_cached(pname, cpu):
+        with contextlib.suppress(ErrorNotFound):
             return self._pcache.get(pname, cpu)
 
         if "getter" in prop:

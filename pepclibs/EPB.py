@@ -15,6 +15,7 @@ This module provides a capability of reading and changing EPB (Energy Performanc
 CPUs.
 """
 
+import contextlib
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo, _PropsCache
@@ -104,7 +105,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
     def _read_cpu_epb_sysfs(self, cpu):
         """Read EPB for CPU 'cpu' from sysfs."""
 
-        if self._pcache.is_cached("epb", cpu, mname="sysfs"):
+        with contextlib.suppress(ErrorNotFound):
             return self._pcache.get("epb", cpu, mname="sysfs")
 
         try:

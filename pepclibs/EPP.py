@@ -13,6 +13,7 @@ This module provides a capability of reading and changing EPP (Energy Performanc
 Intel CPUs.
 """
 
+import contextlib
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs import CPUInfo, _PropsCache
@@ -138,7 +139,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
     def _read_cpu_epp_sysfs(self, cpu):
         """Read EPP for CPU 'cpu' from sysfs."""
 
-        if self._pcache.is_cached("epp", cpu, mname="sysfs"):
+        with contextlib.suppress(ErrorNotFound):
             return self._pcache.get("epp", cpu, mname="sysfs")
 
         try:

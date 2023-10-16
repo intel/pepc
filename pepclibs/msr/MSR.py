@@ -23,7 +23,7 @@ Terminology.
 import logging
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, FSHelpers, KernelModule, Trivial, ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed, ErrorNotFound
 from pepclibs import CPUInfo, _PropsCache
 
 _CPU_BYTEORDER = "little"
@@ -210,9 +210,9 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         for cpu in cpus:
             # Return the cached value if possible.
-            if self._pcache.is_cached(regaddr, cpu):
+            try:
                 regval = self._pcache.get(regaddr, cpu)
-            else:
+            except ErrorNotFound:
                 # Not in the cache, read from the HW.
                 regval = self._read_cpu(regaddr, cpu)
                 self._pcache.add(regaddr, cpu, regval, sname=sname)
