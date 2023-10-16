@@ -20,6 +20,12 @@ from pepclibs import _PropsCache, _PCStatesBase
 from pepclibs.helperlibs import Trivial, KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 
+class ErrorFreqOrder(Error):
+    """
+    An exception indicating that min. or max. frequency modification failed for the ordering
+    reasons.
+    """
+
 _LOG = logging.getLogger()
 
 # Special values for writable CPU frequency properties.
@@ -1106,6 +1112,150 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._pcache.add(pname, cpu, val, sname=prop["sname"])
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
+
+    def set_freq_props(self, min_freq, max_freq, cpus, freq_type="core"):
+        """
+        Set minimum and maximum frequency properties. The arguments are as follows:
+          * min_freq - minimum frequency value to set (can be in Human form, like 1GHz). Value
+                       'None' means that minimum frequency should not be set.
+          * max_freq - maximum frequency value to set.
+          * cpus - collection of integer CPU numbers to set the frequencies for. Special value 'all'
+                   means "all CPUs".
+          * freq_type - defines the frequency properties that should be set. Here are the allowed
+                        values:
+                          o "core" - set 'min_freq' and 'max_freq' properties.
+                          o "core_hw" - set 'min_freq_hw' and 'max_freq_hw' properties.
+                          o "uncore" - set 'min_uncore_freq' and 'max_uncore_freq' properties.
+
+        The reason this method exists is because the order the frequency properties are set matters.
+        Otherwise, just 'set_prop()' would be enough. This method is basically like 'set_prop()',
+        but it sets the frequency limits in the correct order.
+
+        Raise 'ErrorFreqOrder' if only one frequency is provided (either 'min_freq' is 'None' or
+        'max_freq' is 'None'), but it cannot be set because of the ordering constraints.
+
+        Here is an example illustrating why order matters. Suppose current min. and max. frequencies
+        and new min. and max. frequnces are as follows:
+         ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+
+        Where the dotted line represents the horisontal frequency axis. Setting min. frequency
+        before max frequency leads to a failure. Indeed, at step #2 current minimum frequency would
+        be set to a value higher that current maximum frequency.
+         1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+         2. ----------------- Cur. Max -------- Cur. Min -- New Max ---------->
+
+        If max. frequency is set first, the operation succeeds.
+        Make sure we first set the new maximum frequency (New Max):
+         1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+         2. ---- Cur. Min --------------------- New Min --- Cur. Max --------->
+         3. ----------------------------------- Cur. Min -- Cur. Max --------->
+        """
+
+        if not min_freq and not max_freq:
+            raise Error("BUG: provide at least one frequency value")
+
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+
+        if freq_type == "core":
+            uncore = False
+            min_freq_pname = "min_freq"
+            max_freq_pname = "max_freq"
+            min_freq_limit_pname = "min_freq_limit"
+            max_freq_limit_pname = "max_freq_limit"
+            write_func = self._write_freq_prop_value_to_sysfs
+        elif freq_type == "core_hw":
+            uncore = False
+            min_freq_pname = "min_freq_hw"
+            max_freq_pname = "max_freq_hw"
+            min_freq_limit_pname = "min_oper_freq"
+            max_freq_limit_pname = "max_turbo_freq"
+            write_func = self._write_freq_prop_value_to_msr
+        elif freq_type == "uncore":
+            uncore = True
+            min_freq_pname = "min_uncore_freq"
+            max_freq_pname = "max_uncore_freq"
+            min_freq_limit_pname = "min_uncore_freq_limit"
+            max_freq_limit_pname = "max_uncore_freq_limit"
+            write_func = self._write_freq_prop_value_to_sysfs
+
+        if min_freq:
+            min_freq = self._normalize_inprop(min_freq_pname, min_freq)
+            self._set_sname(min_freq_pname)
+            self._validate_cpus_vs_scope(self._props[min_freq_pname], cpus)
+
+        if max_freq:
+            max_freq = self._normalize_inprop(max_freq_pname, max_freq)
+            self._set_sname(max_freq_pname)
+            self._validate_cpus_vs_scope(self._props[max_freq_pname], cpus)
+
+        for cpu in cpus:
+            new_min_freq = None
+            new_max_freq = None
+
+            if min_freq:
+                new_min_freq = self._parse_freq(min_freq, cpu, uncore)
+            if max_freq:
+                new_max_freq = self._parse_freq(max_freq, cpu, uncore)
+
+            cur_min_freq = self._get_cpu_prop_value(min_freq_pname, cpu)
+            cur_max_freq = self._get_cpu_prop_value(max_freq_pname, cpu)
+
+            if not cur_min_freq:
+                name = Human.uncapitalize(self._props[max_freq_pname]["name"])
+                raise ErrorNotSupported(f"CPU {cpu} does not support min. and {name}"
+                                        f"{self._pman.hostmsg}")
+
+            min_limit = self._get_cpu_prop_value(min_freq_limit_pname, cpu)
+            max_limit = self._get_cpu_prop_value(max_freq_limit_pname, cpu)
+
+            what = self._get_num_str(self._props[min_freq_pname], cpu)
+            for pname, val in ((min_freq_pname, new_min_freq), (max_freq_pname, new_max_freq)):
+                if val is None:
+                    continue
+
+                if val < min_limit or val > max_limit:
+                    name = Human.uncapitalize(self._props[pname]["name"])
+                    val = Human.num2si(val, unit="Hz")
+                    min_limit = Human.num2si(min_limit, unit="Hz")
+                    max_limit = Human.num2si(max_limit, unit="Hz")
+                    raise Error(f"{name} value of '{val}' for {what} is out of range, must be "
+                                f"within [{min_limit}, {max_limit}]")
+
+            if new_min_freq and new_max_freq:
+                if new_min_freq > new_max_freq:
+                    name_min = Human.uncapitalize(self._props[min_freq_pname]["name"])
+                    name_max = Human.uncapitalize(self._props[max_freq_pname]["name"])
+                    new_min_freq = Human.num2si(new_min_freq, unit="Hz")
+                    new_max_freq = Human.num2si(new_max_freq, unit="Hz")
+                    raise Error(f"can't set {name_min} to {new_min_freq} and {name_max} to "
+                                f"{new_max_freq} for {what}: minimum can't be greater than maximum")
+                if new_min_freq != cur_min_freq or new_max_freq != cur_max_freq:
+                    if cur_max_freq < new_min_freq:
+                        write_func(max_freq_pname, new_max_freq, cpu)
+                        write_func(min_freq_pname, new_min_freq, cpu)
+                    else:
+                        write_func(min_freq_pname, new_min_freq, cpu)
+                        write_func(max_freq_pname, new_max_freq, cpu)
+            elif not new_max_freq:
+                if new_min_freq > cur_max_freq:
+                    name = Human.uncapitalize(self._props[min_freq_pname]["name"])
+                    new_min_freq = Human.num2si(new_min_freq, unit="Hz")
+                    cur_max_freq = Human.num2si(cur_max_freq, unit="Hz")
+                    raise ErrorFreqOrder(f"can't set {name} of {what} to {new_min_freq} - it is "
+                                         f"higher than currently configured maximum frequency of "
+                                         f"{cur_max_freq}")
+                if new_min_freq != cur_min_freq:
+                    write_func(min_freq_pname, new_min_freq, cpu)
+            elif not new_min_freq:
+                if new_max_freq < cur_min_freq:
+                    name = Human.uncapitalize(self._props[max_freq_pname]["name"])
+                    new_max_freq = Human.num2si(new_max_freq, unit="Hz")
+                    cur_min_freq = Human.num2si(cur_min_freq, unit="Hz")
+                    raise ErrorFreqOrder(f"can't set {name} of {what} to {new_max_freq} - it is "
+                                         f"lower than currently configured minimum frequency of "
+                                         f"{cur_min_freq}")
+                if new_max_freq != cur_max_freq:
+                    write_func(max_freq_pname, new_max_freq, cpu)
 
     def _set_props(self, inprops, cpus):
         """Refer to '_PropsClassBase.PropsClassBase._set_props()'."""
