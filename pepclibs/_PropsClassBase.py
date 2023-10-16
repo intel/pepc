@@ -188,44 +188,50 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pass
         return pinfo
 
+    def _normalize_inprop(self, pname, val):
+        """Normalize and return the input property value."""
+
+        self._validate_pname(pname)
+
+        prop = self._props[pname]
+        if not prop["writable"]:
+            name = Human.uncapitalize(prop["name"])
+            raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
+
+        if prop.get("type") == "bool":
+            val = self._normalize_bool_type_value(prop, val)
+
+        if "unit" not in prop:
+            return val
+
+        if Trivial.is_num(val):
+            if prop["type"] == "int":
+                val = Trivial.str_to_int(val)
+            else:
+                val = float(val)
+        else:
+            special_vals = prop.get("special_vals", {})
+            if val not in special_vals:
+                # This property has a unit, and the value is not a number, nor it is one of the
+                # special values. Presumably this is a value with a unit, such as "100MHz" or
+                # something like that.
+                is_integer = prop["type"] == "int"
+                name = Human.uncapitalize(prop["name"])
+                val = Human.parse_human(val, unit=prop["unit"], integer=is_integer, name=name)
+
+        return val
+
     def _normalize_inprops(self, inprops):
         """Normalize the 'inprops' argument of the 'set_props()' method and return the result."""
 
         def _add_prop(pname, val):
             """Add property 'pname' to the 'result' dictionary."""
 
-            self._validate_pname(pname)
-
-            prop = self._props[pname]
-            if not prop["writable"]:
-                name = Human.uncapitalize(prop["name"])
-                raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
-
-            if pname in result:
+            if pname not in result:
+                result[pname] = self._normalize_inprop(pname, val)
+            else:
                 _LOG.warning("duplicate property '%s': dropping value '%s', keeping '%s'",
                              pname, result[pname], val)
-
-            if prop.get("type") == "bool":
-                val = self._normalize_bool_type_value(prop, val)
-
-            if "unit" in prop:
-                if Trivial.is_num(val):
-                    if prop["type"] == "int":
-                        val = Trivial.str_to_int(val)
-                    else:
-                        val = float(val)
-                else:
-                    special_vals = prop.get("special_vals", {})
-                    if val not in special_vals:
-                        # This property has a unit, and the value is not a number, nor it is one of
-                        # the special values. Presumably this is a value with a unit, such as
-                        # "100MHz" or something like that.
-                        is_integer = prop["type"] == "int"
-                        name = Human.uncapitalize(prop["name"])
-                        val = Human.parse_human(val, unit=prop["unit"], integer=is_integer,
-                                                name=name)
-
-            result[pname] = val
 
         result = {}
         if hasattr(inprops, "items"):
