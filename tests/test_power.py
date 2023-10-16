@@ -111,7 +111,7 @@ def _set_and_verify(pobj, pname, value, cpus):
                           f"received '{pinfo[pname]}'."
 
 def test_power_set_and_verify(params):
-    """This test verifies that 'get_props()' returns same values set by 'set_props()'."""
+    """This test verifies that 'get_props()' returns same values set by 'set_prop()'."""
 
     for pname, value in _set_and_verify_data(params):
         sname = params["pobj"].props[pname]["sname"]
