@@ -360,20 +360,36 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         self._set_props(inprops, cpus)
 
+    def _set_prop(self, pname, val, cpus):
+        """Implements 'set_prop()'. The arguments are as the same as in 'set_prop()'."""
+
+        # pylint: disable=unused-argument
+        return _bug_method_not_defined("PropsClassBase.set_prop")
+
     def set_prop(self, pname, val, cpus):
-        """Same as 'set_props()', but for a single property."""
+        """
+        Set property 'pname' to value 'val' for CPUs in 'cpus'. The arguments are as follows.
+          * pname - name of the property to set.
+          * val - value to set the property to.
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
 
-        self.set_props(((pname, val),), cpus=cpus)
+        Properties of "bool" type have the following values:
+           * True, "on", "enable" for enabling the feature.
+           * False, "off", "disable" for disabling the feature.
+        """
 
-    def set_cpu_props(self, inprops, cpu):
-        """Same as 'set_props()', but for a single CPU."""
+        val = self._normalize_inprop(pname, val)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
 
-        self.set_props(inprops, cpus=(cpu,))
+        self._set_sname(pname)
+        self._validate_cpus_vs_scope(self._props[pname], cpus)
+
+        self._set_prop(pname, val, cpus)
 
     def set_cpu_prop(self, pname, val, cpu):
-        """Same as 'set_props()', but for a single CPU and a single property."""
+        """Same as 'set_prop()', but for a single CPU and a single property."""
 
-        self.set_props(((pname, val),), cpus=(cpu,))
+        self.set_prop(pname, val, (cpu,))
 
     def _init_props_dict(self, props):
         """Initialize the 'props' dictionary."""
