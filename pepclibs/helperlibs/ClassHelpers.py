@@ -108,7 +108,7 @@ class WrapExceptions:
         """The context exit method."""
         try:
             self.close()
-        except Exception as err:
+        except Exception as err: # pylint: disable=broad-exception-caught
             _LOG.warning(err)
 
     def __getattr__(self, name):
