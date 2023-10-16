@@ -237,8 +237,8 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
-    def _set_prop_value(self, pname, val, cpus):
-        """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
+    def _set_prop(self, pname, val, cpus):
+        """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
 
         if pname in PowerCtl.FEATURES:
             self._get_powerctl().write_feature(pname, val, cpus=cpus)
@@ -253,37 +253,6 @@ class CStates(_PCStatesBase.PCStatesBase):
             return
 
         raise Error(f"BUG: undefined property '{pname}'")
-
-    def _set_props(self, inprops, cpus):
-        """Refer to '_PropsClassBase.PropsClassBase._set_props()'."""
-
-        for pname, val in inprops.items():
-            self._set_prop_value(pname, val, cpus)
-
-    def _set_sname(self, pname):
-        """Set scope "sname" for property 'pname'."""
-
-        if self._props[pname]["sname"]:
-            return
-
-        if pname in PCStateConfigCtl.FEATURES:
-            finfo = self._get_pcstatectl().features
-            self._props["c1_demotion"]["sname"] = finfo["c1_demotion"]["sname"]
-            self._props["c1_undemotion"]["sname"] = finfo["c1_undemotion"]["sname"]
-
-            self._props["pkg_cstate_limit"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
-            self._props["pkg_cstate_limit_lock"]["sname"] = finfo["lock"]["sname"]
-        elif pname in PowerCtl.FEATURES:
-            finfo = self._get_powerctl().features
-            self._props["c1e_autopromote"]["sname"] = finfo["c1e_autopromote"]["sname"]
-            self._props["cstate_prewake"]["sname"] = finfo["cstate_prewake"]["sname"]
-        else:
-            raise Error(f"BUG: could not get scope for property '{pname}'")
-
-    def _set_prop(self, pname, val, cpus):
-        """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
-
-        self._set_prop_value(pname, val, cpus)
 
     def _set_sname(self, pname):
         """Set scope "sname" for property 'pname'."""

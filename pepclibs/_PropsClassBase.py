@@ -221,28 +221,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return val
 
-    def _normalize_inprops(self, inprops):
-        """Normalize the 'inprops' argument of the 'set_props()' method and return the result."""
-
-        def _add_prop(pname, val):
-            """Add property 'pname' to the 'result' dictionary."""
-
-            if pname not in result:
-                result[pname] = self._normalize_inprop(pname, val)
-            else:
-                _LOG.warning("duplicate property '%s': dropping value '%s', keeping '%s'",
-                             pname, result[pname], val)
-
-        result = {}
-        if hasattr(inprops, "items"):
-            for pname, val in inprops.items():
-                _add_prop(pname, val)
-        else:
-            for pname, val in inprops:
-                _add_prop(pname, val)
-
-        return result
-
     def _validate_cpus_vs_scope(self, prop, cpus):
         """Make sure that CPUs in 'cpus' match the scope of a property described by 'prop'."""
 
@@ -321,44 +299,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                  f"Here is the {mapping_name}{self._pman.hostmsg}:{mapping}"
 
         raise Error(errmsg)
-
-    def _set_props(self, inprops, cpus):
-        """
-        Implements 'set_props()'. The arguments are as follows.
-          * inprops - normalized and partially validated version for 'inprops' in passed to
-                      'set_props()'.
-          * cpus - same as in 'set_props()', but normalized and validated.
-        """
-
-        # pylint: disable=unused-argument
-        return _bug_method_not_defined("PropsClassBase.set_props")
-
-    def set_props(self, inprops, cpus="all"):
-        """
-        Set multiple properties described by 'inprops' to values also provided in 'inprops'.
-          * inprops - an iterable collection of property names and values.
-          * cpus - same as in 'get_props()'.
-
-        This method accepts two 'inprops' formats.
-
-        1. An iterable collection (e.g., list or a tuple) of ('pname', 'val') pairs. For example:
-           * [(property1_name, property1_value), (property2_name, property2_value)]
-        2. A dictionary with property names as keys. For example:
-           * {property1_name : property1_value, property2_name : property2_value}
-
-        Properties of "bool" type accept the following values:
-           * True, "on", "enable" for enabling the feature.
-           * False, "off", "disable" for disabling the feature.
-        """
-
-        inprops = self._normalize_inprops(inprops)
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-
-        for pname in inprops:
-            self._set_sname(pname)
-            self._validate_cpus_vs_scope(self._props[pname], cpus)
-
-        self._set_props(inprops, cpus)
 
     def _set_prop(self, pname, val, cpus):
         """Implements 'set_prop()'. The arguments are as the same as in 'set_prop()'."""
