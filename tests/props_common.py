@@ -16,8 +16,7 @@ def is_prop_supported(pname, pinfo):
 
     The arguments are as follows.
       * pname - name of the property.
-      * pinfo - a properties dictionary in the format returned by 'PStates.get_props()' or
-                'CStates.get_props()'. Check 'get_props()' docstring for more information.
+      * pinfo - a properties dictionary.
     """
 
     return pinfo[pname] is not None
@@ -59,10 +58,10 @@ def set_and_verify(pcobj, pname, value, cpus):
 
     pcobj.set_prop(pname, value, cpus)
 
-    for cpu, pinfo in pcobj.get_props((pname, ), cpus):
-        if pinfo[pname] != value:
+    for cpu, val in pcobj.get_prop(pname, cpus):
+        if val != value:
             assert False, f"Failed to set property '{pname}' for CPU {cpu}\nSet to '{value}' and " \
-                          f"received '{pinfo[pname]}'."
+                          f"received '{val}'."
 
 def _verify_value_type(pname, ptype, value):
     """
@@ -91,11 +90,11 @@ def _verify_value_type(pname, ptype, value):
 
 def verify_props_value_type(props, pinfo):
     """
-    This function test 'get_props()' return type for all supported properties on the system.
+    This function test 'get_prop()' return type for all supported properties on the system.
 
     The argument are as follows.
      * props - dictionary describing the properties.
-     * pinfo - dictionary returned by 'get_props()' with format {'property': 'value', ...}
+     * pinfo - a properties dictionary.
     """
 
     for pname in props:

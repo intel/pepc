@@ -97,7 +97,7 @@ def _set_and_verify_data(params):
             yield pname_min, max_limit
 
 def test_pstates_set_and_verify(params):
-    """This test verifies that 'get_props()' returns same values set by 'set_prop()'."""
+    """This test verifies that 'get_prop()' returns same values set by 'set_prop()'."""
 
     for pname, value in _set_and_verify_data(params):
         sname = params["psobj"].get_sname(pname)
@@ -106,6 +106,6 @@ def test_pstates_set_and_verify(params):
         set_and_verify(params["psobj"], pname, value, siblings)
 
 def test_pstates_property_type(params):
-    """This test verifies that 'get_props()' returns values of the correct type."""
+    """This test verifies that 'get_prop()' returns values of the correct type."""
 
     verify_props_value_type(params["psobj"].props, params["cpu0_pinfo"])

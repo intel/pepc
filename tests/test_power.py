@@ -101,18 +101,18 @@ def _set_and_verify(pobj, pname, value, cpus):
         minval = value * 0.8
         maxval = value * 1.2
 
-    for cpu, pinfo in pobj.get_props((pname, ), cpus):
+    for cpu, val in pobj.get_prop(pname, cpus):
         failed = False
 
         if minval is not None:
-            if pinfo[pname] < minval or pinfo[pname] > maxval:
+            if val < minval or val > maxval:
                 failed = True
-        elif pinfo[pname] != value:
+        elif val != value:
             failed = True
 
         if failed:
             assert False, f"Failed to set property '{pname}' for CPU {cpu}\nSet to '{value}' and " \
-                          f"received '{pinfo[pname]}'."
+                          f"received '{val}'."
 
 def test_power_set_and_verify(params):
     """This test verifies that 'get_prop()' returns same values set by 'set_prop()'."""
