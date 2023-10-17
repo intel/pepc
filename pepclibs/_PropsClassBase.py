@@ -124,57 +124,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise Error(f"unknown property name '{pname}', known properties are: {pnames_str}")
 
     def _get_cpu_prop_value(self, pname, cpu, prop=None):
-        """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
+        """Returns property 'pname' for CPU 'cpu'."""
 
         # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase._get_cpu_prop_value")
 
-    def _get_cpu_props(self, pnames, cpu):
-        """Returns all properties in 'pnames' for CPU 'cpu'."""
-
-        pinfo = {}
-
-        for pname in pnames:
-            # Get the 'pname' property.
-            pinfo[pname] = self._get_cpu_prop_value(pname, cpu)
-            if pinfo[pname] is None:
-                _LOG.debug("CPU %d: %s is not supported", cpu, pname)
-                continue
-            _LOG.debug("CPU %d: %s = %s", cpu, pname, pinfo[pname])
-
-        return pinfo
-
-    def get_props(self, pnames, cpus="all"):
-        """
-        Read all properties specified in the 'pnames' list for CPUs in 'cpus', and for every CPU
-        yield a ('cpu', 'pinfo') tuple, where 'pinfo' is dictionary containing the read values of
-        all the properties. The arguments are as follows.
-          * pnames - list or an iterable collection of properties to read and yield the values for.
-                     These properties will be read for every CPU in 'cpus'.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-
-        The yielded 'pinfo' dictionaries have the following format.
-
-        { property1_name : property1_value,
-          property2_name : property2_value,
-          ... etc ... }
-
-        If a property is not supported, its value will be 'None'.
-
-        Properties of "bool" type use the following values:
-           * "on" if the feature is enabled.
-           * "off" if the feature is disabled.
-        """
-
-        for pname in pnames:
-            self._validate_pname(pname)
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield cpu, self._get_cpu_props(pnames, cpu)
-
     def get_prop(self, pname, cpus="all"):
         """
-        Read property 'pnames' for CPUs in 'cpus', and for every CPU yield a ('cpu', 'val') tuple,
+        Read property 'pname' for CPUs in 'cpus', and for every CPU yield a ('cpu', 'val') tuple,
         where 'val' is property value. The arguments are as follows.
           * pname - name of the property to read and yield the values for. The property will be read
                     for every CPU in 'cpus'.
@@ -187,24 +144,16 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
            * "off" if the feature is disabled.
         """
 
-        for cpu, pinfo in self.get_props((pname, ), cpus=cpus):
-            yield (cpu, pinfo[pname])
+        self._validate_pname(pname)
 
-    def get_cpu_props(self, pnames, cpu):
-        """Same as 'get_props()', but for a single CPU."""
-
-        pinfo = None
-        for _, pinfo in self.get_props(pnames, cpus=(cpu,)):
-            pass
-        return pinfo
+        for cpu in self._cpuinfo.normalize_cpus(cpus):
+            yield cpu, self._get_cpu_prop_value(pname, cpu)
 
     def get_cpu_prop(self, pname, cpu):
         """Same as 'get_prop()', but for a single CPU and a single property."""
 
-        pinfo = None
-        for _, pinfo in self.get_props((pname,), cpus=(cpu,)):
-            pass
-        return pinfo[pname]
+        for _, val in self.get_prop(pname, cpus=(cpu,)):
+            return val
 
     def _normalize_inprop(self, pname, val):
         """Normalize and return the input property value."""
