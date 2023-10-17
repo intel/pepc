@@ -30,10 +30,12 @@ def test_unknown_cpu_model(hostspec):
         cpuinfo.info["model"] = 0
 
         with PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
-            psobj.get_cpu_props(psobj.props, 0)
+            pname = next(iter(psobj.props))
+            psobj.get_cpu_prop(pname, 0)
 
         with CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
-            csobj.get_cpu_props(csobj.props, 0)
+            pname = next(iter(csobj.props))
+            csobj.get_cpu_prop(pname, 0)
 
 def test_propscache_scope(hostspec):
     """This function tests that the 'PropsCache' class caches a value to the correct CPUs."""
