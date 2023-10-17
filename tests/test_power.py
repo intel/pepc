@@ -36,7 +36,11 @@ def get_params(hostspec, request):
 
         params["siblings"] = get_siblings(cpuinfo, cpu=0)
         params["pobj"] = pobj
-        params["pinfo"] = pobj.get_cpu_props(pobj.props, 0)
+
+        cpu0_pinfo = {}
+        for pname in pobj.props:
+            cpu0_pinfo[pname] = pobj.get_cpu_prop(pname, 0)
+        params["cpu0_pinfo"] = cpu0_pinfo
 
         yield params
 
@@ -47,7 +51,7 @@ def _set_and_verify_data(params):
     makes sure the property actually gets changed.
     """
 
-    pinfo = params["pinfo"]
+    pinfo = params["cpu0_pinfo"]
 
     bool_pnames_pat = {"1_enable", "1_clamp", "2_enable", "2_clamp"}
 
@@ -111,7 +115,7 @@ def _set_and_verify(pobj, pname, value, cpus):
                           f"received '{pinfo[pname]}'."
 
 def test_power_set_and_verify(params):
-    """This test verifies that 'get_props()' returns same values set by 'set_prop()'."""
+    """This test verifies that 'get_prop()' returns same values set by 'set_prop()'."""
 
     for pname, value in _set_and_verify_data(params):
         sname = params["pobj"].props[pname]["sname"]
@@ -120,6 +124,6 @@ def test_power_set_and_verify(params):
         _set_and_verify(params["pobj"], pname, value, siblings)
 
 def test_power_property_type(params):
-    """This test verifies that 'get_props()' returns values of the correct type."""
+    """This test verifies that 'get_prop()' returns values of the correct type."""
 
-    verify_props_value_type(params["pobj"].props, params["pinfo"])
+    verify_props_value_type(params["pobj"].props, params["cpu0_pinfo"])

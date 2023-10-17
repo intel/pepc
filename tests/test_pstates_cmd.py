@@ -39,7 +39,11 @@ def get_params(hostspec, tmp_path_factory):
         params["siblings"] = get_siblings(cpuinfo, cpu=0)
 
         params["psobj"] = psobj
-        params["pinfo"] = psobj.get_cpu_props(psobj.props, 0)
+
+        cpu0_pinfo = {}
+        for pname in psobj.props:
+            cpu0_pinfo[pname] = psobj.get_cpu_prop(pname, 0)
+        params["cpu0_pinfo"] = cpu0_pinfo
 
         yield params
 
@@ -85,26 +89,26 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
 
-    if is_prop_supported("min_freq", params["pinfo"]):
+    if is_prop_supported("min_freq", params["cpu0_pinfo"]):
         good_options += [
             "--min-freq",
             "--max-freq",
             "--min-freq --max-freq",
             "--min-freq min",
             "--max-freq min"]
-        if is_prop_supported("turbo", params["pinfo"]) and \
-            params["pinfo"]["turbo"] == "on":
+        if is_prop_supported("turbo", params["cpu0_pinfo"]) and \
+            params["cpu0_pinfo"]["turbo"] == "on":
             good_options += [
                 "--max-freq max",
                 "--min-freq min --max-freq max",
                 "--max-freq max --min-freq min"]
-        if is_prop_supported("max_eff_freq", params["pinfo"]):
+        if is_prop_supported("max_eff_freq", params["cpu0_pinfo"]):
             good_options += [
                 "--max-freq lfm",
                 "--max-freq eff",
                 "--min-freq lfm",
                 "--min-freq eff"]
-        if is_prop_supported("base_freq", params["pinfo"]):
+        if is_prop_supported("base_freq", params["cpu0_pinfo"]):
             good_options += [
                 "--max-freq base",
                 "--max-freq hfm",
@@ -117,7 +121,7 @@ def _get_config_options(params):
             "--min-freq maximum",
             "--min-freq max --max-freq min"]
 
-    if is_prop_supported("min_uncore_freq", params["pinfo"]):
+    if is_prop_supported("min_uncore_freq", params["cpu0_pinfo"]):
         good_options += [
             "--min-uncore-freq",
             "--max-uncore-freq",
@@ -132,17 +136,17 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
 
-    if is_prop_supported("governor", params["pinfo"]):
+    if is_prop_supported("governor", params["cpu0_pinfo"]):
         good_options += ["--governor"]
-        for governor in params["pinfo"]["governors"]:
+        for governor in params["cpu0_pinfo"]["governors"]:
             good_options += [f"--governor {governor}"]
         bad_options += ["--governor savepower"]
 
-    if is_prop_supported("epp", params["pinfo"]):
+    if is_prop_supported("epp", params["cpu0_pinfo"]):
         good_options += ["--epp", "--epp 0", "--epp 128", "--epp performance"]
         bad_options += ["--epp 256", "--epp green_tree"]
 
-    if is_prop_supported("epb", params["pinfo"]):
+    if is_prop_supported("epb", params["cpu0_pinfo"]):
         good_options += ["--epb", "--epb 0", "--epb 15", "--epb performance"]
         bad_options += ["--epb 16", "--epb green_tree"]
 
@@ -151,9 +155,9 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
 
-    if is_prop_supported("intel_pstate_mode", params["pinfo"]):
+    if is_prop_supported("intel_pstate_mode", params["cpu0_pinfo"]):
         # The "off" mode is not supported when HWP is enabled.
-        if is_prop_supported("hwp", params["pinfo"]) and params["pinfo"]["hwp"] == "off":
+        if is_prop_supported("hwp", params["cpu0_pinfo"]) and params["cpu0_pinfo"]["hwp"] == "off":
             good_options += ["--intel-pstate-mode off"]
 
         # Note, the last mode is intentionally something else but "off", because in "off" mode many
@@ -163,7 +167,7 @@ def _get_config_options(params):
 
         bad_options += ["--intel-pstate-mode Dagny"]
 
-    if is_prop_supported("turbo", params["pinfo"]):
+    if is_prop_supported("turbo", params["cpu0_pinfo"]):
         good_options += ["--turbo", "--turbo enable", "--turbo OFF"]
         bad_options += ["--turbo 1"]
 
@@ -274,7 +278,7 @@ def test_pstates_save_restore(params):
             # Restoring 'epb' will also modify 'epb_hw' and vise versa. Thus, if one is changed,
             # both have to be changed.
             val = int((state[pname][0]["value"] + 1) / 2)
-        if pname == "min_freq_hw" and is_prop_supported("min_oper_freq", params["pinfo"]):
+        if pname == "min_freq_hw" and is_prop_supported("min_oper_freq", params["cpu0_pinfo"]):
             # In most cases MSR and sysfs will modify each other, but min. CPU frequency is an
             # exception. Because sysfs min. limit is min. efficient frequency (e.g., the optimal
             # point between performance and the lowest power drain), while MSRs min. limit is min.
@@ -282,7 +286,7 @@ def test_pstates_save_restore(params):
             # means that the MSR value can be different from the sysfs value, and in this case MSR
             # will not update the sysfs value. Thus, we test that the sysfs property is set first,
             # and then the MSR property. Otherwise the sysfs property will overwrite the MSR value.
-            val = params["pinfo"]["min_oper_freq"]
+            val = params["cpu0_pinfo"]["min_oper_freq"]
         elif state[pname][0]["value"] == "on":
             val = "off"
         elif state[pname][0]["value"] == "off":
@@ -315,8 +319,8 @@ def _set_freq_pairs(params, min_pname, max_pname):
     sname = params["psobj"].get_sname(min_pname)
     siblings = params["siblings"][sname]
 
-    min_limit = params["pinfo"][f"{min_pname}_limit"]
-    max_limit = params["pinfo"][f"{max_pname}_limit"]
+    min_limit = params["cpu0_pinfo"][f"{min_pname}_limit"]
+    max_limit = params["cpu0_pinfo"][f"{max_pname}_limit"]
 
     bclk_MHz = BClock.get_bclk(params["pman"], cpu=0)
     bclk_Hz = int(bclk_MHz * 1000000)
@@ -353,13 +357,13 @@ def test_pstates_frequency_set_order(params):
         return
 
     # When Turbo is disabled the max frequency may be limited.
-    if is_prop_supported("turbo", params["pinfo"]):
+    if is_prop_supported("turbo", params["cpu0_pinfo"]):
         sname = params["psobj"].get_sname("turbo")
         cpus = params["siblings"][sname]
         params["psobj"].set_prop("turbo", "on", cpus)
 
-    if is_prop_supported("min_freq", params["pinfo"]):
+    if is_prop_supported("min_freq", params["cpu0_pinfo"]):
         _set_freq_pairs(params, "min_freq", "max_freq")
 
-    if is_prop_supported("min_uncore_freq", params["pinfo"]):
+    if is_prop_supported("min_uncore_freq", params["cpu0_pinfo"]):
         _set_freq_pairs(params, "min_uncore_freq", "max_uncore_freq")

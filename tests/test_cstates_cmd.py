@@ -31,7 +31,11 @@ def get_params(hostspec, tmp_path_factory):
         params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         params["csobj"] = csobj
-        params["pinfo"] = csobj.get_cpu_props(csobj.props, 0)
+
+        cpu0_pinfo = {}
+        for pname in csobj.props:
+            cpu0_pinfo[pname] = csobj.get_cpu_prop(pname, 0)
+        params["cpu0_pinfo"] = cpu0_pinfo
 
         allcpus = cpuinfo.get_cpus()
         params["cpus"] = allcpus
@@ -44,7 +48,7 @@ def get_params(hostspec, tmp_path_factory):
         params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
 
         params["cstates"] = []
-        if is_prop_supported("idle_driver", params["pinfo"]):
+        if is_prop_supported("idle_driver", params["cpu0_pinfo"]):
             for _, csinfo in csobj.get_cstates_info(cpus=[params["testcpus"][0]]):
                 for csname in csinfo:
                     params["cstates"].append(csname)
@@ -107,24 +111,24 @@ def test_cstates_config(params):
     scope_options = _get_scope_options(params)
 
     good_options = []
-    if is_prop_supported("idle_driver", params["pinfo"]):
+    if is_prop_supported("idle_driver", params["cpu0_pinfo"]):
         good_options += ["--enable all",
                          "--disable all",
                          f"--enable {params['cstates'][-1]}",
                          f"--disable {params['cstates'][-1]}"]
 
-    if is_prop_supported("pkg_cstate_limit", params["pinfo"]):
+    if is_prop_supported("pkg_cstate_limit", params["cpu0_pinfo"]):
         good_options += ["--pkg-cstate-limit"]
-        if params["pinfo"]["pkg_cstate_limit_lock"] == "off":
-            pc = params["pinfo"]["pkg_cstate_limits"][0]
+        if params["cpu0_pinfo"]["pkg_cstate_limit_lock"] == "off":
+            pc = params["cpu0_pinfo"]["pkg_cstate_limits"][0]
             good_options += [f"--pkg-cstate-limit {pc.upper()}", f"--pkg-cstate-limit {pc.lower()}"]
-    if is_prop_supported("c1_demotion", params["pinfo"]):
+    if is_prop_supported("c1_demotion", params["cpu0_pinfo"]):
         good_options += ["--c1-demotion", "--c1-demotion on", "--c1-demotion OFF"]
-    if is_prop_supported("c1_undemotion", params["pinfo"]):
+    if is_prop_supported("c1_undemotion", params["cpu0_pinfo"]):
         good_options += ["--c1-undemotion", "--c1-undemotion on", "--c1-undemotion OFF"]
-    if is_prop_supported("c1e_autopromote", params["pinfo"]):
+    if is_prop_supported("c1e_autopromote", params["cpu0_pinfo"]):
         good_options += ["--c1e-autopromote", "--c1e-autopromote on", "--c1e-autopromote OFF"]
-    if is_prop_supported("cstate_prewake", params["pinfo"]):
+    if is_prop_supported("cstate_prewake", params["cpu0_pinfo"]):
         good_options += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake OFF"]
 
     for option in good_options:
@@ -152,9 +156,9 @@ def test_cstates_config(params):
     good_options = []
     bad_options = []
 
-    if is_prop_supported("governor", params["pinfo"]):
+    if is_prop_supported("governor", params["cpu0_pinfo"]):
         good_options += ["--governor"]
-        for governor in params["pinfo"]["governors"]:
+        for governor in params["cpu0_pinfo"]["governors"]:
             good_options += [f"--governor {governor}"]
         bad_options += ["--governor reardenmetal"]
 

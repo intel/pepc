@@ -35,7 +35,11 @@ def get_params(hostspec, request):
 
         params["siblings"] = get_siblings(cpuinfo, cpu=0)
         params["csobj"] = csobj
-        params["pinfo"] = csobj.get_cpu_props(csobj.props, 0)
+
+        cpu0_pinfo = {}
+        for pname in csobj.props:
+            cpu0_pinfo[pname] = csobj.get_cpu_prop(pname, 0)
+        params["cpu0_pinfo"] = cpu0_pinfo
 
         yield params
 
@@ -46,7 +50,7 @@ def _set_and_verify_data(params):
     makes sure the property actually gets changed.
     """
 
-    pinfo = params["pinfo"]
+    pinfo = params["cpu0_pinfo"]
 
     bool_pnames = {"c1_demotion", "c1_undemotion", "c1e_autopromote", "cstate_prewake"}
     for pname in bool_pnames:
@@ -59,7 +63,7 @@ def _set_and_verify_data(params):
         yield "governor", pinfo["governors"][-1]
 
 def test_cstates_set_and_verify(params):
-    """This test verifies that 'get_props()' returns same values set by 'set_prop()'."""
+    """This test verifies that 'get_prop()' returns same values set by 'set_prop()'."""
 
     for pname, value in _set_and_verify_data(params):
         sname = params["csobj"].get_sname(pname)
@@ -68,6 +72,6 @@ def test_cstates_set_and_verify(params):
         set_and_verify(params["csobj"], pname, value, siblings)
 
 def test_cstates_property_type(params):
-    """This test verifies that 'get_props()' returns values of the correct type."""
+    """This test verifies that 'get_prop()' returns values of the correct type."""
 
-    verify_props_value_type(params["csobj"].props, params["pinfo"])
+    verify_props_value_type(params["csobj"].props, params["cpu0_pinfo"])

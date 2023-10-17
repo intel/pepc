@@ -32,7 +32,11 @@ def get_params(hostspec, tmp_path_factory):
         params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         params["pobj"] = pobj
-        params["pinfo"] = pobj.get_cpu_props(pobj.props, 0)
+
+        cpu0_pinfo = {}
+        for pname in pobj.props:
+            cpu0_pinfo[pname] = pobj.get_cpu_prop(pname, 0)
+        params["cpu0_pinfo"] = cpu0_pinfo
 
         allcpus = cpuinfo.get_cpus()
         params["cpus"] = allcpus
@@ -103,20 +107,20 @@ def test_power_config(params):
         for pat in cfg_pnames_bool:
             prop = f"ppl{index}{pat}"
             valname = prop.replace("-", "_")
-            val = params["pinfo"][valname]
+            val = params["cpu0_pinfo"][valname]
             if val == 'on':
                 newval = 'off'
             else:
                 newval = 'on'
 
-            if is_prop_supported(valname, params["pinfo"]):
+            if is_prop_supported(valname, params["cpu0_pinfo"]):
                 good_options += [f"--{prop} {newval}", f"--{prop} {val}"]
 
         for pat in cfg_pnames_limit:
             prop = f"ppl{index}{pat}"
             valname = prop.replace("-", "_")
-            if is_prop_supported(valname, params["pinfo"]):
-                val = params["pinfo"][valname]
+            if is_prop_supported(valname, params["cpu0_pinfo"]):
+                val = params["cpu0_pinfo"][valname]
                 newval = val - 1
                 good_options += [f"--{prop} {newval}", f"--{prop} {val}"]
 
