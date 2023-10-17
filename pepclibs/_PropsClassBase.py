@@ -172,6 +172,24 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             yield cpu, self._get_cpu_props(pnames, cpu)
 
+    def get_prop(self, pname, cpus="all"):
+        """
+        Read property 'pnames' for CPUs in 'cpus', and for every CPU yield a ('cpu', 'val') tuple,
+        where 'val' is property value. The arguments are as follows.
+          * pname - name of the property to read and yield the values for. The property will be read
+                    for every CPU in 'cpus'.
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+
+        If a property is not supported, its value will be 'None'.
+
+        Properties of "bool" type use the following values:
+           * "on" if the feature is enabled.
+           * "off" if the feature is disabled.
+        """
+
+        for cpu, pinfo in self.get_props((pname, ), cpus=cpus):
+            yield (cpu, pinfo[pname])
+
     def get_cpu_props(self, pnames, cpu):
         """Same as 'get_props()', but for a single CPU."""
 
@@ -181,12 +199,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         return pinfo
 
     def get_cpu_prop(self, pname, cpu):
-        """Same as 'get_props()', but for a single CPU and a single property."""
+        """Same as 'get_prop()', but for a single CPU and a single property."""
 
         pinfo = None
         for _, pinfo in self.get_props((pname,), cpus=(cpu,)):
             pass
-        return pinfo
+        return pinfo[pname]
 
     def _normalize_inprop(self, pname, val):
         """Normalize and return the input property value."""
