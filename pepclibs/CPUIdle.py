@@ -69,6 +69,12 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         files, _ = self._pman.run_verify(cmd, join=False)
         if not files:
             msg = f"failed to find C-state files in '{self._sysfs_base}'{self._pman.hostmsg}."
+            for opt in self._get_cmdline().split():
+                if opt == "cpuidle.off=1" or opt.startswith("idle="):
+                    msg += f"\nThe '/proc/cmdline' file{self._pman.hostmsg} indicates that the " \
+                           f"'{opt}' kernel boot parameter is set.\nThis may be the reason why " \
+                           f"there are no C-states{self._pman.hostmsg}"
+                    break
             raise ErrorNotFound(msg)
 
         # At this point 'files' contains the list of files we'll have to read. Something like this:
@@ -141,7 +147,13 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             for key in CST_SYSFS_FNAMES:
                 csinfo[csname][key] = cstate[key]
 
-        fpaths, values = self._read_fpaths_and_values(cpus)
+        try:
+            fpaths, values = self._read_fpaths_and_values(cpus)
+        except ErrorNotFound as err:
+            _LOG.debug(err)
+            for cpu in cpus:
+                yield cpu, {}
+            return
 
         # This is the dictionary that we'll yield out. It'll contain information for every C-state
         # of a CPU.
@@ -364,8 +376,10 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                 idle_driver = None
                 for opt in self._get_cmdline().split():
                     if opt == "cpuidle.off=1" or opt.startswith("idle="):
-                        _LOG.debug("'%s' kernel boot parameter is set%s, which may be why there is "
-                                   "no idle driver.", opt, self._pman.hostmsg)
+                        _LOG.debug("the '/proc/cmdline' file%s indicates that the '%s' kernel "
+                                   "boot parameter is set.\n"
+                                   "This may be the reason why there is no idle driver%s.",
+                                   self._pman.hostmsg, opt, self._pman.hostmsg)
                         break
 
             self._pcache.add("current_driver", 0, idle_driver)

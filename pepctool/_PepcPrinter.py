@@ -356,6 +356,10 @@ class CStatesPrinter(_PropsPrinter):
           * action - same as in 'print_props()'.
         """
 
+        if not aggr_rcsinfo:
+            self._print("This system does not support C-states")
+            return 0
+
         if not group:
             prefix = None
             sub_prefix = " - "
