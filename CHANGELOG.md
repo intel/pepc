@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - pepc cstates: when system has no C-states (e.g., booted with idle=poll), do
+   not error out, just print that there are no C-states.
 ### Added
  - pepc pstates: add "mdl" special uncore frequency value support.
 ### Removed
