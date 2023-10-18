@@ -51,7 +51,8 @@ SSH connection timeout in seconds, default is 8.
 This option is for debugging and testing purposes only, it defines the
 dataset that will be used to emulate a host for running the command on.
 This option is typically used when running \[aq]pepc\[aq] from the
-source directory, which includes datasets for many different systems.
+source code directory, which includes datasets for many different
+systems.
 .RS
 .PP
 The argument can be the dataset path, \[aq]all\[aq] to specify all
@@ -379,7 +380,7 @@ Maximum CPU efficiency frequency (see \[aq]max_eff_freq\[aq]).
 .TP
 \[dq]\f[B]Pm\f[R]\[dq]
 Minimum CPU operating frequency (see \[aq]min_oper_freq\[aq]).
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/scaling_min_freq\[dq],
 \[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
@@ -423,7 +424,7 @@ Maximum CPU efficiency frequency (see \[aq]max_eff_freq\[aq]).
 .TP
 \[dq]\f[B]Pm\f[R]\[dq]
 Minimum CPU operating frequency (see \[aq]min_oper_freq\[aq]).
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/scaling_max_freq\[dq],
 \[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
@@ -442,7 +443,7 @@ pepc pstates \f[I]info\f[R] \f[B]--min-freq-limit\f[R]
 .PP
 Minimum supported CPU frequency is the minimum CPU frequency supported
 by the OS.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/cpuinfo_min_freq\[dq],
 \[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
@@ -461,7 +462,7 @@ pepc pstates \f[I]info\f[R] \f[B]--min-freq-limit\f[R]
 .PP
 Maximum supported CPU frequency is the maximum CPU frequency supported
 by the OS.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/cpuinfo_max_freq\[dq],
 \[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
@@ -484,7 +485,7 @@ This frequency is also referred to as \[dq]guaranteed frequency\[dq],
 .PP
 The base frequency is acquired from a sysfs file or from an MSR
 register, depending on platform and the CPU frequency driver.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/base_frequency\[dq],
 \[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
@@ -534,7 +535,7 @@ Maximum CPU efficiency frequency (see \[aq]max_eff_freq\[aq]).
 .TP
 \[dq]\f[B]Pm\f[R]\[dq]
 Minimum CPU operating frequency (see \[aq]min_oper_freq\[aq]).
-.SS Source
+.SS Mechanism
 .PP
 MSR_HWP_REQUEST (\f[B]0x774\f[R]), bits \f[B]7:0\f[R].
 .SS Scope
@@ -577,7 +578,7 @@ Maximum CPU efficiency frequency (see \[aq]max_eff_freq\[aq]).
 .TP
 \[dq]\f[B]Pm\f[R]\[dq]
 Minimum CPU operating frequency (see \[aq]min_oper_freq\[aq]).
-.SS Source
+.SS Mechanism
 .PP
 MSR_HWP_REQUEST (\f[B]0x774\f[R]), bits \f[B]15:8\f[R].
 .SS Scope
@@ -595,7 +596,7 @@ pepc pstates \f[I]info\f[R] \f[B]--bus-clock\f[R]
 .PP
 Bus clock refers to how quickly the system bus can move data from one
 computer component to the other.
-.SS Source
+.SS Mechanism
 .PP
 MSR_FSB_FREQ (\f[B]0xCD\f[R]), bits \f[B]2:0\f[R].
 For platforms that don\[aq]t support MSR_FSB_FREQ, \f[B]100.0MHz\f[R] is
@@ -621,7 +622,7 @@ Depending on the CPU model, this frequency may or may not be directly
 available to the OS, but the platform may use it in certain situations
 (e.g., in some C-states).
 This frequency is also referred to as \f[B]Pm\f[R].
-.SS Source
+.SS Mechanism
 .PP
 MSR_PLATFORM_INFO (\f[B]0xCE\f[R]), bits \f[B]55:48\f[R].
 .SS Scope
@@ -640,7 +641,7 @@ pepc pstates \f[I]info\f[R] \f[B]--max-eff-freq\f[R]
 Maximum efficiency frequency is the most energy efficient CPU frequency.
 This frequency is also referred to as \f[B]LFM\f[R] (Low Frequency Mode)
 or \f[B]Pn\f[R].
-.SS Source
+.SS Mechanism
 .PP
 MSR_PLATFORM_INFO (\f[B]0xCE\f[R]), bits \f[B]47:40\f[R].
 .SS Scope
@@ -662,7 +663,7 @@ pepc pstates \f[I]config\f[R] \f[B]--turbo\f[R]=<on|off>
 .PP
 When turbo is enabled, the CPUs can automatically run at a frequency
 greater than base frequency.
-.SS Source
+.SS Mechanism
 .PP
 Location of the turbo knob in sysfs depends on the CPU frequency driver.
 .PP
@@ -686,7 +687,7 @@ Maximum 1-core turbo frequency is the highest frequency a single CPU can
 operate at.
 This frequency is also referred to as max.
 1-core turbo and P01.
-.SS Source
+.SS Mechanism
 .PP
 MSR_TURBO_RATIO_LIMIT (\f[B]0x1AD\f[R]), bits \f[B]7:0\f[R].
 .SS Scope
@@ -706,8 +707,8 @@ pepc pstates \f[I]info\f[R] \f[B]--min-uncore-freq\f[R]
 pepc pstates \f[I]config\f[R] \f[B]--min-uncore-freq\f[R]=<value>
 .SS Description
 .PP
-Minimum CPU frequency is the lowest frequency the OS configured the CPU
-to run at, via sysfs knobs.
+Minimum uncore frequency is the lowest frequency the OS configured the
+CPU to run at, via sysfs knobs.
 .PP
 The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 \[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
@@ -716,11 +717,15 @@ The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 The following special values are supported:
 .TP
 \[dq]\f[B]min\f[R]\[dq]
-Minimum CPU frequency supported (see \[aq]min_freq_limit\[aq]).
+Minimum uncore frequency supported (see \[aq]min_freq_limit\[aq]).
 .TP
 \[dq]\f[B]max\f[R]\[dq]
-Maximum CPU frequency supported (see \[aq]max_freq_limit\[aq]).
-.SS Source
+Maximum uncore frequency supported (see \[aq]max_freq_limit\[aq]).
+.TP
+\[dq]\f[B]mdl\f[R]\[dq]
+Middle uncore frequency between minimum and maximum rounded to nearest
+100MHz.
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_\f[B]00\f[R]_die_\f[B]01\f[R]/min_freq_khz\[dq],
 \[aq]\f[B]00\f[R]\[aq] is replaced with desired package number and
@@ -742,8 +747,8 @@ pepc pstates \f[I]info\f[R] \f[B]--max-uncore-freq\f[R]
 pepc pstates \f[I]config\f[R] \f[B]--max-uncore-freq\f[R]=<value>
 .SS Description
 .PP
-Maximum CPU frequency is the highest frequency the OS configured the CPU
-to run at, via sysfs knobs.
+Maximum uncore frequency is the highest frequency the OS configured the
+CPU to run at, via sysfs knobs.
 .PP
 The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 \[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
@@ -752,11 +757,15 @@ The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 The following special values are supported:
 .TP
 \[dq]\f[B]min\f[R]\[dq]
-Minimum CPU frequency supported (see \[aq]min_freq_limit\[aq]).
+Minimum uncore frequency supported (see \[aq]min_freq_limit\[aq]).
 .TP
 \[dq]\f[B]max\f[R]\[dq]
-Maximum CPU frequency supported (see \[aq]max_freq_limit\[aq]).
-.SS Source
+Maximum uncore frequency supported (see \[aq]max_freq_limit\[aq]).
+.TP
+\[dq]\f[B]mdl\f[R]\[dq]
+Middle uncore frequency between minimum and maximum rounded to nearest
+100MHz.
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_\f[B]00\f[R]_die_\f[B]01\f[R]/max_freq_khz\[dq],
 \[aq]\f[B]00\f[R]\[aq] is replaced with desired package number and
@@ -776,7 +785,7 @@ pepc pstates \f[I]info\f[R] \f[B]--min-uncore-freq-limit\f[R]
 .PP
 Minimum supported uncore frequency is the lowest uncore frequency
 supported by the OS.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_\f[B]00\f[R]_die_\f[B]01\f[R]/initial_min_freq_khz\[dq],
 \[aq]\f[B]00\f[R]\[aq] is replaced with desired package number and
@@ -796,7 +805,7 @@ pepc pstates \f[I]info\f[R] \f[B]--max-uncore-freq-limit\f[R]
 .PP
 Maximum supported uncore frequency is the highest uncore frequency
 supported by the OS.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_\f[B]00\f[R]_die_\f[B]01\f[R]/initial_max_freq_khz\[dq],
 \[aq]\f[B]00\f[R]\[aq] is replaced with desired package number and
@@ -816,7 +825,7 @@ pepc pstates \f[I]info\f[R] \f[B]--hwp\f[R]
 .PP
 When hardware power management is enabled, CPUs can automatically scale
 their frequency without active OS involvement.
-.SS Source
+.SS Mechanism
 .PP
 MSR_PM_ENABLE (\f[B]0x770\f[R]), bit \f[B]0\f[R].
 .SS Scope
@@ -840,7 +849,7 @@ Energy Performance Preference is a hint to the CPU on energy efficiency
 vs performance.
 EPP value is a number in range of 0-255 (maximum energy efficiency to
 maximum performance), or a policy name.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/cpufreq/policy\f[B]0\f[R]/energy_performance_preference\[dq],
 \[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
@@ -870,7 +879,7 @@ When package control is enabled the value is read from
 MSR_HWP_REQUEST_PKG 0x772, but when written package control is disabled
 and value is written to MSR_HWP_REQUEST 0x774, both require the
 \[aq]msr\[aq] Linux kernel driver.
-.SS Source
+.SS Mechanism
 .PP
 MSR_HWP_REQUEST (\f[B]0x774\f[R]), bits \f[B]31:24\f[R].
 .SS Scope
@@ -894,7 +903,7 @@ Energy Performance Bias is a hint to the CPU on energy efficiency vs
 performance.
 EBP value is a number in range of 0-15 (maximum performance to maximum
 energy efficiency), or a policy name.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/cpu\f[B]0\f[R]/power/energy_perf_bias\[dq],
 \[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
@@ -919,7 +928,7 @@ Energy Performance Bias is a hint to the CPU on energy efficiency vs
 performance.
 EBP value is a number in range of 0-15 (maximum performance to maximum
 energy efficiency).
-.SS Source
+.SS Mechanism
 .PP
 MSR_ENERGY_PERF_BIAS (\f[B]0x1B0\f[R]), bits \f[B]3:0\f[R].
 .SS Scope
@@ -939,7 +948,7 @@ pepc pstates \f[I]info\f[R] \f[B]--driver\f[R]
 .PP
 CPU frequency driver enumerates and requests the P-states available on
 the platform.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/cpufreq/policy\f[B]0\f[R]/scaling_driver\[dq],
 \[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
@@ -967,7 +976,7 @@ The main difference between the active and passive mode is in which
 frequency governors are used - the generic Linux governors (passive
 mode) or the custom, built-in \[aq]intel_pstate\[aq] driver governors
 (active mode).
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/intel_pstate/status\[dq]
 .SS Scope
@@ -989,7 +998,7 @@ pepc pstates \f[I]config\f[R] \f[B]--governor\f[R]=<name>
 .PP
 CPU frequency governor decides which P-state to select on a CPU
 depending on CPU business and other factors.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/cpufreq/policy\f[B]0\f[R]/scaling_governor\[dq],
 \[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
@@ -1009,7 +1018,7 @@ pepc pstates \f[I]info\f[R] \f[B]--governors\f[R]
 CPU frequency governors decide which P-state to select on a CPU
 depending on CPU business and other factors.
 Different governors implement different selection policy.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/cpufreq/policy\f[B]0\f[R]/scaling_available_governors\[dq],
 \[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.)

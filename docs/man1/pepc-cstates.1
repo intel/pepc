@@ -51,7 +51,8 @@ SSH connection timeout in seconds, default is 8.
 This option is for debugging and testing purposes only, it defines the
 dataset that will be used to emulate a host for running the command on.
 This option is typically used when running \[aq]pepc\[aq] from the
-source code directory, which includes datasets for many different systems.
+source code directory, which includes datasets for many different
+systems.
 .RS
 .PP
 The argument can be the dataset path, \[aq]all\[aq] to specify all
@@ -312,7 +313,7 @@ The deepest package C-state the platform is allowed to enter.
 MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]) register can be locked, in
 which case the package C-state limit can only be read, but cannot be
 modified, please refer to property \f[B]pkg_cstate_limit_lock\f[R].
-.SS Source
+.SS Mechanism
 .PP
 MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R])
 .PP
@@ -339,7 +340,7 @@ pepc cstates \f[I]info\f[R] \f[B]--pkg-cstate-limits\f[R]
 .SS Description
 .PP
 All available package C-state limits.
-.SS Source
+.SS Mechanism
 .PP
 External Design Specification (EDS)
 .SS Scope
@@ -358,7 +359,7 @@ pepc cstates \f[I]info\f[R] \f[B]--pkg-cstate-limit-lock\f[R]
 Whether the package C-state limit can be modified.
 When \[aq]True\[aq], property \f[B]\[aq]pkg_cstate_limit\[aq]\f[R] is
 read-only.
-.SS Source
+.SS Mechanism
 .PP
 MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]) Refer to
 \[aq]PCStateConfigCtl.py\[aq] for all platforms and bits.
@@ -377,7 +378,7 @@ pepc cstates \f[I]info\f[R] \f[B]--pkg-cstate-limit-aliases\f[R]
 .PP
 Package C-state limit aliases, for example on Ice Lakes \[aq]PC6\[aq] is
 an alias for \[aq]PC6R\[aq].
-.SS Source
+.SS Mechanism
 .PP
 External Design Specification (EDS)
 .SS Scope
@@ -399,7 +400,7 @@ pepc cstates \f[I]config\f[R] \f[B]--c1-demotion\f[R]=<on|off>
 .PP
 Allow or disallow the CPU to demote \f[B]C6\f[R] or \f[B]C7\f[R]
 requests to \f[B]C1\f[R].
-.SS Source
+.SS Mechanism
 .PP
 MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]), bit \f[B]26\f[R].
 .SS Scope
@@ -423,7 +424,7 @@ pepc cstates \f[I]config\f[R] \f[B]--c1-undemotion\f[R]=<on|off>
 .PP
 Allow or disallow the CPU to un-demote previously demoted requests back
 from \f[B]C1\f[R] to \f[B]C6\f[R] or \f[B]C7\f[R].
-.SS Source
+.SS Mechanism
 .PP
 MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]), bit \f[B]28\f[R].
 .SS Scope
@@ -447,7 +448,7 @@ pepc cstates \f[I]config\f[R] \f[B]--c1e-autopromote\f[R]=<on|off>
 .PP
 When enabled, the CPU automatically converts all \f[B]C1\f[R] requests
 to \f[B]C1E\f[R] requests.
-.SS Source
+.SS Mechanism
 .PP
 MSR_POWER_CTL (\f[B]0x1FC\f[R]), bit \f[B]1\f[R].
 .SS Scope
@@ -469,7 +470,7 @@ pepc cstates \f[I]config\f[R] \f[B]--cstate-prewake\f[R]=<on|off>
 .PP
 When enabled, the CPU will start exiting the \f[B]C6\f[R] idle state in
 advance, prior to the next local APIC timer event.
-.SS Source
+.SS Mechanism
 .PP
 MSR_POWER_CTL (\f[B]0x1FC\f[R]), bit \f[B]30\f[R].
 .SS Scope
@@ -487,7 +488,7 @@ pepc cstates \f[I]info\f[R] \f[B]--idle-driver\f[R]
 .PP
 Idle driver is responsible for enumerating and requesting the C-states
 available on the platform.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/cpuidle/current_governor\[dq]
 .SS Scope
@@ -508,7 +509,7 @@ pepc cstates \f[I]config\f[R] \f[B]--governor\f[R]=<name>
 .SS Description
 .PP
 Idle governor decides which C-state to request on an idle CPU.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/cpuidle/scaling_governor\[dq]
 .SS Scope
@@ -526,7 +527,7 @@ pepc cstates \f[I]info\f[R] \f[B]--governors\f[R]
 .PP
 Idle governors decide which C-state to request on an idle CPU.
 Different governors implement different selection policy.
-.SS Source
+.SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/cpuidle/available_governors\[dq]
 .SS Scope

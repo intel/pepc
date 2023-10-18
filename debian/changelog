@@ -1,3 +1,11 @@
+pepc (1.4.36) unstable; urgency=low
+
+  * pepc cstates: when system has no C-states (e.g., booted with idle=poll), do
+    not error out, just print that there are no C-states.
+  * pepc pstates: add "mdl" special uncore frequency value support.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 18 Oct 2023 00:00:00 +0200
+
 pepc (1.4.35) unstable; urgency=low
 
   * Add 'base_frequency' support for AMD systems.
