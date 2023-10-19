@@ -20,7 +20,7 @@ from pepctool import _Pepc
 def test_unknown_cpu_model(hostspec):
     """
     This function tests that 'PStates' and 'CStates' don't fail when getting a property on an
-    unknown CPU.
+    unknown CPU model.
     """
 
     emul_modules = ["CPUInfo", "PStates", "CStates"]

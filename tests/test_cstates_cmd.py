@@ -34,7 +34,7 @@ def get_params(hostspec, tmp_path_factory):
 
         cpu0_pinfo = {}
         for pname in csobj.props:
-            cpu0_pinfo[pname] = csobj.get_cpu_prop(pname, 0)
+            cpu0_pinfo[pname] = csobj.get_cpu_prop(pname, 0)["val"]
         params["cpu0_pinfo"] = cpu0_pinfo
 
         allcpus = cpuinfo.get_cpus()

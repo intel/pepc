@@ -39,7 +39,7 @@ def get_params(hostspec, request):
 
         cpu0_pinfo = {}
         for pname in pobj.props:
-            cpu0_pinfo[pname] = pobj.get_cpu_prop(pname, 0)
+            cpu0_pinfo[pname] = pobj.get_cpu_prop(pname, 0)["val"]
         params["cpu0_pinfo"] = cpu0_pinfo
 
         yield params
@@ -101,7 +101,8 @@ def _set_and_verify(pobj, pname, value, cpus):
         minval = value * 0.8
         maxval = value * 1.2
 
-    for cpu, val in pobj.get_prop(pname, cpus):
+    for pvinfo in pobj.get_prop(pname, cpus):
+        val = pvinfo["val"]
         failed = False
 
         if minval is not None:
@@ -111,8 +112,8 @@ def _set_and_verify(pobj, pname, value, cpus):
             failed = True
 
         if failed:
-            assert False, f"Failed to set property '{pname}' for CPU {cpu}\nSet to '{value}' and " \
-                          f"received '{val}'."
+            assert False, f"Failed to set property '{pname}' for CPU {pvinfo['val']}\nSet to " \
+                          f"'{value}' and received '{val}'."
 
 def test_power_set_and_verify(params):
     """This test verifies that 'get_prop()' returns same values set by 'set_prop()'."""

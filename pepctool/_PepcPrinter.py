@@ -179,7 +179,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         aggr_pinfo = {}
 
         for pname in pnames:
-            for cpu, val in self._pobj.get_prop(pname, cpus):
+            for pvinfo in self._pobj.get_prop(pname, cpus):
+                cpu = pvinfo["cpu"]
+                val = pvinfo["val"]
+
                 if skip_unsupported and val is None:
                     continue
 
@@ -291,8 +294,9 @@ class CStatesPrinter(_PropsPrinter):
             return aggr_pinfo
 
         locked_cpus = set()
-        for cpu, val in self._pobj.get_prop("pkg_cstate_limit_lock", cpus=cpus):
-            if val == "on":
+        for pvinfo in self._pobj.get_prop("pkg_cstate_limit_lock", cpus=cpus):
+            cpu = pvinfo["cpu"]
+            if pvinfo["val"] == "on":
                 locked_cpus.add(cpu)
 
         if not locked_cpus:

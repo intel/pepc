@@ -58,10 +58,10 @@ def set_and_verify(pcobj, pname, value, cpus):
 
     pcobj.set_prop(pname, value, cpus)
 
-    for cpu, val in pcobj.get_prop(pname, cpus):
-        if val != value:
-            assert False, f"Failed to set property '{pname}' for CPU {cpu}\nSet to '{value}' and " \
-                          f"received '{val}'."
+    for pvinfo in pcobj.get_prop(pname, cpus):
+        if pvinfo["val"] != value:
+            assert False, f"Failed to set property '{pname}' for CPU {pvinfo['cpu']}\nSet to " \
+                          f"'{value}' and received '{pvinfo['val']}'."
 
 def _verify_value_type(pname, ptype, value):
     """

@@ -20,7 +20,8 @@ Terminology.
 Naming conventions.
  * props - dictionary describing the properties. As an example, check 'PROPS' in 'PStates' and
            'CStates'.
- * pinfo - a properties dictionary in the format returned described in 'PropsClassBase.get_props()'.
+ * pvinfo - the property value dictionary, returned by 'get_prop()' and 'get_cpu_prop()'. Includes
+            proerty value and CPU number. Refer to 'PropsClassBase.get_prop()' for more information.
  * pname - name of a property.
  * sname - name of a scope from the allowed list of scope names in 'CPUInfo.LEVELS'.
  * <sname> siblings - all CPUs sharing the same <sname>. E.g. "package siblings" means all CPUs
@@ -131,13 +132,17 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def get_prop(self, pname, cpus="all"):
         """
-        Read property 'pname' for CPUs in 'cpus', and for every CPU yield a ('cpu', 'val') tuple,
-        where 'val' is property value. The arguments are as follows.
+        Read property 'pname' for CPUs in 'cpus', and for every CPU yield the property value
+        dictionary. The arguments are as follows.
           * pname - name of the property to read and yield the values for. The property will be read
                     for every CPU in 'cpus'.
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
 
-        If a property is not supported, its value will be 'None'.
+        The property value dictionary has the following format:
+            { "cpu": CPU number,
+              "val": value of proerty 'pname' on the given CPU }
+
+        If a property is not supported, the 'val' and 'mname' keys will contain 'None'.
 
         Properties of "bool" type use the following values:
            * "on" if the feature is enabled.
@@ -147,13 +152,16 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._validate_pname(pname)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield cpu, self._get_cpu_prop_value(pname, cpu)
+            pvinfo = {}
+            pvinfo["cpu"] = cpu
+            pvinfo["val"] = self._get_cpu_prop_value(pname, cpu)
+            yield pvinfo
 
     def get_cpu_prop(self, pname, cpu):
         """Same as 'get_prop()', but for a single CPU and a single property."""
 
-        for _, val in self.get_prop(pname, cpus=(cpu,)):
-            return val
+        for pvinfo in self.get_prop(pname, cpus=(cpu,)):
+            return pvinfo
 
     def _normalize_inprop(self, pname, val):
         """Normalize and return the input property value."""
