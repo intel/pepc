@@ -304,7 +304,7 @@ Synopsis
 Description
 -----------
 
-Minimum CPU frequency is the lowest frequency the OS configured the CPU to run at, via sysfs knobs.
+Minimum CPU frequency is the lowest frequency the CPU was configured the CPU to run at.
 
 The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
 (for example "900MHz").
@@ -312,9 +312,9 @@ The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also b
 The following special values are supported:
 
 "**min**"
-   Minimum CPU frequency supported (see 'min_freq_limit_').
+   Minimum supported CPU frequency (see 'min_freq_limit_').
 "**max**"
-   Maximum CPU frequency supported (see 'max_freq_limit_').
+   Maximum supported CPU frequency (see 'max_freq_limit_').
 "**base**", "**hfm**", "**P1**"
    Base CPU frequency (see 'base_freq_').
 "**eff**", "**lfm**", "**Pn**"
@@ -349,7 +349,7 @@ Synopsis
 Description
 -----------
 
-Maximum CPU frequency is the lowest frequency the OS configured the CPU to run at, via sysfs knobs.
+Maximum CPU frequency is the highest frequency the CPU was configured to run at.
 
 The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
 (for example "900MHz").
@@ -357,9 +357,9 @@ The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also b
 The following special values are supported:
 
 "**min**"
-   Minimum CPU frequency supported (see 'min_freq_limit_').
+   Minimum supported CPU frequency (see 'min_freq_limit_').
 "**max**"
-   Maximum CPU frequency supported (see 'max_freq_limit_').
+   Maximum supported CPU frequency (see 'max_freq_limit_').
 "**base**", "**hfm**", "**P1**"
    Base CPU frequency (see 'base_freq_').
 "**eff**", "**lfm**", "**Pn**"
@@ -393,7 +393,7 @@ pepc pstates *info* **--min-freq-limit**
 Description
 -----------
 
-Minimum supported CPU frequency is the minimum CPU frequency supported by the OS.
+Minimum supported CPU frequency is the lowest frequency the CPU can be configured to run at.
 
 Mechanism
 ---------
@@ -421,7 +421,7 @@ pepc pstates *info* **--min-freq-limit**
 Description
 -----------
 
-Maximum supported CPU frequency is the maximum CPU frequency supported by the OS.
+Maximum supported CPU frequency is the highest requency the CPU can be configured to run at.
 
 Mechanism
 ---------
@@ -484,8 +484,7 @@ Synopsis
 Description
 -----------
 
-Minimum frequency the CPU is configured to run at. This value is read directly from the MSR,
-bypassing the OS.
+Minimum CPU frequency is the lowest frequency the CPU was configured the CPU to run at.
 
 The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
 (for example "900MHz").
@@ -493,9 +492,9 @@ The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also b
 The following special values are supported:
 
 "**min**"
-   Minimum CPU frequency supported (see 'min_freq_limit_').
+   Minimum supported CPU frequency (see 'min_freq_limit_').
 "**max**"
-   Maximum CPU frequency supported (see 'max_freq_limit_').
+   Maximum supported CPU frequency (see 'max_freq_limit_').
 "**base**", "**hfm**", "**P1**"
    Base CPU frequency (see 'base_freq_').
 "**eff**", "**lfm**", "**Pn**"
@@ -529,8 +528,7 @@ Synopsis
 Description
 -----------
 
-Maximum frequency the CPU is configured to run at. This value is read directly from the MSR,
-bypassing the OS.
+Minimum CPU frequency is the lowest frequency the CPU was configured the CPU to run at.
 
 The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
 (for example "900MHz").
@@ -538,9 +536,9 @@ The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also b
 The following special values are supported:
 
 "**min**"
-   Minimum CPU frequency supported (see 'min_freq_limit_').
+   Minimum supported CPU frequency (see 'min_freq_limit_').
 "**max**"
-   Maximum CPU frequency supported (see 'max_freq_limit_').
+   Maximum supported CPU frequency (see 'max_freq_limit_').
 "**base**", "**hfm**", "**P1**"
    Base CPU frequency (see 'base_freq_').
 "**eff**", "**lfm**", "**Pn**"
