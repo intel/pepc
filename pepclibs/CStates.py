@@ -131,7 +131,8 @@ class CStates(_PCStatesBase.PCStatesBase):
         """Returns a 'CPUIdle()' object."""
 
         if not self._cpuidle:
-            self._cpuidle = CPUIdle.CPUIdle(self._pman, cpuinfo=self._cpuinfo)
+            self._cpuidle = CPUIdle.CPUIdle(self._pman, cpuinfo=self._cpuinfo,
+                                            enable_cache=self._enable_cache)
         return self._cpuidle
 
     def _get_msr(self):
