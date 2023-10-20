@@ -156,8 +156,8 @@ class Power(_PropsClassBase.PropsClassBase):
         except ErrorNotSupported:
             return None
 
-    def _set_prop_value(self, pname, val, cpus):
-        """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
+    def _do_set_prop(self, pname, val, cpus):
+        """Implements '_set_prop()'."""
 
         fname = self._pname2fname(pname)
         prop = self._props[pname]
@@ -194,7 +194,7 @@ class Power(_PropsClassBase.PropsClassBase):
         """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
 
         try:
-            self._set_prop_value(pname, val, cpus)
+            self._do_set_prop(pname, val, cpus)
         except ErrorVerifyFailed as err:
             prop = self._props[pname]
             if pname in ("ppl1_enable", "ppl2_enable"):
