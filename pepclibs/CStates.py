@@ -195,7 +195,7 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         return pkg_cstate_limit_props[pname]
 
-    def _read_prop_value_from_msr(self, pname, cpu):
+    def _read_prop_from_msr(self, pname, cpu):
         """
         Read property 'pname' from the corresponding MSR register on CPU 'cpu' and return its value.
         """
@@ -231,10 +231,10 @@ class CStates(_PCStatesBase.PCStatesBase):
             return self._get_pkg_cstate_limit(pname, cpu)
 
         if pname == "pkg_cstate_limit_lock":
-            return self._read_prop_value_from_msr("lock", cpu)
+            return self._read_prop_from_msr("lock", cpu)
 
         if prop["mnames"][0] == "msr":
-            return self._read_prop_value_from_msr(pname, cpu)
+            return self._read_prop_from_msr(pname, cpu)
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
