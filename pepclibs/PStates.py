@@ -814,7 +814,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return what
 
-    def _write_freq_prop_value_to_msr(self, pname, freq, cpu):
+    def _write_freq_prop_to_msr(self, pname, freq, cpu):
         """Write the minimum or maximum CPU frequency by programming 'MSR_HWP_REQUEST'."""
 
         # The "min" or "max" property name prefix.
@@ -832,7 +832,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
     def _handle_write_and_read_freq_mismatch(self, pname, prop, freq, read_freq, cpu, path):
         """
-        This is a helper function fo '_write_freq_prop_value_to_sysfs()' and it is called when there
+        This is a helper function fo '_write_freq_prop_to_sysfs()' and it is called when there
         is a mismatch between what was written to a frequency sysfs file and what was read back.
         """
 
@@ -873,7 +873,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         _LOG.debug(msg)
 
-    def _write_freq_prop_value_to_sysfs(self, pname, freq, cpu):
+    def _write_freq_prop_to_sysfs(self, pname, freq, cpu):
         """
         Write the minimum or maximum CPU or uncore frequency value 'freq' to the corresponing sysfs
         file.
@@ -1061,21 +1061,21 @@ class PStates(_PCStatesBase.PCStatesBase):
             max_freq_pname = "max_freq"
             min_freq_limit_pname = "min_freq_limit"
             max_freq_limit_pname = "max_freq_limit"
-            write_func = self._write_freq_prop_value_to_sysfs
+            write_func = self._write_freq_prop_to_sysfs
         elif freq_type == "core_hw":
             uncore = False
             min_freq_pname = "min_freq_hw"
             max_freq_pname = "max_freq_hw"
             min_freq_limit_pname = "min_oper_freq"
             max_freq_limit_pname = "max_turbo_freq"
-            write_func = self._write_freq_prop_value_to_msr
+            write_func = self._write_freq_prop_to_msr
         elif freq_type == "uncore":
             uncore = True
             min_freq_pname = "min_uncore_freq"
             max_freq_pname = "max_uncore_freq"
             min_freq_limit_pname = "min_uncore_freq_limit"
             max_freq_limit_pname = "max_uncore_freq_limit"
-            write_func = self._write_freq_prop_value_to_sysfs
+            write_func = self._write_freq_prop_to_sysfs
 
         if min_freq:
             min_freq = self._normalize_inprop(min_freq_pname, min_freq)
