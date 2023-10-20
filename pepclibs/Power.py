@@ -129,19 +129,31 @@ class Power(_PropsClassBase.PropsClassBase):
 
         return pname.replace("ppl", "limit")
 
-    def _get_cpu_prop(self, pname, cpu):
-        """Returns property 'pname' for CPU 'cpu'."""
+    def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
+        """
+        Return property value dictionary ('pvinfo') for property 'pname', CPU 'cpu', using
+        mechanisms in 'mnames'. The arguments and the same as in 'get_prop()'.
+        """
 
-        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, pname, cpu, self._pman.hostmsg)
+        prop = self._props[pname]
+        if mnames is None:
+            mnames = prop["mnames"]
+
+        _LOG.debug("getting '%s' for CPU %d using mechanisms '%s'%s",
+                   pname, cpu, ",".join(mnames), self._pman.hostmsg)
+
+        val = None
 
         try:
             if pname.startswith("ppl"):
                 fname = self._pname2fname(pname)
-                return self._get_pplobj().read_cpu_feature(fname, cpu)
-
-            return self._get_ppiobj().read_cpu_feature(pname, cpu)
+                val = self._get_pplobj().read_cpu_feature(fname, cpu)
+            else:
+                val = self._get_ppiobj().read_cpu_feature(pname, cpu)
         except ErrorNotSupported:
-            return None
+            pass
+
+        return self._construct_pvinfo(pname, cpu, "msr", val)
 
     def _do_set_prop(self, pname, val, cpus):
         """Implements '_set_prop()'."""

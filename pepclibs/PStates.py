@@ -459,27 +459,13 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return 100000000
 
-    def _get_base_freq(self, pname, cpu):
-        """
-        Determine the base frequency for a system and return it. Attempts to read the value from
-        sysfs files, and falls back to reading from MSR if this fails. If none of the provided
-        methods succeed, returns 'None'.
-        """
+    def _get_base_freq_sysfs(self, cpu):
+        """Read base frequency from sysfs."""
 
         path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "base_frequency"
         try:
-            return self._read_prop_from_sysfs(pname, path)
+            return self._read_prop_from_sysfs("base_freq", path)
         except ErrorNotFound:
-            pass
-
-        try:
-            platinfo = self._get_platinfo()
-            ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
-
-            bclk = self._get_bclk(cpu)
-            if bclk is not None:
-                return int(ratio * bclk)
-        except ErrorNotSupported:
             pass
 
         path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
@@ -490,51 +476,94 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return None
 
-    def _get_max_eff_freq(self, cpu):
-        """Read max. efficiency frequency from 'MSR_PLATFORM_INFO' and return it."""
+    def _get_base_freq_msr(self, cpu):
+        """Read base frequency from sysfs."""
+
+        try:
+            platinfo = self._get_platinfo()
+            ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
+
+            val = self._get_bclk(cpu)
+            if val is not None:
+                return int(ratio * val)
+        except ErrorNotSupported:
+            return None
+
+        return None
+
+    def _get_base_freq_pvinfo(self, cpu, mnames):
+        """
+        Determine the base frequency for the system and return the property value dictionary.
+        """
+
+        val, mname = None, None
+
+        for mname in mnames:
+            if mname == "sysfs":
+                val = self._get_base_freq_sysfs(cpu)
+            elif mname == "msr":
+                val = self._get_base_freq_msr(cpu)
+            else:
+                mnames = ",".join(mnames)
+                raise Error("BUG: unsupported mechanisms '{mnames}' from 'base_freq' property")
+
+            if val is not None:
+                break
+
+        return self._construct_pvinfo("base_freq", cpu, mname, val)
+
+    def _get_max_eff_freq_pvinfo(self, cpu):
+        """
+        Read max. efficiency frequency from 'MSR_PLATFORM_INFO' and return the property value
+        dictionary.
+        """
 
         try:
             platinfo = self._get_platinfo()
             ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
         except ErrorNotSupported:
-            return None
+            return self._construct_pvinfo("max_eff_freq", cpu, "msr", None)
 
-        bclk = self._get_bclk(cpu)
-        if bclk is None:
-            return bclk
+        val = self._get_bclk(cpu)
+        if val is not None:
+            val = int(ratio * val)
 
-        return int(ratio * bclk)
+        return self._construct_pvinfo("max_eff_freq", cpu, "msr", val)
 
-    def _get_min_oper_freq(self, cpu):
-        """Read the minimum operating frequency from 'MSR_PLATFORM_INFO' and return it."""
+    def _get_min_oper_freq_pvinfo(self, cpu):
+        """
+        Read the minimum operating frequency from 'MSR_PLATFORM_INFO' and return the property value
+        dictionary.
+        """
 
         try:
             platinfo = self._get_platinfo()
             ratio = platinfo.read_cpu_feature("min_oper_ratio", cpu)
         except ErrorNotSupported:
-            return None
+            return self._construct_pvinfo("min_oper_freq", cpu, "msr", None)
 
-        if ratio == 0:
+        if ratio != 0:
+            val = self._get_bclk(cpu)
+            if val is not None:
+                val = int(ratio * val)
+        else:
+            val = None
             _LOG.warn_once("BUG: 'Minimum Operating Ratio' is '0' on CPU %d, MSR address '%#x' "
                             "bit field '55:48'\nPlease, contact project maintainers.",
                             cpu, platinfo.regaddr)
-            return None
 
-        bclk = self._get_bclk(cpu)
-        if bclk is None:
-            return bclk
+        return self._construct_pvinfo("min_oper_freq", cpu, "msr", val)
 
-        return int(ratio * bclk)
-
-    def _get_max_turbo_freq(self, cpu):
+    def _get_max_turbo_freq_pvinfo(self, cpu):
         """
-        Read and return the maximum turbo frequency for CPU 'cpu' from 'MSR_TURBO_RATIO_LIMIT'.
+        Read the maximum turbo frequency for CPU 'cpu' from 'MSR_TURBO_RATIO_LIMIT' and return the
+        property value dictionary.
         """
 
         try:
             trl = self._get_trl()
         except ErrorNotSupported:
-            return None
+            return self._construct_pvinfo("max_turbo_freq", cpu, "msr", None)
 
         try:
             ratio = trl.read_cpu_feature("max_1c_turbo_ratio", cpu)
@@ -548,13 +577,19 @@ class PStates(_PCStatesBase.PCStatesBase):
                 _LOG.warn_once("CPU %d: module 'TurboRatioLimit' doesn't support "
                                "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
                                "maintainers.", cpu, self._cpuinfo.cpudescr, self._pman.hostmsg)
-                return None
+                return self._construct_pvinfo("max_turbo_freq", cpu, "msr", None)
 
-        bclk = self._get_bclk(cpu)
-        if bclk is None:
-            return bclk
+        val = self._get_bclk(cpu)
+        if val is not None:
+            val = int(val * ratio)
 
-        return int(ratio * bclk)
+        return self._construct_pvinfo("max_turbo_freq", cpu, "msr", val)
+
+    def _get_bus_clock_pvinfo(self, cpu):
+        """Read bus clock speed from 'MSR_FSB_FREQ' and return the property value dictionary."""
+
+        val = self._get_bclk(cpu)
+        return self._construct_pvinfo("bus_closk", cpu, "msr", val)
 
     def _read_int(self, path):
         """Read an integer from file 'path' via the process manager."""
@@ -565,11 +600,10 @@ class PStates(_PCStatesBase.PCStatesBase):
                         f"{self._pman.hostmsg}")
         return int(val)
 
-    def _get_cpu_turbo(self, cpu):
-        """
-        Returns "on" if turbo is enabled, "off" if it is disabled, and 'None' if it is not
-        supported.
-        """
+    def _get_turbo_pvinfo(self, cpu):
+        """Return property value dictionary for the "trubo" property."""
+
+        val = None
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
@@ -578,37 +612,37 @@ class PStates(_PCStatesBase.PCStatesBase):
         try:
             if driver == "intel_pstate":
                 if self._get_cpu_prop("intel_pstate_mode", cpu) == "off":
-                    return None
+                    return self._construct_pvinfo("turbo", cpu, "sysfs", None)
 
                 path = self._sysfs_base / "intel_pstate" / "no_turbo"
                 disabled = self._read_int(path)
-                return "off" if disabled else "on"
+                val = "off" if disabled else "on"
 
             if driver == "acpi-cpufreq":
                 path = self._sysfs_base / "cpufreq" / "boost"
                 enabled = self._read_int(path)
-                return "on" if enabled else "off"
+                val = "on" if enabled else "off"
         except ErrorNotFound:
             # If the sysfs file does not exist, the system does not support turbo.
-            return None
+            return self._construct_pvinfo("turbo", cpu, "sysfs", None)
 
-        _LOG.debug("CPU %d: can't check if turbo is enabled%s: unsupported CPU frequency driver "
-                   "'%s'", cpu, self._pman.hostmsg, driver)
+        if val is None:
+            _LOG.debug("CPU %d: can't check if turbo is enabled%s: unsupported CPU frequency "
+                       "driver %s'", cpu, self._pman.hostmsg, driver)
 
-        return None
+        return self._construct_pvinfo("turbo", cpu, "sysfs", val)
 
-    def _get_cpu_hwp(self, cpu):
-        """
-        Returns "on" if HWP is enabled, "off" if it is disabled, and 'None' if it is not supported.
-        """
+    def _get_hwp_pvinfo(self, cpu):
+        """Return property value dictionary for the "hwp" property."""
 
+        val = None
         try:
             pmenable = self._get_pmenable()
-            enabled = pmenable.is_cpu_feature_enabled("hwp", cpu)
+            val = pmenable.is_cpu_feature_enabled("hwp", cpu)
         except ErrorNotSupported:
-            return None
+            pass
 
-        return "on" if enabled else "off"
+        return self._construct_pvinfo("hwp", cpu, "msr", val)
 
     def _get_sysfs_path(self, pname, cpu):
         """
@@ -624,21 +658,22 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
 
-    def _get_cpu_prop_sysfs(self, pname, cpu):
+    def _get_cpu_prop_pvinfo_sysfs(self, pname, cpu):
         """
-        This is a helper for '_get_cpu_prop()' which handles the properties backed by a sysfs file.
+        This is a helper for '_get_cpu_prop_pvinfo()' which handles the properties backed by a sysfs
+        file.
         """
 
         if self._is_uncore_prop(pname) and not self._is_uncore_freq_supported():
             _LOG.debug(self._uncore_errmsg)
-            return None
+            return self._construct_pvinfo(pname, cpu, "sysfs", None)
 
         path = self._get_sysfs_path(pname, cpu)
+        val = self._read_prop_from_sysfs(pname, path)
+        return self._construct_pvinfo(pname, cpu, "sysfs", val)
 
-        return self._read_prop_from_sysfs(pname, path)
-
-    def _get_driver(self, cpu):
-        """Returns the CPU frequency driver."""
+    def _get_driver_pvinfo(self, cpu):
+        """Read the CPU frequency driver name and return the property value dictionary."""
 
         pname = "driver"
         path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
@@ -649,31 +684,34 @@ class PStates(_PCStatesBase.PCStatesBase):
             # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
             # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
             if self._pman.exists(self._sysfs_base / "intel_pstate"):
-                return "intel_pstate"
+                return self._construct_pvinfo(pname, cpu, "sysfs", "intel_pstate")
 
             _LOG.debug("can't read value of property '%s', path '%s' missing", pname, path)
-            return None
+            return self._construct_pvinfo(pname, cpu, "sysfs", None)
 
         # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode, and
         # 'intel_cpufreq' when it is in passive mode. But we always report the 'intel_pstate' name,
         # because reporting 'intel_cpufreq' is just confusing.
         if driver == "intel_cpufreq":
-            return "intel_pstate"
+            driver = "intel_pstate"
 
-        return driver
+        return self._construct_pvinfo(pname, cpu, "sysfs", driver)
 
-    def _get_intel_pstate_mode(self, pname, cpu):
-        """Returns the 'intel_pstate' driver operation mode."""
+    def _get_intel_pstate_mode_pvinfo(self, pname, cpu):
+        """
+        Read the 'intel_pstate' driver operation mode and return the property value dictionary.
+        """
 
+        val = None
         driver = self._get_cpu_prop("driver", cpu)
 
         if driver == "intel_pstate":
             path = self._sysfs_base / "intel_pstate" / "status"
-            return self._read_prop_from_sysfs(pname, path)
+            val = self._read_prop_from_sysfs(pname, path)
 
-        return None
+        return self._construct_pvinfo("intel_pstate_mode", cpu, "sysfs", val)
 
-    def _get_cpu_freq_hw(self, pname, cpu):
+    def _get_cpu_freq_hw_pvinfo(self, pname, cpu):
         """Reads and returns the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
 
         # The "min" or "max" property name prefix.
@@ -684,7 +722,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         try:
             hwpreq = self._get_hwpreq()
         except ErrorNotSupported:
-            return None
+            return self._construct_pvinfo(pname, cpu, "msr", None)
 
         if hwpreq.is_cpu_feature_pkg_controlled(fname, cpu):
             hwpreq = self._get_hwpreq_pkg()
@@ -693,43 +731,77 @@ class PStates(_PCStatesBase.PCStatesBase):
             perf = hwpreq.read_cpu_feature(fname, cpu)
         except ErrorNotSupported:
             _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, prefix)
-            return None
+            return self._construct_pvinfo(pname, cpu, "msr", None)
 
         freq = perf * self._get_cpu_perf_to_freq_factor(cpu)
-        bclk = int(self._get_bclk(cpu))
-        # Round the frequency down to bus clock.
-        # * Why rounding? The assumption is that CPU frequency changes on bus clock increments.
-        # * Why rounding down? Following how Linux 'intel_pstate' driver rounds.
-        return freq - (freq % bclk)
 
-    def _get_cpu_prop(self, pname, cpu):
-        """"Returns 'pname' property value for CPU 'cpu'."""
+        val = self._get_bclk(cpu)
+        if val is not None:
+            # Round the frequency down to bus clock.
+            # * Why rounding? Bus clock is normally the minimum CPU frequency change value.
+            # * Why rounding down? Following how Linux 'intel_pstate' driver example.
+            val = freq - (freq % int(val))
 
-        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, pname, cpu, self._pman.hostmsg)
+        return self._construct_pvinfo(pname, cpu, "msr", val)
+
+    def _get_epp_epb_pvinfo(self, pname, cpu):
+        """
+        Return property value dictionary for EPP or EPB. Return 'None' if 'pname' is not one of the
+        EPP/EPB properties.
+        """
+
+        val, mname = None, None
+
+        if pname == "epp":
+            mname = "sysfs"
+            val = self._get_eppobj().get_cpu_epp(cpu, mname=mname)
+        elif pname == "epp_hw":
+            mname = "msr"
+            val = self._get_eppobj().get_cpu_epp(cpu, mname="msr")
+        elif pname == "epb":
+            mname = "sysfs"
+            val = self._get_epbobj().get_cpu_epb(cpu, mname="sysfs")
+        if pname == "epb_hw":
+            mname = "msr"
+            val = self._get_epbobj().get_cpu_epb(cpu, mname="msr")
+
+        if mname is not None:
+            return self._construct_pvinfo(pname, cpu, mname, val)
+
+        return None
+
+    def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
+        """
+        Return property value dictionary ('pvinfo') for property 'pname', CPU 'cpu', using
+        mechanisms in 'mnames'. The arguments and the same as in 'get_prop()'.
+        """
+
+        prop = self._props[pname]
+        if mnames is None:
+            mnames = prop["mnames"]
+
+        _LOG.debug("getting '%s' for CPU %d using mechanisms '%s'%s",
+                   pname, cpu, ",".join(mnames), self._pman.hostmsg)
 
         # First handle the MSR-based properties. The 'MSR', 'EPP', and 'EPB' modules have their own
         # caching,'self._pcache' is not used for the MSR-based properties.
 
-        if pname == "epp":
-            return self._get_eppobj().get_cpu_epp(cpu, mname="sysfs")
-        if pname == "epp_hw":
-            return self._get_eppobj().get_cpu_epp(cpu, mname="msr")
-        if pname == "epb":
-            return self._get_epbobj().get_cpu_epb(cpu, mname="sysfs")
-        if pname == "epb_hw":
-            return self._get_epbobj().get_cpu_epb(cpu, mname="msr")
+        pvinfo = self._get_epp_epb_pvinfo(pname, cpu)
+        if pvinfo:
+            return pvinfo
+
         if pname == "max_eff_freq":
-            return self._get_max_eff_freq(cpu)
+            return self._get_max_eff_freq_pvinfo(cpu)
         if pname == "hwp":
-            return self._get_cpu_hwp(cpu)
+            return self._get_hwp_pvinfo(cpu)
         if pname == "min_oper_freq":
-            return self._get_min_oper_freq(cpu)
+            return self._get_min_oper_freq_pvinfo(cpu)
         if pname == "max_turbo_freq":
-            return self._get_max_turbo_freq(cpu)
+            return self._get_max_turbo_freq_pvinfo(cpu)
         if pname == "bus_clock":
-            return self._get_bclk(cpu)
+            return self._get_bus_clock_pvinfo(cpu)
         if pname.endswith("_freq_hw"):
-            return self._get_cpu_freq_hw(pname, cpu)
+            return self._get_cpu_freq_hw_pvinfo(pname, cpu)
 
         # Use 'self._pcache' for properties below.
         #
@@ -740,25 +812,24 @@ class PStates(_PCStatesBase.PCStatesBase):
         # and avoid double caching, but it is not worth the trouble at this point.
 
         with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get(pname, cpu)
-
-        prop = self._props[pname]
+            val = self._pcache.get(pname, cpu)
+            return self._construct_pvinfo(pname, cpu, mnames[0], val)
 
         if "getter" in prop:
-            val = prop["getter"](pname, cpu)
+            pvinfo = prop["getter"](cpu, mnames)
         elif "fname" in prop:
-            val = self._get_cpu_prop_sysfs(pname, cpu)
+            pvinfo = self._get_cpu_prop_pvinfo_sysfs(pname, cpu)
         elif pname == "turbo":
-            val = self._get_cpu_turbo(cpu)
+            pvinfo = self._get_turbo_pvinfo(cpu)
         elif pname == "driver":
-            val = self._get_driver(cpu)
+            pvinfo = self._get_driver_pvinfo(cpu)
         elif pname == "intel_pstate_mode":
-            val = self._get_intel_pstate_mode(pname, cpu)
+            pvinfo = self._get_intel_pstate_mode_pvinfo(pname, cpu)
         else:
             raise Error(f"BUG: unsupported property '{pname}'")
 
-        self._pcache.add(pname, cpu, val, sname=prop["sname"])
-        return val
+        self._pcache.add(pname, cpu, pvinfo["val"], sname=prop["sname"])
+        return pvinfo
 
     def _set_turbo(self, cpu, enable):
         """Enable or disable turbo."""
@@ -840,7 +911,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             if bclk and freq % bclk:
                 msg += f"\nHint: consider using frequency value aligned to {bclk // 1000000}MHz."
 
-            if self._get_cpu_turbo(cpu) == "off":
+            if self._get_turbo_pvinfo(cpu)["val"] == "off":
                 base_freq = self._get_cpu_prop("base_freq", cpu)
 
                 if base_freq and freq > base_freq:
@@ -1209,7 +1280,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         # Some properties are read/written to using different mechanisms ("sysfs", "msr", etc),
         # depending on configurations. Properties like this have a dedicated "getter" method.
-        self._props["base_freq"]["getter"] = self._get_base_freq
+        self._props["base_freq"]["getter"] = self._get_base_freq_pvinfo
 
         # Properties backed by a single sysfs file.
         self._props["min_freq"]["fname"] = "scaling_min_freq"

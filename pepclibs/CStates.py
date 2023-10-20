@@ -202,17 +202,6 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         return self._get_cpuidle().disable_cstates(csnames=csnames, cpus=cpus)
 
-    def _get_pkg_cstate_limit(self, pname, cpu):
-        """Return 'pkg_cstate_limit' related 'pname' property."""
-
-        try:
-            pcstatectl = self._get_pcstatectl()
-            pkg_cstate_limit_props = pcstatectl.read_cpu_feature("pkg_cstate_limit", cpu)
-        except ErrorNotSupported:
-            return None
-
-        return pkg_cstate_limit_props[pname]
-
     def _read_prop_from_msr(self, pname, cpu):
         """
         Read property 'pname' from the corresponding MSR register on CPU 'cpu' and return its value.
@@ -228,28 +217,73 @@ class CStates(_PCStatesBase.PCStatesBase):
         except ErrorNotSupported:
             return None
 
-    def _get_cpu_prop(self, pname, cpu):
-        """Returns property 'pname' for CPU 'cpu'."""
+    def _get_pkg_cstate_limit_pvinfo(self, pname, cpu):
+        """
+        Get a 'pkg_cstate_limit' or a related property and return the property value dictionary.
+        Return 'None' if 'pname' is not related to 'pkg_cstate_limit'.
+        """
 
-        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, pname, cpu, self._pman.hostmsg)
-
-        if pname == "idle_driver":
-            return self._get_cpuidle().get_idle_driver()
-
-        if pname == "governor":
-            return self._get_cpuidle().get_current_governor()
-
-        if pname == "governors":
-            return self._get_cpuidle().get_available_governors()
-
-        if pname in {"pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"}:
-            return self._get_pkg_cstate_limit(pname, cpu)
+        mname = self._props[pname]["mnames"][0]
 
         if pname == "pkg_cstate_limit_lock":
-            return self._read_prop_from_msr("lock", cpu)
+            val = self._read_prop_from_msr("lock", cpu)
+            return self._construct_pvinfo(pname, cpu, mname, val)
+
+        if pname not in {"pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"}:
+            return None
+
+        val = None
+        try:
+            pcstatectl = self._get_pcstatectl()
+            pkg_cstate_limit_props = pcstatectl.read_cpu_feature("pkg_cstate_limit", cpu)
+        except ErrorNotSupported:
+            pass
+        else:
+            val = pkg_cstate_limit_props[pname]
+
+        return self._construct_pvinfo(pname, cpu, mname, val)
+
+    def _get_cpuidle_prop_pvinfo(self, pname, cpu):
+        """
+        Get a property using the 'CPUIdle' class and return the property value dictionary. Return
+        'None' if 'pname' does not belong to the 'CPUIdle' class.
+        """
+
+        if pname == "idle_driver":
+            val = self._get_cpuidle().get_idle_driver()
+        elif pname == "governor":
+            val = self._get_cpuidle().get_current_governor()
+        elif pname == "governors":
+            val = self._get_cpuidle().get_available_governors()
+        else:
+            return None
+
+        return self._construct_pvinfo(pname, cpu, "sysfs", val)
+
+    def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
+        """
+        Return property value dictionary ('pvinfo') for property 'pname', CPU 'cpu', using
+        mechanisms in 'mnames'. The arguments and the same as in 'get_prop()'.
+        """
+
+        prop = self._props[pname]
+        if mnames is None:
+            mnames = prop["mnames"]
+
+        _LOG.debug("getting '%s' for CPU %d using mechanisms '%s'%s",
+                   pname, cpu, ",".join(mnames), self._pman.hostmsg)
+
+        pvinfo = self._get_cpuidle_prop_pvinfo(pname, cpu)
+        if pvinfo:
+            return pvinfo
+
+        pvinfo = self._get_pkg_cstate_limit_pvinfo(pname, cpu)
+        if pvinfo:
+            return pvinfo
 
         if self._props[pname]["mnames"][0] == "msr":
-            return self._read_prop_from_msr(pname, cpu)
+            val = self._read_prop_from_msr(pname, cpu)
+            return self._construct_pvinfo(pname, cpu, "msr", val)
 
         raise Error(f"BUG: unsupported property '{pname}'")
 

@@ -102,7 +102,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise ErrorNotSupported(f"unsupported mechanism '{mname}', supported mechanisms are: "
                                     f"{mnames}.", mname=mname)
 
-        if not allow_readonly and self.mechanisms[mname]["readonly"]:
+        if not allow_readonly and not self.mechanisms[mname]["writable"]:
             if pname:
                 name = self._props[pname]["name"]
                 raise Error(f"can't use read-only mechanism '{mname}' for modifying "
@@ -184,6 +184,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pnames_str = ", ".join(set(self._props))
             raise Error(f"unknown property name '{pname}', known properties are: {pnames_str}")
 
+    @staticmethod
+    def _construct_pvinfo(pname, cpu, mname, val):
+        """Construct and return the property value dictionary."""
+
+        if isinstance(val, bool):
+            val = "on" if val is True else "off"
+        return {"cpu": cpu, "pname": pname, "val": val, "mname": mname}
+
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
 
@@ -194,23 +202,36 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self._msr
 
-    def _get_cpu_prop(self, pname, cpu):
-        """Returns property 'pname' for CPU 'cpu'."""
+    def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
+        """
+        This method should be implemented by the sub-class. The arguments and the same as in
+        'get_prop()'. Returns the property value dictionary.
+        """
 
         # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase._get_cpu_prop")
 
-    def get_prop(self, pname, cpus="all"):
+    def _get_cpu_prop(self, pname, cpu, mnames=None):
+        """Read property 'pname' and return the value."""
+
+        return self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)["val"]
+
+    def get_prop(self, pname, cpus="all", mnames=None):
         """
         Read property 'pname' for CPUs in 'cpus', and for every CPU yield the property value
         dictionary. The arguments are as follows.
           * pname - name of the property to read and yield the values for. The property will be read
                     for every CPU in 'cpus'.
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+          * mnames - list of mechanisms to use for getting the property (see
+                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
+                     specified in 'mnames'. By default, all mechanisms supported by the 'pname'
+                     property will be tried.
 
         The property value dictionary has the following format:
             { "cpu": CPU number,
-              "val": value of property 'pname' on the given CPU }
+              "val": value of property 'pname' on the given CPU
+              "mname" : name of the mechanism that was used for getting the property }
 
         If a property is not supported, the 'val' and 'mname' keys will contain 'None'.
 
@@ -220,17 +241,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         self._validate_pname(pname)
+        mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            pvinfo = {}
-            pvinfo["cpu"] = cpu
-            pvinfo["val"] = self._get_cpu_prop(pname, cpu)
-            yield pvinfo
+            yield self._get_cpu_prop_pvinfo(pname, cpu, mnames)
 
-    def get_cpu_prop(self, pname, cpu):
+    def get_cpu_prop(self, pname, cpu, mnames=None):
         """Same as 'get_prop()', but for a single CPU and a single property."""
 
-        for pvinfo in self.get_prop(pname, cpus=(cpu,)):
+        for pvinfo in self.get_prop(pname, cpus=(cpu,), mnames=mnames):
             return pvinfo
 
     def prop_is_supported(self, pname, cpu):
