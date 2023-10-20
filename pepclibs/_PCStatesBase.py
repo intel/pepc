@@ -34,7 +34,7 @@ class PCStatesBase(_PropsClassBase.PropsClassBase):
             governors = ", ".join(governors)
             raise Error(f"bad governor name '{name}', use one of: {governors}")
 
-    def _read_prop_value_from_sysfs(self, prop, path):
+    def _read_prop_from_sysfs(self, prop, path):
         """Read property described by 'prop' from sysfs, and return its value."""
 
         val = self._pman.read(path).strip()
@@ -54,7 +54,7 @@ class PCStatesBase(_PropsClassBase.PropsClassBase):
 
         return val
 
-    def _write_prop_value_to_sysfs(self, prop, path, val):
+    def _write_prop_to_sysfs(self, prop, path, val):
         """Write property value 'val' to a sysfs file at path 'path'."""
 
         pname = prop["name"]

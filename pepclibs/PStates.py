@@ -477,7 +477,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "base_frequency"
         try:
-            return self._read_prop_value_from_sysfs(prop, path)
+            return self._read_prop_from_sysfs(prop, path)
         except ErrorNotFound:
             pass
 
@@ -643,7 +643,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         path = self._get_sysfs_path(prop, cpu)
 
-        return self._read_prop_value_from_sysfs(prop, path)
+        return self._read_prop_from_sysfs(prop, path)
 
     def _get_driver(self, cpu):
         """Returns the CPU frequency driver."""
@@ -652,7 +652,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
 
         try:
-            driver = self._read_prop_value_from_sysfs(prop, path)
+            driver = self._read_prop_from_sysfs(prop, path)
         except ErrorNotFound:
             # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
             # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
@@ -677,7 +677,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if driver == "intel_pstate":
             path = self._sysfs_base / "intel_pstate" / "status"
-            return self._read_prop_value_from_sysfs(self._props[pname], path)
+            return self._read_prop_from_sysfs(self._props[pname], path)
 
         return None
 
@@ -792,7 +792,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             raise ErrorNotSupported(f"{errmsg}: unsupported CPU frequency driver '{driver}'")
 
         try:
-            self._write_prop_value_to_sysfs(self._props["turbo"], path, sysfs_val)
+            self._write_prop_to_sysfs(self._props["turbo"], path, sysfs_val)
         except ErrorNotFound as err:
             raise ErrorNotSupported(f"{errmsg}: turbo is not supported") from err
 
@@ -893,7 +893,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         count = 3
         while count > 0:
             # Returns frequency in Hz.
-            read_freq = self._read_prop_value_from_sysfs(prop, path)
+            read_freq = self._read_prop_from_sysfs(prop, path)
 
             if freq == read_freq:
                 self._pcache.add(pname, cpu, freq, sname=prop["sname"])
@@ -954,7 +954,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         path = self._sysfs_base / "intel_pstate" / "status"
         try:
-            self._write_prop_value_to_sysfs(self._props["intel_pstate_mode"], path, mode)
+            self._write_prop_to_sysfs(self._props["intel_pstate_mode"], path, mode)
             self._pcache.add("intel_pstate_mode", cpu, mode,
                              sname=self._props["intel_pstate_mode"]["sname"])
         except Error:
@@ -1002,7 +1002,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._set_intel_pstate_mode(cpu, val)
             elif "fname" in prop:
                 path = self._get_sysfs_path(prop, cpu)
-                self._write_prop_value_to_sysfs(prop, path, val)
+                self._write_prop_to_sysfs(prop, path, val)
 
                 # Note, below 'add()' call is scope-aware. It will cache 'val' not only for CPU
                 # number 'cpu', but also for all the 'sname' siblings. For example, if property
