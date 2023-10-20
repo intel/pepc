@@ -51,28 +51,28 @@ def _set_and_verify_data(params):
     makes sure the property actually gets changed.
     """
 
-    pinfo = params["cpu0_pinfo"]
+    cpu0_pinfo = params["cpu0_pinfo"]
 
     bool_pnames_pat = {"1_enable", "1_clamp", "2_enable", "2_clamp"}
 
     for pat in bool_pnames_pat:
         pname = f"ppl{pat}"
-        if is_prop_supported(pname, pinfo):
-            if pinfo[pname] == "off":
+        if is_prop_supported(pname, cpu0_pinfo):
+            if cpu0_pinfo[pname] == "off":
                 val = "on"
             else:
                 val = "off"
             yield pname, val
-            yield pname, pinfo[pname]
+            yield pname, cpu0_pinfo[pname]
 
     power_pnames_pat = {"1", "2"}
 
     # For power limits, test with current value - 1W, and current value.
     for pat in power_pnames_pat:
         pname = f"ppl{pat}"
-        if is_prop_supported(pname, pinfo):
-            yield pname, pinfo[pname] - 1
-            yield pname, pinfo[pname]
+        if is_prop_supported(pname, cpu0_pinfo):
+            yield pname, cpu0_pinfo[pname] - 1
+            yield pname, cpu0_pinfo[pname]
 
 def _set_and_verify(pobj, pname, value, cpus):
     """

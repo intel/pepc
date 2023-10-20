@@ -10,16 +10,16 @@
 
 """Common functions for the 'CStates' and 'PStates' class tests."""
 
-def is_prop_supported(pname, pinfo):
+def is_prop_supported(pname, cpu0_pinfo):
     """
     Return 'True' or 'False' depending on if property 'pname' is supported on the system.
 
     The arguments are as follows.
       * pname - name of the property.
-      * pinfo - a properties dictionary.
+      * cpu0_pinfo - a properties dictionary.
     """
 
-    return pinfo[pname] is not None
+    return cpu0_pinfo[pname] is not None
 
 def get_siblings(cpuinfo, cpu=0):
     """
@@ -88,17 +88,17 @@ def _verify_value_type(pname, ptype, value):
     assert ret, f"Property '{pname}' value '{value}' has the wrong datatype. Should be " \
                 f"'{ptype}' but returns type '{type(value)}'"
 
-def verify_props_value_type(props, pinfo):
+def verify_props_value_type(props, cpu0_pinfo):
     """
     This function test 'get_prop()' return type for all supported properties on the system.
 
     The argument are as follows.
      * props - dictionary describing the properties.
-     * pinfo - a properties dictionary.
+     * cpu0_pinfo - properties dictionary for CPU0.
     """
 
     for pname in props:
-        if not is_prop_supported(pname, pinfo):
+        if not is_prop_supported(pname, cpu0_pinfo):
             continue
 
-        _verify_value_type(pname, props[pname]["type"], pinfo[pname])
+        _verify_value_type(pname, props[pname]["type"], cpu0_pinfo[pname])

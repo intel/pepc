@@ -50,17 +50,17 @@ def _set_and_verify_data(params):
     makes sure the property actually gets changed.
     """
 
-    pinfo = params["cpu0_pinfo"]
+    cpu0_pinfo = params["cpu0_pinfo"]
 
     bool_pnames = {"c1_demotion", "c1_undemotion", "c1e_autopromote", "cstate_prewake"}
     for pname in bool_pnames:
-        if is_prop_supported(pname, pinfo):
+        if is_prop_supported(pname, cpu0_pinfo):
             yield pname, "on"
             yield pname, "off"
 
-    if is_prop_supported("governor", pinfo):
-        yield "governor", pinfo["governors"][0]
-        yield "governor", pinfo["governors"][-1]
+    if is_prop_supported("governor", cpu0_pinfo):
+        yield "governor", cpu0_pinfo["governors"][0]
+        yield "governor", cpu0_pinfo["governors"][-1]
 
 def test_cstates_set_and_verify(params):
     """This test verifies that 'get_prop()' returns same values set by 'set_prop()'."""
