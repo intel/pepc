@@ -124,11 +124,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pnames_str = ", ".join(set(self._props))
             raise Error(f"unknown property name '{pname}', known properties are: {pnames_str}")
 
-    def _get_cpu_prop_value(self, pname, cpu, prop=None):
+    def _get_cpu_prop(self, pname, cpu, prop=None):
         """Returns property 'pname' for CPU 'cpu'."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("PropsClassBase._get_cpu_prop_value")
+        return _bug_method_not_defined("PropsClassBase._get_cpu_prop")
 
     def get_prop(self, pname, cpus="all"):
         """
@@ -154,7 +154,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             pvinfo = {}
             pvinfo["cpu"] = cpu
-            pvinfo["val"] = self._get_cpu_prop_value(pname, cpu)
+            pvinfo["val"] = self._get_cpu_prop(pname, cpu)
             yield pvinfo
 
     def get_cpu_prop(self, pname, cpu):

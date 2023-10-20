@@ -210,7 +210,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         except ErrorNotSupported:
             return None
 
-    def _get_cpu_prop_value(self, pname, cpu, prop=None):
+    def _get_cpu_prop(self, pname, cpu, prop=None):
         """"Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
 
         if prop is None:

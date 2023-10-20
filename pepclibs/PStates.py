@@ -582,11 +582,11 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
-        driver = self._get_cpu_prop_value("driver", cpu)
+        driver = self._get_cpu_prop("driver", cpu)
 
         try:
             if driver == "intel_pstate":
-                if self._get_cpu_prop_value("intel_pstate_mode", cpu) == "off":
+                if self._get_cpu_prop("intel_pstate_mode", cpu) == "off":
                     return None
 
                 path = self._sysfs_base / "intel_pstate" / "no_turbo"
@@ -632,10 +632,9 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
 
-    def _get_cpu_prop_value_sysfs(self, prop, cpu):
+    def _get_cpu_prop_sysfs(self, prop, cpu):
         """
-        This is a helper for '_get_cpu_prop_value()' which handles the properties backed by a sysfs
-        file.
+        This is a helper for '_get_cpu_prop()' which handles the properties backed by a sysfs file.
         """
 
         if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
@@ -674,7 +673,7 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_intel_pstate_mode(self, pname, cpu):
         """Returns the 'intel_pstate' driver operation mode."""
 
-        driver = self._get_cpu_prop_value("driver", cpu)
+        driver = self._get_cpu_prop("driver", cpu)
 
         if driver == "intel_pstate":
             path = self._sysfs_base / "intel_pstate" / "status"
@@ -711,7 +710,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         # * Why rounding down? Following how Linux 'intel_pstate' driver rounds.
         return freq - (freq % bclk)
 
-    def _get_cpu_prop_value(self, pname, cpu, prop=None):
+    def _get_cpu_prop(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
 
         if prop is None:
@@ -757,7 +756,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if "getter" in prop:
             val = prop["getter"](prop, cpu)
         elif "fname" in prop:
-            val = self._get_cpu_prop_value_sysfs(prop, cpu)
+            val = self._get_cpu_prop_sysfs(prop, cpu)
         elif pname == "turbo":
             val = self._get_cpu_turbo(cpu)
         elif pname == "driver":
@@ -775,13 +774,13 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
-        driver = self._get_cpu_prop_value("driver", cpu)
+        driver = self._get_cpu_prop("driver", cpu)
 
         status = "on" if enable else "off"
         errmsg = f"failed to switch turbo {status}{self._pman.hostmsg}"
 
         if driver == "intel_pstate":
-            if self._get_cpu_prop_value("intel_pstate_mode", cpu) == "off":
+            if self._get_cpu_prop("intel_pstate_mode", cpu) == "off":
                 raise ErrorNotSupported(f"{errmsg}: 'intel_pstate' driver is in 'off' mode")
 
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
@@ -851,7 +850,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 msg += f"\nHint: consider using frequency value aligned to {bclk // 1000000}MHz."
 
             if self._get_cpu_turbo(cpu) == "off":
-                base_freq = self._get_cpu_prop_value("base_freq", cpu)
+                base_freq = self._get_cpu_prop("base_freq", cpu)
 
                 if base_freq and freq > base_freq:
                     base_freq = Human.num2si(base_freq, unit="Hz")
@@ -863,8 +862,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # to any value above base frequency. At the moment we do not support reading base
                 # frequency for AMD systems, so we only support the 'freq == max_freq_limit' case.
                 # But it should really be 'if freq > base_freq'.
-                max_freq_limit = self._get_cpu_prop_value("max_freq_limit", cpu)
-                driver = self._get_cpu_prop_value("driver", cpu)
+                max_freq_limit = self._get_cpu_prop("max_freq_limit", cpu)
+                driver = self._get_cpu_prop("driver", cpu)
                 if freq == max_freq_limit and driver == "acpi-cpufreq":
                     msg += "\nThis is expected 'acpi-cpufreq' driver behavior on AMD systems."
                     raise_error = False
@@ -913,30 +912,30 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if uncore:
             if val == "min":
-                freq = self._get_cpu_prop_value("min_uncore_freq_limit", cpu)
+                freq = self._get_cpu_prop("min_uncore_freq_limit", cpu)
             elif val == "max":
-                freq = self._get_cpu_prop_value("max_uncore_freq_limit", cpu)
+                freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
             elif val == "mdl":
-                min_freq = self._get_cpu_prop_value("min_uncore_freq_limit", cpu)
-                max_freq = self._get_cpu_prop_value("max_uncore_freq_limit", cpu)
+                min_freq = self._get_cpu_prop("min_uncore_freq_limit", cpu)
+                max_freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
                 freq = round(mean([min_freq, max_freq]), -2)
             else:
                 freq = val
         else:
             if val == "min":
-                freq = self._get_cpu_prop_value("min_freq_limit", cpu)
+                freq = self._get_cpu_prop("min_freq_limit", cpu)
             elif val == "max":
-                freq = self._get_cpu_prop_value("max_freq_limit", cpu)
+                freq = self._get_cpu_prop("max_freq_limit", cpu)
             elif val in {"base", "hfm", "P1"}:
-                freq = self._get_cpu_prop_value("base_freq", cpu)
+                freq = self._get_cpu_prop("base_freq", cpu)
             elif val in {"eff", "lfm", "Pn"}:
-                freq = self._get_cpu_prop_value("max_eff_freq", cpu)
+                freq = self._get_cpu_prop("max_eff_freq", cpu)
                 if not freq:
                     # Max. efficiency frequency may not be supported by the platform. Fall back to
                     # the minimum frequency in this case.
-                    freq = self._get_cpu_prop_value("min_freq_limit", cpu)
+                    freq = self._get_cpu_prop("min_freq_limit", cpu)
             elif val == "Pm":
-                freq = self._get_cpu_prop_value("min_oper_freq", cpu)
+                freq = self._get_cpu_prop("min_oper_freq", cpu)
             else:
                 freq = val
 
@@ -949,7 +948,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Change mode of the CPU frequency driver 'intel_pstate'."""
 
         # Setting 'intel_pstate' driver mode to "off" is only possible in non-HWP (legacy) mode.
-        if mode == "off" and self._get_cpu_prop_value("hwp", cpu) == "on":
+        if mode == "off" and self._get_cpu_prop("hwp", cpu) == "on":
             raise ErrorNotSupported("'intel_pstate' driver does not support \"off\" mode when "
                                     "hardware power management (HWP) is enabled")
 
@@ -960,14 +959,14 @@ class PStates(_PCStatesBase.PCStatesBase):
                              sname=self._props["intel_pstate_mode"]["sname"])
         except Error:
             # When 'intel_pstate' driver is 'off' it is not possible to write 'off' again.
-            if mode != "off" or self._get_cpu_prop_value("intel_pstate_mode", cpu) != "off":
+            if mode != "off" or self._get_cpu_prop("intel_pstate_mode", cpu) != "off":
                 raise
 
     def _validate_intel_pstate_mode(self, mode):
         """Validate 'intel_pstate_mode' mode."""
 
-        if self._get_cpu_prop_value("intel_pstate_mode", 0) is None:
-            driver = self._get_cpu_prop_value("driver", 0)
+        if self._get_cpu_prop("intel_pstate_mode", 0) is None:
+            driver = self._get_cpu_prop("driver", 0)
             raise Error(f"can't set property 'intel_pstate_mode'{self._pman.hostmsg}:\n  "
                         f"the CPU frequency driver is '{driver}', not 'intel_pstate'")
 
@@ -1097,16 +1096,16 @@ class PStates(_PCStatesBase.PCStatesBase):
             if max_freq:
                 new_max_freq = self._parse_freq(max_freq, cpu, uncore)
 
-            cur_min_freq = self._get_cpu_prop_value(min_freq_pname, cpu)
-            cur_max_freq = self._get_cpu_prop_value(max_freq_pname, cpu)
+            cur_min_freq = self._get_cpu_prop(min_freq_pname, cpu)
+            cur_max_freq = self._get_cpu_prop(max_freq_pname, cpu)
 
             if not cur_min_freq:
                 name = Human.uncapitalize(self._props[max_freq_pname]["name"])
                 raise ErrorNotSupported(f"CPU {cpu} does not support min. and {name}"
                                         f"{self._pman.hostmsg}")
 
-            min_limit = self._get_cpu_prop_value(min_freq_limit_pname, cpu)
-            max_limit = self._get_cpu_prop_value(max_freq_limit_pname, cpu)
+            min_limit = self._get_cpu_prop(min_freq_limit_pname, cpu)
+            max_limit = self._get_cpu_prop(max_freq_limit_pname, cpu)
 
             what = self._get_num_str(self._props[min_freq_pname], cpu)
             for pname, val in ((min_freq_pname, new_min_freq), (max_freq_pname, new_max_freq)):

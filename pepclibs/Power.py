@@ -139,7 +139,7 @@ class Power(_PropsClassBase.PropsClassBase):
 
         return pname.replace("ppl", "limit")
 
-    def _get_cpu_prop_value(self, pname, cpu, prop=None):
+    def _get_cpu_prop(self, pname, cpu, prop=None):
         """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
 
         if prop is None:
@@ -166,21 +166,21 @@ class Power(_PropsClassBase.PropsClassBase):
             # RAPL contains min/max values for the PPL in an MSR register, however the register
             # contents are unreliable so we derive ranges here from TDP.
             if pname in ("ppl1", "ppl2"):
-                tdp = self._get_cpu_prop_value("tdp", cpu)
+                tdp = self._get_cpu_prop("tdp", cpu)
 
                 fval = float(val)
 
                 if pname == "ppl1":
                     minval = tdp / 8
                     maxval = tdp
-                    if fval > self._get_cpu_prop_value("ppl2", cpu):
+                    if fval > self._get_cpu_prop("ppl2", cpu):
                         raise Error(f"{prop['name']} can't be higher than RAPL PPL2 for CPU{cpu}")
                 else:
                     # For PPL2, use maxval as TDP * 3. Mehlow system has default value for PPL2 as
                     # 210W, and TDP is 80W.
                     minval = tdp / 8
                     maxval = tdp * 3
-                    if fval < self._get_cpu_prop_value("ppl1", cpu):
+                    if fval < self._get_cpu_prop("ppl1", cpu):
                         raise Error(f"{prop['name']} can't be lower than RAPL PPL1 for CPU{cpu}")
 
                 if fval > maxval or fval < minval:
