@@ -976,8 +976,12 @@ class PStates(_PCStatesBase.PCStatesBase):
             modes = ", ".join(modes)
             raise Error(f"bad 'intel_pstate' mode '{mode}', use one of: {modes}")
 
-    def _set_prop_value(self, pname, val, cpus):
-        """Sets user-provided property 'pname' to value 'val' for CPUs 'cpus'."""
+    def _set_own_prop(self, pname, val, cpus):
+        """
+        Sets property 'pname'. The 'own' part in function name refers to the fact that this
+        method sets only properties implemented by this module, as opposed to properties like "epp",
+        which are implementd by the 'EPP' module.
+        """
 
         # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
         # 'False' for every CPU number that was not yet modified by the scope-aware '_pcache.add()'
@@ -1191,7 +1195,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         elif pname == "epb_hw":
             self._get_epbobj().set_epb(val, cpus=cpus, mname="msr")
         else:
-            self._set_prop_value(pname, val, cpus)
+            self._set_own_prop(pname, val, cpus)
 
     def _set_sname(self, pname):
         """Set scope "sname" for property 'pname'."""
