@@ -153,12 +153,12 @@ def _add_cpu_subset_arguments(subpars, fmt):
                 then '0' would mean CPU 4."""
     subpars.add_argument("--core-siblings", help=text)
 
-def _get_mechanism_str(pinfo):
+def _get_mechanism_str(prop):
     """"Format and return the "mechanism" description string for a property."""
 
     mnames = []
     try:
-        for mname in pinfo["mnames"]:
+        for mname in prop["mnames"]:
             mnames.append(MECHANISMS[mname]["short"])
     except KeyError:
         raise Error(f"BUG: missing mechanism description for '{mname}'") from None
@@ -172,26 +172,26 @@ def _get_mechanism_str(pinfo):
     mnames = ', '.join(mnames[:-1]) + f" or {mnames[-1]}"
     return f" via {mnames} as fall-back methods"
 
-def _get_info_subcommand_prop_help_text(pinfo):
-    """Format and return the "info" sub-command help text for a property described by 'pinfo'."""
+def _get_info_subcommand_prop_help_text(prop):
+    """Format and return the "info" sub-command help text for a property described by 'prop'."""
 
-    if pinfo["type"] == "bool":
+    if prop["type"] == "bool":
         # This is a binary "on/off" type of features.
-        text = f"Check if {Human.uncapitalize(pinfo['name'])} is enabled or disabled"
+        text = f"Check if {Human.uncapitalize(prop['name'])} is enabled or disabled"
     else:
-        text = f"Get {Human.uncapitalize(pinfo['name'])}"
+        text = f"Get {Human.uncapitalize(prop['name'])}"
 
-    return text + _get_mechanism_str(pinfo) + "."
+    return text + _get_mechanism_str(prop) + "."
 
 def _add_info_subcommand_options(props, subpars):
     """Add options for all properties in 'props' to for the "info" subcommand."""
 
     spnames = set()
-    for pinfo in props.values():
-        for spname in pinfo.get("subprops", []):
+    for prop in props.values():
+        for spname in prop.get("subprops", []):
             spnames.add(spname)
 
-    for pname, pinfo in props.items():
+    for pname, prop in props.items():
         if pname in spnames:
             # Do not add a separate option for a sub-property. Sub-property information is printed
             # along with the property information.
@@ -200,37 +200,37 @@ def _add_info_subcommand_options(props, subpars):
         kwargs = {}
         kwargs["default"] = argparse.SUPPRESS
         kwargs["nargs"] = 0
-        kwargs["help"] = _get_info_subcommand_prop_help_text(pinfo)
+        kwargs["help"] = _get_info_subcommand_prop_help_text(prop)
         kwargs["action"] = ArgParse.OrderedArg
 
         option = f"--{pname.replace('_', '-')}"
         subpars.add_argument(option, **kwargs)
 
-def _get_config_subcommand_prop_help_text(pinfo):
-    """Format and return the "info" sub-command help text for a property described by 'pinfo'."""
+def _get_config_subcommand_prop_help_text(prop):
+    """Format and return the "info" sub-command help text for a property described by 'prop'."""
 
-    if pinfo["type"] == "bool":
+    if prop["type"] == "bool":
         # This is a binary "on/off" type of features.
-        text = f"Enable or disable {Human.uncapitalize(pinfo['name'])}"
+        text = f"Enable or disable {Human.uncapitalize(prop['name'])}"
     else:
-        text = f"Set {Human.uncapitalize(pinfo['name'])}"
+        text = f"Set {Human.uncapitalize(prop['name'])}"
 
-    return text + _get_mechanism_str(pinfo) + "."
+    return text + _get_mechanism_str(prop) + "."
 
 def _add_config_subcommand_options(props, subpars):
     """Add options for all properties in 'props' to for the "config" sub-command."""
 
-    for name, pinfo in props.items():
-        if not pinfo["writable"]:
+    for name, prop in props.items():
+        if not prop["writable"]:
             continue
 
         kwargs = {}
         kwargs["default"] = argparse.SUPPRESS
         kwargs["nargs"] = "?"
-        kwargs["help"] = _get_config_subcommand_prop_help_text(pinfo)
+        kwargs["help"] = _get_config_subcommand_prop_help_text(prop)
         kwargs["action"] = ArgParse.OrderedArg
 
-        if pinfo["type"] == "bool":
+        if prop["type"] == "bool":
             kwargs["metavar"] = "on/off"
 
         option = f"--{name.replace('_', '-')}"

@@ -114,9 +114,9 @@ def expand_subprops(pnames, props):
         expanded.append(pname)
 
         spnames = []
-        pinfo = props.get(pname)
-        if pinfo:
-            spnames = pinfo.get("subprops", [])
+        prop = props.get(pname)
+        if prop:
+            spnames = prop.get("subprops", [])
 
         for spname in spnames:
             expanded.append(spname)
