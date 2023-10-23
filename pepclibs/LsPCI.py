@@ -25,9 +25,16 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
         line = lines[0].strip().split()
         info = {"pciaddr" : line[0]}
 
-        line = line[2].split(':')
-        info["vendorid"] = line[0]
-        info["devid"] = line[1]
+        line = lines[0].split(':')
+        info["name"] = line[3][:-5]
+
+        # Find two 4 digit hex numbers with a colon in between, all inside of square brackets.
+        x = re.findall(r"\[([0-9a-fA-F]{4}:[0-9a-fA-F]{4})\]", lines[0])
+        if x:
+            line = x[0].split(':')
+            info["vendorid"] = line[0]
+            info["devid"] = line[1]
+
 
         for line in lines[1:]:
             line = line.strip()
@@ -35,7 +42,7 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
                 continue
 
             # Many lines are like "key: val", but not all of them. E.g.:
-            #   DeviceName: Intel i210
+            #   LnkCtl: ASPM L1 Enabled; RCB 64 bytes, Disabled- CommClk+
             #   Memory at b2000000 (32-bit, prefetchable) [size=16M]
             # Split and strip the former, skip the latter.
             line = [text.strip() for text in line.split(":", maxsplit=1)]
@@ -45,14 +52,8 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
             key, val = line
 
             # Keep only device name for now, but this can be extended later.
-            if key == "DeviceName":
-                info["name"] = val
             if key == "LnkCtl":
                 info["aspm_enabled"] = "Enabled" in val
-
-        # 'Lspci' does not necessarily resolves all the names.
-        if "name" not in info:
-            info["name"] = "unknown"
 
         return info
 
@@ -62,7 +63,7 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
         [[[[<domain>]:]<bus>]:][<slot>][.[<func>]].
         """
 
-        cmd = f"{self._lspci_path} -D -n -vv -s {devaddr}"
+        cmd = f"{self._lspci_path} -D -nn -vv -s {devaddr}"
         stdout, _ = self._pman.run_verify(cmd, join=False)
         if not stdout:
             raise Error(f"failed to get information for PCI slot: {devaddr}")
@@ -72,7 +73,7 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
     def get_devices(self):
         """Generator yields device info as dictionary for each device. """
 
-        cmd = f"{self._lspci_path} -D -n -v"
+        cmd = f"{self._lspci_path} -D -nn -vv"
         stdout, _ = self._pman.run_verify(cmd, join=False)
 
         # The output structure is as follows:
