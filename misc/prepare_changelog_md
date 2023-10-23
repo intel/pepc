@@ -59,7 +59,7 @@ def _format_release_entry(tmp_entry, newver):
     date = datetime.now().strftime("%Y-%m-%d")
     lines[0] = lines[0].replace("ADD DATE HERE", date)
 
-    # Strip the changelg lines so that they do not have empty sub-sections. E.g., an entry like
+    # Strip the changelog lines so that they do not have empty sub-sections. E.g., an entry like
     # this:
     # ### Fixed
     # ### Added

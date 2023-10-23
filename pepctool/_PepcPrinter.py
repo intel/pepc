@@ -156,7 +156,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
         Build the aggregate properties dictionary. The arguments are as follows.
           * pnames - property names to build the dictionary for.
-          * cpus - CPU numbers to builde the dictionary for.
+          * cpus - CPU numbers to build the dictionary for.
           * skip_unsupported - if 'True', the resulting aggregate dictionary will not include
                                unsupported properties.
 

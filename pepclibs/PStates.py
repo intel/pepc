@@ -745,7 +745,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         # Use 'self._pcache' for properties below.
         #
         # Special case is the 'base_frequency' property. In some situations it is read from MSR,
-        # which means it can be in both MSR moule cache and in 'self._pcache'. But 'base_frequency'
+        # which means it can be in both MSR module cache and in 'self._pcache'. But 'base_frequency'
         # is read-only, so this double caching does no cause complications in property write path.
         # We could improve the code so that all "getter" methods return a '(val, mname)' tuple
         # and avoid double caching, but it is not worth the trouble at this point.
@@ -875,7 +875,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
     def _write_freq_prop_to_sysfs(self, pname, freq, cpu):
         """
-        Write the minimum or maximum CPU or uncore frequency value 'freq' to the corresponing sysfs
+        Write the minimum or maximum CPU or uncore frequency value 'freq' to the corresponding sysfs
         file.
         """
 
@@ -979,7 +979,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """
         Sets property 'pname'. The 'own' part in function name refers to the fact that this
         method sets only properties implemented by this module, as opposed to properties like "epp",
-        which are implementd by the 'EPP' module.
+        which are implemented by the 'EPP' module.
         """
 
         # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
@@ -1034,10 +1034,10 @@ class PStates(_PCStatesBase.PCStatesBase):
         'max_freq' is 'None'), but it cannot be set because of the ordering constraints.
 
         Here is an example illustrating why order matters. Suppose current min. and max. frequencies
-        and new min. and max. frequnces are as follows:
+        and new min. and max. frequencies are as follows:
          ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
 
-        Where the dotted line represents the horisontal frequency axis. Setting min. frequency
+        Where the dotted line represents the horizontal frequency axis. Setting min. frequency
         before max frequency leads to a failure. Indeed, at step #2 current minimum frequency would
         be set to a value higher that current maximum frequency.
          1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
@@ -1219,7 +1219,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         # depending on configurations. Properties like this have a dedicated "getter" method.
         self._props["base_freq"]["getter"] = self._get_base_freq
 
-        # Propeties backed by a single sysfs file.
+        # Properties backed by a single sysfs file.
         self._props["min_freq"]["fname"] = "scaling_min_freq"
         self._props["max_freq"]["fname"] = "scaling_max_freq"
         self._props["min_freq_limit"]["fname"] = "cpuinfo_min_freq"

@@ -99,12 +99,12 @@ def override_cpu_model(cpuinfo, model):
 def expand_subprops(pnames, props):
     """
     Expand list of property names 'pnames' with sub-property names. The arguments are as follows.
-      * pnames - a collecion of property names to expand.
+      * pnames - a collection of property names to expand.
       * props - the properties dictionary (e.g., 'CStates.PROPS').
 
       This helper function takes a list of property names in 'pnames', and if any property in
-      'pnames' has a sub-property, the sub-propery names are inserted into 'pnames' right after the
-      main property name. Well, the sub-property names are instered to a copy of 'pnames', and the
+      'pnames' has a sub-property, the sub-property names are inserted into 'pnames' right after the
+      main property name. Well, the sub-property names are inserted to a copy of 'pnames', and the
       resulting copy is returned.
     """
 

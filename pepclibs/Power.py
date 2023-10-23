@@ -96,7 +96,7 @@ PROPS = {
 class Power(_PropsClassBase.PropsClassBase):
     """
     This class provides API for managing platform settings related to power. Refer to
-    '_PropsClassBase.PropsClassBase' docstring for public mnames overview.
+    '_PropsClassBase.PropsClassBase' docstring for public methods overview.
     """
 
     def _get_msr(self):

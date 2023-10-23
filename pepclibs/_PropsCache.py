@@ -46,7 +46,7 @@ class PropsCache():
         About the 'mname' argument. A property may be obtained or modified using different
         mechanisms, for example via an MSR register of via a sysfs file. The 'mname' argument can be
         used for distinguishing between different mechanisms. If 'mname' is used for at least one
-        cached property, it has to be used for all the other cached proerties.
+        cached property, it has to be used for all the other cached properties.
         """
 
         if not self._enable_cache:

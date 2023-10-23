@@ -298,7 +298,7 @@ def _tokenize(hval, specs, name=None, multiple=True):
 
 def _tokenize_prepare(unit):
     """
-    Prepare for tokenizing a humen-oriented value where the expected unit is 'unit'. Returns a tuple
+    Prepare for tokenizing a human-oriented value where the expected unit is 'unit'. Returns a tuple
     of the following 3 elements.
       * specs - the specifiers dictionary, suitable for passing to the '_tokenize()' function.
       * scalers - the scalers dictionary, with key being the specifiers from 'specs' and values
@@ -435,7 +435,7 @@ def uncapitalize(sentence):
     This function includes some heuristics to avoid un-capitalizing words like "C1" or "C-state".
     """
 
-    # Seprate out the first word by splitting the sentence. If the word include a hyphen, separate
+    # Separate out the first word by splitting the sentence. If the word include a hyphen, separate
     # out the first part. E.g., "C-state residency" will become just "C".
     word = sentence
     for separator in (" ", "-"):

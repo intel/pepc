@@ -37,7 +37,7 @@ There are many Linux tools for configuring power management in Linux, and this s
 explain why we created yet another one.
 
 We are doing a lot of work related to power and performance, such as measuring C-states latency
-using [wult](https://github.com/intel/wult), running various workloads and collectin power and
+using [wult](https://github.com/intel/wult), running various workloads and collecting power and
 performance statistics using [stats-collect](https://github.com/intel/stats-collect). We often
 need to configure various power and performance aspects of the system, for example, enable or
 disable C-states, limit CPU or uncore frequency, tweak hardware features like C1 demotion, and
@@ -52,7 +52,7 @@ requires knowledge of the MSR register and the bit number to toggle. The 'wrmsr'
 helpful tools, but they were not easy enough for us to use on a regular basis.
 
 We created 'pepc' to make power and performance configuration tasks easier. With pepc, we do not
-have to remember sysfs paths and platform-specific MSR (Model Spesific Register) numbers. The tool
+have to remember sysfs paths and platform-specific MSR (Model Specific Register) numbers. The tool
 is flexible, supports many CPU models, well-structured, and also provides Python API for other
 python projects to use.
 
@@ -179,7 +179,7 @@ git archive --format zip release >> pepc.standalone
 chmod ug+x pepc.standalone
 ```
 
-This will create the 'pepc.stanalone' file, which you can rename and copy anywhere. It will work
+This will create the 'pepc.standalone' file, which you can rename and copy anywhere. It will work
 as a standalone program.
 
 ## Tab completions
@@ -236,7 +236,7 @@ CPU frequency driver: intel_pstate
 
 ### Set min. and max. CPU frequency
 
-Limit CPU frequency reange to [1.5GHz, 2GHz] for all CPUs.
+Limit CPU frequency rearrange to [1.5GHz, 2GHz] for all CPUs.
 
 ```
 $ pepc pstates config --min-freq 1.5GHz --max-freq 2GHz
@@ -453,7 +453,7 @@ Onlining CPU87
 
 Core siblings are CPUs withing one core. On Intel chips, there are the hyperthreads.
 If a system has two CPUs (execution units, hyperthreads) per core, then their core
-sibling inices are 0 and 1. To disable hyperthreads, offline all core siblings with
+sibling indices are 0 and 1. To disable hyperthreads, offline all core siblings with
 index 1.
 
 

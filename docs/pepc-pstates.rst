@@ -421,7 +421,7 @@ pepc pstates *info* **--min-freq-limit**
 Description
 -----------
 
-Maximum supported CPU frequency is the highest requency the CPU can be configured to run at.
+Maximum supported CPU frequency is the highest frequency the CPU can be configured to run at.
 
 Mechanism
 ---------

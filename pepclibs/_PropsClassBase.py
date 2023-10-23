@@ -21,7 +21,8 @@ Naming conventions.
  * props - dictionary describing the properties. As an example, check 'PROPS' in 'PStates' and
            'CStates'.
  * pvinfo - the property value dictionary, returned by 'get_prop()' and 'get_cpu_prop()'. Includes
-            proerty value and CPU number. Refer to 'PropsClassBase.get_prop()' for more information.
+            property value and CPU number. Refer to 'PropsClassBase.get_prop()' for more
+            information.
  * pname - name of a property.
  * sname - name of a scope from the allowed list of scope names in 'CPUInfo.LEVELS'.
  * <sname> siblings - all CPUs sharing the same <sname>. E.g. "package siblings" means all CPUs
@@ -65,7 +66,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     @staticmethod
     def get_mechanism_descr(mname):
         """
-        Get a string describing a property mechanism 'nname'. See the 'MECHANISMS' dictionary for
+        Get a string describing a property mechanism 'mname'. See the 'MECHANISMS' dictionary for
         more information.
         """
 
@@ -140,7 +141,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         The property value dictionary has the following format:
             { "cpu": CPU number,
-              "val": value of proerty 'pname' on the given CPU }
+              "val": value of property 'pname' on the given CPU }
 
         If a property is not supported, the 'val' and 'mname' keys will contain 'None'.
 
