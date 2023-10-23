@@ -84,10 +84,7 @@ def _get_scope_options(params):
     return {"good" : good_scope_options, "bad" : bad_scope_options}
 
 def test_cstates_info(params):
-    """
-    Test 'pepc cstates info' command. The 'caplog' argument is standard pytest fixture allowing
-    access to the captured logs.
-    """
+    """Test 'pepc cstates info' command."""
 
     pman = params["pman"]
     scope_options = _get_scope_options(params)
