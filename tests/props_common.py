@@ -8,7 +8,7 @@
 #
 # Author: Niklas Neronin <niklas.neronin@intel.com>
 
-"""Common functions for the 'CStates' and 'PStates' class tests."""
+"""Common functions for the property class tests (e.g., 'CStates', 'PStates')."""
 
 def is_prop_supported(pname, cpu0_pinfo):
     """
@@ -44,21 +44,21 @@ def get_siblings(cpuinfo, cpu=0):
 
     return siblings
 
-def set_and_verify(pcobj, pname, value, cpus):
+def set_and_verify(pobj, pname, value, cpus):
     """
     Set property 'pname' to value 'value' for CPUs in 'cpus', then read it back and verify that the
     read value is 'value'.
 
     The argument are as follows.
-     * pcobj - 'CStates' or 'PStates' object.
+     * pobj - a "property" object (e.g. 'CStates' or 'PStates').
      * pname - name of the property.
      * value - the new value.
      * cpus - list of CPUs.
     """
 
-    pcobj.set_prop(pname, value, cpus)
+    pobj.set_prop(pname, value, cpus)
 
-    for pvinfo in pcobj.get_prop(pname, cpus):
+    for pvinfo in pobj.get_prop(pname, cpus):
         if pvinfo["val"] != value:
             assert False, f"Failed to set property '{pname}' for CPU {pvinfo['cpu']}\nSet to " \
                           f"'{value}' and received '{pvinfo['val']}'."

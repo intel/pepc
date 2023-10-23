@@ -247,7 +247,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def __init__(self, pobj, cpuinfo, fobj=None, fmt="human"):
         """
         Initialize a class instance. The arguments are as follows.
-          * obj - a 'PStates', 'CStates' or 'Power' object to print the properties for.
+          * obj - a "properties" object ('PStates', 'CStates', etc) to print the properties for.
           * cpuinfo - a 'CPUInfo' object corresponding to the host the properties are read from.
           * fobj - a file object to print the output to (standard output by default).
           * fmt - the printing format.

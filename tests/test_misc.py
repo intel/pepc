@@ -19,8 +19,8 @@ from pepctool import _Pepc
 
 def test_unknown_cpu_model(hostspec):
     """
-    This function tests that 'PStates' and 'CStates' don't fail when getting a property on an
-    unknown CPU model.
+    This function tests that property objects (such as 'PStates' and 'CStates') don't fail when
+    getting a property on an unknown CPU model.
     """
 
     emul_modules = ["CPUInfo", "PStates", "CStates"]
@@ -29,13 +29,13 @@ def test_unknown_cpu_model(hostspec):
          CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         cpuinfo.info["model"] = 0
 
-        with PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
-            pname = next(iter(psobj.props))
-            psobj.get_cpu_prop(pname, 0)
+        with PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
+            pname = next(iter(pobj.props))
+            pobj.get_cpu_prop(pname, 0)
 
-        with CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
-            pname = next(iter(csobj.props))
-            csobj.get_cpu_prop(pname, 0)
+        with CStates.CStates(pman=pman, cpuinfo=cpuinfo) as pobj:
+            pname = next(iter(pobj.props))
+            pobj.get_cpu_prop(pname, 0)
 
 def test_propscache_scope(hostspec):
     """This function tests that the 'PropsCache' class caches a value to the correct CPUs."""

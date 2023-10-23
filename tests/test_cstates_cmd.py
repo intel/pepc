@@ -26,15 +26,15 @@ def get_params(hostspec, tmp_path_factory):
 
     with get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as csobj:
+         CStates.CStates(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = build_params(pman)
         params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
-        params["csobj"] = csobj
+        params["pobj"] = pobj
 
         cpu0_pinfo = {}
-        for pname in csobj.props:
-            cpu0_pinfo[pname] = csobj.get_cpu_prop(pname, 0)["val"]
+        for pname in pobj.props:
+            cpu0_pinfo[pname] = pobj.get_cpu_prop(pname, 0)["val"]
         params["cpu0_pinfo"] = cpu0_pinfo
 
         allcpus = cpuinfo.get_cpus()
@@ -49,7 +49,7 @@ def get_params(hostspec, tmp_path_factory):
 
         params["cstates"] = []
         if is_prop_supported("idle_driver", params["cpu0_pinfo"]):
-            for _, csinfo in csobj.get_cstates_info(cpus=[params["testcpus"][0]]):
+            for _, csinfo in pobj.get_cstates_info(cpus=[params["testcpus"][0]]):
                 for csname in csinfo:
                     params["cstates"].append(csname)
 

@@ -26,7 +26,7 @@ def get_params(hostspec, tmp_path_factory):
 
     with get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         PStates.PStates(pman=pman, cpuinfo=cpuinfo) as psobj:
+         PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = build_params(pman)
         params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
@@ -38,11 +38,11 @@ def get_params(hostspec, tmp_path_factory):
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
         params["siblings"] = get_siblings(cpuinfo, cpu=0)
 
-        params["psobj"] = psobj
+        params["pobj"] = pobj
 
         cpu0_pinfo = {}
-        for pname in psobj.props:
-            cpu0_pinfo[pname] = psobj.get_cpu_prop(pname, 0)["val"]
+        for pname in pobj.props:
+            cpu0_pinfo[pname] = pobj.get_cpu_prop(pname, 0)["val"]
         params["cpu0_pinfo"] = cpu0_pinfo
 
         yield params
@@ -316,7 +316,7 @@ def _set_freq_pairs(params, min_pname, max_pname):
     them correctly. The arguments 'min_pname' and 'max_pname' are the frequency property names.
     """
 
-    sname = params["psobj"].get_sname(min_pname)
+    sname = params["pobj"].get_sname(min_pname)
     siblings = params["siblings"][sname]
 
     min_limit = params["cpu0_pinfo"][f"{min_pname}_limit"]
@@ -358,9 +358,9 @@ def test_pstates_frequency_set_order(params):
 
     # When Turbo is disabled the max frequency may be limited.
     if is_prop_supported("turbo", params["cpu0_pinfo"]):
-        sname = params["psobj"].get_sname("turbo")
+        sname = params["pobj"].get_sname("turbo")
         cpus = params["siblings"][sname]
-        params["psobj"].set_prop("turbo", "on", cpus)
+        params["pobj"].set_prop("turbo", "on", cpus)
 
     if is_prop_supported("min_freq", params["cpu0_pinfo"]):
         _set_freq_pairs(params, "min_freq", "max_freq")

@@ -32,10 +32,10 @@ def pstates_info_command(args, pman):
         if args.override_cpu_model:
             _PepcCommon.override_cpu_model(cpuinfo, args.override_cpu_model)
 
-        psobj = PStates.PStates(pman=pman, cpuinfo=cpuinfo)
-        stack.enter_context(psobj)
+        pobj = PStates.PStates(pman=pman, cpuinfo=cpuinfo)
+        stack.enter_context(pobj)
 
-        psprint = _PepcPrinter.PStatesPrinter(psobj, cpuinfo, fmt=fmt)
+        psprint = _PepcPrinter.PStatesPrinter(pobj, cpuinfo, fmt=fmt)
         stack.enter_context(psprint)
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
@@ -45,7 +45,7 @@ def pstates_info_command(args, pman):
                                           group=True)
         else:
             pnames = list(getattr(args, "oargs"))
-            pnames = _PepcCommon.expand_subprops(pnames, psobj.props)
+            pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
             printed = psprint.print_props(pnames=pnames, cpus=cpus, skip_unsupported=False)
 
         if not printed:
@@ -79,19 +79,19 @@ def pstates_config_command(args, pman):
         msr = MSR.MSR(pman, cpuinfo=cpuinfo)
         stack.enter_context(msr)
 
-        psobj = PStates.PStates(pman=pman, msr=msr, cpuinfo=cpuinfo)
-        stack.enter_context(psobj)
+        pobj = PStates.PStates(pman=pman, msr=msr, cpuinfo=cpuinfo)
+        stack.enter_context(pobj)
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
 
-        psprint = _PepcPrinter.PStatesPrinter(psobj, cpuinfo)
+        psprint = _PepcPrinter.PStatesPrinter(pobj, cpuinfo)
         stack.enter_context(psprint)
 
         if print_opts:
             psprint.print_props(pnames=print_opts, cpus=cpus, skip_unsupported=False)
 
         if set_opts:
-            psset = _PepcSetter.PStatesSetter(psobj, cpuinfo, psprint, msr=msr)
+            psset = _PepcSetter.PStatesSetter(pobj, cpuinfo, psprint, msr=msr)
             stack.enter_context(psset)
             psset.set_props(set_opts, cpus=cpus)
 
@@ -105,8 +105,8 @@ def pstates_save_command(args, pman):
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
-        psobj = PStates.PStates(pman=pman, cpuinfo=cpuinfo)
-        stack.enter_context(psobj)
+        pobj = PStates.PStates(pman=pman, cpuinfo=cpuinfo)
+        stack.enter_context(pobj)
 
         fobj = None
         if args.outfile != "-":
@@ -119,7 +119,7 @@ def pstates_save_command(args, pman):
 
             stack.enter_context(fobj)
 
-        psprint = _PepcPrinter.PStatesPrinter(psobj, cpuinfo, fobj=fobj, fmt="yaml")
+        psprint = _PepcPrinter.PStatesPrinter(pobj, cpuinfo, fobj=fobj, fmt="yaml")
         stack.enter_context(psprint)
 
         cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
@@ -141,13 +141,13 @@ def pstates_restore_command(args, pman):
         msr = MSR.MSR(pman, cpuinfo=cpuinfo)
         stack.enter_context(msr)
 
-        psobj = PStates.PStates(pman=pman, msr=msr, cpuinfo=cpuinfo)
-        stack.enter_context(psobj)
+        pobj = PStates.PStates(pman=pman, msr=msr, cpuinfo=cpuinfo)
+        stack.enter_context(pobj)
 
-        psprint = _PepcPrinter.PStatesPrinter(psobj, cpuinfo)
+        psprint = _PepcPrinter.PStatesPrinter(pobj, cpuinfo)
         stack.enter_context(psprint)
 
-        psset = _PepcSetter.PStatesSetter(psobj, cpuinfo, psprint, msr=msr)
+        psset = _PepcSetter.PStatesSetter(pobj, cpuinfo, psprint, msr=msr)
         stack.enter_context(psset)
 
         psset.restore(args.infile)

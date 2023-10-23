@@ -30,15 +30,15 @@ def get_params(hostspec, request):
 
     with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CStates.CStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as csobj:
+         CStates.CStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
         params = common.build_params(pman)
 
         params["siblings"] = get_siblings(cpuinfo, cpu=0)
-        params["csobj"] = csobj
+        params["pobj"] = pobj
 
         cpu0_pinfo = {}
-        for pname in csobj.props:
-            cpu0_pinfo[pname] = csobj.get_cpu_prop(pname, 0)["val"]
+        for pname in pobj.props:
+            cpu0_pinfo[pname] = pobj.get_cpu_prop(pname, 0)["val"]
         params["cpu0_pinfo"] = cpu0_pinfo
 
         yield params
@@ -66,12 +66,12 @@ def test_cstates_set_and_verify(params):
     """This test verifies that 'get_prop()' returns same values set by 'set_prop()'."""
 
     for pname, value in _set_and_verify_data(params):
-        sname = params["csobj"].get_sname(pname)
+        sname = params["pobj"].get_sname(pname)
         siblings = params["siblings"][sname]
 
-        set_and_verify(params["csobj"], pname, value, siblings)
+        set_and_verify(params["pobj"], pname, value, siblings)
 
 def test_cstates_property_type(params):
     """This test verifies that 'get_prop()' returns values of the correct type."""
 
-    verify_props_value_type(params["csobj"].props, params["cpu0_pinfo"])
+    verify_props_value_type(params["pobj"].props, params["cpu0_pinfo"])
