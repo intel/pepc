@@ -12,7 +12,7 @@
 
 import pytest
 import common
-from props_common import get_siblings, verify_props_value_type, is_prop_supported
+import props_common
 from pepclibs import CPUInfo, Power
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
@@ -34,7 +34,7 @@ def get_params(hostspec, request):
          Power.Power(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
         params = common.build_params(pman)
 
-        params["siblings"] = get_siblings(cpuinfo, cpu=0)
+        params["siblings"] = props_common.get_siblings(cpuinfo, cpu=0)
         params["pobj"] = pobj
 
         cpu0_pinfo = {}
@@ -57,7 +57,7 @@ def _set_and_verify_data(params):
 
     for pat in bool_pnames_pat:
         pname = f"ppl{pat}"
-        if is_prop_supported(pname, cpu0_pinfo):
+        if props_common.is_prop_supported(pname, cpu0_pinfo):
             if cpu0_pinfo[pname] == "off":
                 val = "on"
             else:
@@ -70,7 +70,7 @@ def _set_and_verify_data(params):
     # For power limits, test with current value - 1W, and current value.
     for pat in power_pnames_pat:
         pname = f"ppl{pat}"
-        if is_prop_supported(pname, cpu0_pinfo):
+        if props_common.is_prop_supported(pname, cpu0_pinfo):
             yield pname, cpu0_pinfo[pname] - 1
             yield pname, cpu0_pinfo[pname]
 
@@ -127,4 +127,4 @@ def test_power_set_and_verify(params):
 def test_power_property_type(params):
     """This test verifies that 'get_prop()' returns values of the correct type."""
 
-    verify_props_value_type(params["pobj"].props, params["cpu0_pinfo"])
+    props_common.verify_props_value_type(params["pobj"].props, params["cpu0_pinfo"])

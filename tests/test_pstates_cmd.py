@@ -12,8 +12,8 @@
 
 import copy
 import pytest
-from common import get_pman, run_pepc, build_params
-from props_common import get_siblings, is_prop_supported
+import common
+import props_common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human, YAML
 from pepclibs import CPUInfo, PStates, BClock
@@ -24,10 +24,10 @@ def get_params(hostspec, tmp_path_factory):
 
     emul_modules = ["CPUInfo", "PStates", "Systemctl"]
 
-    with get_pman(hostspec, modules=emul_modules) as pman, \
+    with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
-        params = build_params(pman)
+        params = common.build_params(pman)
         params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         params["cpuinfo"] = cpuinfo
@@ -36,7 +36,7 @@ def get_params(hostspec, tmp_path_factory):
         params["cores"] = {}
         for pkg in params["packages"]:
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
-        params["siblings"] = get_siblings(cpuinfo, cpu=0)
+        params["siblings"] = props_common.get_siblings(cpuinfo, cpu=0)
 
         params["pobj"] = pobj
 
@@ -89,26 +89,26 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
 
-    if is_prop_supported("min_freq", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("min_freq", params["cpu0_pinfo"]):
         good_options += [
             "--min-freq",
             "--max-freq",
             "--min-freq --max-freq",
             "--min-freq min",
             "--max-freq min"]
-        if is_prop_supported("turbo", params["cpu0_pinfo"]) and \
+        if props_common.is_prop_supported("turbo", params["cpu0_pinfo"]) and \
             params["cpu0_pinfo"]["turbo"] == "on":
             good_options += [
                 "--max-freq max",
                 "--min-freq min --max-freq max",
                 "--max-freq max --min-freq min"]
-        if is_prop_supported("max_eff_freq", params["cpu0_pinfo"]):
+        if props_common.is_prop_supported("max_eff_freq", params["cpu0_pinfo"]):
             good_options += [
                 "--max-freq lfm",
                 "--max-freq eff",
                 "--min-freq lfm",
                 "--min-freq eff"]
-        if is_prop_supported("base_freq", params["cpu0_pinfo"]):
+        if props_common.is_prop_supported("base_freq", params["cpu0_pinfo"]):
             good_options += [
                 "--max-freq base",
                 "--max-freq hfm",
@@ -121,7 +121,7 @@ def _get_config_options(params):
             "--min-freq maximum",
             "--min-freq max --max-freq min"]
 
-    if is_prop_supported("min_uncore_freq", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("min_uncore_freq", params["cpu0_pinfo"]):
         good_options += [
             "--min-uncore-freq",
             "--max-uncore-freq",
@@ -136,17 +136,17 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
 
-    if is_prop_supported("governor", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("governor", params["cpu0_pinfo"]):
         good_options += ["--governor"]
         for governor in params["cpu0_pinfo"]["governors"]:
             good_options += [f"--governor {governor}"]
         bad_options += ["--governor savepower"]
 
-    if is_prop_supported("epp", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("epp", params["cpu0_pinfo"]):
         good_options += ["--epp", "--epp 0", "--epp 128", "--epp performance"]
         bad_options += ["--epp 256", "--epp green_tree"]
 
-    if is_prop_supported("epb", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("epb", params["cpu0_pinfo"]):
         good_options += ["--epb", "--epb 0", "--epb 15", "--epb performance"]
         bad_options += ["--epb 16", "--epb green_tree"]
 
@@ -155,9 +155,10 @@ def _get_config_options(params):
     good_options = []
     bad_options = []
 
-    if is_prop_supported("intel_pstate_mode", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("intel_pstate_mode", params["cpu0_pinfo"]):
         # The "off" mode is not supported when HWP is enabled.
-        if is_prop_supported("hwp", params["cpu0_pinfo"]) and params["cpu0_pinfo"]["hwp"] == "off":
+        if props_common.is_prop_supported("hwp", params["cpu0_pinfo"]) and \
+           params["cpu0_pinfo"]["hwp"] == "off":
             good_options += ["--intel-pstate-mode off"]
 
         # Note, the last mode is intentionally something else but "off", because in "off" mode many
@@ -167,7 +168,7 @@ def _get_config_options(params):
 
         bad_options += ["--intel-pstate-mode Dagny"]
 
-    if is_prop_supported("turbo", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("turbo", params["cpu0_pinfo"]):
         good_options += ["--turbo", "--turbo enable", "--turbo OFF"]
         bad_options += ["--turbo 1"]
 
@@ -182,13 +183,13 @@ def test_pstates_info(params):
     scope_options = _get_scope_options(params)
 
     for option in scope_options["good"]:
-        run_pepc(f"pstates info {option}", pman)
+        common.run_pepc(f"pstates info {option}", pman)
 
     for option in scope_options["bad"]:
-        run_pepc(f"pstates info {option}", pman, exp_exc=Error)
+        common.run_pepc(f"pstates info {option}", pman, exp_exc=Error)
 
     # Treat the target system as Sapphire Rapids Xeon.
-    run_pepc("pstates info --override-cpu-model 0x8F", pman)
+    common.run_pepc("pstates info --override-cpu-model 0x8F", pman)
 
 def _test_pstates_config_good(params):
     """Test 'pepc pstates config' command with good argument values."""
@@ -201,21 +202,21 @@ def _test_pstates_config_good(params):
         for scope in scope_options["good"]:
             if "uncore" in option and ("package" not in scope or "core" in scope):
                 continue
-            run_pepc(f"pstates config {option} {scope}", pman)
+            common.run_pepc(f"pstates config {option} {scope}", pman)
 
         for scope in scope_options["bad"]:
-            run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
+            common.run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
 
     for option in config_options["config"]["good"]:
         for scope in scope_options["good"]:
-            run_pepc(f"pstates config {option} {scope}", pman)
+            common.run_pepc(f"pstates config {option} {scope}", pman)
 
         for scope in scope_options["bad"]:
-            run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
+            common.run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
 
     for option in config_options["config_global"]["good"]:
         for scope in scope_options["good_global"]:
-            run_pepc(f"pstates config {option} {scope}", pman)
+            common.run_pepc(f"pstates config {option} {scope}", pman)
 
 def _test_pstates_config_bad(params):
     """Test 'pepc pstates config' command with bad argument values."""
@@ -226,17 +227,17 @@ def _test_pstates_config_bad(params):
 
     # Test other config options.
     for option in config_options["freq"]["bad"]:
-        run_pepc(f"pstates config {option}", pman, exp_exc=Error)
+        common.run_pepc(f"pstates config {option}", pman, exp_exc=Error)
 
     for option in config_options["freq"]["good"]:
         for scope in scope_options["bad"]:
-            run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
+            common.run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
 
     for option in config_options["config_global"]["bad"]:
-        run_pepc(f"pstates config {option}", pman, exp_exc=Error)
+        common.run_pepc(f"pstates config {option}", pman, exp_exc=Error)
 
     for option in config_options["config"]["bad"]:
-        run_pepc(f"pstates config {option}", pman, exp_exc=Error)
+        common.run_pepc(f"pstates config {option}", pman, exp_exc=Error)
 
 def test_pstates_config(params):
     """Test 'pepc pstates config' command."""
@@ -258,13 +259,13 @@ def test_pstates_save_restore(params):
 
     for option in good_options:
         for scope in scope_options["good"]:
-            run_pepc(f"pstates save {option} {scope}", pman)
+            common.run_pepc(f"pstates save {option} {scope}", pman)
 
         for scope in scope_options["bad"]:
-            run_pepc(f"pstates save {option} {scope}", pman, exp_exc=Error)
+            common.run_pepc(f"pstates save {option} {scope}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
-    run_pepc(f"pstates save -o {state_path}", pman)
+    common.run_pepc(f"pstates save -o {state_path}", pman)
     state = YAML.load(state_path)
 
     cpus = Human.rangify(params["cpus"])
@@ -278,7 +279,8 @@ def test_pstates_save_restore(params):
             # Restoring 'epb' will also modify 'epb_hw' and vise versa. Thus, if one is changed,
             # both have to be changed.
             val = int((state[pname][0]["value"] + 1) / 2)
-        if pname == "min_freq_hw" and is_prop_supported("min_oper_freq", params["cpu0_pinfo"]):
+        if pname == "min_freq_hw" and \
+           props_common.is_prop_supported("min_oper_freq", params["cpu0_pinfo"]):
             # In most cases MSR and sysfs will modify each other, but min. CPU frequency is an
             # exception. Because sysfs min. limit is min. efficient frequency (e.g., the optimal
             # point between performance and the lowest power drain), while MSRs min. limit is min.
@@ -298,15 +300,15 @@ def test_pstates_save_restore(params):
 
     state_modified_path = tmp_path / f"state_modified.{hostname}"
     YAML.dump(state_modified, state_modified_path)
-    run_pepc(f"pstates restore -f {state_modified_path}", pman)
+    common.run_pepc(f"pstates restore -f {state_modified_path}", pman)
 
     state_read_back_path = tmp_path / f"state_read_back.{hostname}"
-    run_pepc(f"pstates save -o {state_read_back_path}", pman)
+    common.run_pepc(f"pstates save -o {state_read_back_path}", pman)
     read_back = YAML.load(state_read_back_path)
     assert read_back == state_modified, "restoring P-states configuration failed"
 
-    run_pepc(f"pstates restore -f {state_path}", pman)
-    run_pepc(f"pstates save -o {state_read_back_path}", pman)
+    common.run_pepc(f"pstates restore -f {state_path}", pman)
+    common.run_pepc(f"pstates save -o {state_read_back_path}", pman)
     read_back = YAML.load(state_read_back_path)
     assert read_back == state, "restoring P-states configuration failed"
 
@@ -334,15 +336,15 @@ def _set_freq_pairs(params, min_pname, max_pname):
 
     # [Min ------------------ Max ----------------------------------------------------------]
     freq_opts = f"{min_optname} {min_limit} {max_optname} {min_limit + increment}"
-    run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
+    common.run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
 
     # [-------------------------------------------------------- Min -------------------- Max]
     freq_opts = f"{min_optname} {max_limit - increment} {max_optname} {max_limit}"
-    run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
+    common.run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
 
     # [Min ------------------ Max ----------------------------------------------------------]
     freq_opts = f"{min_optname} {min_limit} {max_optname} {min_limit + increment}"
-    run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
+    common.run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
 
 def test_pstates_frequency_set_order(params):
     """
@@ -357,13 +359,13 @@ def test_pstates_frequency_set_order(params):
         return
 
     # When Turbo is disabled the max frequency may be limited.
-    if is_prop_supported("turbo", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("turbo", params["cpu0_pinfo"]):
         sname = params["pobj"].get_sname("turbo")
         cpus = params["siblings"][sname]
         params["pobj"].set_prop("turbo", "on", cpus)
 
-    if is_prop_supported("min_freq", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("min_freq", params["cpu0_pinfo"]):
         _set_freq_pairs(params, "min_freq", "max_freq")
 
-    if is_prop_supported("min_uncore_freq", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("min_uncore_freq", params["cpu0_pinfo"]):
         _set_freq_pairs(params, "min_uncore_freq", "max_uncore_freq")

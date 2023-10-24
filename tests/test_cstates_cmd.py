@@ -12,8 +12,8 @@
 
 import copy
 import pytest
-from common import get_pman, run_pepc, build_params
-from props_common import is_prop_supported
+import common
+import props_common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human, YAML
 from pepclibs import CPUInfo, CStates
@@ -24,10 +24,10 @@ def get_params(hostspec, tmp_path_factory):
 
     emul_modules = ["CPUInfo", "CStates", "Systemctl"]
 
-    with get_pman(hostspec, modules=emul_modules) as pman, \
+    with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.CStates(pman=pman, cpuinfo=cpuinfo) as pobj:
-        params = build_params(pman)
+        params = common.build_params(pman)
         params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         params["pobj"] = pobj
@@ -48,7 +48,7 @@ def get_params(hostspec, tmp_path_factory):
         params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
 
         params["cstates"] = []
-        if is_prop_supported("idle_driver", params["cpu0_pinfo"]):
+        if props_common.is_prop_supported("idle_driver", params["cpu0_pinfo"]):
             for _, csinfo in pobj.get_cstates_info(cpus=[params["testcpus"][0]]):
                 for csname in csinfo:
                     params["cstates"].append(csname)
@@ -90,16 +90,16 @@ def test_cstates_info(params):
     scope_options = _get_scope_options(params)
 
     for option in scope_options["good"]:
-        run_pepc(f"cstates info {option}", pman)
+        common.run_pepc(f"cstates info {option}", pman)
 
     for option in scope_options["bad"]:
-        run_pepc(f"cstates info {option}", pman, exp_exc=Error)
+        common.run_pepc(f"cstates info {option}", pman, exp_exc=Error)
 
     for cstate in params["cstates"]:
-        run_pepc(f"cstates info --cpus 0 --cstates {cstate}", pman)
+        common.run_pepc(f"cstates info --cpus 0 --cstates {cstate}", pman)
 
     # Treat the target system as Sapphire Rapids Xeon.
-    run_pepc("cstates info --override-cpu-model 0x8F", pman)
+    common.run_pepc("cstates info --override-cpu-model 0x8F", pman)
 
 def test_cstates_config(params):
     """Test 'pepc cstates config' command."""
@@ -108,32 +108,32 @@ def test_cstates_config(params):
     scope_options = _get_scope_options(params)
 
     good_options = []
-    if is_prop_supported("idle_driver", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("idle_driver", params["cpu0_pinfo"]):
         good_options += ["--enable all",
                          "--disable all",
                          f"--enable {params['cstates'][-1]}",
                          f"--disable {params['cstates'][-1]}"]
 
-    if is_prop_supported("pkg_cstate_limit", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("pkg_cstate_limit", params["cpu0_pinfo"]):
         good_options += ["--pkg-cstate-limit"]
         if params["cpu0_pinfo"]["pkg_cstate_limit_lock"] == "off":
             pc = params["cpu0_pinfo"]["pkg_cstate_limits"][0]
             good_options += [f"--pkg-cstate-limit {pc.upper()}", f"--pkg-cstate-limit {pc.lower()}"]
-    if is_prop_supported("c1_demotion", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("c1_demotion", params["cpu0_pinfo"]):
         good_options += ["--c1-demotion", "--c1-demotion on", "--c1-demotion OFF"]
-    if is_prop_supported("c1_undemotion", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("c1_undemotion", params["cpu0_pinfo"]):
         good_options += ["--c1-undemotion", "--c1-undemotion on", "--c1-undemotion OFF"]
-    if is_prop_supported("c1e_autopromote", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("c1e_autopromote", params["cpu0_pinfo"]):
         good_options += ["--c1e-autopromote", "--c1e-autopromote on", "--c1e-autopromote OFF"]
-    if is_prop_supported("cstate_prewake", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("cstate_prewake", params["cpu0_pinfo"]):
         good_options += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake OFF"]
 
     for option in good_options:
         for scope in scope_options["good"]:
-            run_pepc(f"cstates config {option} {scope}", pman)
+            common.run_pepc(f"cstates config {option} {scope}", pman)
 
         for scope in scope_options["bad"]:
-            run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
+            common.run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
 
     bad_options = [
         "--enable CC0",
@@ -141,28 +141,28 @@ def test_cstates_config(params):
         "--cstate-prewake meh"]
 
     for option in bad_options:
-        run_pepc(f"cstates config {option}", pman, exp_exc=Error)
+        common.run_pepc(f"cstates config {option}", pman, exp_exc=Error)
 
         for scope in scope_options["good"]:
-            run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
+            common.run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
 
         for scope in scope_options["bad"]:
-            run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
+            common.run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
 
     # Options tested without 'scope_options'.
     good_options = []
     bad_options = []
 
-    if is_prop_supported("governor", params["cpu0_pinfo"]):
+    if props_common.is_prop_supported("governor", params["cpu0_pinfo"]):
         good_options += ["--governor"]
         for governor in params["cpu0_pinfo"]["governors"]:
             good_options += [f"--governor {governor}"]
         bad_options += ["--governor reardenmetal"]
 
     for option in good_options:
-        run_pepc(f"cstates config {option}", pman)
+        common.run_pepc(f"cstates config {option}", pman)
     for option in bad_options:
-        run_pepc(f"cstates config {option}", pman, exp_exc=Error)
+        common.run_pepc(f"cstates config {option}", pman, exp_exc=Error)
 
 def test_cstates_save_restore(params):
     """Test 'pepc cstates save' and 'pepc cstates restore' commands."""
@@ -178,13 +178,13 @@ def test_cstates_save_restore(params):
 
     for option in good_options:
         for scope in scope_options["good"]:
-            run_pepc(f"cstates save {option} {scope}", pman)
+            common.run_pepc(f"cstates save {option} {scope}", pman)
 
         for scope in scope_options["bad"]:
-            run_pepc(f"cstates save {option} {scope}", pman, exp_exc=Error)
+            common.run_pepc(f"cstates save {option} {scope}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
-    run_pepc(f"cstates save -o {state_path}", pman)
+    common.run_pepc(f"cstates save -o {state_path}", pman)
     state = YAML.load(state_path)
 
     state_swap = copy.deepcopy(state)
@@ -197,14 +197,14 @@ def test_cstates_save_restore(params):
 
     state_swap_path = tmp_path / f"state_swap.{hostname}"
     YAML.dump(state_swap, state_swap_path)
-    run_pepc(f"cstates restore -f {state_swap_path}", pman)
+    common.run_pepc(f"cstates restore -f {state_swap_path}", pman)
 
     state_read_back_path = tmp_path / f"state_read_back.{hostname}"
-    run_pepc(f"cstates save -o {state_read_back_path}", pman)
+    common.run_pepc(f"cstates save -o {state_read_back_path}", pman)
     read_back = YAML.load(state_read_back_path)
     assert read_back == state_swap, "restoring C-states configuration failed"
 
-    run_pepc(f"cstates restore -f {state_path}", pman)
-    run_pepc(f"cstates save -o {state_read_back_path}", pman)
+    common.run_pepc(f"cstates restore -f {state_path}", pman)
+    common.run_pepc(f"cstates save -o {state_read_back_path}", pman)
     read_back = YAML.load(state_read_back_path)
     assert read_back == state, "restoring C-states configuration failed"

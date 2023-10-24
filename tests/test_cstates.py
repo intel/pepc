@@ -12,7 +12,7 @@
 
 import pytest
 import common
-from props_common import get_siblings, set_and_verify, verify_props_value_type, is_prop_supported
+import props_common
 from pepclibs import CPUInfo, CStates
 
 def _get_enable_cache_param():
@@ -33,7 +33,7 @@ def get_params(hostspec, request):
          CStates.CStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
         params = common.build_params(pman)
 
-        params["siblings"] = get_siblings(cpuinfo, cpu=0)
+        params["siblings"] = props_common.get_siblings(cpuinfo, cpu=0)
         params["pobj"] = pobj
 
         cpu0_pinfo = {}
@@ -54,11 +54,11 @@ def _set_and_verify_data(params):
 
     bool_pnames = {"c1_demotion", "c1_undemotion", "c1e_autopromote", "cstate_prewake"}
     for pname in bool_pnames:
-        if is_prop_supported(pname, cpu0_pinfo):
+        if props_common.is_prop_supported(pname, cpu0_pinfo):
             yield pname, "on"
             yield pname, "off"
 
-    if is_prop_supported("governor", cpu0_pinfo):
+    if props_common.is_prop_supported("governor", cpu0_pinfo):
         yield "governor", cpu0_pinfo["governors"][0]
         yield "governor", cpu0_pinfo["governors"][-1]
 
@@ -69,9 +69,9 @@ def test_cstates_set_and_verify(params):
         sname = params["pobj"].get_sname(pname)
         siblings = params["siblings"][sname]
 
-        set_and_verify(params["pobj"], pname, value, siblings)
+        props_common.set_and_verify(params["pobj"], pname, value, siblings)
 
 def test_cstates_property_type(params):
     """This test verifies that 'get_prop()' returns values of the correct type."""
 
-    verify_props_value_type(params["pobj"].props, params["cpu0_pinfo"])
+    props_common.verify_props_value_type(params["pobj"].props, params["cpu0_pinfo"])

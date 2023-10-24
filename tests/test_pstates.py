@@ -12,7 +12,7 @@
 
 import pytest
 import common
-from props_common import get_siblings, is_prop_supported, set_and_verify, verify_props_value_type
+import props_common
 from pepclibs import CPUInfo, PStates
 
 def _get_enable_cache_param():
@@ -34,7 +34,7 @@ def get_params(hostspec, request):
         params = common.build_params(pman)
 
         params["cpuinfo"] = cpuinfo
-        params["siblings"] = get_siblings(cpuinfo, cpu=0)
+        params["siblings"] = props_common.get_siblings(cpuinfo, cpu=0)
         params["pobj"] = pobj
 
         cpu0_pinfo = {}
@@ -53,37 +53,37 @@ def _set_and_verify_data(params):
 
     cpu0_pinfo = params["cpu0_pinfo"]
 
-    if is_prop_supported("intel_pstate_mode", cpu0_pinfo):
+    if props_common.is_prop_supported("intel_pstate_mode", cpu0_pinfo):
         yield "intel_pstate_mode", "active"
         yield "intel_pstate_mode", "passive"
 
-    if is_prop_supported("turbo", cpu0_pinfo):
+    if props_common.is_prop_supported("turbo", cpu0_pinfo):
         yield "turbo", "off"
         yield "turbo", "on"
 
-    if is_prop_supported("epp", cpu0_pinfo):
+    if props_common.is_prop_supported("epp", cpu0_pinfo):
         yield "epp", "1"
         yield "epp", "254"
 
-    if is_prop_supported("epp_hw", cpu0_pinfo):
+    if props_common.is_prop_supported("epp_hw", cpu0_pinfo):
         yield "epp_hw", 0
         yield "epp_hw", 255
 
-    if is_prop_supported("epb", cpu0_pinfo):
+    if props_common.is_prop_supported("epb", cpu0_pinfo):
         yield "epb", 0
         yield "epb", 15
 
-    if is_prop_supported("epb_hw", cpu0_pinfo):
+    if props_common.is_prop_supported("epb_hw", cpu0_pinfo):
         yield "epb_hw", 0
         yield "epb_hw", 15
 
-    if is_prop_supported("governor", cpu0_pinfo):
+    if props_common.is_prop_supported("governor", cpu0_pinfo):
         yield "governor", cpu0_pinfo["governors"][0]
         yield "governor", cpu0_pinfo["governors"][-1]
 
     freq_pairs = (("min_freq", "max_freq"), ("min_uncore_freq", "max_uncore_freq"))
     for pname_min, pname_max in freq_pairs:
-        if is_prop_supported(pname_min, cpu0_pinfo):
+        if props_common.is_prop_supported(pname_min, cpu0_pinfo):
             min_limit = cpu0_pinfo[f"{pname_min}_limit"]
             max_limit = cpu0_pinfo[f"{pname_max}_limit"]
 
@@ -103,9 +103,9 @@ def test_pstates_set_and_verify(params):
         sname = params["pobj"].get_sname(pname)
         siblings = params["siblings"][sname]
 
-        set_and_verify(params["pobj"], pname, value, siblings)
+        props_common.set_and_verify(params["pobj"], pname, value, siblings)
 
 def test_pstates_property_type(params):
     """This test verifies that 'get_prop()' returns values of the correct type."""
 
-    verify_props_value_type(params["pobj"].props, params["cpu0_pinfo"])
+    props_common.verify_props_value_type(params["pobj"].props, params["cpu0_pinfo"])

@@ -11,7 +11,7 @@
 """Test module for 'pepc' project 'topology' command."""
 
 import pytest
-from common import get_pman, run_pepc, build_params, is_emulated
+import common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 
@@ -21,9 +21,9 @@ def get_params(hostspec):
 
     emul_modules = ["CPUInfo"]
 
-    with get_pman(hostspec, modules=emul_modules) as pman, \
+    with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        params = build_params(pman)
+        params = common.build_params(pman)
 
         params["cpuinfo"] = cpuinfo
         params["cpus"] = cpuinfo.normalize_cpus("all", offlined_ok=True)
@@ -51,7 +51,7 @@ def test_topology_info(params):
         "--columns Alfredo"
     ]
 
-    if is_emulated(params["pman"]):
+    if common.is_emulated(params["pman"]):
         good_options += ["--cpus all --core-siblings 0 --online-only"]
 
     try:
@@ -64,7 +64,7 @@ def test_topology_info(params):
         pass
 
     for option in good_options:
-        run_pepc(f"topology info {option}", params["pman"])
+        common.run_pepc(f"topology info {option}", params["pman"])
 
     for option in bad_options:
-        run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+        common.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)

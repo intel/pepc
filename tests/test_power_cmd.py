@@ -12,8 +12,8 @@
 
 import copy
 import pytest
-from common import get_pman, run_pepc, build_params
-from props_common import is_prop_supported
+import common
+import props_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 from pepclibs.helperlibs import Human, YAML, TestRunner
 from pepclibs import CPUInfo, Power
@@ -25,10 +25,10 @@ def get_params(hostspec, tmp_path_factory):
 
     emul_modules = ["CPUInfo", "Power"]
 
-    with get_pman(hostspec, modules=emul_modules) as pman, \
+    with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          Power.Power(pman=pman, cpuinfo=cpuinfo) as pobj:
-        params = build_params(pman)
+        params = common.build_params(pman)
         params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         params["pobj"] = pobj
@@ -84,13 +84,13 @@ def test_power_info(params):
     scope_options = _get_scope_options(params)
 
     for option in scope_options["good"]:
-        run_pepc(f"power info {option}", pman)
+        common.run_pepc(f"power info {option}", pman)
 
     for option in scope_options["bad"]:
-        run_pepc(f"power info {option}", pman, exp_exc=Error)
+        common.run_pepc(f"power info {option}", pman, exp_exc=Error)
 
     # Treat the target system as Sapphire Rapids Xeon.
-    run_pepc("power info --override-cpu-model 0x8F", pman)
+    common.run_pepc("power info --override-cpu-model 0x8F", pman)
 
 def test_power_config(params):
     """Test 'pepc power config' command."""
@@ -113,13 +113,13 @@ def test_power_config(params):
             else:
                 newval = 'on'
 
-            if is_prop_supported(valname, params["cpu0_pinfo"]):
+            if props_common.is_prop_supported(valname, params["cpu0_pinfo"]):
                 good_options += [f"--{prop} {newval}", f"--{prop} {val}"]
 
         for pat in cfg_pnames_limit:
             prop = f"ppl{index}{pat}"
             valname = prop.replace("-", "_")
-            if is_prop_supported(valname, params["cpu0_pinfo"]):
+            if props_common.is_prop_supported(valname, params["cpu0_pinfo"]):
                 val = params["cpu0_pinfo"][valname]
                 newval = val - 1
                 good_options += [f"--{prop} {newval}", f"--{prop} {val}"]
@@ -130,7 +130,7 @@ def test_power_config(params):
                                 warn_only={ErrorVerifyFailed : "enable"})
 
         for scope in scope_options["bad"]:
-            run_pepc(f"power config {option} {scope}", pman, exp_exc=Error)
+            common.run_pepc(f"power config {option} {scope}", pman, exp_exc=Error)
 
 def _try_change_value(pname, new_val, current_val, pobj):
     """
@@ -182,27 +182,27 @@ def test_power_save_restore(params):
 
     for option in good_options:
         for scope in scope_options["good"]:
-            run_pepc(f"power save {option} {scope}", pman)
+            common.run_pepc(f"power save {option} {scope}", pman)
 
         for scope in scope_options["bad"]:
-            run_pepc(f"power save {option} {scope}", pman, exp_exc=Error)
+            common.run_pepc(f"power save {option} {scope}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
-    run_pepc(f"power save -o {state_path}", pman)
+    common.run_pepc(f"power save -o {state_path}", pman)
     state = YAML.load(state_path)
 
     state_swap = _power_generate_restore_data(state, params["pobj"])
     state_swap_path = tmp_path / f"state_swap.{hostname}"
     YAML.dump(state_swap, state_swap_path)
-    run_pepc(f"power restore -f {state_swap_path}", pman)
+    common.run_pepc(f"power restore -f {state_swap_path}", pman)
 
     state_read_back_path = tmp_path / f"state_read_back.{hostname}"
-    run_pepc(f"power save -o {state_read_back_path}", pman)
+    common.run_pepc(f"power save -o {state_read_back_path}", pman)
     read_back = YAML.load(state_read_back_path)
 
     assert read_back == state_swap, "restoring power configuration failed"
 
-    run_pepc(f"power restore -f {state_path}", pman)
-    run_pepc(f"power save -o {state_read_back_path}", pman)
+    common.run_pepc(f"power restore -f {state_path}", pman)
+    common.run_pepc(f"power save -o {state_read_back_path}", pman)
     read_back = YAML.load(state_read_back_path)
     assert read_back == state, "restoring power configuration failed"
