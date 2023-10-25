@@ -98,9 +98,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise Error(f"property '{pname}' does not exist") from err
 
     @staticmethod
-    def _normalize_bool_type_value(prop, val):
+    def _normalize_bool_type_value(pname, val):
         """
-        Normalize and validate value 'val' of a boolean-type property 'prop'. Returns the boolean
+        Normalize and validate value 'val' of a boolean-type property 'pname'. Returns the boolean
         value corresponding to 'val'.
         """
 
@@ -114,7 +114,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if val in ("off", "disable"):
             return False
 
-        name = Human.uncapitalize(prop["name"])
+        name = Human.uncapitalize(pname)
         raise Error(f"bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
                     f"disable")
 
@@ -125,7 +125,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pnames_str = ", ".join(set(self._props))
             raise Error(f"unknown property name '{pname}', known properties are: {pnames_str}")
 
-    def _get_cpu_prop(self, pname, cpu, prop=None):
+    def _get_cpu_prop(self, pname, cpu):
         """Returns property 'pname' for CPU 'cpu'."""
 
         # pylint: disable=unused-argument
@@ -171,11 +171,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         prop = self._props[pname]
         if not prop["writable"]:
-            name = Human.uncapitalize(prop["name"])
+            name = Human.uncapitalize(pname)
             raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
 
         if prop.get("type") == "bool":
-            val = self._normalize_bool_type_value(prop, val)
+            val = self._normalize_bool_type_value(pname, val)
 
         if "unit" not in prop:
             return val
@@ -197,10 +197,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return val
 
-    def _validate_cpus_vs_scope(self, prop, cpus):
-        """Make sure that CPUs in 'cpus' match the scope of a property described by 'prop'."""
+    def _validate_cpus_vs_scope(self, pname, cpus):
+        """Make sure that CPUs in 'cpus' match the scope of a property 'pname'."""
 
-        sname = prop["sname"]
+        sname = self._props[pname]["sname"]
 
         if sname not in {"global", "package", "die", "core", "CPU"}:
             raise Error(f"BUG: unsupported scope name \"{sname}\"")
@@ -214,7 +214,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             if all_cpus.issubset(cpus):
                 return
 
-            name = Human.uncapitalize(prop["name"])
+            name = Human.uncapitalize(pname)
             missing_cpus = all_cpus - set(cpus)
             raise Error(f"{name} has {sname} scope, so the list of CPUs must include all CPUs.\n"
                         f"However, the following CPUs are missing from the list: {missing_cpus}")
@@ -259,7 +259,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
                 mapping += f"\n{clist_str}"
 
-        name = Human.uncapitalize(prop["name"])
+        name = Human.uncapitalize(pname)
         rem_cpus_str = Human.rangify(rem_cpus)
 
         if sname == "core":
@@ -298,7 +298,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
         self._set_sname(pname)
-        self._validate_cpus_vs_scope(self._props[pname], cpus)
+        self._validate_cpus_vs_scope(pname, cpus)
 
         self._set_prop(pname, val, cpus)
 

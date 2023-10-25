@@ -217,13 +217,10 @@ class CStates(_PCStatesBase.PCStatesBase):
         except ErrorNotSupported:
             return None
 
-    def _get_cpu_prop(self, pname, cpu, prop=None):
-        """"Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
+    def _get_cpu_prop(self, pname, cpu):
+        """Returns property 'pname' for CPU 'cpu'."""
 
-        if prop is None:
-            prop = self._props[pname]
-
-        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
+        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, pname, cpu, self._pman.hostmsg)
 
         if pname == "idle_driver":
             return self._get_cpuidle().get_idle_driver()
@@ -240,7 +237,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         if pname == "pkg_cstate_limit_lock":
             return self._read_prop_from_msr("lock", cpu)
 
-        if prop["mnames"][0] == "msr":
+        if self._props[pname]["mnames"][0] == "msr":
             return self._read_prop_from_msr(pname, cpu)
 
         raise Error(f"BUG: unsupported property '{pname}'")

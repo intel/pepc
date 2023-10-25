@@ -34,10 +34,11 @@ class PCStatesBase(_PropsClassBase.PropsClassBase):
             governors = ", ".join(governors)
             raise Error(f"bad governor name '{name}', use one of: {governors}")
 
-    def _read_prop_from_sysfs(self, prop, path):
-        """Read property described by 'prop' from sysfs, and return its value."""
+    def _read_prop_from_sysfs(self, pname, path):
+        """Read property 'pname' from sysfs, and return its value."""
 
         val = self._pman.read(path).strip()
+        prop = self._props[pname]
 
         if prop["type"] == "int":
             if not Trivial.is_int(val):
@@ -54,11 +55,10 @@ class PCStatesBase(_PropsClassBase.PropsClassBase):
 
         return val
 
-    def _write_prop_to_sysfs(self, prop, path, val):
+    def _write_prop_to_sysfs(self, pname, path, val):
         """Write property value 'val' to a sysfs file at path 'path'."""
 
-        pname = prop["name"]
-
+        prop = self._props[pname]
         if prop["type"] == "int":
             if not Trivial.is_int(val):
                 raise Error(f"received an unexpected non-integer value from '{pname}'"

@@ -241,20 +241,21 @@ PROPS = {
     },
 }
 
-def _is_uncore_prop(prop):
-    """
-    Returns 'True' if property 'prop' is an uncore property, otherwise returns 'False'.
-    """
-
-    if "fname" in prop and prop["fname"].endswith("khz"):
-        return True
-    return False
-
 class PStates(_PCStatesBase.PCStatesBase):
     """
     This class provides API for managing platform settings related to P-states. Refer to
     '_PropsClassBase.PropsClassBase' docstring for public methods overview.
     """
+
+    def _is_uncore_prop(self, pname):
+        """
+        Returns 'True' if property 'pname' is an uncore property, otherwise returns 'False'.
+        """
+
+        prop = self._props[pname]
+        if "fname" in prop and prop["fname"].endswith("khz"):
+            return True
+        return False
 
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
@@ -468,7 +469,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return 100000000
 
-    def _get_base_freq(self, prop, cpu):
+    def _get_base_freq(self, pname, cpu):
         """
         Determine the base frequency for a system and return it. Attempts to read the value from
         sysfs files, and falls back to reading from MSR if this fails. If none of the provided
@@ -477,7 +478,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "base_frequency"
         try:
-            return self._read_prop_from_sysfs(prop, path)
+            return self._read_prop_from_sysfs(pname, path)
         except ErrorNotFound:
             pass
 
@@ -619,12 +620,13 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return "on" if enabled else "off"
 
-    def _get_sysfs_path(self, prop, cpu):
+    def _get_sysfs_path(self, pname, cpu):
         """
-        Construct and return path to the sysfs file corresponding to property 'prop' and CPU 'cpu'.
+        Construct and return path to the sysfs file for property 'pname' and CPU 'cpu'.
         """
 
-        if _is_uncore_prop(prop):
+        prop = self._props[pname]
+        if self._is_uncore_prop(pname):
             levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
             pkg = levels["package"]
             die = levels["die"]
@@ -632,34 +634,34 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
 
-    def _get_cpu_prop_sysfs(self, prop, cpu):
+    def _get_cpu_prop_sysfs(self, pname, cpu):
         """
         This is a helper for '_get_cpu_prop()' which handles the properties backed by a sysfs file.
         """
 
-        if _is_uncore_prop(prop) and not self._is_uncore_freq_supported():
+        if self._is_uncore_prop(pname) and not self._is_uncore_freq_supported():
             _LOG.debug(self._uncore_errmsg)
             return None
 
-        path = self._get_sysfs_path(prop, cpu)
+        path = self._get_sysfs_path(pname, cpu)
 
-        return self._read_prop_from_sysfs(prop, path)
+        return self._read_prop_from_sysfs(pname, path)
 
     def _get_driver(self, cpu):
         """Returns the CPU frequency driver."""
 
-        prop = self._props["driver"]
+        pname = "driver"
         path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
 
         try:
-            driver = self._read_prop_from_sysfs(prop, path)
+            driver = self._read_prop_from_sysfs(pname, path)
         except ErrorNotFound:
             # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
             # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
             if self._pman.exists(self._sysfs_base / "intel_pstate"):
                 return "intel_pstate"
 
-            _LOG.debug("can't read value of property '%s', path '%s' missing", prop["name"], path)
+            _LOG.debug("can't read value of property '%s', path '%s' missing", pname, path)
             return None
 
         # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode, and
@@ -677,7 +679,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if driver == "intel_pstate":
             path = self._sysfs_base / "intel_pstate" / "status"
-            return self._read_prop_from_sysfs(self._props[pname], path)
+            return self._read_prop_from_sysfs(pname, path)
 
         return None
 
@@ -710,13 +712,10 @@ class PStates(_PCStatesBase.PCStatesBase):
         # * Why rounding down? Following how Linux 'intel_pstate' driver rounds.
         return freq - (freq % bclk)
 
-    def _get_cpu_prop(self, pname, cpu, prop=None):
-        """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
+    def _get_cpu_prop(self, pname, cpu):
+        """"Returns 'pname' property value for CPU 'cpu'."""
 
-        if prop is None:
-            prop = self._props[pname]
-
-        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
+        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, pname, cpu, self._pman.hostmsg)
 
         # First handle the MSR-based properties. The 'MSR', 'EPP', and 'EPB' modules have their own
         # caching,'self._pcache' is not used for the MSR-based properties.
@@ -753,10 +752,12 @@ class PStates(_PCStatesBase.PCStatesBase):
         with contextlib.suppress(ErrorNotFound):
             return self._pcache.get(pname, cpu)
 
+        prop = self._props[pname]
+
         if "getter" in prop:
-            val = prop["getter"](prop, cpu)
+            val = prop["getter"](pname, cpu)
         elif "fname" in prop:
-            val = self._get_cpu_prop_sysfs(prop, cpu)
+            val = self._get_cpu_prop_sysfs(pname, cpu)
         elif pname == "turbo":
             val = self._get_cpu_turbo(cpu)
         elif pname == "driver":
@@ -792,19 +793,19 @@ class PStates(_PCStatesBase.PCStatesBase):
             raise ErrorNotSupported(f"{errmsg}: unsupported CPU frequency driver '{driver}'")
 
         try:
-            self._write_prop_to_sysfs(self._props["turbo"], path, sysfs_val)
+            self._write_prop_to_sysfs("turbo", path, sysfs_val)
         except ErrorNotFound as err:
             raise ErrorNotSupported(f"{errmsg}: turbo is not supported") from err
 
         self._pcache.add("turbo", cpu, status, sname=self._props["turbo"]["sname"])
 
-    def _get_num_str(self, prop, cpu):
+    def _get_num_str(self, pname, cpu):
         """
-        If 'prop' has CPU scope, returns "CPU <num>" string. If 'prop' has die scope, returns
-        "package <pkgnum> die <dienum>" string.
+        If property 'pname' has CPU scope, returns "CPU <num>" string. If 'pname' has die scope,
+        returns "package <pkgnum> die <dienum>" string.
         """
 
-        if _is_uncore_prop(prop):
+        if self._is_uncore_prop(pname):
             levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
             pkg = levels["package"]
             die = levels["die"]
@@ -830,7 +831,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         hwpreq.disable_cpu_feature_pkg_control(fname, cpu)
         hwpreq.write_cpu_feature(fname, perf, cpu)
 
-    def _handle_write_and_read_freq_mismatch(self, pname, prop, freq, read_freq, cpu, path):
+    def _handle_write_and_read_freq_mismatch(self, pname, freq, read_freq, cpu, path):
         """
         This is a helper function fo '_write_freq_prop_to_sysfs()' and it is called when there
         is a mismatch between what was written to a frequency sysfs file and what was read back.
@@ -839,7 +840,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         raise_error = True
 
         name = Human.uncapitalize(pname)
-        what = self._get_num_str(prop, cpu)
+        what = self._get_num_str(pname, cpu)
         short_freq = Human.num2si(freq, unit="Hz")
         msg = f"failed to set {name} to {short_freq} for {what}{self._pman.hostmsg}: wrote " \
               f"'{freq // 1000}' to '{path}', but read '{read_freq // 1000}' back."
@@ -879,24 +880,23 @@ class PStates(_PCStatesBase.PCStatesBase):
         file.
         """
 
-        prop = self._props[pname]
-        path = self._get_sysfs_path(prop, cpu)
+        path = self._get_sysfs_path(pname, cpu)
 
         try:
             with self._pman.open(path, "r+") as fobj:
                 # Sysfs files use kHz.
                 fobj.write(str(freq // 1000))
         except Error as err:
-            raise Error(f"failed to set '{prop['name']}'{self._pman.hostmsg}:\n{err.indent(2)}") \
+            raise Error(f"failed to set '{pname}'{self._pman.hostmsg}:\n{err.indent(2)}") \
                         from err
 
         count = 3
         while count > 0:
             # Returns frequency in Hz.
-            read_freq = self._read_prop_from_sysfs(prop, path)
+            read_freq = self._read_prop_from_sysfs(pname, path)
 
             if freq == read_freq:
-                self._pcache.add(pname, cpu, freq, sname=prop["sname"])
+                self._pcache.add(pname, cpu, freq, sname=self._props[pname]["sname"])
                 return
 
             # Sometimes the update does not happen immediately. For example, we observed this on
@@ -905,7 +905,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             time.sleep(0.1)
             count -= 1
 
-        self._handle_write_and_read_freq_mismatch(pname, prop, freq, read_freq, cpu, path)
+        self._handle_write_and_read_freq_mismatch(pname, freq, read_freq, cpu, path)
 
     def _parse_freq(self, val, cpu, uncore=False):
         """Turn a user-provided CPU or uncore frequency property value to hertz."""
@@ -954,7 +954,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         path = self._sysfs_base / "intel_pstate" / "status"
         try:
-            self._write_prop_to_sysfs(self._props["intel_pstate_mode"], path, mode)
+            self._write_prop_to_sysfs("intel_pstate_mode", path, mode)
             self._pcache.add("intel_pstate_mode", cpu, mode,
                              sname=self._props["intel_pstate_mode"]["sname"])
         except Error:
@@ -1001,8 +1001,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif pname == "intel_pstate_mode":
                 self._set_intel_pstate_mode(cpu, val)
             elif "fname" in prop:
-                path = self._get_sysfs_path(prop, cpu)
-                self._write_prop_to_sysfs(prop, path, val)
+                path = self._get_sysfs_path(pname, cpu)
+                self._write_prop_to_sysfs(pname, path, val)
 
                 # Note, below 'add()' call is scope-aware. It will cache 'val' not only for CPU
                 # number 'cpu', but also for all the 'sname' siblings. For example, if property
@@ -1080,12 +1080,12 @@ class PStates(_PCStatesBase.PCStatesBase):
         if min_freq:
             min_freq = self._normalize_inprop(min_freq_pname, min_freq)
             self._set_sname(min_freq_pname)
-            self._validate_cpus_vs_scope(self._props[min_freq_pname], cpus)
+            self._validate_cpus_vs_scope(min_freq_pname, cpus)
 
         if max_freq:
             max_freq = self._normalize_inprop(max_freq_pname, max_freq)
             self._set_sname(max_freq_pname)
-            self._validate_cpus_vs_scope(self._props[max_freq_pname], cpus)
+            self._validate_cpus_vs_scope(max_freq_pname, cpus)
 
         for cpu in cpus:
             new_min_freq = None
@@ -1107,7 +1107,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             min_limit = self._get_cpu_prop(min_freq_limit_pname, cpu)
             max_limit = self._get_cpu_prop(max_freq_limit_pname, cpu)
 
-            what = self._get_num_str(self._props[min_freq_pname], cpu)
+            what = self._get_num_str(min_freq_pname, cpu)
             for pname, val in ((min_freq_pname, new_min_freq), (max_freq_pname, new_max_freq)):
                 if val is None:
                     continue
@@ -1182,7 +1182,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             self._validate_governor_name(val)
         elif pname == "intel_pstate_mode":
             self._validate_intel_pstate_mode(val)
-        elif _is_uncore_prop(self._props[pname]) and not self._is_uncore_freq_supported():
+        elif self._is_uncore_prop(pname) and not self._is_uncore_freq_supported():
             raise Error(self._uncore_errmsg)
 
         if pname == "epp":

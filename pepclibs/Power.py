@@ -139,13 +139,10 @@ class Power(_PropsClassBase.PropsClassBase):
 
         return pname.replace("ppl", "limit")
 
-    def _get_cpu_prop(self, pname, cpu, prop=None):
-        """Returns property value for 'pname' in 'prop' for CPU 'cpu'."""
+    def _get_cpu_prop(self, pname, cpu):
+        """Returns property 'pname' for CPU 'cpu'."""
 
-        if prop is None:
-            prop = self._props[pname]
-
-        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, prop["name"], cpu, self._pman.hostmsg)
+        _LOG.debug("getting '%s' (%s) for CPU %d%s", pname, pname, cpu, self._pman.hostmsg)
 
         try:
             if pname.startswith("ppl"):
@@ -160,7 +157,6 @@ class Power(_PropsClassBase.PropsClassBase):
         """Implements '_set_prop()'."""
 
         fname = self._pname2fname(pname)
-        prop = self._props[pname]
 
         for cpu in cpus:
             # RAPL contains min/max values for the PPL in an MSR register, however the register
@@ -174,17 +170,17 @@ class Power(_PropsClassBase.PropsClassBase):
                     minval = tdp / 8
                     maxval = tdp
                     if fval > self._get_cpu_prop("ppl2", cpu):
-                        raise Error(f"{prop['name']} can't be higher than RAPL PPL2 for CPU{cpu}")
+                        raise Error(f"{pname} can't be higher than RAPL PPL2 for CPU{cpu}")
                 else:
                     # For PPL2, use maxval as TDP * 3. Mehlow system has default value for PPL2 as
                     # 210W, and TDP is 80W.
                     minval = tdp / 8
                     maxval = tdp * 3
                     if fval < self._get_cpu_prop("ppl1", cpu):
-                        raise Error(f"{prop['name']} can't be lower than RAPL PPL1 for CPU{cpu}")
+                        raise Error(f"{pname} can't be lower than RAPL PPL1 for CPU{cpu}")
 
                 if fval > maxval or fval < minval:
-                    errmsg = f"value {val}W for {prop['name']} out of range ({minval}W-" \
+                    errmsg = f"value {val}W for {pname} out of range ({minval}W-" \
                              f"{maxval}W) for CPU{cpu}"
                     raise Error(errmsg)
 
@@ -196,11 +192,10 @@ class Power(_PropsClassBase.PropsClassBase):
         try:
             self._do_set_prop(pname, val, cpus)
         except ErrorVerifyFailed as err:
-            prop = self._props[pname]
             if pname in ("ppl1_enable", "ppl2_enable"):
                 state = "enab" if val else "disab"
-                errmsg = f"failed to {state}le {prop['name']}. Keep in mind some platforms " \
-                         f"forbid {state}ling {prop['name']}."
+                errmsg = f"failed to {state}le {pname}. Keep in mind some platforms " \
+                         f"forbid {state}ling {pname}."
                 raise ErrorVerifyFailed(errmsg) from err
             raise
 
