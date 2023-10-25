@@ -34,78 +34,63 @@ def get_params(hostspec, request):
         params = common.build_params(pman)
 
         params["cpuinfo"] = cpuinfo
-        params["siblings"] = props_common.get_siblings(cpuinfo, cpu=0)
         params["pobj"] = pobj
-
-        cpu0_pinfo = {}
-        for pname in pobj.props:
-            cpu0_pinfo[pname] = pobj.get_cpu_prop(pname, 0)["val"]
-        params["cpu0_pinfo"] = cpu0_pinfo
 
         yield params
 
-def _set_and_verify_data(params):
-    """
-    Yields ('pname', 'value') tuples for the 'test_pstates_set_and_verify()' test-case. The current
-    value of the property is not known, so we yield more than one value for each property. This
-    makes sure the property actually gets changed.
-    """
+def _get_set_and_verify_data(params, cpu):
+    """Yield ('pname', 'value') tuples for the 'test_pstates_set_and_verify()' test-case."""
 
-    cpu0_pinfo = params["cpu0_pinfo"]
+    pobj = params["pobj"]
 
-    if props_common.is_prop_supported("intel_pstate_mode", cpu0_pinfo):
+    # Current value of the property is not known, so we yield more than one value for each #
+    # property. This makes sure the property actually gets changed.
+
+    pvinfo = pobj.get_cpu_prop("driver", cpu)
+    if pvinfo["val"] == "intel_pstate":
         yield "intel_pstate_mode", "active"
         yield "intel_pstate_mode", "passive"
 
-    if props_common.is_prop_supported("turbo", cpu0_pinfo):
-        yield "turbo", "off"
-        yield "turbo", "on"
+    yield "turbo", "off"
+    yield "turbo", "on"
 
-    if props_common.is_prop_supported("epp", cpu0_pinfo):
-        yield "epp", "1"
-        yield "epp", "254"
+    yield "epp", "1"
+    yield "epp", "254"
 
-    if props_common.is_prop_supported("epp_hw", cpu0_pinfo):
-        yield "epp_hw", 0
-        yield "epp_hw", 255
+    yield "epp_hw", 0
+    yield "epp_hw", 255
 
-    if props_common.is_prop_supported("epb", cpu0_pinfo):
-        yield "epb", 0
-        yield "epb", 15
+    yield "epb", 0
+    yield "epb", 15
 
-    if props_common.is_prop_supported("epb_hw", cpu0_pinfo):
-        yield "epb_hw", 0
-        yield "epb_hw", 15
+    yield "epb_hw", 0
+    yield "epb_hw", 15
 
-    if props_common.is_prop_supported("governor", cpu0_pinfo):
-        yield "governor", cpu0_pinfo["governors"][0]
-        yield "governor", cpu0_pinfo["governors"][-1]
+    pvinfo = pobj.get_cpu_prop("governors", cpu)
+    if pvinfo["val"] is not None:
+        yield "governor", pvinfo["val"][0]
+        yield "governor", pvinfo["val"][-1]
 
     freq_pairs = (("min_freq", "max_freq"), ("min_uncore_freq", "max_uncore_freq"))
     for pname_min, pname_max in freq_pairs:
-        if props_common.is_prop_supported(pname_min, cpu0_pinfo):
-            min_limit = cpu0_pinfo[f"{pname_min}_limit"]
-            max_limit = cpu0_pinfo[f"{pname_max}_limit"]
+        min_limit = pobj.get_cpu_prop(f"{pname_min}_limit", cpu)["val"]
+        max_limit = pobj.get_cpu_prop(f"{pname_max}_limit", cpu)["val"]
+        if min_limit is None or max_limit is None:
+            continue
 
-            # Right now we do not know how the systems min. and max frequencies are configured, so
-            # we have to be careful to avoid failures related to setting min. frequency higher than
-            # the currently configured max. frequency.
-            yield pname_min, min_limit
-            yield pname_max, min_limit
+        yield pname_min, min_limit
+        yield pname_max, min_limit
 
-            yield pname_max, max_limit
-            yield pname_min, max_limit
+        yield pname_max, max_limit
+        yield pname_min, max_limit
 
 def test_pstates_set_and_verify(params):
-    """This test verifies that 'get_prop()' returns same values set by 'set_prop()'."""
+    """Verify that 'get_prop()' returns same values set by 'set_prop()'."""
 
-    for pname, value in _set_and_verify_data(params):
-        sname = params["pobj"].get_sname(pname)
-        siblings = params["siblings"][sname]
-
-        props_common.set_and_verify(params["pobj"], pname, value, siblings)
+    props_vals = _get_set_and_verify_data(params, 0)
+    props_common.set_and_verify(params, props_vals, 0)
 
 def test_pstates_property_type(params):
     """This test verifies that 'get_prop()' returns values of the correct type."""
 
-    props_common.verify_props_value_type(params["pobj"].props, params["cpu0_pinfo"])
+    props_common.verify_props_value_type(params, 0)

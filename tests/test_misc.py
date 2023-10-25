@@ -12,21 +12,34 @@
 
 import sys
 import random
+import pytest
 import common
-import props_common
 from pepclibs import CPUInfo, PStates, CStates, _PropsCache
 from pepctool import _Pepc
 
-def test_unknown_cpu_model(hostspec):
-    """
-    This function tests that property objects (such as 'PStates' and 'CStates') don't fail when
-    getting a property on an unknown CPU model.
-    """
+@pytest.fixture(name="params", scope="module")
+def get_params(hostspec):
+    """Yield a dictionary with information we need for testing."""
 
-    emul_modules = ["CPUInfo", "PStates", "CStates"]
+    emul_modules = ["CPUInfo"]
 
     with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+        params = common.build_params(pman)
+
+        params["cpuinfo"] = cpuinfo
+
+        yield params
+
+def test_unknown_cpu_model(params):
+    """
+    Test that property objects (such as 'PStates' and 'CStates') don't fail when getting a property
+    on an unknown CPU model.
+    """
+
+    pman = params["pman"]
+
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         cpuinfo.info["model"] = 0
 
         with PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
@@ -37,36 +50,35 @@ def test_unknown_cpu_model(hostspec):
             pname = next(iter(pobj.props))
             pobj.get_cpu_prop(pname, 0)
 
-def test_propscache_scope(hostspec):
+def test_propscache_scope(params):
     """This function tests that the 'PropsCache' class caches a value to the correct CPUs."""
 
-    emul_modules = ["CPUInfo"]
+    siblings = {}
+    pman = params["pman"]
+    cpuinfo = params["cpuinfo"]
 
-    with common.get_pman(hostspec, modules=emul_modules) as pman, \
-         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+    test_cpu = random.choice(cpuinfo.get_cpus())
+    pcache = _PropsCache.PropsCache(cpuinfo=cpuinfo, pman=pman)
 
-        test_cpu = random.choice(cpuinfo.get_cpus())
-        siblings = props_common.get_siblings(cpuinfo, cpu=test_cpu)
+    for sname in CPUInfo.LEVELS:
+        # Value of 'val' and 'pname' do not matter, as long as they are unique.
+        val = object()
+        pname = object()
 
-        pcache = _PropsCache.PropsCache(cpuinfo=cpuinfo, pman=pman)
+        pcache.add(pname, test_cpu, val, sname=sname)
 
-        snames = {"global", "package", "die", "core", "CPU"}
+        if sname not in siblings:
+            siblings[sname] = params["cpuinfo"].get_cpu_siblings(test_cpu, level=sname)
+        cpus = siblings[sname]
 
-        for sname in snames:
-            # Value of 'val' and 'pname' do not matter, as long as they are unique.
-            val = sname
-            pname = sname
+        for cpu in cpuinfo.get_cpus():
+            res = pcache.is_cached(pname, cpu)
+            if cpu in cpus:
+                assert pcache.get(pname, cpu) == val
+            else:
+                assert res is False
 
-            pcache.add(pname, test_cpu, val, sname=sname)
-
-            for cpu in cpuinfo.get_cpus():
-                res = pcache.is_cached(pname, cpu)
-                if cpu in siblings[sname]:
-                    assert pcache.get(pname, cpu) == val
-                else:
-                    assert res is False
-
-def test_parse_arguments(hostspec): # pylint: disable=unused-argument
+def test_parse_arguments(params): # pylint: disable=unused-argument
     """This function tests 'parse_arguments()' with options that should raise 'SystemExit'."""
 
     for option in ("", "-h", "--version", "--hello"):

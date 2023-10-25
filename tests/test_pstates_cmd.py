@@ -36,7 +36,6 @@ def get_params(hostspec, tmp_path_factory):
         params["cores"] = {}
         for pkg in params["packages"]:
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
-        params["siblings"] = props_common.get_siblings(cpuinfo, cpu=0)
 
         params["pobj"] = pobj
 
@@ -319,7 +318,7 @@ def _set_freq_pairs(params, min_pname, max_pname):
     """
 
     sname = params["pobj"].get_sname(min_pname)
-    siblings = params["siblings"][sname]
+    siblings = params["cpuinfo"].get_cpu_siblings(0, level=sname)
 
     min_limit = params["cpu0_pinfo"][f"{min_pname}_limit"]
     max_limit = params["cpu0_pinfo"][f"{max_pname}_limit"]
@@ -354,15 +353,18 @@ def test_pstates_frequency_set_order(params):
     See 'PStates._validate_and_set_freq()' docstring, for more information.
     """
 
-    if params["cpuinfo"].info["vendor"] != "GenuineIntel":
+    cpuinfo = params["cpuinfo"]
+    pobj = params["pobj"]
+
+    if cpuinfo.info["vendor"] != "GenuineIntel":
         # BClock is only supported on "GenuineIntel" CPU vendors.
         return
 
     # When Turbo is disabled the max frequency may be limited.
     if props_common.is_prop_supported("turbo", params["cpu0_pinfo"]):
-        sname = params["pobj"].get_sname("turbo")
-        cpus = params["siblings"][sname]
-        params["pobj"].set_prop("turbo", "on", cpus)
+        sname = pobj.get_sname("turbo")
+        siblings = cpuinfo.get_cpu_siblings(0, level=sname)
+        pobj.set_prop("turbo", "on", siblings)
 
     if props_common.is_prop_supported("min_freq", params["cpu0_pinfo"]):
         _set_freq_pairs(params, "min_freq", "max_freq")
