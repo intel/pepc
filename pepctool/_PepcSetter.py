@@ -66,9 +66,9 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._msr:
             self._msr.start_transaction()
 
-        spinfo = spinfo.copy()
+        spinfo_copy = spinfo.copy()
         for pname in list(spinfo):
-            self._set_prop(spinfo, pname, cpus)
+            self._set_prop(spinfo_copy, pname, cpus)
 
         if self._msr:
             self._msr.commit_transaction()
