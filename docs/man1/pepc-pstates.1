@@ -357,8 +357,8 @@ pepc pstates \f[I]info\f[R] \f[B]--min-freq\f[R]
 pepc pstates \f[I]config\f[R] \f[B]--min-freq\f[R]=<value>
 .SS Description
 .PP
-Minimum CPU frequency is the lowest frequency the OS configured the CPU
-to run at, via sysfs knobs.
+Minimum CPU frequency is the lowest frequency the CPU was configured the
+CPU to run at.
 .PP
 The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 \[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
@@ -367,10 +367,10 @@ The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 The following special values are supported:
 .TP
 \[dq]\f[B]min\f[R]\[dq]
-Minimum CPU frequency supported (see \[aq]min_freq_limit\[aq]).
+Minimum supported CPU frequency (see \[aq]min_freq_limit\[aq]).
 .TP
 \[dq]\f[B]max\f[R]\[dq]
-Maximum CPU frequency supported (see \[aq]max_freq_limit\[aq]).
+Maximum supported CPU frequency (see \[aq]max_freq_limit\[aq]).
 .TP
 \[dq]\f[B]base\f[R]\[dq], \[dq]\f[B]hfm\f[R]\[dq], \[dq]\f[B]P1\f[R]\[dq]
 Base CPU frequency (see \[aq]base_freq\[aq]).
@@ -401,8 +401,8 @@ pepc pstates \f[I]info\f[R] \f[B]--max-freq\f[R]
 pepc pstates \f[I]config\f[R] \f[B]--max-freq\f[R]=<value>
 .SS Description
 .PP
-Maximum CPU frequency is the lowest frequency the OS configured the CPU
-to run at, via sysfs knobs.
+Maximum CPU frequency is the highest frequency the CPU was configured to
+run at.
 .PP
 The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 \[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
@@ -411,10 +411,10 @@ The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 The following special values are supported:
 .TP
 \[dq]\f[B]min\f[R]\[dq]
-Minimum CPU frequency supported (see \[aq]min_freq_limit\[aq]).
+Minimum supported CPU frequency (see \[aq]min_freq_limit\[aq]).
 .TP
 \[dq]\f[B]max\f[R]\[dq]
-Maximum CPU frequency supported (see \[aq]max_freq_limit\[aq]).
+Maximum supported CPU frequency (see \[aq]max_freq_limit\[aq]).
 .TP
 \[dq]\f[B]base\f[R]\[dq], \[dq]\f[B]hfm\f[R]\[dq], \[dq]\f[B]P1\f[R]\[dq]
 Base CPU frequency (see \[aq]base_freq\[aq]).
@@ -441,8 +441,8 @@ min_freq_limit - Minimum supported CPU frequency
 pepc pstates \f[I]info\f[R] \f[B]--min-freq-limit\f[R]
 .SS Description
 .PP
-Minimum supported CPU frequency is the minimum CPU frequency supported
-by the OS.
+Minimum supported CPU frequency is the lowest frequency the CPU can be
+configured to run at.
 .SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/cpuinfo_min_freq\[dq],
@@ -460,8 +460,8 @@ max_freq_limit - Maximum supported CPU frequency
 pepc pstates \f[I]info\f[R] \f[B]--min-freq-limit\f[R]
 .SS Description
 .PP
-Maximum supported CPU frequency is the maximum CPU frequency supported
-by the OS.
+Maximum supported CPU frequency is the highest frequency the CPU can be
+configured to run at.
 .SS Mechanism
 .PP
 \[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/cpuinfo_max_freq\[dq],
@@ -512,8 +512,8 @@ pepc pstates \f[I]info\f[R] \f[B]--min-freq-hw\f[R]
 pepc pstates \f[I]config\f[R] \f[B]--min-freq-hw\f[R]=<value>
 .SS Description
 .PP
-Minimum frequency the CPU is configured to run at.
-This value is read directly from the MSR, bypassing the OS.
+Minimum CPU frequency is the lowest frequency the CPU was configured the
+CPU to run at.
 .PP
 The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 \[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
@@ -522,10 +522,10 @@ The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 The following special values are supported:
 .TP
 \[dq]\f[B]min\f[R]\[dq]
-Minimum CPU frequency supported (see \[aq]min_freq_limit\[aq]).
+Minimum supported CPU frequency (see \[aq]min_freq_limit\[aq]).
 .TP
 \[dq]\f[B]max\f[R]\[dq]
-Maximum CPU frequency supported (see \[aq]max_freq_limit\[aq]).
+Maximum supported CPU frequency (see \[aq]max_freq_limit\[aq]).
 .TP
 \[dq]\f[B]base\f[R]\[dq], \[dq]\f[B]hfm\f[R]\[dq], \[dq]\f[B]P1\f[R]\[dq]
 Base CPU frequency (see \[aq]base_freq\[aq]).
@@ -555,8 +555,8 @@ pepc pstates \f[I]info\f[R] \f[B]--max-freq-hw\f[R]
 pepc pstates \f[I]config\f[R] \f[B]--max-freq-hw\f[R]=<value>
 .SS Description
 .PP
-Maximum frequency the CPU is configured to run at.
-This value is read directly from the MSR, bypassing the OS.
+Minimum CPU frequency is the lowest frequency the CPU was configured the
+CPU to run at.
 .PP
 The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 \[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
@@ -565,10 +565,10 @@ The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
 The following special values are supported:
 .TP
 \[dq]\f[B]min\f[R]\[dq]
-Minimum CPU frequency supported (see \[aq]min_freq_limit\[aq]).
+Minimum supported CPU frequency (see \[aq]min_freq_limit\[aq]).
 .TP
 \[dq]\f[B]max\f[R]\[dq]
-Maximum CPU frequency supported (see \[aq]max_freq_limit\[aq]).
+Maximum supported CPU frequency (see \[aq]max_freq_limit\[aq]).
 .TP
 \[dq]\f[B]base\f[R]\[dq], \[dq]\f[B]hfm\f[R]\[dq], \[dq]\f[B]P1\f[R]\[dq]
 Base CPU frequency (see \[aq]base_freq\[aq]).

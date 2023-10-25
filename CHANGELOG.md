@@ -5,12 +5,16 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.4.37] - 2023-10-25
+### Fixed
  - Fix regression in v1.4.36: 'pepc cstates|pstates|power config' does not print
    information about changed options.
 ### Added
  - Add '--pch-negotiation' option for 'pepc cstates' command.
-### Removed
-### Changed
 
 ## [1.4.36] - 2023-10-18
 ### Fixed
