@@ -123,6 +123,8 @@ class EPB(ClassHelpers.SimpleCloseContext):
             with self._pman.open(self._sysfs_epb_path % cpu, "r+") as fobj:
                 fobj.write(epb)
         except Error as err:
+            if isinstance(err, ErrorNotFound):
+                err = ErrorNotSupported(err)
             raise type(err)(f"failed to set EPB{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         # Setting EPB to policy name will not read back the name, rather the numeric value.
@@ -166,6 +168,8 @@ class EPB(ClassHelpers.SimpleCloseContext):
                   'mname' is "sysfs", 'epb' can also be EPB policy name (e.g., "performance").
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
           * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
+
+        Raise 'ErrorNotSupported' if the platform does not support EPB.
         """
 
         self._validate_mechanism_name(mname)
