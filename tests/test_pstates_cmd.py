@@ -47,11 +47,11 @@ def get_params(hostspec, tmp_path_factory):
         yield params
 
 def _get_scope_options(params):
-    """Return dictionary of good and bad scope options to be used for testing."""
+    """Return dictionary of good and bad options testing the scope (--cpus, --packages, etc)."""
 
     pkg0_core_ranges = Human.rangify(params['cores'][0])
 
-    good_options = [
+    good = [
         "",
         "--packages 0 --cpus all",
         f"--cpus 0-{params['cpus'][-1]}",
@@ -60,7 +60,7 @@ def _get_scope_options(params):
         "--packages all",
         f"--packages 0-{params['packages'][-1]}"]
 
-    bad_options = [
+    bad = [
         f"--cpus {params['cpus'][-1] + 1}",
         f"--packages 0 --cores {params['cores'][0][-1] + 1}",
         f"--packages {params['packages'][-1] + 1}"]
@@ -68,28 +68,28 @@ def _get_scope_options(params):
     # Option '--cores' must be used with '--packages', except for 1-package systems, or single
     # socket system.
     if len(params["packages"]) == 1:
-        good_options += [f"--cores {pkg0_core_ranges}"]
+        good += [f"--cores {pkg0_core_ranges}"]
     else:
-        bad_options += [f"--cores {pkg0_core_ranges}"]
+        bad += [f"--cores {pkg0_core_ranges}"]
 
-    good_global_options = [
+    glob = [
         "",
         "--cpus all",
         "--packages all",
         f"--cpus  0-{params['cpus'][-1]}"]
 
-    return {"good" : good_options, "bad" : bad_options, "good_global" : good_global_options}
+    return {"good" : good, "bad" : bad, "good_global" : glob}
 
 def _get_config_options(params):
     """Return dictionary of good and bad 'pepc pstates config' option values."""
 
     options = {}
 
-    good_options = []
-    bad_options = []
+    good = []
+    bad = []
 
     if props_common.is_prop_supported("min_freq", params["cpu0_pinfo"]):
-        good_options += [
+        good += [
             "--min-freq",
             "--max-freq",
             "--min-freq --max-freq",
@@ -97,81 +97,81 @@ def _get_config_options(params):
             "--max-freq min"]
         if props_common.is_prop_supported("turbo", params["cpu0_pinfo"]) and \
             params["cpu0_pinfo"]["turbo"] == "on":
-            good_options += [
+            good += [
                 "--max-freq max",
                 "--min-freq min --max-freq max",
                 "--max-freq max --min-freq min"]
         if props_common.is_prop_supported("max_eff_freq", params["cpu0_pinfo"]):
-            good_options += [
+            good += [
                 "--max-freq lfm",
                 "--max-freq eff",
                 "--min-freq lfm",
                 "--min-freq eff"]
         if props_common.is_prop_supported("base_freq", params["cpu0_pinfo"]):
-            good_options += [
+            good += [
                 "--max-freq base",
                 "--max-freq hfm",
                 "--min-freq base",
                 "--min-freq hfm"]
 
-        bad_options += [
+        bad += [
             "--min-freq 1000ghz",
             "--max-freq 3",
             "--min-freq maximum",
             "--min-freq max --max-freq min"]
 
     if props_common.is_prop_supported("min_uncore_freq", params["cpu0_pinfo"]):
-        good_options += [
+        good += [
             "--min-uncore-freq",
             "--max-uncore-freq",
             "--min-uncore-freq --max-uncore-freq",
             "--min-uncore-freq min",
             "--max-uncore-freq max",
             "--max-uncore-freq min --max-uncore-freq max"]
-        bad_options += ["--min-uncore-freq max --max-uncore-freq min"]
+        bad += ["--min-uncore-freq max --max-uncore-freq min"]
 
-    options["freq"] = { "good" : good_options, "bad" : bad_options }
+    options["freq"] = { "good" : good, "bad" : bad }
 
-    good_options = []
-    bad_options = []
+    good = []
+    bad = []
 
     if props_common.is_prop_supported("governor", params["cpu0_pinfo"]):
-        good_options += ["--governor"]
+        good += ["--governor"]
         for governor in params["cpu0_pinfo"]["governors"]:
-            good_options += [f"--governor {governor}"]
-        bad_options += ["--governor savepower"]
+            good += [f"--governor {governor}"]
+        bad += ["--governor savepower"]
 
     if props_common.is_prop_supported("epp", params["cpu0_pinfo"]):
-        good_options += ["--epp", "--epp 0", "--epp 128", "--epp performance"]
-        bad_options += ["--epp 256", "--epp green_tree"]
+        good += ["--epp", "--epp 0", "--epp 128", "--epp performance"]
+        bad += ["--epp 256", "--epp green_tree"]
 
     if props_common.is_prop_supported("epb", params["cpu0_pinfo"]):
-        good_options += ["--epb", "--epb 0", "--epb 15", "--epb performance"]
-        bad_options += ["--epb 16", "--epb green_tree"]
+        good += ["--epb", "--epb 0", "--epb 15", "--epb performance"]
+        bad += ["--epb 16", "--epb green_tree"]
 
-    options["config"] = { "good" : good_options, "bad" : bad_options }
+    options["config"] = { "good" : good, "bad" : bad }
 
-    good_options = []
-    bad_options = []
+    good = []
+    bad = []
 
     if props_common.is_prop_supported("intel_pstate_mode", params["cpu0_pinfo"]):
         # The "off" mode is not supported when HWP is enabled.
         if props_common.is_prop_supported("hwp", params["cpu0_pinfo"]) and \
            params["cpu0_pinfo"]["hwp"] == "off":
-            good_options += ["--intel-pstate-mode off"]
+            good += ["--intel-pstate-mode off"]
 
         # Note, the last mode is intentionally something else but "off", because in "off" mode many
         # options do not work. For example, switching turbo on/off does not work in the "off" mode.
-        good_options += ["--intel-pstate-mode",
+        good += ["--intel-pstate-mode",
                          "--intel-pstate-mode passive"]
 
-        bad_options += ["--intel-pstate-mode Dagny"]
+        bad += ["--intel-pstate-mode Dagny"]
 
     if props_common.is_prop_supported("turbo", params["cpu0_pinfo"]):
-        good_options += ["--turbo", "--turbo enable", "--turbo OFF"]
-        bad_options += ["--turbo 1"]
+        good += ["--turbo", "--turbo enable", "--turbo OFF"]
+        bad += ["--turbo 1"]
 
-    options["config_global"] = { "good" : good_options, "bad" : bad_options }
+    options["config_global"] = { "good" : good, "bad" : bad }
 
     return options
 
@@ -252,11 +252,11 @@ def test_pstates_save_restore(params):
     tmp_path = params["tmp_path"]
     scope_options = _get_scope_options(params)
 
-    good_options = [
+    good = [
         "",
         f"-o {tmp_path}/pstates.{hostname}"]
 
-    for option in good_options:
+    for option in good:
         for scope in scope_options["good"]:
             common.run_pepc(f"pstates save {option} {scope}", pman)
 

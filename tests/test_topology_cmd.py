@@ -33,7 +33,7 @@ def get_params(hostspec):
 def test_topology_info(params):
     """Test 'pepc topology info' command."""
 
-    good_options = [
+    good = [
         "",
         "--online-only",
         f"--cpus 0-{params['cpus'][-1]} --cores all --packages all",
@@ -44,7 +44,7 @@ def test_topology_info(params):
         "--order PaCkAgE"
     ]
 
-    bad_options = [
+    bad = [
         "--order cpu,node",
         "--order Packages",
         "--order HELLO_WORLD",
@@ -52,19 +52,19 @@ def test_topology_info(params):
     ]
 
     if common.is_emulated(params["pman"]):
-        good_options += ["--cpus all --core-siblings 0 --online-only"]
+        good += ["--cpus all --core-siblings 0 --online-only"]
 
     try:
         cores = len(params["cpuinfo"].cores_to_cpus(cores="1", packages="0"))
-        good_options += [f"--online-only --package 0 --core-siblings 0-{cores - 1}"]
+        good += [f"--online-only --package 0 --core-siblings 0-{cores - 1}"]
         # Non-existing core sibling indexes will lead to empty output.
-        good_options += [f"--online-only --package 0 --core-siblings {cores}"]
+        good += [f"--online-only --package 0 --core-siblings {cores}"]
     except Error:
         # There might not be a core 1 on the system.
         pass
 
-    for option in good_options:
+    for option in good:
         common.run_pepc(f"topology info {option}", params["pman"])
 
-    for option in bad_options:
+    for option in bad:
         common.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)

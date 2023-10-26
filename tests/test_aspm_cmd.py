@@ -34,14 +34,14 @@ def test_aspm_config(params):
 
     pman = params["pman"]
 
-    good_options = [
+    good = [
         "",
         "--policy",
         "--policy performance",
         "--policy powersave",
         "--policy powersupersave"]
 
-    for option in good_options:
+    for option in good:
         common.run_pepc(f"aspm config {option}", pman)
 
     common.run_pepc("aspm config --policy badpolicyname", pman, exp_exc=Error)

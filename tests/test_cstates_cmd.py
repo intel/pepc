@@ -56,11 +56,11 @@ def get_params(hostspec, tmp_path_factory):
         yield params
 
 def _get_scope_options(params):
-    """Return dictionary of good and bad scope options to be used for testing."""
+    """Return dictionary of good and bad options testing the scope (--cpus, --packages, etc)."""
 
     pkg0_core_ranges = Human.rangify(params['cores'][0])
 
-    good_scope_options = [
+    good = [
         "",
         "--packages 0 --cpus all",
         f"--cpus 0-{params['cpus'][-1]}",
@@ -69,7 +69,7 @@ def _get_scope_options(params):
         "--packages all",
         f"--packages 0-{params['packages'][-1]}"]
 
-    bad_scope_options = [
+    bad = [
         f"--cpus {params['cpus'][-1] + 1}",
         f"--packages 0 --cores {params['cores'][0][-1] + 1}",
         f"--packages {params['packages'][-1] + 1}"]
@@ -77,11 +77,11 @@ def _get_scope_options(params):
     # Option '--cores' must be used with '--packages', except for 1-package systems, or single
     # socket system.
     if len(params["packages"]) == 1:
-        good_scope_options += [f"--cores {pkg0_core_ranges}"]
+        good += [f"--cores {pkg0_core_ranges}"]
     else:
-        bad_scope_options += [f"--cores {pkg0_core_ranges}"]
+        bad += [f"--cores {pkg0_core_ranges}"]
 
-    return {"good" : good_scope_options, "bad" : bad_scope_options}
+    return {"good" : good, "bad" : bad}
 
 def test_cstates_info(params):
     """Test 'pepc cstates info' command."""
@@ -107,40 +107,40 @@ def test_cstates_config(params):
     pman = params["pman"]
     scope_options = _get_scope_options(params)
 
-    good_options = []
+    good = []
     if props_common.is_prop_supported("idle_driver", params["cpu0_pinfo"]):
-        good_options += ["--enable all",
+        good += ["--enable all",
                          "--disable all",
                          f"--enable {params['cstates'][-1]}",
                          f"--disable {params['cstates'][-1]}"]
 
     if props_common.is_prop_supported("pkg_cstate_limit", params["cpu0_pinfo"]):
-        good_options += ["--pkg-cstate-limit"]
+        good += ["--pkg-cstate-limit"]
         if params["cpu0_pinfo"]["pkg_cstate_limit_lock"] == "off":
             pc = params["cpu0_pinfo"]["pkg_cstate_limits"][0]
-            good_options += [f"--pkg-cstate-limit {pc.upper()}", f"--pkg-cstate-limit {pc.lower()}"]
+            good += [f"--pkg-cstate-limit {pc.upper()}", f"--pkg-cstate-limit {pc.lower()}"]
     if props_common.is_prop_supported("c1_demotion", params["cpu0_pinfo"]):
-        good_options += ["--c1-demotion", "--c1-demotion on", "--c1-demotion OFF"]
+        good += ["--c1-demotion", "--c1-demotion on", "--c1-demotion OFF"]
     if props_common.is_prop_supported("c1_undemotion", params["cpu0_pinfo"]):
-        good_options += ["--c1-undemotion", "--c1-undemotion on", "--c1-undemotion OFF"]
+        good += ["--c1-undemotion", "--c1-undemotion on", "--c1-undemotion OFF"]
     if props_common.is_prop_supported("c1e_autopromote", params["cpu0_pinfo"]):
-        good_options += ["--c1e-autopromote", "--c1e-autopromote on", "--c1e-autopromote OFF"]
+        good += ["--c1e-autopromote", "--c1e-autopromote on", "--c1e-autopromote OFF"]
     if props_common.is_prop_supported("cstate_prewake", params["cpu0_pinfo"]):
-        good_options += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake OFF"]
+        good += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake OFF"]
 
-    for option in good_options:
+    for option in good:
         for scope in scope_options["good"]:
             common.run_pepc(f"cstates config {option} {scope}", pman)
 
         for scope in scope_options["bad"]:
             common.run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
 
-    bad_options = [
+    bad = [
         "--enable CC0",
         "--disable CC0"
         "--cstate-prewake meh"]
 
-    for option in bad_options:
+    for option in bad:
         common.run_pepc(f"cstates config {option}", pman, exp_exc=Error)
 
         for scope in scope_options["good"]:
@@ -150,18 +150,18 @@ def test_cstates_config(params):
             common.run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
 
     # Options tested without 'scope_options'.
-    good_options = []
-    bad_options = []
+    good = []
+    bad = []
 
     if props_common.is_prop_supported("governor", params["cpu0_pinfo"]):
-        good_options += ["--governor"]
+        good += ["--governor"]
         for governor in params["cpu0_pinfo"]["governors"]:
-            good_options += [f"--governor {governor}"]
-        bad_options += ["--governor reardenmetal"]
+            good += [f"--governor {governor}"]
+        bad += ["--governor reardenmetal"]
 
-    for option in good_options:
+    for option in good:
         common.run_pepc(f"cstates config {option}", pman)
-    for option in bad_options:
+    for option in bad:
         common.run_pepc(f"cstates config {option}", pman, exp_exc=Error)
 
 def test_cstates_save_restore(params):
@@ -172,11 +172,11 @@ def test_cstates_save_restore(params):
     tmp_path = params["tmp_path"]
     scope_options = _get_scope_options(params)
 
-    good_options = [
+    good = [
         "",
         f"-o {tmp_path}/cstates.{hostname}"]
 
-    for option in good_options:
+    for option in good:
         for scope in scope_options["good"]:
             common.run_pepc(f"cstates save {option} {scope}", pman)
 

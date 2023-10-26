@@ -48,11 +48,11 @@ def get_params(hostspec, tmp_path_factory):
         yield params
 
 def _get_scope_options(params):
-    """Return dictionary of good and bad scope options to be used for testing."""
+    """Return dictionary of good and bad options testing the scope (--cpus, --packages, etc)."""
 
     pkg0_core_ranges = Human.rangify(params['cores'][0])
 
-    good_scope_options = [
+    good = [
         "",
         "--packages 0 --cpus all",
         f"--cpus 0-{params['cpus'][-1]}",
@@ -61,7 +61,7 @@ def _get_scope_options(params):
         "--packages all",
         f"--packages 0-{params['packages'][-1]}"]
 
-    bad_scope_options = [
+    bad = [
         f"--cpus {params['cpus'][-1] + 1}",
         f"--packages 0 --cores {params['cores'][0][-1] + 1}",
         f"--packages {params['packages'][-1] + 1}"]
@@ -69,11 +69,11 @@ def _get_scope_options(params):
     # Option '--cores' must be used with '--packages', except for 1-package systems, or single
     # socket system.
     if len(params["packages"]) == 1:
-        good_scope_options += [f"--cores {pkg0_core_ranges}"]
+        good += [f"--cores {pkg0_core_ranges}"]
     else:
-        bad_scope_options += [f"--cores {pkg0_core_ranges}"]
+        bad += [f"--cores {pkg0_core_ranges}"]
 
-    return {"good" : good_scope_options, "bad" : bad_scope_options}
+    return {"good" : good, "bad" : bad}
 
 def test_power_info(params):
     """
@@ -98,7 +98,7 @@ def test_power_config(params):
     pman = params["pman"]
     scope_options = _get_scope_options(params)
 
-    good_options = []
+    good = []
 
     cfg_pnames_bool = {"-enable", "-clamp"}
     cfg_pnames_limit = {""}
@@ -114,7 +114,7 @@ def test_power_config(params):
                 newval = 'on'
 
             if props_common.is_prop_supported(valname, params["cpu0_pinfo"]):
-                good_options += [f"--{prop} {newval}", f"--{prop} {val}"]
+                good += [f"--{prop} {newval}", f"--{prop} {val}"]
 
         for pat in cfg_pnames_limit:
             prop = f"ppl{index}{pat}"
@@ -122,9 +122,9 @@ def test_power_config(params):
             if props_common.is_prop_supported(valname, params["cpu0_pinfo"]):
                 val = params["cpu0_pinfo"][valname]
                 newval = val - 1
-                good_options += [f"--{prop} {newval}", f"--{prop} {val}"]
+                good += [f"--{prop} {newval}", f"--{prop} {val}"]
 
-    for option in good_options:
+    for option in good:
         for scope in scope_options["good"]:
             TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, f"power config {option} {scope}", pman,
                                 warn_only={ErrorVerifyFailed : "enable"})
@@ -176,11 +176,11 @@ def test_power_save_restore(params):
     tmp_path = params["tmp_path"]
     scope_options = _get_scope_options(params)
 
-    good_options = [
+    good = [
         "",
         f"-o {tmp_path}/power.{hostname}"]
 
-    for option in good_options:
+    for option in good:
         for scope in scope_options["good"]:
             common.run_pepc(f"power save {option} {scope}", pman)
 
