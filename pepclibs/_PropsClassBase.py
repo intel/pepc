@@ -34,7 +34,7 @@ import copy
 import logging
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, LocalProcessManager
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = logging.getLogger()
 
@@ -87,11 +87,21 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         _bug_method_not_defined("PropsClassBase._set_sname")
 
     def get_sname(self, pname):
-        """Get scope "sname" for property 'pname'."""
+        """
+        Return scope "sname" for property 'pname'. May return 'None' if the property is not
+        supported.
+
+        Note, if the property is not supported by the platform, this method does not guarantee that
+        'None' is returned. Depending on the property and platform, this method may return a valid
+        scope name even if the property is not actually supported.
+        """
 
         try:
             if not self._props[pname]["sname"]:
-                self._set_sname(pname)
+                try:
+                    self._set_sname(pname)
+                except ErrorNotSupported:
+                    return None
 
             return self._props[pname]["sname"]
         except KeyError as err:
