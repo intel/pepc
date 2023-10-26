@@ -178,13 +178,15 @@ class EPP(ClassHelpers.SimpleCloseContext):
                         self._aliases[epp] = fobj.read().strip()
                         val = self._aliases[epp]
         except Error as err:
+            if isinstance(err, ErrorNotFound):
+                err = ErrorNotSupported(err)
             raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         return self._pcache.add("epp", cpu, val, mname="sysfs")
 
     def get_epp(self, cpus="all", mname="sysfs"):
         """
-        read EPP for CPUs 'cpus' using the 'mname' mechanism and yield (CPU number, EPP value)
+        Read EPP for CPUs 'cpus' using the 'mname' mechanism and yield (CPU number, EPP value)
         pairs. The arguments are as follows.
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
           * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
@@ -213,6 +215,8 @@ class EPP(ClassHelpers.SimpleCloseContext):
                   'mname' is "sysfs", 'epp' can also be EPP policy name (e.g., "performance").
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
           * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
+
+        Raise 'ErrorNotSupported' if the platform does not support EPP.
         """
 
         self._validate_mechanism_name(mname)
