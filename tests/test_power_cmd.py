@@ -13,7 +13,6 @@
 import copy
 import pytest
 import common
-import props_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 from pepclibs.helperlibs import Human, YAML, TestRunner
 from pepclibs import CPUInfo, Power
@@ -29,14 +28,9 @@ def get_params(hostspec, tmp_path_factory):
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          Power.Power(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)
-        params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         params["pobj"] = pobj
-
-        cpu0_pinfo = {}
-        for pname in pobj.props:
-            cpu0_pinfo[pname] = pobj.get_cpu_prop(pname, 0)["val"]
-        params["cpu0_pinfo"] = cpu0_pinfo
+        params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         allcpus = cpuinfo.get_cpus()
         params["cpus"] = allcpus
@@ -95,34 +89,38 @@ def test_power_info(params):
 def test_power_config(params):
     """Test 'pepc power config' command."""
 
+    cpu = 0
     pman = params["pman"]
+    pobj = params["pobj"]
     scope_options = _get_scope_options(params)
 
     good = []
 
-    cfg_pnames_bool = {"-enable", "-clamp"}
-    cfg_pnames_limit = {""}
+    opts = ("ppl1-clamp", "ppl2-clamp")
 
-    for index in range(1, 3):
-        for pat in cfg_pnames_bool:
-            prop = f"ppl{index}{pat}"
-            valname = prop.replace("-", "_")
-            val = params["cpu0_pinfo"][valname]
-            if val == 'on':
-                newval = 'off'
-            else:
-                newval = 'on'
+    for opt in opts:
+        pname = opt.replace("-", "_")
+        val = pobj.get_cpu_prop(pname, cpu)["val"]
+        if val is None:
+            continue
 
-            if props_common.is_prop_supported(valname, params["cpu0_pinfo"]):
-                good += [f"--{prop} {newval}", f"--{prop} {val}"]
+        if val == 'on':
+            newval = 'off'
+        else:
+            newval = 'on'
 
-        for pat in cfg_pnames_limit:
-            prop = f"ppl{index}{pat}"
-            valname = prop.replace("-", "_")
-            if props_common.is_prop_supported(valname, params["cpu0_pinfo"]):
-                val = params["cpu0_pinfo"][valname]
-                newval = val - 1
-                good += [f"--{prop} {newval}", f"--{prop} {val}"]
+        good += [f"--{opt} {newval}", f"--{opt} {val}"]
+
+    opts = ("ppl1", "ppl2")
+    for opt in opts:
+        pname = opt.replace("-", "_")
+        val = pobj.get_cpu_prop(pname, cpu)["val"]
+        if val is None:
+            continue
+
+        newval = val - 1
+
+        good += [f"--{opt} {newval}", f"--{opt} {val}"]
 
     for option in good:
         for scope in scope_options["good"]:

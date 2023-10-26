@@ -13,7 +13,6 @@
 import copy
 import pytest
 import common
-import props_common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human, YAML
 from pepclibs import CPUInfo, CStates
@@ -28,14 +27,9 @@ def get_params(hostspec, tmp_path_factory):
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.CStates(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)
-        params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         params["pobj"] = pobj
-
-        cpu0_pinfo = {}
-        for pname in pobj.props:
-            cpu0_pinfo[pname] = pobj.get_cpu_prop(pname, 0)["val"]
-        params["cpu0_pinfo"] = cpu0_pinfo
+        params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         allcpus = cpuinfo.get_cpus()
         params["cpus"] = allcpus
@@ -48,7 +42,7 @@ def get_params(hostspec, tmp_path_factory):
         params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
 
         params["cstates"] = []
-        if props_common.is_prop_supported("idle_driver", params["cpu0_pinfo"]):
+        if pobj.prop_is_supported("idle_driver", 0):
             for _, csinfo in pobj.get_cstates_info(cpus=[params["testcpus"][0]]):
                 for csname in csinfo:
                     params["cstates"].append(csname)
@@ -104,28 +98,31 @@ def test_cstates_info(params):
 def test_cstates_config(params):
     """Test 'pepc cstates config' command."""
 
+    cpu = 0
     pman = params["pman"]
+    pobj = params["pobj"]
     scope_options = _get_scope_options(params)
 
     good = []
-    if props_common.is_prop_supported("idle_driver", params["cpu0_pinfo"]):
+    if pobj.prop_is_supported("idle_driver", cpu):
         good += ["--enable all",
                          "--disable all",
                          f"--enable {params['cstates'][-1]}",
                          f"--disable {params['cstates'][-1]}"]
 
-    if props_common.is_prop_supported("pkg_cstate_limit", params["cpu0_pinfo"]):
+    if pobj.prop_is_supported("pkg_cstate_limit", cpu):
         good += ["--pkg-cstate-limit"]
-        if params["cpu0_pinfo"]["pkg_cstate_limit_lock"] == "off":
-            pc = params["cpu0_pinfo"]["pkg_cstate_limits"][0]
-            good += [f"--pkg-cstate-limit {pc.upper()}", f"--pkg-cstate-limit {pc.lower()}"]
-    if props_common.is_prop_supported("c1_demotion", params["cpu0_pinfo"]):
+        lock = pobj.get_cpu_prop("pkg_cstate_limit_lock", cpu)["val"]
+        if lock == "off":
+            limit = pobj.get_cpu_prop("pkg_cstate_limit", cpu)["val"]
+            good += [f"--pkg-cstate-limit {limit.upper()}", f"--pkg-cstate-limit {limit.lower()}"]
+    if pobj.prop_is_supported("c1_demotion", cpu):
         good += ["--c1-demotion", "--c1-demotion on", "--c1-demotion OFF"]
-    if props_common.is_prop_supported("c1_undemotion", params["cpu0_pinfo"]):
+    if pobj.prop_is_supported("c1_undemotion", cpu):
         good += ["--c1-undemotion", "--c1-undemotion on", "--c1-undemotion OFF"]
-    if props_common.is_prop_supported("c1e_autopromote", params["cpu0_pinfo"]):
+    if pobj.prop_is_supported("c1e_autopromote", cpu):
         good += ["--c1e-autopromote", "--c1e-autopromote on", "--c1e-autopromote OFF"]
-    if props_common.is_prop_supported("cstate_prewake", params["cpu0_pinfo"]):
+    if pobj.prop_is_supported("cstate_prewake", cpu):
         good += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake OFF"]
 
     for option in good:
@@ -153,9 +150,9 @@ def test_cstates_config(params):
     good = []
     bad = []
 
-    if props_common.is_prop_supported("governor", params["cpu0_pinfo"]):
+    if pobj.prop_is_supported("governor", cpu):
         good += ["--governor"]
-        for governor in params["cpu0_pinfo"]["governors"]:
+        for governor in pobj.get_cpu_prop("governors", cpu)["val"]:
             good += [f"--governor {governor}"]
         bad += ["--governor reardenmetal"]
 
