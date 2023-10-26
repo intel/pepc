@@ -174,6 +174,16 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for pvinfo in self.get_prop(pname, cpus=(cpu,)):
             return pvinfo
 
+    def prop_is_supported(self, pname, cpu):
+        """
+        Return 'True' if property 'pname' is supported, otherwise return 'False'. The arguments are
+        as follows:
+          * pname - property name to check.
+          * cpu - CPU number to check the property for.
+        """
+
+        return self.get_cpu_prop(pname, cpu)["val"] is not None
+
     def _normalize_inprop(self, pname, val):
         """Normalize and return the input property value."""
 
