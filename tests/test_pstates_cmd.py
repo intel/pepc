@@ -28,16 +28,16 @@ def get_params(hostspec, tmp_path_factory):
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)
-        params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         params["cpuinfo"] = cpuinfo
+        params["pobj"] = pobj
+        params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
+
         params["cpus"] = cpuinfo.get_cpus()
         params["packages"] = cpuinfo.get_packages()
         params["cores"] = {}
         for pkg in params["packages"]:
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
-
-        params["pobj"] = pobj
 
         yield params
 

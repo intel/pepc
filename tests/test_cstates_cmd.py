@@ -30,6 +30,7 @@ def get_params(hostspec, tmp_path_factory):
         params = common.build_params(pman)
 
         params["pobj"] = pobj
+        params["cpuinfo"] = cpuinfo
         params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         allcpus = cpuinfo.get_cpus()
@@ -40,11 +41,11 @@ def get_params(hostspec, tmp_path_factory):
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
 
         medidx = int(len(allcpus)/2)
-        params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
-
+        testcpus = [allcpus[0], allcpus[medidx], allcpus[-1]]
         params["cstates"] = []
+
         if pobj.prop_is_supported("idle_driver", 0):
-            for _, csinfo in pobj.get_cstates_info(cpus=[params["testcpus"][0]]):
+            for _, csinfo in pobj.get_cstates_info(cpus=(testcpus[0],)):
                 for csname in csinfo:
                     params["cstates"].append(csname)
 
