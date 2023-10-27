@@ -15,7 +15,7 @@ This module provides P-state management API.
 import time
 import logging
 import contextlib
-from statistics import mean
+import statistics
 from pathlib import Path
 from pepclibs import _PCStatesBase
 from pepclibs.helperlibs import Trivial, KernelModule, FSHelpers, Human, ClassHelpers
@@ -908,7 +908,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif val == "mdl":
                 min_freq = self._get_cpu_prop("min_uncore_freq_limit", cpu)
                 max_freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
-                freq = round(mean([min_freq, max_freq]), -2)
+                freq = round(statistics.mean([min_freq, max_freq]), -2)
             else:
                 freq = val
         else:
