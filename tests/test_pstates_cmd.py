@@ -40,8 +40,10 @@ def get_params(hostspec, tmp_path_factory):
 
         yield params
 
-def _get_scope_options(params):
-    """Return dictionary of good and bad options testing the scope (--cpus, --packages, etc)."""
+def _get_cpunum_options(params):
+    """
+    Return a dictionary of good and bad options that specify CPU numbers (--cpus, --packages, etc).
+    """
 
     pkg0_core_ranges = Human.rangify(params['cores'][0])
 
@@ -171,12 +173,12 @@ def test_pstates_info(params):
     """Test 'pepc pstates info' command."""
 
     pman = params["pman"]
-    scope_options = _get_scope_options(params)
+    cpunum_opts = _get_cpunum_options(params)
 
-    for option in scope_options["good"]:
+    for option in cpunum_opts["good"]:
         common.run_pepc(f"pstates info {option}", pman)
 
-    for option in scope_options["bad"]:
+    for option in cpunum_opts["bad"]:
         common.run_pepc(f"pstates info {option}", pman, exp_exc=Error)
 
     # Treat the target system as Sapphire Rapids Xeon.
@@ -186,34 +188,34 @@ def _test_pstates_config_good(params):
     """Test 'pepc pstates config' command with good argument values."""
 
     pman = params["pman"]
-    scope_options = _get_scope_options(params)
+    cpunum_opts = _get_cpunum_options(params)
     config_options = _get_config_options(params)
 
     for option in config_options["freq"]["good"]:
-        for scope in scope_options["good"]:
-            if "uncore" in option and ("package" not in scope or "core" in scope):
+        for cpunum_opt in cpunum_opts["good"]:
+            if "uncore" in option and ("package" not in cpunum_opt or "core" in cpunum_opt):
                 continue
-            common.run_pepc(f"pstates config {option} {scope}", pman)
+            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman)
 
-        for scope in scope_options["bad"]:
-            common.run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
+        for cpunum_opt in cpunum_opts["bad"]:
+            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman, exp_exc=Error)
 
     for option in config_options["config"]["good"]:
-        for scope in scope_options["good"]:
-            common.run_pepc(f"pstates config {option} {scope}", pman)
+        for cpunum_opt in cpunum_opts["good"]:
+            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman)
 
-        for scope in scope_options["bad"]:
-            common.run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
+        for cpunum_opt in cpunum_opts["bad"]:
+            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman, exp_exc=Error)
 
     for option in config_options["config_global"]["good"]:
-        for scope in scope_options["good_global"]:
-            common.run_pepc(f"pstates config {option} {scope}", pman)
+        for cpunum_opt in cpunum_opts["good_global"]:
+            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman)
 
 def _test_pstates_config_bad(params):
     """Test 'pepc pstates config' command with bad argument values."""
 
     pman = params["pman"]
-    scope_options = _get_scope_options(params)
+    cpunum_opts = _get_cpunum_options(params)
     config_options = _get_config_options(params)
 
     # Test other config options.
@@ -221,8 +223,8 @@ def _test_pstates_config_bad(params):
         common.run_pepc(f"pstates config {option}", pman, exp_exc=Error)
 
     for option in config_options["freq"]["good"]:
-        for scope in scope_options["bad"]:
-            common.run_pepc(f"pstates config {option} {scope}", pman, exp_exc=Error)
+        for cpunum_opt in cpunum_opts["bad"]:
+            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman, exp_exc=Error)
 
     for option in config_options["config_global"]["bad"]:
         common.run_pepc(f"pstates config {option}", pman, exp_exc=Error)
@@ -244,18 +246,18 @@ def test_pstates_save_restore(params):
     pobj = params["pobj"]
     hostname = params["hostname"]
     tmp_path = params["tmp_path"]
-    scope_options = _get_scope_options(params)
+    cpunum_opts = _get_cpunum_options(params)
 
     good = [
         "",
         f"-o {tmp_path}/pstates.{hostname}"]
 
     for option in good:
-        for scope in scope_options["good"]:
-            common.run_pepc(f"pstates save {option} {scope}", pman)
+        for cpunum_opt in cpunum_opts["good"]:
+            common.run_pepc(f"pstates save {option} {cpunum_opt}", pman)
 
-        for scope in scope_options["bad"]:
-            common.run_pepc(f"pstates save {option} {scope}", pman, exp_exc=Error)
+        for cpunum_opt in cpunum_opts["bad"]:
+            common.run_pepc(f"pstates save {option} {cpunum_opt}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
     common.run_pepc(f"pstates save -o {state_path}", pman)

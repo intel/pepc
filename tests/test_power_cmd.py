@@ -41,8 +41,10 @@ def get_params(hostspec, tmp_path_factory):
 
         yield params
 
-def _get_scope_options(params):
-    """Return dictionary of good and bad options testing the scope (--cpus, --packages, etc)."""
+def _get_cpunum_options(params):
+    """
+    Return a dictionary of good and bad options that specify CPU numbers (--cpus, --packages, etc).
+    """
 
     pkg0_core_ranges = Human.rangify(params['cores'][0])
 
@@ -75,12 +77,12 @@ def test_power_info(params):
     """
 
     pman = params["pman"]
-    scope_options = _get_scope_options(params)
+    cpunum_opts = _get_cpunum_options(params)
 
-    for option in scope_options["good"]:
+    for option in cpunum_opts["good"]:
         common.run_pepc(f"power info {option}", pman)
 
-    for option in scope_options["bad"]:
+    for option in cpunum_opts["bad"]:
         common.run_pepc(f"power info {option}", pman, exp_exc=Error)
 
     # Treat the target system as Sapphire Rapids Xeon.
@@ -92,7 +94,7 @@ def test_power_config(params):
     cpu = 0
     pman = params["pman"]
     pobj = params["pobj"]
-    scope_options = _get_scope_options(params)
+    cpunum_opts = _get_cpunum_options(params)
 
     good = []
 
@@ -123,12 +125,12 @@ def test_power_config(params):
         good += [f"--{opt} {newval}", f"--{opt} {val}"]
 
     for option in good:
-        for scope in scope_options["good"]:
-            TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, f"power config {option} {scope}", pman,
+        for cpunum_opt in cpunum_opts["good"]:
+            TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, f"power config {option} {cpunum_opt}", pman,
                                 warn_only={ErrorVerifyFailed : "enable"})
 
-        for scope in scope_options["bad"]:
-            common.run_pepc(f"power config {option} {scope}", pman, exp_exc=Error)
+        for cpunum_opt in cpunum_opts["bad"]:
+            common.run_pepc(f"power config {option} {cpunum_opt}", pman, exp_exc=Error)
 
 def _try_change_value(pname, new_val, current_val, pobj):
     """
@@ -172,18 +174,18 @@ def test_power_save_restore(params):
     pman = params["pman"]
     hostname = params["hostname"]
     tmp_path = params["tmp_path"]
-    scope_options = _get_scope_options(params)
+    cpunum_opts = _get_cpunum_options(params)
 
     good = [
         "",
         f"-o {tmp_path}/power.{hostname}"]
 
     for option in good:
-        for scope in scope_options["good"]:
-            common.run_pepc(f"power save {option} {scope}", pman)
+        for cpunum_opt in cpunum_opts["good"]:
+            common.run_pepc(f"power save {option} {cpunum_opt}", pman)
 
-        for scope in scope_options["bad"]:
-            common.run_pepc(f"power save {option} {scope}", pman, exp_exc=Error)
+        for cpunum_opt in cpunum_opts["bad"]:
+            common.run_pepc(f"power save {option} {cpunum_opt}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
     common.run_pepc(f"power save -o {state_path}", pman)

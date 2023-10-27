@@ -49,8 +49,10 @@ def get_params(hostspec, tmp_path_factory):
 
         yield params
 
-def _get_scope_options(params):
-    """Return dictionary of good and bad options testing the scope (--cpus, --packages, etc)."""
+def _get_cpunum_options(params):
+    """
+    Return a dictionary of good and bad options that specify CPU numbers (--cpus, --packages, etc).
+    """
 
     pkg0_core_ranges = Human.rangify(params['cores'][0])
 
@@ -81,12 +83,12 @@ def test_cstates_info(params):
     """Test 'pepc cstates info' command."""
 
     pman = params["pman"]
-    scope_options = _get_scope_options(params)
+    cpunum_opts = _get_cpunum_options(params)
 
-    for option in scope_options["good"]:
+    for option in cpunum_opts["good"]:
         common.run_pepc(f"cstates info {option}", pman)
 
-    for option in scope_options["bad"]:
+    for option in cpunum_opts["bad"]:
         common.run_pepc(f"cstates info {option}", pman, exp_exc=Error)
 
     for cstate in params["cstates"]:
@@ -101,7 +103,7 @@ def test_cstates_config(params):
     cpu = 0
     pman = params["pman"]
     pobj = params["pobj"]
-    scope_options = _get_scope_options(params)
+    cpunum_opts = _get_cpunum_options(params)
 
     good = []
     if pobj.prop_is_supported("idle_driver", cpu):
@@ -126,11 +128,11 @@ def test_cstates_config(params):
         good += ["--cstate-prewake", "--cstate-prewake on", "--cstate-prewake OFF"]
 
     for option in good:
-        for scope in scope_options["good"]:
-            common.run_pepc(f"cstates config {option} {scope}", pman)
+        for cpunum_opt in cpunum_opts["good"]:
+            common.run_pepc(f"cstates config {option} {cpunum_opt}", pman)
 
-        for scope in scope_options["bad"]:
-            common.run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
+        for cpunum_opt in cpunum_opts["bad"]:
+            common.run_pepc(f"cstates config {option} {cpunum_opt}", pman, exp_exc=Error)
 
     bad = [
         "--enable CC0",
@@ -140,13 +142,13 @@ def test_cstates_config(params):
     for option in bad:
         common.run_pepc(f"cstates config {option}", pman, exp_exc=Error)
 
-        for scope in scope_options["good"]:
-            common.run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
+        for cpunum_opt in cpunum_opts["good"]:
+            common.run_pepc(f"cstates config {option} {cpunum_opt}", pman, exp_exc=Error)
 
-        for scope in scope_options["bad"]:
-            common.run_pepc(f"cstates config {option} {scope}", pman, exp_exc=Error)
+        for cpunum_opt in cpunum_opts["bad"]:
+            common.run_pepc(f"cstates config {option} {cpunum_opt}", pman, exp_exc=Error)
 
-    # Options tested without 'scope_options'.
+    # Options tested without 'cpunum_opts'.
     good = []
     bad = []
 
@@ -167,18 +169,18 @@ def test_cstates_save_restore(params):
     pman = params["pman"]
     hostname = params["hostname"]
     tmp_path = params["tmp_path"]
-    scope_options = _get_scope_options(params)
+    cpunum_opts = _get_cpunum_options(params)
 
     good = [
         "",
         f"-o {tmp_path}/cstates.{hostname}"]
 
     for option in good:
-        for scope in scope_options["good"]:
-            common.run_pepc(f"cstates save {option} {scope}", pman)
+        for cpunum_opt in cpunum_opts["good"]:
+            common.run_pepc(f"cstates save {option} {cpunum_opt}", pman)
 
-        for scope in scope_options["bad"]:
-            common.run_pepc(f"cstates save {option} {scope}", pman, exp_exc=Error)
+        for cpunum_opt in cpunum_opts["bad"]:
+            common.run_pepc(f"cstates save {option} {cpunum_opt}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
     common.run_pepc(f"cstates save -o {state_path}", pman)
