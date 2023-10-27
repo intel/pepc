@@ -13,6 +13,7 @@
 import copy
 import pytest
 import common
+import props_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 from pepclibs.helperlibs import Human, YAML, TestRunner
 from pepclibs import CPUInfo, Power
@@ -41,48 +42,17 @@ def get_params(hostspec, tmp_path_factory):
 
         yield params
 
-def _get_cpunum_options(params):
-    """
-    Return a dictionary of good and bad options that specify CPU numbers (--cpus, --packages, etc).
-    """
-
-    pkg0_core_ranges = Human.rangify(params['cores'][0])
-
-    good = [
-        "",
-        "--packages 0 --cpus all",
-        f"--cpus 0-{params['cpus'][-1]}",
-        "--packages 0 --cores all",
-        f"--packages 0 --cores {pkg0_core_ranges}",
-        "--packages all",
-        f"--packages 0-{params['packages'][-1]}"]
-
-    bad = [
-        f"--cpus {params['cpus'][-1] + 1}",
-        f"--packages 0 --cores {params['cores'][0][-1] + 1}",
-        f"--packages {params['packages'][-1] + 1}"]
-
-    # Option '--cores' must be used with '--packages', except for 1-package systems, or single
-    # socket system.
-    if len(params["packages"]) == 1:
-        good += [f"--cores {pkg0_core_ranges}"]
-    else:
-        bad += [f"--cores {pkg0_core_ranges}"]
-
-    return {"good" : good, "bad" : bad}
-
 def test_power_info(params):
     """
     Test 'pepc power info' command.
     """
 
     pman = params["pman"]
-    cpunum_opts = _get_cpunum_options(params)
 
-    for option in cpunum_opts["good"]:
+    for option in props_common.get_good_cpunum_opts(params, sname="package"):
         common.run_pepc(f"power info {option}", pman)
 
-    for option in cpunum_opts["bad"]:
+    for option in props_common.get_bad_cpunum_opts(params):
         common.run_pepc(f"power info {option}", pman, exp_exc=Error)
 
     # Treat the target system as Sapphire Rapids Xeon.
@@ -94,7 +64,6 @@ def test_power_config(params):
     cpu = 0
     pman = params["pman"]
     pobj = params["pobj"]
-    cpunum_opts = _get_cpunum_options(params)
 
     good = []
 
@@ -125,11 +94,11 @@ def test_power_config(params):
         good += [f"--{opt} {newval}", f"--{opt} {val}"]
 
     for option in good:
-        for cpunum_opt in cpunum_opts["good"]:
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
             TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, f"power config {option} {cpunum_opt}", pman,
                                 warn_only={ErrorVerifyFailed : "enable"})
 
-        for cpunum_opt in cpunum_opts["bad"]:
+        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"power config {option} {cpunum_opt}", pman, exp_exc=Error)
 
 def _try_change_value(pname, new_val, current_val, pobj):
@@ -174,17 +143,16 @@ def test_power_save_restore(params):
     pman = params["pman"]
     hostname = params["hostname"]
     tmp_path = params["tmp_path"]
-    cpunum_opts = _get_cpunum_options(params)
 
     good = [
         "",
         f"-o {tmp_path}/power.{hostname}"]
 
     for option in good:
-        for cpunum_opt in cpunum_opts["good"]:
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
             common.run_pepc(f"power save {option} {cpunum_opt}", pman)
 
-        for cpunum_opt in cpunum_opts["bad"]:
+        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"power save {option} {cpunum_opt}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"

@@ -10,6 +10,7 @@
 
 """Common functions for the property class tests (e.g., 'CStates', 'PStates')."""
 
+from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 def is_prop_supported(pname, cpu0_pinfo):
@@ -22,6 +23,49 @@ def is_prop_supported(pname, cpu0_pinfo):
     """
 
     return cpu0_pinfo[pname] is not None
+
+def get_good_cpunum_opts(params, sname="package"):
+    """
+    Return a list of good options that specify CPU numbers (--cpus, --packages, etc).
+    """
+
+    if sname == "global":
+        opts = ["",
+                "--cpus all",
+                "--packages all",
+                f"--cpus  0-{params['cpus'][-1]}"]
+        return opts
+
+    pkg0_core_ranges = Human.rangify(params['cores'][0])
+    opts = ["",
+            "--packages 0 --cpus all",
+            f"--cpus 0-{params['cpus'][-1]}",
+            "--packages 0 --cores all",
+            f"--packages 0 --cores {pkg0_core_ranges}",
+            "--packages all",
+            f"--packages 0-{params['packages'][-1]}"]
+
+    if len(params["packages"]) == 1:
+        opts.append(f"--cores {pkg0_core_ranges}")
+
+    return opts
+
+def get_bad_cpunum_opts(params):
+    """
+    Return a dictionary of good and bad options that specify CPU numbers (--cpus, --packages, etc).
+    """
+
+    opts = [f"--cpus {params['cpus'][-1] + 1}",
+            f"--packages 0 --cores {params['cores'][0][-1] + 1}",
+            f"--packages {params['packages'][-1] + 1}"]
+
+    # Option '--cores' must be used with '--packages', except for 1-package systems, or single
+    # socket system.
+    if len(params["packages"]) > 1:
+        pkg0_core_ranges = Human.rangify(params['cores'][0])
+        opts += [f"--cores {pkg0_core_ranges}"]
+
+    return opts
 
 def set_and_verify(params, props_vals, cpu):
     """

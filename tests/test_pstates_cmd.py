@@ -13,6 +13,7 @@
 import copy
 import pytest
 import common
+import props_common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human, YAML
 from pepclibs import CPUInfo, PStates, BClock
@@ -39,42 +40,6 @@ def get_params(hostspec, tmp_path_factory):
         params["pobj"] = pobj
 
         yield params
-
-def _get_cpunum_options(params):
-    """
-    Return a dictionary of good and bad options that specify CPU numbers (--cpus, --packages, etc).
-    """
-
-    pkg0_core_ranges = Human.rangify(params['cores'][0])
-
-    good = [
-        "",
-        "--packages 0 --cpus all",
-        f"--cpus 0-{params['cpus'][-1]}",
-        "--packages 0 --cores all",
-        f"--packages 0 --cores {pkg0_core_ranges}",
-        "--packages all",
-        f"--packages 0-{params['packages'][-1]}"]
-
-    bad = [
-        f"--cpus {params['cpus'][-1] + 1}",
-        f"--packages 0 --cores {params['cores'][0][-1] + 1}",
-        f"--packages {params['packages'][-1] + 1}"]
-
-    # Option '--cores' must be used with '--packages', except for 1-package systems, or single
-    # socket system.
-    if len(params["packages"]) == 1:
-        good += [f"--cores {pkg0_core_ranges}"]
-    else:
-        bad += [f"--cores {pkg0_core_ranges}"]
-
-    glob = [
-        "",
-        "--cpus all",
-        "--packages all",
-        f"--cpus  0-{params['cpus'][-1]}"]
-
-    return {"good" : good, "bad" : bad, "good_global" : glob}
 
 def _get_config_options(params):
     """Return dictionary of good and bad 'pepc pstates config' option values."""
@@ -173,13 +138,12 @@ def test_pstates_info(params):
     """Test 'pepc pstates info' command."""
 
     pman = params["pman"]
-    cpunum_opts = _get_cpunum_options(params)
 
-    for option in cpunum_opts["good"]:
-        common.run_pepc(f"pstates info {option}", pman)
+    for opt in props_common.get_good_cpunum_opts(params, sname="package"):
+        common.run_pepc(f"pstates info {opt}", pman)
 
-    for option in cpunum_opts["bad"]:
-        common.run_pepc(f"pstates info {option}", pman, exp_exc=Error)
+    for opt in props_common.get_bad_cpunum_opts(params):
+        common.run_pepc(f"pstates info {opt}", pman, exp_exc=Error)
 
     # Treat the target system as Sapphire Rapids Xeon.
     common.run_pepc("pstates info --override-cpu-model 0x8F", pman)
@@ -188,49 +152,47 @@ def _test_pstates_config_good(params):
     """Test 'pepc pstates config' command with good argument values."""
 
     pman = params["pman"]
-    cpunum_opts = _get_cpunum_options(params)
     config_options = _get_config_options(params)
 
-    for option in config_options["freq"]["good"]:
-        for cpunum_opt in cpunum_opts["good"]:
-            if "uncore" in option and ("package" not in cpunum_opt or "core" in cpunum_opt):
+    for opt in config_options["freq"]["good"]:
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+            if "uncore" in opt and ("package" not in cpunum_opt or "core" in cpunum_opt):
                 continue
-            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman)
+            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman)
 
-        for cpunum_opt in cpunum_opts["bad"]:
-            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman, exp_exc=Error)
+        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
+            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
 
-    for option in config_options["config"]["good"]:
-        for cpunum_opt in cpunum_opts["good"]:
-            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman)
+    for opt in config_options["config"]["good"]:
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman)
 
-        for cpunum_opt in cpunum_opts["bad"]:
-            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman, exp_exc=Error)
+        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
+            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
 
-    for option in config_options["config_global"]["good"]:
-        for cpunum_opt in cpunum_opts["good_global"]:
-            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman)
+    for opt in config_options["config_global"]["good"]:
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
+            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman)
 
 def _test_pstates_config_bad(params):
     """Test 'pepc pstates config' command with bad argument values."""
 
     pman = params["pman"]
-    cpunum_opts = _get_cpunum_options(params)
     config_options = _get_config_options(params)
 
     # Test other config options.
-    for option in config_options["freq"]["bad"]:
-        common.run_pepc(f"pstates config {option}", pman, exp_exc=Error)
+    for opt in config_options["freq"]["bad"]:
+        common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
-    for option in config_options["freq"]["good"]:
-        for cpunum_opt in cpunum_opts["bad"]:
-            common.run_pepc(f"pstates config {option} {cpunum_opt}", pman, exp_exc=Error)
+    for opt in config_options["freq"]["good"]:
+        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
+            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
 
-    for option in config_options["config_global"]["bad"]:
-        common.run_pepc(f"pstates config {option}", pman, exp_exc=Error)
+    for opt in config_options["config_global"]["bad"]:
+        common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
-    for option in config_options["config"]["bad"]:
-        common.run_pepc(f"pstates config {option}", pman, exp_exc=Error)
+    for opt in config_options["config"]["bad"]:
+        common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
 def test_pstates_config(params):
     """Test 'pepc pstates config' command."""
@@ -246,17 +208,15 @@ def test_pstates_save_restore(params):
     pobj = params["pobj"]
     hostname = params["hostname"]
     tmp_path = params["tmp_path"]
-    cpunum_opts = _get_cpunum_options(params)
 
-    good = [
-        "",
-        f"-o {tmp_path}/pstates.{hostname}"]
+    good = ["",
+            f"-o {tmp_path}/pstates.{hostname}"]
 
     for option in good:
-        for cpunum_opt in cpunum_opts["good"]:
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
             common.run_pepc(f"pstates save {option} {cpunum_opt}", pman)
 
-        for cpunum_opt in cpunum_opts["bad"]:
+        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"pstates save {option} {cpunum_opt}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
