@@ -17,7 +17,7 @@ import logging
 import contextlib
 from statistics import mean
 from pathlib import Path
-from pepclibs import _PropsCache, _PCStatesBase
+from pepclibs import _PCStatesBase
 from pepclibs.helperlibs import Trivial, KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 
@@ -256,16 +256,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         if "fname" in prop and prop["fname"].endswith("khz"):
             return True
         return False
-
-    def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
-
-        if not self._msr:
-            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
-
-            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
-
-        return self._msr
 
     def _get_eppobj(self):
         """Returns an 'EPP.EPP()' object."""
@@ -1240,7 +1230,7 @@ class PStates(_PCStatesBase.PCStatesBase):
           * enable_cache - this argument can be used to disable caching.
         """
 
-        super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr)
+        super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr, enable_cache=enable_cache)
 
         self._eppobj = None
         self._epbobj = None
@@ -1260,12 +1250,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._sysfs_base = Path("/sys/devices/system/cpu")
         self._sysfs_base_uncore = Path("/sys/devices/system/cpu/intel_uncore_frequency")
 
-        # The write-through per-CPU properties cache. The properties that are backed by MSR/EPP/EPB
-        # are not cached, because they implement their own caching.
-        self._enable_cache = enable_cache
-        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                              enable_cache=self._enable_cache)
-
         self._init_props_dict()
 
     def close(self):
@@ -1275,7 +1259,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             self._ufreq_drv.unload()
 
         close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_hwpreq", "_hwpreq_pkg", "_platinfo",
-                       "_trl", "_pcache", "_fsbfreq", "_ufreq_drv")
+                       "_trl", "_fsbfreq", "_ufreq_drv")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()

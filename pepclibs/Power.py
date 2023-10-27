@@ -99,16 +99,6 @@ class Power(_PropsClassBase.PropsClassBase):
     '_PropsClassBase.PropsClassBase' docstring for public methods overview.
     """
 
-    def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
-
-        if not self._msr:
-            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
-
-            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
-
-        return self._msr
-
     def _get_pplobj(self):
         """Returns a 'PackagePowerLimit.PackagePowerLimit()' object."""
 
@@ -208,10 +198,9 @@ class Power(_PropsClassBase.PropsClassBase):
           * enable_cache - this argument can be used to disable caching.
         """
 
-        super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr)
+        super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr, enable_cache=enable_cache)
         self._pplobj = None
         self._ppiobj = None
-        self._enable_cache = enable_cache
 
         self._init_props_dict(PROPS)
 

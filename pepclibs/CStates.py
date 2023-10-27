@@ -16,7 +16,7 @@ import logging
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import _PCStatesBase, CPUIdle
-from pepclibs.msr import MSR, PowerCtl, PCStateConfigCtl
+from pepclibs.msr import PowerCtl, PCStateConfigCtl
 
 _LOG = logging.getLogger()
 
@@ -141,13 +141,6 @@ class CStates(_PCStatesBase.PCStatesBase):
             self._cpuidle = CPUIdle.CPUIdle(self._pman, cpuinfo=self._cpuinfo,
                                             enable_cache=self._enable_cache)
         return self._cpuidle
-
-    def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
-
-        if not self._msr:
-            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
-        return self._msr
 
     def _get_powerctl(self):
         """Return an instance of 'PowerCtl' class."""
@@ -296,7 +289,7 @@ class CStates(_PCStatesBase.PCStatesBase):
           * enable_cache - this argument can be used to disable caching.
         """
 
-        super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr)
+        super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr, enable_cache=enable_cache)
 
         self._cpuidle = cpuidle
         self._close_cpuidle = cpuidle is None
@@ -305,8 +298,6 @@ class CStates(_PCStatesBase.PCStatesBase):
         self._pcstatectl = None
 
         self._init_props_dict()
-
-        self._enable_cache = enable_cache
 
     def close(self):
         """Uninitialize the class object."""
