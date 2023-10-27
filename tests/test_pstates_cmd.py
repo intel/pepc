@@ -41,98 +41,123 @@ def get_params(hostspec, tmp_path_factory):
 
         yield params
 
-def _get_config_options(params):
-    """Return dictionary of good and bad 'pepc pstates config' option values."""
+def _get_good_config_freq_opts(params):
+    """Return good frequency options for testing 'pepc pstates config'."""
 
-    good = []
-    bad = []
-    options = {}
+    opts = []
 
     cpu = 0
     pobj = params["pobj"]
 
     if pobj.prop_is_supported("min_freq", cpu):
-        good += [
-            "--min-freq",
-            "--max-freq",
-            "--min-freq --max-freq",
-            "--min-freq min",
-            "--max-freq min"]
+        opts += ["--min-freq",
+                 "--max-freq",
+                 "--min-freq --max-freq",
+                 "--min-freq min",
+                 "--max-freq min"]
         if pobj.get_prop("turbo", cpu) == "on":
-            good += [
-                "--max-freq max",
-                "--min-freq min --max-freq max",
-                "--max-freq max --min-freq min"]
+            opts += ["--max-freq max",
+                     "--min-freq min --max-freq max",
+                     "--max-freq max --min-freq min"]
         if pobj.prop_is_supported("max_eff_freq", cpu):
-            good += [
-                "--max-freq lfm",
-                "--max-freq eff",
-                "--min-freq lfm",
-                "--min-freq eff"]
+            opts += ["--max-freq lfm",
+                     "--max-freq eff",
+                     "--min-freq lfm",
+                     "--min-freq eff"]
         if pobj.prop_is_supported("base_freq", cpu):
-            good += [
-                "--max-freq base",
-                "--max-freq hfm",
-                "--min-freq base",
-                "--min-freq hfm"]
+            opts += ["--max-freq base",
+                     "--max-freq hfm",
+                     "--min-freq base",
+                     "--min-freq hfm"]
 
-        bad += [
-            "--min-freq 1000ghz",
+    if pobj.prop_is_supported("min_uncore_freq", cpu):
+        opts += ["--min-uncore-freq",
+                 "--max-uncore-freq",
+                 "--min-uncore-freq --max-uncore-freq",
+                 "--min-uncore-freq min",
+                 "--max-uncore-freq max",
+                 "--max-uncore-freq min --max-uncore-freq max"]
+
+    return opts
+
+def _get_bad_config_freq_opts(params):
+    """Return bad frequency options for testing 'pepc pstates config'."""
+
+    cpu = 0
+    pobj = params["pobj"]
+
+    opts = ["--min-freq 1000ghz",
             "--max-freq 3",
             "--min-freq maximum",
             "--min-freq max --max-freq min"]
 
     if pobj.prop_is_supported("min_uncore_freq", cpu):
-        good += [
-            "--min-uncore-freq",
-            "--max-uncore-freq",
-            "--min-uncore-freq --max-uncore-freq",
-            "--min-uncore-freq min",
-            "--max-uncore-freq max",
-            "--max-uncore-freq min --max-uncore-freq max"]
-        bad += ["--min-uncore-freq max --max-uncore-freq min"]
+        opts += ["--min-uncore-freq max --max-uncore-freq min"]
 
-    options["freq"] = { "good" : good, "bad" : bad }
+    return opts
 
-    good = []
-    bad = []
+def _get_good_config_opts(params, sname="package"):
+    """Return good options for testing 'pepc pstates config'."""
+
+    cpu = 0
+    pobj = params["pobj"]
+    opts = []
+
+    if sname == "global":
+        if pobj.prop_is_supported("intel_pstate_mode", cpu):
+            # The "off" mode is not supported when HWP is enabled.
+            if pobj.get_cpu_prop("hwp", cpu)["val"] == "off":
+                opts += ["--intel-pstate-mode off"]
+
+            # Note, the last mode is intentionally something else but "off", because in "off" mode
+            # many options do not work. For example, switching turbo on/off does not work in the
+            # "off" mode.
+            opts += ["--intel-pstate-mode", "--intel-pstate-mode passive"]
+
+        if pobj.prop_is_supported("turbo", cpu):
+            opts += ["--turbo", "--turbo enable", "--turbo OFF"]
+
+        return opts
 
     if pobj.prop_is_supported("governor", cpu):
-        good += ["--governor"]
+        opts += ["--governor"]
         for governor in pobj.get_cpu_prop("governors", cpu)["val"]:
-            good += [f"--governor {governor}"]
-        bad += ["--governor savepower"]
+            opts += [f"--governor {governor}"]
 
     if pobj.prop_is_supported("epp", cpu):
-        good += ["--epp", "--epp 0", "--epp 128", "--epp performance"]
-        bad += ["--epp 256", "--epp green_tree"]
+        opts += ["--epp", "--epp 0", "--epp 128", "--epp performance"]
 
     if pobj.prop_is_supported("epb", cpu):
-        good += ["--epb", "--epb 0", "--epb 15", "--epb performance"]
-        bad += ["--epb 16", "--epb green_tree"]
+        opts += ["--epb", "--epb 0", "--epb 15", "--epb performance"]
 
-    options["config"] = { "good" : good, "bad" : bad }
+    return opts
 
-    good = []
-    bad = []
+def _get_bad_config_opts(params, sname="package"):
+    """Return bad options for testing 'pepc pstates config'."""
 
-    if pobj.prop_is_supported("intel_pstate_mode", cpu):
-        # The "off" mode is not supported when HWP is enabled.
-        if pobj.get_cpu_prop("hwp", cpu)["val"] == "off":
-            good += ["--intel-pstate-mode off"]
+    cpu = 0
+    pobj = params["pobj"]
+    opts = []
 
-        # Note, the last mode is intentionally something else but "off", because in "off" mode many
-        # options do not work. For example, switching turbo on/off does not work in the "off" mode.
-        good += ["--intel-pstate-mode", "--intel-pstate-mode passive"]
-        bad += ["--intel-pstate-mode Dagny"]
+    if sname == "global":
+        if pobj.prop_is_supported("intel_pstate_mode", cpu):
+            opts += ["--intel-pstate-mode Dagny"]
 
-    if pobj.prop_is_supported("turbo", cpu):
-        good += ["--turbo", "--turbo enable", "--turbo OFF"]
-        bad += ["--turbo 1"]
+        if pobj.prop_is_supported("turbo", cpu):
+            opts += ["--turbo 1"]
 
-    options["config_global"] = { "good" : good, "bad" : bad }
+        return opts
 
-    return options
+    if pobj.prop_is_supported("governor", cpu):
+        opts += ["--governor savepower"]
+
+    if pobj.prop_is_supported("epp", cpu):
+        opts += ["--epp 256", "--epp green_tree"]
+
+    if pobj.prop_is_supported("epb", cpu):
+        opts += ["--epb 16", "--epb green_tree"]
+
+    return opts
 
 def test_pstates_info(params):
     """Test 'pepc pstates info' command."""
@@ -148,13 +173,12 @@ def test_pstates_info(params):
     # Treat the target system as Sapphire Rapids Xeon.
     common.run_pepc("pstates info --override-cpu-model 0x8F", pman)
 
-def _test_pstates_config_good(params):
-    """Test 'pepc pstates config' command with good argument values."""
+def test_pstates_config_freq_good(params):
+    """Test 'pepc pstates config' command with good frequency options."""
 
     pman = params["pman"]
-    config_options = _get_config_options(params)
 
-    for opt in config_options["freq"]["good"]:
+    for opt in _get_good_config_freq_opts(params):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
             if "uncore" in opt and ("package" not in cpunum_opt or "core" in cpunum_opt):
                 continue
@@ -163,42 +187,44 @@ def _test_pstates_config_good(params):
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
 
-    for opt in config_options["config"]["good"]:
+def test_pstates_config_good(params):
+    """Test 'pepc pstates config' command with bad options (excluding frequency)."""
+
+    pman = params["pman"]
+
+    for opt in _get_good_config_opts(params, sname="package"):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
             common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
 
-    for opt in config_options["config_global"]["good"]:
+    for opt in _get_good_config_opts(params, sname="global"):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
             common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman)
 
-def _test_pstates_config_bad(params):
-    """Test 'pepc pstates config' command with bad argument values."""
+def test_pstates_config_freq_bad(params):
+    """Test 'pepc pstates config' command with bad frequency options."""
 
     pman = params["pman"]
-    config_options = _get_config_options(params)
 
-    # Test other config options.
-    for opt in config_options["freq"]["bad"]:
+    for opt in _get_bad_config_freq_opts(params):
         common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
-    for opt in config_options["freq"]["good"]:
+    for opt in _get_good_config_freq_opts(params):
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
 
-    for opt in config_options["config_global"]["bad"]:
+def test_pstates_config_bad(params):
+    """Test 'pepc pstates config' command with bad options (excluding frequency)."""
+
+    pman = params["pman"]
+
+    for opt in _get_bad_config_opts(params, sname="package"):
         common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
-    for opt in config_options["config"]["bad"]:
+    for opt in _get_bad_config_opts(params, sname="global"):
         common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
-
-def test_pstates_config(params):
-    """Test 'pepc pstates config' command."""
-
-    _test_pstates_config_good(params)
-    _test_pstates_config_bad(params)
 
 def test_pstates_save_restore(params):
     """Test 'pepc pstates save' and 'pepc pstates restore' commands."""
@@ -209,15 +235,14 @@ def test_pstates_save_restore(params):
     hostname = params["hostname"]
     tmp_path = params["tmp_path"]
 
-    good = ["",
-            f"-o {tmp_path}/pstates.{hostname}"]
+    opts = ["", f"-o {tmp_path}/pstates.{hostname}"]
 
-    for option in good:
+    for opt in opts:
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-            common.run_pepc(f"pstates save {option} {cpunum_opt}", pman)
+            common.run_pepc(f"pstates save {opt} {cpunum_opt}", pman)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-            common.run_pepc(f"pstates save {option} {cpunum_opt}", pman, exp_exc=Error)
+            common.run_pepc(f"pstates save {opt} {cpunum_opt}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
     common.run_pepc(f"pstates save -o {state_path}", pman)
