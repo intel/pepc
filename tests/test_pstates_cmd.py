@@ -159,16 +159,44 @@ def _get_bad_config_opts(params, sname="package"):
 
     return opts
 
+def _get_good_info_opts(sname="package"):
+    """Return good options for testing 'pepc pstates config'."""
+
+    if sname == "global":
+        opts = ["--turbo",
+                "--intel-pstate-mode",
+                "--governor",
+                "--governors",
+                "--governors --turbo"]
+        return opts
+
+    opts = ["",
+            "--min-freq",
+            "--base-freq",
+            "--max-uncore-freq",
+            "--bus-clock",
+            "--epp",
+            "--epb",
+            "--epb --epp --epp --base-freq",
+            "--max-turbo-freq"]
+
+    return opts
+
 def test_pstates_info(params):
     """Test 'pepc pstates info' command."""
 
     pman = params["pman"]
 
-    for opt in props_common.get_good_cpunum_opts(params, sname="package"):
-        common.run_pepc(f"pstates info {opt}", pman)
+    for opt in _get_good_info_opts(sname="package"):
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+            common.run_pepc(f"pstates info {opt} {cpunum_opt}", pman)
 
-    for opt in props_common.get_bad_cpunum_opts(params):
-        common.run_pepc(f"pstates info {opt}", pman, exp_exc=Error)
+    for opt in _get_good_info_opts(sname="global"):
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
+            common.run_pepc(f"pstates info {opt} {cpunum_opt}", pman)
+
+    for cpunum_opt in props_common.get_bad_cpunum_opts(params):
+        common.run_pepc(f"pstates info {cpunum_opt}", pman, exp_exc=Error)
 
     # Treat the target system as Sapphire Rapids Xeon.
     common.run_pepc("pstates info --override-cpu-model 0x8F", pman)

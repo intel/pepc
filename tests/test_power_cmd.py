@@ -15,7 +15,7 @@ import pytest
 import common
 import props_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
-from pepclibs.helperlibs import Human, YAML, TestRunner
+from pepclibs.helperlibs import YAML, TestRunner
 from pepclibs import CPUInfo, Power
 from pepctool import _Pepc
 
