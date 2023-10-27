@@ -14,9 +14,13 @@ import copy
 import pytest
 import common
 import props_common
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs import Human, YAML
 from pepclibs import CPUInfo, PStates, BClock
+
+# If the '--mechanism' option is present, the command may fail because the mechanism may not be
+# supported. Ignore these failurs.
+_WARN_ONLY = { ErrorNotSupported : "--mechanism" }
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec, tmp_path_factory):
@@ -41,6 +45,53 @@ def get_params(hostspec, tmp_path_factory):
 
         yield params
 
+def _get_good_info_opts(sname="package"):
+    """Return good options for testing 'pepc pstates config'."""
+
+    if sname == "global":
+        opts = ["--turbo",
+                "--intel-pstate-mode",
+                "--governor",
+                "--governors",
+                "--governors --turbo"]
+        return opts
+
+    opts = ["",
+            "--min-freq",
+            "--base-freq",
+            "--max-uncore-freq",
+            "--bus-clock",
+            "--epp",
+            "--epb --epp --epp --base-freq",
+            "--max-turbo-freq"]
+
+    return opts
+
+def test_pstates_info(params):
+    """Test 'pepc pstates info' command."""
+
+    pman = params["pman"]
+
+    for opt in _get_good_info_opts(sname="package"):
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+            for mopt in props_common.get_mechanism_opts(params):
+                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
+
+    for opt in _get_good_info_opts(sname="global"):
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
+            for mopt in props_common.get_mechanism_opts(params):
+                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
+
+    for cpunum_opt in props_common.get_bad_cpunum_opts(params):
+        common.run_pepc(f"pstates info {cpunum_opt}", pman, exp_exc=Error)
+
+    # Cover '--override-cpu-model', use Sapphire Rapids Xeon CPU model number.
+    common.run_pepc("pstates info --override-cpu-model 0x8F", pman)
+    # Cover '--list-mechanisms'.
+    common.run_pepc("pstates info --list-mechanisms", pman)
+
 def _get_good_config_freq_opts(params):
     """Return good frequency options for testing 'pepc pstates config'."""
 
@@ -55,10 +106,18 @@ def _get_good_config_freq_opts(params):
                  "--min-freq --max-freq",
                  "--min-freq min",
                  "--max-freq min"]
-        if pobj.get_cpu_prop("turbo", cpu)["val"] == "on":
-            opts += ["--max-freq max",
-                     "--min-freq min --max-freq max",
-                     "--max-freq max --min-freq min"]
+
+        turbo_status = pobj.get_cpu_prop("turbo", cpu)["val"]
+        maxfreq = None
+        if turbo_status == "on":
+            maxfreq = "max"
+        elif turbo_status == "on":
+            maxfreq = "hfm"
+        if maxfreq:
+            opts += [f"--max-freq {maxfreq}",
+                    f"--min-freq min --max-freq {maxfreq}",
+                    f"--max-freq {maxfreq} --min-freq min"]
+
         if pobj.prop_is_supported("max_eff_freq", cpu):
             opts += ["--max-freq lfm",
                      "--max-freq eff",
@@ -88,6 +147,7 @@ def _get_bad_config_freq_opts(params):
 
     opts = ["--min-freq 1000ghz",
             "--max-freq 3",
+            "--max-freq hfm --mechanism kuku",
             "--min-freq maximum",
             "--min-freq max --max-freq min"]
 
@@ -95,6 +155,34 @@ def _get_bad_config_freq_opts(params):
         opts += ["--min-uncore-freq max --max-uncore-freq min"]
 
     return opts
+
+def test_pstates_config_freq_good(params):
+    """Test 'pepc pstates config' command with good frequency options."""
+
+    pman = params["pman"]
+
+    for opt in _get_good_config_freq_opts(params):
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+            if "uncore" in opt and ("package" not in cpunum_opt or "core" in cpunum_opt):
+                continue
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=True):
+                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
+
+        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
+            common.run_pepc(f"pstates config {opt} {cpunum_opt} {mopt}", pman, exp_exc=Error)
+
+def test_pstates_config_freq_bad(params):
+    """Test 'pepc pstates config' command with bad frequency options."""
+
+    pman = params["pman"]
+
+    for opt in _get_bad_config_freq_opts(params):
+        common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
+
+    for opt in _get_good_config_freq_opts(params):
+        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
+            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
 
 def _get_good_config_opts(params, sname="package"):
     """Return good options for testing 'pepc pstates config'."""
@@ -159,62 +247,6 @@ def _get_bad_config_opts(params, sname="package"):
 
     return opts
 
-def _get_good_info_opts(sname="package"):
-    """Return good options for testing 'pepc pstates config'."""
-
-    if sname == "global":
-        opts = ["--turbo",
-                "--intel-pstate-mode",
-                "--governor",
-                "--governors",
-                "--governors --turbo"]
-        return opts
-
-    opts = ["",
-            "--min-freq",
-            "--base-freq",
-            "--max-uncore-freq",
-            "--bus-clock",
-            "--epp",
-            "--epb",
-            "--epb --epp --epp --base-freq",
-            "--max-turbo-freq"]
-
-    return opts
-
-def test_pstates_info(params):
-    """Test 'pepc pstates info' command."""
-
-    pman = params["pman"]
-
-    for opt in _get_good_info_opts(sname="package"):
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-            common.run_pepc(f"pstates info {opt} {cpunum_opt}", pman)
-
-    for opt in _get_good_info_opts(sname="global"):
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
-            common.run_pepc(f"pstates info {opt} {cpunum_opt}", pman)
-
-    for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-        common.run_pepc(f"pstates info {cpunum_opt}", pman, exp_exc=Error)
-
-    # Treat the target system as Sapphire Rapids Xeon.
-    common.run_pepc("pstates info --override-cpu-model 0x8F", pman)
-
-def test_pstates_config_freq_good(params):
-    """Test 'pepc pstates config' command with good frequency options."""
-
-    pman = params["pman"]
-
-    for opt in _get_good_config_freq_opts(params):
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-            if "uncore" in opt and ("package" not in cpunum_opt or "core" in cpunum_opt):
-                continue
-            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman)
-
-        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
-
 def test_pstates_config_good(params):
     """Test 'pepc pstates config' command with bad options (excluding frequency)."""
 
@@ -222,26 +254,18 @@ def test_pstates_config_good(params):
 
     for opt in _get_good_config_opts(params, sname="package"):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman)
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_opts(params, sname="global"):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
-            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman)
-
-def test_pstates_config_freq_bad(params):
-    """Test 'pepc pstates config' command with bad frequency options."""
-
-    pman = params["pman"]
-
-    for opt in _get_bad_config_freq_opts(params):
-        common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
-
-    for opt in _get_good_config_freq_opts(params):
-        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
 
 def test_pstates_config_bad(params):
     """Test 'pepc pstates config' command with bad options (excluding frequency)."""

@@ -15,7 +15,7 @@ import pytest
 import common
 import props_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed, ErrorNotSupported
-from pepclibs.helperlibs import YAML, TestRunner
+from pepclibs.helperlibs import YAML
 from pepclibs import CPUInfo, Power
 
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
@@ -51,14 +51,17 @@ def test_power_info(params):
     pman = params["pman"]
 
     for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-        cmd = f"power info {cpunum_opt}"
-        common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
+        for mopt in props_common.get_mechanism_opts(params):
+            cmd = f"power info {cpunum_opt} {mopt}"
+            common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
 
     for cpunum_opt in props_common.get_bad_cpunum_opts(params):
         common.run_pepc(f"power info {cpunum_opt}", pman, exp_exc=Error)
 
-    # Treat the target system as Sapphire Rapids Xeon.
+    # Cover '--override-cpu-model', use Sapphire Rapids Xeon CPU model number.
     common.run_pepc("power info --override-cpu-model 0x8F", pman)
+    # Cover '--list-mechanisms'.
+    common.run_pepc("power info --list-mechanisms", pman)
 
 def _get_good_config_opts(params):
     """Return good options for testing 'pepc power config'."""
@@ -102,7 +105,9 @@ def test_power_config(params):
 
     for opt in  _get_good_config_opts(params):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-            common.run_pepc(f"power config {opt} {cpunum_opt}", pman, warn_only=warn_only)
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+                cmd = f"power config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, warn_only=warn_only)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"power config {opt} {cpunum_opt}", pman, exp_exc=Error)
@@ -150,16 +155,13 @@ def test_power_save_restore(params):
     hostname = params["hostname"]
     tmp_path = params["tmp_path"]
 
-    good = [
-        "",
-        f"-o {tmp_path}/power.{hostname}"]
-
-    for option in good:
+    opts = ("", f"-o {tmp_path}/power.{hostname}")
+    for opt in opts:
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-            common.run_pepc(f"power save {option} {cpunum_opt}", pman)
+            common.run_pepc(f"power save {opt} {cpunum_opt}", pman)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-            common.run_pepc(f"power save {option} {cpunum_opt}", pman, exp_exc=Error)
+            common.run_pepc(f"power save {opt} {cpunum_opt}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
     common.run_pepc(f"power save -o {state_path}", pman)

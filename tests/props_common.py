@@ -67,6 +67,21 @@ def get_bad_cpunum_opts(params):
 
     return opts
 
+def get_mechanism_opts(params, allow_readonly=True):
+    """Return a list of various variants of the '--mecahnism' option."""
+
+    opts = []
+    mnames = params["pobj"].mechanisms
+    if not allow_readonly:
+        mnames = [mname for mname, minfo in mnames.items() if minfo["writable"]]
+
+    for mname in mnames:
+        opts.append(f"--mechanism {mname}")
+
+    opts += ["--mechanism msr,sysfs",
+             "--mechanism sysfs,msr"]
+    return opts
+
 def set_and_verify(params, props_vals, cpu):
     """
     Set property values, read them back and verify. The arguments are as follows.

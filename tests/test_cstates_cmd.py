@@ -14,9 +14,13 @@ import copy
 import pytest
 import common
 import props_common
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs import YAML
 from pepclibs import CPUInfo, CStates
+
+# If the '--mechanism' option is present, the command may fail because the mechanism may not be
+# supported. Ignore these failurs.
+_WARN_ONLY = { ErrorNotSupported : "--mechanism" }
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec, tmp_path_factory):
@@ -65,8 +69,10 @@ def test_cstates_info(params):
     for cstate in params["cstates"]:
         common.run_pepc(f"cstates info --cpus 0 --cstates {cstate}", pman)
 
-    # Treat the target system as Sapphire Rapids Xeon.
+    # Cover '--override-cpu-model', use Sapphire Rapids Xeon CPU model number.
     common.run_pepc("cstates info --override-cpu-model 0x8F", pman)
+    # Cover '--list-mechanisms'.
+    common.run_pepc("cstates info --list-mechanisms", pman)
 
 def _get_good_config_opts(params, sname="package"):
     """Return good options for testing 'pepc cstates config'."""
@@ -134,14 +140,18 @@ def test_cstates_config_good(params):
 
     for opt in _get_good_config_opts(params, sname="package"):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-            common.run_pepc(f"cstates config {opt} {cpunum_opt}", pman)
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+                cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"cstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_opts(params, sname="global"):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
-            common.run_pepc(f"cstates config {opt} {cpunum_opt}", pman)
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+                cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd , pman, warn_only=_WARN_ONLY)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"cstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
@@ -159,6 +169,9 @@ def test_cstates_config_bad(params):
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"cstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
+
+        for mopt in props_common.get_mechanism_opts(params):
+            common.run_pepc(f"cstates config {opt} {mopt}", pman, exp_exc=Error)
 
 def test_cstates_save_restore(params):
     """Test 'pepc cstates save' and 'pepc cstates restore' commands."""
