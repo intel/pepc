@@ -66,3 +66,8 @@ def test_cstates_property_type(params):
     """This test verifies that 'get_prop()' returns values of the correct type."""
 
     props_common.verify_props_value_type(params, 0)
+
+def test_cstates_get_props_mechanisms(params):
+    """Verify that the 'mname' arguments of 'get_prop()' works correctly."""
+
+    props_common.verify_get_props_mechanisms(params, 0)

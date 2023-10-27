@@ -58,12 +58,17 @@ def _get_set_and_verify_data(params, cpu):
         yield pname, pvinfo["val"]
 
 def test_pstates_set_and_verify(params):
-    """Verify that 'get_prop()' returns same values set by 'set_prop()'."""
+    """Verify that 'get_prop()' returns same values as set by 'set_prop()'."""
 
     props_vals = _get_set_and_verify_data(params, 0)
     props_common.set_and_verify(params, props_vals, 0)
 
 def test_power_property_type(params):
-    """This test verifies that 'get_prop()' returns values of the correct type."""
+    """Verify that 'get_prop()' returns values of the correct type."""
 
     props_common.verify_props_value_type(params, 0)
+
+def test_power_get_props_mechanisms(params):
+    """Verify that the 'mname' arguments of 'get_prop()' works correctly."""
+
+    props_common.verify_get_props_mechanisms(params, 0)

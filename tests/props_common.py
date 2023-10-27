@@ -152,3 +152,38 @@ def verify_props_value_type(params, cpu):
             continue
 
         _verify_value_type(pname, pobj.props[pname]["type"], pvinfo["val"])
+
+def verify_get_props_mechanisms(params, cpu):
+    """Verify that the 'mname' arguments of 'get_prop()' works correctly."""
+
+    pobj = params["pobj"]
+
+    for pname, pinfo in pobj.props.items():
+        # Test all mechanisms one by one.
+        for mname in pinfo["mnames"]:
+            try:
+                pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=(mname,))
+            except  ErrorNotSupported:
+                pass
+
+            assert pvinfo["mname"] == mname, \
+                   f"Bad mechanism name returned by" \
+                   f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mname}\",))'\n" \
+                   f"Expected '{mname}', got '{pvinfo['mname']}'"
+
+        # Test all mechanisms in reverse order.
+        reverse_mnames = list(pinfo["mnames"])
+        reverse_mnames.reverse()
+        pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=reverse_mnames)
+        assert pvinfo["mname"] in reverse_mnames, \
+                f"Bad mechanism name returned by" \
+                f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{reverse_mnames}\",))'\n" \
+                f"Expected one of '{reverse_mnames}', got '{pvinfo['mname']}'"
+
+        # Read using the claimed mechanisms and compare.
+        mnames = (pvinfo["mname"],)
+        pvinfo1 = pobj.get_cpu_prop(pname, cpu, mnames=mnames)
+        assert pvinfo1["mname"] == pvinfo["mname"], \
+                f"Bad mechanism name returned by" \
+                f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mnames}\",))'\n" \
+                f"Expected '{pvinfo['mname']}', got '{pvinfo1['mname']}'"
