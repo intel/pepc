@@ -13,7 +13,7 @@
 
 from pathlib import Path
 from pepclibs.helperlibs import ProcessManager, TestRunner
-from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied, Error
+from pepclibs.helperlibs.Exceptions import Error
 from pepctool import _Pepc
 
 def _get_datapath(dataset):
@@ -64,16 +64,7 @@ def build_params(pman):
 
     return params
 
-# A map of error type and command argument strings to look for in case of error. For matching
-# exceptions print warning instead of asserting.
-_WARN_ONLY = {
-    ErrorPermissionDenied : "aspm config --policy ",
-    # On a non-emulated hardware CPUs can't be offlined in some cases (e.g., if an interrupt can't
-    # be migrated to another CPU).
-    Error : "cpu-hotplug offline"
-}
-
-def run_pepc(arguments, pman, exp_exc=None):
+def run_pepc(arguments, pman, exp_exc=None, warn_only=None):
     """
     Run pepc command and verify the outcome. The arguments are as follows.
       * arguments - the arguments to run the command with, e.g. 'pstate info --cpus 0-43'.
@@ -81,10 +72,9 @@ def run_pepc(arguments, pman, exp_exc=None):
       * exp_exc - the expected exception, by default, any exception is considered to be a failure.
                   But when set if the command did not raise the expected exception then the test is
                   considered to be a failure.
+    * warn_only - a map of error type and command argument strings to look for in case of error. For
+                  matching exceptions print warning instead of asserting.
     """
 
-    warn_only = {}
-    if pman.is_remote:
-        warn_only = _WARN_ONLY
-
-    TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman, exp_exc, warn_only)
+    TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman=pman, exp_exc=exp_exc,
+                        warn_only=warn_only)

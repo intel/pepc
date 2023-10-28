@@ -12,7 +12,7 @@
 
 import pytest
 import common
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec):
@@ -32,7 +32,6 @@ def test_aspm_info(params):
 def test_aspm_config(params):
     """Test 'pepc aspm config' command."""
 
-    pman = params["pman"]
 
     good = [
         "",
@@ -41,7 +40,16 @@ def test_aspm_config(params):
         "--policy powersave",
         "--policy powersupersave"]
 
+    warn_only = None
+    pman = params["pman"]
+
+    if pman.is_remote:
+        # On a non-emulated system writing the policy sysfs file may end up with a "permission
+        # denied" error. Ignore these errors, they mean the host does not allow for changing the
+        # policy.
+        warn_only = { ErrorPermissionDenied : "aspm config --policy " }
+
     for option in good:
-        common.run_pepc(f"aspm config {option}", pman)
+        common.run_pepc(f"aspm config {option}", pman, warn_only=warn_only)
 
     common.run_pepc("aspm config --policy badpolicyname", pman, exp_exc=Error)

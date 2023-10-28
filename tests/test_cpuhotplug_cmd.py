@@ -121,8 +121,14 @@ def _test_cpuhotplug_offline_good(params):
     if len(params["cores"][0]) > 3:
         good += [f"--packages 0 --cores {params['cores'][0][1]}-{params['cores'][0][2]}"]
 
+    warn_only = None
+    if pman.is_remote:
+        # On a non-emulated systems offlining CPUs sometimes fails. For example,  interrupt can't be
+        # migrated to another CPU. So ignore offlining errors.
+        warn_only = { Error : "cpu-hotplug offline" }
+
     for option in good:
-        common.run_pepc(f"cpu-hotplug offline {option}", pman)
+        common.run_pepc(f"cpu-hotplug offline {option}", pman, warn_only=warn_only)
         _restore_cpus_online_status(params, params["online"], True)
 
 def _test_cpuhotplug_offline_bad(params):
