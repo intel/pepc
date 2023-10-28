@@ -106,24 +106,16 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
           * action - same as in 'print_props()'.
         """
 
-        grouped = {}
-        if not group:
-            prefix = None
-            grouped = {None : aggr_pinfo}
-        else:
+        if group:
             prefix = " - "
-            for pname, info in aggr_pinfo.items():
-                for mname in self._pobj.props[pname]["mnames"]:
-                    if mname not in grouped:
-                        grouped[mname] = {pname : info}
-                    else:
-                        grouped[mname][pname] = info
+        else:
+            prefix = None
 
         printed = 0
-        for mname, pinfos in grouped.items():
-            if mname:
+        for mname, pinfo in aggr_pinfo.items():
+            if group:
                 self._print(f"Source: {self._pobj.get_mechanism_descr(mname)}")
-            printed += self._do_print_aggr_pinfo_human(pinfos, action=action, prefix=prefix)
+            printed += self._do_print_aggr_pinfo_human(pinfo, action=action, prefix=prefix)
         return printed
 
     def _yaml_dump(self, info):
@@ -140,35 +132,39 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         yaml_pinfo = {}
 
-        for pname, pinfo in aggr_pinfo.items():
-            for val, cpus in pinfo.items():
-                if val is None:
-                    val = "not supported"
+        for pinfo in aggr_pinfo.values():
+            for pname, pinfo in pinfo.items():
+                for val, cpus in pinfo.items():
+                    if val is None:
+                        val = "not supported"
 
-                if pname not in yaml_pinfo:
-                    yaml_pinfo[pname] = []
-                yaml_pinfo[pname].append({"value" : val, "cpus" : Human.rangify(cpus)})
+                    if pname not in yaml_pinfo:
+                        yaml_pinfo[pname] = []
+                    yaml_pinfo[pname].append({"value" : val, "cpus" : Human.rangify(cpus)})
 
         self._yaml_dump(yaml_pinfo)
         return len(yaml_pinfo)
 
-    def _build_aggr_pinfo(self, pnames, cpus, skip_ro, skip_unsupported):
+    def _build_aggr_pinfo(self, pnames, cpus, mnames, skip_ro, skip_unsupported):
         """
-        Build the aggregate properties dictionary for properties in 'pnames'. The aggregate
-        properties dictionary has the following format.
+        Build and return the aggregate properties dictionary for properties in 'pnames'. The
+        aggregate properties dictionary has the following format.
 
-        { property1_name : { value1 : [ list of CPUs having value1 ],
-                             value2 : [ list of CPUs having value2 ],
-                             ... and so on for all values ...
-                           },
-          ... and so on for all properties ...
-        },
+          { mname1 : { pname1 : { val1 : [ list of CPUs having value1 ],
+                                  val2 : [ list of CPUs having value2 ],
+                                  ... and so on for all values ...
+                                },
+                       ... and so on for all properties ...
+                     },
+            ... and so on for all mechanisms ...
+          },
 
-          * property1_name - the first property name (e.g., 'pkg_cstate_limit').
+          * mname1 - name of the 1st mechanism that was used for reading the properties.
+          * pname1 - the first property name (e.g., 'pkg_cstate_limit').
           * value1, value2, etc - all the different values for the property.
 
-        In other words, the aggregate dictionary mapping of property values to the list
-        of CPUs having these values.
+        In other words, the aggregate dictionary mapps of property values to the list of CPUs having
+        these values. And all this is grouped by mechanism name.
         """
 
         aggr_pinfo = {}
@@ -176,10 +172,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         for pname in pnames:
             if skip_ro and not self._pobj.props[pname]["writable"]:
                 continue
-
-            for pvinfo in self._pobj.get_prop(pname, cpus):
+            for pvinfo in self._pobj.get_prop(pname, cpus, mnames=mnames):
                 cpu = pvinfo["cpu"]
                 val = pvinfo["val"]
+                mname = pvinfo["mname"]
 
                 if skip_unsupported and val is None:
                     continue
@@ -194,12 +190,14 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                         continue
                     val = ", ".join(f"{k}={v}" for k, v in val.items())
 
-                if pname not in aggr_pinfo:
-                    aggr_pinfo[pname] = {val : [cpu]}
-                elif val not in aggr_pinfo[pname]:
-                    aggr_pinfo[pname][val] = [cpu]
+                if mname not in aggr_pinfo:
+                    aggr_pinfo[mname] = {}
+                if pname not in aggr_pinfo[mname]:
+                    aggr_pinfo[mname][pname] = {val : [cpu]}
+                elif val not in aggr_pinfo[mname][pname]:
+                    aggr_pinfo[mname][pname][val] = [cpu]
                 else:
-                    aggr_pinfo[pname][val].append(cpu)
+                    aggr_pinfo[mname][pname][val].append(cpu)
 
         return aggr_pinfo
 
@@ -238,7 +236,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, skip_ro, skip_unsupported)
+        aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, mnames, skip_ro, skip_unsupported)
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
@@ -280,44 +278,49 @@ class PowerPrinter(_PropsPrinter):
 class CStatesPrinter(_PropsPrinter):
     """This class provides API for printing C-states information."""
 
-    def _adjust_aggr_pinfo_pcs_limit(self, aggr_pinfo, cpus):
+    def _adjust_aggr_pinfo_pcs_limit(self, aggr_pinfo, cpus, mnames):
         """
         The aggregate properties information dictionary 'aggr_pinfo' includes the 'pkg_cstate_limit'
         property. This property is read/write in case the corresponding MSR is unlocked, and it is
-        R/O if the MSR is locked. The goal of this method is to remove all the "lock" CPUs from
+        R/O if the MSR is locked. The goal of this method is to remove all the "locked" CPUs from
         the 'pkg_cstate_limit' key of 'aggr_pinfo'.
         """
 
-        pcsl_info = aggr_pinfo["pkg_cstate_limit"]
-        if set(pcsl_info) == { None }:
-            # The 'pkg_cstate_limit' property is not supported, nothing to do.
-            return aggr_pinfo
+        for pinfo in aggr_pinfo.values():
+            pcsl_info = pinfo.get("pkg_cstate_limit")
+            if not pcsl_info:
+                continue
 
-        locked_cpus = set()
-        for pvinfo in self._pobj.get_prop("pkg_cstate_limit_lock", cpus=cpus):
-            cpu = pvinfo["cpu"]
-            if pvinfo["val"] == "on":
-                locked_cpus.add(cpu)
+            if set(pcsl_info) == { None }:
+                # The 'pkg_cstate_limit' property is not supported, nothing to do.
+                continue
 
-        if not locked_cpus:
-            # There are no locked CPUs, nothing to do.
-            return aggr_pinfo
+            locked_cpus = set()
+            for pvinfo in self._pobj.get_prop("pkg_cstate_limit_lock", cpus=cpus, mnames=mnames):
+                cpu = pvinfo["cpu"]
+                if pvinfo["val"] == "on":
+                    locked_cpus.add(cpu)
 
-        if len(locked_cpus) == len(cpus):
-            # All CPUs are locked, "pkg_cstate_limit" is considered read-only, and is removed.
-            del aggr_pinfo["pkg_cstate_limit"]
-            return aggr_pinfo
+            if not locked_cpus:
+                # There are no locked CPUs, nothing to do.
+                continue
 
-        new_pcsl_info = {}
-        for key, _cpus in pcsl_info.items():
-            new_cpus = []
-            for cpu in _cpus:
-                if cpu not in locked_cpus:
-                    new_cpus.append(cpu)
-            if new_cpus:
-                new_pcsl_info[key] = new_cpus
+            if len(locked_cpus) == len(cpus):
+                # All CPUs are locked, "pkg_cstate_limit" is considered read-only, and is removed.
+                del pinfo["pkg_cstate_limit"]
+                continue
 
-        aggr_pinfo["pkg_cstate_limit"] = new_pcsl_info
+            new_pcsl_info = {}
+            for key, _cpus in pcsl_info.items():
+                new_cpus = []
+                for cpu in _cpus:
+                    if cpu not in locked_cpus:
+                        new_cpus.append(cpu)
+                if new_cpus:
+                    new_pcsl_info[key] = new_cpus
+
+            pinfo["pkg_cstate_limit"] = new_pcsl_info
+
         return aggr_pinfo
 
     def _print_val_msg(self, val, name=None, cpus=None, prefix=None, suffix=None, action=None):
@@ -427,13 +430,13 @@ class CStatesPrinter(_PropsPrinter):
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, skip_ro, skip_unsupported)
+        aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, mnames, skip_ro, skip_unsupported)
 
-        if skip_ro and "pkg_cstate_limit" in aggr_pinfo:
+        if skip_ro and "pkg_cstate_limit" in pnames:
             # Special case: the package C-state limit option is read-write in general, but if it is
             # locked, it is effectively read-only. Since 'skip_ro' is 'True', we need to adjust
             # 'aggr_pinfo'.
-            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo, cpus)
+            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo, cpus, mnames)
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)

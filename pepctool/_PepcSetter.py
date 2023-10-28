@@ -77,8 +77,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
         if self._pcsprint:
             for pname in spinfo:
-                self._pcsprint.print_props((pname,), cpus, skip_ro=True, skip_unsupported=False,
-                                           action="set to")
+                self._pcsprint.print_props((pname,), cpus, mnames=mnames, skip_ro=True,
+                                           skip_unsupported=False, action="set to")
 
     @staticmethod
     def _validate_loaded_data(ydict, known_ykeys):
