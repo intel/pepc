@@ -55,7 +55,7 @@ def _get_good_config_freq_opts(params):
                  "--min-freq --max-freq",
                  "--min-freq min",
                  "--max-freq min"]
-        if pobj.get_prop("turbo", cpu) == "on":
+        if pobj.get_cpu_prop("turbo", cpu)["val"] == "on":
             opts += ["--max-freq max",
                      "--min-freq min --max-freq max",
                      "--max-freq max --min-freq min"]
