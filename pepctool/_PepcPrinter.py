@@ -152,15 +152,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         self._yaml_dump(yaml_pinfo)
         return len(yaml_pinfo)
 
-    def _build_aggr_pinfo(self, pnames, cpus, skip_unsupported):
+    def _build_aggr_pinfo(self, pnames, cpus, skip_ro, skip_unsupported):
         """
-        Build the aggregate properties dictionary. The arguments are as follows.
-          * pnames - property names to build the dictionary for.
-          * cpus - CPU numbers to build the dictionary for.
-          * skip_unsupported - if 'True', the resulting aggregate dictionary will not include
-                               unsupported properties.
-
-        The aggregate properties dictionary has the following format.
+        Build the aggregate properties dictionary for properties in 'pnames'. The aggregate
+        properties dictionary has the following format.
 
         { property1_name : { value1 : [ list of CPUs having value1 ],
                              value2 : [ list of CPUs having value2 ],
@@ -179,6 +174,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         aggr_pinfo = {}
 
         for pname in pnames:
+            if skip_ro and not self._pobj.props[pname]["writable"]:
+                continue
+
             for pvinfo in self._pobj.get_prop(pname, cpus):
                 cpu = pvinfo["cpu"]
                 val = pvinfo["val"]
@@ -238,7 +236,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, skip_unsupported)
+        aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, skip_ro, skip_unsupported)
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
@@ -427,7 +425,7 @@ class CStatesPrinter(_PropsPrinter):
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, skip_unsupported)
+        aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, skip_ro, skip_unsupported)
 
         if skip_ro and "pkg_cstate_limit" in aggr_pinfo:
             # Special case: the package C-state limit option is read-write in general, but if it is
