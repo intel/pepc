@@ -56,7 +56,7 @@ def _get_set_and_verify_data(params, cpu):
         yield "governor", pvinfo["val"][0]
         yield "governor", pvinfo["val"][-1]
 
-def test_pstates_set_and_verify(params):
+def test_cstates_set_and_verify(params):
     """Verify that 'get_prop()' returns same values set by 'set_prop()'."""
 
     props_vals = _get_set_and_verify_data(params, 0)

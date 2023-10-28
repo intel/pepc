@@ -69,7 +69,7 @@ def test_cstates_info(params):
     common.run_pepc("cstates info --override-cpu-model 0x8F", pman)
 
 def _get_good_config_opts(params, sname="package"):
-    """Return good options for testing 'pepc pstates config'."""
+    """Return good options for testing 'pepc cstates config'."""
 
     cpu = 0
     opts = []
@@ -118,7 +118,7 @@ def _get_good_config_opts(params, sname="package"):
     return opts
 
 def _get_bad_config_opts():
-    """Return bad options for testing 'pepc pstates config'."""
+    """Return bad options for testing 'pepc cstates config'."""
 
     opts = ["--enable CC0",
             "--disable CC0",
@@ -167,11 +167,9 @@ def test_cstates_save_restore(params):
     hostname = params["hostname"]
     tmp_path = params["tmp_path"]
 
-    good = [
-        "",
-        f"-o {tmp_path}/cstates.{hostname}"]
+    opts = ( "", f"-o {tmp_path}/cstates.{hostname}")
 
-    for opt in good:
+    for opt in opts:
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
             common.run_pepc(f"cstates save {opt} {cpunum_opt}", pman)
 

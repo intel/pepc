@@ -263,7 +263,7 @@ def test_pstates_save_restore(params):
     hostname = params["hostname"]
     tmp_path = params["tmp_path"]
 
-    opts = ["", f"-o {tmp_path}/pstates.{hostname}"]
+    opts = ("", f"-o {tmp_path}/pstates.{hostname}")
 
     for opt in opts:
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
