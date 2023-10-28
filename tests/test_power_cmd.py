@@ -14,10 +14,13 @@ import copy
 import pytest
 import common
 import props_common
-from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed, ErrorNotSupported
 from pepclibs.helperlibs import YAML, TestRunner
 from pepclibs import CPUInfo, Power
-from pepctool import _Pepc
+
+# If the '--mechanism' option is present, the command may fail because the mechanism may not be
+# supported. Ignore these failurs.
+_WARN_ONLY = { ErrorNotSupported : "--mechanism" }
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec, tmp_path_factory):
@@ -43,33 +46,28 @@ def get_params(hostspec, tmp_path_factory):
         yield params
 
 def test_power_info(params):
-    """
-    Test 'pepc power info' command.
-    """
+    """Test 'pepc power info' command."""
 
     pman = params["pman"]
 
-    for option in props_common.get_good_cpunum_opts(params, sname="package"):
-        common.run_pepc(f"power info {option}", pman)
+    for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+        cmd = f"power info {cpunum_opt}"
+        common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
 
-    for option in props_common.get_bad_cpunum_opts(params):
-        common.run_pepc(f"power info {option}", pman, exp_exc=Error)
+    for cpunum_opt in props_common.get_bad_cpunum_opts(params):
+        common.run_pepc(f"power info {cpunum_opt}", pman, exp_exc=Error)
 
     # Treat the target system as Sapphire Rapids Xeon.
     common.run_pepc("power info --override-cpu-model 0x8F", pman)
 
-def test_power_config(params):
-    """Test 'pepc power config' command."""
+def _get_good_config_opts(params):
+    """Return good options for testing 'pepc power config'."""
 
     cpu = 0
-    pman = params["pman"]
     pobj = params["pobj"]
+    opts = []
 
-    good = []
-
-    opts = ("ppl1-clamp", "ppl2-clamp")
-
-    for opt in opts:
+    for opt in ("ppl1-clamp", "ppl2-clamp"):
         pname = opt.replace("-", "_")
         val = pobj.get_cpu_prop(pname, cpu)["val"]
         if val is None:
@@ -80,26 +78,34 @@ def test_power_config(params):
         else:
             newval = 'on'
 
-        good += [f"--{opt} {newval}", f"--{opt} {val}"]
+        opts += [f"--{opt} {newval}",
+                 f"--{opt} {val}"]
 
-    opts = ("ppl1", "ppl2")
-    for opt in opts:
+    for opt in ("ppl1", "ppl2"):
         pname = opt.replace("-", "_")
         val = pobj.get_cpu_prop(pname, cpu)["val"]
         if val is None:
             continue
 
         newval = val - 1
+        opts += [f"--{opt} {newval}",
+                 f"--{opt} {val}"]
 
-        good += [f"--{opt} {newval}", f"--{opt} {val}"]
+    return opts
 
-    for option in good:
+def test_power_config(params):
+    """Test 'pepc power config' command."""
+
+    pman = params["pman"]
+    warn_only = _WARN_ONLY.copy()
+    warn_only[ErrorVerifyFailed] = "enable"
+
+    for opt in  _get_good_config_opts(params):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-            TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, f"power config {option} {cpunum_opt}", pman,
-                                warn_only={ErrorVerifyFailed : "enable"})
+            common.run_pepc(f"power config {opt} {cpunum_opt}", pman, warn_only=warn_only)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-            common.run_pepc(f"power config {option} {cpunum_opt}", pman, exp_exc=Error)
+            common.run_pepc(f"power config {opt} {cpunum_opt}", pman, exp_exc=Error)
 
 def _try_change_value(pname, new_val, current_val, pobj):
     """
