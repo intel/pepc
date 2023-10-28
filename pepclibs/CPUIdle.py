@@ -440,6 +440,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         """Set current idle driver governor."""
 
         governors = self.get_available_governors()
+        if not governors:
+            raise ErrorNotSupported(f"idle governors are not supported{self._pman.hostmsg}")
         if governor not in governors:
             governors = ", ".join(governors)
             raise Error(f"bad governor name '{governor}', use one of: {governors}")
