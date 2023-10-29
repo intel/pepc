@@ -20,7 +20,7 @@ from pepclibs import CPUInfo, CStates
 
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
 # supported. Ignore these failurs.
-_WARN_ONLY = { ErrorNotSupported : "--mechanism" }
+_IGNORE = { ErrorNotSupported : "--mechanism" }
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec, tmp_path_factory):
@@ -142,7 +142,7 @@ def test_cstates_config_good(params):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
-                common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
+                common.run_pepc(cmd, pman, ignore=_IGNORE)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"cstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
@@ -151,7 +151,7 @@ def test_cstates_config_good(params):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
-                common.run_pepc(cmd , pman, warn_only=_WARN_ONLY)
+                common.run_pepc(cmd , pman, ignore=_IGNORE)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"cstates config {opt} {cpunum_opt}", pman, exp_exc=Error)

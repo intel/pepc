@@ -20,7 +20,7 @@ from pepclibs import CPUInfo, Power
 
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
 # supported. Ignore these failurs.
-_WARN_ONLY = { ErrorNotSupported : "--mechanism" }
+_IGNORE = { ErrorNotSupported : "--mechanism" }
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec, tmp_path_factory):
@@ -53,7 +53,7 @@ def test_power_info(params):
     for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
         for mopt in props_common.get_mechanism_opts(params):
             cmd = f"power info {cpunum_opt} {mopt}"
-            common.run_pepc(cmd, pman, warn_only=_WARN_ONLY)
+            common.run_pepc(cmd, pman, ignore=_IGNORE)
 
     for cpunum_opt in props_common.get_bad_cpunum_opts(params):
         common.run_pepc(f"power info {cpunum_opt}", pman, exp_exc=Error)
@@ -100,14 +100,14 @@ def test_power_config(params):
     """Test 'pepc power config' command."""
 
     pman = params["pman"]
-    warn_only = _WARN_ONLY.copy()
-    warn_only[ErrorVerifyFailed] = "enable"
+    ignore = _IGNORE.copy()
+    ignore[ErrorVerifyFailed] = "enable"
 
     for opt in  _get_good_config_opts(params):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"power config {opt} {cpunum_opt} {mopt}"
-                common.run_pepc(cmd, pman, warn_only=warn_only)
+                common.run_pepc(cmd, pman, ignore=ignore)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"power config {opt} {cpunum_opt}", pman, exp_exc=Error)
