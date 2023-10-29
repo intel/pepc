@@ -219,7 +219,7 @@ PROPS = {
         "writable" : False,
     },
     "intel_pstate_mode" : {
-        "name" : "Operation mode of 'intel_pstate' driver",
+        "name" : "Mode of 'intel_pstate' driver",
         "type" : "str",
         "sname": "global",
         "mnames" : ("sysfs", ),
