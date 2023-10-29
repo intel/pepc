@@ -71,3 +71,8 @@ def test_cstates_get_props_mechanisms(params):
     """Verify that the 'mname' arguments of 'get_prop()' works correctly."""
 
     props_common.verify_get_props_mechanisms(params, 0)
+
+def test_cstates_set_props_mechanisms_bool(params):
+    """Verify that the 'mname' arguments of 'get_prop()' works correctly for boolean properties."""
+
+    props_common.verify_set_props_mechanisms_bool(params, 0)

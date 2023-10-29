@@ -134,10 +134,10 @@ def _verify_value_type(pname, ptype, val):
         ret = isinstance(val, dict) and all(isinstance(key, str) and isinstance(val, str) \
                                               for key, val in val.items())
     else:
-        assert False, f"Unknown '{pname}' property datatype: {ptype}"
+        assert False, f"Unknown '{pname}' property datatype: {ptype}."
 
     assert ret, f"Property '{pname}' value '{val}' has the wrong datatype. Should be " \
-                f"'{ptype}' but returns type '{type(val)}'"
+                f"'{ptype}' but returns type '{type(val)}'."
 
 def verify_props_value_type(params, cpu):
     """
@@ -163,13 +163,13 @@ def verify_get_props_mechanisms(params, cpu):
         for mname in pinfo["mnames"]:
             try:
                 pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=(mname,))
-            except  ErrorNotSupported:
+            except ErrorNotSupported:
                 pass
 
             assert pvinfo["mname"] == mname, \
                    f"Bad mechanism name returned by" \
-                   f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mname}\",))'\n" \
-                   f"Expected '{mname}', got '{pvinfo['mname']}'"
+                   f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mname}\",))'.\n" \
+                   f"Expected '{mname}', got '{pvinfo['mname']}'."
 
         # Test all mechanisms in reverse order.
         reverse_mnames = list(pinfo["mnames"])
@@ -177,8 +177,8 @@ def verify_get_props_mechanisms(params, cpu):
         pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=reverse_mnames)
         assert pvinfo["mname"] in reverse_mnames, \
                 f"Bad mechanism name returned by" \
-                f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{reverse_mnames}\",))'\n" \
-                f"Expected one of '{reverse_mnames}', got '{pvinfo['mname']}'"
+                f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{reverse_mnames}\",))'.\n" \
+                f"Expected one of '{reverse_mnames}', got '{pvinfo['mname']}'."
 
         # Read using the claimed mechanisms and compare.
         mnames = (pvinfo["mname"],)
@@ -186,4 +186,55 @@ def verify_get_props_mechanisms(params, cpu):
         assert pvinfo1["mname"] == pvinfo["mname"], \
                 f"Bad mechanism name returned by" \
                 f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mnames}\",))'\n" \
-                f"Expected '{pvinfo['mname']}', got '{pvinfo1['mname']}'"
+                f"Expected '{pvinfo['mname']}', got '{pvinfo1['mname']}'."
+
+def verify_set_props_mechanisms_bool(params, cpu):
+    """Verify that the 'mname' arguments of 'set_prop()' works correctly for boolean properties."""
+
+    siblings = {}
+    cpuinfo = params["cpuinfo"]
+    pobj = params["pobj"]
+
+    for pname, pinfo in pobj.props.items():
+        if not pinfo["writable"]:
+            continue
+        if not pinfo["type"] == "bool":
+            continue
+
+        try:
+            pvinfo = pobj.get_cpu_prop(pname, cpu)
+        except ErrorNotSupported:
+            continue
+
+        if pvinfo["val"] == "on":
+            val = "off"
+        elif pvinfo["val"] == "off":
+            val = "on"
+        else:
+            continue
+
+        sname = pobj.get_sname(pname)
+        if sname is None:
+            continue
+
+        if sname not in siblings:
+            siblings[sname] = cpuinfo.get_cpu_siblings(cpu, level=sname)
+        cpus = siblings[sname]
+
+        all_mnames = [(mname,) for mname in pinfo["mnames"]]
+        all_mnames += [("msr","sysfs"), ("sysfs" ," msr")]
+        for mnames in all_mnames:
+            try:
+                mname = pobj.set_prop(pname, val, cpus, mnames=mnames)
+            except ErrorNotSupported:
+                continue
+
+            assert mname in mnames, f"Set property '{pname}' to value '{val}' on CPU {cpu} " \
+                                    f"using mechanisms '{','.join(mnames)}', but 'set_prop()' " \
+                                    f"return machanism name '{mname}'."
+
+            pvinfo1 = pobj.get_cpu_prop(pname, cpu)
+            assert pvinfo1["val"] == val, f"Set property '{pname}' to value '{val}' on " \
+                                          f"CPU {cpu}, but read back value '{pvinfo1['val']}'."
+
+            pobj.set_prop(pname, pvinfo["val"], cpus, mnames=mnames)
