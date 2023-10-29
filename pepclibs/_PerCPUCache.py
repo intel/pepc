@@ -9,82 +9,82 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module implements CPU properties caching.
+This class implements per-CPU data caching. The cache is indexed by an element name and CPU number.
 """
 
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
-class PropsCache():
+class PerCPUCache:
     """
-    This class implements properties caching. The cache is indexed by property name and CPU number.
-    It takes the CPU scope (global 0, package 3, etc) into account as well. The cache uses the
-    write-through policy.
+    This class implements per_CPU data caching. The cache is indexed by data element name and CPU
+    number. It takes the CPU scope (global 0, package 3, etc) into account as well. The cache uses
+    the write-through policy.
     """
 
-    def is_cached(self, pname, cpu, mname=None):
+    def is_cached(self, name, cpu):
         """
-        Check if '(pname, cpu, mname)' exists in the cache. Return 'True' if the item was found and
-        'False' otherwise. Arguments are the same as in 'get()'.
+        Check if '(name, cpu)' exists in the cache. Return 'True' if the item was found and 'False'
+        otherwise. Arguments are the same as in 'get()'.
         """
 
         try:
-            self.get(pname, cpu, mname=mname)
-        except Error:
+            self.get(name, cpu)
+        except ErrorNotFound:
             return False
         return True
 
-    def get(self, pname, cpu, mname=None):
+    def get(self, name, cpu):
         """
-        Look up the '(pname, cpu, mname)' in the cache. Return the value if the item was found,
-        raise 'ErrorNotFound' otherwise. The argument are as follows.
-          * pname - name of the property.
+        Look up the '(name, cpu)' in the cache. Return the value if the item was found, raise
+        'ErrorNotFound' otherwise. The argument are as follows.
+          * name - name of the data element.
           * cpu - an integer CPU number.
-          * mname - optional mechanism name for the property.
         """
 
         if not self._enable_cache:
             raise ErrorNotFound("caching is disabled")
 
         try:
-            return self._cache[mname][pname][cpu]
+            return self._cache[name][cpu]
         except KeyError:
-            raise ErrorNotFound(f"{pname} is not cached for CPU {cpu}") from None
+            raise ErrorNotFound(f"'{name}' is not cached for CPU {cpu}") from None
 
-    def remove(self, pname, cpu, sname="CPU", mname=None):
+    def remove(self, name, cpu, sname="CPU"):
         """
-        Remove '(pname, cpu)' and all the other items sharing the same scope from the cache.
-          * pname - name of the property.
+        Remove '(name, cpu)' and all the other items sharing the same scope from the cache.
+          * name - name of the data element.
           * cpu - an integer CPU number.
-          * sname - name of scope (e.g. "package", "core").
-          * mname - optional mechanism name for the property (see a note in 'get()' docstring).
+          * sname - scope name (e.g. "package", "core").
+
+        Returns 'True' if there are elements in the cache left, and 'False' if there are no more
+        elements in the cachel
         """
 
         if not self._enable_cache:
             return
 
         if sname == "global":
-            del self._cache[mname][pname]
+            del self._cache[name]
             return
 
         cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
 
         for cpu in cpus: # pylint: disable=redefined-argument-from-local
             try:
-                del self._cache[mname][pname][cpu]
+                del self._cache[name][cpu]
             except KeyError:
                 pass
 
-    def add(self, pname, cpu, val, sname="CPU", mname=None):
+    def add(self, name, cpu, val, sname="CPU"):
         """
-        Add value 'val' for item '(pname, cpu)' to the cache. Add it also for each CPU sharing the
+        Add value 'val' for item '(name, cpu)' to the cache. Add it also for each CPU sharing the
         same scope. The argument are as follows.
-          * pname - name of the property.
+          * name - name of the data element.
           * cpu - an integer CPU number.
           * val - value to get cached.
-          * sname - name of scope (e.g. "package", "core").
-          * mname - optional mechanism name for the property (see a note in 'get()' docstring).
+          * sname - scope name (e.g. "package", "core").
 
         Return 'val'.
         """
@@ -94,12 +94,10 @@ class PropsCache():
 
         cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
 
-        if mname not in self._cache:
-            self._cache[mname] = {}
-        if pname not in self._cache[mname]:
-            self._cache[mname][pname] = {}
+        if name not in self._cache:
+            self._cache[name] = {}
         for cpu in cpus: # pylint: disable=redefined-argument-from-local
-            self._cache[mname][pname][cpu] = val
+            self._cache[name][cpu] = val
 
         return val
 
