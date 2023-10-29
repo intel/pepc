@@ -1053,8 +1053,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         for cpu in cpus:
             if self._pcache.is_cached(pname, cpu):
-                if prop["sname"] == "global":
-                    break
                 continue
 
             if pname == "turbo":
@@ -1072,6 +1070,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 self._pcache.add(pname, cpu, val, sname=prop["sname"])
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
+
+        return "sysfs"
 
     def set_freq_props(self, min_freq, max_freq, cpus, freq_type="core", mnames=None):
         """
@@ -1118,6 +1118,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if freq_type == "core":
             uncore = False
+            mname = "sysfs"
             min_freq_pname = "min_freq"
             max_freq_pname = "max_freq"
             min_freq_limit_pname = "min_freq_limit"
@@ -1125,6 +1126,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             write_func = self._write_freq_prop_to_sysfs
         elif freq_type == "core_hw":
             uncore = False
+            mname = "msr"
             min_freq_pname = "min_freq_hw"
             max_freq_pname = "max_freq_hw"
             min_freq_limit_pname = "min_oper_freq"
@@ -1132,11 +1134,14 @@ class PStates(_PCStatesBase.PCStatesBase):
             write_func = self._write_freq_prop_to_msr
         elif freq_type == "uncore":
             uncore = True
+            mname = "sysfs"
             min_freq_pname = "min_uncore_freq"
             max_freq_pname = "max_uncore_freq"
             min_freq_limit_pname = "min_uncore_freq_limit"
             max_freq_limit_pname = "max_uncore_freq_limit"
             write_func = self._write_freq_prop_to_sysfs
+        else:
+            raise Error(f"BUG: bad requency type {freq_type}")
 
         if min_freq:
             min_freq = self._normalize_inprop(min_freq_pname, min_freq)
@@ -1219,27 +1224,23 @@ class PStates(_PCStatesBase.PCStatesBase):
                 if new_max_freq != cur_max_freq:
                     write_func(max_freq_pname, new_max_freq, cpu)
 
+        return mname
+
     def _set_prop(self, pname, val, cpus, mnames=None):
         """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
 
         if pname == "min_freq":
-            self.set_freq_props(val, None, cpus, freq_type="core")
-            return
+            return self.set_freq_props(val, None, cpus, freq_type="core", mnames=mnames)
         if pname == "max_freq":
-            self.set_freq_props(None, val, cpus, freq_type="core")
-            return
+            return self.set_freq_props(None, val, cpus, freq_type="core", mnames=mnames)
         if pname == "min_freq_hw":
-            self.set_freq_props(val, None, cpus, freq_type="core_hw")
-            return
+            return self.set_freq_props(val, None, cpus, freq_type="core_hw", mnames=mnames)
         if pname == "max_freq_hw":
-            self.set_freq_props(None, val, cpus, freq_type="core_hw")
-            return
+            return self.set_freq_props(None, val, cpus, freq_type="core_hw", mnames=mnames)
         if pname == "min_uncore_freq":
-            self.set_freq_props(val, None, cpus, freq_type="uncore")
-            return
+            return self.set_freq_props(val, None, cpus, freq_type="uncore", mnames=mnames)
         if pname == "max_uncore_freq":
-            self.set_freq_props(None, val, cpus, freq_type="uncore")
-            return
+            return self.set_freq_props(None, val, cpus, freq_type="uncore", mnames=mnames)
 
         if pname == "governor":
             self._validate_governor_name(val)
@@ -1250,14 +1251,18 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if pname == "epp":
             self._get_eppobj().set_epp(val, cpus=cpus, mname="sysfs")
-        elif pname == "epp_hw":
+            return "sysfs"
+        if pname == "epp_hw":
             self._get_eppobj().set_epp(val, cpus=cpus, mname="msr")
-        elif pname == "epb":
+            return "msr"
+        if pname == "epb":
             self._get_epbobj().set_epb(val, cpus=cpus, mname="sysfs")
-        elif pname == "epb_hw":
+            return "sysfs"
+        if pname == "epb_hw":
             self._get_epbobj().set_epb(val, cpus=cpus, mname="msr")
-        else:
-            self._set_own_prop(pname, val, cpus)
+            return "msr"
+
+        return self._set_own_prop(pname, val, cpus)
 
     def _set_sname(self, pname):
         """Set scope "sname" for property 'pname'."""

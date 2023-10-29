@@ -292,15 +292,15 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         if pname in PowerCtl.FEATURES:
             self._get_powerctl().write_feature(pname, val, cpus=cpus)
-            return
+            return "msr"
 
         if pname in PCStateConfigCtl.FEATURES:
             self._get_pcstatectl().write_feature(pname, val, cpus=cpus)
-            return
+            return "msr"
 
         if pname == "governor":
             self._get_cpuidle().set_current_governor(val)
-            return
+            return "sysfs"
 
         raise Error(f"BUG: undefined property '{pname}'")
 

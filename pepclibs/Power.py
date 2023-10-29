@@ -201,6 +201,8 @@ class Power(_PropsClassBase.PropsClassBase):
                 raise ErrorVerifyFailed(errmsg) from err
             raise
 
+        return "msr"
+
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
         The class constructor. The arguments are as follows.

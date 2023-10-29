@@ -393,6 +393,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Properties of "bool" type have the following values:
            * True, "on", "enable" for enabling the feature.
            * False, "off", "disable" for disabling the feature.
+
+        Returns name of the mechanism that was used for setting the property.
         """
 
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
@@ -402,12 +404,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._set_sname(pname)
         self._validate_cpus_vs_scope(pname, cpus)
 
-        self._set_prop(pname, val, cpus, mnames=mnames)
+        return self._set_prop(pname, val, cpus, mnames=mnames)
 
     def set_cpu_prop(self, pname, val, cpu, mnames=None):
         """Same as 'set_prop()', but for a single CPU and a single property."""
 
-        self.set_prop(pname, val, (cpu,), mnames=mnames)
+        return self.set_prop(pname, val, (cpu,), mnames=mnames)
 
     def _init_props_dict(self, props):
         """Initialize the 'props' and 'mechanisms' dictionaries."""
