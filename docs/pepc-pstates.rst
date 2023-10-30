@@ -151,14 +151,8 @@ Get P-states information for specified CPUs. By default, prints all information 
 **--epp**
    Get EPP via sysfs (details in 'epp_').
 
-**--epp-hw**
-   Get EPP via MSR (details in 'epp_hw_').
-
 **--epb**
    Get EPB via sysfs (details in 'epb_').
-
-**--epb-hw**
-   Get EPB via MSR (details in 'epb_hw_').
 
 **--driver**
    Get CPU frequency driver (details in 'driver_').
@@ -240,14 +234,8 @@ currently configured value(s) will be printed.
 **--epp** *EPP*
    Set EPP via sysfs (details in 'epp_').
 
-**--epp-hw** *EPP*
-   Set EPP via MSR (details in 'epp_hw_').
-
 **--epb** *EPB*
    Set EPB via sysfs (details in 'epb_').
-
-**--epb-hw** *EPB*
-   Set EPB via MSR (details in 'epb_hw_').
 
 **--intel-pstate-mode** *[MODE]*
    Set operation mode of 'intel_pstate' driver (details in 'intel_pstate_mode_').
@@ -903,43 +891,14 @@ Description
 Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is
 a number in range of 0-255 (maximum energy efficiency to maximum performance), or a policy name.
 
-Mechanism
+Mechanisms
 ---------
 
+**sysfs**
 "/sys/devices/system/cpu/cpufreq/policy\ **0**\ /energy_performance_preference", '**0**' is replaced
 with desired CPU number.
 
-Scope
------
-
-This property has **CPU** scope.
-
-----------------------------------------------------------------------------------------------------
-
-epp_hw
-======
-
-epp_hw - Energy Performance Preference
-
-Synopsis
---------
-
-| pepc pstates *info* **--epp-hw**
-| pepc pstates *config* **--epp-hw**\ =<value>
-
-Description
------------
-
-Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is
-a number in range of 0-255 (maximum energy efficiency to maximum performance).
-
-When package control is enabled the value is read from MSR_HWP_REQUEST_PKG 0x772, but when written
-package control is disabled and value is written to MSR_HWP_REQUEST 0x774, both require the 'msr'
-Linux kernel driver.
-
-Mechanism
----------
-
+**msr**
 MSR_HWP_REQUEST (**0x774**), bits **31:24**.
 
 Scope
@@ -965,46 +924,22 @@ Description
 Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a
 number in range of 0-15 (maximum performance to maximum energy efficiency), or a policy name.
 
-Mechanism
----------
+Mechanisms
+----------
 
+**sysfs**
 "/sys/devices/system/cpu/cpu\ **0**\ /power/energy_perf_bias", '**0**' is replaced with desired CPU
 number.
 
-Scope
------
-
-This property has **CPU** scope.
-
-----------------------------------------------------------------------------------------------------
-
-epb_hw
-======
-
-epb_hw - Energy Performance Preference
-
-Synopsis
---------
-
-| pepc pstates *info* **--epb-hw**
-| pepc pstates *config* **--epb-hw**\ =<value>
-
-Description
------------
-
-Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a
-number in range of 0-15 (maximum performance to maximum energy efficiency).
-
-Mechanism
----------
-
+**msr**
 MSR_ENERGY_PERF_BIAS (**0x1B0**), bits **3:0**.
 
 Scope
 -----
 
-This property has **CPU** scope. With the following exceptions, Silvermonts have **core** scope,
-Westmeres and Sandybridges have **package** scope.
+This property has **CPU** scope.
+This property has **CPU** scope on most platforms. However, on Silvermont systems it has **core**
+scope and on Westmere and Sandybridge systems it has **package** scope.
 
 ----------------------------------------------------------------------------------------------------
 

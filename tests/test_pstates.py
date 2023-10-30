@@ -57,14 +57,8 @@ def _get_set_and_verify_data(params, cpu):
     yield "epp", "1"
     yield "epp", "254"
 
-    yield "epp_hw", 0
-    yield "epp_hw", 255
-
     yield "epb", 0
     yield "epb", 15
-
-    yield "epb_hw", 0
-    yield "epb_hw", 15
 
     pvinfo = pobj.get_cpu_prop("governors", cpu)
     if pvinfo["val"] is not None:

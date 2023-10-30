@@ -187,28 +187,14 @@ PROPS = {
         "name" : "EPP",
         "type" : "str",
         "sname": "CPU",
-        "mnames" : ("sysfs", ),
-        "writable" : True,
-    },
-    "epp_hw" : {
-        "name" : "EPP",
-        "type" : "int",
-        "sname": "CPU",
-        "mnames" : ("msr", ),
+        "mnames" : ("sysfs", "msr"),
         "writable" : True,
     },
     "epb" : {
         "name" : "EPB",
         "type" : "int",
         "sname": "CPU",
-        "mnames" : ("sysfs", ),
-        "writable" : True,
-    },
-    "epb_hw" : {
-        "name" : "EPB",
-        "type" : "int",
-        "sname": None,
-        "mnames" : ("msr", ),
+        "mnames" : ("sysfs", "msr"),
         "writable" : True,
     },
     "driver" : {
@@ -749,9 +735,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         val, mname = None, None
 
         try:
-            if pname.startswith("epp"):
+            if pname == "epp":
                 cpu, val, mname = self._get_eppobj().get_cpu_val(cpu, mnames=mnames)
-            elif pname.startswith("epb"):
+            elif pname == "epb":
                 cpu, val, mname = self._get_epbobj().get_cpu_val(cpu, mnames=mnames)
             else:
                 return None
@@ -1243,9 +1229,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         elif self._is_uncore_prop(pname) and not self._is_uncore_freq_supported():
             raise Error(self._uncore_errmsg)
 
-        if pname.startswith("epp"):
+        if pname == "epp":
             return self._get_eppobj().set_vals(val, cpus=cpus, mnames=mnames)
-        elif pname.startswith("epb"):
+        if pname == "epb":
             return self._get_epbobj().set_vals(val, cpus=cpus, mnames=mnames)
 
         return self._set_own_prop(pname, val, cpus)
@@ -1256,9 +1242,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         if self._props[pname]["sname"]:
             return
 
-        if pname == "epb_hw":
-            _epb = self._get_epbobj() # pylint: disable=protected-access
-            self._props[pname]["sname"] = _epb.sname
+        if pname == "epb":
+            try:
+                _epb = self._get_epbobj() # pylint: disable=protected-access
+            except Error:
+                self._props[pname]["sname"] = "CPU"
+            else:
+                self._props[pname]["sname"] = _epb.sname
         elif pname == "bus_clock":
             self._props[pname]["sname"] = self._get_fsbfreq().features["fsb"]["sname"]
         else:

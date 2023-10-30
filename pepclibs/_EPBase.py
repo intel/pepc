@@ -55,8 +55,8 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
     def _raise_getset_exception(self, cpus, mnames, action, errors):
         """
-        Rase an exception from the "get" or "set" method in a situation when EPP/EPB could not be
-        set or set using mechanisms in 'mname'.
+        Rase an exception for "get" or "set" method in a situation when EPP/EPB could not be
+        read or set using mechanisms in 'mnames'.
         """
 
         if len(mnames) > 1:
