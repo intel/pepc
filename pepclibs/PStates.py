@@ -740,7 +740,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._construct_pvinfo(pname, cpu, "msr", val)
 
-    def _get_epp_epb_pvinfo(self, pname, cpu):
+    def _get_epp_epb_pvinfo(self, pname, cpu, mnames):
         """
         Return property value dictionary for EPP or EPB. Return 'None' if 'pname' is not one of the
         EPP/EPB properties.
@@ -749,25 +749,17 @@ class PStates(_PCStatesBase.PCStatesBase):
         val, mname = None, None
 
         try:
-            if pname == "epp":
-                mname = "sysfs"
-                val = self._get_eppobj().get_cpu_epp(cpu, mnames=(mname,))
-            elif pname == "epp_hw":
-                mname = "msr"
-                val = self._get_eppobj().get_cpu_epp(cpu, mnames=(mname,))
-            elif pname == "epb":
-                mname = "sysfs"
-                val = self._get_epbobj().get_cpu_epb(cpu, mnames=(mname,))
-            if pname == "epb_hw":
-                mname = "msr"
-                val = self._get_epbobj().get_cpu_epb(cpu, mnames=(mname,))
+            if pname.startswith("epp"):
+                cpu, val, mname = self._get_eppobj().get_cpu_val(cpu, mnames=mnames)
+            elif pname.startswith("epb"):
+                cpu, val, mname = self._get_epbobj().get_cpu_val(cpu, mnames=mnames)
+            else:
+                return None
         except ErrorNotSupported as err:
             _LOG.debug(err)
+            return self._construct_pvinfo(pname, cpu, mnames[0], None)
 
-        if mname is not None:
-            return self._construct_pvinfo(pname, cpu, mname, val)
-
-        return None
+        return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
         """
@@ -785,7 +777,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         # First handle the MSR-based properties. The 'MSR', 'EPP', and 'EPB' modules have their own
         # caching,'self._pcache' is not used for the MSR-based properties.
 
-        pvinfo = self._get_epp_epb_pvinfo(pname, cpu)
+        pvinfo = self._get_epp_epb_pvinfo(pname, cpu, mnames)
         if pvinfo:
             return pvinfo
 
@@ -1251,18 +1243,10 @@ class PStates(_PCStatesBase.PCStatesBase):
         elif self._is_uncore_prop(pname) and not self._is_uncore_freq_supported():
             raise Error(self._uncore_errmsg)
 
-        if pname == "epp":
-            self._get_eppobj().set_epp(val, cpus=cpus, mnames=("sysfs",))
-            return "sysfs"
-        if pname == "epp_hw":
-            self._get_eppobj().set_epp(val, cpus=cpus, mnames=("msr",))
-            return "msr"
-        if pname == "epb":
-            self._get_epbobj().set_epb(val, cpus=cpus, mnames=("sysfs",))
-            return "sysfs"
-        if pname == "epb_hw":
-            self._get_epbobj().set_epb(val, cpus=cpus, mnames=("msr",))
-            return "msr"
+        if pname.startswith("epp"):
+            return self._get_eppobj().set_vals(val, cpus=cpus, mnames=mnames)
+        elif pname.startswith("epb"):
+            return self._get_epbobj().set_vals(val, cpus=cpus, mnames=mnames)
 
         return self._set_own_prop(pname, val, cpus)
 

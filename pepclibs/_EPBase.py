@@ -65,10 +65,13 @@ class EPBase(ClassHelpers.SimpleCloseContext):
             mnames_str = f"using the {mnames[0]} method"
 
         cpus_range = Human.rangify(cpus)
-        sub_errmsgs = "\n".join([err.indent(2) for err in errors])
+        if errors:
+            sub_errmsgs = "\n" + "\n".join([err.indent(2) for err in errors])
+        else:
+            sub_errmsgs = ""
 
-        raise ErrorNotSupported(f"cannot {action} {self._what} '{mnames_str}' for the following "
-                                f"CPUs: {cpus_range}\n{sub_errmsgs}")
+        raise ErrorNotSupported(f"cannot {action} {self._what} {mnames_str} for the following "
+                                f"CPUs: {cpus_range}{sub_errmsgs}")
 
     def _validate_value(self, val, policy_ok=False):
         """
@@ -104,11 +107,10 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         return _bug_method_not_defined("_EPBase._write_to_sysfs")
 
     def _get_epp_or_epb(self, cpus="all", mnames=None):
-        """Get EPB or EPP. Refer to 'EPP.get_epp()' or 'EPB.get_epb()' docstring."""
+        """Get EPB or EPP."""
 
         mnames = self._normalize_mnames(mnames)
         cpus = self._cpuinfo.normalize_cpus(cpus)
-        errors = []
 
         for mname in mnames:
             if mname == "sysfs":
@@ -116,19 +118,19 @@ class EPBase(ClassHelpers.SimpleCloseContext):
             else:
                 func = self._read_from_msr
 
-            try:
-                for cpu in cpus:
-                    yield (cpu, func(cpu))
-            except ErrorNotSupported as err:
-                if cpu == cpus[0]:
-                    errors.append(err)
-                    continue
-                raise
+            for cpu in cpus:
+                val = func(cpu)
+                if val is None:
+                    break
+                yield (cpu, val, mname)
+
+            if val is None:
+                continue
 
             return
 
         # None of the methods worked.
-        self._raise_getset_exception(cpus, mnames, "get", errors)
+        self._raise_getset_exception(cpus, mnames, "get", [])
 
     def _set_epb_or_epb(self, epb, cpus="all", mnames=None):
         """
@@ -166,10 +168,48 @@ class EPBase(ClassHelpers.SimpleCloseContext):
                     continue
                 raise
 
-            return
+            return mname
 
         # None of the methods worked.
         self._raise_getset_exception(cpus, mnames, "set", errors)
+
+    def get_vals(self, cpus="all", mnames=None):
+        """
+        Read EPP or EPB for CPUs 'cpus' using the 'mname' mechanism and yield '(cpu, value, mname)'
+        tuples for every CPU in 'cpus'. The arguments are as follows.
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+          * mnames - list of mechanisms to use for getting EPP/EPP (see
+                    '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
+                    specified in 'mnames'. By default, all supported mechanisms will be tried.
+        """
+
+        return self._get_epp_or_epb(cpus=cpus, mnames=mnames)
+
+    def get_cpu_val(self, cpu, mnames=None):
+        """Similar to 'get_vals()', but for a single CPU 'cpu'."""
+
+        return next(self._get_epp_or_epb(cpus=(cpu,), mnames=mnames))
+
+    def set_vals(self, val, cpus="all", mnames=None):
+        """
+        Set EPP or EPB for CPU in 'cpus' using the 'mname' mechanism. The arguments are as follows.
+          * epp - the EPP/EPB value to set. Can be an integer, a string representing an integer. If
+                  'mname' is "sysfs", 'epp' can also be EPP/EPB policy name (e.g., "performance").
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+          * mnames - list of mechanisms to use for setting EPP/EPB (see
+                    '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
+                    specified in 'mnames'. By default, all supported mechanisms will be tried.
+
+        Return name of the mechanism that was used to set EPP or EPB. Raise 'ErrorNotSupported' if
+        the platform does not support EPP/EPP.
+        """
+
+        return self._set_epb_or_epb(val, cpus=cpus, mnames=mnames)
+
+    def set_cpu_val(self, val, cpu, mnames=None):
+        """Similar to 'set_vals()', but for a single CPU 'cpu'."""
+
+        return self._set_epb_or_epb(val, cpus=(cpu,), mnames=mnames)
 
     def __init__(self, what, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """

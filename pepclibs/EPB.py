@@ -30,13 +30,6 @@ class EPB(_EPBase.EPBase):
     """
     This class provides a capability of reading and changing EPB (Energy Performance Bias) on Intel
     CPUs.
-
-    Public methods overview.
-
-    1. Multiple CPUs.
-        * Get/set EPB: 'get_epb()', 'set_epb()'.
-    2. Single CPU.
-        * Get/set EPB: 'get_cpu_epb()', 'set_cpu_epb()'.
     """
 
     def _get_epb_msr(self):
@@ -118,44 +111,6 @@ class EPB(_EPBase.EPBase):
             self._pcache.add("epb", cpu, self._epb_policies[val], "sysfs")
         else:
             self._pcache.add("epb", cpu, int(val), "sysfs")
-
-    def get_epb(self, cpus="all", mnames=None):
-        """
-        Get EPB for CPUs 'cpus' using the 'mname' mechanism and yield (CPU number, EPB value) pairs.
-        The arguments are as follows.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * mnames - list of mechanisms to use for getting EPB (see '_PropsClassBase.MECHANISMS').
-                     The mechanisms will be tried in the order specified in 'mnames'. By default,
-                     all supported mechanisms will be tried.
-        """
-
-        return self._get_epp_or_epb(cpus=cpus, mnames=mnames)
-
-    def get_cpu_epb(self, cpu, mnames=None):
-        """Similar to 'get_epb()', but for a single CPU 'cpu'."""
-
-        _, epb = next(self.get_epb(cpus=(cpu,), mnames=mnames))
-        return epb
-
-    def set_epb(self, epb, cpus="all", mnames=None):
-        """
-        Set EPB for CPU in 'cpus' using the 'mname' mechanism. The arguments are as follows.
-          * epb - the EPB value to set. Can be an integer, a string representing an integer. If
-                  'mname' is "sysfs", 'epb' can also be EPB policy name (e.g., "performance").
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * mnames - list of mechanisms to use for setting EPB (see '_PropsClassBase.MECHANISMS').
-                     The mechanisms will be tried in the order specified in 'mnames'. By default,
-                     all supported mechanisms will be tried.
-
-        Raise 'ErrorNotSupported' if the platform does not support EPB.
-        """
-
-        return self._set_epb_or_epb(epb, cpus=cpus, mnames=mnames)
-
-    def set_cpu_epb(self, epb, cpu, mnames=None):
-        """Similar to 'set_epb()', but for a single CPU 'cpu'."""
-
-        self.set_epb(epb, cpus=(cpu,), mnames=mnames)
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """

@@ -230,7 +230,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         The property value dictionary has the following format:
             { "cpu": CPU number,
-              "val": value of property 'pname' on the given CPU
+              "val": value of property 'pname' on the given CPU,
               "mname" : name of the mechanism that was used for getting the property }
 
         If a property is not supported, the 'val' and 'mname' keys will contain 'None'.

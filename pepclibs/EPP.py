@@ -25,13 +25,6 @@ class EPP(_EPBase.EPBase):
     """
     This module provides a capability of reading and changing EPP (Energy Performance Preference) on
     Intel CPUs.
-
-    Public methods overview.
-
-    1. Multiple CPUs.
-        * Get/set EPP: 'get_epp()', 'set_epp()'.
-    2. Single CPU.
-        * Get/set EPP: 'get_cpu_epp()', 'set_cpu_epp()'.
     """
 
     def _get_hwpreq(self):
@@ -165,44 +158,6 @@ class EPP(_EPBase.EPBase):
             raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         return self._pcache.add("epp", cpu, val1, "sysfs")
-
-    def get_epp(self, cpus="all", mnames=None):
-        """
-        Read EPP for CPUs 'cpus' using the 'mname' mechanism and yield (CPU number, EPP value)
-        pairs. The arguments are as follows.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * mnames - list of mechanisms to use for getting EPP (see '_PropsClassBase.MECHANISMS').
-                     The mechanisms will be tried in the order specified in 'mnames'. By default,
-                     all supported mechanisms will be tried.
-        """
-
-        return self._get_epp_or_epb(cpus=cpus, mnames=mnames)
-
-    def get_cpu_epp(self, cpu, mnames=None):
-        """Similar to 'get_epp()', but for a single CPU 'cpu'."""
-
-        _, epp = next(self.get_epp(cpus=(cpu,), mnames=mnames))
-        return epp
-
-    def set_epp(self, epp, cpus="all", mnames=None):
-        """
-        Set EPP for CPU in 'cpus' using the 'mname' mechanism. The arguments are as follows.
-          * epp - the EPP value to set. Can be an integer, a string representing an integer. If
-                  'mname' is "sysfs", 'epp' can also be EPP policy name (e.g., "performance").
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * mnames - list of mechanisms to use for setting EPP (see '_PropsClassBase.MECHANISMS').
-                     The mechanisms will be tried in the order specified in 'mnames'. By default,
-                     all supported mechanisms will be tried.
-
-        Raise 'ErrorNotSupported' if the platform does not support EPP.
-        """
-
-        return self._set_epb_or_epb(epp, cpus=cpus, mnames=mnames)
-
-    def set_cpu_epp(self, epp, cpu, mnames=None):
-        """Similar to 'set_epp()', but for a single CPU 'cpu'."""
-
-        self.set_epp(epp, cpus=(cpu,), mnames=mnames)
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, hwpreq=None, enable_cache=True):
         """
