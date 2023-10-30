@@ -57,6 +57,7 @@ def test_propscache_scope(params):
     pman = params["pman"]
     cpuinfo = params["cpuinfo"]
 
+    mname = "sysfs"
     test_cpu = random.choice(cpuinfo.get_cpus())
     pcache = _PropsCache.PropsCache(cpuinfo=cpuinfo, pman=pman)
 
@@ -65,16 +66,16 @@ def test_propscache_scope(params):
         val = object()
         pname = object()
 
-        pcache.add(pname, test_cpu, val, sname=sname)
+        pcache.add(pname, test_cpu, val, mname, sname=sname)
 
         if sname not in siblings:
             siblings[sname] = params["cpuinfo"].get_cpu_siblings(test_cpu, level=sname)
         cpus = siblings[sname]
 
         for cpu in cpuinfo.get_cpus():
-            res = pcache.is_cached(pname, cpu)
+            res = pcache.is_cached(pname, cpu, mname)
             if cpu in cpus:
-                assert pcache.get(pname, cpu) == val
+                assert pcache.get(pname, cpu, mname) == val
             else:
                 assert res is False
 

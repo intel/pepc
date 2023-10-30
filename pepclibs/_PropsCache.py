@@ -23,25 +23,55 @@ class PropsCache():
     write-through policy.
     """
 
-    def is_cached(self, pname, cpu, mname=None):
+    def is_cached(self, pname, cpu, mname):
         """
         Check if '(pname, cpu, mname)' exists in the cache. Return 'True' if the item was found and
         'False' otherwise. Arguments are the same as in 'get()'.
         """
 
         try:
-            self.get(pname, cpu, mname=mname)
+            self.get(pname, cpu, mname)
         except Error:
             return False
         return True
 
-    def get(self, pname, cpu, mname=None):
+    def find(self, pname, cpu, mnames=None):
         """
-        Look up the '(pname, cpu, mname)' in the cache. Return the value if the item was found,
-        raise 'ErrorNotFound' otherwise. The argument are as follows.
+        Similar to 'get()', but 'mnames' argument specifies the list of mechanism names. Search for
+        the '(pname, cpu)' item with mechanimsm name from 'mnames', and return the first matched
+        item, along with the mechanism name. The argument are as follows.
+          * pname - name of the property to find.
+          * cpu - an integer CPU number.
+          * mnames - a collection of mechanism names to use for searching. By default, search for
+                     items with any mechanism name.
+
+        Return a '(val, mname)' tuple in the item was found, raise 'ErrorNotFound' otherwise.
+        """
+
+        if not self._enable_cache:
+            raise ErrorNotFound("caching is disabled")
+
+        if mnames is None:
+            mnames = self._cache
+
+        for mname in mnames:
+            try:
+                return (self._cache[mname][pname][cpu], mname)
+            except KeyError:
+                pass
+
+        mnames = ",".join(mnames)
+        raise ErrorNotFound(f"property '{pname}' and mechanisms '{mnames}' are not cached for "
+                            f"CPU {cpu}")
+
+    def get(self, pname, cpu, mname):
+        """
+        Look up the '(pname, cpu, mname)' in the cache. The argument are as follows.
           * pname - name of the property.
           * cpu - an integer CPU number.
-          * mname - optional mechanism name for the property.
+          * mname - mechanism name for the property.
+
+        Return the value if the item was found, raise 'ErrorNotFound' otherwise.
         """
 
         if not self._enable_cache:
@@ -50,15 +80,16 @@ class PropsCache():
         try:
             return self._cache[mname][pname][cpu]
         except KeyError:
-            raise ErrorNotFound(f"{pname} is not cached for CPU {cpu}") from None
+            raise ErrorNotFound(f"property '{pname}' and mechanism '{mname}' are not cached for "
+                                f"CPU {cpu}") from None
 
-    def remove(self, pname, cpu, sname="CPU", mname=None):
+    def remove(self, pname, cpu, mname, sname="CPU"):
         """
         Remove '(pname, cpu)' and all the other items sharing the same scope from the cache.
           * pname - name of the property.
           * cpu - an integer CPU number.
+          * mname - mechanism name for the property (see a note in 'get()' docstring).
           * sname - name of scope (e.g. "package", "core").
-          * mname - optional mechanism name for the property (see a note in 'get()' docstring).
         """
 
         if not self._enable_cache:
@@ -76,15 +107,15 @@ class PropsCache():
             except KeyError:
                 pass
 
-    def add(self, pname, cpu, val, sname="CPU", mname=None):
+    def add(self, pname, cpu, val, mname, sname="CPU"):
         """
         Add value 'val' for item '(pname, cpu)' to the cache. Add it also for each CPU sharing the
         same scope. The argument are as follows.
           * pname - name of the property.
           * cpu - an integer CPU number.
           * val - value to get cached.
+          * mname - mechanism name for the property (see a note in 'get()' docstring).
           * sname - name of scope (e.g. "package", "core").
-          * mname - optional mechanism name for the property (see a note in 'get()' docstring).
 
         Return 'val'.
         """

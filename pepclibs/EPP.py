@@ -140,7 +140,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         """Read EPP for CPU 'cpu' from sysfs."""
 
         with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get("epp", cpu, mname="sysfs")
+            return self._pcache.get("epp", cpu, "sysfs")
 
         try:
             with self._pman.open(self._sysfs_epp_path % cpu, "r") as fobj:
@@ -148,7 +148,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound:
             epp = None
 
-        return self._pcache.add("epp", cpu, epp, mname="sysfs")
+        return self._pcache.add("epp", cpu, epp, "sysfs")
 
     def _write_cpu_epp_sysfs(self, epp, cpu):
         """Write EPP 'epp' for CPU 'cpu' to sysfs."""
@@ -182,7 +182,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
                 err = ErrorNotSupported(err)
             raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-        return self._pcache.add("epp", cpu, val, mname="sysfs")
+        return self._pcache.add("epp", cpu, val, "sysfs")
 
     def get_epp(self, cpus="all", mname="sysfs"):
         """

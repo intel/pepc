@@ -106,7 +106,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         """Read EPB for CPU 'cpu' from sysfs."""
 
         with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get("epb", cpu, mname="sysfs")
+            return self._pcache.get("epb", cpu, "sysfs")
 
         try:
             with self._pman.open(self._sysfs_epb_path % cpu, "r") as fobj:
@@ -114,7 +114,7 @@ class EPB(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound:
             val = None
 
-        return self._pcache.add("epb", cpu, val, mname="sysfs")
+        return self._pcache.add("epb", cpu, val, "sysfs")
 
     def _write_cpu_epb_sysfs(self, epb, cpu):
         """Write EPB 'epb' for CPU 'cpu' to sysfs."""
@@ -133,9 +133,9 @@ class EPB(ClassHelpers.SimpleCloseContext):
             if not self._epb_policies[epb]:
                 self._epb_policies[epb] = int(self._read_cpu_epb_sysfs(cpu))
 
-            self._pcache.add("epb", cpu, self._epb_policies[epb], mname="sysfs")
+            self._pcache.add("epb", cpu, self._epb_policies[epb], "sysfs")
         else:
-            self._pcache.add("epb", cpu, int(epb), mname="sysfs")
+            self._pcache.add("epb", cpu, int(epb), "sysfs")
 
     def get_epb(self, cpus="all", mname="sysfs"):
         """

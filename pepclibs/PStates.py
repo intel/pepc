@@ -812,8 +812,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         # and avoid double caching, but it is not worth the trouble at this point.
 
         with contextlib.suppress(ErrorNotFound):
-            val = self._pcache.get(pname, cpu)
-            return self._construct_pvinfo(pname, cpu, mnames[0], val)
+            val, mname = self._pcache.find(pname, cpu, mnames=mnames)
+            return self._construct_pvinfo(pname, cpu, mname, val)
 
         if "getter" in prop:
             pvinfo = prop["getter"](cpu, mnames)
@@ -828,7 +828,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         else:
             raise Error(f"BUG: unsupported property '{pname}'")
 
-        self._pcache.add(pname, cpu, pvinfo["val"], sname=prop["sname"])
+        self._pcache.add(pname, cpu, pvinfo["val"], pvinfo["mname"], sname=prop["sname"])
         return pvinfo
 
     def _set_turbo(self, cpu, enable):
@@ -858,7 +858,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         except ErrorNotFound as err:
             raise ErrorNotSupported(f"{errmsg}: turbo is not supported") from err
 
-        self._pcache.add("turbo", cpu, status, sname=self._props["turbo"]["sname"])
+        self._pcache.add("turbo", cpu, status, "sysfs", sname=self._props["turbo"]["sname"])
 
     def _get_num_str(self, pname, cpu):
         """
@@ -957,7 +957,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             read_freq = self._read_prop_from_sysfs(pname, path)
 
             if freq == read_freq:
-                self._pcache.add(pname, cpu, freq, sname=self._props[pname]["sname"])
+                self._pcache.add(pname, cpu, freq, "sysfs", sname=self._props[pname]["sname"])
                 return
 
             # Sometimes the update does not happen immediately. For example, we observed this on
@@ -1016,7 +1016,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         path = self._sysfs_base / "intel_pstate" / "status"
         try:
             self._write_prop_to_sysfs("intel_pstate_mode", path, mode)
-            self._pcache.add("intel_pstate_mode", cpu, mode,
+            self._pcache.add("intel_pstate_mode", cpu, mode, "sysfs",
                              sname=self._props["intel_pstate_mode"]["sname"])
         except Error:
             # When 'intel_pstate' driver is 'off' it is not possible to write 'off' again.
@@ -1043,16 +1043,19 @@ class PStates(_PCStatesBase.PCStatesBase):
         which are implemented by the 'EPP' module.
         """
 
+        # All properties use the 'sysfs' mechanism at the moment.
+        mname = "sysfs"
+
         # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
         # 'False' for every CPU number that was not yet modified by the scope-aware '_pcache.add()'
         # method.
         for cpu in cpus:
-            self._pcache.remove(pname, cpu)
+            self._pcache.remove(pname, cpu, mname)
 
         prop = self._props[pname]
 
         for cpu in cpus:
-            if self._pcache.is_cached(pname, cpu):
+            if self._pcache.is_cached(pname, cpu, mname):
                 continue
 
             if pname == "turbo":
@@ -1067,11 +1070,11 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # number 'cpu', but also for all the 'sname' siblings. For example, if property
                 # scope name is "package", 'val' will be cached for all CPUs in the package that
                 # contains CPU number 'cpu'.
-                self._pcache.add(pname, cpu, val, sname=prop["sname"])
+                self._pcache.add(pname, cpu, val, mname, sname=prop["sname"])
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
 
-        return "sysfs"
+        return mname
 
     def set_freq_props(self, min_freq, max_freq, cpus, freq_type="core", mnames=None):
         """
