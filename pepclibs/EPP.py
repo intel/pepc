@@ -15,13 +15,13 @@ Intel CPUs.
 
 import contextlib
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
-from pepclibs import CPUInfo, _PropsCache
+from pepclibs.helperlibs import Trivial, ClassHelpers
+from pepclibs import _EPBase
 
 # The minimum and maximum EPP values.
 _EPP_MIN, _EPP_MAX = 0, 0xFF
 
-class EPP(ClassHelpers.SimpleCloseContext):
+class EPP(_EPBase.EPBase):
     """
     This module provides a capability of reading and changing EPP (Energy Performance Preference) on
     Intel CPUs.
@@ -33,15 +33,6 @@ class EPP(ClassHelpers.SimpleCloseContext):
     2. Single CPU.
         * Get/set EPP: 'get_cpu_epp()', 'set_cpu_epp()'.
     """
-
-    def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
-
-        if not self._msr:
-            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
-
-            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
-        return self._msr
 
     def _get_hwpreq(self):
         """Returns an 'HWPRequest.HWPRequest()' object."""
@@ -79,16 +70,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         return self._epp_policies
 
-    @staticmethod
-    def _validate_mname(mname):
-        """Validate mechanism name 'mname'."""
-
-        mnames = {"sysfs", "msr"}
-        if mname not in mnames:
-            mnames = ", ".join(mnames)
-            raise Error(f"BUG: bad mechanism name '{mname}', supported mechanisms are: {mnames}")
-
-    def _validate_epp_value(self, val, policy_ok=False):
+    def _validate_value(self, val, policy_ok=False):
         """
         Validate EPP value. When 'policy_ok=True' will not raise exception if not a numeric value.
         """
@@ -108,7 +90,7 @@ class EPP(ClassHelpers.SimpleCloseContext):
                 raise ErrorNotSupported(f"EPP value must be one of the following EPP policies: "
                                         f"{policies}, or integer within [{_EPP_MIN},{_EPP_MAX}]")
 
-    def _read_cpu_epp_msr(self, cpu):
+    def _read_from_msr(self, cpu):
         """Read EPP for CPU 'cpu' from MSR."""
 
         # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
@@ -125,18 +107,18 @@ class EPP(ClassHelpers.SimpleCloseContext):
         except ErrorNotSupported:
             return None
 
-    def _write_cpu_epp_msr(self, epp, cpu):
+    def _write_to_msr(self, val, cpu):
         """Write EPP 'epp' for CPU 'cpu' to MSR."""
 
         hwpreq = self._get_hwpreq()
         hwpreq.disable_cpu_feature_pkg_control("epp", cpu)
 
         try:
-            hwpreq.write_cpu_feature("epp", epp, cpu)
+            hwpreq.write_cpu_feature("epp", val, cpu)
         except Error as err:
             raise type(err)(f"failed to set EPP HW{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-    def _read_cpu_epp_sysfs(self, cpu):
+    def _read_from_sysfs(self, cpu):
         """Read EPP for CPU 'cpu' from sysfs."""
 
         with contextlib.suppress(ErrorNotFound):
@@ -150,92 +132,77 @@ class EPP(ClassHelpers.SimpleCloseContext):
 
         return self._pcache.add("epp", cpu, epp, "sysfs")
 
-    def _write_cpu_epp_sysfs(self, epp, cpu):
+    def _write_to_sysfs(self, val, cpu):
         """Write EPP 'epp' for CPU 'cpu' to sysfs."""
 
         try:
             with self._pman.open(self._sysfs_epp_path % cpu, "r+") as fobj:
                 try:
-                    fobj.write(epp)
+                    fobj.write(val)
                 except Error:
                     # This is a workaround for a kernel bug, which has been fixed in v6.5:
                     #   03f44ffb3d5be cpufreq: intel_pstate: Fix energy_performance_preference for
                     #                 passive
                     # The bug is that write fails is the new value is the same as the current value.
                     fobj.seek(0)
-                    val = fobj.read().strip()
-                    if epp != val:
+                    val1 = fobj.read().strip()
+                    if val != val1:
                         raise
 
-                    self._aliases[epp] = val
+                    self._aliases[val] = val1
                 else:
                     # Setting some options will not read back the same value. E.g. "default" EPP
                     # might be "balance_performance", "0" might be "powersave".
                     try:
-                        val = self._aliases[epp]
+                        val1 = self._aliases[val]
                     except KeyError:
                         fobj.seek(0)
-                        self._aliases[epp] = fobj.read().strip()
-                        val = self._aliases[epp]
+                        self._aliases[val] = fobj.read().strip()
+                        val1 = self._aliases[val]
         except Error as err:
             if isinstance(err, ErrorNotFound):
                 err = ErrorNotSupported(err)
             raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-        return self._pcache.add("epp", cpu, val, "sysfs")
+        return self._pcache.add("epp", cpu, val1, "sysfs")
 
-    def get_epp(self, cpus="all", mname="sysfs"):
+    def get_epp(self, cpus="all", mnames=None):
         """
         Read EPP for CPUs 'cpus' using the 'mname' mechanism and yield (CPU number, EPP value)
         pairs. The arguments are as follows.
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
+          * mnames - list of mechanisms to use for getting EPP (see '_PropsClassBase.MECHANISMS').
+                     The mechanisms will be tried in the order specified in 'mnames'. By default,
+                     all supported mechanisms will be tried.
         """
 
-        self._validate_mname(mname)
+        return self._get_epp_or_epb(cpus=cpus, mnames=mnames)
 
-        if mname == "sysfs":
-            func = self._read_cpu_epp_sysfs
-        else:
-            func = self._read_cpu_epp_msr
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield (cpu, func(cpu))
-
-    def get_cpu_epp(self, cpu, mname="sysfs"):
+    def get_cpu_epp(self, cpu, mnames=None):
         """Similar to 'get_epp()', but for a single CPU 'cpu'."""
 
-        _, epp = next(self.get_epp(cpus=(cpu,), mname=mname))
+        _, epp = next(self.get_epp(cpus=(cpu,), mnames=mnames))
         return epp
 
-    def set_epp(self, epp, cpus="all", mname="sysfs"):
+    def set_epp(self, epp, cpus="all", mnames=None):
         """
         Set EPP for CPU in 'cpus' using the 'mname' mechanism. The arguments are as follows.
           * epp - the EPP value to set. Can be an integer, a string representing an integer. If
                   'mname' is "sysfs", 'epp' can also be EPP policy name (e.g., "performance").
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * mname - name of the mechanism to use (see '_PropsClassBase.MECHANISMS').
+          * mnames - list of mechanisms to use for setting EPP (see '_PropsClassBase.MECHANISMS').
+                     The mechanisms will be tried in the order specified in 'mnames'. By default,
+                     all supported mechanisms will be tried.
 
         Raise 'ErrorNotSupported' if the platform does not support EPP.
         """
 
-        self._validate_mname(mname)
+        return self._set_epb_or_epb(epp, cpus=cpus, mnames=mnames)
 
-        if mname == "sysfs":
-            func = self._write_cpu_epp_sysfs
-            policy_ok = True
-        else:
-            func = self._write_cpu_epp_msr
-            policy_ok = False
-
-        self._validate_epp_value(epp, policy_ok=policy_ok)
-
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            func(str(epp), cpu)
-
-    def set_cpu_epp(self, epp, cpu, mname):
+    def set_cpu_epp(self, epp, cpu, mnames=None):
         """Similar to 'set_epp()', but for a single CPU 'cpu'."""
-        self.set_epp(epp, cpus=(cpu,), mname=mname)
+
+        self.set_epp(epp, cpus=(cpu,), mnames=mnames)
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, hwpreq=None, enable_cache=True):
         """
@@ -247,34 +214,19 @@ class EPP(ClassHelpers.SimpleCloseContext):
           * enable_cache - this argument can be used to disable caching.
         """
 
-        self._pman = pman
-        self._cpuinfo = cpuinfo
-        self._msr = msr
-        self._hwpreq = hwpreq
-        self._enable_cache = enable_cache
+        super().__init__("EPP", pman=pman, cpuinfo=cpuinfo, msr=msr, enable_cache=enable_cache)
 
-        self._close_pman = pman is None
-        self._close_cpuinfo = cpuinfo is None
-        self._close_msr = msr is None
+        self._hwpreq = hwpreq
+
         self._close_hwpreq = hwpreq is None
 
         self._hwpreq_pkg = None
+        self._aliases = {}
 
         sysfs_base = "/sys/devices/system/cpu/cpufreq/policy%d"
         self._sysfs_epp_path = sysfs_base + "/energy_performance_preference"
         self._sysfs_epp_policies_path = sysfs_base + "/energy_performance_available_preferences"
 
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-
-        if not self._cpuinfo:
-            self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
-
-        # The per-CPU cache for read-only data, such as policies list. MSR implements its own
-        # caching.
-        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                              enable_cache=enable_cache)
-        self._aliases = {}
         # List of available EPP policies according to sysfs.
         self._epp_policies = None
 

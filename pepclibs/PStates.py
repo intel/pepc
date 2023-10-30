@@ -257,35 +257,6 @@ class PStates(_PCStatesBase.PCStatesBase):
             return True
         return False
 
-    def _get_eppobj(self):
-        """Returns an 'EPP.EPP()' object."""
-
-        if not self._eppobj:
-            from pepclibs import EPP # pylint: disable=import-outside-toplevel
-
-            try:
-                hwpreq = self._get_hwpreq()
-            except ErrorNotSupported:
-                hwpreq = None
-
-            msr = self._get_msr()
-            self._eppobj = EPP.EPP(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr, hwpreq=hwpreq,
-                                   enable_cache=self._enable_cache)
-
-        return self._eppobj
-
-    def _get_epbobj(self):
-        """Returns an 'EPB.EPB()' object."""
-
-        if not self._epbobj:
-            from pepclibs import EPB # pylint: disable=import-outside-toplevel
-
-            msr = self._get_msr()
-            self._epbobj = EPB.EPB(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr,
-                                   enable_cache=self._enable_cache)
-
-        return self._epbobj
-
     def _get_fsbfreq(self):
         """Discover bus clock speed."""
 
@@ -365,6 +336,31 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         # Convert MHz to Hz.
         return bclk * 1000000.0
+
+    def _get_eppobj(self):
+        """Returns an 'EPP.EPP()' object."""
+
+        if not self._eppobj:
+            from pepclibs import EPP # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            hwpreq = self._get_hwpreq()
+            self._eppobj = EPP.EPP(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr, hwpreq=hwpreq,
+                                   enable_cache=self._enable_cache)
+
+        return self._eppobj
+
+    def _get_epbobj(self):
+        """Returns an 'EPB.EPB()' object."""
+
+        if not self._epbobj:
+            from pepclibs import EPB # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            self._epbobj = EPB.EPB(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr,
+                                   enable_cache=self._enable_cache)
+
+        return self._epbobj
 
     def __is_uncore_freq_supported(self):
         """Implements '_is_uncore_freq_supported()'."""
@@ -752,18 +748,21 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         val, mname = None, None
 
-        if pname == "epp":
-            mname = "sysfs"
-            val = self._get_eppobj().get_cpu_epp(cpu, mname=mname)
-        elif pname == "epp_hw":
-            mname = "msr"
-            val = self._get_eppobj().get_cpu_epp(cpu, mname="msr")
-        elif pname == "epb":
-            mname = "sysfs"
-            val = self._get_epbobj().get_cpu_epb(cpu, mname="sysfs")
-        if pname == "epb_hw":
-            mname = "msr"
-            val = self._get_epbobj().get_cpu_epb(cpu, mname="msr")
+        try:
+            if pname == "epp":
+                mname = "sysfs"
+                val = self._get_eppobj().get_cpu_epp(cpu, mnames=(mname,))
+            elif pname == "epp_hw":
+                mname = "msr"
+                val = self._get_eppobj().get_cpu_epp(cpu, mnames=(mname,))
+            elif pname == "epb":
+                mname = "sysfs"
+                val = self._get_epbobj().get_cpu_epb(cpu, mnames=(mname,))
+            if pname == "epb_hw":
+                mname = "msr"
+                val = self._get_epbobj().get_cpu_epb(cpu, mnames=(mname,))
+        except ErrorNotSupported as err:
+            _LOG.debug(err)
 
         if mname is not None:
             return self._construct_pvinfo(pname, cpu, mname, val)
@@ -1253,16 +1252,16 @@ class PStates(_PCStatesBase.PCStatesBase):
             raise Error(self._uncore_errmsg)
 
         if pname == "epp":
-            self._get_eppobj().set_epp(val, cpus=cpus, mname="sysfs")
+            self._get_eppobj().set_epp(val, cpus=cpus, mnames=("sysfs",))
             return "sysfs"
         if pname == "epp_hw":
-            self._get_eppobj().set_epp(val, cpus=cpus, mname="msr")
+            self._get_eppobj().set_epp(val, cpus=cpus, mnames=("msr",))
             return "msr"
         if pname == "epb":
-            self._get_epbobj().set_epb(val, cpus=cpus, mname="sysfs")
+            self._get_epbobj().set_epb(val, cpus=cpus, mnames=("sysfs",))
             return "sysfs"
         if pname == "epb_hw":
-            self._get_epbobj().set_epb(val, cpus=cpus, mname="msr")
+            self._get_epbobj().set_epb(val, cpus=cpus, mnames=("msr",))
             return "msr"
 
         return self._set_own_prop(pname, val, cpus)
@@ -1274,8 +1273,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return
 
         if pname == "epb_hw":
-            _epb = self._get_epbobj()._get_epbobj() # pylint: disable=protected-access
-            self._props[pname]["sname"] = _epb.features["epb"]["sname"]
+            _epb = self._get_epbobj() # pylint: disable=protected-access
+            self._props[pname]["sname"] = _epb.sname
         elif pname == "bus_clock":
             self._props[pname]["sname"] = self._get_fsbfreq().features["fsb"]["sname"]
         else:
