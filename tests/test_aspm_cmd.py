@@ -27,14 +27,20 @@ def get_params(hostspec):
 def test_aspm_info(params):
     """Test 'pepc aspm info' command."""
 
-    common.run_pepc("aspm info", params["pman"])
+    good = [
+        "",
+        "--policy",
+        "--policies",
+        "--policy --policies"]
+
+    for option in good:
+        common.run_pepc(f"aspm info {option}", params["pman"])
 
 def test_aspm_config(params):
     """Test 'pepc aspm config' command."""
 
 
     good = [
-        "",
         "--policy",
         "--policy performance",
         "--policy powersave",

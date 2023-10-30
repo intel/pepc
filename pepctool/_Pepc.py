@@ -574,13 +574,19 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=aspm_info_command)
 
+    text = """Get current PCI ASPM policy."""
+    subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs=0, help=text)
+
+    text = """List the available PCI ASPM policies."""
+    subpars2.add_argument("--policies", action=ArgParse.OrderedArg, nargs=0, help=text)
+
     text = "Change PCI ASPM configuration."
     descr = "Change PCI ASPM configuration. " + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=aspm_config_command)
 
     text = """The PCI ASPM policy to set, use "default" to set the Linux default policy."""
-    subpars2.add_argument("--policy", nargs="?", help=text)
+    subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs="?", help=text)
 
     #
     # Create parser for the 'topology' command.
