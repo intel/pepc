@@ -112,12 +112,6 @@ Get P-states information for specified CPUs. By default, prints all information 
 **--base-freq**
    Get base CPU frequency (details in 'base_freq_').
 
-**--min-freq-hw**
-   Get minimum CPU frequency (OS bypass) (details in 'min_freq_hw_').
-
-**--max-freq-hw**
-   Get maximum CPU frequency (OS bypass) (details in 'max_freq_hw_').
-
 **--bus-clock**
    Get bus clock speed (details in 'bus_clock_').
 
@@ -215,12 +209,6 @@ currently configured value(s) will be printed.
 
 **--max-freq** *MAX_FREQ*
    Set maximum CPU frequency (details in 'max_freq_').
-
-**--min-freq-hw** *MIN_FREQ*
-   Set minimum CPU frequency (OS bypass) (details in 'min_freq_limit_').
-
-**--max-freq-hw** *MAX_FREQ*
-   Set maximum CPU frequency (OS bypass) (details in 'max_freq_limit_').
 
 **--turbo** *on|off*
    Enable or disable turbo (details in 'turbo_').
@@ -323,11 +311,22 @@ The following special values are supported:
 "**Pm**"
    Minimum CPU operating frequency (see 'min_oper_freq_').
 
-Mechanism
----------
+Note, on some systems "**Pm**'' is lower than "**lfm**". For example, "**Pm**" may be 500MHz,
+while "**lfm**" may be 800MHz. On those system, Linux may be using "**lfm**" as the minimum
+supported frequency limit. So from Linux perspecitve, the minimum frequency may be 800MHz, not
+500MHz. In this case "**--min-freq 500MHz --mechanisms sysfs**" will fail, while
+"**--min-freq 500MHz --mechanisms sysfs**" will succeed. And "**--min-freq 500MHz**" will also
+succeed, because by default, pepc tries all the available mechanisms.
 
+Mechanisms
+----------
+
+*sysfs*
 "/sys/devices/system/cpu/policy\ **0**\ /scaling_min_freq", '**0**' is replaced with desired CPU
 number.
+
+*msr*
+MSR_HWP_REQUEST (**0x774**), bits **7:0**.
 
 Scope
 -----
@@ -368,13 +367,16 @@ The following special values are supported:
 "**Pm**"
    Minimum CPU operating frequency (see 'min_oper_freq_').
 
-Mechanism
----------
+Mechanisms
+----------
 
+*sysfs*
 "/sys/devices/system/cpu/policy\ **0**\ /scaling_max_freq", '**0**' is replaced with desired CPU
 number.
 
-Scope
+*msr*
+MSR_HWP_REQUEST (**0x774**), bits **15:8**.
+
 -----
 
 This property has **CPU** scope.
@@ -456,101 +458,16 @@ Base CPU frequency is the highest sustainable CPU frequency. This frequency is a
 The base frequency is acquired from a sysfs file or from an MSR register, depending on platform and
 the CPU frequency driver.
 
-Mechanism
----------
+Mechanisms
+----------
 
+**sysfs**
 "/sys/devices/system/cpu/policy\ **0**\ /base_frequency", '**0**' is replaced with desired CPU
-number. If the "base_frequency" file does not exist then either MSR_PLATFORM_INFO **(0xCE)**, bits
-**15:8** is used (Intel platforms) or the "/sys/devices/system/cpu/cpu\ **0**\ /cpufreq/bios_limit"
-sysfs file is used (non-Intel platforms, '**0**' is replaced with desired CPU number).
+number. If this file does not exist, the "/sys/devices/system/cpu/cpu\ **0**\ /cpufreq/bios_limit"
+sysfs file is used ('**0**' is replaced with desired CPU number).
 
-Scope
------
-
-This property has **CPU** scope.
-
-----------------------------------------------------------------------------------------------------
-
-min_freq_hw
-===========
-
-min_freq_hw - Minimum CPU frequency
-
-Synopsis
---------
-
-| pepc pstates *info* **--min-freq-hw**
-| pepc pstates *config* **--min-freq-hw**\ =<value>
-
-Description
------------
-
-Minimum CPU frequency is the lowest frequency the CPU was configured the CPU to run at.
-
-The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
-(for example "900MHz").
-
-The following special values are supported:
-
-"**min**"
-   Minimum supported CPU frequency (see 'min_freq_limit_').
-"**max**"
-   Maximum supported CPU frequency (see 'max_freq_limit_').
-"**base**", "**hfm**", "**P1**"
-   Base CPU frequency (see 'base_freq_').
-"**eff**", "**lfm**", "**Pn**"
-   Maximum CPU efficiency frequency (see 'max_eff_freq_').
-"**Pm**"
-   Minimum CPU operating frequency (see 'min_oper_freq_').
-
-Mechanism
----------
-
-MSR_HWP_REQUEST (**0x774**), bits **7:0**.
-
-Scope
------
-
-This property has **CPU** scope.
-
-----------------------------------------------------------------------------------------------------
-
-max_freq_hw
-===========
-
-max_freq_hw - Maximum CPU frequency
-
-Synopsis
---------
-
-| pepc pstates *info* **--max-freq-hw**
-| pepc pstates *config* **--max-freq-hw**\ =<value>
-
-Description
------------
-
-Minimum CPU frequency is the lowest frequency the CPU was configured the CPU to run at.
-
-The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
-(for example "900MHz").
-
-The following special values are supported:
-
-"**min**"
-   Minimum supported CPU frequency (see 'min_freq_limit_').
-"**max**"
-   Maximum supported CPU frequency (see 'max_freq_limit_').
-"**base**", "**hfm**", "**P1**"
-   Base CPU frequency (see 'base_freq_').
-"**eff**", "**lfm**", "**Pn**"
-   Maximum CPU efficiency frequency (see 'max_eff_freq_').
-"**Pm**"
-   Minimum CPU operating frequency (see 'min_oper_freq_').
-
-Mechanism
----------
-
-MSR_HWP_REQUEST (**0x774**), bits **15:8**.
+**msr**
+MSR_PLATFORM_INFO **(0xCE)**, bits **15:8**.
 
 Scope
 -----

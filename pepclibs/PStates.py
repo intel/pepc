@@ -27,6 +27,9 @@ class ErrorFreqOrder(Error):
     reasons.
     """
 
+class ErrorFreqRange(Error):
+    """An exception indicating that min. or max. frequency values are out of the allowed range."""
+
 _LOG = logging.getLogger()
 
 # Special values for writable CPU frequency properties.
@@ -55,7 +58,7 @@ PROPS = {
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
-        "mnames" : ("sysfs", ),
+        "mnames" : ("sysfs", "msr"),
         "writable" : True,
         "special_vals" : _SPECIAL_FREQ_VALS,
     },
@@ -64,7 +67,7 @@ PROPS = {
         "unit" : "Hz",
         "type" : "int",
         "sname": "CPU",
-        "mnames" : ("sysfs", ),
+        "mnames" : ("sysfs", "msr"),
         "writable" : True,
         "special_vals" : _SPECIAL_FREQ_VALS,
     },
@@ -91,24 +94,6 @@ PROPS = {
         "sname": "CPU",
         "mnames" : ("sysfs", "msr"),
         "writable" : False,
-    },
-    "min_freq_hw" : {
-        "name" : "Min. CPU frequency",
-        "unit" : "Hz",
-        "type" : "int",
-        "sname": "CPU",
-        "mnames" : ("msr", ),
-        "writable" : True,
-        "special_vals" : _SPECIAL_FREQ_VALS,
-    },
-    "max_freq_hw" : {
-        "name" : "Max. CPU frequency",
-        "unit" : "Hz",
-        "type" : "int",
-        "sname": "CPU",
-        "mnames" : ("msr", ),
-        "writable" : True,
-        "special_vals" : _SPECIAL_FREQ_VALS,
     },
     "bus_clock" : {
         "name" : "Bus clock speed",
@@ -348,6 +333,29 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._epbobj
 
+    def _raise_not_supported_exception(self, cpus, mnames, action, what, errors):
+        """
+        Rase an exception from a property "get" or "set" method in a situation when the property
+        could not be read or set using mechanisms in 'mnames'
+        """
+
+        if len(mnames) > 1:
+            mnames_str = f"using {','.join(mnames)} methods"
+        else:
+            mnames_str = f"using the {mnames[0]} method"
+
+        if len(cpus) > 1:
+            cpus_msg = f"the following CPUs: {Human.rangify(cpus)}"
+        else:
+            cpus_msg = f"for CPU {cpus[0]}"
+
+        if errors:
+            sub_errmsgs = "\n" + "\n".join([err.indent(2) for err in errors])
+        else:
+            sub_errmsgs = ""
+
+        raise ErrorNotSupported(f"cannot {action} {what} {mnames_str} for {cpus_msg}{sub_errmsgs}")
+
     def __is_uncore_freq_supported(self):
         """Implements '_is_uncore_freq_supported()'."""
 
@@ -479,11 +487,20 @@ class PStates(_PCStatesBase.PCStatesBase):
         """
 
         val, mname = None, None
+        prop = self._props["base_freq"]
 
         for mname in mnames:
             if mname == "sysfs":
+                with contextlib.suppress(ErrorNotFound):
+                    val, _ = self._pcache.find("base_freq", cpu, mnames=(mname,))
+                    return self._construct_pvinfo("base_freq", cpu, mname, val)
+
                 val = self._get_base_freq_sysfs(cpu)
+                self._pcache.add("base_freq", cpu, val, mname, sname=prop["sname"])
+                if val is not None:
+                    break
             elif mname == "msr":
+                # The MSR layer has caching, so do not use 'self._pcache'.
                 val = self._get_base_freq_msr(cpu)
             else:
                 mnames = ",".join(mnames)
@@ -693,8 +710,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._construct_pvinfo("intel_pstate_mode", cpu, "sysfs", val)
 
-    def _get_cpu_freq_hw_pvinfo(self, pname, cpu):
-        """Reads and returns the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
+    def _get_cpu_freq_msr(self, pname, cpu):
+        """Read and return the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
 
         # The "min" or "max" property name prefix.
         prefix = pname[0:3]
@@ -704,7 +721,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         try:
             hwpreq = self._get_hwpreq()
         except ErrorNotSupported:
-            return self._construct_pvinfo(pname, cpu, "msr", None)
+            return None
 
         if hwpreq.is_cpu_feature_pkg_controlled(fname, cpu):
             hwpreq = self._get_hwpreq_pkg()
@@ -713,7 +730,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             perf = hwpreq.read_cpu_feature(fname, cpu)
         except ErrorNotSupported:
             _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, prefix)
-            return self._construct_pvinfo(pname, cpu, "msr", None)
+            return None
 
         freq = perf * self._get_cpu_perf_to_freq_factor(cpu)
 
@@ -724,7 +741,36 @@ class PStates(_PCStatesBase.PCStatesBase):
             # * Why rounding down? Following how Linux 'intel_pstate' driver example.
             val = freq - (freq % int(val))
 
-        return self._construct_pvinfo(pname, cpu, "msr", val)
+        return val
+
+    def _get_cpu_freq_pvinfo(self, pname, cpu, mnames):
+        """Read and return the minimum or maximum CPU frequency."""
+
+        for mname in mnames:
+            if mname == "msr":
+                # Note, MSR modules have built-in caching, so 'self._pcache' is not used.
+                val = self._get_cpu_freq_msr(pname, cpu)
+                if val is None:
+                    continue
+                return self._construct_pvinfo(pname, cpu, mname, val)
+
+            if mname == "sysfs":
+                with contextlib.suppress(ErrorNotFound):
+                    val, mname = self._pcache.find(pname, cpu, mnames=mnames)
+                    return self._construct_pvinfo(pname, cpu, mname, val)
+
+                pvinfo = self._get_cpu_prop_pvinfo_sysfs(pname, cpu)
+                self._pcache.add(pname, cpu, pvinfo["val"], mname,
+                                 sname=self._props[pname]["sname"])
+
+                if pvinfo["val"] is None:
+                    continue
+
+                return pvinfo
+
+            raise Error(f"BUG: unexpected mechanism name {mname}")
+
+        self._raise_not_supported_exception((cpu,), mnames, "get", "CPU frequency", [])
 
     def _get_epp_epb_pvinfo(self, pname, cpu, mnames):
         """
@@ -777,24 +823,19 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._get_max_turbo_freq_pvinfo(cpu)
         if pname == "bus_clock":
             return self._get_bus_clock_pvinfo(cpu)
-        if pname.endswith("_freq_hw"):
-            return self._get_cpu_freq_hw_pvinfo(pname, cpu)
+        if pname in {"min_freq", "max_freq"}:
+            return self._get_cpu_freq_pvinfo(pname, cpu, mnames)
+        if "getter" in prop:
+            return prop["getter"](cpu, mnames)
 
-        # Use 'self._pcache' for properties below.
-        #
-        # Special case is the 'base_frequency' property. In some situations it is read from MSR,
-        # which means it can be in both MSR module cache and in 'self._pcache'. But 'base_frequency'
-        # is read-only, so this double caching does no cause complications in property write path.
-        # We could improve the code so that all "getter" methods return a '(val, mname)' tuple
-        # and avoid double caching, but it is not worth the trouble at this point.
+        # All the other properties support only one mechanism - sysfs.
+        assert "sysfs" in mnames
 
         with contextlib.suppress(ErrorNotFound):
             val, mname = self._pcache.find(pname, cpu, mnames=mnames)
             return self._construct_pvinfo(pname, cpu, mname, val)
 
-        if "getter" in prop:
-            pvinfo = prop["getter"](cpu, mnames)
-        elif "fname" in prop:
+        if "fname" in prop:
             pvinfo = self._get_cpu_prop_pvinfo_sysfs(pname, cpu)
         elif pname == "turbo":
             pvinfo = self._get_turbo_pvinfo(cpu)
@@ -1053,87 +1094,9 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return mname
 
-    def set_freq_props(self, min_freq, max_freq, cpus, freq_type="core", mnames=None):
-        """
-        Set minimum and maximum frequency properties. The arguments are as follows:
-          * min_freq - minimum frequency value to set (can be in Human form, like 1GHz). Value
-                       'None' means that minimum frequency should not be set.
-          * max_freq - maximum frequency value to set.
-          * cpus - collection of integer CPU numbers to set the frequencies for. Special value 'all'
-                   means "all CPUs".
-          * freq_type - defines the frequency properties that should be set. Here are the allowed
-                        values:
-                          o "core" - set 'min_freq' and 'max_freq' properties.
-                          o "core_hw" - set 'min_freq_hw' and 'max_freq_hw' properties.
-                          o "uncore" - set 'min_uncore_freq' and 'max_uncore_freq' properties.
-
-        The reason this method exists is because the order the frequency properties are set matters.
-        Otherwise, just 'set_prop()' would be enough. This method is basically like 'set_prop()',
-        but it sets the frequency limits in the correct order.
-
-        Raise 'ErrorFreqOrder' if only one frequency is provided (either 'min_freq' is 'None' or
-        'max_freq' is 'None'), but it cannot be set because of the ordering constraints.
-
-        Here is an example illustrating why order matters. Suppose current min. and max. frequencies
-        and new min. and max. frequencies are as follows:
-         ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
-
-        Where the dotted line represents the horizontal frequency axis. Setting min. frequency
-        before max frequency leads to a failure. Indeed, at step #2 current minimum frequency would
-        be set to a value higher that current maximum frequency.
-         1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
-         2. ----------------- Cur. Max -------- Cur. Min -- New Max ---------->
-
-        If max. frequency is set first, the operation succeeds.
-        Make sure we first set the new maximum frequency (New Max):
-         1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
-         2. ---- Cur. Min --------------------- New Min --- Cur. Max --------->
-         3. ----------------------------------- Cur. Min -- Cur. Max --------->
-        """
-
-        if not min_freq and not max_freq:
-            raise Error("BUG: provide at least one frequency value")
-
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-
-        if freq_type == "core":
-            uncore = False
-            mname = "sysfs"
-            min_freq_pname = "min_freq"
-            max_freq_pname = "max_freq"
-            min_freq_limit_pname = "min_freq_limit"
-            max_freq_limit_pname = "max_freq_limit"
-            write_func = self._write_freq_prop_to_sysfs
-        elif freq_type == "core_hw":
-            uncore = False
-            mname = "msr"
-            min_freq_pname = "min_freq_hw"
-            max_freq_pname = "max_freq_hw"
-            min_freq_limit_pname = "min_oper_freq"
-            max_freq_limit_pname = "max_turbo_freq"
-            write_func = self._write_freq_prop_to_msr
-        elif freq_type == "uncore":
-            uncore = True
-            mname = "sysfs"
-            min_freq_pname = "min_uncore_freq"
-            max_freq_pname = "max_uncore_freq"
-            min_freq_limit_pname = "min_uncore_freq_limit"
-            max_freq_limit_pname = "max_uncore_freq_limit"
-            write_func = self._write_freq_prop_to_sysfs
-        else:
-            raise Error(f"BUG: bad requency type {freq_type}")
-
-        if min_freq:
-            min_freq = self._normalize_inprop(min_freq_pname, min_freq)
-            self._set_sname(min_freq_pname)
-            self._validate_cpus_vs_scope(min_freq_pname, cpus)
-            self._normalize_mnames(mnames, pname=min_freq_pname, allow_readonly=False)
-
-        if max_freq:
-            max_freq = self._normalize_inprop(max_freq_pname, max_freq)
-            self._set_sname(max_freq_pname)
-            self._validate_cpus_vs_scope(max_freq_pname, cpus)
-            self._normalize_mnames(mnames, pname=max_freq_pname, allow_readonly=False)
+    def _set_freq_props(self, min_freq, max_freq, cpus, mname, min_freq_pname, max_freq_pname,
+                        min_freq_limit_pname, max_freq_limit_pname, uncore, write_func):
+        """Implements 'set_freq_props()."""
 
         for cpu in cpus:
             new_min_freq = None
@@ -1144,16 +1107,16 @@ class PStates(_PCStatesBase.PCStatesBase):
             if max_freq:
                 new_max_freq = self._parse_freq(max_freq, cpu, uncore)
 
-            cur_min_freq = self._get_cpu_prop(min_freq_pname, cpu)
-            cur_max_freq = self._get_cpu_prop(max_freq_pname, cpu)
+            cur_min_freq = self._get_cpu_prop(min_freq_pname, cpu, mnames=(mname,))
+            cur_max_freq = self._get_cpu_prop(max_freq_pname, cpu, mnames=(mname,))
 
             if not cur_min_freq:
                 name = Human.uncapitalize(self._props[max_freq_pname]["name"])
                 raise ErrorNotSupported(f"CPU {cpu} does not support min. and {name}"
                                         f"{self._pman.hostmsg}")
 
-            min_limit = self._get_cpu_prop(min_freq_limit_pname, cpu)
-            max_limit = self._get_cpu_prop(max_freq_limit_pname, cpu)
+            min_limit = self._get_cpu_prop(min_freq_limit_pname, cpu, mnames=(mname,))
+            max_limit = self._get_cpu_prop(max_freq_limit_pname, cpu, mnames=(mname,))
 
             what = self._get_num_str(min_freq_pname, cpu)
             for pname, val in ((min_freq_pname, new_min_freq), (max_freq_pname, new_max_freq)):
@@ -1165,8 +1128,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                     val = Human.num2si(val, unit="Hz")
                     min_limit = Human.num2si(min_limit, unit="Hz")
                     max_limit = Human.num2si(max_limit, unit="Hz")
-                    raise Error(f"{name} value of '{val}' for {what} is out of range, must be "
-                                f"within [{min_limit}, {max_limit}]")
+                    raise ErrorFreqRange(f"{name} value of '{val}' for {what} is out of range, "
+                                         f"must be within [{min_limit}, {max_limit}]")
 
             if new_min_freq and new_max_freq:
                 if new_min_freq > new_max_freq:
@@ -1204,7 +1167,112 @@ class PStates(_PCStatesBase.PCStatesBase):
                 if new_max_freq != cur_max_freq:
                     write_func(max_freq_pname, new_max_freq, cpu)
 
-        return mname
+    def set_freq_props(self, min_freq, max_freq, cpus, freq_type="core", mnames=None):
+        """
+        Set minimum and maximum frequency properties. The arguments are as follows:
+          * min_freq - minimum frequency value to set (can be in Human form, like 1GHz). Value
+                       'None' means that minimum frequency should not be set.
+          * max_freq - maximum frequency value to set.
+          * cpus - collection of integer CPU numbers to set the frequencies for. Special value 'all'
+                   means "all CPUs".
+          * freq_type - defines the frequency properties that should be set. Here are the allowed
+                        values:
+                          o "core" - set 'min_freq' and 'max_freq' properties.
+                          o "uncore" - set 'min_uncore_freq' and 'max_uncore_freq' properties.
+
+        The reason this method exists is because the order the frequency properties are set matters.
+        Otherwise, just 'set_prop()' would be enough. This method is basically like 'set_prop()',
+        but it sets the frequency limits in the correct order.
+
+        Raise 'ErrorFreqOrder' if only one frequency is provided (either 'min_freq' is 'None' or
+        'max_freq' is 'None'), but it cannot be set because of the ordering constraints.
+
+        Here is an example illustrating why order matters. Suppose current min. and max. frequencies
+        and new min. and max. frequencies are as follows:
+         ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+
+        Where the dotted line represents the horizontal frequency axis. Setting min. frequency
+        before max frequency leads to a failure. Indeed, at step #2 current minimum frequency would
+        be set to a value higher that current maximum frequency.
+         1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+         2. ----------------- Cur. Max -------- Cur. Min -- New Max ---------->
+
+        If max. frequency is set first, the operation succeeds.
+        Make sure we first set the new maximum frequency (New Max):
+         1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+         2. ---- Cur. Min --------------------- New Min --- Cur. Max --------->
+         3. ----------------------------------- Cur. Min -- Cur. Max --------->
+        """
+
+        if not min_freq and not max_freq:
+            raise Error("BUG: provide at least one frequency value")
+
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+
+        errors = []
+
+        if freq_type == "core":
+            uncore = False
+            min_freq_pname = "min_freq"
+            max_freq_pname = "max_freq"
+        elif freq_type == "uncore":
+            uncore = True
+            min_freq_pname = "min_uncore_freq"
+            max_freq_pname = "max_uncore_freq"
+        else:
+            raise Error(f"BUG: bad requency type {freq_type}")
+
+        if min_freq:
+            min_freq = self._normalize_inprop(min_freq_pname, min_freq)
+            self._set_sname(min_freq_pname)
+            self._validate_cpus_vs_scope(min_freq_pname, cpus)
+            mnames = self._normalize_mnames(mnames, pname=min_freq_pname, allow_readonly=False)
+
+        if max_freq:
+            max_freq = self._normalize_inprop(max_freq_pname, max_freq)
+            self._set_sname(max_freq_pname)
+            self._validate_cpus_vs_scope(max_freq_pname, cpus)
+            mnames = self._normalize_mnames(mnames, pname=max_freq_pname, allow_readonly=False)
+
+        for mname in mnames:
+            if uncore:
+                min_freq_limit_pname = "min_uncore_freq_limit"
+                max_freq_limit_pname = "max_uncore_freq_limit"
+                write_func = self._write_freq_prop_to_sysfs
+            else:
+                if mname == "sysfs":
+                    min_freq_limit_pname = "min_freq_limit"
+                    max_freq_limit_pname = "max_freq_limit"
+                    write_func = self._write_freq_prop_to_sysfs
+                elif mname == "msr":
+                    min_freq_limit_pname = "min_oper_freq"
+                    max_freq_limit_pname = "max_turbo_freq"
+                    write_func = self._write_freq_prop_to_msr
+
+            if min_freq:
+                min_freq = self._normalize_inprop(min_freq_pname, min_freq)
+                self._set_sname(min_freq_pname)
+                self._validate_cpus_vs_scope(min_freq_pname, cpus)
+                self._normalize_mnames(mnames, pname=min_freq_pname, allow_readonly=False)
+
+            if max_freq:
+                max_freq = self._normalize_inprop(max_freq_pname, max_freq)
+                self._set_sname(max_freq_pname)
+                self._validate_cpus_vs_scope(max_freq_pname, cpus)
+                self._normalize_mnames(mnames, pname=max_freq_pname, allow_readonly=False)
+
+            try:
+                self._set_freq_props(min_freq, max_freq, cpus, mname, min_freq_pname,
+                                     max_freq_pname, min_freq_limit_pname, max_freq_limit_pname,
+                                     uncore, write_func)
+
+            except (ErrorNotSupported, ErrorFreqRange) as err:
+                errors.append(err)
+                continue
+
+            return mname
+
+        self._raise_not_supported_exception(cpus, mnames, "set", f"{freq_type} frequency", errors)
 
     def _set_prop(self, pname, val, cpus, mnames=None):
         """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
@@ -1213,10 +1281,6 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self.set_freq_props(val, None, cpus, freq_type="core", mnames=mnames)
         if pname == "max_freq":
             return self.set_freq_props(None, val, cpus, freq_type="core", mnames=mnames)
-        if pname == "min_freq_hw":
-            return self.set_freq_props(val, None, cpus, freq_type="core_hw", mnames=mnames)
-        if pname == "max_freq_hw":
-            return self.set_freq_props(None, val, cpus, freq_type="core_hw", mnames=mnames)
         if pname == "min_uncore_freq":
             return self.set_freq_props(val, None, cpus, freq_type="uncore", mnames=mnames)
         if pname == "max_uncore_freq":

@@ -21,7 +21,7 @@ from pepclibs.PStates import ErrorFreqOrder
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
     """This class provides API for changing P-state and C-state properties."""
 
-    def _set_prop(self, spinfo, pname, cpus, mnames):
+    def _set_prop(self, spinfo, pname, cpus, mnames, mnames_info):
         """Set property 'pname' and handle frequency properties ordering."""
 
         if pname not in spinfo:
@@ -33,27 +33,28 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             min_freq_pname = "min_freq"
             max_freq_pname = "max_freq"
             freq_type = "core"
-        elif pname in ("min_freq_hw", "max_freq_hw"):
-            min_freq_pname = "min_freq_hw"
-            max_freq_pname = "max_freq_hw"
-            freq_type = "core_hw"
         elif pname in ("min_uncore_freq", "max_uncore_freq"):
             min_freq_pname = "min_uncore_freq"
             max_freq_pname = "max_uncore_freq"
             freq_type = "uncore"
         else:
-            self._pobj.set_prop(pname, spinfo[pname], cpus=cpus, mnames=mnames)
+            mname = self._pobj.set_prop(pname, spinfo[pname], cpus=cpus, mnames=mnames)
             del spinfo[pname]
+            mnames_info[pname] = mname
             return
 
         min_freq = spinfo.get(min_freq_pname)
         max_freq = spinfo.get(max_freq_pname)
 
-        self._pobj.set_freq_props(min_freq, max_freq, cpus, freq_type=freq_type, mnames=mnames)
+        mname = self._pobj.set_freq_props(min_freq, max_freq, cpus, freq_type=freq_type,
+                                          mnames=mnames)
 
         for fpname in (min_freq_pname, max_freq_pname):
             if fpname in spinfo:
                 del spinfo[fpname]
+            mnames_info[fpname] = mname
+
+        return
 
     def set_props(self, spinfo, cpus="all", mnames=None):
         """
@@ -68,15 +69,20 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._msr:
             self._msr.start_transaction()
 
+        # Remember the mechanism used for every option.
+        mnames_info = {}
+        # '_set_props()' needs to modify the dictionary, so create a copy for that.
         spinfo_copy = spinfo.copy()
+
         for pname in list(spinfo):
-            self._set_prop(spinfo_copy, pname, cpus, mnames)
+            self._set_prop(spinfo_copy, pname, cpus, mnames, mnames_info)
 
         if self._msr:
             self._msr.commit_transaction()
 
         if self._pcsprint:
             for pname in spinfo:
+                mnames = (mnames_info[pname], )
                 self._pcsprint.print_props((pname,), cpus, mnames=mnames, skip_ro=True,
                                            skip_unsupported=False, action="set to")
 
@@ -112,17 +118,13 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             self._pobj.set_prop(pname, val, cpus=cpus)
             return
         except ErrorFreqOrder:
-            if pname not in {"min_freq", "max_freq", "min_freq_hw", "max_freq_hw",
-                             "min_uncore_freq", "max_uncore_freq"}:
+            if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
                 raise
 
         # Setting frequency may be tricky because there are ordering constraints.
         if pname in {"min_freq", "max_freq"}:
             min_freq_pname = "min_freq"
             max_freq_pname = "max_freq"
-        elif pname in ("min_freq_hw", "max_freq_hw"):
-            min_freq_pname = "min_freq_hw"
-            max_freq_pname = "max_freq_hw"
         elif pname in ("min_uncore_freq", "max_uncore_freq"):
             min_freq_pname = "min_uncore_freq"
             max_freq_pname = "max_uncore_freq"

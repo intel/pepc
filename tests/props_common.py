@@ -165,11 +165,11 @@ def verify_get_props_mechanisms(params, cpu):
                 pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=(mname,))
             except ErrorNotSupported:
                 pass
-
-            assert pvinfo["mname"] == mname, \
-                   f"Bad mechanism name returned by" \
-                   f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mname}\",))'.\n" \
-                   f"Expected '{mname}', got '{pvinfo['mname']}'."
+            else:
+                assert pvinfo["mname"] == mname, \
+                    f"Bad mechanism name returned by" \
+                    f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mname}\",))'.\n" \
+                    f"Expected '{mname}', got '{pvinfo['mname']}'."
 
         # Test all mechanisms in reverse order.
         reverse_mnames = list(pinfo["mnames"])

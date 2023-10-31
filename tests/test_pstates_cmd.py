@@ -281,9 +281,7 @@ def test_pstates_config_bad(params):
 def test_pstates_save_restore(params):
     """Test 'pepc pstates save' and 'pepc pstates restore' commands."""
 
-    cpu = 0
     pman = params["pman"]
-    pobj = params["pobj"]
     hostname = params["hostname"]
     tmp_path = params["tmp_path"]
 
@@ -307,17 +305,6 @@ def test_pstates_save_restore(params):
             val = state["min_freq"][0]["value"]
         elif pname.endswith("_uncore_freq"):
             val = state["min_uncore_freq"][0]["value"]
-        if pname == "min_freq_hw":
-            # In most cases MSR and sysfs will modify each other, but min. CPU frequency is an
-            # exception. Because sysfs min. limit is min. efficient frequency (e.g., the optimal
-            # point between performance and the lowest power drain), while MSRs min. limit is min.
-            # operating frequency (e.g., the lowest power drain that the CPU can operate at). This
-            # means that the MSR value can be different from the sysfs value, and in this case MSR
-            # will not update the sysfs value. Thus, we test that the sysfs property is set first,
-            # and then the MSR property. Otherwise the sysfs property will overwrite the MSR value.
-            val = pobj.get_cpu_prop("min_oper_freq", cpu)["val"]
-            if val is None:
-                continue
         elif state[pname][0]["value"] == "on":
             val = "off"
         elif state[pname][0]["value"] == "off":
