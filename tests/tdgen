@@ -222,7 +222,7 @@ def build_arguments_parser():
 
     text = """Path to the directory to store the output of the commands at. Default value is the
               name of the host the command is run on. See the '-H' option."""
-    parser.add_argument("-o", "--outdir", type=Path, default=None, help=text)
+    parser.add_argument("-o", "--outdir", type=Path, help=text)
 
     return parser
 
