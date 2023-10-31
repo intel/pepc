@@ -579,7 +579,7 @@ def build_arguments_parser():
     text = f"""By default, the topology columns are {columns}, "die" and "module" columns are not
                printed if there is only one die per package and no modules. Use this option to
                select topology columns names and order (e.g. '--columns Package,Core,CPU')."""
-    subpars2.add_argument("--columns", help=text, default=None)
+    subpars2.add_argument("--columns", help=text)
 
     text = """Include E-core/P-core information when running on a hybrid system."""
     subpars2.add_argument("--hybrid", action='store_true', help=text)
