@@ -219,14 +219,10 @@ class PStates(_PCStatesBase.PCStatesBase):
     """
 
     def _is_uncore_prop(self, pname):
-        """
-        Returns 'True' if property 'pname' is an uncore property, otherwise returns 'False'.
-        """
+        """Returns 'True' if property 'pname' is an uncore property, otherwise returns 'False'."""
 
-        prop = self._props[pname]
-        if "fname" in prop and prop["fname"].endswith("khz"):
-            return True
-        return False
+        return pname in {"min_uncore_freq", "max_uncore_freq",
+                         "min_uncore_freq_limit", "max_uncore_freq_limit"}
 
     def _get_fsbfreq(self):
         """Discover bus clock speed."""
