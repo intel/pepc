@@ -6,7 +6,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add '--mechanism' option, which can be used for specifying the mechanism for
+   getting and setting pepc C-states, P-states, and Power options.
+ - Add '--list-mechanisms' option for listing all the available mechanisms.
 ### Removed
+ - Remove '--epb-hw' and '--epp-hw' options. They are replaced with '--epb' and
+   '-epp' plus the '--mechanism msr' options combination.
+ - Remove '--min-freq-hw' and '--max-freq-hw' options. They are replaced with
+   '--min-freq' and '-max-freq' plus the '--mechanism msr' options combination.
 ### Changed
 
 ## [1.4.37] - 2023-10-25
