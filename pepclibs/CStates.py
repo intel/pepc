@@ -270,9 +270,6 @@ class CStates(_PCStatesBase.PCStatesBase):
         if mnames is None:
             mnames = prop["mnames"]
 
-        _LOG.debug("getting '%s' for CPU %d using mechanisms '%s'%s",
-                   pname, cpu, ",".join(mnames), self._pman.hostmsg)
-
         pvinfo = self._get_cpuidle_prop_pvinfo(pname, cpu)
         if pvinfo:
             return pvinfo

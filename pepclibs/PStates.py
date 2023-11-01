@@ -803,9 +803,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         if mnames is None:
             mnames = prop["mnames"]
 
-        _LOG.debug("getting '%s' for CPU %d using mechanisms '%s'%s",
-                   pname, cpu, ",".join(mnames), self._pman.hostmsg)
-
         # First handle the MSR-based properties. The 'MSR', 'EPP', and 'EPB' modules have their own
         # caching,'self._pcache' is not used for the MSR-based properties.
 

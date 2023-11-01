@@ -244,7 +244,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            yield self._get_cpu_prop_pvinfo(pname, cpu, mnames)
+            pvinfo = self._get_cpu_prop_pvinfo(pname, cpu, mnames)
+            _LOG.debug("'%s' is '%s' for CPU %d using mechanism '%s'%s",
+                    pname, pvinfo["val"], cpu, pvinfo["mname"], self._pman.hostmsg)
+            yield pvinfo
 
     def get_cpu_prop(self, pname, cpu, mnames=None):
         """Same as 'get_prop()', but for a single CPU and a single property."""
