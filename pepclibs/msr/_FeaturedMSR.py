@@ -175,28 +175,35 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
           * fname - name of the feature to read.
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
 
-        The yielded tuples are '(cpunum, val)'.
-          * cpunum - the CPU number the MSR was read from.
+        The yielded tuples are '(cpu, val)'.
+          * cpu - the CPU number the MSR was read from.
           * val - the feature value.
         """
 
-        _LOG.debug("read feature '%s' from CPU(s) %s%s",
-                   fname, Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._pman.hostmsg)
-
         self.validate_feature_supported(fname, cpus=cpus)
 
-        get_method = getattr(self, f"_get_{fname}", None)
+        get_method_name = f"_get_{fname}"
+        get_method = getattr(self, get_method_name, None)
         if get_method:
-            yield from get_method(cpus=cpus)
+            for cpu, val in get_method(cpus=cpus):
+                _LOG.debug("%s: read '%s' value '%s' from MSR %#x (%s) for CPU %s%s",
+                           get_method_name, fname, val, self.regaddr, self.regname, cpu,
+                           self._pman.hostmsg)
+                yield cpu, val
         elif hasattr(self, "_get_feature"):
-            yield from self._get_feature(fname, cpus=cpus)
+            for cpu, val in self._get_feature(fname, cpus=cpus):
+                _LOG.debug("_get_feature: read '%s' value '%s' from MSR %#x (%s) for CPU %s%s",
+                           fname, val, self.regaddr, self.regname, cpu, self._pman.hostmsg)
+                yield cpu, val
         else:
             bits = self._features[fname]["bits"]
             for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus,
-                                                sname=self._features[fname]["sname"]):
+                                                  sname=self._features[fname]["sname"]):
                 if "rvals" in self._features[fname]:
                     val = self._features[fname]["rvals"][val]
-                yield (cpu, val)
+                _LOG.debug("read_bits: read '%s' value '%s' from MSR %#x (%s) for CPU %s%s",
+                           fname, val, self.regaddr, self.regname, cpu, self._pman.hostmsg)
+                yield cpu, val
 
     def read_cpu_feature(self, fname, cpu):
         """
@@ -257,11 +264,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
           * cpus - the CPUs to write the feature to (same as in 'read_feature()').
         """
 
-        _LOG.debug("set feature '%s' to value %s on CPU(s) %s%s", fname, val,
-                   Human.rangify(self._cpuinfo.normalize_cpus(cpus)), self._pman.hostmsg)
-
         self.validate_feature_supported(fname, cpus=cpus)
-
         val = self._normalize_feature_value(fname, val)
 
         finfo = self._features[fname]
@@ -270,12 +273,22 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             raise Error(f"feature '{fullname}' can not be modified{self._pman.hostmsg}, it is "
                         f"read-only")
 
-        set_method = getattr(self, f"_set_{fname}", None)
+        dbg_msg = ""
+        if _LOG.getEffectiveLevel() == logging.DEBUG:
+            cpus_str = Human.rangify(self._cpuinfo.normalize_cpus(cpus))
+            dbg_msg = f"writing '{val}' to {fname}' in MSR {self.regaddr:#x} ({self.regname}) " \
+                      f"for CPUs {cpus_str}{self._pman.hostmsg}"
+
+        set_method_name = f"_set_{fname}"
+        set_method = getattr(self, set_method_name, None)
         if set_method:
+            _LOG.debug("%s: %s", set_method_name, dbg_msg)
             set_method(val, cpus=cpus)
         elif hasattr(self, "_set_feature"):
+            _LOG.debug("_set_feature: %s", dbg_msg)
             self._set_feature(fname, val, cpus=cpus)
         else:
+            _LOG.debug("write_bits: %s", dbg_msg)
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus, sname=finfo["sname"])
 
     def write_cpu_feature(self, fname, val, cpu):
