@@ -49,9 +49,9 @@ MECHANISMS = {
         "long"  : "Model Specific Register (MSR)",
         "writable" : True,
     },
-    "eds" : {
-        "short" : "EDS",
-        "long"  : "External Design Specification (EDS)",
+    "doc" : {
+        "short" : "Cocumentation",
+        "long"  : "Hardware documentation",
         "writable" : False,
     }
 }

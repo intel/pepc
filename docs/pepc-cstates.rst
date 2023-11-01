@@ -310,7 +310,8 @@ All available package C-state limits.
 Mechanism
 ---------
 
-External Design Specification (EDS)
+Hardware documentation, such as Intel SDM (Software Developer Manual) or Intel EDS (External Design
+Specification).
 
 Scope
 -----
@@ -362,12 +363,13 @@ pepc cstates *info* **--pkg-cstate-limit-aliases**
 Description
 -----------
 
-Package C-state limit aliases, for example on Ice Lakes 'PC6' is an alias for 'PC6R'.
+Package C-state limit aliases. For example on Ice Lake Xeon, 'PC6' is an alias for 'PC6R'.
 
 Mechanism
 ---------
 
-External Design Specification (EDS)
+Hardware documentation, such as Intel SDM (Software Developer Manual) or Intel EDS (External Design
+Specification).
 
 Scope
 -----

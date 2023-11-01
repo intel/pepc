@@ -50,7 +50,7 @@ PROPS = {
         "type" : "list[str]",
         # Conceptually this is per-package, but in practice it is global on all current platforms.
         "sname": "global",
-        "mnames" : ("eds", ),
+        "mnames" : ("doc", ),
         "writable" : False,
     },
     "pkg_cstate_limit_aliases" : {
@@ -58,7 +58,7 @@ PROPS = {
         "type" : "dict[str,str]",
         # Conceptually this is per-package, but in practice it is global on all current platforms.
         "sname": "global",
-        "mnames" : ("eds", ),
+        "mnames" : ("doc", ),
         "writable" : False,
     },
     "c1_demotion" : {
