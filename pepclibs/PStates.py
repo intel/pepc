@@ -816,8 +816,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._get_bus_clock_pvinfo(cpu)
         if pname in {"min_freq", "max_freq"}:
             return self._get_cpu_freq_pvinfo(pname, cpu, mnames)
-        if "getter" in prop:
-            return prop["getter"](cpu, mnames)
+        if pname == "base_freq":
+            return self._get_base_freq_pvinfo(cpu, mnames)
 
         # All the other properties support only one mechanism - sysfs.
         assert "sysfs" in mnames
@@ -1313,10 +1313,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Initialize the 'props' dictionary."""
 
         super()._init_props_dict(PROPS)
-
-        # Some properties are read/written to using different mechanisms ("sysfs", "msr", etc),
-        # depending on configurations. Properties like this have a dedicated "getter" method.
-        self._props["base_freq"]["getter"] = self._get_base_freq_pvinfo
 
         # Properties backed by a single sysfs file.
         self._props["min_freq"]["fname"] = "scaling_min_freq"
