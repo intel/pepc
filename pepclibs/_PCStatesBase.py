@@ -15,7 +15,7 @@ This module provides the base class for 'PState' and 'CState' classes.
 import logging
 from pepclibs.helperlibs import Trivial
 from pepclibs import _PropsClassBase
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 _LOG = logging.getLogger()
 
@@ -37,7 +37,12 @@ class PCStatesBase(_PropsClassBase.PropsClassBase):
     def _read_prop_from_sysfs(self, pname, path):
         """Read property 'pname' from sysfs, and return its value."""
 
-        val = self._pman.read(path).strip()
+        try:
+            val = self._pman.read(path).strip()
+        except ErrorNotFound as err:
+            _LOG.debug(err)
+            return None
+
         prop = self._props[pname]
 
         if prop["type"] == "int":

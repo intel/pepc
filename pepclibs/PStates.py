@@ -333,10 +333,10 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._epbobj
 
-    def _raise_not_supported_exception(self, cpus, mnames, action, what, errors):
+    def _prop_not_supported(self, cpus, mnames, action, what, errors, exception=True):
         """
-        Rase an exception from a property "get" or "set" method in a situation when the property
-        could not be read or set using mechanisms in 'mnames'
+        Rase an exception or print a debug message from a property "get" or "set" method in a
+        situation when the property could not be read or set using mechanisms in 'mnames'
         """
 
         if len(mnames) > 1:
@@ -354,7 +354,10 @@ class PStates(_PCStatesBase.PCStatesBase):
         else:
             sub_errmsgs = ""
 
-        raise ErrorNotSupported(f"cannot {action} {what} {mnames_str} for {cpus_msg}{sub_errmsgs}")
+        msg = f"cannot {action} {what} {mnames_str} for {cpus_msg}{sub_errmsgs}"
+        if exception:
+            raise ErrorNotSupported(msg)
+        _LOG.debug(msg)
 
     def __is_uncore_freq_supported(self):
         """Implements '_is_uncore_freq_supported()'."""
@@ -453,18 +456,12 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Read base frequency from sysfs."""
 
         path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "base_frequency"
-        try:
-            return self._read_prop_from_sysfs("base_freq", path)
-        except ErrorNotFound:
-            pass
+        val = self._read_prop_from_sysfs("base_freq", path)
+        if val is not None:
+            return val
 
         path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
-        try:
-            return self._read_int(path) * 1000
-        except ErrorNotFound:
-            pass
-
-        return None
+        return self._read_prop_from_sysfs("base_freq", path)
 
     def _get_base_freq_msr(self, cpu):
         """Read base frequency from sysfs."""
@@ -677,9 +674,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         pname = "driver"
         path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
 
-        try:
-            driver = self._read_prop_from_sysfs(pname, path)
-        except ErrorNotFound:
+        driver = self._read_prop_from_sysfs(pname, path)
+        if driver is None:
             # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
             # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
             if self._pman.exists(self._sysfs_base / "intel_pstate"):
@@ -770,7 +766,9 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             raise Error(f"BUG: unexpected mechanism name {mname}")
 
-        self._raise_not_supported_exception((cpu,), mnames, "get", "CPU frequency", [])
+
+        self._prop_not_supported((cpu,), mnames, "get", "CPU frequency", [], exception=False)
+        return self._construct_pvinfo(pname, cpu, mnames[0], val)
 
     def _get_epp_epb_pvinfo(self, pname, cpu, mnames):
         """
@@ -970,7 +968,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         while count > 0:
             # Returns frequency in Hz.
             read_freq = self._read_prop_from_sysfs(pname, path)
-
             if freq == read_freq:
                 self._pcache.add(pname, cpu, freq, "sysfs", sname=self._props[pname]["sname"])
                 return
@@ -1269,7 +1266,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             return mname
 
-        self._raise_not_supported_exception(cpus, mnames, "set", f"{freq_type} frequency", errors)
+        # Raise an 'ErrorNotSupported' exception.
+        self._prop_not_supported(cpus, mnames, "set", f"{freq_type} frequency", errors)
 
     def _set_prop(self, pname, val, cpus, mnames=None):
         """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
