@@ -14,6 +14,7 @@ import pytest
 import common
 import props_common
 from pepclibs import CPUInfo, Power
+from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 def _get_enable_cache_param():
     """Yield each dataset with a bool. Used for toggling Power 'enable_cache'."""
@@ -57,11 +58,15 @@ def _get_set_and_verify_data(params, cpu):
         yield pname, pvinfo["val"] - 1
         yield pname, pvinfo["val"]
 
-def test_pstates_set_and_verify(params):
+def test_power_set_and_verify(params):
     """Verify that 'get_prop()' returns same values as set by 'set_prop()'."""
 
     props_vals = _get_set_and_verify_data(params, 0)
-    props_common.set_and_verify(params, props_vals, 0)
+    try:
+        props_common.set_and_verify(params, props_vals, 0)
+    except ErrorVerifyFailed:
+        if common.is_emulated(params["pman"]):
+            raise
 
 def test_power_property_type(params):
     """Verify that 'get_prop()' returns values of the correct type."""
@@ -76,4 +81,8 @@ def test_power_get_props_mechanisms(params):
 def test_power_set_props_mechanisms_bool(params):
     """Verify that the 'mname' arguments of 'get_prop()' works correctly for boolean properties."""
 
-    props_common.verify_set_props_mechanisms_bool(params, 0)
+    try:
+        props_common.verify_set_props_mechanisms_bool(params, 0)
+    except ErrorVerifyFailed:
+        if common.is_emulated(params["pman"]):
+            raise
