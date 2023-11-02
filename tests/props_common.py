@@ -111,7 +111,7 @@ def set_and_verify(params, props_vals, cpu):
 
         for pvinfo in pobj.get_prop(pname, cpus):
             if pvinfo["val"] != val:
-                cpus = ", ".join(cpus)
+                cpus = ", ".join([str(cpu) for cpu in cpus])
                 assert False, f"Set property '{pname}' to value '{val} for CPU the following " \
                               f"CPUs: {cpus}'.\n" \
                               f"Read back property '{pname}', got a different value " \
