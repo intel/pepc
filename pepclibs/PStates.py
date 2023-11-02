@@ -98,7 +98,7 @@ PROPS = {
     "bus_clock" : {
         "name" : "Bus clock speed",
         "unit" : "Hz",
-        "type" : "float",
+        "type" : "int",
         "sname": None,
         "mnames" : ("msr", ),
         "writable" : False,
@@ -298,11 +298,11 @@ class PStates(_PCStatesBase.PCStatesBase):
         except ErrorNotSupported:
             # Fall back to 100MHz clock speed.
             if self._cpuinfo.info["vendor"] == "GenuineIntel":
-                return 100000000.0
+                return 100000000
             return None
 
         # Convert MHz to Hz.
-        return bclk * 1000000.0
+        return int(bclk * 1000000.0)
 
     def _get_eppobj(self):
         """Returns an 'EPP.EPP()' object."""
@@ -468,7 +468,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             val = self._get_bclk(cpu)
             if val is not None:
-                return int(ratio * val)
+                return ratio * val
         except ErrorNotSupported:
             return None
 
@@ -518,7 +518,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         val = self._get_bclk(cpu)
         if val is not None:
-            val = int(ratio * val)
+            val = ratio * val
 
         return self._construct_pvinfo("max_eff_freq", cpu, "msr", val)
 
@@ -537,7 +537,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if ratio != 0:
             val = self._get_bclk(cpu)
             if val is not None:
-                val = int(ratio * val)
+                val = ratio * val
         else:
             val = None
             _LOG.warn_once("BUG: 'Minimum Operating Ratio' is '0' on CPU %d, MSR address '%#x' "
@@ -573,7 +573,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         val = self._get_bclk(cpu)
         if val is not None:
-            val = int(val * ratio)
+            val = val * ratio
 
         return self._construct_pvinfo("max_turbo_freq", cpu, "msr", val)
 
@@ -731,7 +731,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             # Round the frequency down to bus clock.
             # * Why rounding? Bus clock is normally the minimum CPU frequency change value.
             # * Why rounding down? Following how Linux 'intel_pstate' driver example.
-            val = freq - (freq % int(val))
+            val = freq - (freq % val)
 
         return val
 
