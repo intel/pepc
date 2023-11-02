@@ -40,19 +40,24 @@ _LOG = logging.getLogger()
 
 MECHANISMS = {
     "sysfs" : {
-        "short" : "sysfs",
-        "long"  : "Linux sysfs file-system",
-        "writable" : True,
+        "short": "sysfs",
+        "long":  "Linux sysfs file-system",
+        "writable": True,
     },
     "msr" : {
-        "short" : "MSR",
-        "long"  : "Model Specific Register (MSR)",
-        "writable" : True,
+        "short": "MSR",
+        "long":  "Model Specific Register (MSR)",
+        "writable": True,
+    },
+    "cppc" : {
+        "short": "ACPI CPPC",
+        "long":  "ACPI Colalborative Processor Performance Control (CPPC)",
+        "writable": False,
     },
     "doc" : {
-        "short" : "Cocumentation",
-        "long"  : "Hardware documentation",
-        "writable" : False,
+        "short": "Cocumentation",
+        "long":  "Hardware documentation",
+        "writable": False,
     }
 }
 

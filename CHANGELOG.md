@@ -9,6 +9,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Add '--mechanism' option, which can be used for specifying the mechanism for
    getting and setting pepc C-states, P-states, and Power options.
  - Add '--list-mechanisms' option for listing all the available mechanisms.
+ - Add new 'cppc' mechanism, which can read ACPI CPPC CPU frequency data.
 ### Removed
  - Remove '--epb-hw' and '--epp-hw' options. They are replaced with '--epb' and
    '-epp' plus the '--mechanism msr' options combination.
