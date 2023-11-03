@@ -128,6 +128,8 @@ def _verify_value_type(pname, ptype, val):
         ret = isinstance(val, float)
     elif ptype == "list[str]":
         ret = isinstance(val, list) and all(isinstance(item, str) for item in val)
+    elif ptype == "list[int]":
+        ret = isinstance(val, list) and all(isinstance(item, int) for item in val)
     elif ptype == "bool":
         ret = val in ("on", "off")
     elif ptype == "dict[str,str]":

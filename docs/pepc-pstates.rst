@@ -109,6 +109,9 @@ Get P-states information for specified CPUs. By default, prints all information 
 **--max-freq-limit**
    Get maximum supported CPU frequency (details in 'max_freq_limit_').
 
+**--frequencies**
+   Get acceptable CPU frequencies (details in 'frequencies_').
+
 **--base-freq**
    Get base CPU frequency (details in 'base_freq_').
 
@@ -300,18 +303,18 @@ The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also b
 
 The following special values are supported:
 
-"**min**"
+**min**
    Minimum supported CPU frequency (see 'min_freq_limit_').
-"**max**"
+**max**
    Maximum supported CPU frequency (see 'max_freq_limit_').
-"**base**", "**hfm**", "**P1**"
+**base**, **hfm**, **P1**
    Base CPU frequency (see 'base_freq_').
-"**eff**", "**lfm**", "**Pn**"
+**eff**, **lfm**, **Pn**
    Maximum CPU efficiency frequency (see 'max_eff_freq_').
-"**Pm**"
+**Pm**
    Minimum CPU operating frequency (see 'min_oper_freq_').
 
-Note, on some systems "**Pm**'' is lower than "**lfm**". For example, "**Pm**" may be 500MHz,
+Note, on some systems "**Pm**" is lower than "**lfm**". For example, "**Pm**" may be 500MHz,
 while "**lfm**" may be 800MHz. On those system, Linux may be using "**lfm**" as the minimum
 supported frequency limit. So from Linux perspecitve, the minimum frequency may be 800MHz, not
 500MHz. In this case "**--min-freq 500MHz --mechanisms sysfs**" will fail, while
@@ -321,11 +324,11 @@ succeed, because by default, pepc tries all the available mechanisms.
 Mechanisms
 ----------
 
-*sysfs*
+**sysfs**
 "/sys/devices/system/cpu/policy\ **0**\ /scaling_min_freq", '**0**' is replaced with desired CPU
 number.
 
-*msr*
+**msr**
 MSR_HWP_REQUEST (**0x774**), bits **7:0**.
 
 Scope
@@ -356,32 +359,30 @@ The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also b
 
 The following special values are supported:
 
-"**min**"
+**min**
    Minimum supported CPU frequency (see 'min_freq_limit_').
-"**max**"
+**max**
    Maximum supported CPU frequency (see 'max_freq_limit_').
-"**base**", "**hfm**", "**P1**"
+**base**, **hfm**, **P1**
    Base CPU frequency (see 'base_freq_').
-"**eff**", "**lfm**", "**Pn**"
+**eff**, **lfm**, **Pn**
    Maximum CPU efficiency frequency (see 'max_eff_freq_').
-"**Pm**"
+**Pm**
    Minimum CPU operating frequency (see 'min_oper_freq_').
 
 Mechanisms
 ----------
 
-*sysfs*
+**sysfs**
 "/sys/devices/system/cpu/policy\ **0**\ /scaling_max_freq", '**0**' is replaced with desired CPU
 number.
 
-*msr*
+**msr**
 MSR_HWP_REQUEST (**0x774**), bits **15:8**.
 
 -----
 
 This property has **CPU** scope.
-
-----------------------------------------------------------------------------------------------------
 
 min_freq_limit
 ==============
@@ -431,6 +432,40 @@ Mechanism
 
 "/sys/devices/system/cpu/policy\ **0**\ /cpuinfo_max_freq", '**0**' is replaced with desired CPU
 number.
+
+Scope
+-----
+
+This property has **CPU** scope.
+
+----------------------------------------------------------------------------------------------------
+
+frequencies
+===========
+
+frequencies - acceptable CPU frequencies
+
+Synopsis
+--------
+
+| pepc pstates *info* **--frequencies**
+
+Description
+-----------
+
+List of CPU frequencies exposed by the Linux CPU frequency driver and available for the users via
+'**--min-freq**' and '**--max-freq**' options.
+
+Mechanisms
+----------
+
+**sysfs**
+"/sys/devices/system/cpu/cpufreq/policy\ **0**\ /scaling_available_frequencies", '**0**' is replaced
+with desired CPU number.
+
+**doc**
+In case of Intel CPUs and '**intel_idle**' driver, assume all frequencies from 'min_freq_limit_' to
+'max_freq_limit_' with 'bus_clock_' step.
 
 Scope
 -----
@@ -521,7 +556,7 @@ Description
 Minimum operating frequency is the lowest possible frequency the CPU can operate at. Depending on
 the CPU model, this frequency may or may not be directly available to the OS, but the
 platform may use it in certain situations (e.g., in some C-states). This frequency is also referred
-to as **Pm**.
+to as "**Pm**".
 
 Mechanism
 ---------
@@ -603,7 +638,7 @@ max_turbo_freq - Maximum CPU turbo frequency
 Synopsis
 --------
 
-| pepc pstates *info* **--max-eff-freq**
+| pepc pstates *info* **--max-turbo-freq**
 
 Description
 -----------
@@ -644,11 +679,11 @@ The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also b
 
 The following special values are supported:
 
-"**min**"
+**min**
    Minimum uncore frequency supported (see 'min_freq_limit_').
-"**max**"
+**max**
    Maximum uncore frequency supported (see 'max_freq_limit_').
-"**mdl**"
+**mdl**
    Middle uncore frequency between minimum and maximum rounded to nearest 100MHz.
 
 Mechanism
@@ -685,11 +720,11 @@ The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also b
 
 The following special values are supported:
 
-"**min**"
+**min**
    Minimum uncore frequency supported (see 'min_freq_limit_').
-"**max**"
+**max**
    Maximum uncore frequency supported (see 'max_freq_limit_').
-"**mdl**"
+**mdl**
    Middle uncore frequency between minimum and maximum rounded to nearest 100MHz.
 
 Mechanism

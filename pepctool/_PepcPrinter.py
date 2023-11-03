@@ -94,14 +94,32 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             val = ", ".join([_format_unit(v, unit) for v in val])
         elif prop["type"] in ("list[int]", "list[float]"):
             step = _detect_progression(val, 4)
-            if step is None:
-                val = ", ".join([_format_unit(v, unit) for v in val])
-            else:
+            tar = False
+            if not step and len(val) > 1:
+                # The frequency numers are expected to be sorted in the ascending order. The last
+                # frequency number is often the Turbo Activation Ration (TAR) - a value just
+                # slightly higher than the base frquency to activet turbo. Detect this situation and
+                # use concise notation for it too.
+                step = _detect_progression(val[:-1], 3)
+                if not step:
+                    val = ", ".join([_format_unit(v, unit) for v in val])
+                else:
+                    tar = True
+
+            if step:
                 # This is an arithmetic progression, use concise notation.
                 first = _format_unit(val[0], unit)
-                last = _format_unit(val[-1], unit)
+                if tar:
+                    last = _format_unit(val[-2], unit)
+                    tar = _format_unit(val[-1], unit)
+                else:
+                    last = _format_unit(val[-1], unit)
+                    tar = None
+
                 step = _format_unit(step, unit)
-                val = f"values from {first} to {last} with step {step}"
+                val = f"{first} - {last} with step {step}"
+                if tar:
+                    val += f", {tar}"
         else:
             raise Error(f"BUG: property {prop['name']} as unsupported type '{prop['type']}")
 
