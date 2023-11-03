@@ -692,7 +692,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Read bus clock speed from 'MSR_FSB_FREQ' and return the property value dictionary."""
 
         val = self._get_bclk(cpu)
-        return self._construct_pvinfo("bus_closk", cpu, "msr", val)
+        return self._construct_pvinfo("bus_clock", cpu, "msr", val)
 
     def _read_int(self, path):
         """Read an integer from file 'path' via the process manager."""
