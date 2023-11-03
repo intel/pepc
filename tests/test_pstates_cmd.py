@@ -16,7 +16,7 @@ import common
 import props_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs import Human, YAML
-from pepclibs import CPUInfo, PStates, BClock
+from pepclibs import CPUInfo, PStates
 
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
 # supported. Ignore these failurs.
@@ -335,33 +335,57 @@ def _set_freq_pairs(params, min_pname, max_pname):
     """
 
     cpu = 0
+    pman = params["pman"]
     pobj = params["pobj"]
+
+    if "uncore" in min_pname:
+        bclk = pobj.get_cpu_prop("bus_clock", cpu)["val"]
+        if not bclk:
+            return
+
+        min_limit = pobj.get_cpu_prop(f"{min_pname}_limit", cpu)["val"]
+        max_limit = pobj.get_cpu_prop(f"{max_pname}_limit", cpu)["val"]
+        if not min_limit or not max_limit:
+            return
+
+        delta = (max_limit - min_limit) // 4
+        delta -= delta % bclk
+
+        freq0 = min_limit
+        freq1 = min_limit + delta
+        freq2 = max_limit - delta
+        freq3 = max_limit
+    else:
+        pvinfo = pobj.get_cpu_prop("frequencies", cpu)
+        if pvinfo["val"] is None:
+            return
+
+        frequencies = pvinfo["val"]
+        if len(frequencies) < 2:
+            return
+
+        freq0 = frequencies[0]
+        freq1 = frequencies[1]
+        freq2 = frequencies[-2]
+        freq3 = frequencies[-1]
+
+    min_opt = f"--{min_pname.replace('_', '-')}"
+    max_opt = f"--{max_pname.replace('_', '-')}"
+
     sname = pobj.get_sname(min_pname)
     siblings = params["cpuinfo"].get_cpu_siblings(0, level=sname)
-
-    min_limit = pobj.get_cpu_prop(f"{min_pname}_limit", cpu)["val"]
-    max_limit = pobj.get_cpu_prop(f"{max_pname}_limit", cpu)["val"]
-
-    bclk_MHz = BClock.get_bclk(params["pman"], cpu=0)
-    bclk_Hz = int(bclk_MHz * 1000000)
-    a_quarter = int((max_limit - min_limit) / 4)
-    increment = a_quarter - a_quarter % bclk_Hz
-
-    pman = params["pman"]
-    min_optname = f"--{min_pname.replace('_', '-')}"
-    max_optname = f"--{max_pname.replace('_', '-')}"
     cpus_opt = f"--cpus {Human.rangify(siblings)}"
 
     # [Min ------------------ Max ----------------------------------------------------------]
-    freq_opts = f"{min_optname} {min_limit} {max_optname} {min_limit + increment}"
+    freq_opts = f"{min_opt} {freq0} {max_opt} {freq1}"
     common.run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
 
     # [-------------------------------------------------------- Min -------------------- Max]
-    freq_opts = f"{min_optname} {max_limit - increment} {max_optname} {max_limit}"
+    freq_opts = f"{min_opt} {freq2} {max_opt} {freq3}"
     common.run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
 
     # [Min ------------------ Max ----------------------------------------------------------]
-    freq_opts = f"{min_optname} {min_limit} {max_optname} {min_limit + increment}"
+    freq_opts = f"{min_opt} {freq0} {max_opt} {freq1}"
     common.run_pepc(f"pstates config {cpus_opt} {freq_opts}", pman)
 
 def test_pstates_frequency_set_order(params):
