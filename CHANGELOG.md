@@ -16,6 +16,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Remove '--min-freq-hw' and '--max-freq-hw' options. They are replaced with
    '--min-freq' and '-max-freq' plus the '--mechanism msr' options combination.
 ### Changed
+ - The 'pepc aspm info' command now has separate '--policy' and '--policies'
+   options.
 
 ## [1.4.37] - 2023-10-25
 ### Fixed
