@@ -20,6 +20,7 @@ from pathlib import Path
 from pepclibs import _PCStatesBase
 from pepclibs.helperlibs import Trivial, KernelModule, FSHelpers, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 class ErrorFreqOrder(Error):
     """
@@ -1117,42 +1118,28 @@ class PStates(_PCStatesBase.PCStatesBase):
         is a mismatch between what was written to a frequency sysfs file and what was read back.
         """
 
-        raise_error = True
-
         name = Human.uncapitalize(pname)
         what = self._get_num_str(pname, cpu)
-        short_freq = Human.num2si(freq, unit="Hz")
-        msg = f"failed to set {name} to {short_freq} for {what}{self._pman.hostmsg}: wrote " \
+        freq_human = Human.num2si(freq, unit="Hz", decp=4)
+        msg = f"failed to set {name} to {freq_human} for {what}{self._pman.hostmsg}: wrote " \
               f"'{freq // 1000}' to '{path}', but read '{read_freq // 1000}' back."
 
         with contextlib.suppress(Error):
-            bclk = self._get_bclk(cpu)
-            if bclk and freq % bclk:
-                msg += f"\nHint: consider using frequency value aligned to {bclk // 1000000}MHz."
-
-            if self._get_turbo_pvinfo(cpu)["val"] == "off":
+            frequencies = self._get_frequencies_pvinfo(cpu)["val"]
+            if frequencies:
+                frequencies_set = set(frequencies)
+                if freq not in frequencies_set and read_freq in frequencies_set:
+                    fvals = ", ".join([Human.num2si(v, unit="Hz", decp=4) for v in frequencies])
+                    msg += f"\n  Linux kernel frequency driver does not support {freq_human}, " \
+                           f"use one of the following values instead:\n  {fvals}"
+            elif self._get_turbo_pvinfo(cpu)["val"] == "off":
                 base_freq = self._get_cpu_prop("base_freq", cpu)
-
                 if base_freq and freq > base_freq:
-                    base_freq = Human.num2si(base_freq, unit="Hz")
+                    base_freq = Human.num2si(base_freq, unit="Hz", decp=4)
                     msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and this " \
                            f"may be the limiting factor."
 
-            if self._cpuinfo.info["vendor"] == "AuthenticAMD":
-                # This is a limited quirk for an AMD system. It does not allow setting max.frequency
-                # to any value above base frequency. At the moment we do not support reading base
-                # frequency for AMD systems, so we only support the 'freq == max_freq_limit' case.
-                # But it should really be 'if freq > base_freq'.
-                max_freq_limit = self._get_cpu_prop("max_freq_limit", cpu)
-                driver = self._get_cpu_prop("driver", cpu)
-                if freq == max_freq_limit and driver == "acpi-cpufreq":
-                    msg += "\nThis is expected 'acpi-cpufreq' driver behavior on AMD systems."
-                    raise_error = False
-
-        if raise_error:
-            raise Error(msg)
-
-        _LOG.debug(msg)
+        raise ErrorVerifyFailed(msg)
 
     def _write_freq_prop_to_sysfs(self, pname, freq, cpu):
         """
@@ -1325,9 +1312,9 @@ class PStates(_PCStatesBase.PCStatesBase):
 
                 if val < min_limit or val > max_limit:
                     name = Human.uncapitalize(self._props[pname]["name"])
-                    val = Human.num2si(val, unit="Hz")
-                    min_limit = Human.num2si(min_limit, unit="Hz")
-                    max_limit = Human.num2si(max_limit, unit="Hz")
+                    val = Human.num2si(val, unit="Hz", decp=4)
+                    min_limit = Human.num2si(min_limit, unit="Hz", decp=4)
+                    max_limit = Human.num2si(max_limit, unit="Hz", decp=4)
                     raise ErrorFreqRange(f"{name} value of '{val}' for {what} is out of range, "
                                          f"must be within [{min_limit}, {max_limit}]")
 
@@ -1335,8 +1322,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 if new_min_freq > new_max_freq:
                     name_min = Human.uncapitalize(self._props[min_freq_pname]["name"])
                     name_max = Human.uncapitalize(self._props[max_freq_pname]["name"])
-                    new_min_freq = Human.num2si(new_min_freq, unit="Hz")
-                    new_max_freq = Human.num2si(new_max_freq, unit="Hz")
+                    new_min_freq = Human.num2si(new_min_freq, unit="Hz", decp=4)
+                    new_max_freq = Human.num2si(new_max_freq, unit="Hz", decp=4)
                     raise Error(f"can't set {name_min} to {new_min_freq} and {name_max} to "
                                 f"{new_max_freq} for {what}: minimum can't be greater than maximum")
                 if new_min_freq != cur_min_freq or new_max_freq != cur_max_freq:
@@ -1349,8 +1336,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif not new_max_freq:
                 if new_min_freq > cur_max_freq:
                     name = Human.uncapitalize(self._props[min_freq_pname]["name"])
-                    new_min_freq = Human.num2si(new_min_freq, unit="Hz")
-                    cur_max_freq = Human.num2si(cur_max_freq, unit="Hz")
+                    new_min_freq = Human.num2si(new_min_freq, unit="Hz", decp=4)
+                    cur_max_freq = Human.num2si(cur_max_freq, unit="Hz", decp=4)
                     raise ErrorFreqOrder(f"can't set {name} of {what} to {new_min_freq} - it is "
                                          f"higher than currently configured maximum frequency of "
                                          f"{cur_max_freq}")
@@ -1359,8 +1346,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif not new_min_freq:
                 if new_max_freq < cur_min_freq:
                     name = Human.uncapitalize(self._props[max_freq_pname]["name"])
-                    new_max_freq = Human.num2si(new_max_freq, unit="Hz")
-                    cur_min_freq = Human.num2si(cur_min_freq, unit="Hz")
+                    new_max_freq = Human.num2si(new_max_freq, unit="Hz", decp=4)
+                    cur_min_freq = Human.num2si(cur_min_freq, unit="Hz", decp=4)
                     raise ErrorFreqOrder(f"can't set {name} of {what} to {new_max_freq} - it is "
                                          f"lower than currently configured minimum frequency of "
                                          f"{cur_min_freq}")
