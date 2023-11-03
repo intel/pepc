@@ -176,35 +176,16 @@ def _add_cpu_subset_arguments(subpars, fmt):
                 then '0' would mean CPU 4."""
     subpars.add_argument("--core-siblings", help=text)
 
-def _get_mechanism_str(prop):
-    """"Format and return the "mechanism" description string for a property."""
-
-    mnames = []
-    try:
-        for mname in prop["mnames"]:
-            mnames.append(MECHANISMS[mname]["short"])
-    except KeyError:
-        raise Error(f"BUG: missing mechanism description for '{mname}'") from None
-
-    num = len(mnames)
-    if num == 1:
-        return f" via {mnames[0]}"
-    if num == 2:
-        return f" via {mnames[0]} or {mnames[1]} as a fall-back method"
-
-    mnames = ', '.join(mnames[:-1]) + f" or {mnames[-1]}"
-    return f" via {mnames} as fall-back methods"
-
 def _get_info_subcommand_prop_help_text(prop):
     """Format and return the "info" sub-command help text for a property described by 'prop'."""
 
     if prop["type"] == "bool":
         # This is a binary "on/off" type of features.
-        text = f"Check if {Human.uncapitalize(prop['name'])} is enabled or disabled"
+        text = f"Check if {Human.uncapitalize(prop['name'])} is enabled or disabled."
     else:
-        text = f"Get {Human.uncapitalize(prop['name'])}"
+        text = f"Get {Human.uncapitalize(prop['name'])}."
 
-    return text + _get_mechanism_str(prop) + "."
+    return text
 
 def _add_info_subcommand_options(props, subpars):
     """Add options for all properties in 'props' to for the "info" subcommand."""
@@ -234,11 +215,11 @@ def _get_config_subcommand_prop_help_text(prop):
 
     if prop["type"] == "bool":
         # This is a binary "on/off" type of features.
-        text = f"Enable or disable {Human.uncapitalize(prop['name'])}"
+        text = f"Enable or disable {Human.uncapitalize(prop['name'])}."
     else:
-        text = f"Set {Human.uncapitalize(prop['name'])}"
+        text = f"Set {Human.uncapitalize(prop['name'])}."
 
-    return text + _get_mechanism_str(prop) + "."
+    return text
 
 def _add_config_subcommand_options(props, subpars):
     """Add options for all properties in 'props' to for the "config" sub-command."""
