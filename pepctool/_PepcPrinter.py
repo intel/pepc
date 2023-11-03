@@ -55,6 +55,58 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return msg
 
+    def _format_value_human(self, prop, val):
+        """Format value 'val' of property described by 'prop' into the "human" format."""
+
+        def _detect_progression(vals, min_len):
+            """
+            Detect if list of numbers 'vals' is an arithmetic progression, return the step if it is,
+            and 'None' otherwise.
+            """
+
+            if len(vals) < min_len:
+                return None
+
+            step = vals[1] - vals[0]
+            for idx, val in enumerate(vals[:-1]):
+                if vals[idx+1] - val != step:
+                    return None
+            return step
+
+        def _format_unit(val, unit):
+            """Format values with unit."""
+
+            if unit:
+                return Human.num2si(val, unit=unit, decp=4)
+            return str(val)
+
+        unit = prop.get("unit")
+
+        if prop["type"] in ("str", "bool"):
+            return val
+
+        if prop["type"] in ("int", "float"):
+            return _format_unit(val, unit)
+
+        if prop["type"].startswith("dict["):
+            val = ", ".join(f"{k}={_format_unit(v, unit)}" for k, v in val)
+        elif prop["type"] == "list[str]":
+            val = ", ".join([_format_unit(v, unit) for v in val])
+        elif prop["type"] in ("list[int]", "list[float]"):
+            step = _detect_progression(val, 4)
+            if step is None:
+                val = ", ".join([_format_unit(v, unit) for v in val])
+            else:
+                # This is an arithmetic progression, use concise notation.
+                first = _format_unit(val[0], unit)
+                last = _format_unit(val[-1], unit)
+                step = _format_unit(step, unit)
+                val = f"values from {first} to {last} with step {step}"
+        else:
+            raise Error(f"BUG: property {prop['name']} as unsupported type '{prop['type']}")
+
+        return val
+
     def _print_prop_human(self, prop, val, action=None, cpus=None, prefix=None):
         """Format and print a message about property 'prop' in the "human" format."""
 
@@ -72,11 +124,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if val is None:
             val = "not supported"
         else:
-            unit = prop.get("unit")
-            if unit:
-                val = Human.num2si(val, decp=2)
-                val = f"{val}{unit}"
-            if sfx and prop["type"] not in ("int", "float"):
+            val = self._format_value_human(prop, val)
+            if sfx and prop["type"] not in {"int", "float", "list[int]", "list[float]"}:
                 val = f"'{val}'"
 
         if action is not None:
@@ -140,6 +189,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
                     if pname not in yaml_pinfo:
                         yaml_pinfo[pname] = []
+
+                    prop = self._pobj.props[pname]
+                    if prop["type"].startswith("list["):
+                        val = list(val)
+                    if prop["type"].startswith("dict["):
+                        val = dict(val)
+
                     yaml_pinfo[pname].append({"value" : val, "cpus" : Human.rangify(cpus)})
 
         self._yaml_dump(yaml_pinfo)
@@ -170,8 +226,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         aggr_pinfo = {}
 
         for pname in pnames:
-            if skip_ro and not self._pobj.props[pname]["writable"]:
+            prop = self._pobj.props[pname]
+            if skip_ro and not prop["writable"]:
                 continue
+
             for pvinfo in self._pobj.get_prop(pname, cpus, mnames=mnames):
                 cpu = pvinfo["cpu"]
                 val = pvinfo["val"]
@@ -180,15 +238,14 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 if skip_unsupported and val is None:
                     continue
 
-                # Make sure 'val' is "hashable" and can be used as a dictionary key.
-                if isinstance(val, list):
-                    if not val:
-                        continue
-                    val = ", ".join(val)
-                elif isinstance(val, dict):
-                    if not val:
-                        continue
-                    val = ", ".join(f"{k}={v}" for k, v in val.items())
+                # Dictionary keys must be of an immutable type (python language requirement). Turn
+                # lists and dictionaries into tuples.
+                if prop["type"].startswith("list["):
+                    if val is not None:
+                        val = tuple(val)
+                if prop["type"].startswith("dict["):
+                    if val is not None:
+                        val = tuple((k,v) for k, v in val.items())
 
                 if mname not in aggr_pinfo:
                     aggr_pinfo[mname] = {}
