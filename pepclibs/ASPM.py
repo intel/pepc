@@ -41,15 +41,15 @@ class ASPM(ClassHelpers.SimpleCloseContext):
 
         if policy not in policies:
             policies_str = ", ".join(policies)
-            raise Error(f"ASPM policy '{policy}' not available{self._pman.hostmsg}. Use one of the "
-                        f"following: {policies_str}")
+            raise Error(f"ASPM policy '{policy}' not available{self._pman.hostmsg}.\n"
+                        f"  Use one of the following: {policies_str}")
 
         errmsg = f"failed to set ASPM policy to '{policy}'{self._pman.hostmsg}:"
         try:
             with self._pman.open(self._policy_path, "r+") as fobj:
                 fobj.write(policy)
         except ErrorPermissionDenied as err:
-            raise ErrorPermissionDenied(f"{errmsg}\n{err.indent(2)}\nSometimes booting with "
+            raise ErrorPermissionDenied(f"{errmsg}\n{err.indent(2)}\n  Sometimes booting with "
                                         f"'pcie_aspm=force' command line option helps") from err
         except Error as err:
             raise Error(f"{errmsg}\n{err.indent(2)}") from err

@@ -24,10 +24,9 @@ def aspm_info_command(args, pman):
         opt = args.oargs.keys()
 
     with ASPM.ASPM(pman=pman) as aspm:
-
         if "policy" in opt or not opt:
             cur_policy = aspm.get_policy()
-            _LOG.info("ASPM policy%s: %s", pman.hostmsg, cur_policy)
+            _LOG.info("ASPM policy: %s", cur_policy)
         if "policies" in opt or not opt:
             available_policies = ", ".join(aspm.get_policies())
             _LOG.info("Available policies: %s", available_policies)
@@ -39,20 +38,21 @@ def aspm_config_command(args, pman):
         raise Error("please, provide a configuration option")
 
     with ASPM.ASPM(pman=pman) as aspm:
-        old_policy = aspm.get_policy()
-
         for opt, val in args.oargs.items():
             if opt == "policy":
-                if val == old_policy:
-                    _LOG.info("ASPM policy%s is already '%s', nothing to change", pman.hostmsg, val)
-                elif val:
+                old_policy = aspm.get_policy()
+                if val:
                     aspm.set_policy(val)
                     new_policy = aspm.get_policy()
                     if args.policy != new_policy:
                         raise Error(f"ASPM policy{pman.hostmsg} was set to '{val}', but it became "
                                     f"'{new_policy}' instead")
-                    _LOG.info("ASPM policy%s was changed from '%s' to '%s'",
-                              pman.hostmsg, old_policy, val)
+                    if val != old_policy:
+                        _LOG.info("ASPM policy%s was changed from '%s' to '%s'",
+                                pman.hostmsg, old_policy, val)
+                    else:
+                        _LOG.info("ASPM policy%s was '%s', set it to '%s' again",
+                                  pman.hostmsg, val, val)
                 else:
                     cur_policy = aspm.get_policy()
                     _LOG.info("ASPM policy%s: %s", pman.hostmsg, cur_policy)
