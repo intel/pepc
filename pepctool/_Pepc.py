@@ -566,7 +566,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=aspm_config_command)
 
-    text = """The PCI ASPM policy to set, use "default" to set the Linux default policy."""
+    text = """The PCI ASPM policy to set, use "default" to set the default policy."""
     subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs="?", help=text)
 
     #
