@@ -117,12 +117,12 @@ def set_and_verify(params, props_vals, cpu):
                               f"Read back property '{pname}', got a different value " \
                               f"'{pvinfo['val']}' for CPU {pvinfo['cpu']}."
 
-def get_max_cpu_freq(params, cpu):
+def get_max_cpu_freq(params, cpu, numeric=False):
     """Return the maximum CPU or uncore frequency the Linux frequency driver accepts."""
 
     pobj = params["pobj"]
 
-    maxfreq = "hfm"
+    maxfreq = None
     turbo_status = pobj.get_cpu_prop("turbo", cpu)["val"]
     freqs = pobj.get_cpu_prop("frequencies", cpu)["val"]
 
@@ -134,12 +134,20 @@ def get_max_cpu_freq(params, cpu):
 
         if freqs and max_limit:
             if max_limit == freqs[-1]:
-                maxfreq = "max"
+                if numeric:
+                    maxfreq = max_limit
+                else:
+                    maxfreq = "max"
             else:
                 maxfreq = freqs[-1]
     elif freqs:
         maxfreq = freqs[-1]
 
+    if not maxfreq:
+        if numeric:
+            maxfreq = pobj.get_cpu_prop("base_freq", cpu)["val"]
+        else:
+            maxfreq = "hfm"
     return maxfreq
 
 def _verify_value_type(pname, ptype, val):

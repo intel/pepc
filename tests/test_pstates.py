@@ -73,7 +73,7 @@ def _get_set_and_verify_data(params, cpu):
             if min_limit is None or max_limit is None:
                 continue
         else:
-            max_limit = props_common.get_max_cpu_freq(params, cpu)
+            max_limit = props_common.get_max_cpu_freq(params, cpu, numeric=True)
 
         yield pname_min, min_limit
         yield pname_max, min_limit
