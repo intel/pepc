@@ -384,6 +384,10 @@ PHIS =         (CPUS["XEON_PHI_KNL"]["model"],
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
 LEVELS = ("CPU", "core", "module", "die", "node", "package")
 
+# '_NA' is used for the CPU/core/module number for I/O dies, which do not include CPUs, cores, or
+# modules.
+_NA = -1
+
 class CPUInfo(ClassHelpers.SimpleCloseContext):
     """
     Provide information about the CPU of a local or remote host.
@@ -577,6 +581,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 self._add_node_numbers(tinfo)
 
             topology = list(tinfo.values())
+
+            if "die" in self._initialized_levels:
+                self._add_io_dies(topology)
+
             for order in self._initialized_levels:
                 self._sort_topology(topology, order)
 
@@ -657,6 +665,43 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return self._pliobj
 
+    def _get_uncfreq_obj(self):
+        """Return an '_UncoreFreq' object."""
+
+        if not self._uncfreq_supported:
+            return None
+
+        if not self._uncfreq_obj:
+            from pepclibs import _UncoreFreq # pylint: disable=import-outside-toplevel
+
+            try:
+                self._uncfreq_obj = _UncoreFreq.UncoreFreq(pman=self._pman, cpuinfo=self)
+            except ErrorNotSupported:
+                self._uncfreq_supported = False
+
+        return self._uncfreq_obj
+
+    def _add_io_dies(self, topology):
+        """
+        Add I/O dies to 'topology'. I/O dies are any dies that don't have CPUs in them.
+        """
+
+        uncfreq_obj = self._get_uncfreq_obj()
+        if not uncfreq_obj:
+            return
+
+        levels = topology[0].keys()
+        domain_ids = uncfreq_obj.get_domain_ids()
+
+        for package, pkg_dies in domain_ids.items():
+            for die in pkg_dies:
+                tline = {}
+                for key in levels:
+                    tline[key] = _NA
+                tline["package"] = package
+                tline["die"] = die
+                topology.append(tline)
+
     def _add_die_numbers(self, tinfo, cpus):
         """Adds die numbers for CPUs 'cpus' to 'tinfo'"""
 
@@ -726,6 +771,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             self._add_node_numbers(tinfo)
 
         topology = list(tinfo.values())
+
+        if "die" in levels:
+            self._add_io_dies(topology)
+
         self._initialized_levels.update(levels)
         for level in self._initialized_levels:
             if level not in self._topology:
@@ -803,6 +852,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         valid_nums = set()
 
         for tline in self._get_topology(levels=(lvl, sublvl), order=order):
+            if _NA in (tline[lvl], tline[sublvl]):
+                continue
             valid_nums.add(tline[lvl])
             if nums == "all" or tline[lvl] in nums:
                 result[tline[sublvl]] = None
@@ -1567,6 +1618,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         # 'True' if 'MSR_PM_LOGICAL_ID' is supported by the system, otherwise 'False'. When this MSR
         # is supported, it provides the die IDs enumeration.
         self._pli_msr_supported = True
+        self._uncfreq_obj = None
+        self._uncfreq_supported = True
 
         # The topology dictionary. See 'get_topology()' for more information.
         self._topology = {}
@@ -1612,4 +1665,4 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_pman", "_pliobj"))
+        ClassHelpers.close(self, close_attrs=("_pman", "_pliobj", "_uncfreq_obj"))
