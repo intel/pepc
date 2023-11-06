@@ -107,16 +107,10 @@ def _get_good_config_freq_opts(params):
                  "--min-freq min",
                  "--max-freq min"]
 
-        turbo_status = pobj.get_cpu_prop("turbo", cpu)["val"]
-        maxfreq = None
-        if turbo_status == "on":
-            maxfreq = "max"
-        elif turbo_status == "on":
-            maxfreq = "hfm"
-        if maxfreq:
-            opts += [f"--max-freq {maxfreq}",
-                    f"--min-freq min --max-freq {maxfreq}",
-                    f"--max-freq {maxfreq} --min-freq min"]
+        maxfreq = props_common.get_max_cpu_freq(params, cpu)
+        opts += [f"--max-freq {maxfreq}",
+                f"--min-freq min --max-freq {maxfreq}",
+                f"--max-freq {maxfreq} --min-freq min"]
 
         if pobj.prop_is_supported("max_eff_freq", cpu):
             opts += ["--max-freq lfm",

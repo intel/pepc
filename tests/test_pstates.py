@@ -68,9 +68,12 @@ def _get_set_and_verify_data(params, cpu):
     freq_pairs = (("min_freq", "max_freq"), ("min_uncore_freq", "max_uncore_freq"))
     for pname_min, pname_max in freq_pairs:
         min_limit = pobj.get_cpu_prop(f"{pname_min}_limit", cpu)["val"]
-        max_limit = pobj.get_cpu_prop(f"{pname_max}_limit", cpu)["val"]
-        if min_limit is None or max_limit is None:
-            continue
+        if "uncore" in pname_min:
+            max_limit = pobj.get_cpu_prop(f"{pname_max}_limit", cpu)["val"]
+            if min_limit is None or max_limit is None:
+                continue
+        else:
+            max_limit = props_common.get_max_cpu_freq(params, cpu)
 
         yield pname_min, min_limit
         yield pname_max, min_limit
