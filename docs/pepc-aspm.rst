@@ -63,10 +63,16 @@ Subcommand *'info'*
 
 Get information about current PCI ASPM configuration.
 
+**--policy** *NAME*
+   Get currently configured PCI ASPM policy to name.
+
+**--policies** *NAME*
+   Get list of available PCI ASPM policy to names.
+
 Subcommand *'config'*
 =====================
 
 Change PCI ASPM configuration.
 
 **--policy** *NAME*
-   The PCI ASPM policy to set, use "default" to set the Linux default policy.
+   The PCI ASPM policy to set, use "default" to set the default policy.

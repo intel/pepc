@@ -298,15 +298,15 @@ Description
 
 Minimum CPU frequency is the lowest frequency the CPU was configured the CPU to run at.
 
-The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
+The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used
 (for example "900MHz").
 
 The following special values are supported:
 
 **min**
-   Minimum supported CPU frequency (see 'min_freq_limit_').
+   Minimum frequency supported by the Linux CPU frequency driver (see 'min_freq_limit_').
 **max**
-   Maximum supported CPU frequency (see 'max_freq_limit_').
+   Maximum frequency supported by the Linux CPU frequency driver (see 'max_freq_limit_').
 **base**, **hfm**, **P1**
    Base CPU frequency (see 'base_freq_').
 **eff**, **lfm**, **Pn**
@@ -314,27 +314,27 @@ The following special values are supported:
 **Pm**
    Minimum CPU operating frequency (see 'min_oper_freq_').
 
-Note, on some systems "**Pm**" is lower than "**lfm**". For example, "**Pm**" may be 500MHz,
-while "**lfm**" may be 800MHz. On those system, Linux may be using "**lfm**" as the minimum
+Note, on some systems 'Pm' is lower than 'lfm'. For example, 'Pm' may be 500MHz,
+while 'lfm' may be 800MHz. On those system, Linux may be using 'lfm' as the minimum
 supported frequency limit. So from Linux perspecitve, the minimum frequency may be 800MHz, not
-500MHz. In this case "**--min-freq 500MHz --mechanisms sysfs**" will fail, while
-"**--min-freq 500MHz --mechanisms sysfs**" will succeed. And "**--min-freq 500MHz**" will also
+500MHz. In this case '--min-freq 500MHz --mechanisms sysfs' will fail, while
+'--min-freq 500MHz --mechanisms sysfs' will succeed. And '--min-freq 500MHz' will also
 succeed, because by default, pepc tries all the available mechanisms.
 
 Mechanisms
 ----------
 
 **sysfs**
-"/sys/devices/system/cpu/policy\ **0**\ /scaling_min_freq", '**0**' is replaced with desired CPU
+"/sys/devices/system/cpu/policy0/scaling_min_freq", where '0' is replaced with desired CPU
 number.
 
 **msr**
-MSR_HWP_REQUEST (**0x774**), bits **7:0**.
+MSR_HWP_REQUEST (0x774), bits 7:0.
 
 Scope
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -354,15 +354,14 @@ Description
 
 Maximum CPU frequency is the highest frequency the CPU was configured to run at.
 
-The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
-(for example "900MHz").
+The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used (for example '900MHz').
 
 The following special values are supported:
 
 **min**
-   Minimum supported CPU frequency (see 'min_freq_limit_').
+   Minimum frequency supported by the Linux CPU frequency driver (see 'min_freq_limit_').
 **max**
-   Maximum supported CPU frequency (see 'max_freq_limit_').
+   Maximum frequency supported by the Linux CPU frequency driver (see 'max_freq_limit_').
 **base**, **hfm**, **P1**
    Base CPU frequency (see 'base_freq_').
 **eff**, **lfm**, **Pn**
@@ -374,15 +373,15 @@ Mechanisms
 ----------
 
 **sysfs**
-"/sys/devices/system/cpu/policy\ **0**\ /scaling_max_freq", '**0**' is replaced with desired CPU
+"/sys/devices/system/cpu/policy0/scaling_max_freq", where '0' is replaced with desired CPU
 number.
 
 **msr**
-MSR_HWP_REQUEST (**0x774**), bits **15:8**.
+MSR_HWP_REQUEST (0x774), bits 15:8.
 
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 min_freq_limit
 ==============
@@ -402,13 +401,14 @@ Minimum supported CPU frequency is the lowest frequency the CPU can be configure
 Mechanism
 ---------
 
-"/sys/devices/system/cpu/policy\ **0**\ /cpuinfo_min_freq", '**0**' is replaced with desired CPU
+**sysfs**
+"/sys/devices/system/cpu/policy0/cpuinfo_min_freq", where '0' is replaced with desired CPU
 number.
 
 Scope
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -430,13 +430,14 @@ Maximum supported CPU frequency is the highest frequency the CPU can be configur
 Mechanism
 ---------
 
-"/sys/devices/system/cpu/policy\ **0**\ /cpuinfo_max_freq", '**0**' is replaced with desired CPU
+**sysfs**
+"/sys/devices/system/cpu/policy0/cpuinfo_max_freq", where '0' is replaced with desired CPU
 number.
 
 Scope
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -454,23 +455,23 @@ Description
 -----------
 
 List of CPU frequencies exposed by the Linux CPU frequency driver and available for the users via
-'**--min-freq**' and '**--max-freq**' options.
+'--min-freq' and '--max-freq' options.
 
 Mechanisms
 ----------
 
 **sysfs**
-"/sys/devices/system/cpu/cpufreq/policy\ **0**\ /scaling_available_frequencies", '**0**' is replaced
+"/sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies", '0' is replaced
 with desired CPU number.
 
 **doc**
-In case of Intel CPUs and '**intel_idle**' driver, assume all frequencies from 'min_freq_limit_' to
+In case of Intel CPUs and 'intel_idle' driver, assume all frequencies from 'min_freq_limit_' to
 'max_freq_limit_' with 'bus_clock_' step.
 
 Scope
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -488,7 +489,7 @@ Description
 -----------
 
 Base CPU frequency is the highest sustainable CPU frequency. This frequency is also referred to as
-"guaranteed frequency", **HFM** (High Frequency Mode), or **P1**.
+"guaranteed frequency", HFM (High Frequency Mode), or P1.
 
 The base frequency is acquired from a sysfs file or from an MSR register, depending on platform and
 the CPU frequency driver.
@@ -497,17 +498,17 @@ Mechanisms
 ----------
 
 **sysfs**
-"/sys/devices/system/cpu/policy\ **0**\ /base_frequency", '**0**' is replaced with desired CPU
-number. If this file does not exist, the "/sys/devices/system/cpu/cpu\ **0**\ /cpufreq/bios_limit"
-sysfs file is used ('**0**' is replaced with desired CPU number).
+"/sys/devices/system/cpu/policy0/base_frequency", where '0' is replaced with desired CPU
+number. If this file does not exist, the "/sys/devices/system/cpu/cpu0/cpufreq/bios_limit"
+sysfs file is used (where '0' is replaced with desired CPU number).
 
 **msr**
-MSR_PLATFORM_INFO **(0xCE)**, bits **15:8**.
+MSR_PLATFORM_INFO (0xCE), bits 15:8.
 
 Scope
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -527,16 +528,18 @@ Description
 Bus clock refers to how quickly the system bus can move data from one computer component to the
 other.
 
-Mechanism
----------
-MSR_FSB_FREQ (**0xCD**), bits **2:0**. For platforms that don't support MSR_FSB_FREQ, **100.0MHz**
-is used.
+Mechanisms
+----------
+
+**msr**
+MSR_FSB_FREQ (0xCD), bits 2:0.
+**doc**
+100MHz on modern Intel platforms.
 
 Scope
 -----
 
-This property has **package** scope. With the following exception, Silvermonts and Airmonts have
-**module** scope.
+This property has package scope. Exceptions: Silvermonts and Airmonts have module scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -556,17 +559,18 @@ Description
 Minimum operating frequency is the lowest possible frequency the CPU can operate at. Depending on
 the CPU model, this frequency may or may not be directly available to the OS, but the
 platform may use it in certain situations (e.g., in some C-states). This frequency is also referred
-to as "**Pm**".
+to as Pm.
 
 Mechanism
 ---------
 
-MSR_PLATFORM_INFO (**0xCE**), bits **55:48**.
+**msr**
+MSR_PLATFORM_INFO (0xCE), bits 55:48.
 
 Scope
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -584,17 +588,18 @@ Description
 -----------
 
 Maximum efficiency frequency is the most energy efficient CPU frequency. This frequency is also
-referred to as **LFM** (Low Frequency Mode) or **Pn**.
+referred to as LFM (Low Frequency Mode) or Pn.
 
 Mechanism
 ---------
 
-MSR_PLATFORM_INFO (**0xCE**), bits **47:40**.
+**msr**
+MSR_PLATFORM_INFO (0xCE), bits 47:40.
 
 Scope
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -617,6 +622,7 @@ When turbo is enabled, the CPUs can automatically run at a frequency greater tha
 Mechanism
 ---------
 
+**sysfs**
 Location of the turbo knob in sysfs depends on the CPU frequency driver.
 
 intel_pstate - "/sys/devices/system/cpu/intel_pstate/no_turbo"
@@ -626,7 +632,7 @@ acpi-cpufreq - "/sys/devices/system/cpu/cpufreq/boost"
 Scope
 -----
 
-This property has **global** scope.
+This property has global scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -649,12 +655,13 @@ is also referred to as max. 1-core turbo and P01.
 Mechanism
 ---------
 
-MSR_TURBO_RATIO_LIMIT (**0x1AD**), bits **7:0**.
+**msr**
+MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
 
 Scope
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -674,8 +681,8 @@ Description
 
 Minimum uncore frequency is the lowest frequency the OS configured the CPU to run at, via sysfs knobs.
 
-The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
-(for example "900MHz").
+The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used
+(for example '900MHz').
 
 The following special values are supported:
 
@@ -689,13 +696,14 @@ The following special values are supported:
 Mechanism
 ---------
 
-"/sys/devices/system/cpu/intel_uncore_frequency/package\_\ **00**\ _die\_\ **01**\ /min_freq_khz",
-'**00**' is replaced with desired package number and '**01**' with desired die number.
+**sysfs**
+"/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/min_freq_khz",
+where '00' is replaced with desired package number and '01' is replaced with desired die number.
 
 Scope
 -----
 
-This property has **die** scope.
+This property has die scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -715,7 +723,7 @@ Description
 
 Maximum uncore frequency is the highest frequency the OS configured the CPU to run at, via sysfs knobs.
 
-The default unit is "**Hz**", but "**kHz**", "**MHz**", and "**GHz**" can also be used
+The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used
 (for example "900MHz").
 
 The following special values are supported:
@@ -730,13 +738,14 @@ The following special values are supported:
 Mechanism
 ---------
 
-"/sys/devices/system/cpu/intel_uncore_frequency/package\_\ **00**\ _die\_\ **01**\ /max_freq_khz",
-'**00**' is replaced with desired package number and '**01**' with desired die number.
+**sysfs**
+"/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/max_freq_khz",
+where '00' is replaced with desired package number and '01' is replaced with desired die number.
 
 Scope
 -----
 
-This property has **die** scope.
+This property has die scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -758,14 +767,15 @@ Minimum supported uncore frequency is the lowest uncore frequency supported by t
 Mechanism
 ---------
 
-"/sys/devices/system/cpu/intel_uncore_frequency/package\_\ **00**\ _die\_\ **01**\
-/initial_min_freq_khz", '**00**' is replaced with desired package number and '**01**' with desired
+**sysfs**
+"/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/initial_min_freq_khz",
+where '00' is replaced with desired package number and '01' is replaced with desired
 die number.
 
 Scope
 -----
 
-This property has **die** scope.
+This property has die scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -787,14 +797,15 @@ Maximum supported uncore frequency is the highest uncore frequency supported by 
 Mechanism
 ---------
 
-"/sys/devices/system/cpu/intel_uncore_frequency/package\_\ **00**\ _die\_\ **01**\
-/initial_max_freq_khz", '**00**' is replaced with desired package number and '**01**' with desired
+**sysfs**
+"/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/initial_max_freq_khz",
+where '00' is replaced with desired package number and '01' with desired
 die number.
 
 Scope
 -----
 
-This property has **die** scope.
+This property has die scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -817,12 +828,13 @@ active OS involvement.
 Mechanism
 ---------
 
-MSR_PM_ENABLE (**0x770**), bit **0**.
+**msr**
+MSR_PM_ENABLE (0x770), bit 0.
 
 Scope
 -----
 
-This property has **global** scope.
+This property has global scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -847,16 +859,16 @@ Mechanisms
 ---------
 
 **sysfs**
-"/sys/devices/system/cpu/cpufreq/policy\ **0**\ /energy_performance_preference", '**0**' is replaced
+"/sys/devices/system/cpu/cpufreq/policy0/energy_performance_preference", where '0' is replaced
 with desired CPU number.
 
 **msr**
-MSR_HWP_REQUEST (**0x774**), bits **31:24**.
+MSR_HWP_REQUEST (0x774), bits 31:24.
 
 Scope
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -880,18 +892,17 @@ Mechanisms
 ----------
 
 **sysfs**
-"/sys/devices/system/cpu/cpu\ **0**\ /power/energy_perf_bias", '**0**' is replaced with desired CPU
+"/sys/devices/system/cpu/cpu0/power/energy_perf_bias", where '0' is replaced with desired CPU
 number.
 
 **msr**
-MSR_ENERGY_PERF_BIAS (**0x1B0**), bits **3:0**.
+MSR_ENERGY_PERF_BIAS (0x1B0), bits 3:0.
 
 Scope
 -----
 
-This property has **CPU** scope.
-This property has **CPU** scope on most platforms. However, on Silvermont systems it has **core**
-scope and on Westmere and Sandybridge systems it has **package** scope.
+This property has CPU scope on most platforms. However, on Silvermont systems it has core
+scope and on Westmere and Sandybridge systems it has package scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -913,13 +924,14 @@ CPU frequency driver enumerates and requests the P-states available on the platf
 Mechanism
 ---------
 
-"/sys/devices/system/cpu/cpufreq/policy\ **0**\ /scaling_driver", '**0**' is replaced with desired
+**sysfs**
+"/sys/devices/system/cpu/cpufreq/policy0/scaling_driver", where '0' is replaced with desired
 CPU number.
 
 Scope
 -----
 
-This property has **global** scope.
+This property has global scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -937,7 +949,7 @@ Synopsis
 Description
 -----------
 
-The 'intel_pstate' driver has 3 operation modes: '**active**', '**passive**' and '**off**'. The main
+The 'intel_pstate' driver has 3 operation modes: 'active', 'passive' and 'off'. The main
 difference between the active and passive mode is in which frequency governors are used - the
 generic Linux governors (passive mode) or the custom, built-in 'intel_pstate' driver governors
 (active mode).
@@ -945,12 +957,13 @@ generic Linux governors (passive mode) or the custom, built-in 'intel_pstate' dr
 Mechanism
 ---------
 
-"/sys/devices/system/cpu/intel_pstate/status"
+**sysfs**
+"/sys/devices/system/cpu/intel_pstate/status".
 
 Scope
 -----
 
-This property has **global** scope.
+This property has global scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -974,13 +987,14 @@ factors.
 Mechanism
 ---------
 
-"/sys/devices/system/cpu/cpufreq/policy\ **0**\ /scaling_governor", '**0**' is replaced with desired
+**sysfs**
+"/sys/devices/system/cpu/cpufreq/policy0/scaling_governor", where '0' is replaced with desired
 CPU number.
 
 Scope
 -----
 
-This property has **CPU** scope.
+This property has CPU scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -1003,10 +1017,11 @@ factors. Different governors implement different selection policy.
 Mechanism
 ---------
 
-"/sys/devices/system/cpu/cpufreq/policy\ **0**\ /scaling_available_governors", '**0**' is replaced
-with desired CPU number.)
+**sysfs**
+"/sys/devices/system/cpu/cpufreq/policy0/scaling_available_governors", where '0' is replaced
+with desired CPU number.
 
 Scope
 -----
 
-This property has **global** scope.
+This property has global scope.

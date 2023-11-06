@@ -269,26 +269,21 @@ Synopsis
 Description
 -----------
 
-The deepest package C-state the platform is allowed to enter. MSR_PKG_CST_CONFIG_CONTROL (**0xE2**)
+The deepest package C-state the platform is allowed to enter. MSR_PKG_CST_CONFIG_CONTROL (0xE2)
 register can be locked, in which case the package C-state limit can only be read, but cannot be
-modified, please refer to property **pkg_cstate_limit_lock**.
+modified (please, refer to '**pkg_cstate_limit_lock**' for more information).
 
 Mechanism
 ---------
 
-MSR_PKG_CST_CONFIG_CONTROL (**0xE2**)
-
-Package C-state limits are documented in Intel SDM, but it describes all the possible package
-C-states for a CPU model. In practice, however, specific platforms often do not support many of
-package C-states. For example, Xeons typically do not support anything deeper than PC6.
-
-Refer to 'PCStateConfigCtl.py' for all platforms and bits.
+**msr**
+MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0, depending on CPU model.
 
 Scope
 -----
 
-This option has **core** scope. With the following exceptions: Silvermonts and Airmonts have
-**module** scope, Xeon Phis have **package** scope.
+This option has core scope. Exceptions: module scope on Silvermonts and Airmonts, package scop on
+Xeon Phi processors.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -310,13 +305,13 @@ All available package C-state limits.
 Mechanism
 ---------
 
-Hardware documentation, such as Intel SDM (Software Developer Manual) or Intel EDS (External Design
-Specification).
+**doc**
+Intel SDM (Software Developer Manual) and Intel EDS (External Design Specification).
 
 Scope
 -----
 
-This option has **global** scope.
+This option has global scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -333,19 +328,19 @@ pepc cstates *info* **--pkg-cstate-limit-lock**
 Description
 -----------
 
-Whether the package C-state limit can be modified. When 'True', property **'pkg_cstate_limit'** is
+Whether the package C-state limit can be modified. When 'True', '**pkg_cstate_limit**' is
 read-only.
 
 Mechanism
 ---------
 
-MSR_PKG_CST_CONFIG_CONTROL (**0xE2**)
-Refer to 'PCStateConfigCtl.py' for all platforms and bits.
+**msr**
+MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 15.
 
 Scope
 -----
 
-This option has **package** scope.
+This option has package scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -368,13 +363,13 @@ Package C-state limit aliases. For example on Ice Lake Xeon, 'PC6' is an alias f
 Mechanism
 ---------
 
-Hardware documentation, such as Intel SDM (Software Developer Manual) or Intel EDS (External Design
-Specification).
+**doc**
+Intel SDM (Software Developer Manual) or Intel EDS (External Design Specification).
 
 Scope
 -----
 
-This option has **global** scope.
+This option has global scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -392,18 +387,18 @@ Synopsis
 Description
 -----------
 
-Allow or disallow the CPU to demote **C6** or **C7** requests to **C1**.
+Allow or disallow the CPU to demote 'C6' or 'C7' C-state requests to 'C1'.
 
 Mechanism
 ---------
 
-MSR_PKG_CST_CONFIG_CONTROL (**0xE2**), bit **26**.
+MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 26.
 
 Scope
 -----
 
-This option has **core** scope. With the following exceptions, Silvermonts and Airmonts have
-**module** scope, Xeon Phis have **package** scope.
+This option has core scope. Exceptions: module scope on Silvermonts and Airmonts, package scope on
+Xeon Phis.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -421,19 +416,20 @@ Synopsis
 Description
 -----------
 
-Allow or disallow the CPU to un-demote previously demoted requests back from **C1** to
-**C6** or **C7**.
+Allow or disallow the CPU to un-demote previously demoted requests back from 'C1' C-state to
+'C6' or 'C7l.
 
 Mechanism
 ---------
 
-MSR_PKG_CST_CONFIG_CONTROL (**0xE2**), bit **28**.
+**msr**
+MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 28.
 
 Scope
 -----
 
-This option has **core** scope. With the following exceptions, Silvermonts and Airmonts have
-**module** scope, Xeon Phis have **package** scope.
+This option has core scope. Exceptions: module scope on Silvermonts and Airmonts, package scope on
+Xeon Phis.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -451,17 +447,18 @@ Synopsis
 Description
 -----------
 
-When enabled, the CPU automatically converts all **C1** requests to **C1E** requests.
+When enabled, the CPU automatically converts all 'C1' C-state requests to 'C1E' requests.
 
 Mechanism
 ---------
 
-MSR_POWER_CTL (**0x1FC**), bit **1**.
+**msr**
+MSR_POWER_CTL (0x1FC), bit 1.
 
 Scope
 -----
 
-This option has **package** scope.
+This option has package scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -479,18 +476,19 @@ Synopsis
 Description
 -----------
 
-When enabled, the CPU will start exiting the **C6** idle state in advance, prior to the next local
+When enabled, the CPU will start exiting the 'C6' C-state in advance, prior to the next local
 APIC timer event.
 
 Mechanism
 ---------
 
-MSR_POWER_CTL (**0x1FC**), bit **30**.
+**msr**
+MSR_POWER_CTL (0x1FC), bit 30.
 
 Scope
 -----
 
-This option has **package** scope.
+This option has package scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -512,12 +510,13 @@ Idle driver is responsible for enumerating and requesting the C-states available
 Mechanism
 ---------
 
+**sysfs***
 "/sys/devices/system/cpu/cpuidle/current_governor"
 
 Scope
 -----
 
-This option has **global** scope.
+This option has global scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -540,12 +539,13 @@ Idle governor decides which C-state to request on an idle CPU.
 Mechanism
 ---------
 
+**sysfs**
 "/sys/devices/system/cpu/cpuidle/scaling_governor"
 
 Scope
 -----
 
-This option has **global** scope.
+This option has global scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -568,12 +568,13 @@ different selection policy.
 Mechanism
 ---------
 
+**sysfs**
 "/sys/devices/system/cpu/cpuidle/available_governors"
 
 Scope
 -----
 
-This property has **global** scope.
+This property has global scope.
 
 ----------------------------------------------------------------------------------------------------
 
@@ -599,9 +600,10 @@ drives idle power down.
 Source
 ------
 
-MSR_POWER_CTL (**0x1FC**), bit **36**.
+**msr**
+MSR_POWER_CTL (0x1FC), bit 36.
 
 Scope
 -----
 
-This option has **global** scope.
+This option has global scope.
