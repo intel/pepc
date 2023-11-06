@@ -248,6 +248,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._validate_pname(pname)
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
+        self._set_sname(pname)
+
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             pvinfo = self._get_cpu_prop_pvinfo(pname, cpu, mnames)
             _LOG.debug("'%s' is '%s' for CPU %d using mechanism '%s'%s",

@@ -307,20 +307,15 @@ class CStates(_PCStatesBase.PCStatesBase):
         if self._props[pname]["sname"]:
             return
 
-        if pname in PCStateConfigCtl.FEATURES:
-            finfo = self._get_pcstatectl().features
-            self._props["c1_demotion"]["sname"] = finfo["c1_demotion"]["sname"]
-            self._props["c1_undemotion"]["sname"] = finfo["c1_undemotion"]["sname"]
-
-            self._props["pkg_cstate_limit"]["sname"] = finfo["pkg_cstate_limit"]["sname"]
-            self._props["pkg_cstate_limit_lock"]["sname"] = finfo["lock"]["sname"]
-        elif pname in PowerCtl.FEATURES:
-            finfo = self._get_powerctl().features
-            self._props["c1e_autopromote"]["sname"] = finfo["c1e_autopromote"]["sname"]
-            self._props["cstate_prewake"]["sname"] = finfo["cstate_prewake"]["sname"]
-            self._props["pch_negotiation"]["sname"] = finfo["pch_negotiation"]["sname"]
-        else:
-            raise Error(f"BUG: could not get scope for property '{pname}'")
+        try:
+            if pname in PCStateConfigCtl.FEATURES:
+                finfo = self._get_pcstatectl().features
+                self._props[pname]["sname"] = finfo[pname]["sname"]
+            elif pname in PowerCtl.FEATURES:
+                finfo = self._get_powerctl().features
+                self._props[pname]["sname"] = finfo[pname]["sname"]
+        except Error:
+            self._props[pname]["sname"] = "CPU"
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""

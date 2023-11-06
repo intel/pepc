@@ -101,7 +101,7 @@ PROPS = {
         "unit" : "Hz",
         "type" : "int",
         "sname": None,
-        "mnames" : ("msr", ),
+        "mnames" : ("msr", "doc"),
         "writable" : False,
     },
     "min_oper_freq" : {
@@ -697,11 +697,60 @@ class PStates(_PCStatesBase.PCStatesBase):
                                      exception=False)
         return self._construct_pvinfo(pname, cpu, mname, val)
 
-    def _get_bus_clock_pvinfo(self, cpu):
-        """Read bus clock speed from 'MSR_FSB_FREQ' and return the property value dictionary."""
+    def _get_bus_clock_msr(self, cpu):
+        """Read bus clock speed from 'MSR_FSB_FREQ'."""
 
-        val = self._get_bclk(cpu)
-        return self._construct_pvinfo("bus_clock", cpu, "msr", val)
+        try:
+            val = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
+        except ErrorNotSupported:
+            val = None
+
+        return val
+
+    def _get_bus_clock_intel(self, cpu):
+        """Get bus clock for Intel platforms."""
+
+        pname = "bus_clock"
+        mname = "doc"
+        val = None
+
+        with contextlib.suppress(ErrorNotFound):
+            val, _ = self._pcache.find(pname, cpu, mnames=(mname,))
+            return val
+
+        if self._cpuinfo.info["vendor"] == "GenuineIntel":
+            val = self._get_bus_clock_msr(cpu)
+            if val is None:
+                # Modern Intel platforms use 100MHz bus clock.
+                val = 100000000
+
+        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
+        return val
+
+    def _get_bus_clock_pvinfo(self, cpu, mnames=None):
+        """Read bus clock speed and return the property value dictionary."""
+
+        pname = "bus_clock"
+        val, mname = None, None
+
+        if not mnames:
+            mnames = self._props[pname]["mnames"]
+
+        for mname in mnames:
+            if mname == "msr":
+                val = self._get_bus_clock_msr(cpu)
+            elif mname == "doc":
+                val = self._get_bus_clock_intel(cpu)
+            else:
+                mnames = ",".join(mnames)
+                raise Error(f"BUG: unsupported mechanisms '{mnames}' for '{pname}'")
+
+            if val is not None:
+                break
+
+        if val is None:
+            self._prop_not_supported((cpu,), mnames, "get", "bus clock speed", [], exception=False)
+        return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _read_int(self, path):
         """Read an integer from file 'path' via the process manager."""
@@ -1033,7 +1082,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if pname == "max_turbo_freq":
             return self._get_max_turbo_freq_pvinfo(cpu, mnames=mnames)
         if pname == "bus_clock":
-            return self._get_bus_clock_pvinfo(cpu)
+            return self._get_bus_clock_pvinfo(cpu, mnames=mnames)
         if pname in {"min_freq", "max_freq"}:
             return self._get_cpu_freq_pvinfo(pname, cpu, mnames=mnames)
         if pname == "base_freq":
@@ -1494,17 +1543,14 @@ class PStates(_PCStatesBase.PCStatesBase):
         if self._props[pname]["sname"]:
             return
 
-        if pname == "epb":
-            try:
+        try:
+            if pname == "epb":
                 _epb = self._get_epbobj() # pylint: disable=protected-access
-            except Error:
-                self._props[pname]["sname"] = "CPU"
-            else:
                 self._props[pname]["sname"] = _epb.sname
-        elif pname == "bus_clock":
-            self._props[pname]["sname"] = self._get_fsbfreq().features["fsb"]["sname"]
-        else:
-            raise Error(f"BUG: couldn't get scope for property '{pname}'")
+            elif pname == "bus_clock":
+                self._props[pname]["sname"] = self._get_fsbfreq().features["fsb"]["sname"]
+        except Error:
+            self._props[pname]["sname"] = "CPU"
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
