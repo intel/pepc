@@ -75,10 +75,16 @@ Force coloring of the text output.
 .SS Subcommand \f[I]\[aq]info\[aq]\f[R]
 .PP
 Get information about current PCI ASPM configuration.
+.TP
+\f[B]--policy\f[R] \f[I]NAME\f[R]
+Get currently configured PCI ASPM policy to name.
+.TP
+\f[B]--policies\f[R] \f[I]NAME\f[R]
+Get list of available PCI ASPM policy to names.
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
 .PP
 Change PCI ASPM configuration.
 .TP
 \f[B]--policy\f[R] \f[I]NAME\f[R]
-The PCI ASPM policy to set, use \[dq]default\[dq] to set the Linux
-default policy.
+The PCI ASPM policy to set, use \[dq]default\[dq] to set the default
+policy.

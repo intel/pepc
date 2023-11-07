@@ -1,3 +1,20 @@
+pepc (1.4.38) unstable; urgency=low
+
+  * Add '--mechanism' option, which can be used for specifying the mechanism for
+    getting and setting pepc C-states, P-states, and Power options.
+  * Add '--list-mechanisms' option for listing all the available mechanisms.
+  * Add new '--frequencies' option for listing CPU frequencies acceptable but
+    the Linux driver.
+  * Add new 'cppc' mechanism, which can read ACPI CPPC CPU frequency data.
+  * Remove '--epb-hw' and '--epp-hw' options. They are replaced with '--epb' and
+    '-epp' plus the '--mechanism msr' options combination.
+  * Remove '--min-freq-hw' and '--max-freq-hw' options. They are replaced with
+    '--min-freq' and '-max-freq' plus the '--mechanism msr' options combination.
+  * The 'pepc aspm info' command now has separate '--policy' and '--policies'
+    options.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Tue, 07 Nov 2023 00:00:00 +0200
+
 pepc (1.4.37) unstable; urgency=low
 
   * Fix regression in v1.4.36: 'pepc cstates|pstates|power config' does not print

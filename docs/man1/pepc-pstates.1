@@ -120,6 +120,9 @@ as.
 For example, use 0x8F to treat the target system as Sapphire Rapids
 Xeon.
 .TP
+\f[B]--list-mechanisms\f[R]
+List mechanisms available for reading P-states information.
+.TP
 \f[B]--min-freq\f[R]
 Get minimum CPU frequency (details in \[aq]min_freq\[aq]).
 .TP
@@ -134,16 +137,11 @@ Get minimum supported CPU frequency (details in
 Get maximum supported CPU frequency (details in
 \[aq]max_freq_limit\[aq]).
 .TP
+\f[B]--frequencies\f[R]
+Get acceptable CPU frequencies (details in \[aq]frequencies\[aq]).
+.TP
 \f[B]--base-freq\f[R]
 Get base CPU frequency (details in \[aq]base_freq\[aq]).
-.TP
-\f[B]--min-freq-hw\f[R]
-Get minimum CPU frequency (OS bypass) (details in
-\[aq]min_freq_hw\[aq]).
-.TP
-\f[B]--max-freq-hw\f[R]
-Get maximum CPU frequency (OS bypass) (details in
-\[aq]max_freq_hw\[aq]).
 .TP
 \f[B]--bus-clock\f[R]
 Get bus clock speed (details in \[aq]bus_clock\[aq]).
@@ -183,14 +181,8 @@ Check if hardware power management is enabled or disabled (details in
 \f[B]--epp\f[R]
 Get EPP via sysfs (details in \[aq]epp\[aq]).
 .TP
-\f[B]--epp-hw\f[R]
-Get EPP via MSR (details in \[aq]epp_hw\[aq]).
-.TP
 \f[B]--epb\f[R]
 Get EPB via sysfs (details in \[aq]epb\[aq]).
-.TP
-\f[B]--epb-hw\f[R]
-Get EPB via MSR (details in \[aq]epb_hw\[aq]).
 .TP
 \f[B]--driver\f[R]
 Get CPU frequency driver (details in \[aq]driver\[aq]).
@@ -251,19 +243,24 @@ as.
 For example, use 0x8F to treat the target system as Sapphire Rapids
 Xeon.
 .TP
+\f[B]-m\f[R] \f[I]MECHANISMS\f[R], \f[B]--mechanisms\f[R] \f[I]MECHANISMS\f[R]
+Comma-separated list of mechanisms that are allowed to be used for
+configuring P-states.
+Use \[aq]--list-mechanisms\[aq] to get the list of available mechanisms.
+Note, many options support only one mechanism (e.g., \[aq]sysfs\[aq]),
+some may support multiple (e.g., \[aq]sysfs\[aq] and \[aq]msr\[aq]).
+The mechanisms are tried in the specified order.
+By default, all mechanisms are allowed and the most preferred mechanisms
+will be tried first.
+.TP
+\f[B]--list-mechanisms\f[R]
+List mechanisms available for configuring P-states.
+.TP
 \f[B]--min-freq\f[R] \f[I]MIN_FREQ\f[R]
 Set minimum CPU frequency (details in \[aq]min_freq\[aq]).
 .TP
 \f[B]--max-freq\f[R] \f[I]MAX_FREQ\f[R]
 Set maximum CPU frequency (details in \[aq]max_freq\[aq]).
-.TP
-\f[B]--min-freq-hw\f[R] \f[I]MIN_FREQ\f[R]
-Set minimum CPU frequency (OS bypass) (details in
-\[aq]min_freq_limit\[aq]).
-.TP
-\f[B]--max-freq-hw\f[R] \f[I]MAX_FREQ\f[R]
-Set maximum CPU frequency (OS bypass) (details in
-\[aq]max_freq_limit\[aq]).
 .TP
 \f[B]--turbo\f[R] \f[I]on|off\f[R]
 Enable or disable turbo (details in \[aq]turbo\[aq]).
@@ -277,14 +274,8 @@ Set maximum uncore frequency (details in \[aq]max_uncore_freq\[aq]).
 \f[B]--epp\f[R] \f[I]EPP\f[R]
 Set EPP via sysfs (details in \[aq]epp\[aq]).
 .TP
-\f[B]--epp-hw\f[R] \f[I]EPP\f[R]
-Set EPP via MSR (details in \[aq]epp_hw\[aq]).
-.TP
 \f[B]--epb\f[R] \f[I]EPB\f[R]
 Set EPB via sysfs (details in \[aq]epb\[aq]).
-.TP
-\f[B]--epb-hw\f[R] \f[I]EPB\f[R]
-Set EPB via MSR (details in \[aq]epb_hw\[aq]).
 .TP
 \f[B]--intel-pstate-mode\f[R] \f[I][MODE]\f[R]
 Set operation mode of \[aq]intel_pstate\[aq] driver (details in
@@ -360,33 +351,49 @@ pepc pstates \f[I]config\f[R] \f[B]--min-freq\f[R]=<value>
 Minimum CPU frequency is the lowest frequency the CPU was configured the
 CPU to run at.
 .PP
-The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
-\[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
-(for example \[dq]900MHz\[dq]).
+The default unit is \[aq]Hz\[aq], but \[aq]kHz\[aq], \[aq]MHz\[aq], and
+\[aq]GHz\[aq] can also be used (for example \[dq]900MHz\[dq]).
 .PP
 The following special values are supported:
 .TP
-\[dq]\f[B]min\f[R]\[dq]
-Minimum supported CPU frequency (see \[aq]min_freq_limit\[aq]).
+\f[B]min\f[R]
+Minimum frequency supported by the Linux CPU frequency driver (see
+\[aq]min_freq_limit\[aq]).
 .TP
-\[dq]\f[B]max\f[R]\[dq]
-Maximum supported CPU frequency (see \[aq]max_freq_limit\[aq]).
+\f[B]max\f[R]
+Maximum frequency supported by the Linux CPU frequency driver (see
+\[aq]max_freq_limit\[aq]).
 .TP
-\[dq]\f[B]base\f[R]\[dq], \[dq]\f[B]hfm\f[R]\[dq], \[dq]\f[B]P1\f[R]\[dq]
+\f[B]base\f[R], \f[B]hfm\f[R], \f[B]P1\f[R]
 Base CPU frequency (see \[aq]base_freq\[aq]).
 .TP
-\[dq]\f[B]eff\f[R]\[dq], \[dq]\f[B]lfm\f[R]\[dq], \[dq]\f[B]Pn\f[R]\[dq]
+\f[B]eff\f[R], \f[B]lfm\f[R], \f[B]Pn\f[R]
 Maximum CPU efficiency frequency (see \[aq]max_eff_freq\[aq]).
 .TP
-\[dq]\f[B]Pm\f[R]\[dq]
+\f[B]Pm\f[R]
 Minimum CPU operating frequency (see \[aq]min_oper_freq\[aq]).
-.SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/scaling_min_freq\[dq],
-\[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
+Note, on some systems \[aq]Pm\[aq] is lower than \[aq]lfm\[aq].
+For example, \[aq]Pm\[aq] may be 500MHz, while \[aq]lfm\[aq] may be
+800MHz.
+On those system, Linux may be using \[aq]lfm\[aq] as the minimum
+supported frequency limit.
+So from Linux perspecitve, the minimum frequency may be 800MHz, not
+500MHz.
+In this case \[aq]--min-freq 500MHz --mechanisms sysfs\[aq] will fail,
+while \[aq]--min-freq 500MHz --mechanisms sysfs\[aq] will succeed.
+And \[aq]--min-freq 500MHz\[aq] will also succeed, because by default,
+pepc tries all the available mechanisms.
+.SS Mechanisms
+.PP
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/policy0/scaling_min_freq\[dq], where
+\[aq]0\[aq] is replaced with desired CPU number.
+.PP
+\f[B]msr\f[R] MSR_HWP_REQUEST (0x774), bits 7:0.
 .SS Scope
 .PP
-This property has \f[B]CPU\f[R] scope.
+This property has CPU scope.
 .PP
    *   *   *   *   *
 .SS max_freq
@@ -404,35 +411,38 @@ pepc pstates \f[I]config\f[R] \f[B]--max-freq\f[R]=<value>
 Maximum CPU frequency is the highest frequency the CPU was configured to
 run at.
 .PP
-The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
-\[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
-(for example \[dq]900MHz\[dq]).
+The default unit is \[aq]Hz\[aq], but \[aq]kHz\[aq], \[aq]MHz\[aq], and
+\[aq]GHz\[aq] can also be used (for example \[aq]900MHz\[aq]).
 .PP
 The following special values are supported:
 .TP
-\[dq]\f[B]min\f[R]\[dq]
-Minimum supported CPU frequency (see \[aq]min_freq_limit\[aq]).
+\f[B]min\f[R]
+Minimum frequency supported by the Linux CPU frequency driver (see
+\[aq]min_freq_limit\[aq]).
 .TP
-\[dq]\f[B]max\f[R]\[dq]
-Maximum supported CPU frequency (see \[aq]max_freq_limit\[aq]).
+\f[B]max\f[R]
+Maximum frequency supported by the Linux CPU frequency driver (see
+\[aq]max_freq_limit\[aq]).
 .TP
-\[dq]\f[B]base\f[R]\[dq], \[dq]\f[B]hfm\f[R]\[dq], \[dq]\f[B]P1\f[R]\[dq]
+\f[B]base\f[R], \f[B]hfm\f[R], \f[B]P1\f[R]
 Base CPU frequency (see \[aq]base_freq\[aq]).
 .TP
-\[dq]\f[B]eff\f[R]\[dq], \[dq]\f[B]lfm\f[R]\[dq], \[dq]\f[B]Pn\f[R]\[dq]
+\f[B]eff\f[R], \f[B]lfm\f[R], \f[B]Pn\f[R]
 Maximum CPU efficiency frequency (see \[aq]max_eff_freq\[aq]).
 .TP
-\[dq]\f[B]Pm\f[R]\[dq]
+\f[B]Pm\f[R]
 Minimum CPU operating frequency (see \[aq]min_oper_freq\[aq]).
-.SS Mechanism
+.SS Mechanisms
 .PP
-\[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/scaling_max_freq\[dq],
-\[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
-.SS Scope
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/policy0/scaling_max_freq\[dq], where
+\[aq]0\[aq] is replaced with desired CPU number.
 .PP
-This property has \f[B]CPU\f[R] scope.
+\f[B]msr\f[R] MSR_HWP_REQUEST (0x774), bits 15:8.
 .PP
    *   *   *   *   *
+.PP
+This property has CPU scope.
 .SS min_freq_limit
 .PP
 min_freq_limit - Minimum supported CPU frequency
@@ -445,11 +455,12 @@ Minimum supported CPU frequency is the lowest frequency the CPU can be
 configured to run at.
 .SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/cpuinfo_min_freq\[dq],
-\[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/policy0/cpuinfo_min_freq\[dq], where
+\[aq]0\[aq] is replaced with desired CPU number.
 .SS Scope
 .PP
-This property has \f[B]CPU\f[R] scope.
+This property has CPU scope.
 .PP
    *   *   *   *   *
 .SS max_freq_limit
@@ -464,11 +475,37 @@ Maximum supported CPU frequency is the highest frequency the CPU can be
 configured to run at.
 .SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/cpuinfo_max_freq\[dq],
-\[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/policy0/cpuinfo_max_freq\[dq], where
+\[aq]0\[aq] is replaced with desired CPU number.
 .SS Scope
 .PP
-This property has \f[B]CPU\f[R] scope.
+This property has CPU scope.
+.PP
+   *   *   *   *   *
+.SS frequencies
+.PP
+frequencies - acceptable CPU frequencies
+.SS Synopsis
+.PP
+pepc pstates \f[I]info\f[R] \f[B]--frequencies\f[R]
+.SS Description
+.PP
+List of CPU frequencies exposed by the Linux CPU frequency driver and
+available for the users via \[aq]--min-freq\[aq] and
+\[aq]--max-freq\[aq] options.
+.SS Mechanisms
+.PP
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies\[dq],
+\[aq]0\[aq] is replaced with desired CPU number.
+.PP
+\f[B]doc\f[R] In case of Intel CPUs and \[aq]intel_idle\[aq] driver,
+assume all frequencies from \[aq]min_freq_limit\[aq] to
+\[aq]max_freq_limit\[aq] with \[aq]bus_clock\[aq] step.
+.SS Scope
+.PP
+This property has CPU scope.
 .PP
    *   *   *   *   *
 .SS base_freq
@@ -481,109 +518,23 @@ pepc pstates \f[I]info\f[R] \f[B]--base-freq\f[R]
 .PP
 Base CPU frequency is the highest sustainable CPU frequency.
 This frequency is also referred to as \[dq]guaranteed frequency\[dq],
-\f[B]HFM\f[R] (High Frequency Mode), or \f[B]P1\f[R].
+HFM (High Frequency Mode), or P1.
 .PP
 The base frequency is acquired from a sysfs file or from an MSR
 register, depending on platform and the CPU frequency driver.
-.SS Mechanism
+.SS Mechanisms
 .PP
-\[dq]/sys/devices/system/cpu/policy\f[B]0\f[R]/base_frequency\[dq],
-\[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
-If the \[dq]base_frequency\[dq] file does not exist then either
-MSR_PLATFORM_INFO \f[B](0xCE)\f[R], bits \f[B]15:8\f[R] is used (Intel
-platforms) or the
-\[dq]/sys/devices/system/cpu/cpu\f[B]0\f[R]/cpufreq/bios_limit\[dq]
-sysfs file is used (non-Intel platforms, \[aq]\f[B]0\f[R]\[aq] is
-replaced with desired CPU number).
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/policy0/base_frequency\[dq], where
+\[aq]0\[aq] is replaced with desired CPU number.
+If this file does not exist, the
+\[dq]/sys/devices/system/cpu/cpu0/cpufreq/bios_limit\[dq] sysfs file is
+used (where \[aq]0\[aq] is replaced with desired CPU number).
+.PP
+\f[B]msr\f[R] MSR_PLATFORM_INFO (0xCE), bits 15:8.
 .SS Scope
 .PP
-This property has \f[B]CPU\f[R] scope.
-.PP
-   *   *   *   *   *
-.SS min_freq_hw
-.PP
-min_freq_hw - Minimum CPU frequency
-.SS Synopsis
-.PP
-pepc pstates \f[I]info\f[R] \f[B]--min-freq-hw\f[R]
-.PD 0
-.P
-.PD
-pepc pstates \f[I]config\f[R] \f[B]--min-freq-hw\f[R]=<value>
-.SS Description
-.PP
-Minimum CPU frequency is the lowest frequency the CPU was configured the
-CPU to run at.
-.PP
-The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
-\[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
-(for example \[dq]900MHz\[dq]).
-.PP
-The following special values are supported:
-.TP
-\[dq]\f[B]min\f[R]\[dq]
-Minimum supported CPU frequency (see \[aq]min_freq_limit\[aq]).
-.TP
-\[dq]\f[B]max\f[R]\[dq]
-Maximum supported CPU frequency (see \[aq]max_freq_limit\[aq]).
-.TP
-\[dq]\f[B]base\f[R]\[dq], \[dq]\f[B]hfm\f[R]\[dq], \[dq]\f[B]P1\f[R]\[dq]
-Base CPU frequency (see \[aq]base_freq\[aq]).
-.TP
-\[dq]\f[B]eff\f[R]\[dq], \[dq]\f[B]lfm\f[R]\[dq], \[dq]\f[B]Pn\f[R]\[dq]
-Maximum CPU efficiency frequency (see \[aq]max_eff_freq\[aq]).
-.TP
-\[dq]\f[B]Pm\f[R]\[dq]
-Minimum CPU operating frequency (see \[aq]min_oper_freq\[aq]).
-.SS Mechanism
-.PP
-MSR_HWP_REQUEST (\f[B]0x774\f[R]), bits \f[B]7:0\f[R].
-.SS Scope
-.PP
-This property has \f[B]CPU\f[R] scope.
-.PP
-   *   *   *   *   *
-.SS max_freq_hw
-.PP
-max_freq_hw - Maximum CPU frequency
-.SS Synopsis
-.PP
-pepc pstates \f[I]info\f[R] \f[B]--max-freq-hw\f[R]
-.PD 0
-.P
-.PD
-pepc pstates \f[I]config\f[R] \f[B]--max-freq-hw\f[R]=<value>
-.SS Description
-.PP
-Minimum CPU frequency is the lowest frequency the CPU was configured the
-CPU to run at.
-.PP
-The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
-\[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
-(for example \[dq]900MHz\[dq]).
-.PP
-The following special values are supported:
-.TP
-\[dq]\f[B]min\f[R]\[dq]
-Minimum supported CPU frequency (see \[aq]min_freq_limit\[aq]).
-.TP
-\[dq]\f[B]max\f[R]\[dq]
-Maximum supported CPU frequency (see \[aq]max_freq_limit\[aq]).
-.TP
-\[dq]\f[B]base\f[R]\[dq], \[dq]\f[B]hfm\f[R]\[dq], \[dq]\f[B]P1\f[R]\[dq]
-Base CPU frequency (see \[aq]base_freq\[aq]).
-.TP
-\[dq]\f[B]eff\f[R]\[dq], \[dq]\f[B]lfm\f[R]\[dq], \[dq]\f[B]Pn\f[R]\[dq]
-Maximum CPU efficiency frequency (see \[aq]max_eff_freq\[aq]).
-.TP
-\[dq]\f[B]Pm\f[R]\[dq]
-Minimum CPU operating frequency (see \[aq]min_oper_freq\[aq]).
-.SS Mechanism
-.PP
-MSR_HWP_REQUEST (\f[B]0x774\f[R]), bits \f[B]15:8\f[R].
-.SS Scope
-.PP
-This property has \f[B]CPU\f[R] scope.
+This property has CPU scope.
 .PP
    *   *   *   *   *
 .SS bus_clock
@@ -596,16 +547,14 @@ pepc pstates \f[I]info\f[R] \f[B]--bus-clock\f[R]
 .PP
 Bus clock refers to how quickly the system bus can move data from one
 computer component to the other.
-.SS Mechanism
+.SS Mechanisms
 .PP
-MSR_FSB_FREQ (\f[B]0xCD\f[R]), bits \f[B]2:0\f[R].
-For platforms that don\[aq]t support MSR_FSB_FREQ, \f[B]100.0MHz\f[R] is
-used.
+\f[B]msr\f[R] MSR_FSB_FREQ (0xCD), bits 2:0.
+\f[B]doc\f[R] 100MHz on modern Intel platforms.
 .SS Scope
 .PP
-This property has \f[B]package\f[R] scope.
-With the following exception, Silvermonts and Airmonts have
-\f[B]module\f[R] scope.
+This property has package scope.
+Exceptions: Silvermonts and Airmonts have module scope.
 .PP
    *   *   *   *   *
 .SS min_oper_freq
@@ -621,13 +570,13 @@ operate at.
 Depending on the CPU model, this frequency may or may not be directly
 available to the OS, but the platform may use it in certain situations
 (e.g., in some C-states).
-This frequency is also referred to as \f[B]Pm\f[R].
+This frequency is also referred to as Pm.
 .SS Mechanism
 .PP
-MSR_PLATFORM_INFO (\f[B]0xCE\f[R]), bits \f[B]55:48\f[R].
+\f[B]msr\f[R] MSR_PLATFORM_INFO (0xCE), bits 55:48.
 .SS Scope
 .PP
-This property has \f[B]CPU\f[R] scope.
+This property has CPU scope.
 .PP
    *   *   *   *   *
 .SS max_eff_freq
@@ -639,14 +588,13 @@ pepc pstates \f[I]info\f[R] \f[B]--max-eff-freq\f[R]
 .SS Description
 .PP
 Maximum efficiency frequency is the most energy efficient CPU frequency.
-This frequency is also referred to as \f[B]LFM\f[R] (Low Frequency Mode)
-or \f[B]Pn\f[R].
+This frequency is also referred to as LFM (Low Frequency Mode) or Pn.
 .SS Mechanism
 .PP
-MSR_PLATFORM_INFO (\f[B]0xCE\f[R]), bits \f[B]47:40\f[R].
+\f[B]msr\f[R] MSR_PLATFORM_INFO (0xCE), bits 47:40.
 .SS Scope
 .PP
-This property has \f[B]CPU\f[R] scope.
+This property has CPU scope.
 .PP
    *   *   *   *   *
 .SS turbo
@@ -665,14 +613,15 @@ When turbo is enabled, the CPUs can automatically run at a frequency
 greater than base frequency.
 .SS Mechanism
 .PP
-Location of the turbo knob in sysfs depends on the CPU frequency driver.
+\f[B]sysfs\f[R] Location of the turbo knob in sysfs depends on the CPU
+frequency driver.
 .PP
 intel_pstate - \[dq]/sys/devices/system/cpu/intel_pstate/no_turbo\[dq]
 .PP
 acpi-cpufreq - \[dq]/sys/devices/system/cpu/cpufreq/boost\[dq]
 .SS Scope
 .PP
-This property has \f[B]global\f[R] scope.
+This property has global scope.
 .PP
    *   *   *   *   *
 .SS max_turbo_freq
@@ -680,7 +629,7 @@ This property has \f[B]global\f[R] scope.
 max_turbo_freq - Maximum CPU turbo frequency
 .SS Synopsis
 .PP
-pepc pstates \f[I]info\f[R] \f[B]--max-eff-freq\f[R]
+pepc pstates \f[I]info\f[R] \f[B]--max-turbo-freq\f[R]
 .SS Description
 .PP
 Maximum 1-core turbo frequency is the highest frequency a single CPU can
@@ -689,10 +638,10 @@ This frequency is also referred to as max.
 1-core turbo and P01.
 .SS Mechanism
 .PP
-MSR_TURBO_RATIO_LIMIT (\f[B]0x1AD\f[R]), bits \f[B]7:0\f[R].
+\f[B]msr\f[R] MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
 .SS Scope
 .PP
-This property has \f[B]CPU\f[R] scope.
+This property has CPU scope.
 .PP
    *   *   *   *   *
 .SS min_uncore_freq
@@ -710,29 +659,29 @@ pepc pstates \f[I]config\f[R] \f[B]--min-uncore-freq\f[R]=<value>
 Minimum uncore frequency is the lowest frequency the OS configured the
 CPU to run at, via sysfs knobs.
 .PP
-The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
-\[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
-(for example \[dq]900MHz\[dq]).
+The default unit is \[aq]Hz\[aq], but \[aq]kHz\[aq], \[aq]MHz\[aq], and
+\[aq]GHz\[aq] can also be used (for example \[aq]900MHz\[aq]).
 .PP
 The following special values are supported:
 .TP
-\[dq]\f[B]min\f[R]\[dq]
+\f[B]min\f[R]
 Minimum uncore frequency supported (see \[aq]min_freq_limit\[aq]).
 .TP
-\[dq]\f[B]max\f[R]\[dq]
+\f[B]max\f[R]
 Maximum uncore frequency supported (see \[aq]max_freq_limit\[aq]).
 .TP
-\[dq]\f[B]mdl\f[R]\[dq]
+\f[B]mdl\f[R]
 Middle uncore frequency between minimum and maximum rounded to nearest
 100MHz.
 .SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_\f[B]00\f[R]_die_\f[B]01\f[R]/min_freq_khz\[dq],
-\[aq]\f[B]00\f[R]\[aq] is replaced with desired package number and
-\[aq]\f[B]01\f[R]\[aq] with desired die number.
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/min_freq_khz\[dq],
+where \[aq]00\[aq] is replaced with desired package number and
+\[aq]01\[aq] is replaced with desired die number.
 .SS Scope
 .PP
-This property has \f[B]die\f[R] scope.
+This property has die scope.
 .PP
    *   *   *   *   *
 .SS max_uncore_freq
@@ -750,29 +699,29 @@ pepc pstates \f[I]config\f[R] \f[B]--max-uncore-freq\f[R]=<value>
 Maximum uncore frequency is the highest frequency the OS configured the
 CPU to run at, via sysfs knobs.
 .PP
-The default unit is \[dq]\f[B]Hz\f[R]\[dq], but \[dq]\f[B]kHz\f[R]\[dq],
-\[dq]\f[B]MHz\f[R]\[dq], and \[dq]\f[B]GHz\f[R]\[dq] can also be used
-(for example \[dq]900MHz\[dq]).
+The default unit is \[aq]Hz\[aq], but \[aq]kHz\[aq], \[aq]MHz\[aq], and
+\[aq]GHz\[aq] can also be used (for example \[dq]900MHz\[dq]).
 .PP
 The following special values are supported:
 .TP
-\[dq]\f[B]min\f[R]\[dq]
+\f[B]min\f[R]
 Minimum uncore frequency supported (see \[aq]min_freq_limit\[aq]).
 .TP
-\[dq]\f[B]max\f[R]\[dq]
+\f[B]max\f[R]
 Maximum uncore frequency supported (see \[aq]max_freq_limit\[aq]).
 .TP
-\[dq]\f[B]mdl\f[R]\[dq]
+\f[B]mdl\f[R]
 Middle uncore frequency between minimum and maximum rounded to nearest
 100MHz.
 .SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_\f[B]00\f[R]_die_\f[B]01\f[R]/max_freq_khz\[dq],
-\[aq]\f[B]00\f[R]\[aq] is replaced with desired package number and
-\[aq]\f[B]01\f[R]\[aq] with desired die number.
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/max_freq_khz\[dq],
+where \[aq]00\[aq] is replaced with desired package number and
+\[aq]01\[aq] is replaced with desired die number.
 .SS Scope
 .PP
-This property has \f[B]die\f[R] scope.
+This property has die scope.
 .PP
    *   *   *   *   *
 .SS min_uncore_freq_limit
@@ -787,12 +736,13 @@ Minimum supported uncore frequency is the lowest uncore frequency
 supported by the OS.
 .SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_\f[B]00\f[R]_die_\f[B]01\f[R]/initial_min_freq_khz\[dq],
-\[aq]\f[B]00\f[R]\[aq] is replaced with desired package number and
-\[aq]\f[B]01\f[R]\[aq] with desired die number.
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/initial_min_freq_khz\[dq],
+where \[aq]00\[aq] is replaced with desired package number and
+\[aq]01\[aq] is replaced with desired die number.
 .SS Scope
 .PP
-This property has \f[B]die\f[R] scope.
+This property has die scope.
 .PP
    *   *   *   *   *
 .SS max_uncore_freq_limit
@@ -807,12 +757,13 @@ Maximum supported uncore frequency is the highest uncore frequency
 supported by the OS.
 .SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_\f[B]00\f[R]_die_\f[B]01\f[R]/initial_max_freq_khz\[dq],
-\[aq]\f[B]00\f[R]\[aq] is replaced with desired package number and
-\[aq]\f[B]01\f[R]\[aq] with desired die number.
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/initial_max_freq_khz\[dq],
+where \[aq]00\[aq] is replaced with desired package number and
+\[aq]01\[aq] with desired die number.
 .SS Scope
 .PP
-This property has \f[B]die\f[R] scope.
+This property has die scope.
 .PP
    *   *   *   *   *
 .SS hwp
@@ -827,10 +778,10 @@ When hardware power management is enabled, CPUs can automatically scale
 their frequency without active OS involvement.
 .SS Mechanism
 .PP
-MSR_PM_ENABLE (\f[B]0x770\f[R]), bit \f[B]0\f[R].
+\f[B]msr\f[R] MSR_PM_ENABLE (0x770), bit 0.
 .SS Scope
 .PP
-This property has \f[B]global\f[R] scope.
+This property has global scope.
 .PP
    *   *   *   *   *
 .SS epp
@@ -849,42 +800,17 @@ Energy Performance Preference is a hint to the CPU on energy efficiency
 vs performance.
 EPP value is a number in range of 0-255 (maximum energy efficiency to
 maximum performance), or a policy name.
-.SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/cpufreq/policy\f[B]0\f[R]/energy_performance_preference\[dq],
-\[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
+Mechanisms ---------
+.PP
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/cpufreq/policy0/energy_performance_preference\[dq],
+where \[aq]0\[aq] is replaced with desired CPU number.
+.PP
+\f[B]msr\f[R] MSR_HWP_REQUEST (0x774), bits 31:24.
 .SS Scope
 .PP
-This property has \f[B]CPU\f[R] scope.
-.PP
-   *   *   *   *   *
-.SS epp_hw
-.PP
-epp_hw - Energy Performance Preference
-.SS Synopsis
-.PP
-pepc pstates \f[I]info\f[R] \f[B]--epp-hw\f[R]
-.PD 0
-.P
-.PD
-pepc pstates \f[I]config\f[R] \f[B]--epp-hw\f[R]=<value>
-.SS Description
-.PP
-Energy Performance Preference is a hint to the CPU on energy efficiency
-vs performance.
-EPP value is a number in range of 0-255 (maximum energy efficiency to
-maximum performance).
-.PP
-When package control is enabled the value is read from
-MSR_HWP_REQUEST_PKG 0x772, but when written package control is disabled
-and value is written to MSR_HWP_REQUEST 0x774, both require the
-\[aq]msr\[aq] Linux kernel driver.
-.SS Mechanism
-.PP
-MSR_HWP_REQUEST (\f[B]0x774\f[R]), bits \f[B]31:24\f[R].
-.SS Scope
-.PP
-This property has \f[B]CPU\f[R] scope.
+This property has CPU scope.
 .PP
    *   *   *   *   *
 .SS epb
@@ -903,39 +829,18 @@ Energy Performance Bias is a hint to the CPU on energy efficiency vs
 performance.
 EBP value is a number in range of 0-15 (maximum performance to maximum
 energy efficiency), or a policy name.
-.SS Mechanism
+.SS Mechanisms
 .PP
-\[dq]/sys/devices/system/cpu/cpu\f[B]0\f[R]/power/energy_perf_bias\[dq],
-\[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/cpu0/power/energy_perf_bias\[dq], where
+\[aq]0\[aq] is replaced with desired CPU number.
+.PP
+\f[B]msr\f[R] MSR_ENERGY_PERF_BIAS (0x1B0), bits 3:0.
 .SS Scope
 .PP
-This property has \f[B]CPU\f[R] scope.
-.PP
-   *   *   *   *   *
-.SS epb_hw
-.PP
-epb_hw - Energy Performance Preference
-.SS Synopsis
-.PP
-pepc pstates \f[I]info\f[R] \f[B]--epb-hw\f[R]
-.PD 0
-.P
-.PD
-pepc pstates \f[I]config\f[R] \f[B]--epb-hw\f[R]=<value>
-.SS Description
-.PP
-Energy Performance Bias is a hint to the CPU on energy efficiency vs
-performance.
-EBP value is a number in range of 0-15 (maximum performance to maximum
-energy efficiency).
-.SS Mechanism
-.PP
-MSR_ENERGY_PERF_BIAS (\f[B]0x1B0\f[R]), bits \f[B]3:0\f[R].
-.SS Scope
-.PP
-This property has \f[B]CPU\f[R] scope.
-With the following exceptions, Silvermonts have \f[B]core\f[R] scope,
-Westmeres and Sandybridges have \f[B]package\f[R] scope.
+This property has CPU scope on most platforms.
+However, on Silvermont systems it has core scope and on Westmere and
+Sandybridge systems it has package scope.
 .PP
    *   *   *   *   *
 .SS driver
@@ -950,11 +855,12 @@ CPU frequency driver enumerates and requests the P-states available on
 the platform.
 .SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/cpufreq/policy\f[B]0\f[R]/scaling_driver\[dq],
-\[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/cpufreq/policy0/scaling_driver\[dq], where
+\[aq]0\[aq] is replaced with desired CPU number.
 .SS Scope
 .PP
-This property has \f[B]global\f[R] scope.
+This property has global scope.
 .PP
    *   *   *   *   *
 .SS intel_pstate_mode
@@ -970,18 +876,17 @@ pepc pstates \f[I]config\f[R] \f[B]--intel-pstate-mode\f[R]=<mode>
 .SS Description
 .PP
 The \[aq]intel_pstate\[aq] driver has 3 operation modes:
-\[aq]\f[B]active\f[R]\[aq], \[aq]\f[B]passive\f[R]\[aq] and
-\[aq]\f[B]off\f[R]\[aq].
+\[aq]active\[aq], \[aq]passive\[aq] and \[aq]off\[aq].
 The main difference between the active and passive mode is in which
 frequency governors are used - the generic Linux governors (passive
 mode) or the custom, built-in \[aq]intel_pstate\[aq] driver governors
 (active mode).
 .SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/intel_pstate/status\[dq]
+\f[B]sysfs\f[R] \[dq]/sys/devices/system/cpu/intel_pstate/status\[dq].
 .SS Scope
 .PP
-This property has \f[B]global\f[R] scope.
+This property has global scope.
 .PP
    *   *   *   *   *
 .SS governor
@@ -1000,11 +905,12 @@ CPU frequency governor decides which P-state to select on a CPU
 depending on CPU business and other factors.
 .SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/cpufreq/policy\f[B]0\f[R]/scaling_governor\[dq],
-\[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/cpufreq/policy0/scaling_governor\[dq],
+where \[aq]0\[aq] is replaced with desired CPU number.
 .SS Scope
 .PP
-This property has \f[B]CPU\f[R] scope.
+This property has CPU scope.
 .PP
    *   *   *   *   *
 .SS governors
@@ -1020,8 +926,9 @@ depending on CPU business and other factors.
 Different governors implement different selection policy.
 .SS Mechanism
 .PP
-\[dq]/sys/devices/system/cpu/cpufreq/policy\f[B]0\f[R]/scaling_available_governors\[dq],
-\[aq]\f[B]0\f[R]\[aq] is replaced with desired CPU number.)
+\f[B]sysfs\f[R]
+\[dq]/sys/devices/system/cpu/cpufreq/policy0/scaling_available_governors\[dq],
+where \[aq]0\[aq] is replaced with desired CPU number.
 .SS Scope
 .PP
-This property has \f[B]global\f[R] scope.
+This property has global scope.

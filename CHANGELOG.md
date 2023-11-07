@@ -6,6 +6,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+### Removed
+### Changed
+
+## [1.4.38] - 2023-11-07
+### Added
  - Add '--mechanism' option, which can be used for specifying the mechanism for
    getting and setting pepc C-states, P-states, and Power options.
  - Add '--list-mechanisms' option for listing all the available mechanisms.

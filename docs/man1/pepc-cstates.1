@@ -120,6 +120,19 @@ as.
 For example, use 0x8F to treat the target system as Sapphire Rapids
 Xeon.
 .TP
+\f[B]-m\f[R] \f[I]MECHANISMS\f[R], \f[B]--mechanisms\f[R] \f[I]MECHANISMS\f[R]
+Comma-separated list of mechanisms that are allowed to be used for
+configuring C-states.
+Use \[aq]--list-mechanisms\[aq] to get the list of available mechanisms.
+Note, many options support only one mechanism (e.g., \[aq]sysfs\[aq]),
+some may support multiple (e.g., \[aq]sysfs\[aq] and \[aq]msr\[aq]).
+The mechanisms are tried in the specified order.
+By default, all mechanisms are allowed and the most preferred mechanisms
+will be tried first.
+.TP
+\f[B]--list-mechanisms\f[R]
+List mechanisms available for reading C-states information.
+.TP
 \f[B]--cstates\f[R] \f[I][CSTATES]\f[R]
 Comma-separated list of C-states to get information about.
 C-states should be specified by name (e.g., \[aq]C1\[aq]).
@@ -209,6 +222,9 @@ Provide the CPU model number which the tool treats the target system CPU
 as.
 For example, use 0x8F to treat the target system as Sapphire Rapids
 Xeon.
+.TP
+\f[B]--list-mechanisms\f[R]
+List mechanisms available for configuring C-states.
 .TP
 \f[B]--enable\f[R] \f[I]CSTATES\f[R]
 Comma-separated list of C-states to enable.
@@ -314,25 +330,19 @@ pepc cstates \f[I]config\f[R] \f[B]--pkg-cstate-limit\f[R]=<on|off>
 .SS Description
 .PP
 The deepest package C-state the platform is allowed to enter.
-MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]) register can be locked, in
-which case the package C-state limit can only be read, but cannot be
-modified, please refer to property \f[B]pkg_cstate_limit_lock\f[R].
+MSR_PKG_CST_CONFIG_CONTROL (0xE2) register can be locked, in which case
+the package C-state limit can only be read, but cannot be modified
+(please, refer to \[aq]\f[B]pkg_cstate_limit_lock\f[R]\[aq] for more
+information).
 .SS Mechanism
 .PP
-MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R])
-.PP
-Package C-state limits are documented in Intel SDM, but it describes all
-the possible package C-states for a CPU model.
-In practice, however, specific platforms often do not support many of
-package C-states.
-For example, Xeons typically do not support anything deeper than PC6.
-.PP
-Refer to \[aq]PCStateConfigCtl.py\[aq] for all platforms and bits.
+\f[B]msr\f[R] MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0,
+depending on CPU model.
 .SS Scope
 .PP
-This option has \f[B]core\f[R] scope.
-With the following exceptions: Silvermonts and Airmonts have
-\f[B]module\f[R] scope, Xeon Phis have \f[B]package\f[R] scope.
+This option has core scope.
+Exceptions: module scope on Silvermonts and Airmonts, package scop on
+Xeon Phi processors.
 .PP
    *   *   *   *   *
 .SS pkg_cstate_limits
@@ -346,10 +356,11 @@ pepc cstates \f[I]info\f[R] \f[B]--pkg-cstate-limits\f[R]
 All available package C-state limits.
 .SS Mechanism
 .PP
-External Design Specification (EDS)
+\f[B]doc\f[R] Intel SDM (Software Developer Manual) and Intel EDS
+(External Design Specification).
 .SS Scope
 .PP
-This option has \f[B]global\f[R] scope.
+This option has global scope.
 .PP
    *   *   *   *   *
 .SS pkg_cstate_limit_lock
@@ -361,15 +372,13 @@ pepc cstates \f[I]info\f[R] \f[B]--pkg-cstate-limit-lock\f[R]
 .SS Description
 .PP
 Whether the package C-state limit can be modified.
-When \[aq]True\[aq], property \f[B]\[aq]pkg_cstate_limit\[aq]\f[R] is
-read-only.
+When \[aq]True\[aq], \[aq]\f[B]pkg_cstate_limit\f[R]\[aq] is read-only.
 .SS Mechanism
 .PP
-MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]) Refer to
-\[aq]PCStateConfigCtl.py\[aq] for all platforms and bits.
+\f[B]msr\f[R] MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 15.
 .SS Scope
 .PP
-This option has \f[B]package\f[R] scope.
+This option has package scope.
 .PP
    *   *   *   *   *
 .SS pkg_cstate_limit_aliases
@@ -380,14 +389,16 @@ pkg_cstate_limit_aliases - Package C-state limit aliases
 pepc cstates \f[I]info\f[R] \f[B]--pkg-cstate-limit-aliases\f[R]
 .SS Description
 .PP
-Package C-state limit aliases, for example on Ice Lakes \[aq]PC6\[aq] is
-an alias for \[aq]PC6R\[aq].
+Package C-state limit aliases.
+For example on Ice Lake Xeon, \[aq]PC6\[aq] is an alias for
+\[aq]PC6R\[aq].
 .SS Mechanism
 .PP
-External Design Specification (EDS)
+\f[B]doc\f[R] Intel SDM (Software Developer Manual) or Intel EDS
+(External Design Specification).
 .SS Scope
 .PP
-This option has \f[B]global\f[R] scope.
+This option has global scope.
 .PP
    *   *   *   *   *
 .SS c1_demotion
@@ -402,16 +413,16 @@ pepc cstates \f[I]info\f[R] \f[B]--c1-demotion\f[R]
 pepc cstates \f[I]config\f[R] \f[B]--c1-demotion\f[R]=<on|off>
 .SS Description
 .PP
-Allow or disallow the CPU to demote \f[B]C6\f[R] or \f[B]C7\f[R]
-requests to \f[B]C1\f[R].
+Allow or disallow the CPU to demote \[aq]C6\[aq] or \[aq]C7\[aq] C-state
+requests to \[aq]C1\[aq].
 .SS Mechanism
 .PP
-MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]), bit \f[B]26\f[R].
+MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 26.
 .SS Scope
 .PP
-This option has \f[B]core\f[R] scope.
-With the following exceptions, Silvermonts and Airmonts have
-\f[B]module\f[R] scope, Xeon Phis have \f[B]package\f[R] scope.
+This option has core scope.
+Exceptions: module scope on Silvermonts and Airmonts, package scope on
+Xeon Phis.
 .PP
    *   *   *   *   *
 .SS c1_undemotion
@@ -427,15 +438,15 @@ pepc cstates \f[I]config\f[R] \f[B]--c1-undemotion\f[R]=<on|off>
 .SS Description
 .PP
 Allow or disallow the CPU to un-demote previously demoted requests back
-from \f[B]C1\f[R] to \f[B]C6\f[R] or \f[B]C7\f[R].
+from \[aq]C1\[aq] C-state to \[aq]C6\[aq] or \[aq]C7l.
 .SS Mechanism
 .PP
-MSR_PKG_CST_CONFIG_CONTROL (\f[B]0xE2\f[R]), bit \f[B]28\f[R].
+\f[B]msr\f[R] MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 28.
 .SS Scope
 .PP
-This option has \f[B]core\f[R] scope.
-With the following exceptions, Silvermonts and Airmonts have
-\f[B]module\f[R] scope, Xeon Phis have \f[B]package\f[R] scope.
+This option has core scope.
+Exceptions: module scope on Silvermonts and Airmonts, package scope on
+Xeon Phis.
 .PP
    *   *   *   *   *
 .SS c1e_autopromote
@@ -450,14 +461,14 @@ pepc cstates \f[I]info\f[R] \f[B]--c1e-autopromote\f[R]
 pepc cstates \f[I]config\f[R] \f[B]--c1e-autopromote\f[R]=<on|off>
 .SS Description
 .PP
-When enabled, the CPU automatically converts all \f[B]C1\f[R] requests
-to \f[B]C1E\f[R] requests.
+When enabled, the CPU automatically converts all \[aq]C1\[aq] C-state
+requests to \[aq]C1E\[aq] requests.
 .SS Mechanism
 .PP
-MSR_POWER_CTL (\f[B]0x1FC\f[R]), bit \f[B]1\f[R].
+\f[B]msr\f[R] MSR_POWER_CTL (0x1FC), bit 1.
 .SS Scope
 .PP
-This option has \f[B]package\f[R] scope.
+This option has package scope.
 .PP
    *   *   *   *   *
 .SS cstate_prewake
@@ -472,14 +483,14 @@ pepc cstates \f[I]info\f[R] \f[B]--cstate-prewake\f[R]
 pepc cstates \f[I]config\f[R] \f[B]--cstate-prewake\f[R]=<on|off>
 .SS Description
 .PP
-When enabled, the CPU will start exiting the \f[B]C6\f[R] idle state in
+When enabled, the CPU will start exiting the \[aq]C6\[aq] C-state in
 advance, prior to the next local APIC timer event.
 .SS Mechanism
 .PP
-MSR_POWER_CTL (\f[B]0x1FC\f[R]), bit \f[B]30\f[R].
+\f[B]msr\f[R] MSR_POWER_CTL (0x1FC), bit 30.
 .SS Scope
 .PP
-This option has \f[B]package\f[R] scope.
+This option has package scope.
 .PP
    *   *   *   *   *
 .SS idle_driver
@@ -494,10 +505,11 @@ Idle driver is responsible for enumerating and requesting the C-states
 available on the platform.
 .SS Mechanism
 .PP
+\f[B]sysfs\f[R]*
 \[dq]/sys/devices/system/cpu/cpuidle/current_governor\[dq]
 .SS Scope
 .PP
-This option has \f[B]global\f[R] scope.
+This option has global scope.
 .PP
    *   *   *   *   *
 .SS governor
@@ -515,10 +527,11 @@ pepc cstates \f[I]config\f[R] \f[B]--governor\f[R]=<name>
 Idle governor decides which C-state to request on an idle CPU.
 .SS Mechanism
 .PP
+\f[B]sysfs\f[R]
 \[dq]/sys/devices/system/cpu/cpuidle/scaling_governor\[dq]
 .SS Scope
 .PP
-This option has \f[B]global\f[R] scope.
+This option has global scope.
 .PP
    *   *   *   *   *
 .SS governors
@@ -533,10 +546,11 @@ Idle governors decide which C-state to request on an idle CPU.
 Different governors implement different selection policy.
 .SS Mechanism
 .PP
+\f[B]sysfs\f[R]
 \[dq]/sys/devices/system/cpu/cpuidle/available_governors\[dq]
 .SS Scope
 .PP
-This property has \f[B]global\f[R] scope.
+This property has global scope.
 .PP
    *   *   *   *   *
 .SS pch_negotiation
@@ -559,7 +573,7 @@ interactions with the processor.
 This may improve PC6 residency and drives idle power down.
 .SS Source
 .PP
-MSR_POWER_CTL (\f[B]0x1FC\f[R]), bit \f[B]36\f[R].
+\f[B]msr\f[R] MSR_POWER_CTL (0x1FC), bit 36.
 .SS Scope
 .PP
-This option has \f[B]global\f[R] scope.
+This option has global scope.
