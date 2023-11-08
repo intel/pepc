@@ -106,7 +106,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("_EPBase._write_to_sysfs")
 
-    def _get_epp_or_epb(self, cpus="all", mnames=None):
+    def _get_epp_or_epb(self, cpus, mnames):
         """Get EPB or EPP."""
 
         mnames = self._normalize_mnames(mnames)
@@ -183,12 +183,12 @@ class EPBase(ClassHelpers.SimpleCloseContext):
                     specified in 'mnames'. By default, all supported mechanisms will be tried.
         """
 
-        return self._get_epp_or_epb(cpus=cpus, mnames=mnames)
+        return self._get_epp_or_epb(cpus, mnames)
 
     def get_cpu_val(self, cpu, mnames=None):
         """Similar to 'get_vals()', but for a single CPU 'cpu'."""
 
-        return next(self._get_epp_or_epb(cpus=(cpu,), mnames=mnames))
+        return next(self._get_epp_or_epb((cpu,), mnames))
 
     def set_vals(self, val, cpus="all", mnames=None):
         """
