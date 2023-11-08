@@ -109,7 +109,7 @@ def set_and_verify(params, props_vals, cpu):
         except ErrorNotSupported:
             continue
 
-        for pvinfo in pobj.get_prop(pname, cpus):
+        for pvinfo in pobj.get_prop(pname, cpus=cpus):
             if pvinfo["val"] != val:
                 cpus = ", ".join([str(cpu) for cpu in cpus])
                 assert False, f"Set property '{pname}' to value '{val} for CPU the following " \
