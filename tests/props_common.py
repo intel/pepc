@@ -103,6 +103,7 @@ def set_and_verify(params, props_vals, cpu):
         if sname not in siblings:
             siblings[sname] = cpuinfo.get_cpu_siblings(cpu, level=sname)
         cpus = siblings[sname]
+        cpus_set = set(cpus)
 
         try:
             pobj.set_prop(pname, val, cpus)
@@ -112,10 +113,17 @@ def set_and_verify(params, props_vals, cpu):
         for pvinfo in pobj.get_prop(pname, cpus=cpus):
             if pvinfo["val"] != val:
                 cpus = ", ".join([str(cpu) for cpu in cpus])
-                assert False, f"Set property '{pname}' to value '{val} for CPU the following " \
+                assert False, f"Set property '{pname}' to value '{val}' for CPU the following " \
                               f"CPUs: {cpus}'.\n" \
                               f"Read back property '{pname}', got a different value " \
                               f"'{pvinfo['val']}' for CPU {pvinfo['cpu']}."
+
+            cpus_set.remove(pvinfo["cpu"])
+
+        assert not cpus_set, f"Set property '{pname}' to value '{val}' for CPU the following " \
+                             f"CPUs: {cpus}'.\n" \
+                             f"Read back property '{pname}', but did not get value fro the " \
+                             f"following CPUs: {cpus_set}"
 
 def get_max_cpu_freq(params, cpu, numeric=False):
     """Return the maximum CPU or uncore frequency the Linux frequency driver accepts."""
