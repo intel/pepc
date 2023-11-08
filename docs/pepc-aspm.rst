@@ -69,6 +69,14 @@ Get information about current PCI ASPM configuration.
 **--policies** *NAME*
    Get list of available PCI ASPM policy to names.
 
+**--device** *ADDR*
+   PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'.
+
+**--l1-aspm**
+   Enable or disable L1 ASPM for the PCI device specified with --device option. Make sure the kernel
+   version is at least 5.5 and is compiled with CONFIG_PCIEASPM and CONFIG_PCIEASPM_DEFAULT for this
+   option to work.
+
 Subcommand *'config'*
 =====================
 
@@ -76,3 +84,12 @@ Change PCI ASPM configuration.
 
 **--policy** *NAME*
    The PCI ASPM policy to set, use "default" to set the default policy.
+
+**--device** *ADDR*
+   PCI device address for the '--l1-aspm' option. Example '0000:00:02.0'.
+
+**--l1-aspm** *OPTION*
+   Enable or disable L1 ASPM for a particular device. Valid arguments are 'on', 'off',
+   'enable', 'disable', 'true', 'false'. The argument is case insensitive. Make sure the kernel
+   version is at least 5.5 and is compiled with CONFIG_PCIEASPM and CONFIG_PCIEASPM_DEFAULT for this
+   option to work.

@@ -591,6 +591,12 @@ def build_arguments_parser():
     text = """List the available PCI ASPM policies."""
     subpars2.add_argument("--policies", action=ArgParse.OrderedArg, nargs=0, help=text)
 
+    text = """PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."""
+    subpars2.add_argument("--device", metavar="ADDR", action="store", help=text)
+
+    text = """Get current L1 ASPM status for a device chosen with the '--device' option."""
+    subpars2.add_argument("--l1-aspm", action=ArgParse.OrderedArg, nargs=0, help=text)
+
     text = "Change PCI ASPM configuration."
     descr = "Change PCI ASPM configuration. " + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
@@ -598,6 +604,15 @@ def build_arguments_parser():
 
     text = """The PCI ASPM policy to set, use "default" to set the default policy."""
     subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs="?", help=text)
+
+    text = """PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."""
+    subpars2.add_argument("--device", metavar="ADDR", action="store", help=text)
+
+    text = """Enable or disable L1 ASPM on a PCI device chosen with the '--device' option. Valid
+              arguments are 'on', 'off', 'enable', 'disable', 'true', 'false'. The argument is case
+              insensitive."""
+    subpars2.add_argument("--l1-aspm", metavar="on/off", action=ArgParse.OrderedArg, nargs="?",
+                          help=text)
 
     #
     # Create parser for the 'topology' command.
