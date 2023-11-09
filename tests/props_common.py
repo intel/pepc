@@ -92,16 +92,16 @@ def _verify_after_set_per_cpu(pobj, pname, val, cpus):
     for pvinfo in pobj.get_prop_cpus(pname, cpus=cpus):
         if pvinfo["val"] != val:
             cpus = ", ".join([str(cpu) for cpu in cpus])
-            assert False, f"Set property '{pname}' to value '{val}' for CPU the following " \
-                          f"CPUs: {cpus}'.\n" \
+            assert False, f"Set property '{pname}' to value '{val}' for the following CPUs: " \
+                          f"{cpus}.\n" \
                           f"Read back property '{pname}', got a different value " \
                           f"'{pvinfo['val']}' for CPU {pvinfo['cpu']}."
 
         cpus_set.remove(pvinfo["cpu"])
 
-    assert not cpus_set, f"Set property '{pname}' to value '{val}' for CPU the following " \
-                         f"CPUs: {cpus}'.\n" \
-                         f"Read back property '{pname}', but did not get value fro the " \
+    assert not cpus_set, f"Set property '{pname}' to value '{val}' for the following CPUs: " \
+                         f"{cpus}.\n" \
+                         f"Read back property '{pname}', but did not get value for the " \
                          f"following CPUs: {cpus_set}"
 
 def set_and_verify(params, props_vals, cpu):
