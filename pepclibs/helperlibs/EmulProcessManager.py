@@ -519,6 +519,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         dirpath = self._get_basepath() / str(dirpath).lstrip("/")
         super().mkdir(dirpath, parents=parents, exist_ok=exist_ok)
 
+    def lsdir(self, path, must_exist=True):
+        """
+        List directory entries in 'path'. Refer to
+        '_ProcessManagerBase.ProcessManagerBase().lsdir()' for more information.
+        """
+
+        emul_path = Path(self._get_basepath() / str(path).lstrip("/"))
+        yield from super().lsdir(emul_path, must_exist=must_exist)
+
     def exists(self, path):
         """Returns 'True' if path 'path' exists."""
 
