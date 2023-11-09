@@ -132,7 +132,7 @@ class Power(_PropsClassBase.PropsClassBase):
     def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
         """
         Return property value dictionary ('pvinfo') for property 'pname', CPU 'cpu', using
-        mechanisms in 'mnames'. The arguments and the same as in 'get_prop()'.
+        mechanisms in 'mnames'. The arguments and the same as in 'get_prop_cpus()'.
         """
 
         prop = self._props[pname]

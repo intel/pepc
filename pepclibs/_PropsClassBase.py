@@ -20,9 +20,9 @@ Terminology.
 Naming conventions.
  * props - dictionary describing the properties. As an example, check 'PROPS' in 'PStates' and
            'CStates'.
- * pvinfo - the property value dictionary, returned by 'get_prop()' and 'get_cpu_prop()'. Includes
-            property value and CPU number. Refer to 'PropsClassBase.get_prop()' for more
-            information.
+ * pvinfo - the property value dictionary, returned by 'get_prop_cpus()' and 'get_cpu_prop()'.
+            Includes property value and CPU number. Refer to 'PropsClassBase.get_prop_cpus()' for
+            more information.
  * pname - name of a property.
  * sname - name of a scope from the allowed list of scope names in 'CPUInfo.LEVELS'.
  * <sname> siblings - all CPUs sharing the same <sname>. E.g. "package siblings" means all CPUs
@@ -210,7 +210,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
         """
         This method should be implemented by the sub-class. The arguments and the same as in
-        'get_prop()'. Returns the property value dictionary.
+        'get_prop_cpus()'. Returns the property value dictionary.
         """
 
         # pylint: disable=unused-argument
@@ -221,7 +221,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)["val"]
 
-    def get_prop(self, pname, cpus="all", mnames=None):
+    def get_prop_cpus(self, pname, cpus="all", mnames=None):
         """
         Read property 'pname' for CPUs in 'cpus', and for every CPU yield the property value
         dictionary. The arguments are as follows.
@@ -257,9 +257,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             yield pvinfo
 
     def get_cpu_prop(self, pname, cpu, mnames=None):
-        """Same as 'get_prop()', but for a single CPU and a single property."""
+        """Same as 'get_prop_cpus()', but for a single CPU and a single property."""
 
-        for pvinfo in self.get_prop(pname, cpus=(cpu,), mnames=mnames):
+        for pvinfo in self.get_prop_cpus(pname, cpus=(cpu,), mnames=mnames):
             return pvinfo
 
     def prop_is_supported(self, pname, cpu):

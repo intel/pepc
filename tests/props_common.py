@@ -87,7 +87,7 @@ def _verify_after_set(pobj, pname, val, cpus):
 
     cpus_set = set(cpus)
 
-    for pvinfo in pobj.get_prop(pname, cpus=cpus):
+    for pvinfo in pobj.get_prop_cpus(pname, cpus=cpus):
         if pvinfo["val"] != val:
             cpus = ", ".join([str(cpu) for cpu in cpus])
             assert False, f"Set property '{pname}' to value '{val}' for CPU the following " \
@@ -190,7 +190,7 @@ def _verify_value_type(pname, ptype, val):
 
 def verify_props_value_type(params, cpu):
     """
-    Check that 'get_prop()' returns values of correct type for all supported properties.
+    Check that 'get_prop_cpus()' returns values of correct type for all supported properties.
     """
 
     pobj = params["pobj"]
@@ -203,7 +203,7 @@ def verify_props_value_type(params, cpu):
         _verify_value_type(pname, pobj.props[pname]["type"], pvinfo["val"])
 
 def verify_get_props_mechanisms(params, cpu):
-    """Verify that the 'mname' arguments of 'get_prop()' works correctly."""
+    """Verify that the 'mname' arguments of 'get_prop_cpus()' works correctly."""
 
     pobj = params["pobj"]
 

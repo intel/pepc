@@ -248,7 +248,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             if skip_ro and not prop["writable"]:
                 continue
 
-            for pvinfo in self._pobj.get_prop(pname, cpus, mnames=mnames):
+            for pvinfo in self._pobj.get_prop_cpus(pname, cpus, mnames=mnames):
                 cpu = pvinfo["cpu"]
                 val = pvinfo["val"]
                 mname = pvinfo["mname"]
@@ -371,7 +371,8 @@ class CStatesPrinter(_PropsPrinter):
                 continue
 
             locked_cpus = set()
-            for pvinfo in self._pobj.get_prop("pkg_cstate_limit_lock", cpus=cpus, mnames=mnames):
+            for pvinfo in self._pobj.get_prop_cpus("pkg_cstate_limit_lock", cpus=cpus,
+                                                   mnames=mnames):
                 cpu = pvinfo["cpu"]
                 if pvinfo["val"] == "on":
                     locked_cpus.add(cpu)
