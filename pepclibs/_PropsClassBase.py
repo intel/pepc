@@ -189,6 +189,84 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pnames_str = ", ".join(set(self._props))
             raise Error(f"unknown property name '{pname}', known properties are: {pnames_str}")
 
+    def _validate_cpus_vs_scope(self, pname, cpus):
+        """Make sure that CPUs in 'cpus' match the scope of a property 'pname'."""
+
+        sname = self._props[pname]["sname"]
+        name = Human.uncapitalize(self._props[pname]["name"])
+
+        if sname not in {"global", "package", "die", "core", "CPU"}:
+            raise Error(f"BUG: unsupported scope name \"{sname}\"")
+
+        if sname == "CPU":
+            return
+
+        if sname == "global":
+            all_cpus = set(self._cpuinfo.get_cpus())
+
+            if all_cpus.issubset(cpus):
+                return
+
+            missing_cpus = all_cpus - set(cpus)
+            raise Error(f"{name} has {sname} scope, so the list of CPUs must include all CPUs.\n"
+                        f"However, the following CPUs are missing from the list: {missing_cpus}")
+
+        _, rem_cpus = getattr(self._cpuinfo, f"cpus_div_{sname}s")(cpus)
+        if not rem_cpus:
+            return
+
+        mapping = ""
+        for pkg in self._cpuinfo.get_packages():
+            pkg_cpus = self._cpuinfo.package_to_cpus(pkg)
+            pkg_cpus_str = Human.rangify(pkg_cpus)
+            mapping += f"\n  * package {pkg}: CPUs: {pkg_cpus_str}"
+
+            if sname in {"core", "die"}:
+                # Build the cores or dies to packages map, in order to make the error message more
+                # helpful. We use "core" in variable names, but in case of the "die" scope name,
+                # they actually mean "die".
+
+                pkg_cores = getattr(self._cpuinfo, f"package_to_{sname}s")(pkg)
+                pkg_cores_str = Human.rangify(pkg_cores)
+                mapping += f"\n               {sname}s: {pkg_cores_str}"
+
+                # Build the cores to CPUs mapping string.
+                clist = []
+                for core in pkg_cores:
+                    if sname == "core":
+                        cpus = self._cpuinfo.cores_to_cpus(cores=(core,), packages=(pkg,))
+                    else:
+                        cpus = self._cpuinfo.dies_to_cpus(dies=(core,), packages=(pkg,))
+                    cpus_str = Human.rangify(cpus)
+                    clist.append(f"{core}:{cpus_str}")
+
+                # The core/die->CPU mapping may be very long, wrap it to 100 symbols.
+                import textwrap # pylint: disable=import-outside-toplevel
+
+                prefix = f"               {sname}s to CPUs: "
+                indent = " " * len(prefix)
+                clist_wrapped = textwrap.wrap(", ".join(clist), width=100,
+                                              initial_indent=prefix, subsequent_indent=indent)
+                clist_str = "\n".join(clist_wrapped)
+
+                mapping += f"\n{clist_str}"
+
+        rem_cpus_str = Human.rangify(rem_cpus)
+
+        if sname == "core":
+            mapping_name = "relation between CPUs, cores, and packages"
+        elif sname == "die":
+            mapping_name = "relation between CPUs, dies, and packages"
+        else:
+            mapping_name = "relation between CPUs and packages"
+
+        errmsg = f"{name} has {sname} scope, so the list of CPUs must include all CPUs " \
+                 f"in one or multiple {sname}s.\n" \
+                 f"However, the following CPUs do not comprise full {sname}(s): {rem_cpus_str}\n" \
+                 f"Here is the {mapping_name}{self._pman.hostmsg}:{mapping}"
+
+        raise Error(errmsg)
+
     @staticmethod
     def _construct_pvinfo(pname, cpu, mname, val):
         """Construct and return the property value dictionary."""
@@ -304,84 +382,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 val = Human.parse_human(val, unit=prop["unit"], integer=is_integer, name=name)
 
         return val
-
-    def _validate_cpus_vs_scope(self, pname, cpus):
-        """Make sure that CPUs in 'cpus' match the scope of a property 'pname'."""
-
-        sname = self._props[pname]["sname"]
-        name = Human.uncapitalize(self._props[pname]["name"])
-
-        if sname not in {"global", "package", "die", "core", "CPU"}:
-            raise Error(f"BUG: unsupported scope name \"{sname}\"")
-
-        if sname == "CPU":
-            return
-
-        if sname == "global":
-            all_cpus = set(self._cpuinfo.get_cpus())
-
-            if all_cpus.issubset(cpus):
-                return
-
-            missing_cpus = all_cpus - set(cpus)
-            raise Error(f"{name} has {sname} scope, so the list of CPUs must include all CPUs.\n"
-                        f"However, the following CPUs are missing from the list: {missing_cpus}")
-
-        _, rem_cpus = getattr(self._cpuinfo, f"cpus_div_{sname}s")(cpus)
-        if not rem_cpus:
-            return
-
-        mapping = ""
-        for pkg in self._cpuinfo.get_packages():
-            pkg_cpus = self._cpuinfo.package_to_cpus(pkg)
-            pkg_cpus_str = Human.rangify(pkg_cpus)
-            mapping += f"\n  * package {pkg}: CPUs: {pkg_cpus_str}"
-
-            if sname in {"core", "die"}:
-                # Build the cores or dies to packages map, in order to make the error message more
-                # helpful. We use "core" in variable names, but in case of the "die" scope name,
-                # they actually mean "die".
-
-                pkg_cores = getattr(self._cpuinfo, f"package_to_{sname}s")(pkg)
-                pkg_cores_str = Human.rangify(pkg_cores)
-                mapping += f"\n               {sname}s: {pkg_cores_str}"
-
-                # Build the cores to CPUs mapping string.
-                clist = []
-                for core in pkg_cores:
-                    if sname == "core":
-                        cpus = self._cpuinfo.cores_to_cpus(cores=(core,), packages=(pkg,))
-                    else:
-                        cpus = self._cpuinfo.dies_to_cpus(dies=(core,), packages=(pkg,))
-                    cpus_str = Human.rangify(cpus)
-                    clist.append(f"{core}:{cpus_str}")
-
-                # The core/die->CPU mapping may be very long, wrap it to 100 symbols.
-                import textwrap # pylint: disable=import-outside-toplevel
-
-                prefix = f"               {sname}s to CPUs: "
-                indent = " " * len(prefix)
-                clist_wrapped = textwrap.wrap(", ".join(clist), width=100,
-                                              initial_indent=prefix, subsequent_indent=indent)
-                clist_str = "\n".join(clist_wrapped)
-
-                mapping += f"\n{clist_str}"
-
-        rem_cpus_str = Human.rangify(rem_cpus)
-
-        if sname == "core":
-            mapping_name = "relation between CPUs, cores, and packages"
-        elif sname == "die":
-            mapping_name = "relation between CPUs, dies, and packages"
-        else:
-            mapping_name = "relation between CPUs and packages"
-
-        errmsg = f"{name} has {sname} scope, so the list of CPUs must include all CPUs " \
-                 f"in one or multiple {sname}s.\n" \
-                 f"However, the following CPUs do not comprise full {sname}(s): {rem_cpus_str}\n" \
-                 f"Here is the {mapping_name}{self._pman.hostmsg}:{mapping}"
-
-        raise Error(errmsg)
 
     def _set_prop(self, pname, val, cpus, mnames=None):
         """Implements 'set_prop()'. The arguments are as the same as in 'set_prop()'."""
