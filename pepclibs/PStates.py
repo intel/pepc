@@ -1485,18 +1485,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                     max_freq_limit_pname = "max_turbo_freq"
                     write_func = self._write_freq_prop_to_msr
 
-            if min_freq:
-                min_freq = self._normalize_inprop(min_freq_pname, min_freq)
-                self._set_sname(min_freq_pname)
-                self._validate_cpus_vs_scope(min_freq_pname, cpus)
-                self._normalize_mnames(mnames, pname=min_freq_pname, allow_readonly=False)
-
-            if max_freq:
-                max_freq = self._normalize_inprop(max_freq_pname, max_freq)
-                self._set_sname(max_freq_pname)
-                self._validate_cpus_vs_scope(max_freq_pname, cpus)
-                self._normalize_mnames(mnames, pname=max_freq_pname, allow_readonly=False)
-
             try:
                 self._set_freq_props(min_freq, max_freq, cpus, mname, min_freq_pname,
                                      max_freq_pname, min_freq_limit_pname, max_freq_limit_pname,
