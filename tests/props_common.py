@@ -169,6 +169,56 @@ def _verify_after_set_per_cpu(pobj, pname, val, cpus):
                          f"Read back property '{pname}', but did not get value for the " \
                          f"following CPUs: {cpus_set}"
 
+def _verify_after_set_per_die(pobj, pname, val, dies):
+    """
+    Helper for 'set_and_verify(). Verify that the value was set to 'val', use the per-die interface.
+    """
+
+    dies_left = {}
+    for pkg, dies_list in dies.items():
+        dies_left[pkg] = set(dies_list)
+
+    for pvinfo in pobj.get_prop_dies(pname, dies=dies):
+        pkg = pvinfo["package"]
+        die = pvinfo["die"]
+        if pvinfo["val"] != val:
+            assert False, f"Set property '{pname}' to value '{val}' for the following package " \
+                          f"and dies: {dies}\n" \
+                          f"Read back property '{pname}', got a different value " \
+                          f"'{pvinfo['val']}' for die {die} and package {pkg}."
+
+        dies_left[pkg].remove(die)
+        if not dies_left[pkg]:
+            del dies_left[pkg]
+
+    assert not dies_left, f"Set property '{pname}' to value '{val}' for the following packages " \
+                          f"and dies: {dies}.\n" \
+                          f"Read back property '{pname}', but did not get value for the " \
+                          f"following prackages and dies: {dies_left}"
+
+def _verify_after_set_per_package(pobj, pname, val, packages):
+    """
+    Helper for 'set_and_verify(). Verify that the value was set to 'val', use the per-package
+    interface.
+    """
+
+    packages_set = set(packages)
+
+    for pvinfo in pobj.get_prop_packages(pname, packages=packages):
+        if pvinfo["val"] != val:
+            packages = ", ".join([str(pkg) for pkg in packages])
+            assert False, f"Set property '{pname}' to value '{val}' for the following packages: " \
+                          f"{packages}'.\n" \
+                          f"Read back property '{pname}', got a different value " \
+                          f"'{pvinfo['val']}' for package {pvinfo['package']}."
+
+        packages_set.remove(pvinfo["package"])
+
+    assert not packages_set, f"Set property '{pname}' to value '{val}' for the following CPUs: " \
+                             f"{packages}'.\n" \
+                             f"Read back property '{pname}', but did not get value for the " \
+                             f"following CPUs: {packages_set}"
+
 def set_and_verify(params, props_vals, cpu):
     """
     Set property values, read them back and verify. The arguments are as follows.
@@ -182,6 +232,10 @@ def set_and_verify(params, props_vals, cpu):
     pobj = params["pobj"]
     cpuinfo = params["cpuinfo"]
 
+    levels = cpuinfo.get_cpu_levels(cpu)
+    packages = (levels["package"],)
+    dies = {levels["package"] : (levels["die"],)}
+
     for pname, val in props_vals:
         sname = pobj.get_sname(pname)
         if sname is None:
@@ -191,12 +245,33 @@ def set_and_verify(params, props_vals, cpu):
             siblings[sname] = cpuinfo.get_cpu_siblings(cpu, level=sname)
         cpus = siblings[sname]
 
-        try:
-            pobj.set_prop_cpus(pname, val, cpus)
-        except ErrorNotSupported:
-            continue
+        if sname == "die":
+            # Set the property on per-die basis.
+            try:
+                pobj.set_prop_dies(pname, val, dies, siblings[sname])
+            except ErrorNotSupported:
+                continue
+        elif sname == "package":
+            # Set the property on per-package basis.
+            try:
+                pobj.set_prop_packages(pname, val, packages, siblings[sname])
+            except ErrorNotSupported:
+                continue
+        else:
+            # Set the property on per-CPU basis.
+            try:
+                pobj.set_prop_cpus(pname, val, cpus)
+            except ErrorNotSupported:
+                continue
 
         _verify_after_set_per_cpu(pobj, pname, val, cpus)
+
+        if pobj.props[pname]["sname"] in ("die", "package", "global"):
+            _verify_after_set_per_die(pobj, pname, val, dies)
+
+        if pobj.props[pname]["sname"] in ("package", "global"):
+            _verify_after_set_per_package(pobj, pname, val, packages)
+
 
 def get_max_cpu_freq(params, cpu, numeric=False):
     """Return the maximum CPU or uncore frequency the Linux frequency driver accepts."""
