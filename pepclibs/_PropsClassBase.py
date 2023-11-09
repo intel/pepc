@@ -309,6 +309,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """Make sure that CPUs in 'cpus' match the scope of a property 'pname'."""
 
         sname = self._props[pname]["sname"]
+        name = Human.uncapitalize(self._props[pname]["name"])
 
         if sname not in {"global", "package", "die", "core", "CPU"}:
             raise Error(f"BUG: unsupported scope name \"{sname}\"")
@@ -322,7 +323,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             if all_cpus.issubset(cpus):
                 return
 
-            name = Human.uncapitalize(pname)
             missing_cpus = all_cpus - set(cpus)
             raise Error(f"{name} has {sname} scope, so the list of CPUs must include all CPUs.\n"
                         f"However, the following CPUs are missing from the list: {missing_cpus}")
@@ -367,7 +367,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
                 mapping += f"\n{clist_str}"
 
-        name = Human.uncapitalize(pname)
         rem_cpus_str = Human.rangify(rem_cpus)
 
         if sname == "core":
