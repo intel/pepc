@@ -91,16 +91,16 @@ def _verify_after_set(pobj, pname, val, cpus):
         if pvinfo["val"] != val:
             cpus = ", ".join([str(cpu) for cpu in cpus])
             assert False, f"Set property '{pname}' to value '{val}' for CPU the following " \
-                            f"CPUs: {cpus}'.\n" \
-                            f"Read back property '{pname}', got a different value " \
-                            f"'{pvinfo['val']}' for CPU {pvinfo['cpu']}."
+                          f"CPUs: {cpus}'.\n" \
+                          f"Read back property '{pname}', got a different value " \
+                          f"'{pvinfo['val']}' for CPU {pvinfo['cpu']}."
 
         cpus_set.remove(pvinfo["cpu"])
 
     assert not cpus_set, f"Set property '{pname}' to value '{val}' for CPU the following " \
-                            f"CPUs: {cpus}'.\n" \
-                            f"Read back property '{pname}', but did not get value fro the " \
-                            f"following CPUs: {cpus_set}"
+                         f"CPUs: {cpus}'.\n" \
+                         f"Read back property '{pname}', but did not get value fro the " \
+                         f"following CPUs: {cpus_set}"
 
 def set_and_verify(params, props_vals, cpu):
     """
