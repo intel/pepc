@@ -272,6 +272,33 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         raise Error(errmsg)
 
+    def _validate_prop_vs_scope(self, pname, sname):
+        """
+        Validate that 'pname' is suitable for accessing on per-die or per-package bases (the scope
+        is defined by 'sname').
+        """
+
+        if sname == "die":
+            ok_scopes = set(("die", "package", "global"))
+        elif sname == "package":
+            ok_scopes = set(("package", "global"))
+        else:
+            raise Error(f"BUG: support for scope {sname} is not implemented")
+
+        # If there is only one die per package, assume that "package" and "die" scopes are the same
+        # thing and allow for setting per-die features using per-package interface and vice-versa.
+        if len(self._cpuinfo.get_dies(package=0)) == 1:
+            ok_scopes.add("die")
+
+        prop = self._props[pname]
+
+        if prop["sname"] not in ok_scopes:
+            name = prop["name"]
+            snames = ", ".join(ok_scopes)
+            raise Error(f"cannot access {name} on per-{sname} basis, because it has "
+                        f"{prop['sname']} scope{self._pman.hostmsg}.\nPer-{sname} access is only "
+                        f"allowed for properties with the following scopes: {snames}")
+
     @staticmethod
     def _construct_pvinfo(pname, cpu, mname, val):
         """Construct and return the property value dictionary."""
@@ -341,7 +368,13 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             yield pvinfo
 
     def get_cpu_prop(self, pname, cpu, mnames=None):
-        """Same as 'get_prop_cpus()', but for a single CPU and a single property."""
+        """
+        Similar to 'get_prop_cpus()', but for a single CPU and a single property. The arguments are
+        as follows:
+          * pname - name of the property to get.
+          * cpu - CPU number to get the property for.
+          * mnames - same as in 'get_prop_cpus()'.
+        """
 
         for pvinfo in self.get_prop_cpus(pname, cpus=(cpu,), mnames=mnames):
             return pvinfo
@@ -355,6 +388,145 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         return self.get_cpu_prop(pname, cpu)["val"] is not None
+
+    def get_prop_dies(self, pname, dies="all", mnames=None):
+        """
+        Read property 'pname' for dies in 'dies'. For every die, yield the property value
+        dictionary. This is similar to 'get_prop_cpus()', but works on per-die basis.
+
+        The arguments are as follows.
+          * pname - name of the property to read and yield the values for. The property will be read
+                    for every die in 'dies'.
+          * dies - a dictionary with keys being integer package numbers and values being a
+                   collection of integer die numbers in the package. Special value 'all' means "all
+                   dies in all packages".
+          * mnames - list of mechanisms to use for getting the property (see
+                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
+                     specified in 'mnames'. By default, all mechanisms supported by the 'pname'
+                     property will be tried.
+
+        Unlike CPU numbers, die numbers are relative to package numbers. For example, on a two
+        socket system there may be die 0 in both packages 0 and 1. Therefore, the 'dies' argument is
+        a dictionary, not just a list of integer die numbers.
+
+        The property value dictionary has the following format:
+            { "die": die number within the package,
+              "package": package number,
+              "val": value of property 'pname' for the given package and die,
+              "mname" : name of the mechanism that was used for getting the property }
+
+        Otherwise the same as 'get_prop_cpus()'.
+        """
+
+        self._validate_pname(pname)
+        mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
+
+        with contextlib.suppress(ErrorNotSupported):
+            self._set_sname(pname)
+
+        self._validate_prop_vs_scope(pname, "die")
+
+        # Emulate using the per-CPU interface so far (temporary solution).
+        for package in self._cpuinfo.normalize_packages(dies):
+            for die in self._cpuinfo.normalize_dies(dies[package], package=package):
+                cpu = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))[0]
+                pvinfo = self.get_cpu_prop(pname, cpu, mnames=mnames)
+
+                die_pvinfo = {}
+                die_pvinfo["die"] = die
+                die_pvinfo["package"] = package
+                die_pvinfo["val"] = pvinfo["val"]
+                die_pvinfo["mname"] = pvinfo["mname"]
+
+                yield die_pvinfo
+
+    def get_die_prop(self, pname, die, package, mnames=None):
+        """
+        Similar to 'get_prop_dies()', but for a single die and a single property. The arguments are
+        as follows:
+          * pname - name of the property to get.
+          * die - die number to get the property for.
+          * package - package number for die 'die'.
+          * mnames - same as in 'get_prop_dies()'.
+        """
+
+        for pvinfo in self.get_prop_dies(pname, dies={package: (die,)}, mnames=mnames):
+            return pvinfo
+
+    def prop_is_supported_die(self, pname, die, package):
+        """
+        Return 'True' if property 'pname' is supported by die 'die' on package 'package', otherwise
+        return 'False'. The arguments are as follows:
+          * pname - property name to check.
+          * die - die number to check the property for.
+          * package - package number for die 'die'.
+        """
+
+        return self.get_die_prop(pname, die, package)["val"] is not None
+
+    def get_prop_packages(self, pname, packages="all", mnames=None):
+        """
+        Read property 'pname' for packages in 'packages', and for every package yield the property
+        value dictionary. This is similar to 'get_prop_cpus()', but works on per-package basis. The
+        arguments are as follows.
+          * pname - name of the property to read and yield the values for. The property will be read
+                    for every package in 'packages'.
+          * packages - collection of integer package numbers. Special value 'all' means "all
+                       packages".
+          * mnames - list of mechanisms to use for getting the property (see
+                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
+                     specified in 'mnames'. By default, all mechanisms supported by the 'pname'
+                     property will be tried.
+
+        The property value dictionary has the following format:
+            { "package": package number,
+              "val": value of property 'pname' for the given package,
+              "mname" : name of the mechanism that was used for getting the property }
+
+        Otherwise the same as 'get_prop_cpus()'.
+        """
+
+        self._validate_pname(pname)
+        mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
+
+        with contextlib.suppress(ErrorNotSupported):
+            self._set_sname(pname)
+
+        self._validate_prop_vs_scope(pname, "package")
+
+        # Emulate using the per-CPU interface so far (temporary solution).
+        for package in self._cpuinfo.normalize_packages(packages):
+            cpu = self._cpuinfo.package_to_cpus(package)[0]
+            pvinfo = self.get_cpu_prop(pname, cpu, mnames=mnames)
+
+            pkg_pvinfo = {}
+            pkg_pvinfo["package"] = package
+            pkg_pvinfo["val"] = pvinfo["val"]
+            pkg_pvinfo["mname"] = pvinfo["mname"]
+
+            yield pkg_pvinfo
+
+    def get_package_prop(self, pname, package, mnames=None):
+        """
+        Similar to 'get_prop_packages()', but for a single package and a single property. The
+        arguments are as follows:
+          * pname - name of the property to get.
+          * package - package number to get the property for.
+          * mnames - same as in 'get_prop_packages()'.
+        """
+
+        for pvinfo in self.get_prop_packages(pname, packages=(package,), mnames=mnames):
+            return pvinfo
+
+    def prop_is_supported_package(self, pname, package):
+        """
+        Return 'True' if property 'pname' is supported by package 'package, otherwise return
+        'False'. The arguments are as follows:
+          * pname - property name to check.
+          * package - package number to check the property for.
+        """
+
+        return self.get_package_prop(pname, package)["val"] is not None
 
     def _normalize_inprop(self, pname, val):
         """Normalize and return the input property value."""
@@ -422,9 +594,99 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
 
     def set_cpu_prop(self, pname, val, cpu, mnames=None):
-        """Same as 'set_prop_cpus()', but for a single CPU and a single property."""
+        """
+        Similar to 'set_prop_cpus()', but for a single CPU and a single property. The arguments are
+        as follows:
+          * pname - name of the property to set.
+          * val - the value to set the property to.
+          * cpu - CPU number to set the property for.
+          * mnames - same as in 'set_prop_cpus()'.
+        """
 
         return self.set_prop_cpus(pname, val, (cpu,), mnames=mnames)
+
+    def set_prop_dies(self, pname, val, dies, mnames=None):
+        """
+        Set property 'pname' to value 'val' for dies in 'dies'. The arguments are as follows.
+          * pname - name of the property to set.
+          * val - value to set the property to.
+          * dies - a dictionary with keys being integer package numbers and values being a
+                   collection of integer die numbers in the package. Special value 'all' means "all
+                   dies in all packages".
+          * mnames - list of mechanisms to use for setting the property (see
+                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
+                     specified in 'mnames'. Any mechanism is allowed by default.
+
+        Otherwise the same as 'set_prop_cpus()'.
+        """
+
+        mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
+        val = self._normalize_inprop(pname, val)
+
+        self._set_sname(pname)
+        self._validate_prop_vs_scope(pname, "die")
+
+        # Emulate using the per-CPU interface so far (temporary solution).
+        cpus = []
+        for package in self._cpuinfo.normalize_packages(dies):
+            for die in self._cpuinfo.normalize_dies(dies[package], package=package):
+                die_cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+                cpus += die_cpus
+
+        return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
+
+    def set_die_prop(self, pname, val, die, package, mnames=None):
+        """
+        Similar to 'set_prop_dies()', but for a single die and a single property. The arguments are
+        as follows:
+          * pname - name of the property to set.
+          * val - the value to set the property to.
+          * die - die number to set the property for.
+          * package - package number for die 'die'.
+          * mnames - same as in 'set_prop_dies()'.
+        """
+
+        return self.set_prop_dies(pname, val, {package: (die,)}, mnames=mnames)
+
+    def set_prop_packages(self, pname, val, packages, mnames=None):
+        """
+        Set property 'pname' to value 'val' for packages in 'packages'. The arguments are as
+        follows.
+          * pname - name of the property to set.
+          * val - value to set the property to.
+          * packages - collection of integer package numbers. Special value 'all' means "all CPUs".
+          * mnames - list of mechanisms to use for setting the property (see
+                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
+                     specified in 'mnames'. Any mechanism is allowed by default.
+
+        Otherwise the same as 'set_prop_cpus()'.
+        """
+
+        mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
+        val = self._normalize_inprop(pname, val)
+
+        self._set_sname(pname)
+        self._validate_prop_vs_scope(pname, "package")
+
+        # Emulate using the per-CPU interface so far (temporary solution).
+        cpus = []
+        for package in self._cpuinfo.normalize_packages(packages):
+            cpu = self._cpuinfo.package_to_cpus(package)[0]
+            cpus.append(cpu)
+
+        return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
+
+    def set_package_prop(self, pname, val, package, mnames=None):
+        """
+        Similar to 'set_prop_packages()', but for a single package and a single property. The
+        arguments are as follows:
+          * pname - name of the property to set.
+          * val - the value to set the property to.
+          * package - package number to set the property for.
+          * mnames - same as in 'set_prop_packages()'.
+        """
+
+        return self.set_prop_packages(pname, val, (package,), mnames=mnames)
 
     def _init_props_dict(self, props):
         """Initialize the 'props' and 'mechanisms' dictionaries."""
