@@ -82,8 +82,10 @@ def get_mechanism_opts(params, allow_readonly=True):
              "--mechanism sysfs,msr"]
     return opts
 
-def _verify_after_set(pobj, pname, val, cpus):
-    """Helper for 'set_and_verify(). Verify that the value was set to 'val'."""
+def _verify_after_set_per_cpu(pobj, pname, val, cpus):
+    """
+    Helper for 'set_and_verify(). Verify that the value was set to 'val', use the per-CPU interface.
+    """
 
     cpus_set = set(cpus)
 
@@ -129,7 +131,7 @@ def set_and_verify(params, props_vals, cpu):
         except ErrorNotSupported:
             continue
 
-        _verify_after_set(pobj, pname, val, cpus)
+        _verify_after_set_per_cpu(pobj, pname, val, cpus)
 
 def get_max_cpu_freq(params, cpu, numeric=False):
     """Return the maximum CPU or uncore frequency the Linux frequency driver accepts."""
