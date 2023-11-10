@@ -338,16 +338,19 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._epbobj
 
-    def _prop_not_supported(self, cpus, mnames, action, what, exceptions=None):
+    def _prop_not_supported(self, cpus, mnames, action, what, exceptions=None, exc_type=None):
         """
         Rase an exception or print a debug message from a property "get" or "set" method in a
         situation when the property could not be read or set using mechanisms in 'mnames'
         """
 
-        if len(mnames) > 1:
-            mnames_str = f"using {','.join(mnames)} methods"
+        if len(mnames) > 2:
+            mnames_quoted = [f"'{mname}'" for mname in mnames]
+            mnames_str = f"using {', '.join(mnames_quoted[:-1])} and {mnames_quoted[-1]} methods"
+        elif len(mnames) == 2:
+            mnames_str = f"using '{mnames[0]}' and '{mnames[1]}' methods"
         else:
-            mnames_str = f"using the {mnames[0]} method"
+            mnames_str = f"using the '{mnames[0]}' method"
 
         if len(cpus) > 1:
             cpus_msg = f"the following CPUs: {Human.rangify(cpus)}"
@@ -355,13 +358,16 @@ class PStates(_PCStatesBase.PCStatesBase):
             cpus_msg = f"for CPU {cpus[0]}"
 
         if exceptions:
-            errmsgs = "\n" + "\n".join([err.indent(2) for err in exceptions])
+            errmsgs = Trivial.list_dedup([str(err) for err in exceptions])
+            errmsgs = "\n" + "\n".join([Error(errmsg).indent(2) for errmsg in errmsgs])
         else:
             errmsgs = ""
 
         msg = f"cannot {action} {what} {mnames_str} for {cpus_msg}{errmsgs}"
         if exceptions:
-            raise ErrorNotSupported(msg)
+            if exc_type:
+                raise exc_type(msg)
+            raise type(exceptions[0])(msg)
         _LOG.debug(msg)
 
     def __is_uncore_freq_supported(self):
@@ -1441,7 +1447,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
-        exceptions = []
+        not_supported_exceptions = []
+        freq_range_exceptions = []
 
         if freq_type == "core":
             uncore = False
@@ -1486,15 +1493,24 @@ class PStates(_PCStatesBase.PCStatesBase):
                                      max_freq_pname, min_freq_limit_pname, max_freq_limit_pname,
                                      uncore, write_func)
 
-            except (ErrorNotSupported, ErrorFreqRange) as err:
-                exceptions.append(err)
+            except ErrorNotSupported as err:
+                not_supported_exceptions.append(err)
+                continue
+            except ErrorFreqRange as err:
+                # Different methods have different ranges, so continue.
+                freq_range_exceptions.append(err)
                 continue
 
             return mname
 
-        # Raise an 'ErrorNotSupported' exception.
+        if freq_range_exceptions:
+            exceptions = freq_range_exceptions
+            exc_type = ErrorFreqRange
+        else:
+            exceptions = not_supported_exceptions
+            exc_type = ErrorNotSupported
         self._prop_not_supported(cpus, mnames, "set", f"{freq_type} frequency",
-                                 exceptions=exceptions)
+                                 exceptions=exceptions, exc_type=exc_type)
 
     def _set_prop(self, pname, val, cpus, mnames=None):
         """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
