@@ -1384,17 +1384,17 @@ class PStates(_PCStatesBase.PCStatesBase):
         for cpu in cpus:
             new_freq = self._parse_freq(val, cpu, is_uncore)
 
+            min_limit = self._get_cpu_prop(min_freq_limit_pname, cpu, mnames=(mname,))
+            if not min_limit:
+                _raise_not_supported(min_freq_limit_pname)
+            max_limit = self._get_cpu_prop(max_freq_limit_pname, cpu, mnames=(mname,))
+            if not max_limit:
+                _raise_not_supported(max_freq_limit_pname)
+
+            if new_freq < min_limit or new_freq > max_limit:
+                _raise_out_of_range(pname, new_freq, min_limit, max_limit)
+
             if is_min:
-                min_limit = self._get_cpu_prop(min_freq_limit_pname, cpu, mnames=(mname,))
-                if not min_limit:
-                    _raise_not_supported(min_freq_limit_pname)
-
-                if new_freq < min_limit:
-                    max_limit = self._get_cpu_prop(max_freq_limit_pname, cpu, mnames=(mname,))
-                    if not max_limit:
-                        _raise_not_supported(max_freq_limit_pname)
-                    _raise_out_of_range(pname, new_freq, min_limit, max_limit)
-
                 cur_max_freq = self._get_cpu_prop(max_freq_pname, cpu, mnames=(mname,))
                 if not cur_max_freq:
                     _raise_not_supported(max_freq_pname)
@@ -1404,19 +1404,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                     # frequency.
                     _raise_order(pname, new_freq, cur_max_freq, is_min)
 
-                    if new_freq != cur_min_freq:
-                        write_func(pname, new_freq, cpu)
+                write_func(pname, new_freq, cpu)
             else:
-                max_limit = self._get_cpu_prop(max_freq_limit_pname, cpu, mnames=(mname,))
-                if not max_limit:
-                    _raise_not_supported(max_freq_limit_pname)
-
-                if new_freq > max_limit:
-                    min_limit = self._get_cpu_prop(min_freq_limit_pname, cpu, mnames=(mname,))
-                    if not min_limit:
-                        _raise_not_supported(min_freq_limit_pname)
-                    _raise_out_of_range(pname, new_freq, min_limit, max_limit)
-
                 cur_min_freq = self._get_cpu_prop(min_freq_pname, cpu, mnames=(mname,))
                 if not cur_min_freq:
                     _raise_not_supported(min_freq_pname)
@@ -1426,8 +1415,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                     # frequency.
                     _raise_order(pname, new_freq, cur_min_freq, is_min)
 
-                if new_freq != cur_max_freq:
-                    write_func(pname, new_freq, cpu)
+                write_func(pname, new_freq, cpu)
 
     def _set_freq_prop(self, pname, val, cpus, mnames=None):
         """Set core or uncore frequency property 'pname'."""

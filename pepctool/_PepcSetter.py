@@ -27,34 +27,52 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if pname not in spinfo:
             return
 
-        # Setting frequency may be tricky because there are ordering constraints, which is
-        # handled by 'set_freq_props()' method.
-        if pname in ("min_freq", "max_freq"):
-            min_freq_pname = "min_freq"
-            max_freq_pname = "max_freq"
-            freq_type = "core"
-        elif pname in ("min_uncore_freq", "max_uncore_freq"):
-            min_freq_pname = "min_uncore_freq"
-            max_freq_pname = "max_uncore_freq"
-            freq_type = "uncore"
-        else:
+        try:
             mname = self._pobj.set_prop(pname, spinfo[pname], cpus=cpus, mnames=mnames)
             del spinfo[pname]
             mnames_info[pname] = mname
             return
+        except ErrorFreqOrder:
+            if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
+                raise
 
-        min_freq = spinfo.get(min_freq_pname)
-        max_freq = spinfo.get(max_freq_pname)
+            # Setting frequencies may be tricky because of the ordering constraints. Here is an
+            # example illustrating why order matters. Suppose current min. and max. frequencies and
+            # new min. and max. frequencies are as follows:
+            #  ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+            #
+            # Where the dotted line represents the horizontal frequency axis. Setting min. frequency
+            # before max. frequency leads to a failure (more precisely, the 'ErrorFreqOrder'
+            # exception). Indeed, at step #2 below, current minimum frequency would be set to a
+            # value higher that current maximum frequency.
+            #  1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+            #  2. ----------------- Cur. Max -------- Cur. Min -- New Max ----------> FAIL!
+            #
+            # To handle this situation, max. frequency should be set first.
+            #  1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+            #  2. ---- Cur. Min --------------------- New Min --- Cur. Max --------->
+            #  3. ----------------------------------- Cur. Min -- Cur. Max --------->
+            #
+            # Therefore, if both min. and max. frequencies should be changed, try changing them in
+            # different order.
 
-        mname = self._pobj.set_freq_props(min_freq, max_freq, cpus, freq_type=freq_type,
-                                          mnames=mnames)
+            freq_pname = pname
+            if pname.startswith("min"):
+                # Trying to set minimum frequency to a value higher than currently configured
+                # maximum frequency.
+                other_freq_pname = pname.replace("min", "max")
+            elif pname.startswith("max"):
+                other_freq_pname = pname.replace("max", "mim")
+            else:
+                raise Error(f"BUG: unexpected property {pname}")
 
-        for fpname in (min_freq_pname, max_freq_pname):
-            if fpname in spinfo:
-                del spinfo[fpname]
-            mnames_info[fpname] = mname
+            if other_freq_pname not in spinfo:
+                raise
 
-        return
+            for pname in (other_freq_pname, freq_pname):
+                mname = self._pobj.set_prop(pname, spinfo[pname], cpus=cpus, mnames=mnames)
+                del spinfo[pname]
+                mnames_info[pname] = mname
 
     def set_props(self, spinfo, cpus="all", mnames=None):
         """
