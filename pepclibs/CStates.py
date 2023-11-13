@@ -226,7 +226,7 @@ class CStates(_PCStatesBase.PCStatesBase):
         mname = self._props[pname]["mnames"][0]
 
         if pname == "pkg_cstate_limit_lock":
-            val = self._read_prop_from_msr("lock", cpu)
+            val = self._read_prop_from_msr(pname, cpu)
             return self._construct_pvinfo(pname, cpu, mname, val)
 
         if pname not in {"pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"}:
