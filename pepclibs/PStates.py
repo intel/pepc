@@ -1478,10 +1478,14 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         try:
             if pname == "epb":
-                _epb = self._get_epbobj() # pylint: disable=protected-access
-                self._props[pname]["sname"] = _epb.sname
+                epbobj = self._get_epbobj() # pylint: disable=protected-access
+                self._props[pname]["sname"] = epbobj.sname
             elif pname == "bus_clock":
-                self._props[pname]["sname"] = self._get_fsbfreq().features["fsb"]["sname"]
+                try:
+                    fsbfreq = self._get_fsbfreq()
+                    self._props[pname]["sname"] = fsbfreq.features["fsb"]["sname"]
+                except ErrorNotSupported:
+                    self._props[pname]["sname"] = "global"
         except Error:
             self._props[pname]["sname"] = "CPU"
 
