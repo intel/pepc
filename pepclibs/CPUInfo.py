@@ -697,7 +697,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def _get_level_nums(self, sublvl, lvl, nums, order=None):
         """
-        Returns a list containing all sub-level 'sublvl' numbers in level 'lvl' elements with
+        Return a list containing all sub-level 'sublvl' numbers in level 'lvl' elements with
         numbers 'nums'.
 
         Examples.
@@ -775,7 +775,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         return list(result)
 
     def get_cpus(self, order="CPU"):
-        """Returns list of online CPU numbers."""
+        """Return list of online CPU numbers."""
 
         if order == "CPU":
             return sorted(self._get_online_cpus())
@@ -784,55 +784,55 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_cores(self, package=0, order="core"):
         """
-        Returns list of core numbers in package 'package', only cores containing at least one online
+        Return list of core numbers in package 'package', only cores containing at least one online
         CPU will be included.
         """
         return self._get_level_nums("core", "package", package, order=order)
 
     def get_modules(self, order="module"):
         """
-        Returns list of module numbers, only modules containing at least one online CPU will be
+        Return list of module numbers, only modules containing at least one online CPU will be
         included.
         """
         return self._get_level_nums("module", "module", "all", order=order)
 
     def get_dies(self, package=0, order="die"):
         """
-        Returns list of die numbers in package 'package', only dies containing at least one online
+        Return list of die numbers in package 'package', only dies containing at least one online
         CPU will be included.
         """
         return self._get_level_nums("die", "package", package, order=order)
 
     def get_nodes(self, order="node"):
         """
-        Returns list of node numbers, only nodes containing at least one online CPU will be
+        Return list of node numbers, only nodes containing at least one online CPU will be
         included.
         """
         return self._get_level_nums("node", "node", "all", order=order)
 
     def get_packages(self, order="package"):
         """
-        Returns list of package numbers, only packages containing at least one online CPU will be
+        Return list of package numbers, only packages containing at least one online CPU will be
         included.
         """
         return self._get_level_nums("package", "package", "all", order=order)
 
     def _get_all_cpus(self):
-        """Returns set of online and offline CPU numbers."""
+        """Return set of online and offline CPU numbers."""
 
         if not self._all_cpus:
             self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
         return self._all_cpus
 
     def _get_online_cpus(self, update=False):
-        """Returns set of online CPU numbers."""
+        """Return set of online CPU numbers."""
 
         if not self._cpus or update:
             self._cpus = set(self._read_range("/sys/devices/system/cpu/online"))
         return self._cpus
 
     def get_offline_cpus(self):
-        """Returns list of offline CPU numbers sorted in ascending order."""
+        """Return list of offline CPU numbers sorted in ascending order."""
 
         cpus = self._get_all_cpus()
         online_cpus = self._get_online_cpus()
@@ -848,7 +848,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_cpu_levels(self, cpu, levels=None):
         """
-        Returns a dictionary of levels an online CPU 'cpu' belongs to. By default all levels are
+        Return a dictionary of levels an online CPU 'cpu' belongs to. By default all levels are
         included.
         """
 
@@ -870,7 +870,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_cpu_siblings(self, cpu, level):
         """
-        Returns a list of 'level' siblings. The arguments are as follows:
+        Return a list of 'level' siblings. The arguments are as follows:
          * cpu - the CPU whose siblings to return.
          * level - the siblings level (e.g. "package", "core").
 
@@ -920,7 +920,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
         """
-        Returns list of online CPU numbers belonging to cores 'cores' in packages 'packages'.
+        Return list of online CPU numbers belonging to cores 'cores' in packages 'packages'.
 
         Note: core numbers are per-package.
         """
@@ -936,13 +936,12 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         return cpus
 
     def modules_to_cpus(self, modules="all", order="CPU"):
-        """Returns list of online CPU numbers belonging to modules 'modules'."""
+        """Return list of online CPU numbers belonging to modules 'modules'."""
         return self._get_level_nums("CPU", "module", modules, order=order)
 
     def dies_to_cpus(self, dies="all", packages="all", order="CPU"):
         """
-        Returns list of online CPU numbers belonging to dies 'dies' in packages 'packages'.
-
+        Return list of online CPU numbers belonging to dies 'dies' in packages 'packages'.
         Note: die numbers are per-package.
         """
 
@@ -957,23 +956,23 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         return cpus
 
     def nodes_to_cpus(self, nodes="all", order="CPU"):
-        """Returns list of online CPU numbers belonging to nodes 'nodes'."""
+        """Return list of online CPU numbers belonging to nodes 'nodes'."""
         return self._get_level_nums("CPU", "node", nodes, order=order)
 
     def packages_to_cpus(self, packages="all", order="CPU"):
-        """Returns list of online CPU numbers belonging to packages 'packages'."""
+        """Return list of online CPU numbers belonging to packages 'packages'."""
         return self._get_level_nums("CPU", "package", packages, order=order)
 
     def get_offline_cpus_count(self):
-        """Returns count of offline CPUs."""
+        """Return count of offline CPUs."""
         return len(self.get_offline_cpus())
 
     def get_cpus_count(self):
-        """Returns count of online CPUs."""
+        """Return count of online CPUs."""
         return len(self._get_online_cpus())
 
     def get_packages_count(self):
-        """Returns packages count."""
+        """Return packages count."""
         return len(self.get_packages())
 
     def select_core_siblings(self, cpus, indexes):
@@ -1041,7 +1040,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         follows.
           * cpus - same as in 'normalize_cpus()'.
 
-        Returns a tuple of two lists: ('cores', 'rem_cpus').
+        Return a tuple of two lists: ('cores', 'rem_cpus').
           * cores - list of ('core', 'package') tuples with all CPUs present in 'cpus'.
               o core - core number.
               o package - package number 'core' belongs to
@@ -1086,7 +1085,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         cover entire dies(s). The arguments are as follows.
           * cpus - same as in 'normalize_cpus()'.
 
-        Returns a tuple of two lists: ('dies', 'rem_cpus').
+        Return a tuple of two lists: ('dies', 'rem_cpus').
           * dies - list of ('die', 'package') tuples with all CPUs present in 'cpus'.
               o die - die number.
               o package - package number 'die' belongs to
@@ -1138,7 +1137,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
           * cpus - same as in 'normalize_cpus()'.
           * packages - the packages to check for CPU numbers in.
 
-        Returns a tuple of two lists: ('packages', 'rem_cpus').
+        Return a tuple of two lists: ('packages', 'rem_cpus').
           * packages - list of packages with all CPUs present in 'cpus'.
           * rem_cpus - list of remaining CPUs that cannot be converted to a package number.
 
@@ -1210,7 +1209,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
           * package - package number to validate the 'dies' against: all numbers in 'dies' should be
                       valid die numbers in package number 'package'.
 
-        Returns a list of integer die numbers.
+        Return a list of integer die numbers.
         """
 
         pkg_dies = self.package_to_dies(package)
@@ -1271,7 +1270,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_hybrid_cpu_topology(self):
         """
-        Returns P-core/E-core CPU list on hybrid CPUs, otherwise returns 'None'.
+        Return P-core/E-core CPU list on hybrid CPUs, otherwise return 'None'.
         If the kernel does not support hybrid CPU topology, this function will return 'None'
         """
 
@@ -1287,7 +1286,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_cache_info(self):
         """
-        Returns a dictionary including CPU cache infomration. The dictionary keys and layout is
+        Return a dictionary including CPU cache infomration. The dictionary keys and layout is
         similar to what the following command provides: 'lscpu --json --caches'.
         """
 
