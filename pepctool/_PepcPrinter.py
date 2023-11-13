@@ -127,7 +127,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def _print_prop_human(self, prop, val, action=None, cpus=None, prefix=None):
         """Format and print a message about property 'prop' in the "human" format."""
 
-        if cpus is None or (prop["sname"] == "global" and not prop["writable"]):
+        if cpus is None or prop["sname"] == "global":
             sfx = ""
         else:
             cpus = self._fmt_cpus(cpus)
