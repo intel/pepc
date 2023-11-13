@@ -12,9 +12,11 @@ This module provides a capability for reading and writing to read and write CPU 
 Registers. This module has been designed and implemented for Intel CPUs.
 
 Terminology.
-  * MSR scope. MSR scope is defined by the "observability" of MSR writes. For example, if modifying
-    an MSR register from CPU X makes the modification visible on all core siblings, the MSR has core
-    scope. If the modification is visible on all package siblings, the MSR has package scope.
+  * MSR scope. MSR scope is defined by the observability of MSR writes, not by their functional
+    impact. For example, if modifying an MSR register from CPU X makes the modification visible on
+    all core siblings, the MSR has core scope. If the modification is visible on all package
+    siblings, the MSR has package scope. Some MSRs may have, for example, core scope, but impact the
+    entire package from the functional point of view.
   * MSR feature scope, defines the scope for specific bit/bits inside a MSR. Some MSR can be hybrid
     for example, on Knights Mill MSR_MISC_FEATURE_CONTROL bit 0 has core scope and bit 1 has module
     scope.

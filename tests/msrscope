@@ -8,7 +8,10 @@
 #
 # Author: Niklas Neronin <niklas.neronin@intel.com>
 
-"""MSR scope checker, for checking the scope for a writable MSR."""
+"""
+MSR scope checker - find out the observability scope for a writable MSR. Note, the scope is defined
+by the observability MSR value changes, not by the functional impact of the MSR register feature(s).
+"""
 
 import sys
 import logging
