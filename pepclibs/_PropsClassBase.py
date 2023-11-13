@@ -383,13 +383,13 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return val
 
-    def _set_prop(self, pname, val, cpus, mnames=None):
-        """Implements 'set_prop()'. The arguments are as the same as in 'set_prop()'."""
+    def _set_prop_cpus(self, pname, val, cpus, mnames=None):
+        """Implements 'set_prop_cpus()'. The arguments are as the same as in 'set_prop_cpus()'."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("PropsClassBase.set_prop")
+        return _bug_method_not_defined("PropsClassBase.set_prop_cpus")
 
-    def set_prop(self, pname, val, cpus, mnames=None):
+    def set_prop_cpus(self, pname, val, cpus, mnames=None):
         """
         Set property 'pname' to value 'val' for CPUs in 'cpus'. The arguments are as follows.
           * pname - name of the property to set.
@@ -413,12 +413,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._set_sname(pname)
         self._validate_cpus_vs_scope(pname, cpus)
 
-        return self._set_prop(pname, val, cpus, mnames=mnames)
+        return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
 
     def set_cpu_prop(self, pname, val, cpu, mnames=None):
-        """Same as 'set_prop()', but for a single CPU and a single property."""
+        """Same as 'set_prop_cpus()', but for a single CPU and a single property."""
 
-        return self.set_prop(pname, val, (cpu,), mnames=mnames)
+        return self.set_prop_cpus(pname, val, (cpu,), mnames=mnames)
 
     def _init_props_dict(self, props):
         """Initialize the 'props' and 'mechanisms' dictionaries."""

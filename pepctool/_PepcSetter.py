@@ -21,18 +21,18 @@ from pepclibs.PStates import ErrorFreqOrder
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
     """This class provides API for changing P-state and C-state properties."""
 
-    def _set_prop(self, spinfo, pname, cpus, mnames, mnames_info):
+    def _set_prop_cpus(self, spinfo, pname, cpus, mnames, mnames_info):
         """Set property 'pname' and handle frequency properties ordering."""
 
         if pname not in spinfo:
             return
 
         try:
-            mname = self._pobj.set_prop(pname, spinfo[pname], cpus=cpus, mnames=mnames)
+            mname = self._pobj.set_prop_cpus(pname, spinfo[pname], cpus=cpus, mnames=mnames)
             del spinfo[pname]
             mnames_info[pname] = mname
             return
-        except ErrorFreqOrder:
+        except ErrorFreqOrder as err:
             if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
                 raise
 
@@ -64,15 +64,15 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             elif pname.startswith("max"):
                 other_freq_pname = pname.replace("max", "mim")
             else:
-                raise Error(f"BUG: unexpected property {pname}")
+                raise Error(f"BUG: unexpected property {pname}") from err
 
             if other_freq_pname not in spinfo:
                 raise
 
-            for pname in (other_freq_pname, freq_pname):
-                mname = self._pobj.set_prop(pname, spinfo[pname], cpus=cpus, mnames=mnames)
-                del spinfo[pname]
-                mnames_info[pname] = mname
+            for pnm in (other_freq_pname, freq_pname):
+                mname = self._pobj.set_prop_cpus(pnm, spinfo[pnm], cpus=cpus, mnames=mnames)
+                del spinfo[pnm]
+                mnames_info[pnm] = mname
 
     def set_props(self, spinfo, cpus="all", mnames=None):
         """
@@ -93,7 +93,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         spinfo_copy = spinfo.copy()
 
         for pname in list(spinfo):
-            self._set_prop(spinfo_copy, pname, cpus, mnames, mnames_info)
+            self._set_prop_cpus(spinfo_copy, pname, cpus, mnames, mnames_info)
 
         if self._msr:
             self._msr.commit_transaction()
@@ -133,7 +133,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         """Restore property 'pname' to value 'val' for CPUs 'cpus."""
 
         try:
-            self._pobj.set_prop(pname, val, cpus=cpus)
+            self._pobj.set_prop_cpus(pname, val, cpus=cpus)
             return
         except ErrorFreqOrder:
             if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
@@ -147,15 +147,15 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             min_freq_pname = "min_uncore_freq"
             max_freq_pname = "max_uncore_freq"
         else:
-            self._pobj.set_prop(pname, val, cpus=cpus)
+            self._pobj.set_prop_cpus(pname, val, cpus=cpus)
             return
 
         if pname.startswith("min_"):
-            self._pobj.set_prop(max_freq_pname, "max", cpus=cpus)
-            self._pobj.set_prop(min_freq_pname, val, cpus=cpus)
+            self._pobj.set_prop_cpus(max_freq_pname, "max", cpus=cpus)
+            self._pobj.set_prop_cpus(min_freq_pname, val, cpus=cpus)
         elif pname.startswith("max_"):
-            self._pobj.set_prop(min_freq_pname, "min", cpus=cpus)
-            self._pobj.set_prop(max_freq_pname, val, cpus=cpus)
+            self._pobj.set_prop_cpus(min_freq_pname, "min", cpus=cpus)
+            self._pobj.set_prop_cpus(max_freq_pname, val, cpus=cpus)
 
     def _restore_props(self, ydict):
         """Restore properties from a loaded YAML file and represented by 'ydict'."""

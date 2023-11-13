@@ -156,7 +156,7 @@ class Power(_PropsClassBase.PropsClassBase):
         return self._construct_pvinfo(pname, cpu, "msr", val)
 
     def _do_set_prop(self, pname, val, cpus):
-        """Implements '_set_prop()'."""
+        """Implements '_set_prop_cpus()'."""
 
         fname = self._pname2fname(pname)
 
@@ -188,8 +188,8 @@ class Power(_PropsClassBase.PropsClassBase):
 
             self._get_pplobj().write_cpu_feature(fname, val, cpu)
 
-    def _set_prop(self, pname, val, cpus, mnames=None):
-        """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
+    def _set_prop_cpus(self, pname, val, cpus, mnames=None):
+        """Refer to '_PropsClassBase.PropsClassBase.set_prop_cpus()'."""
 
         try:
             self._do_set_prop(pname, val, cpus)

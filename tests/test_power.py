@@ -59,7 +59,7 @@ def _get_set_and_verify_data(params, cpu):
         yield pname, pvinfo["val"]
 
 def test_power_set_and_verify(params):
-    """Verify that 'get_prop_cpus()' returns same values as set by 'set_prop()'."""
+    """Verify that 'get_prop_cpus()' returns same values as set by 'set_prop_cpus()'."""
 
     props_vals = _get_set_and_verify_data(params, 0)
     try:

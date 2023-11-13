@@ -402,7 +402,7 @@ def test_pstates_frequency_set_order(params):
     if pobj.prop_is_supported("turbo", cpu):
         sname = pobj.get_sname("turbo")
         siblings = cpuinfo.get_cpu_siblings(0, level=sname)
-        pobj.set_prop("turbo", "on", siblings)
+        pobj.set_prop_cpus("turbo", "on", siblings)
 
     if pobj.prop_is_supported("min_freq", cpu):
         _set_freq_pairs(params, "min_freq", "max_freq")

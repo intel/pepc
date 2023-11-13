@@ -1450,8 +1450,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._prop_not_supported(cpus, mnames, "set", f"{freq_type} frequency",
                                  exceptions=exceptions, exc_type=exc_type)
 
-    def _set_prop(self, pname, val, cpus, mnames=None):
-        """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
+    def _set_prop_cpus(self, pname, val, cpus, mnames=None):
+        """Refer to '_PropsClassBase.PropsClassBase.set_prop_cpus()'."""
 
         if pname == "governor":
             self._validate_governor_name(val)

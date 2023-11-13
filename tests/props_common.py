@@ -127,7 +127,7 @@ def set_and_verify(params, props_vals, cpu):
         cpus = siblings[sname]
 
         try:
-            pobj.set_prop(pname, val, cpus)
+            pobj.set_prop_cpus(pname, val, cpus)
         except ErrorNotSupported:
             continue
 
@@ -240,7 +240,9 @@ def verify_get_props_mechanisms(params, cpu):
                 f"Expected '{pvinfo['mname']}', got '{pvinfo1['mname']}'."
 
 def verify_set_props_mechanisms_bool(params, cpu):
-    """Verify that the 'mname' arguments of 'set_prop()' works correctly for boolean properties."""
+    """
+    Verify that the 'mname' arguments of 'set_prop_cpus()' works correctly for boolean properties.
+    """
 
     siblings = {}
     cpuinfo = params["cpuinfo"]
@@ -276,16 +278,16 @@ def verify_set_props_mechanisms_bool(params, cpu):
         all_mnames += [("msr","sysfs"), ("sysfs" ," msr")]
         for mnames in all_mnames:
             try:
-                mname = pobj.set_prop(pname, val, cpus, mnames=mnames)
+                mname = pobj.set_prop_cpus(pname, val, cpus, mnames=mnames)
             except ErrorNotSupported:
                 continue
 
             assert mname in mnames, f"Set property '{pname}' to value '{val}' on CPU {cpu} " \
-                                    f"using mechanisms '{','.join(mnames)}', but 'set_prop()' " \
-                                    f"return machanism name '{mname}'."
+                                    f"using mechanisms '{','.join(mnames)}', but " \
+                                    f"'set_prop_cpus()' return machanism name '{mname}'."
 
             pvinfo1 = pobj.get_cpu_prop(pname, cpu)
             assert pvinfo1["val"] == val, f"Set property '{pname}' to value '{val}' on " \
                                           f"CPU {cpu}, but read back value '{pvinfo1['val']}'."
 
-            pobj.set_prop(pname, pvinfo["val"], cpus, mnames=mnames)
+            pobj.set_prop_cpus(pname, pvinfo["val"], cpus, mnames=mnames)

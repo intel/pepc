@@ -120,11 +120,11 @@ def _try_change_value(pname, new_val, current_val, pobj):
     """
 
     try:
-        pobj.set_prop(pname, new_val, cpus="all")
+        pobj.set_prop_cpus(pname, new_val, cpus="all")
     except ErrorVerifyFailed:
         return current_val
 
-    pobj.set_prop(pname, current_val, cpus="all")
+    pobj.set_prop_cpus(pname, current_val, cpus="all")
 
     return new_val
 

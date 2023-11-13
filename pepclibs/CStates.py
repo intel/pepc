@@ -284,8 +284,8 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
-    def _set_prop(self, pname, val, cpus, mnames=None):
-        """Refer to '_PropsClassBase.PropsClassBase.set_prop()'."""
+    def _set_prop_cpus(self, pname, val, cpus, mnames=None):
+        """Refer to '_PropsClassBase.PropsClassBase.set_prop_cpus()'."""
 
         if pname in PowerCtl.FEATURES:
             self._get_powerctl().write_feature(pname, val, cpus=cpus)
