@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - 'pepc * info' commands do not print CPU numbers when a property has the same
+   value for all CPUs. Instead, just "all CPUs" is printed. This makes output
+   less cluttered.
 
 ## [1.4.38] - 2023-11-07
 ### Added
