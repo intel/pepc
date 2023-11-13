@@ -425,6 +425,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             * 'normalize_packages()'
         B. Single package/CPU/etc.
             * 'normalize_cpu()'
+            * 'normalize_die()'
             * 'normalize_package()'
     6. Select CPUs by sibling index.
         * 'select_core_siblings()'
@@ -1258,11 +1259,15 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def normalize_cpu(self, cpu):
         """Same as 'normalize_cpus()', but for a single CPU number."""
-        return  self.normalize_cpus([cpu])[0]
+        return  self.normalize_cpus((cpu,))[0]
+
+    def normalize_die(self, die, package=0):
+        """Same as 'normalize_packages()', but for a single package number."""
+        return self.normalize_dies((die,), package=package)[0]
 
     def normalize_package(self, package):
         """Same as 'normalize_packages()', but for a single package number."""
-        return self.normalize_packages([package])[0]
+        return self.normalize_packages((package,))[0]
 
     def get_hybrid_cpu_topology(self):
         """
