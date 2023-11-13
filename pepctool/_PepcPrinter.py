@@ -36,22 +36,21 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         cpus_range = Human.rangify(cpus)
         if len(cpus) == 1:
-            msg = f"CPU {cpus_range}"
-        else:
-            msg = f"CPUs {cpus_range}"
+            return f"CPU {cpus_range}"
 
         allcpus = self._cpuinfo.get_cpus()
         if set(cpus) == set(allcpus):
-            msg += " (all CPUs)"
-        else:
-            pkgs, rem_cpus = self._cpuinfo.cpus_div_packages(cpus)
-            if pkgs and not rem_cpus:
-                # CPUs in 'cpus' are actually the packages in 'pkgs'.
-                pkgs_range = Human.rangify(pkgs)
-                if len(pkgs) == 1:
-                    msg += f" (package {pkgs_range})"
-                else:
-                    msg += f" (packages {pkgs_range})"
+            return "all CPUs"
+
+        msg = f"CPUs {cpus_range}"
+        pkgs, rem_cpus = self._cpuinfo.cpus_div_packages(cpus)
+        if pkgs and not rem_cpus:
+            # CPUs in 'cpus' are actually the packages in 'pkgs'.
+            pkgs_range = Human.rangify(pkgs)
+            if len(pkgs) == 1:
+                msg += f" (package {pkgs_range})"
+            else:
+                msg += f" (packages {pkgs_range})"
 
         return msg
 
