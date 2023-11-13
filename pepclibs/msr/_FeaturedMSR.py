@@ -480,9 +480,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
-            if self._cpuinfo.info["vendor"] != self.vendor:
-                raise ErrorNotSupported(f"unsupported MSR {self.regaddr:#x} ({self.regname}), it's "
-                                        f"only available on {self.vendor} CPUs")
+
+        if self._cpuinfo.info["vendor"] != self.vendor:
+            raise ErrorNotSupported(f"unsupported MSR {self.regaddr:#x} ({self.regname}), it's "
+                                    f"only available on {self.vendor} CPUs")
 
         if not self._msr:
             self._msr = MSR.MSR(pman=self._pman, cpuinfo=self._cpuinfo)
