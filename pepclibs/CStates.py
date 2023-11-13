@@ -317,6 +317,8 @@ class CStates(_PCStatesBase.PCStatesBase):
         except Error:
             self._props[pname]["sname"] = "CPU"
 
+        self.props[pname] = self._props[pname]
+
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
 
