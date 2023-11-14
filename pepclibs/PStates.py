@@ -17,8 +17,8 @@ import logging
 import contextlib
 import statistics
 from pathlib import Path
-from pepclibs import _PCStatesBase
-from pepclibs.helperlibs import Trivial, KernelModule, FSHelpers, Human, ClassHelpers
+from pepclibs import _PCStatesBase, UncoreFreq
+from pepclibs.helperlibs import Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
@@ -372,79 +372,16 @@ class PStates(_PCStatesBase.PCStatesBase):
             raise type(exceptions[0])(msg)
         _LOG.debug(msg)
 
-    def __is_uncore_freq_supported(self):
-        """Implements '_is_uncore_freq_supported()'."""
-
-        if self._pman.exists(self._sysfs_base_uncore):
-            return True
-
-        from pepclibs.msr import UncoreRatioLimit # pylint: disable=import-outside-toplevel
-
-        cpumodel = self._cpuinfo.info["model"]
-
-        # If the CPU supports MSR_UNCORE_RATIO_LIMIT, the uncore frequency driver is
-        # "intel_uncore_frequency".
-        if cpumodel in UncoreRatioLimit.FEATURES["max_ratio"]["cpumodels"]:
-            drvname = "intel_uncore_frequency"
-            kopt = "CONFIG_INTEL_UNCORE_FREQ_CONTROL"
-            msr_addr = UncoreRatioLimit.MSR_UNCORE_RATIO_LIMIT
-
-            msg = f"Uncore frequency operations are not supported{self._pman.hostmsg}. Here are " \
-                  f"the possible reasons:\n" \
-                  f" 1. the '{drvname}' driver is not enabled. Try to compile the kernel " \
-                  f"with the '{kopt}' option.\n" \
-                  f" 2. the kernel is old and does not have the '{drvname}' driver.\n" \
-                  f"Address these issues or contact project maintainers and request" \
-                  f"implementing uncore frequency support via MSR {msr_addr:#x}"
-        else:
-            drvname = "intel_uncore_frequency_tpmi"
-            kopt = "CONFIG_INTEL_UNCORE_FREQ_CONTROL_TPMI"
-
-            msg = f"Uncore frequency operations are not supported{self._pman.hostmsg}. Here are " \
-                  f"the possible reasons:\n" \
-                  f" 1. the hardware does not support uncore frequency management.\n" \
-                  f" 2. the '{drvname}' driver does not support this hardware.\n" \
-                  f" 3. the kernel is old and does not have the '{drvname}' driver. This driver " \
-                  f"is supported since kernel version 6.5.\n" \
-                  f" 4. the '{drvname}' driver is not enabled. Try to compile the kernel " \
-                  f"with the '{kopt}' option"
-
-        try:
-            self._ufreq_drv = KernelModule.KernelModule(drvname, pman=self._pman)
-            loaded = self._ufreq_drv.is_loaded()
-        except Error as err:
-            _LOG.debug("%s\n%s", err, msg)
-            self._uncore_errmsg = msg
-            return False
-
-        if loaded:
-            # The sysfs directories do not exist, but the driver is loaded.
-            _LOG.debug("The uncore frequency driver '%s' is loaded, but the sysfs directory '%s' "
-                       "does not exist.\n%s", drvname, self._sysfs_base_uncore, msg)
-            self._uncore_errmsg = msg
-
-        try:
-            self._ufreq_drv.load()
-            self._unload_ufreq_drv = True
-            FSHelpers.wait_for_a_file(self._sysfs_base_uncore, timeout=1, pman=self._pman)
-        except Error as err:
-            _LOG.debug("%s\n%s", err, msg)
-            self._uncore_errmsg = msg
-            return False
-
-        return True
-
     def _is_uncore_freq_supported(self):
         """
         Make sure that the uncore frequency control is supported. Load the uncore frequency
         control driver if necessary.
         """
 
-        if self._uncore_freq_supported is not None:
-            return self._uncore_freq_supported
+        if not self._uncore_obj:
+            return False
 
-        self._uncore_freq_supported = self.__is_uncore_freq_supported()
-        return self._uncore_freq_supported
+        return True
 
     def _read_cppc_sysfs_file(self, fname, cpu):
         """Read an ACPI CPPC sysfs file."""
@@ -910,11 +847,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         """
 
         prop = self._props[pname]
-        if self._is_uncore_prop(pname):
-            levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
-            pkg = levels["package"]
-            die = levels["die"]
-            return self._sysfs_base_uncore / f"package_{pkg:02d}_die_{die:02d}" / prop["fname"]
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
 
@@ -930,12 +862,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             val, mname = self._pcache.find(pname, cpu, mnames=(mname,))
             return self._construct_pvinfo(pname, cpu, mname, val)
 
-        if self._is_uncore_prop(pname) and not self._is_uncore_freq_supported():
-            _LOG.debug(self._uncore_errmsg)
-            val =  None
-        else:
-            path = self._get_sysfs_path(pname, cpu)
-            val = self._read_prop_from_sysfs(pname, path)
+        path = self._get_sysfs_path(pname, cpu)
+        val = self._read_prop_from_sysfs(pname, path)
 
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
         return self._construct_pvinfo(pname, cpu, mname, val)
@@ -990,6 +918,28 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
         return self._construct_pvinfo("intel_pstate_mode", cpu, mname, val)
+
+    def _get_uncore_freq(self, pname, cpu):
+        """Read and return the minimum or maximum uncore frequency."""
+
+        val = None
+        if self._uncore_obj:
+            if pname == "min_uncore_freq":
+                val = self._uncore_obj.get_min_freq(cpu)
+            elif pname == "max_uncore_freq":
+                val = self._uncore_obj.get_max_freq(cpu)
+            elif pname == "min_uncore_freq_limit":
+                val = self._uncore_obj.get_min_freq_limit(cpu)
+            elif pname == "max_uncore_freq_limit":
+                val = self._uncore_obj.get_max_freq_limit(cpu)
+
+        return val
+
+    def _get_uncore_freq_pvinfo(self, pname, cpu):
+        """Read and return the minimum or maximum uncore frequnecy."""
+
+        val = self._get_uncore_freq(pname, cpu)
+        return self._construct_pvinfo(pname, cpu, "sysfs", val)
 
     def _get_cpu_freq_msr(self, pname, cpu):
         """Read and return the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
@@ -1107,6 +1057,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._get_frequencies_pvinfo(cpu, mnames=mnames)
         if pname == "driver":
             return self._get_driver_pvinfo(cpu)
+        if self._is_uncore_prop(pname):
+            return self._get_uncore_freq_pvinfo(pname, cpu)
         if "fname" in prop:
             return self._get_cpu_prop_pvinfo_sysfs(pname, cpu)
         if pname == "intel_pstate_mode":
@@ -1235,6 +1187,14 @@ class PStates(_PCStatesBase.PCStatesBase):
             count -= 1
 
         self._handle_write_and_read_freq_mismatch(pname, freq, read_freq, cpu, path)
+
+    def _write_uncore_freq_prop(self, pname, freq, cpu):
+        """Write uncore frequency property."""
+
+        if pname == "min_uncore_freq":
+            self._uncore_obj.set_min_freq(freq, cpu)
+        elif pname == "max_uncore_freq":
+            self._uncore_obj.set_max_freq(freq, cpu)
 
     def _parse_freq(self, val, cpu, uncore=False):
         """Turn a user-provided CPU or uncore frequency property value to hertz."""
@@ -1380,7 +1340,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             max_freq_pname = "max_uncore_freq"
             min_freq_limit_pname = "min_uncore_freq_limit"
             max_freq_limit_pname = "max_uncore_freq_limit"
-            write_func = self._write_freq_prop_to_sysfs
+            write_func = self._write_uncore_freq_prop
         else:
             min_freq_pname = "min_freq"
             max_freq_pname = "max_freq"
@@ -1469,8 +1429,6 @@ class PStates(_PCStatesBase.PCStatesBase):
             self._validate_governor_name(val)
         elif pname == "intel_pstate_mode":
             self._validate_intel_pstate_mode(val)
-        elif self._is_uncore_prop(pname) and not self._is_uncore_freq_supported():
-            raise Error(self._uncore_errmsg)
 
         if pname == "epp":
             return self._get_eppobj().set_vals(val, cpus=cpus, mnames=mnames)
@@ -1519,10 +1477,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._props["max_freq_limit"]["fname"] = "cpuinfo_max_freq"
         self._props["base_freq"]["fname"] = "base_frequency"
         self._props["frequencies"]["fname"] = "scaling_available_frequencies"
-        self._props["min_uncore_freq"]["fname"] = "min_freq_khz"
-        self._props["max_uncore_freq"]["fname"] = "max_freq_khz"
-        self._props["min_uncore_freq_limit"]["fname"] = "initial_min_freq_khz"
-        self._props["max_uncore_freq_limit"]["fname"] = "initial_max_freq_khz"
         self._props["governor"]["fname"] = "scaling_governor"
         self._props["governors"]["fname"] = "scaling_available_governors"
 
@@ -1546,25 +1500,25 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._platinfo = None
         self._trl = None
 
-        # Will be 'True' if uncore frequency operations are supported, 'False' otherwise.
-        self._uncore_freq_supported = None
-        self._uncore_errmsg = None
-        self._ufreq_drv = None
-        self._unload_ufreq_drv = False
+        self._uncore_obj = None
+        self._uncore_err = None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
         self._sysfs_base_uncore = Path("/sys/devices/system/cpu/intel_uncore_frequency")
 
         self._init_props_dict()
 
+        try:
+            self._uncore_obj = UncoreFreq.UncoreFreq(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                     enable_cache=self._enable_cache)
+        except ErrorNotSupported as err:
+            self._uncore_err = err
+
     def close(self):
         """Uninitialize the class object."""
 
-        if self._unload_ufreq_drv:
-            self._ufreq_drv.unload()
-
         close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_hwpreq", "_hwpreq_pkg", "_platinfo",
-                       "_trl", "_fsbfreq", "_ufreq_drv")
+                       "_trl", "_fsbfreq", "_uncore_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
