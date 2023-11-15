@@ -167,12 +167,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def get_sname(self, pname):
         """
-        Return scope "sname" for property 'pname'. May return 'None' if the property is not
-        supported.
+        Return observability scope name for the 'pname' property. May return 'None' if the property
+        is not supported, but this is not guaranteed.
 
-        Note, if the property is not supported by the platform, this method does not guarantee that
-        'None' is returned. Depending on the property and platform, this method may return a valid
-        scope name even if the property is not actually supported.
+        If the property is not supported by the platform, this method does not guarantee that 'None'
+        is returned. Depending on the property and platform, this method may return a valid scope
+        name even if the property is not actually supported.
         """
 
         try:
@@ -451,7 +451,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._props = copy.deepcopy(props)
         self.props = props
 
-        # Initialize the 'mechanisms' dictionery, which includes the mechanisms supported by the
+        # Initialize the 'mechanisms' dictionary, which includes the mechanisms supported by the
         # subclass.
         seen = set()
         for prop in self._props.values():
