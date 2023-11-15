@@ -443,17 +443,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         raise Error("BUG: sub-class did not define the '_set_baseclass_attributes()' method")
 
-    def __new__(cls, **kwargs):
-        """The class constructor."""
-
-        # When 'cpuinfo' argument is passed, optimize by validating that the CPU vendor is
-        # supported, before initializing the entire class.
-        if "cpuinfo" in kwargs and cls.vendor != kwargs["cpuinfo"].info["vendor"]:
-            raise ErrorNotSupported(f"unsupported MSR {cls.regaddr:#x} ({cls.regname}), it's only "
-                                    f"available on {cls.vendor} CPUs")
-
-        return super(FeaturedMSR, cls).__new__(cls)
-
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
         The class constructor. The argument are as follows.
