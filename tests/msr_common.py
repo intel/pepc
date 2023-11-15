@@ -13,6 +13,7 @@
 from importlib import import_module
 import pytest
 import common
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 from pepclibs.msr import MSR
 from pepclibs import CPUInfo
 
@@ -72,15 +73,18 @@ def get_params(hostspec):
             if msr_feature_class.vendor != cpuinfo.info["vendor"]:
                 continue
 
-            with msr_feature_class(pman=pman, cpuinfo=cpuinfo) as msr:
-                for name, finfo in msr._features.items(): # pylint: disable=protected-access
-                    if not msr.is_feature_supported(name):
-                        continue
-                    if not is_safe_to_set(name, params["hostname"]):
-                        continue
-                    if msr.regaddr not in params["msrs"]:
-                        params["msrs"][msr.regaddr] = {}
-                    params["msrs"][msr.regaddr].update({name : finfo})
+            try:
+                with msr_feature_class(pman=pman, cpuinfo=cpuinfo) as msr:
+                    for name, finfo in msr._features.items(): # pylint: disable=protected-access
+                        if not msr.is_feature_supported(name):
+                            continue
+                        if not is_safe_to_set(name, params["hostname"]):
+                            continue
+                        if msr.regaddr not in params["msrs"]:
+                            params["msrs"][msr.regaddr] = {}
+                        params["msrs"][msr.regaddr].update({name : finfo})
+            except ErrorNotSupported:
+                continue
 
             if params["msrs"]:
                 params["feature_classes"].append(msr_feature_class)

@@ -345,6 +345,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
     def _init_supported_flag(self):
         """Initialize the 'supported' flag for all features."""
 
+        supported = False
         cpumodel = self._cpuinfo.info["model"]
 
         for finfo in self._features.values():
@@ -357,11 +358,19 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
             if "cpuflags" not in finfo:
                 for cpu in self._cpuinfo.get_cpus():
+                    supported = True
                     finfo["supported"][cpu] = True
             else:
                 for cpu in self._cpuinfo.get_cpus():
                     cpuflags = self._cpuinfo.info["flags"][cpu]
                     finfo["supported"][cpu] = finfo["cpuflags"].issubset(cpuflags)
+                    if finfo["supported"][cpu]:
+                        supported = True
+
+        if not supported:
+            # None of the features are supported by this processor.
+            raise ErrorNotSupported(f"MSR {self.regaddr:#x} ({self.regname}) is not supported"
+                                    f"{self._pman.hostmsg} ({self._cpuinfo.cpudescr})")
 
     def _init_features_dict_defaults(self):
         """
@@ -471,7 +480,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
         if self._cpuinfo.info["vendor"] != self.vendor:
-            raise ErrorNotSupported(f"unsupported MSR {self.regaddr:#x} ({self.regname}), it's "
+            raise ErrorNotSupported(f"unsupported MSR {self.regaddr:#x} ({self.regname}), it is "
                                     f"only available on {self.vendor} CPUs")
 
         if not self._msr:
