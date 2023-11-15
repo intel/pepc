@@ -670,9 +670,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             tinfo = {tline["CPU"] : tline for tline in self._topology["CPU"]}
 
         cpus = self._get_online_cpus()
-        if "package" in levels or "core" in levels:
-            self._add_core_and_package_numbers(tinfo, cpus)
-            levels.update({"package", "core"})
+        self._add_core_and_package_numbers(tinfo, cpus)
+        levels.update({"package", "core"})
+
         if "module" in levels:
             self._add_module_numbers(tinfo, cpus)
         if "die" in levels:
