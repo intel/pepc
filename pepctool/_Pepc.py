@@ -161,6 +161,11 @@ def _add_cpu_subset_arguments(subpars, fmt):
                similar to '--cpus'."""
     subpars.add_argument("--cores", help=text)
 
+    text = fmt % "dies" # pylint: disable=consider-using-f-string
+    text += """ The list can include individual die numbers and die number ranges. The format is
+               similar to '--cpus'."""
+    subpars.add_argument("--dies", help=text)
+
     text = fmt % "packages" # pylint: disable=consider-using-f-string
     text += """ The list can include individual package numbers and package number ranges. The
                format is similar to '--cpus'."""
