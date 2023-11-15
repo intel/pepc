@@ -157,15 +157,13 @@ def _add_cpu_subset_arguments(subpars, fmt):
     subpars.add_argument("--cpus", help=text)
 
     text = fmt % "cores" # pylint: disable=consider-using-f-string
-    text += """ The list can include individual core numbers and core number ranges. For example,
-               '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special
-               keyword 'all' to specify all cores."""
+    text += """ The list can include individual core numbers and core number ranges. The format is
+               similar to '--cpus'."""
     subpars.add_argument("--cores", help=text)
 
     text = fmt % "packages" # pylint: disable=consider-using-f-string
-    text += """ The list can include individual package numbers and package number ranges. For
-                example, '1-3' would mean packages 1 to 3, and '1,3' would mean packages 1 and 3.
-                Use the special keyword 'all' to specify all packages."""
+    text += """ The list can include individual package numbers and package number ranges. The
+               format is similar to '--cpus'."""
     subpars.add_argument("--packages", help=text)
 
     text = fmt % "core sibling indices" # pylint: disable=consider-using-f-string
