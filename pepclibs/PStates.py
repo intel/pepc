@@ -300,7 +300,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         return self._trl
 
     def _get_bclk(self, cpu):
-        """Read bus clock speed from 'MSR_FSB_FREQ' and return it in Hz."""
+        """
+        Return bus clock speed in Hz. Return 'None' if bus clock is not supported by the platform.
+        """
 
         try:
             bclk = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
@@ -311,7 +313,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             return None
 
         # Convert MHz to Hz.
-        return int(bclk * 1000000.0)
+        return int(bclk * 1000000)
 
     def _get_eppobj(self):
         """Returns an 'EPP.EPP()' object."""
@@ -701,17 +703,27 @@ class PStates(_PCStatesBase.PCStatesBase):
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_bus_clock_msr(self, cpu):
-        """Read bus clock speed from 'MSR_FSB_FREQ'."""
+        """
+        Read bus clock speed from 'MSR_FSB_FREQ' and return the value in Hz. Return 'None' if the
+        MSR is not supported.
+
+        Note: the difference between this method and '_get_bclk()' is that this method returns
+        'None' for intel platforms that do not support 'MSR_FSB_FREQ'.
+        """
 
         try:
             val = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
         except ErrorNotSupported:
-            val = None
+            return None
 
-        return val
+        return int(val * 1000000)
 
     def _get_bus_clock_intel(self, cpu):
-        """Get bus clock for Intel platforms."""
+        """
+        Return bus clock speed in 'Hz' for Intel platforms that do not support 'MSR_FSB_FREQ'.
+        Return 'None' for non-Intel platforms and for Intel platforms that do support
+        'MSR_FSB_FREQ'.
+        """
 
         pname = "bus_clock"
         mname = "doc"
