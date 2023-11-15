@@ -1483,25 +1483,26 @@ class PStates(_PCStatesBase.PCStatesBase):
         return self._set_prop_sysfs(pname, val, cpus)
 
     def _set_sname(self, pname):
-        """Set scope "sname" for property 'pname'."""
+        """Set scope name for property 'pname'."""
 
-        if self._props[pname]["sname"]:
+        prop = self._props[pname]
+        if prop["sname"]:
             return
 
         try:
             if pname == "epb":
                 epbobj = self._get_epbobj() # pylint: disable=protected-access
-                self._props[pname]["sname"] = epbobj.sname
+                prop["sname"] = epbobj.sname
             elif pname == "bus_clock":
                 try:
                     fsbfreq = self._get_fsbfreq()
-                    self._props[pname]["sname"] = fsbfreq.features["fsb"]["sname"]
+                    prop["sname"] = fsbfreq.features["fsb"]["sname"]
                 except ErrorNotSupported:
-                    self._props[pname]["sname"] = "global"
+                    prop["sname"] = "global"
         except Error:
-            self._props[pname]["sname"] = "CPU"
+            prop["sname"] = "CPU"
 
-        self.props[pname] = self._props[pname]
+        self.props[pname]["sname"] = prop["sname"]
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""

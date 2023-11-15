@@ -302,22 +302,23 @@ class CStates(_PCStatesBase.PCStatesBase):
         raise Error(f"BUG: undefined property '{pname}'")
 
     def _set_sname(self, pname):
-        """Set scope "sname" for property 'pname'."""
+        """Set scope name for property 'pname'."""
 
-        if self._props[pname]["sname"]:
+        prop = self._props[pname]
+        if prop["sname"]:
             return
 
         try:
             if pname in PCStateConfigCtl.FEATURES:
                 finfo = self._get_pcstatectl().features
-                self._props[pname]["sname"] = finfo[pname]["sname"]
+                prop["sname"] = finfo[pname]["sname"]
             elif pname in PowerCtl.FEATURES:
                 finfo = self._get_powerctl().features
-                self._props[pname]["sname"] = finfo[pname]["sname"]
+                prop["sname"] = finfo[pname]["sname"]
         except Error:
-            self._props[pname]["sname"] = "CPU"
+            prop["sname"] = "CPU"
 
-        self.props[pname] = self._props[pname]
+        self.props[pname]["sname"] = prop["sname"]
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""

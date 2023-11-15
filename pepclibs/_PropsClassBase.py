@@ -156,8 +156,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def _set_sname(self, pname):
         """
-        Set scope "sname" for property 'pname'. This method is useful in cases where property scope
-        depends on the platform.
+        Set scope name for property 'pname'. Some properties have platform-dependent scope, and this
+        method exists for assigning scope name depending on the platform.
         """
 
         if self._props[pname]["sname"]:
