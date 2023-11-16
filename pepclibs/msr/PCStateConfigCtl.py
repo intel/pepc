@@ -112,6 +112,7 @@ _PKG_CST_LIMITS = {
         CPUInfo.CPUS["SKYLAKE_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
         CPUInfo.CPUS["BROADWELL"]["model"]:        _CLIENT_PC10_CST_LIMITS,
         CPUInfo.CPUS["HASWELL_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
+        CPUInfo.CPUS["METEORLAKE_L"]["model"]:     _CLIENT_PC10_CST_LIMITS,
         # Deepest: PC7S.
         CPUInfo.CPUS["HASWELL"]["model"]:          _CLIENT_PC7S_CST_LIMITS,
         CPUInfo.CPUS["HASWELL_G"]["model"]:        _CLIENT_PC7S_CST_LIMITS,
