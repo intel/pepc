@@ -33,22 +33,50 @@ def get_good_cpunum_opts(params, sname="package"):
         opts = ["",
                 "--cpus all",
                 "--packages all",
+                "--packages all --dies all",
+                "--packages all --cores all",
                 f"--cpus  0-{params['cpus'][-1]}"]
         return opts
 
-    pkg0_core_ranges = Human.rangify(params['cores'][0])
-    opts = ["",
-            "--packages 0 --cpus all",
-            f"--cpus 0-{params['cpus'][-1]}",
-            "--packages 0 --cores all",
-            f"--packages 0 --cores {pkg0_core_ranges}",
-            "--packages all",
-            f"--packages 0-{params['packages'][-1]}"]
+    if sname == "package":
+        pkg0_cores_range = Human.rangify(params["cores"][0])
+        pkg0_dies_range = Human.rangify(params["dies"][0])
+        opts = ["--packages 0 --cpus all",
+                "--packages 0 --dies all",
+                "--packages 0 --cores all",
+                f"--packages 0 --cores {pkg0_cores_range}",
+                f"--packages 0 --dies {pkg0_dies_range}",
+                f"--packages 0-{params['packages'][-1]}"]
 
-    if len(params["packages"]) == 1:
-        opts.append(f"--cores {pkg0_core_ranges}")
+        if len(params["packages"]) == 1:
+            opts.append(f"--cores {pkg0_cores_range}")
+            opts.append(f"--dies {pkg0_dies_range}")
 
-    return opts
+        return opts
+
+    if sname == "die":
+        opts = []
+        if len(params["dies"][0]) > 1:
+            pkg0_dies_range_partial = Human.rangify(params["dies"][0][1:])
+            opts.append("--package 0 --dies 0")
+            opts.append("--package 0 --dies 1")
+            opts.append(f"--package 0 --dies {pkg0_dies_range_partial}")
+            opts.append(f"--package 0 --dies {params['dies'][0][-1]}")
+            if len(params["packages"]) > 1:
+                opts.append("--package 1 --dies 0")
+                opts.append("--package 1 --dies 1")
+
+                pkgs_range_partial = Human.rangify(params["packages"][1:])
+                pkg1_dies_range_partial = Human.rangify(params["dies"][1][1:])
+
+                opts.append(f"--packages {pkgs_range_partial} --dies 1")
+                opts.append(f"--packages {pkgs_range_partial} --dies {pkg1_dies_range_partial}")
+                opts.append(f"--packages 1 --dies {pkg1_dies_range_partial}")
+                opts.append(f"--packages {params['packages'][-1]} --dies {params['dies'][0][-1]}")
+
+        return opts
+
+    assert False, f"BUG: bad scope name {sname}"
 
 def get_bad_cpunum_opts(params):
     """

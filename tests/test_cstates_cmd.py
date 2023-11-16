@@ -40,9 +40,13 @@ def get_params(hostspec, tmp_path_factory):
         allcpus = cpuinfo.get_cpus()
         params["cpus"] = allcpus
         params["packages"] = cpuinfo.get_packages()
+
         params["cores"] = {}
+        params["dies"] = {}
+
         for pkg in params["packages"]:
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+            params["dies"][pkg] = cpuinfo.get_dies(package=pkg)
 
         medidx = int(len(allcpus)/2)
         testcpus = [allcpus[0], allcpus[medidx], allcpus[-1]]

@@ -39,9 +39,13 @@ def get_params(hostspec, tmp_path_factory):
         allcpus = cpuinfo.get_cpus()
         params["cpus"] = allcpus
         params["packages"] = cpuinfo.get_packages()
+
         params["cores"] = {}
+        params["dies"] = {}
+
         for pkg in params["packages"]:
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+            params["dies"][pkg] = cpuinfo.get_dies(package=pkg)
 
         yield params
 
@@ -51,6 +55,11 @@ def test_power_info(params):
     pman = params["pman"]
 
     for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+        for mopt in props_common.get_mechanism_opts(params):
+            cmd = f"power info {cpunum_opt} {mopt}"
+            common.run_pepc(cmd, pman, ignore=_IGNORE)
+
+    for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
         for mopt in props_common.get_mechanism_opts(params):
             cmd = f"power info {cpunum_opt} {mopt}"
             common.run_pepc(cmd, pman, ignore=_IGNORE)
