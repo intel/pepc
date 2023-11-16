@@ -149,6 +149,7 @@ FEATURES = {
                     (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
                     is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
                     MSR.""",
+        "cpumodels" : tuple(_PKG_CST_LIMITS.keys()),
         "type" : "bool",
         "vals" : {"on" : 1, "off" : 0},
         "bits" : (15, 15),
