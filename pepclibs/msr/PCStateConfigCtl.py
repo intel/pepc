@@ -57,10 +57,8 @@ _IVT_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "u
 #
 # Atom-based micro servers.
 #
-# Grand Ridge (Crestmont) and Snow Ridge (Tremont) SoCs.
-_SNR_PKG_CST_LIMITS = {"codes"   : {"PC2": 2, "unlimited": 0},
-                       "bits"    : (3, 0)}
-# Denverton SoC (Goldmont).
+# Denverton SoC (Goldmont). Note, successor of Denverton is Snow Ridge, and its successor is Grand
+# Ridge. They do not support package C-states.
 _DNV_PKG_CST_LIMITS = {"codes"   : {"PC2": 2, "PC6": 3, "unlimited": 0},
                        "bits"    : (3, 0)}
 
@@ -93,8 +91,6 @@ _PKG_CST_LIMITS = {
         CPUInfo.CPUS["XEON_PHI_KNM"]["model"]:     _SKX_PKG_CST_LIMITS,
         CPUInfo.CPUS["XEON_PHI_KNL"]["model"]:     _SKX_PKG_CST_LIMITS,
         # Atom microservers.
-        CPUInfo.CPUS["GRANDRIDGE"]["model"]:       _SNR_PKG_CST_LIMITS,
-        CPUInfo.CPUS["TREMONT_D"]["model"]:        _SNR_PKG_CST_LIMITS,
         CPUInfo.CPUS["GOLDMONT_D"]["model"]:       _DNV_PKG_CST_LIMITS,
         # Clients.
         # Deepest: PC10.
