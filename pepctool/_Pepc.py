@@ -143,41 +143,54 @@ class PepcArgsParser(ArgParse.ArgsParser):
 
         return args
 
-def _add_cpu_subset_arguments(subpars, fmt):
+def _add_target_cpus_arguments(subpars, fmt, exclude=None):
     """
-    Add CPU subset arguments, argument 'fmt' should include '%s' that will be replaced by the subset
-    name.
+    Add target CPUs arguments, such as '--cpus' and '--packages. The input arguments are as follows.
+      * subpars - the 'argparse' sub-parser to add the target CPU arguments too.
+      * fmt - format string for the first sentence. Should include one '%s' that will be replaced
+              with level name (CPU, module, package, etc.).
+      * exclude - name of options to exclude ("nothing" by default).
     """
 
-    text = fmt % "CPUs" # pylint: disable=consider-using-f-string
-    text += """ The list can include individual CPU numbers and CPU number ranges. For example,
-               '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special
-               keyword 'all' to specify all CPUs. If the CPUs/cores/packages were not specified, all
-               CPUs will be used as the default value."""
-    subpars.add_argument("--cpus", help=text)
+    if not exclude:
+        exclude = set()
 
-    text = fmt % "cores" # pylint: disable=consider-using-f-string
-    text += """ The list can include individual core numbers and core number ranges. The format is
-               similar to '--cpus'."""
-    subpars.add_argument("--cores", help=text)
+    if "--cpus" not in exclude:
+        text = fmt % "CPUs" # pylint: disable=consider-using-f-string
+        text += """ The list can include individual CPU numbers and CPU number ranges. For example,
+                   '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special
+                   keyword 'all' to specify all CPUs. If the CPUs/cores/packages were not specified,
+                   all CPUs will be used as the default value."""
+        subpars.add_argument("--cpus", help=text)
 
-    text = fmt % "dies" # pylint: disable=consider-using-f-string
-    text += """ The list can include individual die numbers and die number ranges. The format is
-               similar to '--cpus'."""
-    subpars.add_argument("--dies", help=text)
+    if "--cores" not in exclude:
+        text = fmt % "cores" # pylint: disable=consider-using-f-string
+        text += """ The list can include individual core numbers and core number ranges. The format
+                   is similar to '--cpus'. Note, unlike CPU numers, core numbers are relative to
+                   package numbers."""
+        subpars.add_argument("--cores", help=text)
 
-    text = fmt % "packages" # pylint: disable=consider-using-f-string
-    text += """ The list can include individual package numbers and package number ranges. The
-               format is similar to '--cpus'."""
-    subpars.add_argument("--packages", help=text)
+    if "--dies" not in exclude:
+        text = fmt % "dies" # pylint: disable=consider-using-f-string
+        text += """ The list can include individual die numbers and die number ranges. The format is
+                   similar to '--cpus'."""
+        subpars.add_argument("--dies", help=text)
 
-    text = fmt % "core sibling indices" # pylint: disable=consider-using-f-string
-    text += """ Core soblings are the CPUs sharing the same core. The list can include individual
-                core sibling indices or index ranges. For example, core x includes CPUs 3 and 4, '0'
-                would mean CPU 3 and '1' would mean CPU 4. This option can only be used to reference
-                online CPUs, because Linux does not provide topology information for offline CPUs.
-                In the previous example if CPU 3 was offline, then '0' would mean CPU 4."""
-    subpars.add_argument("--core-siblings", help=text)
+    if "--packages" not in exclude:
+        text = fmt % "packages" # pylint: disable=consider-using-f-string
+        text += """ The list can include individual package numbers and package number ranges. The
+                   format is similar to '--cpus'."""
+        subpars.add_argument("--packages", help=text)
+
+    if "--core-siblings" not in exclude:
+        text = fmt % "core sibling indices" # pylint: disable=consider-using-f-string
+        text += """ Core soblings are the CPUs sharing the same core. The list can include
+                   individual core sibling indices or index ranges. For example, core x includes
+                   CPUs 3 and 4, '0' would mean CPU 3 and '1' would mean CPU 4. This option can only
+                   be used to reference online CPUs, because Linux does not provide topology
+                   information for offline CPUs. In the previous example if CPU 3 was offline, then
+                   '0' would mean CPU 4."""
+        subpars.add_argument("--core-siblings", help=text)
 
 def _get_info_subcommand_prop_help_text(prop):
     """Format and return the "info" sub-command help text for a property described by 'prop'."""
@@ -299,7 +312,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("offline", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cpu_hotplug_offline_command)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to offline.")
+    _add_target_cpus_arguments(subpars2, "List of %s to offline.")
 
     #
     # Create parser for the 'cstates' command.
@@ -326,7 +339,7 @@ def build_arguments_parser():
     subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
+    _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
@@ -351,7 +364,7 @@ def build_arguments_parser():
     subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to configure.")
+    _add_target_cpus_arguments(subpars2, "List of %s to configure.")
 
     text = f"""Comma-separated list of C-states to enable. {cst_list_text}"""
     subpars2.add_argument("--enable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
@@ -373,7 +386,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cstates_save_command)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to save C-state information about.")
+    _add_target_cpus_arguments(subpars2, "List of %s to save C-state information about.")
 
     text = "Name of the file to save the settings to."
     subpars2.add_argument("-o", "--outfile", help=text)
@@ -414,7 +427,7 @@ def build_arguments_parser():
     subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
+    _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
@@ -434,7 +447,7 @@ def build_arguments_parser():
     subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to configure P-States on.")
+    _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
 
     _add_config_subcommand_options(PStates.PROPS, subpars2)
 
@@ -448,7 +461,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=pstates_save_command)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to save P-state information about.")
+    _add_target_cpus_arguments(subpars2, "List of %s to save P-state information about.")
 
     text = "Name of the file to save the settings to (printed to standard output by default)."
     subpars2.add_argument("-o", "--outfile", help=text, default="-")
@@ -476,6 +489,8 @@ def build_arguments_parser():
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
     subparsers2.required = True
 
+    power_exclude = set(["--core-siblings"])
+
     #
     # Create parser for the 'power info' command.
     #
@@ -489,7 +504,8 @@ def build_arguments_parser():
     subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to get information about.")
+    _add_target_cpus_arguments(subpars2, "List of %s to get information about.",
+                               exclude=power_exclude)
 
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
@@ -510,7 +526,8 @@ def build_arguments_parser():
     subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
     subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to configure power settings on.")
+    _add_target_cpus_arguments(subpars2, "List of %s to configure power settings on.",
+                               exclude=power_exclude)
 
     _add_config_subcommand_options(Power.PROPS, subpars2)
 
@@ -525,7 +542,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=power_save_command)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to save power information about.")
+    _add_target_cpus_arguments(subpars2, "List of %s to save power information about.",
+                               exclude=power_exclude)
 
     text = "Name of the file to save the settings to (printed to standard output by default)."
     subpars2.add_argument("-o", "--outfile", help=text, default="-")
@@ -589,7 +607,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=topology_info_command)
 
-    _add_cpu_subset_arguments(subpars2, "List of %s to print topology information for.")
+    _add_target_cpus_arguments(subpars2, "List of %s to print topology information for.")
 
     orders = ", ".join([lvl.lower() for lvl in CPUInfo.LEVELS])
     text = f"""By default, the topology table is printed in CPU number order. Use this option to
@@ -619,6 +637,14 @@ def parse_arguments():
 
     parser = build_arguments_parser()
     args = parser.parse_args()
+
+    # It is handy to have CPU target attributes.
+    if not hasattr(args, "cores"):
+        setattr(args, "cores", None)
+    if not hasattr(args, "dies"):
+        setattr(args, "dies", None)
+    if not hasattr(args, "core_siblings"):
+        setattr(args, "core_siblings", None)
 
     return args
 
