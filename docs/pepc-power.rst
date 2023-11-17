@@ -75,10 +75,10 @@ Get information about power on specified CPUs. By default, prints all informatio
    '--package' option, because core numbers are per-package.
 
 **--dies** *DIES*
-   List of dies to get information about. The list can include individual die numbers and
-   die number ranges. For example, '0-3,5' would mean dies 0 to 3, and die 5. Use the special
-   keyword 'all' to specify all dies. This option has to be accompanied by '--package' option,
-   because die numbers are per-package.
+   List of dies to get information about. The list can include individual die numbers and die number
+   ranges. For example, '0-3,5' would mean dies 0 to 3, and die 5. Use the special keyword 'all' to
+   specify all dies. This option has to be accompanied by '--package' option, because die numbers
+   are per-package.
 
 **--packages** *PACKAGES*
    List of packages to get information about. The list can include individual package numbers and
@@ -153,6 +153,12 @@ currently configured value(s) will be printed.
    core number ranges. For example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to
    12. Use the special keyword 'all' to specify all cores. This option has to be accompanied by
    '--package' option, because core numbers are per-package
+
+**--dies** *DIES*
+   List of dies to get configure power on. The list can include individual die numbers and die
+   number ranges. For example, '0-3,5' would mean dies 0 to 3, and die 5. Use the special keyword
+   'all' to specify all dies. This option has to be accompanied by '--package' option, because die
+   numbers are per-package.
 
 **--packages** *PACKAGES*
    List of packages to configure power on. The list can include individual package numbers and
