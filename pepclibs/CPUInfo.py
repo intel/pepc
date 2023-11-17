@@ -977,7 +977,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def select_core_siblings(self, cpus, indexes):
         """
-        Select only core siblings from 'cpus' and return the result. The arguments are as follows.
+        Select core siblings described by 'indexes' from 'cpus' and return the result. The arguments
+        are as follows.
         * cpus - list of CPU numbers to select core siblings from. The returned result is always a
                  subset of CPU numbers from 'cpus'.
         * indexes - "indexes" of core siblings to select.
@@ -994,8 +995,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         CPUs 0, 1, 2, and 3 are core siblings with index 0.
         CPUs 4, 5, 6, and 7 are core siblings with index 1.
 
-        Suppose the input 'cpus' argument is '[1, 4, 5, 2]'. The following cores will be selected:
-        1, 0 and 2.
+        Suppose the 'cpus' input argument is '[1, 2, 4, 5]'. This means that the following cores
+        will participate in the selection: 0, 1, and 2.
 
         In order to select first core siblings from 'cpus', provide 'indexes=[0]'. The result will
         be: '[1, 2]'.
@@ -1003,12 +1004,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         In order to select second core siblings from 'cpus', provide 'indexes=[1]'. The result will
         be: '[4, 5]'.
 
-        If 'indexes=[0,1]', the result will be the same as 'cpus': '[1, 4, 5, 2]'
+        If 'indexes=[0,1]', the result will be the same as 'cpus': '[1, 2, 4, 5]'
 
-        Note: the index of a CPU inside the core depends on the online status of all CPUs inside the
-              core. For example, a core with 3 CPUs 0, 1 and 2, when each of the CPUs are online
-              their CPU number corresponds to their index, but say we offline CPU 1, then CPU 2 will
-              have index 1 instead of 2.
+        Note: this method ignores offline CPUs.
         """
 
         cpus = self.normalize_cpus(cpus, offlined_ok=True)
