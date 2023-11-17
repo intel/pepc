@@ -295,7 +295,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         This method yields a dictionary for every CPU in 'cpus'. The yielded dictionaries describe
         all C-states in 'csnames' for the CPU. Here is the format of the yielded dictionaries.
 
-        { csname1: { "index":     C-State index,
+        { csname1: { "index":     C-state index,
                      "name":      C-state name,
                      "desc":      C-state description,
                      "disable":   'True' if the C-state is disabled,
