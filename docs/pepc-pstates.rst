@@ -58,31 +58,31 @@ General options
 **--force-color**
    Force coloring of the text output.
 
-Subcommand *'info'*
-===================
+Target CPU specification options
+================================
 
-Get P-states information for specified CPUs. By default, prints all information for all CPUs.
+All sub-commans (*'info'*, *'config'*, *'save'*) support the following target CPU specification
+options.
 
 **--cpus** *CPUS*
-   List of CPUs to get information about. The list can include individual CPU numbers and CPU number
-   ranges. For example,'1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the
-   special keyword 'all' to specify all CPUs.
+   The list can include individual CPU numbers and CPU number ranges. For example,'1-4,7,8,10-12'
+   would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+   CPUs.
 
 **--cores** *CORES*
-   List of cores to get information about. The list can include individual core numbers and
-   core number ranges. For example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to
-   1. Use the special keyword 'all' to specify all cores. This option has to be accompanied by
-   '--package' option, because core numbers are per-package.
+   The list can include individual core numbers and core number ranges. For example, '1-4,7,8,10-12'
+   would mean cores 1 to 4, cores 7, 8, and 10 to 1. Use the special keyword 'all' to specify all
+   cores. This option has to be accompanied by '--package' option, because core numbers are
+   per-package.
 
 **--dies** *DIES*
-   List of dies to get information about. The list can include individual die numbers and die number
-   ranges. For example, '0-3,5' would mean dies 0 to 3, and die 5. Use the special keyword 'all' to
-   specify all dies. This option has to be accompanied by '--package' option, because die numbers
-   are per-package.
+   The list can include individual die numbers and die number ranges. For example, '0-3,5' would
+   mean dies 0 to 3, and die 5. Use the special keyword 'all' to specify all dies. This option has
+   to be accompanied by '--package' option, because die numbers are per-package.
 
 **--packages** *PACKAGES*
-   List of packages to get information about. The list can include individual package numbers and
-   package number ranges. For example, '0,2-4' would mean package 0 and packages 2 to 4. Use the
+   The list can include individual package numbers and package number ranges. For example, '0,2-4'
+   would mean package 0 and packages 2 to 4. Use the
    special keyword 'all' to specify all packages.
 
 **--core-siblings** *CORE_SIBLINGS*
@@ -91,6 +91,13 @@ Get P-states information for specified CPUs. By default, prints all information 
    and '1' would mean CPU 4. This option can only be used to reference online CPUs, because Linux
    does not provide topology information for offline CPUs. In the previous example if CPU 3 was
    offline, then '0' would mean CPU 4.
+
+Subcommand *'info'*
+===================
+
+Get P-states information for specified CPUs. By default, prints all information for all CPUs.
+
+Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
 
 **--yaml**
    Print information in YAML format.
@@ -175,34 +182,7 @@ Subcommand *'config'*
 Configure P-states on specified CPUs. All options can be used without a parameter, in which case the
 currently configured value(s) will be printed.
 
-**--cpus** *CPUS*
-   List of CPUs to configure P-States on. The list can include individual CPU numbers and CPU number
-   ranges. For example,'1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the
-   special keyword 'all' to specify all CPUs.
-
-**--cores** *CORES*
-   List of cores to configure P-States on. The list can include individual core numbers and
-   core number ranges. For example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to
-   12. Use the special keyword 'all' to specify all cores. This option has to be accompanied by
-   '--package' option, because core numbers are per-package.
-
-**--dies** *DIES*
-   List of dies to configure P-States on. The list can include individual die numbers and die number
-   ranges. For example, '0-3,5' would mean dies 0 to 3, and die 5. Use the special keyword 'all' to
-   specify all dies. This option has to be accompanied by '--package' option, because die numbers
-   are per-package.
-
-**--packages** *PACKAGES*
-   List of packages to configure P-States on. The list can include individual package numbers and
-   package number ranges. For example, '0,2-4' would mean package 0 and packages 2 to 4. Use the
-   special keyword 'all' to specify all packages.
-
-**--core-siblings** *CORE_SIBLINGS*
-   List of core sibling indices to configure P-States on. The list can include individual core
-   sibling indices or index ranges. For example, core x includes CPUs 3 and 4, '0' would mean CPU 3
-   and '1' would mean CPU 4. This option can only be used to reference online CPUs, because Linux
-   does not provide topology information for offline CPUs. In the previous example if CPU 3 was
-   offline, then '0' would mean CPU 4.
+Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
 
 **--override-cpu-model** *MODEL*
    This option is for debugging and testing purposes only. Provide the CPU model number which the
@@ -252,28 +232,7 @@ Subcommand *'save'*
 Save all the modifiable P-state settings into a file. This file can later be used for restoring
 P-state settings with the 'pepc pstates restore' command.
 
-**--cpus** *CPUS*
-   List of CPUs to save P-state information about. The list can include individual CPU numbers and
-   CPU number ranges. For example,'1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all CPUs.
-
-**--cores** *CORES*
-   List of cores to save P-state information about. The list can include individual core numbers and
-   core number ranges. For example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to
-   12. Use the special keyword 'all' to specify all cores. This option has to be accompanied by
-   '--package' option, because core numbers are per-package.
-
-**--packages** *PACKAGES*
-   List of packages to save P-state information about. The list can include individual package
-   numbers and package number ranges. For example, '0,2-4' would mean package 0 and packages 2 to 4.
-   Use the special keyword 'all' to specify all packages.
-
-**--core-siblings** *CORE_SIBLINGS*
-   List of core sibling indices to save P-state information about. The list can include individual
-   core sibling indices or index ranges. For example, core x includes CPUs 3 and 4, '0' would mean
-   CPU 3 and '1' would mean CPU 4. This option can only be used to reference online CPUs, because
-   Linux does not provide topology information for offline CPUs. In the previous example if CPU 3
-   was offline, then '0' would mean CPU 4.
+Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
 
 **-o** *OUTFILE*, **--outfile** *OUTFILE*
    Name of the file to save the settings to (printed to standard output
