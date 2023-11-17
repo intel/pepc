@@ -192,6 +192,12 @@ def _add_target_cpus_arguments(subpars, fmt, exclude=None):
                    '0' would mean CPU 4."""
         subpars.add_argument("--core-siblings", help=text)
 
+    if "--module-siblings" not in exclude:
+        text = fmt % "module sibling indices" # pylint: disable=consider-using-f-string
+        text += """ module soblings are the CPUs sharing the same module. This option is similar to
+                   '--core-siblings', but it accepts module sibling indices."""
+        subpars.add_argument("--module-siblings", help=text)
+
 def _get_info_subcommand_prop_help_text(prop):
     """Format and return the "info" sub-command help text for a property described by 'prop'."""
 
@@ -300,9 +306,6 @@ def build_arguments_parser():
               ranges. For example, '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12.
               Use the special keyword 'all' to specify all CPUs."""
     subpars2.add_argument("--cpus", help=text)
-    subpars2.add_argument("--cores", help=argparse.SUPPRESS)
-    subpars2.add_argument("--packages", help=argparse.SUPPRESS)
-    subpars2.add_argument("--core-siblings", help=argparse.SUPPRESS)
 
     #
     # Create parser for the 'cpu-hotplug offline' command.
@@ -645,6 +648,8 @@ def parse_arguments():
         setattr(args, "dies", None)
     if not hasattr(args, "core_siblings"):
         setattr(args, "core_siblings", None)
+    if not hasattr(args, "module_siblings"):
+        setattr(args, "module_siblings", None)
 
     return args
 

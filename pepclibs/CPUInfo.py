@@ -429,6 +429,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             * 'normalize_package()'
     6. Select CPUs by sibling index.
         * 'select_core_siblings()'
+        * 'select_module_siblings()'
     7. "Divide" list of CPUs.
         * By cores: 'cpus_div_cores()'.
         * By dies: 'cpus_div_dies()'.
@@ -1018,6 +1019,63 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             cpu = tline["CPU"]
             if tline["core"] != core or tline["package"] != pkg:
                 core = tline["core"]
+                pkg = tline["package"]
+                index = 0
+            cpu2index[cpu] = index
+            index += 1
+
+        result = []
+        indexes = set(indexes)
+        for cpu in cpus:
+            if cpu in cpu2index and cpu2index[cpu] in indexes:
+                result.append(cpu)
+
+        return result
+
+    def select_module_siblings(self, cpus, indexes):
+        """
+        Select module siblings described by 'indexes' from 'cpus' and return the result. The
+        arguments are as follows.
+        * cpus - list of CPU numbers to select module siblings from. The returned result is always a
+                 subset of CPU numbers from 'cpus'.
+        * indexes - "indexes" of module siblings to select.
+
+        Example.
+
+        Suppose the system has 4 modules, and each module has 4 CPUs.
+        * module 0 includes CPUs 0, 1, 2, 3
+        * module 1 includes CPUs 4, 5, 6, 7
+        * module 2 includes CPUs 8, 9, 10, 11
+        * module 4 includes CPUs 12, 13, 14, 15
+
+        CPUs 0, 4, 8, and 12 are module siblings with index 0.
+        CPUs 1, 5, 9, and 13 are module siblings with index 1.
+        CPUs 2, 6, 10, and 14 are module siblings with index 2.
+        CPUs 3, 7, 11, and 15 are module siblings with index 3.
+
+        Suppose the 'cpus' input argument is '[0, 1, 2, 3, 4, 5, 8]'. This means that the following
+        modules will participate in selection: 0, 1, 2.
+
+        In order to select first module siblings from 'cpus', provide 'indexes=[0]'. The result will
+        be: '[0, 4, 8]'.
+
+        In order to select second module siblings from 'cpus', provide 'indexes=[1]'. The result
+        will be: '[1, 5]'.
+
+        If 'indexes=[0,1]', the result will be '[0, 1, 4, 5, 8]'
+
+        Note: this method ignores offline CPUs.
+        """
+
+        cpus = self.normalize_cpus(cpus, offlined_ok=True)
+
+        cpu2index = {} # CPU number -> module siblings index map.
+        module = pkg = index = None
+
+        for tline in self._get_topology(levels=("CPU", "module", "package"), order="module"):
+            cpu = tline["CPU"]
+            if tline["module"] != module or tline["package"] != pkg:
+                module = tline["module"]
                 pkg = tline["package"]
                 index = 0
             cpu2index[cpu] = index

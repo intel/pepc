@@ -86,11 +86,19 @@ options.
    special keyword 'all' to specify all packages.
 
 **--core-siblings** *CORE_SIBLINGS*
-   List of core sibling indices to get information about. The list can include individual core
-   sibling indices or index ranges. For example, core x includes CPUs 3 and 4, '0' would mean CPU 3
-   and '1' would mean CPU 4. This option can only be used to reference online CPUs, because Linux
-   does not provide topology information for offline CPUs. In the previous example if CPU 3 was
-   offline, then '0' would mean CPU 4.
+   Core siblings are CPUs sharing the same core. The list can include individual core sibling
+   indices or index ranges. For example, if a core includes CPUs 3 and 4, index '0' would mean CPU 3
+   and index '1' would mean CPU 4. This option can only be used to reference online CPUs, because
+   Linux does not provide topology information for offline CPUs. In the example with CPUs 3 and 4,
+   if CPU 3 was offline, then index '0' would mean CPU 4.
+
+**--module-siblings** *MODULE_SIBLINGS*
+   Module siblings are CPUs sharing the same module. The list can include individual module sibling
+   indices or index ranges. For example, if a module includes CPUs 3, 4, 5, and 6, index '0' would
+   mean CPU 3, index '1' would mean CPU 4, and idex '3' would mean CPU 5. This option can only be
+   used to reference online CPUs, because Linux does not provide topology information for offline
+   CPUs. In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index '1' would mean
+   CPU 5.
 
 Subcommand *'info'*
 ===================

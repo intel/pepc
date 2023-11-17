@@ -99,6 +99,9 @@ def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
     if args.core_siblings:
         return cpuinfo.select_core_siblings(cpus, parse_cpus_string(args.core_siblings))
 
+    if args.module_siblings:
+        return cpuinfo.select_module_siblings(cpus, parse_cpus_string(args.module_siblings))
+
     return Trivial.list_dedup(cpus)
 
 def override_cpu_model(cpuinfo, model):
