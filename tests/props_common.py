@@ -32,6 +32,7 @@ def get_good_cpunum_opts(params, sname="package"):
     if sname == "global":
         opts = ["",
                 "--cpus all",
+                "--modules all",
                 "--packages all",
                 "--packages all --dies all",
                 "--packages all --cores all",
@@ -40,8 +41,11 @@ def get_good_cpunum_opts(params, sname="package"):
 
     if sname == "package":
         pkg0_cores_range = Human.rangify(params["cores"][0])
+        pkg0_modules_range = Human.rangify(params["modules"][0])
         pkg0_dies_range = Human.rangify(params["dies"][0])
         opts = ["--packages 0 --cpus all",
+                "--packages 0 --modules all",
+                f"--modules {pkg0_modules_range}",
                 "--packages 0 --dies all",
                 "--packages 0 --cores all",
                 f"--packages 0 --cores {pkg0_cores_range}",
@@ -76,12 +80,26 @@ def get_good_cpunum_opts(params, sname="package"):
 
         return opts
 
+    if sname == "module":
+        opts = []
+        if len(params["modules"][0]) > 1:
+            opts.append(f"--modules {params['modules'][0][0]}")
+            opts.append(f"--modules {params['modules'][0][-1]}")
+            pkg0_modules_range_partial = Human.rangify(params["modules"][0][1:])
+            opts.append(f"--modules {pkg0_modules_range_partial}")
+
+            if len(params["packages"]) > 1:
+                opts.append(f"--modules {params['modules'][1][0]}")
+                opts.append(f"--modules {params['modules'][1][-1]}")
+                pkg1_modules_range_partial = Human.rangify(params["modules"][1][1:])
+                opts.append(f"--modules {pkg1_modules_range_partial}")
+
+        return opts
+
     assert False, f"BUG: bad scope name {sname}"
 
 def get_bad_cpunum_opts(params):
-    """
-    Return a dictionary of good and bad options that specify CPU numbers (--cpus, --packages, etc).
-    """
+    """Return bad target CPU specification options."""
 
     opts = [f"--cpus {params['cpus'][-1] + 1}",
             f"--packages 0 --cores {params['cores'][0][-1] + 1}",

@@ -170,6 +170,12 @@ def _add_target_cpus_arguments(subpars, fmt, exclude=None):
                    package numbers."""
         subpars.add_argument("--cores", help=text)
 
+    if "--modules" not in exclude:
+        text = fmt % "modules" # pylint: disable=consider-using-f-string
+        text += """ The list can include individual module numbers and module number ranges. The
+                format is similar to '--cpus'."""
+        subpars.add_argument("--modules", help=text)
+
     if "--dies" not in exclude:
         text = fmt % "dies" # pylint: disable=consider-using-f-string
         text += """ The list can include individual die numbers and die number ranges. The format is
@@ -644,6 +650,8 @@ def parse_arguments():
     # It is handy to have CPU target attributes.
     if not hasattr(args, "cores"):
         setattr(args, "cores", None)
+    if not hasattr(args, "modules"):
+        setattr(args, "modules", None)
     if not hasattr(args, "dies"):
         setattr(args, "dies", None)
     if not hasattr(args, "core_siblings"):

@@ -75,6 +75,11 @@ options.
    cores. This option has to be accompanied by '--package' option, because core numbers are
    per-package.
 
+**--modules** *MODULES*
+   The list can include individual module numbers and module number ranges. For example, '0,2-5'
+   would mean module 0 and modules 2, 3, 4, and 5. Use the special keyword 'all' to specify all
+   modules. Note, unlike core and die numbers, module numbers are absolute.
+
 **--dies** *DIES*
    The list can include individual die numbers and die number ranges. For example, '0-3,5' would
    mean dies 0 to 3, and die 5. Use the special keyword 'all' to specify all dies. This option has

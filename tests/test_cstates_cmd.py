@@ -42,10 +42,12 @@ def get_params(hostspec, tmp_path_factory):
         params["packages"] = cpuinfo.get_packages()
 
         params["cores"] = {}
+        params["modules"] = {}
         params["dies"] = {}
 
         for pkg in params["packages"]:
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+            params["modules"][pkg] = cpuinfo.package_to_modules(package=pkg)
             params["dies"][pkg] = cpuinfo.get_dies(package=pkg)
 
         medidx = int(len(allcpus)/2)
@@ -92,40 +94,46 @@ def _get_good_config_opts(params, sname="package"):
                 opts += [f"--governor {governor}"]
         return opts
 
-    if pobj.prop_is_supported("idle_driver", cpu):
-        opts += ["--enable all",
-                 "--disable all",
-                f"--enable {params['cstates'][-1]}",
-                f"--disable {params['cstates'][-1]}"]
+    if sname == "package":
 
-    if pobj.prop_is_supported("pkg_cstate_limit", cpu):
-        opts += ["--pkg-cstate-limit"]
-        lock = pobj.get_cpu_prop("pkg_cstate_limit_lock", cpu)["val"]
-        if lock == "off":
-            limit = pobj.get_cpu_prop("pkg_cstate_limit", cpu)["val"]
-            opts += [f"--pkg-cstate-limit {limit.upper()}",
-                     f"--pkg-cstate-limit {limit.lower()}"]
+        if pobj.prop_is_supported("c1e_autopromote", cpu):
+            opts += ["--c1e-autopromote",
+                    "--c1e-autopromote on",
+                    "--c1e-autopromote OFF"]
 
-    if pobj.prop_is_supported("c1_demotion", cpu):
-        opts += ["--c1-demotion",
-                 "--c1-demotion on",
-                 "--c1-demotion OFF"]
+        if pobj.prop_is_supported("cstate_prewake", cpu):
+            opts += ["--cstate-prewake",
+                    "--cstate-prewake on",
+                    "--cstate-prewake OFF"]
 
-    if pobj.prop_is_supported("c1_undemotion", cpu):
-        opts += ["--c1-undemotion",
-                 "--c1-undemotion on",
-                 "--c1-undemotion OFF"]
+        if pobj.prop_is_supported("c1_demotion", cpu):
+            opts += ["--c1-demotion",
+                    "--c1-demotion on",
+                    "--c1-demotion OFF"]
 
-    if pobj.prop_is_supported("c1e_autopromote", cpu):
-        opts += ["--c1e-autopromote",
-                 "--c1e-autopromote on",
-                 "--c1e-autopromote OFF"]
+        if pobj.prop_is_supported("c1_undemotion", cpu):
+            opts += ["--c1-undemotion",
+                    "--c1-undemotion on",
+                    "--c1-undemotion OFF"]
 
-    if pobj.prop_is_supported("cstate_prewake", cpu):
-        opts += ["--cstate-prewake",
-                "--cstate-prewake on",
-                "--cstate-prewake OFF"]
-    return opts
+        if pobj.prop_is_supported("pkg_cstate_limit", cpu):
+            opts += ["--pkg-cstate-limit"]
+            lock = pobj.get_cpu_prop("pkg_cstate_limit_lock", cpu)["val"]
+            if lock == "off":
+                limit = pobj.get_cpu_prop("pkg_cstate_limit", cpu)["val"]
+                opts += [f"--pkg-cstate-limit {limit.upper()}",
+                        f"--pkg-cstate-limit {limit.lower()}"]
+        return opts
+
+    if sname == "CPU":
+        if pobj.prop_is_supported("idle_driver", cpu):
+            opts += ["--enable all",
+                    "--disable all",
+                    f"--enable {params['cstates'][-1]}",
+                    f"--disable {params['cstates'][-1]}"]
+        return opts
+
+    assert False, f"BUG: bad scope name {sname}"
 
 def _get_bad_config_opts():
     """Return bad options for testing 'pepc cstates config'."""
@@ -142,11 +150,32 @@ def test_cstates_config_good(params):
 
     pman = params["pman"]
 
+    for opt in _get_good_config_opts(params, sname="CPU"):
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+                cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, ignore=_IGNORE)
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+                cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, ignore=_IGNORE)
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+                cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd , pman, ignore=_IGNORE)
+
+        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
+            common.run_pepc(f"cstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
+
     for opt in _get_good_config_opts(params, sname="package"):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+                cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd , pman, ignore=_IGNORE)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):
             common.run_pepc(f"cstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
@@ -187,7 +216,11 @@ def test_cstates_save_restore(params):
     opts = ( "", f"-o {tmp_path}/cstates.{hostname}")
 
     for opt in opts:
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
+            common.run_pepc(f"cstates save {opt} {cpunum_opt}", pman)
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+            common.run_pepc(f"cstates save {opt} {cpunum_opt}", pman)
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
             common.run_pepc(f"cstates save {opt} {cpunum_opt}", pman)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):

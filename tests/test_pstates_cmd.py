@@ -41,10 +41,12 @@ def get_params(hostspec, tmp_path_factory):
         params["packages"] = cpuinfo.get_packages()
 
         params["cores"] = {}
+        params["modules"] = {}
         params["dies"] = {}
 
         for pkg in params["packages"]:
             params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+            params["modules"][pkg] = cpuinfo.package_to_modules(package=pkg)
             params["dies"][pkg] = cpuinfo.get_dies(package=pkg)
 
         yield params
@@ -62,18 +64,22 @@ def _get_good_info_opts(sname="package"):
         return opts
 
     if sname == "package":
-        opts = ["--min-freq",
-                "--base-freq",
-                "--max-uncore-freq",
-                "--bus-clock",
-                "--epp",
-                "--epb --epp --epp --base-freq",
-                "--max-turbo-freq"]
+        opts = ["--bus-clock",
+                "--epp"]
         return opts
 
     if sname == "die":
         opts = ["--min-uncore-freq-limit",
-                "--min-uncore-freq"]
+                "--min-uncore-freq",
+                "--max-uncore-freq --max-uncore-freq-limit"]
+        return opts
+
+    if sname == "CPU":
+        opts = ["--min-freq",
+                "--base-freq",
+                "--epp",
+                "--epp --base-freq",
+                "--max-turbo-freq"]
         return opts
 
     assert False, f"BUG: bad scope name {sname}"
@@ -82,6 +88,24 @@ def test_pstates_info(params):
     """Test 'pepc pstates info' command."""
 
     pman = params["pman"]
+
+    for opt in _get_good_info_opts(sname="CPU"):
+        for mopt in props_common.get_mechanism_opts(params):
+            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
+                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, ignore=_IGNORE)
+
+            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="die"):
+                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, ignore=_IGNORE)
+
+            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, ignore=_IGNORE)
+
+            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
+                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, ignore=_IGNORE)
 
     for opt in _get_good_info_opts(sname="die"):
         for mopt in props_common.get_mechanism_opts(params):
@@ -208,6 +232,10 @@ def test_pstates_config_freq_good(params):
 
     for opt in _get_good_config_freq_opts(params, sname="CPU"):
         for mopt in props_common.get_mechanism_opts(params, allow_readonly=True):
+            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
+                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, ignore=_IGNORE)
+
             for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="die"):
                 cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
@@ -339,7 +367,11 @@ def test_pstates_save_restore(params):
     opts = ("", f"-o {tmp_path}/pstates.{hostname}")
 
     for opt in opts:
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
+            common.run_pepc(f"pstates save {opt} {cpunum_opt}", pman)
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+            common.run_pepc(f"pstates save {opt} {cpunum_opt}", pman)
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
             common.run_pepc(f"pstates save {opt} {cpunum_opt}", pman)
 
         for cpunum_opt in props_common.get_bad_cpunum_opts(params):

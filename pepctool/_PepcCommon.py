@@ -62,11 +62,11 @@ def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
         offline CPUs.
       * if 'offline_ok' is 'True', all online and offline CPUs will be included.
 
-    But if this function ends up expanding special value "all" for 'args.cores', 'args.dies', or
-    'args.packages', then 'offline_ok' argument is not used (ignored). The reason for this is that
-    Linux kernel does not provide topology information for offline CPUs. Only offline CPU numbers
-    are known, but what package or core they belong to is unknown, and becomes known only when the
-    CPU is onlined.
+    But if this function ends up expanding special value "all" for 'args.cores', 'args.modules'
+    'args.dies', or 'args.packages', then 'offline_ok' argument is not used (ignored). The reason
+    for this is that Linux kernel does not provide topology information for offline CPUs. Only
+    offline CPU numbers are known, but what package or core they belong to is unknown, and becomes
+    known only when the CPU is onlined.
     """
 
     cpus = []
@@ -92,6 +92,10 @@ def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
 
     if args.packages and not (args.cores or args.dies):
         cpus += cpuinfo.packages_to_cpus(packages=parse_cpus_string(args.packages))
+
+    # Note, module numbers are absolute.
+    if args.modules:
+        cpus += cpuinfo.modules_to_cpus(modules=parse_cpus_string(args.modules))
 
     if not cpus and default_cpus is not None:
         cpus = cpuinfo.normalize_cpus(parse_cpus_string(default_cpus), offlined_ok=offlined_ok)
