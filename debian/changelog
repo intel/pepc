@@ -1,3 +1,13 @@
+pepc (1.4.39) unstable; urgency=low
+
+  * Add '--modules' and '--dies' options to all commands that support '--cores' option. The new
+    options allow for specifying module and die numbers.
+  * 'pepc * info' commands do not print CPU numbers when a property has the same
+    value for all CPUs. Instead, just "all CPUs" is printed. This makes output
+    less cluttered.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Sun, 19 Nov 2023 00:00:00 +0200
+
 pepc (1.4.38) unstable; urgency=low
 
   * Add '--mechanism' option, which can be used for specifying the mechanism for

@@ -6,9 +6,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+### Removed
+### Changed
+
+## [1.4.39] - 2023-11-19
+### Added
  - Add '--modules' and '--dies' options to all commands that support '--cores' option. The new
    options allow for specifying module and die numbers.
-### Removed
 ### Changed
  - 'pepc * info' commands do not print CPU numbers when a property has the same
    value for all CPUs. Instead, just "all CPUs" is printed. This makes output

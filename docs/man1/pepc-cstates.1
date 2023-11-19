@@ -72,43 +72,73 @@ searched for.
 .TP
 \f[B]--force-color\f[R]
 Force coloring of the text output.
-.SS Subcommand \f[I]\[aq]info\[aq]\f[R]
+.SS Target CPU specification options
 .PP
-Get information about C-states on specified CPUs.
-By default, prints all information for all CPUs.
+All sub-commans (\f[I]\[aq]info\[aq]\f[R], \f[I]\[aq]config\[aq]\f[R],
+\f[I]\[aq]save\[aq]\f[R]) support the following target CPU specification
+options.
 .TP
 \f[B]--cpus\f[R] \f[I]CPUS\f[R]
-List of CPUs to get information about.
 The list can include individual CPU numbers and CPU number ranges.
 For example,\[aq]1-4,7,8,10-12\[aq] would mean CPUs 1 to 4, CPUs 7, 8,
 and 10 to 12.
 Use the special keyword \[aq]all\[aq] to specify all CPUs.
 .TP
 \f[B]--cores\f[R] \f[I]CORES\f[R]
-List of cores to get information about.
 The list can include individual core numbers and core number ranges.
 For example, \[aq]1-4,7,8,10-12\[aq] would mean cores 1 to 4, cores 7,
-8, and 10 to 12.
+8, and 10 to 1.
 Use the special keyword \[aq]all\[aq] to specify all cores.
 This option has to be accompanied by \[aq]--package\[aq] option, because
-core numbers are per-package
+core numbers are per-package.
+.TP
+\f[B]--modules\f[R] \f[I]MODULES\f[R]
+The list can include individual module numbers and module number ranges.
+For example, \[aq]0,2-5\[aq] would mean module 0 and modules 2, 3, 4,
+and 5.
+Use the special keyword \[aq]all\[aq] to specify all modules.
+Note, unlike core and die numbers, module numbers are absolute.
+.TP
+\f[B]--dies\f[R] \f[I]DIES\f[R]
+The list can include individual die numbers and die number ranges.
+For example, \[aq]0-3,5\[aq] would mean dies 0 to 3, and die 5.
+Use the special keyword \[aq]all\[aq] to specify all dies.
+This option has to be accompanied by \[aq]--package\[aq] option, because
+die numbers are per-package.
 .TP
 \f[B]--packages\f[R] \f[I]PACKAGES\f[R]
-List of packages to get information about.
 The list can include individual package numbers and package number
 ranges.
 For example, \[aq]0,2-4\[aq] would mean package 0 and packages 2 to 4.
 Use the special keyword \[aq]all\[aq] to specify all packages.
 .TP
 \f[B]--core-siblings\f[R] \f[I]CORE_SIBLINGS\f[R]
-List of core sibling indices to get information about.
+Core siblings are CPUs sharing the same core.
 The list can include individual core sibling indices or index ranges.
-For example, core x includes CPUs 3 and 4, \[aq]0\[aq] would mean CPU 3
-and \[aq]1\[aq] would mean CPU 4.
+For example, if a core includes CPUs 3 and 4, index \[aq]0\[aq] would
+mean CPU 3 and index \[aq]1\[aq] would mean CPU 4.
 This option can only be used to reference online CPUs, because Linux
 does not provide topology information for offline CPUs.
-In the previous example if CPU 3 was offline, then \[aq]0\[aq] would
-mean CPU 4.
+In the example with CPUs 3 and 4, if CPU 3 was offline, then index
+\[aq]0\[aq] would mean CPU 4.
+.TP
+\f[B]--module-siblings\f[R] \f[I]MODULE_SIBLINGS\f[R]
+Module siblings are CPUs sharing the same module.
+The list can include individual module sibling indices or index ranges.
+For example, if a module includes CPUs 3, 4, 5, and 6, index \[aq]0\[aq]
+would mean CPU 3, index \[aq]1\[aq] would mean CPU 4, and idex
+\[aq]3\[aq] would mean CPU 5.
+This option can only be used to reference online CPUs, because Linux
+does not provide topology information for offline CPUs.
+In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index
+\[aq]1\[aq] would mean CPU 5.
+.SS Subcommand \f[I]\[aq]info\[aq]\f[R]
+.PP
+Get information about C-states on specified CPUs.
+By default, prints all information for all CPUs.
+.PP
+Use target CPU specification options to specify the subset of CPUs,
+cores, dies, or packages.
 .TP
 \f[B]--yaml\f[R]
 Print information in YAML format.
@@ -182,39 +212,9 @@ Get list of available idle governors (details in \[aq]governors\[aq]).
 Configure C-states on specified CPUs.
 All options can be used without a parameter, in which case the currently
 configured value(s) will be printed.
-.TP
-\f[B]--cpus\f[R] \f[I]CPUS\f[R]
-List of CPUs to configure C-States on.
-The list can include individual CPU numbers and CPU number ranges.
-For example,\[aq]1-4,7,8,10-12\[aq] would mean CPUs 1 to 4, CPUs 7, 8,
-and 10 to 12.
-Use the special keyword \[aq]all\[aq] to specify all CPUs.
-.TP
-\f[B]--cores\f[R] \f[I]CORES\f[R]
-List of cores to configure C-States on.
-The list can include individual core numbers and core number ranges.
-For example, \[aq]1-4,7,8,10-12\[aq] would mean cores 1 to 4, cores 7,
-8, and 10 to 1.
-Use the special keyword \[aq]all\[aq] to specify all cores.
-This option has to be accompanied by \[aq]--package\[aq] option, because
-core numbers are per-package
-.TP
-\f[B]--packages\f[R] \f[I]PACKAGES\f[R]
-List of packages to configure C-States on.
-The list can include individual package numbers and package number
-ranges.
-For example, \[aq]0,2-4\[aq] would mean package 0 and packages 2 to 4.
-Use the special keyword \[aq]all\[aq] to specify all packages.
-.TP
-\f[B]--core-siblings\f[R] \f[I]CORE_SIBLINGS\f[R]
-List of core sibling indices to configure C-States on.
-The list can include individual core sibling indices or index ranges.
-For example, core x includes CPUs 3 and 4, \[aq]0\[aq] would mean CPU 3
-and \[aq]1\[aq] would mean CPU 4.
-This option can only be used to reference online CPUs, because Linux
-does not provide topology information for offline CPUs.
-In the previous example if CPU 3 was offline, then \[aq]0\[aq] would
-mean CPU 4.
+.PP
+Use target CPU specification options to specify the subset of CPUs,
+cores, dies, or packages.
 .TP
 \f[B]--override-cpu-model\f[R] \f[I]MODEL\f[R]
 This option is for debugging and testing purposes only.
@@ -270,39 +270,9 @@ Enable or disable PCH negotiation (details in
 Save all the modifiable C-state settings into a file.
 This file can later be used for restoring C-state settings with the
 \[aq]pepc cstates restore\[aq] command.
-.TP
-\f[B]--cpus\f[R] \f[I]CPUS\f[R]
-List of CPUs to save C-state information about.
-The list can include individual CPU numbers and CPU number ranges.
-For example,\[aq]1-4,7,8,10-12\[aq] would mean CPUs 1 to 4, CPUs 7, 8,
-and 10 to 12.
-Use the special keyword \[aq]all\[aq] to specify all CPUs.
-.TP
-\f[B]--cores\f[R] \f[I]CORES\f[R]
-List of cores to save C-state information about.
-The list can include individual core numbers and core number ranges.
-For example, \[aq]1-4,7,8,10-12\[aq] would mean cores 1 to 4, cores 7,
-8, and 10 to 12.
-Use the special keyword \[aq]all\[aq] to specify all cores.
-This option has to be accompanied by \[aq]--package\[aq] option, because
-core numbers are per-package
-.TP
-\f[B]--packages\f[R] \f[I]PACKAGES\f[R]
-List of packages to save C-state information about.
-The list can include individual package numbers and package number
-ranges.
-For example, \[aq]0,2-4\[aq] would mean package 0 and packages 2 to 4.
-Use the special keyword \[aq]all\[aq] to specify all packages.
-.TP
-\f[B]--core-siblings\f[R] \f[I]CORE_SIBLINGS\f[R]
-List of core sibling indices to save C-state information about.
-The list can include individual core sibling indices or index ranges.
-For example, core x includes CPUs 3 and 4, \[aq]0\[aq] would mean CPU 3
-and \[aq]1\[aq] would mean CPU 4.
-This option can only be used to reference online CPUs, because Linux
-does not provide topology information for offline CPUs.
-In the previous example if CPU 3 was offline, then \[aq]0\[aq] would
-mean CPU 4.
+.PP
+Use target CPU specification options to specify the subset of CPUs,
+cores, dies, or packages.
 .TP
 \f[B]-o\f[R] \f[I]OUTFILE\f[R], \f[B]--outfile\f[R] \f[I]OUTFILE\f[R]
 Name of the file to save the settings to.

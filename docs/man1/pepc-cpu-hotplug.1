@@ -105,6 +105,22 @@ Use the special keyword \[aq]all\[aq] to specify all cores.
 This option has to be accompanied by \[aq]--package\[aq] option, because
 core numbers are per-package.
 .TP
+\f[B]--modules\f[R] \f[I]MODULES\f[R]
+List of modules to offline.
+The list can include individual module numbers and module number ranges.
+For example, \[aq]0,2-5\[aq] would mean module 0 and modules 2, 3, 4,
+and 5.
+Use the special keyword \[aq]all\[aq] to specify all modules.
+Note, unlike core and die numbers, module numbers are absolute.
+.TP
+\f[B]--dies\f[R] \f[I]DIES\f[R]
+List of dies to offline.
+The list can include individual die numbers and die number ranges.
+For example, \[aq]0-3,5\[aq] would mean dies 0 to 3, and die 5.
+Use the special keyword \[aq]all\[aq] to specify all dies.
+This option has to be accompanied by \[aq]--package\[aq] option, because
+die numbers are per-package.
+.TP
 \f[B]--packages\f[R] \f[I]PACKAGES\f[R]
 List of packages to offline.
 The list can include individual package numbers and package number
@@ -113,11 +129,22 @@ For example, \[aq]0,2-4\[aq] would mean package 0 and packages 2 to 4.
 Use the special keyword \[aq]all\[aq] to specify all packages.
 .TP
 \f[B]--core-siblings\f[R] \f[I]CORE_SIBLINGS\f[R]
-List of core sibling indices to offline.
+Core siblings are CPUs sharing the same core.
 The list can include individual core sibling indices or index ranges.
-For example, core x includes CPUs 3 and 4, \[aq]0\[aq] would mean CPU 3
-and \[aq]1\[aq] would mean CPU 4.
+For example, if a core includes CPUs 3 and 4, index \[aq]0\[aq] would
+mean CPU 3 and index \[aq]1\[aq] would mean CPU 4.
 This option can only be used to reference online CPUs, because Linux
 does not provide topology information for offline CPUs.
-In the previous example if CPU 3 was offline, then \[aq]0\[aq] would
-mean CPU 4.
+In the example with CPUs 3 and 4, if CPU 3 was offline, then index
+\[aq]0\[aq] would mean CPU 4.
+.TP
+\f[B]--module-siblings\f[R] \f[I]MODULE_SIBLINGS\f[R]
+Module siblings are CPUs sharing the same module.
+The list can include individual module sibling indices or index ranges.
+For example, if a module includes CPUs 3, 4, 5, and 6, index \[aq]0\[aq]
+would mean CPU 3, index \[aq]1\[aq] would mean CPU 4, and idex
+\[aq]3\[aq] would mean CPU 5.
+This option can only be used to reference online CPUs, because Linux
+does not provide topology information for offline CPUs.
+In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index
+\[aq]1\[aq] would mean CPU 5.
