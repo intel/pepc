@@ -17,7 +17,7 @@ import logging
 import contextlib
 import statistics
 from pathlib import Path
-from pepclibs import _PCStatesBase, _UncoreFreq
+from pepclibs import _PCStatesBase
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
@@ -339,6 +339,20 @@ class PStates(_PCStatesBase.PCStatesBase):
                                    enable_cache=self._enable_cache)
 
         return self._epbobj
+
+    def _get_uncore_obj(self):
+        """Return an 'UncoreFreq' object."""
+
+        if not self._uncore_obj:
+            from pepclibs import _UncoreFreq # pylint: disable=import-outside-toplevel
+
+            try:
+                self._uncore_obj = _UncoreFreq.UncoreFreq(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                          enable_cache=self._enable_cache)
+            except ErrorNotSupported as err:
+                self._uncore_err = err
+
+        return self._uncore_obj
 
     def _prop_not_supported(self, cpus, mnames, action, what, exceptions=None, exc_type=None):
         """
@@ -911,18 +925,18 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_uncore_freq_pvinfo(self, pname, cpu):
         """Read and return the minimum or maximum uncore frequnecy."""
 
-        if self._uncore_err:
-            raise ErrorNotSupported(self._uncore_err)
+        self._uncore_obj = self._get_uncore_obj()
 
         val = None
-        if pname == "min_uncore_freq":
-            val = self._uncore_obj.get_min_freq(cpu)
-        elif pname == "max_uncore_freq":
-            val = self._uncore_obj.get_max_freq(cpu)
-        elif pname == "min_uncore_freq_limit":
-            val = self._uncore_obj.get_min_freq_limit(cpu)
-        elif pname == "max_uncore_freq_limit":
-            val = self._uncore_obj.get_max_freq_limit(cpu)
+        if self._uncore_obj:
+            if pname == "min_uncore_freq":
+                val = self._uncore_obj.get_min_freq(cpu)
+            elif pname == "max_uncore_freq":
+                val = self._uncore_obj.get_max_freq(cpu)
+            elif pname == "min_uncore_freq_limit":
+                val = self._uncore_obj.get_min_freq_limit(cpu)
+            elif pname == "max_uncore_freq_limit":
+                val = self._uncore_obj.get_max_freq_limit(cpu)
 
         return self._construct_pvinfo(pname, cpu, "sysfs", val)
 
@@ -1175,6 +1189,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
     def _write_uncore_freq_prop(self, pname, freq, cpu):
         """Write uncore frequency property."""
+
+        self._uncore_obj = self._get_uncore_obj()
 
         if self._uncore_err:
             raise ErrorNotSupported(self._uncore_err)
@@ -1494,12 +1510,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._sysfs_base = Path("/sys/devices/system/cpu")
 
         self._init_props_dict()
-
-        try:
-            self._uncore_obj = _UncoreFreq.UncoreFreq(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                      enable_cache=self._enable_cache)
-        except ErrorNotSupported as err:
-            self._uncore_err = err
 
     def close(self):
         """Uninitialize the class object."""
