@@ -1504,7 +1504,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._uncore_err = None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
-        self._sysfs_base_uncore = Path("/sys/devices/system/cpu/intel_uncore_frequency")
 
         self._init_props_dict()
 
