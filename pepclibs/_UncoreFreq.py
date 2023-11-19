@@ -115,12 +115,17 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
             with self._pman.open(path, "r+") as fobj:
                 # Note, the frequency value is in kHz in sysfs.
                 fobj.write(str(freq // 1000))
+        except Error as err:
+            raise Error(f"failed to write {key} uncore frequency value '{freq}' for CPU{cpu} to "
+                        f"'{path}'{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
+        # Read uncore frequency back and verify that it was set correctly.
+        try:
             with self._pman.open(path, "r") as fobj:
                 new_freq = Trivial.str_to_int(fobj.read(), what=f"{key} uncore frequency") * 1000
         except Error as err:
-            raise Error(f"failed to set {key} uncore frequency to {freq} for CPU{cpu}"
-                        f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+            raise Error(f"failed to read {key} uncore frequency for CPU{cpu}{self._pman.hostmsg} "
+                        f"from '{path}'\n{err.indent(2)}") from err
 
         if freq != new_freq:
             raise ErrorVerifyFailed(f"failed to set {key} uncore frequency to {freq} for CPU{cpu}"
