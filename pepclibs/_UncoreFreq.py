@@ -10,13 +10,14 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module provides a capability of reading and changing the uncore frequencies on Intel CPUs.
+This module provides a capability of reading and changing uncore frequency on Intel CPUs.
 """
 
 import logging
 import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, _PropsCache
+from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, KernelModule, FSHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
@@ -25,16 +26,20 @@ _LOG = logging.getLogger()
 
 class UncoreFreq(ClassHelpers.SimpleCloseContext):
     """
-    This class provides a capability of reading and changing the uncore frequencies on Intel CPUs.
-    This class is considered to be an internal "companion" class for other classes, so it does not
+    This class provides a capability of reading and changing uncore frequency on Intel CPUs. This
+    class is considered to be an internal "companion" class for other classes, so it does not
     validate the input arguments, assuming the user does the validation.
 
     Public methods overview.
 
     1. Get/set uncore frequency via Linux sysfs interfaces:
-       'get_min_freq()', 'get_max_freq()', 'set_min_freq()', 'set_max_freq()'.
+       * 'get_min_freq()'
+       * 'get_max_freq()'
+       * 'set_min_freq()'
+       * 'set_max_freq()'
     2. Get uncore frequency limits via Linux sysfs interfaces:
-       'get_min_freq_limit()', 'get_max_freq_limit()'.
+       * 'get_min_freq_limit()'
+       * 'get_max_freq_limit()'
     """
 
     def _get_filename_from_key(self, key, limit=False, write=False):
@@ -49,10 +54,9 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
             else:
                 msg = "reading"
             raise Error(f"BUG: bad uncore frequency key for {msg}: '{key}', only 'min', 'max' "
-                        "supported.")
+                        f"are supported.")
 
         prefix = "initial_" if limit else ""
-
         return prefix + key + "_freq_khz"
 
     def _get_sysfs_path(self, key, cpu, limit=False, write=False):
@@ -66,12 +70,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / name
 
     def _get_freq(self, key, cpu, limit=False):
-        """
-        Get uncore frequency from sysfs. The arguments are as follows.
-          * key - name identifier of the frequency to read.
-          * cpu - CPU number to read the frequency for.
-          * limit - if 'True', reads the limit value. Otherwise reads the current setting.
-        """
+        """Set uncore frequency by reading from the corresponding sysfs file."""
 
         path = self._get_sysfs_path(key, cpu, limit=limit)
 
@@ -80,76 +79,93 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         try:
             with self._pman.open(path, "r") as fobj:
-                freq = Trivial.str_to_int(fobj.read(), what=f"{key} uncore frequency") * 1000
+                freq = Trivial.str_to_int(fobj.read(), what=f"{key} uncore frequency")
         except Error as err:
             raise Error(f"failed to read {key} uncore frequency for CPU{cpu}{self._pman.hostmsg} "
-                        f"from '{path}'\n{err.indent(2)}")
+                        f"from '{path}'\n{err.indent(2)}") from err
 
+        # The frequency value is in kHz in sysfs.
+        freq *= 1000
         return self._pcache.add(path, cpu, freq, "sysfs", sname="die")
 
     def get_min_freq(self, cpu):
-        """Get minimum uncore frequency from sysfs for CPU 'cpu'."""
+        """
+        Get minimum uncore frequency. The arguments are as follows.
+          * cpu - CPU number to set the frequency for.
+
+        Note, the CPU number is not validated and the caller is assumed to have done the validation.
+        CPU 'cpu' should exist and should be online.
+        """
+
         return self._get_freq("min", cpu)
 
     def get_max_freq(self, cpu):
-        """Get maximum uncore frequency from sysfs for CPU 'cpu'."""
+        """Same as 'get_min_freq()', but for the maximum uncore frequency."""
+
         return self._get_freq("max", cpu)
 
     def get_min_freq_limit(self, cpu):
-        """Get minimum uncore frequency limit from sysfs for CPU 'cpu'."""
+        """
+        Get minimum uncore frequency limit. The arguments are as follows.
+          * cpu - CPU number to set the frequency limit for.
+
+        Note, the CPU number is not validated and the caller is assumed to have done the validation.
+        CPU 'cpu' should exist and should be online.
+        """
         return self._get_freq("min", cpu, limit=True)
 
     def get_max_freq_limit(self, cpu):
-        """Get maximum uncore frequency limit from sysfs for CPU 'cpu'."""
+        """Same as 'get_min_freq_limit()', but for the maximum uncore frequency limit."""
+
         return self._get_freq("max", cpu, limit=True)
 
     def _set_freq(self, freq, key, cpu):
-        """
-        Write uncore frequency to sysfs. The arguments are as follows.
-          * freq - frequency to write to sysfs, in Hz.
-          * key - name identifier of the frequency to write.
-          * cpu - CPU number to write the frequency for.
-        """
+        """Set uncore frequency by writing to the corresponding sysfs file."""
 
         path = self._get_sysfs_path(key, cpu, write=True)
 
         try:
             with self._pman.open(path, "r+") as fobj:
+                # Note, the frequency value is in kHz in sysfs.
                 fobj.write(str(freq // 1000))
 
             with self._pman.open(path, "r") as fobj:
                 new_freq = Trivial.str_to_int(fobj.read(), what=f"{key} uncore frequency") * 1000
         except Error as err:
-            errmsg = f"failed to set {key} uncore frequency to {freq} for CPU{cpu}" \
-                     f"{self._pman.hostmsg}:\n{err.indent(2)}"
-            raise Error(errmsg)
+            raise Error(f"failed to set {key} uncore frequency to {freq} for CPU{cpu}"
+                        f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         if freq != new_freq:
-            errmsg = f"failed to set {key} uncore frequency to {freq} for CPU{cpu}" \
-                     f"{self._pman.hostmsg}: wrote '{freq // 1000}' to '{path}' but read" \
-                     f"'{new_freq}' back."
-            raise ErrorVerifyFailed(errmsg)
+            raise ErrorVerifyFailed(f"failed to set {key} uncore frequency to {freq} for CPU{cpu}"
+                                    f"{self._pman.hostmsg}: wrote '{freq // 1000}' to '{path}' but "
+                                    f"read '{new_freq}' back.")
 
         return self._pcache.add(path, cpu, freq, "sysfs", sname="die")
 
     def set_min_freq(self, freq, cpu):
-        """Set minimum uncore frequency for CPU 'cpu' to 'freq'."""
+        """
+        Set minimum uncore frequency. The arguments are as follows.
+          * freq - the frequency to set, in Hz.
+          * cpu - CPU number to set the frequency for.
+
+        Note, the CPU number is not validated and the caller is assumed to have done the validation.
+        CPU 'cpu' should exist and should be online.
+        """
+
         self._set_freq(freq, "min", cpu)
 
     def set_max_freq(self, freq, cpu):
-        """Set maximum uncore frequency for CPU 'cpu' to 'freq'."""
+        """Same as 'set_min_freq()', but for the maximum uncore frequency."""
+
         self._set_freq(freq, "max", cpu)
 
     def _probe_driver(self):
         """
-        Attempt to determine the required kernel module for uncore support, and probe it. Will
-        raise an ErrorNotSupported if fails.
+        Attempt to determine the required kernel module for uncore frequency support, and probe it.
+        Raise 'ErrorNotSupported' if the uncore frequency driver fails to load.
         """
 
-        from pepclibs.msr import UncoreRatioLimit # pylint: disable=import-outside-toplevel
-
         cpumodel = self._cpuinfo.info["model"]
-
         errmsg = None
 
         # If the CPU supports MSR_UNCORE_RATIO_LIMIT, the uncore frequency driver is
@@ -207,7 +223,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
     def __init__(self, pman=None, cpuinfo=None, enable_cache=True):
         """
         The class constructor. The argument are as follows.
-          * pman - the process manager object that defines the host to manage EPP for.
+          * pman - the process manager object that defines the host to control uncore frequency on.
           * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
           * enable_cache - this argument can be used to disable caching.
         """
