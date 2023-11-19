@@ -372,17 +372,6 @@ class PStates(_PCStatesBase.PCStatesBase):
             raise type(exceptions[0])(msg)
         _LOG.debug(msg)
 
-    def _is_uncore_freq_supported(self):
-        """
-        Make sure that the uncore frequency control is supported. Load the uncore frequency
-        control driver if necessary.
-        """
-
-        if not self._uncore_obj:
-            return False
-
-        return True
-
     def _read_cppc_sysfs_file(self, fname, cpu):
         """Read an ACPI CPPC sysfs file."""
 
