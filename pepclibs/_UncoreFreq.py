@@ -246,6 +246,11 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
+        vendor = self._cpuinfo.info["vendor"]
+        if vendor != "GenuineIntel":
+            raise ErrorNotSupported(f"unsupported CPU vendor '{vendor}'{pman.hostmsg}\nOnly"
+                                    f"Intel CPU uncore frequency control is currently supported")
+
         if not self._pman.exists(self._sysfs_base):
             self._probe_driver()
 
