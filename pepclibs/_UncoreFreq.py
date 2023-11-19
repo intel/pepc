@@ -16,7 +16,7 @@ This module provides a capability of reading and changing uncore frequency on In
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs import CPUInfo, _PropsCache
+from pepclibs import CPUInfo, _PerCPUCache
 from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, KernelModule, FSHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
@@ -62,7 +62,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         path = self._get_sysfs_path(key, cpu, limit=limit)
 
         with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get(path, cpu, "sysfs")
+            return self._cache.get(path, cpu)
 
         try:
             with self._pman.open(path, "r") as fobj:
@@ -73,7 +73,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         # The frequency value is in kHz in sysfs.
         freq *= 1000
-        return self._pcache.add(path, cpu, freq, "sysfs", sname="die")
+        return self._cache.add(path, cpu, freq, sname="die")
 
     def get_min_freq(self, cpu):
         """
@@ -132,7 +132,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
                                     f"{self._pman.hostmsg}: wrote '{freq // 1000}' to '{path}' but "
                                     f"read '{new_freq}' back.")
 
-        return self._pcache.add(path, cpu, freq, "sysfs", sname="die")
+        return self._cache.add(path, cpu, freq, sname="die")
 
     def set_min_freq(self, freq, cpu):
         """
@@ -246,8 +246,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if not self._pman.exists(self._sysfs_base):
             self._probe_driver()
 
-        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                              enable_cache=enable_cache)
+        self._cache = _PerCPUCache.PerCPUCache(cpuinfo=self._cpuinfo, pman=self._pman,
+                                               enable_cache=enable_cache)
 
     def close(self):
         """Uninitialize the class object."""
@@ -255,5 +255,5 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if self._unload_drv:
             self._drv.unload()
 
-        close_attrs = ("_pcache", "_drv", "_cpuinfo", "_pman")
+        close_attrs = ("_cache", "_drv", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
