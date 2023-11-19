@@ -908,26 +908,22 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
         return self._construct_pvinfo("intel_pstate_mode", cpu, mname, val)
 
-    def _get_uncore_freq(self, pname, cpu):
-        """Read and return the minimum or maximum uncore frequency."""
-
-        val = None
-        if self._uncore_obj:
-            if pname == "min_uncore_freq":
-                val = self._uncore_obj.get_min_freq(cpu)
-            elif pname == "max_uncore_freq":
-                val = self._uncore_obj.get_max_freq(cpu)
-            elif pname == "min_uncore_freq_limit":
-                val = self._uncore_obj.get_min_freq_limit(cpu)
-            elif pname == "max_uncore_freq_limit":
-                val = self._uncore_obj.get_max_freq_limit(cpu)
-
-        return val
-
     def _get_uncore_freq_pvinfo(self, pname, cpu):
         """Read and return the minimum or maximum uncore frequnecy."""
 
-        val = self._get_uncore_freq(pname, cpu)
+        if self._uncore_err:
+            raise ErrorNotSupported(self._uncore_err)
+
+        val = None
+        if pname == "min_uncore_freq":
+            val = self._uncore_obj.get_min_freq(cpu)
+        elif pname == "max_uncore_freq":
+            val = self._uncore_obj.get_max_freq(cpu)
+        elif pname == "min_uncore_freq_limit":
+            val = self._uncore_obj.get_min_freq_limit(cpu)
+        elif pname == "max_uncore_freq_limit":
+            val = self._uncore_obj.get_max_freq_limit(cpu)
+
         return self._construct_pvinfo(pname, cpu, "sysfs", val)
 
     def _get_cpu_freq_msr(self, pname, cpu):
@@ -1179,6 +1175,9 @@ class PStates(_PCStatesBase.PCStatesBase):
 
     def _write_uncore_freq_prop(self, pname, freq, cpu):
         """Write uncore frequency property."""
+
+        if self._uncore_err:
+            raise ErrorNotSupported(self._uncore_err)
 
         if pname == "min_uncore_freq":
             self._uncore_obj.set_min_freq(freq, cpu)
