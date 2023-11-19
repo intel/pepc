@@ -937,6 +937,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 val = self._uncfreq_obj.get_min_freq_limit(cpu)
             elif pname == "max_uncore_freq_limit":
                 val = self._uncfreq_obj.get_max_freq_limit(cpu)
+            else:
+                raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
         return self._construct_pvinfo(pname, cpu, "sysfs", val)
 
@@ -1199,6 +1201,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             self._uncfreq_obj.set_min_freq(freq, cpu)
         elif pname == "max_uncore_freq":
             self._uncfreq_obj.set_max_freq(freq, cpu)
+        else:
+            raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
     def _parse_freq(self, val, cpu, uncore=False):
         """Turn a user-provided CPU or uncore frequency property value to hertz."""
