@@ -17,7 +17,7 @@ import logging
 import contextlib
 import statistics
 from pathlib import Path
-from pepclibs import _PCStatesBase, UncoreFreq
+from pepclibs import _PCStatesBase, _UncoreFreq
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
@@ -1509,8 +1509,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._init_props_dict()
 
         try:
-            self._uncore_obj = UncoreFreq.UncoreFreq(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                     enable_cache=self._enable_cache)
+            self._uncore_obj = _UncoreFreq.UncoreFreq(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                      enable_cache=self._enable_cache)
         except ErrorNotSupported as err:
             self._uncore_err = err
 

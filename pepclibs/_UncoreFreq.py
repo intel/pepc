@@ -26,6 +26,8 @@ _LOG = logging.getLogger()
 class UncoreFreq(ClassHelpers.SimpleCloseContext):
     """
     This class provides a capability of reading and changing the uncore frequencies on Intel CPUs.
+    This class is considered to be an internal "companion" class for other classes, so it does not
+    validate the input arguments, assuming the user does the validation.
 
     Public methods overview.
 
@@ -80,9 +82,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
             with self._pman.open(path, "r") as fobj:
                 freq = Trivial.str_to_int(fobj.read(), what=f"{key} uncore frequency") * 1000
         except Error as err:
-            errmsg = f"failed to read {key} uncore frequency for CPU{cpu}{self._pman.hostmsg} " \
-                     f"from '{path}'\n{err.indent(2)}"
-            raise Error(errmsg)
+            raise Error(f"failed to read {key} uncore frequency for CPU{cpu}{self._pman.hostmsg} "
+                        f"from '{path}'\n{err.indent(2)}")
 
         return self._pcache.add(path, cpu, freq, "sysfs", sname="die")
 
