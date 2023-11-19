@@ -42,32 +42,19 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
        * 'get_max_freq_limit()'
     """
 
-    def _get_filename_from_key(self, key, limit=False, write=False):
-        """
-        Verify the validity of 'key', and return the corresponding sysfs file name. Raise an
-        exception if 'key' is invalid.
-        """
+    def _get_sysfs_path(self, key, cpu, limit=False):
+        """Return the sysfs file path for an uncore frequency read or write operation."""
 
         if key not in ("min", "max"):
-            if write:
-                msg = "writing"
-            else:
-                msg = "reading"
-            raise Error(f"BUG: bad uncore frequency key for {msg}: '{key}', only 'min', 'max' "
-                        f"are supported.")
-
-        prefix = "initial_" if limit else ""
-        return prefix + key + "_freq_khz"
-
-    def _get_sysfs_path(self, key, cpu, limit=False, write=False):
-        """Get the sysfs file path for the given uncore frequency parameter."""
+            raise Error(f"BUG: bad uncore frequency key '{key}', should be 'min' or 'max'")
 
         levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
         package = levels["package"]
         die = levels["die"]
 
-        name = self._get_filename_from_key(key, limit=limit, write=write)
-        return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / name
+        prefix = "initial_" if limit else ""
+        fname =  prefix + key + "_freq_khz"
+        return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
 
     def _get_freq(self, key, cpu, limit=False):
         """Set uncore frequency by reading from the corresponding sysfs file."""
@@ -122,7 +109,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
     def _set_freq(self, freq, key, cpu):
         """Set uncore frequency by writing to the corresponding sysfs file."""
 
-        path = self._get_sysfs_path(key, cpu, write=True)
+        path = self._get_sysfs_path(key, cpu)
 
         try:
             with self._pman.open(path, "r+") as fobj:
