@@ -12,7 +12,6 @@
 This module provides P-state management API.
 """
 
-import time
 import logging
 import contextlib
 import statistics
@@ -339,6 +338,16 @@ class PStates(_PCStatesBase.PCStatesBase):
                                    enable_cache=self._enable_cache)
 
         return self._epbobj
+
+    def _get_cpufreq_obj(self):
+        """Return an 'UncoreFreq' object."""
+
+        if not self._cpufreq_obj:
+            from pepclibs import _CPUFreq # pylint: disable=import-outside-toplevel
+
+            self._cpufreq_obj = _CPUFreq.CPUFreq(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                 enable_cache=self._enable_cache)
+        return self._cpufreq_obj
 
     def _get_uncfreq_obj(self):
         """Return an 'UncoreFreq' object."""
@@ -1112,7 +1121,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return what
 
-    def _write_freq_prop_to_msr(self, pname, freq, cpu):
+    def _write_freq_prop_msr(self, pname, freq, cpu):
         """Write the minimum or maximum CPU frequency by programming 'MSR_HWP_REQUEST'."""
 
         # The "min" or "max" property name prefix.
@@ -1128,17 +1137,16 @@ class PStates(_PCStatesBase.PCStatesBase):
         hwpreq.disable_cpu_feature_pkg_control(fname, cpu)
         hwpreq.write_cpu_feature(fname, perf, cpu)
 
-    def _handle_write_and_read_freq_mismatch(self, pname, freq, read_freq, cpu, path):
+    def _handle_write_and_read_freq_mismatch(self, err):
         """
-        This is a helper function fo '_write_freq_prop_to_sysfs()' and it is called when there
-        is a mismatch between what was written to a frequency sysfs file and what was read back.
+        This is a helper function fo '_write_cpu_freq_prop_sysfs()' and it is called when there
+        is a mismatch between what was written to a CPU frequency sysfs file and what was read back.
         """
 
-        name = Human.uncapitalize(pname)
-        what = self._get_num_str(pname, cpu)
-        freq_human = Human.num2si(freq, unit="Hz", decp=4)
-        msg = f"failed to set {name} to {freq_human} for {what}{self._pman.hostmsg}: wrote " \
-              f"'{freq // 1000}' to '{path}', but read '{read_freq // 1000}' back."
+        freq = err.expected
+        read_freq = err.actual
+        cpu = err.cpu
+        msg = str(err)
 
         with contextlib.suppress(Error):
             frequencies = self._get_frequencies_pvinfo(cpu)["val"]
@@ -1146,48 +1154,35 @@ class PStates(_PCStatesBase.PCStatesBase):
                 frequencies_set = set(frequencies)
                 if freq not in frequencies_set and read_freq in frequencies_set:
                     fvals = ", ".join([Human.num2si(v, unit="Hz", decp=4) for v in frequencies])
-                    msg += f"\n  Linux kernel frequency driver does not support {freq_human}, " \
-                           f"use one of the following values instead:\n  {fvals}"
+                    freq_human = Human.num2si(freq, unit="Hz", decp=4)
+                    msg += f".\n  Linux kernel CPU frequency driver does not support " \
+                           f"{freq_human}, use one of the following values instead:\n  {fvals}"
             elif self._get_turbo_pvinfo(cpu)["val"] == "off":
                 base_freq = self._get_cpu_prop("base_freq", cpu)
                 if base_freq and freq > base_freq:
                     base_freq = Human.num2si(base_freq, unit="Hz", decp=4)
-                    msg += f"\nHint: turbo is disabled, base frequency is {base_freq}, and this " \
-                           f"may be the limiting factor."
+                    msg += f".\n  Hint: turbo is disabled, base frequency is {base_freq}, and " \
+                           f"this may be the limiting factor."
 
-        raise ErrorVerifyFailed(msg)
+        raise ErrorVerifyFailed(msg) from err
 
-    def _write_freq_prop_to_sysfs(self, pname, freq, cpu):
-        """
-        Write the minimum or maximum CPU or uncore frequency value 'freq' to the corresponding sysfs
-        file.
-        """
+    def _write_cpu_freq_prop_sysfs(self, pname, freq, cpu):
+        """Write CPU frequency property via Linux "cpufreq" sysfs interfaces."""
 
-        path = self._get_sysfs_path(pname, cpu)
+        # TODO: temporary, remove when migrated to '_CPUFreq.py'.
+        self._pcache.remove(pname, cpu, "sysfs", sname="CPU")
+
+        cpufreq_obj = self._get_cpufreq_obj()
 
         try:
-            with self._pman.open(path, "r+") as fobj:
-                # Sysfs files use kHz.
-                fobj.write(str(freq // 1000))
-        except Error as err:
-            raise Error(f"failed to set '{pname}'{self._pman.hostmsg}:\n{err.indent(2)}") \
-                        from err
-
-        count = 3
-        while count > 0:
-            # Returns frequency in Hz.
-            read_freq = self._read_prop_from_sysfs(pname, path)
-            if freq == read_freq:
-                self._pcache.add(pname, cpu, freq, "sysfs", sname=self._props[pname]["sname"])
-                return
-
-            # Sometimes the update does not happen immediately. For example, we observed this on
-            # systems with frequency files when HWP was enabled, for example. Wait a little bit and
-            # try again.
-            time.sleep(0.1)
-            count -= 1
-
-        self._handle_write_and_read_freq_mismatch(pname, freq, read_freq, cpu, path)
+            if pname == "min_freq":
+                cpufreq_obj.set_min_freq(freq, cpu)
+            elif pname == "max_freq":
+                cpufreq_obj.set_max_freq(freq, cpu)
+            else:
+                raise Error(f"BUG: unexpected CPU frequency property {pname}")
+        except ErrorVerifyFailed as err:
+            self._handle_write_and_read_freq_mismatch(err)
 
     def _write_uncore_freq_prop(self, pname, freq, cpu):
         """Write uncore frequency property."""
@@ -1355,11 +1350,11 @@ class PStates(_PCStatesBase.PCStatesBase):
             if mname == "sysfs":
                 min_freq_limit_pname = "min_freq_limit"
                 max_freq_limit_pname = "max_freq_limit"
-                write_func = self._write_freq_prop_to_sysfs
+                write_func = self._write_cpu_freq_prop_sysfs
             elif mname == "msr":
                 min_freq_limit_pname = "min_oper_freq"
                 max_freq_limit_pname = "max_turbo_freq"
-                write_func = self._write_freq_prop_to_msr
+                write_func = self._write_freq_prop_msr
 
         for cpu in cpus:
             new_freq = self._parse_freq(val, cpu, is_uncore)
@@ -1508,6 +1503,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._platinfo = None
         self._trl = None
 
+        self._cpufreq_obj = None
         self._uncfreq_obj = None
         self._uncfreq_err = None
 
@@ -1519,7 +1515,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Uninitialize the class object."""
 
         close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_hwpreq", "_hwpreq_pkg", "_platinfo",
-                       "_trl", "_fsbfreq", "_uncfreq_obj")
+                       "_trl", "_fsbfreq", "_cpufreq_obj", "_uncfreq_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
