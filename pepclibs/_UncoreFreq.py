@@ -127,12 +127,13 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
             raise Error(f"failed to read {key} uncore frequency for CPU{cpu}{self._pman.hostmsg} "
                         f"from '{path}'\n{err.indent(2)}") from err
 
-        if freq != new_freq:
-            raise ErrorVerifyFailed(f"failed to set {key} uncore frequency to {freq} for CPU{cpu}"
-                                    f"{self._pman.hostmsg}: wrote '{freq // 1000}' to '{path}' but "
-                                    f"read '{new_freq}' back.")
+        if freq == new_freq:
+            return self._cache.add(path, cpu, freq, sname="die")
 
-        return self._cache.add(path, cpu, freq, sname="die")
+        raise ErrorVerifyFailed(f"failed to set {key} uncore frequency to {freq} for CPU{cpu}"
+                                f"{self._pman.hostmsg}: wrote '{freq // 1000}' to '{path}', but "
+                                f"read '{new_freq // 1000}' back",
+                                cpu=cpu, expected=freq, actual=new_freq, path=path)
 
     def set_min_freq(self, freq, cpu):
         """

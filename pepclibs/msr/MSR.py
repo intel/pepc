@@ -362,7 +362,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
                     err_msg = f"verification failed for MSR '{regaddr:#x}' on CPU {cpu}" \
                               f"{self._pman.hostmsg}:\n  wrote '{regval:#x}', read back " \
                               f"'{new_val:#x}'"
-                    raise ErrorVerifyFailed(err_msg, cpu=cpu)
+                    raise ErrorVerifyFailed(err_msg, cpu=cpu, expected=regval, actual=new_val)
 
     def write_cpu(self, regaddr, regval, cpu, sname="CPU", verify=False):
         """
