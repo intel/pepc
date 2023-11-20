@@ -923,7 +923,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         return self._construct_pvinfo("intel_pstate_mode", cpu, mname, val)
 
     def _get_uncore_freq_pvinfo(self, pname, cpu):
-        """Read and return the minimum or maximum uncore frequnecy."""
+        """Read and return the minimum or maximum uncore frequency."""
 
         self._uncfreq_obj = self._get_uncfreq_obj()
 
