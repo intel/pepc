@@ -855,7 +855,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
     def _get_cpu_prop_pvinfo_sysfs(self, pname, cpu):
         """
-        This is a helper for '_get_cpu_prop_pvinfo()' which handles the properties backed by a sysfs
+        This is a helper for '_get_cpu_prop_pvinfo()' for handling properties backed by a sysfs
         file.
         """
 
