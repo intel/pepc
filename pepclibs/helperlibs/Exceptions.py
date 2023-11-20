@@ -14,7 +14,7 @@ class Error(Exception):
     """The base class for all exceptions raised by this project."""
 
     def __init__(self, msg, *args, **kwargs):
-        """The constructor."""
+        """The exception class constructor."""
 
         msg = str(msg)
         super().__init__(msg)
@@ -67,11 +67,28 @@ class ErrorPermissionDenied(Error):
 class ErrorVerifyFailed(Error):
     """Verification failed."""
 
+    def __init__(self, msg, *args, cpu=None, expected=None, actual=None, path=None, **kwargs):
+        """
+        The exception class constructor. The arguments are as follows.
+          * cpu - CPU number the associated with the operation that failed the verification
+          * expected - the expected value or result of an operation
+          * actual - the actual value or result of operation, which was expected to be the same as
+                     'expected', but it is different
+          * path - a file-system path associated with the operation that failed the verification
+        """
+
+        self.cpu = cpu
+        self.expected = expected
+        self.actual = actual
+        self.path = path
+
+        super().__init__(msg, *args, **kwargs)
+
 class ErrorConnect(Error):
     """Failed to connect to a remote host."""
 
     def __init__(self, msg, *args, host=None, **kwargs):
-        """Constructor."""
+        """The exception class constructor."""
 
         if host:
             msg = f"cannot connect to host '{host}'\n{msg}"
