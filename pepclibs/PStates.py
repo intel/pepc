@@ -1335,9 +1335,9 @@ class PStates(_PCStatesBase.PCStatesBase):
             cur_freq = Human.num2si(cur_freq, unit="Hz", decp=4)
             what = self._get_num_str(pname, cpu)
             if is_min:
-                msg = "larger than currently configured max. frequency of {cur_freq}"
+                msg = f"larger than currently configured max. frequency of {cur_freq}"
             else:
-                msg = "lower than currently configured min. frequency of {cur_freq}"
+                msg = f"lower than currently configured min. frequency of {cur_freq}"
             raise ErrorFreqOrder(f"can't set {name} of {what} to {cur_freq} - it is {msg}")
 
         is_min = "min" in pname
