@@ -176,7 +176,7 @@ def _get_good_config_freq_opts(params, sname="CPU"):
                         "--max-freq hfm",
                         "--min-freq base",
                         "--min-freq hfm"]
-            return opts
+        return opts
 
     if sname == "die":
         if pobj.prop_is_supported("min_uncore_freq", cpu):
