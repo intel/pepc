@@ -14,10 +14,11 @@ This module provides a capability of reading and changing CPU frequency.
 
 import time
 import logging
+import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, _PerCPUCache
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 _LOG = logging.getLogger()
@@ -29,6 +30,8 @@ class CPUFreq(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Set CPU frequency via Linux "cpufreq" sysfs interfaces:
+       * 'get_min_freq()'
+       * 'get_max_freq()'
        * 'set_min_freq()'
        * 'set_max_freq()'
 
@@ -41,6 +44,46 @@ class CPUFreq(ClassHelpers.SimpleCloseContext):
 
         fname = "scaling_" + key + "_freq"
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / fname
+
+    def _get_freq_sysfs(self, key, cpu):
+        """Get CPU frequency from the Linux "cpufreq" sysfs file."""
+
+        path = self._get_sysfs_path(key, cpu)
+
+        with contextlib.suppress(ErrorNotFound):
+            return self._cache.get(path, cpu)
+
+        _LOG.debug("reading %s CPU frequency for CPU%d from '%s'%s",
+                   key, cpu, path, self._pman.hostmsg)
+
+        try:
+            with self._pman.open(path, "r") as fobj:
+                try:
+                    freq = Trivial.str_to_int(fobj.read(), what=f"{key} CPU frequency") * 1000
+                except Error as err:
+                    raise Error(f"failed to read {key} CPU frequency for CPU{cpu} from '{path}'"
+                                f"{self._pman.hostmsg}\n{err.indent(2)}") from err
+        except ErrorNotFound as err:
+            return self._cache.add(path, cpu, None, sname="CPU")
+
+        return self._cache.add(path, cpu, freq, sname="CPU")
+
+    def get_min_freq(self, cpu):
+        """
+        Get minimum CPU frequency via Linux "cpufreq" sysfs interfaces. The arguments are as
+        follows.
+          * cpu - CPU number to get the frequency for.
+
+        Return the minimum CPU frequency in Hz or 'None' if the CPU frequency sysfs file does not
+        exist.
+        """
+
+        return self._get_freq_sysfs("min", cpu)
+
+    def get_max_freq(self, cpu):
+        """Same as 'get_min_freq()', but for the maximum CPU frequency."""
+
+        return self._get_freq_sysfs("max", cpu)
 
     def _set_freq_sysfs(self, freq, key, cpu):
         """Set CPU frequency by writing to the Linux "cpufreq" sysfs file."""

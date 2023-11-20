@@ -798,8 +798,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         if bclk is None:
             return None
 
-        min_freq = self._get_cpu_prop_pvinfo_sysfs("min_freq", cpu)["val"]
-        max_freq = self._get_cpu_prop_pvinfo_sysfs("max_freq", cpu)["val"]
+        min_freq = self._get_cpu_freq_sysfs("min_freq", cpu)
+        max_freq = self._get_cpu_freq_sysfs("max_freq", cpu)
         if min_freq is None or max_freq is None:
             return None
 
@@ -951,6 +951,25 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._construct_pvinfo(pname, cpu, "sysfs", val)
 
+    def _get_cpu_freq_sysfs(self, pname, cpu):
+        """Read and return the minimum or maximum CPU frequency from Linux "cpufreq" sysfs files."""
+
+        # TODO: temporary, remove later.
+        assert not self._pcache.is_cached(pname, cpu, "sysfs")
+
+        cpufreq_obj = self._get_cpufreq_obj()
+
+        val = None
+        if cpufreq_obj:
+            if pname == "min_freq":
+                val = cpufreq_obj.get_min_freq(cpu)
+            elif pname == "max_freq":
+                val = cpufreq_obj.get_max_freq(cpu)
+            else:
+                raise Error(f"BUG: unexpected CPU frequency property {pname}")
+
+        return val
+
     def _get_cpu_freq_msr(self, pname, cpu):
         """Read and return the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
 
@@ -993,7 +1012,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         for mname in mnames:
             if mname == "sysfs":
-                val = self._get_cpu_prop_pvinfo_sysfs(pname, cpu)["val"]
+                val = self._get_cpu_freq_sysfs(pname, cpu)
             elif mname == "msr":
                 val = self._get_cpu_freq_msr(pname, cpu)
             else:
@@ -1474,8 +1493,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         #
         # Note, not all properties that may be backed by a sysfs file have "fname". For example,
         # "turbo" does not, because the sysfs knob path depends on what frequency driver is used.
-        self._props["min_freq"]["fname"] = "scaling_min_freq"
-        self._props["max_freq"]["fname"] = "scaling_max_freq"
         self._props["min_freq_limit"]["fname"] = "cpuinfo_min_freq"
         self._props["max_freq_limit"]["fname"] = "cpuinfo_max_freq"
         self._props["base_freq"]["fname"] = "base_frequency"
