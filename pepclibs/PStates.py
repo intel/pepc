@@ -1137,21 +1137,17 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return what
 
-    def _write_freq_prop_msr(self, pname, freq, cpu):
-        """Write the minimum or maximum CPU frequency by programming 'MSR_HWP_REQUEST'."""
+    def _write_cpu_freq_prop_msr(self, pname, freq, cpu):
+        """Write CPU frequency property by programming 'MSR_HWP_REQUEST'."""
 
-        # The "min" or "max" property name prefix.
-        prefix = pname[0:3]
-        # The corresponding 'MSR_HWP_REQUEST' feature name.
-        fname = f"{prefix}_perf"
+        cpufreq_obj = self._get_cpufreq_msr_obj()
 
-        factor = self._get_cpu_perf_to_freq_factor(cpu)
-        # Round the resulting performance the same way as Linux 'intel_pstate' driver does it.
-        perf = int((freq + factor - 1) / factor)
-
-        hwpreq = self._get_hwpreq()
-        hwpreq.disable_cpu_feature_pkg_control(fname, cpu)
-        hwpreq.write_cpu_feature(fname, perf, cpu)
+        if pname == "min_freq":
+            cpufreq_obj.set_min_freq(freq, cpu)
+        elif pname == "max_freq":
+            cpufreq_obj.set_max_freq(freq, cpu)
+        else:
+            raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
     def _handle_write_and_read_freq_mismatch(self, err):
         """
@@ -1367,7 +1363,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif mname == "msr":
                 min_freq_limit_pname = "min_oper_freq"
                 max_freq_limit_pname = "max_turbo_freq"
-                write_func = self._write_freq_prop_msr
+                write_func = self._write_cpu_freq_prop_msr
 
         for cpu in cpus:
             new_freq = self._parse_freq(val, cpu, is_uncore)

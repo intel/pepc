@@ -206,6 +206,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     1. Get/set CPU frequency via an MSR (Intel CPUs only):
        * 'get_min_freq()'
        * 'get_max_freq()'
+       * 'set_min_freq()'
+       * 'set_max_freq()'
 
     Note, class methods do not validate the CPU number argument. The caller is assumed to have done
     the validation. The input CPU number should exist and should be online.
@@ -232,7 +234,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         return self._fsbfreq
 
-    def _get_bclk(self, cpu):
+    def _get_bclk(self, cpu, not_supported_ok=True):
         """
         Return bus clock speed in Hz. Return 'None' if bus clock is not supported by the platform.
         """
@@ -243,7 +245,9 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             # Fall back to 100MHz clock speed.
             if self._cpuinfo.info["vendor"] == "GenuineIntel":
                 return 100000000
-            return None
+            if not_supported_ok:
+                return None
+            raise
 
         # Convert MHz to Hz.
         return int(bclk * 1000000)
@@ -276,7 +280,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         # The corresponding 'MSR_HWP_REQUEST' feature name.
         feature_name = f"{key}_perf"
 
-        bclk = self._get_bclk(cpu)
+        bclk = self._get_bclk(cpu, not_supported_ok=True)
         if not bclk:
             return None
 
@@ -327,6 +331,41 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """Same as 'get_min_freq()', but for the maximum CPU frequency."""
 
         return self._get_freq_msr("max", cpu)
+
+    def _set_freq_msr(self, freq, key, cpu):
+        """Set CPU frequency by writing to 'MSR_HWP_REQUEST'."""
+
+        # The corresponding 'MSR_HWP_REQUEST' feature name.
+        feature_name = f"{key}_perf"
+
+        perf = None
+        if self._cpuinfo.info["hybrid"]:
+            pcore_cpus = set(self._cpuinfo.get_hybrid_cpu_topology()["pcore"])
+            if cpu in pcore_cpus:
+                perf = int((freq + self._perf_to_freq_factor - 1) / self._perf_to_freq_factor)
+
+        if perf is None:
+            bclk = self._get_bclk(cpu, not_supported_ok=False)
+            perf = freq // bclk
+
+        hwpreq = self._get_hwpreq()
+        hwpreq.disable_cpu_feature_pkg_control(feature_name, cpu)
+        hwpreq.write_cpu_feature(feature_name, perf, cpu)
+
+    def set_min_freq(self, freq, cpu):
+        """
+        Set minimum CPU frequency via the 'MSR_HWP_REQUEST' model specific register. The arguments
+        are as follows.
+          * freq - the minimum frequency value to set, hertz.
+          * cpu - CPU number to set the frequency for.
+        """
+
+        self._set_freq_msr(freq, "min", cpu)
+
+    def set_max_freq(self, freq, cpu):
+        """Same as 'set_min_freq()', but for the maximum CPU frequency."""
+
+        self._set_freq_msr(freq, "max", cpu)
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
