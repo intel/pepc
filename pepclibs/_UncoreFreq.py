@@ -77,7 +77,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
     def get_min_freq(self, cpu):
         """
-        Get minimum uncore frequency. The arguments are as follows.
+        Get minimum uncore frequency via Linux uncore frequency driver sysfs interface. The
+        arguments are as follows.
           * cpu - CPU number to set the frequency for.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
@@ -93,7 +94,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
     def get_min_freq_limit(self, cpu):
         """
-        Get minimum uncore frequency limit. The arguments are as follows.
+        Get minimum uncore frequency limit via Linux uncore frequency driver sysfs interface. The
+        arguments are as follows.
           * cpu - CPU number to set the frequency limit for.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
@@ -137,7 +139,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
     def set_min_freq(self, freq, cpu):
         """
-        Set minimum uncore frequency. The arguments are as follows.
+        Set minimum uncore frequency via Linux uncore frequency driver sysfs interface. The
+        arguments are as follows.
           * freq - the frequency to set, in Hz.
           * cpu - CPU number to set the frequency for.
 
