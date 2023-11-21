@@ -23,9 +23,10 @@ from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 _LOG = logging.getLogger()
 
-class CPUFreq(ClassHelpers.SimpleCloseContext):
+class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     """
-    This class provides a capability of reading and changing CPU frequency.
+    This class provides a capability of reading and changing CPU frequency via Linux "cpufreq"
+    subsystem sysfs interfaces.
 
     Public methods overview.
 
@@ -193,4 +194,172 @@ class CPUFreq(ClassHelpers.SimpleCloseContext):
         """Uninitialize the class object."""
 
         close_attrs = ("_cache", "_cpuinfo", "_pman")
+        ClassHelpers.close(self, close_attrs=close_attrs)
+
+class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
+    """
+    This class provides a capability of reading and changing CPU frequency for Intel platforms
+    supporting thie 'MSR_HWP_REQUEST' model-specific register (MSR).
+
+    Public methods overview.
+
+    1. Get/set CPU frequency via an MSR (Intel CPUs only):
+       * 'get_min_freq()'
+       * 'get_max_freq()'
+
+    Note, class methods do not validate the CPU number argument. The caller is assumed to have done
+    the validation. The input CPU number should exist and should be online.
+    """
+
+    def _get_msr(self):
+        """Returns an 'MSR.MSR()' object."""
+
+        if not self._msr:
+            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
+
+            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
+
+        return self._msr
+
+    def _get_fsbfreq(self):
+        """Discover bus clock speed."""
+
+        if not self._fsbfreq:
+            from pepclibs.msr import FSBFreq # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            self._fsbfreq = FSBFreq.FSBFreq(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
+
+        return self._fsbfreq
+
+    def _get_bclk(self, cpu):
+        """
+        Return bus clock speed in Hz. Return 'None' if bus clock is not supported by the platform.
+        """
+
+        try:
+            bclk = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
+        except ErrorNotSupported:
+            # Fall back to 100MHz clock speed.
+            if self._cpuinfo.info["vendor"] == "GenuineIntel":
+                return 100000000
+            return None
+
+        # Convert MHz to Hz.
+        return int(bclk * 1000000)
+
+    def _get_hwpreq(self):
+        """Returns an 'HWPRequest.HWPRequest()' object."""
+
+        if not self._hwpreq:
+            from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            self._hwpreq = HWPRequest.HWPRequest(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
+
+        return self._hwpreq
+
+    def _get_hwpreq_pkg(self):
+        """Returns an 'HWPRequest.HWPRequest()' object."""
+
+        if not self._hwpreq_pkg:
+            from pepclibs.msr import HWPRequestPkg # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
+                                                           msr=msr)
+        return self._hwpreq_pkg
+
+    def _get_freq_msr(self, key, cpu):
+        """Read and return the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
+
+        # The corresponding 'MSR_HWP_REQUEST' feature name.
+        feature_name = f"{key}_perf"
+
+        bclk = self._get_bclk(cpu)
+        if not bclk:
+            return None
+
+        try:
+            hwpreq = self._get_hwpreq()
+            if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu):
+                hwpreq = self._get_hwpreq_pkg()
+        except ErrorNotSupported as err:
+            _LOG.debug(err)
+            return None
+
+        try:
+            perf = hwpreq.read_cpu_feature(feature_name, cpu)
+        except ErrorNotSupported:
+            _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, key)
+            return None
+
+        freq = None
+        if self._cpuinfo.info["hybrid"]:
+            pcore_cpus = set(self._cpuinfo.get_hybrid_cpu_topology()["pcore"])
+            # In HWP mode, the Linux 'intel_pstate' driver changes CPU frequency by programming
+            # 'MSR_HWP_REQUEST'.
+            # On many Intel platforms,the MSR is programmed in terms of frequency ratio (frequency
+            # divided by 100MHz). But on hybrid Intel platform (e.g., Alder Lake), the MSR works in
+            # terms of platform-dependent abstract performance units on P-cores. Convert the
+            # performance units to CPU frequency in Hz.
+            if cpu in pcore_cpus:
+                freq = perf * self._perf_to_freq_factor
+                # Round the frequency down to bus clock.
+                # * Why rounding? CPU frequency changes in bus-clock increments.
+                # * Why rounding down? Following how Linux 'intel_pstate' driver example.
+                return freq - (freq % bclk)
+
+        return perf * bclk
+
+    def get_min_freq(self, cpu):
+        """
+        Get minimum CPU frequency via the 'MSR_HWP_REQUEST' model specific register. The arguments
+        are as follows.
+          * cpu - CPU number to get the frequency for.
+
+        Return the minimum CPU frequency in Hz or 'None' if 'MSR_HWP_REQUEST' is not supported.
+        """
+
+        return self._get_freq_msr("min", cpu)
+
+    def get_max_freq(self, cpu):
+        """Same as 'get_min_freq()', but for the maximum CPU frequency."""
+
+        return self._get_freq_msr("max", cpu)
+
+    def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
+        """
+        The class constructor. The argument are as follows.
+          * pman - the process manager object that defines the host to control CPU frequency on.
+          * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
+          * msr - an 'MSR.MSR()' object which should be used for accessing MSR registers.
+          * enable_cache - this argument can be used to disable caching.
+        """
+
+        self._pman = pman
+        self._cpuinfo = cpuinfo
+        self._msr = msr
+        self._enable_cache = enable_cache
+
+        self._close_pman = pman is None
+        self._close_cpuinfo = cpuinfo is None
+
+        self._fsbfreq = None
+        self._hwpreq = None
+        self._hwpreq_pkg = None
+
+        # Performance to frequency factor.
+        self._perf_to_freq_factor = 78740157
+
+        if not self._pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
+
+        if not self._cpuinfo:
+            self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        close_attrs = ("_fsbfreq", "_hwpreq", "_hwpreq_pkg", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)

@@ -265,17 +265,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._hwpreq
 
-    def _get_hwpreq_pkg(self):
-        """Returns an 'HWPRequest.HWPRequest()' object."""
-
-        if not self._hwpreq_pkg:
-            from pepclibs.msr import HWPRequestPkg # pylint: disable=import-outside-toplevel
-
-            msr = self._get_msr()
-            self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
-                                                           msr=msr)
-        return self._hwpreq_pkg
-
     def _get_platinfo(self):
         """Returns an 'PlatformInfo.PlatformInfo()' object."""
 
@@ -339,18 +328,29 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._epbobj
 
-    def _get_cpufreq_obj(self):
-        """Return an 'UncoreFreq' object."""
+    def _get_cpufreq_sysfs_obj(self):
+        """Return a '_CPUFreqSysfs' object."""
 
-        if not self._cpufreq_obj:
+        if not self._cpufreq_sysfs_obj:
             from pepclibs import _CPUFreq # pylint: disable=import-outside-toplevel
 
-            self._cpufreq_obj = _CPUFreq.CPUFreq(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                 enable_cache=self._enable_cache)
-        return self._cpufreq_obj
+            self._cpufreq_sysfs_obj = _CPUFreq.CPUFreqSysfs(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                          enable_cache=self._enable_cache)
+        return self._cpufreq_sysfs_obj
+
+    def _get_cpufreq_msr_obj(self):
+        """Return a '_CPUFreqMSR' object."""
+
+        if not self._cpufreq_msr_obj:
+            from pepclibs import _CPUFreq # pylint: disable=import-outside-toplevel
+
+            self._cpufreq_msr_obj = _CPUFreq.CPUFreqMSR(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                          msr=self._msr,
+                                                          enable_cache=self._enable_cache)
+        return self._cpufreq_msr_obj
 
     def _get_uncfreq_obj(self):
-        """Return an 'UncoreFreq' object."""
+        """Return an '_UncoreFreq' object."""
 
         if not self._uncfreq_obj:
             from pepclibs import _UncoreFreq # pylint: disable=import-outside-toplevel
@@ -954,7 +954,7 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_cpu_freq_sysfs(self, pname, cpu):
         """Read and return the minimum or maximum CPU frequency from Linux "cpufreq" sysfs files."""
 
-        cpufreq_obj = self._get_cpufreq_obj()
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
 
         val = None
         if cpufreq_obj:
@@ -974,33 +974,16 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_cpu_freq_msr(self, pname, cpu):
         """Read and return the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
 
-        # The "min" or "max" property name prefix.
-        prefix = pname[0:3]
-        # The corresponding 'MSR_HWP_REQUEST' feature name.
-        fname = f"{prefix}_perf"
+        cpufreq_obj = self._get_cpufreq_msr_obj()
 
-        try:
-            hwpreq = self._get_hwpreq()
-        except ErrorNotSupported:
-            return None
-
-        if hwpreq.is_cpu_feature_pkg_controlled(fname, cpu):
-            hwpreq = self._get_hwpreq_pkg()
-
-        try:
-            perf = hwpreq.read_cpu_feature(fname, cpu)
-        except ErrorNotSupported:
-            _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, prefix)
-            return None
-
-        freq = perf * self._get_cpu_perf_to_freq_factor(cpu)
-
-        val = self._get_bclk(cpu)
-        if val is not None:
-            # Round the frequency down to bus clock.
-            # * Why rounding? Bus clock is normally the minimum CPU frequency change value.
-            # * Why rounding down? Following how Linux 'intel_pstate' driver example.
-            val = freq - (freq % val)
+        val = None
+        if cpufreq_obj:
+            if pname == "min_freq":
+                val = cpufreq_obj.get_min_freq(cpu)
+            elif pname == "max_freq":
+                val = cpufreq_obj.get_max_freq(cpu)
+            else:
+                raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
         return val
 
@@ -1202,7 +1185,7 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _write_cpu_freq_prop_sysfs(self, pname, freq, cpu):
         """Write CPU frequency property via Linux "cpufreq" sysfs interfaces."""
 
-        cpufreq_obj = self._get_cpufreq_obj()
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
 
         try:
             if pname == "min_freq":
@@ -1525,11 +1508,12 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._fsbfreq = None
         self._pmenable = None
         self._hwpreq = None
-        self._hwpreq_pkg = None
         self._platinfo = None
         self._trl = None
 
-        self._cpufreq_obj = None
+        self._cpufreq_sysfs_obj = None
+        self._cpufreq_msr_obj = None
+
         self._uncfreq_obj = None
         self._uncfreq_err = None
 
@@ -1540,8 +1524,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_eppobj", "_epbobj", "_pmenable", "_hwpreq", "_hwpreq_pkg", "_platinfo",
-                       "_trl", "_fsbfreq", "_cpufreq_obj", "_uncfreq_obj")
+        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_pmenable", "_hwpreq", "_platinfo",
+                       "_trl", "_cpufreq_sysfs_obj", "_cpufreq_msr_obj", "_uncfreq_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
