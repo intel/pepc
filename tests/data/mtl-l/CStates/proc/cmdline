@@ -1,0 +1,1 @@
+BOOT_IMAGE=(hd0,gpt2)/boot/vmlinuz-6.7.0-rc1 root=UUID=e855b57d-edea-45f9-92db-899ae9805c13 ro crashkernel=1G-4G:192M,4G-64G:256M,64G-:512M resume=UUID=d5284d15-a81a-4497-b8d2-4def87cb84fa rhgb quiet no_console_suspend resume=/dev/nvme0n1p4 initcall_debug log_buf_len=200M thunderbolt.dyndbg ignore_loglevel
