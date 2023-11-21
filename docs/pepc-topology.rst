@@ -119,6 +119,7 @@ Therefore, unknown topology numbers (e.g., package number) for offline CPUs are 
    Include only online CPUs. By default offline and online CPUs are included.
 
 **--columns** *COLUMNS*
-   By default, the topology columns are "CPU", "core", "module", "die", "node", and "package". The
-   "die" and "module" columns are not printed if there is only one die per package and no modules.
-   Use this option to select topology columns names and order (e.g.'--columns Package,Core,CPU').
+   Comma-separated list of the topology columns to print. Available columns are: CPU, core, module,
+   die, node, package, hybrid. Example: --columns Package,Core,CPU. By default, all columns that are
+   meaningful for the platform are printed. If the platform does not have modules or dies, the
+   corresponding columns won't be printed. The "hybrid" column is not printed for non-hybrid

@@ -53,6 +53,7 @@ def _get_default_colnames(cpuinfo):
 def topology_info_command(args, pman):
     """Implements the 'topology info' command."""
 
+    show_hybrid = None
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         if args.columns is None:
             colnames = _get_default_colnames(cpuinfo)
@@ -64,9 +65,15 @@ def topology_info_command(args, pman):
                         colnames.append(key)
                         break
                 else:
-                    columns = ", ".join(CPUInfo.LEVELS)
-                    raise Error(f"invalid colname '{colname}', use one of: {columns}")
+                    if colname == "hybrid":
+                        show_hybrid = True
+                    else:
+                        columns = list(CPUInfo.LEVELS) + ["hybrid"]
+                        columns = ", ".join(columns)
+                        raise Error(f"invalid colname '{colname}', use one of: {columns}")
 
+        if show_hybrid and not cpuinfo.info["hybrid"]:
+            raise Error(f"no hybrid CPU found{pman.hostmsg}, found {cpuinfo.cpudescr}")
         order = args.order
         for lvl in CPUInfo.LEVELS:
             if order.lower() == lvl.lower():
@@ -87,20 +94,20 @@ def topology_info_command(args, pman):
         cpus = _PepcCommon.get_cpus(args, cpuinfo, offlined_ok=offlined_ok)
         topology = cpuinfo.get_topology(levels=colnames, order=order)
 
-        if args.hybrid:
-            if not cpuinfo.info["hybrid"]:
-                _LOG.warning("%s is not a hybrid CPU", cpuinfo.cpudescr)
-            else:
-                colnames.append("hybrid")
-                headers.append("Hybrid")
-                fmt += "    %6s"
+        if show_hybrid is None and cpuinfo.info["hybrid"]:
+            show_hybrid = True
 
-                performance_cores = set(cpuinfo.get_hybrid_cpu_topology()["pcore"])
-                for tline in topology:
-                    if tline["CPU"] in performance_cores:
-                        tline["hybrid"] = "P-core"
-                    else:
-                        tline["hybrid"] = "E-core"
+        if show_hybrid:
+            colnames.append("hybrid")
+            headers.append("Hybrid")
+            fmt += "    %6s"
+
+            performance_cores = set(cpuinfo.get_hybrid_cpu_topology()["pcore"])
+            for tline in topology:
+                if tline["CPU"] in performance_cores:
+                    tline["hybrid"] = "P-core"
+                else:
+                    tline["hybrid"] = "E-core"
 
         if offlined_ok:
             # Offline CPUs are not present in 'topology' list. Thus, we add them to the list with
