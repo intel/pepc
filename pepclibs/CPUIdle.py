@@ -454,6 +454,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             raise type(err)(f"failed to set 'governor'{self._pman.hostmsg}:\n{err.indent(2)}") \
                             from err
 
+        self._cache.add("current_governor", 0, governor)
+
     def __init__(self, pman=None, cpuinfo=None, enable_cache=True):
         """
         The class constructor. The arguments are as follows.
