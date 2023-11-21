@@ -954,9 +954,6 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_cpu_freq_sysfs(self, pname, cpu):
         """Read and return the minimum or maximum CPU frequency from Linux "cpufreq" sysfs files."""
 
-        # TODO: temporary, remove later.
-        assert not self._pcache.is_cached(pname, cpu, "sysfs")
-
         cpufreq_obj = self._get_cpufreq_obj()
 
         val = None
@@ -965,6 +962,10 @@ class PStates(_PCStatesBase.PCStatesBase):
                 val = cpufreq_obj.get_min_freq(cpu)
             elif pname == "max_freq":
                 val = cpufreq_obj.get_max_freq(cpu)
+            elif pname == "min_freq_limit":
+                val = cpufreq_obj.get_min_freq_limit(cpu)
+            elif pname == "max_freq_limit":
+                val = cpufreq_obj.get_max_freq_limit(cpu)
             else:
                 raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
@@ -1026,6 +1027,17 @@ class PStates(_PCStatesBase.PCStatesBase):
             self._prop_not_supported((cpu,), mnames, "get", "CPU frequency")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
+    def _get_cpu_freq_limit_pvinfo(self, pname, cpu):
+        """Read and return the minimum or maximum CPU frequency limits."""
+
+        mname = "sysfs"
+
+        val = self._get_cpu_freq_sysfs(pname, cpu)
+        if val is None:
+            self._prop_not_supported((cpu,), ("sysfs",), "get", "CPU frequency limit")
+
+        return self._construct_pvinfo(pname, cpu, mname, val)
+
     def _get_epp_pvinfo(self, pname, cpu, mnames):
         """Return property value dictionary for EPP."""
 
@@ -1078,6 +1090,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._get_bus_clock_pvinfo(cpu, mnames=mnames)
         if pname in {"min_freq", "max_freq"}:
             return self._get_cpu_freq_pvinfo(pname, cpu, mnames=mnames)
+        if pname in {"min_freq_limit", "max_freq_limit"}:
+            return self._get_cpu_freq_limit_pvinfo(pname, cpu)
         if pname == "base_freq":
             return self._get_base_freq_pvinfo(cpu, mnames=mnames)
         if pname == "turbo":
@@ -1187,9 +1201,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
     def _write_cpu_freq_prop_sysfs(self, pname, freq, cpu):
         """Write CPU frequency property via Linux "cpufreq" sysfs interfaces."""
-
-        # TODO: temporary, remove when migrated to '_CPUFreq.py'.
-        self._pcache.remove(pname, cpu, "sysfs", sname="CPU")
 
         cpufreq_obj = self._get_cpufreq_obj()
 
@@ -1493,8 +1504,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         #
         # Note, not all properties that may be backed by a sysfs file have "fname". For example,
         # "turbo" does not, because the sysfs knob path depends on what frequency driver is used.
-        self._props["min_freq_limit"]["fname"] = "cpuinfo_min_freq"
-        self._props["max_freq_limit"]["fname"] = "cpuinfo_max_freq"
         self._props["base_freq"]["fname"] = "base_frequency"
         self._props["frequencies"]["fname"] = "scaling_available_frequencies"
         self._props["governor"]["fname"] = "scaling_governor"

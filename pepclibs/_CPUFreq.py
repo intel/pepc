@@ -29,26 +29,31 @@ class CPUFreq(ClassHelpers.SimpleCloseContext):
 
     Public methods overview.
 
-    1. Set CPU frequency via Linux "cpufreq" sysfs interfaces:
+    1. Get/set CPU frequency via Linux "cpufreq" sysfs interfaces:
        * 'get_min_freq()'
        * 'get_max_freq()'
        * 'set_min_freq()'
        * 'set_max_freq()'
+    2. Get CPU frequency limits via Linux "cpufreq" sysfs interfaces:
+       * 'get_min_freq_limit()'
+       * 'get_max_freq_limit()'
 
     Note, class methods do not validate the CPU number argument. The caller is assumed to have done
     the validation. The input CPU number should exist and should be online.
     """
 
-    def _get_sysfs_path(self, key, cpu):
+    def _get_sysfs_path(self, key, cpu, limit=False):
         """Get the sysfs file path for a CPU frequency read of write operation."""
 
         fname = "scaling_" + key + "_freq"
+        prefix = "cpuinfo_" if limit else "scaling_"
+        fname = prefix + key + "_freq"
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / fname
 
-    def _get_freq_sysfs(self, key, cpu):
+    def _get_freq_sysfs(self, key, cpu, limit=False):
         """Get CPU frequency from the Linux "cpufreq" sysfs file."""
 
-        path = self._get_sysfs_path(key, cpu)
+        path = self._get_sysfs_path(key, cpu, limit=limit)
 
         with contextlib.suppress(ErrorNotFound):
             return self._cache.get(path, cpu)
@@ -59,9 +64,9 @@ class CPUFreq(ClassHelpers.SimpleCloseContext):
         try:
             with self._pman.open(path, "r") as fobj:
                 try:
-                    freq = Trivial.str_to_int(fobj.read(), what=f"{key} CPU frequency") * 1000
+                    freq = Trivial.str_to_int(fobj.read(), what=f"{key}. CPU frequency") * 1000
                 except Error as err:
-                    raise Error(f"failed to read {key} CPU frequency for CPU{cpu} from '{path}'"
+                    raise Error(f"failed to read {key}. CPU frequency for CPU{cpu} from '{path}'"
                                 f"{self._pman.hostmsg}\n{err.indent(2)}") from err
         except ErrorNotFound as err:
             return self._cache.add(path, cpu, None, sname="CPU")
@@ -84,6 +89,23 @@ class CPUFreq(ClassHelpers.SimpleCloseContext):
         """Same as 'get_min_freq()', but for the maximum CPU frequency."""
 
         return self._get_freq_sysfs("max", cpu)
+
+    def get_min_freq_limit(self, cpu):
+        """
+        Get minimum CPU frequency limit via Linux "cpufreq" sysfs interfaces. The arguments are as
+        follows.
+          * cpu - CPU number to get the frequency for.
+
+        Return the minimum CPU frequency limit in Hz or 'None' if the CPU frequency sysfs file does
+        not exist.
+        """
+
+        return self._get_freq_sysfs("min", cpu, limit=True)
+
+    def get_max_freq_limit(self, cpu):
+        """Same as 'get_min_freq_sysfs()', but for the maximum CPU frequency."""
+
+        return self._get_freq_sysfs("max", cpu, limit=True)
 
     def _set_freq_sysfs(self, freq, key, cpu):
         """Set CPU frequency by writing to the Linux "cpufreq" sysfs file."""
