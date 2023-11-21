@@ -896,7 +896,6 @@ def main():
             with ProcessManager.get_pman(args.hostname, username=args.username,
                                          privkeypath=args.privkey, timeout=args.timeout) as pman:
                 args.func(args, pman)
-
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
         return -1
