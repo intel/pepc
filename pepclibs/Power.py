@@ -174,10 +174,10 @@ class Power(_PropsClassBase.PropsClassBase):
                     if fval > self._get_cpu_prop("ppl2", cpu):
                         raise Error(f"{pname} can't be higher than RAPL PPL2 for CPU{cpu}")
                 else:
-                    # For PPL2, use maxval as TDP * 3. Mehlow system has default value for PPL2 as
-                    # 210W, and TDP is 80W.
+                    # Apply a reasonable limit for PPL2. This is imperical limit, based on general
+                    # observations.
                     minval = tdp / 8
-                    maxval = tdp * 3
+                    maxval = tdp * 4
                     if fval < self._get_cpu_prop("ppl1", cpu):
                         raise Error(f"{pname} can't be lower than RAPL PPL1 for CPU{cpu}")
 
