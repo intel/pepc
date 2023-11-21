@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+  - Fix 'pepc power config --ppl2' faling on some system with a "PPL2 value out
+    of range" error message.
 ### Added
 ### Removed
 ### Changed
