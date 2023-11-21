@@ -925,18 +925,18 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_uncore_freq_pvinfo(self, pname, cpu):
         """Read and return the minimum or maximum uncore frequency."""
 
-        self._uncfreq_obj = self._get_uncfreq_obj()
+        uncfreq_obj = self._get_uncfreq_obj()
 
         val = None
-        if self._uncfreq_obj:
+        if uncfreq_obj:
             if pname == "min_uncore_freq":
-                val = self._uncfreq_obj.get_min_freq(cpu)
+                val = uncfreq_obj.get_min_freq(cpu)
             elif pname == "max_uncore_freq":
-                val = self._uncfreq_obj.get_max_freq(cpu)
+                val = uncfreq_obj.get_max_freq(cpu)
             elif pname == "min_uncore_freq_limit":
-                val = self._uncfreq_obj.get_min_freq_limit(cpu)
+                val = uncfreq_obj.get_min_freq_limit(cpu)
             elif pname == "max_uncore_freq_limit":
-                val = self._uncfreq_obj.get_max_freq_limit(cpu)
+                val = uncfreq_obj.get_max_freq_limit(cpu)
             else:
                 raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
@@ -1192,15 +1192,15 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _write_uncore_freq_prop(self, pname, freq, cpu):
         """Write uncore frequency property."""
 
-        self._uncfreq_obj = self._get_uncfreq_obj()
+        uncfreq_obj = self._get_uncfreq_obj()
 
         if self._uncfreq_err:
             raise ErrorNotSupported(self._uncfreq_err)
 
         if pname == "min_uncore_freq":
-            self._uncfreq_obj.set_min_freq(freq, cpu)
+            uncfreq_obj.set_min_freq(freq, cpu)
         elif pname == "max_uncore_freq":
-            self._uncfreq_obj.set_max_freq(freq, cpu)
+            uncfreq_obj.set_max_freq(freq, cpu)
         else:
             raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
