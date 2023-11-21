@@ -17,7 +17,7 @@ import json
 import logging
 from pathlib import Path
 from contextlib import suppress
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers, Human
 from pepclibs.helperlibs import KernelVersion
 
@@ -612,12 +612,26 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def _add_module_numbers(self, tinfo, cpus):
         """Adds module numbers for CPUs 'cpus' to 'tinfo'"""
 
+        no_cache_info = False
         for cpu in cpus:
             if "module" in tinfo[cpu]:
                 continue
 
+            if no_cache_info:
+                tinfo[cpu]["module"] = tinfo[cpu]["core"]
+                continue
+
             base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
-            data = self._pman.read(base / "cache/index2/id")
+            try:
+                data = self._pman.read(base / "cache/index2/id")
+            except ErrorNotFound as err:
+                if not no_cache_info:
+                    _LOG.debug("no CPU cache topology info found%s:\n%s",
+                               self._pman.hostmsg, err.indent(2))
+                    no_cache_info = True
+                    tinfo[cpu]["module"] = tinfo[cpu]["core"]
+                    continue
+
             module = Trivial.str_to_int(data, "module number")
             siblings = self._read_range(base / "cache/index2/shared_cpu_list")
             for sibling in siblings:
