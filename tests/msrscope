@@ -202,10 +202,21 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
     from pepclibs.msr import PackagePowerLimit, MiscFeatureControl, PMEnable
 
     cpu = cpuinfo.normalize_cpu(args.cpu)
-    with EnergyPerfBias.EnergyPerfBias(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+
+    try:
+        fmsr = EnergyPerfBias.EnergyPerfBias(pman=pman, cpuinfo=cpuinfo, msr=msr)
+    except ErrorNotSupported as err:
+        _LOG.notice(err)
+    else:
         _find_feature_scope(cpuinfo, fmsr, "epb", (4, 8), cpu)
+    finally:
+        fmsr.close()
 
-    with HWPRequest.HWPRequest(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+    try:
+        fmsr = HWPRequest.HWPRequest(pman=pman, cpuinfo=cpuinfo, msr=msr)
+    except ErrorNotSupported as err:
+        _LOG.notice(err)
+    else:
         _find_feature_scope(cpuinfo, fmsr, "epp", (64, 128), cpu)
 
         with contextlib.suppress(ErrorNotSupported):
@@ -217,8 +228,14 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
             perf = fmsr.read_cpu_feature("max_perf", cpu)
             perf1, perf2 = (perf - 1, perf) if perf > 254 else (perf, perf + 1)
             _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf1 , perf2), cpu)
+    finally:
+        fmsr.close()
 
-    with HWPRequestPkg.HWPRequestPkg(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+    try:
+        fmsr = HWPRequestPkg.HWPRequestPkg(pman=pman, cpuinfo=cpuinfo, msr=msr)
+    except ErrorNotSupported as err:
+        _LOG.notice(err)
+    else:
         _find_feature_scope(cpuinfo, fmsr, "epp", (64, 128), cpu)
 
         with contextlib.suppress(ErrorNotSupported):
@@ -230,22 +247,40 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
             perf = fmsr.read_cpu_feature("max_perf", cpu)
             perf1, perf2 = (perf - 1, perf) if perf > 254 else (perf, perf + 1)
             _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf1 , perf2), cpu)
+    finally:
+        fmsr.close()
 
-    with PowerCtl.PowerCtl(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+    try:
+        fmsr = PowerCtl.PowerCtl(pman=pman, cpuinfo=cpuinfo, msr=msr)
+    except ErrorNotSupported as err:
+        _LOG.notice(err)
+    else:
         _find_feature_scope(cpuinfo, fmsr, "c1e_autopromote", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "cstate_prewake", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "ltr", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "pch_negotiation", ("off", "on"), cpu)
+    finally:
+        fmsr.close()
 
-    with PCStateConfigCtl.PCStateConfigCtl(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+    try:
+        fmsr = PCStateConfigCtl.PCStateConfigCtl(pman=pman, cpuinfo=cpuinfo, msr=msr)
+    except ErrorNotSupported as err:
+        _LOG.notice(err)
+    else:
         _find_feature_scope(cpuinfo, fmsr, "c1_demotion", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "c1_undemotion", ("off", "on"), cpu)
 
         if fmsr.read_cpu_feature("pkg_cstate_limit_lock", cpu) == "off":
             limits = fmsr.read_cpu_feature("pkg_cstate_limit", cpu)["pkg_cstate_limits"]
             _find_feature_scope(cpuinfo, fmsr, "pkg_cstate_limit", limits[:2], cpu)
+    finally:
+        fmsr.close()
 
-    with PackagePowerLimit.PackagePowerLimit(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+    try:
+        fmsr = PackagePowerLimit.PackagePowerLimit(pman=pman, cpuinfo=cpuinfo, msr=msr)
+    except ErrorNotSupported as err:
+        _LOG.notice(err)
+    else:
         with contextlib.suppress(Error):
             limit = fmsr.read_cpu_feature("limit1", cpu)
             _find_feature_scope(cpuinfo, fmsr, "limit1", (limit - 1, limit + 1), cpu)
@@ -257,16 +292,30 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
             _find_feature_scope(cpuinfo, fmsr, "limit2", (limit - 1, limit + 1), cpu)
             _find_feature_scope(cpuinfo, fmsr, "limit2_enable", ("off", "on"), cpu)
             _find_feature_scope(cpuinfo, fmsr, "limit2_clamp", ("off", "on"), cpu)
+    finally:
+        fmsr.close()
 
-    with MiscFeatureControl.MiscFeatureControl(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+    try:
+        fmsr = MiscFeatureControl.MiscFeatureControl(pman=pman, cpuinfo=cpuinfo, msr=msr)
+    except ErrorNotSupported as err:
+        _LOG.notice(err)
+    else:
         _find_feature_scope(cpuinfo, fmsr, "l2_hw_prefetcher", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "l2_adj_prefetcher", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "dcu_hw_prefetcher", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "dcu_ip_prefetcher", ("off", "on"), cpu)
+    finally:
+        fmsr.close()
 
-    with PMEnable.PMEnable(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+    try:
+        fmsr = PMEnable.PMEnable(pman=pman, cpuinfo=cpuinfo, msr=msr)
+    except ErrorNotSupported as err:
+        _LOG.notice(err)
+    else:
         with contextlib.suppress(Error):
             _find_feature_scope(cpuinfo, fmsr, "hwp", ("off", "on"), cpu)
+    finally:
+        fmsr.close()
 
 def _build_arguments_parser():
     """A helper function which parses the input arguments."""
