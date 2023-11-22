@@ -43,18 +43,23 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     the validation. The input CPU number should exist and should be online.
     """
 
-    def _get_sysfs_path(self, key, cpu, limit=False):
+    def _get_sysfs_path(self, cpu, fname):
+        """Construct and return Linux "cpufreq" sysfs path for file 'fname'."""
+
+        return self._sysfs_base / "cpufreq" / f"policy{cpu}" / fname
+
+    def _get_cpu_freq_sysfs_path(self, key, cpu, limit=False):
         """Get the sysfs file path for a CPU frequency read of write operation."""
 
         fname = "scaling_" + key + "_freq"
         prefix = "cpuinfo_" if limit else "scaling_"
         fname = prefix + key + "_freq"
-        return self._sysfs_base / "cpufreq" / f"policy{cpu}" / fname
+        return self._get_sysfs_path(cpu, fname)
 
     def _get_freq_sysfs(self, key, cpu, limit=False):
         """Get CPU frequency from the Linux "cpufreq" sysfs file."""
 
-        path = self._get_sysfs_path(key, cpu, limit=limit)
+        path = self._get_cpu_freq_sysfs_path(key, cpu, limit=limit)
 
         with contextlib.suppress(ErrorNotFound):
             return self._cache.get(path, cpu)
@@ -111,7 +116,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     def _set_freq_sysfs(self, freq, key, cpu):
         """Set CPU frequency by writing to the Linux "cpufreq" sysfs file."""
 
-        path = self._get_sysfs_path(key, cpu)
+        path = self._get_cpu_freq_sysfs_path(key, cpu)
 
         _LOG.debug("writing %s CPU frequency value '%d' for CPU%d to '%s'%s",
                    key, freq // 1000, cpu, path, self._pman.hostmsg)
