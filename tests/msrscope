@@ -227,7 +227,7 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
         _find_feature_scope(cpuinfo, fmsr, "c1_demotion", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "c1_undemotion", ("off", "on"), cpu)
 
-        if fmsr.read_cpu_feature("locked", cpu) == "off":
+        if fmsr.read_cpu_feature("pkg_cstate_limit_lock", cpu) == "off":
             limits = fmsr.read_cpu_feature("pkg_cstate_limit", cpu)["pkg_cstate_limits"]
             _find_feature_scope(cpuinfo, fmsr, "pkg_cstate_limit", limits[:2], cpu)
 
