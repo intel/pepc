@@ -198,7 +198,7 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
     """Test MSRs which are used by the 'pepc' tool."""
 
     # pylint: disable=import-outside-toplevel
-    from pepclibs.msr import EnergyPerfBias, HWPRequest, PowerCtl, PCStateConfigCtl
+    from pepclibs.msr import EnergyPerfBias, HWPRequest, HWPRequestPkg, PowerCtl, PCStateConfigCtl
     from pepclibs.msr import PackagePowerLimit, MiscFeatureControl, PMEnable
 
     cpu = cpuinfo.normalize_cpu(args.cpu)
@@ -206,6 +206,19 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
         _find_feature_scope(cpuinfo, fmsr, "epb", (4, 8), cpu)
 
     with HWPRequest.HWPRequest(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
+        _find_feature_scope(cpuinfo, fmsr, "epp", (64, 128), cpu)
+
+        with contextlib.suppress(ErrorNotSupported):
+            perf = fmsr.read_cpu_feature("min_perf", cpu)
+            perf1, perf2 = (perf - 1, perf) if perf > 0 else (perf, perf + 1)
+            _find_feature_scope(cpuinfo, fmsr, "min_perf", (perf1, perf2), cpu)
+
+        with contextlib.suppress(ErrorNotSupported):
+            perf = fmsr.read_cpu_feature("max_perf", cpu)
+            perf1, perf2 = (perf - 1, perf) if perf > 254 else (perf, perf + 1)
+            _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf1 , perf2), cpu)
+
+    with HWPRequestPkg.HWPRequestPkg(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
         _find_feature_scope(cpuinfo, fmsr, "epp", (64, 128), cpu)
 
         with contextlib.suppress(ErrorNotSupported):
