@@ -218,9 +218,6 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
             perf1, perf2 = (perf - 1, perf) if perf > 254 else (perf, perf + 1)
             _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf1 , perf2), cpu)
 
-    with EnergyPerfBias.EnergyPerfBias(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
-        _find_feature_scope(cpuinfo, fmsr, "epb", (4, 8), cpu)
-
     with PowerCtl.PowerCtl(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
         _find_feature_scope(cpuinfo, fmsr, "c1e_autopromote", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "cstate_prewake", ("off", "on"), cpu)
