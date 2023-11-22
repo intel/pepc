@@ -56,6 +56,40 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         fname = prefix + key + "_freq"
         return self._get_sysfs_path(cpu, fname)
 
+    def _read_sysfs_file(self, path, what):
+        """
+        Read a sysfs file at 'path' and return its contents. Return 'None' if the file does not
+        exist.
+        """
+
+        try:
+            with self._pman.open(path, "r") as fobj:
+                try:
+                    val = fobj.read().strip()
+                except Error as err:
+                    raise Error(f"failed to read {what} from '{path}'{self._pman.hostmsg}\n"
+                                f"{err.indent(2)}") from err
+        except ErrorNotFound:
+            return None
+
+        return val
+
+    def _read_sysfs_file_int(self, path, what):
+        """
+        Read a sysfs file at 'path', verify that it contains an integer value and return the value
+        as 'int'. Return 'None' if the file does not exist.
+        """
+
+        val = self._read_sysfs_file(path, what)
+        if val is None:
+            return None
+
+        try:
+            return Trivial.str_to_int(val, what="CPU valuency value")
+        except Error as err:
+            raise Error(f"bad contents of file '{path}'{self._pman.hostmsg}\n{err.indent(2)}") \
+                        from err
+
     def _get_freq_sysfs(self, key, cpu, limit=False):
         """Get CPU frequency from the Linux "cpufreq" sysfs file."""
 
@@ -67,16 +101,12 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         _LOG.debug("reading %s CPU frequency for CPU%d from '%s'%s",
                    key, cpu, path, self._pman.hostmsg)
 
-        try:
-            with self._pman.open(path, "r") as fobj:
-                try:
-                    freq = Trivial.str_to_int(fobj.read(), what=f"{key}. CPU frequency") * 1000
-                except Error as err:
-                    raise Error(f"failed to read {key}. CPU frequency for CPU{cpu} from '{path}'"
-                                f"{self._pman.hostmsg}\n{err.indent(2)}") from err
-        except ErrorNotFound as err:
-            return self._cache.add(path, cpu, None, sname="CPU")
+        freq = self._read_sysfs_file_int(path, f"{key}. frequency for CPU {cpu}")
+        if freq is None:
+            return None
 
+        # Sysfs files use kHz.
+        freq *= 1000
         return self._cache.add(path, cpu, freq, sname="CPU")
 
     def get_min_freq(self, cpu):
