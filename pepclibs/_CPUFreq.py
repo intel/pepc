@@ -40,6 +40,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
        * 'get_max_freq_limit()'
     3. Get avalilable CPU frequencies list:
        * 'get_available_frequencies()'
+    4. Get CPU base frequency:
+       * 'get_base_freq()'
 
     Note, class methods do not validate the CPU number argument. The caller is assumed to have done
     the validation. The input CPU number should exist and should be online.
@@ -231,6 +233,52 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         freqs = sorted(freqs)
         return self._cache.add(path, cpu, freqs, sname="CPU")
+
+    def _get_base_freq_intel_pstate(self, cpu):
+        """Get CPU base frequency from 'intel_pstate' driver's sysfs file."""
+
+        path = self._get_sysfs_path(cpu, "base_frequency")
+
+        with contextlib.suppress(ErrorNotFound):
+            return self._cache.get(path, cpu)
+
+        freq = self._read_sysfs_file_int(path, f"base frequency for CPU {cpu}")
+        if freq is None:
+            return None
+
+        # Sysfs files use kHz.
+        freq *= 1000
+        return self._cache.add(path, cpu, freq, sname="CPU")
+
+    def _get_base_freq_bios_limit(self, cpu):
+        """Get CPU base frequency from the 'bios_limit' sysfs file."""
+
+        path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
+
+        with contextlib.suppress(ErrorNotFound):
+            return self._cache.get(path, cpu)
+
+        freq = self._read_sysfs_file_int(path, f"base frequency for CPU {cpu}")
+        if freq is None:
+            return None
+
+        # Sysfs files use kHz.
+        freq *= 1000
+        return self._cache.add(path, cpu, freq, sname="CPU")
+
+    def get_base_freq(self, cpu):
+        """
+        Get CPU base frequency via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
+          * cpu - CPU number to get base frequency for.
+
+        Return the base frequency vaule in Hz or 'None' if the bae frequency sysfs files do not
+        exist.
+        """
+
+        freq = self._get_base_freq_intel_pstate(cpu)
+        if freq is None:
+            freq = self._get_base_freq_bios_limit(cpu)
+        return freq
 
     def __init__(self, pman=None, cpuinfo=None, enable_cache=True):
         """

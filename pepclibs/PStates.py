@@ -469,20 +469,11 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_base_freq_sysfs(self, cpu):
         """Read base frequency from sysfs."""
 
-        mname = "sysfs"
-        pname = "base_freq"
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        if not cpufreq_obj:
+            return None
 
-        with contextlib.suppress(ErrorNotFound):
-            val, _ = self._pcache.find(pname, cpu, mnames=(mname,))
-            return val
-
-        val = self._get_cpu_prop_pvinfo_sysfs(pname, cpu)["val"]
-        if val is None:
-            path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
-            val = self._read_prop_from_sysfs(pname, path)
-
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
-        return val
+        return cpufreq_obj.get_base_freq(cpu)
 
     def _get_base_freq_msr(self, cpu):
         """Read base frequency from sysfs."""
@@ -1472,7 +1463,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         #
         # Note, not all properties that may be backed by a sysfs file have "fname". For example,
         # "turbo" does not, because the sysfs knob path depends on what frequency driver is used.
-        self._props["base_freq"]["fname"] = "base_frequency"
         self._props["governor"]["fname"] = "scaling_governor"
         self._props["governors"]["fname"] = "scaling_available_governors"
 
