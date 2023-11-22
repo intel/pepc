@@ -478,17 +478,11 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_base_freq_msr(self, cpu):
         """Read base frequency from sysfs."""
 
-        try:
-            platinfo = self._get_platinfo()
-            ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
-
-            val = self._get_bclk(cpu)
-            if val is not None:
-                return ratio * val
-        except ErrorNotSupported:
+        cpufreq_obj = self._get_cpufreq_msr_obj()
+        if cpufreq_obj is None:
             return None
 
-        return None
+        return cpufreq_obj.get_base_freq(cpu)
 
     def _get_base_freq_pvinfo(self, cpu, mnames=None):
         """

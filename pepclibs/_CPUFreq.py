@@ -324,6 +324,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
        * 'get_max_freq()'
        * 'set_min_freq()'
        * 'set_max_freq()'
+    3. Get base frequency via an MSR (Intel CPUs only):
+       * 'get_base_freq()'
 
     Note, class methods do not validate the CPU number argument. The caller is assumed to have done
     the validation. The input CPU number should exist and should be online.
@@ -390,31 +392,20 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                                                            msr=msr)
         return self._hwpreq_pkg
 
-    def _get_freq_msr(self, key, cpu):
-        """Read and return the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
+    def _perf_to_freq(self, cpu, perf):
+        """
+        On many Intel platforms, the MSR registers such as 'MSR_HWP_REQUEST  use frequency ratio
+        units - CPU frequency in Hz divided by 100MHz (bus clock). But on hybrid Intel platform
+        (e.g., Alder Lake), the MSR works in  terms of platform-dependent abstract performance units
+        on P-cores.
 
-        # The corresponding 'MSR_HWP_REQUEST' feature name.
-        feature_name = f"{key}_perf"
+        Convert the performance units to CPU frequency in Hz.
+        """
 
         bclk = self._get_bclk(cpu, not_supported_ok=True)
         if not bclk:
             return None
 
-        try:
-            hwpreq = self._get_hwpreq()
-            if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu):
-                hwpreq = self._get_hwpreq_pkg()
-        except ErrorNotSupported as err:
-            _LOG.debug(err)
-            return None
-
-        try:
-            perf = hwpreq.read_cpu_feature(feature_name, cpu)
-        except ErrorNotSupported:
-            _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, key)
-            return None
-
-        freq = None
         if self._cpuinfo.info["hybrid"]:
             pcore_cpus = set(self._cpuinfo.get_hybrid_cpu_topology()["pcore"])
             # In HWP mode, the Linux 'intel_pstate' driver changes CPU frequency by programming
@@ -431,6 +422,28 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                 return freq - (freq % bclk)
 
         return perf * bclk
+
+    def _get_freq_msr(self, key, cpu):
+        """Read and return the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
+
+        # The corresponding 'MSR_HWP_REQUEST' feature name.
+        feature_name = f"{key}_perf"
+
+        try:
+            hwpreq = self._get_hwpreq()
+            if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu):
+                hwpreq = self._get_hwpreq_pkg()
+        except ErrorNotSupported as err:
+            _LOG.debug(err)
+            return None
+
+        try:
+            perf = hwpreq.read_cpu_feature(feature_name, cpu)
+        except ErrorNotSupported:
+            _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, key)
+            return None
+
+        return self._perf_to_freq(cpu, perf)
 
     def get_min_freq(self, cpu):
         """
@@ -483,6 +496,38 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         self._set_freq_msr(freq, "max", cpu)
 
+    def _get_platinfo(self):
+        """Returns an 'PlatformInfo.PlatformInfo()' object."""
+
+        if not self._platinfo:
+            from pepclibs.msr import PlatformInfo # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            self._platinfo = PlatformInfo.PlatformInfo(pman=self._pman, cpuinfo=self._cpuinfo,
+                                                       msr=msr)
+        return self._platinfo
+
+    def get_base_freq(self, cpu):
+        """
+        Get base CPU frequency from the 'MSR_PLATFORM_INFO' model-specific register. The arguments
+        are as follows.
+          * cpu - CPU number to get base frequency for.
+
+        Return base CPU frequency in Hz or 'None' if 'MSR_PLATFORM_INFO' is not supported.
+        """
+
+        try:
+            platinfo = self._get_platinfo()
+            ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
+
+            bclk = self._get_bclk(cpu)
+            if bclk is not None:
+                return ratio * bclk
+        except ErrorNotSupported:
+            return None
+
+        return None
+
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
         The class constructor. The argument are as follows.
@@ -503,6 +548,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         self._fsbfreq = None
         self._hwpreq = None
         self._hwpreq_pkg = None
+        self._platinfo = None
 
         # Performance to frequency factor.
         self._perf_to_freq_factor = 78740157
@@ -516,5 +562,5 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_fsbfreq", "_hwpreq", "_hwpreq_pkg", "_cpuinfo", "_pman")
+        close_attrs = ("_platinfo", "_fsbfreq", "_hwpreq", "_hwpreq_pkg", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
