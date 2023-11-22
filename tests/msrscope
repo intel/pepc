@@ -210,11 +210,13 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
 
         with contextlib.suppress(ErrorNotSupported):
             perf = fmsr.read_cpu_feature("min_perf", cpu)
-            _find_feature_scope(cpuinfo, fmsr, "min_perf", (perf - 1, perf), cpu)
+            perf1, perf2 = (perf - 1, perf) if perf > 0 else (perf, perf + 1)
+            _find_feature_scope(cpuinfo, fmsr, "min_perf", (perf1, perf2), cpu)
 
         with contextlib.suppress(ErrorNotSupported):
             perf = fmsr.read_cpu_feature("max_perf", cpu)
-            _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf , perf + 1), cpu)
+            perf1, perf2 = (perf - 1, perf) if perf > 254 else (perf, perf + 1)
+            _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf1 , perf2), cpu)
 
     with EnergyPerfBias.EnergyPerfBias(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
         _find_feature_scope(cpuinfo, fmsr, "epb", (4, 8), cpu)
