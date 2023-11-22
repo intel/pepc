@@ -199,7 +199,8 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
 
     # pylint: disable=import-outside-toplevel
     from pepclibs.msr import EnergyPerfBias, HWPRequest, HWPRequestPkg, PowerCtl, PCStateConfigCtl
-    from pepclibs.msr import PackagePowerLimit, MiscFeatureControl, PMEnable
+    from pepclibs.msr import PackagePowerLimit, MiscFeatureControl, PMEnable, UncoreRatioLimit
+    from pepclibs.msr import SwLTROvrd
 
     cpu = cpuinfo.normalize_cpu(args.cpu)
 
@@ -314,6 +315,35 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
     else:
         with contextlib.suppress(Error):
             _find_feature_scope(cpuinfo, fmsr, "hwp", ("off", "on"), cpu)
+    finally:
+        fmsr.close()
+
+    try:
+        fmsr = UncoreRatioLimit.UncoreRatioLimit(pman=pman, cpuinfo=cpuinfo, msr=msr)
+    except ErrorNotSupported as err:
+        _LOG.notice(err)
+    else:
+        with contextlib.suppress(ErrorNotSupported):
+            ratio = fmsr.read_cpu_feature("min_ratio", cpu)
+            ratio1, ratio2 = ratio, ratio + 1
+            _find_feature_scope(cpuinfo, fmsr, "min_ratio", (ratio1, ratio2), cpu)
+
+        with contextlib.suppress(ErrorNotSupported):
+            ratio = fmsr.read_cpu_feature("max_ratio", cpu)
+            ratio1, ratio2 = ratio, ratio + 1
+            _find_feature_scope(cpuinfo, fmsr, "max_ratio", (ratio1, ratio2), cpu)
+    finally:
+        fmsr.close()
+
+    try:
+        fmsr = SwLTROvrd.SwLTROvrd(pman=pman, cpuinfo=cpuinfo, msr=msr)
+    except ErrorNotSupported as err:
+        _LOG.notice(err)
+    else:
+        _find_feature_scope(cpuinfo, fmsr, "sxl", (0, 1), cpu)
+        _find_feature_scope(cpuinfo, fmsr, "sxlm", (0, 1), cpu)
+        _find_feature_scope(cpuinfo, fmsr, "force_sxl", ("on", "off"), cpu)
+        _find_feature_scope(cpuinfo, fmsr, "sxl_v", ("on", "off"), cpu)
     finally:
         fmsr.close()
 
