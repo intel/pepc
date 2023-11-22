@@ -23,3 +23,9 @@ Run for a single emulation dataset, instead of all (default)
 Special cases:
 * 'spr2' has '```idle=nomwait```' boot parameter.
 * 'bdwex0' has '```cpuidle.off=1```' boot parameter.
+
+# MSR scope
+
+The 'msrscope' tool is used for checking the observability MSR scope. Run:
+
+tests/msrscope all
