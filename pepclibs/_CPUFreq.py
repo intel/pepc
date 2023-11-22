@@ -38,6 +38,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     2. Get CPU frequency limits via Linux "cpufreq" sysfs interfaces:
        * 'get_min_freq_limit()'
        * 'get_max_freq_limit()'
+    3. Get avalilable CPU frequencies list:
+       * 'get_available_frequencies()'
 
     Note, class methods do not validate the CPU number argument. The caller is assumed to have done
     the validation. The input CPU number should exist and should be online.
@@ -198,6 +200,37 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         """Same as 'set_min_freq()', but for the maximum CPU frequency."""
 
         self._set_freq_sysfs(freq, "max", cpu)
+
+    def get_available_frequencies(self, cpu):
+        """
+        Get the list of available CPU frequency values. The arguments are as follows.
+          * cpu - CPU number to get the list of available frequencies for.
+
+        Return the list of available frequencies Hz or 'None' if the frequencies sysfs file does not
+        exist. The sysfs file provided by the 'acpi-cpufreq' driver. but 'intel_idle' driver does
+        not provide it.
+        """
+
+        path = self._get_sysfs_path(cpu, "scaling_available_frequencies")
+
+        with contextlib.suppress(ErrorNotFound):
+            return self._cache.get(path, cpu)
+
+        val = self._read_sysfs_file(path, "available CPU frequencies")
+        if val is None:
+            return self._cache.add(path, cpu, None, sname="CPU")
+
+        freqs = []
+        for freq in val.split():
+            try:
+                freq = Trivial.str_to_int(freq, what="CPU frequency value")
+                freqs.append(freq * 1000)
+            except Error as err:
+                raise Error(f"bad contents of file '{path}'{self._pman.hostmsg}\n{err.indent(2)}") \
+                            from err
+
+        freqs = sorted(freqs)
+        return self._cache.add(path, cpu, freqs, sname="CPU")
 
     def __init__(self, pman=None, cpuinfo=None, enable_cache=True):
         """

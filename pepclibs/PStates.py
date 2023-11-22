@@ -764,62 +764,53 @@ class PStates(_PCStatesBase.PCStatesBase):
 
     def _get_frequencies_sysfs(self, cpu):
         """
-        Get the list of available CPU frequency values for CPU 'cpu' from a Linux 'sysfs' file,
-        which is provided by the 'acpi-cpufreq' driver.
+        Get the list of available CPU frequency values for CPU 'cpu' vial Linux "cpuidle" subsystem
+        'sysfs' interface.
         """
 
-        pname = "frequencies"
-
-        path = self._get_sysfs_path(pname, cpu)
-        val = self._read_prop_from_sysfs(pname, path)
-        if not val:
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        if not cpufreq_obj:
             return None
 
-        freqs = []
-        for freq in val.split():
-            try:
-                freq = Trivial.str_to_int(freq, what="CPU frequency value")
-                freqs.append(freq * 1000)
-            except Error as err:
-                raise Error(f"bad contents of file '{path}'{self._pman.hostmsg}\n  {err}") from err
-
-        return sorted(freqs)
+        return cpufreq_obj.get_available_frequencies(cpu)
 
     def _get_frequencies_intel(self, cpu):
         """Get the list of available CPU frequency values for CPU 'cpu' for an Intel platform."""
+
+        pname = "frequencies"
+        mname = "doc"
+
+        with contextlib.suppress(ErrorNotFound):
+            return self._pcache.get(pname, cpu, mname)
 
         driver = self._get_cpu_prop("driver", cpu)
         if driver != "intel_pstate":
             # Only 'intel_pstate' was verified to accept any frequency value that is multiple of bus
             # clock.
-            return None
+            return self._pcache.add(pname, cpu, None, mname, sname="global")
 
         bclk = self._get_bclk(cpu)
         if bclk is None:
-            return None
+            return self._pcache.add(pname, cpu, None, mname, sname="global")
 
         min_freq = self._get_cpu_freq_sysfs("min_freq", cpu)
         max_freq = self._get_cpu_freq_sysfs("max_freq", cpu)
         if min_freq is None or max_freq is None:
-            return None
+            return self._pcache.add(pname, cpu, None, mname, sname="global")
 
         freqs = []
         freq = min_freq
         while freq <= max_freq:
             freqs.append(freq)
             freq += bclk
-        return freqs
+
+        return self._pcache.add(pname, cpu, freqs, mname, sname="global")
 
     def _get_frequencies_pvinfo(self, cpu, mnames=None):
         """Get the list of acceptable CPU frequency values for CPU 'cpu'."""
 
+        mname = None
         pname = "frequencies"
-
-        with contextlib.suppress(ErrorNotFound):
-            val, mname = self._pcache.find(pname, cpu, mnames=mnames)
-            return self._construct_pvinfo(pname, cpu, mname, val)
-
-        mname, val = None, None
         if not mnames:
             mnames = self._props[pname]["mnames"]
 
@@ -836,9 +827,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 break
 
         if val is None:
-            self._prop_not_supported((cpu,), mnames, "get", "acceptable frequencies")
-
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
+            self._prop_not_supported((cpu,), mnames, "get", "acceptable CPU frequencies")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_hwp_pvinfo(self, cpu):
@@ -1484,7 +1473,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         # Note, not all properties that may be backed by a sysfs file have "fname". For example,
         # "turbo" does not, because the sysfs knob path depends on what frequency driver is used.
         self._props["base_freq"]["fname"] = "base_frequency"
-        self._props["frequencies"]["fname"] = "scaling_available_frequencies"
         self._props["governor"]["fname"] = "scaling_governor"
         self._props["governors"]["fname"] = "scaling_available_governors"
 
