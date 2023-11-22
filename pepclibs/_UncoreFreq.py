@@ -67,6 +67,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         try:
             with self._pman.open(path, "r") as fobj:
                 freq = Trivial.str_to_int(fobj.read(), what=f"{key} uncore frequency")
+        except ErrorNotFound:
+            return self._cache.add(path, cpu, None, sname="die")
         except Error as err:
             raise Error(f"failed to read {key} uncore frequency for CPU{cpu}{self._pman.hostmsg} "
                         f"from '{path}'\n{err.indent(2)}") from err
@@ -80,6 +82,9 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         Get minimum uncore frequency via Linux uncore frequency driver sysfs interface. The
         arguments are as follows.
           * cpu - CPU number to set the frequency for.
+
+        Return the minimum uncore frequency in Hz or 'None' if the uncore frequency sysfs file does
+        not exist.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
         CPU 'cpu' should exist and should be online.
@@ -97,6 +102,9 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         Get minimum uncore frequency limit via Linux uncore frequency driver sysfs interface. The
         arguments are as follows.
           * cpu - CPU number to set the frequency limit for.
+
+        Return the minimum uncore frequency limit in Hz or 'None' if the uncore frequency sysfs file
+        does not exist.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
         CPU 'cpu' should exist and should be online.
