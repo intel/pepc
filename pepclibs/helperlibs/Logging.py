@@ -325,3 +325,5 @@ def setup_stdout_logging(toolname, logs_path):
         raise Error(f"failed to write command line to '{logfile}':\n{msg}") from None
 
     setup_logger(toolname, info_logfile=logfile, error_logfile=logfile)
+
+    return logfile
