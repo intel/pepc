@@ -70,8 +70,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound:
             return self._cache.add(path, cpu, None, sname="die")
         except Error as err:
-            raise Error(f"failed to read {key} uncore frequency for CPU{cpu}{self._pman.hostmsg} "
-                        f"from '{path}'\n{err.indent(2)}") from err
+            raise Error(f"failed to read {key} uncore frequency for CPU{cpu} from '{path}'"
+                        f"{self._pman.hostmsg}\n{err.indent(2)}") from err
 
         # The frequency value is in kHz in sysfs.
         freq *= 1000
