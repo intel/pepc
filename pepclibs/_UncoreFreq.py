@@ -121,6 +121,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         path = self._get_sysfs_path(key, cpu)
 
+        self._cache.remove(path, cpu, sname="die")
+
         try:
             with self._pman.open(path, "r+") as fobj:
                 # Note, the frequency value is in kHz in sysfs.
