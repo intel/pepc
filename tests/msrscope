@@ -224,6 +224,8 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
     with PowerCtl.PowerCtl(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
         _find_feature_scope(cpuinfo, fmsr, "c1e_autopromote", ("off", "on"), cpu)
         _find_feature_scope(cpuinfo, fmsr, "cstate_prewake", ("off", "on"), cpu)
+        _find_feature_scope(cpuinfo, fmsr, "ltr", ("off", "on"), cpu)
+        _find_feature_scope(cpuinfo, fmsr, "pch_negotiation", ("off", "on"), cpu)
 
     with PCStateConfigCtl.PCStateConfigCtl(pman=pman, cpuinfo=cpuinfo, msr=msr) as fmsr:
         _find_feature_scope(cpuinfo, fmsr, "c1_demotion", ("off", "on"), cpu)
