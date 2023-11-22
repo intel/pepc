@@ -94,6 +94,8 @@ class EPB(_EPBase.EPBase):
     def _write_to_sysfs(self, val, cpu):
         """Write EPB 'epb' for CPU 'cpu' to sysfs."""
 
+        self._pcache.remove("epb", cpu, "sysfs")
+
         try:
             with self._pman.open(self._sysfs_epb_path % cpu, "r+") as fobj:
                 fobj.write(val)

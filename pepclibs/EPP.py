@@ -128,6 +128,8 @@ class EPP(_EPBase.EPBase):
     def _write_to_sysfs(self, val, cpu):
         """Write EPP 'epp' for CPU 'cpu' to sysfs."""
 
+        self._pcache.remove("epp", cpu, "sysfs")
+
         try:
             with self._pman.open(self._sysfs_epp_path % cpu, "r+") as fobj:
                 try:
