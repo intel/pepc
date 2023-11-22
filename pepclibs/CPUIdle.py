@@ -439,6 +439,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
     def set_current_governor(self, governor):
         """Set current idle driver governor."""
 
+        self._cache.remove("current_governor", 0)
+
         governors = self.get_available_governors()
         if not governors:
             raise ErrorNotSupported(f"idle governors are not supported{self._pman.hostmsg}")
