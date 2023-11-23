@@ -265,17 +265,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._hwpreq
 
-    def _get_platinfo(self):
-        """Returns an 'PlatformInfo.PlatformInfo()' object."""
-
-        if not self._platinfo:
-            from pepclibs.msr import PlatformInfo # pylint: disable=import-outside-toplevel
-
-            msr = self._get_msr()
-            self._platinfo = PlatformInfo.PlatformInfo(pman=self._pman, cpuinfo=self._cpuinfo,
-                                                       msr=msr)
-        return self._platinfo
-
     def _get_trl(self):
         """Returns an 'TurboRatioLimit.TurboRatioLimit()' object."""
 
@@ -520,17 +509,17 @@ class PStates(_PCStatesBase.PCStatesBase):
         dictionary.
         """
 
-        try:
-            platinfo = self._get_platinfo()
-            ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
-        except ErrorNotSupported:
-            return self._construct_pvinfo("max_eff_freq", cpu, "msr", None)
+        pname = "max_eff_freq"
+        mname = "msr"
+        val = None
 
-        val = self._get_bclk(cpu)
-        if val is not None:
-            val = ratio * val
+        cpufreq_obj = self._get_cpufreq_msr_obj()
+        if cpufreq_obj is not None:
+            val = cpufreq_obj.get_max_eff_freq(cpu)
 
-        return self._construct_pvinfo("max_eff_freq", cpu, "msr", val)
+        if val is None:
+            self._prop_not_supported((cpu,), (mname, ), "get", "max. CPU efficiency frequency")
+        return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_min_oper_freq_msr(self, cpu):
         """
@@ -538,23 +527,11 @@ class PStates(_PCStatesBase.PCStatesBase):
         dictionary.
         """
 
-        try:
-            platinfo = self._get_platinfo()
-            ratio = platinfo.read_cpu_feature("min_oper_ratio", cpu)
-        except ErrorNotSupported:
+        cpufreq_obj = self._get_cpufreq_msr_obj()
+        if cpufreq_obj is None:
             return None
 
-        if ratio != 0:
-            val = self._get_bclk(cpu)
-            if val is not None:
-                val = ratio * val
-        else:
-            val = None
-            _LOG.warn_once("BUG: 'Minimum Operating Ratio' is '0' on CPU %d, MSR address '%#x' "
-                            "bit field '55:48'\nPlease, contact project maintainers.",
-                            cpu, platinfo.regaddr)
-
-        return val
+        return cpufreq_obj.get_min_oper_freq(cpu)
 
     def _get_min_oper_freq_pvinfo(self, cpu, mnames):
         """Read the minimum operating frequency and return the property value dictionary."""
@@ -1477,7 +1454,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._fsbfreq = None
         self._pmenable = None
         self._hwpreq = None
-        self._platinfo = None
         self._trl = None
 
         self._cpufreq_sysfs_obj = None
@@ -1494,8 +1470,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_pmenable", "_hwpreq", "_platinfo",
-                       "_trl", "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj", "_cpufreq_msr_obj",
+        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_pmenable", "_hwpreq", "_trl",
+                       "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj", "_cpufreq_msr_obj",
                        "_uncfreq_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 

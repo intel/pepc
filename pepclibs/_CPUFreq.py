@@ -445,6 +445,10 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
        * 'set_max_freq()'
     3. Get base frequency via an MSR (Intel CPUs only):
        * 'get_base_freq()'
+    4. Get the minimum CPU operating frequency via an MSR (Intel CPUs only):
+       * 'get_min_oper_freq()'
+    5. Get the maximum CPU efficiency frequency via an MSR (Intel CPUs only):
+       * 'get_max_eff_freq()'
 
     Note, class methods do not validate the CPU number argument. The caller is assumed to have done
     the validation. The input CPU number should exist and should be online.
@@ -638,6 +642,51 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         try:
             platinfo = self._get_platinfo()
             ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
+
+            bclk = self._get_bclk(cpu)
+            if bclk is not None:
+                return ratio * bclk
+        except ErrorNotSupported:
+            return None
+
+        return None
+
+    def get_min_oper_freq(self, cpu):
+        """
+        Get the minimum CPU operating frequency from the 'MSR_PLATFORM_INFO' model-specific
+        register. The arguments are as follows.
+          * cpu - CPU number to get the minimum operating frequency for.
+
+        Return the minium opeating CPU frequency in Hz or 'None' if 'MSR_PLATFORM_INFO' is not
+        supported.
+        """
+
+        try:
+            platinfo = self._get_platinfo()
+            ratio = platinfo.read_cpu_feature("min_oper_ratio", cpu)
+
+            bclk = self._get_bclk(cpu)
+            if bclk is not None:
+                return ratio * bclk
+        except ErrorNotSupported:
+            return None
+
+        return None
+
+    def get_max_eff_freq(self, cpu):
+        """
+        Get the maximum CPU efficiency frequency from the 'MSR_PLATFORM_INFO' model-specific
+        register. The arguments are as follows.
+          * cpu - CPU number to get the maximum efficiency frequency for.
+
+        Return the maximum CPU efficiency frequency in Hz. Maximum efficiency frequency is the
+        frequency with best CPU performance per watt ratio. Return  'None' if 'MSR_PLATFORM_INFO' is
+        not supported.
+        """
+
+        try:
+            platinfo = self._get_platinfo()
+            ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
 
             bclk = self._get_bclk(cpu)
             if bclk is not None:
