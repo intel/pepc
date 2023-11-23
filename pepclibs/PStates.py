@@ -265,17 +265,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._hwpreq
 
-    def _get_trl(self):
-        """Returns an 'TurboRatioLimit.TurboRatioLimit()' object."""
-
-        if not self._trl:
-            from pepclibs.msr import TurboRatioLimit # pylint: disable=import-outside-toplevel
-
-            msr = self._get_msr()
-            self._trl = TurboRatioLimit.TurboRatioLimit(pman=self._pman, cpuinfo=self._cpuinfo,
-                                                        msr=msr)
-        return self._trl
-
     def _get_bclk(self, cpu):
         """
         Return bus clock speed in Hz. Return 'None' if bus clock is not supported by the platform.
@@ -564,30 +553,11 @@ class PStates(_PCStatesBase.PCStatesBase):
         property value dictionary.
         """
 
-        try:
-            trl = self._get_trl()
-        except ErrorNotSupported:
+        cpufreq_obj = self._get_cpufreq_msr_obj()
+        if cpufreq_obj is None:
             return None
 
-        try:
-            ratio = trl.read_cpu_feature("max_1c_turbo_ratio", cpu)
-        except ErrorNotSupported:
-            try:
-                # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores.
-                # We can safely assume that group 0 will correspond to max. 1-core turbo, so we do
-                # not need to look at 'MSR_TURBO_RATIO_LIMIT1'.
-                ratio = trl.read_cpu_feature("max_g0_turbo_ratio", cpu)
-            except ErrorNotSupported:
-                _LOG.warn_once("CPU %d: module 'TurboRatioLimit' doesn't support "
-                               "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
-                               "maintainers.", cpu, self._cpuinfo.cpudescr, self._pman.hostmsg)
-                return None
-
-        val = self._get_bclk(cpu)
-        if val is not None:
-            val = val * ratio
-
-        return val
+        return cpufreq_obj.get_max_turbo_freq(cpu)
 
     def _get_max_turbo_freq_pvinfo(self, cpu, mnames=None):
         """Read the maximum turbo frequency for CPU 'cpu'."""
@@ -1454,7 +1424,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._fsbfreq = None
         self._pmenable = None
         self._hwpreq = None
-        self._trl = None
 
         self._cpufreq_sysfs_obj = None
         self._cpufreq_cppc_obj = None
@@ -1470,7 +1439,7 @@ class PStates(_PCStatesBase.PCStatesBase):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_pmenable", "_hwpreq", "_trl",
+        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_pmenable", "_hwpreq",
                        "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj", "_cpufreq_msr_obj",
                        "_uncfreq_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)

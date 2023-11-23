@@ -449,6 +449,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
        * 'get_min_oper_freq()'
     5. Get the maximum CPU efficiency frequency via an MSR (Intel CPUs only):
        * 'get_max_eff_freq()'
+    6. Get the maximum CPU turbo frequency via an MSR (Intel CPUs only):
+       * 'get_max_turbo_freq()'
 
     Note, class methods do not validate the CPU number argument. The caller is assumed to have done
     the validation. The input CPU number should exist and should be online.
@@ -630,6 +632,17 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                                                        msr=msr)
         return self._platinfo
 
+    def _get_trl(self):
+        """Returns an 'TurboRatioLimit.TurboRatioLimit()' object."""
+
+        if not self._trl:
+            from pepclibs.msr import TurboRatioLimit # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            self._trl = TurboRatioLimit.TurboRatioLimit(pman=self._pman, cpuinfo=self._cpuinfo,
+                                                        msr=msr)
+        return self._trl
+
     def get_base_freq(self, cpu):
         """
         Get base CPU frequency from the 'MSR_PLATFORM_INFO' model-specific register. The arguments
@@ -696,6 +709,44 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         return None
 
+    def get_max_turbo_freq(self, cpu):
+        """
+        Get the maximum 1-core CPU turbo frequency from the 'MSR_TURBO_RATIO_LIMIT' model-specific
+        register. The arguments are as follows.
+          * cpu - CPU number to get the maximum turbo frequency for.
+
+        Return the maximum CPU turbo frequency in Hz. Return 'None' if 'MSR_TURBO_RATIO_LIMIT' is
+        not supported.
+        """
+
+        try:
+            trl = self._get_trl()
+        except ErrorNotSupported:
+            return None
+
+        try:
+            ratio = trl.read_cpu_feature("max_1c_turbo_ratio", cpu)
+        except ErrorNotSupported:
+            try:
+                # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores.
+                # We can safely assume that group 0 will correspond to max. 1-core turbo, so we do
+                # not need to look at 'MSR_TURBO_RATIO_LIMIT1'.
+                ratio = trl.read_cpu_feature("max_g0_turbo_ratio", cpu)
+            except ErrorNotSupported:
+                _LOG.warn_once("CPU %d: module 'TurboRatioLimit' doesn't support "
+                               "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
+                               "maintainers.", cpu, self._cpuinfo.cpudescr, self._pman.hostmsg)
+                return None
+
+        try:
+            bclk = self._get_bclk(cpu)
+            if bclk is not None:
+                return ratio * bclk
+        except ErrorNotSupported:
+            return None
+
+        return None
+
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
         The class constructor. The argument are as follows.
@@ -717,6 +768,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         self._hwpreq = None
         self._hwpreq_pkg = None
         self._platinfo = None
+        self._trl = None
 
         # Performance to frequency factor.
         self._perf_to_freq_factor = 78740157
@@ -730,5 +782,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_platinfo", "_fsbfreq", "_hwpreq", "_hwpreq_pkg", "_cpuinfo", "_pman")
+        close_attrs = ("_trl", "_platinfo", "_fsbfreq", "_hwpreq", "_hwpreq_pkg", "_cpuinfo",
+                       "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
