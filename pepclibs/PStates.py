@@ -414,25 +414,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return None
 
-    def _get_cpu_perf_to_freq_factor(self, cpu):
-        """
-        In HWP mode, the OS can affect CPU frequency via HWP registers, such as 'IA32_HWP_REQUEST'.
-        However, these HWP registers work in terms of performance, not in terms of frequency. On
-        many CPUs, the performance is just frequency in 100MHz. However, on hybrid CPUs like
-        Alder Lake, the performance must be scaled by ~7.8740157. In general, future CPUs may have
-        use a different formula.
-
-        Return integer factor, so that CPU performance multiplied by this factor results in CPU
-        frequency in Hz.
-        """
-
-        if self._cpuinfo.info["hybrid"]:
-            pcore_cpus = set(self._cpuinfo.get_hybrid_cpu_topology()["pcore"])
-            if cpu in pcore_cpus:
-                return 78740157
-
-        return 100000000
-
     def _get_base_freq_sysfs(self, cpu):
         """Read base frequency from sysfs."""
 
@@ -769,7 +750,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         """
 
         prop = self._props[pname]
-
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
 
     def _get_cpu_prop_pvinfo_sysfs(self, pname, cpu):
