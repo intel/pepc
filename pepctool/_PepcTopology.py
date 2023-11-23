@@ -14,7 +14,7 @@ import logging
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
-from pepctool import _PepcCommon
+from pepctool import _OpTarget
 
 _LOG = logging.getLogger()
 
@@ -91,7 +91,11 @@ def topology_info_command(args, pman):
         # ["CPU", "Core", "Node", "Die", "Package"]
         headers = [name[0].upper() + name[1:] for name in colnames]
 
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, offline_ok=offline_ok)
+        optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
+                                   modules=args.modules, dies=args.dies, packages=args.packages,
+                                   core_siblings=args.core_siblings,
+                                   module_siblings=args.module_siblings)
+        cpus = optar.get_cpus()
         topology = cpuinfo.get_topology(levels=colnames, order=order)
 
         if show_hybrid is None and cpuinfo.info["hybrid"]:

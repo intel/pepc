@@ -13,7 +13,7 @@ This module provides API for changing P-state and C-state properties.
 
 import sys
 import contextlib
-from pepctool import _PepcCommon
+from pepctool import _PepcCommon, _OpTarget
 from pepclibs.helperlibs import ClassHelpers, YAML
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.PStates import ErrorFreqOrder
@@ -74,12 +74,13 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                 del spinfo[pnm]
                 mnames_info[pnm] = mname
 
-    def set_props(self, spinfo, cpus="all", mnames=None):
+    def set_props(self, spinfo, optar, mnames=None):
         """
         Set properties for CPUs 'cpus'. The arguments are as follows.
           * spinfo - a dictionary defining names of the properties to set and the values to set the
                      properties to.
-          * cpus - CPU numbers to set the property for (all CPUs by default).
+          * optar - an '_OpTarget.OpTarget()' object representing the CPUs, cores, modules, etc to
+                    set the properties for.
           * mnames - list of mechanism names allowed to be used for setting properties (default -
                      all mechanisms are allowed).
         """
@@ -92,6 +93,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         # '_set_props()' needs to modify the dictionary, so create a copy for that.
         spinfo_copy = spinfo.copy()
 
+        cpus = optar.get_cpus()
+
         for pname in list(spinfo):
             self._set_prop_cpus(spinfo_copy, pname, cpus, mnames, mnames_info)
 
@@ -101,7 +104,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._pcsprint:
             for pname in spinfo:
                 mnames = (mnames_info[pname], )
-                self._pcsprint.print_props((pname,), cpus, mnames=mnames, skip_ro=True,
+                self._pcsprint.print_props((pname,), optar, mnames=mnames, skip_ro=True,
                                            skip_unsupported=False, action="set to")
 
     @staticmethod
@@ -168,8 +171,9 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                 cpus = _PepcCommon.parse_cpus_string(pinfo["cpus"])
                 self._restore_prop(pname, pinfo["value"], cpus)
                 if self._pcsprint:
-                    self._pcsprint.print_props((pname,), cpus, skip_ro=True, skip_unsupported=False,
-                                               action="restored to")
+                    optar = _OpTarget.OpTarget(pman=self._pman, cpuinfo=self._cpuinfo, cpus=cpus)
+                    self._pcsprint.print_props((pname,), optar, skip_ro=True,
+                                               skip_unsupported=False, action="restored to")
 
         if self._msr:
             self._msr.commit_transaction()

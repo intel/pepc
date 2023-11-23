@@ -293,12 +293,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             return pnames
         return [pname for pname in pnames if self._pobj.props[pname]["writable"]]
 
-    def print_props(self, pnames="all", cpus="all", mnames=None, skip_ro=False,
-                    skip_unsupported=True, group=False, action=None):
+    def print_props(self, pnames, optar, mnames=None, skip_ro=False, skip_unsupported=True,
+                    group=False, action=None):
         """
         Read and print properties. The arguments are as follows.
-          * pnames - names of the property to read and print (all properties by default).
-          * cpus - CPU numbers to read and print the property for (all CPUs by default).
+          * pnames - names of the property to read and print.
+          * optar - an '_OpTarget.OpTarget()' object representing the CPUs, cores, modules, etc to
+                    print the properties for.
           * mnames - list of mechanism names allowed to be used for getting properties (default -
                      all mechanisms are allowed).
           * skip_unsupported - if 'True', unsupported properties are skipped. Otherwise
@@ -314,6 +315,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
+        cpus = optar.get_cpus()
         aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, mnames, skip_ro, skip_unsupported)
 
         if self._fmt == "human":
@@ -503,13 +505,14 @@ class CStatesPrinter(_PropsPrinter):
         self._yaml_dump(yaml_rcsinfo)
         return len(yaml_rcsinfo)
 
-    def print_props(self, pnames="all", cpus="all", mnames=None, skip_ro=False,
+    def print_props(self, pnames, optar, mnames=None, skip_ro=False,
                     skip_unsupported=True, group=False, action=None):
         """
         Read and print properties. The arguments are the same as in '_PropsPrinter.print_props()'.
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
+        cpus = optar.get_cpus()
         aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, mnames, skip_ro, skip_unsupported)
 
         if skip_ro and "pkg_cstate_limit" in pnames:

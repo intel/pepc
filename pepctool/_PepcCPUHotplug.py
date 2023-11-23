@@ -14,7 +14,7 @@ import logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Human
 from pepclibs import CPUInfo, CPUOnline
-from pepctool import _PepcCommon
+from pepctool import _PepcCommon, _OpTarget
 
 _LOG = logging.getLogger()
 
@@ -51,9 +51,12 @@ def cpu_hotplug_offline_command(args, pman):
         # indirectly specified CPU 0 via '--cpus all' or '--packages 0'.
         skip_unsupported = args.cpus in ("all", None)
 
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus=None)
+        try:
+            optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
+                                       modules=args.modules, dies=args.dies, packages=args.packages,
+                                       core_siblings=args.core_siblings,
+                                       module_siblings=args.module_siblings)
+        except _OpTarget.ErrorNoTarget:
+            raise Error("please, specify the CPUs to offline") from None
 
-        if not cpus:
-            raise Error("please, specify the CPUs to offline")
-
-        onl.offline(cpus=cpus, skip_unsupported=skip_unsupported)
+        onl.offline(cpus=optar.get_cpus(), skip_unsupported=skip_unsupported)

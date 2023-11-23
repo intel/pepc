@@ -15,7 +15,7 @@ import contextlib
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
 from pepclibs import Power, CPUInfo
-from pepctool import _PepcCommon, _PepcPrinter, _PepcSetter
+from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 
 _LOG = logging.getLogger()
 
@@ -38,20 +38,24 @@ def power_info_command(args, pman):
         pprint = _PepcPrinter.PowerPrinter(pobj, cpuinfo, fmt=fmt)
         stack.enter_context(pprint)
 
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
-
         mnames = None
         if args.mechanisms:
             mnames = _PepcCommon.parse_mechanisms(args.mechanisms, pobj)
 
+        optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
+                                   modules=args.modules, dies=args.dies, packages=args.packages,
+                                   core_siblings=args.core_siblings,
+                                   module_siblings=args.module_siblings)
+        stack.enter_context(optar)
+
         if not hasattr(args, "oargs"):
-            printed = pprint.print_props(pnames="all", cpus=cpus, mnames=mnames,
-                                         skip_unsupported=True, group=True)
+            printed = pprint.print_props("all", optar, mnames=mnames, skip_unsupported=True,
+                                         group=True)
         else:
             pnames = list(getattr(args, "oargs"))
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
-            printed = pprint.print_props(pnames=pnames, cpus=cpus, mnames=mnames,
-                                         skip_unsupported=False, group=False)
+            printed = pprint.print_props(pnames, optar, mnames=mnames, skip_unsupported=False,
+                                         group=False)
 
         if not printed:
             _LOG.info("No power properties supported%s.", pman.hostmsg)
@@ -87,8 +91,6 @@ def power_config_command(args, pman):
         pobj = Power.Power(pman=pman, msr=msr, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
-
         mnames = None
         if args.mechanisms:
             mnames = _PepcCommon.parse_mechanisms(args.mechanisms, pobj)
@@ -96,13 +98,19 @@ def power_config_command(args, pman):
         psprint = _PepcPrinter.PowerPrinter(pobj, cpuinfo)
         stack.enter_context(psprint)
 
+        optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
+                                   modules=args.modules, dies=args.dies, packages=args.packages,
+                                   core_siblings=args.core_siblings,
+                                   module_siblings=args.module_siblings)
+        stack.enter_context(optar)
+
         if print_opts:
-            psprint.print_props(pnames=print_opts, cpus=cpus, mnames=mnames, skip_unsupported=False)
+            psprint.print_props(print_opts, optar, mnames=mnames, skip_unsupported=False)
 
         if set_opts:
             psset = _PepcSetter.PowerSetter(pman, pobj, cpuinfo, psprint, msr=msr)
             stack.enter_context(psset)
-            psset.set_props(set_opts, cpus=cpus, mnames=mnames)
+            psset.set_props(set_opts, optar, mnames=mnames)
 
     if set_opts:
         _PepcCommon.check_tuned_presence(pman)
@@ -131,9 +139,13 @@ def power_save_command(args, pman):
         psprint = _PepcPrinter.PowerPrinter(pobj, cpuinfo, fobj=fobj, fmt="yaml")
         stack.enter_context(psprint)
 
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, default_cpus="all")
+        optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
+                                   modules=args.modules, dies=args.dies, packages=args.packages,
+                                   core_siblings=args.core_siblings,
+                                   module_siblings=args.module_siblings)
+        stack.enter_context(optar)
 
-        if not psprint.print_props(cpus=cpus, skip_ro=True, skip_unsupported=True):
+        if not psprint.print_props("all", optar, skip_ro=True, skip_unsupported=True):
             _LOG.info("No writable power properties supported%s.", pman.hostmsg)
 
 def power_restore_command(args, pman):
