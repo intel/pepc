@@ -335,8 +335,19 @@ class PStates(_PCStatesBase.PCStatesBase):
             from pepclibs import _CPUFreq # pylint: disable=import-outside-toplevel
 
             self._cpufreq_sysfs_obj = _CPUFreq.CPUFreqSysfs(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                          enable_cache=self._enable_cache)
+                                                            enable_cache=self._enable_cache)
         return self._cpufreq_sysfs_obj
+
+    def _get_cpufreq_cppc_obj(self):
+        """Return a '_CPUFreqcppc' object."""
+
+        if not self._cpufreq_cppc_obj:
+            from pepclibs import _CPUFreq # pylint: disable=import-outside-toplevel
+
+            self._cpufreq_cppc_obj = _CPUFreq.CPUFreqCPPC(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                          enable_cache=self._enable_cache)
+        return self._cpufreq_cppc_obj
+
 
     def _get_cpufreq_msr_obj(self):
         """Return a '_CPUFreqMSR' object."""
@@ -345,9 +356,10 @@ class PStates(_PCStatesBase.PCStatesBase):
             from pepclibs import _CPUFreq # pylint: disable=import-outside-toplevel
 
             self._cpufreq_msr_obj = _CPUFreq.CPUFreqMSR(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                          msr=self._msr,
-                                                          enable_cache=self._enable_cache)
+                                                        msr=self._msr,
+                                                        enable_cache=self._enable_cache)
         return self._cpufreq_msr_obj
+
 
     def _get_uncfreq_obj(self):
         """Return an '_UncoreFreq' object."""
@@ -395,57 +407,46 @@ class PStates(_PCStatesBase.PCStatesBase):
             raise type(exceptions[0])(msg)
         _LOG.debug(msg)
 
-    def _read_cppc_sysfs_file(self, fname, cpu):
-        """Read an ACPI CPPC sysfs file."""
-
-        val = None
-        path = self._sysfs_base / f"cpu{cpu}/acpi_cppc" / fname
-
-        try:
-            val = self._read_int(path)
-        except ErrorNotFound as err:
-            _LOG.debug(err)
-        except Error as err:
-            _LOG.debug(err)
-            _LOG.warn_once("ACPI CPPC sysfs file '%s' is not readable%s", path, self._pman.hostmsg)
-
-        return val
-
-    def _get_cppc_freq_sysfs(self, pname, cpu):
+    def _get_cppc_freq(self, pname, cpu):
         """Read the ACPI CPPC sysfs files for property 'pname' and CPU 'cpu'."""
 
-        mname = "cppc"
-
-        with contextlib.suppress(ErrorNotFound):
-            val, mname = self._pcache.find(pname, cpu, mnames=(mname,))
-            return val
-
-        val = None
+        cpufreq_obj = self._get_cpufreq_cppc_obj()
+        if not cpufreq_obj:
+            return None
 
         if pname == "base_freq":
-            val = self._read_cppc_sysfs_file("nominal_freq", cpu)
-            if val:
-                val *= 1000 * 1000
-                self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
-                return val
+            return cpufreq_obj.get_base_freq(cpu)
+
+        if pname == "max_turbo_freq":
+            val = cpufreq_obj.get_max_perf_limit(cpu)
+        elif pname == "min_oper_freq":
+            val = cpufreq_obj.get_min_perf_limit(cpu)
+        else:
+            raise Error(f"BUG: unexpected property {pname}")
+
+        if val is not None:
+            return val
+
+        # Sometimes the frequency CPPC sysfs files are not readable, but the "performance" files
+        # are. The base frequency is required to turn performance values to Hz.
 
         base_freq = self._get_base_freq_pvinfo(cpu)["val"]
         if base_freq is None:
             return None
 
-        nominal_perf = self._read_cppc_sysfs_file("nominal_perf", cpu)
-        if nominal_perf is not None:
-            if pname in ("max_turbo_freq"):
-                highest_perf = self._read_cppc_sysfs_file("highest_perf", cpu)
-                if highest_perf is not None:
-                    val = int((base_freq * highest_perf) / nominal_perf)
-            elif pname == "min_oper_freq":
-                lowest_perf = self._read_cppc_sysfs_file("lowest_perf", cpu)
-                if lowest_perf is not None:
-                    val = int((base_freq * lowest_perf) / nominal_perf)
+        nominal_perf = cpufreq_obj.get_base_perf(cpu)
+        if nominal_perf is None:
+            return None
 
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
-        return val
+        if pname == "max_turbo_freq":
+            perf = cpufreq_obj.get_max_perf_limit(cpu)
+        elif pname == "min_oper_freq":
+            perf = cpufreq_obj.get_min_perf_limit(cpu)
+
+        if perf is not None:
+            return int((base_freq * perf) / nominal_perf)
+
+        return None
 
     def _get_cpu_perf_to_freq_factor(self, cpu):
         """
@@ -501,7 +502,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif mname == "msr":
                 val = self._get_base_freq_msr(cpu)
             elif mname == "cppc":
-                val = self._get_cppc_freq_sysfs(pname, cpu)
+                val = self._get_cppc_freq(pname, cpu)
             else:
                 mnames = ",".join(mnames)
                 raise Error(f"BUG: unsupported mechanisms '{mnames}' for '{pname}'")
@@ -568,7 +569,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             if mname == "msr":
                 val = self._get_min_oper_freq_msr(cpu)
             elif mname == "cppc":
-                val = self._get_cppc_freq_sysfs(pname, cpu)
+                val = self._get_cppc_freq(pname, cpu)
             else:
                 mnames = ",".join(mnames)
                 raise Error(f"BUG: unsupported mechanisms '{mnames}' for '{pname}'")
@@ -624,7 +625,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             if mname == "msr":
                 val = self._get_max_turbo_freq_msr(cpu)
             elif mname == "cppc":
-                val = self._get_cppc_freq_sysfs(pname, cpu)
+                val = self._get_cppc_freq(pname, cpu)
             else:
                 mnames = ",".join(mnames)
                 raise Error(f"BUG: unsupported mechanisms '{mnames}' for '{pname}'")
@@ -1480,6 +1481,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._trl = None
 
         self._cpufreq_sysfs_obj = None
+        self._cpufreq_cppc_obj = None
         self._cpufreq_msr_obj = None
 
         self._uncfreq_obj = None
@@ -1493,7 +1495,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Uninitialize the class object."""
 
         close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_pmenable", "_hwpreq", "_platinfo",
-                       "_trl", "_cpufreq_sysfs_obj", "_cpufreq_msr_obj", "_uncfreq_obj")
+                       "_trl", "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj", "_cpufreq_msr_obj",
+                       "_uncfreq_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
