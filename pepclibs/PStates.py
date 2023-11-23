@@ -254,17 +254,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._pmenable
 
-    def _get_hwpreq(self):
-        """Returns an 'HWPRequest.HWPRequest()' object."""
-
-        if not self._hwpreq:
-            from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
-
-            msr = self._get_msr()
-            self._hwpreq = HWPRequest.HWPRequest(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
-
-        return self._hwpreq
-
     def _get_bclk(self, cpu):
         """
         Return bus clock speed in Hz. Return 'None' if bus clock is not supported by the platform.
@@ -288,8 +277,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             from pepclibs import EPP # pylint: disable=import-outside-toplevel
 
             msr = self._get_msr()
-            hwpreq = self._get_hwpreq()
-            self._eppobj = EPP.EPP(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr, hwpreq=hwpreq,
+            self._eppobj = EPP.EPP(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr,
                                    enable_cache=self._enable_cache)
 
         return self._eppobj
@@ -1423,7 +1411,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._epbobj = None
         self._fsbfreq = None
         self._pmenable = None
-        self._hwpreq = None
 
         self._cpufreq_sysfs_obj = None
         self._cpufreq_cppc_obj = None
@@ -1439,9 +1426,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_pmenable", "_hwpreq",
-                       "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj", "_cpufreq_msr_obj",
-                       "_uncfreq_obj")
+        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_pmenable", "_cpufreq_sysfs_obj",
+                       "_cpufreq_cppc_obj", "_cpufreq_msr_obj", "_uncfreq_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
