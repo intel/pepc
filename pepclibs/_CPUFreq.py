@@ -118,8 +118,8 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
     the validation. The input CPU number should exist and should be online.
     """
 
-    def _get_sysfs_path(self, cpu, fname):
-        """Construct and return Linux "cpufreq" sysfs path for file 'fname'."""
+    def _get_policy_sysfs_path(self, cpu, fname):
+        """Construct and return a Linux "cpufreq" policy sysfs path for file 'fname'."""
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / fname
 
@@ -129,7 +129,7 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         fname = "scaling_" + key + "_freq"
         prefix = "cpuinfo_" if limit else "scaling_"
         fname = prefix + key + "_freq"
-        return self._get_sysfs_path(cpu, fname)
+        return self._get_policy_sysfs_path(cpu, fname)
 
     def _get_freq_sysfs(self, key, cpu, limit=False):
         """Get CPU frequency from the Linux "cpufreq" sysfs file."""
@@ -250,7 +250,7 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         not provide it.
         """
 
-        path = self._get_sysfs_path(cpu, "scaling_available_frequencies")
+        path = self._get_policy_sysfs_path(cpu, "scaling_available_frequencies")
 
         with contextlib.suppress(ErrorNotFound):
             return self._cache.get(path, cpu)
@@ -274,7 +274,7 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
     def _get_base_freq_intel_pstate(self, cpu):
         """Get CPU base frequency from 'intel_pstate' driver's sysfs file."""
 
-        path = self._get_sysfs_path(cpu, "base_frequency")
+        path = self._get_policy_sysfs_path(cpu, "base_frequency")
 
         with contextlib.suppress(ErrorNotFound):
             return self._cache.get(path, cpu)
