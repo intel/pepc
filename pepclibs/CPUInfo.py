@@ -421,6 +421,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     5. Normalize a list of packages/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
             * 'normalize_cpus()'
+            * 'normalize_modules()'
             * 'normalize_dies()'
             * 'normalize_packages()'
         B. Single package/CPU/etc.
@@ -1269,6 +1270,32 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                             f"{cpus_str}")
 
         return cpus
+
+    def normalize_modules(self, modules):
+        """
+        Validate module numbers in 'modules' and return the normalized list. The arguments are
+        as follows.
+          * modules - collection of integer module numbers to normalize. Special value 'all' means
+                      "all modules".
+        """
+
+        allmdls = self.get_modules()
+
+        if modules == "all":
+            return allmdls
+
+        allmdls = set(allmdls)
+        modules = Trivial.list_dedup(modules)
+        for mdl in modules:
+            if type(mdl) is not int: # pylint: disable=unidiomatic-typecheck
+                raise Error(f"'{mdl}' is not an integer, module numbers must be integers")
+
+            if mdl not in allmdls:
+                mdls_str = Human.rangify(allmdls)
+                raise Error(f"module '{mdl}' is not available{self._pman.hostmsg}, available "
+                            f"modules are: {mdls_str}")
+
+        return modules
 
     def normalize_dies(self, dies, package=0):
         """
