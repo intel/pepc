@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Minor logger improvement to satisfy 'wult' project needs.
 ### Removed
 ### Changed
+
+## [1.4.42] - 2023-11-24
+### Added
+ - Minor logger improvement to satisfy 'wult' project needs.
 
 ## [1.4.41] - 2023-11-22
 ### Fixed

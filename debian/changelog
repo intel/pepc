@@ -1,3 +1,9 @@
+pepc (1.4.42) unstable; urgency=low
+
+  * Minor logger improvement to satisfy 'wult' project needs.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 24 Nov 2023 00:00:00 +0200
+
 pepc (1.4.41) unstable; urgency=low
 
   * Fix 'pepc power config --ppl2' faling on some system with a "PPL2 value out
