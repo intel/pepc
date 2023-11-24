@@ -557,19 +557,19 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         new_online_cpus = self._get_online_cpus()
         old_online_cpus = {tline["CPU"] for tline in self._topology["CPU"]}
         if new_online_cpus != old_online_cpus:
-            onlined = list(new_online_cpus - old_online_cpus)
+            online = list(new_online_cpus - old_online_cpus)
 
-            tinfo = {cpu : {"CPU" : cpu} for cpu in onlined}
+            tinfo = {cpu : {"CPU" : cpu} for cpu in online}
             for tline in self._topology["CPU"]:
                 if tline["CPU"] in new_online_cpus:
                     tinfo[tline["CPU"]] = tline
 
             if "package" in self._initialized_levels or "core" in self._initialized_levels:
-                self._add_core_and_package_numbers(tinfo, onlined)
+                self._add_core_and_package_numbers(tinfo, online)
             if "module" in self._initialized_levels:
-                self._add_module_numbers(tinfo, onlined)
+                self._add_module_numbers(tinfo, online)
             if "die" in self._initialized_levels:
-                self._add_die_numbers(tinfo, onlined)
+                self._add_die_numbers(tinfo, online)
             if "node" in self._initialized_levels:
                 self._add_node_numbers(tinfo)
 
@@ -1024,7 +1024,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         Note: this method ignores offline CPUs.
         """
 
-        cpus = self.normalize_cpus(cpus, offlined_ok=True)
+        cpus = self.normalize_cpus(cpus, offline_ok=True)
 
         cpu2index = {} # CPU number -> core siblings index map.
         core = pkg = index = None
@@ -1081,7 +1081,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         Note: this method ignores offline CPUs.
         """
 
-        cpus = self.normalize_cpus(cpus, offlined_ok=True)
+        cpus = self.normalize_cpus(cpus, offline_ok=True)
 
         cpu2index = {} # CPU number -> module siblings index map.
         module = pkg = index = None
@@ -1240,17 +1240,17 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return (pkgs, rem_cpus)
 
-    def normalize_cpus(self, cpus, offlined_ok=False):
+    def normalize_cpus(self, cpus, offline_ok=False):
         """
         Validate CPU numbers in 'cpus' and return a normalized list. The arguments are as follows.
           * cpus - collection of integer CPU numbers to normalize. Special value 'all' means
                    "all CPUs".
-          * offlined - by default, offlined CPUs are considered as not available and are not allowed
-                       to be in 'cpus' (will cause an exception). Use 'offlined_ok=True' to allow
-                       for offlined CPUs.
+          * offline_ok - by default, offline CPUs are considered as not available and are not
+                         allowed to be in 'cpus' (will cause an exception). Use 'offline_ok=True'
+                         to allow for offline CPUs.
         """
 
-        if offlined_ok:
+        if offline_ok:
             allcpus = self._get_all_cpus()
         else:
             allcpus = self._get_online_cpus()
@@ -1474,7 +1474,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._topology = {}
         # Stores all initialized topology levels.
         self._initialized_levels = set()
-        # This flag notifies '_get_topology()' that some CPUs have been offlined/onlined.
+        # This flag notifies '_get_topology()' that some CPUs have been offline/online.
         self._must_update_topology = False
         # We are going to sort topology by level, this map specifies how each is sorted. Note, core
         # and die numbers are per-package, therefore we always sort them by package first.

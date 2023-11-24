@@ -50,7 +50,7 @@ def test_cpuonline_good(params):
     # Skip first online CPU, because CPU 0 does not support offlining.
     onl.offline(cpus=params["online"][1:])
     offline = set(params["online"][1:])
-    # When a CPU is offlined/onlined, CPUInfo topology should reflect the changes.
+    # When a CPU is offline/online, CPUInfo topology should reflect the changes.
     for tline in cpuinfo.get_topology():
         if tline["CPU"] in offline:
             raise Error(f"CPU{tline['CPU']} was not updated in 'CPUInfo._topology'")

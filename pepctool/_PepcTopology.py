@@ -82,7 +82,7 @@ def topology_info_command(args, pman):
         else:
             raise Error(f"invalid order '{order}', use one of: {', '.join(CPUInfo.LEVELS)}")
 
-        offlined_ok = not args.online_only
+        offline_ok = not args.online_only
 
         # Create format string, example: '%7s    %3s    %4s    %4s    %3s'.
         fmt = "    ".join([f"%{len(name)}s" for name in colnames])
@@ -91,7 +91,7 @@ def topology_info_command(args, pman):
         # ["CPU", "Core", "Node", "Die", "Package"]
         headers = [name[0].upper() + name[1:] for name in colnames]
 
-        cpus = _PepcCommon.get_cpus(args, cpuinfo, offlined_ok=offlined_ok)
+        cpus = _PepcCommon.get_cpus(args, cpuinfo, offline_ok=offline_ok)
         topology = cpuinfo.get_topology(levels=colnames, order=order)
 
         if show_hybrid is None and cpuinfo.info["hybrid"]:
@@ -109,7 +109,7 @@ def topology_info_command(args, pman):
                 else:
                     tline["hybrid"] = "E-core"
 
-        if offlined_ok:
+        if offline_ok:
             # Offline CPUs are not present in 'topology' list. Thus, we add them to the list with
             # "?" as level number.
             for cpu in cpuinfo.get_offline_cpus():

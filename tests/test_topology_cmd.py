@@ -26,7 +26,7 @@ def get_params(hostspec):
         params = common.build_params(pman)
 
         params["cpuinfo"] = cpuinfo
-        params["cpus"] = cpuinfo.normalize_cpus("all", offlined_ok=True)
+        params["cpus"] = cpuinfo.normalize_cpus("all", offline_ok=True)
 
         yield params
 

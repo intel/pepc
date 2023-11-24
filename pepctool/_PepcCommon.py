@@ -40,7 +40,7 @@ def parse_cpus_string(string):
         return string
     return ArgParse.parse_int_list(string, ints=True, dedup=True)
 
-def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
+def get_cpus(args, cpuinfo, default_cpus="all", offline_ok=False):
     """
     Get list of CPUs based on requested CPU, core, die, and package numbers. The arguments are as
     follows.
@@ -54,7 +54,7 @@ def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
                        Value "all" means "all CPUs".
       * offline_ok - whether offline CPUs should be accepted or cause an exception.
 
-    By default, offline CPUs are not allowed and will cause an exception. Use 'offlined_ok=True' to
+    By default, offline CPUs are not allowed and will cause an exception. Use 'offline_ok=True' to
     allow for offline CPUs.
 
     If this functions ends up expanding special value "all" for 'args.cpus' or 'default_cpus', then:
@@ -72,7 +72,7 @@ def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
     cpus = []
 
     if args.cpus:
-        cpus += cpuinfo.normalize_cpus(cpus=parse_cpus_string(args.cpus), offlined_ok=offlined_ok)
+        cpus += cpuinfo.normalize_cpus(cpus=parse_cpus_string(args.cpus), offline_ok=offline_ok)
 
     if args.cores:
         packages = parse_cpus_string(args.packages)
@@ -98,7 +98,7 @@ def get_cpus(args, cpuinfo, default_cpus="all", offlined_ok=False):
         cpus += cpuinfo.modules_to_cpus(modules=parse_cpus_string(args.modules))
 
     if not cpus and default_cpus is not None:
-        cpus = cpuinfo.normalize_cpus(parse_cpus_string(default_cpus), offlined_ok=offlined_ok)
+        cpus = cpuinfo.normalize_cpus(parse_cpus_string(default_cpus), offline_ok=offline_ok)
 
     if args.core_siblings:
         return cpuinfo.select_core_siblings(cpus, parse_cpus_string(args.core_siblings))
