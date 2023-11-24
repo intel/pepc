@@ -421,11 +421,13 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     5. Normalize a list of packages/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
             * 'normalize_cpus()'
+            * 'normalize_cores()'
             * 'normalize_modules()'
             * 'normalize_dies()'
             * 'normalize_packages()'
         B. Single package/CPU/etc.
             * 'normalize_cpu()'
+            * 'normalize_core()'
             * 'normalize_die()'
             * 'normalize_package()'
     6. Select CPUs by sibling index.
@@ -1271,6 +1273,36 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return cpus
 
+    def normalize_cores(self, cores, package=0):
+        """
+        Validate core numbers in 'cores' for package 'package' and return the normalized list. The
+        arguments are as follows.
+          * cores - collection of integer core numbers to normalize. Special value 'all' means
+                   "all coress".
+          * package - package number to validate the 'cores' against: all numbers in 'cores' should be
+                      valid core numbers in package number 'package'.
+
+        Return a list of integer core numbers.
+        """
+
+        pkg_cores = self.package_to_cores(package)
+
+        if cores == "all":
+            return pkg_cores
+
+        pkg_cores = set(pkg_cores)
+        cores = Trivial.list_dedup(cores)
+        for core in cores:
+            if type(core) is not int: # pylint: disable=unidiomatic-typecheck
+                raise Error(f"'{core}' is not an integer, core numbers must be integers")
+
+            if core not in pkg_cores:
+                cores_str = Human.rangify(pkg_cores)
+                raise Error(f"core '{core}' is not available in package "
+                            f"'{package}'{self._pman.hostmsg}, available cores are: {cores_str}")
+
+        return cores
+
     def normalize_modules(self, modules):
         """
         Validate module numbers in 'modules' and return the normalized list. The arguments are
@@ -1356,6 +1388,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def normalize_cpu(self, cpu):
         """Same as 'normalize_cpus()', but for a single CPU number."""
         return  self.normalize_cpus((cpu,))[0]
+
+    def normalize_core(self, core, package=0):
+        """Same as 'normalize_packages()', but for a single package number."""
+        return self.normalize_cores((core,), package=package)[0]
 
     def normalize_die(self, die, package=0):
         """Same as 'normalize_packages()', but for a single package number."""
