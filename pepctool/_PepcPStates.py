@@ -100,7 +100,7 @@ def pstates_config_command(args, pman):
             psprint.print_props(pnames=print_opts, cpus=cpus, mnames=mnames, skip_unsupported=False)
 
         if set_opts:
-            psset = _PepcSetter.PStatesSetter(pobj, cpuinfo, psprint, msr=msr)
+            psset = _PepcSetter.PStatesSetter(pman, pobj, cpuinfo, psprint, msr=msr)
             stack.enter_context(psset)
             psset.set_props(set_opts, cpus=cpus, mnames=mnames)
 
@@ -156,7 +156,7 @@ def pstates_restore_command(args, pman):
         psprint = _PepcPrinter.PStatesPrinter(pobj, cpuinfo)
         stack.enter_context(psprint)
 
-        psset = _PepcSetter.PStatesSetter(pobj, cpuinfo, psprint, msr=msr)
+        psset = _PepcSetter.PStatesSetter(pman, pobj, cpuinfo, psprint, msr=msr)
         stack.enter_context(psset)
 
         psset.restore(args.infile)

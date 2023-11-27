@@ -174,9 +174,10 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._msr:
             self._msr.commit_transaction()
 
-    def __init__(self, pobj, cpuinfo, pcsprint, msr=None):
+    def __init__(self, pman, pobj, cpuinfo, pcsprint, msr=None):
         """
         Initialize a class instance. The arguments are as follows.
+          * pman - the process manager object that defines the target host.
           * pobj - a properties object (e.g., 'PStates') to print the properties for.
           * cpuinfo - a 'CPUInfo' object corresponding to the host the properties are read from.
           * pcsprint - a 'PStatesPrinter' or 'CStatesPrinter' class instance to use for reading and
@@ -184,6 +185,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
           * msr - an optional 'MSR.MSR()' object which will be used for transactions.
         """
 
+        self._pman = pman
         self._pobj = pobj
         self._cpuinfo = cpuinfo
         self._pcsprint = pcsprint
@@ -191,7 +193,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, unref_attrs=("_msr", "_pcsprint", "_cpuinfo", "_pobj"))
+        ClassHelpers.close(self, unref_attrs=("_msr", "_pcsprint", "_cpuinfo", "_pobj", "_pman"))
 
 class PStatesSetter(_PropsSetter):
     """This class provides API for changing P-states properties."""

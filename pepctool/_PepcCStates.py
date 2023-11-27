@@ -127,7 +127,7 @@ def cstates_config_command(args, pman):
             csprint.print_props(pnames=print_opts, mnames=mnames, cpus=cpus, skip_unsupported=False)
 
         if set_opts or enable_opts:
-            csset = _PepcSetter.CStatesSetter(pobj, cpuinfo, csprint, msr=msr)
+            csset = _PepcSetter.CStatesSetter(pman, pobj, cpuinfo, csprint, msr=msr)
             stack.enter_context(csset)
 
         if enable_opts:
@@ -194,7 +194,7 @@ def cstates_restore_command(args, pman):
         csprint = _PepcPrinter.CStatesPrinter(pobj, cpuinfo)
         stack.enter_context(csprint)
 
-        csset = _PepcSetter.CStatesSetter(pobj, cpuinfo, csprint, msr=msr)
+        csset = _PepcSetter.CStatesSetter(pman, pobj, cpuinfo, csprint, msr=msr)
         stack.enter_context(csset)
 
         csset.restore(args.infile)
