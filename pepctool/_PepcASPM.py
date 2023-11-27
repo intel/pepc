@@ -21,7 +21,7 @@ def aspm_info_command(args, pman):
 
     opt = []
     if hasattr(args, "oargs"):
-        opt = args.oargs.keys()
+        opt = args.oargs
 
     with ASPM.ASPM(pman=pman) as aspm:
         if "policy" in opt or not opt:
@@ -31,6 +31,23 @@ def aspm_info_command(args, pman):
             available_policies = ", ".join(aspm.get_policies())
             _LOG.info("Available policies: %s", available_policies)
 
+def _handle_policy_option(pman, aspm, name):
+    """Handle the '--policy' option of the "config" command."""
+
+    cur_policy = aspm.get_policy()
+    if name:
+        aspm.set_policy(name)
+        new_policy = aspm.get_policy()
+        if name != new_policy:
+            raise Error(f"ASPM policy{pman.hostmsg} was set to '{name}', but it became "
+                        f"'{new_policy}' instead")
+        if name != cur_policy:
+            _LOG.info("ASPM policy%s was changed from '%s' to '%s'", pman.hostmsg, cur_policy, name)
+        else:
+            _LOG.info("ASPM policy%s was '%s', set it to '%s' again", pman.hostmsg, name, name)
+    else:
+        _LOG.info("ASPM policy%s: %s", pman.hostmsg, cur_policy)
+
 def aspm_config_command(args, pman):
     """Implements the 'aspm config' command."""
 
@@ -38,21 +55,7 @@ def aspm_config_command(args, pman):
         raise Error("please, provide a configuration option")
 
     with ASPM.ASPM(pman=pman) as aspm:
-        for opt, val in args.oargs.items():
-            if opt == "policy":
-                old_policy = aspm.get_policy()
-                if val:
-                    aspm.set_policy(val)
-                    new_policy = aspm.get_policy()
-                    if args.policy != new_policy:
-                        raise Error(f"ASPM policy{pman.hostmsg} was set to '{val}', but it became "
-                                    f"'{new_policy}' instead")
-                    if val != old_policy:
-                        _LOG.info("ASPM policy%s was changed from '%s' to '%s'",
-                                pman.hostmsg, old_policy, val)
-                    else:
-                        _LOG.info("ASPM policy%s was '%s', set it to '%s' again",
-                                  pman.hostmsg, val, val)
-                else:
-                    cur_policy = aspm.get_policy()
-                    _LOG.info("ASPM policy%s: %s", pman.hostmsg, cur_policy)
+        opts = getattr(args, "oargs", {})
+        if "policy" in opts:
+            name = opts["policy"]
+            _handle_policy_option(pman, aspm, name)
