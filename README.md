@@ -197,7 +197,7 @@ default.
 
 ## P-states
 
-### Get all the genearlly interesting P-states information:
+### Get all the generally interesting P-states information:
 
 ```
 $ pepc pstates info
@@ -311,7 +311,7 @@ CPU frequency governor: 'performance' for CPUs 0-87 (all CPUs)
 
 ## C-states
 
-### Get all the genearlly interesting C-states information
+### Get all the generally interesting C-states information
 
 ```
 $ pepc cstates info
