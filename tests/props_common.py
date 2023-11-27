@@ -96,6 +96,25 @@ def get_good_cpunum_opts(params, sname="package"):
 
         return opts
 
+    if sname == "CPU":
+        opts = ["--core-siblings 0", "--module-siblings 0"]
+
+        cpus_per_pkg = len(params["cpus"]) // len(params["packages"])
+        cores_per_pkg = len(params["cores"][0])
+        modules_per_pkg = len(params["modules"][0])
+
+        cpus_per_core = cpus_per_pkg // cores_per_pkg
+        if cpus_per_core > 1:
+            opts.append(f"--core-siblings {','.join([str(i) for i in range(0, cpus_per_core + 1)])}")
+            opts.append(f"--core-siblings {','.join([str(i) for i in range(1, cpus_per_core)])}")
+
+        cpus_per_module = cpus_per_pkg // modules_per_pkg
+        if cpus_per_module > 1:
+            opts.append(f"--module-siblings {','.join([str(i) for i in range(0, cpus_per_module + 1)])}")
+            opts.append(f"--module-siblings {','.join([str(i) for i in range(1, cpus_per_module)])}")
+
+        return opts
+
     assert False, f"BUG: bad scope name {sname}"
 
 def get_bad_cpunum_opts(params):

@@ -151,6 +151,10 @@ def test_cstates_config_good(params):
     pman = params["pman"]
 
     for opt in _get_good_config_opts(params, sname="CPU"):
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="CPU"):
+            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+                cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
+                common.run_pepc(cmd, pman, ignore=_IGNORE)
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpunum_opt} {mopt}"
@@ -216,6 +220,8 @@ def test_cstates_save_restore(params):
     opts = ( "", f"-o {tmp_path}/cstates.{hostname}")
 
     for opt in opts:
+        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="CPU"):
+            common.run_pepc(f"cstates save {opt} {cpunum_opt}", pman)
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
             common.run_pepc(f"cstates save {opt} {cpunum_opt}", pman)
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
