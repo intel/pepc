@@ -8,7 +8,7 @@ vim: ts=4 sw=4 tw=100 et ai si
 Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 -->
 - [Introduction](#introduction)
-  - [Context](#tool-context)
+  - [Context](#context)
 - [Authors](#authors-and-contributors)
 - [What is supported](#what-is-supported)
 - [Installation](#installation)
@@ -132,7 +132,7 @@ sudo apt install -y rsync libssl-dev util-linux procps python3 git
 sudo apt install -y python3-pip python3-colorama python3-paramiko python3-argcomplete
 ```
 
-## Installing with 'pip'
+## Using 'pip'
 
 Run the following command:
 
@@ -472,7 +472,7 @@ of a package to effectively "disable" it. Here is how to do it for package 1.
 $ pepc cpu-hotplug offline --packages 1
 ```
 
-## CPU topolgy
+## CPU topology
 
 ### Print the topology table
 
