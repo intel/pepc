@@ -12,7 +12,6 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [Authors](#authors-and-contributors)
 - [What is supported](#what-is-supported)
 - [Installation](#installation)
-  - [Dependencies](#dependencies)
   - [Using 'pip'](#using-pip)
   - [Standalone version](#standalone-version)
   - [Tab completions](#tab-completions)
