@@ -174,7 +174,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._msr:
             self._msr.commit_transaction()
 
-    def __init__(self, pobj, cpuinfo, pcsprint=None, msr=None):
+    def __init__(self, pobj, cpuinfo, pcsprint, msr=None):
         """
         Initialize a class instance. The arguments are as follows.
           * pobj - a properties object (e.g., 'PStates') to print the properties for.
