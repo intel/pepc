@@ -18,6 +18,8 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [Examples](#examples)
   - [P-states](#p-states)
   - [C-states](#c-states)
+  - [Power](#power)
+  - [ASPM](#aspm)
   - [CPU hotplug](#cpu-hotplug)
   - [CPU topology](#cpu-topology)
 - [FAQ](#faq)
@@ -412,6 +414,34 @@ allowed package C-state to PC0 on all packages.
 ```
 $ pepc cstates config --pkg-cstate-limit PC0 --packages all
 Package C-state limit set to 'PC0' for CPUs 0-87 (all CPUs)
+```
+
+## Power
+
+### Get all the generally interesting power information:
+
+```
+$ pepc power info
+Source: Model Specific Register (MSR)
+ - TDP: 83W for all CPUs
+ - RAPL PPL1: 83W for all CPUs
+ - RAPL PPL1: 'on' for all CPUs
+ - RAPL PPL1 clamping: 'on' for all CPUs
+ - RAPL PPL1 time window: 1s for all CPUs
+ - RAPL PPL2: 99.625W for all CPUs
+ - RAPL PPL2: 'on' for all CPUs
+ - RAPL PPL2 clamping: 'on' for all CPUs
+ - RAPL PPL2 time window: 1s for all CPUs
+```
+
+## ASPM
+
+### Get all the generally interesting ASPM information:
+
+```
+$ pepc aspm info
+ASPM policy: default
+Available policies: default, performance, powersave, powersupersave
 ```
 
 ## CPU hotplug
