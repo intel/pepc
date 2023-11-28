@@ -14,6 +14,7 @@ This module provides a capability of reading and changing uncore frequency on In
 """
 
 import logging
+import re
 import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, _PerCPUCache
@@ -40,6 +41,10 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
     2. Get uncore frequency limits via Linux sysfs interfaces:
        * 'get_min_freq_limit()'
        * 'get_max_freq_limit()'
+    3. Get uncore domain ID numbers per package:
+       * 'get_domain_ids()'
+    4. Get number of uncore domains:
+       * 'get_domains_count()'
     """
 
     def _get_sysfs_path(self, key, cpu, limit=False):
@@ -162,6 +167,69 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         self._set_freq(freq, "max", cpu)
 
+    def _add_domain(self, package, domain):
+        """Add mapping for a single uncore 'domain' under 'package'."""
+
+        if package not in self._domains_info:
+            self._domains_info[package] = []
+
+        self._domains_info[package].append(domain)
+        self._domains_cnt += 1
+
+    def _build_domains_info(self):
+        """Build domain info for available uncore domains."""
+
+        self._domains_info = {}
+
+        if self._pman.is_dir(self._sysfs_base / "uncore00"):
+            for dirname, path, _ in self._pman.lsdir(self._sysfs_base):
+                match = re.match(r"^uncore(\d+)$", dirname)
+                if not match:
+                    continue
+
+                with self._pman.open(path / "package_id", "r") as fobj:
+                    package = Trivial.str_to_int(fobj.read(), what="package ID")
+
+                with self._pman.open(path / "domain_id", "r") as fobj:
+                    domain = Trivial.str_to_int(fobj.read(), what="uncore domain ID")
+
+                self._add_domain(package, domain)
+        else:
+            for dirname, path, _ in self._pman.lsdir(self._sysfs_base):
+                match = re.match(r"package_(\d+)_die_(\d+)", dirname)
+                if match:
+                    package = int(match.group(1))
+                    domain = int(match.group(2))
+                    self._add_domain(package, domain)
+
+    def get_domain_ids(self):
+        """
+        Return the domain ID dictionary, which maps package numbers to domain ID numbers, and has
+        the following format.
+
+        domain_ids = { <package-id-0>: [ <domain-id-0>, <domain-id-1> ... <domain-id-n> ],
+                       <package-id-n>: [ <domain-id-0>, <domain-id-1> ... <domain-id-n> ] }
+
+        For example, with a system with 2 packages and 3 domains under each package the domain ids
+        would be:
+
+        domain_ids = { 0: [0, 1, 2],
+                       1: [0, 1, 2] }
+        """
+
+        if not self._domains_info:
+            self._build_domains_info()
+
+        return self._domains_info
+
+    def get_domains_count(self):
+        """Get total number of uncore domains for system."""
+
+        if not self._domains_info:
+            self._build_domains_info()
+
+        return self._domains_cnt
+
     def _probe_driver(self):
         """
         Attempt to determine the required kernel module for uncore frequency support, and probe it.
@@ -237,6 +305,9 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
+
+        self._domains_info = None
+        self._domains_cnt = 0
 
         self._drv = None
         self._unload_drv = False
