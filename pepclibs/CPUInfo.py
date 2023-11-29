@@ -17,7 +17,7 @@ import json
 import logging
 from pathlib import Path
 from contextlib import suppress
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers, Human
 from pepclibs.helperlibs import KernelVersion
 
@@ -642,11 +642,33 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 with suppress(KeyError):
                     tinfo[sibling]["module"] = module
 
+    def _get_pliobj(self):
+        """Returns a 'PMLogicalId.PMLogicalID()' object."""
+
+        if not self._pliobj:
+            if not self._pli_msr_supported:
+                return None
+
+            from pepclibs.msr import PMLogicalId # pylint: disable=import-outside-toplevel
+            try:
+                self._pliobj = PMLogicalId.PMLogicalId(pman=self._pman, cpuinfo=self)
+            except ErrorNotSupported:
+                self._pli_msr_supported = False
+
+        return self._pliobj
+
     def _add_die_numbers(self, tinfo, cpus):
         """Adds die numbers for CPUs 'cpus' to 'tinfo'"""
 
+        pli_obj = self._get_pliobj()
+
         for cpu in cpus:
             if "die" in tinfo[cpu]:
+                continue
+
+            if pli_obj:
+                die = pli_obj.read_cpu_feature("domain_id", cpu)
+                tinfo[cpu]["die"] = die
                 continue
 
             base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
@@ -1536,6 +1558,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._pman = pman
         self._close_pman = pman is None
 
+        self._pliobj = None
+        # 'True' if 'MSR_PM_LOGICAL_ID' is supported by the system, otherwise 'False'. When this MSR
+        # is supported, it provides the die IDs enumeration.
+        self._pli_msr_supported = True
+
         # The topology dictionary. See 'get_topology()' for more information.
         self._topology = {}
         # Stores all initialized topology levels.
@@ -1580,4 +1607,4 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_pman",))
+        ClassHelpers.close(self, close_attrs=("_pman", "_pliobj"))
