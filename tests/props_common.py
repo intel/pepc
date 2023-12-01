@@ -26,7 +26,10 @@ def is_prop_supported(pname, cpu0_pinfo):
 
 def get_good_cpunum_opts(params, sname="package"):
     """
-    Return a list of good options that specify CPU numbers (--cpus, --packages, etc).
+    Return a list of good options that specify CPU numbers (--cpus, --packages, etc). The arguments
+    are as follows.
+      * params - test parameters.
+      * sname - scope name to get CPU numbers for.
     """
 
     if sname == "global":
@@ -105,20 +108,27 @@ def get_good_cpunum_opts(params, sname="package"):
 
         cpus_per_core = cpus_per_pkg // cores_per_pkg
         if cpus_per_core > 1:
-            opts.append(f"--core-siblings {','.join([str(i) for i in range(0, cpus_per_core + 1)])}")
-            opts.append(f"--core-siblings {','.join([str(i) for i in range(1, cpus_per_core)])}")
+            siblings = ",".join([str(i) for i in range(0, cpus_per_core + 1)])
+            opts.append(f"--core-siblings {siblings}")
+            siblings = ",".join([str(i) for i in range(1, cpus_per_core)])
+            opts.append(f"--core-siblings {siblings}")
 
         cpus_per_module = cpus_per_pkg // modules_per_pkg
         if cpus_per_module > 1:
-            opts.append(f"--module-siblings {','.join([str(i) for i in range(0, cpus_per_module + 1)])}")
-            opts.append(f"--module-siblings {','.join([str(i) for i in range(1, cpus_per_module)])}")
+            siblings = ",".join([str(i) for i in range(0, cpus_per_module + 1)])
+            opts.append(f"--module-siblings {siblings}")
+            siblings = ",".join([str(i) for i in range(1, cpus_per_module)])
+            opts.append(f"--module-siblings {siblings}")
 
         return opts
 
     assert False, f"BUG: bad scope name {sname}"
 
 def get_bad_cpunum_opts(params):
-    """Return bad target CPU specification options."""
+    """
+    Return bad target CPU specification options. The arguments are as follows.
+      * params - test parameters.
+    """
 
     opts = [f"--cpus {params['cpus'][-1] + 1}",
             f"--packages 0 --cores {params['cores'][0][-1] + 1}",
@@ -127,13 +137,18 @@ def get_bad_cpunum_opts(params):
     # Option '--cores' must be used with '--packages', except for 1-package systems, or single
     # socket system.
     if len(params["packages"]) > 1:
-        pkg0_core_ranges = Human.rangify(params['cores'][0])
+        pkg0_core_ranges = Human.rangify(params["cores"][0])
         opts += [f"--cores {pkg0_core_ranges}"]
 
     return opts
 
 def get_mechanism_opts(params, allow_readonly=True):
-    """Return a list of various variants of the '--mecahnism' option."""
+    """
+    Return a list of various variants of the '--mechanism' option.
+    The arguments are as follows.
+      * params - test parameters.
+      * allow_readonly - 'True' if including read-only mechanisms is OK.
+    """
 
     opts = []
     mnames = params["pobj"].mechanisms
@@ -223,8 +238,8 @@ def set_and_verify(params, props_vals, cpu):
     """
     Set property values, read them back and verify. The arguments are as follows.
       * params - the test parameters dictionary.
-      * props_val - an iterator of '(pname, value)' tuples, where 'pname' is the property to set and
-                    verify, and 'value' is the value to set the property to.
+      * props_vals - an iterator of '(pname, value)' tuples, where 'pname' is the property to set
+                     and verify, and 'value' is the value to set the property to.
       * cpu - CPU numbers to set the property for.
     """
 
@@ -234,7 +249,7 @@ def set_and_verify(params, props_vals, cpu):
 
     levels = cpuinfo.get_cpu_levels(cpu)
     packages = (levels["package"],)
-    dies = {levels["package"] : (levels["die"],)}
+    dies = {levels["package"]: (levels["die"],)}
 
     for pname, val in props_vals:
         sname = pobj.get_sname(pname)
@@ -272,9 +287,14 @@ def set_and_verify(params, props_vals, cpu):
         if pobj.props[pname]["sname"] in ("package", "global"):
             _verify_after_set_per_package(pobj, pname, val, packages)
 
-
 def get_max_cpu_freq(params, cpu, numeric=False):
-    """Return the maximum CPU or uncore frequency the Linux frequency driver accepts."""
+    """
+    Return the maximum CPU or uncore frequency the Linux frequency driver accepts. The arguments are
+    as follows.
+      * params - test parameters.
+      * cpu - CPU number to return the frequency for.
+      * numeric - if 'False', it is OK to return non-numeric values, such as "max" or "min".
+    """
 
     pobj = params["pobj"]
 
@@ -332,7 +352,10 @@ def _verify_value_type(pname, ptype, val):
 
 def verify_props_value_type(params, cpu):
     """
-    Check that 'get_prop_cpus()' returns values of correct type for all supported properties.
+    Check that 'get_prop_cpus()' returns values of correct type for all supported properties. The
+    arguments are as follows.
+      * params - test parameters.
+      * cpu - CPU number to verify the values for.
     """
 
     pobj = params["pobj"]
@@ -345,7 +368,12 @@ def verify_props_value_type(params, cpu):
         _verify_value_type(pname, pobj.props[pname]["type"], pvinfo["val"])
 
 def verify_get_props_mechanisms(params, cpu):
-    """Verify that the 'mname' arguments of 'get_prop_cpus()' works correctly."""
+    """
+    Verify that the 'mname' arguments of 'get_prop_cpus()' works correctly. The arguments are as
+    follows.
+      * params - test parameters.
+      * cpu - CPU number to verify mechanisms for.
+    """
 
     pobj = params["pobj"]
 
@@ -382,6 +410,9 @@ def verify_get_props_mechanisms(params, cpu):
 def verify_set_props_mechanisms_bool(params, cpu):
     """
     Verify that the 'mname' arguments of 'set_prop_cpus()' works correctly for boolean properties.
+    The arguments are as follows.
+      * params - test parameters.
+      * cpu - CPU number to verify mechanisms for.
     """
 
     siblings = {}
@@ -415,7 +446,7 @@ def verify_set_props_mechanisms_bool(params, cpu):
         cpus = siblings[sname]
 
         all_mnames = [(mname,) for mname in pinfo["mnames"]]
-        all_mnames += [("msr","sysfs"), ("sysfs" ," msr")]
+        all_mnames += [("msr", "sysfs"), ("sysfs", " msr")]
         for mnames in all_mnames:
             try:
                 mname = pobj.set_prop_cpus(pname, val, cpus, mnames=mnames)
