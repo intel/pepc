@@ -74,6 +74,30 @@ def _bug_method_not_defined(method_name):
 class PropsClassBase(ClassHelpers.SimpleCloseContext):
     """
     Base class for higher level classes implementing properties (e.g. 'CStates' or 'PStates').
+
+    Public methods overview.
+
+    1. Per-CPU methods.
+       * 'get_prop_cpus()' - get a property for multiple CPUs.
+       * 'get_cpu_prop()' - get a property for a single CPU.
+       * 'set_prop_cpus()' - set a property for multiple CPUs.
+       * 'set_cpu_prop()' - set a property for a single CPU.
+       * 'prop_is_supported_cpu()' - check if a property is supported for a single CPU.
+    2. Per-die methods.
+       * 'get_prop_dies()' - get a property for multiple dies.
+       * 'get_die_prop()' - get a property for a single die.
+       * 'set_prop_dies()' - set a property for multiple dies.
+       * 'set_die_prop()' - set a property for a single die.
+       * 'prop_is_supported_die()' - check if a property is supported for a single die.
+    3. Per-package methods.
+       * 'get_prop_packages()' - get a property for multiple packages.
+       * 'get_package_prop()' - get a property for a single package.
+       * 'set_prop_packages()' - set a property for multiple packages.
+       * 'set_package_prop()' - set a property for a single package.
+       * 'prop_is_supported_package()' - check if a property is supported for a single package.
+    4. Misc. methods.
+       * 'get_sname()' - get property scope name.
+       * 'get_mechanism_descr()' - get a mechanism description string.
     """
 
     def get_mechanism_descr(self, mname):
