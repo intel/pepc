@@ -158,7 +158,7 @@ def _get_good_config_freq_opts(params, sname="CPU"):
     pobj = params["pobj"]
 
     if sname == "CPU":
-        if pobj.prop_is_supported("min_freq", cpu):
+        if pobj.prop_is_supported_cpu("min_freq", cpu):
             opts += ["--min-freq",
                     "--max-freq",
                     "--min-freq --max-freq",
@@ -170,12 +170,12 @@ def _get_good_config_freq_opts(params, sname="CPU"):
                     f"--min-freq min --max-freq {maxfreq}",
                     f"--max-freq {maxfreq} --min-freq min"]
 
-            if pobj.prop_is_supported("max_eff_freq", cpu):
+            if pobj.prop_is_supported_cpu("max_eff_freq", cpu):
                 opts += ["--max-freq lfm",
                         "--max-freq eff",
                         "--min-freq lfm",
                         "--min-freq eff"]
-            if pobj.prop_is_supported("base_freq", cpu):
+            if pobj.prop_is_supported_cpu("base_freq", cpu):
                 opts += ["--max-freq base",
                         "--max-freq hfm",
                         "--min-freq base",
@@ -183,7 +183,7 @@ def _get_good_config_freq_opts(params, sname="CPU"):
         return opts
 
     if sname == "die":
-        if pobj.prop_is_supported("min_uncore_freq", cpu):
+        if pobj.prop_is_supported_cpu("min_uncore_freq", cpu):
             opts += ["--min-uncore-freq",
                     "--max-uncore-freq",
                     "--min-uncore-freq --max-uncore-freq",
@@ -207,7 +207,7 @@ def _get_bad_config_freq_opts(params):
             "--min-freq maximum",
             "--min-freq max --max-freq min"]
 
-    if pobj.prop_is_supported("min_uncore_freq", cpu):
+    if pobj.prop_is_supported_cpu("min_uncore_freq", cpu):
         opts += ["--min-uncore-freq max --max-uncore-freq min"]
 
     return opts
@@ -279,7 +279,7 @@ def _get_good_config_opts(params, sname="package"):
     opts = []
 
     if sname == "global":
-        if pobj.prop_is_supported("intel_pstate_mode", cpu):
+        if pobj.prop_is_supported_cpu("intel_pstate_mode", cpu):
             # The "off" mode is not supported when HWP is enabled.
             if pobj.get_cpu_prop("hwp", cpu)["val"] == "off":
                 opts += ["--intel-pstate-mode off"]
@@ -289,20 +289,20 @@ def _get_good_config_opts(params, sname="package"):
             # "off" mode.
             opts += ["--intel-pstate-mode", "--intel-pstate-mode passive"]
 
-        if pobj.prop_is_supported("turbo", cpu):
+        if pobj.prop_is_supported_cpu("turbo", cpu):
             opts += ["--turbo", "--turbo enable", "--turbo OFF"]
 
         return opts
 
-    if pobj.prop_is_supported("governor", cpu):
+    if pobj.prop_is_supported_cpu("governor", cpu):
         opts += ["--governor"]
         for governor in pobj.get_cpu_prop("governors", cpu)["val"]:
             opts += [f"--governor {governor}"]
 
-    if pobj.prop_is_supported("epp", cpu):
+    if pobj.prop_is_supported_cpu("epp", cpu):
         opts += ["--epp", "--epp 0", "--epp 128", "--epp performance"]
 
-    if pobj.prop_is_supported("epb", cpu):
+    if pobj.prop_is_supported_cpu("epb", cpu):
         opts += ["--epb", "--epb 0", "--epb 15", "--epb performance"]
 
     return opts
@@ -315,21 +315,21 @@ def _get_bad_config_opts(params, sname="package"):
     opts = []
 
     if sname == "global":
-        if pobj.prop_is_supported("intel_pstate_mode", cpu):
+        if pobj.prop_is_supported_cpu("intel_pstate_mode", cpu):
             opts += ["--intel-pstate-mode Dagny"]
 
-        if pobj.prop_is_supported("turbo", cpu):
+        if pobj.prop_is_supported_cpu("turbo", cpu):
             opts += ["--turbo 1"]
 
         return opts
 
-    if pobj.prop_is_supported("governor", cpu):
+    if pobj.prop_is_supported_cpu("governor", cpu):
         opts += ["--governor savepower"]
 
-    if pobj.prop_is_supported("epp", cpu):
+    if pobj.prop_is_supported_cpu("epp", cpu):
         opts += ["--epp 256", "--epp green_tree"]
 
-    if pobj.prop_is_supported("epb", cpu):
+    if pobj.prop_is_supported_cpu("epb", cpu):
         opts += ["--epb 16", "--epb green_tree"]
 
     return opts
@@ -513,13 +513,13 @@ def test_pstates_frequency_set_order(params):
         return
 
     # When Turbo is disabled the max frequency may be limited.
-    if pobj.prop_is_supported("turbo", cpu):
+    if pobj.prop_is_supported_cpu("turbo", cpu):
         sname = pobj.get_sname("turbo")
         siblings = cpuinfo.get_cpu_siblings(0, level=sname)
         pobj.set_prop_cpus("turbo", "on", siblings)
 
-    if pobj.prop_is_supported("min_freq", cpu):
+    if pobj.prop_is_supported_cpu("min_freq", cpu):
         _set_freq_pairs(params, "min_freq", "max_freq")
 
-    if pobj.prop_is_supported("min_uncore_freq", cpu):
+    if pobj.prop_is_supported_cpu("min_uncore_freq", cpu):
         _set_freq_pairs(params, "min_uncore_freq", "max_uncore_freq")

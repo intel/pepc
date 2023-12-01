@@ -54,7 +54,7 @@ def get_params(hostspec, tmp_path_factory):
         testcpus = [allcpus[0], allcpus[medidx], allcpus[-1]]
         params["cstates"] = []
 
-        if pobj.prop_is_supported("idle_driver", 0):
+        if pobj.prop_is_supported_cpu("idle_driver", 0):
             for _, csinfo in pobj.get_cstates_info(cpus=(testcpus[0],)):
                 for csname in csinfo:
                     params["cstates"].append(csname)
@@ -88,7 +88,7 @@ def _get_good_config_opts(params, sname="package"):
     pobj = params["pobj"]
 
     if sname == "global":
-        if pobj.prop_is_supported("governor", cpu):
+        if pobj.prop_is_supported_cpu("governor", cpu):
             opts += ["--governor"]
             for governor in pobj.get_cpu_prop("governors", cpu)["val"]:
                 opts += [f"--governor {governor}"]
@@ -96,27 +96,27 @@ def _get_good_config_opts(params, sname="package"):
 
     if sname == "package":
 
-        if pobj.prop_is_supported("c1e_autopromote", cpu):
+        if pobj.prop_is_supported_cpu("c1e_autopromote", cpu):
             opts += ["--c1e-autopromote",
                     "--c1e-autopromote on",
                     "--c1e-autopromote OFF"]
 
-        if pobj.prop_is_supported("cstate_prewake", cpu):
+        if pobj.prop_is_supported_cpu("cstate_prewake", cpu):
             opts += ["--cstate-prewake",
                     "--cstate-prewake on",
                     "--cstate-prewake OFF"]
 
-        if pobj.prop_is_supported("c1_demotion", cpu):
+        if pobj.prop_is_supported_cpu("c1_demotion", cpu):
             opts += ["--c1-demotion",
                     "--c1-demotion on",
                     "--c1-demotion OFF"]
 
-        if pobj.prop_is_supported("c1_undemotion", cpu):
+        if pobj.prop_is_supported_cpu("c1_undemotion", cpu):
             opts += ["--c1-undemotion",
                     "--c1-undemotion on",
                     "--c1-undemotion OFF"]
 
-        if pobj.prop_is_supported("pkg_cstate_limit", cpu):
+        if pobj.prop_is_supported_cpu("pkg_cstate_limit", cpu):
             opts += ["--pkg-cstate-limit"]
             lock = pobj.get_cpu_prop("pkg_cstate_limit_lock", cpu)["val"]
             if lock == "off":
@@ -126,7 +126,7 @@ def _get_good_config_opts(params, sname="package"):
         return opts
 
     if sname == "CPU":
-        if pobj.prop_is_supported("idle_driver", cpu):
+        if pobj.prop_is_supported_cpu("idle_driver", cpu):
             opts += ["--enable all",
                     "--disable all",
                     f"--enable {params['cstates'][-1]}",

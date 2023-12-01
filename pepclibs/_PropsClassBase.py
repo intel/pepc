@@ -365,10 +365,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for pvinfo in self.get_prop_cpus(pname, cpus=(cpu,), mnames=mnames):
             return pvinfo
 
-    def prop_is_supported(self, pname, cpu):
+    def prop_is_supported_cpu(self, pname, cpu):
         """
-        Return 'True' if property 'pname' is supported, otherwise return 'False'. The arguments are
-        as follows:
+        Return 'True' if property 'pname' is supported by CPU 'cpu, otherwise return 'False'. The
+        arguments are as follows:
           * pname - property name to check.
           * cpu - CPU number to check the property for.
         """
