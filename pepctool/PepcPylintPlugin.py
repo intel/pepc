@@ -722,6 +722,14 @@ class ScopeStack():
 
         return self._access_variable(node, read=True)
 
+    def get_class_name(self):
+        """Get name of current class scope, if any."""
+
+        if self._class_scope:
+            return self._class_scope["name"]
+
+        return None
+
     def __init__(self, parent):
         """
         Class constructor for 'ScopeStack()'. Arguments are as follows.
@@ -788,6 +796,22 @@ class PepcASTChecker(BaseChecker):
             "pepc-arg-not-documented",
             (
                 "Used when a function argument is not documented."
+            ),
+        ),
+        "W9961": (
+            "Function argument document reference '%s' not found",
+            "pepc-arg-doc-ref-not-found",
+            (
+                """
+                Docstring refers to another function for argument reference, but argument not
+                found.
+                """),
+        ),
+        "W9962": (
+            "Function argument document for '%s' is external",
+            "pepc-arg-doc-ref-not-local",
+            (
+                "Docstring refers to another function that is not local to this file."
             ),
         ),
     }
@@ -909,6 +933,75 @@ class PepcASTChecker(BaseChecker):
 
         return args
 
+    def _document_arg(self, func, arg):
+        """Tag a single 'arg' as documented for function 'func'."""
+
+        if func not in self._documented_args:
+            self._documented_args[func] = set()
+
+        self._documented_args[func].add(arg)
+
+        if func in self._cross_refer_args:
+            for arg_ref in self._cross_refer_args[func]:
+                if arg_ref["name"] == arg:
+                    self._document_arg(arg_ref["func"], arg)
+                    arg_ref["found"] = True
+
+    def _document_args(self, func, args):
+        """Tag 'args' as documented for function 'func'."""
+
+        for arg in args:
+            self._document_arg(func, arg)
+
+    def _is_local_class(self, class_name):
+        """Check if the class is local to this file or not."""
+
+        for func in self._documented_args:
+            match = re.match(fr"^{class_name}.", func)
+            if match:
+                return True
+
+        return False
+
+    def _is_local_ref(self, func):
+        """Check if the function is local to this file or not."""
+
+        func_name = func.split(".")
+
+        if len(func_name) >= 2:
+            return self._is_local_class(func_name[0])
+
+        return True
+
+    def _verify_cross_ref_args(self):
+        """Verify that all cross referenced function arguments have been documented."""
+
+        for func, func_args in self._cross_refer_args.items():
+            local = self._is_local_ref(func)
+            for arg in func_args:
+                if "found" in arg:
+                    continue
+                if not local:
+                    if not self.config.pepc_plugin_strict:
+                        continue
+
+                    self.add_message("pepc-arg-doc-ref-not-local", args=arg["name"],
+                                     node=arg["node"])
+                else:
+                    self.add_message("pepc-arg-doc-ref-not-found", args=arg["name"],
+                                     node=arg["node"])
+
+    def _cross_refer_arg(self, node, func, arg, func_ref):
+        """Cross refer documentation for function argument."""
+
+        if func_ref in self._documented_args and arg in self._documented_args[func_ref]:
+            return
+
+        if func_ref not in self._cross_refer_args:
+            self._cross_refer_args[func_ref] = []
+
+        self._cross_refer_args[func_ref] += [{"name": arg, "func": func, "node": node}]
+
     def _check_func_docstring(self, node):
         """
         Verify function docstring for 'node'. Checks that either all the function arguments are
@@ -928,13 +1021,19 @@ class PepcASTChecker(BaseChecker):
         if not public and not self.config.pepc_plugin_strict:
             return
 
+        # Generate name for current function.
+        name = node.name
+        class_name = self._scope.get_class_name()
+        if class_name:
+            name = class_name + "." + name
+
         args = set(self._get_args(node.args.args))
 
         doc_long = set()
         doc_short = set()
 
         for arg in args:
-            match = re.search(fr".*\* {arg} - ", docstring, re.MULTILINE)
+            match = re.search(fr" *\* {arg} - ", docstring, re.MULTILINE)
             if match:
                 doc_long.add(arg)
 
@@ -942,17 +1041,25 @@ class PepcASTChecker(BaseChecker):
             if match:
                 doc_short.add(arg)
 
-        # Pick whichever is larger.
-        if len(doc_long) > len(doc_short):
+        # Use long format if it is available.
+        if doc_long:
             documented_args = doc_long
         else:
             documented_args = doc_short
 
+        self._document_args(name, documented_args)
+
         missing_args = args.difference(documented_args)
 
-        if args != documented_args and (public or missing_args != args):
+        # Check for argument documentation cross references.
+        match = re.search(r"^[^\*]*[Ss]ame as \S* *'([^']+)\(\)'", docstring, re.MULTILINE)
+        if match:
             for arg in missing_args:
-                self.add_message("pepc-arg-not-documented", args=arg, node=node.doc_node)
+                self._cross_refer_arg(node, name, arg, match.group(1))
+        else:
+            if args != documented_args and (public or missing_args != args):
+                for arg in missing_args:
+                    self.add_message("pepc-arg-not-documented", args=arg, node=node.doc_node)
 
     def _check_class_docstring(self, node):
         """Verify class docstring for class defined in 'node'. For future implementation."""
@@ -970,6 +1077,7 @@ class PepcASTChecker(BaseChecker):
         """AST callback for a module exit from 'node'."""
 
         # pylint: disable=unused-argument
+        self._verify_cross_ref_args()
         self._scope.pop("module")
 
     def visit_classdef(self, node):
@@ -1004,6 +1112,8 @@ class PepcASTChecker(BaseChecker):
 
         super().__init__(linter=linter)
         self._scope = ScopeStack(self)
+        self._documented_args = {}
+        self._cross_refer_args = {}
 
 def register(linter):
     """
