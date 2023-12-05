@@ -13,7 +13,7 @@ terms of what CPU, core, module, die, or package numbers the operation should re
 
 import logging
 from pepclibs import CPUInfo
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, ArgParse, Human
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, ArgParse, Human, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
@@ -28,6 +28,8 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
     Public methods overview.
     * 'get_cpus()' - return the target CPU numbers as a list of integers.
+    * 'get_dies()' - return the target die numbers as a dictionary.
+    * 'get_packages()' - return the target CPU numbers as a list of integers.
     """
 
     def _get_cpus(self, exclude=None):
@@ -80,9 +82,59 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
     def get_cpus(self):
         """Return list of target CPU numbers."""
 
-        if self._cpus is None:
-            self._cpus = self._get_cpus()
-        return self._cpus
+        if "cpus" not in self._cache:
+            self._cache["cpus"] = self._get_cpus()
+        return self._cache["cpus"]
+
+    def get_dies(self):
+        """
+        Return target die numbers.
+
+        The die numbers are returned in form of a dictionary, with keys being integer package
+        numbers and values being lists of integer die numbers in the package.
+
+        Raise 'ErrorNoTarget' if no dies are targeted.
+        """
+
+        if "dies" in self._cache:
+            return self._cache["dies"]
+
+        cpus = self._get_cpus(exclude=["die"])
+        dies, rem_cpus = self._cpuinfo.cpus_div_dies(cpus)
+        if rem_cpus:
+            human_cpus = Human.rangify(rem_cpus)
+            raise ErrorNoTarget(f"the following CPUs do not comprise a die: {human_cpus}",
+                             cpus=rem_cpus)
+
+        if self.dies:
+            for package, pkg_dies in self.dies.items():
+                dies[package] += pkg_dies
+
+        for package in dies:
+            dies[package] = Trivial.list_dedup(dies[package])
+
+        self._cache["dies"] = dies
+        return self._cache["dies"]
+
+    def get_packages(self):
+        """
+        Return list of target package numbers. Raise 'ErrorNoTarget' if no packages are target.
+        """
+
+        if "packages" in self._cache:
+            return self._cache["packages"]
+
+        cpus = self._get_cpus(exclude=["package"])
+        packages, rem_cpus = self._cpuinfo.cpus_div_packages(cpus)
+        if rem_cpus:
+            human_cpus = Human.rangify(rem_cpus)
+            raise ErrorNoTarget(f"the following CPUs do not comprise a package: {human_cpus}",
+                                cpus=rem_cpus)
+
+        if self.packages:
+            packages += self.packages
+        self._cache["packages"] = Trivial.list_dedup(packages)
+        return self._cache["packages"]
 
     def _parse_input_nums(self, nums):
         """
@@ -222,8 +274,8 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         self.module_siblings = None
         self.module_sib_cpus = None
 
-        # The cached result of 'get_cpus()'.
-        self._cpus = None
+        # The cached result of 'get_cpus()', 'get_dies()', and 'get_packages()'.
+        self._cache = {}
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
@@ -306,7 +358,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                 self.core_sib_cpus = self._cpuinfo.select_core_siblings(_cpus, self.core_siblings)
 
         if _cpus is not None:
-            self._cpus = _cpus
+            self._cache["cpus"] = _cpus
 
         if _LOG.getEffectiveLevel() == logging.DEBUG:
             if self.cpus:
