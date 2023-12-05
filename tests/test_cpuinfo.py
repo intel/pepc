@@ -377,24 +377,24 @@ def _test_div_create_exp_res(lvl, nums, cpus):
     method of "CPUInfo".
        * 'cpus_div_packages()' returns a tuple with first element being a list of integers. For
           example: ([0,1], []).
-       * 'cpus_div_cores()' returns a tuple with first element being a list of tuples of 2 integers.
-          For example ([(0,0), (1,0)], []).
+       * 'cpus_div_cores()' and 'cpu_div_dies()' return a tuple with first element being a
+          dictionary of lists. For example ({0: [0[], 1: [0])}, []).
 
-    The difference is that 'cpus_div_cores()' returns the list of (core, package) pairs, while
-    'cpus_div_packages()' returns the list of package numbers. And the reason for this is that core
-    numbers are not global.
+    The difference is that 'cpus_div_cores()' and 'cpus_div_dies()' return the dictionary n the
+    {package: [list of cores or dies]} format. , while 'cpus_div_packages()' returns the list of
+    package numbers. And the reason for this is that core and die numbers are relative to the
+    package.
 
     For globally-numbered levels, such as "package", this function does nothing and just returns the
     ('nums', 'cpus') tuple.
-
-    For non-globally numbered levels this function  the list of core numbers in 'nums' into '(core,
-    package)' pairs. It uses the fact that '_get_level_nums()' returns only package 0 numbers.
     """
 
     if _is_globally_numbered(lvl):
         return (nums, cpus)
 
-    return ([(num, 0) for num in nums], cpus)
+    if nums:
+        return ({0:nums}, cpus)
+    return ({}, cpus)
 
 def _test_cpuinfo_div(cpuinfo):
     """Implements the 'test_cpuinfo_div()'."""

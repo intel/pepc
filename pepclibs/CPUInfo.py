@@ -1113,25 +1113,24 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         follows.
           * cpus - same as in 'normalize_cpus()'.
 
-        Return a tuple of two lists: ('cores', 'rem_cpus').
-          * cores - list of ('core', 'package') tuples with all CPUs present in 'cpus'.
-              o core - core number.
-              o package - package number 'core' belongs to
+        Return a tuple of ('cores', 'rem_cpus').
+          * cores - a dictionary indexed by the package numbers with values being lists of core
+                    numbers.
           * rem_cpus - list of remaining CPUs that cannot be converted to a core number.
 
-        The return value is inconsistent with 'cpus_div_packages()' because cores numbers are not
-        global, so they must go with package numbers.
+        The return value is inconsistent with 'cpus_div_packages()' because core numbers are
+        realtive to package numbers.
 
         Consider an example of a system with 2 packages, 1 core per package, 2 CPUs per core.
           * package 0 includes core 0 and CPUs 0 and 1
           * package 1 includes core 0 and CPUs 2 and 3
 
-        1. cpus_div_cores("0-3") would return ([(0,0), (0,1)], []).
-        2. cpus_div_cores("2,3") would return ([(0,1)],        []).
-        3. cpus_div_cores("0,3") would return ([],             [0,3]).
+        1. cpus_div_cores("0-3") would return ({0:[0], 1:[0]}, []).
+        2. cpus_div_cores("2,3") would return ({1:[0]},        []).
+        3. cpus_div_cores("0,3") would return ({},             [0,3]).
         """
 
-        cores = []
+        cores = {}
         rem_cpus = []
 
         cpus = self.normalize_cpus(cpus)
@@ -1142,7 +1141,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 siblings_set = set(self.cores_to_cpus(cores=(core,), packages=(pkg,)))
 
                 if siblings_set.issubset(cpus_set):
-                    cores.append((core, pkg))
+                    if pkg not in cores:
+                        cores[pkg] = []
+                    cores[pkg].append(core)
                     cpus_set -= siblings_set
 
         # Return the remaining CPUs in the order of the input 'cpus'.
@@ -1155,33 +1156,33 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def cpus_div_dies(self, cpus):
         """
         This method is similar to 'cpus_div_packages()', but it checks which CPU numbers in 'cpus'
-        cover entire dies(s). The arguments are as follows.
+        cover entire die(s). So it is inverse to the 'dies_to_cpus()' method. The arguments are as
+        follows.
           * cpus - same as in 'normalize_cpus()'.
 
-        Return a tuple of two lists: ('dies', 'rem_cpus').
-          * dies - list of ('die', 'package') tuples with all CPUs present in 'cpus'.
-              o die - die number.
-              o package - package number 'die' belongs to
+        Return a tuple of ('dies', 'rem_cpus').
+          * dies - a dictionary indexed by the package numbers with values being lists of die
+                    numbers.
           * rem_cpus - list of remaining CPUs that cannot be converted to a die number.
 
-        The return value is inconsistent with 'cpus_div_packages()' because die numbers are not
-        global, so they must go with package numbers.
+        The return value is inconsistent with 'cpus_div_packages()' because die numbers are
+        realtive to package numbers.
 
         Consider an example of a system with 2 packages, 2 dies per package, 1 core per die, 2 CPUs
         per core.
-          * package 0 includes dies 0 and 1, cores 0 and 1, and CPUs 0, 1, 2, and 3
+          * package 0 includes dies 0 and 1 and CPUs 0, 1, 2, and 3
             - die 0 includes CPUs 0 and 1
             - die 1 includes CPUs 2 and 3
-          * package 1 includes dies 0 and 1, cores 0 and 1, and CPUs 4, 5, 6, and 7
+          * package 1 includes dies 0 and 1 and CPUs 4, 5, 6, and 7
             - die 0 includes CPUs 4 and 5
             - die 1 includes CPUs 6 and 7
 
-        1. cpus_div_dies("0-3") would return   ([(0,0), (1,0)], []).
-        2. cpus_div_dies("4,5,6") would return ([(1,1)],        [6]).
-        3. cpus_div_dies("0,3") would return   ([],             [0,3]).
+        1. cpus_div_dies("0-3") would return   ({0:[0], 0:[1]}, []).
+        2. cpus_div_dies("4,5,6") would return ({1:[1]},        [6]).
+        3. cpus_div_dies("0,3") would return   ({},             [0,3]).
         """
 
-        dies = []
+        dies = {}
         rem_cpus = []
 
         cpus = self.normalize_cpus(cpus)
@@ -1192,7 +1193,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 siblings_set = set(self.dies_to_cpus(dies=(die,), packages=(pkg,)))
 
                 if siblings_set.issubset(cpus_set):
-                    dies.append((die, pkg))
+                    if pkg not in dies:
+                        dies[pkg] = []
+                    dies[pkg].append(die)
                     cpus_set -= siblings_set
 
         # Return the remaining CPUs in the order of the input 'cpus'.
