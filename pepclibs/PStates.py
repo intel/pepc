@@ -314,7 +314,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                                                           enable_cache=self._enable_cache)
         return self._cpufreq_cppc_obj
 
-
     def _get_cpufreq_msr_obj(self):
         """Return a '_CPUFreqMSR' object."""
 
@@ -325,7 +324,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                                                         msr=self._msr,
                                                         enable_cache=self._enable_cache)
         return self._cpufreq_msr_obj
-
 
     def _get_uncfreq_obj(self):
         """Return an '_UncoreFreq' object."""
