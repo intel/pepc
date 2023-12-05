@@ -222,10 +222,11 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         self._yaml_dump(yaml_pinfo)
         return len(yaml_pinfo)
 
-    def _build_aggr_pinfo(self, pnames, cpus, mnames, skip_ro, skip_unsupported):
+    def _build_aggr_pinfo(self, pnames, optar, mnames, skip_ro, skip_unsupported):
         """
-        Build and return the aggregate properties dictionary for properties in 'pnames'. The
-        aggregate properties dictionary has the following format.
+        Build and return the aggregate properties dictionary for properties in 'pnames'.
+
+        The aggregate properties dictionary has the following format.
 
           { mname1 : { pname1 : { val1 : [ list of CPUs having value1 ],
                                   val2 : [ list of CPUs having value2 ],
@@ -245,6 +246,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
 
         aggr_pinfo = {}
+        cpus = optar.get_cpus()
 
         for pname in pnames:
             prop = self._pobj.props[pname]
@@ -315,8 +317,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        cpus = optar.get_cpus()
-        aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, mnames, skip_ro, skip_unsupported)
+        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro, skip_unsupported)
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
@@ -358,7 +359,7 @@ class PowerPrinter(_PropsPrinter):
 class CStatesPrinter(_PropsPrinter):
     """This class provides API for printing C-states information."""
 
-    def _adjust_aggr_pinfo_pcs_limit(self, aggr_pinfo, cpus, mnames):
+    def _adjust_aggr_pinfo_pcs_limit(self, aggr_pinfo, optar, mnames):
         """
         The aggregate properties information dictionary 'aggr_pinfo' includes the 'pkg_cstate_limit'
         property. This property is read/write in case the corresponding MSR is unlocked, and it is
@@ -366,6 +367,7 @@ class CStatesPrinter(_PropsPrinter):
         the 'pkg_cstate_limit' key of 'aggr_pinfo'.
         """
 
+        cpus = optar.get_cpus()
         for pinfo in aggr_pinfo.values():
             pcsl_info = pinfo.get("pkg_cstate_limit")
             if not pcsl_info:
@@ -512,14 +514,13 @@ class CStatesPrinter(_PropsPrinter):
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        cpus = optar.get_cpus()
-        aggr_pinfo = self._build_aggr_pinfo(pnames, cpus, mnames, skip_ro, skip_unsupported)
+        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro, skip_unsupported)
 
         if skip_ro and "pkg_cstate_limit" in pnames:
             # Special case: the package C-state limit option is read-write in general, but if it is
             # locked, it is effectively read-only. Since 'skip_ro' is 'True', we need to adjust
             # 'aggr_pinfo'.
-            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo, cpus, mnames)
+            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo, optar, mnames)
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
