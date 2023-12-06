@@ -13,6 +13,7 @@ Misc. helpers shared between various 'pepc' commands.
 import logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import Systemctl, Trivial, ArgParse
+from pepctool._OpTarget import ErrorNoTarget
 
 _LOG = logging.getLogger()
 
@@ -99,3 +100,52 @@ def parse_mechanisms(mechanisms, pobj):
             raise ErrorNotSupported(f"mechanism '{mname}' is not supported. The supported " \
                                     f"mechanisms are: {mnames}")
     return mnames
+
+def _get_sname_and_nums(pobj, cpuinfo, pname, optar):
+    """
+    Find out whether property 'pname' should be accessed on the per-CPU, per-die, or per-package
+    manner. Return the corresponding scope name and CPU, die, or package numbers.
+    """
+
+    sname = pobj.get_sname(pname)
+    if sname is None:
+        sname = "CPU"
+
+    # There is only one die per package. Use per-package interface.
+    force_per_package = (sname == "die" and cpuinfo.get_dies_count(package=0) == 1)
+
+    if force_per_package or sname == "package":
+        try:
+            return "package", optar.get_packages()
+        except ErrorNoTarget:
+            sname = "CPU"
+
+    if sname == "die":
+        try:
+            return "die", optar.get_dies()
+        except ErrorNoTarget:
+            sname = "CPU"
+
+    return "CPU", optar.get_cpus()
+
+def get_prop_sname(pobj, cpuinfo, pname, optar, mnames):
+    """
+    Yield property value dictionaries ('pvinfo', refer to '_PropsClassBase.get_prop_cpu()')
+    for property 'pname' taking into account its scope. The arguments are as follows.
+      * pobj - a property object, such as 'PStates' or 'CStates'.
+      * cpuinfo - CPU information object ('CPUInfo.CPUInfo()') for the target system.
+      * pname - name of the property to get values for.
+      * optar - an '_OpTarget.OpTarget()' object specifying the CPUs, packages, etc to get property
+                value dictionaries for.
+      * mnames - list of mechanisms to use for getting the property (see
+                 '_PropsClassBase.MECHANISMS').
+    """
+
+    sname, nums = _get_sname_and_nums(pobj, cpuinfo, pname, optar)
+
+    if sname == "CPU":
+        yield from pobj.get_prop_cpus(pname, nums, mnames=mnames)
+    elif sname == "die":
+        yield from pobj.get_prop_dies(pname, nums, mnames=mnames)
+    else:
+        yield from pobj.get_prop_packages(pname, nums, mnames=mnames)

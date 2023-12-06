@@ -15,6 +15,7 @@ This module provides API for printing properties.
 
 import sys
 import logging
+from pepctool import _PepcCommon
 from pepclibs.helperlibs import ClassHelpers, Human, YAML
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
@@ -32,7 +33,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             _LOG.info(msg)
 
     def _fmt_cpus(self, cpus):
-        """Formats and returns a string describing CPU numbers in the 'cpus' list."""
+        """Format and return a string describing CPU numbers in the 'cpus' list."""
 
         cpus_range = Human.rangify(cpus)
         if len(cpus) == 1:
@@ -53,6 +54,70 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 msg += f" (packages {pkgs_range})"
 
         return msg
+
+    def _fmt_packages(self, packages):
+        """Format and return a string describing package numbers in the 'packages' list."""
+
+        allpkgs = self._cpuinfo.get_packages()
+        if set(packages) == set(allpkgs):
+            if len(allpkgs) == 1:
+                return "all CPUs"
+            return "all packages"
+
+        pkgs_range = Human.rangify(packages)
+        if len(packages) == 1:
+            return f"package {pkgs_range}"
+        return f"packages {pkgs_range}"
+
+    def _fmt_dies(self, pkgs_dies):
+        """Format and return a string describing die numbers in the 'dies' dictionary."""
+
+        # Special case: provide a simpler and easier to read message when dealing with all
+        # dies in all packages.
+        all_dies_all_packages = True
+        for pkg, dies in pkgs_dies.items():
+            if len(dies) != self._cpuinfo.get_dies_count(package=pkg):
+                all_dies_all_packages = False
+
+        packages_count = self._cpuinfo.get_packages_count()
+        if all_dies_all_packages and len(pkgs_dies) == packages_count:
+            if packages_count == 1:
+                return "all CPUs"
+            return "all dies in all packages"
+
+        # Format the detailed string. Examples:
+        #   * all dies of package 0, dies 1,2 of package 1.
+        #   * die 1 of package 0, dies 0-3 of package 1.
+        result = []
+        for pkg, dies in pkgs_dies.items():
+            if len(dies) == self._cpuinfo.get_dies_count(package=pkg):
+                dies_str = "all dies"
+            else:
+                dies_str = Human.rangify(dies)
+                if len(dies) == 1:
+                    plural = ""
+                else:
+                    plural = "s"
+                dies_str = f"die{plural} {dies_str}"
+
+            result.append(f"{dies_str} in package {pkg}")
+
+        return ", ".join(result)
+
+    def _fmt_nums(self, sname, nums):
+        """
+        Formats and returns a string describing CPU, die, or package numbers in the 'nums' list (CPU
+        or package case) or dictionary (die case)
+        """
+
+        if sname == "CPU":
+            return self._fmt_cpus(nums)
+        if sname == "package":
+            return self._fmt_packages(nums)
+        if sname == "die":
+            return self._fmt_dies(nums)
+
+        raise Error(f"BUG: unexpected scope name {sname} for message formatting")
 
     def _format_value_human(self, prop, val):
         """Format value 'val' of property described by 'prop' into the "human" format."""
@@ -124,14 +189,33 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return val
 
-    def _print_prop_human(self, prop, val, action=None, cpus=None, prefix=None):
-        """Format and print a message about property 'prop' in the "human" format."""
+    def _print_prop_human(self, prop, sname, val, nums, action=None, prefix=None):
+        """
+        Format and print a message about property 'prop' and its value 'val' in the "human" format.
+        The arguments are as follows.
+          * prop - the property information dictionary (for the property to print).
+          * sname - scope name corresponding to the API that was used for reading the property. Can
+                    be "die", "package", or "CPU" at the moment. Note, there is also
+                    'prop["sname"]', and this is the functional scope of the property, but it does
+                    not have to have the same value as 'sname'. For example, a property with "core"
+                    scope ('prop["sname"] == "core"') could have been read using the per-CPU API, so
+                    'sname' will be "CPU".
+          * nums - a list defining the CPU or package numbers where the property has value 'val'.
+                   But if 'sname' is "die", 'nums" is a dictionary with keys being package numbers
+                   and values being lists of die numbers within the package (the key).
+          * val - the value of property 'prop["name"]' on CPUs/dies/packages defined by 'num'.
+          * action - same as in 'print_props()'.
+          * prefix - a string to print before the property value message. This method prints a singe
+                     line, and 'prefix' is the string to prefix the line with.
+        """
 
-        if cpus is None or prop["sname"] == "global":
+        if nums is None or prop["sname"] == "global":
+            # If there are no CPU/die/package numbers or this is a global property, just do not
+            # print any of the numbers.
             sfx = ""
         else:
-            cpus = self._fmt_cpus(cpus)
-            sfx = f" for {cpus}"
+            nums = self._fmt_nums(sname, nums)
+            sfx = f" for {nums}"
 
         msg = f"{prop['name']}: "
 
@@ -162,8 +246,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         printed = 0
         for pname, pinfo in aggr_pinfo.items():
-            for val, cpus in pinfo["vals"].items():
-                self._print_prop_human(props[pname], val, cpus=cpus, action=action, prefix=prefix)
+            for val, nums, in pinfo["vals"].items():
+                self._print_prop_human(props[pname], pinfo["sname"], val, nums=nums, action=action,
+                                       prefix=prefix)
                 printed += 1
 
         return printed
@@ -204,7 +289,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         for pinfo in aggr_pinfo.values():
             for pname, pinfo in pinfo.items():
-                for val, cpus in pinfo["vals"].items():
+                sname = pinfo["sname"]
+                for val, nums in pinfo["vals"].items():
                     if val is None:
                         val = "not supported"
 
@@ -217,10 +303,33 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                     if prop["type"].startswith("dict["):
                         val = dict(val)
 
-                    yaml_pinfo[pname].append({"value" : val, "cpus" : Human.rangify(cpus)})
+                    if sname != "die":
+                        nums_range = Human.rangify(nums)
+                    else:
+                        nums_range = {}
+                        for pkg, dies in nums.items():
+                            nums_range[pkg] = Human.rangify(dies)
+
+                    yaml_pinfo[pname].append({"value" : val, sname: nums_range})
 
         self._yaml_dump(yaml_pinfo)
         return len(yaml_pinfo)
+
+    @staticmethod
+    def _get_pvinfo_num(pvinfo):
+        """
+        Return CPU, die, or package number and the level name from 'pvinfo' (property value info).
+        """
+
+        if "cpu" in pvinfo:
+            return "CPU", pvinfo["cpu"]
+        if "die" in pvinfo:
+            return "die", (pvinfo["package"], pvinfo["die"])
+        if "package" in pvinfo:
+            return "package", pvinfo["package"]
+
+        raise Error("BUG: bad property value dictionary, no 'cpu', 'die', or 'package' key found.\n"
+                    "The dictionary: {pvinfo}")
 
     def _build_aggr_pinfo(self, pnames, optar, mnames, skip_ro, skip_unsupported):
         """
@@ -266,16 +375,15 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         """
 
         aggr_pinfo = {}
-        cpus = optar.get_cpus()
 
         for pname in pnames:
             prop = self._pobj.props[pname]
             if skip_ro and not prop["writable"]:
                 continue
 
-            for pvinfo in self._pobj.get_prop_cpus(pname, cpus, mnames=mnames):
-                sname = "CPU"
-                num = pvinfo["cpu"]
+            for pvinfo in _PepcCommon.get_prop_sname(self._pobj, self._cpuinfo, pname, optar,
+                                                     mnames):
+                sname, num = self._get_pvinfo_num(pvinfo)
                 val = pvinfo["val"]
                 mname = pvinfo["mname"]
 
@@ -291,18 +399,34 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                     if val is not None:
                         val = tuple((k, v) for k, v in val.items())
 
+                if sname == "die":
+                    package, die = num
+                else:
+                    package, die = None, None
+
                 if mname not in aggr_pinfo:
                     aggr_pinfo[mname] = {}
                 if pname not in aggr_pinfo[mname]:
-                    aggr_pinfo[mname][pname] = {"sname": sname, "vals": {val: [num]}}
-                elif val not in aggr_pinfo[mname][pname]["vals"]:
-                    aggr_pinfo[mname][pname]["vals"][val] = [num]
-                else:
-                    aggr_pinfo[mname][pname]["vals"][val].append(num)
+                    aggr_pinfo[mname][pname] = {"sname": sname, "vals": {}}
 
-                if sname != aggr_pinfo[mname][pname]["sname"]:
+                pinfo = aggr_pinfo[mname][pname]
+
+                if val not in pinfo["vals"]:
+                    if sname == "die":
+                        pinfo["vals"][val] = {package: [die]}
+                    else:
+                        pinfo["vals"][val] = [num]
+                else:
+                    if sname == "die":
+                        if package not in pinfo["vals"][val]:
+                            pinfo["vals"][val][package] = []
+                        pinfo["vals"][val][package].append(die)
+                    else:
+                        pinfo["vals"][val].append(num)
+
+                if sname != pinfo["sname"]:
                     raise Error(f"BUG: varying scope name for property '{pname}': was "
-                                f"'{aggr_pinfo[mname][pname]['sname']}', now '{sname}'")
+                                f"'{pinfo['sname']}', now '{sname}'")
 
         return aggr_pinfo
 
@@ -527,7 +651,7 @@ class CStatesPrinter(_PropsPrinter):
                     if csname not in yaml_rcsinfo:
                         yaml_rcsinfo[csname] = []
 
-                    yaml_rcsinfo[csname].append({key : val, "cpus" : Human.rangify(cpus)})
+                    yaml_rcsinfo[csname].append({key: val, "CPU": Human.rangify(cpus)})
 
         self._yaml_dump(yaml_rcsinfo)
         return len(yaml_rcsinfo)
@@ -563,6 +687,7 @@ class CStatesPrinter(_PropsPrinter):
         """
 
         aggr_rcsinfo = {}
+
         # C-states info 'csinfo' has the following format:
         #
         # {"POLL": {"disable": True, "latency": 0, "residency": 0, ...},

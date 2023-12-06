@@ -14,7 +14,7 @@ This module provides API for changing P-state and C-state properties.
 import sys
 import contextlib
 from pepctool import _PepcCommon, _OpTarget
-from pepclibs.helperlibs import ClassHelpers, YAML
+from pepclibs.helperlibs import ClassHelpers, YAML, ArgParse
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.PStates import ErrorFreqOrder
 
@@ -128,16 +128,38 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                     raise Error(f"expected list of dictionaries for the key '{ykey}', got list "
                                 f"of: '{type(yval)}'")
 
-                for key in ("value", "cpus"):
+                for key in ("value",):
                     if key not in yval:
                         raise Error(f"did not find key '{key}' in the '{ykey}' sub-dictionary")
 
-    def _restore_prop(self, pname, val, cpus):
-        """Restore property 'pname' to value 'val' for CPUs 'cpus."""
+                sname_keys = ("CPU", "die", "package")
+                found = []
+                for key in sname_keys:
+                    if key in yval:
+                        found.append(key)
+
+                if len(found) == 0:
+                    raise Error(f"did not find one of the following keys in the '{ykey}' "
+                                f"sub-dictionary: {', '.join(sname_keys)}")
+                if len(found) > 1:
+                    raise Error(f"found multiple scope name keys in the '{ykey}' sub-dictionary, "
+                                f"expected only one of {', '.join(sname_keys)}")
+
+    def _restore_prop(self, pname, sname, val, nums):
+        """Restore property 'pname' to value 'val' for CPUs, dies, or packages in  'nums'."""
+
+        def _set_prop(pobj, pname, sname, val, nums):
+            """Set property 'pname' using the method suitable for scope 'sname'."""
+
+            if sname == "CPU":
+                pobj.set_prop_cpus(pname, val, nums)
+            elif sname == "die":
+                pobj.set_prop_dies(pname, val, nums)
+            elif sname == "package":
+                pobj.set_prop_packages(pname, val, nums)
 
         try:
-            self._pobj.set_prop_cpus(pname, val, cpus=cpus)
-            return
+            _set_prop(self._pobj, pname, sname, val, nums)
         except ErrorFreqOrder:
             if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
                 raise
@@ -150,15 +172,15 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             min_freq_pname = "min_uncore_freq"
             max_freq_pname = "max_uncore_freq"
         else:
-            self._pobj.set_prop_cpus(pname, val, cpus=cpus)
+            _set_prop(self._pobj, pname, sname, val, nums)
             return
 
         if pname.startswith("min_"):
-            self._pobj.set_prop_cpus(max_freq_pname, "max", cpus=cpus)
-            self._pobj.set_prop_cpus(min_freq_pname, val, cpus=cpus)
+            _set_prop(self._pobj, max_freq_pname, sname, "max", nums)
+            _set_prop(self._pobj, min_freq_pname, sname, val, nums)
         elif pname.startswith("max_"):
-            self._pobj.set_prop_cpus(min_freq_pname, "min", cpus=cpus)
-            self._pobj.set_prop_cpus(max_freq_pname, val, cpus=cpus)
+            _set_prop(self._pobj, min_freq_pname, sname, "min", nums)
+            _set_prop(self._pobj, max_freq_pname, sname, val, nums)
 
     def _restore_props(self, ydict):
         """Restore properties from a loaded YAML file and represented by 'ydict'."""
@@ -168,10 +190,25 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
         for pname, pinfos in ydict.items():
             for pinfo in pinfos:
-                cpus = _PepcCommon.parse_cpus_string(pinfo["cpus"])
-                self._restore_prop(pname, pinfo["value"], cpus)
+                if "CPU" in pinfo:
+                    sname = "CPU"
+                elif "package" in pinfo:
+                    sname = "package"
+                else:
+                    sname = "die"
+
+                if sname in ("CPU", "package"):
+                    nums = ArgParse.parse_int_list(pinfo[sname], ints=True, dedup=True)
+                else:
+                    nums = {}
+                    for pkg, dies in pinfo[sname].items():
+                        nums[pkg] = ArgParse.parse_int_list(dies, ints=True, dedup=True)
+
+                self._restore_prop(pname, sname, pinfo["value"], nums)
+
                 if self._pcsprint:
-                    optar = _OpTarget.OpTarget(pman=self._pman, cpuinfo=self._cpuinfo, cpus=cpus)
+                    kwargs = {f"{sname.lower()}s": nums}
+                    optar = _OpTarget.OpTarget(pman=self._pman, cpuinfo=self._cpuinfo, **kwargs)
                     self._pcsprint.print_props((pname,), optar, skip_ro=True,
                                                skip_unsupported=False, action="restored to")
 
@@ -266,7 +303,7 @@ class CStatesSetter(_PropsSetter):
 
         for csname, yvals in ydict.items():
             for yval in yvals:
-                cpus = _PepcCommon.parse_cpus_string(yval["cpus"])
+                cpus = _PepcCommon.parse_cpus_string(yval["CPU"])
                 value = yval["value"]
                 if value == "on":
                     self._pobj.enable_cstates(csname, cpus=cpus)
