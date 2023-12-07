@@ -200,7 +200,7 @@ class PepcTokenChecker(BaseTokenChecker):
         if tok.type != tokenize.NAME:
             return False
 
-        if tok.string in ("if", "and", "or", "not", "in", "yield", "return"):
+        if tok.string in ("if", "else", "elif", "and", "or", "not", "in", "yield", "return"):
             return True
 
         return False
