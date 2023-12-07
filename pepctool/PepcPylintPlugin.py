@@ -111,6 +111,13 @@ class PepcTokenChecker(BaseTokenChecker):
                 "Used when function definition does not have blank line before it."
             ),
         ),
+        "W9912": (
+            "Code can fit a single line",
+            "pepc-can-fit-single-line",
+            (
+                "Used when code is spread over multiple lines, but can fit a single line."
+            ),
+        ),
     }
     options = ()
 
@@ -404,6 +411,19 @@ class PepcTokenChecker(BaseTokenChecker):
             self.__check_operand_spacing(token, curop, nexttoken, nextop, lineno, after,
                                          prevprevtok=prevtok)
 
+    def _prev_is_line_comment(self):
+        """Returns true if the previous tokens consist of a line comment."""
+
+        p_tok = self._get_token(1)
+        if p_tok and p_tok.type != tokenize.NL:
+            return False
+
+        p_tok = self._get_token(2)
+        if p_tok and p_tok.type != tokenize.COMMENT:
+            return False
+
+        return True
+
     def _check_double_newline(self, token, lineno):
         """Check for double newline errors."""
 
@@ -474,6 +494,44 @@ class PepcTokenChecker(BaseTokenChecker):
         self._check_double_space(token, lineno)
         self._check_func_class_defs(token, lineno, txt)
 
+    def _check_multiline(self, token, lineno):
+        """Check if linefeed is unnecessary."""
+
+        # Grab previous token, if it is NEWLINE, ignore, as we have just started a fresh.
+        p_tok = self._get_token(1)
+        if p_tok and p_tok.type == tokenize.NEWLINE:
+            p_tok = None
+
+        if self._prev_is_line_comment():
+            p_tok = None
+
+        # Store current line at newlines.
+        if token.type == tokenize.NEWLINE or (p_tok and p_tok.start[0] != token.start[0]):
+            txt = p_tok.line
+
+            # Remove leading newline.
+            txt = re.sub(r"^\n", "", txt)
+
+            # Remove trailing newline or backslash.
+            txt = re.sub(r"[\\\n]$", "", txt)
+
+            # If this is not first line, remove leading tabulation.
+            if self._multiline_txt != "":
+                txt = re.sub("^ *", "", txt)
+
+            self._multiline_txt += txt
+            self._multiline_lines += 1
+
+        if self._multiline_txt == "":
+            self._multiline_lineno = lineno
+            self._multiline_lines = 0
+
+        if token.type == tokenize.NEWLINE:
+            if len(self._multiline_txt) < 100 and self._multiline_lines > 1:
+                self.add_message("pepc-can-fit-single-line", line=self._multiline_lineno)
+            self._multiline_txt = ""
+            self._multiline_lineno = None
+
     def process_tokens(self, tokens):
         """
         Callback for base token checker. Will process all the 'tokens' parsed by parent
@@ -495,6 +553,8 @@ class PepcTokenChecker(BaseTokenChecker):
             self._check_operand_spacing(token)
             self._check_whitespaces(token, lineno, txt)
 
+            self._check_multiline(token, lineno)
+
             # Processing based on current state.
             self._process_comment(token, lineno, txt)
 
@@ -511,10 +571,11 @@ class PepcTokenChecker(BaseTokenChecker):
         self._context = None
         self._context_stack = []
         self._tokens = []
+        self._multiline_lineno = None
+        self._multiline_txt = ""
+        self._multiline_lines = 0
 
-_CLASS_INIT_VALID_TYPES = (
-    nodes.Name, nodes.Assign, nodes.AssignName, nodes.If, nodes.Const
-    )
+_CLASS_INIT_VALID_TYPES = (nodes.Name, nodes.Assign, nodes.AssignName, nodes.If, nodes.Const)
 
 class ClassInitValidator():
     """Validate the ordering of code in class '__init__()' method."""
