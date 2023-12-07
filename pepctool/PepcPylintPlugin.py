@@ -28,6 +28,13 @@ def dump_node(node, recursive=False):
         max_depth = 1
     print(f"dump_node: node={node.repr_tree(max_depth=max_depth)}")
 
+def _check_generic_string(obj, txt, msg, node=None, lineno=None):
+    """Generic checks for strings."""
+
+    match = re.match(".*[^'](--[a-z0-9_\-]+)(?!')[^']", txt)
+    if match:
+        obj.add_message(msg, args=match.group(1), node=node, line=lineno)
+
 class PepcTokenChecker(BaseTokenChecker):
     """Pepc linter class using tokens."""
 
@@ -118,6 +125,13 @@ class PepcTokenChecker(BaseTokenChecker):
                 "Used when code is spread over multiple lines, but can fit a single line."
             ),
         ),
+        "W9913": (
+            "Command line option '%s' is documented without hyphens",
+            "pepc-comment-option-without-hyphens",
+            (
+                "Comment refers to an option, but it doesn't have hyphens around it."
+            ),
+        ),
     }
     options = ()
 
@@ -143,6 +157,7 @@ class PepcTokenChecker(BaseTokenChecker):
 
         if token.type == tokenize.COMMENT:
             self._commentstate = STATE_COMMENT
+            _check_generic_string(self, txt, "pepc-comment-option-without-hyphens", lineno=lineno)
 
         if self._commentstate not in (STATE_COMMENT, STATE_COMMENT_NL):
             return
@@ -878,6 +893,13 @@ class PepcASTChecker(BaseChecker):
                 "Docstring refers to another function that is not local to this file."
             ),
         ),
+        "W9963": (
+            "Command line option '%s' is documented without hyphens",
+            "pepc-option-without-hyphens",
+            (
+                "Docstring refers to an option, but it doesn't have hyphens around it."
+            ),
+        ),
     }
 
     options = (
@@ -1066,6 +1088,17 @@ class PepcASTChecker(BaseChecker):
 
         self._cross_refer_args[func_ref] += [{"name": arg, "func": func, "node": node}]
 
+    def _check_generic_docstring(self, node, docstring=None):
+        """Generic checks for all docstrings."""
+
+        if not node.doc_node:
+            return
+
+        if not docstring:
+            docstring = node.doc_node.value.replace("\n", " ")
+
+        _check_generic_string(self, docstring, "pepc-option-without-hyphens", node=node)
+
     def _check_func_docstring(self, node):
         """
         Verify function docstring for 'node'. Checks that either all the function arguments are
@@ -1076,6 +1109,8 @@ class PepcASTChecker(BaseChecker):
             return
 
         docstring = node.doc_node.value.replace("\n", " ")
+
+        self._check_generic_docstring(node, docstring=docstring)
 
         name = node.name
         public = not name.startswith("_")
@@ -1125,17 +1160,10 @@ class PepcASTChecker(BaseChecker):
                 for arg in missing_args:
                     self.add_message("pepc-arg-not-documented", args=arg, node=node.doc_node)
 
-    def _check_class_docstring(self, node):
-        """Verify class docstring for class defined in 'node'. For future implementation."""
-
-        if not node.doc_node:
-            return
-
-        # To be implemented, if needed. Look at '_check_func_docstring()' for tips.
-
     def visit_module(self, node):
         """AST callback for a module entry to module defined in 'node'."""
         self._scope.push(node, "module")
+        self._check_generic_docstring(node)
 
     def leave_module(self, node):
         """AST callback for a module exit from 'node'."""
@@ -1148,7 +1176,7 @@ class PepcASTChecker(BaseChecker):
         """AST callback for a class entry to class defined in 'node'."""
 
         self._scope.push(node, "class")
-        self._check_class_docstring(node)
+        self._check_generic_docstring(node)
 
     def leave_classdef(self, node):
         """AST callback for a class exit from 'node'."""
