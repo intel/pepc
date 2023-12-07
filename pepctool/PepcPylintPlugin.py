@@ -646,6 +646,7 @@ class ScopeStack():
         self._parent.debug(f"_check_variables for scope {self._current_scope['name']}")
 
         class_scope = bool(self._current_scope["type"] == "class")
+        global_scope = bool(self._current_scope["type"] == "module")
 
         for name in variables:
             var = variables[name]
@@ -660,6 +661,10 @@ class ScopeStack():
 
             # Skip checking public and python internal attributes for classes.
             if class_scope and (not name.startswith("self._") or name.startswith("__")):
+                continue
+
+            # Skip checking public variables for global scope.
+            if global_scope and re.match("^[A-Z][A-Z_0-9]+$", name):
                 continue
 
             self._parent.add_message("pepc-unused-variable", args=name, node=var["node"])
