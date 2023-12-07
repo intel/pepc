@@ -55,7 +55,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         die = levels["die"]
 
         prefix = "initial_" if limit else ""
-        fname =  prefix + key + "_freq_khz"
+        fname = prefix + key + "_freq_khz"
         return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
 
     def _get_freq(self, key, cpu, limit=False):
