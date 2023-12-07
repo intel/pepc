@@ -13,8 +13,7 @@ This module implements pepc coding style checks for pylint as a plugin.
 import re
 import tokenize
 from astroid import nodes
-from pylint import interfaces
-from pylint.checkers import BaseChecker
+from pylint.checkers import BaseChecker, BaseTokenChecker
 
 STATE_COMMENT = 1
 STATE_COMMENT_NL = 2
@@ -29,10 +28,9 @@ def dump_node(node, recursive=False):
         max_depth = 1
     print(f"dump_node: node={node.repr_tree(max_depth=max_depth)}")
 
-class PepcTokenChecker(BaseChecker):
+class PepcTokenChecker(BaseTokenChecker):
     """Pepc linter class using tokens."""
 
-    __implements__ = interfaces.ITokenChecker
     priority = -1
     name = "pepc-token"
     msgs = {
