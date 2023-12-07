@@ -659,7 +659,7 @@ class ScopeStack():
                     continue
 
             # Skip checking public and python internal attributes for classes.
-            if class_scope and (not name.startswith("_") or name.startswith("__")):
+            if class_scope and (not name.startswith("self._") or name.startswith("__")):
                 continue
 
             self._parent.add_message("pepc-unused-variable", args=name, node=var["node"])
