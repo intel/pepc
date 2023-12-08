@@ -40,7 +40,7 @@ _CPUS = CPUInfo.EMRS +                            \
 FEATURES = {
     "max_ratio" : {
         "name" : "Maximum uncore ratio",
-        "sname": "package",
+        "sname": None,
         "help" : """The maximum allowed uncore ratio. This ratio multiplied by bus clock speed gives
                     the maximum allowed uncore frequency.""",
         "cpumodels" : _CPUS,
@@ -50,7 +50,7 @@ FEATURES = {
     },
     "min_ratio" : {
         "name" : "Minimum uncore ratio",
-        "sname": "package",
+        "sname": None,
         "help" : """The minimum allowed uncore ratio. This ratio multiplied by bus clock speed gives
                     the minimum allowed uncore frequency.""",
         "cpumodels" : _CPUS,
@@ -74,6 +74,18 @@ class UncoreRatioLimit(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
+
+        # MSR_POWER_CTL features have package scope, except for Cascade Lake AP, which has two dies,
+        # and the features have die scope.
+        model = self._cpuinfo.info["model"]
+        if model == CPUInfo.CPUS["SKYLAKE_X"]["model"] and \
+           len(self._cpuinfo.get_dies(package=0)) > 1:
+            sname = "die"
+        else:
+            sname = "package"
+
+        for finfo in self.features.values():
+            finfo["sname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
