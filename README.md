@@ -61,7 +61,7 @@ python projects to use.
 
 * Artem Bityutskiy <dedekind1@gmail.com> - original author, project maintainer.
 * Antti Laakso <antti.laakso@linux.intel.com> - contributor, project maintainer.
-* Niklas Neronin <niklas.neronin@intel.com> - contributor, project maintainer.
+* Niklas Neronin <niklas.neronin@intel.com> - contributor.
 * Tero Kristo <tero.kristo@intel.com> - contributor.
 * Adam Hawley <adam.james.hawley@intel.com> - contributor.
 * Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com> - contributor.
