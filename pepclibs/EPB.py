@@ -127,8 +127,11 @@ class EPB(_EPBase.EPBase):
 
         self._epb_msr = None
 
-        # Note, EPB scope varies from platform to platform.
-        self.sname = self._get_epb_msr().features["epb"]["sname"]
+        # EPB scope is "CPU" on most platforms, but it may be something else of some platforms.
+        try:
+            self.sname = self._get_epb_msr().features["epb"]["sname"]
+        except ErrorNotSupported:
+            self.sname = "CPU"
 
         # EPB policy to EPB value dictionary.
         self._epb_policies = {name : None for name in _EPB_POLICIES}

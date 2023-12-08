@@ -186,7 +186,7 @@ PROPS = {
     "epb" : {
         "name" : "EPB",
         "type" : "int",
-        "sname": "CPU",
+        "sname": None,
         "mnames" : ("sysfs", "msr"),
         "writable" : True,
     },
