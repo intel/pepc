@@ -13,6 +13,7 @@ many Intel platforms.
 """
 
 import logging
+from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR, PMEnable
 
 _LOG = logging.getLogger()
@@ -25,7 +26,7 @@ MSR_HWP_REQUEST_PKG = 0x772
 FEATURES = {
     "min_perf" : {
         "name" : "Min. CPU performance",
-        "sname": "package",
+        "sname": None,
         "help" : """The minimum desired CPU performance.""",
         "cpuflags" : {"hwp", "hwp_pkg_req"},
         "type" : "int",
@@ -33,7 +34,7 @@ FEATURES = {
     },
     "max_perf" : {
         "name" : "Max. CPU performance",
-        "sname": "package",
+        "sname": None,
         "help" : """The maximum desired CPU performance.""",
         "cpuflags" : {"hwp", "hwp_pkg_req"},
         "type" : "int",
@@ -41,7 +42,7 @@ FEATURES = {
     },
     "epp" : {
         "name" : "Energy Performance Preference",
-        "sname": "package",
+        "sname": None,
         "help" : """Energy Performance Preference is a hint to the CPU running in HWP mode about the
                     power and performance preference. Value 0 indicates highest performance and
                     value 255 indicates maximum energy savings.""",
@@ -65,6 +66,18 @@ class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
+
+        # MSR_POWER_CTL features have package scope, except for Cascade Lake AP, which has two dies,
+        # and the features have die scope.
+        model = self._cpuinfo.info["model"]
+        if model == CPUInfo.CPUS["SKYLAKE_X"]["model"] and \
+           len(self._cpuinfo.get_dies(package=0)) > 1:
+            sname = "die"
+        else:
+            sname = "package"
+
+        for finfo in self.features.values():
+            finfo["sname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
