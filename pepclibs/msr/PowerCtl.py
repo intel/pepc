@@ -105,10 +105,10 @@ class PowerCtl(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
-        model = self._cpuinfo.info["model"]
 
         # MSR_POWER_CTL features have package scope, except for Cascade Lake AP, which has two dies,
         # and the features have die scope.
+        model = self._cpuinfo.info["model"]
         if model == CPUInfo.CPUS["SKYLAKE_X"]["model"] and \
            len(self._cpuinfo.get_dies(package=0)) > 1:
             sname = "die"
