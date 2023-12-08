@@ -266,7 +266,7 @@ MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0, depending on CPU model.
 Scope
 -----
 
-This option has core scope. Exceptions: module scope on Silvermonts and Airmonts, package scop on
+This option has core scope. Exceptions: module scope on Silvermonts and Airmonts, package scope on
 Xeon Phi processors.
 
 ----------------------------------------------------------------------------------------------------
