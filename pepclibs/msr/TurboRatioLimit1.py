@@ -18,8 +18,8 @@ from pepclibs.msr import _FeaturedMSR, TurboRatioLimit
 _LOG = logging.getLogger()
 
 # The Turbo Ratio Limit 1 Model Specific Register.
-MSR_TURBO_RATIO_LIMIT1      = 0x1AE
-MSR_TURBO_GROUP_CORECNT     = 0x1AE
+MSR_TURBO_RATIO_LIMIT1 = 0x1AE
+MSR_TURBO_GROUP_CORECNT = 0x1AE
 MSR_TURBO_RATIO_LIMIT_CORES = 0x1AE
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
