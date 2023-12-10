@@ -24,35 +24,14 @@ Naming conventions.
             Includes property value and CPU number. Refer to 'PropsClassBase.get_prop_cpus()' for
             more information.
  * pname - name of a property.
- * sname - observability scope name, or just scope name. Scope names have the same values in
-           'CPUInfo.LEVELS': CPU, core, package, etc. Observability scope of a property is not
-           always same.
+ * sname - functional scope name of the property, i.e., whether the property is per-CPU (affects a
+           single CPU), per-core, per-package, etc. Scope names have the same values in
+           'CPUInfo.LEVELS': CPU, core, package, etc.
  * core siblings - all CPUs sharing the same core. For example, "CPU6 core siblings" are all CPUs
                    sharing the same core as CPU 6.
  * module siblings - all CPUs sharing the same module.
  * die siblings - all CPUs sharing the same die.
  * package siblings - all CPUs sharing the same package.
-
- On observability scope (or just "scope") vs functional impact scope. They should ideally be the
- same, but it is not always the case. Here are a couple of examples.
-    1. Consider the package C-state limit feature in MSR_PKG_CST_CONFIG_CONTROL. The MSR register
-       and therefor, the package C-state limit property, has core observability scope, but has
-       package functional impact scope.
-       Suppose core 0 includes CPUs 0 and 1, and core 1 includes CPUs 2 and 3. Suppose current
-       package C-state limit (PC limit) is "PC0 on, and reading MSR_PKG_CST_CONFIG_CONTROL from any
-       CPU will give "PC0" PC limit.  Suppose CPU0 writes new "PC6" PC limit to
-       MSR_PKG_CST_CONFIG_CONTROL. From functional impact, this will change package C-state limit of
-       the entire package to PC6. If CPU0 reads PC limit, it will read PC6, because  (observability)
-       scope is "core". However, if CPU2 reads the limit, it will read PC0. This value will not
-       reflect the actual PC limit, which is defined by the previous write from CPU 0.
-    2. Consider the EBP value Linux kernel provides via the per-CPU 'energy_perf_bias' sysfs file.
-       The actual EPB feature functional impact is "package". Linux sysfs file is, however, per-CPU.
-       Therefore, the observability scope is "CPU.
-       Suppose current EPB value is '1' for all CPUs - reading the 'energy_perf_bias' sysfs file for
-       any CPU gives value 1. Suppose user changes EPB to value 7 for CPU0, by writing '7' to CPU0's
-       'energy_perf_bias' sysfs file. Reading EPB 0 for CPU1 still gives value '1'. So the
-       (observability) scope of the sysfs-based EPB property is "CPU". The functional impact scope
-       of it is, however, "package".
 """
 
 import copy
@@ -168,8 +147,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def get_sname(self, pname):
         """
-        Return observability scope name for the 'pname' property. May return 'None' if the property
-        is not supported, but this is not guaranteed.
+        Return scope name for the 'pname' property. May return 'None' if the property is not
+        supported, but this is not guaranteed.
 
         If the property is not supported by the platform, this method does not guarantee that 'None'
         is returned. Depending on the property and platform, this method may return a valid scope

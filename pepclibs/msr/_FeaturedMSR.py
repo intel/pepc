@@ -8,7 +8,22 @@
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides the base class for "featured" MSRs, such as 'MSR_PKG_CST_CONFIG_CONTROL'.
+This module provides the base class for "featured" MSRs, such as MSR_PKG_CST_CONFIG_CONTROL.
+
+Terminology.
+  * MSR feature scope - the functional scope of MSR feature, i.e., whether it is per-CPU, per-core,
+                        per-package, etc.
+  * MSR feature I/O scope - same as the scope in most cases. But in rare cases feature scope and its
+                            I/O scope may be different. The I/O scop is defined by the observability
+                            of MSR feature changes, not by its functional impact. For example, if
+                            modifying an MSR feature from CPU X makes the modification visible on
+                            all core siblings, the MSR feature has core scope. If the modification
+                            is visible on all package siblings, the MSR feature has package scope.
+                            Some MSRs may have, for example, core I/O scope, but impact the entire
+                            package from the functional point of view (e.g., the package C-state
+                            limit feature in MSR_PKG_CST_CONFIG_CONTROL).
+  * MSR I/O scope - same as MSR feature I/O scope. Usually all features in an MSR have the same
+                    scope, in which case the I/O scope references the entire MSR.
 """
 
 import copy
