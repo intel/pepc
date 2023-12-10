@@ -11,11 +11,8 @@ This module provides API to MSR 0xCE (MSR_PLATFORM_INFO). This MSR provides powe
 information on Intel platforms.
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
-
-_LOG = logging.getLogger()
 
 # The Power Control Model Specific Register.
 MSR_PLATFORM_INFO = 0xCE

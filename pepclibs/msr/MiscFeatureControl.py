@@ -12,11 +12,8 @@ This module provides API to MSR 0x1A4 (MSR_MISC_FEATURE_CONTROL). This MSR provi
 various CPU prefetchers on many Intel platforms.
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
-
-_LOG = logging.getLogger()
 
 # The Hardware Power Management Request Model Specific Register.
 MSR_MISC_FEATURE_CONTROL = 0x1A4

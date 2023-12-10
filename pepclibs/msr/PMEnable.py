@@ -11,10 +11,7 @@ This module provides API to MSR 0x770 (MSR_PM_ENABLE). This is an architectural 
 many Intel platforms.
 """
 
-import logging
 from pepclibs.msr import _FeaturedMSR
-
-_LOG = logging.getLogger()
 
 # The Power Management Enable Model Specific Register.
 MSR_PM_ENABLE = 0x770

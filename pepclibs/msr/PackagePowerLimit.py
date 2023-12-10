@@ -10,13 +10,10 @@
 This module provides API to MSR 0x610 (MSR_PKG_POWER_LIMIT).
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
-
-_LOG = logging.getLogger()
 
 # The Package Power Limit Model Specific Register.
 MSR_PKG_POWER_LIMIT = 0x610

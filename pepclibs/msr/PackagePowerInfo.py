@@ -10,12 +10,9 @@
 This module provides API to MSR 0x614 (MSR_PKG_POWER_INFO).
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
 from pepclibs.helperlibs import ClassHelpers
-
-_LOG = logging.getLogger()
 
 # The Package Power Info Model Specific Register.
 MSR_PKG_POWER_INFO = 0x614

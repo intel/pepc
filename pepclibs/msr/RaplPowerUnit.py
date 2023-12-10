@@ -10,11 +10,8 @@
 This module provides API to MSR 0x606 (RAPL_POWER_UNIT).
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
-
-_LOG = logging.getLogger()
 
 # The Energy Performance Bias Model Specific Register.
 RAPL_POWER_UNIT = 0x606

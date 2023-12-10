@@ -12,10 +12,7 @@ provides either turbo ratio information, or the turbo ratio groups encoding. In 
 is called either 'MSR_TURBO_GROUP_CORECNT' (Atoms) or 'MSR_TURBO_RATIO_LIMIT_CORES' (big cores).
 """
 
-import logging
 from pepclibs.msr import _FeaturedMSR, TurboRatioLimit
-
-_LOG = logging.getLogger()
 
 # The Turbo Ratio Limit 1 Model Specific Register.
 MSR_TURBO_RATIO_LIMIT1 = 0x1AE

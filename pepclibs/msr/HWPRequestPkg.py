@@ -12,11 +12,8 @@ This module provides API to MSR 0x772 (MSR_HWP_REQUEST_PKG). This is an architec
 many Intel platforms.
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR, PMEnable
-
-_LOG = logging.getLogger()
 
 # The Hardware Power Management Request Package Model Specific Register.
 MSR_HWP_REQUEST_PKG = 0x772

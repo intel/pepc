@@ -13,11 +13,8 @@ This module provides API to MSR 0x774 (MSR_HWP_REQUEST). This is an architectura
 Intel platforms.
 """
 
-import logging
 from pepclibs.msr import _FeaturedMSR, PMEnable
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
-
-_LOG = logging.getLogger()
 
 # The Hardware Power Management Request Model Specific Register.
 MSR_HWP_REQUEST = 0x774

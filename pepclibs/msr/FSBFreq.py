@@ -12,11 +12,8 @@ This module provides API to MSR 0xCD (MSR_FSB_FREQ). This MSR provides bus clock
 on some Intel platforms.
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
-
-_LOG = logging.getLogger()
 
 # The Scalable Bus Speed Model Specific Register.
 MSR_FSB_FREQ = 0xCD

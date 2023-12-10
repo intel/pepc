@@ -12,10 +12,7 @@ model-specific register allows the OS communicate software (as opposed to PCIe) 
 Tolerance Report) requirements to the power management unit of the CPU.
 """
 
-import logging
 from pepclibs.msr import _FeaturedMSR, PowerCtl
-
-_LOG = logging.getLogger()
 
 # The Software LTR Override Model Specific Register.
 MSR_SW_LTR_OVRD = 0xA02

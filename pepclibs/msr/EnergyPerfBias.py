@@ -11,11 +11,8 @@ This module provides API to MSR 0x1B1 (MSR_ENERGY_PERF_BIAS). This is an archite
 many Intel platforms.
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
-
-_LOG = logging.getLogger()
 
 # The Energy Performance Bias Model Specific Register.
 MSR_ENERGY_PERF_BIAS = 0x1B0

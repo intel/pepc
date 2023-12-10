@@ -11,11 +11,8 @@ This module provides API to MSR 0x620 (MSR_UNCORE_RATIO_LIMIT). This MSR provide
 uncore frequency on Intel platforms.
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
-
-_LOG = logging.getLogger()
 
 # The Uncore Ratio Limit Model Specific Register.
 MSR_UNCORE_RATIO_LIMIT = 0x620

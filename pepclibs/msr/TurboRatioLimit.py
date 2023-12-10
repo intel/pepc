@@ -11,11 +11,8 @@ This module provides API to MSR 0x1AD (MSR_TURBO_RATIO_LIMIT). This MSR provides
 information on Intel platforms.
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
-
-_LOG = logging.getLogger()
 
 # The Turbo Ratio Limit Model Specific Register.
 MSR_TURBO_RATIO_LIMIT = 0x1AD

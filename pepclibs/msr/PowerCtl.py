@@ -12,11 +12,8 @@ This module provides API to MSR 0x1FC (MSR_POWER_CTL). This is a model-specific 
 many Intel platforms.
 """
 
-import logging
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
-
-_LOG = logging.getLogger()
 
 # The Power Control Model Specific Register.
 MSR_POWER_CTL = 0x1FC
