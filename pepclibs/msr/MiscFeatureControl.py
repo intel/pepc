@@ -113,10 +113,10 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
         cpumodel = self._cpuinfo.info["model"]
         if cpumodel in CPUInfo.PHIS:
             # Xeon Phi platforms have different bit numbers comparing to all other platforms.
-            self._features["l2_hw_prefetcher"]["bits"]  = (1, 1)
+            self._features["l2_hw_prefetcher"]["bits"] = (1, 1)
             self._features["dcu_hw_prefetcher"]["bits"] = (0, 0)
         else:
-            self._features["l2_hw_prefetcher"]["bits"]  = (0, 0)
+            self._features["l2_hw_prefetcher"]["bits"] = (0, 0)
             self._features["l2_adj_prefetcher"]["bits"] = (1, 1)
             self._features["dcu_hw_prefetcher"]["bits"] = (2, 2)
             self._features["dcu_ip_prefetcher"]["bits"] = (3, 3)
