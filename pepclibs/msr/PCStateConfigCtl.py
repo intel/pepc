@@ -35,41 +35,41 @@ MSR_PKG_CST_CONFIG_CONTROL = 0xE2
 # Xeons.
 #
 # Ice Lake and Granite Rapids Xeons.
-_ICX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
-                       "aliases" : {"PC6N": "PC6"},
-                       "bits"    : (2, 0)}
+_ICX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
+                       "aliases": {"PC6N": "PC6"},
+                       "bits": (2, 0)}
 # Emerald Rapids, Sapphire Rapids, Cooper Lake, Cascade Lake, Sky Lake Xeons. Knights Mill and
 # Knights Landing Xeon Phis.
-_SKX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
-                       "aliases" : {"PC6": "PC6R"},
-                       "bits"    : (2, 0)}
+_SKX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
+                       "aliases": {"PC6": "PC6R"},
+                       "bits": (2, 0)}
 # Broadwell-D Xeon.
-_BDWD_PKG_CST_LIMITS = {"codes"  : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
-                        "bits"   : (3, 0)}
+_BDWD_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
+                        "bits": (3, 0)}
 # Broadwell and Haswell Xeons.
-_HSX_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unlimited": 7},
-                       "bits"    : (2, 0)}
+_HSX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unlimited": 7},
+                       "bits": (2, 0)}
 # Ivy Bridge Xeon (Ivy Town).
-_IVT_PKG_CST_LIMITS = {"codes"   : {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
-                       "aliases" : {"PC6": "PC6R"},
-                       "bits"    : (2, 0)}
+_IVT_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
+                       "aliases": {"PC6": "PC6R"},
+                       "bits": (2, 0)}
 
 #
 # Atom-based micro servers.
 #
 # Denverton SoC (Goldmont). Note, successor of Denverton is Snow Ridge, and its successor is Grand
 # Ridge. They do not support package C-states.
-_DNV_PKG_CST_LIMITS = {"codes"   : {"PC2": 2, "PC6": 3, "unlimited": 0},
-                       "bits"    : (3, 0)}
+_DNV_PKG_CST_LIMITS = {"codes": {"PC2": 2, "PC6": 3, "unlimited": 0},
+                       "bits": (3, 0)}
 
 #
 # Clients.
 #
-_CLIENT_PC10_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5,
+_CLIENT_PC10_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5,
                            "PC8": 6, "PC9": 7, "PC10": 8},
-                           "bits" : (3, 0)}
-_CLIENT_PC7S_CST_LIMITS = {"codes" : {"PC0" : 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5},
-                           "bits" : (3, 0)}
+                           "bits": (3, 0)}
+_CLIENT_PC7S_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5},
+                           "bits": (3, 0)}
 
 # CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
@@ -125,49 +125,49 @@ _PACKAGE_SCOPE_CPUS = CPUInfo.PHIS
 # Map of features available on various CPU models. Please, refer to the notes for
 # '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "pkg_cstate_limit" : {
-        "name" : "Package C-state limit",
+    "pkg_cstate_limit": {
+        "name": "Package C-state limit",
         "sname": None,
-        "help" : """The deepest package C-state the platform is allowed to enter. The package
-                    C-state limit is configured via MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
-                    (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
-                    BIOS, in which case the package C-state limit can only be read, but cannot be
-                    modified.""",
-        "cpumodels" : tuple(_PKG_CST_LIMITS.keys()),
-        "type"    : "dict",
-        "vals"    : None,
-        "aliases" : {},
-        "bits"    : None,
+        "help": """The deepest package C-state the platform is allowed to enter. The package
+                   C-state limit is configured via MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
+                   (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
+                   BIOS, in which case the package C-state limit can only be read, but cannot be
+                   modified.""",
+        "cpumodels": tuple(_PKG_CST_LIMITS.keys()),
+        "type": "dict",
+        "vals": None,
+        "aliases": {},
+        "bits": None,
     },
-    "pkg_cstate_limit_lock" :  {
-        "name" : "MSR lock",
+    "pkg_cstate_limit_lock":  {
+        "name": "MSR lock",
         "sname": None,
-        "help" : """Lock/unlock bits 15:0 of MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
-                    (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
-                    is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
-                    MSR.""",
-        "cpumodels" : tuple(_PKG_CST_LIMITS.keys()),
-        "type" : "bool",
-        "vals" : {"on" : 1, "off" : 0},
-        "bits" : (15, 15),
-        "writable" : False,
+        "help": """Lock/unlock bits 15:0 of MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
+                   (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
+                   is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
+                   MSR.""",
+        "cpumodels": tuple(_PKG_CST_LIMITS.keys()),
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (15, 15),
+        "writable": False,
     },
-    "c1_demotion" : {
-        "name" : "C1 demotion",
+    "c1_demotion": {
+        "name": "C1 demotion",
         "sname": None,
-        "help" : """Allow/disallow the CPU to demote C6/C7 requests to C1.""",
-        "type" : "bool",
-        "vals" : {"on" : 1, "off" : 0},
-        "bits" : (26, 26),
+        "help": """Allow/disallow the CPU to demote C6/C7 requests to C1.""",
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (26, 26),
     },
-    "c1_undemotion" : {
-        "name" : "C1 undemotion",
+    "c1_undemotion": {
+        "name": "C1 undemotion",
         "sname": None,
-        "help" : """Allow/disallow the CPU to un-demote previously demoted requests back from C1 to
-                    C6/C7.""",
-        "type" : "bool",
-        "vals" : {"on" : 1, "off" : 0},
-        "bits" : (28, 28),
+        "help": """Allow/disallow the CPU to un-demote previously demoted requests back from C1 to
+                   C6/C7.""",
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (28, 28),
     },
 }
 

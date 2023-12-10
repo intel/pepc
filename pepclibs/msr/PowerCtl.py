@@ -46,45 +46,45 @@ _PCH_NEGOTIATION_CPUS = (CPUInfo.CPUS["EMERALDRAPIDS_X"]["model"],)
 #       some platforms, like Ice Lake Xeon. Therefore we mark it as "supported" only for those
 #       platforms where we know it works.
 FEATURES = {
-    "c1e_autopromote" : {
-        "name" : "C1E autopromote",
+    "c1e_autopromote": {
+        "name": "C1E autopromote",
         "sname": None,
-        "help" : "When enabled, the CPU automatically converts all C1 requests to C1E requests.",
-        "type" : "bool",
-        "vals" : {"on" : 1, "off" : 0},
-        "bits" : (1, 1),
+        "help": "When enabled, the CPU automatically converts all C1 requests to C1E requests.",
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (1, 1),
     },
-    "cstate_prewake" : {
-        "name" : "C-state prewake",
+    "cstate_prewake": {
+        "name": "C-state prewake",
         "sname": None,
-        "help" : """When enabled, the CPU will start exiting the C6 idle state in advance, prior to
-                    the next local APIC timer event.""",
-        "cpumodels" : _CSTATE_PREWAKE_CPUS,
-        "type" : "bool",
-        "vals" : {"on" : 0, "off" : 1},
-        "bits" : (30, 30),
+        "help": """When enabled, the CPU will start exiting the C6 idle state in advance, prior to
+                   the next local APIC timer event.""",
+        "cpumodels": _CSTATE_PREWAKE_CPUS,
+        "type": "bool",
+        "vals": {"on": 0, "off": 1},
+        "bits": (30, 30),
     },
-    "ltr" : {
-        "name" : "LTR (Latency Tolerance Reporting)",
+    "ltr": {
+        "name": "LTR (Latency Tolerance Reporting)",
         "sname": "package",
-        "help" : """When enabled, the CPU will take LTR constraints into account when making power
-                    management decisions, such as selecting package C-state.""",
-        "cpumodels" : LTR_CPUS,
-        "type" : "bool",
-        "vals" : { "on" : 0, "off" : 1},
-        "bits" : (35, 35),
+        "help": """When enabled, the CPU will take LTR constraints into account when making power
+                   management decisions, such as selecting package C-state.""",
+        "cpumodels": LTR_CPUS,
+        "type": "bool",
+        "vals": {"on": 0, "off": 1},
+        "bits": (35, 35),
     },
-    "pch_negotiation" : {
-        "name" : "PCH negotiation",
+    "pch_negotiation": {
+        "name": "PCH negotiation",
         "sname": None,
-        "help" : """When enabled, processor's PCU (Power Control Unit) informs PCH (Platform
-                    Controller Hub) about entering and exiting package C6 state (PC6). Depending on
-                    configuration, PCH may use this information to minimize its interactions with
-                    the processor. This may improve PC6 residency and drives idle power down.""",
-        "cpumodels" : _PCH_NEGOTIATION_CPUS,
-        "type" : "bool",
-        "vals" : {"on" : 0, "off" : 1},
-        "bits" : (36, 36),
+        "help": """When enabled, processor's PCU (Power Control Unit) informs PCH (Platform
+                   Controller Hub) about entering and exiting package C6 state (PC6). Depending on
+                   configuration, PCH may use this information to minimize its interactions with
+                   the processor. This may improve PC6 residency and drives idle power down.""",
+        "cpumodels": _PCH_NEGOTIATION_CPUS,
+        "type": "bool",
+        "vals": {"on": 0, "off": 1},
+        "bits": (36, 36),
     },
 }
 

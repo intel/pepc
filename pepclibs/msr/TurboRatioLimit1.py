@@ -22,16 +22,16 @@ MSR_TURBO_RATIO_LIMIT_CORES = 0x1AE
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
 # notes for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "g0_cpu_cnt" : {
-        "name" : "Group 0 cores count",
+    "g0_cpu_cnt": {
+        "name": "Group 0 cores count",
         "sname": "package",
-        "help" : """Count of cores in group 0. This group is used in MSR 0x1AD
-                    (MSR_TURBO_RATIO_LIMIT) for encoding the maximum group of cores turbo
-                    frequency.""",
-        "cpumodels" : TurboRatioLimit.FEATURES["max_g0_turbo_ratio"]["cpumodels"],
-        "type"      : "int",
-        "writable"  : False,
-        "bits"      : (7, 0),
+        "help": """Count of cores in group 0. This group is used in MSR 0x1AD
+                   (MSR_TURBO_RATIO_LIMIT) for encoding the maximum group of cores turbo
+                   frequency.""",
+        "cpumodels": TurboRatioLimit.FEATURES["max_g0_turbo_ratio"]["cpumodels"],
+        "type": "int",
+        "writable": False,
+        "bits": (7, 0),
     },
 }
 

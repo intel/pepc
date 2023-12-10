@@ -52,45 +52,45 @@ _MODULE_SCOPE_L2_HW_PREFETCHER = CPUInfo.TREMONTS + CPUInfo.PHIS + CPUInfo.GOLDM
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "l2_hw_prefetcher" : {
-        "name" : "L2 hardware prefetcher",
+    "l2_hw_prefetcher": {
+        "name": "L2 hardware prefetcher",
         "sname": None,
-        "help" : """Enable/disable the L2 cache hardware prefetcher.""",
-        "cpumodels" : _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
-        "type" : "bool",
-        "vals" : { "on" : 0, "off" : 1},
-        "bits" : None,
+        "help": """Enable/disable the L2 cache hardware prefetcher.""",
+        "cpumodels": _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
+        "type": "bool",
+        "vals": {"on": 0, "off": 1},
+        "bits": None,
     },
-    "l2_adj_prefetcher" : {
-        "name" : "L2 adjacent cache line prefetcher",
+    "l2_adj_prefetcher": {
+        "name": "L2 adjacent cache line prefetcher",
         "sname": "core",
-        "help" : """Enable/disable the L2 adjacent cache lines prefetcher, which fetches cache
+        "help": """Enable/disable the L2 adjacent cache lines prefetcher, which fetches cache
                     lines that comprise a cache line pair.""",
-        "cpumodels" : _ALL_PREFETCHERS_CPUS,
-        "type" : "bool",
-        "vals" : { "on" : 0, "off" : 1},
-        "bits" : None,
+        "cpumodels": _ALL_PREFETCHERS_CPUS,
+        "type": "bool",
+        "vals": {"on": 0, "off": 1},
+        "bits": None,
     },
-    "dcu_hw_prefetcher" : {
-        "name" : "DCU hardware prefetcher",
+    "dcu_hw_prefetcher": {
+        "name": "DCU hardware prefetcher",
         "sname": "core",
-        "help" : """Enable/disable the DCU hardware prefetcher, which fetches the next cache line
+        "help": """Enable/disable the DCU hardware prefetcher, which fetches the next cache line
                     into L1 data cache.""",
-        "cpumodels" : _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
-        "type" : "bool",
-        "vals" : { "on" : 0, "off" : 1},
-        "bits" : None,
+        "cpumodels": _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
+        "type": "bool",
+        "vals": {"on": 0, "off": 1},
+        "bits": None,
     },
-    "dcu_ip_prefetcher" : {
-        "name" : "DCU IP prefetcher",
+    "dcu_ip_prefetcher": {
+        "name": "DCU IP prefetcher",
         "sname": "core",
-        "help" : """Enable/disable the DCU IP prefetcher, which uses sequential load history (based
+        "help": """Enable/disable the DCU IP prefetcher, which uses sequential load history (based
                     on instruction pointer of previous loads) to determine whether to prefetch
                     additional lines.""",
-        "cpumodels" : _ALL_PREFETCHERS_CPUS,
-        "type" : "bool",
-        "vals" : { "on" : 0, "off" : 1},
-        "bits" : None,
+        "cpumodels": _ALL_PREFETCHERS_CPUS,
+        "type": "bool",
+        "vals": {"on": 0, "off": 1},
+        "bits": None,
     },
 }
 

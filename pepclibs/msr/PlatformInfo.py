@@ -70,36 +70,36 @@ _BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS
 # Description of CPU features controlled by the the Platform Information MSR. Please, refer to the
 # notes for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "max_non_turbo_ratio" : {
-        "name" : "Max. Non-Turbo Ratio",
+    "max_non_turbo_ratio": {
+        "name": "Max. Non-Turbo Ratio",
         "sname": "package",
-        "help" : """The ratio of the maximum non-turbo frequency. This ratio multiplied by bus
-                    clock speed gives the maximum non-turbo frequency.""",
-        "cpumodels" : _BASEFREQ_CPUS,
-        "type"      : "int",
-        "writable"  : False,
-        "bits"      : (15, 8),
+        "help": """The ratio of the maximum non-turbo frequency. This ratio multiplied by bus
+                   clock speed gives the maximum non-turbo frequency.""",
+        "cpumodels": _BASEFREQ_CPUS,
+        "type": "int",
+        "writable": False,
+        "bits": (15, 8),
     },
-    "max_eff_ratio" : {
-        "name" : "Max. Efficiency Ratio",
+    "max_eff_ratio": {
+        "name": "Max. Efficiency Ratio",
         "sname": "package",
-        "help" : """The maximum efficiency CPU ratio (in practice, the minimum ratio the OS can
-                    request the CPU to run at). This ratio multiplied by bus clock speed gives the
-                    efficiency CPU frequency.""",
-        "cpumodels" : _EFREQ_CPUS,
-        "type"      : "int",
-        "writable"  : False,
-        "bits"      : (47, 40),
+        "help": """The maximum efficiency CPU ratio (in practice, the minimum ratio the OS can
+                   request the CPU to run at). This ratio multiplied by bus clock speed gives the
+                   efficiency CPU frequency.""",
+        "cpumodels": _EFREQ_CPUS,
+        "type": "int",
+        "writable": False,
+        "bits": (47, 40),
     },
-    "min_oper_ratio" : {
-        "name" : "Min. Operating Ratio",
+    "min_oper_ratio": {
+        "name": "Min. Operating Ratio",
         "sname": "package",
-        "help" : """The minimum operating CPU ratio. This ratio multiplied by bus clock speed gives
-                    the minimum operating CPU frequency.""",
-        "cpumodels" : _MIN_OPER_RATIO_CPUS,
-        "type"      : "int",
-        "writable"  : False,
-        "bits"      : (55, 48),
+        "help": """The minimum operating CPU ratio. This ratio multiplied by bus clock speed gives
+                   the minimum operating CPU frequency.""",
+        "cpumodels": _MIN_OPER_RATIO_CPUS,
+        "type": "int",
+        "writable": False,
+        "bits": (55, 48),
     },
 }
 

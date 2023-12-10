@@ -19,15 +19,15 @@ MSR_PM_ENABLE = 0x770
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "hwp" : {
-        "name" : "Hardware Power Management enabled",
+    "hwp": {
+        "name": "Hardware Power Management enabled",
         "sname": "package",
-        "help" : """When hardware power management is enabled, the platform autonomously scales CPU
-                    frequency depending on the load.""",
-        "cpuflags" : {"hwp",},
-        "type" : "bool",
-        "vals" : {"on" : 1, "off" : 0},
-        "bits" : (0, 0),
+        "help": """When hardware power management is enabled, the platform autonomously scales CPU
+                   frequency depending on the load.""",
+        "cpuflags": {"hwp",},
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (0, 0),
     },
 }
 

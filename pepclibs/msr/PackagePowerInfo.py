@@ -43,14 +43,14 @@ _PPI_CPUS = CPUInfo.GNRS +         \
 # Description of CPU features controlled by the Package Power Info MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "tdp" : {
-        "name" : "CPU package thermal design power",
+    "tdp": {
+        "name": "CPU package thermal design power",
         "sname": "package",
-        "help" : """CPU package thermal design power in Watts.""",
-        "cpumodels" : _PPI_CPUS,
-        "type"      : "float",
-        "bits"      : (14, 0),
-        "writable"  : False,
+        "help": """CPU package thermal design power in Watts.""",
+        "cpumodels": _PPI_CPUS,
+        "type": "float",
+        "bits": (14, 0),
+        "writable": False,
     },
 }
 

@@ -42,32 +42,32 @@ _RPU_CPUS = CPUInfo.GNRS +         \
 # Description of CPU features controlled by the RAPL Power Unit MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "power_units" : {
-        "name" : "Power units",
-        "help" : """Scaling factor for translating RAPL Power Units to Watts.""",
+    "power_units": {
+        "name": "Power units",
+        "help": """Scaling factor for translating RAPL Power Units to Watts.""",
         "cpumodels": _RPU_CPUS,
-        "sname"    : "package",
-        "type"     : "float",
-        "writable" : False,
-        "bits"     : (3, 0),
+        "sname": "package",
+        "type": "float",
+        "writable": False,
+        "bits": (3, 0),
     },
-    "energy_units" : {
-        "name" : "Energy units",
-        "help" : """Scaling factor for translating RAPL Energy Units to Joules.""",
+    "energy_units": {
+        "name": "Energy units",
+        "help": """Scaling factor for translating RAPL Energy Units to Joules.""",
         "cpumodels": _RPU_CPUS,
-        "sname"    : "package",
-        "type"     : "float",
-        "writable" : False,
-        "bits"     : (12, 8),
+        "sname": "package",
+        "type": "float",
+        "writable": False,
+        "bits": (12, 8),
     },
-    "time_units" : {
-        "name" : "Time units",
-        "help" : """Scaling factor for translating RAPL Time Units to seconds.""",
+    "time_units": {
+        "name": "Time units",
+        "help": """Scaling factor for translating RAPL Time Units to seconds.""",
         "cpumodels": _RPU_CPUS,
-        "sname"    : "package",
-        "type"     : "float",
-        "writable" : False,
-        "bits"     : (19, 16),
+        "sname": "package",
+        "type": "float",
+        "writable": False,
+        "bits": (19, 16),
     },
 }
 

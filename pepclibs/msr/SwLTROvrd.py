@@ -26,43 +26,43 @@ _LTR_CPUS = PowerCtl.LTR_CPUS
 # Note: only snoop latency bits and fields are supported. There are non-snoop latency bits and
 # fields, but the do not seem to be useful.
 FEATURES = {
-    "sxl" : {
-        "name" : "Snoop latency software LTR",
+    "sxl": {
+        "name": "Snoop latency software LTR",
         "sname": "package",
-        "help" : "Software (as opposed to PCIe) Latency Tolerance Report (LTR) value for "
-                  "snoop latency in nanoseconds. Value 0 corresponds to best possible service "
-                  "request.",
-        "cpumodels" : _LTR_CPUS,
-        "type" : "int",
-        "bits" : (25, 16),
+        "help": """Software (as opposed to PCIe) Latency Tolerance Report (LTR) value for
+                   snoop latency in nanoseconds. Value 0 corresponds to best possible service
+                   request.""",
+        "cpumodels": _LTR_CPUS,
+        "type": "int",
+        "bits": (25, 16),
     },
-    "sxlm" : {
-        "name" : "Snoop latency LTR multiplier",
+    "sxlm": {
+        "name": "Snoop latency LTR multiplier",
         "sname": "package",
-        "help" : "Multiplier for the snoop latency software LTR.",
-        "cpumodels" : _LTR_CPUS,
-        "type" : "int",
-        "bits" : (28, 26),
+        "help": "Multiplier for the snoop latency software LTR.",
+        "cpumodels": _LTR_CPUS,
+        "type": "int",
+        "bits": (28, 26),
     },
-    "force_sxl" : {
-        "name" : "Force snoop latency software LTR",
+    "force_sxl": {
+        "name": "Force snoop latency software LTR",
         "sname": "package",
-        "help" : "When set, use snoop latency software LTR value from this MSR regardless of LTR "
-                 "from PCIe controllers.",
-        "cpumodels" : _LTR_CPUS,
-        "type" : "bool",
-        "vals" : {"on" : 1, "off" : 0},
-        "bits" : (30, 30),
+        "help": """When set, use snoop latency software LTR value from this MSR regardless of LTR
+                   from PCIe controllers.""",
+        "cpumodels": _LTR_CPUS,
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (30, 30),
     },
-    "sxl_v" : {
-        "name" : "Enable snoop latency software LTR",
+    "sxl_v": {
+        "name": "Enable snoop latency software LTR",
         "sname": "package",
-        "help" : "When enabled, power management unit takes into account snoop latency software "
-                 "LTR value from this MSR, otherwise ignores it.",
-        "cpumodels" : _LTR_CPUS,
-        "type" : "bool",
-        "vals" : {"on" : 1, "off" : 0},
-        "bits" : (31, 31),
+        "help": """When enabled, power management unit takes into account snoop latency software
+                   LTR value from this MSR, otherwise ignores it.""",
+        "cpumodels": _LTR_CPUS,
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (31, 31),
     },
 }
 

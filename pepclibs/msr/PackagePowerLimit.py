@@ -44,82 +44,82 @@ _PPL_CPUS = CPUInfo.GNRS +         \
 # Description of CPU features controlled by the Package Power Limit MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "limit1" : {
-        "name" : "Package power limit #1",
+    "limit1": {
+        "name": "Package power limit #1",
         "sname": "package",
-        "help" : """Average power usage limit of the package domain corresponding to time
-                    window #1.""",
-        "cpumodels" : _PPL_CPUS,
-        "type"      : "float",
-        "bits"      : (14, 0),
+        "help": """Average power usage limit of the package domain corresponding to time
+                   window #1.""",
+        "cpumodels": _PPL_CPUS,
+        "type": "float",
+        "bits": (14, 0),
     },
-    "limit1_enable" : {
-        "name" : "Enable package power limit #1",
+    "limit1_enable": {
+        "name": "Enable package power limit #1",
         "sname": "package",
-        "help" : """Enable/disable RAPL package power limit #1.""",
-        "cpumodels" : _PPL_CPUS,
-        "type"      : "bool",
-        "vals"      : {"on" : 1, "off" : 0},
-        "bits"      : (15, 15),
+        "help": """Enable/disable RAPL package power limit #1.""",
+        "cpumodels": _PPL_CPUS,
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (15, 15),
     },
-    "limit1_clamp" : {
-        "name" : "Enable package power clamping for limit #1",
+    "limit1_clamp": {
+        "name": "Enable package power clamping for limit #1",
         "sname": "package",
-        "help" : """Clamp the package power usage to specified limit during time window #1.
-                    This may result in the system running below the requested frequency/voltage.""",
-        "cpumodels" : _PPL_CPUS,
-        "type"      : "bool",
-        "vals"      : {"on" : 1, "off" : 0},
-        "bits"      : (16, 16),
+        "help": """Clamp the package power usage to specified limit during time window #1.
+                   This may result in the system running below the requested frequency/voltage.""",
+        "cpumodels": _PPL_CPUS,
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (16, 16),
     },
-    "limit1_window" : {
-        "name" : "Time window for power limit #1",
+    "limit1_window": {
+        "name": "Time window for power limit #1",
         "sname": "package",
-        "help" : """Time window for package power limit #1: the system makes sure that average
-                    package power over the time window does not exceed power limit #1.""",
-        "cpumodels" : _PPL_CPUS,
-        "type"      : "float",
-        "bits"      : (23, 17),
-        "writable"  : False,
+        "help": """Time window for package power limit #1: the system makes sure that average
+                   package power over the time window does not exceed power limit #1.""",
+        "cpumodels": _PPL_CPUS,
+        "type": "float",
+        "bits": (23, 17),
+        "writable": False,
     },
-    "limit2" : {
-        "name" : "Package power limit #2",
+    "limit2": {
+        "name": "Package power limit #2",
         "sname": "package",
-        "help" : """Average power usage limit of the package domain corresponding to time
-                    window #2.""",
-        "cpumodels" : _PPL_CPUS,
-        "type"      : "float",
-        "bits"      : (46, 32),
+        "help": """Average power usage limit of the package domain corresponding to time
+                   window #2.""",
+        "cpumodels": _PPL_CPUS,
+        "type": "float",
+        "bits": (46, 32),
     },
-    "limit2_enable" : {
-        "name" : "Enable package power limit #2",
+    "limit2_enable": {
+        "name": "Enable package power limit #2",
         "sname": "package",
-        "help" : """Enable/disable RAPL package power limit #2.""",
-        "cpumodels" : _PPL_CPUS,
-        "type"      : "bool",
-        "vals"      : {"on" : 1, "off" : 0},
-        "bits"      : (47, 47),
+        "help": """Enable/disable RAPL package power limit #2.""",
+        "cpumodels": _PPL_CPUS,
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (47, 47),
     },
-    "limit2_clamp" : {
-        "name" : "Enable package power clamping for limit #2",
+    "limit2_clamp": {
+        "name": "Enable package power clamping for limit #2",
         "sname": "package",
-        "help" : """Clamp the package power usage to specified limit during time window #2.
-                    This may result in the system running below the requested frequency/voltage.""",
-        "cpumodels" : _PPL_CPUS,
-        "type"      : "bool",
-        "vals"      : {"on" : 1, "off" : 0},
-        "bits"      : (48, 48),
+        "help": """Clamp the package power usage to specified limit during time window #2.
+                   This may result in the system running below the requested frequency/voltage.""",
+        "cpumodels": _PPL_CPUS,
+        "type": "bool",
+        "vals": {"on": 1, "off": 0},
+        "bits": (48, 48),
     },
-    "limit2_window" : {
-        "name" : "Time window for power limit #2",
+    "limit2_window": {
+        "name": "Time window for power limit #2",
         "sname": "package",
-        "help" : """Time window for package power limit #2: the system makes sure that average
-                    package power over the time window does not exceed power limit #2.""",
+        "help": """Time window for package power limit #2: the system makes sure that average
+                   package power over the time window does not exceed power limit #2.""",
 
-        "cpumodels" : _PPL_CPUS,
-        "type"      : "float",
-        "bits"      : (55, 49),
-        "writable"  : False,
+        "cpumodels": _PPL_CPUS,
+        "type": "float",
+        "bits": (55, 49),
+        "writable": False,
     },
 }
 

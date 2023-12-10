@@ -35,25 +35,25 @@ _CPUS = CPUInfo.EMRS +                            \
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
 # notes for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "max_ratio" : {
-        "name" : "Maximum uncore ratio",
+    "max_ratio": {
+        "name": "Maximum uncore ratio",
         "sname": None,
-        "help" : """The maximum allowed uncore ratio. This ratio multiplied by bus clock speed gives
-                    the maximum allowed uncore frequency.""",
-        "cpumodels" : _CPUS,
-        "type"      : "int",
-        "writable"  : True,
-        "bits"      : (6, 0),
+        "help": """The maximum allowed uncore ratio. This ratio multiplied by bus clock speed gives
+                   the maximum allowed uncore frequency.""",
+        "cpumodels": _CPUS,
+        "type": "int",
+        "writable": True,
+        "bits": (6, 0),
     },
-    "min_ratio" : {
-        "name" : "Minimum uncore ratio",
+    "min_ratio": {
+        "name": "Minimum uncore ratio",
         "sname": None,
-        "help" : """The minimum allowed uncore ratio. This ratio multiplied by bus clock speed gives
-                    the minimum allowed uncore frequency.""",
-        "cpumodels" : _CPUS,
-        "type"      : "int",
-        "writable"  : True,
-        "bits"      : (14, 8),
+        "help": """The minimum allowed uncore ratio. This ratio multiplied by bus clock speed gives
+                   the minimum allowed uncore frequency.""",
+        "cpumodels": _CPUS,
+        "type": "int",
+        "writable": True,
+        "bits": (14, 8),
     },
 }
 

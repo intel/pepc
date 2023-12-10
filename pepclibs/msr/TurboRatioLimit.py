@@ -60,26 +60,26 @@ _GT_CPUS = CPUInfo.GNRS + \
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
 # notes for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "max_1c_turbo_ratio" : {
-        "name" : "Max. 1 Core Turbo Ratio",
+    "max_1c_turbo_ratio": {
+        "name": "Max. 1 Core Turbo Ratio",
         "sname": "package",
-        "help" : """The ratio of maximum turbo frequency in case of 1 active core. This ratio
-                    multiplied by bus clock speed gives the maximum 1 core turbo frequency.""",
-        "cpumodels" : _CT_CPUS,
-        "type"      : "int",
-        "writable"  : False,
-        "bits"      : (7, 0),
+        "help": """The ratio of maximum turbo frequency in case of 1 active core. This ratio
+                   multiplied by bus clock speed gives the maximum 1 core turbo frequency.""",
+        "cpumodels": _CT_CPUS,
+        "type": "int",
+        "writable": False,
+        "bits": (7, 0),
     },
-    "max_g0_turbo_ratio" : {
-        "name" : "Max. Group 0 cores Turbo Ratio",
+    "max_g0_turbo_ratio": {
+        "name": "Max. Group 0 cores Turbo Ratio",
         "sname": "package",
-        "help" : """The ratio of maximum turbo frequency in case "group 0" count of cores are
-                    active. This ratio multiplied by bus clock speed gives the frequency. Count of
-                    cores in group 0 is provided by MSR 0x1AE.""",
-        "cpumodels" : _GT_CPUS,
-        "type"      : "int",
-        "writable"  : False,
-        "bits"      : (7, 0),
+        "help": """The ratio of maximum turbo frequency in case "group 0" count of cores are
+                   active. This ratio multiplied by bus clock speed gives the frequency. Count of
+                   cores in group 0 is provided by MSR 0x1AE.""",
+        "cpumodels": _GT_CPUS,
+        "type": "int",
+        "writable": False,
+        "bits": (7, 0),
     },
 }
 

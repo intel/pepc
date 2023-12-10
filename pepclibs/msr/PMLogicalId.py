@@ -22,32 +22,32 @@ _PLI_CPUS = CPUInfo.GNRS + CPUInfo.CRESTMONTS
 # Description of CPU features controlled by the PM Logical ID. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "domain_id" : {
-        "name" : "Domain ID",
+    "domain_id": {
+        "name": "Domain ID",
         "sname": "CPU",
-        "help" : """Domain ID.""",
-        "cpumodels" : _PLI_CPUS,
-        "type" : "int",
-        "bits" : (15, 11),
-        "writable" : False,
+        "help": """Domain ID.""",
+        "cpumodels": _PLI_CPUS,
+        "type": "int",
+        "bits": (15, 11),
+        "writable": False,
     },
-    "module_id" : {
-        "name" : "Module ID",
+    "module_id": {
+        "name": "Module ID",
         "sname": "CPU",
-        "help" : """Module ID.""",
-        "cpumodels" : _PLI_CPUS,
-        "type" : "int",
-        "bits" : (10, 3),
-        "writable" : False,
+        "help": """Module ID.""",
+        "cpumodels": _PLI_CPUS,
+        "type": "int",
+        "bits": (10, 3),
+        "writable": False,
     },
-    "cpu_id" : {
-        "name" : "CPU ID",
+    "cpu_id": {
+        "name": "CPU ID",
         "sname": "CPU",
-        "help" : """CPU ID.""",
-        "cpumodels" : _PLI_CPUS,
-        "type" : "int",
-        "bits" : (2, 0),
-        "writable" : False,
+        "help": """CPU ID.""",
+        "cpumodels": _PLI_CPUS,
+        "type": "int",
+        "bits": (2, 0),
+        "writable": False,
     },
 }
 

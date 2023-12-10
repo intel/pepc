@@ -24,15 +24,15 @@ _PACKAGE_SCOPE_CPUS = CPUInfo.WESTMERES + CPUInfo.SANDYBRIDGES
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "epb" : {
-        "name" : "Energy Performance Bias",
+    "epb": {
+        "name": "Energy Performance Bias",
         "sname": None,
-        "help" : """Energy Performance Bias is a hint to the CPU about the power and performance
-                    preference. Value 0 indicates highest performance and value 15 indicates
-                    maximum energy savings.""",
-        "cpuflags" : {"epb",},
-        "type" : "int",
-        "bits" : (3, 0),
+        "help": """Energy Performance Bias is a hint to the CPU about the power and performance
+                   preference. Value 0 indicates highest performance and value 15 indicates
+                   maximum energy savings.""",
+        "cpuflags": {"epb",},
+        "type": "int",
+        "bits": (3, 0),
     },
 }
 

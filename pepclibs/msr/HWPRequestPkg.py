@@ -20,31 +20,31 @@ MSR_HWP_REQUEST_PKG = 0x772
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 FEATURES = {
-    "min_perf" : {
-        "name" : "Min. CPU performance",
+    "min_perf": {
+        "name": "Min. CPU performance",
         "sname": None,
-        "help" : """The minimum desired CPU performance.""",
-        "cpuflags" : {"hwp", "hwp_pkg_req"},
-        "type" : "int",
-        "bits" : (7, 0),
+        "help": """The minimum desired CPU performance.""",
+        "cpuflags": {"hwp", "hwp_pkg_req"},
+        "type": "int",
+        "bits": (7, 0),
     },
-    "max_perf" : {
-        "name" : "Max. CPU performance",
+    "max_perf": {
+        "name": "Max. CPU performance",
         "sname": None,
-        "help" : """The maximum desired CPU performance.""",
-        "cpuflags" : {"hwp", "hwp_pkg_req"},
-        "type" : "int",
-        "bits" : (15, 8),
+        "help": """The maximum desired CPU performance.""",
+        "cpuflags": {"hwp", "hwp_pkg_req"},
+        "type": "int",
+        "bits": (15, 8),
     },
-    "epp" : {
-        "name" : "Energy Performance Preference",
+    "epp": {
+        "name": "Energy Performance Preference",
         "sname": None,
-        "help" : """Energy Performance Preference is a hint to the CPU running in HWP mode about the
-                    power and performance preference. Value 0 indicates highest performance and
-                    value 255 indicates maximum energy savings.""",
-        "cpuflags" : {"hwp", "hwp_epp", "hwp_pkg_req"},
-        "type" : "int",
-        "bits" : (31, 24),
+        "help": """Energy Performance Preference is a hint to the CPU running in HWP mode about the
+                   power and performance preference. Value 0 indicates highest performance and
+                   value 255 indicates maximum energy savings.""",
+        "cpuflags": {"hwp", "hwp_epp", "hwp_pkg_req"},
+        "type": "int",
+        "bits": (31, 24),
     },
 }
 
