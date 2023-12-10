@@ -437,6 +437,19 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         self._init_features_dict_defaults()
         self._init_public_features_dict()
 
+    def _get_clx_ap_adjusted_msr_scope(self):
+        """
+        Return string "die" if the platfomr is a Cascade Lake AP (CLX-AP) and string "package"
+        otherwise. The CLX-AP platform is special, because it basically has 2x CLX-SP dies in one
+        package. So most MSRs that has "package" scope on SKX or CLX have "die" scope on CLX-AP.
+        """
+
+        model = self._cpuinfo.info["model"]
+        if model == CPUInfo.CPUS["SKYLAKE_X"]["model"] and \
+           len(self._cpuinfo.get_dies(package=0)) > 1:
+            return "die"
+        return "package"
+
     def _set_baseclass_attributes(self):
         """
         This method must be provided by the sub-class and it must initialized the following

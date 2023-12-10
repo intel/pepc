@@ -72,15 +72,7 @@ class UncoreRatioLimit(_FeaturedMSR.FeaturedMSR):
 
         self.features = FEATURES
 
-        # MSR_POWER_CTL features have package scope, except for Cascade Lake AP, which has two dies,
-        # and the features have die scope.
-        model = self._cpuinfo.info["model"]
-        if model == CPUInfo.CPUS["SKYLAKE_X"]["model"] and \
-           len(self._cpuinfo.get_dies(package=0)) > 1:
-            sname = "die"
-        else:
-            sname = "package"
-
+        sname = self._get_clx_ap_adjusted_msr_scope()
         for finfo in self.features.values():
             finfo["sname"] = sname
 
