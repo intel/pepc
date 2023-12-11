@@ -320,9 +320,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         if not self._cpufreq_msr_obj:
             from pepclibs import _CPUFreq # pylint: disable=import-outside-toplevel
 
+            msr = self._get_msr()
             self._cpufreq_msr_obj = _CPUFreq.CPUFreqMSR(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                        msr=self._msr,
-                                                        enable_cache=self._enable_cache)
+                                                        msr=msr, enable_cache=self._enable_cache)
         return self._cpufreq_msr_obj
 
     def _get_uncfreq_obj(self):
