@@ -47,6 +47,7 @@ FEATURES = {
     "limit1": {
         "name": "Package power limit #1",
         "sname": "package",
+        "iosname": "package",
         "help": """Average power usage limit of the package domain corresponding to time
                    window #1.""",
         "cpumodels": _PPL_CPUS,
@@ -56,6 +57,7 @@ FEATURES = {
     "limit1_enable": {
         "name": "Enable package power limit #1",
         "sname": "package",
+        "iosname": "package",
         "help": """Enable/disable RAPL package power limit #1.""",
         "cpumodels": _PPL_CPUS,
         "type": "bool",
@@ -65,6 +67,7 @@ FEATURES = {
     "limit1_clamp": {
         "name": "Enable package power clamping for limit #1",
         "sname": "package",
+        "iosname": "package",
         "help": """Clamp the package power usage to specified limit during time window #1.
                    This may result in the system running below the requested frequency/voltage.""",
         "cpumodels": _PPL_CPUS,
@@ -75,6 +78,7 @@ FEATURES = {
     "limit1_window": {
         "name": "Time window for power limit #1",
         "sname": "package",
+        "iosname": "package",
         "help": """Time window for package power limit #1: the system makes sure that average
                    package power over the time window does not exceed power limit #1.""",
         "cpumodels": _PPL_CPUS,
@@ -85,6 +89,7 @@ FEATURES = {
     "limit2": {
         "name": "Package power limit #2",
         "sname": "package",
+        "iosname": "package",
         "help": """Average power usage limit of the package domain corresponding to time
                    window #2.""",
         "cpumodels": _PPL_CPUS,
@@ -94,6 +99,7 @@ FEATURES = {
     "limit2_enable": {
         "name": "Enable package power limit #2",
         "sname": "package",
+        "iosname": "package",
         "help": """Enable/disable RAPL package power limit #2.""",
         "cpumodels": _PPL_CPUS,
         "type": "bool",
@@ -103,6 +109,7 @@ FEATURES = {
     "limit2_clamp": {
         "name": "Enable package power clamping for limit #2",
         "sname": "package",
+        "iosname": "package",
         "help": """Clamp the package power usage to specified limit during time window #2.
                    This may result in the system running below the requested frequency/voltage.""",
         "cpumodels": _PPL_CPUS,
@@ -113,6 +120,7 @@ FEATURES = {
     "limit2_window": {
         "name": "Time window for power limit #2",
         "sname": "package",
+        "iosname": "package",
         "help": """Time window for package power limit #2: the system makes sure that average
                    package power over the time window does not exceed power limit #2.""",
 
@@ -176,7 +184,7 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
         bits = self._features[fname]["bits"]
 
         for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus,
-                                            sname=self._features[fname]["sname"]):
+                                            sname=self._features[fname]["iosname"]):
             if fname.endswith("_window"):
                 val = self._val_to_window(val)
             elif fname in ("limit1", "limit2"):
@@ -190,7 +198,7 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
         """Helper method to set the given package power limit in Watts."""
 
         val = int(float(val) / self._get_power_units())
-        self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, sname=finfo["sname"])
+        self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, sname=finfo["iosname"])
 
     def _set_feature(self, fname, val, cpus="all"):
         """Sets the value of a feature."""
@@ -203,7 +211,7 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
         # 'verify=True' to detect if the change was successful.
         if fname.endswith("_clamp") or fname.endswith("_enable"):
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, verify=True,
-                                 sname=finfo["sname"])
+                                 sname=finfo["iosname"])
         elif fname in ("limit1", "limit2"):
             self._set_limit(finfo, val, cpus)
         else:

@@ -49,6 +49,7 @@ FEATURES = {
     "c1e_autopromote": {
         "name": "C1E autopromote",
         "sname": None,
+        "iosname": None,
         "help": "When enabled, the CPU automatically converts all C1 requests to C1E requests.",
         "type": "bool",
         "vals": {"on": 1, "off": 0},
@@ -57,6 +58,7 @@ FEATURES = {
     "cstate_prewake": {
         "name": "C-state prewake",
         "sname": None,
+        "iosname": None,
         "help": """When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                    the next local APIC timer event.""",
         "cpumodels": _CSTATE_PREWAKE_CPUS,
@@ -67,6 +69,7 @@ FEATURES = {
     "ltr": {
         "name": "LTR (Latency Tolerance Reporting)",
         "sname": "package",
+        "iosname": None,
         "help": """When enabled, the CPU will take LTR constraints into account when making power
                    management decisions, such as selecting package C-state.""",
         "cpumodels": LTR_CPUS,
@@ -77,6 +80,7 @@ FEATURES = {
     "pch_negotiation": {
         "name": "PCH negotiation",
         "sname": None,
+        "iosname": None,
         "help": """When enabled, processor's PCU (Power Control Unit) informs PCH (Platform
                    Controller Hub) about entering and exiting package C6 state (PC6). Depending on
                    configuration, PCH may use this information to minimize its interactions with
@@ -105,7 +109,7 @@ class PowerCtl(_FeaturedMSR.FeaturedMSR):
 
         sname = self._get_clx_ap_adjusted_msr_scope()
         for finfo in self.features.values():
-            finfo["sname"] = sname
+            finfo["sname"] = finfo["iosname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

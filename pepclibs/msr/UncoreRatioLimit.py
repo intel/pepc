@@ -38,6 +38,7 @@ FEATURES = {
     "max_ratio": {
         "name": "Maximum uncore ratio",
         "sname": None,
+        "iosname": None,
         "help": """The maximum allowed uncore ratio. This ratio multiplied by bus clock speed gives
                    the maximum allowed uncore frequency.""",
         "cpumodels": _CPUS,
@@ -48,6 +49,7 @@ FEATURES = {
     "min_ratio": {
         "name": "Minimum uncore ratio",
         "sname": None,
+        "iosname": None,
         "help": """The minimum allowed uncore ratio. This ratio multiplied by bus clock speed gives
                    the minimum allowed uncore frequency.""",
         "cpumodels": _CPUS,

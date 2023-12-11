@@ -29,6 +29,7 @@ FEATURES = {
     "sxl": {
         "name": "Snoop latency software LTR",
         "sname": "package",
+        "iosname": "package",
         "help": """Software (as opposed to PCIe) Latency Tolerance Report (LTR) value for
                    snoop latency in nanoseconds. Value 0 corresponds to best possible service
                    request.""",
@@ -39,6 +40,7 @@ FEATURES = {
     "sxlm": {
         "name": "Snoop latency LTR multiplier",
         "sname": "package",
+        "iosname": "package",
         "help": "Multiplier for the snoop latency software LTR.",
         "cpumodels": _LTR_CPUS,
         "type": "int",
@@ -47,6 +49,7 @@ FEATURES = {
     "force_sxl": {
         "name": "Force snoop latency software LTR",
         "sname": "package",
+        "iosname": "package",
         "help": """When set, use snoop latency software LTR value from this MSR regardless of LTR
                    from PCIe controllers.""",
         "cpumodels": _LTR_CPUS,
@@ -57,6 +60,7 @@ FEATURES = {
     "sxl_v": {
         "name": "Enable snoop latency software LTR",
         "sname": "package",
+        "iosname": "package",
         "help": """When enabled, power management unit takes into account snoop latency software
                    LTR value from this MSR, otherwise ignores it.""",
         "cpumodels": _LTR_CPUS,

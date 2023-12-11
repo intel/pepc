@@ -22,6 +22,7 @@ FEATURES = {
     "hwp": {
         "name": "Hardware Power Management enabled",
         "sname": "package",
+        "iosname": "package",
         "help": """When hardware power management is enabled, the platform autonomously scales CPU
                    frequency depending on the load.""",
         "cpuflags": {"hwp",},

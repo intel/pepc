@@ -25,6 +25,7 @@ FEATURES = {
     "domain_id": {
         "name": "Domain ID",
         "sname": "CPU",
+        "iosname": "CPU",
         "help": """Domain ID.""",
         "cpumodels": _PLI_CPUS,
         "type": "int",
@@ -34,6 +35,7 @@ FEATURES = {
     "module_id": {
         "name": "Module ID",
         "sname": "CPU",
+        "iosname": "CPU",
         "help": """Module ID.""",
         "cpumodels": _PLI_CPUS,
         "type": "int",
@@ -43,6 +45,7 @@ FEATURES = {
     "cpu_id": {
         "name": "CPU ID",
         "sname": "CPU",
+        "iosname": "CPU",
         "help": """CPU ID.""",
         "cpumodels": _PLI_CPUS,
         "type": "int",

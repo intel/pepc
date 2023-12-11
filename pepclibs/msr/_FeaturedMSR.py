@@ -24,6 +24,8 @@ Terminology.
                             limit feature in MSR_PKG_CST_CONFIG_CONTROL).
   * MSR I/O scope - same as MSR feature I/O scope. Usually all features in an MSR have the same
                     scope, in which case the I/O scope references the entire MSR.
+  * sname - (functional) scope.
+  * iosname - I/O scope.
 """
 
 import copy

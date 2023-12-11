@@ -25,6 +25,7 @@ FEATURES = {
     "min_perf": {
         "name": "Min. CPU performance",
         "sname": "CPU",
+        "iosname": "CPU",
         "help": """The minimum desired CPU performance.""",
         "cpuflags": {"hwp"},
         "type": "int",
@@ -33,6 +34,7 @@ FEATURES = {
     "max_perf": {
         "name": "Max. CPU performance",
         "sname": "CPU",
+        "iosname": "CPU",
         "help": """The maximum desired CPU performance.""",
         "cpuflags": {"hwp"},
         "type": "int",
@@ -41,6 +43,7 @@ FEATURES = {
     "epp": {
         "name": "Energy Performance Preference",
         "sname": "CPU",
+        "iosname": "CPU",
         "help": """Energy Performance Preference is a hint to the CPU running in HWP mode about the
                    power and performance preference. Value 0 indicates highest performance and
                    value 255 indicates maximum energy savings.""",
@@ -51,6 +54,7 @@ FEATURES = {
     "pkg_control": {
         "name": "HWP is controlled by MSR_HWP_REQUEST_PKG",
         "sname": "CPU",
+        "iosname": "CPU",
         "help": f"""When enabled, the CPU ignores this per-CPU ignores MSR {MSR_HWP_REQUEST}
                     (MSR_HWP_REQUEST), and instead, uses per-package MSR 0x772
                     (MSR_HWP_REQUEST_PKG).""",
@@ -62,6 +66,7 @@ FEATURES = {
     "epp_valid": {
         "name": "EPP is controlled by MSR_HWP_REQUEST",
         "sname": "CPU",
+        "iosname": "CPU",
         "help": f"""When set, the CPU reads the EPP value from per-CPU MSR {MSR_HWP_REQUEST}
                     (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
         "cpuflags": {"hwp", "hwp_epp"},
@@ -72,6 +77,7 @@ FEATURES = {
     "max_perf_valid": {
         "name": "Max. performance is controlled by MSR_HWP_REQUEST",
         "sname": "CPU",
+        "iosname": "CPU",
         "help": f"""When set, the CPU reads the Maximum performance value from per-CPU MSR
                    {MSR_HWP_REQUEST} (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
         "cpuflags": {"hwp"},
@@ -82,6 +88,7 @@ FEATURES = {
     "min_perf_valid": {
         "name": "Min. performance is controlled by MSR_HWP_REQUEST",
         "sname": "CPU",
+        "iosname": "CPU",
         "help": f"""When set, the CPU reads the Minimum performance value from per-CPU MSR
                     {MSR_HWP_REQUEST} (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
         "cpuflags": {"hwp"},

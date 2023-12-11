@@ -25,6 +25,7 @@ FEATURES = {
     "g0_cpu_cnt": {
         "name": "Group 0 cores count",
         "sname": "package",
+        "iosname": "package",
         "help": """Count of cores in group 0. This group is used in MSR 0x1AD
                    (MSR_TURBO_RATIO_LIMIT) for encoding the maximum group of cores turbo
                    frequency.""",

@@ -67,6 +67,7 @@ FEATURES = {
     "fsb" : {
         "name": "Bus clock speed (megahertz)",
         "sname": None,
+        "iosname": None,
         "help": "Platform bus clock speed (FSB) in megahertz",
         "cpumodels": tuple(_FSB_CODES.keys()),
         "type": "float",
@@ -116,7 +117,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
             sname = "core"
 
         for finfo in self.features.values():
-            finfo["sname"] = sname
+            finfo["sname"] = finfo["iosname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

@@ -73,6 +73,7 @@ FEATURES = {
     "max_non_turbo_ratio": {
         "name": "Max. Non-Turbo Ratio",
         "sname": "package",
+        "iosname": "package",
         "help": """The ratio of the maximum non-turbo frequency. This ratio multiplied by bus
                    clock speed gives the maximum non-turbo frequency.""",
         "cpumodels": _BASEFREQ_CPUS,
@@ -83,6 +84,7 @@ FEATURES = {
     "max_eff_ratio": {
         "name": "Max. Efficiency Ratio",
         "sname": "package",
+        "iosname": "package",
         "help": """The maximum efficiency CPU ratio (in practice, the minimum ratio the OS can
                    request the CPU to run at). This ratio multiplied by bus clock speed gives the
                    efficiency CPU frequency.""",
@@ -94,6 +96,7 @@ FEATURES = {
     "min_oper_ratio": {
         "name": "Min. Operating Ratio",
         "sname": "package",
+        "iosname": "package",
         "help": """The minimum operating CPU ratio. This ratio multiplied by bus clock speed gives
                    the minimum operating CPU frequency.""",
         "cpumodels": _MIN_OPER_RATIO_CPUS,

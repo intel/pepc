@@ -27,6 +27,7 @@ FEATURES = {
     "epb": {
         "name": "Energy Performance Bias",
         "sname": None,
+        "iosname": None,
         "help": """Energy Performance Bias is a hint to the CPU about the power and performance
                    preference. Value 0 indicates highest performance and value 15 indicates
                    maximum energy savings.""",
@@ -60,7 +61,7 @@ class EnergyPerfBias(_FeaturedMSR.FeaturedMSR):
             sname = "CPU"
 
         for finfo in self.features.values():
-            finfo["sname"] = sname
+            finfo["sname"] = finfo["iosname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

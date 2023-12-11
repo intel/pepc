@@ -55,6 +55,7 @@ FEATURES = {
     "l2_hw_prefetcher": {
         "name": "L2 hardware prefetcher",
         "sname": None,
+        "iosname": None,
         "help": """Enable/disable the L2 cache hardware prefetcher.""",
         "cpumodels": _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
         "type": "bool",
@@ -64,6 +65,7 @@ FEATURES = {
     "l2_adj_prefetcher": {
         "name": "L2 adjacent cache line prefetcher",
         "sname": "core",
+        "iosname": "core",
         "help": """Enable/disable the L2 adjacent cache lines prefetcher, which fetches cache
                     lines that comprise a cache line pair.""",
         "cpumodels": _ALL_PREFETCHERS_CPUS,
@@ -74,6 +76,7 @@ FEATURES = {
     "dcu_hw_prefetcher": {
         "name": "DCU hardware prefetcher",
         "sname": "core",
+        "iosname": "core",
         "help": """Enable/disable the DCU hardware prefetcher, which fetches the next cache line
                     into L1 data cache.""",
         "cpumodels": _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
@@ -84,6 +87,7 @@ FEATURES = {
     "dcu_ip_prefetcher": {
         "name": "DCU IP prefetcher",
         "sname": "core",
+        "iosname": "core",
         "help": """Enable/disable the DCU IP prefetcher, which uses sequential load history (based
                     on instruction pointer of previous loads) to determine whether to prefetch
                     additional lines.""",
@@ -133,9 +137,12 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
         model = self._cpuinfo.info["model"]
 
         if model in _MODULE_SCOPE_L2_HW_PREFETCHER:
-            self.features["l2_hw_prefetcher"]["sname"] = "module"
+            sname = "module"
         else:
-            self.features["l2_hw_prefetcher"]["sname"] = "core"
+            sname = "core"
+
+        finfo = self.features["l2_hw_prefetcher"]
+        finfo["sname"] = finfo["iosname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

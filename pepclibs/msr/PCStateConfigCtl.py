@@ -128,6 +128,7 @@ FEATURES = {
     "pkg_cstate_limit": {
         "name": "Package C-state limit",
         "sname": None,
+        "iosname": None,
         "help": """The deepest package C-state the platform is allowed to enter. The package
                    C-state limit is configured via MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                    (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
@@ -142,6 +143,7 @@ FEATURES = {
     "pkg_cstate_limit_lock":  {
         "name": "MSR lock",
         "sname": None,
+        "iosname": None,
         "help": """Lock/unlock bits 15:0 of MSR {MSR_PKG_CST_CONFIG_CONTROL:#x}
                    (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
                    is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
@@ -155,6 +157,7 @@ FEATURES = {
     "c1_demotion": {
         "name": "C1 demotion",
         "sname": None,
+        "iosname": None,
         "help": """Allow/disallow the CPU to demote C6/C7 requests to C1.""",
         "type": "bool",
         "vals": {"on": 1, "off": 0},
@@ -163,6 +166,7 @@ FEATURES = {
     "c1_undemotion": {
         "name": "C1 undemotion",
         "sname": None,
+        "iosname": None,
         "help": """Allow/disallow the CPU to un-demote previously demoted requests back from C1 to
                    C6/C7.""",
         "type": "bool",
@@ -197,7 +201,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         finfo = self._features["pkg_cstate_limit"]
 
         for cpu, code in self._msr.read_bits(self.regaddr, finfo["bits"], cpus=cpus,
-                                             sname=finfo["sname"]):
+                                             sname=finfo["iosname"]):
             if code not in finfo["rvals"]:
                 # No exact match. The limit is the closest lower known number. For example, if the
                 # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the
@@ -229,7 +233,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         finfo = self._features["pkg_cstate_limit"]
         regvals = {}
 
-        for cpu, regval in self._msr.read(self.regaddr, cpus=cpus, sname=finfo["sname"]):
+        for cpu, regval in self._msr.read(self.regaddr, cpus=cpus, sname=finfo["iosname"]):
             if self._msr.get_bits(regval, self._features["pkg_cstate_limit_lock"]["bits"]):
                 raise Error(f"cannot set package C-state limit{self._pman.hostmsg} for CPU "
                             f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
@@ -244,7 +248,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             regvals[new_regval].append(cpu)
 
         for regval, regval_cpus in regvals.items():
-            self._msr.write(self.regaddr, regval, regval_cpus, sname=finfo["sname"])
+            self._msr.write(self.regaddr, regval, regval_cpus, sname=finfo["iosname"])
 
     def _init_features_dict_pkg_cstate_limit(self):
         """Initialize the 'pkg_cstate_limit' information in the 'self._features' dictionary."""
@@ -285,7 +289,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             sname = "core"
 
         for finfo in self.features.values():
-            finfo["sname"] = sname
+            finfo["sname"] = finfo["iosname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

@@ -23,6 +23,7 @@ FEATURES = {
     "min_perf": {
         "name": "Min. CPU performance",
         "sname": None,
+        "iosname": None,
         "help": """The minimum desired CPU performance.""",
         "cpuflags": {"hwp", "hwp_pkg_req"},
         "type": "int",
@@ -31,6 +32,7 @@ FEATURES = {
     "max_perf": {
         "name": "Max. CPU performance",
         "sname": None,
+        "iosname": None,
         "help": """The maximum desired CPU performance.""",
         "cpuflags": {"hwp", "hwp_pkg_req"},
         "type": "int",
@@ -39,6 +41,7 @@ FEATURES = {
     "epp": {
         "name": "Energy Performance Preference",
         "sname": None,
+        "iosname": None,
         "help": """Energy Performance Preference is a hint to the CPU running in HWP mode about the
                    power and performance preference. Value 0 indicates highest performance and
                    value 255 indicates maximum energy savings.""",
@@ -65,7 +68,7 @@ class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
 
         sname = self._get_clx_ap_adjusted_msr_scope()
         for finfo in self.features.values():
-            finfo["sname"] = sname
+            finfo["sname"] = finfo["iosname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """

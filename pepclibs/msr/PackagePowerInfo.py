@@ -46,6 +46,7 @@ FEATURES = {
     "tdp": {
         "name": "CPU package thermal design power",
         "sname": "package",
+        "iosname": "package",
         "help": """CPU package thermal design power in Watts.""",
         "cpumodels": _PPI_CPUS,
         "type": "float",
@@ -92,7 +93,7 @@ class PackagePowerInfo(_FeaturedMSR.FeaturedMSR):
         bits = self._features[fname]["bits"]
 
         for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus,
-                                            sname=self._features[fname]["sname"]):
+                                            sname=self._features[fname]["iosname"]):
             val *= self._get_power_units()
 
             yield (cpu, val)
