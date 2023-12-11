@@ -161,6 +161,10 @@ def close(cls_obj, close_attrs=None, unref_attrs=None):
         close_attrs = []
 
     for attr in close_attrs:
+        if not hasattr(cls_obj, attr):
+            _LOG.warning("close(close_attrs=<list>): non-existing attribute '%s' in '%s'",
+                         name, cls_obj)
+
         obj = getattr(cls_obj, attr, None)
         if not obj:
             continue
@@ -189,6 +193,10 @@ def close(cls_obj, close_attrs=None, unref_attrs=None):
         setattr(cls_obj, attr, None)
 
     for attr in unref_attrs:
+        if not hasattr(cls_obj, attr):
+            _LOG.warning("close(unref_attrs=<list>): non-existing attribute '%s' in '%s'",
+                         name, cls_obj)
+
         obj = getattr(cls_obj, attr, None)
         if obj:
             setattr(cls_obj, attr, None)
