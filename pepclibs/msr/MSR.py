@@ -213,11 +213,11 @@ class MSR(ClassHelpers.SimpleCloseContext):
         for cpu in cpus:
             # Return the cached value if possible.
             try:
-                regval = self._pcache.get(regaddr, cpu)
+                regval = self._cache.get(regaddr, cpu)
             except ErrorNotFound:
                 # Not in the cache, read from the HW.
                 regval = self._read_cpu(regaddr, cpu)
-                self._pcache.add(regaddr, cpu, regval, sname=sname)
+                self._cache.add(regaddr, cpu, regval, sname=sname)
 
             yield (cpu, regval)
 
@@ -324,13 +324,13 @@ class MSR(ClassHelpers.SimpleCloseContext):
         regval_bytes = None
 
         for cpu in cpus:
-            self._pcache.remove(regaddr, cpu, sname=sname)
+            self._cache.remove(regaddr, cpu, sname=sname)
 
-        # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
-        # 'False' for every CPU number that was not yet modified by the scope-aware '_pcache.add()'
+        # Removing 'cpus' from the cache will make sure the following '_cache.is_cached()' returns
+        # 'False' for every CPU number that was not yet modified by the scope-aware '_cache.add()'
         # method.
         for cpu in cpus:
-            if self._pcache.is_cached(regaddr, cpu):
+            if self._cache.is_cached(regaddr, cpu):
                 continue
 
             if not self._in_transaction:
@@ -344,17 +344,17 @@ class MSR(ClassHelpers.SimpleCloseContext):
             # number 'cpu', but also for all the 'sname' siblings. For example, if 'sname' is
             # "package", 'regval' will be cached for all CPUs in the package that contains CPU
             # number 'cpu'.
-            self._pcache.add(regaddr, cpu, regval, sname=sname)
+            self._cache.add(regaddr, cpu, regval, sname=sname)
 
         if verify:
             if self._in_transaction:
                 self.flush_transaction()
 
             for cpu in cpus:
-                self._pcache.remove(regaddr, cpu, sname=sname)
+                self._cache.remove(regaddr, cpu, sname=sname)
 
             for cpu in cpus:
-                if self._pcache.is_cached(regaddr, cpu):
+                if self._cache.is_cached(regaddr, cpu):
                     continue
 
                 new_val = self.read_cpu(regaddr, cpu, sname=sname)
@@ -483,8 +483,8 @@ class MSR(ClassHelpers.SimpleCloseContext):
         self._unload_msr_drv = False
 
         # The write-through per-CPU MSR values cache.
-        self._pcache = _PerCPUCache.PerCPUCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                enable_cache=self._enable_cache)
+        self._cache = _PerCPUCache.PerCPUCache(cpuinfo=self._cpuinfo, pman=self._pman,
+                                               enable_cache=self._enable_cache)
         # Stores new MSR values to be written when 'commit_transaction()' is called.
         self._transaction_buffer = {}
         # Whether there is an ongoing transaction.
@@ -498,4 +498,4 @@ class MSR(ClassHelpers.SimpleCloseContext):
         if self._unload_msr_drv:
             self._msr_drv.unload()
 
-        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman", "_msr_drv", "_pcache",))
+        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman", "_msr_drv", "_cache",))
