@@ -308,15 +308,12 @@ class CStates(_PCStatesBase.PCStatesBase):
         if prop["sname"]:
             return
 
-        try:
-            if pname in PCStateConfigCtl.FEATURES:
-                finfo = self._get_pcstatectl().features
-                prop["sname"] = finfo[pname]["sname"]
-            elif pname in PowerCtl.FEATURES:
-                finfo = self._get_powerctl().features
-                prop["sname"] = finfo[pname]["sname"]
-        except Error:
-            prop["sname"] = "CPU"
+        if pname in PCStateConfigCtl.FEATURES:
+            finfo = self._get_pcstatectl().features
+            prop["sname"] = finfo[pname]["sname"]
+        elif pname in PowerCtl.FEATURES:
+            finfo = self._get_powerctl().features
+            prop["sname"] = finfo[pname]["sname"]
 
         self.props[pname]["sname"] = prop["sname"]
 

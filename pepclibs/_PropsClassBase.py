@@ -57,6 +57,7 @@ Naming conventions.
 
 import copy
 import logging
+import contextlib
 from pepclibs import CPUInfo, _PropsCache
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -351,7 +352,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._validate_pname(pname)
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
-        self._set_sname(pname)
+        with contextlib.suppress(ErrorNotSupported):
+            self._set_sname(pname)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
             pvinfo = self._get_cpu_prop_pvinfo(pname, cpu, mnames)
