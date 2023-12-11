@@ -710,7 +710,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             return self._topology[order]
 
         if not self._topology:
-            tinfo = {cpu : {"CPU" : cpu} for cpu in self._get_online_cpus(update=True)}
+            tinfo = {cpu : {"CPU" : cpu} for cpu in self._get_online_cpus()}
         else:
             tinfo = {tline["CPU"] : tline for tline in self._topology["CPU"]}
 
@@ -869,10 +869,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
         return self._all_cpus
 
-    def _get_online_cpus(self, update=False):
+    def _get_online_cpus(self):
         """Return set of online CPU numbers."""
 
-        if not self._cpus or update:
+        if not self._cpus:
             self._cpus = set(self._read_range("/sys/devices/system/cpu/online"))
         return self._cpus
 
