@@ -692,16 +692,21 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                     tinfo[cpu]["node"] = node
 
     def _get_topology(self, levels, order="CPU"):
-        """Build and return topology list, refer to 'get_topology()' for more information."""
-
-        levels = set(levels)
-        levels.update(set(self._sorting_map[order]))
+        """
+        Build and return topology list, refer to 'get_topology()' for more information. For
+        optimization purposes, try to build only the necessary parts of the topology - only the
+        levels in 'levels'.
+        """
 
         if self._must_update_topology:
             self._update_topology()
 
+        levels = set(levels)
+        levels.update(set(self._sorting_map[order]))
         levels -= self._initialized_levels
+
         if not levels:
+            # The topology for the necessary levels has already been built, just return it.
             return self._topology[order]
 
         if not self._topology:
