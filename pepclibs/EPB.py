@@ -140,5 +140,5 @@ class EPB(_EPBase.EPBase):
     def close(self):
         """Uninitialize the class object."""
 
-        super().close()
         ClassHelpers.close(self, close_attrs=("_epb_msr",))
+        super().close()
