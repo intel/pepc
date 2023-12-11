@@ -186,5 +186,5 @@ class EPP(_EPBase.EPBase):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_hwpreq", "_hwpreq_pkg", "_msr", "_cpuinfo", "_pman", "_pcache")
-        ClassHelpers.close(self, close_attrs=close_attrs)
+        ClassHelpers.close(self, close_attrs=("_hwpreq", "_hwpreq_pkg"))
+        super().close()
