@@ -147,7 +147,7 @@ def _find_feature_scope(cpuinfo, fmsr, fname, values, cpu):
 
     regaddr = fmsr.regaddr
     bits = fmsr.features[fname]["bits"]
-    sname = fmsr.features[fname]["sname"]
+    iosname = fmsr.features[fname]["iosname"]
 
     info = {}
     for _cpu, val in fmsr.read_feature(fname):
@@ -188,11 +188,12 @@ def _find_feature_scope(cpuinfo, fmsr, fname, values, cpu):
     if not scopes:
         _LOG.info("'%s' (%#x %d:%d) scope couldn't be determined. The modified CPUs are:\n%s",
                   fname, regaddr, bits[0], bits[1], Human.rangify(cpus))
-    elif sname in scopes:
-        _LOG.info("'%s' (%#x %d:%d) %s scope is correct.", fname, regaddr, bits[0], bits[1], sname)
+    elif iosname in scopes:
+        _LOG.info("'%s' (%#x %d:%d) %s scope is correct.",
+                  fname, regaddr, bits[0], bits[1], iosname)
     else:
         _LOG.info("'%s' (%#x %d:%d) %s scope is incorrect, possible scopes are: %s.",
-                  fname, regaddr, bits[0], bits[1], sname, ", ".join(scopes))
+                  fname, regaddr, bits[0], bits[1], iosname, ", ".join(scopes))
 
 def _test_all_msrs(pman, cpuinfo, msr, args):
     """Test MSRs which are used by the 'pepc' tool."""

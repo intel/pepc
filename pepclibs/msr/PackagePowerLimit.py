@@ -184,7 +184,7 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
         bits = self._features[fname]["bits"]
 
         for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus,
-                                            sname=self._features[fname]["iosname"]):
+                                            iosname=self._features[fname]["iosname"]):
             if fname.endswith("_window"):
                 val = self._val_to_window(val)
             elif fname in ("limit1", "limit2"):
@@ -198,7 +198,7 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
         """Helper method to set the given package power limit in Watts."""
 
         val = int(float(val) / self._get_power_units())
-        self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, sname=finfo["iosname"])
+        self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, iosname=finfo["iosname"])
 
     def _set_feature(self, fname, val, cpus="all"):
         """Sets the value of a feature."""
@@ -211,7 +211,7 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
         # 'verify=True' to detect if the change was successful.
         if fname.endswith("_clamp") or fname.endswith("_enable"):
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, verify=True,
-                                 sname=finfo["iosname"])
+                                 iosname=finfo["iosname"])
         elif fname in ("limit1", "limit2"):
             self._set_limit(finfo, val, cpus)
         else:

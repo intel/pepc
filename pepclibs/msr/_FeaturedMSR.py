@@ -215,7 +215,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         else:
             bits = self._features[fname]["bits"]
             for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus,
-                                                  sname=self._features[fname]["sname"]):
+                                                iosname=self._features[fname]["sname"]):
                 if "rvals" in self._features[fname]:
                     val = self._features[fname]["rvals"][val]
                 _LOG.debug("read_bits: read '%s' value '%s' from MSR %#x (%s) for CPU %s%s",
@@ -306,7 +306,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             self._set_feature(fname, val, cpus=cpus)
         else:
             _LOG.debug("write_bits: %s", dbg_msg)
-            self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus, sname=finfo["sname"])
+            self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus,
+                                 iosname=finfo["sname"])
 
     def write_cpu_feature(self, fname, val, cpu):
         """

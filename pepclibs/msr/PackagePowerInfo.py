@@ -93,7 +93,7 @@ class PackagePowerInfo(_FeaturedMSR.FeaturedMSR):
         bits = self._features[fname]["bits"]
 
         for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus,
-                                            sname=self._features[fname]["iosname"]):
+                                            iosname=self._features[fname]["iosname"]):
             val *= self._get_power_units()
 
             yield (cpu, val)
