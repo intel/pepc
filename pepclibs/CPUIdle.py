@@ -486,4 +486,4 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_pcache", "_cpuinfo", "_pman"))
+        ClassHelpers.close(self, close_attrs=("_cache", "_cpuinfo", "_pman"))
