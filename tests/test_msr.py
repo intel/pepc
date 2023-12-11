@@ -57,7 +57,7 @@ def _get_good_msr_cpu_nums(params):
     """Yield good CPU numbers."""
 
     allcpus = params["cpus"]
-    medidx = int(len(allcpus)/2)
+    medidx = int(len(allcpus) / 2)
     for cpu in (allcpus[0], allcpus[medidx], allcpus[-1]):
         yield cpu
 
