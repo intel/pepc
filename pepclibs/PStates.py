@@ -654,7 +654,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             else:
                 val = None
                 _LOG.debug("CPU %d: can't check if turbo is enabled%s: unsupported CPU frequency "
-                        "driver %s'", cpu, self._pman.hostmsg, driver)
+                           "driver %s'", cpu, self._pman.hostmsg, driver)
         except ErrorNotFound:
             # If the sysfs file does not exist, the system does not support turbo.
             val = None
