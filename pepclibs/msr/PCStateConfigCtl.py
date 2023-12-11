@@ -44,8 +44,7 @@ _SKX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unli
                        "aliases": {"PC6": "PC6R"},
                        "bits": (2, 0)}
 # Broadwell-D Xeon.
-_BDWD_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
-                        "bits": (3, 0)}
+_BDWD_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3}, "bits": (3, 0)}
 # Broadwell and Haswell Xeons.
 _HSX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unlimited": 7},
                        "bits": (2, 0)}
@@ -59,8 +58,7 @@ _IVT_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unli
 #
 # Denverton SoC (Goldmont). Note, successor of Denverton is Snow Ridge, and its successor is Grand
 # Ridge. They do not support package C-states.
-_DNV_PKG_CST_LIMITS = {"codes": {"PC2": 2, "PC6": 3, "unlimited": 0},
-                       "bits": (3, 0)}
+_DNV_PKG_CST_LIMITS = {"codes": {"PC2": 2, "PC6": 3, "unlimited": 0}, "bits": (3, 0)}
 
 #
 # Clients.
@@ -288,12 +286,16 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         else:
             iosname = "core"
 
-        # The scope is always "package", except for CLX-AP, which is one very special platform. And
-        # it is different to the I/O scope on most platforms.
+        # For the package C-state limit/lock features the scope is always "package", except for
+        # CLX-AP, which is one very special platform. And it is different to the I/O scope on most
+        # platforms.
         sname = self._get_clx_ap_adjusted_msr_scope()
 
-        for finfo in self.features.values():
-            finfo["sname"] = sname
+        for fname, finfo in self.features.items():
+            if fname.startswith("pkg_"):
+                finfo["sname"] = sname
+            else:
+                finfo["sname"] = iosname
             finfo["iosname"] = iosname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
