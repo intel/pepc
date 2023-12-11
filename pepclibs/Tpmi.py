@@ -48,6 +48,14 @@ Terminology.
                     be decoded and used.
 
   * unknown feature - a supported feature for which the spec file was not found.
+  * memory dump map - a dictionary storing the offsets of specific TPMI memory locations within
+                      their memory dump file. The dictionary has two levels, first indexed via the
+                      instance number, and the second via the memory offset in bytes. The
+                      dictionary is parsed from TPMI debugfs memory dump file, e.g.
+                      /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump for 'rapl' feature.
+  * instance - TPMI features are split into instances, each one corresponding to a logical entity.
+               For example, if 'rapl' has 4 instances under it, there are four power domains under
+               the 'rapl', each with their own settings and status registers.
 """
 
 import os
@@ -331,6 +339,70 @@ class Tpmi():
 
         self._fmap = fmap
         self._unknown_fids = unknown_fids
+
+    def _get_debugfs_path(self, addr, fname=None):
+        """Get sysfs path for a specified TPMI bus address and feature."""
+
+        path = self._debugfs_mnt / f"tpmi-{addr}"
+
+        if fname is not None:
+            fid = self._get_fdict(fname)["feature-id"]
+            path = path / f"tpmi-id-{fid:02x}"
+
+        return path
+
+    def _get_memdump_map(self, addr, fname):
+        """
+        Parse and return memory dump mapping for the feature. Reads the memory dump contents
+        from debugfs and return the newly created memory dump mapping. Returned mapping is a two
+        level dictionary with for example following format if there are two instances (0, 1), and
+        4 memory locations available under each:
+          {0: {0: 48, 4: 57, 8: 66, 12: 75},
+           1: {0: 77, 4: 86, 8: 95, 12: 104}}.
+        In this example, accessing instance 1, byte offset 8 can be found from the memory dump
+        offset 95. Arguments are as follows.
+          * addr - TPMI device address.
+          * fname - Name of the TPMI feature to use.
+        """
+
+        path = self._get_debugfs_path(addr, fname=fname)
+        path = path / "mem_dump"
+
+        _LOG.debug("reading memory dump: '%s'", path)
+
+        mdmap = {}
+        offset = 0
+
+        with self._pman.open(path, "r") as fobj:
+            for line in fobj:
+                line = line.rstrip()
+                line_offset = 0
+
+                # Sample line to match: "TPMI Instance:1 offset:0x40005000".
+                match = re.match(r"TPMI Instance:(\d+) offset:(0x[0-9a-f]+)", line)
+                if match:
+                    instance = Trivial.str_to_int(match.group(1), what="instance number")
+                    mdmap[instance] = {}
+
+                # Matches two different line formats:
+                #   " 00000020: 013afd40 00004000 2244aacc deadbeef" and
+                #   "[00000020] 013afd40 00004000 2244aacc deadbeef".
+                # Some older kernels have the second format in place.
+                match = re.match(r"^( |\[)([0-9a-f]+)(:|\]) (.*)$", line)
+                if match:
+                    memaddr = Trivial.str_to_int(match.group(2), base=16, what="TPMI offset")
+                    data_arr = Trivial.split_csv_line(match.group(4), sep=" ")
+                    line_offset += 3 + len(match.group(2))
+                    for data_val in data_arr:
+                        # Just verify the value.
+                        Trivial.str_to_int(data_val, base=16, what="TPMI value")
+                        mdmap[instance][memaddr] = offset + line_offset
+                        line_offset += 9
+                        memaddr += 4
+
+                offset += len(line) + 1
+
+        return mdmap
 
     def __init__(self, pman, specdirs=None):
         """
