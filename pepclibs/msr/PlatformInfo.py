@@ -72,8 +72,8 @@ _BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS
 FEATURES = {
     "max_non_turbo_ratio": {
         "name": "Max. Non-Turbo Ratio",
-        "sname": "package",
-        "iosname": "package",
+        "sname": None,
+        "iosname": None,
         "help": """The ratio of the maximum non-turbo frequency. This ratio multiplied by bus
                    clock speed gives the maximum non-turbo frequency.""",
         "cpumodels": _BASEFREQ_CPUS,
@@ -83,8 +83,8 @@ FEATURES = {
     },
     "max_eff_ratio": {
         "name": "Max. Efficiency Ratio",
-        "sname": "package",
-        "iosname": "package",
+        "sname": None,
+        "iosname": None,
         "help": """The maximum efficiency CPU ratio (in practice, the minimum ratio the OS can
                    request the CPU to run at). This ratio multiplied by bus clock speed gives the
                    efficiency CPU frequency.""",
@@ -95,8 +95,8 @@ FEATURES = {
     },
     "min_oper_ratio": {
         "name": "Min. Operating Ratio",
-        "sname": "package",
-        "iosname": "package",
+        "sname": None,
+        "iosname": None,
         "help": """The minimum operating CPU ratio. This ratio multiplied by bus clock speed gives
                    the minimum operating CPU frequency.""",
         "cpumodels": _MIN_OPER_RATIO_CPUS,
@@ -120,6 +120,10 @@ class PlatformInfo(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
+
+        sname = self._get_clx_ap_adjusted_msr_scope()
+        for finfo in self.features.values():
+            finfo["sname"] = finfo["iosname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
