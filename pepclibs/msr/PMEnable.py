@@ -21,8 +21,8 @@ MSR_PM_ENABLE = 0x770
 FEATURES = {
     "hwp": {
         "name": "Hardware Power Management enabled",
-        "sname": "package",
-        "iosname": "package",
+        "sname": None,
+        "iosname": None,
         "help": """When hardware power management is enabled, the platform autonomously scales CPU
                    frequency depending on the load.""",
         "cpuflags": {"hwp",},
@@ -46,6 +46,10 @@ class PMEnable(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
+
+        sname = self._get_clx_ap_adjusted_msr_scope()
+        for finfo in self.features.values():
+            finfo["sname"] = finfo["iosname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
