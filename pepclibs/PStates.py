@@ -328,6 +328,9 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_uncfreq_obj(self):
         """Return an '_UncoreFreq' object."""
 
+        if self._uncfreq_err:
+            raise ErrorNotSupported(self._uncfreq_err)
+
         if not self._uncfreq_obj:
             from pepclibs import _UncoreFreq # pylint: disable=import-outside-toplevel
 
@@ -336,6 +339,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                                                            enable_cache=self._enable_cache)
             except ErrorNotSupported as err:
                 self._uncfreq_err = err
+                raise
 
         return self._uncfreq_obj
 
@@ -822,7 +826,13 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_uncore_freq_pvinfo(self, pname, cpu):
         """Read and return the minimum or maximum uncore frequency."""
 
-        uncfreq_obj = self._get_uncfreq_obj()
+        mname = "sysfs"
+
+        try:
+            uncfreq_obj = self._get_uncfreq_obj()
+        except ErrorNotSupported as err:
+            _LOG.debug(err)
+            return self._construct_pvinfo(pname, cpu, mname, None)
 
         val = None
         if uncfreq_obj:
@@ -837,7 +847,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             else:
                 raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
-        return self._construct_pvinfo(pname, cpu, "sysfs", val)
+        return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_cpu_freq_sysfs(self, pname, cpu):
         """Read and return the minimum or maximum CPU frequency from Linux "cpufreq" sysfs files."""
@@ -1085,9 +1095,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Write uncore frequency property."""
 
         uncfreq_obj = self._get_uncfreq_obj()
-
-        if self._uncfreq_err:
-            raise ErrorNotSupported(self._uncfreq_err)
 
         if pname == "min_uncore_freq":
             uncfreq_obj.set_min_freq(freq, cpu)
