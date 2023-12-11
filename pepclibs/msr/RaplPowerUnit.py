@@ -88,6 +88,10 @@ class RaplPowerUnit(_FeaturedMSR.FeaturedMSR):
 
         self.features = FEATURES
 
+        sname = self._get_clx_ap_adjusted_msr_scope()
+        for finfo in self.features.values():
+            finfo["sname"] = finfo["iosname"] = sname
+
     def _get_units(self, fname, cpus):
         """Helper routine to get and calculate given unit value."""
 
