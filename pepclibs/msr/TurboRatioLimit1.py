@@ -24,8 +24,8 @@ MSR_TURBO_RATIO_LIMIT_CORES = 0x1AE
 FEATURES = {
     "g0_cpu_cnt": {
         "name": "Group 0 cores count",
-        "sname": "package",
-        "iosname": "package",
+        "sname": None,
+        "iosname": None,
         "help": """Count of cores in group 0. This group is used in MSR 0x1AD
                    (MSR_TURBO_RATIO_LIMIT) for encoding the maximum group of cores turbo
                    frequency.""",
@@ -52,6 +52,10 @@ class TurboRatioLimit1(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
+
+        sname = self._get_clx_ap_adjusted_msr_scope()
+        for finfo in self.features.values():
+            finfo["sname"] = finfo["iosname"] = sname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
