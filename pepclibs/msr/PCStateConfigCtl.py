@@ -282,14 +282,19 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         model = self._cpuinfo.info["model"]
 
         if model in _MODULE_SCOPE_CPUS:
-            sname = "module"
+            iosname = "module"
         elif model in _PACKAGE_SCOPE_CPUS:
-            sname = "package"
+            iosname = "package"
         else:
-            sname = "core"
+            iosname = "core"
+
+        # The scope is always "package", except for CLX-AP, which is one very special platform. And
+        # it is different to the I/O scope on most platforms.
+        sname = self._get_clx_ap_adjusted_msr_scope()
 
         for finfo in self.features.values():
-            finfo["sname"] = finfo["iosname"] = sname
+            finfo["sname"] = sname
+            finfo["iosname"] = iosname
 
     def __init__(self, pman=None, cpuinfo=None, msr=None):
         """
