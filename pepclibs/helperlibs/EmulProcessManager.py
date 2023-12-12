@@ -380,8 +380,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                                 f"{line}")
 
                 # Create file in temporary directory. For example:
-                # Emulated path: /sys/devices/system/cpu/cpu0/
-                # Real path: /tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0/
+                # Emulated path: '/sys/devices/system/cpu/cpu0/'.
+                # Real path: '/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0/'.
                 path = split[0]
                 data = split[1]
 
