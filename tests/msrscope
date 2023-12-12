@@ -98,7 +98,7 @@ def _find_msr_scope(pman, cpuinfo, msr, regaddr, bits, values, cpu):
     # 'args.cpu' needs to be write to.
     msr.write_bits(regaddr, bits, info[cpu], cpus=(cpu, ))
     val = msr.read_cpu_bits(regaddr, bits, cpu)
-    _LOG.debug("initial value was '%d' and value after test is '%d'.", info[cpu], val)
+    _LOG.debug("initial value was '%d' and value after test is '%d'", info[cpu], val)
 
     if len(scopes) == 1:
         _LOG.info("The scope for MSR %#x bits %s is %s.", regaddr, ":".join(bits), scopes[0])
@@ -183,7 +183,7 @@ def _find_feature_scope(cpuinfo, fmsr, fname, values, cpu):
     else:
         fmsr.write_feature(fname, info[cpu], cpus=(cpu, ))
         val = fmsr.read_cpu_feature(fname, cpu)
-    _LOG.debug("initial value was '%d' and value after test is '%d'.", info[cpu], val)
+    _LOG.debug("initial value was '%d' and value after test is '%d'", info[cpu], val)
 
     if not scopes:
         _LOG.info("'%s' (%#x %d:%d) scope couldn't be determined. The modified CPUs are:\n%s",
@@ -229,7 +229,7 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
         with contextlib.suppress(ErrorNotSupported):
             perf = fmsr.read_cpu_feature("max_perf", cpu)
             perf1, perf2 = (perf - 1, perf) if perf > 254 else (perf, perf + 1)
-            _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf1 , perf2), cpu)
+            _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf1, perf2), cpu)
     finally:
         fmsr.close()
 
@@ -248,7 +248,7 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
         with contextlib.suppress(ErrorNotSupported):
             perf = fmsr.read_cpu_feature("max_perf", cpu)
             perf1, perf2 = (perf - 1, perf) if perf > 254 else (perf, perf + 1)
-            _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf1 , perf2), cpu)
+            _find_feature_scope(cpuinfo, fmsr, "max_perf", (perf1, perf2), cpu)
     finally:
         fmsr.close()
 
