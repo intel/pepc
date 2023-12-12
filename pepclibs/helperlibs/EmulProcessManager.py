@@ -146,8 +146,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             also supports policies.
             """
 
-            policies = { "performance" : 0, "balance-performance" : 4, "normal" : 6,
-                        " balance-power" : 8, "power" : 15 }
+            policies = {"performance": 0, "balance-performance": 4, "normal": 6,
+                        "balance-power": 8, "power": 15}
 
             key = data.strip()
             if key in policies:
@@ -182,7 +182,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         if path.startswith("/sys/"):
             if "w" in mode:
-                raise Error("BUG: use 'r+' mode when opening sysfs virtual files.")
+                raise Error("BUG: use 'r+' mode when opening sysfs virtual files")
 
             if mode != "r+":
                 return
@@ -379,9 +379,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                     raise Error(f"unexpected line format, expected <path>{sep}<value>, received\n"
                                 f"{line}")
 
-                # Create file in temporary directory. For example:
-                # Emulated path: '/sys/devices/system/cpu/cpu0/'.
-                # Real path: '/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0/'.
+                # Create file in temporary directory. Here is an example.
+                #   * Emulated path: "/sys/devices/system/cpu/cpu0".
+                #   * Real path: "/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0".
                 path = split[0]
                 data = split[1]
 
