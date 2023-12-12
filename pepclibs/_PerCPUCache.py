@@ -109,11 +109,13 @@ class PerCPUCache:
           * enable_cache - this argument can be used to disable caching.
         """
 
+        self._cpuinfo = cpuinfo
+        self._pman = pman
         self._enable_cache = enable_cache
+
         if not self._enable_cache:
             return
 
-        self._cpuinfo = cpuinfo
         self._close_cpuinfo = cpuinfo is None
 
         if not self._cpuinfo:
@@ -125,4 +127,4 @@ class PerCPUCache:
     def close(self):
         """Uninitialize the class object."""
 
-        ClassHelpers.close(self, close_attrs=("_cpuinfo",))
+        ClassHelpers.close(self, close_attrs=("_cpuinfo",), unref_attrs=("_pman",))
