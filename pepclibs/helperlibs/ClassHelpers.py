@@ -163,7 +163,7 @@ def close(cls_obj, close_attrs=None, unref_attrs=None):
     for attr in close_attrs:
         if not hasattr(cls_obj, attr):
             _LOG.warning("close(close_attrs=<list>): non-existing attribute '%s' in '%s'",
-                         name, cls_obj)
+                         attr, cls_obj)
 
         obj = getattr(cls_obj, attr, None)
         if not obj:
@@ -178,7 +178,7 @@ def close(cls_obj, close_attrs=None, unref_attrs=None):
         if hasattr(cls_obj, name):
             run_close = getattr(cls_obj, name)
             if run_close not in (True, False):
-                _LOG.warning("BUG: bad value of attribute '%s' in '%s'", name, cls_obj)
+                _LOG.warning("BUG: bad value of attribute '%s' in '%s'", attr, cls_obj)
                 _LOG.debug_print_stack()
                 setattr(cls_obj, attr, None)
                 continue
