@@ -24,8 +24,8 @@ Special cases:
 * 'spr2' has '```idle=nomwait```' boot parameter.
 * 'bdwex0' has '```cpuidle.off=1```' boot parameter.
 
-# MSR scope
+# msr-ioscope
 
-The 'msrscope' tool is used for checking the observability MSR scope. Run:
+The 'msr-ioscope' tool can be used for finding out the MSR I/O scope. Run:
 
-tests/msrscope all
+tests/msr-ioscope all
