@@ -68,7 +68,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
             step = vals[1] - vals[0]
             for idx, val in enumerate(vals[:-1]):
-                if vals[idx+1] - val != step:
+                if vals[idx + 1] - val != step:
                     return None
             return step
 
@@ -266,7 +266,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                         val = tuple(val)
                 if prop["type"].startswith("dict["):
                     if val is not None:
-                        val = tuple((k,v) for k, v in val.items())
+                        val = tuple((k, v) for k, v in val.items())
 
                 if mname not in aggr_pinfo:
                     aggr_pinfo[mname] = {}
@@ -323,7 +323,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def __init__(self, pobj, cpuinfo, fobj=None, fmt="human"):
         """
         Initialize a class instance. The arguments are as follows.
-          * obj - a "properties" object ('PStates', 'CStates', etc) to print the properties for.
+          * pobj - a "properties" object ('PStates', 'CStates', etc) to print the properties for.
           * cpuinfo - a 'CPUInfo' object corresponding to the host the properties are read from.
           * fobj - a file object to print the output to (standard output by default).
           * fmt - the printing format.
@@ -369,7 +369,7 @@ class CStatesPrinter(_PropsPrinter):
             if not pcsl_info:
                 continue
 
-            if set(pcsl_info) == { None }:
+            if set(pcsl_info) == {None}:
                 # The 'pkg_cstate_limit' property is not supported, nothing to do.
                 continue
 
@@ -536,9 +536,9 @@ class CStatesPrinter(_PropsPrinter):
         aggr_rcsinfo = {}
         # C-states info 'csinfo' has the following format:
         #
-        # { "POLL" : {"disable" : True, "latency" : 0, "residency" : 0, ... },
-        #   "C1E"  : {"disable" : False, "latency" : 2, "residency" : 1, ... },
-        #   ... }
+        # {"POLL": {"disable": True, "latency": 0, "residency": 0, ...},
+        #  "C1E": {"disable": False, "latency": 2, "residency": 1, ...},
+        #  ...}
         for cpu, csinfo in csinfo_iter:
             for pname, values in csinfo.items():
                 if pname not in aggr_rcsinfo:
@@ -549,7 +549,7 @@ class CStatesPrinter(_PropsPrinter):
                         continue
 
                     if name not in aggr_rcsinfo[pname]:
-                        aggr_rcsinfo[pname][name] = {val : [cpu]}
+                        aggr_rcsinfo[pname][name] = {val: [cpu]}
                     elif val not in aggr_rcsinfo[pname][name]:
                         aggr_rcsinfo[pname][name][val] = [cpu]
                     else:
