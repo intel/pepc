@@ -162,7 +162,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         printed = 0
         for pname, pinfo in aggr_pinfo.items():
-            for val, cpus in pinfo.items():
+            for val, cpus in pinfo["vals"].items():
                 self._print_prop_human(props[pname], val, cpus=cpus, action=action, prefix=prefix)
                 printed += 1
 
@@ -204,7 +204,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         for pinfo in aggr_pinfo.values():
             for pname, pinfo in pinfo.items():
-                for val, cpus in pinfo.items():
+                for val, cpus in pinfo["vals"].items():
                     if val is None:
                         val = "not supported"
 
@@ -228,21 +228,41 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         The aggregate properties dictionary has the following format.
 
-          { mname1 : { pname1 : { val1 : [ list of CPUs having value1 ],
-                                  val2 : [ list of CPUs having value2 ],
-                                  ... and so on for all values ...
-                                },
-                       ... and so on for all properties ...
-                     },
-            ... and so on for all mechanisms ...
-          },
+          {mname1: {pname1: {"sname": sname,
+                             "vals": {val1: [list of CPUs/packages having value 'val1'],
+                                      val2: [list of CPUs/packages having value 'val2'],
+                                      ... and so on for all values ...},
+                    ... and so on for all properties ...},
+           ... and so on for all mechanisms ...},
 
-          * mname1 - name of the 1st mechanism that was used for reading the properties.
+          * mname1 - name of the first mechanism that was used for reading the properties.
           * pname1 - the first property name (e.g., 'pkg_cstate_limit').
-          * value1, value2, etc - all the different values for the property.
+          * sname - scope name that was used for reading the property, may be one of "CPU", "die",
+                    "package". If it is "CPU", the per-CPU 'get_prop_cpus()' method was used, if
+                    "die", the per-die 'get_prop_dies()' was used, if "package", the per-package
+                    'get_prop_packages()' was used.
+          * val, val2, etc - all the different values for the property.
 
-        In other words, the aggregate dictionary mapps of property values to the list of CPUs having
-        these values. And all this is grouped by mechanism name.
+        In other words, the aggregate dictionary essentially maps property values to the list of
+        CPUs, dies, or packages having these values. It represents a "by value view". And there is
+        additional information like mechanism name and scope name. The scope name ("sname") defines
+        whether the values are for individual CPUs, dies, or packages.
+
+        There is a complication related to the fact that die numbers are relative to package
+        numbers. If "sname" is "package" or "CPU", the values are mapped to the list of integer
+        package or CPU numbers. But if "sname" is "die", then they are mapped to a dictionary, not a
+        list. The keys of the dictionary are integer package numbers, and the values of the
+        dictionaries are lists of integer die numbers for the package (the key).
+
+        So when 'sname' is die, then the aggregate propeties dictionary has the following format:
+
+          {mname1: {pname1: {"sname": sname,
+                             "vals": {val1: {package0: [die numbers in package 0],
+                                             package1: [die numbers in package 1]
+                                             ... and so on for all dies ...},
+                                      ... and so on for all values ...},
+                    ... and so on for all properties ...},
+           ... and so on for all mechanisms ...},
         """
 
         aggr_pinfo = {}
@@ -254,7 +274,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 continue
 
             for pvinfo in self._pobj.get_prop_cpus(pname, cpus, mnames=mnames):
-                cpu = pvinfo["cpu"]
+                sname = "CPU"
+                num = pvinfo["cpu"]
                 val = pvinfo["val"]
                 mname = pvinfo["mname"]
 
@@ -273,11 +294,15 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 if mname not in aggr_pinfo:
                     aggr_pinfo[mname] = {}
                 if pname not in aggr_pinfo[mname]:
-                    aggr_pinfo[mname][pname] = {val : [cpu]}
-                elif val not in aggr_pinfo[mname][pname]:
-                    aggr_pinfo[mname][pname][val] = [cpu]
+                    aggr_pinfo[mname][pname] = {"sname": sname, "vals": {val: [num]}}
+                elif val not in aggr_pinfo[mname][pname]["vals"]:
+                    aggr_pinfo[mname][pname]["vals"][val] = [num]
                 else:
-                    aggr_pinfo[mname][pname][val].append(cpu)
+                    aggr_pinfo[mname][pname]["vals"][val].append(num)
+
+                if sname != aggr_pinfo[mname][pname]["sname"]:
+                    raise Error(f"BUG: varying scope name for property '{pname}': was "
+                                f"'{aggr_pinfo[mname][pname]['sname']}', now '{sname}'")
 
         return aggr_pinfo
 
