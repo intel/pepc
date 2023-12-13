@@ -56,7 +56,20 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         prefix = "initial_" if limit else ""
         fname = prefix + key + "_freq_khz"
-        return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
+
+        if self._die_id_quirk:
+            die = 0
+
+        path = self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
+        if not self._die_id_quirk and not self._pman.exists(path) and die > 0:
+            # If path does not exist, try to fallback to die 0 as temporary band-aid for some of the
+            # newer platforms. Please note that on newer platforms the legacy path controls every
+            # uncore domain under it via the kernel driver support.
+            path = self._sysfs_base / f"package_{package:02d}_die_00" / fname
+            self._die_id_quirk = True
+            _LOG.debug("die ID quirk applied, falling back to die 0 from die %d", die)
+
+        return path
 
     def _get_freq(self, key, cpu, limit=False):
         """Set uncore frequency by reading from the corresponding sysfs file."""
@@ -313,6 +326,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         self._unload_drv = False
 
         self._sysfs_base = Path("/sys/devices/system/cpu/intel_uncore_frequency")
+
+        self._die_id_quirk = False
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
