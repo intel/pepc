@@ -488,12 +488,13 @@ class CStatesPrinter(_PropsPrinter):
             for key, kinfo in csinfo.items():
                 for val, cpus in kinfo.items():
                     if key == "disable":
+                        key = "value"
                         val = "off" if val else "on"
 
                     if csname not in yaml_rcsinfo:
                         yaml_rcsinfo[csname] = []
 
-                    yaml_rcsinfo[csname].append({"value" : val, "cpus" : Human.rangify(cpus)})
+                    yaml_rcsinfo[csname].append({key : val, "cpus" : Human.rangify(cpus)})
 
         self._yaml_dump(yaml_rcsinfo)
         return len(yaml_rcsinfo)
