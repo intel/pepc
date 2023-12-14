@@ -9,6 +9,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Refer to packages and dies when printing about per-package and per-die
+   properties, instead for referring to CPU numbers.
 
 ## [1.4.42] - 2023-11-24
 ### Added
