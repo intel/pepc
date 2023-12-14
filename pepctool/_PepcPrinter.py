@@ -142,6 +142,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             val = "not supported"
         else:
             val = self._format_value_human(prop, val)
+            if val == "" and (prop["type"].startswith("list") or prop["type"].startswith("dict")):
+                # The list of dictionary is empty. Just do not print the line at all.
+                return
+
             if sfx and prop["type"] not in {"int", "float", "list[int]", "list[float]"}:
                 val = f"'{val}'"
 
