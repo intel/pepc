@@ -420,6 +420,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         * 'packages_to_cpus()'
     4. Get packages/core/etc counts.
         * 'get_cpus_count()'
+        * 'get_cores_count()'
+        * 'get_modules_count()'
+        * 'get_dies_count()'
         * 'get_packages_count()'
         * 'get_offline_cpus_count()'
     5. Normalize a list of packages/cores/etc.
@@ -1059,17 +1062,35 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Return list of online CPU numbers belonging to packages 'packages'."""
         return self._get_level_nums("CPU", "package", packages, order=order)
 
-    def get_offline_cpus_count(self):
-        """Return count of offline CPUs."""
-        return len(self.get_offline_cpus())
-
     def get_cpus_count(self):
         """Return count of online CPUs."""
         return len(self._get_online_cpus())
 
+    def get_cores_count(self, package=0):
+        """
+        Return cores count in a package. The arguments are as follows.
+          * package - package number to get cores count for.
+        """
+        return len(self.get_cores(package=package))
+
+    def get_modules_count(self):
+        """Return modules count."""
+        return len(self.get_modules())
+
+    def get_dies_count(self, package=0):
+        """
+        Return dies count in a package. The arguments are as follows.
+          * package - package number to get dies count for.
+        """
+        return len(self.get_dies(package=package))
+
     def get_packages_count(self):
         """Return packages count."""
         return len(self.get_packages())
+
+    def get_offline_cpus_count(self):
+        """Return count of offline CPUs."""
+        return len(self.get_offline_cpus())
 
     def select_core_siblings(self, cpus, indexes):
         """
