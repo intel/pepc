@@ -21,14 +21,15 @@ from pepclibs.PStates import ErrorFreqOrder
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
     """This class provides API for changing P-state and C-state properties."""
 
-    def _set_prop_cpus(self, spinfo, pname, cpus, mnames, mnames_info):
+    def _set_prop_sname(self, spinfo, pname, optar, mnames, mnames_info):
         """Set property 'pname' and handle frequency properties ordering."""
 
         if pname not in spinfo:
             return
 
         try:
-            mname = self._pobj.set_prop_cpus(pname, spinfo[pname], cpus=cpus, mnames=mnames)
+            mname = _PepcCommon.set_prop_sname(self._pobj, self._cpuinfo, pname, optar,
+                                               spinfo[pname], mnames=mnames)
             del spinfo[pname]
             mnames_info[pname] = mname
             return
@@ -70,7 +71,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                 raise
 
             for pnm in (other_freq_pname, freq_pname):
-                mname = self._pobj.set_prop_cpus(pnm, spinfo[pnm], cpus=cpus, mnames=mnames)
+                mname = _PepcCommon.set_prop_sname(self._pobj, self._cpuinfo, pnm, optar,
+                                                   spinfo[pnm], mnames=mnames)
                 del spinfo[pnm]
                 mnames_info[pnm] = mname
 
@@ -93,10 +95,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         # '_set_props()' needs to modify the dictionary, so create a copy for that.
         spinfo_copy = spinfo.copy()
 
-        cpus = optar.get_cpus()
-
         for pname in list(spinfo):
-            self._set_prop_cpus(spinfo_copy, pname, cpus, mnames, mnames_info)
+            self._set_prop_sname(spinfo_copy, pname, optar, mnames, mnames_info)
 
         if self._msr:
             self._msr.commit_transaction()

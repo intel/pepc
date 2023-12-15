@@ -149,3 +149,26 @@ def get_prop_sname(pobj, cpuinfo, pname, optar, mnames):
         yield from pobj.get_prop_dies(pname, nums, mnames=mnames)
     else:
         yield from pobj.get_prop_packages(pname, nums, mnames=mnames)
+
+def set_prop_sname(pobj, cpuinfo, pname, optar, val, mnames):
+    """
+    Set property 'pname' to value 'val'. The arguments are as follows.
+      * pobj - a property object, such as 'PStates' or 'CStates'.
+      * cpuinfo - CPU information object ('CPUInfo.CPUInfo()') for the target system.
+      * pname - name of the property to set.
+      * optar - an '_OpTarget.OpTarget()' object specifying the CPUs, packages, etc to set property
+                value dictionaries for.
+      * val - the value to set the property to.
+      * mnames - list of mechanisms to use for getting the property (see
+                 '_PropsClassBase.MECHANISMS').
+    """
+
+    sname, nums = _get_sname_and_nums(pobj, cpuinfo, pname, optar)
+
+    if sname == "CPU":
+        return pobj.set_prop_cpus(pname, val, nums, mnames=mnames)
+
+    if sname == "die":
+        return pobj.set_prop_dies(pname, val, nums, mnames=mnames)
+
+    return pobj.set_prop_packages(pname, val, nums, mnames=mnames)
