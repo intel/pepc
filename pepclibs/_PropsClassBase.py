@@ -350,11 +350,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase._get_cpu_prop")
 
-    def _get_cpu_prop(self, pname, cpu, mnames=None):
-        """Read property 'pname' and return the value."""
-
-        return self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)["val"]
-
     def get_prop_cpus(self, pname, cpus="all", mnames=None):
         """
         Read property 'pname' for CPUs in 'cpus', and for every CPU yield the property value
@@ -628,6 +623,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         return self.set_prop_cpus(pname, val, (cpu,), mnames=mnames)
+
+    def _set_prop_cpus(self, pname, val, cpus, mnames=None):
+        """Implements 'set_prop_cpus()'. The arguments are as the same as in 'set_prop_cpus()'."""
+
+        # pylint: disable=unused-argument
+        return _bug_method_not_defined("PropsClassBase.set_prop_cpus")
 
     def set_prop_dies(self, pname, val, dies, mnames=None):
         """
