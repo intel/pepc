@@ -335,7 +335,8 @@ class PepcTokenChecker(BaseTokenChecker):
             return
 
         # Check unary operators, they must have no space after.
-        if prevprevtok and prevprevtok.type in (tokenize.OP, tokenize.NL):
+        if prevprevtok and (self._is_reserved(prevprevtok) or
+                            prevprevtok.type in (tokenize.OP, tokenize.NL)):
             prevprevop = self._get_op(prevprevtok, lineno=lineno)
             if prevop in ("-", "*", "**", "@", "~") and not self._is_close_bracket(prevprevop):
                 if char == " ":
