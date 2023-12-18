@@ -136,10 +136,17 @@ class PepcTokenChecker(BaseTokenChecker):
     options = ()
 
     def _end_comment(self):
-        """Tag the end of the current comment and verify it."""
+        """
+        Tag the end of the current comment and verify that it ends with either '}', ']', ')' or '.'.
+        If the comment contains some data structure snippet, it can end with closing parenthesis,
+        e.g.
+           # This is some data struct:
+           # { "intval": 7, "txt": "test" }
+        """
 
         if self._comment and self._commentline != 1:
-            match = re.match(r".*\.\s*$", self._comment)
+            # Below regex matches any line that ends with '}', ']', ')' or '.'.
+            match = re.match(r".*[}\]\)\.]\s*$", self._comment)
             if not match:
                 self.add_message("pepc-comment-no-dot", line=self._commentline)
 
