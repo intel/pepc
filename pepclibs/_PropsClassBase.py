@@ -757,6 +757,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # The write-through per-CPU properties cache. The properties that are backed by MSR/EPP/EPB
         # are not cached, because they implement their own caching.
         self._enable_cache = enable_cache
+        # pylint: disable=pepc-unused-variable
         self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
                                               enable_cache=self._enable_cache)
 
