@@ -308,19 +308,32 @@ class CStates(_PCStatesBase.PCStatesBase):
         if prop["sname"]:
             return
 
+        finfo = None
         if pname in PCStateConfigCtl.FEATURES:
             finfo = self._get_pcstatectl().features
-            prop["sname"] = finfo[pname]["sname"]
         elif pname in PowerCtl.FEATURES:
             finfo = self._get_powerctl().features
-            prop["sname"] = finfo[pname]["sname"]
 
-        self.props[pname]["sname"] = prop["sname"]
+        if finfo:
+            prop["sname"] = finfo[pname]["sname"]
+            prop["iosname"] = finfo[pname]["iosname"]
+            self.props[pname]["sname"] = prop["sname"]
+        else:
+            raise Error(f"BUG: unexpected property \"{pname}\"")
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
         """Initialize the 'props' dictionary."""
 
         super()._init_props_dict(PROPS)
+
+        # The Package C-state limit feature has "package" scope, but the underlying MSR register may
+        # have "core" I/O scope.
+        try:
+            pcstatectl = self._get_pcstatectl()
+        except ErrorNotSupported:
+            pass
+        else:
+            self._props["iosname"] = pcstatectl.features["pkg_cstate_limit"]["iosname"]
 
     def __init__(self, pman=None, cpuinfo=None, cpuidle=None, msr=None, enable_cache=True):
         """

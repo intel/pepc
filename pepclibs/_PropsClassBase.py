@@ -733,6 +733,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._props = copy.deepcopy(props)
         self.props = props
 
+        # Initialize the 'ioscope' to the same value as 'scope'. I/O scope may be different to the
+        # scope for some MSR-based properties. Please, refer to 'MSR.py' for more information about
+        # the difference between "scope" and "I/O scope".
+        for prop in self._props.values():
+            prop["iosname"] = prop["sname"]
+
         # Initialize the 'mechanisms' dictionary, which includes the mechanisms supported by the
         # subclass.
         seen = set()
