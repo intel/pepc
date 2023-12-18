@@ -132,6 +132,13 @@ class PepcTokenChecker(BaseTokenChecker):
                 "Comment refers to an option, but it doesn't have hyphens around it."
             ),
         ),
+        "W9914": (
+            "Heading newline",
+            "pepc-heading-newline",
+            (
+                "File begins with newline characters."
+            ),
+        ),
     }
     options = ()
 
@@ -448,6 +455,14 @@ class PepcTokenChecker(BaseTokenChecker):
 
         return True
 
+    def _check_heading_newline(self, token, lineno):
+        """Check for heading newlines."""
+
+        if lineno == 1 and token.type == tokenize.NL:
+            p_tok = self._get_token(1)
+            if p_tok and p_tok.type == tokenize.ENCODING:
+                self.add_message("pepc-heading-newline", line=lineno)
+
     def _check_double_newline(self, token, lineno):
         """Check for double newline errors."""
 
@@ -514,6 +529,7 @@ class PepcTokenChecker(BaseTokenChecker):
     def _check_whitespaces(self, token, lineno, txt):
         """Check for whitespacing errors."""
 
+        self._check_heading_newline(token, lineno)
         self._check_double_newline(token, lineno)
         self._check_double_space(token, lineno)
         self._check_func_class_defs(token, lineno, txt)
