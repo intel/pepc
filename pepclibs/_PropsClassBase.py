@@ -408,6 +408,22 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self.get_cpu_prop(pname, cpu)["val"] is not None
 
+    def _get_die_prop_pvinfo(self, pname, package, die, mnames=None):
+        """
+        The default implementation or per-die property reading via '_get_cpu_prop_pvinfo()'.
+        """
+
+        cpu = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))[0]
+        pvinfo = self.get_cpu_prop(pname, cpu, mnames=mnames)
+
+        die_pvinfo = {}
+        die_pvinfo["die"] = die
+        die_pvinfo["package"] = package
+        die_pvinfo["val"] = pvinfo["val"]
+        die_pvinfo["mname"] = pvinfo["mname"]
+
+        return die_pvinfo
+
     def get_prop_dies(self, pname, dies="all", mnames=None):
         """
         Read property 'pname' for dies in 'dies'. For every die, yield the property value
@@ -448,16 +464,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # Emulate using the per-CPU interface so far (temporary solution).
         for package in self._cpuinfo.normalize_packages(dies):
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
-                cpu = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))[0]
-                pvinfo = self.get_cpu_prop(pname, cpu, mnames=mnames)
-
-                die_pvinfo = {}
-                die_pvinfo["die"] = die
-                die_pvinfo["package"] = package
-                die_pvinfo["val"] = pvinfo["val"]
-                die_pvinfo["mname"] = pvinfo["mname"]
-
-                yield die_pvinfo
+                yield self._get_die_prop_pvinfo(pname, package, die, mnames=mnames)
 
     def get_die_prop(self, pname, die, package, mnames=None):
         """
@@ -482,6 +489,21 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         return self.get_die_prop(pname, die, package)["val"] is not None
+
+    def _get_package_prop_pvinfo(self, pname, package, mnames=None):
+        """
+        The default implementation or per-package property reading via '_get_cpu_prop_pvinfo()'.
+        """
+
+        cpu = self._cpuinfo.package_to_cpus(package)[0]
+        pvinfo = self.get_cpu_prop(pname, cpu, mnames=mnames)
+
+        pkg_pvinfo = {}
+        pkg_pvinfo["package"] = package
+        pkg_pvinfo["val"] = pvinfo["val"]
+        pkg_pvinfo["mname"] = pvinfo["mname"]
+
+        return pkg_pvinfo
 
     def get_prop_packages(self, pname, packages="all", mnames=None):
         """
@@ -515,15 +537,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         # Emulate using the per-CPU interface so far (temporary solution).
         for package in self._cpuinfo.normalize_packages(packages):
-            cpu = self._cpuinfo.package_to_cpus(package)[0]
-            pvinfo = self.get_cpu_prop(pname, cpu, mnames=mnames)
-
-            pkg_pvinfo = {}
-            pkg_pvinfo["package"] = package
-            pkg_pvinfo["val"] = pvinfo["val"]
-            pkg_pvinfo["mname"] = pvinfo["mname"]
-
-            yield pkg_pvinfo
+            yield self._get_package_prop_pvinfo(pname, package, mnames=mnames)
 
     def get_package_prop(self, pname, package, mnames=None):
         """
