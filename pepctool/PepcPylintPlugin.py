@@ -768,6 +768,9 @@ class ScopeStack():
         else:
             scope = self._current_scope
 
+        if not scope:
+            return None
+
         if name not in scope["vars"]:
             scope["vars"][name] = {"node": node, "read": read}
 
