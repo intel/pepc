@@ -101,15 +101,18 @@ def parse_mechanisms(mechanisms, pobj):
                                     f"mechanisms are: {mnames}")
     return mnames
 
-def _get_sname_and_nums(pobj, cpuinfo, pname, optar):
+def _get_sname_and_nums(pobj, cpuinfo, pname, optar, override_sname=None):
     """
     Find out whether property 'pname' should be accessed on the per-CPU, per-die, or per-package
     manner. Return the corresponding scope name and CPU, die, or package numbers.
     """
 
-    sname = pobj.get_sname(pname)
-    if sname is None:
-        sname = "CPU"
+    if override_sname is None:
+        sname = pobj.get_sname(pname)
+        if sname is None:
+            sname = "CPU"
+    else:
+        sname = override_sname
 
     # There is only one die per package. Use per-package interface.
     force_per_package = (sname == "die" and cpuinfo.get_dies_count(package=0) == 1)
@@ -128,7 +131,7 @@ def _get_sname_and_nums(pobj, cpuinfo, pname, optar):
 
     return "CPU", optar.get_cpus()
 
-def get_prop_sname(pobj, cpuinfo, pname, optar, mnames):
+def get_prop_sname(pobj, cpuinfo, pname, optar, mnames, override_sname=None):
     """
     Yield property value dictionaries ('pvinfo', refer to '_PropsClassBase.get_prop_cpu()')
     for property 'pname' taking into account its scope. The arguments are as follows.
@@ -139,9 +142,11 @@ def get_prop_sname(pobj, cpuinfo, pname, optar, mnames):
                 value dictionaries for.
       * mnames - list of mechanisms to use for getting the property (see
                  '_PropsClassBase.MECHANISMS').
+      * override_sname - use this scope name for the 'pname' property, instead of using its real
+                         scope name.
     """
 
-    sname, nums = _get_sname_and_nums(pobj, cpuinfo, pname, optar)
+    sname, nums = _get_sname_and_nums(pobj, cpuinfo, pname, optar, override_sname=override_sname)
 
     if sname == "CPU":
         yield from pobj.get_prop_cpus(pname, nums, mnames=mnames)

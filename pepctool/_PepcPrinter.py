@@ -15,6 +15,7 @@ This module provides API for printing properties.
 import sys
 import logging
 from pepctool import _PepcCommon
+from pepclibs import CStates
 from pepclibs.helperlibs import ClassHelpers, Human, YAML
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
@@ -330,13 +331,14 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         raise Error("BUG: bad property value dictionary, no 'cpu', 'die', or 'package' key found.\n"
                     "The dictionary: {pvinfo}")
 
-    def _build_aggr_pinfo_pname(self, pname, optar, mnames, skip_unsupported):
+    def _build_aggr_pinfo_pname(self, pname, optar, mnames, skip_unsupported, override_sname=None):
         """Implement '_build_aggr_pinfo()' for one property."""
 
         prop = self._pobj.props[pname]
         apinfo = {}
 
-        for pvinfo in _PepcCommon.get_prop_sname(self._pobj, self._cpuinfo, pname, optar, mnames):
+        for pvinfo in _PepcCommon.get_prop_sname(self._pobj, self._cpuinfo, pname, optar, mnames,
+                                                 override_sname=override_sname):
             sname, num = self._get_pvinfo_num(pvinfo)
             val = pvinfo["val"]
             mname = pvinfo["mname"]
@@ -434,7 +436,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             if skip_ro and not prop["writable"]:
                 continue
 
-            apinfo = self._build_aggr_pinfo_pname(pname, optar, mnames, skip_unsupported)
+            try:
+                apinfo = self._build_aggr_pinfo_pname(pname, optar, mnames, skip_unsupported)
+            except CStates.ErrorUsePerCPU as err:
+                # Inconsistent property value across package or die siblings. Use per-CPU access.
+                _LOG.warning(err)
+                apinfo = self._build_aggr_pinfo_pname(pname, optar, mnames, skip_unsupported,
+                                                      override_sname="CPU")
 
             # Merge 'apinfo' to 'aggr_pinfo'.
             for mname, info in apinfo.items():
