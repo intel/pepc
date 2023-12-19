@@ -108,6 +108,8 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         if self.dies:
             for package, pkg_dies in self.dies.items():
+                if package not in dies:
+                    dies[package] = []
                 dies[package] += pkg_dies
 
         for package in dies:
