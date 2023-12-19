@@ -31,7 +31,7 @@ def dump_node(node, recursive=False):
 def _check_generic_string(obj, txt, msg, node=None, lineno=None):
     """Generic checks for strings."""
 
-    match = re.match(".*[^'](--[a-z0-9_\-]+)(?!')[^']", txt)
+    match = re.match(r".*[^'](--[a-z0-9_\-]+)(?!')[^']", txt)
     if match:
         obj.add_message(msg, args=match.group(1), node=node, line=lineno)
 
