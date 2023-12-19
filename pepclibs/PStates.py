@@ -21,6 +21,9 @@ from pepclibs.helperlibs import Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
+# Make the exception class be available for users.
+from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-import
+
 class ErrorFreqOrder(Error):
     """
     An exception indicating that min. or max. frequency modification failed for the ordering

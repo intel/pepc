@@ -66,6 +66,16 @@ MECHANISMS = {
     }
 }
 
+class ErrorUsePerCPU(Error):
+    """
+    The per-die or per-package property "get" method cannot provide a reliable result because
+    sibling CPUs have different property values. Use the per-CPU 'get_prop_cpus()' method instead.
+
+    For example, even though a property has package scope, different CPUs in the same package have
+    different value. This is possible when property scope is not the same as its I/O scope. Please,
+    refer to '_FeaturedMSR' module docstring for more information.
+    """
+
 def _bug_method_not_defined(method_name):
     """Raise an error if the child class did not define the 'method_name' mandatory method."""
 
@@ -323,6 +333,67 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                         f"{prop['sname']} scope{self._pman.hostmsg}.\nPer-{sname} access is only "
                         f"allowed for properties with the following scopes: {snames}")
 
+    def _validate_prop_vs_ioscope(self, pname, cpus, mnames=None, **kwargs):
+        """
+        Verify the property 'pname' has the same value on all CPUs in 'cpus'.
+
+        This method should only be used for properties that have different scope and I/O scope.
+        Please, refer to 'FeatruedMSR' module docstring for information about "scope" vs "I/O
+        scope".
+
+        Example of a situation this method helps catching.
+
+        This "Package C-state Limit" property has package scope, but the corresponding MSR has core
+        scope on many Intel platforms. This means, that the MSR may have different value on
+        different cores, and it is impossible to tell what is the actual package C-state limit
+        value.
+        """
+
+        same = True
+        prev_cpu = None
+        disagreed_pvinfos = None
+        pvinfos = {}
+
+        for cpu in cpus:
+            pvinfo = self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)
+            pvinfos[cpu] = pvinfo
+            if not same:
+                continue
+
+            if prev_cpu is None:
+                prev_cpu = cpu
+                continue
+
+            if pvinfo["val"] != pvinfos[prev_cpu]["val"]:
+                disagreed_pvinfos = (pvinfos[prev_cpu], pvinfo)
+                same = False
+
+        if same:
+            return
+
+        if "die" in kwargs:
+            name = "die"
+            for_what = f" for package {kwargs['package']}, die {kwargs['die']}"
+        else:
+            name = "package"
+            for_what = f" for package {kwargs['package']}"
+
+        cpu1 = disagreed_pvinfos[0]["cpu"]
+        val1 = disagreed_pvinfos[0]["val"]
+        cpu2 = disagreed_pvinfos[1]["cpu"]
+        val2 = disagreed_pvinfos[1]["val"]
+
+        sname = self._props[pname]["sname"]
+        iosname = self._props[pname]["iosname"]
+
+        raise ErrorUsePerCPU(f"cannot determine the value of property '{pname}'{for_what} "
+                             f"{self._pman.hostmsg}:\n"
+                             f"  CPU {cpu1} has value '{val1}', but CPU {cpu2} has value '{val2}', "
+                             f"even though they are in the same {name}.\n"
+                             f"  This situation is possible because '{pname}' has '{sname}' "
+                             f"scope, but '{iosname}' I/O scope.",
+                             pvinfos=pvinfos)
+
     @staticmethod
     def _construct_pvinfo(pname, cpu, mname, val):
         """Construct and return the property value dictionary."""
@@ -381,7 +452,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             self._set_sname(pname)
 
         for cpu in self._cpuinfo.normalize_cpus(cpus):
-            pvinfo = self._get_cpu_prop_pvinfo(pname, cpu, mnames)
+            pvinfo = self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)
             _LOG.debug("'%s' is '%s' for CPU %d using mechanism '%s'%s",
                     pname, pvinfo["val"], cpu, pvinfo["mname"], self._pman.hostmsg)
             yield pvinfo
@@ -413,8 +484,13 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         The default implementation or per-die property reading via '_get_cpu_prop_pvinfo()'.
         """
 
-        cpu = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))[0]
-        pvinfo = self.get_cpu_prop(pname, cpu, mnames=mnames)
+        prop = self._props[pname]
+        cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+
+        if prop["sname"] != prop["iosname"]:
+            self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package, die=die)
+
+        pvinfo = self.get_cpu_prop(pname, cpus[0], mnames=mnames)
 
         die_pvinfo = {}
         die_pvinfo["die"] = die
@@ -495,8 +571,13 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         The default implementation or per-package property reading via '_get_cpu_prop_pvinfo()'.
         """
 
-        cpu = self._cpuinfo.package_to_cpus(package)[0]
-        pvinfo = self.get_cpu_prop(pname, cpu, mnames=mnames)
+        prop = self._props[pname]
+        cpus = self._cpuinfo.package_to_cpus(package)
+
+        if prop["sname"] != prop["iosname"]:
+            self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package)
+
+        pvinfo = self.get_cpu_prop(pname, cpus[0], mnames=mnames)
 
         pkg_pvinfo = {}
         pkg_pvinfo["package"] = package

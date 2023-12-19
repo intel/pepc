@@ -18,6 +18,9 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import _PCStatesBase, CPUIdle
 from pepclibs.msr import PowerCtl, PCStateConfigCtl
 
+# Make the exception class be available for users.
+from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-import
+
 _LOG = logging.getLogger()
 
 # This dictionary describes the C-state properties this module supports. Many of the properties are
