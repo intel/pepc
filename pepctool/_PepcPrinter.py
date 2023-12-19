@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
@@ -331,6 +330,60 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         raise Error("BUG: bad property value dictionary, no 'cpu', 'die', or 'package' key found.\n"
                     "The dictionary: {pvinfo}")
 
+    def _build_aggr_pinfo_pname(self, pname, optar, mnames, skip_unsupported):
+        """Implement '_build_aggr_pinfo()' for one property."""
+
+        prop = self._pobj.props[pname]
+        apinfo = {}
+
+        for pvinfo in _PepcCommon.get_prop_sname(self._pobj, self._cpuinfo, pname, optar, mnames):
+            sname, num = self._get_pvinfo_num(pvinfo)
+            val = pvinfo["val"]
+            mname = pvinfo["mname"]
+
+            if skip_unsupported and val is None:
+                continue
+
+            # Dictionary keys must be of an immutable type (python language requirement). Turn lists
+            # and dictionaries into tuples.
+            if prop["type"].startswith("list["):
+                if val is not None:
+                    val = tuple(val)
+            if prop["type"].startswith("dict["):
+                if val is not None:
+                    val = tuple((k, v) for k, v in val.items())
+
+            if sname == "die":
+                package, die = num
+            else:
+                package, die = None, None
+
+            if mname not in apinfo:
+                apinfo[mname] = {}
+            if pname not in apinfo[mname]:
+                apinfo[mname][pname] = {"sname": sname, "vals": {}}
+
+            pinfo = apinfo[mname][pname]
+
+            if val not in pinfo["vals"]:
+                if sname == "die":
+                    pinfo["vals"][val] = {package: [die]}
+                else:
+                    pinfo["vals"][val] = [num]
+            else:
+                if sname == "die":
+                    if package not in pinfo["vals"][val]:
+                        pinfo["vals"][val][package] = []
+                    pinfo["vals"][val][package].append(die)
+                else:
+                    pinfo["vals"][val].append(num)
+
+            if sname != pinfo["sname"]:
+                raise Error(f"BUG: varying scope name for property '{pname}': was "
+                            f"'{pinfo['sname']}', now '{sname}'")
+
+        return apinfo
+
     def _build_aggr_pinfo(self, pnames, optar, mnames, skip_ro, skip_unsupported):
         """
         Build and return the aggregate properties dictionary for properties in 'pnames'.
@@ -381,52 +434,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             if skip_ro and not prop["writable"]:
                 continue
 
-            for pvinfo in _PepcCommon.get_prop_sname(self._pobj, self._cpuinfo, pname, optar,
-                                                     mnames):
-                sname, num = self._get_pvinfo_num(pvinfo)
-                val = pvinfo["val"]
-                mname = pvinfo["mname"]
+            apinfo = self._build_aggr_pinfo_pname(pname, optar, mnames, skip_unsupported)
 
-                if skip_unsupported and val is None:
-                    continue
-
-                # Dictionary keys must be of an immutable type (python language requirement). Turn
-                # lists and dictionaries into tuples.
-                if prop["type"].startswith("list["):
-                    if val is not None:
-                        val = tuple(val)
-                if prop["type"].startswith("dict["):
-                    if val is not None:
-                        val = tuple((k, v) for k, v in val.items())
-
-                if sname == "die":
-                    package, die = num
-                else:
-                    package, die = None, None
-
+            # Merge 'apinfo' to 'aggr_pinfo'.
+            for mname, info in apinfo.items():
                 if mname not in aggr_pinfo:
                     aggr_pinfo[mname] = {}
-                if pname not in aggr_pinfo[mname]:
-                    aggr_pinfo[mname][pname] = {"sname": sname, "vals": {}}
-
-                pinfo = aggr_pinfo[mname][pname]
-
-                if val not in pinfo["vals"]:
-                    if sname == "die":
-                        pinfo["vals"][val] = {package: [die]}
-                    else:
-                        pinfo["vals"][val] = [num]
-                else:
-                    if sname == "die":
-                        if package not in pinfo["vals"][val]:
-                            pinfo["vals"][val][package] = []
-                        pinfo["vals"][val][package].append(die)
-                    else:
-                        pinfo["vals"][val].append(num)
-
-                if sname != pinfo["sname"]:
-                    raise Error(f"BUG: varying scope name for property '{pname}': was "
-                                f"'{pinfo['sname']}', now '{sname}'")
+                aggr_pinfo[mname].update(info)
 
         return aggr_pinfo
 
