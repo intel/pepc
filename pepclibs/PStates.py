@@ -1113,6 +1113,9 @@ class PStates(_PCStatesBase.PCStatesBase):
                 freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
             elif val == "mdl":
                 bclk = self._get_bclk(cpu)
+                if bclk is None:
+                    bclk = 100000000 # If bus clock frequency is not available, use 100MHz.
+
                 min_freq = self._get_cpu_prop("min_uncore_freq_limit", cpu)
                 max_freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
                 # Mid-point between min and max freq, rounded to the nearest multiple of 'bclk'.
