@@ -6,6 +6,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
  - Fix C-state printing with '--yaml' opiton.
+ - Fix 'pepc pstates config' failing with 'mdl' CPU and uncore frequency value.
 ### Added
 ### Removed
 ### Changed
