@@ -316,7 +316,6 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         self._pman = pman
         self._cpuinfo = cpuinfo
-        self._enable_cache = enable_cache
 
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
