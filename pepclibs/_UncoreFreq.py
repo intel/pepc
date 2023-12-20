@@ -94,12 +94,12 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
     def get_min_freq(self, cpu):
         """
-        Get minimum uncore frequency via Linux uncore frequency driver sysfs interface. The
-        arguments are as follows.
-          * cpu - CPU number to set the frequency for.
+        Get minimum uncore frequency for the die (uncore frequency domain) corresponding to CPU
+        'cpu'. The arguments are as follows.
+          * cpu - CPU number to get the uncore frequency for.
 
-        Return the minimum uncore frequency in Hz or 'None' if the uncore frequency sysfs file does
-        not exist.
+        Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
+        frequency in Hz or 'None' if the uncore frequency sysfs file does not exist.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
         CPU 'cpu' should exist and should be online.
@@ -114,12 +114,12 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
     def get_min_freq_limit(self, cpu):
         """
-        Get minimum uncore frequency limit via Linux uncore frequency driver sysfs interface. The
-        arguments are as follows.
-          * cpu - CPU number to set the frequency limit for.
+        Get minimum uncore frequency limit for the die (uncore frequency domain) corresponding to
+        CPU 'cpu'. The arguments are as follows.
+          * cpu - CPU number to get the uncore frequency limit for.
 
-        Return the minimum uncore frequency limit in Hz or 'None' if the uncore frequency sysfs file
-        does not exist.
+        Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
+        frequency limit in Hz or 'None' if the uncore frequency sysfs file does not exist.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
         CPU 'cpu' should exist and should be online.
@@ -164,10 +164,12 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
     def set_min_freq(self, freq, cpu):
         """
-        Set minimum uncore frequency via Linux uncore frequency driver sysfs interface. The
-        arguments are as follows.
+        Set minimum uncore frequency for the die (uncore frequency domain) corresponding to CPU
+        'cpu'. The arguments are as follows.
           * freq - the frequency to set, in Hz.
-          * cpu - CPU number to set the frequency for.
+          * cpu - CPU number to set the uncore frequency for.
+
+        Use the Linux uncore frequency driver sysfs interface set the minimum uncore frequency.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
         CPU 'cpu' should exist and should be online.
