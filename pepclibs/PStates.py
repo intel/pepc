@@ -1112,9 +1112,11 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif val == "max":
                 freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
             elif val == "mdl":
+                bclk = self._get_bclk(cpu)
                 min_freq = self._get_cpu_prop("min_uncore_freq_limit", cpu)
                 max_freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
-                freq = round(statistics.mean([min_freq, max_freq]), -2)
+                # Mid-point between min and max freq, rounded to the nearest multiple of 'bclk'.
+                freq = bclk * round(statistics.mean([min_freq, max_freq]) / bclk)
             else:
                 freq = val
         else:
