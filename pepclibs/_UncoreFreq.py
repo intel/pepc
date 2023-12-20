@@ -11,6 +11,24 @@
 
 """
 This module provides a capability of reading and changing uncore frequency on Intel CPUs.
+
+On older platforms, such as Skylake Xeon and Sapphire Rapids Xeon, the uncore frequency is
+controlled via an MSR. Linux kernel has the 'intel_uncore_frequency' driver that exposes the sysfs
+interface, which programs the MSR under the hood. The sysfs interface is per-die. For example,
+package 0, die 1 uncore frequency is controlled via sysfs files under the "package_01_die_00" sysfs
+sub-directory.
+
+This sysfs interface is referred to as the legacy interface.
+
+On newer platforms, such as Granite Rapids Xeon, the uncore frequency is controlled via TPMI, and
+Linux kernel has the 'intel_uncore_frequency_tpmi' driver that exposes the sysfs interface. The TPMI
+driver has two sysfs interfaces, though: the legacy interface and the new interface. The legacy
+interface is limited, and the new interface is preferable.
+
+The new interface works in terms of "uncore domains". However, uncore domain IDs are the same as die
+IDs, and in this project uncore domains are also referred to as "dies".
+
+At this point this module uses the legacy sysfs interface even when the new interface is available.
 """
 
 import logging
@@ -41,7 +59,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
     2. Get uncore frequency limits via Linux sysfs interfaces:
        * 'get_min_freq_limit()'
        * 'get_max_freq_limit()'
-    3. Get uncore domain ID numbers per package:
+    3. Get uncore domain ID numbers (same as die numbers) per package:
        * 'get_domain_ids()'
     4. Get number of uncore domains:
        * 'get_domains_count()'
