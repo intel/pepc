@@ -5,10 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix C-state printing with '--yaml' opiton.
- - Fix 'pepc pstates config' failing with 'mdl' CPU and uncore frequency value.
 ### Added
 ### Removed
+### Changed
+
+## [1.4.43] - 2023-12-20
+### Fixed
+ - Fix C-state printing with '--yaml' opiton.
+ - Fix 'pepc pstates config' failing with 'mdl' CPU and uncore frequency value.
 ### Changed
  - Refer to packages and dies when printing about per-package and per-die
    properties, instead for referring to CPU numbers.

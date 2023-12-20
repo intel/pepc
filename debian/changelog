@@ -1,3 +1,12 @@
+pepc (1.4.43) unstable; urgency=low
+
+  * Fix C-state printing with '--yaml' opiton.
+  * Fix 'pepc pstates config' failing with 'mdl' CPU and uncore frequency value.
+  * Refer to packages and dies when printing about per-package and per-die
+    properties, instead for referring to CPU numbers.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 20 Dec 2023 00:00:00 +0200
+
 pepc (1.4.42) unstable; urgency=low
 
   * Minor logger improvement to satisfy 'wult' project needs.
