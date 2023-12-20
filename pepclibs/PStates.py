@@ -1125,8 +1125,12 @@ class PStates(_PCStatesBase.PCStatesBase):
 
                 min_freq = self._get_cpu_prop("min_uncore_freq_limit", cpu)
                 max_freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
-                # Mid-point between min and max freq, rounded to the nearest multiple of 'bclk'.
-                freq = bclk * round(statistics.mean([min_freq, max_freq]) / bclk)
+                if min_freq and max_freq:
+                    # Mid-point between min. and max. frequencies, rounded to the nearest multiple
+                    # of bus clock frequency.
+                    freq = bclk * round(statistics.mean([min_freq, max_freq]) / bclk)
+                else:
+                    freq = None
             else:
                 freq = val
         else:
@@ -1148,6 +1152,8 @@ class PStates(_PCStatesBase.PCStatesBase):
                 freq = val
 
         if not freq:
+            if uncore and self._uncfreq_err:
+                raise ErrorNotSupported(self._uncfreq_err)
             raise ErrorNotSupported(f"'{val}' is not supported{self._pman.hostmsg}")
 
         return freq
