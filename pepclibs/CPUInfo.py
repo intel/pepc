@@ -698,6 +698,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         for package, pkg_dies in domain_ids.items():
             for die in pkg_dies:
+                if die in self._compute_dies[package]:
+                    continue
+
                 tline = {}
                 for key in levels:
                     tline[key] = _NA
@@ -705,8 +708,22 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 tline["die"] = die
                 topology.append(tline)
 
+                # Cache the I/O die number.
+                self._io_dies[package].add(die)
+
     def _add_compute_dies(self, tinfo, cpus):
         """Adds die numbers for CPUs 'cpus' to 'tinfo'"""
+
+        def _add_compute_die(tinfo, cpu, die):
+            """Add compute die number 'die'."""
+
+            tinfo[cpu]["die"] = die
+            package = tinfo[cpu]["package"]
+            if package not in self._compute_dies:
+                self._compute_dies[package] = set()
+                # Initialize the I/O dies cache at the same time.
+                self._io_dies[package] = set()
+            self._compute_dies[package].add(die)
 
         pli_obj = self._get_pliobj()
 
@@ -716,7 +733,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
             if pli_obj:
                 die = pli_obj.read_cpu_feature("domain_id", cpu)
-                tinfo[cpu]["die"] = die
+                _add_compute_die(tinfo, cpu, die)
                 continue
 
             base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
@@ -726,7 +743,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             for sibling in siblings:
                 # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
                 with suppress(KeyError):
-                    tinfo[sibling]["die"] = die
+                    _add_compute_die(tinfo, cpu, die)
 
     def _add_nodes(self, tinfo):
         """Adds NUMA node numbers to 'tinfo'."""
@@ -1669,6 +1686,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._cpus = None
         # Dictionary of P-core/E-core CPUs.
         self._hybrid_cpus = None
+        # Per-package compute die numbers (dies which have CPUs) and I/O die numbers (dies which do
+        # not have CPUs). Dictionaries with package numbers as key and set of die numbers as values.
+        self._compute_dies = {}
+        self._io_dies = {}
 
         # General CPU information.
         self.info = None
