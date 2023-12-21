@@ -750,8 +750,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         cpus = []
         for package in self._cpuinfo.normalize_packages(dies):
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
-                die_cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
-                cpus += die_cpus
+                cpu = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))[0]
+                cpus.append(cpu)
 
         return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
 
