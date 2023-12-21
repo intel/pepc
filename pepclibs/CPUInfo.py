@@ -653,6 +653,19 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 with suppress(KeyError):
                     tinfo[sibling]["module"] = module
 
+    def _get_msr(self):
+        """Returns an 'MSR.MSR()' object."""
+
+        if not self._msr:
+            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
+
+            # Disable caching because it does not add value - the MSR should be read only once for
+            # every online CPU, and also to exclude usage of the 'cpuinfo' object by the 'MSR'
+            # module, which happens when 'MSR' module uses 'PerCPUCache'.
+            self._msr = MSR.MSR(self._pman, cpuinfo=self, enable_cache=False)
+
+        return self._msr
+
     def _get_pliobj(self):
         """Returns a 'PMLogicalId.PMLogicalID()' object."""
 
@@ -661,8 +674,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 return None
 
             from pepclibs.msr import PMLogicalId # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+
             try:
-                self._pliobj = PMLogicalId.PMLogicalId(pman=self._pman, cpuinfo=self)
+                self._pliobj = PMLogicalId.PMLogicalId(pman=self._pman, cpuinfo=self, msr=msr)
             except ErrorNotSupported:
                 self._pli_msr_supported = False
 
@@ -1652,6 +1668,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._pman = pman
         self._close_pman = pman is None
 
+        self._msr = None
         self._pliobj = None
         # 'True' if 'MSR_PM_LOGICAL_ID' is supported by the system, otherwise 'False'. When this MSR
         # is supported, it provides the die IDs enumeration.
@@ -1707,4 +1724,4 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_pman", "_pliobj", "_uncfreq_obj"))
+        ClassHelpers.close(self, close_attrs=("_pman", "_msr", "_pliobj", "_uncfreq_obj"))
