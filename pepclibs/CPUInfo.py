@@ -1323,6 +1323,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         for pkg in self.get_packages():
             for die in self.package_to_dies(pkg):
+                if die in self._io_dies[pkg]:
+                    # Skip I/O dies, they have no CPUs.
+                    continue
+
                 siblings_set = set(self.dies_to_cpus(dies=(die,), packages=(pkg,)))
 
                 if siblings_set.issubset(cpus_set):
