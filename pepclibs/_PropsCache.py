@@ -143,11 +143,12 @@ class PropsCache():
         """
 
         self._enable_cache = enable_cache
+        self._cpuinfo = cpuinfo
+
+        self._close_cpuinfo = cpuinfo is None
+
         if not self._enable_cache:
             return
-
-        self._cpuinfo = cpuinfo
-        self._close_cpuinfo = cpuinfo is None
 
         if not self._cpuinfo:
             # 'pman' is only used to initialize 'cpuinfo' in this class.

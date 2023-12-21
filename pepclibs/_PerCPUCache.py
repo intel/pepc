@@ -113,10 +113,10 @@ class PerCPUCache:
         self._pman = pman
         self._enable_cache = enable_cache
 
+        self._close_cpuinfo = cpuinfo is None
+
         if not self._enable_cache:
             return
-
-        self._close_cpuinfo = cpuinfo is None
 
         if not self._cpuinfo:
             # 'pman' is only used to initialize 'cpuinfo' in this class.
