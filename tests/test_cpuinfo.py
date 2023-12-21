@@ -57,6 +57,9 @@ def _get_level_nums(lvl, cpuinfo, order=None):
 
     assert get_method, f"BUG: 'get_{lvl}s()' does not exist"
 
+    if lvl == "die":
+        # TODO: cover I/O dies too.
+        return get_method(order=order, include_io_dies=False)
     return get_method(order=order)
 
 def _get_levels_and_nums(cpuinfo):
@@ -219,7 +222,11 @@ def test_cpuinfo_get_count(params):
 
     for cpuinfo in _get_cpuinfos(params):
         for lvl, nums in _get_levels_and_nums(cpuinfo):
-            _run_method(f"get_{lvl}s_count", cpuinfo, exp_res=len(nums))
+            kwargs = {}
+            if lvl == "die":
+                # TODO: cover I/O dies too.
+                kwargs = {"include_io_dies" : False}
+            _run_method(f"get_{lvl}s_count", cpuinfo, kwargs=kwargs, exp_res=len(nums))
 
         offline_cpus = cpuinfo.get_offline_cpus()
         _run_method("get_offline_cpus_count", cpuinfo, exp_res=len(offline_cpus))
