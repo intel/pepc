@@ -709,7 +709,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if not uncfreq_obj:
             return
 
-        levels = topology[0].keys()
         domain_ids = uncfreq_obj.get_domain_ids()
 
         for package, pkg_dies in domain_ids.items():
@@ -718,7 +717,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                     continue
 
                 tline = {}
-                for key in levels:
+                for key in LEVELS:
+                    # At this point the topology table lines may not even include some levels (e.g.,
+                    # "numa" may not be there). But they may be added later. Add them for the I/O
+                    # die topology table lines now, so that later the lines would not need # to be
+                    # updated.
                     tline[key] = _NA
                 tline["package"] = package
                 tline["die"] = die
