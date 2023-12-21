@@ -285,7 +285,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
                   f"with the '{kopt}' option.\n" \
                   f" 2. the kernel is old and does not have the '{drvname}' driver.\n" \
                   f"Address these issues or contact project maintainers and request" \
-                  f"implementing uncore frequency support via MSR {msr_addr:#x}"
+                  f"implementing uncore frequency support via MSR {msr_addr:#x}."
         else:
             drvname = "intel_uncore_frequency_tpmi"
             kopt = "CONFIG_INTEL_UNCORE_FREQ_CONTROL_TPMI"
@@ -297,7 +297,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
                   f" 3. the kernel is old and does not have the '{drvname}' driver. This driver " \
                   f"is supported since kernel version 6.5.\n" \
                   f" 4. the '{drvname}' driver is not enabled. Try to compile the kernel " \
-                  f"with the '{kopt}' option"
+                  f"with the '{kopt}' option."
 
         try:
             self._drv = KernelModule.KernelModule(drvname, pman=self._pman)
