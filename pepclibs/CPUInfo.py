@@ -932,12 +932,26 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """
         return self._get_level_nums("module", "module", "all", order=order)
 
-    def get_dies(self, package=0, order="die"):
+    def get_dies(self, package=0, order="die", include_io_dies=True):
         """
-        Return list of die numbers in package 'package', only dies containing at least one online
-        CPU will be included.
+        Return list of die numbers in package 'package'. The arguments are as follows.
+          * package - package number to return the list of dies for.
+          * order - the sorting order of the result.
+          * include_io_dies - include I/O dies to the result if 'True', otherwise exclude them. I/O
+                              dies are the dies that do not have any CPUs.
+
+        Only dies containing at least one online CPU will be included to the result.
         """
-        return self._get_level_nums("die", "package", package, order=order)
+
+        dies = self._get_level_nums("die", "package", package, order=order)
+        if include_io_dies:
+            return dies
+
+        compute_dies = []
+        for die in dies:
+            if die in self._compute_dies[package]:
+                compute_dies.append(die)
+        return compute_dies
 
     def get_nodes(self, order="node"):
         """
@@ -1114,12 +1128,17 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Return modules count."""
         return len(self.get_modules())
 
-    def get_dies_count(self, package=0):
+    def get_dies_count(self, package=0, include_io_dies=True):
         """
         Return dies count in a package. The arguments are as follows.
           * package - package number to get dies count for.
+          * include_io_dies - include I/O dies to the result if 'True', otherwise exclude them. I/O
+                              dies are the dies that do not have any CPUs.
+
+        Only dies containing at least one online CPU will be counted.
         """
-        return len(self.get_dies(package=package))
+
+        return len(self.get_dies(package=package, include_io_dies=include_io_dies))
 
     def get_packages_count(self):
         """Return packages count."""
