@@ -1,3 +1,9 @@
+pepc (1.4.44) unstable; urgency=low
+
+  * Fix multiple bugs on systems that have I/O dies.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 21 Dec 2023 00:00:00 +0200
+
 pepc (1.4.43) unstable; urgency=low
 
   * Fix C-state printing with '--yaml' opiton.

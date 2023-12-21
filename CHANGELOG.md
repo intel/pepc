@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix multiple bugs on systems that have I/O dies.
 ### Added
 ### Removed
 ### Changed
+
+## [1.4.44] - 2023-12-21
+### Fixed
+ - Fix multiple bugs on systems that have I/O dies.
 
 ## [1.4.43] - 2023-12-20
 ### Fixed
