@@ -887,9 +887,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         valid_nums = set()
 
         for tline in self._get_topology(levels=(lvl, sublvl), order=order):
-            if _NA in (tline[lvl], tline[sublvl]):
-                continue
+            if tline[lvl] == _NA:
+                 continue
             valid_nums.add(tline[lvl])
+            if tline[sublvl] == _NA:
+                continue
             if nums == "all" or tline[lvl] in nums:
                 result[tline[sublvl]] = None
 
