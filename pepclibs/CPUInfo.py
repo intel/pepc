@@ -813,8 +813,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         self._initialized_levels.update(levels)
         for level in self._initialized_levels:
-            if level not in self._topology:
-                self._sort_topology(topology, level)
+            self._sort_topology(topology, level)
 
         return self._topology[order]
 
