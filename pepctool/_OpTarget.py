@@ -115,6 +115,13 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                 if package not in dies:
                     dies[package] = []
                 dies[package] += pkg_dies
+        elif not self.cpus and not self.cores and not self.modules and self.packages:
+            # One or more packages are targeted. No specific CPUs, cores, or modules are targeted.
+            # Assume this means that I/O dies are targeted too, so include them.
+            for package in self.packages:
+                if package not in dies:
+                    dies[package] = []
+                dies[package] += self._cpuinfo.get_dies(package=package)
 
         for package in dies:
             dies[package] = Trivial.list_dedup(dies[package])
