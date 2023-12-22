@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Improve 'pepc topology info' to include I/O dies to the output.
 ### Removed
 ### Changed
+
+## [1.4.45] - 2023-12-22
+### Added
+ - Improve 'pepc topology info' to include I/O dies to the output.
 
 ## [1.4.44] - 2023-12-21
 ### Fixed

@@ -1,3 +1,9 @@
+pepc (1.4.45) unstable; urgency=low
+
+  * Improve 'pepc topology info' to include I/O dies to the output.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 22 Dec 2023 00:00:00 +0200
+
 pepc (1.4.44) unstable; urgency=low
 
   * Fix multiple bugs on systems that have I/O dies.
