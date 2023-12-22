@@ -950,11 +950,13 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """
         return self._get_level_nums("module", "module", "all", order=order)
 
-    def get_dies(self, package=0, order="die", io_dies_ok=True):
+    def get_dies(self, package=0, order="die", compute_dies_ok=True, io_dies_ok=True):
         """
         Return list of die numbers in package 'package'. The arguments are as follows.
           * package - package number to return the list of dies for.
           * order - the sorting order of the result.
+          * compute_dies_ok - include compute dies to the result if 'True', otherwise exclude them.
+                              Compute dies are the dies that have CPUs.
           * io_dies_ok - include I/O dies to the result if 'True', otherwise exclude them. I/O dies
                          are the dies that do not have any CPUs.
 
@@ -962,14 +964,23 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """
 
         dies = self._get_level_nums("die", "package", package, order=order)
-        if io_dies_ok:
+        if compute_dies_ok and io_dies_ok:
             return dies
 
-        compute_dies = []
-        for die in dies:
-            if die in self._compute_dies[package]:
-                compute_dies.append(die)
-        return compute_dies
+        if compute_dies_ok:
+            compute_dies = []
+            for die in dies:
+                if die in self._compute_dies[package]:
+                    compute_dies.append(die)
+            return compute_dies
+        elif io_dies_ok:
+            io_dies = []
+            for die in dies:
+                if die in self._io_dies[package]:
+                    io_dies.append(die)
+            return io_dies
+
+        return []
 
     def get_nodes(self, order="node"):
         """
@@ -1146,17 +1157,20 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Return modules count."""
         return len(self.get_modules())
 
-    def get_dies_count(self, package=0, io_dies_ok=True):
+    def get_dies_count(self, package=0, compute_dies_ok=True, io_dies_ok=True):
         """
         Return dies count in a package. The arguments are as follows.
           * package - package number to get dies count for.
+          * compute_dies_ok - include compute dies to the result if 'True', otherwise exclude them.
+                              Compute dies are the dies that have CPUs.
           * io_dies_ok - include I/O dies to the result if 'True', otherwise exclude them. I/O dies
                          are the dies that do not have any CPUs.
 
         Only dies containing at least one online CPU will be counted.
         """
 
-        return len(self.get_dies(package=package, io_dies_ok=io_dies_ok))
+        return len(self.get_dies(package=package, compute_dies_ok=compute_dies_ok,
+                                 io_dies_ok=io_dies_ok))
 
     def get_packages_count(self):
         """Return packages count."""
