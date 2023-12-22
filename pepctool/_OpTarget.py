@@ -86,14 +86,18 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             self._cache["cpus"] = self._get_cpus()
         return self._cache["cpus"]
 
-    def get_dies(self):
+    def get_dies(self, strict=True):
         """
-        Return target die numbers.
+        Return target die numbers. The arguments are as follows.
+          * strict - if 'True', the operation must target only dies, otherwise the operation may
+                     target any level below "die" as well (e.g., it may target die 4 and CPU 0).
 
         The die numbers are returned in form of a dictionary, with keys being integer package
         numbers and values being lists of integer die numbers in the package.
 
-        Raise 'ErrorNoTarget' if no dies are targeted.
+        In "strict" mode ('strict' is 'True'), if the operation target includes sub-levels of the
+        "die" level (i.e., there are CPUs that do not comprise full die), the 'ErrorNoTarget'
+        exception is raised.
         """
 
         if "dies" in self._cache:
@@ -101,7 +105,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         cpus = self._get_cpus(exclude=["die"])
         dies, rem_cpus = self._cpuinfo.cpus_div_dies(cpus)
-        if rem_cpus:
+        if strict and rem_cpus:
             human_cpus = Human.rangify(rem_cpus)
             raise ErrorNoTarget(f"the following CPUs do not comprise a die: {human_cpus}",
                                 cpus=rem_cpus)
@@ -118,9 +122,15 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         self._cache["dies"] = dies
         return self._cache["dies"]
 
-    def get_packages(self):
+    def get_packages(self, strict=True):
         """
-        Return list of target package numbers. Raise 'ErrorNoTarget' if no packages are target.
+        Return target die numbers as a list of integers. The arguments are as follows.
+          * strict - if 'True', the operation must target only dies, otherwise the operation may
+                     target any level below "die" as well (e.g., it may target die 4 and CPU 0).
+
+        In "strict" mode ('strict' is 'True'), if the operation target includes sub-levels of the
+        "die" level (i.e., there are CPUs that do not comprise full die), the 'ErrorNoTarget'
+        exception is raised.
         """
 
         if "packages" in self._cache:
@@ -128,7 +138,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         cpus = self._get_cpus(exclude=["package"])
         packages, rem_cpus = self._cpuinfo.cpus_div_packages(cpus)
-        if rem_cpus:
+        if strict and rem_cpus:
             human_cpus = Human.rangify(rem_cpus)
             raise ErrorNoTarget(f"the following CPUs do not comprise a package: {human_cpus}",
                                 cpus=rem_cpus)
