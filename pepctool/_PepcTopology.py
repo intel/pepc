@@ -50,6 +50,22 @@ def _get_default_colnames(cpuinfo):
 
     return colnames
 
+def _add_offline_cpus(cpus, cpuinfo, topology, colnames):
+    """
+    Add offline CPUs to the topology table. Only the CPU numbers are known for offline CPUs,
+    everything else is marked with '?' symbol.
+
+    Return the updated topology table.
+    """
+
+    for cpu in cpuinfo.get_offline_cpus():
+        if cpu in cpus:
+            tline = {name: "?" for name in colnames}
+            tline["CPU"] = cpu
+            topology.append(tline)
+
+    return topology
+
 def topology_info_command(args, pman):
     """Implements the 'topology info' command."""
 
@@ -70,7 +86,7 @@ def topology_info_command(args, pman):
                     else:
                         columns = list(CPUInfo.LEVELS) + ["hybrid"]
                         columns = ", ".join(columns)
-                        raise Error(f"invalid colname '{colname}', use one of: {columns}")
+                        raise Error(f"invalid column name '{colname}', use one of: {columns}")
 
         if show_hybrid and not cpuinfo.info["hybrid"]:
             raise Error(f"no hybrid CPU found{pman.hostmsg}, found {cpuinfo.cpudescr}")
@@ -95,7 +111,7 @@ def topology_info_command(args, pman):
                                    modules=args.modules, dies=args.dies, packages=args.packages,
                                    core_siblings=args.core_siblings,
                                    module_siblings=args.module_siblings, offline_ok=offline_ok)
-        cpus = optar.get_cpus()
+
         topology = cpuinfo.get_topology(levels=colnames, order=order)
 
         if show_hybrid is None and cpuinfo.info["hybrid"]:
@@ -113,13 +129,10 @@ def topology_info_command(args, pman):
                 else:
                     tline["hybrid"] = "E-core"
 
+        cpus = set(optar.get_cpus())
+
         if offline_ok:
-            # Offline CPUs are not present in 'topology' list. Thus, we add them to the list with
-            # "?" as level number.
-            for cpu in cpuinfo.get_offline_cpus():
-                tline = {name : "?" for name in colnames}
-                tline["CPU"] = cpu
-                topology.append(tline)
+            topology = _add_offline_cpus(cpus, cpuinfo, topology, colnames)
 
     _LOG.info(fmt, *headers)
     for tline in topology:
