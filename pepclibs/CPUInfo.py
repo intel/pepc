@@ -385,8 +385,8 @@ PHIS =         (CPUS["XEON_PHI_KNL"]["model"],
 LEVELS = ("CPU", "core", "module", "die", "node", "package")
 
 # '_NA' is used for the CPU/core/module number for I/O dies, which do not include CPUs, cores, or
-# modules.
-_NA = -1
+# modules. Use a very large number to make sure the the '_NA' numbers go last when sorting.
+_NA = 0xFFFFFFFF
 
 class CPUInfo(ClassHelpers.SimpleCloseContext):
     """
