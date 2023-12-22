@@ -104,7 +104,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         if rem_cpus:
             human_cpus = Human.rangify(rem_cpus)
             raise ErrorNoTarget(f"the following CPUs do not comprise a die: {human_cpus}",
-                             cpus=rem_cpus)
+                                cpus=rem_cpus)
 
         if self.dies:
             for package, pkg_dies in self.dies.items():
