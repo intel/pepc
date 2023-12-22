@@ -66,6 +66,43 @@ def _add_offline_cpus(cpus, cpuinfo, topology, colnames):
 
     return topology
 
+def _filter_cpus(cpus, topology):
+    """
+    The 'topology' topology table includes all CPUs. Filter out the all CPUs except for the ones in
+    the 'cpus' set.
+    """
+
+    new_topology = []
+    for tline in topology:
+        # Do not filter out 'NA' CPUs, they will be handled separately.
+        if tline["CPU"] == CPUInfo.NA or tline["CPU"] in cpus:
+            new_topology.append(tline)
+    return new_topology
+
+def _filter_io_dies(optar, topology, colnames):
+    """
+    If the system has I/O dies (dies withot CPUs), they will be present in the 'topology' topology
+    table. Exclude them if they should not be printed.
+    """
+
+    dies = {}
+    if "die" in colnames:
+        dies = optar.get_dies(strict=False)
+
+    new_topology = []
+    for tline in topology:
+        if tline["CPU"] != CPUInfo.NA:
+            new_topology.append(tline)
+            continue
+
+        if tline["package"] not in dies:
+            continue
+        if tline["die"] not in dies[tline["package"]]:
+            continue
+        new_topology.append(tline)
+
+    return new_topology
+
 def topology_info_command(args, pman):
     """Implements the 'topology info' command."""
 
@@ -112,6 +149,8 @@ def topology_info_command(args, pman):
                                    core_siblings=args.core_siblings,
                                    module_siblings=args.module_siblings, offline_ok=offline_ok)
 
+        # Note, if there are I/O dies, the topology will include them. They will be filtered out
+        # separately in necessary.
         topology = cpuinfo.get_topology(levels=colnames, order=order)
 
         if show_hybrid is None and cpuinfo.info["hybrid"]:
@@ -131,10 +170,17 @@ def topology_info_command(args, pman):
 
         cpus = set(optar.get_cpus())
 
+        topology = _filter_cpus(cpus, topology)
+        topology = _filter_io_dies(optar, topology, colnames)
+
         if offline_ok:
             topology = _add_offline_cpus(cpus, cpuinfo, topology, colnames)
 
     _LOG.info(fmt, *headers)
     for tline in topology:
-        if tline["CPU"] in cpus:
-            _LOG.info(fmt, *[str(tline[name]) for name in colnames])
+        for lvl, val in tline.items():
+            if val == CPUInfo.NA:
+                tline[lvl] = "-"
+
+        args = [str(tline[name]) for name in colnames]
+        _LOG.info(fmt, *args)
