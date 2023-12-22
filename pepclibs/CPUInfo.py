@@ -1306,7 +1306,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         cores = {}
         rem_cpus = []
 
-        cpus = self.normalize_cpus(cpus)
+        cpus = self.normalize_cpus(cpus, offline_ok=True)
         cpus_set = set(cpus)
 
         for pkg in self.get_packages():
@@ -1358,7 +1358,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         dies = {}
         rem_cpus = []
 
-        cpus = self.normalize_cpus(cpus)
+        cpus = self.normalize_cpus(cpus, offline_ok=True)
         cpus_set = set(cpus)
 
         for pkg in self.get_packages():
@@ -1406,7 +1406,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         pkgs = []
         rem_cpus = []
 
-        cpus = self.normalize_cpus(cpus)
+        cpus = self.normalize_cpus(cpus, offline_ok=True)
         cpus_set = set(cpus)
 
         for pkg in self.normalize_packages(packages):
