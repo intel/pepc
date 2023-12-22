@@ -13,7 +13,7 @@ This module implements pepc coding style checks for pylint as a plugin.
 import re
 import tokenize
 from astroid import nodes
-from pylint.checkers import BaseChecker, BaseTokenChecker
+from pylint.checkers import BaseChecker, BaseTokenChecker, BaseRawFileChecker
 
 STATE_COMMENT = 1
 STATE_COMMENT_NL = 2
@@ -35,7 +35,7 @@ def _check_generic_string(obj, txt, msg, node=None, lineno=None):
     if match:
         obj.add_message(msg, args=match.group(1), node=node, line=lineno)
 
-class PepcTokenChecker(BaseTokenChecker):
+class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
     """Pepc linter class using tokens."""
 
     priority = -1
@@ -139,6 +139,23 @@ class PepcTokenChecker(BaseTokenChecker):
                 "File begins with newline characters."
             ),
         ),
+        "W9915": (
+            "Unnecessary trailing backslash",
+            "pepc-unnecessary-backslash",
+            (
+                "Unnecessary backslash used to continue line."
+            ),
+        ),
+        "W9916": (
+            "Bad multiline string format",
+            "pepc-bad-multiline-string",
+            (
+                """
+                Bad multiline string format, should either use triple quotes or split to separate
+                strings.
+                """
+            ),
+        ),
     }
     options = ()
 
@@ -215,8 +232,12 @@ class PepcTokenChecker(BaseTokenChecker):
         if token.type != tokenize.STRING:
             return
 
-        if txt[0] == "'":
+        if re.match("[a-z]{0,1}'", txt):
             self.add_message("pepc-string-bad-delimiter", line=lineno)
+
+        if token.start[0] != token.end[0]:
+            if not re.match("[a-z]{0,1}\"\"\"", txt):
+                self.add_message("pepc-bad-multiline-string", line=lineno)
 
     def _is_reserved(self, tok):
         """
@@ -572,6 +593,35 @@ class PepcTokenChecker(BaseTokenChecker):
             self._multiline_txt = ""
             self._multiline_lineno = None
 
+    def _check_backslashes(self, start, end):
+        """Check for unnecessary backslashes."""
+
+        while True:
+            if not self._backslash_lines:
+                return
+            lineno = self._backslash_lines[0]
+            if lineno >= end:
+                return
+            if lineno < end:
+                self._backslash_lines.pop(0)
+                if lineno >= start:
+                    self.add_message("pepc-unnecessary-backslash", line=lineno)
+
+    def _process_parenthesis(self, token, lineno, txt):
+        """Store the parenthesis depth."""
+
+        if token.type != tokenize.OP:
+            return
+
+        if txt in ("(", "[", "{"):
+            self._parenthesis_depth += 1
+            if self._parenthesis_depth == 1:
+                self._parenthesis_line = lineno
+        elif txt in (")", "]", "}"):
+            self._parenthesis_depth -= 1
+            if not self._parenthesis_depth:
+                self._check_backslashes(self._parenthesis_line, lineno)
+
     def process_tokens(self, tokens):
         """
         Callback for base token checker. Will process all the 'tokens' parsed by parent
@@ -598,6 +648,19 @@ class PepcTokenChecker(BaseTokenChecker):
             # Processing based on current state.
             self._process_comment(token, lineno, txt)
 
+            # Store parenthesis depth.
+            self._process_parenthesis(token, lineno, txt)
+
+    def process_module(self, node):
+        """Process the raw text for 'node'."""
+
+        with node.stream() as stream:
+            for lineno, line in enumerate(stream):
+                line = line.rstrip().decode("utf-8")
+
+                if line.endswith("\\"):
+                    self._backslash_lines += [lineno + 1]
+
     def __init__(self, linter):
         """
         Class constructor for the 'PepcTokenChecker'. Arguments are as follows.
@@ -614,6 +677,9 @@ class PepcTokenChecker(BaseTokenChecker):
         self._multiline_lineno = None
         self._multiline_txt = ""
         self._multiline_lines = 0
+        self._backslash_lines = []
+        self._parenthesis_depth = 0
+        self._parenthesis_line = None
 
 _CLASS_INIT_VALID_TYPES = (nodes.Name, nodes.Assign, nodes.AssignName, nodes.If, nodes.Const)
 
