@@ -168,8 +168,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                     f"relative to package.")
 
     def __init__(self, pman=None, cpuinfo=None, cpus=None, cores=None, modules=None, dies=None,
-                 packages=None, core_siblings=None, module_siblings=None, default_cpus="all",
-                 offline_ok=False):
+                 packages=None, core_siblings=None, module_siblings=None, offline_ok=False):
         """
         The class constructor. The argument are as follows.
           * pman - the process manager object that defines the target host.
@@ -194,14 +193,17 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
           * module_siblings - collection of integer module sibling numbers.
                               Will be used to reduce the final list of CPUs using
                               'CPUInfo.select_module_siblings()'.
-          * default_cpus - if no CPUs, cores, modules, dies or packages were specified or empty
-                           collections were specified (e.g., empty lists), behave as if the 'cpus'
-                           argument value was 'default_cpus'.
           * offline_ok - if 'True', offline CPU numbers in 'cpus' are acceptable, otherwise they
                          will cause an exception.
 
         The cpu, core, module, die, package, core and module sibling numbers could be a list of
         integer or comma-separated string of integers.
+
+        If no cpu, core, module, die, package, core and module sibling numbers were specified,
+        assume that the following was specified:
+          * cpus: "all"
+          * packages: "all"
+          * dies: "all"
 
         The following arguments may use the special "all" value:
           * cpus - to specify all CPUs.
@@ -295,6 +297,13 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
+        if not cpus and not cores and not modules and not dies and not packages:
+            # Nothing was provided. Assume everything in this case: all CPUs and all dies in order
+            # to cover I/O dies.
+            cpus = "all"
+            dies = "all"
+            packages = "all"
+
         if cpus:
             nums = self._parse_input_nums(cpus)
             self.cpus = self._cpuinfo.normalize_cpus(nums, offline_ok=offline_ok)
@@ -346,11 +355,6 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                             self.dies[pkg] = []
                         if die not in self.dies[pkg]:
                             self.dies[pkg].append(die)
-
-        if not cpus and not cores and not modules and not dies and not packages:
-            if not default_cpus:
-                raise ErrorNoTarget("no CPU, core, module, die, or package specified")
-            self.cpus = self._cpuinfo.normalize_cpus(cpus=default_cpus, offline_ok=offline_ok)
 
         _cpus = None
         if core_siblings:
