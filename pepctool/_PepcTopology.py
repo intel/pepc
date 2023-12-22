@@ -68,8 +68,7 @@ def _add_offline_cpus(cpus, cpuinfo, topology, colnames):
 
 def _filter_cpus(cpus, topology):
     """
-    The 'topology' topology table includes all CPUs. Filter out the all CPUs except for the ones in
-    the 'cpus' set.
+    The 'topology' topology table includes all CPUs. Filter out CPUs that are not in the 'cpus' set.
     """
 
     new_topology = []
