@@ -384,9 +384,9 @@ PHIS =         (CPUS["XEON_PHI_KNL"]["model"],
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
 LEVELS = ("CPU", "core", "module", "die", "node", "package")
 
-# '_NA' is used for the CPU/core/module number for I/O dies, which do not include CPUs, cores, or
-# modules. Use a very large number to make sure the the '_NA' numbers go last when sorting.
-_NA = 0xFFFFFFFF
+# 'NA' is used for the CPU/core/module number for I/O dies, which do not include CPUs, cores, or
+# modules. Use a very large number to make sure the the 'NA' numbers go last when sorting.
+NA = 0xFFFFFFFF
 
 class CPUInfo(ClassHelpers.SimpleCloseContext):
     """
@@ -722,7 +722,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                     # "numa" may not be there). But they may be added later. Add them for the I/O
                     # die topology table lines now, so that later the lines would not need # to be
                     # updated.
-                    tline[key] = _NA
+                    tline[key] = NA
                 tline["package"] = package
                 tline["die"] = die
                 topology.append(tline)
@@ -741,7 +741,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                     # "numa" may not be there). But they may be added later. Add them for the I/O
                     # die topology table lines now, so that later the lines would not need # to be
                     # updated.
-                    tline[key] = _NA
+                    tline[key] = NA
                 tline["package"] = package
                 tline["die"] = die
                 topology.append(tline)
@@ -812,7 +812,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if not self._topology:
             tinfo = {cpu : {"CPU" : cpu} for cpu in self._get_online_cpus()}
         else:
-            tinfo = {tline["CPU"] : tline for tline in self._topology["CPU"] if tline["CPU"] != _NA}
+            tinfo = {tline["CPU"] : tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
 
         cpus = self._get_online_cpus()
         self._add_cores_and_packages(tinfo, cpus)
@@ -908,10 +908,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         valid_nums = set()
 
         for tline in self._get_topology(levels=(lvl, sublvl), order=order):
-            if tline[lvl] == _NA:
+            if tline[lvl] == NA:
                  continue
             valid_nums.add(tline[lvl])
-            if tline[sublvl] == _NA:
+            if tline[sublvl] == NA:
                 continue
             if nums == "all" or tline[lvl] in nums:
                 result[tline[sublvl]] = None
