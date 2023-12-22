@@ -587,6 +587,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
             if "die" in self._initialized_levels:
                 self._add_io_dies(topology)
+            elif "die" in self._initialized_levels:
+                self._add_io_dies_from_cache(topology)
 
             for order in self._initialized_levels:
                 self._sort_topology(topology, order)
@@ -701,9 +703,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         return self._uncfreq_obj
 
     def _add_io_dies(self, topology):
-        """
-        Add I/O dies to 'topology'. I/O dies are any dies that don't have CPUs in them.
-        """
+        """Add I/O dies to the 'topology' topology table (list of dicitionaries)."""
 
         uncfreq_obj = self._get_uncfreq_obj()
         if not uncfreq_obj:
@@ -729,6 +729,22 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
                 # Cache the I/O die number.
                 self._io_dies[package].add(die)
+
+    def _add_io_dies_from_cache(self, topology):
+        """Append the cached I/O dies to the 'topology' topology table (list of dicitionaries)."""
+
+        for package, pkg_dies in self._io_dies.items():
+            for die in pkg_dies:
+                tline = {}
+                for key in LEVELS:
+                    # At this point the topology table lines may not even include some levels (e.g.,
+                    # "numa" may not be there). But they may be added later. Add them for the I/O
+                    # die topology table lines now, so that later the lines would not need # to be
+                    # updated.
+                    tline[key] = _NA
+                tline["package"] = package
+                tline["die"] = die
+                topology.append(tline)
 
     def _add_compute_dies(self, tinfo, cpus):
         """Adds die numbers for CPUs 'cpus' to 'tinfo'"""
@@ -796,7 +812,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if not self._topology:
             tinfo = {cpu : {"CPU" : cpu} for cpu in self._get_online_cpus()}
         else:
-            tinfo = {tline["CPU"] : tline for tline in self._topology["CPU"]}
+            tinfo = {tline["CPU"] : tline for tline in self._topology["CPU"] if tline["CPU"] != _NA}
 
         cpus = self._get_online_cpus()
         self._add_cores_and_packages(tinfo, cpus)
@@ -813,6 +829,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         if "die" in levels:
             self._add_io_dies(topology)
+        elif "die" in self._initialized_levels:
+            self._add_io_dies_from_cache(topology)
 
         self._initialized_levels.update(levels)
         for level in self._initialized_levels:
