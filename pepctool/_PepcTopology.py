@@ -94,7 +94,7 @@ def topology_info_command(args, pman):
         optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
                                    modules=args.modules, dies=args.dies, packages=args.packages,
                                    core_siblings=args.core_siblings,
-                                   module_siblings=args.module_siblings)
+                                   module_siblings=args.module_siblings, offline_ok=offline_ok)
         cpus = optar.get_cpus()
         topology = cpuinfo.get_topology(levels=colnames, order=order)
 
