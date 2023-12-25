@@ -16,7 +16,7 @@ import time
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs import CPUInfo, _PerCPUCache
+from pepclibs import CPUInfo, _PerCPUCache, _SysfsIO
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
@@ -27,40 +27,6 @@ class _CPUFreqSysfsBase(ClassHelpers.SimpleCloseContext):
     """
     Base class for 'CPUFreqSysfs' and 'CPUFreqCPPC'. Includes common functionality.
     """
-
-    def _read_sysfs_file(self, path, what):
-        """
-        Read a sysfs file at 'path' and return its contents. Return 'None' if the file does not
-        exist.
-        """
-
-        try:
-            with self._pman.open(path, "r") as fobj:
-                try:
-                    val = fobj.read().strip()
-                except Error as err:
-                    raise Error(f"failed to read {what} from '{path}'{self._pman.hostmsg}\n"
-                                f"{err.indent(2)}") from err
-        except ErrorNotFound:
-            return None
-
-        return val
-
-    def _read_sysfs_file_int(self, path, what):
-        """
-        Read a sysfs file at 'path', verify that it contains an integer value and return the value
-        as 'int'. Return 'None' if the file does not exist.
-        """
-
-        val = self._read_sysfs_file(path, what)
-        if val is None:
-            return None
-
-        try:
-            return Trivial.str_to_int(val, what="CPU valuency value")
-        except Error as err:
-            raise Error(f"bad contents of file '{path}'{self._pman.hostmsg}\n{err.indent(2)}") \
-                        from err
 
     def __init__(self, pman=None, cpuinfo=None, enable_cache=True):
         """
@@ -77,6 +43,7 @@ class _CPUFreqSysfsBase(ClassHelpers.SimpleCloseContext):
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
 
+        self._sysfs_io = None
         self._sysfs_base = Path("/sys/devices/system/cpu")
 
         if not self._pman:
@@ -85,13 +52,15 @@ class _CPUFreqSysfsBase(ClassHelpers.SimpleCloseContext):
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
+        self._sysfs_io = _SysfsIO.SysfsIO(pman=pman)
+
         self._cache = _PerCPUCache.PerCPUCache(cpuinfo=self._cpuinfo, pman=self._pman,
                                                enable_cache=enable_cache)
 
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_cache", "_cpuinfo", "_pman")
+        close_attrs = ("_cache", "_sysfs_io", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
 class CPUFreqSysfs(_CPUFreqSysfsBase):
@@ -142,11 +111,11 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         _LOG.debug("reading %s CPU frequency for CPU%d from '%s'%s",
                    key, cpu, path, self._pman.hostmsg)
 
-        freq = self._read_sysfs_file_int(path, f"{key}. frequency for CPU {cpu}")
+        freq = self._sysfs_io.read_int(path, what=f"{key}. frequency for CPU {cpu}")
         if freq is None:
             return None
 
-        # Sysfs files use kHz.
+        # The frequency value is in kHz in sysfs.
         freq *= 1000
         return self._cache.add(path, cpu, freq, sname="CPU")
 
@@ -194,24 +163,13 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
 
         self._cache.remove(path, cpu, sname="CPU")
 
-        try:
-            with self._pman.open(path, "r+") as fobj:
-                # Sysfs files use kHz.
-                fobj.write(str(freq // 1000))
-        except Error as err:
-            raise Error(f"failed to write {key}. CPU frequency value '{freq}' for CPU{cpu} to "
-                        f"'{path}'{self._pman.hostmsg}:\n{err.indent(2)}") from err
+        self._sysfs_io.write(path, str(freq // 1000), what=f"{key}. CPU frequency")
 
         count = 3
         while count > 0:
             # Read CPU frequency back and verify that it was set correctly.
-            try:
-                with self._pman.open(path, "r") as fobj:
-                    new_freq = Trivial.str_to_int(fobj.read(), what=f"{key}. CPU frequency") * 1000
-            except Error as err:
-                raise Error(f"failed to read {key}. CPU frequency for CPU{cpu}{self._pman.hostmsg} "
-                            f"from '{path}'\n{err.indent(2)}") from err
-
+            new_freq = self._sysfs_io.read_int(path, what=f"{key}. CPU frequency")
+            new_freq *= 1000
             if freq == new_freq:
                 return self._cache.add(path, cpu, freq, sname="CPU")
 
@@ -255,7 +213,7 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         with contextlib.suppress(ErrorNotFound):
             return self._cache.get(path, cpu)
 
-        val = self._read_sysfs_file(path, "available CPU frequencies")
+        val = self._sysfs_io.read(path, what="available CPU frequencies")
         if val is None:
             return self._cache.add(path, cpu, None, sname="CPU")
 
@@ -279,11 +237,11 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         with contextlib.suppress(ErrorNotFound):
             return self._cache.get(path, cpu)
 
-        freq = self._read_sysfs_file_int(path, f"base frequency for CPU {cpu}")
+        freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
         if freq is None:
             return None
 
-        # Sysfs files use kHz.
+        # The frequency value is in kHz in sysfs.
         freq *= 1000
         return self._cache.add(path, cpu, freq, sname="CPU")
 
@@ -295,11 +253,11 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         with contextlib.suppress(ErrorNotFound):
             return self._cache.get(path, cpu)
 
-        freq = self._read_sysfs_file_int(path, f"base frequency for CPU {cpu}")
+        freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
         if freq is None:
             return None
 
-        # Sysfs files use kHz.
+        # The frequency value is in kHz in sysfs.
         freq *= 1000
         return self._cache.add(path, cpu, freq, sname="CPU")
 
@@ -352,7 +310,7 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         val = None
 
         try:
-            val = self._read_sysfs_file_int(path, what)
+            val = self._sysfs_io.read_int(path, what=what)
         except Error as err:
             # On some platforms reading CPPC sysfs files always fails. So treat these errors as if
             # the sysfs file was not even available and return 'None'.
