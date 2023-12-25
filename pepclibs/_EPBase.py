@@ -107,7 +107,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         return _bug_method_not_defined("_EPBase._write_to_sysfs")
 
     def _get_epp_or_epb(self, cpus, mnames):
-        """Get EPB or EPP."""
+        """Yield EPB or EPP for CPUs in 'cpus'."""
 
         mnames = self._normalize_mnames(mnames)
         cpus = self._cpuinfo.normalize_cpus(cpus)
@@ -184,7 +184,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
                      tried.
         """
 
-        return self._get_epp_or_epb(cpus, mnames)
+        yield from self._get_epp_or_epb(cpus, mnames)
 
     def get_cpu_val(self, cpu, mnames=None):
         """
