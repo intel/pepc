@@ -166,20 +166,11 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         path = self._get_sysfs_path(key, cpu)
         what = f"{key}. CPU frequency"
 
-        self._sysfs_io.write(path, str(freq // 1000), what=what)
-
-        # Read uncore frequency back and verify that it was set correctly.
-        new_freq = self._sysfs_io.read_int(path, bypass_cache=True, what=what)
-
-        new_freq *= 1000
-        if freq == new_freq:
-            return new_freq
-
-        self._sysfs_io.cache_remove(path)
-        raise ErrorVerifyFailed(f"failed to set {key}. uncore frequency to {freq} for CPU{cpu}"
-                                f"{self._pman.hostmsg}: wrote '{freq // 1000}' to '{path}', but "
-                                f"read '{new_freq // 1000}' back",
-                                cpu=cpu, expected=freq, actual=new_freq, path=path)
+        try:
+            self._sysfs_io.write_verify(path, str(freq // 1000), what=what)
+        except ErrorVerifyFailed as err:
+            setattr(err, "cpu", cpu)
+            raise err
 
     def set_min_freq(self, freq, cpu):
         """

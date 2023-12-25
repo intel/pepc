@@ -12,7 +12,6 @@
 This module provides a capability of reading and changing CPU frequency.
 """
 
-import time
 import logging
 from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
@@ -158,29 +157,24 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
     def _set_freq_sysfs(self, freq, key, cpu):
         """Set CPU frequency by writing to the Linux "cpufreq" sysfs file."""
 
+        cpu_info = self._cpuinfo.info
+        if cpu_info["vendor"] == "GenuineIntel" and "hwp" in cpu_info["flags"][cpu]:
+            # On some Intel platforms with HWP enabled the change does not happen immediatly. Retry
+            # few times.
+            retries = 2
+            sleep = 0.1
+        else:
+            retries = sleep = 0
+
         path = self._get_cpu_freq_sysfs_path(key, cpu)
         what = f"{key}. CPU frequency"
 
-        self._sysfs_io.write(path, str(freq // 1000), what=what)
-
-        count = 3
-        while count > 0:
-            # Read CPU frequency back and verify that it was set correctly.
-            new_freq = self._sysfs_io.read_int(path, bypass_cache=True, what=what)
-            new_freq *= 1000
-            if freq == new_freq:
-                return new_freq
-
-            # Sometimes the update does not happen immediately. For example, we observed this on
-            # Intel systems with HWP enabled. Wait a little bit and try again.
-            time.sleep(0.1)
-            count -= 1
-
-        self._sysfs_io.cache_remove(path)
-        raise ErrorVerifyFailed(f"failed to set {key}. CPU frequency to {freq} for CPU{cpu}"
-                                f"{self._pman.hostmsg}: wrote '{freq // 1000}' to '{path}', but "
-                                f"read '{new_freq // 1000}' back",
-                                cpu=cpu, expected=freq, actual=new_freq, path=path)
+        try:
+            self._sysfs_io.write_verify(path, str(freq // 1000), what=what, retries=retries,
+                                        sleep=sleep)
+        except ErrorVerifyFailed as err:
+            setattr(err, "cpu", cpu)
+            raise err
 
     def set_min_freq(self, freq, cpu):
         """

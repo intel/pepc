@@ -12,10 +12,11 @@
 Provide a capability of reading and writing sysfs files. Implement caching.
 """
 
+import time
 import contextlib
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorVerifyFailed
 
 class SysfsIO(ClassHelpers.SimpleCloseContext):
     """
@@ -164,6 +165,48 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         if self._enable_cache and not bypass_cache:
             self._cache[path] = val
+
+    def write_verify(self, path, val, bypass_cache=False, what=None, retries=0, sleep=0):
+        """
+        Write value 'val' to a sysfs file at 'path' and verify that it was "accepted" by the kernel
+        by reading it back and comparing to the written value. The arguments are as follows.
+          * path - path of the sysfs file to write to.
+          * val - the value to write.
+          * bypass_cache - if 'False', use the cache, if 'False', do not use the cache.
+          * what - short description of the file at 'path', will be included to the exception
+                   message in case of a failure.
+          * retries - how many times to re-try the verification.
+          * sleep - sleep for 'sleep' amount of seconds before repeating the verification.
+
+        Raise 'ErrorVerifyFailed' if the value read was not the same as value written.
+
+        If 'bypass_cache' is 'True', write to the sysfs file and clear the cache for path 'path'
+        (remove the possibly cached value). If 'bypass_cache' is 'False', cache the written value.
+        """
+
+        self.write(path, val, bypass_cache=True, what=what)
+
+        while True:
+            # Read CPU frequency back and verify that it was set correctly.
+            new_val = self.read(path, bypass_cache=True, what=what)
+            if val == new_val:
+                if not bypass_cache:
+                    self.cache_add(path, new_val)
+                return new_val
+
+            retries -= 1
+            if retries < 0:
+                break
+
+            time.sleep(sleep)
+
+        what = "" if what is None else f" {what}"
+        val_str = str(val)
+        if len(val_str) > 24:
+            val_str = f"{val[:23]}...snip..."
+        raise ErrorVerifyFailed(f"failed to write value '{val_str}' to{what} sysfs file '{path}'"
+                                f"{self._pman.hostmsg}:\n  wrote '{val}', but read '{new_val}' "
+                                "back", expected=val, actual=new_val, path=path)
 
     def __init__(self, pman=None, cpuinfo=None, enable_cache=True):
         """
