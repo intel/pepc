@@ -928,7 +928,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         val, mname = None, None
 
         try:
-            cpu, val, mname = self._get_eppobj().get_cpu_val(cpu, mnames=mnames)
+            val, mname = self._get_eppobj().get_cpu_val(cpu, mnames=mnames)
         except ErrorNotSupported as err:
             _LOG.debug(err)
             return self._construct_pvinfo(pname, cpu, mnames[0], None)
@@ -941,7 +941,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         val, mname = None, None
 
         try:
-            cpu, val, mname = self._get_epbobj().get_cpu_val(cpu, mnames=mnames)
+            val, mname = self._get_epbobj().get_cpu_val(cpu, mnames=mnames)
         except ErrorNotSupported as err:
             _LOG.debug(err)
             return self._construct_pvinfo(pname, cpu, mnames[0], None)

@@ -188,16 +188,16 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
     def get_cpu_val(self, cpu, mnames=None):
         """
-        Read EPP or EPB for CPUs 'cpus' using mechanisms in 'mnames' and return the
-        '(cpu, value, mname)' tuple. The arguments are as follows.
+        Read EPP or EPB for CPUs 'cpus' using mechanisms in 'mnames' and return the '(value, mname)'
+        tuple. The arguments are as follows.
           * cpu - CPU number to read EPP or EPB for.
           * mnames - list of mechanisms to use for reading EPP/EPP. The mechanisms will be tried in
                      the order specified in 'mnames'. By default, all supported mechanisms will be
                      tried.
         """
 
-        cpu, val, mname = next(self._get_epp_or_epb((cpu,), mnames))
-        return cpu, val, mname
+        _, val, mname = next(self._get_epp_or_epb((cpu,), mnames))
+        return val, mname
 
     def set_vals(self, val, cpus="all", mnames=None):
         """
