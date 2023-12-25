@@ -33,12 +33,11 @@ At this point this module uses the legacy sysfs interface even when the new inte
 
 import logging
 import re
-import contextlib
 from pathlib import Path
-from pepclibs import CPUInfo, _PerCPUCache, _SysfsIO
+from pepclibs import CPUInfo, _SysfsIO
 from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, KernelModule, FSHelpers, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 _LOG = logging.getLogger()
@@ -94,15 +93,12 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         path = self._get_sysfs_path(key, cpu, limit=limit)
 
-        with contextlib.suppress(ErrorNotFound):
-            return self._cache.get(path, cpu)
-
         freq = self._sysfs_io.read_int(path, what=f"{key}. uncore frequency")
-        if freq is not None:
-            # The frequency value is in kHz in sysfs.
-            freq *= 1000
+        if freq is None:
+            return None
 
-        return self._cache.add(path, cpu, freq, sname="die")
+        # The frequency value is in kHz in sysfs.
+        return freq * 1000
 
     def get_min_freq(self, cpu):
         """
@@ -168,18 +164,18 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         """Set uncore frequency by writing to the corresponding sysfs file."""
 
         path = self._get_sysfs_path(key, cpu)
+        what = f"{key}. CPU frequency"
 
-        self._cache.remove(path, cpu, sname="die")
-
-        self._sysfs_io.write(path, str(freq // 1000), what=f"{key}. CPU frequency")
+        self._sysfs_io.write(path, str(freq // 1000), what=what)
 
         # Read uncore frequency back and verify that it was set correctly.
-        new_freq = self._sysfs_io.read_int(path, what=f"{key}. CPU frequency")
+        new_freq = self._sysfs_io.read_int(path, bypass_cache=True, what=what)
+
         new_freq *= 1000
-
         if freq == new_freq:
-            return self._cache.add(path, cpu, freq, sname="die")
+            return new_freq
 
+        self._sysfs_io.cache_remove(path)
         raise ErrorVerifyFailed(f"failed to set {key}. uncore frequency to {freq} for CPU{cpu}"
                                 f"{self._pman.hostmsg}: wrote '{freq // 1000}' to '{path}', but "
                                 f"read '{new_freq // 1000}' back",
@@ -378,10 +374,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if not self._pman.exists(self._sysfs_base):
             self._probe_driver()
 
-        self._sysfs_io = _SysfsIO.SysfsIO(pman=pman)
-
-        self._cache = _PerCPUCache.PerCPUCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                               enable_cache=enable_cache)
+        self._sysfs_io = _SysfsIO.SysfsIO(pman=pman, enable_cache=enable_cache)
 
     def close(self):
         """Uninitialize the class object."""
@@ -389,5 +382,5 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if self._unload_drv:
             self._drv.unload()
 
-        close_attrs = ("_cache", "_sysfs_io", "_drv", "_cpuinfo", "_pman")
+        close_attrs = ("_sysfs_io", "_drv", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)

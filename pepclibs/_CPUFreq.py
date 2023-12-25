@@ -14,11 +14,10 @@ This module provides a capability of reading and changing CPU frequency.
 
 import time
 import logging
-import contextlib
 from pathlib import Path
-from pepclibs import CPUInfo, _PerCPUCache, _SysfsIO
+from pepclibs import CPUInfo, _SysfsIO
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 _LOG = logging.getLogger()
@@ -38,7 +37,6 @@ class _CPUFreqSysfsBase(ClassHelpers.SimpleCloseContext):
 
         self._pman = pman
         self._cpuinfo = cpuinfo
-        self._enable_cache = enable_cache
 
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
@@ -52,15 +50,12 @@ class _CPUFreqSysfsBase(ClassHelpers.SimpleCloseContext):
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
-        self._sysfs_io = _SysfsIO.SysfsIO(pman=pman)
-
-        self._cache = _PerCPUCache.PerCPUCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                               enable_cache=enable_cache)
+        self._sysfs_io = _SysfsIO.SysfsIO(pman=pman, enable_cache=enable_cache)
 
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_cache", "_sysfs_io", "_cpuinfo", "_pman")
+        close_attrs = ("_sysfs_io", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
 class CPUFreqSysfs(_CPUFreqSysfsBase):
@@ -105,19 +100,12 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
 
         path = self._get_cpu_freq_sysfs_path(key, cpu, limit=limit)
 
-        with contextlib.suppress(ErrorNotFound):
-            return self._cache.get(path, cpu)
-
-        _LOG.debug("reading %s CPU frequency for CPU%d from '%s'%s",
-                   key, cpu, path, self._pman.hostmsg)
-
         freq = self._sysfs_io.read_int(path, what=f"{key}. frequency for CPU {cpu}")
         if freq is None:
             return None
 
         # The frequency value is in kHz in sysfs.
-        freq *= 1000
-        return self._cache.add(path, cpu, freq, sname="CPU")
+        return freq * 1000
 
     def get_min_freq(self, cpu):
         """
@@ -171,27 +159,24 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         """Set CPU frequency by writing to the Linux "cpufreq" sysfs file."""
 
         path = self._get_cpu_freq_sysfs_path(key, cpu)
+        what = f"{key}. CPU frequency"
 
-        _LOG.debug("writing %s CPU frequency value '%d' for CPU%d to '%s'%s",
-                   key, freq // 1000, cpu, path, self._pman.hostmsg)
-
-        self._cache.remove(path, cpu, sname="CPU")
-
-        self._sysfs_io.write(path, str(freq // 1000), what=f"{key}. CPU frequency")
+        self._sysfs_io.write(path, str(freq // 1000), what=what)
 
         count = 3
         while count > 0:
             # Read CPU frequency back and verify that it was set correctly.
-            new_freq = self._sysfs_io.read_int(path, what=f"{key}. CPU frequency")
+            new_freq = self._sysfs_io.read_int(path, bypass_cache=True, what=what)
             new_freq *= 1000
             if freq == new_freq:
-                return self._cache.add(path, cpu, freq, sname="CPU")
+                return new_freq
 
             # Sometimes the update does not happen immediately. For example, we observed this on
             # Intel systems with HWP enabled. Wait a little bit and try again.
             time.sleep(0.1)
             count -= 1
 
+        self._sysfs_io.cache_remove(path)
         raise ErrorVerifyFailed(f"failed to set {key}. CPU frequency to {freq} for CPU{cpu}"
                                 f"{self._pman.hostmsg}: wrote '{freq // 1000}' to '{path}', but "
                                 f"read '{new_freq // 1000}' back",
@@ -229,12 +214,9 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
 
         path = self._get_policy_sysfs_path(cpu, "scaling_available_frequencies")
 
-        with contextlib.suppress(ErrorNotFound):
-            return self._cache.get(path, cpu)
-
         val = self._sysfs_io.read(path, what="available CPU frequencies")
         if val is None:
-            return self._cache.add(path, cpu, None, sname="CPU")
+            return val
 
         freqs = []
         for freq in val.split():
@@ -245,40 +227,31 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
                 raise Error(f"bad contents of file '{path}'{self._pman.hostmsg}\n{err.indent(2)}") \
                             from err
 
-        freqs = sorted(freqs)
-        return self._cache.add(path, cpu, freqs, sname="CPU")
+        return sorted(freqs)
 
     def _get_base_freq_intel_pstate(self, cpu):
         """Get CPU base frequency from 'intel_pstate' driver's sysfs file."""
 
         path = self._get_policy_sysfs_path(cpu, "base_frequency")
 
-        with contextlib.suppress(ErrorNotFound):
-            return self._cache.get(path, cpu)
-
         freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
         if freq is None:
             return None
 
         # The frequency value is in kHz in sysfs.
-        freq *= 1000
-        return self._cache.add(path, cpu, freq, sname="CPU")
+        return freq * 1000
 
     def _get_base_freq_bios_limit(self, cpu):
         """Get CPU base frequency from the 'bios_limit' sysfs file."""
 
         path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
 
-        with contextlib.suppress(ErrorNotFound):
-            return self._cache.get(path, cpu)
-
         freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
         if freq is None:
             return None
 
         # The frequency value is in kHz in sysfs.
-        freq *= 1000
-        return self._cache.add(path, cpu, freq, sname="CPU")
+        return freq * 1000
 
     def get_base_freq(self, cpu):
         """
@@ -322,9 +295,6 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
 
         path = self._get_sysfs_path(cpu, fname)
 
-        with contextlib.suppress(ErrorNotFound):
-            return self._cache.get(path, cpu)
-
         val = None
 
         try:
@@ -335,7 +305,7 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
             _LOG.debug(err)
             _LOG.warn_once("ACPI CPPC sysfs file '%s' is not readable%s", path, self._pman.hostmsg)
 
-        return self._cache.add(path, cpu, val, sname="CPU")
+        return self._sysfs_io.cache_add(path, val)
 
     def get_min_freq_limit(self, cpu):
         """
