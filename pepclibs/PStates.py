@@ -1378,6 +1378,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             except ErrorNotSupported:
                 prop["sname"] = "global"
 
+        prop["iosname"] = prop["sname"]
         self.props[pname]["sname"] = prop["sname"]
 
     def _init_props_dict(self): # pylint: disable=arguments-differ
