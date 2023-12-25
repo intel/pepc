@@ -16,7 +16,7 @@ from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, Huma
 from pepclibs import CPUInfo, _PropsCache
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-# Supported mechanism names
+# Supported mechanism names.
 _MNAMES = ("sysfs", "msr")
 
 def _bug_method_not_defined(method_name):
@@ -193,7 +193,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
     def set_vals(self, val, cpus="all", mnames=None):
         """
         Set EPP or EPB for CPU in 'cpus' using the 'mname' mechanism. The arguments are as follows.
-          * epp - the EPP/EPB value to set. Can be an integer, a string representing an integer. If
+          * val - the EPP/EPB value to set. Can be an integer, a string representing an integer. If
                   'mname' is "sysfs", 'epp' can also be EPP/EPB policy name (e.g., "performance").
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
           * mnames - list of mechanisms to use for setting EPP/EPB (see
@@ -242,6 +242,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
         # The per-CPU cache for read-only data, such as policies list. MSR implements its own
         # caching.
+        # pylint: disable=pepc-unused-variable
         self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
                                               enable_cache=enable_cache)
 
