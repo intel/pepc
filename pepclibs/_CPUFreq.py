@@ -275,7 +275,6 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
             freq = self._get_base_freq_bios_limit(cpu)
         return freq
 
-
 class CPUFreqCPPC(_CPUFreqSysfsBase):
     """
     This class provides a cpability of reading CPU frequency information from ACPI CPPC via Linux
@@ -317,7 +316,7 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
             _LOG.debug(err)
             _LOG.warn_once("ACPI CPPC sysfs file '%s' is not readable%s", path, self._pman.hostmsg)
 
-        return self._cache.add(path, cpu, val , sname="CPU")
+        return self._cache.add(path, cpu, val, sname="CPU")
 
     def get_min_freq_limit(self, cpu):
         """
@@ -387,7 +386,6 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         """
 
         return self._read_cppc_sysfs_file(cpu, "nominal_perf", f"base CPU {cpu} performance")
-
 
 class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     """
