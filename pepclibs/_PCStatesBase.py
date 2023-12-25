@@ -29,7 +29,7 @@ class PCStatesBase(_PropsClassBase.PropsClassBase):
 
         # Get the list of governors to validate 'name' against. Note, the list of governors is the
         # same for all CPUs (global scope).
-        governors = self._get_cpu_prop("governors", 0)
+        governors = self._get_cpu_prop_cache("governors", 0)
         if name not in governors:
             governors = ", ".join(governors)
             raise Error(f"bad governor name '{name}', use one of: {governors}")

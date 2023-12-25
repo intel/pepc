@@ -645,11 +645,11 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
-        driver = self._get_cpu_prop("driver", cpu)
+        driver = self._get_cpu_prop_cache("driver", cpu)
 
         try:
             if driver == "intel_pstate":
-                if self._get_cpu_prop("intel_pstate_mode", cpu) == "off":
+                if self._get_cpu_prop_cache("intel_pstate_mode", cpu) == "off":
                     return self._construct_pvinfo(pname, cpu, mname, None)
 
                 path = self._sysfs_base / "intel_pstate" / "no_turbo"
@@ -691,7 +691,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         with contextlib.suppress(ErrorNotFound):
             return self._pcache.get(pname, cpu, mname)
 
-        driver = self._get_cpu_prop("driver", cpu)
+        driver = self._get_cpu_prop_cache("driver", cpu)
         if driver != "intel_pstate":
             # Only 'intel_pstate' was verified to accept any frequency value that is multiple of bus
             # clock.
@@ -817,7 +817,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             val, mname = self._pcache.find(pname, cpu, mnames=(mname,))
             return self._construct_pvinfo(pname, cpu, mname, val)
 
-        driver = self._get_cpu_prop("driver", cpu)
+        driver = self._get_cpu_prop_cache("driver", cpu)
         if driver == "intel_pstate":
             path = self._sysfs_base / "intel_pstate" / "status"
             val = self._read_prop_from_sysfs(pname, path)
@@ -949,7 +949,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._construct_pvinfo(pname, cpu, mname, val)
 
-    def _get_cpu_prop(self, pname, cpu, mnames=None):
+    def _get_cpu_prop_cache(self, pname, cpu, mnames=None):
         """Read property 'pname' and return the value."""
         return self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)["val"]
 
@@ -1003,13 +1003,13 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
-        driver = self._get_cpu_prop("driver", cpu)
+        driver = self._get_cpu_prop_cache("driver", cpu)
 
         status = "on" if enable else "off"
         errmsg = f"failed to switch turbo {status}{self._pman.hostmsg}"
 
         if driver == "intel_pstate":
-            if self._get_cpu_prop("intel_pstate_mode", cpu) == "off":
+            if self._get_cpu_prop_cache("intel_pstate_mode", cpu) == "off":
                 raise ErrorNotSupported(f"{errmsg}: 'intel_pstate' driver is in 'off' mode")
 
             path = self._sysfs_base / "intel_pstate" / "no_turbo"
@@ -1076,7 +1076,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                     msg += f".\n  Linux kernel CPU frequency driver does not support " \
                            f"{freq_human}, use one of the following values instead:\n  {fvals}"
             elif self._get_turbo_pvinfo(cpu)["val"] == "off":
-                base_freq = self._get_cpu_prop("base_freq", cpu)
+                base_freq = self._get_cpu_prop_cache("base_freq", cpu)
                 if base_freq and freq > base_freq:
                     base_freq = Human.num2si(base_freq, unit="Hz", decp=4)
                     msg += f".\n  Hint: turbo is disabled, base frequency is {base_freq}, and " \
@@ -1116,16 +1116,16 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if uncore:
             if val == "min":
-                freq = self._get_cpu_prop("min_uncore_freq_limit", cpu)
+                freq = self._get_cpu_prop_cache("min_uncore_freq_limit", cpu)
             elif val == "max":
-                freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
+                freq = self._get_cpu_prop_cache("max_uncore_freq_limit", cpu)
             elif val == "mdl":
                 bclk = self._get_bclk(cpu)
                 if bclk is None:
                     bclk = 100000000 # If bus clock frequency is not available, use 100MHz.
 
-                min_freq = self._get_cpu_prop("min_uncore_freq_limit", cpu)
-                max_freq = self._get_cpu_prop("max_uncore_freq_limit", cpu)
+                min_freq = self._get_cpu_prop_cache("min_uncore_freq_limit", cpu)
+                max_freq = self._get_cpu_prop_cache("max_uncore_freq_limit", cpu)
                 if min_freq and max_freq:
                     # Mid-point between min. and max. frequencies, rounded to the nearest multiple
                     # of bus clock frequency.
@@ -1136,19 +1136,19 @@ class PStates(_PCStatesBase.PCStatesBase):
                 freq = val
         else:
             if val == "min":
-                freq = self._get_cpu_prop("min_freq_limit", cpu)
+                freq = self._get_cpu_prop_cache("min_freq_limit", cpu)
             elif val == "max":
-                freq = self._get_cpu_prop("max_freq_limit", cpu)
+                freq = self._get_cpu_prop_cache("max_freq_limit", cpu)
             elif val in {"base", "hfm", "P1"}:
-                freq = self._get_cpu_prop("base_freq", cpu)
+                freq = self._get_cpu_prop_cache("base_freq", cpu)
             elif val in {"eff", "lfm", "Pn"}:
-                freq = self._get_cpu_prop("max_eff_freq", cpu)
+                freq = self._get_cpu_prop_cache("max_eff_freq", cpu)
                 if not freq:
                     # Max. efficiency frequency may not be supported by the platform. Fall back to
                     # the minimum frequency in this case.
-                    freq = self._get_cpu_prop("min_freq_limit", cpu)
+                    freq = self._get_cpu_prop_cache("min_freq_limit", cpu)
             elif val == "Pm":
-                freq = self._get_cpu_prop("min_oper_freq", cpu)
+                freq = self._get_cpu_prop_cache("min_oper_freq", cpu)
             else:
                 freq = val
 
@@ -1163,7 +1163,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Change mode of the CPU frequency driver 'intel_pstate'."""
 
         # Setting 'intel_pstate' driver mode to "off" is only possible in non-HWP (legacy) mode.
-        if mode == "off" and self._get_cpu_prop("hwp", cpu) == "on":
+        if mode == "off" and self._get_cpu_prop_cache("hwp", cpu) == "on":
             raise ErrorNotSupported("'intel_pstate' driver does not support \"off\" mode when "
                                     "hardware power management (HWP) is enabled")
 
@@ -1174,14 +1174,14 @@ class PStates(_PCStatesBase.PCStatesBase):
                              sname=self._props["intel_pstate_mode"]["sname"])
         except Error:
             # When 'intel_pstate' driver is 'off' it is not possible to write 'off' again.
-            if mode != "off" or self._get_cpu_prop("intel_pstate_mode", cpu) != "off":
+            if mode != "off" or self._get_cpu_prop_cache("intel_pstate_mode", cpu) != "off":
                 raise
 
     def _validate_intel_pstate_mode(self, mode):
         """Validate 'intel_pstate_mode' mode."""
 
-        if self._get_cpu_prop("intel_pstate_mode", 0) is None:
-            driver = self._get_cpu_prop("driver", 0)
+        if self._get_cpu_prop_cache("intel_pstate_mode", 0) is None:
+            driver = self._get_cpu_prop_cache("driver", 0)
             raise Error(f"can't set property 'intel_pstate_mode'{self._pman.hostmsg}:\n  "
                         f"the CPU frequency driver is '{driver}', not 'intel_pstate'")
 
@@ -1282,10 +1282,10 @@ class PStates(_PCStatesBase.PCStatesBase):
         for cpu in cpus:
             new_freq = self._parse_freq(val, cpu, is_uncore)
 
-            min_limit = self._get_cpu_prop(min_freq_limit_pname, cpu, mnames=(mname,))
+            min_limit = self._get_cpu_prop_cache(min_freq_limit_pname, cpu, mnames=(mname,))
             if not min_limit:
                 _raise_not_supported(min_freq_limit_pname)
-            max_limit = self._get_cpu_prop(max_freq_limit_pname, cpu, mnames=(mname,))
+            max_limit = self._get_cpu_prop_cache(max_freq_limit_pname, cpu, mnames=(mname,))
             if not max_limit:
                 _raise_not_supported(max_freq_limit_pname)
 
@@ -1293,7 +1293,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 _raise_out_of_range(pname, new_freq, min_limit, max_limit)
 
             if is_min:
-                cur_max_freq = self._get_cpu_prop(max_freq_pname, cpu, mnames=(mname,))
+                cur_max_freq = self._get_cpu_prop_cache(max_freq_pname, cpu, mnames=(mname,))
                 if not cur_max_freq:
                     _raise_not_supported(max_freq_pname)
 
@@ -1304,7 +1304,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
                 write_func(pname, new_freq, cpu)
             else:
-                cur_min_freq = self._get_cpu_prop(min_freq_pname, cpu, mnames=(mname,))
+                cur_min_freq = self._get_cpu_prop_cache(min_freq_pname, cpu, mnames=(mname,))
                 if not cur_min_freq:
                     _raise_not_supported(min_freq_pname)
 
