@@ -175,39 +175,62 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
     def get_vals(self, cpus="all", mnames=None):
         """
-        Read EPP or EPB for CPUs 'cpus' using the 'mname' mechanism and yield '(cpu, value, mname)'
+        Read EPP or EPB for CPUs 'cpus' using mechanisms in 'mnames' and yield '(cpu, value, mname)'
         tuples for every CPU in 'cpus'. The arguments are as follows.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * mnames - list of mechanisms to use for getting EPP/EPP (see
-                    '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
-                    specified in 'mnames'. By default, all supported mechanisms will be tried.
+          * cpus - collection of integer CPU numbers to read EPP or EPB for. Special value 'all'
+                   means "all CPUs".
+          * mnames - list of mechanisms to use for reading EPP/EPP. The mechanisms will be tried in
+                     the order specified in 'mnames'. By default, all supported mechanisms will be
+                     tried.
         """
 
         return self._get_epp_or_epb(cpus, mnames)
 
     def get_cpu_val(self, cpu, mnames=None):
-        """Similar to 'get_vals()', but for a single CPU 'cpu'."""
+        """
+        Read EPP or EPB for CPUs 'cpus' using mechanisms in 'mnames' and return the
+        '(cpu, value, mname)' tuple. The arguments are as follows.
+          * cpu - CPU number to read EPP or EPB for.
+          * mnames - list of mechanisms to use for reading EPP/EPP. The mechanisms will be tried in
+                     the order specified in 'mnames'. By default, all supported mechanisms will be
+                     tried.
+        """
 
-        return next(self._get_epp_or_epb((cpu,), mnames))
+        cpu, val, mname = next(self._get_epp_or_epb((cpu,), mnames))
+        return cpu, val, mname
 
     def set_vals(self, val, cpus="all", mnames=None):
         """
-        Set EPP or EPB for CPU in 'cpus' using the 'mname' mechanism. The arguments are as follows.
-          * val - the EPP/EPB value to set. Can be an integer, a string representing an integer. If
-                  'mname' is "sysfs", 'epp' can also be EPP/EPB policy name (e.g., "performance").
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * mnames - list of mechanisms to use for setting EPP/EPB (see
-                    '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
-                    specified in 'mnames'. By default, all supported mechanisms will be tried.
+        Set EPP or EPB for CPUs in 'cpus' using the 'mname' mechanism. The arguments are as follows.
+          * val - the EPP/EPB value to set. Can be an integer or a string representing an integer.
+                  If 'mname' is "sysfs", 'epp' can also be EPP/EPB policy name
+                  (e.g., "performance").
+          * cpus - collection of integer CPU numbers to set EPP or EPB for. Special value 'all'
+                   means "all CPUs".
+          * mnames - list of mechanisms to use for setting EPP/EPP. The mechanisms will be tried in
+                     the order specified in 'mnames'. By default, all supported mechanisms will be
+                     tried.
 
-        Return name of the mechanism that was used to set EPP or EPB. Raise 'ErrorNotSupported' if
-        the platform does not support EPP/EPP.
+        Return name of the mechanism that was used for setting EPP or EPB. Raise 'ErrorNotSupported'
+        if the platform does not support EPP/EPP.
         """
 
         return self._set_epb_or_epb(val, cpus=cpus, mnames=mnames)
 
     def set_cpu_val(self, val, cpu, mnames=None):
-        """Similar to 'set_vals()', but for a single CPU 'cpu'."""
+        """
+        Set EPP or EPB for CPU cpu' using the 'mname' mechanism. The arguments are as follows.
+          * val - the EPP/EPB value to set. Can be an integer or a string representing an integer.
+                  If 'mname' is "sysfs", 'epp' can also be EPP/EPB policy name
+                  (e.g., "performance").
+          * cpu - CPU numbers to set EPP or EPB for.
+          * mnames - list of mechanisms to use for setting EPP/EPP. The mechanisms will be tried in
+                     the order specified in 'mnames'. By default, all supported mechanisms will be
+                     tried.
+
+        Return name of the mechanism that was used for setting EPP or EPB. Raise 'ErrorNotSupported'
+        if the platform does not support EPP/EPP.
+        """
 
         return self._set_epb_or_epb(val, cpus=(cpu,), mnames=mnames)
 
