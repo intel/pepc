@@ -346,7 +346,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._uncfreq_obj
 
-    def _prop_not_supported(self, cpus, mnames, action, what, exceptions=None, exc_type=None):
+    def _prop_not_supported(self, pname, cpus, mnames, action, exceptions=None, exc_type=None):
         """
         Rase an exception or print a debug message from a property "get" or "set" method in a
         situation when the property could not be read or set using mechanisms in 'mnames'
@@ -371,6 +371,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         else:
             errmsgs = ""
 
+        what = Human.uncapitalize(self._props[pname]["name"])
         msg = f"cannot {action} {what} {mnames_str} for {cpus_msg}{errmsgs}"
         if exceptions:
             if exc_type:
@@ -463,7 +464,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 break
 
         if val is None:
-            self._prop_not_supported((cpu,), mnames, "get", "base CPU frequency")
+            self._prop_not_supported(pname, (cpu,), mnames, "get")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_max_eff_freq_pvinfo(self, cpu):
@@ -481,7 +482,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = cpufreq_obj.get_max_eff_freq(cpu)
 
         if val is None:
-            self._prop_not_supported((cpu,), (mname, ), "get", "max. CPU efficiency frequency")
+            self._prop_not_supported(pname, (cpu,), (mname, ), "get")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_min_oper_freq_msr(self, cpu):
@@ -518,7 +519,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 break
 
         if val is None:
-            self._prop_not_supported((cpu,), mnames, "get", "min. operational frequency")
+            self._prop_not_supported(pname, (cpu,), mnames, "get")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_max_turbo_freq_msr(self, cpu):
@@ -555,7 +556,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 break
 
         if val is None:
-            self._prop_not_supported((cpu,), mnames, "get", "max. CPU turbo frequency")
+            self._prop_not_supported(pname, (cpu,), mnames, "get")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_bus_clock_msr(self, cpu):
@@ -620,7 +621,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 break
 
         if val is None:
-            self._prop_not_supported((cpu,), mnames, "get", "bus clock speed")
+            self._prop_not_supported(pname, (cpu,), mnames, "get")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _read_int(self, path):
@@ -734,7 +735,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 break
 
         if val is None:
-            self._prop_not_supported((cpu,), mnames, "get", "acceptable CPU frequencies")
+            self._prop_not_supported(pname, (cpu,), mnames, "get")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_hwp_pvinfo(self, cpu):
@@ -908,7 +909,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 break
 
         if val is None:
-            self._prop_not_supported((cpu,), mnames, "get", "CPU frequency")
+            self._prop_not_supported(pname, (cpu,), mnames, "get")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_cpu_freq_limit_pvinfo(self, pname, cpu):
@@ -918,7 +919,7 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         val = self._get_cpu_freq_sysfs(pname, cpu)
         if val is None:
-            self._prop_not_supported((cpu,), ("sysfs",), "get", "CPU frequency limit")
+            self._prop_not_supported(pname, (cpu,), ("sysfs",), "get")
 
         return self._construct_pvinfo(pname, cpu, mname, val)
 
@@ -1343,9 +1344,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             exceptions = not_supported_exceptions
             exc_type = ErrorNotSupported
 
-        freq_type = "uncore" if "uncore" in pname else "core"
-        self._prop_not_supported(cpus, mnames, "set", f"{freq_type} frequency",
-                                 exceptions=exceptions, exc_type=exc_type)
+        self._prop_not_supported(pname, cpus, mnames, "set", exceptions=exceptions,
+                                 exc_type=exc_type)
 
     def _set_prop_cpus(self, pname, val, cpus, mnames=None):
         """Refer to '_PropsClassBase.PropsClassBase.set_prop_cpus()'."""
