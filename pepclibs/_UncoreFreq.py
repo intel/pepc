@@ -35,7 +35,7 @@ import logging
 import re
 import contextlib
 from pathlib import Path
-from pepclibs import CPUInfo, _PerCPUCache
+from pepclibs import CPUInfo, _PerCPUCache, _SysfsIO
 from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, KernelModule, FSHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
@@ -97,17 +97,11 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         with contextlib.suppress(ErrorNotFound):
             return self._cache.get(path, cpu)
 
-        try:
-            with self._pman.open(path, "r") as fobj:
-                freq = Trivial.str_to_int(fobj.read(), what=f"{key}. uncore frequency")
-        except ErrorNotFound:
-            return self._cache.add(path, cpu, None, sname="die")
-        except Error as err:
-            raise Error(f"failed to read {key}. uncore frequency for CPU{cpu} from '{path}'"
-                        f"{self._pman.hostmsg}\n{err.indent(2)}") from err
+        freq = self._sysfs_io.read_int(path, what=f"{key}. uncore frequency")
+        if freq is not None:
+            # The frequency value is in kHz in sysfs.
+            freq *= 1000
 
-        # The frequency value is in kHz in sysfs.
-        freq *= 1000
         return self._cache.add(path, cpu, freq, sname="die")
 
     def get_min_freq(self, cpu):
@@ -156,21 +150,11 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         self._cache.remove(path, cpu, sname="die")
 
-        try:
-            with self._pman.open(path, "r+") as fobj:
-                # Note, the frequency value is in kHz in sysfs.
-                fobj.write(str(freq // 1000))
-        except Error as err:
-            raise Error(f"failed to write {key}. uncore frequency value '{freq}' for CPU{cpu} to "
-                        f"'{path}'{self._pman.hostmsg}:\n{err.indent(2)}") from err
+        self._sysfs_io.write(path, str(freq // 1000), what=f"{key}. CPU frequency")
 
         # Read uncore frequency back and verify that it was set correctly.
-        try:
-            with self._pman.open(path, "r") as fobj:
-                new_freq = Trivial.str_to_int(fobj.read(), what=f"{key}. uncore frequency") * 1000
-        except Error as err:
-            raise Error(f"failed to read {key}. uncore frequency for CPU{cpu}{self._pman.hostmsg} "
-                        f"from '{path}'\n{err.indent(2)}") from err
+        new_freq = self._sysfs_io.read_int(path, what=f"{key}. CPU frequency")
+        new_freq *= 1000
 
         if freq == new_freq:
             return self._cache.add(path, cpu, freq, sname="die")
@@ -344,6 +328,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         self._drv = None
         self._unload_drv = False
 
+        self._sysfs_io = None
         self._sysfs_base = Path("/sys/devices/system/cpu/intel_uncore_frequency")
 
         self._die_id_quirk = False
@@ -362,6 +347,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if not self._pman.exists(self._sysfs_base):
             self._probe_driver()
 
+        self._sysfs_io = _SysfsIO.SysfsIO(pman=pman)
+
         self._cache = _PerCPUCache.PerCPUCache(cpuinfo=self._cpuinfo, pman=self._pman,
                                                enable_cache=enable_cache)
 
@@ -371,5 +358,5 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if self._unload_drv:
             self._drv.unload()
 
-        close_attrs = ("_cache", "_drv", "_cpuinfo", "_pman")
+        close_attrs = ("_cache", "_sysfs_io", "_drv", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
