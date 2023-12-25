@@ -596,7 +596,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # Modern Intel platforms use 100MHz bus clock.
                 val = 100000000
 
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
+        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return val
 
     def _get_bus_clock_pvinfo(self, cpu, mnames=None):
@@ -667,7 +667,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             # If the sysfs file does not exist, the system does not support turbo.
             val = None
 
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
+        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_frequencies_sysfs(self, cpu):
@@ -773,7 +773,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         path = self._get_sysfs_path(pname, cpu)
         val = self._read_prop_from_sysfs(pname, path)
 
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
+        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_driver_pvinfo(self, cpu):
@@ -803,7 +803,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             if val == "intel_cpufreq":
                 val = "intel_pstate"
 
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
+        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_intel_pstate_mode_pvinfo(self, pname, cpu):
@@ -824,7 +824,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         else:
             val = None
 
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["sname"])
+        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return self._construct_pvinfo("intel_pstate_mode", cpu, mname, val)
 
     def _get_uncore_freq_pvinfo(self, pname, cpu):
@@ -1021,7 +1021,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         except ErrorNotFound as err:
             raise ErrorNotSupported(f"{errmsg}: turbo is not supported") from err
 
-        self._pcache.add("turbo", cpu, status, "sysfs", sname=self._props["turbo"]["sname"])
+        self._pcache.add("turbo", cpu, status, "sysfs", sname=self._props["turbo"]["iosname"])
 
     def _get_num_str(self, pname, cpu):
         """
@@ -1167,7 +1167,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         try:
             self._write_prop_to_sysfs("intel_pstate_mode", path, mode)
             self._pcache.add("intel_pstate_mode", cpu, mode, "sysfs",
-                             sname=self._props["intel_pstate_mode"]["sname"])
+                             sname=self._props["intel_pstate_mode"]["iosname"])
         except Error:
             # When 'intel_pstate' driver is 'off' it is not possible to write 'off' again.
             if mode != "off" or self._get_cpu_prop_cache("intel_pstate_mode", cpu) != "off":
@@ -1215,7 +1215,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                 # number 'cpu', but also for all the 'sname' siblings. For example, if property
                 # scope name is "package", 'val' will be cached for all CPUs in the package that
                 # contains CPU number 'cpu'.
-                self._pcache.add(pname, cpu, val, mname, sname=prop["sname"])
+                self._pcache.add(pname, cpu, val, mname, sname=prop["iosname"])
             else:
                 raise Error(f"BUG: unsupported property '{pname}'")
 
