@@ -132,7 +132,14 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         return self._get_freq_sysfs("min", cpu)
 
     def get_max_freq(self, cpu):
-        """Same as 'get_min_freq()', but for the maximum CPU frequency."""
+        """
+        Get maximum CPU frequency via Linux "cpufreq" sysfs interfaces. The arguments are as
+        follows.
+          * cpu - CPU number to get the frequency for.
+
+        Return the maximum CPU frequency in Hz or 'None' if the CPU frequency sysfs file does not
+        exist.
+        """
 
         return self._get_freq_sysfs("max", cpu)
 
@@ -149,7 +156,14 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         return self._get_freq_sysfs("min", cpu, limit=True)
 
     def get_max_freq_limit(self, cpu):
-        """Same as 'get_min_freq_sysfs()', but for the maximum CPU frequency."""
+        """
+        Get maximum CPU frequency limit via Linux "cpufreq" sysfs interfaces. The arguments are as
+        follows.
+          * cpu - CPU number to get the frequency for.
+
+        Return the maximum CPU frequency limit in Hz or 'None' if the CPU frequency sysfs file does
+        not exist.
+        """
 
         return self._get_freq_sysfs("max", cpu, limit=True)
 
@@ -194,7 +208,12 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         self._set_freq_sysfs(freq, "min", cpu)
 
     def set_max_freq(self, freq, cpu):
-        """Same as 'set_min_freq()', but for the maximum CPU frequency."""
+        """
+        Set maximum CPU frequency via Linux "cpufreq" sysfs interfaces. The arguments are as
+        follows.
+          * freq - the maximum frequency value to set, hertz.
+          * cpu - CPU number to set the frequency for.
+        """
 
         self._set_freq_sysfs(freq, "max", cpu)
 
@@ -335,7 +354,14 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         return val
 
     def get_max_freq_limit(self, cpu):
-        """Same as 'get_min_freq_limit()', but for the maximum CPU frequency limit."""
+        """
+        Get maximum CPU frequency limit from ACPI CPPC via Linux sysfs interfaces. The arguments are
+        as follows.
+          * cpu - CPU number to get the frequency limit for.
+
+        Return the maximum CPU frequency limit in Hz or 'None' if the CPU frequency sysfs file does
+        not exist.
+        """
 
         val = self._read_cppc_sysfs_file(cpu, "highest_freq", f"max. CPU {cpu} frequency limit")
         if val:
@@ -355,7 +381,13 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         return self._read_cppc_sysfs_file(cpu, "lowest_perf", f"min. CPU {cpu} performance limit")
 
     def get_max_perf_limit(self, cpu):
-        """Same as 'get_min_perf_limit()', but for the maximum CPU performance limit."""
+        """
+        Get maximum CPU performance limit from ACPI CPPC via Linux sysfs interfaces. The arguments
+        are as follows.
+          * cpu - CPU number to get the frequency limit for.
+
+        Return the maximum CPU limit or 'None' if the CPU frequency sysfs file does not exist.
+        """
 
         return self._read_cppc_sysfs_file(cpu, "highest_perf", f"max. CPU {cpu} performance limit")
 
@@ -538,7 +570,13 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         return self._get_freq_msr("min", cpu)
 
     def get_max_freq(self, cpu):
-        """Same as 'get_min_freq()', but for the maximum CPU frequency."""
+        """
+        Get maximum CPU frequency via the 'MSR_HWP_REQUEST' model specific register. The arguments
+        are as follows.
+          * cpu - CPU number to get the frequency for.
+
+        Return the maximum CPU frequency in Hz or 'None' if 'MSR_HWP_REQUEST' is not supported.
+        """
 
         return self._get_freq_msr("max", cpu)
 
@@ -573,7 +611,12 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         self._set_freq_msr(freq, "min", cpu)
 
     def set_max_freq(self, freq, cpu):
-        """Same as 'set_min_freq()', but for the maximum CPU frequency."""
+        """
+        Set maximum CPU frequency via the 'MSR_HWP_REQUEST' model specific register. The arguments
+        are as follows.
+          * freq - the maximum frequency value to set, hertz.
+          * cpu - CPU number to set the frequency for.
+        """
 
         self._set_freq_msr(freq, "max", cpu)
 
