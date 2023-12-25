@@ -949,10 +949,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._construct_pvinfo(pname, cpu, mname, val)
 
-    def _get_cpu_prop_cache(self, pname, cpu, mnames=None):
-        """Read property 'pname' and return the value."""
-        return self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)["val"]
-
     def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
         """
         Return property value dictionary ('pvinfo') for property 'pname', CPU 'cpu', using

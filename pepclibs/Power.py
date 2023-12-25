@@ -158,10 +158,6 @@ class Power(_PropsClassBase.PropsClassBase):
 
         return self._construct_pvinfo(pname, cpu, "msr", val)
 
-    def _get_cpu_prop(self, pname, cpu, mnames=None):
-        """Read property 'pname' and return the value."""
-        return self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)["val"]
-
     def _do_set_prop(self, pname, val, cpus):
         """Implements '_set_prop_cpus()'."""
 

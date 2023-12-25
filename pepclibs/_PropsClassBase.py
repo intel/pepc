@@ -412,6 +412,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self._msr
 
+    def _get_cpu_prop_cache(self, pname, cpu, mnames=None):
+        """Read property 'pname' and return the value."""
+        return self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)["val"]
+
     def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
         """
         This method should be implemented by the sub-class. The arguments and the same as in
