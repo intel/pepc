@@ -480,9 +480,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         return self.get_cpu_prop(pname, cpu)["val"] is not None
 
     def _get_die_prop_pvinfo(self, pname, package, die, mnames=None):
-        """
-        The default implementation or per-die property reading via '_get_cpu_prop_pvinfo()'.
-        """
+        """The default implementation or per-die property reading useng the per-CPU method."""
 
         prop = self._props[pname]
         cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
@@ -537,7 +535,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         self._validate_prop_vs_scope(pname, "die")
 
-        # Emulate using the per-CPU interface so far (temporary solution).
         for package in self._cpuinfo.normalize_packages(dies):
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
                 yield self._get_die_prop_pvinfo(pname, package, die, mnames=mnames)
@@ -567,9 +564,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         return self.get_die_prop(pname, die, package)["val"] is not None
 
     def _get_package_prop_pvinfo(self, pname, package, mnames=None):
-        """
-        The default implementation or per-package property reading via '_get_cpu_prop_pvinfo()'.
-        """
+        """The default implementation or per-package property reading using the per-CPU method."""
 
         prop = self._props[pname]
         cpus = self._cpuinfo.package_to_cpus(package)
@@ -616,7 +611,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         self._validate_prop_vs_scope(pname, "package")
 
-        # Emulate using the per-CPU interface so far (temporary solution).
         for package in self._cpuinfo.normalize_packages(packages):
             yield self._get_package_prop_pvinfo(pname, package, mnames=mnames)
 
@@ -719,11 +713,16 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self.set_prop_cpus(pname, val, (cpu,), mnames=mnames)
 
-    def _set_prop_cpus(self, pname, val, cpus, mnames=None):
-        """Implements 'set_prop_cpus()'. The arguments are as the same as in 'set_prop_cpus()'."""
+    def _set_prop_dies(self, pname, val, dies, mnames=None):
+        """The default implementation of 'set_prop_dies()' using the per-CPU method."""
 
-        # pylint: disable=unused-argument
-        return _bug_method_not_defined("PropsClassBase.set_prop_cpus")
+        cpus = []
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                cpu = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))[0]
+                cpus.append(cpu)
+
+        return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
 
     def set_prop_dies(self, pname, val, dies, mnames=None):
         """
@@ -746,14 +745,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._set_sname(pname)
         self._validate_prop_vs_scope(pname, "die")
 
-        # Emulate using the per-CPU interface so far (temporary solution).
-        cpus = []
+        normalized_dies = {}
         for package in self._cpuinfo.normalize_packages(dies):
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
-                cpu = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))[0]
-                cpus.append(cpu)
+                if package not in normalized_dies:
+                    normalized_dies[package] = []
+                normalized_dies[package].append(die)
 
-        return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
+        return self._set_prop_dies(pname, val, normalized_dies, mnames=mnames)
 
     def set_die_prop(self, pname, val, die, package, mnames=None):
         """
@@ -767,6 +766,16 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         return self.set_prop_dies(pname, val, {package: (die,)}, mnames=mnames)
+
+    def _set_prop_packages(self, pname, val, packages, mnames=None):
+        """The default implementation of 'set_prop_packages()' using the per-CPU method."""
+
+        cpus = []
+        for package in packages:
+            cpu = self._cpuinfo.packages_to_cpus(packages=(package,))[0]
+            cpus.append(cpu)
+
+        return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
 
     def set_prop_packages(self, pname, val, packages, mnames=None):
         """
@@ -788,13 +797,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._set_sname(pname)
         self._validate_prop_vs_scope(pname, "package")
 
-        # Emulate using the per-CPU interface so far (temporary solution).
-        cpus = []
+        normalized_packages = []
         for package in self._cpuinfo.normalize_packages(packages):
-            cpu = self._cpuinfo.package_to_cpus(package)[0]
-            cpus.append(cpu)
+            normalized_packages.append(package)
 
-        return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
+        return self._set_prop_packages(pname, val, normalized_packages, mnames=mnames)
 
     def set_package_prop(self, pname, val, package, mnames=None):
         """
