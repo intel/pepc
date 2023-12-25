@@ -412,18 +412,73 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self._msr
 
-    def _get_cpu_prop_cache(self, pname, cpu, mnames=None):
-        """Read property 'pname' and return the value."""
-        return self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)["val"]
-
-    def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
+    def _prop_not_supported(self, pname, cpus, mnames, action, exceptions=None, exc_type=None):
         """
-        This method should be implemented by the sub-class. The arguments and the same as in
-        'get_prop_cpus()'. Returns the property value dictionary.
+        Rase an exception or print a debug message from a property "get" or "set" method in a
+        situation when the property could not be read or set using mechanisms in 'mnames'
+        """
+
+        if len(mnames) > 2:
+            mnames_quoted = [f"'{mname}'" for mname in mnames]
+            mnames_str = f"using {', '.join(mnames_quoted[:-1])} and {mnames_quoted[-1]} methods"
+        elif len(mnames) == 2:
+            mnames_str = f"using '{mnames[0]}' and '{mnames[1]}' methods"
+        else:
+            mnames_str = f"using the '{mnames[0]}' method"
+
+        if len(cpus) > 1:
+            cpus_msg = f"the following CPUs: {Human.rangify(cpus)}"
+        else:
+            cpus_msg = f"for CPU {cpus[0]}"
+
+        if exceptions:
+            errmsgs = Trivial.list_dedup([str(err) for err in exceptions])
+            errmsgs = "\n" + "\n".join([Error(errmsg).indent(2) for errmsg in errmsgs])
+        else:
+            errmsgs = ""
+
+        what = Human.uncapitalize(self._props[pname]["name"])
+        msg = f"cannot {action} {what} {mnames_str} for {cpus_msg}{errmsgs}"
+        if exceptions:
+            if exc_type:
+                raise exc_type(msg)
+            raise type(exceptions[0])(msg)
+        _LOG.debug(msg)
+
+    def _get_cpu_prop(self, pname, cpu, mname):
+        """
+        Return 'pname' property value for CPU 'cpu', using mechanism 'mname'. This method should be
+        implemented by the sub-class.
         """
 
         # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase._get_cpu_prop")
+
+    def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
+        """
+        Return the property value dictionary ('pvinfo') for property 'pname', CPU 'cpu', using
+        mechanisms in 'mnames'.
+        """
+
+        prop = self._props[pname]
+        mname, val = None, None
+        if not mnames:
+            mnames = prop["mnames"]
+
+        for mname in mnames:
+            val = self._get_cpu_prop(pname, cpu, mname)
+            if val is not None:
+                break
+
+        if val is None:
+            self._prop_not_supported(pname, (cpu,), mnames, "get")
+
+        return self._construct_pvinfo(pname, cpu, mname, val)
+
+    def _get_cpu_prop_cache(self, pname, cpu, mnames=None):
+        """Read property 'pname' and return the value."""
+
+        return self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)["val"]
 
     def get_prop_cpus(self, pname, cpus="all", mnames=None):
         """

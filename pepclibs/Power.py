@@ -132,19 +132,10 @@ class Power(_PropsClassBase.PropsClassBase):
 
         return pname.replace("ppl", "limit")
 
-    def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
-        """
-        Return property value dictionary ('pvinfo') for property 'pname', CPU 'cpu', using
-        mechanisms in 'mnames'. The arguments and the same as in 'get_prop_cpus()'.
-        """
+    def _get_cpu_prop(self, pname, cpu, mname):
+        """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
-        prop = self._props[pname]
-        if mnames is None:
-            mnames = prop["mnames"]
-
-        _LOG.debug("getting '%s' for CPU %d using mechanisms '%s'%s",
-                   pname, cpu, ",".join(mnames), self._pman.hostmsg)
-
+        assert mname == "msr"
         val = None
 
         try:
@@ -156,7 +147,7 @@ class Power(_PropsClassBase.PropsClassBase):
         except ErrorNotSupported:
             pass
 
-        return self._construct_pvinfo(pname, cpu, "msr", val)
+        return val
 
     def _do_set_prop(self, pname, val, cpus):
         """Implements '_set_prop_cpus()'."""
@@ -167,21 +158,21 @@ class Power(_PropsClassBase.PropsClassBase):
             # RAPL contains min/max values for the PPL in an MSR register, however the register
             # contents are unreliable so we derive ranges here from TDP.
             if pname in ("ppl1", "ppl2"):
-                tdp = self._get_cpu_prop("tdp", cpu)
+                tdp = self._get_cpu_prop_cache("tdp", cpu)
 
                 fval = float(val)
 
                 if pname == "ppl1":
                     minval = tdp / 8
                     maxval = tdp
-                    if fval > self._get_cpu_prop("ppl2", cpu):
+                    if fval > self._get_cpu_prop_cache("ppl2", cpu):
                         raise Error(f"{pname} can't be higher than RAPL PPL2 for CPU{cpu}")
                 else:
                     # Apply a reasonable limit for PPL2. This is imperical limit, based on general
                     # observations.
                     minval = tdp / 8
                     maxval = tdp * 4
-                    if fval < self._get_cpu_prop("ppl1", cpu):
+                    if fval < self._get_cpu_prop_cache("ppl1", cpu):
                         raise Error(f"{pname} can't be lower than RAPL PPL1 for CPU{cpu}")
 
                 if fval > maxval or fval < minval:

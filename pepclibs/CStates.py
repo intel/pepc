@@ -263,27 +263,19 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         return self._construct_pvinfo(pname, cpu, "sysfs", val)
 
-    def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
-        """
-        Return property value dictionary ('pvinfo') for property 'pname', CPU 'cpu', using
-        mechanisms in 'mnames'. The arguments and the same as in 'get_prop_cpus()'.
-        """
-
-        prop = self._props[pname]
-        if mnames is None:
-            mnames = prop["mnames"]
+    def _get_cpu_prop(self, pname, cpu, mname):
+        """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
         pvinfo = self._get_cpuidle_prop_pvinfo(pname, cpu)
         if pvinfo:
-            return pvinfo
+            return pvinfo["val"]
 
         pvinfo = self._get_pkg_cstate_limit_pvinfo(pname, cpu)
         if pvinfo:
-            return pvinfo
+            return pvinfo["val"]
 
-        if self._props[pname]["mnames"][0] == "msr":
-            val = self._read_prop_from_msr(pname, cpu)
-            return self._construct_pvinfo(pname, cpu, "msr", val)
+        if mname == "msr":
+            return self._read_prop_from_msr(pname, cpu)
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
