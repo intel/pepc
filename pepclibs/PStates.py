@@ -587,8 +587,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         val = None
 
         with contextlib.suppress(ErrorNotFound):
-            val, _ = self._pcache.find(pname, cpu, mnames=(mname,))
-            return val
+            return self._pcache.get(pname, cpu, mname)
 
         if self._cpuinfo.info["vendor"] == "GenuineIntel":
             val = self._get_bus_clock_msr(cpu)
@@ -640,7 +639,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         mname = "sysfs"
 
         with contextlib.suppress(ErrorNotFound):
-            val, mname = self._pcache.find(pname, cpu, mnames=(mname,))
+            val = self._pcache.get(pname, cpu, mname)
             return self._construct_pvinfo(pname, cpu, mname, val)
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
@@ -767,7 +766,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         mname = "sysfs"
 
         with contextlib.suppress(ErrorNotFound):
-            val, mname = self._pcache.find(pname, cpu, mnames=(mname,))
+            val = self._pcache.get(pname, cpu, mname)
             return self._construct_pvinfo(pname, cpu, mname, val)
 
         path = self._get_sysfs_path(pname, cpu)
@@ -783,7 +782,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         mname = "sysfs"
 
         with contextlib.suppress(ErrorNotFound):
-            val, mname = self._pcache.find(pname, cpu, mnames=(mname,))
+            val = self._pcache.get(pname, cpu, mname)
             return self._construct_pvinfo(pname, cpu, mname, val)
 
         path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
@@ -814,7 +813,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         mname = "sysfs"
 
         with contextlib.suppress(ErrorNotFound):
-            val, mname = self._pcache.find(pname, cpu, mnames=(mname,))
+            val = self._pcache.get(pname, cpu, mname)
             return self._construct_pvinfo(pname, cpu, mname, val)
 
         driver = self._get_cpu_prop_cache("driver", cpu)
