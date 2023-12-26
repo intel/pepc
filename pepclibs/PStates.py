@@ -528,22 +528,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._get_cpu_freq_sysfs(pname, cpu)
 
-    def _get_bus_clock_msr(self, cpu):
-        """
-        Read bus clock speed from 'MSR_FSB_FREQ' and return the value in Hz. Return 'None' if the
-        MSR is not supported.
-
-        Note: the difference between this method and '_get_bclk()' is that this method returns
-        'None' for intel platforms that do not support 'MSR_FSB_FREQ'.
-        """
-
-        try:
-            val = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
-        except ErrorNotSupported:
-            return None
-
-        return int(val * 1000000)
-
     def _get_uncore_freq(self, pname, cpu):
         """
         Return the uncore frequency or frequency limit for CPU 'cpu', use method the "sysfs"
@@ -607,53 +591,32 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
-    def _get_bus_clock_intel(self, cpu):
-        """
-        Return bus clock speed in 'Hz' for Intel platforms that do not support 'MSR_FSB_FREQ'.
-        Return 'None' for non-Intel platforms and for Intel platforms that do support
-        'MSR_FSB_FREQ'.
-        """
+    def _get_bus_clock(self, cpu, mname):
+        """Return the bus clock speed for CPU 'cpu', use method 'mname'."""
 
-        pname = "bus_clock"
-        mname = "doc"
-        val = None
+        try:
+            fsbfreq = self._get_fsbfreq()
+        except ErrorNotSupported:
+            fsbfreq = None
 
-        with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get(pname, cpu, mname)
+        if mname == "msr":
+            if not fsbfreq:
+                return None
+            try:
+                val = fsbfreq.read_cpu_feature("fsb", cpu)
+            except ErrorNotSupported:
+                return None
+            return int(val * 1000000)
 
-        if self._cpuinfo.info["vendor"] == "GenuineIntel":
-            val = self._get_bus_clock_msr(cpu)
-            if val is None:
-                # Modern Intel platforms use 100MHz bus clock.
-                val = 100000000
+        if mname == "doc":
+            if fsbfreq:
+                return None
+            if self._cpuinfo.info["vendor"] != "GenuineIntel":
+                return None
+            # Modern Intel platforms use 100MHz bus clock.
+            return 100000000
 
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
-        return val
-
-    def _get_bus_clock_pvinfo(self, cpu, mnames=None):
-        """Read bus clock speed and return the property value dictionary."""
-
-        pname = "bus_clock"
-        val, mname = None, None
-
-        if not mnames:
-            mnames = self._props[pname]["mnames"]
-
-        for mname in mnames:
-            if mname == "msr":
-                val = self._get_bus_clock_msr(cpu)
-            elif mname == "doc":
-                val = self._get_bus_clock_intel(cpu)
-            else:
-                mnames = ",".join(mnames)
-                raise Error(f"BUG: unsupported mechanisms '{mnames}' for '{pname}'")
-
-            if val is not None:
-                break
-
-        if val is None:
-            self._prop_not_supported(pname, (cpu,), mnames, "get")
-        return self._construct_pvinfo(pname, cpu, mname, val)
+        raise Error(f"BUG: unsupported mechanism '{mname}'")
 
     def _read_int(self, path):
         """Read an integer from file 'path' via the process manager."""
@@ -817,7 +780,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = self._get_frequencies(cpu, mname)
             pvinfo = {"val": val}
         elif pname == "bus_clock":
-            pvinfo = self._get_bus_clock_pvinfo(cpu, mnames=(mname,))
+            val = self._get_bus_clock(cpu, mname)
+            pvinfo = {"val": val}
         elif pname == "turbo":
             pvinfo = self._get_turbo_pvinfo(cpu)
         elif pname == "driver":
