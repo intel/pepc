@@ -16,7 +16,7 @@ import logging
 import contextlib
 import statistics
 from pathlib import Path
-from pepclibs import _PCStatesBase
+from pepclibs import _PCStatesBase, _PropsCache
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
@@ -1419,11 +1419,14 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         self._init_props_dict()
 
+        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
+                                              enable_cache=self._enable_cache)
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_pmenable", "_cpufreq_sysfs_obj",
-                       "_cpufreq_cppc_obj", "_cpufreq_msr_obj", "_uncfreq_obj")
+        close_attrs = ("_pcache", "_eppobj", "_epbobj", "_fsbfreq", "_pmenable",
+                       "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj", "_cpufreq_msr_obj",
+                       "_uncfreq_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()

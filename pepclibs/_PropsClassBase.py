@@ -37,7 +37,7 @@ Naming conventions.
 import copy
 import logging
 import contextlib
-from pepclibs import CPUInfo, _PropsCache
+from pepclibs import CPUInfo
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
@@ -870,9 +870,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # The write-through per-CPU properties cache. The properties that are backed by MSR/EPP/EPB
         # are not cached, because they implement their own caching.
         self._enable_cache = enable_cache
-        # pylint: disable=pepc-unused-variable
-        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                              enable_cache=self._enable_cache)
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
@@ -882,5 +879,5 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_pcache", "_msr", "_cpuinfo", "_pman")
+        close_attrs = ("_msr", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
