@@ -567,6 +567,46 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
+    def _get_frequencies_intel(self, cpu):
+        """Get the list of available CPU frequency values for CPU 'cpu' for an Intel platform."""
+
+        driver = self._get_cpu_prop_cache("driver", cpu)
+        if driver != "intel_pstate":
+            # Only 'intel_pstate' was verified to accept any frequency value that is multiple of bus
+            # clock.
+            return None
+
+        bclk = self._get_bclk(cpu)
+        if bclk is None:
+            return None
+
+        min_freq = self._get_cpu_prop_cache("min_freq", cpu)
+        max_freq = self._get_cpu_prop_cache("max_freq", cpu)
+        if min_freq is None or max_freq is None:
+            return None
+
+        freqs = []
+        freq = min_freq
+        while freq <= max_freq:
+            freqs.append(freq)
+            freq += bclk
+
+        return freqs
+
+    def _get_frequencies(self, cpu, mname):
+        """Return the list of available CPU frequencies for CPU 'cpu', use method 'mname'."""
+
+        if mname == "sysfs":
+            cpufreq_obj = self._get_cpufreq_sysfs_obj()
+            if not cpufreq_obj:
+                return None
+            return cpufreq_obj.get_available_frequencies(cpu)
+
+        if mname == "doc":
+            return self._get_frequencies_intel(cpu)
+
+        raise Error(f"BUG: unsupported mechanism '{mname}'")
+
     def _get_bus_clock_intel(self, cpu):
         """
         Return bus clock speed in 'Hz' for Intel platforms that do not support 'MSR_FSB_FREQ'.
@@ -659,74 +699,6 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = None
 
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
-    def _get_frequencies_sysfs(self, cpu):
-        """
-        Get the list of available CPU frequency values for CPU 'cpu' vial Linux "cpuidle" subsystem
-        'sysfs' interface.
-        """
-
-        cpufreq_obj = self._get_cpufreq_sysfs_obj()
-        if not cpufreq_obj:
-            return None
-
-        return cpufreq_obj.get_available_frequencies(cpu)
-
-    def _get_frequencies_intel(self, cpu):
-        """Get the list of available CPU frequency values for CPU 'cpu' for an Intel platform."""
-
-        pname = "frequencies"
-        mname = "doc"
-
-        with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get(pname, cpu, mname)
-
-        driver = self._get_cpu_prop_cache("driver", cpu)
-        if driver != "intel_pstate":
-            # Only 'intel_pstate' was verified to accept any frequency value that is multiple of bus
-            # clock.
-            return self._pcache.add(pname, cpu, None, mname, sname="global")
-
-        bclk = self._get_bclk(cpu)
-        if bclk is None:
-            return self._pcache.add(pname, cpu, None, mname, sname="global")
-
-        min_freq = self._get_cpu_freq_sysfs("min_freq", cpu)
-        max_freq = self._get_cpu_freq_sysfs("max_freq", cpu)
-        if min_freq is None or max_freq is None:
-            return self._pcache.add(pname, cpu, None, mname, sname="global")
-
-        freqs = []
-        freq = min_freq
-        while freq <= max_freq:
-            freqs.append(freq)
-            freq += bclk
-
-        return self._pcache.add(pname, cpu, freqs, mname, sname="global")
-
-    def _get_frequencies_pvinfo(self, cpu, mnames=None):
-        """Get the list of acceptable CPU frequency values for CPU 'cpu'."""
-
-        mname = None
-        pname = "frequencies"
-        if not mnames:
-            mnames = self._props[pname]["mnames"]
-
-        for mname in mnames:
-            if mname == "sysfs":
-                val = self._get_frequencies_sysfs(cpu)
-            elif mname == "doc":
-                val = self._get_frequencies_intel(cpu)
-            else:
-                mnames = ",".join(mnames)
-                raise Error(f"BUG: unsupported mechanisms '{mnames}' for '{pname}'")
-
-            if val is not None:
-                break
-
-        if val is None:
-            self._prop_not_supported(pname, (cpu,), mnames, "get")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_sysfs_path(self, pname, cpu):
@@ -841,12 +813,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         elif self._is_uncore_prop(pname):
             val = self._get_uncore_freq(pname, cpu)
             pvinfo = {"val": val}
+        elif pname == "frequencies":
+            val = self._get_frequencies(cpu, mname)
+            pvinfo = {"val": val}
         elif pname == "bus_clock":
             pvinfo = self._get_bus_clock_pvinfo(cpu, mnames=(mname,))
         elif pname == "turbo":
             pvinfo = self._get_turbo_pvinfo(cpu)
-        elif pname == "frequencies":
-            pvinfo = self._get_frequencies_pvinfo(cpu, mnames=(mname,))
         elif pname == "driver":
             pvinfo = self._get_driver_pvinfo(cpu)
         elif "fname" in prop:
@@ -927,7 +900,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         msg = str(err)
 
         with contextlib.suppress(Error):
-            frequencies = self._get_frequencies_pvinfo(cpu)["val"]
+            frequencies = self._get_cpu_prop_cache("frequencies", cpu)
             if frequencies:
                 frequencies_set = set(frequencies)
                 if freq not in frequencies_set and read_freq in frequencies_set:
