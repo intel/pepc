@@ -476,6 +476,58 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
+    def _get_cpu_freq_sysfs(self, pname, cpu):
+        """Read and return the minimum or maximum CPU frequency from Linux "cpufreq" sysfs files."""
+
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+
+        val = None
+        if cpufreq_obj:
+            if pname == "min_freq":
+                val = cpufreq_obj.get_min_freq(cpu)
+            elif pname == "max_freq":
+                val = cpufreq_obj.get_max_freq(cpu)
+            elif pname == "min_freq_limit":
+                val = cpufreq_obj.get_min_freq_limit(cpu)
+            elif pname == "max_freq_limit":
+                val = cpufreq_obj.get_max_freq_limit(cpu)
+            else:
+                raise Error(f"BUG: unexpected CPU frequency property {pname}")
+
+        return val
+
+    def _get_cpu_freq_msr(self, pname, cpu):
+        """Read and return the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
+
+        cpufreq_obj = self._get_cpufreq_msr_obj()
+
+        val = None
+        if cpufreq_obj:
+            if pname == "min_freq":
+                val = cpufreq_obj.get_min_freq(cpu)
+            elif pname == "max_freq":
+                val = cpufreq_obj.get_max_freq(cpu)
+            else:
+                raise Error(f"BUG: unexpected CPU frequency property {pname}")
+
+        return val
+
+    def _get_cpu_freq(self, pname, cpu, mname):
+        """Return the CPU frequency for CPU 'cpu', use method 'mname'."""
+
+        if mname == "sysfs":
+            return self._get_cpu_freq_sysfs(pname, cpu)
+
+        if mname == "msr":
+            return self._get_cpu_freq_msr(pname, cpu)
+
+        raise Error(f"BUG: unsupported mechanism '{mname}'")
+
+    def _get_cpu_freq_limit(self, pname, cpu):
+        """Return the CPU frequency limit for CPU 'cpu', use the 'sysfs' method."""
+
+        return self._get_cpu_freq_sysfs(pname, cpu)
+
     def _get_bus_clock_msr(self, cpu):
         """
         Read bus clock speed from 'MSR_FSB_FREQ' and return the value in Hz. Return 'None' if the
@@ -756,76 +808,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._construct_pvinfo(pname, cpu, mname, val)
 
-    def _get_cpu_freq_sysfs(self, pname, cpu):
-        """Read and return the minimum or maximum CPU frequency from Linux "cpufreq" sysfs files."""
-
-        cpufreq_obj = self._get_cpufreq_sysfs_obj()
-
-        val = None
-        if cpufreq_obj:
-            if pname == "min_freq":
-                val = cpufreq_obj.get_min_freq(cpu)
-            elif pname == "max_freq":
-                val = cpufreq_obj.get_max_freq(cpu)
-            elif pname == "min_freq_limit":
-                val = cpufreq_obj.get_min_freq_limit(cpu)
-            elif pname == "max_freq_limit":
-                val = cpufreq_obj.get_max_freq_limit(cpu)
-            else:
-                raise Error(f"BUG: unexpected CPU frequency property {pname}")
-
-        return val
-
-    def _get_cpu_freq_msr(self, pname, cpu):
-        """Read and return the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
-
-        cpufreq_obj = self._get_cpufreq_msr_obj()
-
-        val = None
-        if cpufreq_obj:
-            if pname == "min_freq":
-                val = cpufreq_obj.get_min_freq(cpu)
-            elif pname == "max_freq":
-                val = cpufreq_obj.get_max_freq(cpu)
-            else:
-                raise Error(f"BUG: unexpected CPU frequency property {pname}")
-
-        return val
-
-    def _get_cpu_freq_pvinfo(self, pname, cpu, mnames=None):
-        """Read and return the minimum or maximum CPU frequency."""
-
-        mname, val = None, None
-        if not mnames:
-            mnames = self._props[pname]["mnames"]
-
-        for mname in mnames:
-            if mname == "sysfs":
-                val = self._get_cpu_freq_sysfs(pname, cpu)
-            elif mname == "msr":
-                val = self._get_cpu_freq_msr(pname, cpu)
-            else:
-                mnames = ",".join(mnames)
-                raise Error(f"BUG: unsupported mechanisms '{mnames}' for '{pname}'")
-
-            if val is not None:
-                break
-
-        if val is None:
-            self._prop_not_supported(pname, (cpu,), mnames, "get")
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
-    def _get_cpu_freq_limit_pvinfo(self, pname, cpu):
-        """Read and return the minimum or maximum CPU frequency limits."""
-
-        mname = "sysfs"
-
-        val = self._get_cpu_freq_sysfs(pname, cpu)
-        if val is None:
-            self._prop_not_supported(pname, (cpu,), ("sysfs",), "get")
-
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
@@ -853,12 +835,14 @@ class PStates(_PCStatesBase.PCStatesBase):
         elif pname == "base_freq":
             val = self._get_base_freq(cpu, mname)
             pvinfo = {"val": val}
+        elif pname in {"min_freq", "max_freq"}:
+            val = self._get_cpu_freq(pname, cpu, mname)
+            pvinfo = {"val": val}
+        elif pname in {"min_freq_limit", "max_freq_limit"}:
+            val = self._get_cpu_freq_limit(pname, cpu)
+            pvinfo = {"val": val}
         elif pname == "bus_clock":
             pvinfo = self._get_bus_clock_pvinfo(cpu, mnames=(mname,))
-        elif pname in {"min_freq", "max_freq"}:
-            pvinfo = self._get_cpu_freq_pvinfo(pname, cpu, mnames=(mname,))
-        elif pname in {"min_freq_limit", "max_freq_limit"}:
-            pvinfo = self._get_cpu_freq_limit_pvinfo(pname, cpu)
         elif pname == "turbo":
             pvinfo = self._get_turbo_pvinfo(cpu)
         elif pname == "frequencies":
