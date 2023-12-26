@@ -319,7 +319,13 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         yield from self._get_cstates_info(csnames, cpus)
 
     def get_cpu_cstates_info(self, cpu, csnames="all"):
-        """Same as 'get_cstates_info()', but for a single CPU."""
+        """
+        Get information about C-states specified in 'csnames' for CPU 'cpu'.
+          * cpu - integer CPU number to get C-states information about.
+          * csnames - same as in 'get_cstates_info()'.
+
+        Return a dictionary similar to the dictionaries yielded by 'get_cstates_info()'.
+        """
 
         csinfo = None
         for _, csinfo in self.get_cstates_info(cpus=(cpu,), csnames=csnames):
@@ -327,7 +333,13 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         return csinfo
 
     def get_cpu_cstate_info(self, cpu, csname):
-        """Same as 'get_cstates_info()', but for a single CPU and a single C-state."""
+        """
+        Get information about C-states 'csname' for CPU 'cpu'.
+          * cpu - integer CPU number to get C-state information about.
+          * csname - name of the C-state to get information about.
+
+        Return a dictionary similar to the dictionaries yielded by 'get_cstates_info()'.
+        """
 
         csinfo = None
         for _, csinfo in self.get_cstates_info(cpus=(cpu,), csnames=(csname,)):
@@ -398,7 +410,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         """
 
         if not self.get_idle_driver():
-            raise ErrorNotSupported(f"There is no idle driver in use{self._pman.hostmsg}")
+            raise ErrorNotSupported(f"there is no idle driver in use{self._pman.hostmsg}")
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
         csnames = self._normalize_csnames(csnames)
@@ -422,8 +434,10 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
     def enable_cstates(self, csnames="all", cpus="all"):
         """
         Enable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
-          * cpus - same as in 'get_cstates_info()'.
-          * csnames - same as in 'get_cstates_info()'.
+          * cpus - collection of integer CPU numbers to enable. Special value 'all' means "all
+                   CPUs".
+          * csnames - list of C-states names to enable. It can be both a list of names or a string
+                      containing a comma-separated list of names. Value 'all' mean "all C-states".
 
         Returns a dictionary of the following structure:
           { cpunum: { "csnames" : [ cstate1, cstate2, ...]}}
@@ -434,12 +448,23 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         return self._toggle_cstates(csnames, cpus, True)
 
     def disable_cstates(self, csnames="all", cpus="all"):
-        """Similar to 'enable_cstates()', but disables instead of enabling."""
+        """
+        Disable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
+          * cpus - collection of integer CPU numbers to disable. Special value 'all' means "all
+                   CPUs".
+          * csnames - list of C-states names to enable. It can be both a list of names or a string
+                      containing a comma-separated list of names. Value 'all' mean "all C-states".
+
+        Return a dictionary similar to the dictionary returned by 'enable_cstates()'.
+        """
 
         return self._toggle_cstates(csnames, cpus, False)
 
     def set_current_governor(self, governor):
-        """Set current idle driver governor."""
+        """
+        Set current idle driver governor. The arguments are as follows.
+          * governor - name of the governor to set.
+        """
 
         self._cache.remove("current_governor", 0)
 
