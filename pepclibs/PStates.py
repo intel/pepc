@@ -368,6 +368,15 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return val
 
+    def _get_max_eff_freq(self, cpu):
+        """Return the max. efficiency frequency for CPU 'cpu'."""
+
+        cpufreq_obj = self._get_cpufreq_msr_obj()
+        if cpufreq_obj is None:
+            return None
+
+        return cpufreq_obj.get_max_eff_freq(cpu)
+
     def _get_cppc_freq(self, pname, cpu):
         """Read the ACPI CPPC sysfs files for property 'pname' and CPU 'cpu'."""
 
@@ -454,24 +463,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if val is None:
             self._prop_not_supported(pname, (cpu,), mnames, "get")
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
-    def _get_max_eff_freq_pvinfo(self, cpu):
-        """
-        Read max. efficiency frequency from 'MSR_PLATFORM_INFO' and return the property value
-        dictionary.
-        """
-
-        pname = "max_eff_freq"
-        mname = "msr"
-        val = None
-
-        cpufreq_obj = self._get_cpufreq_msr_obj()
-        if cpufreq_obj is not None:
-            val = cpufreq_obj.get_max_eff_freq(cpu)
-
-        if val is None:
-            self._prop_not_supported(pname, (cpu,), (mname, ), "get")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
     def _get_min_oper_freq_msr(self, cpu):
@@ -923,7 +914,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = self._get_epb(cpu, mname)
             pvinfo = {"val": val}
         elif pname == "max_eff_freq":
-            pvinfo = self._get_max_eff_freq_pvinfo(cpu)
+            val = self._get_max_eff_freq(cpu)
+            pvinfo = {"val": val}
         elif pname == "hwp":
             pvinfo = self._get_hwp_pvinfo(cpu)
         elif pname == "min_oper_freq":
