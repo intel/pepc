@@ -442,6 +442,20 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
+    def _get_max_turbo_freq(self, cpu, mname):
+        """Return the max. turbo frequency for CPU 'cpu', use method 'mname'."""
+
+        if mname == "msr":
+            cpufreq_obj = self._get_cpufreq_msr_obj()
+            if cpufreq_obj is None:
+                return None
+            return cpufreq_obj.get_max_turbo_freq(cpu)
+
+        if mname == "cppc":
+            return self._get_cppc_freq("max_turbo_freq", cpu)
+
+        raise Error(f"BUG: unsupported mechanism '{mname}'")
+
     def _get_base_freq_sysfs(self, cpu):
         """Read base frequency from sysfs."""
 
@@ -476,43 +490,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                 val = self._get_base_freq_sysfs(cpu)
             elif mname == "msr":
                 val = self._get_base_freq_msr(cpu)
-            elif mname == "cppc":
-                val = self._get_cppc_freq(pname, cpu)
-            else:
-                mnames = ",".join(mnames)
-                raise Error(f"BUG: unsupported mechanisms '{mnames}' for '{pname}'")
-
-            if val is not None:
-                break
-
-        if val is None:
-            self._prop_not_supported(pname, (cpu,), mnames, "get")
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
-    def _get_max_turbo_freq_msr(self, cpu):
-        """
-        Read the maximum turbo frequency for CPU 'cpu' from 'MSR_TURBO_RATIO_LIMIT' and return the
-        property value dictionary.
-        """
-
-        cpufreq_obj = self._get_cpufreq_msr_obj()
-        if cpufreq_obj is None:
-            return None
-
-        return cpufreq_obj.get_max_turbo_freq(cpu)
-
-    def _get_max_turbo_freq_pvinfo(self, cpu, mnames=None):
-        """Read the maximum turbo frequency for CPU 'cpu'."""
-
-        pname = "max_turbo_freq"
-        val, mname = None, None
-
-        if not mnames:
-            mnames = self._props[pname]["mnames"]
-
-        for mname in mnames:
-            if mname == "msr":
-                val = self._get_max_turbo_freq_msr(cpu)
             elif mname == "cppc":
                 val = self._get_cppc_freq(pname, cpu)
             else:
@@ -898,7 +875,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = self._get_min_oper_freq(cpu, mname)
             pvinfo = {"val": val}
         elif pname == "max_turbo_freq":
-            pvinfo = self._get_max_turbo_freq_pvinfo(cpu, mnames=(mname,))
+            val = self._get_max_turbo_freq(cpu, mname)
+            pvinfo = {"val": val}
         elif pname == "bus_clock":
             pvinfo = self._get_bus_clock_pvinfo(cpu, mnames=(mname,))
         elif pname in {"min_freq", "max_freq"}:
