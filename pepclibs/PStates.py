@@ -428,6 +428,20 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return None
 
+    def _get_min_oper_freq(self, cpu, mname):
+        """Return the minimum operating frequency for CPU 'cpu', use method 'mname'."""
+
+        if mname == "msr":
+            cpufreq_obj = self._get_cpufreq_msr_obj()
+            if cpufreq_obj is None:
+                return None
+            return cpufreq_obj.get_min_oper_freq(cpu)
+
+        if mname == "cppc":
+            return self._get_cppc_freq("min_oper_freq", cpu)
+
+        raise Error(f"BUG: unsupported mechanism '{mname}'")
+
     def _get_base_freq_sysfs(self, cpu):
         """Read base frequency from sysfs."""
 
@@ -462,43 +476,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                 val = self._get_base_freq_sysfs(cpu)
             elif mname == "msr":
                 val = self._get_base_freq_msr(cpu)
-            elif mname == "cppc":
-                val = self._get_cppc_freq(pname, cpu)
-            else:
-                mnames = ",".join(mnames)
-                raise Error(f"BUG: unsupported mechanisms '{mnames}' for '{pname}'")
-
-            if val is not None:
-                break
-
-        if val is None:
-            self._prop_not_supported(pname, (cpu,), mnames, "get")
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
-    def _get_min_oper_freq_msr(self, cpu):
-        """
-        Read the minimum operating frequency from 'MSR_PLATFORM_INFO' and return the property value
-        dictionary.
-        """
-
-        cpufreq_obj = self._get_cpufreq_msr_obj()
-        if cpufreq_obj is None:
-            return None
-
-        return cpufreq_obj.get_min_oper_freq(cpu)
-
-    def _get_min_oper_freq_pvinfo(self, cpu, mnames):
-        """Read the minimum operating frequency and return the property value dictionary."""
-
-        pname = "min_oper_freq"
-        val, mname = None, None
-
-        if not mnames:
-            mnames = self.props[pname]["mnames"]
-
-        for mname in mnames:
-            if mname == "msr":
-                val = self._get_min_oper_freq_msr(cpu)
             elif mname == "cppc":
                 val = self._get_cppc_freq(pname, cpu)
             else:
@@ -918,7 +895,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = self._get_hwp(cpu)
             pvinfo = {"val": val}
         elif pname == "min_oper_freq":
-            pvinfo = self._get_min_oper_freq_pvinfo(cpu, mnames=(mname,))
+            val = self._get_min_oper_freq(cpu, mname)
+            pvinfo = {"val": val}
         elif pname == "max_turbo_freq":
             pvinfo = self._get_max_turbo_freq_pvinfo(cpu, mnames=(mname,))
         elif pname == "bus_clock":
