@@ -377,6 +377,16 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return cpufreq_obj.get_max_eff_freq(cpu)
 
+    def _get_hwp(self, cpu):
+        """Return hardware power management on/off status."""
+
+        try:
+            pmenable = self._get_pmenable()
+            return pmenable.is_cpu_feature_enabled("hwp", cpu)
+        except ErrorNotSupported:
+
+            return None
+
     def _get_cppc_freq(self, pname, cpu):
         """Read the ACPI CPPC sysfs files for property 'pname' and CPU 'cpu'."""
 
@@ -717,18 +727,6 @@ class PStates(_PCStatesBase.PCStatesBase):
             self._prop_not_supported(pname, (cpu,), mnames, "get")
         return self._construct_pvinfo(pname, cpu, mname, val)
 
-    def _get_hwp_pvinfo(self, cpu):
-        """Return property value dictionary for the "hwp" property."""
-
-        val = None
-        try:
-            pmenable = self._get_pmenable()
-            val = pmenable.is_cpu_feature_enabled("hwp", cpu)
-        except ErrorNotSupported:
-            pass
-
-        return self._construct_pvinfo("hwp", cpu, "msr", val)
-
     def _get_sysfs_path(self, pname, cpu):
         """
         Construct and return path to the sysfs file for property 'pname' and CPU 'cpu'.
@@ -917,7 +915,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = self._get_max_eff_freq(cpu)
             pvinfo = {"val": val}
         elif pname == "hwp":
-            pvinfo = self._get_hwp_pvinfo(cpu)
+            val = self._get_hwp(cpu)
+            pvinfo = {"val": val}
         elif pname == "min_oper_freq":
             pvinfo = self._get_min_oper_freq_pvinfo(cpu, mnames=(mname,))
         elif pname == "max_turbo_freq":
