@@ -207,15 +207,12 @@ class CStates(_PCStatesBase.PCStatesBase):
         Read property 'pname' from the corresponding MSR register on CPU 'cpu' and return its value.
         """
 
-        try:
-            if pname in PowerCtl.FEATURES:
-                module = self._get_powerctl()
-            else:
-                module = self._get_pcstatectl()
+        if pname in PowerCtl.FEATURES:
+            module = self._get_powerctl()
+        else:
+            module = self._get_pcstatectl()
 
-            return module.read_cpu_feature(pname, cpu)
-        except ErrorNotSupported:
-            return None
+        return module.read_cpu_feature(pname, cpu)
 
     def _get_pkg_cstate_limit(self, pname, cpu):
         """
@@ -226,12 +223,8 @@ class CStates(_PCStatesBase.PCStatesBase):
         if pname == "pkg_cstate_limit_lock":
             return self._read_prop_from_msr(pname, cpu)
 
-        try:
-            pcstatectl = self._get_pcstatectl()
-            pkg_cstate_limit_props = pcstatectl.read_cpu_feature("pkg_cstate_limit", cpu)
-        except ErrorNotSupported:
-            return None
-
+        pcstatectl = self._get_pcstatectl()
+        pkg_cstate_limit_props = pcstatectl.read_cpu_feature("pkg_cstate_limit", cpu)
         return pkg_cstate_limit_props[pname]
 
     def _get_cpuidle_prop(self, pname):

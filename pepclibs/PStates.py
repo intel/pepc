@@ -354,23 +354,13 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_epp(self, cpu, mname):
         """Return EPP value for CPU 'cpu', use mechanism 'mname'."""
 
-        try:
-            val, mname = self._get_eppobj().get_cpu_val(cpu, mnames=(mname,))
-        except ErrorNotSupported as err:
-            _LOG.debug(err)
-            return None
-
+        val, _ = self._get_eppobj().get_cpu_val(cpu, mnames=(mname,))
         return val
 
     def _get_epb(self, cpu, mname):
         """Return EPB value for CPU 'cpu', use mechanism 'mname'."""
 
-        try:
-            val, mname = self._get_epbobj().get_cpu_val(cpu, mnames=(mname,))
-        except ErrorNotSupported as err:
-            _LOG.debug(err)
-            return None
-
+        val, _ = self._get_epbobj().get_cpu_val(cpu, mnames=(mname,))
         return val
 
     def _get_max_eff_freq(self, cpu):
@@ -385,12 +375,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_hwp(self, cpu):
         """Return hardware power management on/off status."""
 
-        try:
-            pmenable = self._get_pmenable()
-            return pmenable.is_cpu_feature_enabled("hwp", cpu)
-        except ErrorNotSupported:
-
-            return None
+        pmenable = self._get_pmenable()
+        return pmenable.is_cpu_feature_enabled("hwp", cpu)
 
     def _get_cppc_freq(self, pname, cpu):
         """Read the ACPI CPPC sysfs files for property 'pname' and CPU 'cpu'."""
@@ -539,11 +525,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         method.
         """
 
-        try:
-            uncfreq_obj = self._get_uncfreq_obj()
-        except ErrorNotSupported as err:
-            _LOG.debug(err)
-            return None
+        uncfreq_obj = self._get_uncfreq_obj()
 
         if pname == "min_uncore_freq":
             return uncfreq_obj.get_min_freq(cpu)
@@ -599,14 +581,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_bus_clock(self, cpu, mname):
         """Return the bus clock speed for CPU 'cpu', use method 'mname'."""
 
-        try:
-            fsbfreq = self._get_fsbfreq()
-        except ErrorNotSupported:
-            fsbfreq = None
-
         if mname == "msr":
-            if not fsbfreq:
-                return None
+            fsbfreq = self._get_fsbfreq()
             try:
                 val = fsbfreq.read_cpu_feature("fsb", cpu)
             except ErrorNotSupported:
@@ -614,12 +590,16 @@ class PStates(_PCStatesBase.PCStatesBase):
             return int(val * 1000000)
 
         if mname == "doc":
-            if fsbfreq:
-                return None
-            if self._cpuinfo.info["vendor"] != "GenuineIntel":
-                return None
-            # Modern Intel platforms use 100MHz bus clock.
-            return 100000000
+            try:
+                fsbfreq = self._get_fsbfreq()
+            except ErrorNotSupported:
+                if self._cpuinfo.info["vendor"] == "GenuineIntel":
+                    # Modern Intel platforms use 100MHz bus clock.
+                    return 100000000
+
+                raise ErrorNotSupported(f"unsupported CPU model '{self._cpuinfo.cpudescr}"
+                                        f"{self._pman.hostmsg}") from None
+            raise ErrorTryAnotherMechanism(f"use 'msr' method for {self._cpuinfo.cpudescr}")
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 

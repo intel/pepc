@@ -12,7 +12,7 @@ This module provides API for managing platform settings related to power.
 
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 
 # Make the exception class be available for users.
 from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-import
@@ -133,18 +133,11 @@ class Power(_PropsClassBase.PropsClassBase):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
         assert mname == "msr"
-        val = None
 
-        try:
-            if pname.startswith("ppl"):
-                fname = self._pname2fname(pname)
-                val = self._get_pplobj().read_cpu_feature(fname, cpu)
-            else:
-                val = self._get_ppiobj().read_cpu_feature(pname, cpu)
-        except ErrorNotSupported:
-            pass
-
-        return val
+        if pname.startswith("ppl"):
+            fname = self._pname2fname(pname)
+            return self._get_pplobj().read_cpu_feature(fname, cpu)
+        return self._get_ppiobj().read_cpu_feature(pname, cpu)
 
     def _do_set_prop(self, pname, val, cpus):
         """Implements '_set_prop_cpus()'."""

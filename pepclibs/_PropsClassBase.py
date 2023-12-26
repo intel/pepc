@@ -455,8 +455,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def _get_cpu_prop(self, pname, cpu, mname):
         """
-        Return 'pname' property value for CPU 'cpu', using mechanism 'mname'. This method should be
-        implemented by the sub-class.
+        Return 'pname' property value for CPU 'cpu', using mechanism 'mname'. Raise
+        'ErrorNotSupported' if the property is not supported.
+
+        This method should be implemented by the sub-class.
         """
 
         # pylint: disable=unused-argument
@@ -475,7 +477,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         val, cpu = None, None
         for mname in mnames:
             for cpu in cpus:
-                val = self._get_cpu_prop(pname, cpu, mname)
+                try:
+                    val = self._get_cpu_prop(pname, cpu, mname)
+                except ErrorNotSupported:
+                    val = None
+
                 if val is None:
                     if cpu == cpus[0]:
                         # Got "property not supported" right away, for the first CPU in the 'cpus'
@@ -502,9 +508,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 yield self._construct_pvinfo(pname, cpu, mnames[-1], None)
 
     def _get_cpu_prop_cache(self, pname, cpu, mnames=None):
-        """Read property 'pname' and return the value."""
+        """
+        Read property 'pname' and return the value. Use the cached value if it is available. If
+        proprty 'pname is not supported, return 'None'.
+        """
 
-        pvinfo = next(self._get_prop_pvinfo_cpus(pname, (cpu,), mnames))
+        try:
+            pvinfo = next(self._get_prop_pvinfo_cpus(pname, (cpu,), mnames))
+        except ErrorNotSupported:
+            return None
         return pvinfo["val"]
 
     def get_prop_cpus(self, pname, cpus="all", mnames=None):
