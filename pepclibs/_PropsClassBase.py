@@ -354,8 +354,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         disagreed_pvinfos = None
         pvinfos = {}
 
-        for cpu in cpus:
-            pvinfo = self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)
+        for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames=mnames):
+            cpu = pvinfo["cpu"]
             pvinfos[cpu] = pvinfo
             if not same:
                 continue
@@ -454,31 +454,50 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase._get_cpu_prop")
 
-    def _get_cpu_prop_pvinfo(self, pname, cpu, mnames=None):
+    def _get_prop_pvinfo_cpus(self, pname, cpus, mnames=None):
         """
-        Return the property value dictionary ('pvinfo') for property 'pname', CPU 'cpu', using
-        mechanisms in 'mnames'.
+        For each CPU in 'cpus', yield the property value dictionary ('pvinfo') of property 'pname'.
+        Use mechanisms in 'mnames'.
         """
 
         prop = self._props[pname]
-        mname, val = None, None
         if not mnames:
             mnames = prop["mnames"]
 
+        val, cpu = None, None
         for mname in mnames:
-            val = self._get_cpu_prop(pname, cpu, mname)
+            for cpu in cpus:
+                val = self._get_cpu_prop(pname, cpu, mname)
+                if val is None:
+                    if cpu == cpus[0]:
+                        # Got "property not supported" right away, for the first CPU in the 'cpus'
+                        # list. Switch to the next method.
+                        break
+                    # Already yielded some values, continue with the same method.
+                    pvinfo = self._construct_pvinfo(pname, cpu, mname, None)
+                else:
+                    pvinfo = self._construct_pvinfo(pname, cpu, mname, val)
+                    _LOG.debug("'%s' is '%s' for CPU %d using mechanism '%s'%s",
+                               pname, val, cpu, mname, self._pman.hostmsg)
+                yield pvinfo
+
             if val is not None:
-                break
+                # A 'pvinfo' was yielded for every CPU.
+                return
 
-        if val is None:
-            self._prop_not_supported(pname, (cpu,), mnames, "get")
+        assert val is None
 
-        return self._construct_pvinfo(pname, cpu, mname, val)
+        if cpu == cpus[0]:
+            # None of the methods are supported. Nothing was yielded yet.
+            self._prop_not_supported(pname, cpus, mnames, "get")
+            for cpu in cpus:
+                yield self._construct_pvinfo(pname, cpu, mnames[-1], None)
 
     def _get_cpu_prop_cache(self, pname, cpu, mnames=None):
         """Read property 'pname' and return the value."""
 
-        return self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)["val"]
+        pvinfo = next(self._get_prop_pvinfo_cpus(pname, (cpu,), mnames))
+        return pvinfo["val"]
 
     def get_prop_cpus(self, pname, cpus="all", mnames=None):
         """
@@ -510,11 +529,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         with contextlib.suppress(ErrorNotSupported):
             self._set_sname(pname)
 
-        for cpu in self._cpuinfo.normalize_cpus(cpus):
-            pvinfo = self._get_cpu_prop_pvinfo(pname, cpu, mnames=mnames)
-            _LOG.debug("'%s' is '%s' for CPU %d using mechanism '%s'%s",
-                    pname, pvinfo["val"], cpu, pvinfo["mname"], self._pman.hostmsg)
-            yield pvinfo
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+
+        yield from self._get_prop_pvinfo_cpus(pname, cpus, mnames=mnames)
 
     def get_cpu_prop(self, pname, cpu, mnames=None):
         """
