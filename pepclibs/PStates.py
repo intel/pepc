@@ -736,61 +736,40 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
-        pvinfo = None
-        prop = self._props[pname]
-
         if pname == "epp":
-            val = self._get_epp(cpu, mname)
-            pvinfo = {"val": val}
-        elif pname == "epb":
-            val = self._get_epb(cpu, mname)
-            pvinfo = {"val": val}
-        elif pname == "max_eff_freq":
-            val = self._get_max_eff_freq(cpu)
-            pvinfo = {"val": val}
-        elif pname == "hwp":
-            val = self._get_hwp(cpu)
-            pvinfo = {"val": val}
-        elif pname == "min_oper_freq":
-            val = self._get_min_oper_freq(cpu, mname)
-            pvinfo = {"val": val}
-        elif pname == "max_turbo_freq":
-            val = self._get_max_turbo_freq(cpu, mname)
-            pvinfo = {"val": val}
-        elif pname == "base_freq":
-            val = self._get_base_freq(cpu, mname)
-            pvinfo = {"val": val}
-        elif pname in {"min_freq", "max_freq"}:
-            val = self._get_cpu_freq(pname, cpu, mname)
-            pvinfo = {"val": val}
-        elif pname in {"min_freq_limit", "max_freq_limit"}:
-            val = self._get_cpu_freq_limit(pname, cpu)
-            pvinfo = {"val": val}
-        elif self._is_uncore_prop(pname):
-            val = self._get_uncore_freq(pname, cpu)
-            pvinfo = {"val": val}
-        elif pname == "frequencies":
-            val = self._get_frequencies(cpu, mname)
-            pvinfo = {"val": val}
-        elif pname == "bus_clock":
-            val = self._get_bus_clock(cpu, mname)
-            pvinfo = {"val": val}
-        elif pname == "turbo":
-            val = self._get_turbo(cpu)
-            pvinfo = {"val": val}
-        elif pname == "driver":
-            val = self._get_driver(cpu)
-            pvinfo = {"val": val}
-        elif pname == "intel_pstate_mode":
-            val = self._get_intel_pstate_mode(pname, cpu)
-            pvinfo = {"val": val}
-        elif "fname" in prop:
-            val = self._get_prop_from_sysfs(pname, cpu)
-            pvinfo = {"val": val}
+            return self._get_epp(cpu, mname)
+        if pname == "epb":
+            return self._get_epb(cpu, mname)
+        if pname == "max_eff_freq":
+            return self._get_max_eff_freq(cpu)
+        if pname == "hwp":
+            return self._get_hwp(cpu)
+        if pname == "min_oper_freq":
+            return self._get_min_oper_freq(cpu, mname)
+        if pname == "max_turbo_freq":
+            return self._get_max_turbo_freq(cpu, mname)
+        if pname == "base_freq":
+            return self._get_base_freq(cpu, mname)
+        if pname in {"min_freq", "max_freq"}:
+            return self._get_cpu_freq(pname, cpu, mname)
+        if pname in {"min_freq_limit", "max_freq_limit"}:
+            return self._get_cpu_freq_limit(pname, cpu)
+        if self._is_uncore_prop(pname):
+            return self._get_uncore_freq(pname, cpu)
+        if pname == "frequencies":
+            return self._get_frequencies(cpu, mname)
+        if pname == "bus_clock":
+            return self._get_bus_clock(cpu, mname)
+        if pname == "turbo":
+            return self._get_turbo(cpu)
+        if pname == "driver":
+            return self._get_driver(cpu)
+        if pname == "intel_pstate_mode":
+            return self._get_intel_pstate_mode(pname, cpu)
+        if "fname" in self._props[pname]:
+            return self._get_prop_from_sysfs(pname, cpu)
 
-        if pvinfo is None:
-            raise Error(f"BUG: unsupported property '{pname}'")
-        return pvinfo["val"]
+        raise Error(f"BUG: unsupported property '{pname}'")
 
     def _set_turbo(self, cpu, enable):
         """Enable or disable turbo."""
