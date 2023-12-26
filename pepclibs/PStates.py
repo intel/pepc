@@ -711,30 +711,27 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return val
 
-    def _get_sysfs_path(self, pname, cpu):
-        """
-        Construct and return path to the sysfs file for property 'pname' and CPU 'cpu'.
-        """
+    def _get_prop_sysfs_path(self, pname, cpu):
+        """Return path to the sysfs file of property 'pname' for CPU 'cpu'."""
 
         prop = self._props[pname]
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
 
-    def _get_cpu_prop_pvinfo_sysfs(self, pname, cpu):
+    def _get_prop_from_sysfs(self, pname, cpu):
         """
-        This is a helper for '_get_cpu_prop()' for handling properties backed by a sysfs file.
+        Return the governor or list of available governors for CPU 'cpu', use the 'sysfs' method.
         """
 
         mname = "sysfs"
 
         with contextlib.suppress(ErrorNotFound):
-            val = self._pcache.get(pname, cpu, mname)
-            return self._construct_pvinfo(pname, cpu, mname, val)
+            return self._pcache.get(pname, cpu, mname)
 
-        path = self._get_sysfs_path(pname, cpu)
+        path = self._get_prop_sysfs_path(pname, cpu)
         val = self._read_prop_from_sysfs(pname, path)
 
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
-        return self._construct_pvinfo(pname, cpu, mname, val)
+        return val
 
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
@@ -788,7 +785,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = self._get_intel_pstate_mode(pname, cpu)
             pvinfo = {"val": val}
         elif "fname" in prop:
-            pvinfo = self._get_cpu_prop_pvinfo_sysfs(pname, cpu)
+            val = self._get_prop_from_sysfs(pname, cpu)
+            pvinfo = {"val": val}
 
         if pvinfo is None:
             raise Error(f"BUG: unsupported property '{pname}'")
@@ -1008,7 +1006,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             elif pname == "intel_pstate_mode":
                 self._set_intel_pstate_mode(cpu, val)
             elif "fname" in prop:
-                path = self._get_sysfs_path(pname, cpu)
+                path = self._get_prop_sysfs_path(pname, cpu)
                 self._write_prop_to_sysfs(pname, path, val)
 
                 # Note, below 'add()' call is scope-aware. It will cache 'val' not only for CPU
