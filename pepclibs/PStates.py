@@ -544,6 +544,29 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return int(val * 1000000)
 
+    def _get_uncore_freq(self, pname, cpu):
+        """
+        Return the uncore frequency or frequency limit for CPU 'cpu', use method the "sysfs"
+        method.
+        """
+
+        try:
+            uncfreq_obj = self._get_uncfreq_obj()
+        except ErrorNotSupported as err:
+            _LOG.debug(err)
+            return None
+
+        if pname == "min_uncore_freq":
+            return uncfreq_obj.get_min_freq(cpu)
+        if pname == "max_uncore_freq":
+            return uncfreq_obj.get_max_freq(cpu)
+        if pname == "min_uncore_freq_limit":
+            return uncfreq_obj.get_min_freq_limit(cpu)
+        if pname == "max_uncore_freq_limit":
+            return uncfreq_obj.get_max_freq_limit(cpu)
+
+        raise Error(f"BUG: unexpected uncore frequency property {pname}")
+
     def _get_bus_clock_intel(self, cpu):
         """
         Return bus clock speed in 'Hz' for Intel platforms that do not support 'MSR_FSB_FREQ'.
@@ -782,32 +805,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return self._construct_pvinfo("intel_pstate_mode", cpu, mname, val)
 
-    def _get_uncore_freq_pvinfo(self, pname, cpu):
-        """Read and return the minimum or maximum uncore frequency."""
-
-        mname = "sysfs"
-
-        try:
-            uncfreq_obj = self._get_uncfreq_obj()
-        except ErrorNotSupported as err:
-            _LOG.debug(err)
-            return self._construct_pvinfo(pname, cpu, mname, None)
-
-        val = None
-        if uncfreq_obj:
-            if pname == "min_uncore_freq":
-                val = uncfreq_obj.get_min_freq(cpu)
-            elif pname == "max_uncore_freq":
-                val = uncfreq_obj.get_max_freq(cpu)
-            elif pname == "min_uncore_freq_limit":
-                val = uncfreq_obj.get_min_freq_limit(cpu)
-            elif pname == "max_uncore_freq_limit":
-                val = uncfreq_obj.get_max_freq_limit(cpu)
-            else:
-                raise Error(f"BUG: unexpected uncore frequency property {pname}")
-
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
@@ -841,6 +838,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         elif pname in {"min_freq_limit", "max_freq_limit"}:
             val = self._get_cpu_freq_limit(pname, cpu)
             pvinfo = {"val": val}
+        elif self._is_uncore_prop(pname):
+            val = self._get_uncore_freq(pname, cpu)
+            pvinfo = {"val": val}
         elif pname == "bus_clock":
             pvinfo = self._get_bus_clock_pvinfo(cpu, mnames=(mname,))
         elif pname == "turbo":
@@ -849,8 +849,6 @@ class PStates(_PCStatesBase.PCStatesBase):
             pvinfo = self._get_frequencies_pvinfo(cpu, mnames=(mname,))
         elif pname == "driver":
             pvinfo = self._get_driver_pvinfo(cpu)
-        elif self._is_uncore_prop(pname):
-            pvinfo = self._get_uncore_freq_pvinfo(pname, cpu)
         elif "fname" in prop:
             pvinfo = self._get_cpu_prop_pvinfo_sysfs(pname, cpu)
         elif pname == "intel_pstate_mode":
