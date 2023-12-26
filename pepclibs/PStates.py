@@ -691,6 +691,26 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return val
 
+    def _get_intel_pstate_mode(self, pname, cpu):
+        """
+        Return the 'intel_pstate' driver operation mode for CPU 'cpu', use the 'sysfs' method.
+        """
+
+        mname = "sysfs"
+
+        with contextlib.suppress(ErrorNotFound):
+            return self._pcache.get(pname, cpu, mname)
+
+        driver = self._get_cpu_prop_cache("driver", cpu)
+        if driver == "intel_pstate":
+            path = self._sysfs_base / "intel_pstate" / "status"
+            val = self._read_prop_from_sysfs(pname, path)
+        else:
+            val = None
+
+        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
+        return val
+
     def _get_sysfs_path(self, pname, cpu):
         """
         Construct and return path to the sysfs file for property 'pname' and CPU 'cpu'.
@@ -715,27 +735,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return self._construct_pvinfo(pname, cpu, mname, val)
-
-    def _get_intel_pstate_mode_pvinfo(self, pname, cpu):
-        """
-        Read the 'intel_pstate' driver operation mode and return the property value dictionary.
-        """
-
-        mname = "sysfs"
-
-        with contextlib.suppress(ErrorNotFound):
-            val = self._pcache.get(pname, cpu, mname)
-            return self._construct_pvinfo(pname, cpu, mname, val)
-
-        driver = self._get_cpu_prop_cache("driver", cpu)
-        if driver == "intel_pstate":
-            path = self._sysfs_base / "intel_pstate" / "status"
-            val = self._read_prop_from_sysfs(pname, path)
-        else:
-            val = None
-
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
-        return self._construct_pvinfo("intel_pstate_mode", cpu, mname, val)
 
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
@@ -785,10 +784,11 @@ class PStates(_PCStatesBase.PCStatesBase):
         elif pname == "driver":
             val = self._get_driver(cpu)
             pvinfo = {"val": val}
+        elif pname == "intel_pstate_mode":
+            val = self._get_intel_pstate_mode(pname, cpu)
+            pvinfo = {"val": val}
         elif "fname" in prop:
             pvinfo = self._get_cpu_prop_pvinfo_sysfs(pname, cpu)
-        elif pname == "intel_pstate_mode":
-            pvinfo = self._get_intel_pstate_mode_pvinfo(pname, cpu)
 
         if pvinfo is None:
             raise Error(f"BUG: unsupported property '{pname}'")
