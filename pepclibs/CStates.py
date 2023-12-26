@@ -259,22 +259,23 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
-    def _set_prop_cpus(self, pname, val, cpus, mnames=None):
-        """Refer to '_PropsClassBase.PropsClassBase.set_prop_cpus()'."""
+    def _set_prop_cpus(self, pname, val, cpus, mname):
+        """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
 
-        if pname in PowerCtl.FEATURES:
-            self._get_powerctl().write_feature(pname, val, cpus=cpus)
-            return "msr"
+        if mname == "msr":
+            if pname in PowerCtl.FEATURES:
+                self._get_powerctl().write_feature(pname, val, cpus=cpus)
+                return
+            if pname in PCStateConfigCtl.FEATURES:
+                self._get_pcstatectl().write_feature(pname, val, cpus=cpus)
+                return
 
-        if pname in PCStateConfigCtl.FEATURES:
-            self._get_pcstatectl().write_feature(pname, val, cpus=cpus)
-            return "msr"
+        if mname == "sysfs":
+            if pname == "governor":
+                self._get_cpuidle().set_current_governor(val)
+                return
 
-        if pname == "governor":
-            self._get_cpuidle().set_current_governor(val)
-            return "sysfs"
-
-        raise Error(f"BUG: undefined property '{pname}'")
+        raise Error(f"BUG: unsupported property '{pname}'")
 
     def _set_sname(self, pname):
         """Set scope name for property 'pname'."""

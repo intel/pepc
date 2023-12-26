@@ -76,6 +76,12 @@ class ErrorUsePerCPU(Error):
     refer to '_FeaturedMSR' module docstring for more information.
     """
 
+class ErrorTryAnotherMechanism(Error):
+    """
+    The property is not supported by the specified mechanism, but may be supported by another
+    mechanism.
+    """
+
 def _bug_method_not_defined(method_name):
     """Raise an error if the child class did not define the 'method_name' mandatory method."""
 
@@ -745,8 +751,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return val
 
-    def _set_prop_cpus(self, pname, val, cpus, mnames=None):
-        """Implements 'set_prop_cpus()'. The arguments are as the same as in 'set_prop_cpus()'."""
+    def _set_prop_cpus(self, pname, val, cpus, mname):
+        """
+        Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'. This method
+        should be implemented by the sub-class.
+        """
 
         # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase.set_prop_cpus")
@@ -761,8 +770,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         for mname in mnames:
             try:
-                self._set_prop_cpus(pname, val, cpus, mnames=(mname,))
-            except ErrorNotSupported as err:
+                self._set_prop_cpus(pname, val, cpus, mname)
+            except (ErrorNotSupported, ErrorTryAnotherMechanism) as err:
                 exceptions.append(err)
                 continue
 

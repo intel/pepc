@@ -182,8 +182,11 @@ class Power(_PropsClassBase.PropsClassBase):
 
             self._get_pplobj().write_cpu_feature(fname, val, cpu)
 
-    def _set_prop_cpus(self, pname, val, cpus, mnames=None):
-        """Refer to '_PropsClassBase.PropsClassBase.set_prop_cpus()'."""
+    def _set_prop_cpus(self, pname, val, cpus, mname):
+        """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
+
+        if mname != "msr":
+            raise Error(f"BUG: unsupported mechanism '{mname}'")
 
         try:
             self._do_set_prop(pname, val, cpus)
@@ -194,8 +197,6 @@ class Power(_PropsClassBase.PropsClassBase):
                          f"forbid {state}ling {pname}."
                 raise ErrorVerifyFailed(errmsg) from err
             raise
-
-        return "msr"
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """

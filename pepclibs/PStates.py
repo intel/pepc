@@ -21,6 +21,7 @@ from pepclibs.helperlibs import Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
+from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 # Make the exception class be available for users.
 from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-import
 
@@ -30,8 +31,12 @@ class ErrorFreqOrder(Error):
     reasons.
     """
 
-class ErrorFreqRange(Error):
-    """An exception indicating that min. or max. frequency values are out of the allowed range."""
+class ErrorFreqRange(ErrorTryAnotherMechanism):
+    """
+    An exception indicating that min. or max. frequency values are out of the allowed range. Since
+    different mechanisms may have different ranges, sub-class '_ErrorTryAnotherMechanism' to
+    indicate that another mechanism may succeed.
+    """
 
 _LOG = logging.getLogger()
 
@@ -998,8 +1003,11 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return mname
 
-    def __set_freq_prop(self, pname, val, cpus, mname):
-        """Implements '_set_freq_prop()."""
+    def _set_freq_prop(self, pname, val, cpus, mname):
+        """
+        Set core or uncore frequency property 'pname' to value 'val' for CPUs in 'cpus' using method
+        'mname'.
+        """
 
         def _raise_not_supported(pname):
             """Raise an exception if one of the required properties is not supported."""
@@ -1088,40 +1096,8 @@ class PStates(_PCStatesBase.PCStatesBase):
 
                 write_func(pname, new_freq, cpu)
 
-    def _set_freq_prop(self, pname, val, cpus, mnames=None):
-        """Set core or uncore frequency property 'pname'."""
-
-        if not mnames:
-            mnames = self._props[pname]["mnames"]
-
-        not_supported_exceptions = []
-        freq_range_exceptions = []
-
-        for mname in mnames:
-            try:
-                self.__set_freq_prop(pname, val, cpus, mname)
-            except ErrorNotSupported as err:
-                not_supported_exceptions.append(err)
-                continue
-            except ErrorFreqRange as err:
-                # Different methods have different ranges, so continue.
-                freq_range_exceptions.append(err)
-                continue
-
-            return mname
-
-        if freq_range_exceptions:
-            exceptions = freq_range_exceptions
-            exc_type = ErrorFreqRange
-        else:
-            exceptions = not_supported_exceptions
-            exc_type = ErrorNotSupported
-
-        self._prop_not_supported(pname, cpus, mnames, "set", exceptions=exceptions,
-                                 exc_type=exc_type)
-
-    def _set_prop_cpus(self, pname, val, cpus, mnames=None):
-        """Refer to '_PropsClassBase.PropsClassBase.set_prop_cpus()'."""
+    def _set_prop_cpus(self, pname, val, cpus, mname):
+        """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
 
         if pname == "governor":
             self._validate_governor_name(val)
@@ -1129,12 +1105,12 @@ class PStates(_PCStatesBase.PCStatesBase):
             self._validate_intel_pstate_mode(val)
 
         if pname == "epp":
-            return self._get_eppobj().set_vals(val, cpus=cpus, mnames=mnames)
+            return self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))
         if pname == "epb":
-            return self._get_epbobj().set_vals(val, cpus=cpus, mnames=mnames)
+            return self._get_epbobj().set_vals(val, cpus=cpus, mnames=(mname,))
 
         if pname in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
-            return self._set_freq_prop(pname, val, cpus, mnames=mnames)
+            return self._set_freq_prop(pname, val, cpus, mname)
 
         return self._set_prop_sysfs(pname, val, cpus)
 
