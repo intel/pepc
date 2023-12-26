@@ -751,6 +751,26 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("PropsClassBase.set_prop_cpus")
 
+    def _set_prop_cpus_mnames(self, pname, val, cpus, mnames):
+        """Implement 'set_prop_cpus()'."""
+
+        if not mnames:
+            mnames = self._props[pname]["mnames"]
+
+        exceptions = []
+
+        for mname in mnames:
+            try:
+                self._set_prop_cpus(pname, val, cpus, mnames=(mname,))
+            except ErrorNotSupported as err:
+                exceptions.append(err)
+                continue
+
+            return mname
+
+        self._prop_not_supported(pname, cpus, mnames, "set", exceptions=exceptions,
+                                 exc_type=ErrorNotSupported)
+
     def set_prop_cpus(self, pname, val, cpus, mnames=None):
         """
         Set property 'pname' to value 'val' for CPUs in 'cpus'. The arguments are as follows.
@@ -775,7 +795,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._set_sname(pname)
         self._validate_cpus_vs_scope(pname, cpus)
 
-        return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
+        return self._set_prop_cpus_mnames(pname, val, cpus, mnames)
 
     def set_cpu_prop(self, pname, val, cpu, mnames=None):
         """
@@ -798,7 +818,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 cpu = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))[0]
                 cpus.append(cpu)
 
-        return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
+        return self._set_prop_cpus_mnames(pname, val, cpus, mnames=mnames)
 
     def set_prop_dies(self, pname, val, dies, mnames=None):
         """
@@ -851,7 +871,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             cpu = self._cpuinfo.packages_to_cpus(packages=(package,))[0]
             cpus.append(cpu)
 
-        return self._set_prop_cpus(pname, val, cpus, mnames=mnames)
+        return self._set_prop_cpus_mnames(pname, val, cpus, mnames=mnames)
 
     def set_prop_packages(self, pname, val, packages, mnames=None):
         """
