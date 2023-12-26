@@ -234,7 +234,7 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         return pkg_cstate_limit_props[pname]
 
-    def _get_cpuidle_prop(self, pname, cpu):
+    def _get_cpuidle_prop(self, pname):
         """Return value for a property provided by the 'CPUIdle' class."""
 
         if pname == "idle_driver":
@@ -251,8 +251,8 @@ class CStates(_PCStatesBase.PCStatesBase):
         if pname.startswith("pkg_cstate_"):
             return self._get_pkg_cstate_limit(pname, cpu)
 
-        if pname in ("idle_driver","governor", "governors"):
-            return self._get_cpuidle_prop(pname, cpu)
+        if pname in ("idle_driver", "governor", "governors"):
+            return self._get_cpuidle_prop(pname)
 
         if mname == "msr":
             return self._read_prop_from_msr(pname, cpu)
