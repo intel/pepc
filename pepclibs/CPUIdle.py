@@ -334,7 +334,10 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         return csinfo
 
     def get_current_governor(self):
-        """Get current idle driver governor."""
+        """
+        Return name of the current Linux idle driver governor. Return 'None' if there is no idle
+        driver, and therefore, not idle governor.
+        """
 
         if not self.get_idle_driver():
             return None
@@ -364,7 +367,10 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         return avail_governors
 
     def get_idle_driver(self):
-        """Get the CPUIdle driver currently used by the kernel."""
+        """
+        Return name of Linux idle driver currently used by the kernel. Return 'None' if there is no
+        idle driver.
+        """
 
         try:
             idle_driver = self._cache.get("current_driver", 0)
