@@ -410,7 +410,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         # Sometimes the frequency CPPC sysfs files are not readable, but the "performance" files
         # are. The base frequency is required to turn performance values to Hz.
 
-        base_freq = self._get_base_freq_pvinfo(cpu)["val"]
+        base_freq = self._get_cpu_prop_cache("base_freq", cpu)
         if base_freq is None:
             return None
 
@@ -456,52 +456,25 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
-    def _get_base_freq_sysfs(self, cpu):
-        """Read base frequency from sysfs."""
+    def _get_base_freq(self, cpu, mname):
+        """Return the base frequency for CPU 'cpu', use method 'mname'."""
 
-        cpufreq_obj = self._get_cpufreq_sysfs_obj()
-        if not cpufreq_obj:
-            return None
+        if mname == "sysfs":
+            cpufreq_obj = self._get_cpufreq_sysfs_obj()
+            if not cpufreq_obj:
+                return None
+            return cpufreq_obj.get_base_freq(cpu)
 
-        return cpufreq_obj.get_base_freq(cpu)
+        if mname == "msr":
+            cpufreq_obj = self._get_cpufreq_msr_obj()
+            if cpufreq_obj is None:
+                return None
+            return cpufreq_obj.get_base_freq(cpu)
 
-    def _get_base_freq_msr(self, cpu):
-        """Read base frequency from sysfs."""
+        if mname == "cppc":
+            return self._get_cppc_freq("base_freq", cpu)
 
-        cpufreq_obj = self._get_cpufreq_msr_obj()
-        if cpufreq_obj is None:
-            return None
-
-        return cpufreq_obj.get_base_freq(cpu)
-
-    def _get_base_freq_pvinfo(self, cpu, mnames=None):
-        """
-        Determine the base frequency for the system and return the property value dictionary.
-        """
-
-        pname = "base_freq"
-        val, mname = None, None
-
-        if not mnames:
-            mnames = self._props["base_freq"]["mnames"]
-
-        for mname in mnames:
-            if mname == "sysfs":
-                val = self._get_base_freq_sysfs(cpu)
-            elif mname == "msr":
-                val = self._get_base_freq_msr(cpu)
-            elif mname == "cppc":
-                val = self._get_cppc_freq(pname, cpu)
-            else:
-                mnames = ",".join(mnames)
-                raise Error(f"BUG: unsupported mechanisms '{mnames}' for '{pname}'")
-
-            if val is not None:
-                break
-
-        if val is None:
-            self._prop_not_supported(pname, (cpu,), mnames, "get")
-        return self._construct_pvinfo(pname, cpu, mname, val)
+        raise Error(f"BUG: unsupported mechanism '{mname}'")
 
     def _get_bus_clock_msr(self, cpu):
         """
@@ -877,14 +850,15 @@ class PStates(_PCStatesBase.PCStatesBase):
         elif pname == "max_turbo_freq":
             val = self._get_max_turbo_freq(cpu, mname)
             pvinfo = {"val": val}
+        elif pname == "base_freq":
+            val = self._get_base_freq(cpu, mname)
+            pvinfo = {"val": val}
         elif pname == "bus_clock":
             pvinfo = self._get_bus_clock_pvinfo(cpu, mnames=(mname,))
         elif pname in {"min_freq", "max_freq"}:
             pvinfo = self._get_cpu_freq_pvinfo(pname, cpu, mnames=(mname,))
         elif pname in {"min_freq_limit", "max_freq_limit"}:
             pvinfo = self._get_cpu_freq_limit_pvinfo(pname, cpu)
-        elif pname == "base_freq":
-            pvinfo = self._get_base_freq_pvinfo(cpu, mnames=(mname,))
         elif pname == "turbo":
             pvinfo = self._get_turbo_pvinfo(cpu)
         elif pname == "frequencies":
