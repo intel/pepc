@@ -627,15 +627,14 @@ class PStates(_PCStatesBase.PCStatesBase):
                         f"{self._pman.hostmsg}")
         return int(val)
 
-    def _get_turbo_pvinfo(self, cpu):
-        """Return property value dictionary for the "turbo" property."""
+    def _get_turbo(self, cpu):
+        """Return the turbo on/of status for CPU 'cpu', use the 'sysfs' method."""
 
         pname = "turbo"
         mname = "sysfs"
 
         with contextlib.suppress(ErrorNotFound):
-            val = self._pcache.get(pname, cpu, mname)
-            return self._construct_pvinfo(pname, cpu, mname, val)
+            return self._pcache.get(pname, cpu, mname)
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
@@ -644,8 +643,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         try:
             if driver == "intel_pstate":
                 if self._get_cpu_prop_cache("intel_pstate_mode", cpu) == "off":
-                    return self._construct_pvinfo(pname, cpu, mname, None)
-
+                    return None
                 path = self._sysfs_base / "intel_pstate" / "no_turbo"
                 disabled = self._read_int(path)
                 val = "off" if disabled else "on"
@@ -662,7 +660,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = None
 
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
-        return self._construct_pvinfo(pname, cpu, mname, val)
+        return val
 
     def _get_sysfs_path(self, pname, cpu):
         """
@@ -783,7 +781,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = self._get_bus_clock(cpu, mname)
             pvinfo = {"val": val}
         elif pname == "turbo":
-            pvinfo = self._get_turbo_pvinfo(cpu)
+            val = self._get_turbo(cpu)
+            pvinfo = {"val": val}
         elif pname == "driver":
             pvinfo = self._get_driver_pvinfo(cpu)
         elif "fname" in prop:
@@ -872,7 +871,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                     freq_human = Human.num2si(freq, unit="Hz", decp=4)
                     msg += f".\n  Linux kernel CPU frequency driver does not support " \
                            f"{freq_human}, use one of the following values instead:\n  {fvals}"
-            elif self._get_turbo_pvinfo(cpu)["val"] == "off":
+            elif self._get_turbo(cpu)["val"] == "off":
                 base_freq = self._get_cpu_prop_cache("base_freq", cpu)
                 if base_freq and freq > base_freq:
                     base_freq = Human.num2si(base_freq, unit="Hz", decp=4)
