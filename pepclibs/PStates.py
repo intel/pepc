@@ -662,6 +662,35 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return val
 
+    def _get_driver(self, cpu):
+        """Return the CPU frequency driver name for CPU 'cpu', use the 'sysfs' method."""
+
+        pname = "driver"
+        mname = "sysfs"
+
+        with contextlib.suppress(ErrorNotFound):
+            return self._pcache.get(pname, cpu, mname)
+
+        path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
+
+        val = self._read_prop_from_sysfs(pname, path)
+        if val is None:
+            # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
+            # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
+            if self._pman.exists(self._sysfs_base / "intel_pstate"):
+                val = "intel_pstate"
+            else:
+                _LOG.debug("can't read value of property '%s', path '%s' missing", pname, path)
+        else:
+            # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode, and
+            # 'intel_cpufreq' when it is in passive mode. But we always report the 'intel_pstate'
+            # name, because reporting 'intel_cpufreq' is confusing for users.
+            if val == "intel_cpufreq":
+                val = "intel_pstate"
+
+        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
+        return val
+
     def _get_sysfs_path(self, pname, cpu):
         """
         Construct and return path to the sysfs file for property 'pname' and CPU 'cpu'.
@@ -683,36 +712,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         path = self._get_sysfs_path(pname, cpu)
         val = self._read_prop_from_sysfs(pname, path)
-
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
-    def _get_driver_pvinfo(self, cpu):
-        """Read the CPU frequency driver name and return the property value dictionary."""
-
-        pname = "driver"
-        mname = "sysfs"
-
-        with contextlib.suppress(ErrorNotFound):
-            val = self._pcache.get(pname, cpu, mname)
-            return self._construct_pvinfo(pname, cpu, mname, val)
-
-        path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
-
-        val = self._read_prop_from_sysfs(pname, path)
-        if val is None:
-            # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
-            # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
-            if self._pman.exists(self._sysfs_base / "intel_pstate"):
-                val = "intel_pstate"
-            else:
-                _LOG.debug("can't read value of property '%s', path '%s' missing", pname, path)
-        else:
-            # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode, and
-            # 'intel_cpufreq' when it is in passive mode. But we always report the 'intel_pstate'
-            # name, because reporting 'intel_cpufreq' is confusing for users.
-            if val == "intel_cpufreq":
-                val = "intel_pstate"
 
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return self._construct_pvinfo(pname, cpu, mname, val)
@@ -784,7 +783,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = self._get_turbo(cpu)
             pvinfo = {"val": val}
         elif pname == "driver":
-            pvinfo = self._get_driver_pvinfo(cpu)
+            val = self._get_driver(cpu)
+            pvinfo = {"val": val}
         elif "fname" in prop:
             pvinfo = self._get_cpu_prop_pvinfo_sysfs(pname, cpu)
         elif pname == "intel_pstate_mode":
