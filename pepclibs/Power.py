@@ -10,15 +10,12 @@
 This module provides API for managing platform settings related to power.
 """
 
-import logging
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 
 # Make the exception class be available for users.
 from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-import
-
-_LOG = logging.getLogger()
 
 # This dictionary describes the CPU properties this module supports.
 #
