@@ -132,15 +132,15 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         # None of the methods worked.
         self._raise_getset_exception(cpus, mnames, "get", [])
 
-    def _set_epb_or_epb(self, epb, cpus="all", mnames=None):
+    def _set_epb_or_epb(self, val, cpus="all", mnames=None):
         """
-        Set EPB for CPU in 'cpus' using the 'mname' mechanism. The arguments are as follows.
-          * epb - the EPB value to set. Can be an integer, a string representing an integer. If
-                  'mname' is "sysfs", 'epb' can also be EPB policy name (e.g., "performance").
+        Set EPB or EPP for CPU in 'cpus' using the 'mname' mechanism. The arguments are as follows.
+          * val - the EPB or EPP value to set. Can be an integer, a string representing an integer.
+                  If 'mname' is "sysfs", 'val' can also be EPB or EPP policy name (e.g.,
+                  "performance").
           * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * mnames - list of mechanisms to use for setting EPB (see '_PropsClassBase.MECHANISMS').
-                     The mechanisms will be tried in the order specified in 'mnames'. By default,
-                     all supported mechanisms will be tried.
+          * mnames - list of mechanisms to use for setting EPB or EPP. The mechanisms will be tried
+            in the order specified in 'mnames'. By default, all supported mechanisms will be tried.
 
         Raise 'ErrorNotSupported' if the platform does not support EPB.
         """
@@ -159,9 +159,9 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
             cpu = 0
             try:
-                self._validate_value(epb, policy_ok=policy_ok)
+                self._validate_value(val, policy_ok=policy_ok)
                 for cpu in cpus:
-                    func(str(epb), cpu)
+                    func(str(val), cpu)
             except ErrorNotSupported as err:
                 if cpu == cpus[0]:
                     errors.append(err)
