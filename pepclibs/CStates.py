@@ -302,15 +302,6 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         super()._init_props_dict(PROPS)
 
-        # The Package C-state limit feature has "package" scope, but the underlying MSR register may
-        # have "core" I/O scope.
-        try:
-            pcstatectl = self._get_pcstatectl()
-        except ErrorNotSupported:
-            pass
-        else:
-            self._props["iosname"] = pcstatectl.features["pkg_cstate_limit"]["iosname"]
-
     def __init__(self, pman=None, cpuinfo=None, cpuidle=None, msr=None, enable_cache=True):
         """
         The class constructor. The arguments are as follows.
