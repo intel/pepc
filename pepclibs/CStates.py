@@ -217,59 +217,42 @@ class CStates(_PCStatesBase.PCStatesBase):
         except ErrorNotSupported:
             return None
 
-    def _get_pkg_cstate_limit_pvinfo(self, pname, cpu):
+    def _get_pkg_cstate_limit(self, pname, cpu):
         """
-        Get a 'pkg_cstate_limit' or a related property and return the property value dictionary.
+        Return the 'pkg_cstate_limit' or a related property value.
         Return 'None' if 'pname' is not related to 'pkg_cstate_limit'.
         """
 
-        mname = self._props[pname]["mnames"][0]
-
         if pname == "pkg_cstate_limit_lock":
-            val = self._read_prop_from_msr(pname, cpu)
-            return self._construct_pvinfo(pname, cpu, mname, val)
+            return self._read_prop_from_msr(pname, cpu)
 
-        if pname not in {"pkg_cstate_limit", "pkg_cstate_limits", "pkg_cstate_limit_aliases"}:
-            return None
-
-        val = None
         try:
             pcstatectl = self._get_pcstatectl()
             pkg_cstate_limit_props = pcstatectl.read_cpu_feature("pkg_cstate_limit", cpu)
         except ErrorNotSupported:
-            pass
-        else:
-            val = pkg_cstate_limit_props[pname]
-
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
-    def _get_cpuidle_prop_pvinfo(self, pname, cpu):
-        """
-        Get a property using the 'CPUIdle' class and return the property value dictionary. Return
-        'None' if 'pname' does not belong to the 'CPUIdle' class.
-        """
-
-        if pname == "idle_driver":
-            val = self._get_cpuidle().get_idle_driver()
-        elif pname == "governor":
-            val = self._get_cpuidle().get_current_governor()
-        elif pname == "governors":
-            val = self._get_cpuidle().get_available_governors()
-        else:
             return None
 
-        return self._construct_pvinfo(pname, cpu, "sysfs", val)
+        return pkg_cstate_limit_props[pname]
+
+    def _get_cpuidle_prop(self, pname, cpu):
+        """Return value for a property provided by the 'CPUIdle' class."""
+
+        if pname == "idle_driver":
+            return self._get_cpuidle().get_idle_driver()
+        if pname == "governor":
+            return self._get_cpuidle().get_current_governor()
+        if pname == "governors":
+            return self._get_cpuidle().get_available_governors()
+        return None
 
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
-        pvinfo = self._get_cpuidle_prop_pvinfo(pname, cpu)
-        if pvinfo:
-            return pvinfo["val"]
+        if pname.startswith("pkg_cstate_"):
+            return self._get_pkg_cstate_limit(pname, cpu)
 
-        pvinfo = self._get_pkg_cstate_limit_pvinfo(pname, cpu)
-        if pvinfo:
-            return pvinfo["val"]
+        if pname in ("idle_driver","governor", "governors"):
+            return self._get_cpuidle_prop(pname, cpu)
 
         if mname == "msr":
             return self._read_prop_from_msr(pname, cpu)
