@@ -14,6 +14,7 @@ This class provides API for Linux "cpuidle" subsystem sysfs knobs.
 
 import re
 import logging
+import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
@@ -342,14 +343,12 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         if not self.get_idle_driver():
             return None
 
-        try:
-            governor = self._cache.get("current_governor", 0)
-        except ErrorNotFound:
-            path = self._sysfs_base / "cpuidle" / "current_governor"
-            governor = self._pman.read(path).strip()
-            self._cache.add("current_governor", 0, governor)
+        with contextlib.suppress(ErrorNotFound):
+            return self._cache.get("current_governor", 0)
 
-        return governor
+        path = self._sysfs_base / "cpuidle" / "current_governor"
+        governor = self._pman.read(path).strip()
+        return self._cache.add("current_governor", 0, governor)
 
     def get_available_governors(self):
         """Get list of available idle driver governors."""
@@ -357,14 +356,12 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         if not self.get_idle_driver():
             return None
 
-        try:
-            avail_governors = self._cache.get("available_governors", 0)
-        except ErrorNotFound:
-            path = self._sysfs_base / "cpuidle" / "available_governors"
-            avail_governors = self._pman.read(path).strip().split()
-            self._cache.add("available_governors", 0, avail_governors)
+        with contextlib.suppress(ErrorNotFound):
+            return self._cache.get("available_governors", 0)
 
-        return avail_governors
+        path = self._sysfs_base / "cpuidle" / "available_governors"
+        avail_governors = self._pman.read(path).strip().split()
+        return self._cache.add("available_governors", 0, avail_governors)
 
     def get_idle_driver(self):
         """
@@ -372,24 +369,23 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         idle driver.
         """
 
+        with contextlib.suppress(ErrorNotFound):
+            return self._cache.get("current_driver", 0)
+
+        path = self._sysfs_base / "cpuidle" / "current_driver"
         try:
-            idle_driver = self._cache.get("current_driver", 0)
+            idle_driver = self._pman.read(path).strip()
         except ErrorNotFound:
-            path = self._sysfs_base / "cpuidle" / "current_driver"
-            try:
-                idle_driver = self._pman.read(path).strip()
-            except ErrorNotFound:
-                idle_driver = None
-                for opt in self._get_cmdline().split():
-                    if opt == "cpuidle.off=1" or opt.startswith("idle="):
-                        _LOG.debug("the '/proc/cmdline' file%s indicates that the '%s' kernel "
-                                   "boot parameter is set.\n"
-                                   "This may be the reason why there is no idle driver%s.",
-                                   self._pman.hostmsg, opt, self._pman.hostmsg)
-                        break
+            idle_driver = None
+            for opt in self._get_cmdline().split():
+                if opt == "cpuidle.off=1" or opt.startswith("idle="):
+                    _LOG.debug("the '/proc/cmdline' file%s indicates that the '%s' kernel "
+                                "boot parameter is set.\n"
+                                "This may be the reason why there is no idle driver%s.",
+                                self._pman.hostmsg, opt, self._pman.hostmsg)
+                    break
 
-            self._cache.add("current_driver", 0, idle_driver)
-
+        self._cache.add("current_driver", 0, idle_driver)
         return idle_driver
 
     def _toggle_cstates(self, csnames="all", cpus="all", enable=True):
