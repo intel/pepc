@@ -346,6 +346,28 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._uncfreq_obj
 
+    def _get_epp(self, cpu, mname):
+        """Return EPP value for CPU 'cpu', use mechanism 'mname'."""
+
+        try:
+            val, mname = self._get_eppobj().get_cpu_val(cpu, mnames=(mname,))
+        except ErrorNotSupported as err:
+            _LOG.debug(err)
+            return None
+
+        return val
+
+    def _get_epb(self, cpu, mname):
+        """Return EPB value for CPU 'cpu', use mechanism 'mname'."""
+
+        try:
+            val, mname = self._get_epbobj().get_cpu_val(cpu, mnames=(mname,))
+        except ErrorNotSupported as err:
+            _LOG.debug(err)
+            return None
+
+        return val
+
     def _get_cppc_freq(self, pname, cpu):
         """Read the ACPI CPPC sysfs files for property 'pname' and CPU 'cpu'."""
 
@@ -888,32 +910,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._construct_pvinfo(pname, cpu, mname, val)
 
-    def _get_epp_pvinfo(self, pname, cpu, mnames):
-        """Return property value dictionary for EPP."""
-
-        val, mname = None, None
-
-        try:
-            val, mname = self._get_eppobj().get_cpu_val(cpu, mnames=mnames)
-        except ErrorNotSupported as err:
-            _LOG.debug(err)
-            return self._construct_pvinfo(pname, cpu, mnames[0], None)
-
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
-    def _get_epb_pvinfo(self, pname, cpu, mnames):
-        """Return property value dictionary for EPB."""
-
-        val, mname = None, None
-
-        try:
-            val, mname = self._get_epbobj().get_cpu_val(cpu, mnames=mnames)
-        except ErrorNotSupported as err:
-            _LOG.debug(err)
-            return self._construct_pvinfo(pname, cpu, mnames[0], None)
-
-        return self._construct_pvinfo(pname, cpu, mname, val)
-
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
@@ -921,9 +917,11 @@ class PStates(_PCStatesBase.PCStatesBase):
         prop = self._props[pname]
 
         if pname == "epp":
-            pvinfo = self._get_epp_pvinfo(pname, cpu, (mname,))
+            val = self._get_epp(cpu, mname)
+            pvinfo = {"val": val}
         elif pname == "epb":
-            pvinfo = self._get_epb_pvinfo(pname, cpu, (mname,))
+            val = self._get_epb(cpu, mname)
+            pvinfo = {"val": val}
         elif pname == "max_eff_freq":
             pvinfo = self._get_max_eff_freq_pvinfo(cpu)
         elif pname == "hwp":
