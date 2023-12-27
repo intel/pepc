@@ -129,24 +129,21 @@ class Power(_PropsClassBase.PropsClassBase):
 
         return pname.replace("ppl", "limit")
 
-    def _get_cpu_prop(self, pname, cpu, mname):
-        """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
-
-        assert mname == "msr"
-
-        if pname.startswith("ppl"):
-            fname = self._pname2fname(pname)
-            return self._get_pplobj().read_cpu_feature(fname, cpu)
-        return self._get_ppiobj().read_cpu_feature(pname, cpu)
-
     def _get_prop_cpus(self, pname, cpus, mname):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, 'val' is property 'pname' value for CPU
         'cpu'. Use mechanism 'mname'.
         """
 
-        for cpu in cpus:
-            yield (cpu, self._get_cpu_prop(pname, cpu, mname))
+        assert mname == "msr"
+
+        if pname.startswith("ppl"):
+            fname = self._pname2fname(pname)
+            pplobj = self._get_pplobj()
+            yield from pplobj.read_feature(fname, cpus=cpus)
+        else:
+            ppiobj = self._get_ppiobj()
+            yield from ppiobj.read_feature(pname, cpus=cpus)
 
     def _do_set_prop(self, pname, val, cpus):
         """Implements '_set_prop_cpus()'."""
