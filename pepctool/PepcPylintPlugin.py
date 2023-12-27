@@ -994,6 +994,34 @@ class PepcASTChecker(BaseChecker):
                 "Docstring refers to an option, but it doesn't have hyphens around it."
             ),
         ),
+        "W9964": (
+            "New line of log message starting in lower case",
+            "pepc-lower-case-log-message-cont",
+            (
+                "Used when the next line of a non-info log message starts with lower case letter."
+            ),
+        ),
+        "W9965": (
+            "New line of log message not ending in dot",
+            "pepc-no-dot-log-message-cont",
+            (
+                "Used when the next line of a non-info log message does not end in dot."
+            ),
+        ),
+        "W9966": (
+            "New line of error message starting in lower case",
+            "pepc-lower-case-error-message-cont",
+            (
+                "Used when the next line of an error message starts with lower case letter."
+            ),
+        ),
+        "W9967": (
+            "New line of error message not ending in dot",
+            "pepc-no-dot-error-message-cont",
+            (
+                "Used when the next line of an error message does not end in dot."
+            ),
+        ),
     }
 
     options = (
@@ -1033,13 +1061,21 @@ class PepcASTChecker(BaseChecker):
         else:
             msgtype = "error"
 
-        match = re.match(r"[^\.]*\.\s*$", txt)
-        if match:
-            self.add_message(f"pepc-dot-{msgtype}-message", node=node)
+        firstline = True
 
-        match = re.match(r"^[A-Z]([a-z]+|\s+)", txt)
-        if match:
-            self.add_message(f"pepc-cap-{msgtype}-message", node=node)
+        for line in txt.split("\n", 1):
+            match = re.match(r"[^\.]*\.\s*$", line)
+            if match and firstline:
+                self.add_message(f"pepc-dot-{msgtype}-message", node=node)
+            if not match and not firstline:
+                self.add_message(f"pepc-no-dot-{msgtype}-message-cont", node=node)
+
+            match = re.match(r"^[A-Z]([a-z]+|\s+)", line)
+            if match and firstline:
+                self.add_message(f"pepc-cap-{msgtype}-message", node=node)
+            if not match and not firstline:
+                self.add_message(f"pepc-lower-case-{msgtype}-message-cont", node=node)
+            firstline = False
 
     def _check_log(self, node):
         """Verify '_LOG.' call for a given 'node'."""
