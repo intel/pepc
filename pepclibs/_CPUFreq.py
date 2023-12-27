@@ -258,14 +258,20 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
     Public methods overview.
 
     1. Get CPU frequency limits from ACPI CPPC.
-       * 'get_min_freq_limit()'
-       * 'get_max_freq_limit()'
+       * 'get_min_freq_limit()' - multiple CPUs.
+       * 'get_cpu_min_freq_limit()' - single CPU.
+       * 'get_max_freq_limit()' - multiple CPUs.
+       * 'get_cpu_max_freq_limit()' - single CPU.
     1. Get CPU performance limits from ACPI CPPC.
-       * 'get_min_perf_limit()'
-       * 'get_max_perf_limit()'
+       * 'get_min_perf_limit()' - multiple CPUs.
+       * 'get_cpu_min_perf_limit()' - single CPU.
+       * 'get_max_perf_limit()' - multiple CPUs.
+       * 'get_cpu_max_perf_limit()' - single CPU.
     4. Get CPU base frequency and performance from ACPI CPPC:
-       * 'get_base_freq()'
-       * 'get_base_perf()'
+       * 'get_base_freq()' - multiple CPUs.
+       * 'get_cpu_base_freq()' - single CPU.
+       * 'get_base_perf()' - multiple CPUs.
+       * 'get_cpu_base_perf()' - single CPU.
     """
 
     def _get_sysfs_path(self, cpu, fname):
@@ -294,7 +300,22 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
 
         return self._sysfs_io.cache_add(path, val)
 
-    def get_min_freq_limit(self, cpu):
+    def get_min_freq_limit(self, cpus="all"):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum frequency
+        limit for CPU 'cpu' read from ACPI CPPC via Linux sysfs interfaces. The arguments are as
+        follows.
+          * cpus - a collection of integer CPU numbers to get the minimum frequency limit for.
+
+        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        """
+
+        for cpu in cpus:
+            val = self._read_cppc_sysfs_file(cpu, "lowest_freq", f"max. CPU {cpu} frequency limit")
+            # CPPC sysfs files use MHz.
+            yield cpu, val * 1000 * 1000
+
+    def get_cpu_min_freq_limit(self, cpu):
         """
         Get minimum CPU frequency limit from ACPI CPPC via Linux sysfs interfaces. The arguments are
         as follows.
@@ -304,11 +325,25 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         sysfs file does not exist.
         """
 
-        val = self._read_cppc_sysfs_file(cpu, "lowest_freq", f"min. CPU {cpu} frequency limit")
-        # CPPC sysfs files use MHz.
-        return val * 1000 * 1000
+        _, val = next(self.get_min_freq_limit(cpus=(cpu,)))
+        return val
 
-    def get_max_freq_limit(self, cpu):
+    def get_max_freq_limit(self, cpus="all"):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum frequency
+        limit for CPU 'cpu' read from ACPI CPPC via Linux sysfs interfaces. The arguments are as
+        follows.
+          * cpus - a collection of integer CPU numbers to get the maximum frequency limit for.
+
+        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        """
+
+        for cpu in cpus:
+            val = self._read_cppc_sysfs_file(cpu, "highest_freq", f"max. CPU {cpu} frequency limit")
+            # CPPC sysfs files use MHz.
+            yield cpu, val * 1000 * 1000
+
+    def get_cpu_max_freq_limit(self, cpu):
         """
         Get maximum CPU frequency limit from ACPI CPPC via Linux sysfs interfaces. The arguments are
         as follows.
@@ -318,11 +353,25 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         sysfs file does not exist.
         """
 
-        val = self._read_cppc_sysfs_file(cpu, "highest_freq", f"max. CPU {cpu} frequency limit")
-        # CPPC sysfs files use MHz.
-        return val * 1000 * 1000
+        _, val = next(self.get_max_freq_limit(cpus=(cpu,)))
+        return val
 
-    def get_min_perf_limit(self, cpu):
+    def get_min_perf_limit(self, cpus="all"):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum performance
+        limit for CPU 'cpu' read from ACPI CPPC via Linux sysfs interfaces. The arguments are as
+        follows.
+          * cpus - a collection of integer CPU numbers to get the minimum performance limit for.
+
+        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        """
+
+        for cpu in cpus:
+            what = f"min. CPU {cpu} performance limit"
+            val = self._read_cppc_sysfs_file(cpu, "lowest_perf", what)
+            yield cpu, val
+
+    def get_cpu_min_perf_limit(self, cpu):
         """
         Get minimum CPU performance limit from ACPI CPPC via Linux sysfs interfaces. The arguments
         are as follows.
@@ -332,9 +381,25 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         not exist.
         """
 
-        return self._read_cppc_sysfs_file(cpu, "lowest_perf", f"min. CPU {cpu} performance limit")
+        _, val = next(self.get_min_perf_limit(cpus=(cpu,)))
+        return val
 
-    def get_max_perf_limit(self, cpu):
+    def get_max_perf_limit(self, cpus="all"):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum performance
+        limit for CPU 'cpu' read from ACPI CPPC via Linux sysfs interfaces. The arguments are as
+        follows.
+          * cpus - a collection of integer CPU numbers to get the maximum performance limit for.
+
+        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        """
+
+        for cpu in cpus:
+            what = f"max. CPU {cpu} performance limit"
+            val = self._read_cppc_sysfs_file(cpu, "highest_perf", what)
+            yield cpu, val
+
+    def get_cpu_max_perf_limit(self, cpu):
         """
         Get maximum CPU performance limit from ACPI CPPC via Linux sysfs interfaces. The arguments
         are as follows.
@@ -344,9 +409,24 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         not exist.
         """
 
-        return self._read_cppc_sysfs_file(cpu, "highest_perf", f"max. CPU {cpu} performance limit")
+        _, val = next(self.get_max_perf_limit(cpus=(cpu,)))
+        return val
 
-    def get_base_freq(self, cpu):
+    def get_base_freq(self, cpus="all"):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the base frequency of
+        CPU 'cpu' read from ACPI CPPC via Linux sysfs interfaces. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the base frequency for.
+
+        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        """
+
+        for cpu in cpus:
+            val = self._read_cppc_sysfs_file(cpu, "nominal_freq", f"base CPU {cpu} frequency")
+            # CPPC sysfs files use MHz.
+            yield cpu, val * 1000 * 1000
+
+    def get_cpu_base_freq(self, cpu):
         """
         Get base CPU frequency from ACPI CPPC via Linux sysfs interfaces. The arguments are as
         follows.
@@ -356,11 +436,23 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         file does not exist.
         """
 
-        val = self._read_cppc_sysfs_file(cpu, "nominal_freq", f"base CPU {cpu} frequency")
-        # CPPC sysfs files use MHz.
-        return val * 1000 * 1000
+        _, val = next(self.get_base_freq(cpus=(cpu,)))
+        return val
 
-    def get_base_perf(self, cpu):
+    def get_base_perf(self, cpus="all"):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the base performance of
+        CPU 'cpu' read from ACPI CPPC via Linux sysfs interfaces. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the maximum performance limit for.
+
+        Raise 'ErrorNotSupported' if the CPU performance sysfs file does not exist.
+        """
+
+        for cpu in cpus:
+            val = self._read_cppc_sysfs_file(cpu, "nominal_perf", f"base CPU {cpu} performance")
+            yield cpu, val
+
+    def get_cpu_base_perf(self, cpu):
         """
         Get base CPU performance from ACPI CPPC via Linux sysfs interfaces. The arguments are as
         follows.
@@ -370,7 +462,8 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         sysfs file does not exist.
         """
 
-        return self._read_cppc_sysfs_file(cpu, "nominal_perf", f"base CPU {cpu} performance")
+        _, val = next(self.get_base_perf(cpus=(cpu,)))
+        return val
 
 class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     """

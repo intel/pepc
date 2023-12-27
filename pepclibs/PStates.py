@@ -391,14 +391,14 @@ class PStates(_PCStatesBase.PCStatesBase):
         cpufreq_obj = self._get_cpufreq_cppc_obj()
 
         if pname == "base_freq":
-            return cpufreq_obj.get_base_freq(cpu)
+            return cpufreq_obj.get_cpu_base_freq(cpu)
 
 
         with contextlib.suppress(ErrorNotSupported):
             if pname == "max_turbo_freq":
-                return cpufreq_obj.get_max_freq_limit(cpu)
+                return cpufreq_obj.get_cpu_max_freq_limit(cpu)
             elif pname == "min_oper_freq":
-                return cpufreq_obj.get_min_freq_limit(cpu)
+                return cpufreq_obj.get_cpu_min_freq_limit(cpu)
             else:
                 raise Error(f"BUG: unexpected property {pname}")
 
@@ -406,12 +406,12 @@ class PStates(_PCStatesBase.PCStatesBase):
         # are. The base frequency is required to turn performance values to Hz.
 
         base_freq = self._get_cpu_prop_cache("base_freq", cpu)
-        nominal_perf = cpufreq_obj.get_base_perf(cpu)
+        nominal_perf = cpufreq_obj.get_cpu_base_perf(cpu)
 
         if pname == "max_turbo_freq":
-            perf = cpufreq_obj.get_max_perf_limit(cpu)
+            perf = cpufreq_obj.get_cpu_max_perf_limit(cpu)
         elif pname == "min_oper_freq":
-            perf = cpufreq_obj.get_min_perf_limit(cpu)
+            perf = cpufreq_obj.get_cpu_min_perf_limit(cpu)
 
         return int((base_freq * perf) / nominal_perf)
 
