@@ -98,11 +98,7 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         """Get CPU frequency from the Linux "cpufreq" sysfs file."""
 
         path = self._get_cpu_freq_sysfs_path(key, cpu, limit=limit)
-
         freq = self._sysfs_io.read_int(path, what=f"{key}. frequency for CPU {cpu}")
-        if freq is None:
-            return None
-
         # The frequency value is in kHz in sysfs.
         return freq * 1000
 
@@ -112,8 +108,8 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         follows.
           * cpu - CPU number to get the frequency for.
 
-        Return the minimum CPU frequency in Hz or 'None' if the CPU frequency sysfs file does not
-        exist.
+        Return the minimum CPU frequency in Hz. Raise 'ErrorNotSupported' if the CPU frequency sysfs
+        file does not exist.
         """
 
         return self._get_freq_sysfs("min", cpu)
@@ -124,8 +120,8 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         follows.
           * cpu - CPU number to get the frequency for.
 
-        Return the maximum CPU frequency in Hz or 'None' if the CPU frequency sysfs file does not
-        exist.
+        Return the maximum CPU frequency in Hz. Raise 'ErrorNotSupported' if the CPU frequency sysfs
+        file does not exist.
         """
 
         return self._get_freq_sysfs("max", cpu)
@@ -136,8 +132,8 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         follows.
           * cpu - CPU number to get the frequency for.
 
-        Return the minimum CPU frequency limit in Hz or 'None' if the CPU frequency sysfs file does
-        not exist.
+        Return the minimum CPU frequency limit in Hz. Raise 'ErrorNotSupported' if the CPU frequency
+        sysfs file does not exist.
         """
 
         return self._get_freq_sysfs("min", cpu, limit=True)
@@ -148,8 +144,8 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         follows.
           * cpu - CPU number to get the frequency for.
 
-        Return the maximum CPU frequency limit in Hz or 'None' if the CPU frequency sysfs file does
-        not exist.
+        Return the maximum CPU frequency limit in Hz. Raise 'ErrorNotSupported' if the CPU frequency
+        sysfs file does not exist.
         """
 
         return self._get_freq_sysfs("max", cpu, limit=True)
@@ -201,16 +197,13 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         Get the list of available CPU frequency values. The arguments are as follows.
           * cpu - CPU number to get the list of available frequencies for.
 
-        Return the list of available frequencies Hz or 'None' if the frequencies sysfs file does not
-        exist. The sysfs file provided by the 'acpi-cpufreq' driver. but 'intel_idle' driver does
-        not provide it.
+        Return the list of available frequencies Hz. Raise 'ErrorNotSupported' if the frequencies
+        sysfs file does not exist. The sysfs file provided by the 'acpi-cpufreq' driver. but
+        'intel_idle' driver does not provide it.
         """
 
         path = self._get_policy_sysfs_path(cpu, "scaling_available_frequencies")
-
         val = self._sysfs_io.read(path, what="available CPU frequencies")
-        if val is None:
-            return val
 
         freqs = []
         for freq in val.split():
@@ -227,11 +220,7 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         """Get CPU base frequency from 'intel_pstate' driver's sysfs file."""
 
         path = self._get_policy_sysfs_path(cpu, "base_frequency")
-
         freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
-        if freq is None:
-            return None
-
         # The frequency value is in kHz in sysfs.
         return freq * 1000
 
@@ -239,11 +228,7 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         """Get CPU base frequency from the 'bios_limit' sysfs file."""
 
         path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
-
         freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
-        if freq is None:
-            return None
-
         # The frequency value is in kHz in sysfs.
         return freq * 1000
 
@@ -252,13 +237,17 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         Get CPU base frequency via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
           * cpu - CPU number to get base frequency for.
 
-        Return the base frequency vaule in Hz or 'None' if the bae frequency sysfs files do not
-        exist.
+        Return the base frequency vaule in Hz. Raise 'ErrorNotSupported' if the bae frequency sysfs
+        files do not exist.
         """
 
-        freq = self._get_base_freq_intel_pstate(cpu)
-        if freq is None:
-            freq = self._get_base_freq_bios_limit(cpu)
+        try:
+            freq = self._get_base_freq_intel_pstate(cpu)
+        except ErrorNotSupported as err1:
+            try:
+                freq = self._get_base_freq_bios_limit(cpu)
+            except ErrorNotSupported as err2:
+                raise ErrorNotSupported(f"{err1}\n{err2}") from err2
         return freq
 
 class CPUFreqCPPC(_CPUFreqSysfsBase):
@@ -295,9 +284,9 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
             val = self._sysfs_io.read_int(path, what=what)
         except Error as err:
             # On some platforms reading CPPC sysfs files always fails. So treat these errors as if
-            # the sysfs file was not even available and return 'None'.
-            _LOG.debug(err)
+            # the sysfs file was not even available and raise 'ErrorNotSupported'.
             _LOG.warn_once("ACPI CPPC sysfs file '%s' is not readable%s", path, self._pman.hostmsg)
+            raise ErrorNotSupported(err) from err
 
         return self._sysfs_io.cache_add(path, val)
 
@@ -307,15 +296,13 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         as follows.
           * cpu - CPU number to get the frequency limit for.
 
-        Return the minimum CPU frequency limit in Hz or 'None' if the CPU frequency sysfs file does
-        not exist.
+        Return the minimum CPU frequency limit in Hz. Raise 'ErrorNotSupported' if the CPU frequency
+        sysfs file does not exist.
         """
 
         val = self._read_cppc_sysfs_file(cpu, "lowest_freq", f"min. CPU {cpu} frequency limit")
-        if val:
-            # CPPC sysfs files use MHz.
-            val *= 1000 * 1000
-        return val
+        # CPPC sysfs files use MHz.
+        return val * 1000 * 1000
 
     def get_max_freq_limit(self, cpu):
         """
@@ -323,15 +310,13 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         as follows.
           * cpu - CPU number to get the frequency limit for.
 
-        Return the maximum CPU frequency limit in Hz or 'None' if the CPU frequency sysfs file does
-        not exist.
+        Return the maximum CPU frequency limit in Hz. Raise 'ErrorNotSupported' if the CPU frequency
+        sysfs file does not exist.
         """
 
         val = self._read_cppc_sysfs_file(cpu, "highest_freq", f"max. CPU {cpu} frequency limit")
-        if val:
-            # CPPC sysfs files use MHz.
-            val *= 1000 * 1000
-        return val
+        # CPPC sysfs files use MHz.
+        return val * 1000 * 1000
 
     def get_min_perf_limit(self, cpu):
         """
@@ -339,7 +324,8 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         are as follows.
           * cpu - CPU number to get the frequency limit for.
 
-        Return the minimum CPU limit or 'None' if the CPU frequency sysfs file does not exist.
+        Return the minimum CPU limit. Raise 'ErrorNotSupported' if the CPU frequency sysfs file does
+        not exist.
         """
 
         return self._read_cppc_sysfs_file(cpu, "lowest_perf", f"min. CPU {cpu} performance limit")
@@ -350,7 +336,8 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         are as follows.
           * cpu - CPU number to get the frequency limit for.
 
-        Return the maximum CPU limit or 'None' if the CPU frequency sysfs file does not exist.
+        Return the maximum CPU limit. Raise 'ErrorNotSupported' if the CPU frequency sysfs file does
+        not exist.
         """
 
         return self._read_cppc_sysfs_file(cpu, "highest_perf", f"max. CPU {cpu} performance limit")
@@ -361,15 +348,13 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         follows.
           * cpu - CPU number to get the base frequency for.
 
-        Return the base CPU frequency in Hz or 'None' if the CPU frequency sysfs file does not
-        exist.
+        Return the base CPU frequency in Hz. Raise 'ErrorNotSupported' if the CPU frequency sysfs
+        file does not exist.
         """
 
         val = self._read_cppc_sysfs_file(cpu, "nominal_freq", f"base CPU {cpu} frequency")
-        if val:
-            # CPPC sysfs files use MHz.
-            val *= 1000 * 1000
-        return val
+        # CPPC sysfs files use MHz.
+        return val * 1000 * 1000
 
     def get_base_perf(self, cpu):
         """
@@ -377,8 +362,8 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         follows.
           * cpu - CPU number to get the base performance for.
 
-        Return the base CPU performance in Hz or 'None' if the CPU performance sysfs file does not
-        exist.
+        Return the base CPU performance in Hz. Raise 'ErrorNotSupported' if the CPU performance
+        sysfs file does not exist.
         """
 
         return self._read_cppc_sysfs_file(cpu, "nominal_perf", f"base CPU {cpu} performance")
@@ -429,10 +414,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         return self._fsbfreq
 
-    def _get_bclk(self, cpu, not_supported_ok=True):
-        """
-        Return bus clock speed in Hz. Return 'None' if bus clock is not supported by the platform.
-        """
+    def _get_bclk(self, cpu):
+        """Return bus clock speed in Hz."""
 
         try:
             bclk = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
@@ -440,8 +423,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             # Fall back to 100MHz clock speed.
             if self._cpuinfo.info["vendor"] == "GenuineIntel":
                 return 100000000
-            if not_supported_ok:
-                return None
             raise
 
         # Convert MHz to Hz.
@@ -479,9 +460,10 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         Convert the performance units to CPU frequency in Hz.
         """
 
-        bclk = self._get_bclk(cpu, not_supported_ok=True)
-        if not bclk:
-            return None
+        try:
+            bclk = self._get_bclk(cpu)
+        except ErrorNotSupported:
+            return perf
 
         if self._cpuinfo.info["hybrid"]:
             pcore_cpus = set(self._cpuinfo.get_hybrid_cpu_topology()["pcore"])
@@ -506,20 +488,11 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         # The corresponding 'MSR_HWP_REQUEST' feature name.
         feature_name = f"{key}_perf"
 
-        try:
-            hwpreq = self._get_hwpreq()
-            if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu):
-                hwpreq = self._get_hwpreq_pkg()
-        except ErrorNotSupported as err:
-            _LOG.debug(err)
-            return None
+        hwpreq = self._get_hwpreq()
+        if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu):
+            hwpreq = self._get_hwpreq_pkg()
 
-        try:
-            perf = hwpreq.read_cpu_feature(feature_name, cpu)
-        except ErrorNotSupported:
-            _LOG.debug("CPU %d: HWP %s performance is not supported", cpu, key)
-            return None
-
+        perf = hwpreq.read_cpu_feature(feature_name, cpu)
         return self._perf_to_freq(cpu, perf)
 
     def get_min_freq(self, cpu):
@@ -528,7 +501,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         are as follows.
           * cpu - CPU number to get the frequency for.
 
-        Return the minimum CPU frequency in Hz or 'None' if 'MSR_HWP_REQUEST' is not supported.
+        Return the minimum CPU frequency in Hz. Raise 'ErrorNotSupported' if 'MSR_HWP_REQUEST' is
+        not supported.
         """
 
         return self._get_freq_msr("min", cpu)
@@ -539,7 +513,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         are as follows.
           * cpu - CPU number to get the frequency for.
 
-        Return the maximum CPU frequency in Hz or 'None' if 'MSR_HWP_REQUEST' is not supported.
+        Return the maximum CPU frequency in Hz. Raise 'ErrorNotSupported' if 'MSR_HWP_REQUEST' is
+        not supported.
         """
 
         return self._get_freq_msr("max", cpu)
@@ -557,7 +532,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                 perf = int((freq + self._perf_to_freq_factor - 1) / self._perf_to_freq_factor)
 
         if perf is None:
-            bclk = self._get_bclk(cpu, not_supported_ok=False)
+            bclk = self._get_bclk(cpu)
             perf = freq // bclk
 
         hwpreq = self._get_hwpreq()
@@ -612,20 +587,14 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         are as follows.
           * cpu - CPU number to get base frequency for.
 
-        Return base CPU frequency in Hz or 'None' if 'MSR_PLATFORM_INFO' is not supported.
+        Return base CPU frequency in Hz. Raise 'ErrorNotSupported' if 'MSR_PLATFORM_INFO' is not
+        supported.
         """
 
-        try:
-            platinfo = self._get_platinfo()
-            ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
-
-            bclk = self._get_bclk(cpu)
-            if bclk is not None:
-                return ratio * bclk
-        except ErrorNotSupported:
-            return None
-
-        return None
+        platinfo = self._get_platinfo()
+        ratio = platinfo.read_cpu_feature("max_non_turbo_ratio", cpu)
+        bclk = self._get_bclk(cpu)
+        return ratio * bclk
 
     def get_min_oper_freq(self, cpu):
         """
@@ -633,21 +602,14 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         register. The arguments are as follows.
           * cpu - CPU number to get the minimum operating frequency for.
 
-        Return the minium opeating CPU frequency in Hz or 'None' if 'MSR_PLATFORM_INFO' is not
-        supported.
+        Return the minium opeating CPU frequency in Hz. Raise 'ErrorNotSupported' if
+        'MSR_PLATFORM_INFO' is not supported.
         """
 
-        try:
-            platinfo = self._get_platinfo()
-            ratio = platinfo.read_cpu_feature("min_oper_ratio", cpu)
-
-            bclk = self._get_bclk(cpu)
-            if bclk is not None:
-                return ratio * bclk
-        except ErrorNotSupported:
-            return None
-
-        return None
+        platinfo = self._get_platinfo()
+        ratio = platinfo.read_cpu_feature("min_oper_ratio", cpu)
+        bclk = self._get_bclk(cpu)
+        return ratio * bclk
 
     def get_max_eff_freq(self, cpu):
         """
@@ -656,21 +618,14 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
           * cpu - CPU number to get the maximum efficiency frequency for.
 
         Return the maximum CPU efficiency frequency in Hz. Maximum efficiency frequency is the
-        frequency with best CPU performance per watt ratio. Return  'None' if 'MSR_PLATFORM_INFO' is
-        not supported.
+        frequency with best CPU performance per watt ratio. Raise 'ErrorNotSupported' if
+        'MSR_PLATFORM_INFO' is not supported.
         """
 
-        try:
-            platinfo = self._get_platinfo()
-            ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
-
-            bclk = self._get_bclk(cpu)
-            if bclk is not None:
-                return ratio * bclk
-        except ErrorNotSupported:
-            return None
-
-        return None
+        platinfo = self._get_platinfo()
+        ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
+        bclk = self._get_bclk(cpu)
+        return ratio * bclk
 
     def get_max_turbo_freq(self, cpu):
         """
@@ -678,37 +633,27 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         register. The arguments are as follows.
           * cpu - CPU number to get the maximum turbo frequency for.
 
-        Return the maximum CPU turbo frequency in Hz. Return 'None' if 'MSR_TURBO_RATIO_LIMIT' is
-        not supported.
+        Return the maximum CPU turbo frequency in Hz. Raise 'ErrorNotSupported' if
+        'MSR_TURBO_RATIO_LIMIT' is not supported.
         """
 
-        try:
-            trl = self._get_trl()
-        except ErrorNotSupported:
-            return None
-
+        trl = self._get_trl()
         try:
             ratio = trl.read_cpu_feature("max_1c_turbo_ratio", cpu)
-        except ErrorNotSupported:
+        except ErrorNotSupported as err1:
             try:
                 # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores.
                 # We can safely assume that group 0 will correspond to max. 1-core turbo, so we do
                 # not need to look at 'MSR_TURBO_RATIO_LIMIT1'.
                 ratio = trl.read_cpu_feature("max_g0_turbo_ratio", cpu)
-            except ErrorNotSupported:
+            except ErrorNotSupported as err2:
                 _LOG.warn_once("CPU %d: module 'TurboRatioLimit' doesn't support "
                                "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
                                "maintainers.", cpu, self._cpuinfo.cpudescr, self._pman.hostmsg)
-                return None
+                raise ErrorNotSupported(f"{err1}\n{err2}") from err2
 
-        try:
-            bclk = self._get_bclk(cpu)
-            if bclk is not None:
-                return ratio * bclk
-        except ErrorNotSupported:
-            return None
-
-        return None
+        bclk = self._get_bclk(cpu)
+        return ratio * bclk
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """

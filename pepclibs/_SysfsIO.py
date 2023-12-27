@@ -16,6 +16,7 @@ import time
 import contextlib
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorVerifyFailed
 
 class SysfsIO(ClassHelpers.SimpleCloseContext):
@@ -81,7 +82,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         from the sysfs file and add the result to the cache. If cache is disabled, skip all the
         cache operations.
 
-        Return the contents of the file at 'path'. Return 'None' if the file does not exist.
+        Return the contents of the file at 'path'. Raise 'ErrorNotSupported' if the file does not exist.
         """
 
         if bypass_cache:
@@ -103,8 +104,10 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                     what = "" if what is None else f" {what}"
                     raise Error(f"failed to read{what} from '{path}'{self._pman.hostmsg}\n"
                                 f"{err.indent(2)}") from err
-        except ErrorNotFound:
-            val = None
+        except ErrorNotFound as err:
+            what = "" if what is None else f" {what}"
+            raise ErrorNotSupported(f"failed to read{what} from '{path}'{self._pman.hostmsg}\n"
+                                    f"{err.indent(2)}") from err
 
         if not bypass_cache:
             self.cache_add(path, val)
@@ -127,8 +130,6 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         """
 
         val = self.read(path, bypass_cache=bypass_cache, what=what)
-        if val is None:
-            return None
 
         try:
             return Trivial.str_to_int(val, what=what)
@@ -154,14 +155,22 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         try:
             with self._pman.open(path, "r+") as fobj:
-                fobj.write(val)
-        except Error as err:
+                try:
+                    fobj.write(val)
+                except Error as err:
+                    what = "" if what is None else f" {what}"
+                    val = str(val)
+                    if len(val) > 24:
+                        val = f"{val[:23]}...snip..."
+                    raise Error(f"failed to write value '{val}' to{what} sysfs file '{path}'"
+                                f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+        except ErrorNotFound as err:
             what = "" if what is None else f" {what}"
             val = str(val)
             if len(val) > 24:
                 val = f"{val[:23]}...snip..."
-            raise Error(f"failed to write value '{val}' to{what} sysfs file '{path}'"
-                        f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+            raise ErrorNotSupported(f"failed to write value '{val}' to{what} sysfs file '{path}'"
+                                    f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         if self._enable_cache and not bypass_cache:
             self._cache[path] = val
