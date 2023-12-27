@@ -346,39 +346,10 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             pass
         return csinfo
 
-    def get_current_governor(self):
-        """
-        Return name of the current Linux idle driver governor. Return 'None' if there is no idle
-        driver, and therefore, not idle governor.
-        """
-
-        if not self.get_idle_driver():
-            return None
-
-        with contextlib.suppress(ErrorNotFound):
-            return self._cache.get("current_governor", 0)
-
-        path = self._sysfs_base / "cpuidle" / "current_governor"
-        governor = self._pman.read(path).strip()
-        return self._cache.add("current_governor", 0, governor)
-
-    def get_available_governors(self):
-        """Get list of available idle driver governors."""
-
-        if not self.get_idle_driver():
-            return None
-
-        with contextlib.suppress(ErrorNotFound):
-            return self._cache.get("available_governors", 0)
-
-        path = self._sysfs_base / "cpuidle" / "available_governors"
-        avail_governors = self._pman.read(path).strip().split()
-        return self._cache.add("available_governors", 0, avail_governors)
-
     def get_idle_driver(self):
         """
-        Return name of Linux idle driver currently used by the kernel. Return 'None' if there is no
-        idle driver.
+        Return name of Linux idle driver currently used by the kernel. Raise 'ErrorNotSupported' if
+        there is no idle driver.
         """
 
         with contextlib.suppress(ErrorNotFound):
@@ -387,18 +358,61 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         path = self._sysfs_base / "cpuidle" / "current_driver"
         try:
             idle_driver = self._pman.read(path).strip()
-        except ErrorNotFound:
-            idle_driver = None
+        except ErrorNotFound as err:
+            msg = f"failed to detect current Linux idle driver name:\n{err.indent(2)}"
             for opt in self._get_cmdline().split():
                 if opt == "cpuidle.off=1" or opt.startswith("idle="):
-                    _LOG.debug("the '/proc/cmdline' file%s indicates that the '%s' kernel "
-                                "boot parameter is set.\n"
-                                "This may be the reason why there is no idle driver%s.",
-                                self._pman.hostmsg, opt, self._pman.hostmsg)
-                    break
+                    msg += f"\nThe '/proc/cmdline' file{self._pman.hostmsg} indicates that the " \
+                           f"'{opt}' kernel boot parameter is set, may be the reason"
+            raise ErrorNotSupported(msg) from err
 
         self._cache.add("current_driver", 0, idle_driver)
         return idle_driver
+
+    def get_current_governor(self):
+        """
+        Return name of the current Linux idle driver governor. Raise 'ErrorNotSUpported' if there is
+        no idle driver, and therefore, not idle governor.
+        """
+
+        # Verify there is an idle driver.
+        try:
+            self.get_idle_driver()
+        except ErrorNotSupported as err:
+            raise ErrorNotSupported(f"failed to detect idle governor because there is no idle "
+                                    f"driver:\n{err.indent(2)}") from err
+
+        with contextlib.suppress(ErrorNotFound):
+            return self._cache.get("current_governor", 0)
+
+        path = self._sysfs_base / "cpuidle" / "current_governor"
+        try:
+            governor = self._pman.read(path).strip()
+        except ErrorNotFound as err:
+            raise ErrorNotSupported(f"failed to detect idle governor:\n{err.indent(2)}") from err
+
+        return self._cache.add("current_governor", 0, governor)
+
+    def get_available_governors(self):
+        """Get list of available idle driver governors."""
+
+        # Verify there is an idle driver.
+        try:
+            self.get_idle_driver()
+        except ErrorNotSupported as err:
+            raise ErrorNotSupported(f"failed to detect idle governors because there is no idle "
+                                    f"driver:\n{err.indent(2)}") from err
+
+        with contextlib.suppress(ErrorNotFound):
+            return self._cache.get("available_governors", 0)
+
+        path = self._sysfs_base / "cpuidle" / "available_governors"
+        try:
+            avail_governors = self._pman.read(path).strip().split()
+        except ErrorNotFound as err:
+            raise ErrorNotSupported(f"failed to detect idle governors:\n{err.indent(2)}") from err
+
+        return self._cache.add("available_governors", 0, avail_governors)
 
     def _toggle_cstates(self, csnames="all", cpus="all", enable=True):
         """
