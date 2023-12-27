@@ -285,8 +285,12 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
         except Error as err:
             # On some platforms reading CPPC sysfs files always fails. So treat these errors as if
             # the sysfs file was not even available and raise 'ErrorNotSupported'.
-            _LOG.warn_once("ACPI CPPC sysfs file '%s' is not readable%s", path, self._pman.hostmsg)
+            _LOG.debug("ACPI CPPC sysfs file '%s' is not readable%s", path, self._pman.hostmsg)
             raise ErrorNotSupported(err) from err
+
+        if val == 0:
+            _LOG.debug("ACPI CPPC sysfs file '%s' contains 0%s", path, self._pman.hostmsg)
+            raise ErrorNotSupported(f"read '0' for {what} from '{path}'")
 
         return self._sysfs_io.cache_add(path, val)
 
