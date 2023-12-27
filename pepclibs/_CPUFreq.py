@@ -389,7 +389,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     4. Get the minimum CPU operating frequency via an MSR (Intel CPUs only):
        * 'get_min_oper_freq()'
     5. Get the maximum CPU efficiency frequency via an MSR (Intel CPUs only):
-       * 'get_max_eff_freq()'
+       * 'get_max_eff_freq()' - multiple CPUs.
+       * 'get_cpu_max_eff_freq()' - single CPU.
     6. Get the maximum CPU turbo frequency via an MSR (Intel CPUs only):
        * 'get_max_turbo_freq()'
 
@@ -418,19 +419,30 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         return self._fsbfreq
 
+    def _get_bclks(self, cpus="all"):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the bus clock speed for
+        CPU 'cpu' in Hz.
+        """
+
+        try:
+            fsbfreq = self._get_fsbfreq()
+        except ErrorNotSupported:
+            if self._cpuinfo.info["vendor"] != "GenuineIntel":
+                raise
+            # Fall back to 100MHz bus clock speed.
+            for cpu in cpus:
+                yield cpu, 100000000
+        else:
+            for cpu, bclk in fsbfreq.read_feature("fsb", cpus=cpus):
+                # Convert MHz to Hz.
+                yield cpu, int(bclk * 1000000)
+
     def _get_bclk(self, cpu):
         """Return bus clock speed in Hz."""
 
-        try:
-            bclk = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
-        except ErrorNotSupported:
-            # Fall back to 100MHz clock speed.
-            if self._cpuinfo.info["vendor"] == "GenuineIntel":
-                return 100000000
-            raise
-
-        # Convert MHz to Hz.
-        return int(bclk * 1000000)
+        _, val = next(self._get_bclks(cpus=(cpu,)))
+        return val
 
     def _get_hwpreq(self):
         """Returns an 'HWPRequest.HWPRequest()' object."""
@@ -615,7 +627,25 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         bclk = self._get_bclk(cpu)
         return ratio * bclk
 
-    def get_max_eff_freq(self, cpu):
+    def get_max_eff_freq(self, cpus="all"):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is  maximum CPU efficiency
+        frequency for CPU 'cpu' from the 'MSR_PLATFORM_INFO' model-specific register. The arguments
+        are as follows.
+          * cpus - a collection of integer CPU numbers to get the maximum efficiency frequency for.
+
+        Maximum efficiency frequency is the frequency with best CPU performance per watt ratio.
+        Raise 'ErrorNotSupported' if 'MSR_PLATFORM_INFO' is not supported.
+        """
+
+        platinfo = self._get_platinfo()
+        bclks_generator = self._get_bclks(cpus=cpus)
+        platinfo_generator = platinfo.read_feature("max_eff_ratio", cpus=cpus)
+        for (cpu1, ratio), (cpu2, bclk) in zip(bclks_generator, platinfo_generator):
+            assert cpu1 == cpu2
+            yield cpu1, ratio * bclk
+
+    def get_cpu_max_eff_freq(self, cpu):
         """
         Get the maximum CPU efficiency frequency from the 'MSR_PLATFORM_INFO' model-specific
         register. The arguments are as follows.
@@ -626,10 +656,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         'MSR_PLATFORM_INFO' is not supported.
         """
 
-        platinfo = self._get_platinfo()
-        ratio = platinfo.read_cpu_feature("max_eff_ratio", cpu)
-        bclk = self._get_bclk(cpu)
-        return ratio * bclk
+        _, val = next(self.get_max_eff_freq(cpus=(cpu,)))
+        return val
 
     def get_max_turbo_freq(self, cpu):
         """

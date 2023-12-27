@@ -367,14 +367,14 @@ class PStates(_PCStatesBase.PCStatesBase):
         for cpu, val, _ in self._get_epbobj().get_vals(cpus=cpus, mnames=(mname,)):
             yield cpu, val
 
-    def _get_max_eff_freq(self, cpu):
-        """Return the max. efficiency frequency for CPU 'cpu'."""
+    def _get_max_eff_freq(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' the maximum efficiency
+        frequency in Hz for CPU 'cpu'.
+        """
 
         cpufreq_obj = self._get_cpufreq_msr_obj()
-        if cpufreq_obj is None:
-            return None
-
-        return cpufreq_obj.get_max_eff_freq(cpu)
+        yield from cpufreq_obj.get_max_eff_freq(cpus=cpus)
 
     def _get_hwp(self, cpu):
         """Return hardware power management on/off status."""
@@ -714,8 +714,6 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
-        if pname == "max_eff_freq":
-            return self._get_max_eff_freq(cpu)
         if pname == "hwp":
             return self._get_hwp(cpu)
         if pname == "min_oper_freq":
@@ -755,6 +753,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             yield from self._get_epp(cpus, mname)
         elif pname == "epb":
             yield from self._get_epb(cpus, mname)
+        elif pname == "max_eff_freq":
+            yield from self._get_max_eff_freq(cpus)
         else:
             for cpu in cpus:
                 yield (cpu, self._get_cpu_prop(pname, cpu, mname))
