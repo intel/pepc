@@ -351,17 +351,21 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._uncfreq_obj
 
-    def _get_epp(self, cpu, mname):
-        """Return EPP value for CPU 'cpu', use mechanism 'mname'."""
+    def _get_epp(self, cpus, mname):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is EPP value for CPU 'cpu'.
+        """
 
-        val, _ = self._get_eppobj().get_cpu_val(cpu, mnames=(mname,))
-        return val
+        for cpu, val, _ in self._get_eppobj().get_vals(cpus=cpus, mnames=(mname,)):
+            yield cpu, val
 
-    def _get_epb(self, cpu, mname):
-        """Return EPB value for CPU 'cpu', use mechanism 'mname'."""
+    def _get_epb(self, cpus, mname):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is EPB value for CPU 'cpu'.
+        """
 
-        val, _ = self._get_epbobj().get_cpu_val(cpu, mnames=(mname,))
-        return val
+        for cpu, val, _ in self._get_epbobj().get_vals(cpus=cpus, mnames=(mname,)):
+            yield cpu, val
 
     def _get_max_eff_freq(self, cpu):
         """Return the max. efficiency frequency for CPU 'cpu'."""
@@ -710,10 +714,6 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
-        if pname == "epp":
-            return self._get_epp(cpu, mname)
-        if pname == "epb":
-            return self._get_epb(cpu, mname)
         if pname == "max_eff_freq":
             return self._get_max_eff_freq(cpu)
         if pname == "hwp":
@@ -751,8 +751,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         'cpu'. Use mechanism 'mname'.
         """
 
-        for cpu in cpus:
-            yield (cpu, self._get_cpu_prop(pname, cpu, mname))
+        if pname == "epp":
+            yield from self._get_epp(cpus, mname)
+        elif pname == "epb":
+            yield from self._get_epb(cpus, mname)
+        else:
+            for cpu in cpus:
+                yield (cpu, self._get_cpu_prop(pname, cpu, mname))
 
     def _set_turbo(self, cpu, enable):
         """Enable or disable turbo."""
