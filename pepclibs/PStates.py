@@ -376,11 +376,14 @@ class PStates(_PCStatesBase.PCStatesBase):
         cpufreq_obj = self._get_cpufreq_msr_obj()
         yield from cpufreq_obj.get_max_eff_freq(cpus=cpus)
 
-    def _get_hwp(self, cpu):
-        """Return hardware power management on/off status."""
+    def _get_hwp(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' the hardware power
+        management on/off status for CPU 'cpu'.
+        """
 
         pmenable = self._get_pmenable()
-        return pmenable.is_cpu_feature_enabled("hwp", cpu)
+        yield from pmenable.is_feature_enabled("hwp", cpus=cpus)
 
     def _get_cppc_freq(self, pname, cpu):
         """Read the ACPI CPPC sysfs files for property 'pname' and CPU 'cpu'."""
@@ -714,8 +717,6 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
-        if pname == "hwp":
-            return self._get_hwp(cpu)
         if pname == "min_oper_freq":
             return self._get_min_oper_freq(cpu, mname)
         if pname == "max_turbo_freq":
@@ -755,6 +756,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             yield from self._get_epb(cpus, mname)
         elif pname == "max_eff_freq":
             yield from self._get_max_eff_freq(cpus)
+        elif pname == "hwp":
+            yield from self._get_hwp(cpus)
         else:
             for cpu in cpus:
                 yield (cpu, self._get_cpu_prop(pname, cpu, mname))
