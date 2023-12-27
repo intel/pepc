@@ -139,6 +139,15 @@ class Power(_PropsClassBase.PropsClassBase):
             return self._get_pplobj().read_cpu_feature(fname, cpu)
         return self._get_ppiobj().read_cpu_feature(pname, cpu)
 
+    def _get_prop_cpus(self, pname, cpus, mname):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, 'val' is property 'pname' value for CPU
+        'cpu'. Use mechanism 'mname'.
+        """
+
+        for cpu in cpus:
+            yield (cpu, self._get_cpu_prop(pname, cpu, mname))
+
     def _do_set_prop(self, pname, val, cpus):
         """Implements '_set_prop_cpus()'."""
 

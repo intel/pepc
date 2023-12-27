@@ -252,6 +252,15 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported property '{pname}'")
 
+    def _get_prop_cpus(self, pname, cpus, mname):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, 'val' is property 'pname' value for CPU
+        'cpu'. Use mechanism 'mname'.
+        """
+
+        for cpu in cpus:
+            yield (cpu, self._get_cpu_prop(pname, cpu, mname))
+
     def _set_prop_cpus(self, pname, val, cpus, mname):
         """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
 

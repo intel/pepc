@@ -453,10 +453,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise type(exceptions[0])(msg)
         _LOG.debug(msg)
 
-    def _get_cpu_prop(self, pname, cpu, mname):
+    def _get_prop_cpus(self, pname, cpus, mname):
         """
-        Return 'pname' property value for CPU 'cpu', using mechanism 'mname'. Raise
-        'ErrorNotSupported' if the property is not supported.
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, 'val' is property 'pname' value for CPU
+        'cpu'. Use mechanism 'mname'. If the property is not supported for a CPU, yield 'None' for
+        'val'. If the property is not supported for any CPU, raise 'ErrorNotSupported'.
 
         This method should be implemented by the sub-class.
         """
@@ -474,38 +475,29 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if not mnames:
             mnames = prop["mnames"]
 
-        val, cpu = None, None
         for mname in mnames:
-            for cpu in cpus:
-                try:
-                    val = self._get_cpu_prop(pname, cpu, mname)
-                except ErrorNotSupported:
-                    val = None
-
-                if val is None:
-                    if cpu == cpus[0]:
-                        # Got "property not supported" right away, for the first CPU in the 'cpus'
-                        # list. Switch to the next method.
-                        break
-                    # Already yielded some values, continue with the same method.
-                    pvinfo = self._construct_pvinfo(pname, cpu, mname, None)
-                else:
-                    pvinfo = self._construct_pvinfo(pname, cpu, mname, val)
+            cpu = None
+            try:
+                for cpu, val in self._get_prop_cpus(pname, cpus, mname):
                     _LOG.debug("'%s' is '%s' for CPU %d using mechanism '%s'%s",
-                               pname, val, cpu, mname, self._pman.hostmsg)
-                yield pvinfo
-
-            if val is not None:
-                # A 'pvinfo' was yielded for every CPU.
+                            pname, val, cpu, mname, self._pman.hostmsg)
+                    pvinfo = self._construct_pvinfo(pname, cpu, mname, val)
+                    yield pvinfo
+                # Yielded a 'pvinfo' for every CPU.
                 return
+            except ErrorNotSupported as err:
+                # If something was yielded already, this is an error condition. Otherwise, try the
+                # next mechanism.
+                if cpu is not None:
+                    name = self._props[pname]["name"]
+                    raise Error(f"failed to get {name} ({pname}) for CPU {cpu} using the '{mname}' "
+                                f"mechanism:\n{err.indent(2)}\nHowever, succeeded getting it for "
+                                f"CPU {cpus[0]}") from err
 
-        assert val is None
-
-        if cpu == cpus[0]:
-            # None of the methods are supported. Nothing was yielded yet.
-            self._prop_not_supported(pname, cpus, mnames, "get")
-            for cpu in cpus:
-                yield self._construct_pvinfo(pname, cpu, mnames[-1], None)
+        # None of the methods succeeded.
+        self._prop_not_supported(pname, cpus, mnames, "get")
+        for cpu in cpus:
+            yield self._construct_pvinfo(pname, cpu, mnames[-1], None)
 
     def _get_cpu_prop_cache(self, pname, cpu, mnames=None):
         """
