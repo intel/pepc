@@ -382,42 +382,31 @@ class PStates(_PCStatesBase.PCStatesBase):
         """Read the ACPI CPPC sysfs files for property 'pname' and CPU 'cpu'."""
 
         cpufreq_obj = self._get_cpufreq_cppc_obj()
-        if not cpufreq_obj:
-            return None
 
         if pname == "base_freq":
             return cpufreq_obj.get_base_freq(cpu)
 
-        if pname == "max_turbo_freq":
-            val = cpufreq_obj.get_max_perf_limit(cpu)
-        elif pname == "min_oper_freq":
-            val = cpufreq_obj.get_min_perf_limit(cpu)
-        else:
-            raise Error(f"BUG: unexpected property {pname}")
 
-        if val is not None:
-            return val
+        with contextlib.suppress(ErrorNotSupported):
+            if pname == "max_turbo_freq":
+                return cpufreq_obj.get_max_freq_limit(cpu)
+            elif pname == "min_oper_freq":
+                return cpufreq_obj.get_min_freq_limit(cpu)
+            else:
+                raise Error(f"BUG: unexpected property {pname}")
 
         # Sometimes the frequency CPPC sysfs files are not readable, but the "performance" files
         # are. The base frequency is required to turn performance values to Hz.
 
         base_freq = self._get_cpu_prop_cache("base_freq", cpu)
-        if base_freq is None:
-            return None
-
         nominal_perf = cpufreq_obj.get_base_perf(cpu)
-        if nominal_perf is None:
-            return None
 
         if pname == "max_turbo_freq":
             perf = cpufreq_obj.get_max_perf_limit(cpu)
         elif pname == "min_oper_freq":
             perf = cpufreq_obj.get_min_perf_limit(cpu)
 
-        if perf is not None:
-            return int((base_freq * perf) / nominal_perf)
-
-        return None
+        return int((base_freq * perf) / nominal_perf)
 
     def _get_min_oper_freq(self, cpu, mname):
         """Return the minimum operating frequency for CPU 'cpu', use method 'mname'."""
