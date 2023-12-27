@@ -141,7 +141,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             """Format values with unit."""
 
             if unit:
-                return Human.num2si(val, unit=unit, decp=4)
+                return Human.num2si(val, unit=unit, decp=2)
             return str(val)
 
         unit = prop.get("unit")
