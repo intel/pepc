@@ -745,14 +745,14 @@ class ClassInitValidator():
 class ScopeStack():
     """Provide push/pop functionality for scopes, and variable access data."""
 
-    def _check_variables(self):
-        """Verify variables for the current scope."""
+    def _check_variables(self, scope):
+        """Verify variables for the given 'scope'."""
 
-        variables = self._current_scope["vars"]
-        self._parent.debug(f"_check_variables for scope {self._current_scope['name']}")
+        variables = scope["vars"]
+        self._parent.debug(f"_check_variables for scope {scope['name']}")
 
-        class_scope = bool(self._current_scope["type"] == "class")
-        global_scope = bool(self._current_scope["type"] == "module")
+        class_scope = bool(scope["type"] == "class")
+        global_scope = bool(scope["type"] == "module")
 
         for name in variables:
             var = variables[name]
@@ -778,7 +778,11 @@ class ScopeStack():
     def pop(self, scope_type):
         """Pop scope of type 'scope_type' from the stack."""
 
-        self._check_variables()
+        if scope_type == "func":
+            self._check_variables(self._current_scope)
+        if scope_type == "module":
+            for _, scope in self._classes.items():
+                self._check_variables(scope)
 
         self._stack.pop()
         if self._stack:
@@ -803,8 +807,10 @@ class ScopeStack():
         self._current_scope = scope
 
         if scope_type == "class":
+            scope["bases"] = [n.as_string() for n in node.bases]
             self._class_stack.append(scope)
             self._class_scope = scope
+            self._classes[node.name] = scope
             scope["validator"] = ClassInitValidator()
 
         if scope_type == "module":
@@ -876,7 +882,12 @@ class ScopeStack():
                 self._parent.debug("validated init order for {name} as ok.")
 
         if read:
-            scope["vars"][name]["read"] = read
+            scope["vars"][name]["read"] = True
+
+            if "bases" in scope:
+                for base_class in scope["bases"]:
+                    if base_class in self._classes and name in self._classes[base_class]["vars"]:
+                        self._classes[base_class]["vars"][name]["read"] = True
 
             if "value" in scope["vars"][name]:
                 return scope["vars"][name]["value"]
@@ -915,6 +926,7 @@ class ScopeStack():
         self._class_scope = None
         self._global_scope = None
         self._parent = parent
+        self._classes = {}
 
 class PepcASTChecker(BaseChecker):
     """Pepc linter class using AST nodes."""
