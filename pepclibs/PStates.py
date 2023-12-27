@@ -422,7 +422,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             cpufreq_obj = self._get_cpufreq_msr_obj()
             if cpufreq_obj is None:
                 return None
-            return cpufreq_obj.get_min_oper_freq(cpu)
+            return cpufreq_obj.get_cpu_min_oper_freq(cpu)
 
         if mname == "cppc":
             return self._get_cppc_freq("min_oper_freq", cpu)
@@ -436,7 +436,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             cpufreq_obj = self._get_cpufreq_msr_obj()
             if cpufreq_obj is None:
                 return None
-            return cpufreq_obj.get_max_turbo_freq(cpu)
+            return cpufreq_obj.get_cpu_max_turbo_freq(cpu)
 
         if mname == "cppc":
             return self._get_cppc_freq("max_turbo_freq", cpu)
@@ -456,7 +456,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             cpufreq_obj = self._get_cpufreq_msr_obj()
             if cpufreq_obj is None:
                 return None
-            return cpufreq_obj.get_base_freq(cpu)
+            return cpufreq_obj.get_cpu_base_freq(cpu)
 
         if mname == "cppc":
             return self._get_cppc_freq("base_freq", cpu)
@@ -491,9 +491,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         val = None
         if cpufreq_obj:
             if pname == "min_freq":
-                val = cpufreq_obj.get_min_freq(cpu)
+                val = cpufreq_obj.get_cpu_min_freq(cpu)
             elif pname == "max_freq":
-                val = cpufreq_obj.get_max_freq(cpu)
+                val = cpufreq_obj.get_cpu_max_freq(cpu)
             else:
                 raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
