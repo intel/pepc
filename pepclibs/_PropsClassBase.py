@@ -144,7 +144,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if mname not in all_mnames:
             mnames = ", ".join(all_mnames)
             if pname:
-                name = self._props[pname]["name"]
+                name = Human.uncapitalize(self._props[pname]["name"])
                 raise ErrorNotSupported(f"cannot access {name} ({pname}) using the '{mname}' "
                                         f"mechanism{self._pman.hostmsg}.\n"
                                         f"Use one the following mechanism(s) instead: {mnames}.",
@@ -154,7 +154,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         if not allow_readonly and not self.mechanisms[mname]["writable"]:
             if pname:
-                name = self._props[pname]["name"]
+                name = Human.uncapitalize(self._props[pname]["name"])
                 raise Error(f"can't use read-only mechanism '{mname}' for modifying "
                             f"{name} ({pname})\n")
             raise Error(f"can't use read-only mechanism '{mname}'")
@@ -206,8 +206,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         except KeyError as err:
             raise Error(f"property '{pname}' does not exist") from err
 
-    @staticmethod
-    def _normalize_bool_type_value(pname, val):
+    def _normalize_bool_type_value(self, pname, val):
         """
         Normalize and validate value 'val' of a boolean-type property 'pname'. Returns the boolean
         value corresponding to 'val'.
@@ -223,9 +222,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if val in ("off", "disable"):
             return False
 
-        name = Human.uncapitalize(pname)
-        raise Error(f"bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
-                    f"disable")
+        name = Human.uncapitalize(self._props[pname]["name"])
+        raise Error(f"bad value '{val}' for {name} ({pname}), use one of: True, False, on, off, "
+                    f"enable, disable")
 
     def _validate_pname(self, pname):
         """Raise an exception if property 'pname' is unknown."""
@@ -238,7 +237,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """Make sure that CPUs in 'cpus' match the scope of a property 'pname'."""
 
         sname = self._props[pname]["sname"]
-        name = Human.uncapitalize(self._props[pname]["name"])
 
         if sname not in {"global", "package", "die", "core", "CPU"}:
             raise Error(f"BUG: unsupported scope name \"{sname}\"")
@@ -253,8 +251,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 return
 
             missing_cpus = all_cpus - set(cpus)
-            raise Error(f"{name} has {sname} scope, so the list of CPUs must include all CPUs.\n"
-                        f"However, the following CPUs are missing from the list: {missing_cpus}")
+            name = Human.uncapitalize(self._props[pname]["name"])
+            raise Error(f"{name} ({pname}) has {sname} scope, so the list of CPUs must include all "
+                        f"CPUs.\nHowever, the following CPUs are missing from the list: "
+                        f"{missing_cpus}")
 
         _, rem_cpus = getattr(self._cpuinfo, f"cpus_div_{sname}s")(cpus)
         if not rem_cpus:
@@ -305,7 +305,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         else:
             mapping_name = "relation between CPUs and packages"
 
-        errmsg = f"{name} has {sname} scope, so the list of CPUs must include all CPUs " \
+        name = Human.uncapitalize(self._props[pname]["name"])
+        errmsg = f"{name} ({pname}) has {sname} scope, so the list of CPUs must include all CPUs " \
                  f"in one or multiple {sname}s.\n" \
                  f"However, the following CPUs do not comprise full {sname}(s): {rem_cpus_str}\n" \
                  f"Here is the {mapping_name}{self._pman.hostmsg}:{mapping}"
@@ -333,9 +334,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         prop = self._props[pname]
 
         if prop["sname"] not in ok_scopes:
-            name = prop["name"]
+            name = Human.uncapitalize(prop["name"])
             snames = ", ".join(ok_scopes)
-            raise Error(f"cannot access {name} on per-{sname} basis, because it has "
+            raise Error(f"cannot access {name} ({pname}) on per-{sname} basis, because it has "
                         f"{prop['sname']} scope{self._pman.hostmsg}.\nPer-{sname} access is only "
                         f"allowed for properties with the following scopes: {snames}")
 
@@ -378,10 +379,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             return
 
         if "die" in kwargs:
-            name = "die"
+            op_sname = "die"
             for_what = f" for package {kwargs['package']}, die {kwargs['die']}"
         else:
-            name = "package"
+            op_sname = "package"
             for_what = f" for package {kwargs['package']}"
 
         cpu1 = disagreed_pvinfos[0]["cpu"]
@@ -389,13 +390,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         cpu2 = disagreed_pvinfos[1]["cpu"]
         val2 = disagreed_pvinfos[1]["val"]
 
-        sname = self._props[pname]["sname"]
-        iosname = self._props[pname]["iosname"]
+        prop = self._props[pname]
+        sname = prop["sname"]
+        iosname = prop["iosname"]
+        name = Human.uncapitalize(prop["name"])
 
-        raise ErrorUsePerCPU(f"cannot determine the value of property '{pname}'{for_what} "
-                             f"{self._pman.hostmsg}:\n"
+        raise ErrorUsePerCPU(f"cannot determine {name} ({pname}){for_what}{self._pman.hostmsg}:\n"
                              f"  CPU {cpu1} has value '{val1}', but CPU {cpu2} has value '{val2}', "
-                             f"even though they are in the same {name}.\n"
+                             f"even though they are in the same {op_sname}.\n"
                              f"  This situation is possible because '{pname}' has '{sname}' "
                              f"scope, but '{iosname}' I/O scope.",
                              pvinfos=pvinfos)
@@ -724,9 +726,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._validate_pname(pname)
 
         prop = self._props[pname]
+
+        if val is None:
+            name = Human.uncapitalize(prop["name"])
+            raise Error(f"bad value 'None' for {name} ({pname})")
+
         if not prop["writable"]:
-            name = Human.uncapitalize(pname)
-            raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
+            name = Human.uncapitalize(prop["name"])
+            raise Error(f"{name} ({pname}) is read-only and can not be modified"
+                        f"{self._pman.hostmsg}")
 
         if prop.get("type") == "bool":
             val = self._normalize_bool_type_value(pname, val)
