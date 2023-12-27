@@ -202,9 +202,10 @@ class CStates(_PCStatesBase.PCStatesBase):
 
         return self._get_cpuidle().disable_cstates(csnames=csnames, cpus=cpus)
 
-    def _read_prop_from_msr(self, pname, cpu):
+    def get_prop_from_msr(self, pname, cpus):
         """
-        Read property 'pname' from the corresponding MSR register on CPU 'cpu' and return its value.
+        For every CPU in 'cpus', yield '(cpu, val)' pairs, where 'val' is value of property 'pname',
+        provided by 'MSR_POWER_CTL' or 'MSR_PKG_CST_CONFIG_CONTROL'.
         """
 
         if pname in PowerCtl.FEATURES:
@@ -212,45 +213,38 @@ class CStates(_PCStatesBase.PCStatesBase):
         else:
             module = self._get_pcstatectl()
 
-        return module.read_cpu_feature(pname, cpu)
+        yield from module.read_feature(pname, cpus=cpus)
 
-    def _get_pkg_cstate_limit(self, pname, cpu):
+    def _get_pkg_cstate_limit(self, pname, cpus):
         """
-        Return the 'pkg_cstate_limit' or a related property value.
-        Return 'None' if 'pname' is not related to 'pkg_cstate_limit'.
+        For every CPU in 'cpus', yield '(cpu, val)' pairs, where 'val' is the 'pkg_cstate_limit' or
+        a related property value.
         """
-
-        if pname == "pkg_cstate_limit_lock":
-            return self._read_prop_from_msr(pname, cpu)
 
         pcstatectl = self._get_pcstatectl()
-        pkg_cstate_limit_props = pcstatectl.read_cpu_feature("pkg_cstate_limit", cpu)
-        return pkg_cstate_limit_props[pname]
 
-    def _get_cpuidle_prop(self, pname):
-        """Return value for a property provided by the 'CPUIdle' class."""
+        if pname == "pkg_cstate_limit_lock":
+            yield from pcstatectl.read_feature(pname, cpus=cpus)
+        else:
+            for cpu, features in pcstatectl.read_feature("pkg_cstate_limit", cpus=cpus):
+                yield cpu, features[pname]
+
+    def _get_cpuidle_prop(self, pname, cpus):
+        """
+        For every CPU in 'cpus', yield '(cpu, val)' pairs, where 'val' is value of property 'pname',
+        provided by the 'CPUIdle' module.
+        """
 
         if pname == "idle_driver":
-            return self._get_cpuidle().get_idle_driver()
-        if pname == "governor":
-            return self._get_cpuidle().get_current_governor()
-        if pname == "governors":
-            return self._get_cpuidle().get_available_governors()
-        return None
+            val = self._get_cpuidle().get_idle_driver()
+        elif pname == "governor":
+            val = self._get_cpuidle().get_current_governor()
+        else:
+            val = self._get_cpuidle().get_available_governors()
 
-    def _get_cpu_prop(self, pname, cpu, mname):
-        """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
-
-        if pname.startswith("pkg_cstate_"):
-            return self._get_pkg_cstate_limit(pname, cpu)
-
-        if pname in ("idle_driver", "governor", "governors"):
-            return self._get_cpuidle_prop(pname)
-
-        if mname == "msr":
-            return self._read_prop_from_msr(pname, cpu)
-
-        raise Error(f"BUG: unsupported property '{pname}'")
+        # All the properties are global, sor read only once and yield the same value for all CPUs.
+        for cpu in cpus:
+            yield (cpu, val)
 
     def _get_prop_cpus(self, pname, cpus, mname):
         """
@@ -258,8 +252,14 @@ class CStates(_PCStatesBase.PCStatesBase):
         'cpu'. Use mechanism 'mname'.
         """
 
-        for cpu in cpus:
-            yield (cpu, self._get_cpu_prop(pname, cpu, mname))
+        if pname.startswith("pkg_cstate_"):
+            yield from self._get_pkg_cstate_limit(pname, cpus)
+        elif pname in ("idle_driver", "governor", "governors"):
+            yield from self._get_cpuidle_prop(pname, cpus)
+        elif mname == "msr":
+            yield from self.get_prop_from_msr(pname, cpus)
+        else:
+            raise Error(f"BUG: unsupported property '{pname}'")
 
     def _set_prop_cpus(self, pname, val, cpus, mname):
         """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
