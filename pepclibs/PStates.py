@@ -1242,7 +1242,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             max_limit = Human.num2si(max_limit, unit="Hz", decp=4)
             what = self._get_num_str(pname, cpu)
             raise ErrorFreqRange(f"{name} value of '{val}' for {what} is out of range, "
-                                    f"must be within [{min_limit}, {max_limit}]")
+                                 f"must be within [{min_limit}, {max_limit}]")
 
         def _raise_order(pname, new_freq, cur_freq, is_min):
             """Raise and exception in case of failure due to frequency ordering constraints."""
