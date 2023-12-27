@@ -160,6 +160,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
         try:
             _set_prop(self._pobj, pname, sname, val, nums)
+            return
         except ErrorFreqOrder:
             if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
                 raise
@@ -168,12 +169,9 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if pname in {"min_freq", "max_freq"}:
             min_freq_pname = "min_freq"
             max_freq_pname = "max_freq"
-        elif pname in ("min_uncore_freq", "max_uncore_freq"):
+        else:
             min_freq_pname = "min_uncore_freq"
             max_freq_pname = "max_uncore_freq"
-        else:
-            _set_prop(self._pobj, pname, sname, val, nums)
-            return
 
         if pname.startswith("min_"):
             _set_prop(self._pobj, max_freq_pname, sname, "max", nums)
