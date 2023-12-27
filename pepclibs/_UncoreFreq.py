@@ -94,9 +94,6 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         path = self._get_sysfs_path(key, cpu, limit=limit)
 
         freq = self._sysfs_io.read_int(path, what=f"{key}. uncore frequency")
-        if freq is None:
-            return None
-
         # The frequency value is in kHz in sysfs.
         return freq * 1000
 
@@ -107,7 +104,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
           * cpu - CPU number to get the uncore frequency for.
 
         Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
-        frequency in Hz or 'None' if the uncore frequency sysfs file does not exist.
+        frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
         CPU 'cpu' should exist and should be online.
@@ -122,7 +120,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
           * cpu - CPU number to get the uncore frequency for.
 
         Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
-        frequency in Hz or 'None' if the uncore frequency sysfs file does not exist.
+        frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
         CPU 'cpu' should exist and should be online.
@@ -137,7 +136,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
           * cpu - CPU number to get the uncore frequency limit for.
 
         Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
-        frequency limit in Hz or 'None' if the uncore frequency sysfs file does not exist.
+        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
         CPU 'cpu' should exist and should be online.
@@ -152,7 +152,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
           * cpu - CPU number to get the uncore frequency limit for.
 
         Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
-        frequency limit in Hz or 'None' if the uncore frequency sysfs file does not exist.
+        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
 
         Note, the CPU number is not validated and the caller is assumed to have done the validation.
         CPU 'cpu' should exist and should be online.
