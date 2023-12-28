@@ -67,32 +67,32 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
 
     1. Get/set CPU frequency via Linux "cpufreq" sysfs interfaces:
        * Multiple CPUs.
-         - 'get_min_freq()'
-         - 'get_max_freq()'
-         - 'set_min_freq()'
-         - 'set_max_freq()'
+           - 'get_min_freq()'
+           - 'get_max_freq()'
+           - 'set_min_freq()'
+           - 'set_max_freq()'
        * Single CPU.
-         - 'get_cpu_min_freq()'
-         - 'get_cpu_max_freq()'
-         - 'set_cpu_min_freq()'
-         - 'set_cpu_max_freq()'
+           - 'get_cpu_min_freq()'
+           - 'get_cpu_max_freq()'
+           - 'set_cpu_min_freq()'
+           - 'set_cpu_max_freq()'
     2. Get CPU frequency limits via Linux "cpufreq" sysfs interfaces:
        * Multiple CPUs.
-         - 'get_min_freq_limit()'
-         - 'get_max_freq_limit()'
+           - 'get_min_freq_limit()'
+           - 'get_max_freq_limit()'
        * Single CPU.
-         - 'get_cpu_min_freq_limit()'
-         - 'get_cpu_max_freq_limit()'
+           - 'get_cpu_min_freq_limit()'
+           - 'get_cpu_max_freq_limit()'
     3. Get avalilable CPU frequencies list:
        * Multiple CPUs.
-         - 'get_available_frequencies()'
+           - 'get_available_frequencies()'
        * Single CPU.
-         - 'get_cpu_available_frequencies()'
+           - 'get_cpu_available_frequencies()'
     4. Get CPU base frequency:
        * Multiple CPUs.
-         - 'get_base_freq()'
+           - 'get_base_freq()'
        * Single CPU.
-         - 'get_cpu_base_freq()'
+           - 'get_cpu_base_freq()'
 
     Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
     have done the validation. The input CPU number(s) should exist and should be online.
@@ -385,25 +385,25 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
 
     1. Get CPU frequency limits from ACPI CPPC.
        * Multiple CPUs.
-         - 'get_min_freq_limit()'
-         - 'get_max_freq_limit()'
+           - 'get_min_freq_limit()'
+           - 'get_max_freq_limit()'
        * Single CPU.
-         - 'get_cpu_min_freq_limit()'
-         - 'get_cpu_max_freq_limit()'
+           - 'get_cpu_min_freq_limit()'
+           - 'get_cpu_max_freq_limit()'
     1. Get CPU performance limits from ACPI CPPC.
        * Multiple CPUs.
-         - 'get_min_perf_limit()'
-         - 'get_max_perf_limit()'
+           - 'get_min_perf_limit()'
+           - 'get_max_perf_limit()'
        * Single CPU.
-         - 'get_cpu_min_perf_limit()'
-         - 'get_cpu_max_perf_limit()'
+           - 'get_cpu_min_perf_limit()'
+           - 'get_cpu_max_perf_limit()'
     4. Get CPU base frequency and performance from ACPI CPPC:
        * Multiple CPUs.
-         - 'get_base_freq()'
-         - 'get_base_perf()'
+           - 'get_base_freq()'
+           - 'get_base_perf()'
        * Single CPU.
-         - 'get_cpu_base_freq()'
-         - 'get_cpu_base_perf()'
+           - 'get_cpu_base_freq()'
+           - 'get_cpu_base_perf()'
 
     Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
     have done the validation. The input CPU number(s) should exist and should be online.
@@ -609,35 +609,35 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
     1. Get/set CPU frequency via an MSR (Intel CPUs only):
        * Multiple CPUs.
-         - 'get_min_freq()'
-         - 'get_max_freq()'
-         - 'set_min_freq()'
-         - 'set_max_freq()'
+           - 'get_min_freq()'
+           - 'get_max_freq()'
+           - 'set_min_freq()'
+           - 'set_max_freq()'
        * Single CPU.
-         - 'get_cpu_min_freq()'
-         - 'get_cpu_max_freq()'
-         - 'set_cpu_min_freq()'
-         - 'set_cpu_max_freq()'
+            - 'get_cpu_min_freq()'
+            - 'get_cpu_max_freq()'
+            - 'set_cpu_min_freq()'
+            - 'set_cpu_max_freq()'
     3. Get base frequency via an MSR (Intel CPUs only):
        * Multiple CPUs.
-         - 'get_base_freq()'
+            - 'get_base_freq()'
        * Single CPU.
-         - 'get_cpu_base_freq()'
+            - 'get_cpu_base_freq()'
     4. Get the minimum CPU operating frequency via an MSR (Intel CPUs only):
        * Multiple CPUs.
-         - 'get_min_oper_freq()'
+            - 'get_min_oper_freq()'
        * Single CPU.
-         - 'get_cpu_min_oper_freq()'
+            - 'get_cpu_min_oper_freq()'
     5. Get the maximum CPU efficiency frequency via an MSR (Intel CPUs only):
        * Multiple CPUs.
-         - 'get_max_eff_freq()'
+            - 'get_max_eff_freq()'
        * Single CPU.
-         - 'get_cpu_max_eff_freq()'
+            - 'get_cpu_max_eff_freq()'
     6. Get the maximum CPU turbo frequency via an MSR (Intel CPUs only):
        * Multiple CPUs.
-         - 'get_max_turbo_freq()'
+            - 'get_max_turbo_freq()'
        * Single CPU.
-         - 'get_cpu_max_turbo_freq()'
+            - 'get_cpu_max_turbo_freq()'
 
     Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
     have done the validation. The input CPU number(s) should exist and should be online.
