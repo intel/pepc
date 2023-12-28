@@ -262,20 +262,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._pmenable
 
-    def _get_bclk(self, cpu):
-        """Return bus clock speed in Hz."""
-
-        try:
-            bclk = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
-        except ErrorNotSupported:
-            # Fall back to 100MHz clock speed.
-            if self._cpuinfo.info["vendor"] == "GenuineIntel":
-                return 100000000
-            raise
-
-        # Convert MHz to Hz.
-        return int(bclk * 1000000)
-
     def _get_eppobj(self):
         """Returns an 'EPP.EPP()' object."""
 
@@ -551,40 +537,70 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
-    def _get_frequencies_intel(self, cpu):
-        """Get the list of available CPU frequency values for CPU 'cpu' for an Intel platform."""
+    def _get_bclks(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the bus clock speed for
+        CPU 'cpu' in Hz.
+        """
 
-        driver = self._get_cpu_prop_cache("driver", cpu)
-        if driver != "intel_pstate":
-            # Only 'intel_pstate' was verified to accept any frequency value that is multiple of bus
-            # clock.
-            return None
+        try:
+            fsbfreq = self._get_fsbfreq()
+        except ErrorNotSupported:
+            if self._cpuinfo.info["vendor"] != "GenuineIntel":
+                raise
+            # Fall back to 100MHz bus clock speed.
+            for cpu in cpus:
+                yield cpu, 100000000
+        else:
+            for cpu, bclk in fsbfreq.read_feature("fsb", cpus=cpus):
+                # Convert MHz to Hz.
+                yield cpu, int(bclk * 1000000)
 
-        bclk = self._get_bclk(cpu)
-        min_freq = self._get_cpu_prop_cache("min_freq", cpu)
-        max_freq = self._get_cpu_prop_cache("max_freq", cpu)
-        if min_freq is None or max_freq is None:
-            return None
+    def _get_bclk(self, cpu):
+        """Return bus clock speed in Hz."""
 
-        freqs = []
-        freq = min_freq
-        while freq <= max_freq:
-            freqs.append(freq)
-            freq += bclk
+        _, val = next(self._get_bclks((cpu,)))
+        return val
 
-        return freqs
+    def _get_frequencies_intel(self, cpus):
+        """
+        For every CPU in 'cpus', yield the list of CPU frequencies for CPU 'cpu' on an Intel
+        platform.
+        """
 
-    def _get_frequencies(self, cpu, mname):
-        """Return the list of available CPU frequencies for CPU 'cpu', use method 'mname'."""
+        driver_iter = self._get_prop_pvinfo_cpus("driver", cpus)
+        min_freq_iter = self._get_prop_pvinfo_cpus("min_freq", cpus)
+        max_freq_iter = self._get_prop_pvinfo_cpus("max_freq", cpus)
+        bclks_iter = self._get_bclks(cpus)
+        iterator = zip(driver_iter, min_freq_iter, max_freq_iter, bclks_iter)
+
+        for driver_pvinfo, min_freq_pvinfo, max_freq_pvinfo, (cpu, bclk) in iterator:
+            if driver_pvinfo["val"] != "intel_pstate":
+                raise ErrorNotSupported("only 'intel_pstate' was verified to accept any frequency "
+                                        "value that is multiple of bus clock")
+
+            freqs = []
+            freq = min_freq_pvinfo["val"]
+            while freq <= max_freq_pvinfo["val"]:
+                freqs.append(freq)
+                freq += bclk
+
+            yield cpu, freqs
+
+    def _get_frequencies(self, cpus, mname):
+        """
+        For every CPU in 'cpus', yield the list of CPU frequencies available for CPU 'cpu'. Use
+        method 'mname'.
+        """
 
         if mname == "sysfs":
             cpufreq_obj = self._get_cpufreq_sysfs_obj()
-            if not cpufreq_obj:
-                return None
-            return cpufreq_obj.get_cpu_available_frequencies(cpu)
+            yield from cpufreq_obj.get_available_frequencies(cpus)
+            return
 
         if mname == "doc":
-            return self._get_frequencies_intel(cpu)
+            yield from self._get_frequencies_intel(cpus)
+            return
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
@@ -731,8 +747,6 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
-        if pname == "frequencies":
-            return self._get_frequencies(cpu, mname)
         if pname == "bus_clock":
             return self._get_bus_clock(cpu, mname)
         if pname == "turbo":
@@ -772,6 +786,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             yield from self._get_cpu_freq_limit(pname, cpus)
         elif self._is_uncore_prop(pname):
             yield from self._get_uncore_freq(pname, cpus)
+        elif pname == "frequencies":
+            yield from self._get_frequencies(cpus, mname)
         else:
             for cpu in cpus:
                 yield (cpu, self._get_cpu_prop(pname, cpu, mname))
