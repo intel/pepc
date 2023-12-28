@@ -292,7 +292,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         if not self._cpufreq_sysfs_obj:
             from pepclibs import _CPUFreq # pylint: disable=import-outside-toplevel
 
+            msr = self._get_msr()
             self._cpufreq_sysfs_obj = _CPUFreq.CPUFreqSysfs(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                            msr=msr,
                                                             enable_cache=self._enable_cache)
         return self._cpufreq_sysfs_obj
 
