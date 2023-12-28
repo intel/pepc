@@ -650,6 +650,23 @@ class PStates(_PCStatesBase.PCStatesBase):
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_intel_pstate_mode(cpus)
 
+    def _get_governor(self, cpus):
+        """
+        For every CPU in 'cpus', yield the Linux CPU frequency governor name. Use method 'sysfs'.
+        """
+
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        yield from cpufreq_obj.get_governor(cpus)
+
+    def _get_governors(self, cpus):
+        """
+        For every CPU in 'cpus', yield the list of available Linux CPU frequency governors. Use
+        method 'sysfs'.
+        """
+
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        yield from cpufreq_obj.get_available_governors(cpus)
+
     def _get_prop_sysfs_path(self, pname, cpu):
         """Return path to the sysfs file of property 'pname' for CPU 'cpu'."""
 
@@ -716,22 +733,36 @@ class PStates(_PCStatesBase.PCStatesBase):
             yield from self._get_driver(cpus)
         elif pname == "intel_pstate_mode":
             yield from self._get_intel_pstate_mode(cpus)
+        elif pname == "governor":
+            yield from self._get_governor(cpus)
+        elif pname == "governors":
+            yield from self._get_governors(cpus)
         else:
             for cpu in cpus:
                 yield (cpu, self._get_cpu_prop(pname, cpu, mname))
 
     def _set_turbo(self, enable, cpus):
-        """Enable or disable turbo."""
+        """Enable or disable turbo for CPUs in 'cpus'. Use method 'sysfs'."""
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_turbo(enable, cpus=cpus)
         return "sysfs"
 
     def _set_intel_pstate_mode(self, mode, cpus):
-        """Set 'intel_pstate' driver mode to 'mode' for CPUs in 'cpus'."""
+        """Set 'intel_pstate' driver mode to 'mode' for CPUs in 'cpus'. Use method 'sysfs'."""
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_intel_pstate_mode(mode, cpus=cpus)
+        return "sysfs"
+
+    def _set_governor(self, governor, cpus):
+        """
+        Set 'intel_pstate' Linux CPU frequency governor to 'governor' for CPUs in 'cpus'. Use method
+        'sysfs'.
+        """
+
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        cpufreq_obj.set_governor(governor, cpus=cpus)
         return "sysfs"
 
     def _get_num_str(self, pname, cpu):
@@ -782,7 +813,7 @@ class PStates(_PCStatesBase.PCStatesBase):
                     freq_human = Human.num2si(freq, unit="Hz", decp=4)
                     msg += f".\n  Linux kernel CPU frequency driver does not support " \
                            f"{freq_human}, use one of the following values instead:\n  {fvals}"
-            elif self._get_turbo(cpu)["val"] == "off":
+            elif self._get_cpu_prop_cache("turbo", cpu) == "off":
                 base_freq = self._get_cpu_prop_cache("base_freq", cpu)
                 if base_freq and freq > base_freq:
                     base_freq = Human.num2si(base_freq, unit="Hz", decp=4)
@@ -1001,7 +1032,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._set_turbo(val, cpus)
         if pname == "intel_pstate_mode":
             return self._set_intel_pstate_mode(val, cpus)
-
+        if pname == "governor":
+            return self._set_governor(val, cpus)
         if pname in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
             return self._set_freq_prop(pname, val, cpus, mname)
 
