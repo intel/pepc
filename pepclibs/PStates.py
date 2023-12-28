@@ -672,25 +672,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_driver(cpus)
 
-    def _get_intel_pstate_mode(self, pname, cpu):
+    def _get_intel_pstate_mode(self, cpus):
         """
-        Return the 'intel_pstate' driver operation mode for CPU 'cpu', use the 'sysfs' method.
+        For every CPU in 'cpus', yield the 'intel_pstate' mode name. Use method 'sysfs'.
         """
 
-        mname = "sysfs"
-
-        with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get(pname, cpu, mname)
-
-        driver = self._get_cpu_prop_cache("driver", cpu)
-        if driver == "intel_pstate":
-            path = self._sysfs_base / "intel_pstate" / "status"
-            val = self._read_prop_from_sysfs(pname, path)
-        else:
-            val = None
-
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
-        return val
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        yield from cpufreq_obj.get_intel_pstate_mode(cpus)
 
     def _get_prop_sysfs_path(self, pname, cpu):
         """Return path to the sysfs file of property 'pname' for CPU 'cpu'."""
@@ -719,8 +707,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if pname == "turbo":
             return self._get_turbo(cpu)
-        if pname == "intel_pstate_mode":
-            return self._get_intel_pstate_mode(pname, cpu)
         if "fname" in self._props[pname]:
             return self._get_prop_from_sysfs(pname, cpu)
 
@@ -758,6 +744,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             yield from self._get_bus_clock(cpus, mname)
         elif pname == "driver":
             yield from self._get_driver(cpus)
+        elif pname == "intel_pstate_mode":
+            yield from self._get_intel_pstate_mode(cpus)
         else:
             for cpu in cpus:
                 yield (cpu, self._get_cpu_prop(pname, cpu, mname))
@@ -920,23 +908,12 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return freq
 
-    def _set_intel_pstate_mode(self, cpu, mode):
-        """Change mode of the CPU frequency driver 'intel_pstate'."""
+    def _set_intel_pstate_mode(self, mode, cpus):
+        """Set 'intel_pstate' driver mode to 'mode' for CPUs in 'cpus'."""
 
-        # Setting 'intel_pstate' driver mode to "off" is only possible in non-HWP (legacy) mode.
-        if mode == "off" and self._get_cpu_prop_cache("hwp", cpu) == "on":
-            raise ErrorNotSupported("'intel_pstate' driver does not support \"off\" mode when "
-                                    "hardware power management (HWP) is enabled")
-
-        path = self._sysfs_base / "intel_pstate" / "status"
-        try:
-            self._write_prop_to_sysfs("intel_pstate_mode", path, mode)
-            self._pcache.add("intel_pstate_mode", cpu, mode, "sysfs",
-                             sname=self._props["intel_pstate_mode"]["iosname"])
-        except Error:
-            # When 'intel_pstate' driver is 'off' it is not possible to write 'off' again.
-            if mode != "off" or self._get_cpu_prop_cache("intel_pstate_mode", cpu) != "off":
-                raise
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        cpufreq_obj.set_intel_pstate_mode(mode, cpus=cpus)
+        return "sysfs"
 
     def _set_prop_sysfs(self, pname, val, cpus):
         """Sets property 'pname' using 'sysfs' mechanism."""
@@ -960,8 +937,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
             if pname == "turbo":
                 self._set_turbo(cpu, val)
-            elif pname == "intel_pstate_mode":
-                self._set_intel_pstate_mode(cpu, val)
             elif "fname" in prop:
                 path = self._get_prop_sysfs_path(pname, cpu)
                 self._write_prop_to_sysfs(pname, path, val)
@@ -1076,6 +1051,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))
         if pname == "epb":
             return self._get_epbobj().set_vals(val, cpus=cpus, mnames=(mname,))
+        if pname == "intel_pstate_mode":
+            return self._set_intel_pstate_mode(val, cpus)
 
         if pname in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
             return self._set_freq_prop(pname, val, cpus, mname)
