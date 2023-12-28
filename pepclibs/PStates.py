@@ -813,9 +813,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         cpufreq_obj = self._get_cpufreq_msr_obj()
 
         if pname == "min_freq":
-            cpufreq_obj.set_min_freq(freq, cpu)
+            cpufreq_obj.set_cpu_min_freq(freq, cpu)
         elif pname == "max_freq":
-            cpufreq_obj.set_max_freq(freq, cpu)
+            cpufreq_obj.set_cpu_max_freq(freq, cpu)
         else:
             raise Error(f"BUG: unexpected CPU frequency property {pname}")
 

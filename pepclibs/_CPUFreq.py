@@ -16,6 +16,7 @@ normalize. The caller is supposed to provide a validated CPU numbers collection.
 """
 
 import logging
+import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
@@ -80,8 +81,8 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
     4. Get CPU base frequency:
        * 'get_base_freq()'
 
-    Note, class methods do not validate the CPU number argument. The caller is assumed to have done
-    the validation. The input CPU number should exist and should be online.
+    Note, class methods do not validate the 'cpu' and 'cpus' number arguments. The caller is assumed
+    to have done the validation. The input CPU number(s) should exist and should be online.
     """
 
     def _get_policy_sysfs_path(self, cpu, fname):
@@ -275,6 +276,9 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
        * 'get_cpu_base_freq()' - single CPU.
        * 'get_base_perf()' - multiple CPUs.
        * 'get_cpu_base_perf()' - single CPU.
+
+    Note, class methods do not validate the 'cpu' and 'cpus' number arguments. The caller is assumed
+    to have done the validation. The input CPU number(s) should exist and should be online.
     """
 
     def _get_sysfs_path(self, cpu, fname):
@@ -476,12 +480,16 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Get/set CPU frequency via an MSR (Intel CPUs only):
-       * 'get_min_freq()' - multiple CPUs.
-       * 'get_cpu_min_freq()' - single CPU.
-       * 'get_max_freq()' - multiple CPUs.
-       * 'get_cpu_max_freq()' - single CPU.
-       * 'set_min_freq()'
-       * 'set_max_freq()'
+       * Multiple CPUs.
+         - 'get_min_freq()'
+         - 'get_max_freq()'
+         - 'set_min_freq()'
+         - 'set_max_freq()'
+       * Single CPU.
+         - 'get_cpu_min_freq()'
+         - 'get_cpu_max_freq()'
+         - 'set_cpu_min_freq()'
+         - 'set_cpu_max_freq()'
     3. Get base frequency via an MSR (Intel CPUs only):
        * 'get_base_freq()' - multiple CPUs.
        * 'get_cpu_base_freq()' - single CPU.
@@ -495,8 +503,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
        * 'get_max_turbo_freq()' - multiple CPUs.
        * 'get_cpu_max_turbo_freq()' - single CPU.
 
-    Note, class methods do not validate the CPU number argument. The caller is assumed to have done
-    the validation. The input CPU number should exist and should be online.
+    Note, class methods do not validate the 'cpu' and 'cpus' number arguments. The caller is assumed
+    to have done the validation. The input CPU number(s) should exist and should be online.
     """
 
     def _get_msr(self):
@@ -688,45 +696,77 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         _, val = next(self._get_freq_msr("max", (cpu,)))
         return val
 
-    def _set_freq_msr(self, freq, key, cpu):
-        """Set CPU frequency by writing to 'MSR_HWP_REQUEST'."""
+    def _set_freq_msr(self, freq, key, cpus):
+        """For every CPU in 'cpus', set CPU frequency by writing to 'MSR_HWP_REQUEST'."""
 
         # The corresponding 'MSR_HWP_REQUEST' feature name.
         feature_name = f"{key}_perf"
 
-        perf = None
+        hwpreq = self._get_hwpreq()
+
+        # Disable package control.
+        with contextlib.suppress(ErrorNotSupported):
+            hwpreq.write_feature(f"{feature_name}_valid", "on", cpus=cpus)
+
         if self._cpuinfo.info["hybrid"]:
             pcore_cpus = set(self._cpuinfo.get_hybrid_cpu_topology()["pcore"])
+        else:
+            pcore_cpus = set()
+
+        # Prepare the values dictionary, which maps each value to the list of CPUs to write this
+        # value to.
+        vals = {}
+        for cpu, bclk in self._get_bclks(cpus):
             if cpu in pcore_cpus:
                 perf = int((freq + self._perf_to_freq_factor - 1) / self._perf_to_freq_factor)
+            else:
+                perf = freq // bclk
+            if perf not in vals:
+                vals[perf] = []
+            vals[perf].append(cpu)
 
-        if perf is None:
-            bclk = self._get_bclk(cpu)
-            perf = freq // bclk
+        for val, val_cpus in vals.items():
+            hwpreq.write_feature(feature_name, val, cpus=val_cpus)
 
-        hwpreq = self._get_hwpreq()
-        hwpreq.disable_cpu_feature_pkg_control(feature_name, cpu)
-        hwpreq.write_cpu_feature(feature_name, perf, cpu)
+    def set_min_freq(self, freq, cpus="all"):
+        """
+        Set minimum frequency for CPUs in 'cpus' via the 'MSR_HWP_REQUEST' model specific register.
+        The arguments are as follows.
+          * freq - the minimum frequency value to set, hertz.
+          * cpus - a collection CPU numbers to set minimum frequency for.
+        """
 
-    def set_min_freq(self, freq, cpu):
+        self._set_freq_msr(freq, "min", cpus)
+
+    def set_cpu_min_freq(self, freq, cpu):
         """
         Set minimum CPU frequency via the 'MSR_HWP_REQUEST' model specific register. The arguments
         are as follows.
           * freq - the minimum frequency value to set, hertz.
-          * cpu - CPU number to set the frequency for.
+          * cpu - CPU number to set minimum frequency for.
         """
 
-        self._set_freq_msr(freq, "min", cpu)
+        self._set_freq_msr(freq, "min", (cpu,))
 
-    def set_max_freq(self, freq, cpu):
+    def set_max_freq(self, freq, cpus):
+        """
+        Set maximum frequency for CPUs in 'cpus' via the 'MSR_HWP_REQUEST' model specific register.
+        The arguments are as follows.
+          * freq - the maximum frequency value to set, hertz.
+          * cpus - a collection CPU numbers to set maximum frequency for.
+        """
+
+        self._set_freq_msr(freq, "max", cpus)
+
+    def set_cpu_max_freq(self, freq, cpu):
         """
         Set maximum CPU frequency via the 'MSR_HWP_REQUEST' model specific register. The arguments
         are as follows.
           * freq - the maximum frequency value to set, hertz.
-          * cpu - CPU number to set the frequency for.
+          * cpu - CPU number to set maximum frequency for.
         """
 
-        self._set_freq_msr(freq, "max", cpu)
+        self._set_freq_msr(freq, "max", (cpu,))
 
     def _get_platinfo(self):
         """Returns an 'PlatformInfo.PlatformInfo()' object."""
