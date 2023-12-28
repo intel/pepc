@@ -263,9 +263,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         return self._pmenable
 
     def _get_bclk(self, cpu):
-        """
-        Return bus clock speed in Hz. Return 'None' if bus clock is not supported by the platform.
-        """
+        """Return bus clock speed in Hz."""
 
         try:
             bclk = self._get_fsbfreq().read_cpu_feature("fsb", cpu)
@@ -273,7 +271,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             # Fall back to 100MHz clock speed.
             if self._cpuinfo.info["vendor"] == "GenuineIntel":
                 return 100000000
-            return None
+            raise
 
         # Convert MHz to Hz.
         return int(bclk * 1000000)
@@ -563,9 +561,6 @@ class PStates(_PCStatesBase.PCStatesBase):
             return None
 
         bclk = self._get_bclk(cpu)
-        if bclk is None:
-            return None
-
         min_freq = self._get_cpu_prop_cache("min_freq", cpu)
         max_freq = self._get_cpu_prop_cache("max_freq", cpu)
         if min_freq is None or max_freq is None:
@@ -904,9 +899,6 @@ class PStates(_PCStatesBase.PCStatesBase):
                 freq = self._get_cpu_prop_cache("max_uncore_freq_limit", cpu)
             elif val == "mdl":
                 bclk = self._get_bclk(cpu)
-                if bclk is None:
-                    bclk = 100000000 # If bus clock frequency is not available, use 100MHz.
-
                 min_freq = self._get_cpu_prop_cache("min_uncore_freq_limit", cpu)
                 max_freq = self._get_cpu_prop_cache("max_uncore_freq_limit", cpu)
                 if min_freq and max_freq:
