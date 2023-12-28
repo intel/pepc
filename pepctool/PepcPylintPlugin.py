@@ -251,7 +251,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             return False
 
         if tok.string in ("if", "else", "elif", "and", "or", "not", "in", "yield", "return",
-                          "except"):
+                          "except", "for"):
             return True
 
         return False
