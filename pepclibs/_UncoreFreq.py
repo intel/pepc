@@ -51,17 +51,30 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Get/set uncore frequency via Linux sysfs interfaces:
-       * 'get_min_freq()'
-       * 'get_max_freq()'
-       * 'set_min_freq()'
-       * 'set_max_freq()'
+       * Multiple CPUs.
+         - 'get_min_freq()'
+         - 'get_max_freq()'
+         - 'set_min_freq()'
+         - 'set_max_freq()'
+       * Single CPU.
+         - 'get_cpu_min_freq()'
+         - 'get_cpu_max_freq()'
+         - 'set_cpu_min_freq()'
+         - 'set_cpu_max_freq()'
     2. Get uncore frequency limits via Linux sysfs interfaces:
-       * 'get_min_freq_limit()'
-       * 'get_max_freq_limit()'
+       * Multiple CPUs.
+         - 'get_min_freq_limit()'
+         - 'get_max_freq_limit()'
+       * Single CPU.
+         - 'get_cpu_min_freq_limit()'
+         - 'get_cpu_max_freq_limit()'
     3. Get uncore domain ID numbers (same as die numbers) per package:
        * 'get_domain_ids()'
     4. Get number of uncore domains:
        * 'get_domains_count()'
+
+    Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
+    have done the validation. The input CPU number(s) should exist and should be online.
     """
 
     def _get_sysfs_path(self, key, cpu, limit=False):
@@ -88,16 +101,31 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         return path
 
-    def _get_freq(self, key, cpu, limit=False):
-        """Set uncore frequency by reading from the corresponding sysfs file."""
+    def _get_freq(self, key, cpus, limit=False):
+        """Yield uncore frequency by reading from the corresponding sysfs file."""
 
-        path = self._get_sysfs_path(key, cpu, limit=limit)
+        what = f"{key}. uncore frequency"
+        for cpu in cpus:
+            path = self._get_sysfs_path(key, cpu, limit=limit)
+            freq = self._sysfs_io.read_int(path, what=what)
+            # The frequency value is in kHz in sysfs.
+            yield cpu, freq * 1000
 
-        freq = self._sysfs_io.read_int(path, what=f"{key}. uncore frequency")
-        # The frequency value is in kHz in sysfs.
-        return freq * 1000
+    def get_min_freq(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum uncore
+        frequency for the die (uncore frequency domain) corresponding to CPU 'cpu'. The arguments
+        are as follows.
+          * cpus - a collection of integer CPU numbers to get the uncore frequencies for.
 
-    def get_min_freq(self, cpu):
+        Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
+        frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
+        """
+
+        yield from self._get_freq("min", cpus)
+
+    def get_cpu_min_freq(self, cpu):
         """
         Get minimum uncore frequency for the die (uncore frequency domain) corresponding to CPU
         'cpu'. The arguments are as follows.
@@ -106,14 +134,26 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
         frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
         exist.
-
-        Note, the CPU number is not validated and the caller is assumed to have done the validation.
-        CPU 'cpu' should exist and should be online.
         """
 
-        return self._get_freq("min", cpu)
+        _, val = next(self._get_freq("min", (cpu,)))
+        return val
 
-    def get_max_freq(self, cpu):
+    def get_max_freq(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum uncore
+        frequency for the die (uncore frequency domain) corresponding to CPU 'cpu'. The arguments
+        are as follows.
+          * cpus - a collection of integer CPU numbers to get the uncore frequencies for.
+
+        Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
+        frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
+        """
+
+        yield from self._get_freq("max", cpus)
+
+    def get_cpu_max_freq(self, cpu):
         """
         Get maximum uncore frequency for the die (uncore frequency domain) corresponding to CPU
         'cpu'. The arguments are as follows.
@@ -122,14 +162,26 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
         frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
         exist.
-
-        Note, the CPU number is not validated and the caller is assumed to have done the validation.
-        CPU 'cpu' should exist and should be online.
         """
 
-        return self._get_freq("max", cpu)
+        _, val = next(self._get_freq("max", (cpu,)))
+        return val
 
-    def get_min_freq_limit(self, cpu):
+    def get_min_freq_limit(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum uncore
+        frequency limit for the die (uncore frequency domain) corresponding to CPU 'cpu'. The
+        arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the uncore frequency limit for.
+
+        Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
+        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
+        """
+
+        yield from self._get_freq("min", cpus, limit=True)
+
+    def get_cpu_min_freq_limit(self, cpu):
         """
         Get minimum uncore frequency limit for the die (uncore frequency domain) corresponding to
         CPU 'cpu'. The arguments are as follows.
@@ -138,14 +190,26 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
         frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
         exist.
-
-        Note, the CPU number is not validated and the caller is assumed to have done the validation.
-        CPU 'cpu' should exist and should be online.
         """
 
-        return self._get_freq("min", cpu, limit=True)
+        _, val = next(self._get_freq("min", (cpu,), limit=True))
+        return val
 
-    def get_max_freq_limit(self, cpu):
+    def get_max_freq_limit(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum uncore
+        frequency limit for the die (uncore frequency domain) corresponding to CPU 'cpu'. The
+        arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the uncore frequency limit for.
+
+        Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
+        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
+        """
+
+        yield from self._get_freq("max", cpus, limit=True)
+
+    def get_cpu_max_freq_limit(self, cpu):
         """
         Get maximum uncore frequency limit for the die (uncore frequency domain) corresponding to
         CPU 'cpu'. The arguments are as follows.
@@ -154,26 +218,39 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
         frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
         exist.
-
-        Note, the CPU number is not validated and the caller is assumed to have done the validation.
-        CPU 'cpu' should exist and should be online.
         """
 
-        return self._get_freq("max", cpu, limit=True)
+        _, val = next(self._get_freq("max", (cpu,), limit=True))
+        return val
 
-    def _set_freq(self, freq, key, cpu):
-        """Set uncore frequency by writing to the corresponding sysfs file."""
+    def _set_freq(self, freq, key, cpus):
+        """
+        For every CPU in 'cpus', set uncore frequency by writing to the corresponding sysfs file.
+        """
 
-        path = self._get_sysfs_path(key, cpu)
         what = f"{key}. CPU frequency"
 
-        try:
-            self._sysfs_io.write_verify(path, str(freq // 1000), what=what)
-        except ErrorVerifyFailed as err:
-            setattr(err, "cpu", cpu)
-            raise err
+        for cpu in cpus:
+            path = self._get_sysfs_path(key, cpu)
+            try:
+                self._sysfs_io.write_verify(path, str(freq // 1000), what=what)
+            except ErrorVerifyFailed as err:
+                setattr(err, "cpu", cpu)
+                raise err
 
-    def set_min_freq(self, freq, cpu):
+    def set_min_freq(self, freq, cpus):
+        """
+        For every CPU in 'cpus', set the minimum uncore frequency for corresponding die die (uncore
+        frequency domain) corresponding. The arguments are as follows.
+          * freq - the frequency to set, in Hz.
+          * cpus - a collection of integer CPU numbers to set the uncore frequency limit for.
+
+        Use the Linux uncore frequency driver sysfs interface set the minimum uncore frequency.
+        """
+
+        self._set_freq(freq, "min", cpus)
+
+    def set_cpu_min_freq(self, freq, cpu):
         """
         Set minimum uncore frequency for the die (uncore frequency domain) corresponding to CPU
         'cpu'. The arguments are as follows.
@@ -181,14 +258,23 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
           * cpu - CPU number to set the uncore frequency for.
 
         Use the Linux uncore frequency driver sysfs interface set the minimum uncore frequency.
-
-        Note, the CPU number is not validated and the caller is assumed to have done the validation.
-        CPU 'cpu' should exist and should be online.
         """
 
-        self._set_freq(freq, "min", cpu)
+        self._set_freq(freq, "min", (cpu,))
 
-    def set_max_freq(self, freq, cpu):
+    def set_max_freq(self, freq, cpus):
+        """
+        For every CPU in 'cpus', set the maximum uncore frequency for corresponding die die (uncore
+        frequency domain) corresponding. The arguments are as follows.
+          * freq - the frequency to set, in Hz.
+          * cpus - a collection of integer CPU numbers to set the uncore frequency limit for.
+
+        Use the Linux uncore frequency driver sysfs interface set the maximum uncore frequency.
+        """
+
+        self._set_freq(freq, "max", cpus)
+
+    def set_cpu_max_freq(self, freq, cpu):
         """
         Set maximum uncore frequency for the die (uncore frequency domain) corresponding to CPU
         'cpu'. The arguments are as follows.
@@ -196,12 +282,9 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
           * cpu - CPU number to set the uncore frequency for.
 
         Use the Linux uncore frequency driver sysfs interface set the maximum uncore frequency.
-
-        Note, the CPU number is not validated and the caller is assumed to have done the validation.
-        CPU 'cpu' should exist and should be online.
         """
 
-        self._set_freq(freq, "max", cpu)
+        self._set_freq(freq, "max", (cpu,))
 
     def _add_domain(self, package, domain):
         """Add mapping for a single uncore 'domain' under 'package'."""
