@@ -12,7 +12,6 @@
 This module provides P-state management API.
 """
 
-import logging
 import contextlib
 import statistics
 from pathlib import Path
@@ -37,8 +36,6 @@ class ErrorFreqRange(ErrorTryAnotherMechanism):
     different mechanisms may have different ranges, sub-class '_ErrorTryAnotherMechanism' to
     indicate that another mechanism may succeed.
     """
-
-_LOG = logging.getLogger()
 
 # Special values for writable CPU frequency properties.
 _SPECIAL_FREQ_VALS = {"min", "max", "base", "hfm", "P1", "eff", "lfm", "Pn", "Pm"}
@@ -632,36 +629,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_turbo(self, cpu):
         """Return the turbo on/of status for CPU 'cpu', use the 'sysfs' method."""
 
-        pname = "turbo"
-        mname = "sysfs"
-
-        with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get(pname, cpu, mname)
-
-        # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
-        # name first.
-        driver = self._get_cpu_prop_cache("driver", cpu)
-
-        try:
-            if driver == "intel_pstate":
-                if self._get_cpu_prop_cache("intel_pstate_mode", cpu) == "off":
-                    return None
-                path = self._sysfs_base / "intel_pstate" / "no_turbo"
-                disabled = self._read_int(path)
-                val = "off" if disabled else "on"
-            elif driver == "acpi-cpufreq":
-                path = self._sysfs_base / "cpufreq" / "boost"
-                enabled = self._read_int(path)
-                val = "on" if enabled else "off"
-            else:
-                val = None
-                _LOG.debug("CPU %d: can't check if turbo is enabled%s: unsupported CPU frequency "
-                           "driver %s'", cpu, self._pman.hostmsg, driver)
-        except ErrorNotFound:
-            # If the sysfs file does not exist, the system does not support turbo.
-            val = None
-
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        _, val = next(cpufreq_obj.get_driver((cpu,)))
         return val
 
     def _get_driver(self, cpus):
@@ -750,34 +719,19 @@ class PStates(_PCStatesBase.PCStatesBase):
             for cpu in cpus:
                 yield (cpu, self._get_cpu_prop(pname, cpu, mname))
 
-    def _set_turbo(self, cpu, enable):
+    def _set_turbo(self, enable, cpus):
         """Enable or disable turbo."""
 
-        # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
-        # name first.
-        driver = self._get_cpu_prop_cache("driver", cpu)
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        cpufreq_obj.set_turbo(enable, cpus=cpus)
+        return "sysfs"
 
-        status = "on" if enable else "off"
-        errmsg = f"failed to switch turbo {status}{self._pman.hostmsg}"
+    def _set_intel_pstate_mode(self, mode, cpus):
+        """Set 'intel_pstate' driver mode to 'mode' for CPUs in 'cpus'."""
 
-        if driver == "intel_pstate":
-            if self._get_cpu_prop_cache("intel_pstate_mode", cpu) == "off":
-                raise ErrorNotSupported(f"{errmsg}: 'intel_pstate' driver is in 'off' mode")
-
-            path = self._sysfs_base / "intel_pstate" / "no_turbo"
-            sysfs_val = int(not enable)
-        elif driver == "acpi-cpufreq":
-            path = self._sysfs_base / "cpufreq" / "boost"
-            sysfs_val = int(enable)
-        else:
-            raise ErrorNotSupported(f"{errmsg}: unsupported CPU frequency driver '{driver}'")
-
-        try:
-            self._write_prop_to_sysfs("turbo", path, sysfs_val)
-        except ErrorNotFound as err:
-            raise ErrorNotSupported(f"{errmsg}: turbo is not supported") from err
-
-        self._pcache.add("turbo", cpu, status, "sysfs", sname=self._props["turbo"]["iosname"])
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        cpufreq_obj.set_intel_pstate_mode(mode, cpus=cpus)
+        return "sysfs"
 
     def _get_num_str(self, pname, cpu):
         """
@@ -908,13 +862,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return freq
 
-    def _set_intel_pstate_mode(self, mode, cpus):
-        """Set 'intel_pstate' driver mode to 'mode' for CPUs in 'cpus'."""
-
-        cpufreq_obj = self._get_cpufreq_sysfs_obj()
-        cpufreq_obj.set_intel_pstate_mode(mode, cpus=cpus)
-        return "sysfs"
-
     def _set_prop_sysfs(self, pname, val, cpus):
         """Sets property 'pname' using 'sysfs' mechanism."""
 
@@ -935,9 +882,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             if self._pcache.is_cached(pname, cpu, mname):
                 continue
 
-            if pname == "turbo":
-                self._set_turbo(cpu, val)
-            elif "fname" in prop:
+            if "fname" in prop:
                 path = self._get_prop_sysfs_path(pname, cpu)
                 self._write_prop_to_sysfs(pname, path, val)
 
@@ -1051,6 +996,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             return self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))
         if pname == "epb":
             return self._get_epbobj().set_vals(val, cpus=cpus, mnames=(mname,))
+        if pname == "turbo":
+            return self._set_turbo(val, cpus)
         if pname == "intel_pstate_mode":
             return self._set_intel_pstate_mode(val, cpus)
 

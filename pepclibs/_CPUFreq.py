@@ -62,6 +62,9 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     6. Get/set 'intel_pstate' driver mode.
        * 'get_intel_pstate_mode()'
        * 'set_intel_pstate_mode()'
+    7. Get/set turbo on/off status.
+       * 'get_turbo()'
+       * 'set_turbo()'
 
     Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
     have done the validation. The input CPU number(s) should exist and should be online.
@@ -456,10 +459,87 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     raise type(err)(err) from exc
 
                 if hwp == "on":
-                    raise ErrorNotSupported("'intel_pstate' driver does not support \"off\" mode "
-                                            "when hardware power management (HWP) is enabled") \
-                                            from err
+                    raise ErrorNotSupported(f"'intel_pstate' driver does not support \"off\" mode "
+                                            f"when hardware power management (HWP) is enabled:\n"
+                                            f"{err.indent(2)}") from err
                 raise
+
+    def get_turbo(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the turbo on/of status
+        for CPU 'cpu'. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get turbo status for.
+        """
+
+        what = "turbo on/off status"
+        path_intel_pstate = self._sysfs_base / "intel_pstate" / "no_turbo"
+        path_acpi_cpufreq = self._sysfs_base / "cpufreq" / "boost"
+
+        # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
+        # name first.
+        for cpu, driver in self.get_driver(cpus):
+            if driver == "intel_pstate":
+                try:
+                    disabled = self._sysfs_io.read_int(path_intel_pstate, what=what)
+                except Error as err:
+                    try:
+                        _, mode = next(self.get_intel_pstate_mode((cpu,)))
+                    except (StopIteration, Error) as exc:
+                        raise Error(err) from exc
+
+                    if mode != "off":
+                        raise
+
+                    raise ErrorNotSupported(f"turbo is not supported when the 'intel_pstate' "
+                                            f"driver is in 'off' mode:\n{err.indent(2)}") from err
+                val = "off" if disabled else "on"
+            elif driver == "acpi-cpufreq":
+                enabled = self._sysfs_io.read_int(path_acpi_cpufreq, what=what)
+                val = "on" if enabled else "off"
+            else:
+                raise ErrorNotSupported(f"can't check if turbo is enabled for CPU {cpu}"
+                                        f"{self._pman.hostmsg}: unsupported CPU frequency driver "
+                                        f"'{driver}'")
+
+            yield cpu, val
+
+    def set_turbo(self, enable, cpus):
+        """
+        Enable or disable turbo for CPUs in 'cpus'. The arguments are as follows.
+          * enable - enable turbo if 'True', disable otherwise.
+          * cpus - a collection of integer CPU numbers to set turbo for.
+        """
+
+        what = "turbo on/off status"
+        path_intel_pstate = self._sysfs_base / "intel_pstate" / "no_turbo"
+        path_acpi_cpufreq = self._sysfs_base / "cpufreq" / "boost"
+
+        # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
+        # name first.
+        for cpu, driver in self.get_driver(cpus):
+            if driver == "intel_pstate":
+                sysfs_val = str(int(not enable))
+                try:
+                    self._sysfs_io.write(path_intel_pstate, sysfs_val, what=what)
+                except Error as err:
+                    try:
+                        _, mode = next(self.get_intel_pstate_mode((cpu,)))
+                    except (StopIteration, Error) as exc:
+                        raise Error(err) from exc
+
+                    if mode != "off":
+                        raise
+
+                    raise ErrorNotSupported(f"turbo is not supported when the 'intel_pstate' "
+                                            f"driver is in 'off' mode:\n{err.indent(2)}") from err
+            elif driver == "acpi-cpufreq":
+                sysfs_val = str(int(enable))
+                self._sysfs_io.write(path_acpi_cpufreq, sysfs_val, what=what)
+            else:
+                status = "on" if enable else "off"
+                raise ErrorNotSupported(f"failed to switch turbo {status} for CPU {cpu}"
+                                        f"{self._pman.hostmsg}: unsupported CPU frequency driver "
+                                        f"'{driver}'")
 
     def __init__(self, pman=None, msr=None, cpuinfo=None, enable_cache=True):
         """
