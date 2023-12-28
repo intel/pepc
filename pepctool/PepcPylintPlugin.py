@@ -381,6 +381,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         # Everything else should have a space between.
         if curop and char != " ":
             self.add_message("pepc-op-no-space-before", args=curop, line=lineno)
+            return
 
         if prevop and char != " ":
             self.add_message("pepc-op-no-space-after", args=prevop, line=lineno)
