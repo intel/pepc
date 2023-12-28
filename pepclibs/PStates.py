@@ -673,34 +673,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return val
 
-    def _get_driver(self, cpu):
-        """Return the CPU frequency driver name for CPU 'cpu', use the 'sysfs' method."""
+    def _get_driver(self, cpus):
+        """
+        For every CPU in 'cpus', yield the Linux CPU frequency driver name. Use method 'sysfs'.
+        """
 
-        pname = "driver"
-        mname = "sysfs"
-
-        with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get(pname, cpu, mname)
-
-        path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
-
-        val = self._read_prop_from_sysfs(pname, path)
-        if val is None:
-            # The 'intel_pstate' driver may be in the 'off' mode, in which case the 'scaling_driver'
-            # sysfs file does not exist. So just check if the 'intel_pstate' sysfs directory exists.
-            if self._pman.exists(self._sysfs_base / "intel_pstate"):
-                val = "intel_pstate"
-            else:
-                _LOG.debug("can't read value of property '%s', path '%s' missing", pname, path)
-        else:
-            # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode, and
-            # 'intel_cpufreq' when it is in passive mode. But we always report the 'intel_pstate'
-            # name, because reporting 'intel_cpufreq' is confusing for users.
-            if val == "intel_cpufreq":
-                val = "intel_pstate"
-
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
-        return val
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+        yield from cpufreq_obj.get_driver(cpus)
 
     def _get_intel_pstate_mode(self, pname, cpu):
         """
@@ -749,8 +728,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         if pname == "turbo":
             return self._get_turbo(cpu)
-        if pname == "driver":
-            return self._get_driver(cpu)
         if pname == "intel_pstate_mode":
             return self._get_intel_pstate_mode(pname, cpu)
         if "fname" in self._props[pname]:
@@ -788,6 +765,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             yield from self._get_frequencies(cpus, mname)
         elif pname == "bus_clock":
             yield from self._get_bus_clock(cpus, mname)
+        elif pname == "driver":
+            yield from self._get_driver(cpus)
         else:
             for cpu in cpus:
                 yield (cpu, self._get_cpu_prop(pname, cpu, mname))
