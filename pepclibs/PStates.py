@@ -938,23 +938,13 @@ class PStates(_PCStatesBase.PCStatesBase):
             if mode != "off" or self._get_cpu_prop_cache("intel_pstate_mode", cpu) != "off":
                 raise
 
-    def _validate_intel_pstate_mode(self, mode):
-        """Validate 'intel_pstate_mode' mode."""
-
-        if self._get_cpu_prop_cache("intel_pstate_mode", 0) is None:
-            driver = self._get_cpu_prop_cache("driver", 0)
-            raise Error(f"can't set property 'intel_pstate_mode'{self._pman.hostmsg}:\n  "
-                        f"the CPU frequency driver is '{driver}', not 'intel_pstate'")
-
-        modes = ("active", "passive", "off")
-        if mode not in modes:
-            modes = ", ".join(modes)
-            raise Error(f"bad 'intel_pstate' mode '{mode}', use one of: {modes}")
-
     def _set_prop_sysfs(self, pname, val, cpus):
         """Sets property 'pname' using 'sysfs' mechanism."""
 
         mname = "sysfs"
+
+        if pname == "governor":
+            self._validate_governor_name(val)
 
         # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
         # 'False' for every CPU number that was not yet modified by the scope-aware '_pcache.add()'
@@ -1081,11 +1071,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
     def _set_prop_cpus(self, pname, val, cpus, mname):
         """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
-
-        if pname == "governor":
-            self._validate_governor_name(val)
-        elif pname == "intel_pstate_mode":
-            self._validate_intel_pstate_mode(val)
 
         if pname == "epp":
             return self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))

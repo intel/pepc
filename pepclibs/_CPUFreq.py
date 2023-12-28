@@ -59,8 +59,9 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
            - 'get_cpu_base_freq()'
     5. Get CPU frequency driver name.
        * 'get_driver()'
-    6. Get 'intel_pstate' driver mode.
+    6. Get/set 'intel_pstate' driver mode.
        * 'get_intel_pstate_mode()'
+       * 'set_intel_pstate_mode()'
 
     Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
     have done the validation. The input CPU number(s) should exist and should be online.
@@ -400,14 +401,65 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         """
 
         what = "'intel_pstate' driver mode"
+        path = self._sysfs_base / "intel_pstate" / "status"
+
         for cpu, driver in self.get_driver(cpus):
-            if driver == "intel_pstate":
-                path = self._sysfs_base / "intel_pstate" / "status"
-                mode = self._sysfs_io.read(path, what=what)
-                yield cpu, mode
-            else:
+            if driver != "intel_pstate":
                 raise ErrorNotSupported(f"failed to get 'intel_pstate' driver mode for CPU "
                                         f"{cpu}{self._pman.hostmsg}: current driver is '{driver}'")
+            mode = self._sysfs_io.read(path, what=what)
+            yield cpu, mode
+
+    def set_intel_pstate_mode(self, mode, cpus):
+        """
+        For every CPU in 'cpus', set 'intel_pstate' driver mode to 'mode'. The arguments are as
+        follows.
+          * mode - 'intel_pstate' driver mode.
+          * cpus - a collection of integer CPU numbers to set driver mode for.
+        """
+
+        modes = ("active", "passive", "off")
+        if mode not in modes:
+            modes = ", ".join(modes)
+            raise Error(f"bad 'intel_pstate' mode '{mode}', use one of: {modes}")
+
+        what = "'intel_pstate' driver mode"
+        path = self._sysfs_base / "intel_pstate" / "status"
+
+        driver_iter = self.get_driver(cpus)
+        mode_iter = self.get_intel_pstate_mode(cpus)
+
+        for (cpu, driver), (_, curmode) in zip(driver_iter, mode_iter):
+            if driver != "intel_pstate":
+                raise ErrorNotSupported(f"failed to set 'intel_pstate' driver mode to '{mode}' for "
+                                        f"CPU {cpu}{self._pman.hostmsg}: current driver is "
+                                        f"'{driver}'")
+
+            try:
+                self._sysfs_io.write(path, mode, what=what)
+            except Error as err:
+                if mode != "off":
+                    raise
+
+                if curmode == "off":
+                    # When 'intel_pstate' driver is 'off', writing 'off' again errors out. Ignore the
+                    # error.
+                    continue
+
+                # Setting 'intel_pstate' driver mode to "off" is only possible in non-HWP (legacy)
+                # mode. Check for this situation and try to provide a helpful error message.
+                try:
+                    cpufreq_obj = self._get_cpufreq_msr_obj()
+                    _, hwp = next(cpufreq_obj.get_hwp((cpu,)))
+                except Error as exc:
+                    # Failed to provide additional help, just raise the original exception.
+                    raise type(err)(err) from exc
+
+                if hwp == "on":
+                    raise ErrorNotSupported("'intel_pstate' driver does not support \"off\" mode "
+                                            "when hardware power management (HWP) is enabled") \
+                                            from err
+                raise
 
     def __init__(self, pman=None, msr=None, cpuinfo=None, enable_cache=True):
         """
