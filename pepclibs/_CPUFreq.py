@@ -93,6 +93,8 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
            - 'get_base_freq()'
        * Single CPU.
            - 'get_cpu_base_freq()'
+    5. Get CPU frequency driver name.
+       * 'get_driver()'
 
     Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
     have done the validation. The input CPU number(s) should exist and should be online.
@@ -375,6 +377,36 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
 
         _, val = next(self.get_base_freq((cpu,)))
         return val
+
+    def get_driver(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the Linux CPU frequency
+        driver name for CPU 'cpu'. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get driver name for.
+        """
+
+        what = "CPU frequency driver name"
+
+        for cpu in cpus:
+            path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
+            try:
+                name = self._sysfs_io.read(path, what=what)
+            except ErrorNotSupported:
+                # The 'intel_pstate' driver may be in the 'off' mode, in which case the
+                # 'scaling_driver' sysfs file does not exist. So just check if the 'intel_pstate'
+                # sysfs directory exists.
+                if not self._pman.exists(self._sysfs_base / "intel_pstate"):
+                    raise
+                name = "intel_pstate"
+            else:
+                # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode,
+                # and 'intel_cpufreq' when it is in passive mode. But we always report the
+                # 'intel_pstate' name, because reporting 'intel_cpufreq' is confusing for users.
+                if name == "intel_cpufreq":
+                    name = "intel_pstate"
+
+            yield cpu, name
+
 
 class CPUFreqCPPC(_CPUFreqSysfsBase):
     """
