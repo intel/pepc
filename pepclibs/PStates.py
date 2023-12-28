@@ -604,27 +604,27 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
-    def _get_bus_clock(self, cpu, mname):
-        """Return the bus clock speed for CPU 'cpu', use method 'mname'."""
+    def _get_bus_clock(self, cpus, mname):
+        """
+        For every CPU in 'cpus', yield the the bus clock speed for CPU 'cpu'. Use method 'mname'.
+        """
 
         if mname == "msr":
-            fsbfreq = self._get_fsbfreq()
-            try:
-                val = fsbfreq.read_cpu_feature("fsb", cpu)
-            except ErrorNotSupported:
-                return None
-            return int(val * 1000000)
+            for cpu, val in self._get_fsbfreq().read_feature("fsb", cpus=cpus):
+                yield cpu, int(val * 1000000)
+            return
 
         if mname == "doc":
             try:
-                fsbfreq = self._get_fsbfreq()
+                self._get_fsbfreq()
             except ErrorNotSupported:
-                if self._cpuinfo.info["vendor"] == "GenuineIntel":
+                if self._cpuinfo.info["vendor"] != "GenuineIntel":
+                    raise ErrorNotSupported(f"unsupported CPU model '{self._cpuinfo.cpudescr}"
+                                            f"{self._pman.hostmsg}") from None
+                for cpu in cpus:
                     # Modern Intel platforms use 100MHz bus clock.
-                    return 100000000
-
-                raise ErrorNotSupported(f"unsupported CPU model '{self._cpuinfo.cpudescr}"
-                                        f"{self._pman.hostmsg}") from None
+                    yield cpu, 100000000
+                return
             raise ErrorTryAnotherMechanism(f"use 'msr' method for {self._cpuinfo.cpudescr}")
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
@@ -744,11 +744,9 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
         return val
 
-    def _get_cpu_prop(self, pname, cpu, mname):
+    def _get_cpu_prop(self, pname, cpu, _):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
-        if pname == "bus_clock":
-            return self._get_bus_clock(cpu, mname)
         if pname == "turbo":
             return self._get_turbo(cpu)
         if pname == "driver":
@@ -788,6 +786,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             yield from self._get_uncore_freq(pname, cpus)
         elif pname == "frequencies":
             yield from self._get_frequencies(cpus, mname)
+        elif pname == "bus_clock":
+            yield from self._get_bus_clock(cpus, mname)
         else:
             for cpu in cpus:
                 yield (cpu, self._get_cpu_prop(pname, cpu, mname))
