@@ -31,9 +31,9 @@ def dump_node(node, recursive=False):
 def _check_generic_string(obj, txt, msg, node=None, lineno=None):
     """Generic checks for strings."""
 
-    match = re.match(r".*[^'](--[a-z0-9_\-]+)(?!')[^']", txt)
-    if match:
-        obj.add_message(msg, args=match.group(1), node=node, line=lineno)
+    match = re.match(r"[^']*('{0,1})[^']*(--[a-z][a-z0-9_\-]+)[^']*('{0,1})[^']*$", txt)
+    if match and (match.group(1) != "'" or match.group(3) != "'"):
+        obj.add_message(msg, args=match.group(2), node=node, line=lineno)
 
 class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
     """Pepc linter class using tokens."""
