@@ -95,6 +95,8 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
            - 'get_cpu_base_freq()'
     5. Get CPU frequency driver name.
        * 'get_driver()'
+    6. Get 'intel_pstate' driver mode.
+       * 'get_intel_pstate_mode()'
 
     Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
     have done the validation. The input CPU number(s) should exist and should be online.
@@ -407,6 +409,22 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
 
             yield cpu, name
 
+    def get_intel_pstate_mode(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the 'intel_pstate' CPU
+        frequency driver mode for CPU 'cpu'. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get driver mode for.
+        """
+
+        what = "'intel_pstate' driver mode"
+        for cpu, driver in self.get_driver(cpus):
+            if driver == "intel_pstate":
+                path = self._sysfs_base / "intel_pstate" / "status"
+                mode = self._sysfs_io.read(path, what=what)
+                yield cpu, mode
+            else:
+                raise ErrorNotSupported(f"failed to get 'intel_pstate' driver mode for CPU "
+                                        f"{cpu}{self._pman.hostmsg}: current driver is '{driver}'")
 
 class CPUFreqCPPC(_CPUFreqSysfsBase):
     """
