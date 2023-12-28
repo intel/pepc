@@ -14,10 +14,9 @@ This module provides P-state management API.
 
 import contextlib
 import statistics
-from pathlib import Path
-from pepclibs import _PCStatesBase, _PropsCache
+from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
@@ -225,7 +224,7 @@ PROPS = {
     },
 }
 
-class PStates(_PCStatesBase.PCStatesBase):
+class PStates(_PropsClassBase.PropsClassBase):
     """
     This class provides API for managing platform settings related to P-states. Refer to
     '_PropsClassBase.PropsClassBase' docstring for public methods overview.
@@ -667,36 +666,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_available_governors(cpus)
 
-    def _get_prop_sysfs_path(self, pname, cpu):
-        """Return path to the sysfs file of property 'pname' for CPU 'cpu'."""
-
-        prop = self._props[pname]
-        return self._sysfs_base / "cpufreq" / f"policy{cpu}" / prop["fname"]
-
-    def _get_prop_from_sysfs(self, pname, cpu):
-        """
-        Return the governor or list of available governors for CPU 'cpu', use the 'sysfs' method.
-        """
-
-        mname = "sysfs"
-
-        with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get(pname, cpu, mname)
-
-        path = self._get_prop_sysfs_path(pname, cpu)
-        val = self._read_prop_from_sysfs(pname, path)
-
-        self._pcache.add(pname, cpu, val, mname, sname=self._props[pname]["iosname"])
-        return val
-
-    def _get_cpu_prop(self, pname, cpu, _):
-        """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
-
-        if "fname" in self._props[pname]:
-            return self._get_prop_from_sysfs(pname, cpu)
-
-        raise Error(f"BUG: unsupported property '{pname}'")
-
     def _get_prop_cpus(self, pname, cpus, mname):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, 'val' is property 'pname' value for CPU
@@ -738,8 +707,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         elif pname == "governors":
             yield from self._get_governors(cpus)
         else:
-            for cpu in cpus:
-                yield (cpu, self._get_cpu_prop(pname, cpu, mname))
+            raise Error("BUG: unkonw property '{pname}'")
 
     def _set_turbo(self, enable, cpus):
         """Enable or disable turbo for CPUs in 'cpus'. Use method 'sysfs'."""
@@ -764,22 +732,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_governor(governor, cpus=cpus)
         return "sysfs"
-
-    def _get_num_str(self, pname, cpu):
-        """
-        If property 'pname' has CPU scope, returns "CPU <num>" string. If 'pname' has die scope,
-        returns "package <pkgnum> die <dienum>" string.
-        """
-
-        if self._is_uncore_prop(pname):
-            levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
-            pkg = levels["package"]
-            die = levels["die"]
-            what = f"package {pkg} die {die}"
-        else:
-            what = f"CPU {cpu}"
-
-        return what
 
     def _write_cpu_freq_prop_msr(self, pname, freq, cpu):
         """Write CPU frequency property by programming 'MSR_HWP_REQUEST'."""
@@ -894,45 +846,27 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return freq
 
-    def _set_prop_sysfs(self, pname, val, cpus):
-        """Sets property 'pname' using 'sysfs' mechanism."""
-
-        mname = "sysfs"
-
-        if pname == "governor":
-            self._validate_governor_name(val)
-
-        # Removing 'cpus' from the cache will make sure the following '_pcache.is_cached()' returns
-        # 'False' for every CPU number that was not yet modified by the scope-aware '_pcache.add()'
-        # method.
-        for cpu in cpus:
-            self._pcache.remove(pname, cpu, mname)
-
-        prop = self._props[pname]
-
-        for cpu in cpus:
-            if self._pcache.is_cached(pname, cpu, mname):
-                continue
-
-            if "fname" in prop:
-                path = self._get_prop_sysfs_path(pname, cpu)
-                self._write_prop_to_sysfs(pname, path, val)
-
-                # Note, below 'add()' call is scope-aware. It will cache 'val' not only for CPU
-                # number 'cpu', but also for all the 'sname' siblings. For example, if property
-                # scope name is "package", 'val' will be cached for all CPUs in the package that
-                # contains CPU number 'cpu'.
-                self._pcache.add(pname, cpu, val, mname, sname=prop["iosname"])
-            else:
-                raise Error(f"BUG: unsupported property '{pname}'")
-
-        return mname
-
     def _set_freq_prop(self, pname, val, cpus, mname):
         """
         Set core or uncore frequency property 'pname' to value 'val' for CPUs in 'cpus' using method
         'mname'.
         """
+
+        def _get_num_str(pname, cpu):
+            """
+            If property 'pname' has CPU scope, returns "CPU <num>" string. If 'pname' has die scope,
+            returns "package <pkgnum> die <dienum>" string.
+            """
+
+            if self._is_uncore_prop(pname):
+                levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
+                pkg = levels["package"]
+                die = levels["die"]
+                what = f"package {pkg} die {die}"
+            else:
+                what = f"CPU {cpu}"
+
+            return what
 
         def _raise_not_supported(pname):
             """Raise an exception if one of the required properties is not supported."""
@@ -947,7 +881,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             val = Human.num2si(val, unit="Hz", decp=4)
             min_limit = Human.num2si(min_limit, unit="Hz", decp=4)
             max_limit = Human.num2si(max_limit, unit="Hz", decp=4)
-            what = self._get_num_str(pname, cpu)
+            what = _get_num_str(pname, cpu)
             raise ErrorFreqRange(f"{name} value of '{val}' for {what} is out of range, "
                                  f"must be within [{min_limit}, {max_limit}]")
 
@@ -957,7 +891,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             name = Human.uncapitalize(self._props[pname]["name"])
             new_freq = Human.num2si(new_freq, unit="Hz", decp=4)
             cur_freq = Human.num2si(cur_freq, unit="Hz", decp=4)
-            what = self._get_num_str(pname, cpu)
+            what = _get_num_str(pname, cpu)
             if is_min:
                 msg = f"larger than currently configured max. frequency of {cur_freq}"
             else:
@@ -1037,7 +971,7 @@ class PStates(_PCStatesBase.PCStatesBase):
         if pname in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
             return self._set_freq_prop(pname, val, cpus, mname)
 
-        return self._set_prop_sysfs(pname, val, cpus)
+        raise Error("BUG: unknown property '{pname}'")
 
     def _set_sname(self, pname):
         """Set scope name for property 'pname'."""
@@ -1064,13 +998,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         super()._init_props_dict(PROPS)
 
-        # Properties backed by a single sysfs file (only simple cases).
-        #
-        # Note, not all properties that may be backed by a sysfs file have "fname". For example,
-        # "turbo" does not, because the sysfs knob path depends on what frequency driver is used.
-        self._props["governor"]["fname"] = "scaling_governor"
-        self._props["governors"]["fname"] = "scaling_available_governors"
-
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
         The class constructor. The arguments are as follows.
@@ -1093,17 +1020,13 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._uncfreq_obj = None
         self._uncfreq_err = None
 
-        self._sysfs_base = Path("/sys/devices/system/cpu")
-
         self._init_props_dict()
 
-        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                              enable_cache=self._enable_cache)
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_pcache", "_eppobj", "_epbobj", "_fsbfreq", "_cpufreq_sysfs_obj",
-                       "_cpufreq_cppc_obj", "_cpufreq_msr_obj", "_uncfreq_obj")
+        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj",
+                       "_cpufreq_msr_obj", "_uncfreq_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()

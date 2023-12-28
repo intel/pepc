@@ -14,7 +14,7 @@ This module provides C-state management API.
 
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs import _PCStatesBase, CPUIdle
+from pepclibs import _PropsClassBase, CPUIdle
 from pepclibs.msr import PowerCtl, PCStateConfigCtl
 
 # Make the exception class be available for users.
@@ -119,7 +119,7 @@ PROPS = {
     },
 }
 
-class CStates(_PCStatesBase.PCStatesBase):
+class CStates(_PropsClassBase.PropsClassBase):
     """
     This class provides C-state management API.
 
