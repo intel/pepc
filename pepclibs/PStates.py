@@ -626,12 +626,13 @@ class PStates(_PCStatesBase.PCStatesBase):
                         f"{self._pman.hostmsg}")
         return int(val)
 
-    def _get_turbo(self, cpu):
-        """Return the turbo on/of status for CPU 'cpu', use the 'sysfs' method."""
+    def _get_turbo(self, cpus):
+        """
+        For every CPU in 'cpus', yield the turbo on/off status for CPU 'cpu'. Use method 'sysfs'.
+        """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
-        _, val = next(cpufreq_obj.get_driver((cpu,)))
-        return val
+        yield from cpufreq_obj.get_turbo(cpus)
 
     def _get_driver(self, cpus):
         """
@@ -674,8 +675,6 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_cpu_prop(self, pname, cpu, _):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
-        if pname == "turbo":
-            return self._get_turbo(cpu)
         if "fname" in self._props[pname]:
             return self._get_prop_from_sysfs(pname, cpu)
 
@@ -711,6 +710,8 @@ class PStates(_PCStatesBase.PCStatesBase):
             yield from self._get_frequencies(cpus, mname)
         elif pname == "bus_clock":
             yield from self._get_bus_clock(cpus, mname)
+        elif pname == "turbo":
+            yield from self._get_turbo(cpus)
         elif pname == "driver":
             yield from self._get_driver(cpus)
         elif pname == "intel_pstate_mode":
