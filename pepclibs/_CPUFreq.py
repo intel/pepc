@@ -10,9 +10,6 @@
 
 """
 This module provides a capability of reading and changing CPU frequency.
-
-Note: the 'cpus' argument in all methods of all classes of this module is not validated or
-normalize. The caller is supposed to provide a validated CPU numbers collection.
 """
 
 import logging
@@ -69,20 +66,36 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
     Public methods overview.
 
     1. Get/set CPU frequency via Linux "cpufreq" sysfs interfaces:
-       * 'get_min_freq()'
-       * 'get_max_freq()'
-       * 'set_min_freq()'
-       * 'set_max_freq()'
+       * Multiple CPUs.
+         - 'get_min_freq()'
+         - 'get_max_freq()'
+         - 'set_min_freq()'
+         - 'set_max_freq()'
+       * Single CPU.
+         - 'get_cpu_min_freq()'
+         - 'get_cpu_max_freq()'
+         - 'set_cpu_min_freq()'
+         - 'set_cpu_max_freq()'
     2. Get CPU frequency limits via Linux "cpufreq" sysfs interfaces:
-       * 'get_min_freq_limit()'
-       * 'get_max_freq_limit()'
+       * Multiple CPUs.
+         - 'get_min_freq_limit()'
+         - 'get_max_freq_limit()'
+       * Single CPU.
+         - 'get_cpu_min_freq_limit()'
+         - 'get_cpu_max_freq_limit()'
     3. Get avalilable CPU frequencies list:
-       * 'get_available_frequencies()'
+       * Multiple CPUs.
+         - 'get_available_frequencies()'
+       * Single CPU.
+         - 'get_cpu_available_frequencies()'
     4. Get CPU base frequency:
-       * 'get_base_freq()'
+       * Multiple CPUs.
+         - 'get_base_freq()'
+       * Single CPU.
+         - 'get_cpu_base_freq()'
 
-    Note, class methods do not validate the 'cpu' and 'cpus' number arguments. The caller is assumed
-    to have done the validation. The input CPU number(s) should exist and should be online.
+    Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
+    have done the validation. The input CPU number(s) should exist and should be online.
     """
 
     def _get_policy_sysfs_path(self, cpu, fname):
@@ -98,85 +111,150 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
         fname = prefix + key + "_freq"
         return self._get_policy_sysfs_path(cpu, fname)
 
-    def _get_freq_sysfs(self, key, cpu, limit=False):
-        """Get CPU frequency from the Linux "cpufreq" sysfs file."""
+    def _get_freq_sysfs(self, key, cpus, limit=False):
+        """Yield CPU frequency from the Linux "cpufreq" sysfs file."""
 
-        path = self._get_cpu_freq_sysfs_path(key, cpu, limit=limit)
-        freq = self._sysfs_io.read_int(path, what=f"{key}. frequency for CPU {cpu}")
-        # The frequency value is in kHz in sysfs.
-        return freq * 1000
+        for cpu in cpus:
+            path = self._get_cpu_freq_sysfs_path(key, cpu, limit=limit)
+            freq = self._sysfs_io.read_int(path, what=f"{key}. frequency for CPU {cpu}")
+            # The frequency value is in kHz in sysfs.
+            yield cpu, freq * 1000
 
-    def get_min_freq(self, cpu):
+    def get_min_freq(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum CPU
+        frequency via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the minimum frequency for.
+
+        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        """
+
+        yield from self._get_freq_sysfs("min", cpus)
+
+    def get_cpu_min_freq(self, cpu):
         """
         Get minimum CPU frequency via Linux "cpufreq" sysfs interfaces. The arguments are as
         follows.
-          * cpu - CPU number to get the frequency for.
+          * cpu - CPU number to get the minimum frequency for.
 
         Return the minimum CPU frequency in Hz. Raise 'ErrorNotSupported' if the CPU frequency sysfs
         file does not exist.
         """
 
-        return self._get_freq_sysfs("min", cpu)
+        _, val = next(self._get_freq_sysfs("min", (cpu,)))
+        return val
 
-    def get_max_freq(self, cpu):
+    def get_max_freq(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum CPU
+        frequency via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the maximum frequency for.
+
+        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        """
+
+        yield from self._get_freq_sysfs("max", cpus)
+
+    def get_cpu_max_freq(self, cpu):
         """
         Get maximum CPU frequency via Linux "cpufreq" sysfs interfaces. The arguments are as
         follows.
-          * cpu - CPU number to get the frequency for.
+          * cpu - CPU number to get the maximum frequency for.
 
         Return the maximum CPU frequency in Hz. Raise 'ErrorNotSupported' if the CPU frequency sysfs
         file does not exist.
         """
 
-        return self._get_freq_sysfs("max", cpu)
+        _, val = next(self._get_freq_sysfs("max", (cpu,)))
+        return val
 
-    def get_min_freq_limit(self, cpu):
+    def get_min_freq_limit(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum CPU
+        frequency limit for CPU 'cpu', read via Linux "cpufreq" sysfs interfaces. The arguments are
+        as follows.
+          * cpus - a collection of integer CPU numbers to get the frequency limit for.
+
+        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        """
+
+        yield from self._get_freq_sysfs("min", cpus, limit=True)
+
+    def get_cpu_min_freq_limit(self, cpu):
         """
         Get minimum CPU frequency limit via Linux "cpufreq" sysfs interfaces. The arguments are as
         follows.
-          * cpu - CPU number to get the frequency for.
+          * cpu - CPU number to get the frequency limit for.
 
         Return the minimum CPU frequency limit in Hz. Raise 'ErrorNotSupported' if the CPU frequency
         sysfs file does not exist.
         """
 
-        return self._get_freq_sysfs("min", cpu, limit=True)
+        _, val = next(self._get_freq_sysfs("min", (cpu,), limit=True))
+        return val
 
-    def get_max_freq_limit(self, cpu):
+    def get_max_freq_limit(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum CPU
+        frequency limit for CPU 'cpu', read via Linux "cpufreq" sysfs interfaces. The arguments are
+        as follows.
+          * cpus - a collection of integer CPU numbers to get the frequency limit for.
+
+        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        """
+
+        yield from self._get_freq_sysfs("max", cpus, limit=True)
+
+    def get_cpu_max_freq_limit(self, cpu):
         """
         Get maximum CPU frequency limit via Linux "cpufreq" sysfs interfaces. The arguments are as
         follows.
-          * cpu - CPU number to get the frequency for.
+          * cpu - CPU number to get the frequency limit for.
 
         Return the maximum CPU frequency limit in Hz. Raise 'ErrorNotSupported' if the CPU frequency
         sysfs file does not exist.
         """
 
-        return self._get_freq_sysfs("max", cpu, limit=True)
+        _, val = next(self._get_freq_sysfs("max", (cpu,), limit=True))
+        return val
 
-    def _set_freq_sysfs(self, freq, key, cpu):
-        """Set CPU frequency by writing to the Linux "cpufreq" sysfs file."""
+    def _set_freq_sysfs(self, freq, key, cpus):
+        """
+        For every CPU in 'cpus', set CPU frequency by writing to the Linux "cpufreq" sysfs file.
+        """
 
-        cpu_info = self._cpuinfo.info
-        if cpu_info["vendor"] == "GenuineIntel" and "hwp" in cpu_info["flags"][cpu]:
-            # On some Intel platforms with HWP enabled the change does not happen immediatly. Retry
-            # few times.
-            retries = 2
-            sleep = 0.1
-        else:
-            retries = sleep = 0
-
-        path = self._get_cpu_freq_sysfs_path(key, cpu)
         what = f"{key}. CPU frequency"
 
-        try:
-            self._sysfs_io.write_verify(path, str(freq // 1000), what=what, retries=retries,
-                                        sleep=sleep)
-        except ErrorVerifyFailed as err:
-            setattr(err, "cpu", cpu)
-            raise err
+        for cpu in cpus:
+            cpu_info = self._cpuinfo.info
+            if cpu_info["vendor"] == "GenuineIntel" and "hwp" in cpu_info["flags"][cpu]:
+                # On some Intel platforms with HWP enabled the change does not happen immediately.
+                # Retry few times.
+                retries = 2
+                sleep = 0.1
+            else:
+                retries = sleep = 0
 
-    def set_min_freq(self, freq, cpu):
+            path = self._get_cpu_freq_sysfs_path(key, cpu)
+
+            try:
+                self._sysfs_io.write_verify(path, str(freq // 1000), what=what, retries=retries,
+                                            sleep=sleep)
+            except ErrorVerifyFailed as err:
+                setattr(err, "cpu", cpu)
+                raise err
+
+    def set_min_freq(self, freq, cpus):
+        """
+        For every CPU in 'cpus', set minimum CPU frequency via Linux "cpufreq" sysfs interfaces. The
+        arguments are as follows.
+          * freq - the minimum frequency value to set, hertz.
+          * cpus - a collection of CPU numbers to set the frequency for.
+        """
+
+        self._set_freq_sysfs(freq, "min", cpus)
+
+    def set_cpu_min_freq(self, freq, cpu):
         """
         Set minimum CPU frequency via Linux "cpufreq" sysfs interfaces. The arguments are as
         follows.
@@ -184,9 +262,19 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
           * cpu - CPU number to set the frequency for.
         """
 
-        self._set_freq_sysfs(freq, "min", cpu)
+        self._set_freq_sysfs(freq, "min", (cpu,))
 
-    def set_max_freq(self, freq, cpu):
+    def set_max_freq(self, freq, cpus):
+        """
+        For every CPU in 'cpus', set maximum CPU frequency via Linux "cpufreq" sysfs interfaces. The
+        arguments are as follows.
+          * freq - the maximum frequency value to set, hertz.
+          * cpus - a collection of CPU numbers to set the frequency for.
+        """
+
+        self._set_freq_sysfs(freq, "max", cpus)
+
+    def set_cpu_max_freq(self, freq, cpu):
         """
         Set maximum CPU frequency via Linux "cpufreq" sysfs interfaces. The arguments are as
         follows.
@@ -194,65 +282,99 @@ class CPUFreqSysfs(_CPUFreqSysfsBase):
           * cpu - CPU number to set the frequency for.
         """
 
-        self._set_freq_sysfs(freq, "max", cpu)
+        self._set_freq_sysfs(freq, "max", (cpu,))
 
-    def get_available_frequencies(self, cpu):
+    def get_available_frequencies(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the list of available
+        CPU frequencies in Hz for CPU 'cpu'. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the list of available frequencies for.
+
+        Raise 'ErrorNotSupported' if the frequencies sysfs file does not exist. The sysfs file
+        is provided by the 'acpi-cpufreq' driver, but not by the 'intel_idle' driver.
+        """
+
+        for cpu in cpus:
+            path = self._get_policy_sysfs_path(cpu, "scaling_available_frequencies")
+            val = self._sysfs_io.read(path, what="available CPU frequencies")
+
+            freqs = []
+            for freq in val.split():
+                try:
+                    freq = Trivial.str_to_int(freq, what="CPU frequency value")
+                    freqs.append(freq * 1000)
+                except Error as err:
+                    raise Error(f"bad contents of file '{path}'{self._pman.hostmsg}\n"
+                                f"{err.indent(2)}") from err
+
+            yield cpu, sorted(freqs)
+
+    def get_cpu_available_frequencies(self, cpu):
         """
         Get the list of available CPU frequency values. The arguments are as follows.
           * cpu - CPU number to get the list of available frequencies for.
 
         Return the list of available frequencies Hz. Raise 'ErrorNotSupported' if the frequencies
-        sysfs file does not exist. The sysfs file provided by the 'acpi-cpufreq' driver. but
-        'intel_idle' driver does not provide it.
+        sysfs file does not exist. The sysfs file is provided by the 'acpi-cpufreq' driver, but not
+        the 'intel_idle' driver.
         """
 
-        path = self._get_policy_sysfs_path(cpu, "scaling_available_frequencies")
-        val = self._sysfs_io.read(path, what="available CPU frequencies")
+        _, val = next(self.get_available_frequencies((cpu,)))
+        return val
 
-        freqs = []
-        for freq in val.split():
+    def _get_base_freq_intel_pstate(self, cpus):
+        """Yield base frequency from 'intel_pstate' driver's sysfs file."""
+
+        for cpu in cpus:
+            path = self._get_policy_sysfs_path(cpu, "base_frequency")
+            freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
+            # The frequency value is in kHz in sysfs.
+            yield cpu, freq * 1000
+
+    def _get_base_freq_bios_limit(self, cpus):
+        """Yield base frequency from the 'bios_limit' sysfs file."""
+
+        for cpu in cpus:
+            path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
+            freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
+            # The frequency value is in kHz in sysfs.
+            yield cpu, freq * 1000
+
+    def get_base_freq(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is base frequency of CPU
+        'cpu', read via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get base frequency for.
+
+        Raise 'ErrorNotSupported' if the base frequency sysfs files do not exist.
+        """
+
+        yielded_cpus = set()
+        try:
+            for cpu, val in self._get_base_freq_intel_pstate(cpus):
+                yielded_cpus.add(cpu)
+                yield cpu, val
+        except ErrorNotSupported as err1:
+            left_cpus = []
+            for cpu in cpus:
+                if cpu not in yielded_cpus:
+                    left_cpus.append(cpu)
             try:
-                freq = Trivial.str_to_int(freq, what="CPU frequency value")
-                freqs.append(freq * 1000)
-            except Error as err:
-                raise Error(f"bad contents of file '{path}'{self._pman.hostmsg}\n{err.indent(2)}") \
-                            from err
+                yield from self._get_base_freq_bios_limit(left_cpus)
+            except ErrorNotSupported as err2:
+                raise ErrorNotSupported(f"{err1}\n{err2}") from err2
 
-        return sorted(freqs)
-
-    def _get_base_freq_intel_pstate(self, cpu):
-        """Get CPU base frequency from 'intel_pstate' driver's sysfs file."""
-
-        path = self._get_policy_sysfs_path(cpu, "base_frequency")
-        freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
-        # The frequency value is in kHz in sysfs.
-        return freq * 1000
-
-    def _get_base_freq_bios_limit(self, cpu):
-        """Get CPU base frequency from the 'bios_limit' sysfs file."""
-
-        path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
-        freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
-        # The frequency value is in kHz in sysfs.
-        return freq * 1000
-
-    def get_base_freq(self, cpu):
+    def get_cpu_base_freq(self, cpu):
         """
         Get CPU base frequency via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
           * cpu - CPU number to get base frequency for.
 
-        Return the base frequency vaule in Hz. Raise 'ErrorNotSupported' if the bae frequency sysfs
+        Return the base frequency vaule in Hz. Raise 'ErrorNotSupported' if the base frequency sysfs
         files do not exist.
         """
 
-        try:
-            freq = self._get_base_freq_intel_pstate(cpu)
-        except ErrorNotSupported as err1:
-            try:
-                freq = self._get_base_freq_bios_limit(cpu)
-            except ErrorNotSupported as err2:
-                raise ErrorNotSupported(f"{err1}\n{err2}") from err2
-        return freq
+        _, val = next(self.get_base_freq((cpu,)))
+        return val
 
 class CPUFreqCPPC(_CPUFreqSysfsBase):
     """
@@ -262,23 +384,29 @@ class CPUFreqCPPC(_CPUFreqSysfsBase):
     Public methods overview.
 
     1. Get CPU frequency limits from ACPI CPPC.
-       * 'get_min_freq_limit()' - multiple CPUs.
-       * 'get_cpu_min_freq_limit()' - single CPU.
-       * 'get_max_freq_limit()' - multiple CPUs.
-       * 'get_cpu_max_freq_limit()' - single CPU.
+       * Multiple CPUs.
+         - 'get_min_freq_limit()'
+         - 'get_max_freq_limit()'
+       * Single CPU.
+         - 'get_cpu_min_freq_limit()'
+         - 'get_cpu_max_freq_limit()'
     1. Get CPU performance limits from ACPI CPPC.
-       * 'get_min_perf_limit()' - multiple CPUs.
-       * 'get_cpu_min_perf_limit()' - single CPU.
-       * 'get_max_perf_limit()' - multiple CPUs.
-       * 'get_cpu_max_perf_limit()' - single CPU.
+       * Multiple CPUs.
+         - 'get_min_perf_limit()'
+         - 'get_max_perf_limit()'
+       * Single CPU.
+         - 'get_cpu_min_perf_limit()'
+         - 'get_cpu_max_perf_limit()'
     4. Get CPU base frequency and performance from ACPI CPPC:
-       * 'get_base_freq()' - multiple CPUs.
-       * 'get_cpu_base_freq()' - single CPU.
-       * 'get_base_perf()' - multiple CPUs.
-       * 'get_cpu_base_perf()' - single CPU.
+       * Multiple CPUs.
+         - 'get_base_freq()'
+         - 'get_base_perf()'
+       * Single CPU.
+         - 'get_cpu_base_freq()'
+         - 'get_cpu_base_perf()'
 
-    Note, class methods do not validate the 'cpu' and 'cpus' number arguments. The caller is assumed
-    to have done the validation. The input CPU number(s) should exist and should be online.
+    Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
+    have done the validation. The input CPU number(s) should exist and should be online.
     """
 
     def _get_sysfs_path(self, cpu, fname):
@@ -491,20 +619,28 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
          - 'set_cpu_min_freq()'
          - 'set_cpu_max_freq()'
     3. Get base frequency via an MSR (Intel CPUs only):
-       * 'get_base_freq()' - multiple CPUs.
-       * 'get_cpu_base_freq()' - single CPU.
+       * Multiple CPUs.
+         - 'get_base_freq()'
+       * Single CPU.
+         - 'get_cpu_base_freq()'
     4. Get the minimum CPU operating frequency via an MSR (Intel CPUs only):
-       * 'get_min_oper_freq()' - multiple CPUs.
-       * 'get_cpu_min_oper_freq()' - single CPU.
+       * Multiple CPUs.
+         - 'get_min_oper_freq()'
+       * Single CPU.
+         - 'get_cpu_min_oper_freq()'
     5. Get the maximum CPU efficiency frequency via an MSR (Intel CPUs only):
-       * 'get_max_eff_freq()' - multiple CPUs.
-       * 'get_cpu_max_eff_freq()' - single CPU.
+       * Multiple CPUs.
+         - 'get_max_eff_freq()'
+       * Single CPU.
+         - 'get_cpu_max_eff_freq()'
     6. Get the maximum CPU turbo frequency via an MSR (Intel CPUs only):
-       * 'get_max_turbo_freq()' - multiple CPUs.
-       * 'get_cpu_max_turbo_freq()' - single CPU.
+       * Multiple CPUs.
+         - 'get_max_turbo_freq()'
+       * Single CPU.
+         - 'get_cpu_max_turbo_freq()'
 
-    Note, class methods do not validate the 'cpu' and 'cpus' number arguments. The caller is assumed
-    to have done the validation. The input CPU number(s) should exist and should be online.
+    Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
+    have done the validation. The input CPU number(s) should exist and should be online.
     """
 
     def _get_msr(self):

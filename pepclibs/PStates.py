@@ -385,135 +385,149 @@ class PStates(_PCStatesBase.PCStatesBase):
         pmenable = self._get_pmenable()
         yield from pmenable.is_feature_enabled("hwp", cpus=cpus)
 
-    def _get_cppc_freq(self, pname, cpu):
-        """Read the ACPI CPPC sysfs files for property 'pname' and CPU 'cpu'."""
+    def _get_cppc_freq(self, pname, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' the value of property
+        'pname' for CPU 'cpu', eead from an ACPI CPPC sysfs file.
+        """
 
         cpufreq_obj = self._get_cpufreq_cppc_obj()
 
         if pname == "base_freq":
-            return cpufreq_obj.get_cpu_base_freq(cpu)
-
+            yield from cpufreq_obj.get_base_freq(cpus)
+            return
 
         with contextlib.suppress(ErrorNotSupported):
             if pname == "max_turbo_freq":
-                return cpufreq_obj.get_cpu_max_freq_limit(cpu)
+                yield from cpufreq_obj.get_max_freq_limit(cpus)
             elif pname == "min_oper_freq":
-                return cpufreq_obj.get_cpu_min_freq_limit(cpu)
+                yield from cpufreq_obj.get_min_freq_limit(cpus)
             else:
                 raise Error(f"BUG: unexpected property {pname}")
+            return
 
         # Sometimes the frequency CPPC sysfs files are not readable, but the "performance" files
         # are. The base frequency is required to turn performance values to Hz.
 
-        base_freq = self._get_cpu_prop_cache("base_freq", cpu)
-        nominal_perf = cpufreq_obj.get_cpu_base_perf(cpu)
+        base_freq_iter = self._get_prop_pvinfo_cpus("base_freq", cpus)
+        nominal_perf_iter = cpufreq_obj.get_base_perf(cpus)
 
         if pname == "max_turbo_freq":
-            perf = cpufreq_obj.get_cpu_max_perf_limit(cpu)
-        elif pname == "min_oper_freq":
-            perf = cpufreq_obj.get_cpu_min_perf_limit(cpu)
+            perf_iter = cpufreq_obj.get_max_perf_limit(cpus)
+        else:
+            perf_iter = cpufreq_obj.get_min_perf_limit(cpus)
 
-        return int((base_freq * perf) / nominal_perf)
+        iterator = zip(base_freq_iter, nominal_perf_iter, perf_iter)
+        for pvinfo, (_, nominal_perf), (_, perf) in iterator:
+            yield pvinfo["cpu"], int((pvinfo["val"] * perf) / nominal_perf)
 
-    def _get_min_oper_freq(self, cpu, mname):
-        """Return the minimum operating frequency for CPU 'cpu', use method 'mname'."""
-
-        if mname == "msr":
-            cpufreq_obj = self._get_cpufreq_msr_obj()
-            if cpufreq_obj is None:
-                return None
-            return cpufreq_obj.get_cpu_min_oper_freq(cpu)
-
-        if mname == "cppc":
-            return self._get_cppc_freq("min_oper_freq", cpu)
-
-        raise Error(f"BUG: unsupported mechanism '{mname}'")
-
-    def _get_max_turbo_freq(self, cpu, mname):
-        """Return the max. turbo frequency for CPU 'cpu', use method 'mname'."""
+    def _get_min_oper_freq(self, cpus, mname):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is  the minimum operating
+        frequency for CPU 'cpu'. Use method 'mname'.
+        """
 
         if mname == "msr":
             cpufreq_obj = self._get_cpufreq_msr_obj()
-            if cpufreq_obj is None:
-                return None
-            return cpufreq_obj.get_cpu_max_turbo_freq(cpu)
+            yield from cpufreq_obj.get_min_oper_freq(cpus)
+            return
 
         if mname == "cppc":
-            return self._get_cppc_freq("max_turbo_freq", cpu)
+            yield from self._get_cppc_freq("min_oper_freq", cpus)
+            return
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
-    def _get_base_freq(self, cpu, mname):
-        """Return the base frequency for CPU 'cpu', use method 'mname'."""
+    def _get_max_turbo_freq(self, cpus, mname):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is  the maximum 1-core
+        turbo frequency for CPU 'cpu'. Use method 'mname'.
+        """
+
+        if mname == "msr":
+            cpufreq_obj = self._get_cpufreq_msr_obj()
+            yield from cpufreq_obj.get_max_turbo_freq(cpus)
+            return
+
+        if mname == "cppc":
+            yield from self._get_cppc_freq("max_turbo_freq", cpus)
+            return
+
+        raise Error(f"BUG: unsupported mechanism '{mname}'")
+
+    def _get_base_freq(self, cpus, mname):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is base frequency of CPU
+        'cpu'. Use method 'mname'.
+        """
 
         if mname == "sysfs":
             cpufreq_obj = self._get_cpufreq_sysfs_obj()
-            if not cpufreq_obj:
-                return None
-            return cpufreq_obj.get_base_freq(cpu)
+            yield from cpufreq_obj.get_base_freq(cpus)
+            return
 
         if mname == "msr":
             cpufreq_obj = self._get_cpufreq_msr_obj()
-            if cpufreq_obj is None:
-                return None
-            return cpufreq_obj.get_cpu_base_freq(cpu)
+            yield from cpufreq_obj.get_base_freq(cpus)
+            return
 
         if mname == "cppc":
-            return self._get_cppc_freq("base_freq", cpu)
+            yield from self._get_cppc_freq("base_freq", cpus)
+            return
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
-    def _get_cpu_freq_sysfs(self, pname, cpu):
-        """Read and return the minimum or maximum CPU frequency from Linux "cpufreq" sysfs files."""
+    def _get_cpu_freq_sysfs(self, pname, cpus):
+        """YIeld the minimum or maximum CPU frequency read from Linux "cpufreq" sysfs files."""
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
 
-        val = None
-        if cpufreq_obj:
-            if pname == "min_freq":
-                val = cpufreq_obj.get_min_freq(cpu)
-            elif pname == "max_freq":
-                val = cpufreq_obj.get_max_freq(cpu)
-            elif pname == "min_freq_limit":
-                val = cpufreq_obj.get_min_freq_limit(cpu)
-            elif pname == "max_freq_limit":
-                val = cpufreq_obj.get_max_freq_limit(cpu)
-            else:
-                raise Error(f"BUG: unexpected CPU frequency property {pname}")
+        if pname == "min_freq":
+            yield from cpufreq_obj.get_min_freq(cpus)
+        elif pname == "max_freq":
+            yield from cpufreq_obj.get_max_freq(cpus)
+        elif pname == "min_freq_limit":
+            yield from cpufreq_obj.get_min_freq_limit(cpus)
+        elif pname == "max_freq_limit":
+            yield from cpufreq_obj.get_max_freq_limit(cpus)
+        else:
+            raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
-        return val
-
-    def _get_cpu_freq_msr(self, pname, cpu):
-        """Read and return the minimum or maximum CPU frequency from 'MSR_HWP_REQUEST'."""
+    def _get_cpu_freq_msr(self, pname, cpus):
+        """Yield the minimum or maximum CPU frequency read from 'MSR_HWP_REQUEST'."""
 
         cpufreq_obj = self._get_cpufreq_msr_obj()
 
-        val = None
-        if cpufreq_obj:
-            if pname == "min_freq":
-                val = cpufreq_obj.get_cpu_min_freq(cpu)
-            elif pname == "max_freq":
-                val = cpufreq_obj.get_cpu_max_freq(cpu)
-            else:
-                raise Error(f"BUG: unexpected CPU frequency property {pname}")
+        if pname == "min_freq":
+            yield from cpufreq_obj.get_min_freq(cpus)
+        elif pname == "max_freq":
+            yield from cpufreq_obj.get_max_freq(cpus)
+        else:
+            raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
-        return val
-
-    def _get_cpu_freq(self, pname, cpu, mname):
-        """Return the CPU frequency for CPU 'cpu', use method 'mname'."""
+    def _get_cpu_freq(self, pname, cpus, mname):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the frequency of CPU
+        'cpu'. Use method 'mname'.
+        """
 
         if mname == "sysfs":
-            return self._get_cpu_freq_sysfs(pname, cpu)
+            yield from self._get_cpu_freq_sysfs(pname, cpus)
+            return
 
         if mname == "msr":
-            return self._get_cpu_freq_msr(pname, cpu)
+            yield from self._get_cpu_freq_msr(pname, cpus)
+            return
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
-    def _get_cpu_freq_limit(self, pname, cpu):
-        """Return the CPU frequency limit for CPU 'cpu', use the 'sysfs' method."""
+    def _get_cpu_freq_limit(self, pname, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the frequency limit for
+        CPU 'cpu'. Use the 'sysfs' method.
+        """
 
-        return self._get_cpu_freq_sysfs(pname, cpu)
+        yield from self._get_cpu_freq_sysfs(pname, cpus)
 
     def _get_uncore_freq(self, pname, cpu):
         """
@@ -567,7 +581,7 @@ class PStates(_PCStatesBase.PCStatesBase):
             cpufreq_obj = self._get_cpufreq_sysfs_obj()
             if not cpufreq_obj:
                 return None
-            return cpufreq_obj.get_available_frequencies(cpu)
+            return cpufreq_obj.get_cpu_available_frequencies(cpu)
 
         if mname == "doc":
             return self._get_frequencies_intel(cpu)
@@ -717,16 +731,6 @@ class PStates(_PCStatesBase.PCStatesBase):
     def _get_cpu_prop(self, pname, cpu, mname):
         """Return 'pname' property value for CPU 'cpu', using mechanism 'mname'."""
 
-        if pname == "min_oper_freq":
-            return self._get_min_oper_freq(cpu, mname)
-        if pname == "max_turbo_freq":
-            return self._get_max_turbo_freq(cpu, mname)
-        if pname == "base_freq":
-            return self._get_base_freq(cpu, mname)
-        if pname in {"min_freq", "max_freq"}:
-            return self._get_cpu_freq(pname, cpu, mname)
-        if pname in {"min_freq_limit", "max_freq_limit"}:
-            return self._get_cpu_freq_limit(pname, cpu)
         if self._is_uncore_prop(pname):
             return self._get_uncore_freq(pname, cpu)
         if pname == "frequencies":
@@ -758,6 +762,16 @@ class PStates(_PCStatesBase.PCStatesBase):
             yield from self._get_max_eff_freq(cpus)
         elif pname == "hwp":
             yield from self._get_hwp(cpus)
+        elif pname == "min_oper_freq":
+            yield from self._get_min_oper_freq(cpus, mname)
+        elif pname == "max_turbo_freq":
+            yield from self._get_max_turbo_freq(cpus, mname)
+        elif pname == "base_freq":
+            yield from self._get_base_freq(cpus, mname)
+        elif pname in {"min_freq", "max_freq"}:
+            yield from self._get_cpu_freq(pname, cpus, mname)
+        elif pname in {"min_freq_limit", "max_freq_limit"}:
+            yield from self._get_cpu_freq_limit(pname, cpus)
         else:
             for cpu in cpus:
                 yield (cpu, self._get_cpu_prop(pname, cpu, mname))
@@ -855,9 +869,9 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         try:
             if pname == "min_freq":
-                cpufreq_obj.set_min_freq(freq, cpu)
+                cpufreq_obj.set_cpu_min_freq(freq, cpu)
             elif pname == "max_freq":
-                cpufreq_obj.set_max_freq(freq, cpu)
+                cpufreq_obj.set_cpu_max_freq(freq, cpu)
             else:
                 raise Error(f"BUG: unexpected CPU frequency property {pname}")
         except ErrorVerifyFailed as err:
