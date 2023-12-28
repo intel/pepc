@@ -29,7 +29,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     Public methods overview.
 
-    1. Get/set CPU frequency via Linux "cpufreq" sysfs interfaces:
+    1. Get/set CPU frequency via Linux "cpufreq" sysfs interfaces.
        * Multiple CPUs.
            - 'get_min_freq()'
            - 'get_max_freq()'
@@ -40,19 +40,19 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
            - 'get_cpu_max_freq()'
            - 'set_cpu_min_freq()'
            - 'set_cpu_max_freq()'
-    2. Get CPU frequency limits via Linux "cpufreq" sysfs interfaces:
+    2. Get CPU frequency limits via Linux "cpufreq" sysfs interfaces.
        * Multiple CPUs.
            - 'get_min_freq_limit()'
            - 'get_max_freq_limit()'
        * Single CPU.
            - 'get_cpu_min_freq_limit()'
            - 'get_cpu_max_freq_limit()'
-    3. Get avalilable CPU frequencies list:
+    3. Get avalilable CPU frequencies list.
        * Multiple CPUs.
            - 'get_available_frequencies()'
        * Single CPU.
            - 'get_cpu_available_frequencies()'
-    4. Get CPU base frequency:
+    4. Get CPU base frequency.
        * Multiple CPUs.
            - 'get_base_freq()'
        * Single CPU.
@@ -65,6 +65,10 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     7. Get/set turbo on/off status.
        * 'get_turbo()'
        * 'set_turbo()'
+    8. Get/set Linux CPU frequency governor.
+       * 'get_governor()'
+       * 'get_available_governors()'
+       * 'set_governor()'
 
     Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
     have done the validation. The input CPU number(s) should exist and should be online.
@@ -541,6 +545,54 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                         f"{self._pman.hostmsg}: unsupported CPU frequency driver "
                                         f"'{driver}'")
 
+    def get_governor(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the Linux CPU frequency
+        governor name for CPU 'cpu'. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get governor name for.
+        """
+
+        what = "CPU frequency governor"
+
+        for cpu in cpus:
+            path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_governor"
+            name = self._sysfs_io.read(path, what=what)
+            yield cpu, name
+
+    def get_available_governors(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the list of available
+        Linux CPU frequency governor names for CPU 'cpu'. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get available governor names for.
+        """
+
+        what = "available CPU frequency governors"
+
+        for cpu in cpus:
+            path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_available_governors"
+            names = self._sysfs_io.read(path, what=what)
+            yield cpu, Trivial.split_csv_line(names, sep=" ")
+
+    def set_governor(self, governor, cpus):
+        """
+        For the Linux CPU frequency governor to 'governor' for CPUs 'cpus'. The arguments are as
+        follows.
+          * governor - name of the governor to set.
+          * cpus - a collection of integer CPU numbers to set the governor for.
+        """
+
+        what = "CPU frequency governor"
+
+        for cpu, governors in self.get_available_governors(cpus):
+            print(cpu, governors)
+            if governor not in governors:
+                governors = ", ".join(governors)
+                raise Error(f"bad governor name '{governor}' for CPU {cpu}{self._pman.hostmsg}, "
+                            f"use one of: {governors}")
+
+            path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_governor"
+            self._sysfs_io.write(path, governor, what=what)
+
     def __init__(self, pman=None, msr=None, cpuinfo=None, enable_cache=True):
         """
         The class constructor. The argument are as follows.
@@ -603,7 +655,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
        * Single CPU.
            - 'get_cpu_min_perf_limit()'
            - 'get_cpu_max_perf_limit()'
-    4. Get CPU base frequency and performance from ACPI CPPC:
+    4. Get CPU base frequency and performance from ACPI CPPC.
        * Multiple CPUs.
            - 'get_base_freq()'
            - 'get_base_perf()'
@@ -844,7 +896,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
     Public methods overview.
 
-    1. Get/set CPU frequency via an MSR (Intel CPUs only):
+    1. Get/set CPU frequency via an MSR (Intel CPUs only).
        * Multiple CPUs.
            - 'get_min_freq()'
            - 'get_max_freq()'
@@ -855,27 +907,27 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             - 'get_cpu_max_freq()'
             - 'set_cpu_min_freq()'
             - 'set_cpu_max_freq()'
-    3. Get base frequency via an MSR (Intel CPUs only):
+    3. Get base frequency via an MSR (Intel CPUs only).
        * Multiple CPUs.
             - 'get_base_freq()'
        * Single CPU.
             - 'get_cpu_base_freq()'
-    4. Get the minimum CPU operating frequency via an MSR (Intel CPUs only):
+    4. Get the minimum CPU operating frequency via an MSR (Intel CPUs only).
        * Multiple CPUs.
             - 'get_min_oper_freq()'
        * Single CPU.
             - 'get_cpu_min_oper_freq()'
-    5. Get the maximum CPU efficiency frequency via an MSR (Intel CPUs only):
+    5. Get the maximum CPU efficiency frequency via an MSR (Intel CPUs only).
        * Multiple CPUs.
             - 'get_max_eff_freq()'
        * Single CPU.
             - 'get_cpu_max_eff_freq()'
-    6. Get the maximum CPU turbo frequency via an MSR (Intel CPUs only):
+    6. Get the maximum CPU turbo frequency via an MSR (Intel CPUs only).
        * Multiple CPUs.
             - 'get_max_turbo_freq()'
        * Single CPU.
             - 'get_cpu_max_turbo_freq()'
-    7. Get hardware power management (HWP) on/off status:
+    7. Get hardware power management (HWP) on/off status.
        * 'get_hwp()'
 
     Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
