@@ -743,6 +743,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             - 'get_max_turbo_freq()'
        * Single CPU.
             - 'get_cpu_max_turbo_freq()'
+    7. Get hardware power management (HWP) on/off status:
+       * 'get_hwp()'
 
     Note, class methods do not validate the 'cpu' and 'cpus' arguments. The caller is assumed to
     have done the validation. The input CPU number(s) should exist and should be online.
@@ -768,6 +770,17 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             self._fsbfreq = FSBFreq.FSBFreq(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
         return self._fsbfreq
+
+    def _get_pmenable(self):
+        """Returns an 'PMEnable.PMEnable()' object."""
+
+        if not self._pmenable:
+            from pepclibs.msr import PMEnable # pylint: disable=import-outside-toplevel
+
+            msr = self._get_msr()
+            self._pmenable = PMEnable.PMEnable(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
+
+        return self._pmenable
 
     def _get_bclks(self, cpus):
         """
@@ -1172,6 +1185,15 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         _, val = next(self.get_max_turbo_freq((cpu,)))
         return val
 
+    def get_hwp(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' the hardware power
+        management on/off status for CPU 'cpu'.
+        """
+
+        pmenable = self._get_pmenable()
+        yield from pmenable.is_feature_enabled("hwp", cpus=cpus)
+
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
         The class constructor. The argument are as follows.
@@ -1190,6 +1212,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         self._close_cpuinfo = cpuinfo is None
 
         self._fsbfreq = None
+        self._pmenable = None
         self._hwpreq = None
         self._hwpreq_pkg = None
         self._platinfo = None
@@ -1207,6 +1230,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_trl", "_platinfo", "_fsbfreq", "_hwpreq", "_hwpreq_pkg", "_cpuinfo",
-                       "_pman")
+        close_attrs = ("_trl", "_platinfo", "_fsbfreq", "_pmenable", "_hwpreq", "_hwpreq_pkg",
+                       "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)

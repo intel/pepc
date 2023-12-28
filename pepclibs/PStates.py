@@ -251,17 +251,6 @@ class PStates(_PCStatesBase.PCStatesBase):
 
         return self._fsbfreq
 
-    def _get_pmenable(self):
-        """Returns an 'PMEnable.PMEnable()' object."""
-
-        if not self._pmenable:
-            from pepclibs.msr import PMEnable # pylint: disable=import-outside-toplevel
-
-            msr = self._get_msr()
-            self._pmenable = PMEnable.PMEnable(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
-
-        return self._pmenable
-
     def _get_eppobj(self):
         """Returns an 'EPP.EPP()' object."""
 
@@ -368,8 +357,8 @@ class PStates(_PCStatesBase.PCStatesBase):
         management on/off status for CPU 'cpu'.
         """
 
-        pmenable = self._get_pmenable()
-        yield from pmenable.is_feature_enabled("hwp", cpus=cpus)
+        cpufreq_obj = self._get_cpufreq_msr_obj()
+        yield from cpufreq_obj.get_hwp(cpus=cpus)
 
     def _get_cppc_freq(self, pname, cpus):
         """
@@ -1154,7 +1143,6 @@ class PStates(_PCStatesBase.PCStatesBase):
         self._eppobj = None
         self._epbobj = None
         self._fsbfreq = None
-        self._pmenable = None
 
         self._cpufreq_sysfs_obj = None
         self._cpufreq_cppc_obj = None
@@ -1172,9 +1160,8 @@ class PStates(_PCStatesBase.PCStatesBase):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_pcache", "_eppobj", "_epbobj", "_fsbfreq", "_pmenable",
-                       "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj", "_cpufreq_msr_obj",
-                       "_uncfreq_obj")
+        close_attrs = ("_pcache", "_eppobj", "_epbobj", "_fsbfreq", "_cpufreq_sysfs_obj",
+                       "_cpufreq_cppc_obj", "_cpufreq_msr_obj", "_uncfreq_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
