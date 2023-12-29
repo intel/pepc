@@ -709,9 +709,10 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if not uncfreq_obj:
             return
 
-        domain_ids = uncfreq_obj.get_domain_ids()
+        # The 'UncoreFreq' class is I/O dies-aware.
+        dies_info = uncfreq_obj.get_dies_info()
 
-        for package, pkg_dies in domain_ids.items():
+        for package, pkg_dies in dies_info.items():
             for die in pkg_dies:
                 if die in self._compute_dies[package]:
                     continue
@@ -767,6 +768,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 continue
 
             if pli_obj:
+                # Domain IDs match the die numbers.
                 die = pli_obj.read_cpu_feature("domain_id", cpu)
                 _add_compute_die(tinfo, cpu, die)
                 continue

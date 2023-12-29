@@ -25,8 +25,8 @@ Linux kernel has the 'intel_uncore_frequency_tpmi' driver that exposes the sysfs
 driver has two sysfs interfaces, though: the legacy interface and the new interface. The legacy
 interface is limited, and the new interface is preferable.
 
-The new interface works in terms of "uncore domains". However, uncore domain IDs are the same as die
-IDs, and in this project uncore domains are also referred to as "dies".
+The new interface works in terms of "uncore frequency domains". However, uncore domain IDs are the
+same as die IDs, and in this project uncore domains are referred to as "dies".
 
 At this point this module uses the legacy sysfs interface even when the new interface is available.
 """
@@ -58,10 +58,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
     2. Get uncore frequency limits via Linux sysfs interfaces:
        * 'get_min_freq_limit()'
        * 'get_max_freq_limit()'
-    3. Get uncore domain ID numbers (same as die numbers) per package:
-       * 'get_domain_ids()'
-    4. Get number of uncore domains:
-       * 'get_domains_count()'
+    3. Get dies information dictionary:
+       * 'get_dies_info()'
 
     Note, class methods do not validate the 'cpus' argument. The caller is assumed to have done the
     validation. The input CPU numbers should exist and should be online.
@@ -84,7 +82,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if not self._die_id_quirk and not self._pman.exists(path) and die > 0:
             # If path does not exist, try to fallback to die 0 as temporary band-aid for some of the
             # newer platforms. Please note that on newer platforms the legacy path controls every
-            # uncore domain under it via the kernel driver support.
+            # die (uncore frequency domain) under it via the kernel driver support.
             path = self._sysfs_base / f"package_{package:02d}_die_00" / fname
             self._die_id_quirk = True
             _LOG.debug("die ID quirk applied, falling back to die 0 from die %d", die)
@@ -196,19 +194,18 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         self._set_freq(freq, "max", cpus)
 
-    def _add_domain(self, package, domain):
-        """Add mapping for a single uncore 'domain' under 'package'."""
+    def _add_die(self, package, die):
+        """Add die 'die' for package 'packet' to the dies information dictionary."""
 
-        if package not in self._domains_info:
-            self._domains_info[package] = []
+        if package not in self._dies_info:
+            self._dies_info[package] = []
 
-        self._domains_info[package].append(domain)
-        self._domains_cnt += 1
+        self._dies_info[package].append(die)
 
-    def _build_domains_info(self):
-        """Build domain info for available uncore domains."""
+    def _build_dies_info(self):
+        """Build dies information dictionary."""
 
-        self._domains_info = {}
+        self._dies_info = {}
 
         if self._pman.is_dir(self._sysfs_base / "uncore00"):
             for dirname, path, _ in self._pman.lsdir(self._sysfs_base):
@@ -220,44 +217,36 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
                     package = Trivial.str_to_int(fobj.read(), what="package ID")
 
                 with self._pman.open(path / "domain_id", "r") as fobj:
-                    domain = Trivial.str_to_int(fobj.read(), what="uncore domain ID")
+                    die = Trivial.str_to_int(fobj.read(), what="uncore frequency domain ID")
 
-                self._add_domain(package, domain)
+                self._add_die(package, die)
         else:
             for dirname, path, _ in self._pman.lsdir(self._sysfs_base):
                 match = re.match(r"package_(\d+)_die_(\d+)", dirname)
                 if match:
                     package = int(match.group(1))
-                    domain = int(match.group(2))
-                    self._add_domain(package, domain)
+                    die = int(match.group(2))
+                    self._add_die(package, die)
 
-    def get_domain_ids(self):
+    def get_dies_info(self):
         """
-        Return the domain ID dictionary, which maps package numbers to domain ID numbers, and has
-        the following format.
+        Return the dies information dictionary, which maps package numbers to die numbers. Die
+        numbers match the uncore frequency domain ID numbers. The returned dictionary has the
+        following format.
 
-        domain_ids = { <package-id-0>: [ <domain-id-0>, <domain-id-1> ... <domain-id-n> ],
-                       <package-id-n>: [ <domain-id-0>, <domain-id-1> ... <domain-id-n> ] }
+            {package0: [ die0, die1, ... ], package1: [ die0, die1, ... ]}
 
-        For example, with a system with 2 packages and 3 domains under each package the domain ids
-        would be:
+        In other words, it is a dictionary with keys being package numbers and values being lists of
+        die numbers.  For example, with a system with 2 packages and 3 dies per package, the dies
+        information dictionary would be as follows.
 
-        domain_ids = { 0: [0, 1, 2],
-                       1: [0, 1, 2] }
+            {0: [0, 1, 2], 1: [0, 1, 2]}
         """
 
-        if not self._domains_info:
-            self._build_domains_info()
+        if not self._dies_info:
+            self._build_dies_info()
 
-        return self._domains_info
-
-    def get_domains_count(self):
-        """Get total number of uncore domains for system."""
-
-        if not self._domains_info:
-            self._build_domains_info()
-
-        return self._domains_cnt
+        return self._dies_info
 
     def _probe_driver(self):
         """
@@ -334,8 +323,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
 
-        self._domains_info = None
-        self._domains_cnt = 0
+        self._dies_info = None
 
         self._drv = None
         self._unload_drv = False
