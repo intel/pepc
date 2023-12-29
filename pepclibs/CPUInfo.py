@@ -1349,11 +1349,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         Return a tuple of ('dies', 'rem_cpus').
           * dies - a dictionary indexed by the package numbers with values being lists of die
-                    numbers.
+                   numbers.
           * rem_cpus - list of remaining CPUs that cannot be converted to a die number.
 
         The return value is inconsistent with 'cpus_div_packages()' because die numbers are
-        realtive to package numbers.
+        relative to package numbers.
 
         Consider an example of a system with 2 packages, 2 dies per package, 1 core per die, 2 CPUs
         per core.
@@ -1528,7 +1528,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         Validate die numbers in 'dies' for package 'package' and return the normalized list. The
         arguments are as follows.
           * dies - collection of integer die numbers to normalize. Special value 'all' means
-                   "all diess".
+                   "all dies".
           * package - package number to validate the 'dies' against: all numbers in 'dies' should be
                       valid die numbers in package number 'package'.
 
