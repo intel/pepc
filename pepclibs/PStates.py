@@ -380,7 +380,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         # Sometimes the frequency CPPC sysfs files are not readable, but the "performance" files
         # are. The base frequency is required to turn performance values to Hz.
 
-        base_freq_iter = self._get_prop_pvinfo_cpus("base_freq", cpus)
+        base_freq_iter = self._get_prop_cpus_mnames("base_freq", cpus)
         nominal_perf_iter = cpufreq_obj.get_base_perf(cpus)
 
         if pname == "max_turbo_freq":
@@ -389,8 +389,8 @@ class PStates(_PropsClassBase.PropsClassBase):
             perf_iter = cpufreq_obj.get_min_perf_limit(cpus)
 
         iterator = zip(base_freq_iter, nominal_perf_iter, perf_iter)
-        for pvinfo, (_, nominal_perf), (_, perf) in iterator:
-            yield pvinfo["cpu"], int((pvinfo["val"] * perf) / nominal_perf)
+        for (cpu, base_freq), (_, nominal_perf), (_, perf) in iterator:
+            yield cpu, (base_freq * perf) // nominal_perf
 
     def _get_min_oper_freq(self, cpus, mname):
         """
@@ -555,20 +555,20 @@ class PStates(_PropsClassBase.PropsClassBase):
         platform.
         """
 
-        driver_iter = self._get_prop_pvinfo_cpus("driver", cpus)
-        min_freq_iter = self._get_prop_pvinfo_cpus("min_freq", cpus)
-        max_freq_iter = self._get_prop_pvinfo_cpus("max_freq", cpus)
+        driver_iter = self._get_prop_cpus_mnames("driver", cpus)
+        min_freq_iter = self._get_prop_cpus_mnames("min_freq", cpus)
+        max_freq_iter = self._get_prop_cpus_mnames("max_freq", cpus)
         bclks_iter = self._get_bclks(cpus)
         iterator = zip(driver_iter, min_freq_iter, max_freq_iter, bclks_iter)
 
-        for driver_pvinfo, min_freq_pvinfo, max_freq_pvinfo, (cpu, bclk) in iterator:
-            if driver_pvinfo["val"] != "intel_pstate":
+        for (cpu, driver), (_, min_freq), (_, max_freq), (_, bclk) in iterator:
+            if driver != "intel_pstate":
                 raise ErrorNotSupported("only 'intel_pstate' was verified to accept any frequency "
                                         "value that is multiple of bus clock")
 
             freqs = []
-            freq = min_freq_pvinfo["val"]
-            while freq <= max_freq_pvinfo["val"]:
+            freq = min_freq
+            while freq <= max_freq:
                 freqs.append(freq)
                 freq += bclk
 

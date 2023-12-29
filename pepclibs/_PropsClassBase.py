@@ -506,6 +506,18 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for cpu in cpus:
             yield self._construct_pvinfo(pname, cpu, mnames[-1], None)
 
+    def _get_prop_cpus_mnames(self, pname, cpus, mnames=None):
+        """
+        For every CPU in 'cpus', yield '(cpu, val)' tuples, where 'val' is the 'pname' property
+        value for CPU 'cpu'. Try mechanisms in 'mnames'.
+
+        This method is similar to the API 'get_prop_cpus()' method, but it does not validate input
+        arguments.
+        """
+
+        for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames):
+            yield (pvinfo["cpu"], pvinfo["val"])
+
     def _get_cpu_prop_mnames(self, pname, cpu, mnames=None):
         """
         Read property 'pname' and return the value, try mechanisms in 'mnames'. This method is
