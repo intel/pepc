@@ -205,8 +205,39 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_dies("max", dies, limit=True)
 
+    def _unlock_new_sysfs_api(self):
+        """
+        The "intel_uncore_frequency_tpmi" kernel driver has an unintuitive behavior: the min./max.
+        frequency configured via the legacy sysfs API limits the range of available uncore
+        frequencies configurable via the new sysfs API.
+
+        For example, if max. uncore frequency limit is 2GHz, but max. uncore frequency was set to
+        1GHz via the legacy API, it is impossible to set it to anything greater than 1GHz via the
+        new API.
+
+        The method is essentially a quirk to work around the driver behavior: "unlock" the new sysfs
+        API by removing the floor/ceiling potentially configured via the legacy sysfs API.
+        """
+
+        if self._new_sysfs_api_unlocked:
+            return
+
+        # When the new sysfs API is available, the legacy sysfs API exposes sysfs files only for die
+        # 0, which actually controls all dies in the package. Therefore, iterate only the packages,
+        # but not dies.
+        for package in self._get_dies_info():
+            for key in "min", "max":
+                path = self._get_sysfs_path_dies(key, package, 0, limit=True)
+                what = f"{key}. uncore frequency limit"
+                limit = self._sysfs_io.read_int(path, what=what)
+
+                path = self._get_sysfs_path_dies(key, package, 0, limit=False)
+                self._sysfs_io.write_verify(path, str(limit), what=what)
+
     def _set_freq_dies(self, freq, key, dies):
         """For every die in 'dies', set the min. or max. uncore frequency for the die."""
+
+        self._unlock_new_sysfs_api()
 
         what = f"{key}. uncore frequency"
 
@@ -526,6 +557,9 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         # The sysfs directories map, translating package/die number to the corresponding sysfs
         # directory name. Helps to quickly determine sysfs path in case of the new sysfs API.
         self._dirmap = None
+        # 'True' if the uncore frequency was "unlocked" via the legacy sysfs API before starting to
+        # use the new sysfs API.
+        self._new_sysfs_api_unlocked = False
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
