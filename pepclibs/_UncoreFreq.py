@@ -104,19 +104,12 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         prefix = "initial_" if limit else ""
         fname = prefix + key + "_freq_khz"
 
-        if self._die_id_quirk:
+        if self._use_new_sysfs_api():
+            # When the new sysfs API is available, the legacy sysfs API exposes sysfs files only for
+            # die 0, which actually controls all dies in the package.
             die = 0
 
-        path = self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
-        if not self._die_id_quirk and not self._pman.exists(path) and die > 0:
-            # If path does not exist, try to fallback to die 0 as temporary band-aid for some of the
-            # newer platforms. Please note that on newer platforms the legacy path controls every
-            # die (uncore frequency domain) under it via the kernel driver support.
-            path = self._sysfs_base / f"package_{package:02d}_die_00" / fname
-            self._die_id_quirk = True
-            _LOG.debug("die ID quirk applied, falling back to die 0 from die %d", die)
-
-        return path
+        return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
 
     def _get_freq_cpus(self, key, cpus, limit=False):
         """
@@ -374,8 +367,6 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         self._sysfs_base_lsdir = None
         # The new sysfs API is available if 'True'.
         self._has_sysfs_new_api = None
-
-        self._die_id_quirk = False
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
