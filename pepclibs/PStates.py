@@ -733,15 +733,18 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj.set_governor(governor, cpus=cpus)
         return "sysfs"
 
-    def _write_cpu_freq_prop_msr(self, pname, freq, cpu):
-        """Write CPU frequency property by programming 'MSR_HWP_REQUEST'."""
+    def _set_freq_prop_cpus_msr(self, pname, freq, cpus):
+        """
+        Set 'intel_pstate' Linux CPU frequency governor to 'governor' for CPUs in 'cpus'. Use method
+        'msr'.
+        """
 
         cpufreq_obj = self._get_cpufreq_msr_obj()
 
         if pname == "min_freq":
-            cpufreq_obj.set_cpu_min_freq(freq, cpu)
+            cpufreq_obj.set_min_freq(freq, cpus)
         elif pname == "max_freq":
-            cpufreq_obj.set_cpu_max_freq(freq, cpu)
+            cpufreq_obj.set_max_freq(freq, cpus)
         else:
             raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
@@ -775,30 +778,33 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise ErrorVerifyFailed(msg) from err
 
-    def _write_cpu_freq_prop_sysfs(self, pname, freq, cpu):
-        """Write CPU frequency property via Linux "cpufreq" sysfs interfaces."""
+    def _set_freq_prop_cpus_sysfs(self, pname, freq, cpus):
+        """Set min. or max. CPU frequency to 'freq' for CPUs in 'cpus', use mechanism 'sysfs'."""
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
 
         try:
             if pname == "min_freq":
-                cpufreq_obj.set_cpu_min_freq(freq, cpu)
+                cpufreq_obj.set_min_freq(freq, cpus)
             elif pname == "max_freq":
-                cpufreq_obj.set_cpu_max_freq(freq, cpu)
+                cpufreq_obj.set_max_freq(freq, cpus)
             else:
                 raise Error(f"BUG: unexpected CPU frequency property {pname}")
         except ErrorVerifyFailed as err:
             self._handle_write_and_read_freq_mismatch(err)
 
-    def _write_uncore_freq_prop(self, pname, freq, cpu):
-        """Write uncore frequency property."""
+    def _set_uncore_freq_prop_cpus(self, pname, freq, cpus):
+        """
+        Set min. or max. uncore frequency to 'freq' for the dies (uncore frequency domains)
+        corresponding to CPUs in 'cpus'.
+        """
 
         uncfreq_obj = self._get_uncfreq_obj()
 
         if pname == "min_uncore_freq":
-            uncfreq_obj.set_cpu_min_freq(freq, cpu)
+            uncfreq_obj.set_min_freq(freq, cpus)
         elif pname == "max_uncore_freq":
-            uncfreq_obj.set_cpu_max_freq(freq, cpu)
+            uncfreq_obj.set_max_freq(freq, cpus)
         else:
             raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
@@ -904,18 +910,18 @@ class PStates(_PropsClassBase.PropsClassBase):
             max_freq_pname = "max_uncore_freq"
             min_freq_limit_pname = "min_uncore_freq_limit"
             max_freq_limit_pname = "max_uncore_freq_limit"
-            write_func = self._write_uncore_freq_prop
+            set_freq_prop_cpus_func = self._set_uncore_freq_prop_cpus
         else:
             min_freq_pname = "min_freq"
             max_freq_pname = "max_freq"
             if mname == "sysfs":
                 min_freq_limit_pname = "min_freq_limit"
                 max_freq_limit_pname = "max_freq_limit"
-                write_func = self._write_cpu_freq_prop_sysfs
+                set_freq_prop_cpus_func = self._set_freq_prop_cpus_sysfs
             elif mname == "msr":
                 min_freq_limit_pname = "min_oper_freq"
                 max_freq_limit_pname = "max_turbo_freq"
-                write_func = self._write_cpu_freq_prop_msr
+                set_freq_prop_cpus_func = self._set_freq_prop_cpus_msr
 
         new_freq_iter = self._get_numeric_freq(val, cpus, is_uncore)
         min_limit_iter = self._get_prop_cpus_mnames(min_freq_limit_pname, cpus, mnames=(mname,))
@@ -925,6 +931,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         iterator = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit)
 
+        freq2cpus = {}
         for (cpu, new_freq), (_, min_limit), (_, max_limit), (_, cur_freq_limit) in iterator:
             if new_freq < min_limit or new_freq > max_limit:
                 _raise_out_of_range(pname, new_freq, min_limit, max_limit)
@@ -938,7 +945,12 @@ class PStates(_PropsClassBase.PropsClassBase):
                 #  New max. frequency cannot be set to a value smaller than current min. frequency.
                 _raise_order(pname, new_freq, cur_freq_limit, is_min)
 
-            write_func(pname, new_freq, cpu)
+            if new_freq not in freq2cpus:
+                freq2cpus[new_freq] = []
+            freq2cpus[new_freq].append(cpu)
+
+        for new_freq, freq_cpus in freq2cpus.items():
+            set_freq_prop_cpus_func(pname, new_freq, freq_cpus)
 
     def _set_prop_cpus(self, pname, val, cpus, mname):
         """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
