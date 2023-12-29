@@ -246,7 +246,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if not self._dies_info:
             self._build_dies_info()
 
-        return self._dies_info
+        return self._dies_info.copy()
 
     def _probe_driver(self):
         """
