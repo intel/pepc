@@ -65,6 +65,21 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
     validation. The input CPU numbers should exist and should be online.
     """
 
+    def _get_sysfs_base_lsdir(self):
+        """
+        Return the list of files and directories in the uncore frequency driver's base sysfs
+        directory.
+        """
+
+        if self._sysfs_base_lsdir is not None:
+            return self._sysfs_base_lsdir
+
+        self._sysfs_base_lsdir = []
+        for dirname, _, _ in self._pman.lsdir(self._sysfs_base):
+            self._sysfs_base_lsdir.append(dirname)
+
+        return self._sysfs_base_lsdir
+
     def _get_sysfs_path(self, key, cpu, limit=False):
         """Return the sysfs file path for an uncore frequency read or write operation."""
 
@@ -209,13 +224,15 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         """Build dies information dictionary."""
 
         self._dies_info = {}
+        sysfs_base_lsdir = self._get_sysfs_base_lsdir()
 
         if self._pman.is_dir(self._sysfs_base / "uncore00"):
-            for dirname, path, _ in self._pman.lsdir(self._sysfs_base):
+            for dirname in sysfs_base_lsdir:
                 match = re.match(r"^uncore(\d+)$", dirname)
                 if not match:
                     continue
 
+                path = self._sysfs_base / dirname
                 with self._pman.open(path / "package_id", "r") as fobj:
                     package = Trivial.str_to_int(fobj.read(), what="package ID")
 
@@ -224,7 +241,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
                 self._add_die(package, die)
         else:
-            for dirname, path, _ in self._pman.lsdir(self._sysfs_base):
+            for dirname in sysfs_base_lsdir:
                 match = re.match(r"package_(\d+)_die_(\d+)", dirname)
                 if match:
                     package = int(match.group(1))
@@ -333,6 +350,9 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         self._sysfs_io = None
         self._sysfs_base = Path("/sys/devices/system/cpu/intel_uncore_frequency")
+
+        # List of directory names in 'self._sysfs_base'.
+        self._sysfs_base_lsdir = None
 
         self._die_id_quirk = False
 
