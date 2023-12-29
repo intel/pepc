@@ -47,7 +47,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
        * Single CPU.
            - 'get_cpu_min_freq_limit()'
            - 'get_cpu_max_freq_limit()'
-    3. Get avalilable CPU frequencies list.
+    3. Get available CPU frequencies list.
        * Multiple CPUs.
            - 'get_available_frequencies()'
        * Single CPU.
@@ -364,7 +364,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Get CPU base frequency via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
           * cpu - CPU number to get base frequency for.
 
-        Return the base frequency vaule in Hz. Raise 'ErrorNotSupported' if the base frequency sysfs
+        Return the base frequency value in Hz. Raise 'ErrorNotSupported' if the base frequency sysfs
         files do not exist.
         """
 
@@ -636,7 +636,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
 class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
     """
-    This class provides a cpability of reading CPU frequency information from ACPI CPPC via Linux
+    This class provides a capability of reading CPU frequency information from ACPI CPPC via Linux
     sysfs interfaces.
 
     Public methods overview.
@@ -892,7 +892,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
 class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     """
     This class provides a capability of reading and changing CPU frequency for Intel platforms
-    supporting thie 'MSR_HWP_REQUEST' model-specific register (MSR).
+    supporting the 'MSR_HWP_REQUEST' model-specific register (MSR).
 
     Public methods overview.
 
@@ -1265,7 +1265,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         arguments are as follows.
           * cpus - a collection of integer CPU numbers to get the minimum operating frequency for.
 
-        Return the minium opeating CPU frequency in Hz. Raise 'ErrorNotSupported' if
+        Return the minium operating CPU frequency in Hz. Raise 'ErrorNotSupported' if
         'MSR_PLATFORM_INFO' is not supported.
         """
 
@@ -1282,7 +1282,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         register. The arguments are as follows.
           * cpu - CPU number to get the minimum operating frequency for.
 
-        Return the minium opeating CPU frequency in Hz. Raise 'ErrorNotSupported' if
+        Return the minium operating CPU frequency in Hz. Raise 'ErrorNotSupported' if
         'MSR_PLATFORM_INFO' is not supported.
         """
 

@@ -703,7 +703,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         return self._uncfreq_obj
 
     def _add_io_dies(self, topology):
-        """Add I/O dies to the 'topology' topology table (list of dicitionaries)."""
+        """Add I/O dies to the 'topology' topology table (list of dictionaries)."""
 
         uncfreq_obj = self._get_uncfreq_obj()
         if not uncfreq_obj:
@@ -731,7 +731,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 self._io_dies[package].add(die)
 
     def _add_io_dies_from_cache(self, topology):
-        """Append the cached I/O dies to the 'topology' topology table (list of dicitionaries)."""
+        """Append the cached I/O dies to the 'topology' topology table (list of dictionaries)."""
 
         for package, pkg_dies in self._io_dies.items():
             for die in pkg_dies:
@@ -1613,7 +1613,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_cache_info(self):
         """
-        Return a dictionary including CPU cache infomration. The dictionary keys and layout is
+        Return a dictionary including CPU cache information. The dictionary keys and layout is
         similar to what the following command provides: 'lscpu --json --caches'.
         """
 

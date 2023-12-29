@@ -164,7 +164,7 @@ class Power(_PropsClassBase.PropsClassBase):
                     if fval > self._get_cpu_prop_mnames("ppl2", cpu):
                         raise Error(f"{pname} can't be higher than RAPL PPL2 for CPU{cpu}")
                 else:
-                    # Apply a reasonable limit for PPL2. This is imperical limit, based on general
+                    # Apply a reasonable limit for PPL2. This is empirical limit, based on general
                     # observations.
                     minval = tdp / 8
                     maxval = tdp * 4

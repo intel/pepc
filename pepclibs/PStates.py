@@ -284,7 +284,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         return self._cpufreq_sysfs_obj
 
     def _get_cpufreq_cppc_obj(self):
-        """Return a '_CPUFreqcppc' object."""
+        """Return a '_CPUFreqCPPC' object."""
 
         if not self._cpufreq_cppc_obj:
             from pepclibs import _CPUFreq # pylint: disable=import-outside-toplevel
@@ -359,7 +359,7 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _get_cppc_freq(self, pname, cpus):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' the value of property
-        'pname' for CPU 'cpu', eead from an ACPI CPPC sysfs file.
+        'pname' for CPU 'cpu', read from an ACPI CPPC sysfs file.
         """
 
         cpufreq_obj = self._get_cpufreq_cppc_obj()
@@ -707,7 +707,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "governors":
             yield from self._get_governors(cpus)
         else:
-            raise Error("BUG: unkonw property '{pname}'")
+            raise Error("BUG: unknown property '{pname}'")
 
     def _set_turbo(self, enable, cpus):
         """Enable or disable turbo for CPUs in 'cpus'. Use method 'sysfs'."""

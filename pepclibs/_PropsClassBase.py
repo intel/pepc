@@ -56,11 +56,11 @@ MECHANISMS = {
     },
     "cppc" : {
         "short": "ACPI CPPC",
-        "long":  "ACPI Colalborative Processor Performance Control (CPPC)",
+        "long":  "ACPI Collaborative Processor Performance Control (CPPC)",
         "writable": False,
     },
     "doc" : {
-        "short": "Cocumentation",
+        "short": "Documentation",
         "long":  "Hardware documentation",
         "writable": False,
     }
@@ -129,7 +129,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def _validate_mname(self, mname, pname=None, allow_readonly=True):
         """
-        Validate if mechanism 'mname'. The arguments are as follwos.
+        Validate if mechanism 'mname'. The arguments are as follows.
           * mname - name of the mechanism to validate.
           * pname - if provided, ensure that 'mname' is supported by property 'pname'.
           * allow_readonly - if 'True', allow both read-only and read-write mechanisms, otherwise
@@ -584,7 +584,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         return self.get_cpu_prop(pname, cpu)["val"] is not None
 
     def _get_die_prop_pvinfo(self, pname, package, die, mnames=None):
-        """The default implementation or per-die property reading useng the per-CPU method."""
+        """The default implementation or per-die property reading using the per-CPU method."""
 
         prop = self._props[pname]
         cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))

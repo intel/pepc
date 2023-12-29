@@ -78,7 +78,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         If 'bypass_cache' is True, remove the potentially cached value from the cash, read directly
         from the sysfs file, and do not add the read value to the cache.
 
-        If 'bypass_cachs' is 'False', return the value from the cache is possible, otherwise read
+        If 'bypass_cache' is 'False', return the value from the cache is possible, otherwise read
         from the sysfs file and add the result to the cache. If cache is disabled, skip all the
         cache operations.
 
@@ -124,7 +124,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                    message in case of a failure.
 
         Validate the contents of the 'path', raise 'Error' if the contents is not an integer value.
-        Otherwise, return the the value as an integer ('int' typei). Return 'None' if the file does
+        Otherwise, return the the value as an integer ('int' type). Return 'None' if the file does
         not exist.
 
         Refer 'read()' for more information about 'bypass_cache'.
@@ -136,7 +136,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             return Trivial.str_to_int(val, what=what)
         except Error as err:
             what = "" if what is None else f" {what}"
-            raise Error(f"bad contents of{what} syfs file '{path}'{self._pman.hostmsg}\n"
+            raise Error(f"bad contents of{what} sysfs file '{path}'{self._pman.hostmsg}\n"
                         f"{err.indent(2)}") from err
 
     def write(self, path, val, bypass_cache=False, what=None):
