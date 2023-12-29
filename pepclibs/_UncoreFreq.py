@@ -248,25 +248,16 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         self._set_freq_dies(freq, "max", dies)
 
-    def _get_legacy_sysfs_api_path_cpu(self, key, cpu, limit=False):
-        """
-        Return the legacy sysfs API file path for a CPU-based uncore frequency read or write
-        operation.
-        """
+    def _get_sysfs_path_cpu(self, key, cpu, limit=False):
+        """Return the sysfs file path for a CPU-based uncore frequency read or write operation."""
 
         levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
         package = levels["package"]
         die = levels["die"]
 
-        prefix = "initial_" if limit else ""
-        fname = prefix + key + "_freq_khz"
-
         if self._use_new_sysfs_api():
-            # When the new sysfs API is available, the legacy sysfs API exposes sysfs files only for
-            # die 0, which actually controls all dies in the package.
-            die = 0
-
-        return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
+            return self._get_new_sysfs_api_path(key, package, die, limit=limit)
+        return self._get_legacy_sysfs_api_path(key, package, die, limit=limit)
 
     def _get_freq_cpus(self, key, cpus, limit=False):
         """
@@ -280,7 +271,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
             what += " limit"
 
         for cpu in cpus:
-            path = self._get_legacy_sysfs_api_path_cpu(key, cpu, limit=limit)
+            path = self._get_sysfs_path_cpu(key, cpu, limit=limit)
             freq = self._sysfs_io.read_int(path, what=what)
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
@@ -350,7 +341,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         what = f"{key}. uncore frequency"
 
         for cpu in cpus:
-            path = self._get_legacy_sysfs_api_path_cpu(key, cpu)
+            path = self._get_sysfs_path_cpu(key, cpu)
             try:
                 self._sysfs_io.write_verify(path, str(freq // 1000), what=what)
             except ErrorVerifyFailed as err:
