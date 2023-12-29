@@ -448,7 +448,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
-    def _get_cpu_freq_sysfs(self, pname, cpus):
+    def _get_freq_sysfs(self, pname, cpus):
         """YIeld the minimum or maximum CPU frequency read from Linux "cpufreq" sysfs files."""
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
@@ -464,7 +464,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
-    def _get_cpu_freq_msr(self, pname, cpus):
+    def _get_freq_msr(self, pname, cpus):
         """Yield the minimum or maximum CPU frequency read from 'MSR_HWP_REQUEST'."""
 
         cpufreq_obj = self._get_cpufreq_msr_obj()
@@ -476,29 +476,29 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
-    def _get_cpu_freq(self, pname, cpus, mname):
+    def _get_freq(self, pname, cpus, mname):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the frequency of CPU
         'cpu'. Use method 'mname'.
         """
 
         if mname == "sysfs":
-            yield from self._get_cpu_freq_sysfs(pname, cpus)
+            yield from self._get_freq_sysfs(pname, cpus)
             return
 
         if mname == "msr":
-            yield from self._get_cpu_freq_msr(pname, cpus)
+            yield from self._get_freq_msr(pname, cpus)
             return
 
         raise Error(f"BUG: unsupported mechanism '{mname}'")
 
-    def _get_cpu_freq_limit(self, pname, cpus):
+    def _get_freq_limit(self, pname, cpus):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the frequency limit for
         CPU 'cpu'. Use the 'sysfs' method.
         """
 
-        yield from self._get_cpu_freq_sysfs(pname, cpus)
+        yield from self._get_freq_sysfs(pname, cpus)
 
     def _get_uncore_freq(self, pname, cpus):
         """
@@ -687,9 +687,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "base_freq":
             yield from self._get_base_freq(cpus, mname)
         elif pname in {"min_freq", "max_freq"}:
-            yield from self._get_cpu_freq(pname, cpus, mname)
+            yield from self._get_freq(pname, cpus, mname)
         elif pname in {"min_freq_limit", "max_freq_limit"}:
-            yield from self._get_cpu_freq_limit(pname, cpus)
+            yield from self._get_freq_limit(pname, cpus)
         elif self._is_uncore_prop(pname):
             yield from self._get_uncore_freq(pname, cpus)
         elif pname == "frequencies":
@@ -856,7 +856,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 for cpu in cpus:
                     yield cpu, freq
 
-    def _set_freq_prop(self, pname, val, cpus, mname):
+    def _set_freq(self, pname, val, cpus, mname):
         """
         Set core or uncore frequency property 'pname' to value 'val' for CPUs in 'cpus' using method
         'mname'.
@@ -966,7 +966,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         if pname == "governor":
             return self._set_governor(val, cpus)
         if pname in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
-            return self._set_freq_prop(pname, val, cpus, mname)
+            return self._set_freq(pname, val, cpus, mname)
 
         raise Error("BUG: unknown property '{pname}'")
 
