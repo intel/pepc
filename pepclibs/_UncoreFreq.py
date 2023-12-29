@@ -103,15 +103,26 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         return self._has_sysfs_new_api
 
-    def _get_new_sysfs_api_path(self, key, package, die, limit=False):
-        """Return the new sysfs API file path for an uncore frequency read or write operation."""
+    def _get_dies_info(self):
+        """Return the dies information dictionary."""
+
+        if self._dies_info is None:
+            self._build_dies_info()
+        return self._dies_info
+
+    def _get_dirmap(self):
+        """Return the sysfs directory map."""
 
         if self._dirmap is None:
             self._build_dies_info()
+        return self._dirmap
+
+    def _get_new_sysfs_api_path(self, key, package, die, limit=False):
+        """Return the new sysfs API file path for an uncore frequency read or write operation."""
 
         prefix = "initial_" if limit else ""
         fname = prefix + key + "_freq_khz"
-        return self._sysfs_base / self._dirmap[package][die] / fname
+        return self._sysfs_base / self._get_dirmap()[package][die] / fname
 
     def _get_legacy_sysfs_api_path(self, key, package, die, limit=False):
         """Return the legacy sysfs API file path for a uncore frequency read or write operation."""
@@ -461,10 +472,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
             {0: [0, 1, 2], 1: [0, 1, 2]}
         """
 
-        if not self._dies_info:
-            self._build_dies_info()
-
-        return self._dies_info.copy()
+        return self._get_dies_info().copy()
 
     def _probe_driver(self):
         """
