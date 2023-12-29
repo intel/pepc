@@ -80,6 +80,20 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         return self._sysfs_base_lsdir
 
+    def _use_new_sysfs_api(self):
+        """Return 'True' if the new uncore frequency driver interface is available."""
+
+        if self._has_sysfs_new_api is not None:
+            return self._has_sysfs_new_api
+
+        self._has_sysfs_new_api = False
+        for dirname in self._get_sysfs_base_lsdir():
+            if dirname.startswith("uncore"):
+                self._has_sysfs_new_api = True
+                break
+
+        return self._has_sysfs_new_api
+
     def _get_sysfs_path(self, key, cpu, limit=False):
         """Return the sysfs file path for an uncore frequency read or write operation."""
 
@@ -226,7 +240,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         self._dies_info = {}
         sysfs_base_lsdir = self._get_sysfs_base_lsdir()
 
-        if self._pman.is_dir(self._sysfs_base / "uncore00"):
+        if self._use_new_sysfs_api():
             for dirname in sysfs_base_lsdir:
                 match = re.match(r"^uncore(\d+)$", dirname)
                 if not match:
@@ -353,6 +367,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         # List of directory names in 'self._sysfs_base'.
         self._sysfs_base_lsdir = None
+        # The new sysfs API is available if 'True'.
+        self._has_sysfs_new_api = None
 
         self._die_id_quirk = False
 
