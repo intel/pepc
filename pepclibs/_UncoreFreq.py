@@ -52,6 +52,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
        * On per-die (uncore frequency domain) basis:
            - 'get_min_freq_dies()'
            - 'get_max_freq_dies()'
+           - 'set_min_freq_dies()'
+           - 'set_max_freq_dies()'
        * On per-CPU basis:
            - 'get_min_freq_cpus()'
            - 'get_max_freq_cpus()'
@@ -202,6 +204,49 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         """
 
         yield from self._get_freq_dies("max", dies, limit=True)
+
+    def _set_freq_dies(self, freq, key, dies):
+        """For every die in 'dies', set the min. or max. uncore frequency for the die."""
+
+        what = f"{key}. uncore frequency"
+
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                path = self._get_sysfs_path_dies(key, package, die)
+                try:
+                    self._sysfs_io.write_verify(path, str(freq // 1000), what=what)
+                except ErrorVerifyFailed as err:
+                    setattr(err, "package", package)
+                    setattr(err, "die", die)
+                    raise err
+
+    def set_min_freq_dies(self, freq, dies):
+        """
+        For every die in 'dies', set the minimum uncore frequency for the die (uncore frequency
+        domain). The arguments are as follows.
+          * freq - the frequency to set, in Hz.
+          * dies - a dictionary indexed by the package numbers with values being lists of die
+                   numbers to get the frequency limit for.
+
+        Use the Linux uncore frequency driver sysfs interface set the minimum uncore frequency.
+        Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not exist.
+        """
+
+        self._set_freq_dies(freq, "min", dies)
+
+    def set_max_freq_dies(self, freq, dies):
+        """
+        For every die in 'dies', set the maximum uncore frequency for the die (uncore frequency
+        domain). The arguments are as follows.
+          * freq - the frequency to set, in Hz.
+          * dies - a dictionary indexed by the package numbers with values being lists of die
+                   numbers to get the frequency limit for.
+
+        Use the Linux uncore frequency driver sysfs interface set the maximum uncore frequency.
+        Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not exist.
+        """
+
+        self._set_freq_dies(freq, "max", dies)
 
     def _get_legacy_sysfs_api_path_cpu(self, key, cpu, limit=False):
         """
