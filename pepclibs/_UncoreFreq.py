@@ -94,8 +94,11 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         return self._has_sysfs_new_api
 
-    def _get_sysfs_path_cpu(self, key, cpu, limit=False):
-        """Return the sysfs file path for a CPU-based uncore frequency read or write operation."""
+    def _get_legacy_sysfs_api_path_cpu(self, key, cpu, limit=False):
+        """
+        Return the legacy sysfs API file path for a CPU-based uncore frequency read or write
+        operation.
+        """
 
         levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
         package = levels["package"]
@@ -123,7 +126,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
             what += " limit"
 
         for cpu in cpus:
-            path = self._get_sysfs_path_cpu(key, cpu, limit=limit)
+            path = self._get_legacy_sysfs_api_path_cpu(key, cpu, limit=limit)
             freq = self._sysfs_io.read_int(path, what=what)
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
@@ -193,7 +196,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         what = f"{key}. uncore frequency"
 
         for cpu in cpus:
-            path = self._get_sysfs_path_cpu(key, cpu)
+            path = self._get_legacy_sysfs_api_path_cpu(key, cpu)
             try:
                 self._sysfs_io.write_verify(path, str(freq // 1000), what=what)
             except ErrorVerifyFailed as err:
