@@ -917,6 +917,11 @@ class PStates(_PropsClassBase.PropsClassBase):
                 max_freq_limit_pname = "max_turbo_freq"
                 write_func = self._write_cpu_freq_prop_msr
 
+        if is_min:
+            cur_freq_limit_pname = max_freq_pname
+        else:
+            cur_freq_limit_pname = min_freq_pname
+
         new_freq_iter = self._get_numeric_freq(val, cpus, is_uncore)
         min_limit_iter = self._get_prop_cpus_mnames(min_freq_limit_pname, cpus, mnames=(mname,))
         max_limit_iter = self._get_prop_cpus_mnames(max_freq_limit_pname, cpus, mnames=(mname,))
@@ -928,21 +933,15 @@ class PStates(_PropsClassBase.PropsClassBase):
                 _raise_out_of_range(pname, new_freq, min_limit, max_limit)
 
             if is_min:
-                cur_max_freq = self._get_cpu_prop_mnames(max_freq_pname, cpu, mnames=(mname,))
-                if new_freq > cur_max_freq:
+                if new_freq > cur_freq_limit:
                     # New min. frequency cannot be set to a value larger than current max.
                     # frequency.
-                    _raise_order(pname, new_freq, cur_max_freq, is_min)
+                    _raise_order(pname, new_freq, cur_freq_limit, is_min)
+            elif new_freq < cur_freq_limit:
+                #  New max. frequency cannot be set to a value smaller than current min. frequency.
+                _raise_order(pname, new_freq, cur_freq_limit, is_min)
 
-                write_func(pname, new_freq, cpu)
-            else:
-                cur_min_freq = self._get_cpu_prop_mnames(min_freq_pname, cpu, mnames=(mname,))
-                if new_freq < cur_min_freq:
-                    # New max. frequency cannot be set to a value smaller than current min.
-                    # frequency.
-                    _raise_order(pname, new_freq, cur_min_freq, is_min)
-
-                write_func(pname, new_freq, cpu)
+            write_func(pname, new_freq, cpu)
 
     def _set_prop_cpus(self, pname, val, cpus, mname):
         """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
