@@ -917,18 +917,15 @@ class PStates(_PropsClassBase.PropsClassBase):
                 max_freq_limit_pname = "max_turbo_freq"
                 write_func = self._write_cpu_freq_prop_msr
 
-        if is_min:
-            cur_freq_limit_pname = max_freq_pname
-        else:
-            cur_freq_limit_pname = min_freq_pname
-
         new_freq_iter = self._get_numeric_freq(val, cpus, is_uncore)
         min_limit_iter = self._get_prop_cpus_mnames(min_freq_limit_pname, cpus, mnames=(mname,))
         max_limit_iter = self._get_prop_cpus_mnames(max_freq_limit_pname, cpus, mnames=(mname,))
+        cur_freq_limit_pname = max_freq_pname if is_min else min_freq_pname
+        cur_freq_limit = self._get_prop_cpus_mnames(cur_freq_limit_pname, cpus, mnames=(mname,))
 
-        iterator = zip(new_freq_iter, min_limit_iter, max_limit_iter)
+        iterator = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit)
 
-        for (cpu, new_freq), (_, min_limit), (_, max_limit) in iterator:
+        for (cpu, new_freq), (_, min_limit), (_, max_limit), (_, cur_freq_limit) in iterator:
             if new_freq < min_limit or new_freq > max_limit:
                 _raise_out_of_range(pname, new_freq, min_limit, max_limit)
 
