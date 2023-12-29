@@ -295,7 +295,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if loaded:
             # The sysfs directories do not exist, but the driver is loaded.
             _LOG.debug("the uncore frequency driver '%s' is loaded, but the sysfs directory '%s' "
-                       "does not exist.\n%s.", drvname, self._sysfs_base, msg)
+                       "does not exist\n%s.", drvname, self._sysfs_base, msg)
             errmsg = msg
         else:
             try:
