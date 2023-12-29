@@ -569,7 +569,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if new_online_cpus != old_online_cpus:
             online = list(new_online_cpus - old_online_cpus)
 
-            tinfo = {cpu : {"CPU" : cpu} for cpu in online}
+            tinfo = {cpu: {"CPU": cpu} for cpu in online}
             for tline in self._topology["CPU"]:
                 if tline["CPU"] in new_online_cpus:
                     tinfo[tline["CPU"]] = tline
@@ -642,7 +642,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 data = self._pman.read(base / "cache/index2/id")
             except ErrorNotFound as err:
                 if not no_cache_info:
-                    _LOG.debug("no CPU cache topology info found%s:\n%s",
+                    _LOG.debug("no CPU cache topology info found%s:\n%s.",
                                self._pman.hostmsg, err.indent(2))
                     no_cache_info = True
                     tinfo[cpu]["module"] = tinfo[cpu]["core"]
@@ -777,7 +777,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             data = self._pman.read(base / "topology/die_id")
             die = Trivial.str_to_int(data, "die number")
             siblings = self._read_range(base / "topology/die_cpus_list")
-            for sibling in siblings:
+            for _ in siblings:
                 # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
                 with suppress(KeyError):
                     _add_compute_die(tinfo, cpu, die)
@@ -812,9 +812,9 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             return self._topology[order]
 
         if not self._topology:
-            tinfo = {cpu : {"CPU" : cpu} for cpu in self._get_online_cpus()}
+            tinfo = {cpu: {"CPU": cpu} for cpu in self._get_online_cpus()}
         else:
-            tinfo = {tline["CPU"] : tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
+            tinfo = {tline["CPU"]: tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
 
         cpus = self._get_online_cpus()
         self._add_cores_and_packages(tinfo, cpus)
@@ -911,7 +911,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         for tline in self._get_topology(levels=(lvl, sublvl), order=order):
             if tline[lvl] == NA:
-                 continue
+                continue
             valid_nums.add(tline[lvl])
             if tline[sublvl] == NA:
                 continue
@@ -975,14 +975,12 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 if die in self._compute_dies[package]:
                     compute_dies.append(die)
             return compute_dies
-        elif io_dies_ok:
-            io_dies = []
-            for die in dies:
-                if die in self._io_dies[package]:
-                    io_dies.append(die)
-            return io_dies
 
-        return []
+        io_dies = []
+        for die in dies:
+            if die in self._io_dies[package]:
+                io_dies.append(die)
+        return io_dies
 
     def get_nodes(self, order="node"):
         """
@@ -1475,8 +1473,8 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         arguments are as follows.
           * cores - collection of integer core numbers to normalize. Special value 'all' means
                    "all coress".
-          * package - package number to validate the 'cores' against: all numbers in 'cores' should be
-                      valid core numbers in package number 'package'.
+          * package - package number to validate the 'cores' against: all numbers in 'cores' should
+                      be valid core numbers in package number 'package'.
 
         Return a list of integer core numbers.
         """
@@ -1583,7 +1581,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def normalize_cpu(self, cpu):
         """Same as 'normalize_cpus()', but for a single CPU number."""
-        return  self.normalize_cpus((cpu,))[0]
+        return self.normalize_cpus((cpu,))[0]
 
     def normalize_core(self, core, package=0):
         """Same as 'normalize_packages()', but for a single package number."""
@@ -1753,10 +1751,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                              "package" : ("package", "CPU")}
 
         # Level name to its index number.
-        self._lvl2idx = {lvl : idx for idx, lvl in enumerate(LEVELS)}
-
-        # The CPU topology sysfs directory path pattern.
-        self._topology_sysfs_base = "/sys/devices/system/cpu/cpu%d/topology/"
+        self._lvl2idx = {lvl: idx for idx, lvl in enumerate(LEVELS)}
 
         # Set of online and offline CPUs.
         self._all_cpus = None
