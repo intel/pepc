@@ -816,8 +816,8 @@ class PStates(_PropsClassBase.PropsClassBase):
                 yield from self._get_prop_cpus_mnames("max_uncore_freq_limit", cpus)
             elif freq == "mdl":
                 bclks_iter = self._get_bclks(cpus)
-                min_limit_iter = self._get_cpu_prop_mnames("min_uncore_freq_limit", cpus)
-                max_limit_iter = self._get_cpu_prop_mnames("max_uncore_freq_limit", cpus)
+                min_limit_iter = self._get_prop_cpus_mnames("min_uncore_freq_limit", cpus)
+                max_limit_iter = self._get_prop_cpus_mnames("max_uncore_freq_limit", cpus)
                 iterator = zip(bclks_iter, min_limit_iter, max_limit_iter)
                 for (cpu, bclk), (_, min_limit), (_, max_limit) in iterator:
                     yield cpu, bclk * round(statistics.mean([min_limit, max_limit]) / bclk)
@@ -917,9 +917,13 @@ class PStates(_PropsClassBase.PropsClassBase):
                 max_freq_limit_pname = "max_turbo_freq"
                 write_func = self._write_cpu_freq_prop_msr
 
-        for cpu, new_freq in self._get_numeric_freq(val, cpus, is_uncore):
-            min_limit = self._get_cpu_prop_mnames(min_freq_limit_pname, cpu, mnames=(mname,))
-            max_limit = self._get_cpu_prop_mnames(max_freq_limit_pname, cpu, mnames=(mname,))
+        new_freq_iter = self._get_numeric_freq(val, cpus, is_uncore)
+        min_limit_iter = self._get_prop_cpus_mnames(min_freq_limit_pname, cpus, mnames=(mname,))
+        max_limit_iter = self._get_prop_cpus_mnames(max_freq_limit_pname, cpus, mnames=(mname,))
+
+        iterator = zip(new_freq_iter, min_limit_iter, max_limit_iter)
+
+        for (cpu, new_freq), (_, min_limit), (_, max_limit) in iterator:
             if new_freq < min_limit or new_freq > max_limit:
                 _raise_out_of_range(pname, new_freq, min_limit, max_limit)
 
