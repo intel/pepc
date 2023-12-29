@@ -449,8 +449,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     raise
 
                 if curmode == "off":
-                    # When 'intel_pstate' driver is 'off', writing 'off' again errors out. Ignore the
-                    # error.
+                    # When 'intel_pstate' driver is 'off', writing 'off' again errors out. Ignore
+                    # the error.
                     continue
 
                 # Setting 'intel_pstate' driver mode to "off" is only possible in non-HWP (legacy)
