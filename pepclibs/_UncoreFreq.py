@@ -93,6 +93,9 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         """Yield uncore frequency by reading from the corresponding sysfs file."""
 
         what = f"{key}. uncore frequency"
+        if limit:
+            what += " limit"
+
         for cpu in cpus:
             path = self._get_sysfs_path(key, cpu, limit=limit)
             freq = self._sysfs_io.read_int(path, what=what)
@@ -160,7 +163,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         For every CPU in 'cpus', set uncore frequency by writing to the corresponding sysfs file.
         """
 
-        what = f"{key}. CPU frequency"
+        what = f"{key}. uncore frequency"
 
         for cpu in cpus:
             path = self._get_sysfs_path(key, cpu)
