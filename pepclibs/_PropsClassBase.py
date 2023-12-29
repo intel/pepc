@@ -506,7 +506,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for cpu in cpus:
             yield self._construct_pvinfo(pname, cpu, mnames[-1], None)
 
-    def _get_cpu_prop_cache(self, pname, cpu, mnames=None):
+    def _get_cpu_prop_mnames(self, pname, cpu, mnames=None):
         """
         Read property 'pname' and return the value, try mechanisms in 'mnames'. This method is
         similar to the API method 'get_cpu_prop()', but it does not verify input arguments.

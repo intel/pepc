@@ -154,21 +154,21 @@ class Power(_PropsClassBase.PropsClassBase):
             # RAPL contains min/max values for the PPL in an MSR register, however the register
             # contents are unreliable so we derive ranges here from TDP.
             if pname in ("ppl1", "ppl2"):
-                tdp = self._get_cpu_prop_cache("tdp", cpu)
+                tdp = self._get_cpu_prop_mnames("tdp", cpu)
 
                 fval = float(val)
 
                 if pname == "ppl1":
                     minval = tdp / 8
                     maxval = tdp
-                    if fval > self._get_cpu_prop_cache("ppl2", cpu):
+                    if fval > self._get_cpu_prop_mnames("ppl2", cpu):
                         raise Error(f"{pname} can't be higher than RAPL PPL2 for CPU{cpu}")
                 else:
                     # Apply a reasonable limit for PPL2. This is imperical limit, based on general
                     # observations.
                     minval = tdp / 8
                     maxval = tdp * 4
-                    if fval < self._get_cpu_prop_cache("ppl1", cpu):
+                    if fval < self._get_cpu_prop_mnames("ppl1", cpu):
                         raise Error(f"{pname} can't be lower than RAPL PPL1 for CPU{cpu}")
 
                 if fval > maxval or fval < minval:
