@@ -510,16 +510,16 @@ class PStates(_PropsClassBase.PropsClassBase):
         uncfreq_obj = self._get_uncfreq_obj()
 
         if pname == "min_uncore_freq":
-            yield from uncfreq_obj.get_min_freq(cpus)
+            yield from uncfreq_obj.get_min_freq_cpus(cpus)
             return
         if pname == "max_uncore_freq":
-            yield from uncfreq_obj.get_max_freq(cpus)
+            yield from uncfreq_obj.get_max_freq_cpus(cpus)
             return
         if pname == "min_uncore_freq_limit":
-            yield from uncfreq_obj.get_min_freq_limit(cpus)
+            yield from uncfreq_obj.get_min_freq_limit_cpus(cpus)
             return
         if pname == "max_uncore_freq_limit":
-            yield from uncfreq_obj.get_max_freq_limit(cpus)
+            yield from uncfreq_obj.get_max_freq_limit_cpus(cpus)
             return
 
         raise Error(f"BUG: unexpected uncore frequency property {pname}")
@@ -802,9 +802,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         uncfreq_obj = self._get_uncfreq_obj()
 
         if pname == "min_uncore_freq":
-            uncfreq_obj.set_min_freq(freq, cpus)
+            uncfreq_obj.set_min_freq_cpus(freq, cpus)
         elif pname == "max_uncore_freq":
-            uncfreq_obj.set_max_freq(freq, cpus)
+            uncfreq_obj.set_max_freq_cpus(freq, cpus)
         else:
             raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
