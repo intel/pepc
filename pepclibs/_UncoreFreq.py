@@ -23,12 +23,10 @@ This sysfs interface is referred to as the legacy interface.
 On newer platforms, such as Granite Rapids Xeon, the uncore frequency is controlled via TPMI, and
 Linux kernel has the 'intel_uncore_frequency_tpmi' driver that exposes the sysfs interface. The TPMI
 driver has two sysfs interfaces, though: the legacy interface and the new interface. The legacy
-interface is limited, and the new interface is preferable.
+interface is limited, so this module uses the new interface instead.
 
 The new interface works in terms of "uncore frequency domains". However, uncore domain IDs are the
 same as die IDs, and in this project uncore domains are referred to as "dies".
-
-At this point this module uses the legacy sysfs interface even when the new interface is available.
 """
 
 import logging
@@ -51,18 +49,27 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Get/set uncore frequency via Linux sysfs interfaces:
-       * 'get_min_freq_cpus()'
-       * 'get_max_freq_cpus()'
-       * 'set_min_freq_cpus()'
-       * 'set_max_freq_cpus()'
+       * On per-die (uncore frequency domain) basis:
+           - 'get_min_freq_dies()'
+           - 'get_max_freq_dies()'
+       * On per-CPU basis:
+           - 'get_min_freq_cpus()'
+           - 'get_max_freq_cpus()'
+           - 'set_min_freq_cpus()'
+           - 'set_max_freq_cpus()'
     2. Get uncore frequency limits via Linux sysfs interfaces:
-       * 'get_min_freq_limit_cpus()'
-       * 'get_max_freq_limit_cpus()'
+       * On per-die (uncore frequency domain) basis:
+           - 'get_min_freq_limit_dies()'
+           - 'get_max_freq_limit_dies()'
+       * On per-CPU basis:
+           - 'get_min_freq_limit_cpus()'
+           - 'get_max_freq_limit_cpus()'
     3. Get dies information dictionary:
        * 'get_dies_info()'
 
-    Note, class methods do not validate the 'cpus' argument. The caller is assumed to have done the
-    validation. The input CPU numbers should exist and should be online.
+    Note, class methods do not validate the 'cpus' and 'dies' arguments. The caller is assumed to
+    have done the validation. The input package, die, and CPU numbers should exist, the CPUs should
+    be online.
     """
 
     def _get_sysfs_base_lsdir(self):
@@ -93,6 +100,108 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
                 break
 
         return self._has_sysfs_new_api
+
+    def _get_new_sysfs_api_path(self, key, package, die, limit=False):
+        """Return the new sysfs API file path for an uncore frequency read or write operation."""
+
+        if self._dirmap is None:
+            self._build_dies_info()
+
+        prefix = "initial_" if limit else ""
+        fname = prefix + key + "_freq_khz"
+        return self._sysfs_base / self._dirmap[package][die] / fname
+
+    def _get_legacy_sysfs_api_path(self, key, package, die, limit=False):
+        """Return the legacy sysfs API file path for a uncore frequency read or write operation."""
+
+        prefix = "initial_" if limit else ""
+        fname = prefix + key + "_freq_khz"
+        return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
+
+    def _get_sysfs_path_dies(self, key, package, die, limit=False):
+        """Get the sysfs file path for an uncore frequency read or write operation."""
+
+        if self._use_new_sysfs_api():
+            return self._get_new_sysfs_api_path(key, package, die, limit=limit)
+        return self._get_legacy_sysfs_api_path(key, package, die, limit=limit)
+
+    def _get_freq_dies(self, key, dies, limit=False):
+        """
+        For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
+        the min. or max. uncore frequency or frequency limit for the die 'die' in package 'package'.
+        The arguments are as follows.
+        """
+
+        what = f"{key}. uncore frequency"
+        if limit:
+            what += " limit"
+
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                path = self._get_sysfs_path_dies(key, package, die, limit=limit)
+                freq = self._sysfs_io.read_int(path, what=what)
+                # The frequency value is in kHz in sysfs.
+                yield package, die, freq * 1000
+
+    def get_min_freq_dies(self, dies):
+        """
+        For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
+        the minimum uncore frequency for the die 'die' in package 'package'. The arguments are as
+        follows.
+          * dies - a dictionary indexed by the package numbers with values being lists of die
+                   numbers to get the frequency for.
+
+        Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
+        frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
+        """
+
+        yield from self._get_freq_dies("min", dies)
+
+    def get_max_freq_dies(self, dies):
+        """
+        For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
+        the maximum uncore frequency for the die 'die' in package 'package'. The arguments are as
+        follows.
+          * dies - a dictionary indexed by the package numbers with values being lists of die
+                   numbers to get the frequency for.
+
+        Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
+        frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
+        """
+
+        yield from self._get_freq_dies("max", dies)
+
+    def get_min_freq_limit_dies(self, dies):
+        """
+        For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
+        the minimum uncore frequency limit for the die 'die' in package 'package'. The arguments are
+        as follows.
+          * dies - a dictionary indexed by the package numbers with values being lists of die
+                   numbers to get the frequency limit for.
+
+        Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
+        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency limit sysfs file
+        does not exist.
+        """
+
+        yield from self._get_freq_dies("min", dies, limit=True)
+
+    def get_max_freq_limit_dies(self, dies):
+        """
+        For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
+        the maximum uncore frequency limit for the die 'die' in package 'package'. The arguments are
+        as follows.
+          * dies - a dictionary indexed by the package numbers with values being lists of die
+                   numbers to get the frequency limit for.
+
+        Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
+        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency limit sysfs file
+        does not exist.
+        """
+
+        yield from self._get_freq_dies("max", dies, limit=True)
 
     def _get_legacy_sysfs_api_path_cpu(self, key, cpu, limit=False):
         """
