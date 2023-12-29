@@ -758,14 +758,15 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         with contextlib.suppress(Error):
             frequencies = self._get_cpu_prop_cache("frequencies", cpu)
-            if frequencies:
-                frequencies_set = set(frequencies)
-                if freq not in frequencies_set and read_freq in frequencies_set:
-                    fvals = ", ".join([Human.num2si(v, unit="Hz", decp=4) for v in frequencies])
-                    freq_human = Human.num2si(freq, unit="Hz", decp=4)
-                    msg += f".\n  Linux kernel CPU frequency driver does not support " \
-                           f"{freq_human}, use one of the following values instead:\n  {fvals}"
-            elif self._get_cpu_prop_cache("turbo", cpu) == "off":
+            frequencies_set = set(frequencies)
+            if freq not in frequencies_set and read_freq in frequencies_set:
+                fvals = ", ".join([Human.num2si(v, unit="Hz", decp=4) for v in frequencies])
+                freq_human = Human.num2si(freq, unit="Hz", decp=4)
+                msg += f".\n  Linux kernel CPU frequency driver does not support " \
+                       f"{freq_human}, use one of the following values instead:\n  {fvals}"
+
+        with contextlib.suppress(Error):
+            if self._get_cpu_prop_cache("turbo", cpu) == "off":
                 base_freq = self._get_cpu_prop_cache("base_freq", cpu)
                 if base_freq and freq > base_freq:
                     base_freq = Human.num2si(base_freq, unit="Hz", decp=4)
@@ -813,12 +814,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 bclk = self._get_bclk(cpu)
                 min_freq = self._get_cpu_prop_cache("min_uncore_freq_limit", cpu)
                 max_freq = self._get_cpu_prop_cache("max_uncore_freq_limit", cpu)
-                if min_freq and max_freq:
-                    # Mid-point between min. and max. frequencies, rounded to the nearest multiple
-                    # of bus clock frequency.
-                    freq = bclk * round(statistics.mean([min_freq, max_freq]) / bclk)
-                else:
-                    freq = None
+                freq = bclk * round(statistics.mean([min_freq, max_freq]) / bclk)
             else:
                 freq = val
         else:
@@ -829,8 +825,9 @@ class PStates(_PropsClassBase.PropsClassBase):
             elif val in {"base", "hfm", "P1"}:
                 freq = self._get_cpu_prop_cache("base_freq", cpu)
             elif val in {"eff", "lfm", "Pn"}:
-                freq = self._get_cpu_prop_cache("max_eff_freq", cpu)
-                if not freq:
+                try:
+                    freq = self._get_cpu_prop_cache("max_eff_freq", cpu)
+                except ErrorNotSupported:
                     # Max. efficiency frequency may not be supported by the platform. Fall back to
                     # the minimum frequency in this case.
                     freq = self._get_cpu_prop_cache("min_freq_limit", cpu)
@@ -838,11 +835,6 @@ class PStates(_PropsClassBase.PropsClassBase):
                 freq = self._get_cpu_prop_cache("min_oper_freq", cpu)
             else:
                 freq = val
-
-        if not freq:
-            if uncore and self._uncfreq_err:
-                raise ErrorNotSupported(self._uncfreq_err)
-            raise ErrorNotSupported(f"'{val}' is not supported{self._pman.hostmsg}")
 
         return freq
 
@@ -867,12 +859,6 @@ class PStates(_PropsClassBase.PropsClassBase):
                 what = f"CPU {cpu}"
 
             return what
-
-        def _raise_not_supported(pname):
-            """Raise an exception if one of the required properties is not supported."""
-
-            name = Human.uncapitalize(self._props[pname]["name"])
-            raise ErrorNotSupported(f"CPU {cpu} does not support {name}{self._pman.hostmsg}")
 
         def _raise_out_of_range(pname, val, min_limit, max_limit):
             """Raise an exception if the frequency property is out of range."""
@@ -923,20 +909,12 @@ class PStates(_PropsClassBase.PropsClassBase):
             new_freq = self._parse_freq(val, cpu, is_uncore)
 
             min_limit = self._get_cpu_prop_cache(min_freq_limit_pname, cpu, mnames=(mname,))
-            if not min_limit:
-                _raise_not_supported(min_freq_limit_pname)
             max_limit = self._get_cpu_prop_cache(max_freq_limit_pname, cpu, mnames=(mname,))
-            if not max_limit:
-                _raise_not_supported(max_freq_limit_pname)
-
             if new_freq < min_limit or new_freq > max_limit:
                 _raise_out_of_range(pname, new_freq, min_limit, max_limit)
 
             if is_min:
                 cur_max_freq = self._get_cpu_prop_cache(max_freq_pname, cpu, mnames=(mname,))
-                if not cur_max_freq:
-                    _raise_not_supported(max_freq_pname)
-
                 if new_freq > cur_max_freq:
                     # New min. frequency cannot be set to a value larger than current max.
                     # frequency.
@@ -945,9 +923,6 @@ class PStates(_PropsClassBase.PropsClassBase):
                 write_func(pname, new_freq, cpu)
             else:
                 cur_min_freq = self._get_cpu_prop_cache(min_freq_pname, cpu, mnames=(mname,))
-                if not cur_min_freq:
-                    _raise_not_supported(min_freq_pname)
-
                 if new_freq < cur_min_freq:
                     # New max. frequency cannot be set to a value smaller than current min.
                     # frequency.

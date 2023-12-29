@@ -508,14 +508,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def _get_cpu_prop_cache(self, pname, cpu, mnames=None):
         """
-        Read property 'pname' and return the value. Use the cached value if it is available. If
-        proprty 'pname is not supported, return 'None'.
+        Read property 'pname' and return the value, try mechanisms in 'mnames'. This method is
+        similar to the API method 'get_cpu_prop()', but it does not verify input arguments.
         """
 
-        try:
-            pvinfo = next(self._get_prop_pvinfo_cpus(pname, (cpu,), mnames))
-        except ErrorNotSupported:
-            return None
+        pvinfo = next(self._get_prop_pvinfo_cpus(pname, (cpu,), mnames))
         return pvinfo["val"]
 
     def get_prop_cpus(self, pname, cpus="all", mnames=None):
