@@ -82,7 +82,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         from the sysfs file and add the result to the cache. If cache is disabled, skip all the
         cache operations.
 
-        Return the contents of the file at 'path'. Raise 'ErrorNotSupported' if the file does not exist.
+        Return the contents of the file at 'path'. Raise 'ErrorNotSupported' if the file does not
+        exist.
         """
 
         if bypass_cache:
