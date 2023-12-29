@@ -299,14 +299,14 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
             self._drv = KernelModule.KernelModule(drvname, pman=self._pman)
             loaded = self._drv.is_loaded()
         except Error as err:
-            _LOG.debug("%s\n%s", err, msg)
+            _LOG.debug("%s\n%s.", err, msg)
             errmsg = msg
             loaded = False
 
         if loaded:
             # The sysfs directories do not exist, but the driver is loaded.
             _LOG.debug("the uncore frequency driver '%s' is loaded, but the sysfs directory '%s' "
-                       "does not exist.\n%s", drvname, self._sysfs_base, msg)
+                       "does not exist.\n%s.", drvname, self._sysfs_base, msg)
             errmsg = msg
         else:
             try:
@@ -314,7 +314,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
                 self._unload_drv = True
                 FSHelpers.wait_for_a_file(self._sysfs_base, timeout=1, pman=self._pman)
             except Error as err:
-                _LOG.debug("%s\n%s", err, msg)
+                _LOG.debug("%s\n%s.", err, msg)
                 errmsg = msg
 
         if errmsg:
