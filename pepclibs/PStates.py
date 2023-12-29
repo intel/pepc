@@ -802,41 +802,53 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
-    def _parse_freq(self, val, cpu, uncore=False):
-        """Turn a user-provided CPU or uncore frequency property value to hertz."""
+    def _get_numeric_freq(self, freq, cpus, uncore=False):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is a numeric version of the
+        user-provided frequency value 'freq' in Hz. E.g., if 'val' is "max", yield the maximum
+        supported CPU frequency.
+        """
 
         if uncore:
-            if val == "min":
-                freq = self._get_cpu_prop_mnames("min_uncore_freq_limit", cpu)
-            elif val == "max":
-                freq = self._get_cpu_prop_mnames("max_uncore_freq_limit", cpu)
-            elif val == "mdl":
-                bclk = self._get_bclk(cpu)
-                min_freq = self._get_cpu_prop_mnames("min_uncore_freq_limit", cpu)
-                max_freq = self._get_cpu_prop_mnames("max_uncore_freq_limit", cpu)
-                freq = bclk * round(statistics.mean([min_freq, max_freq]) / bclk)
+            if freq == "min":
+                yield from self._get_prop_cpus_mnames("min_uncore_freq_limit", cpus)
+            elif freq == "max":
+                yield from self._get_prop_cpus_mnames("max_uncore_freq_limit", cpus)
+            elif freq == "mdl":
+                bclks_iter = self._get_bclks(cpus)
+                min_limit_iter = self._get_cpu_prop_mnames("min_uncore_freq_limit", cpus)
+                max_limit_iter = self._get_cpu_prop_mnames("max_uncore_freq_limit", cpus)
+                iterator = zip(bclks_iter, min_limit_iter, max_limit_iter)
+                for (cpu, bclk), (_, min_limit), (_, max_limit) in iterator:
+                    yield cpu, bclk * round(statistics.mean([min_limit, max_limit]) / bclk)
             else:
-                freq = val
+                for cpu in cpus:
+                    yield cpu, freq
         else:
-            if val == "min":
-                freq = self._get_cpu_prop_mnames("min_freq_limit", cpu)
-            elif val == "max":
-                freq = self._get_cpu_prop_mnames("max_freq_limit", cpu)
-            elif val in {"base", "hfm", "P1"}:
-                freq = self._get_cpu_prop_mnames("base_freq", cpu)
-            elif val in {"eff", "lfm", "Pn"}:
+            if freq == "min":
+                yield from self._get_prop_cpus_mnames("min_freq_limit", cpus)
+            elif freq == "max":
+                yield from self._get_prop_cpus_mnames("max_freq_limit", cpus)
+            elif freq in {"base", "hfm", "P1"}:
+                yield from self._get_prop_cpus_mnames("base_freq", cpus)
+            elif freq in {"eff", "lfm", "Pn"}:
+                idx = 0
                 try:
-                    freq = self._get_cpu_prop_mnames("max_eff_freq", cpu)
+                    iterator = enumerate(self._get_prop_cpus_mnames("max_eff_freq", cpus))
+                    for idx, (cpu, max_eff_freq) in iterator:
+                        yield cpu, max_eff_freq
                 except ErrorNotSupported:
+                    if idx != 0:
+                        # Already yielded something, consider this to be an error.
+                        raise
                     # Max. efficiency frequency may not be supported by the platform. Fall back to
                     # the minimum frequency in this case.
-                    freq = self._get_cpu_prop_mnames("min_freq_limit", cpu)
-            elif val == "Pm":
-                freq = self._get_cpu_prop_mnames("min_oper_freq", cpu)
+                    yield from self._get_prop_cpus_mnames("min_freq_limit", cpus)
+            elif freq == "Pm":
+                yield from self._get_prop_cpus_mnames("min_oper_freq", cpus)
             else:
-                freq = val
-
-        return freq
+                for cpu in cpus:
+                    yield cpu, freq
 
     def _set_freq_prop(self, pname, val, cpus, mname):
         """
@@ -905,9 +917,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 max_freq_limit_pname = "max_turbo_freq"
                 write_func = self._write_cpu_freq_prop_msr
 
-        for cpu in cpus:
-            new_freq = self._parse_freq(val, cpu, is_uncore)
-
+        for cpu, new_freq in self._get_numeric_freq(val, cpus, is_uncore):
             min_limit = self._get_cpu_prop_mnames(min_freq_limit_pname, cpu, mnames=(mname,))
             max_limit = self._get_cpu_prop_mnames(max_freq_limit_pname, cpu, mnames=(mname,))
             if new_freq < min_limit or new_freq > max_limit:
