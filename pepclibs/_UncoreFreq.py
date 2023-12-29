@@ -227,18 +227,25 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         self._set_freq_cpus(freq, "max", cpus)
 
-    def _add_die(self, package, die):
-        """Add die 'die' for package 'packet' to the dies information dictionary."""
+    def _add_die(self, package, die, dirname):
+        """
+        Add package and die numbers to the dies information dictionary. Add the sysfs directory name
+        to the sysfs directories map.
+        """
 
         if package not in self._dies_info:
             self._dies_info[package] = []
-
         self._dies_info[package].append(die)
 
+        if package not in self._dirmap:
+            self._dirmap[package] = {}
+        self._dirmap[package][die] = dirname
+
     def _build_dies_info(self):
-        """Build dies information dictionary."""
+        """Build the dies information dictionary and the sysfs directories map."""
 
         self._dies_info = {}
+        self._dirmap = {}
         sysfs_base_lsdir = self._get_sysfs_base_lsdir()
 
         if self._use_new_sysfs_api():
@@ -254,14 +261,14 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
                 with self._pman.open(path / "domain_id", "r") as fobj:
                     die = Trivial.str_to_int(fobj.read(), what="uncore frequency domain ID")
 
-                self._add_die(package, die)
+                self._add_die(package, die, dirname)
         else:
             for dirname in sysfs_base_lsdir:
                 match = re.match(r"package_(\d+)_die_(\d+)", dirname)
                 if match:
                     package = int(match.group(1))
                     die = int(match.group(2))
-                    self._add_die(package, die)
+                    self._add_die(package, die, dirname)
 
     def get_dies_info(self):
         """
@@ -358,8 +365,6 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
 
-        self._dies_info = None
-
         self._drv = None
         self._unload_drv = False
 
@@ -370,6 +375,12 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         self._sysfs_base_lsdir = None
         # The new sysfs API is available if 'True'.
         self._has_sysfs_new_api = None
+
+        # The package -> die numbers map.
+        self._dies_info = None
+        # The sysfs directories map, translating package/die number to the corresponding sysfs
+        # directory name. Helps to quickly determine sysfs path in case of the new sysfs API.
+        self._dirmap = None
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
