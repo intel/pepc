@@ -420,9 +420,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self._msr
 
-    def _prop_not_supported(self, pname, cpus, mnames, action, exceptions=None, exc_type=None):
+    def _prop_not_supported(self, pname, cpus, mnames, action, exceptions=None):
         """
-        Rase an exception or print a debug message from a property "get" or "set" method in a
+        Rase 'ErrorNotSupported' or print a debug message from a property "get" or "set" method in a
         situation when the property could not be read or set using mechanisms in 'mnames'
         """
 
@@ -448,9 +448,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         what = Human.uncapitalize(self._props[pname]["name"])
         msg = f"cannot {action} {what} {mnames_str} for {cpus_msg}{errmsgs}"
         if exceptions:
-            if exc_type:
-                raise exc_type(msg)
-            raise type(exceptions[0])(msg)
+            raise ErrorNotSupported(msg)
         _LOG.debug(msg)
 
     def _get_prop_cpus(self, pname, cpus, mname):
@@ -789,8 +787,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
             return mname
 
-        self._prop_not_supported(pname, cpus, mnames, "set", exceptions=exceptions,
-                                 exc_type=ErrorNotSupported)
+        self._prop_not_supported(pname, cpus, mnames, "set", exceptions=exceptions)
 
     def set_prop_cpus(self, pname, val, cpus, mnames=None):
         """
