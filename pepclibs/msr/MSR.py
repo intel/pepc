@@ -8,8 +8,7 @@
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides a capability for reading and writing to read and write CPU Model Specific
-Registers. This module has been designed and implemented for Intel CPUs.
+Provide a capability to read and write CPU Model Specific Registers.
 """
 
 import logging
@@ -35,22 +34,27 @@ _LOG = logging.getLogger()
 
 class MSR(ClassHelpers.SimpleCloseContext):
     """
-    This class provides helpers to read and write CPU Model Specific Registers.
+    Provide a capability to read and write CPU Model Specific Registers.
 
     Public methods overview.
 
     1. Multi-CPU I/O.
-        * Read/write entire MSR: 'read()', 'write()'.
-        * Read/write MSR bits range: 'read_bits()', 'write_bits()'.
+        * 'read()' - read an MSR.
+        * 'read_bits()'  - read an MSR bits range.
+        * 'write()' - write to the an MSR.
+        * 'write_bits()'  - write MSR bits range.
     2. Single-CPU I/O.
-        * Read/write entire MSR: 'read_cpu()', 'write_cpu()'.
-        * Read/write MSR bits range: 'read_cpu_bits()', 'write_cpu_bits()'.
+        * 'read_cpu()' - read an MSR.
+        * 'read_cpu_bits()'  - read an MSR bits range.
+        * 'write_cpu()' - write to the an MSR.
+        * 'write_cpu_bits()'  - write MSR bits range.
     3. Transactions support.
-        * Start a transaction: start_transaction().
-        * Flush the transaction buffer: flush_transaction().
-        * Commit the transaction: commit_transaction().
-    4. Miscellaneous helpers.
-        * Get/set bits from/in a user-provided MSR value: 'get_bits()', 'set_bits()'.
+        * 'start_transaction()' - start a transaction.
+        * 'flush_transaction()' - flush the transaction buffer.
+        * 'commit_transaction()' - commit the transaction.
+    4. Miscellaneous.
+        * 'get_bits()' - get bits range from a user-provided MSR value.
+        * 'set_bits()' - set bits range from a user-provided MSR value.
     """
 
     def _add_for_transation(self, regaddr, regval, cpu):
