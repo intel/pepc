@@ -79,8 +79,8 @@ class MSR(ClassHelpers.SimpleCloseContext):
     def start_transaction(self):
         """
         Start transaction. All writes to MSR registers will be cached, and will only be written
-        to the actual hardware on 'commit_transaction()'. Writes to the same MSR registers will be
-        merged.
+        to the actual hardware on 'commit_transaction()' or 'flush_transaction(). Writes to the same
+        MSR registers will be merged.
 
         The purpose of a transaction is to reduce the amount of I/O. There is no atomicity and
         roll-back functionality, it is only about buffering the I/O and merging multiple writes to
