@@ -133,16 +133,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             raise Error(f"bad contents of{what} sysfs file '{path}'{self._pman.hostmsg}\n"
                         f"{err.indent(2)}") from err
 
-    def write(self, path, val, what=None):
-        """
-        Write value 'val' to a sysfs file at 'path'. The arguments are as follows.
-          * path - path of the sysfs file to write to.
-          * val - the value to write.
-          * what - short description of the file at 'path', will be included to the exception
-                   message in case of a failure.
-        """
-
-        self.cache_remove(path)
+    def _write(self, path, val, what):
+        """Write value 'val' to file at path 'path'."""
 
         try:
             with self._pman.open(path, "r+") as fobj:
@@ -163,23 +155,21 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             raise ErrorNotSupported(f"failed to write value '{val}' to{what} sysfs file '{path}'"
                                     f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-        self.cache_add(path, val)
-
-    def write_verify(self, path, val, what=None, retries=0, sleep=0):
+    def write(self, path, val, what=None):
         """
-        Write value 'val' to a sysfs file at 'path' and verify that it was "accepted" by the kernel
-        by reading it back and comparing to the written value. The arguments are as follows.
+        Write value 'val' to a sysfs file at 'path'. The arguments are as follows.
           * path - path of the sysfs file to write to.
           * val - the value to write.
           * what - short description of the file at 'path', will be included to the exception
                    message in case of a failure.
-          * retries - how many times to re-try the verification.
-          * sleep - sleep for 'sleep' amount of seconds before repeating the verification.
-
-        Raise 'ErrorVerifyFailed' if the value read was not the same as value written.
         """
 
-        self.write(path, val, what=what)
+        self.cache_remove(path)
+        self._write(path, val, what=what)
+        self.cache_add(path, val)
+
+    def _verify(self, path, val, what=None, retries=0, sleep=0):
+        """Verify that file 'path' has value 'what'."""
 
         while True:
             # Read CPU frequency back and verify that it was set correctly.
@@ -202,6 +192,25 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                                 f"{self._pman.hostmsg}:\n  wrote '{val}', but read '{new_val}' "
                                 "back", expected=val, actual=new_val, path=path)
 
+    def write_verify(self, path, val, what=None, retries=0, sleep=0):
+        """
+        Write value 'val' to a sysfs file at 'path' and verify that it was "accepted" by the kernel
+        by reading it back and comparing to the written value. The arguments are as follows.
+          * path - path of the sysfs file to write to.
+          * val - the value to write.
+          * what - short description of the file at 'path', will be included to the exception
+                   message in case of a failure.
+          * retries - how many times to re-try the verification.
+          * sleep - sleep for 'sleep' amount of seconds before repeating the verification.
+
+        Raise 'ErrorVerifyFailed' if the value read was not the same as value written.
+        """
+
+        self.cache_remove(path)
+        self._write(path, val, what=what)
+        self._verify(path, val, what, retries, sleep)
+        self.cache_add(path, val)
+
     def __init__(self, pman=None, cpuinfo=None, enable_cache=True):
         """
         The class constructor. The argument are as follows.
@@ -217,6 +226,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
 
+        # The write-through data cache, indexed by the file path.
         self._cache = {}
 
         if not self._pman:
