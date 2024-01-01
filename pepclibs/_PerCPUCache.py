@@ -59,7 +59,7 @@ class PerCPUCache:
           * sname - scope name (e.g. "package", "core").
 
         Returns 'True' if there are elements in the cache left, and 'False' if there are no more
-        elements in the cachel
+        elements in the cache.
         """
 
         if not self._enable_cache:
