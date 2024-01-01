@@ -22,6 +22,21 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorVerifyFail
 class SysfsIO(ClassHelpers.SimpleCloseContext):
     """
     Provide a capability of reading and writing sysfs files. Implement caching.
+
+    Public methods overview.
+
+    1. Read / write to a file.
+        * 'read()' - read a string.
+        * 'read_int()' - read an integer.
+        * 'write()' - write a string.
+        * 'write_verify()' - write a string and verify.
+    2. Cache operations.
+        * cache_get() - get data from the cache.
+        * cache_add() - add data to the cache.
+        * cache_remove() - remove data from the cache.
+
+    Note, the method of this class do not normalize the input path, and the user is supposed to do
+    it for caching to work efficiently (the cache is indexed by file path).
     """
 
     def cache_get(self, path):
