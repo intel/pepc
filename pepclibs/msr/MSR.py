@@ -57,7 +57,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
         * 'set_bits()' - set bits range from a user-provided MSR value.
     """
 
-    def _add_for_transation(self, regaddr, regval, cpu):
+    def _add_for_transation(self, regaddr, regval, cpu, verify, iosname):
         """Add CPU 'cpu' MSR at 'regaddr' with its value 'regval' to the transaction buffer."""
 
         if not self._enable_cache:
@@ -67,7 +67,21 @@ class MSR(ClassHelpers.SimpleCloseContext):
         if cpu not in self._transaction_buffer:
             self._transaction_buffer[cpu] = {}
 
-        self._transaction_buffer[cpu][regaddr] = regval
+        if regaddr not in self._transaction_buffer[cpu]:
+            self._transaction_buffer[cpu][regaddr] = {}
+
+        tinfo = self._transaction_buffer[cpu][regaddr] = {}
+
+        if "iosname" in tinfo and tinfo["iosname"] != iosname:
+            raise Error(f"BUG: inconsistent I/O scope name for MSR {regaddr:#x}:\n"
+                        f"  old: {tinfo['iosname']}, new: {iosname}.")
+        if "verify" in tinfo and tinfo["verify"] != verify:
+            raise Error(f"BUG: inconsistent verification flag value for MSR {regaddr:#x}:\n"
+                        f"  old: {tinfo['iosname']}, new: {iosname}.")
+
+        tinfo["regval"] = regval
+        tinfo["verify"] = verify
+        tinfo["iosname"] = iosname
 
     def start_transaction(self):
         """
@@ -89,6 +103,22 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         self._in_transaction = True
 
+    def _verify(self, regaddr, regval, cpus, iosname):
+        """Read MSR 'regaddr' for CPUs in 'cpus' and verify that it's value is 'regval'."""
+
+        for cpu in cpus:
+            self._cache.remove(regaddr, cpu, sname=iosname)
+
+        for cpu in cpus:
+            if self._cache.is_cached(regaddr, cpu):
+                continue
+
+            new_val = self.read_cpu(regaddr, cpu, iosname=iosname)
+            if new_val != regval:
+                raise ErrorVerifyFailed(f"verification failed for MSR '{regaddr:#x}' on CPU {cpu}"
+                                        f"{self._pman.hostmsg}:\n  wrote '{regval:#x}', read back "
+                                        f"'{new_val:#x}'", cpu=cpu, expected=regval, actual=new_val)
+
     def flush_transaction(self):
         """
         Flush the transaction buffer. Write all the buffered data to the MSR registers. If there are
@@ -105,11 +135,15 @@ class MSR(ClassHelpers.SimpleCloseContext):
         if self._transaction_buffer:
             _LOG.debug("flushing MSR transaction buffer")
 
-        for cpu, to_write in self._transaction_buffer.items():
+        verify_info = {}
+
+        for cpu, cpus_info in self._transaction_buffer.items():
             # Write all the dirty data.
             path = Path(f"/dev/cpu/{cpu}/msr")
             with self._pman.open(path, "r+b") as fobj:
-                for regaddr, regval in to_write.items():
+                for regaddr, regval_info in cpus_info.items():
+                    regval = regval_info["regval"]
+                    verify = regval_info["verify"]
                     try:
                         fobj.seek(regaddr)
                         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
@@ -122,7 +156,19 @@ class MSR(ClassHelpers.SimpleCloseContext):
                                     f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
                                     f"{err.indent(2)}") from err
 
+                    if verify:
+                        if regval not in verify_info:
+                            verify_info[regval] = {}
+                        if regaddr not in verify_info[regval]:
+                            verify_info[regval][regaddr] = {"iosname": None, "cpus": []}
+                        verify_info[regval][regaddr]["iosname"] = regval_info["iosname"]
+                        verify_info[regval][regaddr]["cpus"].append(cpu)
+
         self._transaction_buffer.clear()
+
+        for regval, regaddr_info in verify_info.items():
+            for regaddr, cpus_info in regaddr_info.items():
+                self._verify(regaddr, regval, cpus_info["cpus"], cpus_info["iosname"])
 
     def commit_transaction(self):
         """
@@ -302,24 +348,6 @@ class MSR(ClassHelpers.SimpleCloseContext):
                 raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                             f"{cpu}{self._pman.hostmsg} (file '{path}'):\n{err.indent(2)}") from err
 
-    def _verify(self, regaddr, regval, cpus, iosname):
-        """
-        Read MSR 'regaddr' for CPUs in 'cpus' and verify that it's value is 'regval'.
-        """
-
-        for cpu in cpus:
-            self._cache.remove(regaddr, cpu, sname=iosname)
-
-        for cpu in cpus:
-            if self._cache.is_cached(regaddr, cpu):
-                continue
-
-            new_val = self.read_cpu(regaddr, cpu, iosname=iosname)
-            if new_val != regval:
-                raise ErrorVerifyFailed(f"verification failed for MSR '{regaddr:#x}' on CPU {cpu}"
-                                        f"{self._pman.hostmsg}:\n  wrote '{regval:#x}', read back "
-                                        f"'{new_val:#x}'", cpu=cpu, expected=regval, actual=new_val)
-
     def write(self, regaddr, regval, cpus="all", iosname="CPU", verify=False):
         """
         Write 'regval' to an MSR at 'regaddr' on CPUs in 'cpus'. The arguments are as follows.
@@ -328,8 +356,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
           * cpus - the CPUs to write to (similar to the 'cpus' argument in 'read()').
           * iosname - the 'regaddr' MSR I/O scope name (e.g. "package", "core").
           * verify - read-back and verify the written value, raises 'ErrorVerifyFailed' if it
-                     differs. Setting this flag to 'True' also flushed any pending transaction
-                     buffers, but lets the transaction continue afterwards.
+                     differs.
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
@@ -350,7 +377,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
                     regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                 self._write_cpu(regaddr, regval, cpu, regval_bytes=regval_bytes)
             else:
-                self._add_for_transation(regaddr, regval, cpu)
+                self._add_for_transation(regaddr, regval, cpu, verify, iosname)
 
             # Note, below 'add()' call is scope-aware. It will cache 'regval' not only for CPU
             # number 'cpu', but also for all the 'iosname' siblings. For example, if 'iosname' is
@@ -358,10 +385,9 @@ class MSR(ClassHelpers.SimpleCloseContext):
             # number 'cpu'.
             self._cache.add(regaddr, cpu, regval, sname=iosname)
 
-        if verify:
-            if self._in_transaction:
-                self.flush_transaction()
-
+        # In case of an ongoing transaction, skip the verification, it'll be done at the end of the
+        # transaction.
+        if verify and not self._in_transaction:
             self._verify(regaddr, regval, cpus, iosname)
 
     def write_cpu(self, regaddr, regval, cpu, iosname="CPU", verify=False):
