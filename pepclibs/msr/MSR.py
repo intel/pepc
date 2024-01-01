@@ -23,13 +23,6 @@ _CPU_BYTEORDER = "little"
 # 'write_bits()'.
 ALL_BITS_1 = object()
 
-# Feature control MSR.
-MSR_MISC_FEATURE_CONTROL = 0x1A4
-MLC_STREAMER = 0
-MLC_SPACIAL = 1
-DCU_STREAMER = 2
-DCU_IP = 3
-
 _LOG = logging.getLogger()
 
 class MSR(ClassHelpers.SimpleCloseContext):
