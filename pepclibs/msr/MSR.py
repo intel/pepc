@@ -302,6 +302,24 @@ class MSR(ClassHelpers.SimpleCloseContext):
                 raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                             f"{cpu}{self._pman.hostmsg} (file '{path}'):\n{err.indent(2)}") from err
 
+    def _verify(self, regaddr, regval, cpus, iosname):
+        """
+        Read MSR 'regaddr' for CPUs in 'cpus' and verify that it's value is 'regval'.
+        """
+
+        for cpu in cpus:
+            self._cache.remove(regaddr, cpu, sname=iosname)
+
+        for cpu in cpus:
+            if self._cache.is_cached(regaddr, cpu):
+                continue
+
+            new_val = self.read_cpu(regaddr, cpu, iosname=iosname)
+            if new_val != regval:
+                raise ErrorVerifyFailed(f"verification failed for MSR '{regaddr:#x}' on CPU {cpu}"
+                                        f"{self._pman.hostmsg}:\n  wrote '{regval:#x}', read back "
+                                        f"'{new_val:#x}'", cpu=cpu, expected=regval, actual=new_val)
+
     def write(self, regaddr, regval, cpus="all", iosname="CPU", verify=False):
         """
         Write 'regval' to an MSR at 'regaddr' on CPUs in 'cpus'. The arguments are as follows.
@@ -344,19 +362,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
             if self._in_transaction:
                 self.flush_transaction()
 
-            for cpu in cpus:
-                self._cache.remove(regaddr, cpu, sname=iosname)
-
-            for cpu in cpus:
-                if self._cache.is_cached(regaddr, cpu):
-                    continue
-
-                new_val = self.read_cpu(regaddr, cpu, iosname=iosname)
-                if new_val != regval:
-                    err_msg = f"verification failed for MSR '{regaddr:#x}' on CPU {cpu}" \
-                              f"{self._pman.hostmsg}:\n  wrote '{regval:#x}', read back " \
-                              f"'{new_val:#x}'"
-                    raise ErrorVerifyFailed(err_msg, cpu=cpu, expected=regval, actual=new_val)
+            self._verify(regaddr, regval, cpus, iosname)
 
     def write_cpu(self, regaddr, regval, cpu, iosname="CPU", verify=False):
         """
