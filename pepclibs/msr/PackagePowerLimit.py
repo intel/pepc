@@ -12,8 +12,8 @@ This module provides API to MSR 0x610 (MSR_PKG_POWER_LIMIT).
 
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
-from pepclibs.helperlibs import ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs import ClassHelpers, Human
+from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 
 # The Package Power Limit Model Specific Register.
 MSR_PKG_POWER_LIMIT = 0x610
@@ -55,7 +55,7 @@ FEATURES = {
         "bits": (14, 0),
     },
     "limit1_enable": {
-        "name": "Enable package power limit #1",
+        "name": "Package power limit #1",
         "sname": "package",
         "iosname": "package",
         "help": """Enable/disable RAPL package power limit #1.""",
@@ -65,7 +65,7 @@ FEATURES = {
         "bits": (15, 15),
     },
     "limit1_clamp": {
-        "name": "Enable package power clamping for limit #1",
+        "name": "Package power clamping for limit #1",
         "sname": "package",
         "iosname": "package",
         "help": """Clamp the package power usage to specified limit during time window #1.
@@ -97,7 +97,7 @@ FEATURES = {
         "bits": (46, 32),
     },
     "limit2_enable": {
-        "name": "Enable package power limit #2",
+        "name": "Package power limit #2",
         "sname": "package",
         "iosname": "package",
         "help": """Enable/disable RAPL package power limit #2.""",
@@ -107,7 +107,7 @@ FEATURES = {
         "bits": (47, 47),
     },
     "limit2_clamp": {
-        "name": "Enable package power clamping for limit #2",
+        "name": "Package power clamping for limit #2",
         "sname": "package",
         "iosname": "package",
         "help": """Clamp the package power usage to specified limit during time window #2.
@@ -212,10 +212,21 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
         if fname.endswith("_clamp") or fname.endswith("_enable"):
             # If there is a transaction ongoing, flush it to prepare for verification.
             self._msr.flush_transaction()
-            self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, verify=True,
-                                 iosname=finfo["iosname"])
-            # Force verification in case of an ongoing transaction.
-            self._msr.flush_transaction()
+            try:
+                self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, verify=True,
+                                    iosname=finfo["iosname"])
+                # Force verification in case of an ongoing transaction.
+                self._msr.flush_transaction()
+            except ErrorVerifyFailed as err:
+                name = Human.uncapitalize(finfo["name"])
+                msg = f"failed to set {name} ('{fname}') to '{val}' in '{self.regname}'" \
+                      f"{self._pman.hostmsg}:\n{err.indent(2)}."
+                setattr(err, "msg", msg)
+                setattr(err, "regname", self.regname)
+                setattr(err, "regaddr", self.regaddr)
+                setattr(err, "fname", fname)
+                raise err from err
+
         elif fname in ("limit1", "limit2"):
             self._set_limit(finfo, val, cpus)
         else:
