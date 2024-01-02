@@ -11,11 +11,12 @@
 """Unittests for the public methods of the MSR Feature modules."""
 
 import pytest
+import common
 import msr_common
 from msr_common import get_params # pylint: disable=unused-import
 from pepclibs import CPUInfo
 from pepclibs.msr import MSR
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 
 def _get_msr_feature_objs(params):
     """
@@ -159,43 +160,74 @@ def test_msr_read_feature(params):
     _test_msr_read_feature_good(params)
     _test_msr_read_feature_bad(params)
 
+def is_verify_error_ok(params, err):
+    """
+    Return 'True' if 'ErrorVerifyFailed' exception should be ignored, and 'False' otherwise. The
+    arguments are as follows.
+      * params - test parameters.
+      * err - the 'ErrorVerifyFailed' object to check.
+
+    The 'ErrorVerifyFailed' exception is raised when an MSR read operation right after a write
+    operation returns a value different to the written value. Some MSRs are known to not "accept"
+    written values on some platforms, for example the RAPL package power limit MSR.
+    """
+
+    if common.is_emulated(params["pman"]):
+        return False
+    if not hasattr(err, "regname"):
+        return False
+
+    if err.regname == "MSR_PKG_POWER_LIMIT":
+        # This MSR is known to not "accept" written values on some platforms.
+        return True
+
+    return False
+
 def _test_msr_write_feature_good(params):
     """Test 'write_feature()' method for good option values."""
 
     for msr in _get_msr_feature_objs(params):
-        for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
-            if "vals" in finfo:
-                for val in finfo["vals"]:
-                    msr.write_feature(name, val, cpus=params["testcpus"])
-            else:
-                val = msr.read_cpu_feature(name, params["testcpus"][0])
-                newval = _flip_bits(val, finfo["bits"])
-                msr.write_feature(name, newval, cpus=params["testcpus"])
+        try:
+            for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
+                if "vals" in finfo:
+                    for val in finfo["vals"]:
+                        msr.write_feature(name, val, cpus=params["testcpus"])
+                else:
+                    val = msr.read_cpu_feature(name, params["testcpus"][0])
+                    newval = _flip_bits(val, finfo["bits"])
+                    msr.write_feature(name, newval, cpus=params["testcpus"])
+        except ErrorVerifyFailed as err:
+            if not is_verify_error_ok(params, err):
+                raise
 
 def _test_msr_write_feature_bad(params):
     """Test 'write_feature()' method for bad option values."""
 
     for msr in _get_msr_feature_objs(params):
-        for name in _get_bad_feature_names():
-            with pytest.raises(Error):
-                msr.write_feature(name, 0, cpus=params["testcpus"])
-
-        for name, _ in _get_msr_feature_test_params(msr, params, include_rw=False):
-            val = msr.read_cpu_feature(name, params["testcpus"][0])
-            with pytest.raises(Error):
-                msr.write_feature(name, val, cpus=params["testcpus"])
-
-        for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
-            val = msr.read_cpu_feature(name, params["testcpus"][0])
-            if "vals" in finfo:
-                for bad_val in _get_bad_feature_values(finfo):
-                    with pytest.raises(Exception):
-                        msr.write_feature(name, bad_val, cpus=params["testcpus"])
-            else:
-                bad_bits = (finfo["bits"][0] + 1, finfo["bits"][1])
-                bad_val = _flip_bits(val, bad_bits)
+        try:
+            for name in _get_bad_feature_names():
                 with pytest.raises(Error):
-                    msr.write_feature(name, bad_val, cpus=params["testcpus"])
+                    msr.write_feature(name, 0, cpus=params["testcpus"])
+
+            for name, _ in _get_msr_feature_test_params(msr, params, include_rw=False):
+                val = msr.read_cpu_feature(name, params["testcpus"][0])
+                with pytest.raises(Error):
+                    msr.write_feature(name, val, cpus=params["testcpus"])
+
+            for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
+                val = msr.read_cpu_feature(name, params["testcpus"][0])
+                if "vals" in finfo:
+                    for bad_val in _get_bad_feature_values(finfo):
+                        with pytest.raises(Exception):
+                            msr.write_feature(name, bad_val, cpus=params["testcpus"])
+                else:
+                    bad_bits = (finfo["bits"][0] + 1, finfo["bits"][1])
+                    bad_val = _flip_bits(val, bad_bits)
+                    with pytest.raises(Error):
+                        msr.write_feature(name, bad_val, cpus=params["testcpus"])
+        except ErrorVerifyFailed as err:
+            if not is_verify_error_ok(params, err):
+                raise
 
 def test_msr_write_feature(params):
     """Test 'write_feature()' method."""
@@ -207,32 +239,40 @@ def _test_msr_enable_feature_good(params):
     """Test 'enable_feature()' method for good option values."""
 
     for msr in _get_msr_feature_objs(params):
-        for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
-            if finfo.get("type") != "bool":
-                continue
+        try:
+            for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
+                if finfo.get("type") != "bool":
+                    continue
 
-            for enable in _get_good_feature_values(finfo):
-                msr.enable_feature(name, enable, cpus=params["testcpus"])
-                msr.enable_feature(name, enable)
+                for enable in _get_good_feature_values(finfo):
+                    msr.enable_feature(name, enable, cpus=params["testcpus"])
+                    msr.enable_feature(name, enable)
+        except ErrorVerifyFailed as err:
+            if not is_verify_error_ok(params, err):
+                raise
 
 def _test_msr_enable_feature_bad(params):
     """Test 'enable_feature()' method for bad option values."""
 
     for msr in _get_msr_feature_objs(params):
-        for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
-            if finfo.get("type") != "bool":
-                finfo["type"] = "bool"
-                enable = next(_get_good_feature_values(finfo))
-                with pytest.raises(Error):
-                    msr.enable_feature(name, enable, cpus=params["testcpus"])
-                with pytest.raises(Error):
-                    msr.enable_feature(name, enable)
+        try:
+            for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
+                if finfo.get("type") != "bool":
+                    finfo["type"] = "bool"
+                    enable = next(_get_good_feature_values(finfo))
+                    with pytest.raises(Error):
+                        msr.enable_feature(name, enable, cpus=params["testcpus"])
+                    with pytest.raises(Error):
+                        msr.enable_feature(name, enable)
 
-            for enable in _get_bad_feature_values(finfo):
-                with pytest.raises(Error):
-                    msr.enable_feature(name, enable, cpus=params["testcpus"])
-                with pytest.raises(Error):
-                    msr.enable_feature(name, enable)
+                for enable in _get_bad_feature_values(finfo):
+                    with pytest.raises(Error):
+                        msr.enable_feature(name, enable, cpus=params["testcpus"])
+                    with pytest.raises(Error):
+                        msr.enable_feature(name, enable)
+        except ErrorVerifyFailed as err:
+            if not is_verify_error_ok(params, err):
+                raise
 
 def test_msr_enable_feature(params):
     """Test 'enable_feature()' method."""
@@ -244,22 +284,26 @@ def _test_msr_is_feature_enabled_good(params):
     """Test 'is_feature_enabled()' method for good option values."""
 
     for msr in _get_msr_feature_objs(params):
-        for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
-            if finfo.get("type") != "bool":
-                continue
+        try:
+            for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
+                if finfo.get("type") != "bool":
+                    continue
 
-            for enable in (True, False):
-                msr.enable_feature(name, enable, cpus=params["testcpus"])
-                for cpu, enabled in msr.is_feature_enabled(name, cpus=params["testcpus"]):
-                    assert enable == enabled
-                    assert cpu in params["testcpus"]
+                for enable in (True, False):
+                    msr.enable_feature(name, enable, cpus=params["testcpus"])
+                    for cpu, enabled in msr.is_feature_enabled(name, cpus=params["testcpus"]):
+                        assert enable == enabled
+                        assert cpu in params["testcpus"]
 
-                msr.enable_feature(name, enable)
-                allcpus = []
-                for cpu, enabled in msr.is_feature_enabled(name):
-                    assert enable == enabled
-                    allcpus.append(cpu)
-                assert allcpus == params["cpus"]
+                    msr.enable_feature(name, enable)
+                    allcpus = []
+                    for cpu, enabled in msr.is_feature_enabled(name):
+                        assert enable == enabled
+                        allcpus.append(cpu)
+                    assert allcpus == params["cpus"]
+        except ErrorVerifyFailed as err:
+            if not is_verify_error_ok(params, err):
+                raise
 
 def _test_msr_is_feature_enabled_bad(params):
     """Test 'is_feature_enabled()' method for bad option values."""
