@@ -87,6 +87,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                      all mechanisms are allowed).
         """
 
+        if self._sysfs_io:
+            self._sysfs_io.start_transaction()
         if self._msr:
             self._msr.start_transaction()
 
@@ -100,6 +102,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
         if self._msr:
             self._msr.commit_transaction()
+        if self._sysfs_io:
+            self._sysfs_io.commit_transaction()
 
         if self._pcsprint:
             for pname in spinfo:
@@ -183,6 +187,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
     def _restore_props(self, ydict):
         """Restore properties from a loaded YAML file and represented by 'ydict'."""
 
+        if self._sysfs_io:
+            self._sysfs_io.start_transaction()
         if self._msr:
             self._msr.start_transaction()
 
@@ -212,8 +218,10 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
         if self._msr:
             self._msr.commit_transaction()
+        if self._sysfs_io:
+            self._sysfs_io.commit_transaction()
 
-    def __init__(self, pman, pobj, cpuinfo, pcsprint, msr=None):
+    def __init__(self, pman, pobj, cpuinfo, pcsprint, msr=None, sysfs_io=None):
         """
         Initialize a class instance. The arguments are as follows.
           * pman - the process manager object that defines the target host.
@@ -222,6 +230,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
           * pcsprint - a 'PStatesPrinter' or 'CStatesPrinter' class instance to use for reading and
                        printing the properties after they were set.
           * msr - an optional 'MSR.MSR()' object which will be used for transactions.
+          * sysfs_io - an optional '_SysfsIO.SysfsIO()' object which will be used for transactions.
         """
 
         self._pman = pman
@@ -229,10 +238,12 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         self._cpuinfo = cpuinfo
         self._pcsprint = pcsprint
         self._msr = msr
+        self._sysfs_io = sysfs_io
 
     def close(self):
         """Uninitialize the class object."""
-        ClassHelpers.close(self, unref_attrs=("_msr", "_pcsprint", "_cpuinfo", "_pobj", "_pman"))
+        ClassHelpers.close(self, unref_attrs=("_sysfs_io", "_msr", "_pcsprint", "_cpuinfo", "_pobj",
+                                              "_pman"))
 
 class PStatesSetter(_PropsSetter):
     """This class provides API for changing P-states properties."""

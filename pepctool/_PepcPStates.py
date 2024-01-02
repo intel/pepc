@@ -14,7 +14,7 @@ import logging
 import contextlib
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
-from pepclibs import PStates, CPUInfo
+from pepclibs import PStates, CPUInfo, _SysfsIO
 from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 
 _LOG = logging.getLogger()
@@ -87,7 +87,10 @@ def pstates_config_command(args, pman):
         msr = MSR.MSR(pman, cpuinfo=cpuinfo)
         stack.enter_context(msr)
 
-        pobj = PStates.PStates(pman=pman, msr=msr, cpuinfo=cpuinfo)
+        sysfs_io = _SysfsIO.SysfsIO(pman, cpuinfo=cpuinfo)
+        stack.enter_context(sysfs_io)
+
+        pobj = PStates.PStates(pman=pman, msr=msr, sysfs_io=sysfs_io, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
         mnames = None
@@ -107,7 +110,8 @@ def pstates_config_command(args, pman):
             psprint.print_props(print_opts, optar, mnames=mnames, skip_unsupported=False)
 
         if set_opts:
-            psset = _PepcSetter.PStatesSetter(pman, pobj, cpuinfo, psprint, msr=msr)
+            psset = _PepcSetter.PStatesSetter(pman, pobj, cpuinfo, psprint, msr=msr,
+                                              sysfs_io=sysfs_io)
             stack.enter_context(psset)
             psset.set_props(set_opts, optar, mnames=mnames)
 
@@ -161,13 +165,16 @@ def pstates_restore_command(args, pman):
         msr = MSR.MSR(pman, cpuinfo=cpuinfo)
         stack.enter_context(msr)
 
+        sysfs_io = _SysfsIO.SysfsIO(pman, cpuinfo=cpuinfo)
+        stack.enter_context(sysfs_io)
+
         pobj = PStates.PStates(pman=pman, msr=msr, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
         psprint = _PepcPrinter.PStatesPrinter(pobj, cpuinfo)
         stack.enter_context(psprint)
 
-        psset = _PepcSetter.PStatesSetter(pman, pobj, cpuinfo, psprint, msr=msr)
+        psset = _PepcSetter.PStatesSetter(pman, pobj, cpuinfo, psprint, msr=msr, sysfs_io=sysfs_io)
         stack.enter_context(psset)
 
         psset.restore(args.infile)
