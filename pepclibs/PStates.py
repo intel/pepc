@@ -900,7 +900,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 msg = f"larger than currently configured max. frequency of {cur_freq}"
             else:
                 msg = f"lower than currently configured min. frequency of {cur_freq}"
-            raise ErrorFreqOrder(f"can't set {name} of {what} to {cur_freq} - it is {msg}")
+            raise ErrorFreqOrder(f"can't set {name} of {what} to {new_freq} - it is {msg}")
 
         is_min = "min" in pname
         is_uncore = "uncore" in pname
