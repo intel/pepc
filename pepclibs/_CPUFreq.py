@@ -896,8 +896,12 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         hwpreq = self._get_hwpreq()
 
         # Disable package control.
+        pkg_control_cpus = []
         with contextlib.suppress(ErrorNotSupported):
-            hwpreq.write_feature(f"{feature_name}_valid", "on", cpus=cpus)
+            for cpu, enabled in hwpreq.is_feature_enabled("pkg_control"):
+                if enabled:
+                    pkg_control_cpus.append(cpu)
+            hwpreq.write_feature(f"{feature_name}_valid", "on", cpus=pkg_control_cpus)
 
         if self._cpuinfo.info["hybrid"]:
             pcore_cpus = set(self._cpuinfo.get_hybrid_cpu_topology()["pcore"])
