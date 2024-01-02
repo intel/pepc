@@ -210,8 +210,12 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
         # "off"). The MSR write operation succeeds, but the bit does not change (says "on"). Pass
         # 'verify=True' to detect if the change was successful.
         if fname.endswith("_clamp") or fname.endswith("_enable"):
+            # If there is a transaction ongoing, flush it to prepare for verification.
+            self._msr.flush_transaction()
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, verify=True,
                                  iosname=finfo["iosname"])
+            # Force verification in case of an ongoing transaction.
+            self._msr.flush_transaction()
         elif fname in ("limit1", "limit2"):
             self._set_limit(finfo, val, cpus)
         else:
