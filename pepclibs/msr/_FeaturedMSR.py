@@ -457,7 +457,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     def _get_clx_ap_adjusted_msr_scope(self):
         """
-        Return string "die" if the platfomr is a Cascade Lake AP (CLX-AP) and string "package"
+        Return string "die" if the platform is a Cascade Lake AP (CLX-AP) and string "package"
         otherwise. The CLX-AP platform is special, because it basically has 2x CLX-SP dies in one
         package. So most MSRs that has "package" scope on SKX or CLX have "die" scope on CLX-AP.
         """
