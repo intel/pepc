@@ -121,12 +121,12 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         if not self._enable_cache:
             return
-
         if not self._in_transaction:
-            raise Error("cannot commit a transaction, it did not start")
+            return
+        if not self._transaction_buffer:
+            return
 
-        if self._transaction_buffer:
-            _LOG.debug("flushing MSR transaction buffer")
+        _LOG.debug("flushing MSR transaction buffer")
 
         verify_info = {}
 
@@ -169,6 +169,9 @@ class MSR(ClassHelpers.SimpleCloseContext):
         transaction. Note, there is no atomicity guarantee, this is not like a database transaction,
         this is just an optimization to reduce the amount of MSR I/O.
         """
+
+        if not self._in_transaction:
+            raise Error("cannot commit a transaction, it did not start")
 
         self.flush_transaction()
         self._in_transaction = False
