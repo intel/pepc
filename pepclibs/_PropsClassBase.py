@@ -399,7 +399,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                              pvinfos=pvinfos)
 
     @staticmethod
-    def _contstruct_cpu_pvinfo(pname, cpu, mname, val):
+    def _construct_cpu_pvinfo(pname, cpu, mname, val):
         """Construct and return the property value dictionary for CPU 'cpu'."""
 
         if isinstance(val, bool):
@@ -407,7 +407,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         return {"cpu": cpu, "pname": pname, "val": val, "mname": mname}
 
     @staticmethod
-    def _contstruct_die_pvinfo(pname, package, die, mname, val):
+    def _construct_die_pvinfo(pname, package, die, mname, val):
         """Construct and return the property value dictionary for die 'die' of package 'package'."""
 
         if isinstance(val, bool):
@@ -415,7 +415,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         return {"package": package, "die" : die, "pname": pname, "val": val, "mname": mname}
 
     @staticmethod
-    def _contstruct_package_pvinfo(pname, package, mname, val):
+    def _construct_package_pvinfo(pname, package, mname, val):
         """Construct and return the property value dictionary for package 'package'."""
 
         if isinstance(val, bool):
@@ -544,7 +544,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 for cpu, val in self._get_prop_cpus(pname, cpus, mname):
                     _LOG.debug("'%s' is '%s' for CPU %d using mechanism '%s'%s",
                                pname, val, cpu, mname, self._pman.hostmsg)
-                    pvinfo = self._contstruct_cpu_pvinfo(pname, cpu, mname, val)
+                    pvinfo = self._construct_cpu_pvinfo(pname, cpu, mname, val)
                     yield pvinfo
                 # Yielded a 'pvinfo' for every CPU.
                 return
@@ -566,7 +566,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             self._prop_not_supported_cpus(pname, cpus, mnames, "get")
 
         for cpu in cpus:
-            yield self._contstruct_cpu_pvinfo(pname, cpu, mnames[-1], None)
+            yield self._construct_cpu_pvinfo(pname, cpu, mnames[-1], None)
 
     def _get_prop_cpus_mnames(self, pname, cpus, mnames=None):
         """
@@ -680,7 +680,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 for package, die, val in self._get_prop_dies(pname, dies, mname):
                     _LOG.debug("'%s' is '%s' for package %d, die %d, using mechanism '%s'%s",
                                pname, val, package, die, mname, self._pman.hostmsg)
-                    pvinfo = self._contstruct_die_pvinfo(pname, package, die, mname, val)
+                    pvinfo = self._construct_die_pvinfo(pname, package, die, mname, val)
                     yield pvinfo
                 # Yielded a 'pvinfo' for every die.
                 return
@@ -706,7 +706,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
-                yield self._contstruct_die_pvinfo(pname, package, die, mnames[-1], None)
+                yield self._construct_die_pvinfo(pname, package, die, mnames[-1], None)
 
     def _get_prop_dies_mnames(self, pname, dies, mnames=None):
         """
@@ -838,7 +838,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 for package, val in self._get_prop_packages(pname, packages, mname):
                     _LOG.debug("'%s' is '%s' for package %d using mechanism '%s'%s",
                                pname, val, package, mname, self._pman.hostmsg)
-                    pvinfo = self._contstruct_package_pvinfo(pname, package, mname, val)
+                    pvinfo = self._construct_package_pvinfo(pname, package, mname, val)
                     yield pvinfo
                 # Yielded a 'pvinfo' for every package.
                 return
@@ -860,7 +860,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             self._prop_not_supported_packages(pname, packages, mnames, "get")
 
         for package in packages:
-            yield self._contstruct_package_pvinfo(pname, package, mnames[-1], None)
+            yield self._construct_package_pvinfo(pname, package, mnames[-1], None)
 
     def _get_prop_packages_mnames(self, pname, packages, mnames=None):
         """
@@ -914,6 +914,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._validate_prop_vs_scope(pname, "package")
 
         packages = self._cpuinfo.normalize_packages(packages)
+        for package in packages:
+            if self._props[pname]["sname"] != self._props[pname]["iosname"]:
+                cpus = self._cpuinfo.package_to_cpus(package)
+                self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package)
 
         yield from self._get_prop_pvinfo_packages(pname, packages, mnames=mnames,
                                                   raise_not_supported=False)
@@ -1079,9 +1083,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         normalized_dies = {}
         for package in self._cpuinfo.normalize_packages(dies):
+            normalized_dies[package] = []
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
-                if package not in normalized_dies:
-                    normalized_dies[package] = []
                 normalized_dies[package].append(die)
 
         return self._set_prop_dies(pname, val, normalized_dies, mnames=mnames)
