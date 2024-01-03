@@ -72,8 +72,8 @@ def run_pepc(arguments, pman, exp_exc=None, ignore=None):
       * exp_exc - the expected exception, by default, any exception is considered to be a failure.
                   But when set if the command did not raise the expected exception then the test is
                   considered to be a failure.
-    * ignore - a map of error type and command argument strings to look for in case of errors.
-               Ignore matching exceptions.
+      * ignore - a map of error type and command argument strings to look for in case of errors.
+                 Ignore matching exceptions.
     """
 
     TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman=pman, exp_exc=exp_exc,
