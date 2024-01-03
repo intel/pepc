@@ -163,10 +163,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             step = _detect_progression(val, 4)
             tar = False
             if not step and len(val) > 1:
-                # The frequency numers are expected to be sorted in the ascending order. The last
+                # The frequency numbers are expected to be sorted in the ascending order. The last
                 # frequency number is often the Turbo Activation Ration (TAR) - a value just
-                # slightly higher than the base frquency to activet turbo. Detect this situation and
-                # use concise notation for it too.
+                # slightly higher than the base frequency to activate turbo. Detect this situation
+                # and use concise notation for it too.
                 step = _detect_progression(val[:-1], 3)
                 if not step:
                     val = ", ".join([_format_unit(v, unit) for v in val])
@@ -331,7 +331,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if "package" in pvinfo:
             return "package", pvinfo["package"]
 
-        raise Error("BUG: bad property value dictionary, no 'cpu', 'die', or 'package' key found.\n"
+        raise Error("BUG: bad property value dictionary, no 'cpu', 'die', or 'package' key found\n"
                     "The dictionary: {pvinfo}")
 
     def _build_aggr_pinfo_pname(self, pname, optar, mnames, skip_unsupported, override_sname=None):
@@ -421,7 +421,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         list. The keys of the dictionary are integer package numbers, and the values of the
         dictionaries are lists of integer die numbers for the package (the key).
 
-        So when 'sname' is die, then the aggregate propeties dictionary has the following format:
+        So when 'sname' is die, then the aggregate properties dictionary has the following format:
 
           {mname1: {pname1: {"sname": sname,
                              "vals": {val1: {package0: [die numbers in package 0],
