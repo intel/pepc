@@ -28,7 +28,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             return
 
         try:
-            mname = _PepcCommon.set_prop_sname(self._pobj, self._cpuinfo, pname, optar,
+            mname = _PepcCommon.set_prop_sname(self._pobj, pname, optar,
                                                spinfo[pname], mnames=mnames)
             del spinfo[pname]
             mnames_info[pname] = mname
@@ -71,8 +71,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                 raise
 
             for pnm in (other_freq_pname, freq_pname):
-                mname = _PepcCommon.set_prop_sname(self._pobj, self._cpuinfo, pnm, optar,
-                                                   spinfo[pnm], mnames=mnames)
+                mname = _PepcCommon.set_prop_sname(self._pobj, pnm, optar, spinfo[pnm],
+                                                   mnames=mnames)
                 del spinfo[pnm]
                 mnames_info[pnm] = mname
 

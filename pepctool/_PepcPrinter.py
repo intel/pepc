@@ -115,6 +115,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if sname == "package":
             return self._fmt_packages(nums)
         if sname == "die":
+            # Use package formatting if there is only one die per package.
+            if self._cpuinfo.get_dies_count(package=0) == 1:
+                return self._fmt_packages(nums)
             return self._fmt_dies(nums)
 
         raise Error(f"BUG: unexpected scope name {sname} for message formatting")
@@ -337,7 +340,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         prop = self._pobj.props[pname]
         apinfo = {}
 
-        for pvinfo in _PepcCommon.get_prop_sname(self._pobj, self._cpuinfo, pname, optar, mnames,
+        for pvinfo in _PepcCommon.get_prop_sname(self._pobj, pname, optar, mnames,
                                                  override_sname=override_sname):
             sname, num = self._get_pvinfo_num(pvinfo)
             val = pvinfo["val"]

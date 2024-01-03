@@ -101,7 +101,7 @@ def parse_mechanisms(mechanisms, pobj):
                                     f"mechanisms are: {mnames}")
     return mnames
 
-def _get_sname_and_nums(pobj, cpuinfo, pname, optar, override_sname=None):
+def _get_sname_and_nums(pobj, pname, optar, override_sname=None):
     """
     Find out whether property 'pname' should be accessed on the per-CPU, per-die, or per-package
     manner. Return the corresponding scope name and CPU, die, or package numbers.
@@ -128,12 +128,11 @@ def _get_sname_and_nums(pobj, cpuinfo, pname, optar, override_sname=None):
 
     return "CPU", optar.get_cpus()
 
-def get_prop_sname(pobj, cpuinfo, pname, optar, mnames, override_sname=None):
+def get_prop_sname(pobj, pname, optar, mnames, override_sname=None):
     """
     Yield property value dictionaries ('pvinfo', refer to '_PropsClassBase.get_prop_cpu()')
     for property 'pname' taking into account its scope. The arguments are as follows.
       * pobj - a property object, such as 'PStates' or 'CStates'.
-      * cpuinfo - CPU information object ('CPUInfo.CPUInfo()') for the target system.
       * pname - name of the property to get values for.
       * optar - an '_OpTarget.OpTarget()' object specifying the CPUs, packages, etc to get property
                 value dictionaries for.
@@ -143,7 +142,7 @@ def get_prop_sname(pobj, cpuinfo, pname, optar, mnames, override_sname=None):
                          scope name.
     """
 
-    sname, nums = _get_sname_and_nums(pobj, cpuinfo, pname, optar, override_sname=override_sname)
+    sname, nums = _get_sname_and_nums(pobj, pname, optar, override_sname=override_sname)
 
     if sname == "CPU":
         yield from pobj.get_prop_cpus(pname, nums, mnames=mnames)
@@ -152,11 +151,10 @@ def get_prop_sname(pobj, cpuinfo, pname, optar, mnames, override_sname=None):
     else:
         yield from pobj.get_prop_packages(pname, nums, mnames=mnames)
 
-def set_prop_sname(pobj, cpuinfo, pname, optar, val, mnames):
+def set_prop_sname(pobj, pname, optar, val, mnames):
     """
     Set property 'pname' to value 'val'. The arguments are as follows.
       * pobj - a property object, such as 'PStates' or 'CStates'.
-      * cpuinfo - CPU information object ('CPUInfo.CPUInfo()') for the target system.
       * pname - name of the property to set.
       * optar - an '_OpTarget.OpTarget()' object specifying the CPUs, packages, etc to set property
                 value dictionaries for.
@@ -165,7 +163,7 @@ def set_prop_sname(pobj, cpuinfo, pname, optar, val, mnames):
                  '_PropsClassBase.MECHANISMS').
     """
 
-    sname, nums = _get_sname_and_nums(pobj, cpuinfo, pname, optar)
+    sname, nums = _get_sname_and_nums(pobj, pname, optar)
 
     if sname == "CPU":
         return pobj.set_prop_cpus(pname, val, nums, mnames=mnames)
