@@ -332,6 +332,10 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             return
 
         if prevop == ",":
+            if self._is_singlet_tuple(1) and char == " ":
+                self.add_message("pepc-op-extra-space-after", args=prevop, line=lineno)
+                return
+
             if self._is_close_bracket(curop):
                 # Accept any number of spaces between ',' and ')' or '}'.
                 return
@@ -622,6 +626,34 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             self._parenthesis_depth -= 1
             if not self._parenthesis_depth:
                 self._check_backslashes(self._parenthesis_line, lineno)
+
+    def _match_token_sequence(self, sequence, index=0):
+        """Check that the current token sequence matches the given pattern."""
+
+        for match in reversed(sequence):
+            token = self._get_token(index)
+            if not token:
+                return False
+
+            index += 1
+
+            if match["type"] == "any":
+                continue
+
+            if token.type != match["type"] or token.string.rstrip() != match["txt"]:
+                return False
+
+        return True
+
+    def _is_singlet_tuple(self, index=0):
+        """Check if the preceding code is a singlet tuple, i.e. tuple with only single element."""
+
+        sequence = [{"type": tokenize.OP, "txt": "("},
+                    {"type": "any"},
+                    {"type": tokenize.OP, "txt": ","},
+                    {"type": tokenize.OP, "txt": ")"}]
+
+        return self._match_token_sequence(sequence, index=index)
 
     def process_tokens(self, tokens):
         """
