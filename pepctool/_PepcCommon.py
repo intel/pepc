@@ -18,28 +18,33 @@ from pepctool._OpTarget import ErrorNoTarget
 _LOG = logging.getLogger()
 
 def check_tuned_presence(pman):
-    """Check if the 'tuned' service is active, and if it is, print a warning message."""
+    """
+    Check if the 'tuned' service is active, and if it is, print a warning message. The arguments are
+    as follows.
+      * pman - the process manager object that defines the target system..
+    """
 
     try:
         with Systemctl.Systemctl(pman=pman) as systemctl:
             if systemctl.is_active("tuned"):
                 _LOG.warning("the 'tuned' service is active%s! It may override the changes made by "
-                             "'pepc'.\nConsider having 'tuned' disabled while experimenting with "
+                             "'pepc'\nConsider having 'tuned' disabled while experimenting with "
                              "power management settings.", pman.hostmsg)
     except ErrorNotFound:
         pass
     except Error as err:
         _LOG.warning("failed to check for 'tuned' presence:\n%s", err.indent(2))
 
-def parse_cpus_string(string):
+def parse_cpus_string(cpus_str):
     """
     Parse string of comma-separated numbers and number ranges, and return them as a list of
-    integers.
+    integers. The arguments are as follows.
+      * cpus_str - a string of comma-separated CPU numbers or number ranges to parse.
     """
 
-    if string == "all":
-        return string
-    return ArgParse.parse_int_list(string, ints=True, dedup=True)
+    if cpus_str == "all":
+        return cpus_str
+    return ArgParse.parse_int_list(cpus_str, ints=True, dedup=True)
 
 def override_cpu_model(cpuinfo, model):
     """
@@ -89,15 +94,17 @@ def expand_subprops(pnames, props):
 
 def parse_mechanisms(mechanisms, pobj):
     """
-    Parse and validate a string of comma-separated mechanism names. Return the resulting mechanism
-    names list.
+    Parse and validate a string of comma-separated mechanism names for a properties object 'pobj'.
+    Return the resulting mechanism names list. The arguments are as follows.
+      * mechanisms - list of mechanism names to parse.
+      * pobj - a "properties" object ('PStates', 'CStates', etc) to parse the mechanisms for.
     """
 
     mnames = Trivial.split_csv_line(mechanisms, dedup=True)
     for mname in mnames:
         if mname not in pobj.mechanisms:
             mnames = ", ".join(pobj.mechanisms)
-            raise ErrorNotSupported(f"mechanism '{mname}' is not supported. The supported " \
+            raise ErrorNotSupported(f"mechanism '{mname}' is not supported. The supported "
                                     f"mechanisms are: {mnames}")
     return mnames
 
