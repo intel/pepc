@@ -11,10 +11,12 @@
 """Unittests for the public methods of the 'MSR' module."""
 
 import pytest
+import common
 import msr_common
 from msr_common import get_params # pylint: disable=unused-import
 from pepclibs.msr.TurboRatioLimit import MSR_TURBO_RATIO_LIMIT
 from pepclibs.msr.TurboRatioLimit1 import MSR_TURBO_RATIO_LIMIT1
+from pepclibs.msr.PackagePowerLimit import MSR_PKG_POWER_LIMIT
 from pepclibs.helperlibs.Exceptions import Error
 
 def _get_msr_test_params(params, include_ro=True, include_rw=True):
@@ -34,6 +36,13 @@ def _get_msr_test_params(params, include_ro=True, include_rw=True):
                 if not include_rw:
                     continue
             elif not include_ro:
+                continue
+
+            if not common.is_emulated(params["pman"]) and addr == MSR_PKG_POWER_LIMIT and \
+               include_rw:
+                # On many platforms writes to 'MSR_PKG_POWER_LIMIT' do not get "accepted", meaning
+                # reading it back gives a value different to what was written. Therefore, treat this
+                # MSR as R/O.
                 continue
 
             if not finfo["bits"]:
@@ -122,12 +131,12 @@ def _test_msr_write_bad(params):
 
     # Following test will expect failure when writing to readonly MSR. On emulated host, such writes
     # don't fail.
-    if params["hostname"] == "emulation":
+    if common.is_emulated(params["pman"]):
         return
 
     for msr in msr_common.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_rw=False):
-            # Writes to Turbo MSRs pass, skip them.
+            # Writes to Turbo MSRs go through, even thought they are really R/O, skip them.
             if tp["addr"] in (MSR_TURBO_RATIO_LIMIT, MSR_TURBO_RATIO_LIMIT1):
                 continue
 
