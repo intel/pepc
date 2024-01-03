@@ -414,6 +414,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             val = "on" if val is True else "off"
         return {"package": package, "die" : die, "pname": pname, "val": val, "mname": mname}
 
+    @staticmethod
+    def _contstruct_package_pvinfo(pname, package, mname, val):
+        """Construct and return the property value dictionary for package 'package'."""
+
+        if isinstance(val, bool):
+            val = "on" if val is True else "off"
+        return {"package": package, "pname": pname, "val": val, "mname": mname}
+
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
 
@@ -492,6 +500,19 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         dies_str += ", and "
         dies_str += dies_strs[-1]
         self._do_prop_not_supported(pname, dies_str, mnames, action, exceptions=exceptions)
+
+    def _prop_not_supported_packages(self, pname, packages, mnames, action, exceptions=None):
+        """
+        Rase 'ErrorNotSupported' or print a debug message if property "get" or "set" method failed
+        to get or set a property for packages in 'packages' using mechanisms in 'mnames'.
+        """
+
+        if len(packages) > 1:
+            packages_str = f"the following packages: {Human.rangify(packages)}"
+        else:
+            packages_str = f"CPU {packages[0]}"
+
+        self._do_prop_not_supported(pname, packages_str, mnames, action, exceptions=exceptions)
 
     def _get_prop_cpus(self, pname, cpus, mname):
         """
@@ -783,23 +804,84 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self.get_die_prop(pname, die, package)["val"] is not None
 
-    def _get_package_prop_pvinfo(self, pname, package, mnames=None):
-        """The default implementation or per-package property reading using the per-CPU method."""
+    def _get_prop_packages(self, pname, packages, mname):
+        """
+        For every package in 'packages', yield a '(package, val)' tuple, where 'val' is property
+        'pname' value for package 'package'. Use mechanisms in 'mnames'. If the
+        property is not supported for a package, yield 'None' for 'val'. If the property is not
+        supported for any package, raise 'ErrorNotSupported'.
+
+        This is the default implementation of the method, which is based on per-CPU access.
+        Subclasses may choose to override this default implementation.
+        """
+
+        for package in packages:
+            cpus = self._cpuinfo.package_to_cpus(package)
+            val = self._get_cpu_prop_mnames(pname, cpus[0], mnames=(mname,))
+            yield package, val
+
+    def _get_prop_pvinfo_packages(self, pname, packages, mnames=None, raise_not_supported=True):
+        """
+        For every package in 'packages', yield the property value dictionary ('pvinfo') of property
+        'pname'.  Use mechanisms in 'mnames'.
+        """
 
         prop = self._props[pname]
-        cpus = self._cpuinfo.package_to_cpus(package)
+        if not mnames:
+            mnames = prop["mnames"]
 
-        if prop["sname"] != prop["iosname"]:
-            self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package)
+        exceptions = []
 
-        pvinfo = self.get_cpu_prop(pname, cpus[0], mnames=mnames)
+        for mname in mnames:
+            package = None
+            try:
+                for package, val in self._get_prop_packages(pname, packages, mname):
+                    _LOG.debug("'%s' is '%s' for package %d using mechanism '%s'%s",
+                               pname, val, package, mname, self._pman.hostmsg)
+                    pvinfo = self._contstruct_package_pvinfo(pname, package, mname, val)
+                    yield pvinfo
+                # Yielded a 'pvinfo' for every package.
+                return
+            except ErrorNotSupported as err:
+                exceptions.append(err)
+                # If something was yielded already, this is an error condition. Otherwise, try the
+                # next mechanism.
+                if package is not None:
+                    name = self._props[pname]["name"]
+                    raise Error(f"failed to get {name} ({pname}) for package {package} using the "
+                                f"'{mname}' mechanism:\n{err.indent(2)}\nHowever, succeeded "
+                                f"getting it for package {packages[0]}") from err
 
-        pkg_pvinfo = {}
-        pkg_pvinfo["package"] = package
-        pkg_pvinfo["val"] = pvinfo["val"]
-        pkg_pvinfo["mname"] = pvinfo["mname"]
+        # None of the methods succeeded.
+        if raise_not_supported:
+            # The below will raise an exception and won't return.
+            self._prop_not_supported_packages(pname, packages, mnames, "get", exceptions=exceptions)
+        else:
+            self._prop_not_supported_packages(pname, packages, mnames, "get")
 
-        return pkg_pvinfo
+        for package in packages:
+            yield self._contstruct_package_pvinfo(pname, package, mnames[-1], None)
+
+    def _get_prop_packages_mnames(self, pname, packages, mnames=None):
+        """
+        For every package in 'packages', yield '(package, val)' tuples, where 'val' is the 'pname'
+        property value for package 'package'. Try mechanisms in 'mnames'.
+
+        This method is similar to the API 'get_prop_packages()' method, but it does not validate
+        input arguments.
+        """
+
+        for pvinfo in self._get_prop_pvinfo_packages(pname, packages, mnames):
+            yield (pvinfo["package"], pvinfo["val"])
+
+    def _get_package_prop_mnames(self, pname, package, mnames=None):
+        """
+        Read property 'pname' and return the value, try mechanisms in 'mnames'. This method is
+        similar to the API method 'get_package_prop()', but it does not verify input arguments.
+        """
+
+        pvinfo = next(self._get_prop_pvinfo_packages(pname, (package,), mnames))
+        return pvinfo["val"]
 
     def get_prop_packages(self, pname, packages="all", mnames=None):
         """
@@ -831,8 +913,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         self._validate_prop_vs_scope(pname, "package")
 
-        for package in self._cpuinfo.normalize_packages(packages):
-            yield self._get_package_prop_pvinfo(pname, package, mnames=mnames)
+        packages = self._cpuinfo.normalize_packages(packages)
+
+        yield from self._get_prop_pvinfo_packages(pname, packages, mnames=mnames,
+                                                  raise_not_supported=False)
 
     def get_package_prop(self, pname, package, mnames=None):
         """
