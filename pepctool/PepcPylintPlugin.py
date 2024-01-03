@@ -1215,17 +1215,21 @@ class PepcASTChecker(BaseChecker):
         firstline = True
 
         for line in txt.split("\n", 1):
-            match = re.match(r"[^\.]*\.\s*$", line)
-            if match and firstline:
-                self.add_message(f"pepc-dot-{msgtype}-message", node=node)
-            if not match and not firstline:
-                self.add_message(f"pepc-no-dot-{msgtype}-message-cont", node=node)
+            match = re.match(r".*(%[^a-z]*[a-z]|{.+})$", line)
+            if not match:
+                match = re.match(r"[^\.]*\.\s*$", line)
+                if match and firstline:
+                    self.add_message(f"pepc-dot-{msgtype}-message", node=node)
+                if not match and not firstline:
+                    self.add_message(f"pepc-no-dot-{msgtype}-message-cont", node=node)
 
-            match = re.match(r"^[A-Z]([a-z]+|\s+)", line)
-            if match and firstline:
-                self.add_message(f"pepc-cap-{msgtype}-message", node=node)
-            if not match and not firstline:
-                self.add_message(f"pepc-lower-case-{msgtype}-message-cont", node=node)
+            match = re.match(r"^[%{]", line)
+            if not match:
+                match = re.match(r"^[A-Z]([a-z]+|\s+)", line)
+                if match and firstline:
+                    self.add_message(f"pepc-cap-{msgtype}-message", node=node)
+                if not match and not firstline:
+                    self.add_message(f"pepc-lower-case-{msgtype}-message-cont", node=node)
             firstline = False
 
     def _check_log(self, node):
