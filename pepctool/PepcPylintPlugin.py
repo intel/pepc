@@ -35,6 +35,101 @@ def _check_generic_string(obj, txt, msg, node=None, lineno=None):
     if match and (match.group(1) != "'" or match.group(3) != "'"):
         obj.add_message(msg, args=match.group(2), node=node, line=lineno)
 
+class IndentValidator():
+    """Helper class for validating code indentation."""
+
+    def validate(self, token, lineno, txt):
+        """
+        Verify the alignment of a token, if it is the first token on a line. The arguments are as
+        follows.
+          * token - token to check.
+          * lineno - current line number.
+          * txt - text content of current token.
+        """
+
+        # Previous token updated a new indent level for us.
+        if self._new_indent:
+            self._indent = self._new_indent
+            self._new_indent = None
+
+        # Bracket immediately followed by a newline marks the start of a data struct level. In this
+        # case, force the indent level to base + 4, and update the saved indent level in the stack
+        # also.
+        if self._was_bracket and token.type == tokenize.NL:
+            self._indent = self._base_indent + len(self._stack) * 4
+            self._stack[-1] = self._indent - 4
+
+        self._was_bracket = False
+
+        # Reset indent tracking at newline.
+        if token.type == tokenize.NEWLINE:
+            self._indent = self._base_indent
+            self._stack = []
+            return
+
+        # Update expected indent level at brackets.
+        if txt in ("(", "{", "["):
+            self._stack.append(self._indent)
+            self._new_indent = token.end[1]
+            self._was_bracket = True
+        elif txt in (")", "}", "]"):
+            self._indent = self._stack.pop()
+
+        if token.type == tokenize.INDENT:
+            self._indent += 4
+            self._base_indent += 4
+            return
+
+        if token.type == tokenize.DEDENT:
+            self._indent -= 4
+            self._base_indent -= 4
+            return
+
+        if token.type == tokenize.NL:
+            return
+
+        if self._indent == self._base_indent and self._new_indent is None and \
+           (self._parent.is_reserved(token) or token.type == tokenize.OP):
+            self._new_indent = token.end[1] + 1
+
+        prevtok = self._parent.get_token(0)
+        if not prevtok:
+            return
+
+        prevline = prevtok.end[0]
+        if prevline == lineno:
+            return
+
+        if token.type == tokenize.COMMENT:
+            self._pending.append(token)
+            return
+
+        tokens = [token]
+        tokens += self._pending
+
+        for tok in tokens:
+            indent = tok.start[1]
+
+            if indent != self._indent:
+                self._parent.add_message("pepc-bad-indent", line=tok.start[0],
+                                         args=(self._indent, indent))
+
+        self._pending = []
+
+    def __init__(self, parent):
+        """
+        Class constructor for the 'IndentValidator'. Arguments are as follows.
+          * parent - parent 'PepcTokenChecker' object.
+        """
+
+        self._parent = parent
+        self._indent = 0
+        self._new_indent = None
+        self._base_indent = 0
+        self._stack = []
+        self._pending = []
+        self._was_bracket = False
+
 class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
     """Pepc linter class using tokens."""
 
@@ -156,6 +251,13 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
                 """
             ),
         ),
+        "W9917": (
+            "Bad indentation, expected %s, got %s spaces",
+            "pepc-bad-indent",
+            (
+                "Used when code is badly indented."
+            ),
+        ),
     }
     options = ()
 
@@ -239,19 +341,19 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             if not re.match("[a-z]{0,1}\"\"\"", txt):
                 self.add_message("pepc-bad-multiline-string", line=lineno)
 
-    def _is_reserved(self, tok):
+    def is_reserved(self, token):
         """
-        Check if token matches a reserved name.
+        Check if 'token' matches a reserved name.
         """
 
-        if not tok:
+        if not token:
             return False
 
-        if tok.type != tokenize.NAME:
+        if token.type != tokenize.NAME:
             return False
 
-        if tok.string in ("if", "else", "elif", "and", "or", "not", "in", "yield", "return",
-                          "except", "for", "with", "raise"):
+        if token.string in ("if", "else", "elif", "and", "or", "not", "in", "yield", "return",
+                            "except", "for", "with", "raise"):
             return True
 
         return False
@@ -262,11 +364,11 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         call.
         """
 
-        p_tok = self._get_token(2)
+        p_tok = self.get_token(2)
         if p_tok and p_tok.type != tokenize.NAME:
             return False
 
-        return not self._is_reserved(p_tok)
+        return not self.is_reserved(p_tok)
 
     def _is_bracket(self, char):
         """Returns True if 'char' is of any type of bracket."""
@@ -354,7 +456,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
 
         # Opening braces must have no space before them, unless preceded by an operand.
         if curop in ("(", "["):
-            prev_reserved = self._is_reserved(prevtok)
+            prev_reserved = self.is_reserved(prevtok)
             if (prevop or prev_reserved) and char != " ":
                 self.add_message("pepc-op-no-space-before", args=curop, line=lineno)
             if not (prevop or prev_reserved) and char == " ":
@@ -374,7 +476,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             return
 
         # Check unary operators, they must have no space after.
-        if prevprevtok and (self._is_reserved(prevprevtok) or
+        if prevprevtok and (self.is_reserved(prevprevtok) or
                             prevprevtok.type in (tokenize.OP, tokenize.NL)):
             prevprevop = self._get_op(prevprevtok, lineno=lineno)
             if prevop in ("-", "*", "**", "@", "~") and not self._is_close_bracket(prevprevop):
@@ -409,7 +511,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
 
         return None
 
-    def _get_token(self, index=0):
+    def get_token(self, index=0):
         """
         Get token from the token history. 'index' is a positive number for how far into the history
         we go. 'index' 0 nominates current token.
@@ -426,7 +528,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         """
 
         # We delay processing of operands so that we can see the next token also.
-        token = self._get_token(1)
+        token = self.get_token(1)
 
         curop = self._get_op(token)
         if not curop:
@@ -434,7 +536,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
 
         lineno = token.start[0]
 
-        prevtok = self._get_token(2)
+        prevtok = self.get_token(2)
         prevop = None
         nextop = None
 
@@ -471,11 +573,11 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
     def _prev_is_line_comment(self):
         """Returns true if the previous tokens consist of a line comment."""
 
-        p_tok = self._get_token(1)
+        p_tok = self.get_token(1)
         if p_tok and p_tok.type != tokenize.NL:
             return False
 
-        p_tok = self._get_token(2)
+        p_tok = self.get_token(2)
         if p_tok and p_tok.type != tokenize.COMMENT:
             return False
 
@@ -485,7 +587,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         """Check for heading newlines."""
 
         if lineno == 1 and token.type == tokenize.NL:
-            p_tok = self._get_token(1)
+            p_tok = self.get_token(1)
             if p_tok and p_tok.type == tokenize.ENCODING:
                 self.add_message("pepc-heading-newline", line=lineno)
 
@@ -495,11 +597,11 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         if token.type != tokenize.NL:
             return
 
-        p_tok = self._get_token(1)
+        p_tok = self.get_token(1)
         if p_tok and p_tok.type != tokenize.NL:
             return
 
-        pp_tok = self._get_token(2)
+        pp_tok = self.get_token(2)
         if pp_tok and pp_tok.type != tokenize.COMMENT:
             self.add_message("pepc-double-newline", line=lineno)
 
@@ -522,7 +624,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         chars = token.line[token.start[1] - 2:token.start[1]]
 
         if chars == "  ":
-            p_tok = self._get_token(1)
+            p_tok = self.get_token(1)
             if token.string != ":" and p_tok.string != ":":
                 self.add_message("pepc-double-space", line=lineno)
 
@@ -537,8 +639,8 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
 
         missing_newline = False
 
-        p_tok = self._get_token(1)
-        pp_tok = self._get_token(2)
+        p_tok = self.get_token(1)
+        pp_tok = self.get_token(2)
 
         if p_tok and p_tok.type not in (tokenize.NL, tokenize.NEWLINE):
             missing_newline = True
@@ -564,7 +666,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         """Check if linefeed is unnecessary."""
 
         # Grab previous token, if it is NEWLINE, ignore, as we have just started a fresh.
-        p_tok = self._get_token(1)
+        p_tok = self.get_token(1)
         if p_tok and p_tok.type == tokenize.NEWLINE:
             p_tok = None
 
@@ -631,7 +733,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         """Check that the current token sequence matches the given pattern."""
 
         for match in reversed(sequence):
-            token = self._get_token(index)
+            token = self.get_token(index)
             if not token:
                 return False
 
@@ -662,14 +764,17 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         """
 
         for token in tokens:
-            # We don't care about these token types.
-            if token.type == tokenize.DEDENT:
+            lineno = token.start[0]
+            txt = token.string.rstrip()
+
+            # First, verify alignment.
+            self._alignment.validate(token, lineno, txt)
+
+            # Ignore DEDENT / INDENT tokens for rest of the checks.
+            if token.type in (tokenize.INDENT, tokenize.DEDENT):
                 continue
 
             self._tokens.append(token)
-
-            lineno = token.start[0]
-            txt = token.string.rstrip()
 
             # Global checks here.
             self._check_string_format(token, lineno, txt)
@@ -713,6 +818,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         self._backslash_lines = []
         self._parenthesis_depth = 0
         self._parenthesis_line = None
+        self._alignment = IndentValidator(self)
 
 _CLASS_INIT_VALID_TYPES = (nodes.Name, nodes.Assign, nodes.AssignName, nodes.If, nodes.Const)
 
