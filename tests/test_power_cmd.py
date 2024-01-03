@@ -112,7 +112,7 @@ def test_power_config(params):
 
     pman = params["pman"]
     ignore = _IGNORE.copy()
-    ignore[ErrorVerifyFailed] = "enable"
+    ignore[ErrorVerifyFailed] = "clamp"
 
     for opt in  _get_good_config_opts(params):
         for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
