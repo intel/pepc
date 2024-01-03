@@ -326,11 +326,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         else:
             raise Error(f"BUG: support for scope {sname} is not implemented")
 
-        # If there is only one die per package, assume that "package" and "die" scopes are the same
-        # thing and allow for setting per-die features using per-package interface and vice-versa.
-        if len(self._cpuinfo.get_dies(package=0)) == 1:
-            ok_scopes.add("die")
-
         prop = self._props[pname]
 
         if prop["sname"] not in ok_scopes:

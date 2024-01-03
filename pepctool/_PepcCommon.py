@@ -114,10 +114,7 @@ def _get_sname_and_nums(pobj, cpuinfo, pname, optar, override_sname=None):
     else:
         sname = override_sname
 
-    # There is only one die per package. Use per-package interface.
-    force_per_package = (sname == "die" and cpuinfo.get_dies_count(package=0) == 1)
-
-    if force_per_package or sname == "package":
+    if sname == "package":
         try:
             return "package", optar.get_packages()
         except ErrorNoTarget:
