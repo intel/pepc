@@ -399,12 +399,20 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                              pvinfos=pvinfos)
 
     @staticmethod
-    def _construct_pvinfo(pname, cpu, mname, val):
-        """Construct and return the property value dictionary."""
+    def _contstruct_cpu_pvinfo(pname, cpu, mname, val):
+        """Construct and return the property value dictionary for CPU 'cpu'."""
 
         if isinstance(val, bool):
             val = "on" if val is True else "off"
         return {"cpu": cpu, "pname": pname, "val": val, "mname": mname}
+
+    @staticmethod
+    def _contstruct_die_pvinfo(pname, package, die, mname, val):
+        """Construct and return the property value dictionary for die 'die' of package 'package'."""
+
+        if isinstance(val, bool):
+            val = "on" if val is True else "off"
+        return {"package": package, "die" : die, "pname": pname, "val": val, "mname": mname}
 
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
@@ -466,6 +474,25 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         self._do_prop_not_supported(pname, cpus_str, mnames, action, exceptions=exceptions)
 
+    def _prop_not_supported_dies(self, pname, dies, mnames, action, exceptions=None):
+        """
+        Rase 'ErrorNotSupported' or print a debug message if property "get" or "set" method failed
+        to get or set a property for dies in 'dies' using mechanisms in 'mnames'.
+        """
+
+        dies_strs = []
+        for package, pkg_dies in dies.items():
+            if len(pkg_dies) > 1:
+                dies_str = ",".join(pkg_dies)
+                dies_strs.append(f"package {package} dies {dies_str}")
+            else:
+                dies_strs.append(f"package {package} die {pkg_dies[0]}")
+
+        dies_str = ", ".join(dies_strs[:-1])
+        dies_str += ", and "
+        dies_str += dies_strs[-1]
+        self._do_prop_not_supported(pname, dies_str, mnames, action, exceptions=exceptions)
+
     def _get_prop_cpus(self, pname, cpus, mname):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, 'val' is property 'pname' value for CPU
@@ -480,7 +507,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def _get_prop_pvinfo_cpus(self, pname, cpus, mnames=None, raise_not_supported=True):
         """
-        For each CPU in 'cpus', yield the property value dictionary ('pvinfo') of property 'pname'.
+        For every CPU in 'cpus', yield the property value dictionary ('pvinfo') of property 'pname'.
         Use mechanisms in 'mnames'.
         """
 
@@ -495,8 +522,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             try:
                 for cpu, val in self._get_prop_cpus(pname, cpus, mname):
                     _LOG.debug("'%s' is '%s' for CPU %d using mechanism '%s'%s",
-                            pname, val, cpu, mname, self._pman.hostmsg)
-                    pvinfo = self._construct_pvinfo(pname, cpu, mname, val)
+                               pname, val, cpu, mname, self._pman.hostmsg)
+                    pvinfo = self._contstruct_cpu_pvinfo(pname, cpu, mname, val)
                     yield pvinfo
                 # Yielded a 'pvinfo' for every CPU.
                 return
@@ -518,7 +545,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             self._prop_not_supported_cpus(pname, cpus, mnames, "get")
 
         for cpu in cpus:
-            yield self._construct_pvinfo(pname, cpu, mnames[-1], None)
+            yield self._contstruct_cpu_pvinfo(pname, cpu, mnames[-1], None)
 
     def _get_prop_cpus_mnames(self, pname, cpus, mnames=None):
         """
@@ -597,24 +624,89 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self.get_cpu_prop(pname, cpu)["val"] is not None
 
-    def _get_die_prop_pvinfo(self, pname, package, die, mnames=None):
-        """The default implementation or per-die property reading using the per-CPU method."""
+    def _get_prop_dies(self, pname, dies, mname):
+        """
+        For every die in 'dies', yield a '(package, die, val)' tuple, where 'val' is property
+        'pname' value for die 'die' of package 'package'. Use mechanisms in 'mnames'. If the
+        property is not supported for a die, yield 'None' for 'val'. If the property is not
+        supported for any die, raise 'ErrorNotSupported'.
+
+        This is the default implementation of the method, which is based on per-CPU access.
+        Subclasses may choose to override this default implementation.
+        """
+
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+                val = self._get_cpu_prop_mnames(pname, cpus[0], mnames=(mname,))
+                yield package, die, val
+
+    def _get_prop_pvinfo_dies(self, pname, dies, mnames=None, raise_not_supported=True):
+        """
+        For every die in 'dies', yield the property value dictionary ('pvinfo') of property 'pname'.
+        Use mechanisms in 'mnames'.
+        """
 
         prop = self._props[pname]
-        cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+        if not mnames:
+            mnames = prop["mnames"]
 
-        if prop["sname"] != prop["iosname"]:
-            self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package, die=die)
+        exceptions = []
 
-        pvinfo = self.get_cpu_prop(pname, cpus[0], mnames=mnames)
+        for mname in mnames:
+            package = die = None
+            try:
+                for package, die, val in self._get_prop_dies(pname, dies, mname):
+                    _LOG.debug("'%s' is '%s' for package %d, die %d, using mechanism '%s'%s",
+                               pname, val, package, die, mname, self._pman.hostmsg)
+                    pvinfo = self._contstruct_die_pvinfo(pname, package, die, mname, val)
+                    yield pvinfo
+                # Yielded a 'pvinfo' for every die.
+                return
+            except ErrorNotSupported as err:
+                exceptions.append(err)
+                # If something was yielded already, this is an error condition. Otherwise, try the
+                # next mechanism.
+                if die is not None:
+                    name = self._props[pname]["name"]
+                    got_pkg = list[dies][0]
+                    got_die = dies[got_pkg][0]
+                    raise Error(f"failed to get {name} ({pname}) for package {package}, die {die}, "
+                                f"using the '{mname}' mechanism:\n{err.indent(2)}\nHowever, "
+                                f"succeeded getting it for package {got_pkg}, die {got_die}") \
+                                from err
 
-        die_pvinfo = {}
-        die_pvinfo["die"] = die
-        die_pvinfo["package"] = package
-        die_pvinfo["val"] = pvinfo["val"]
-        die_pvinfo["mname"] = pvinfo["mname"]
+        # None of the methods succeeded.
+        if raise_not_supported:
+            # The below will raise an exception and won't return.
+            self._prop_not_supported_dies(pname, dies, mnames, "get", exceptions=exceptions)
+        else:
+            self._prop_not_supported_dies(pname, dies, mnames, "get")
 
-        return die_pvinfo
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                yield self._contstruct_die_pvinfo(pname, package, die, mnames[-1], None)
+
+    def _get_prop_dies_mnames(self, pname, dies, mnames=None):
+        """
+        For every die in 'dies', yield '(package, die, val)' tuples, where 'val' is the 'pname'
+        property value for die 'die' in package 'package'. Try mechanisms in 'mnames'.
+
+        This method is similar to the API 'get_prop_cpus()' method, but it does not validate input
+        arguments.
+        """
+
+        for pvinfo in self._get_prop_pvinfo_dies(pname, dies, mnames):
+            yield (pvinfo["package"], pvinfo["die"], pvinfo["val"])
+
+    def _get_die_prop_mnames(self, pname, package, die, mnames=None):
+        """
+        Read property 'pname' and return the value, try mechanisms in 'mnames'. This method is
+        similar to the API method 'get_die_prop()', but it does not verify input arguments.
+        """
+
+        pvinfo = next(self._get_prop_pvinfo_dies(pname, {package: [die]}, mnames))
+        return pvinfo["val"]
 
     def get_prop_dies(self, pname, dies="all", mnames=None):
         """
@@ -653,9 +745,19 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         self._validate_prop_vs_scope(pname, "die")
 
+        normalized_dies = {}
         for package in self._cpuinfo.normalize_packages(dies):
+            normalized_dies[package] = []
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
-                yield self._get_die_prop_pvinfo(pname, package, die, mnames=mnames)
+                normalized_dies[package].append(die)
+
+                if self._props[pname]["sname"] != self._props[pname]["iosname"]:
+                    cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+                    self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package,
+                                                   die=die)
+
+        yield from self._get_prop_pvinfo_dies(pname, normalized_dies, mnames=mnames,
+                                              raise_not_supported=False)
 
     def get_die_prop(self, pname, die, package, mnames=None):
         """
