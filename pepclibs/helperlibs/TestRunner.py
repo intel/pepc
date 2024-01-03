@@ -47,7 +47,7 @@ def run_tool(tool, toolname, arguments, pman=None, exp_exc=None, ignore=None):
             err_type = type(err)
             msg = f"command '{toolname} {arguments}' raised the following exception:\n" \
                   f"- {type(err).__name__}({err})"
-            if err_type in ignore and ignore[err_type] in arguments:
+            if err_type in ignore and (ignore[err_type] is None or ignore[err_type] in arguments):
                 _LOG.debug(msg)
                 return None
             assert False, msg
