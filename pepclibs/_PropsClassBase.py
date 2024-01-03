@@ -432,10 +432,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self._sysfs_io
 
-    def _prop_not_supported(self, pname, cpus, mnames, action, exceptions=None):
+    def _do_prop_not_supported(self, pname, nums_str, mnames, action, exceptions=None):
         """
-        Rase 'ErrorNotSupported' or print a debug message from a property "get" or "set" method in a
-        situation when the property could not be read or set using mechanisms in 'mnames'
+        Rase 'ErrorNotSupported' or print a debug message if a property "get" or "set" method
+        failed.
         """
 
         if len(mnames) > 2:
@@ -446,11 +446,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         else:
             mnames_str = f"using the '{mnames[0]}' method"
 
-        if len(cpus) > 1:
-            cpus_msg = f"the following CPUs: {Human.rangify(cpus)}"
-        else:
-            cpus_msg = f"for CPU {cpus[0]}"
-
         if exceptions:
             errmsgs = Trivial.list_dedup([str(err) for err in exceptions])
             errmsgs = "\n" + "\n".join([Error(errmsg).indent(2) for errmsg in errmsgs])
@@ -458,10 +453,23 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             errmsgs = ""
 
         what = Human.uncapitalize(self._props[pname]["name"])
-        msg = f"cannot {action} {what} {mnames_str} for {cpus_msg}{errmsgs}"
+        msg = f"cannot {action} {what} {mnames_str} for {nums_str}{errmsgs}"
         if exceptions:
             raise ErrorNotSupported(msg)
         _LOG.debug(msg)
+
+    def _prop_not_supported_cpus(self, pname, cpus, mnames, action, exceptions=None):
+        """
+        Rase 'ErrorNotSupported' or print a debug message if property "get" or "set" method failed
+        to get or set a property for CPUs in 'cpus' using mechanisms in 'mnames'.
+        """
+
+        if len(cpus) > 1:
+            cpus_str = f"the following CPUs: {Human.rangify(cpus)}"
+        else:
+            cpus_str = f"CPU {cpus[0]}"
+
+        self._do_prop_not_supported(pname, cpus_str, mnames, action, exceptions=exceptions)
 
     def _get_prop_cpus(self, pname, cpus, mname):
         """
@@ -510,9 +518,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # None of the methods succeeded.
         if raise_not_supported:
             # The below will raise an exception and won't return.
-            self._prop_not_supported(pname, cpus, mnames, "get", exceptions=exceptions)
+            self._prop_not_supported_cpus(pname, cpus, mnames, "get", exceptions=exceptions)
         else:
-            self._prop_not_supported(pname, cpus, mnames, "get")
+            self._prop_not_supported_cpus(pname, cpus, mnames, "get")
 
         for cpu in cpus:
             yield self._construct_pvinfo(pname, cpu, mnames[-1], None)
@@ -816,7 +824,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
             return mname
 
-        self._prop_not_supported(pname, cpus, mnames, "set", exceptions=exceptions)
+        self._prop_not_supported_cpus(pname, cpus, mnames, "set", exceptions=exceptions)
 
     def set_prop_cpus(self, pname, val, cpus, mnames=None):
         """
