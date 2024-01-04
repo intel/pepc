@@ -376,9 +376,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if "die" in kwargs:
             op_sname = "die"
             for_what = f" for package {kwargs['package']}, die {kwargs['die']}"
-        else:
+        elif "package" in kwargs:
             op_sname = "package"
             for_what = f" for package {kwargs['package']}"
+        else:
+            raise Error("BUG: unsupported scope")
 
         cpu1 = disagreed_pvinfos[0]["cpu"]
         val1 = disagreed_pvinfos[0]["val"]
