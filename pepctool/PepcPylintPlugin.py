@@ -1177,15 +1177,15 @@ class PepcASTChecker(BaseChecker):
 
     options = (
         (
-        "pepc-plugin-debug",
-        {"default": False, "type": "yn", "metavar": "<y or n>",
-         "help": "Whether to print debugging information or not."
-        }),
+            "pepc-plugin-debug",
+            {"default": False, "type": "yn", "metavar": "<y or n>",
+             "help": "Whether to print debugging information or not."
+            }),
         (
-        "pepc-plugin-strict",
-        {"default": False, "type": "yn", "metavar": "<y or n>",
-         "help": "Whether to use more stricter checks or not."
-        }),
+            "pepc-plugin-strict",
+            {"default": False, "type": "yn", "metavar": "<y or n>",
+             "help": "Whether to use more stricter checks or not."
+            }),
     )
 
     def debug(self, txt):
