@@ -505,7 +505,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         yield from self._get_freq_sysfs(pname, cpus)
 
-    def _get_uncore_freq(self, pname, cpus):
+    def _get_uncore_freq_cpus(self, pname, cpus):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is uncore frequency or
         uncore frequency limit for the die (uncore frequency domain) corresponding to CPU 'cpu'. Use
@@ -696,7 +696,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname in {"min_freq_limit", "max_freq_limit"}:
             yield from self._get_freq_limit(pname, cpus)
         elif self._is_uncore_prop(pname):
-            yield from self._get_uncore_freq(pname, cpus)
+            yield from self._get_uncore_freq_cpus(pname, cpus)
         elif pname == "frequencies":
             yield from self._get_frequencies(cpus, mname)
         elif pname == "bus_clock":
@@ -713,6 +713,44 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_governors(cpus)
         else:
             raise Error("BUG: unknown property '{pname}'")
+
+    def _get_uncore_freq_dies(self, pname, dies):
+        """
+        For every die in 'dies', yield a '(package, die, val)' tuple, where 'val' is uncore
+        frequency or uncore frequency limit for die 'die' in package 'package'. Use the "sysfs"
+        method.
+        """
+
+        uncfreq_obj = self._get_uncfreq_obj()
+
+        if pname == "min_uncore_freq":
+            yield from uncfreq_obj.get_min_freq_dies(dies)
+            return
+        if pname == "max_uncore_freq":
+            yield from uncfreq_obj.get_max_freq_dies(dies)
+            return
+        if pname == "min_uncore_freq_limit":
+            yield from uncfreq_obj.get_min_freq_limit_dies(dies)
+            return
+        if pname == "max_uncore_freq_limit":
+            yield from uncfreq_obj.get_max_freq_limit_dies(dies)
+            return
+
+        raise Error(f"BUG: unexpected uncore frequency property {pname}")
+
+    def _get_prop_dies(self, pname, dies, mname):
+        """
+        For every die in 'dies', yield a '(package, die, val)' tuple, where 'val' is property
+        'pname' value for die 'die' of package 'package'.
+        """
+
+        if not self._is_uncore_prop(pname):
+            # Use the default implementation for anything but uncore frequency.
+            yield from super()._get_prop_dies(pname, dies, mname)
+        else:
+            # In case of uncore frequency, there may be I/O dies, which have no CPUs, so implement
+            # per-die access.
+            yield from self._get_uncore_freq_dies(pname, dies)
 
     def _set_turbo(self, enable, cpus):
         """Enable or disable turbo for CPUs in 'cpus'. Use method 'sysfs'."""
