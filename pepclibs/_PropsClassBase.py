@@ -36,7 +36,6 @@ Naming conventions.
 
 import copy
 import logging
-import contextlib
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -616,10 +615,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._validate_pname(pname)
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
-        with contextlib.suppress(ErrorNotSupported):
-            self._set_sname(pname)
-
         cpus = self._cpuinfo.normalize_cpus(cpus)
+
+        try:
+            self._set_sname(pname)
+        except ErrorNotSupported:
+            for cpu in cpus:
+                yield self._construct_cpu_pvinfo(pname, cpu, mnames[-1], None)
+            return
 
         yield from self._get_prop_pvinfo_cpus(pname, cpus, mnames=mnames, raise_not_supported=False)
 
@@ -761,21 +764,28 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._validate_pname(pname)
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
-        with contextlib.suppress(ErrorNotSupported):
-            self._set_sname(pname)
-
-        self._validate_prop_vs_scope(pname, "die")
-
         normalized_dies = {}
         for package in self._cpuinfo.normalize_packages(dies):
             normalized_dies[package] = []
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
                 normalized_dies[package].append(die)
 
-                if self._props[pname]["sname"] != self._props[pname]["iosname"]:
-                    cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
-                    self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package,
-                                                   die=die)
+        try:
+            self._set_sname(pname)
+        except ErrorNotSupported:
+            for package, pkg_dies in normalized_dies.items():
+                for die in pkg_dies:
+                    yield self._construct_die_pvinfo(package, package, die, mnames[-1], None)
+            return
+
+        self._validate_prop_vs_scope(pname, "die")
+
+        for package, pkg_dies in normalized_dies.items():
+            for die in pkg_dies:
+                if self._props[pname]["sname"] == self._props[pname]["iosname"]:
+                    continue
+                cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+                self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package, die=die)
 
         yield from self._get_prop_pvinfo_dies(pname, normalized_dies, mnames=mnames,
                                               raise_not_supported=False)
@@ -908,16 +918,22 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._validate_pname(pname)
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
-        with contextlib.suppress(ErrorNotSupported):
+        packages = self._cpuinfo.normalize_packages(packages)
+
+        try:
             self._set_sname(pname)
+        except ErrorNotSupported:
+            for package in packages:
+                yield self._construct_package_pvinfo(pname, package, mnames[-1], None)
+            return
 
         self._validate_prop_vs_scope(pname, "package")
 
-        packages = self._cpuinfo.normalize_packages(packages)
         for package in packages:
-            if self._props[pname]["sname"] != self._props[pname]["iosname"]:
-                cpus = self._cpuinfo.package_to_cpus(package)
-                self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package)
+            if self._props[pname]["sname"] == self._props[pname]["iosname"]:
+                continue
+            cpus = self._cpuinfo.package_to_cpus(package)
+            self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package)
 
         yield from self._get_prop_pvinfo_packages(pname, packages, mnames=mnames,
                                                   raise_not_supported=False)
