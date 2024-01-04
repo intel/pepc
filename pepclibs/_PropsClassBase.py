@@ -1067,8 +1067,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self.set_prop_cpus(pname, val, (cpu,), mnames=mnames)
 
-    def _set_prop_dies(self, pname, val, dies, mnames=None):
-        """The default implementation of 'set_prop_dies()' using the per-CPU method."""
+    def _set_prop_dies(self, pname, val, dies, mname):
+        """
+        The default implementation of 'set_prop_dies()' using the per-CPU method. Subclasses may
+        choose to override this default implementation.
+        """
 
         cpus = []
         for package, pkg_dies in dies.items():
@@ -1076,7 +1079,26 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 cpu = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))[0]
                 cpus.append(cpu)
 
-        return self._set_prop_cpus_mnames(pname, val, cpus, mnames=mnames)
+        return self._set_prop_cpus_mnames(pname, val, cpus, mnames=(mname,))
+
+    def _set_prop_dies_mnames(self, pname, val, dies, mnames):
+        """Implement 'set_prop_dies()'."""
+
+        if not mnames:
+            mnames = self._props[pname]["mnames"]
+
+        exceptions = []
+
+        for mname in mnames:
+            try:
+                self._set_prop_dies(pname, val, dies, mname)
+            except (ErrorNotSupported, ErrorTryAnotherMechanism) as err:
+                exceptions.append(err)
+                continue
+
+            return mname
+
+        self._prop_not_supported_dies(pname, dies, mnames, "set", exceptions=exceptions)
 
     def set_prop_dies(self, pname, val, dies, mnames=None):
         """
@@ -1096,16 +1118,16 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
         val = self._normalize_inprop(pname, val)
 
-        self._set_sname(pname)
-        self._validate_prop_vs_scope(pname, "die")
-
         normalized_dies = {}
         for package in self._cpuinfo.normalize_packages(dies):
             normalized_dies[package] = []
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
                 normalized_dies[package].append(die)
 
-        return self._set_prop_dies(pname, val, normalized_dies, mnames=mnames)
+        self._set_sname(pname)
+        self._validate_prop_vs_scope(pname, "die")
+
+        return self._set_prop_dies_mnames(pname, val, normalized_dies, mnames)
 
     def set_die_prop(self, pname, val, die, package, mnames=None):
         """
@@ -1120,15 +1142,37 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self.set_prop_dies(pname, val, {package: (die,)}, mnames=mnames)
 
-    def _set_prop_packages(self, pname, val, packages, mnames=None):
-        """The default implementation of 'set_prop_packages()' using the per-CPU method."""
+    def _set_prop_packages(self, pname, val, packages, mname):
+        """
+        The default implementation of 'set_prop_packages()' using the per-CPU method. Subclasses may
+        choose to override this default implementation.
+        """
 
         cpus = []
         for package in packages:
             cpu = self._cpuinfo.packages_to_cpus(packages=(package,))[0]
             cpus.append(cpu)
 
-        return self._set_prop_cpus_mnames(pname, val, cpus, mnames=mnames)
+        return self._set_prop_cpus_mnames(pname, val, cpus, mnames=(mname,))
+
+    def _set_prop_packages_mnames(self, pname, val, packages, mnames):
+        """Implement 'set_prop_packages()'."""
+
+        if not mnames:
+            mnames = self._props[pname]["mnames"]
+
+        exceptions = []
+
+        for mname in mnames:
+            try:
+                self._set_prop_packages(pname, val, packages, mname)
+            except (ErrorNotSupported, ErrorTryAnotherMechanism) as err:
+                exceptions.append(err)
+                continue
+
+            return mname
+
+        self._prop_not_supported_packages(pname, packages, mnames, "set", exceptions=exceptions)
 
     def set_prop_packages(self, pname, val, packages, mnames=None):
         """
@@ -1147,14 +1191,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
         val = self._normalize_inprop(pname, val)
 
-        self._set_sname(pname)
-        self._validate_prop_vs_scope(pname, "package")
-
         normalized_packages = []
         for package in self._cpuinfo.normalize_packages(packages):
             normalized_packages.append(package)
 
-        return self._set_prop_packages(pname, val, normalized_packages, mnames=mnames)
+        self._set_sname(pname)
+        self._validate_prop_vs_scope(pname, "package")
+
+        return self._set_prop_packages_mnames(pname, val, normalized_packages, mnames)
 
     def set_package_prop(self, pname, val, package, mnames=None):
         """
