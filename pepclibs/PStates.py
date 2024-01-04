@@ -529,7 +529,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
-    def _get_bclks(self, cpus):
+    def _get_bclks_cpus(self, cpus):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the bus clock speed for
         CPU 'cpu' in Hz.
@@ -548,10 +548,30 @@ class PStates(_PropsClassBase.PropsClassBase):
                 # Convert MHz to Hz.
                 yield cpu, int(bclk * 1000000)
 
+    def _get_bclks_dies(self, dies):
+        """
+        For every die in 'dies', yield a '(package, die, val)' tuple, where 'val' is the bus clock
+        speed in Hz for die 'die' in package 'package'.
+        """
+
+        try:
+            self._get_fsbfreq()
+        except ErrorNotSupported:
+            if self._cpuinfo.info["vendor"] != "GenuineIntel":
+                raise
+            # Fall back to 100MHz bus clock speed.
+            for package, pkg_dies in dies.items():
+                for die in pkg_dies:
+                    yield package, die, 100000000
+        else:
+            # Only legacy platforms support 'MSR_FSB_FREQ', and they do not have uncore frequency
+            # control, so this code should never be executed.
+            raise Error("BUG: not implemented, contact project maintainers")
+
     def _get_bclk(self, cpu):
         """Return bus clock speed in Hz."""
 
-        _, val = next(self._get_bclks((cpu,)))
+        _, val = next(self._get_bclks_cpus((cpu,)))
         return val
 
     def _get_frequencies_intel(self, cpus):
@@ -563,7 +583,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         driver_iter = self._get_prop_cpus_mnames("driver", cpus)
         min_freq_iter = self._get_prop_cpus_mnames("min_freq", cpus)
         max_freq_iter = self._get_prop_cpus_mnames("max_freq", cpus)
-        bclks_iter = self._get_bclks(cpus)
+        bclks_iter = self._get_bclks_cpus(cpus)
         iterator = zip(driver_iter, min_freq_iter, max_freq_iter, bclks_iter)
 
         for (cpu, driver), (_, min_freq), (_, max_freq), (_, bclk) in iterator:
@@ -836,21 +856,6 @@ class PStates(_PropsClassBase.PropsClassBase):
         except ErrorVerifyFailed as err:
             self._handle_write_and_read_freq_mismatch(err)
 
-    def _set_uncore_freq_prop_cpus(self, pname, freq, cpus):
-        """
-        Set min. or max. uncore frequency to 'freq' for the dies (uncore frequency domains)
-        corresponding to CPUs in 'cpus'.
-        """
-
-        uncfreq_obj = self._get_uncfreq_obj()
-
-        if pname == "min_uncore_freq":
-            uncfreq_obj.set_min_freq_cpus(freq, cpus)
-        elif pname == "max_uncore_freq":
-            uncfreq_obj.set_max_freq_cpus(freq, cpus)
-        else:
-            raise Error(f"BUG: unexpected uncore frequency property {pname}")
-
     def _raise_freq_out_of_range(self, pname, val, min_limit, max_limit, what):
         """Raise an exception if CPU or uncore frequency is out of range."""
 
@@ -951,76 +956,6 @@ class PStates(_PropsClassBase.PropsClassBase):
         for new_freq, freq_cpus in freq2cpus.items():
             set_freq_method(pname, new_freq, freq_cpus)
 
-    def _get_numeric_uncore_freq(self, freq, cpus):
-        """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is a numeric version of the
-        user-provided frequency value 'freq' in Hz. E.g., if 'val' is "max", yield the maximum
-        supported CPU frequency.
-        """
-
-        if freq == "min":
-            yield from self._get_prop_cpus_mnames("min_uncore_freq_limit", cpus)
-        elif freq == "max":
-            yield from self._get_prop_cpus_mnames("max_uncore_freq_limit", cpus)
-        elif freq == "mdl":
-            bclks_iter = self._get_bclks(cpus)
-            min_limit_iter = self._get_prop_cpus_mnames("min_uncore_freq_limit", cpus)
-            max_limit_iter = self._get_prop_cpus_mnames("max_uncore_freq_limit", cpus)
-            iterator = zip(bclks_iter, min_limit_iter, max_limit_iter)
-            for (cpu, bclk), (_, min_limit), (_, max_limit) in iterator:
-                yield cpu, bclk * round(statistics.mean([min_limit, max_limit]) / bclk)
-        else:
-            for cpu in cpus:
-                yield cpu, freq
-
-    def _set_uncore_freq(self, pname, val, cpus, mname):
-        """
-        Set uncore frequency property 'pname' to value 'val' for CPUs in 'cpus' using method
-        'mname'.
-        """
-
-        def _get_die_num_str(cpu):
-            """Get package/die numbers for a CPU."""
-
-            levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
-            pkg = levels["package"]
-            die = levels["die"]
-            return f"package {pkg} die {die}"
-
-        is_min = "min" in pname
-
-        new_freq_iter = self._get_numeric_uncore_freq(val, cpus)
-        min_limit_iter = self._get_prop_cpus_mnames("min_uncore_freq_limit", cpus, mnames=(mname,))
-        max_limit_iter = self._get_prop_cpus_mnames("max_uncore_freq_limit", cpus, mnames=(mname,))
-        cur_freq_limit_pname = "max_uncore_freq" if is_min else "min_uncore_freq"
-        cur_freq_limit = self._get_prop_cpus_mnames(cur_freq_limit_pname, cpus, mnames=(mname,))
-
-        iterator = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit)
-
-        freq2cpus = {}
-        for (cpu, new_freq), (_, min_limit), (_, max_limit), (_, cur_freq_limit) in iterator:
-            if new_freq < min_limit or new_freq > max_limit:
-                what = _get_die_num_str(cpu)
-                self._raise_freq_out_of_range(pname, new_freq, min_limit, max_limit, what=what)
-
-            if is_min:
-                if new_freq > cur_freq_limit:
-                    # New min. frequency cannot be set to a value larger than current max.
-                    # frequency.
-                    what = _get_die_num_str(cpu)
-                    self._raise_wrong_freq_order(pname, new_freq, cur_freq_limit, is_min, what=what)
-            elif new_freq < cur_freq_limit:
-                #  New max. frequency cannot be set to a value smaller than current min. frequency.
-                what = _get_die_num_str(cpu)
-                self._raise_wrong_freq_order(pname, new_freq, cur_freq_limit, is_min, what=what)
-
-            if new_freq not in freq2cpus:
-                freq2cpus[new_freq] = []
-            freq2cpus[new_freq].append(cpu)
-
-        for new_freq, freq_cpus in freq2cpus.items():
-            self._set_uncore_freq_prop_cpus(pname, new_freq, freq_cpus)
-
     def _set_prop_cpus(self, pname, val, cpus, mname):
         """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
 
@@ -1036,10 +971,94 @@ class PStates(_PropsClassBase.PropsClassBase):
             return self._set_governor(val, cpus)
         if pname in ("min_freq", "max_freq"):
             return self._set_cpu_freq(pname, val, cpus, mname)
-        if pname in ("min_uncore_freq", "max_uncore_freq"):
-            return self._set_uncore_freq(pname, val, cpus, mname)
 
-        raise Error("BUG: unknown property '{pname}'")
+        raise Error("BUG: unsupported property '{pname}'")
+
+    def _set_uncore_freq_prop_dies(self, pname, freq, dies):
+        """Set min. or max. uncore frequency to 'freq' for the dies in 'dies'."""
+
+        uncfreq_obj = self._get_uncfreq_obj()
+
+        if pname == "min_uncore_freq":
+            uncfreq_obj.set_min_freq_dies(freq, dies)
+        elif pname == "max_uncore_freq":
+            uncfreq_obj.set_max_freq_dies(freq, dies)
+        else:
+            raise Error(f"BUG: unexpected uncore frequency property {pname}")
+
+    def _get_numeric_uncore_freq(self, freq, dies):
+        """
+        For every die in 'dies', yield a '(package, die, val)' tuple, where 'val' is a numeric
+        version of the user-provided frequency value 'freq' in Hz. E.g., if 'val' is "max", yield
+        the maximum supported CPU frequency.
+        """
+
+        if freq == "min":
+            yield from self._get_prop_dies_mnames("min_uncore_freq_limit", dies)
+        elif freq == "max":
+            yield from self._get_prop_dies_mnames("max_uncore_freq_limit", dies)
+        elif freq == "mdl":
+            bclks_iter = self._get_bclks_dies(dies)
+            min_limit_iter = self._get_prop_dies_mnames("min_uncore_freq_limit", dies)
+            max_limit_iter = self._get_prop_dies_mnames("max_uncore_freq_limit", dies)
+            iterator = zip(bclks_iter, min_limit_iter, max_limit_iter)
+            for (package, die, bclk), (_, _, min_limit), (_, _, max_limit) in iterator:
+                yield package, die, bclk * round(statistics.mean([min_limit, max_limit]) / bclk)
+        else:
+            for package, pkg_dies in dies.items():
+                for die in pkg_dies:
+                    yield package, die, freq
+
+    def _set_uncore_freq(self, pname, val, dies, mname):
+        """
+        Set uncore frequency property 'pname' to value 'val' for dies in 'dies' using method
+        'mname'.
+        """
+
+        is_min = "min" in pname
+
+        new_freq_iter = self._get_numeric_uncore_freq(val, dies)
+        min_limit_iter = self._get_prop_dies_mnames("min_uncore_freq_limit", dies, mnames=(mname,))
+        max_limit_iter = self._get_prop_dies_mnames("max_uncore_freq_limit", dies, mnames=(mname,))
+        cur_freq_limit_pname = "max_uncore_freq" if is_min else "min_uncore_freq"
+        cur_freq_limit = self._get_prop_dies_mnames(cur_freq_limit_pname, dies, mnames=(mname,))
+
+        iterator = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit)
+
+        freq2dies = {}
+        for (package, die, new_freq), (_, _, min_limit), (_, _, max_limit), (_, _, cur_freq_limit) \
+            in iterator:
+            if new_freq < min_limit or new_freq > max_limit:
+                what = f"package {package} die {die}"
+                self._raise_freq_out_of_range(pname, new_freq, min_limit, max_limit, what=what)
+
+            if is_min:
+                if new_freq > cur_freq_limit:
+                    # New min. frequency cannot be set to a value larger than current max.
+                    # frequency.
+                    what = f"package {package} die {die}"
+                    self._raise_wrong_freq_order(pname, new_freq, cur_freq_limit, is_min, what=what)
+            elif new_freq < cur_freq_limit:
+                #  New max. frequency cannot be set to a value smaller than current min. frequency.
+                what = f"package {package} die {die}"
+                self._raise_wrong_freq_order(pname, new_freq, cur_freq_limit, is_min, what=what)
+
+            if new_freq not in freq2dies:
+                freq2dies[new_freq] = freq_dies = {}
+            if package not in freq_dies:
+                freq_dies[package] = []
+            freq_dies[package].append(die)
+
+        for new_freq, freq_dies in freq2dies.items():
+            self._set_uncore_freq_prop_dies(pname, new_freq, freq_dies)
+
+    def _set_prop_dies(self, pname, val, dies, mname):
+        """Set property 'pname' to value 'val' for dies in 'dies'. Use mechanism 'mname'."""
+
+        if pname not in ("min_uncore_freq", "max_uncore_freq"):
+            return super()._set_prop_dies(pname, val, dies, mname)
+
+        return self._set_uncore_freq(pname, val, dies, mname)
 
     def _set_sname(self, pname):
         """Set scope name for property 'pname'."""
