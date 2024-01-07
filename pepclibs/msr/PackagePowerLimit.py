@@ -123,7 +123,6 @@ FEATURES = {
         "iosname": "package",
         "help": """Time window for package power limit #2: the system makes sure that average
                    package power over the time window does not exceed power limit #2.""",
-
         "cpumodels": _PPL_CPUS,
         "type": "float",
         "bits": (55, 49),
@@ -214,7 +213,7 @@ class PackagePowerLimit(_FeaturedMSR.FeaturedMSR):
             self._msr.flush_transaction()
             try:
                 self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, verify=True,
-                                    iosname=finfo["iosname"])
+                                     iosname=finfo["iosname"])
                 # Force verification in case of an ongoing transaction.
                 self._msr.flush_transaction()
             except ErrorVerifyFailed as err:
