@@ -646,6 +646,13 @@ Middle uncore frequency between minimum and maximum rounded to nearest
 .SS Mechanism
 .PP
 \f[B]sysfs\f[R]
+.PP
+In case of \[aq]intel_uncore_frequency_tpmi\[aq] driver, file
+\[dq]/sys/devices/system/cpu/intel_uncore_frequency/uncore00/min_freq_khz\[dq],
+where \[aq]00\[aq] is replaced with the uncore number corresponding to
+the desired package and die numbers.
+.PP
+In case of \[aq]intel_uncore_frequency\[aq] driver, file
 \[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/min_freq_khz\[dq],
 where \[aq]00\[aq] is replaced with desired package number and
 \[aq]01\[aq] is replaced with desired die number.
@@ -686,6 +693,13 @@ Middle uncore frequency between minimum and maximum rounded to nearest
 .SS Mechanism
 .PP
 \f[B]sysfs\f[R]
+.PP
+In case of \[aq]intel_uncore_frequency_tpmi\[aq] driver, file
+\[dq]/sys/devices/system/cpu/intel_uncore_frequency/uncore00/max_freq_khz\[dq],
+where \[aq]00\[aq] is replaced with the uncore number corresponding to
+the desired package and die numbers.
+.PP
+In case of \[aq]intel_uncore_frequency\[aq] driver, file
 \[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/max_freq_khz\[dq],
 where \[aq]00\[aq] is replaced with desired package number and
 \[aq]01\[aq] is replaced with desired die number.
@@ -707,6 +721,12 @@ supported by the OS.
 .SS Mechanism
 .PP
 \f[B]sysfs\f[R]
+.PP
+In case of \[aq]intel_uncore_frequency_tpmi\[aq] driver, file
+\[dq]/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_min_freq_khz\[dq],
+where \[aq]00\[aq] is replaced with the uncore number corresponding to
+the desired package and die numbers.
+.PP
 \[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/initial_min_freq_khz\[dq],
 where \[aq]00\[aq] is replaced with desired package number and
 \[aq]01\[aq] is replaced with desired die number.
@@ -728,6 +748,12 @@ supported by the OS.
 .SS Mechanism
 .PP
 \f[B]sysfs\f[R]
+.PP
+In case of \[aq]intel_uncore_frequency_tpmi\[aq] driver, file
+\[dq]/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_max_freq_khz\[dq],
+where \[aq]00\[aq] is replaced with the uncore number corresponding to
+the desired package and die numbers.
+.PP
 \[dq]/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/initial_max_freq_khz\[dq],
 where \[aq]00\[aq] is replaced with desired package number and
 \[aq]01\[aq] with desired die number.

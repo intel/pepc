@@ -1,3 +1,9 @@
+pepc (1.5.0) unstable; urgency=low
+
+  * Support setting uncore frequency for I/O dies.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Sun, 07 Jan 2024 00:00:00 +0200
+
 pepc (1.4.45) unstable; urgency=low
 
   * Improve 'pepc topology info' to include I/O dies to the output.

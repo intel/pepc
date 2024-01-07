@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Support setting uncore frequency for I/O dies.
 ### Removed
 ### Changed
+
+## [1.5.0] - 2024-01-07
+### Added
+ - Support setting uncore frequency for I/O dies.
 
 ## [1.4.45] - 2023-12-22
 ### Added
