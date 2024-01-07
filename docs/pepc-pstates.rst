@@ -681,6 +681,13 @@ Mechanism
 ---------
 
 **sysfs**
+
+In case of 'intel_uncore_frequency_tpmi' driver, file
+"/sys/devices/system/cpu/intel_uncore_frequency/uncore00/min_freq_khz",
+where '00' is replaced with the uncore number corresponding to the desired package
+and die numbers.
+
+In case of 'intel_uncore_frequency' driver, file
 "/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/min_freq_khz",
 where '00' is replaced with desired package number and '01' is replaced with desired die number.
 
@@ -723,6 +730,13 @@ Mechanism
 ---------
 
 **sysfs**
+
+In case of 'intel_uncore_frequency_tpmi' driver, file
+"/sys/devices/system/cpu/intel_uncore_frequency/uncore00/max_freq_khz",
+where '00' is replaced with the uncore number corresponding to the desired package
+and die numbers.
+
+In case of 'intel_uncore_frequency' driver, file
 "/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/max_freq_khz",
 where '00' is replaced with desired package number and '01' is replaced with desired die number.
 
@@ -752,6 +766,12 @@ Mechanism
 ---------
 
 **sysfs**
+
+In case of 'intel_uncore_frequency_tpmi' driver, file
+"/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_min_freq_khz",
+where '00' is replaced with the uncore number corresponding to the desired package
+and die numbers.
+
 "/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/initial_min_freq_khz",
 where '00' is replaced with desired package number and '01' is replaced with desired
 die number.
@@ -782,6 +802,12 @@ Mechanism
 ---------
 
 **sysfs**
+
+In case of 'intel_uncore_frequency_tpmi' driver, file
+"/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_max_freq_khz",
+where '00' is replaced with the uncore number corresponding to the desired package
+and die numbers.
+
 "/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/initial_max_freq_khz",
 where '00' is replaced with desired package number and '01' with desired
 die number.
