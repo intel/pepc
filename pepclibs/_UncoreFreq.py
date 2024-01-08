@@ -256,7 +256,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
             for die in pkg_dies:
                 path = self._get_sysfs_path_dies(key, package, die)
                 try:
-                    self._sysfs_io.write_verify(path, str(freq // 1000), what=what)
+                    self._sysfs_io.write_verify_int(path, freq // 1000, what=what)
                 except ErrorVerifyFailed as err:
                     setattr(err, "package", package)
                     setattr(err, "die", die)

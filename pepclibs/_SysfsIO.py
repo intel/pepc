@@ -321,6 +321,40 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         self.cache_add(path, val)
 
+    def write_verify_int(self, path, val, what=None, retries=0, sleep=0):
+        """
+        Same as 'write_verify()', but write an integer value 'val'. The arguments are as follows.
+          * path - path of the sysfs file to write to.
+          * val - the integer value to write.
+          * what - short description of the file at 'path.
+          * retries - how many times to re-try the verification.
+          * sleep - sleep for 'sleep' amount of seconds before repeating the verification.
+
+        Raise 'ErrorVerifyFailed' if the value read was not the same as value written.
+        """
+
+        intval = val
+        val = str(intval)
+
+        self.cache_remove(path)
+
+        # In case of an ongoing transaction, skip the verification, it'll be done at the end of the
+        # transaction.
+        if self._in_transaction:
+            self._add_for_transaction(path, val, what, verify=True, retries=retries, sleep=sleep)
+        else:
+            self._write(path, val, what=what)
+            try:
+                self._verify(path, val, what, retries, sleep)
+            except ErrorNotFound as err:
+                # Make sure the expected and actual values are of an integer time.
+                setattr(err, "expected", intval)
+                if hasattr("actual") and Trivial.is_int(err.actual):
+                    err.actual = int(err.actual)
+                raise err
+
+        self.cache_add(path, val)
+
     def __init__(self, pman=None, cpuinfo=None, enable_cache=True):
         """
         The class constructor. The argument are as follows.

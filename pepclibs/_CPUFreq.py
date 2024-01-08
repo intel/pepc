@@ -165,8 +165,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             path = self._get_cpu_freq_sysfs_path(key, cpu)
 
             try:
-                self._sysfs_io.write_verify(path, str(freq // 1000), what=what, retries=retries,
-                                            sleep=sleep)
+                self._sysfs_io.write_verify_int(path, freq // 1000, what=what, retries=retries,
+                                                sleep=sleep)
             except ErrorVerifyFailed as err:
                 setattr(err, "cpu", cpu)
                 raise err
