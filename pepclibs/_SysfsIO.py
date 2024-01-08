@@ -89,7 +89,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         with contextlib.suppress(KeyError):
             del self._cache[path]
 
-    def _add_for_transation(self, path, val, what, verify=True, retries=0, sleep=0):
+    def _add_for_transaction(self, path, val, what, verify=True, retries=0, sleep=0):
         """Add a write operation to the transaction buffer."""
 
         if not self._enable_cache:
