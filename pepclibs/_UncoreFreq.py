@@ -243,6 +243,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
                 limit = self._sysfs_io.read_int(path, what=what)
 
                 path = self._get_sysfs_path_dies(key, package, 0, limit=False)
+                what = f"{key}. uncore frequency"
                 self._sysfs_io.write_verify(path, str(limit), what=what)
 
     def _set_freq_dies(self, freq, key, dies):
