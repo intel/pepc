@@ -698,9 +698,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                     got_pkg = list[dies][0]
                     got_die = dies[got_pkg][0]
                     raise Error(f"failed to get {name} ({pname}) for package {package}, die {die}, "
-                                f"using the '{mname}' mechanism:\n{err.indent(2)}\nHowever, "
-                                f"succeeded getting it for package {got_pkg}, die {got_die}") \
-                                from err
+                                f"using the '{mname}' mechanism:\n{err.indent(2)}\n"
+                                f"However, " f"succeeded getting it for package {got_pkg}, "
+                                f"die {got_die}") from err
 
         # None of the methods succeeded.
         if raise_not_supported:
