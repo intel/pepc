@@ -587,8 +587,6 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if not self._pman.exists(self._sysfs_base):
             self._probe_driver()
 
-        self._sysfs_io = _SysfsIO.SysfsIO(pman=pman, enable_cache=enable_cache)
-
     def close(self):
         """Uninitialize the class object."""
 
