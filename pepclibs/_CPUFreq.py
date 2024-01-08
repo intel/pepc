@@ -508,7 +508,6 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         self._cpufreq_msr_obj = None
 
-        self._sysfs_io = None
         self._sysfs_base = Path("/sys/devices/system/cpu")
 
         if not self._pman:
