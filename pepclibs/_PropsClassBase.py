@@ -144,18 +144,16 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             mnames = ", ".join(all_mnames)
             if pname:
                 name = Human.uncapitalize(self._props[pname]["name"])
-                raise ErrorNotSupported(f"cannot access {name} ({pname}) using the '{mname}' "
-                                        f"mechanism{self._pman.hostmsg}.\n"
-                                        f"Use one the following mechanism(s) instead: {mnames}.",
-                                        mname=mname)
+                raise ErrorNotSupported(f"cannot access {name} using the '{mname}' mechanism"
+                                        f"{self._pman.hostmsg}.\nUse one the following "
+                                        f"mechanism(s) instead: {mnames}.", mname=mname)
             raise ErrorNotSupported(f"unsupported mechanism '{mname}', supported mechanisms are: "
                                     f"{mnames}.", mname=mname)
 
         if not allow_readonly and not self.mechanisms[mname]["writable"]:
             if pname:
                 name = Human.uncapitalize(self._props[pname]["name"])
-                raise Error(f"can't use read-only mechanism '{mname}' for modifying "
-                            f"{name} ({pname})\n")
+                raise Error(f"can't use read-only mechanism '{mname}' for modifying {name}\n")
             raise Error(f"can't use read-only mechanism '{mname}'")
 
     def _normalize_mnames(self, mnames, pname=None, allow_readonly=True):
@@ -222,8 +220,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             return False
 
         name = Human.uncapitalize(self._props[pname]["name"])
-        raise Error(f"bad value '{val}' for {name} ({pname}), use one of: True, False, on, off, "
-                    f"enable, disable")
+        raise Error(f"bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
+                    f"disable")
 
     def _validate_pname(self, pname):
         """Raise an exception if property 'pname' is unknown."""
@@ -251,9 +249,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
             missing_cpus = all_cpus - set(cpus)
             name = Human.uncapitalize(self._props[pname]["name"])
-            raise Error(f"{name} ({pname}) has {sname} scope, so the list of CPUs must include all "
-                        f"CPUs.\nHowever, the following CPUs are missing from the list: "
-                        f"{missing_cpus}")
+            raise Error(f"{name} has {sname} scope, so the list of CPUs must include all CPUs.\n"
+                        f"However, the following CPUs are missing from the list: {missing_cpus}")
 
         _, rem_cpus = getattr(self._cpuinfo, f"cpus_div_{sname}s")(cpus)
         if not rem_cpus:
@@ -330,7 +327,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if prop["sname"] not in ok_scopes:
             name = Human.uncapitalize(prop["name"])
             snames = ", ".join(ok_scopes)
-            raise Error(f"cannot access {name} ({pname}) on per-{sname} basis, because it has "
+            raise Error(f"cannot access {name} on per-{sname} basis, because it has "
                         f"{prop['sname']} scope{self._pman.hostmsg}.\nPer-{sname} access is only "
                         f"allowed for properties with the following scopes: {snames}")
 
@@ -392,12 +389,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         iosname = prop["iosname"]
         name = Human.uncapitalize(prop["name"])
 
-        raise ErrorUsePerCPU(f"cannot determine {name} ({pname}){for_what}{self._pman.hostmsg}:\n"
+        raise ErrorUsePerCPU(f"cannot determine {name} {for_what}{self._pman.hostmsg}:\n"
                              f"  CPU {cpu1} has value '{val1}', but CPU {cpu2} has value '{val2}', "
                              f"even though they are in the same {op_sname}.\n"
-                             f"  This situation is possible because '{pname}' has '{sname}' "
-                             f"scope, but '{iosname}' I/O scope.",
-                             pvinfos=pvinfos)
+                             f"  This situation is possible because {name} has '{sname}' "
+                             f"scope, but '{iosname}' I/O scope.", pvinfos=pvinfos)
 
     @staticmethod
     def _construct_cpu_pvinfo(pname, cpu, mname, val):
@@ -555,7 +551,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 # next mechanism.
                 if cpu is not None:
                     name = self._props[pname]["name"]
-                    raise Error(f"failed to get {name} ({pname}) for CPU {cpu} using the '{mname}' "
+                    raise Error(f"failed to get {name} for CPU {cpu} using the '{mname}' "
                                 f"mechanism:\n{err.indent(2)}\nHowever, succeeded getting it for "
                                 f"CPU {cpus[0]}") from err
 
@@ -699,9 +695,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                     name = self._props[pname]["name"]
                     got_pkg = list[dies][0]
                     got_die = dies[got_pkg][0]
-                    raise Error(f"failed to get {name} ({pname}) for package {package}, die {die}, "
+                    raise Error(f"failed to get {name} for package {package}, die {die}, "
                                 f"using the '{mname}' mechanism:\n{err.indent(2)}\n"
-                                f"However, " f"succeeded getting it for package {got_pkg}, "
+                                f"However, succeeded getting it for package {got_pkg}, "
                                 f"die {got_die}") from err
 
         # None of the methods succeeded.
@@ -870,7 +866,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 # next mechanism.
                 if package is not None:
                     name = self._props[pname]["name"]
-                    raise Error(f"failed to get {name} ({pname}) for package {package} using the "
+                    raise Error(f"failed to get {name} for package {package} using the "
                                 f"'{mname}' mechanism:\n{err.indent(2)}\nHowever, succeeded "
                                 f"getting it for package {packages[0]}") from err
 
@@ -983,12 +979,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         if val is None:
             name = Human.uncapitalize(prop["name"])
-            raise Error(f"bad value 'None' for {name} ({pname})")
+            raise Error(f"bad value 'None' for {name}")
 
         if not prop["writable"]:
             name = Human.uncapitalize(prop["name"])
-            raise Error(f"{name} ({pname}) is read-only and can not be modified"
-                        f"{self._pman.hostmsg}")
+            raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
 
         if prop.get("type") == "bool":
             val = self._normalize_bool_type_value(pname, val)
@@ -1063,8 +1058,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
         if len(cpus) == 0:
-            raise Error(f"BUG: no CPU numbers provided for setting {self._props[pname]['name']} "
-                        f"('{pname}'){self._pman.hostmsg}")
+            raise Error(f"BUG: no CPU numbers provided for setting {self._props[pname]['name']}"
+                        f"{self._pman.hostmsg}")
 
         self._set_sname(pname)
         self._validate_cpus_vs_scope(pname, cpus)
@@ -1144,10 +1139,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for package, pkg_dies in dies.copy().items():
             if len(pkg_dies) == 0:
                 raise Error(f"BUG: no package {package} die numbers provided for setting "
-                            f"{self._props[pname]['name']} ('{pname}'){self._pman.hostmsg}")
+                            f"{self._props[pname]['name']}{self._pman.hostmsg}")
         if len(dies) == 0:
             raise Error(f"BUG: no package and die numbers provided for setting "
-                        f"{self._props[pname]['name']} ('{pname}'){self._pman.hostmsg}")
+                        f"{self._props[pname]['name']}{self._pman.hostmsg}")
 
         self._set_sname(pname)
         self._validate_prop_vs_scope(pname, "die")
@@ -1219,7 +1214,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         normalized_packages = self._cpuinfo.normalize_packages(packages)
         if len(packages) == 0:
             raise Error(f"BUG: no package numbers provided for setting "
-                        f"{self._props[pname]['name']} ('{pname}'){self._pman.hostmsg}")
+                        f"{self._props[pname]['name']}{self._pman.hostmsg}")
 
         self._set_sname(pname)
         self._validate_prop_vs_scope(pname, "package")
