@@ -618,6 +618,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
+        if len(cpus) == 0:
+            return
 
         try:
             self._set_sname(pname)
@@ -772,6 +774,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
                 normalized_dies[package].append(die)
 
+        # Get rid of empty die lists.
+        for package, pkg_dies in dies.copy().items():
+            if len(pkg_dies) == 0:
+                del dies[package]
+
+        if len(dies) == 0:
+            return
+
         try:
             self._set_sname(pname)
         except ErrorNotSupported:
@@ -921,6 +931,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
         packages = self._cpuinfo.normalize_packages(packages)
+        if len(packages) == 0:
+            return
 
         try:
             self._set_sname(pname)
@@ -1048,7 +1060,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
         val = self._normalize_inprop(pname, val)
+
         cpus = self._cpuinfo.normalize_cpus(cpus)
+        if len(cpus) == 0:
+            raise Error(f"BUG: no CPU numbers provided for setting {self._props[pname]['name']} "
+                        f"('{pname}'){self._pman.hostmsg}")
 
         self._set_sname(pname)
         self._validate_cpus_vs_scope(pname, cpus)
@@ -1124,6 +1140,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
                 normalized_dies[package].append(die)
 
+        # Make sure there are some die numbers.
+        for package, pkg_dies in dies.copy().items():
+            if len(pkg_dies) == 0:
+                raise Error(f"BUG: no package {package} die numbers provided for setting "
+                            f"{self._props[pname]['name']} ('{pname}'){self._pman.hostmsg}")
+        if len(dies) == 0:
+            raise Error(f"BUG: no package and die numbers provided for setting "
+                        f"{self._props[pname]['name']} ('{pname}'){self._pman.hostmsg}")
+
         self._set_sname(pname)
         self._validate_prop_vs_scope(pname, "die")
 
@@ -1191,9 +1216,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
         val = self._normalize_inprop(pname, val)
 
-        normalized_packages = []
-        for package in self._cpuinfo.normalize_packages(packages):
-            normalized_packages.append(package)
+        normalized_packages = self._cpuinfo.normalize_packages(packages)
+        if len(packages) == 0:
+            raise Error(f"BUG: no package numbers provided for setting "
+                        f"{self._props[pname]['name']} ('{pname}'){self._pman.hostmsg}")
 
         self._set_sname(pname)
         self._validate_prop_vs_scope(pname, "package")
