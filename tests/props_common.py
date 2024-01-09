@@ -32,6 +32,79 @@ def get_good_cpunum_opts(params, sname="package"):
       * sname - scope name to get CPU numbers for.
     """
 
+    def _get_package_opts(params, pkg):
+        """Return package scope options for package 'pkg'."""
+
+        pkg = params["packages"][0]
+        pkg_cores_range = Human.rangify(params["cores"][pkg])
+        pkg_modules_range = Human.rangify(params["modules"][pkg])
+        pkg_dies_range = Human.rangify(params["dies"][pkg])
+        opts = [f"--packages {pkg} --cpus all",
+                f"--packages {pkg} --modules all",
+                f"--modules {pkg_modules_range}",
+                f"--packages {pkg} --dies all",
+                f"--packages {pkg} --cores all",
+                f"--packages {pkg} --cores {pkg_cores_range}",
+                f"--packages {pkg} --dies {pkg_dies_range}",
+                f"--packages {pkg}-{params['packages'][-1]}"]
+        return opts
+
+    def _get_die_opts(params, pkg):
+        """Return die scope options for package 'pkg'."""
+
+        first_die = params["dies"][pkg][0]
+        last_die = params["dies"][pkg][-1]
+
+        opts = [f"--package {pkg} --dies {first_die}"]
+        opts = [f"--package {pkg} --dies all"]
+
+        if first_die != last_die:
+            opts.append(f"--package {pkg} --dies {last_die}")
+        else:
+            return opts
+
+        if len(params["dies"][pkg]) > 1:
+            pkg_dies_range_partial = Human.rangify(params["dies"][pkg][1:])
+            opts.append(f"--packages {pkg} --dies {pkg_dies_range_partial}")
+            pkg_dies_range_partial = Human.rangify(params["dies"][pkg][:-1])
+            opts.append(f"--packages {pkg} --dies {pkg_dies_range_partial}")
+
+            if len(params["packages"]) > 1:
+                pkgs_range_partial = Human.rangify(params["packages"][1:])
+                opts.append(f"--packages {pkgs_range_partial} --dies {first_die}")
+                pkg_dies_range_partial = Human.rangify(params["dies"][pkg][1:])
+                opts.append(f"--packages {pkgs_range_partial} --dies {pkg_dies_range_partial}")
+
+        return opts
+
+    def _get_module_opts(params, pkg):
+        """Return module scope options for package 'pkg'."""
+
+        first_module = params["modules"][pkg][0]
+        last_module = params["modules"][pkg][-1]
+
+        opts = [f"--package {pkg} --modules {first_module}"]
+        opts = [f"--package {pkg} --modules all"]
+
+        if first_module != last_module:
+            opts.append(f"--package {pkg} --modules {last_module}")
+        else:
+            return opts
+
+        if len(params["modules"][pkg]) > 1:
+            pkg_modules_range_partial = Human.rangify(params["modules"][pkg][1:])
+            opts.append(f"--packages {pkg} --modules {pkg_modules_range_partial}")
+            pkg_modules_range_partial = Human.rangify(params["modules"][pkg][:-1])
+            opts.append(f"--packages {pkg} --modules {pkg_modules_range_partial}")
+
+            if len(params["packages"]) > 1:
+                pkgs_range_partial = Human.rangify(params["packages"][1:])
+                opts.append(f"--packages {pkgs_range_partial} --modules {first_module}")
+                pkg_modules_range_partial = Human.rangify(params["modules"][pkg][1:])
+                opts.append(f"--packages {pkgs_range_partial} --modules {pkg_modules_range_partial}")
+
+        return opts
+
     if sname == "global":
         opts = ["",
                 "--cpus all",
@@ -43,60 +116,21 @@ def get_good_cpunum_opts(params, sname="package"):
         return opts
 
     if sname == "package":
-        pkg0_cores_range = Human.rangify(params["cores"][0])
-        pkg0_modules_range = Human.rangify(params["modules"][0])
-        pkg0_dies_range = Human.rangify(params["dies"][0])
-        opts = ["--packages 0 --cpus all",
-                "--packages 0 --modules all",
-                f"--modules {pkg0_modules_range}",
-                "--packages 0 --dies all",
-                "--packages 0 --cores all",
-                f"--packages 0 --cores {pkg0_cores_range}",
-                f"--packages 0 --dies {pkg0_dies_range}",
-                f"--packages 0-{params['packages'][-1]}"]
-
-        if len(params["packages"]) == 1:
-            opts.append(f"--cores {pkg0_cores_range}")
-            opts.append(f"--dies {pkg0_dies_range}")
-
+        opts = _get_package_opts(params, params["packages"][0])
+        if len(params["packages"]) > 1:
+            opts += _get_package_opts(params, params["packages"][-1])
         return opts
 
     if sname == "die":
-        opts = []
-        if len(params["dies"][0]) > 1:
-            pkg0_dies_range_partial = Human.rangify(params["dies"][0][1:])
-            opts.append("--package 0 --dies 0")
-            opts.append("--package 0 --dies 1")
-            opts.append(f"--package 0 --dies {pkg0_dies_range_partial}")
-            opts.append(f"--package 0 --dies {params['dies'][0][-1]}")
-            if len(params["packages"]) > 1:
-                opts.append("--package 1 --dies 0")
-                opts.append("--package 1 --dies 1")
-
-                pkgs_range_partial = Human.rangify(params["packages"][1:])
-                pkg1_dies_range_partial = Human.rangify(params["dies"][1][1:])
-
-                opts.append(f"--packages {pkgs_range_partial} --dies 1")
-                opts.append(f"--packages {pkgs_range_partial} --dies {pkg1_dies_range_partial}")
-                opts.append(f"--packages 1 --dies {pkg1_dies_range_partial}")
-                opts.append(f"--packages {params['packages'][-1]} --dies {params['dies'][0][-1]}")
-
+        opts = _get_die_opts(params, params["packages"][0])
+        if len(params["packages"]) > 1:
+            opts += _get_die_opts(params, params["packages"][-1])
         return opts
 
     if sname == "module":
-        opts = []
-        if len(params["modules"][0]) > 1:
-            opts.append(f"--modules {params['modules'][0][0]}")
-            opts.append(f"--modules {params['modules'][0][-1]}")
-            pkg0_modules_range_partial = Human.rangify(params["modules"][0][1:])
-            opts.append(f"--modules {pkg0_modules_range_partial}")
-
-            if len(params["packages"]) > 1:
-                opts.append(f"--modules {params['modules'][1][0]}")
-                opts.append(f"--modules {params['modules'][1][-1]}")
-                pkg1_modules_range_partial = Human.rangify(params["modules"][1][1:])
-                opts.append(f"--modules {pkg1_modules_range_partial}")
-
+        opts = _get_module_opts(params, params["packages"][0])
+        if len(params["packages"]) > 1:
+            opts += _get_module_opts(params, params["packages"][-1])
         return opts
 
     if sname == "CPU":
