@@ -488,7 +488,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         dies_strs = []
         for package, pkg_dies in dies.items():
             if len(pkg_dies) > 1:
-                dies_str = ",".join(pkg_dies)
+                dies_str = Human.rangify(pkg_dies)
                 dies_strs.append(f"package {package} dies {dies_str}")
             else:
                 dies_strs.append(f"package {package} die {pkg_dies[0]}")
