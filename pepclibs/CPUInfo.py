@@ -1598,8 +1598,14 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_hybrid_cpu_topology(self):
         """
-        Return P-core/E-core CPU list on hybrid CPUs, otherwise return 'None'.
-        If the kernel does not support hybrid CPU topology, this function will return 'None'
+        Return P-core/E-core information on hybrid in case of a hybrid Intel system (e.g., Alder
+        Lake). The returned dictionary has the following format.
+
+            {"ecore": <list of E-core CPU numbers>,
+             "pcore": <list of P-core CPU numbers>}
+
+        If the target system is not hybrid, return 'None'. Only online CPUs are included to the
+        returned lists.
         """
 
         if self.info["hybrid"] is False:

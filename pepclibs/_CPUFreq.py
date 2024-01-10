@@ -16,7 +16,7 @@ import logging
 import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
@@ -58,6 +58,43 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     validation. The input CPU numbers should exist and should be online.
     """
 
+    def _warn_no_ecores_bug(self):
+        """
+        Kernels prior to v6.5 had a bug that affected hybrid systems with disabled E-cores. This
+        issue was fixed by the following Linux kernel commit:
+
+          0fcfc9e51990 cpufreq: intel_pstate: Fix scaling for hybrid-capable systems with disabled
+          E-cores
+
+        Detect if the target system is affected and print a warning.
+        """
+
+        if not self._check_no_ecores_bug:
+            return
+        if not self._cpuinfo.info["hybrid"]:
+            return
+
+        hybrid_info = self._cpuinfo.get_hybrid_cpu_topology()
+
+        if not hybrid_info["ecore"] and hybrid_info["pcore"]:
+            if not self._kver:
+                self._kver = KernelVersion.get_kver()
+
+            if KernelVersion.kver_ge(self._kver, "6.5"):
+                self._check_no_ecores_bug = False
+                return
+
+            # It is possible that there are E-cores, but they are offline. To avoid false-positives,
+            # warn only if there are no offline CPUs.
+            if self._cpuinfo.get_offline_cpus():
+                return
+
+            self._check_no_ecores_bug = False
+            _LOG.warning("there is a bug in Linux kernel versions older than version 6.5 that "
+                         "affects hybrid systems with disabled E-cores: CPU frequency in sysfs "
+                         "files is incorrect. See kernel commit "
+                         "'0fcfc9e51990246a9813475716746ff5eb98c6aa'.")
+
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
 
@@ -92,6 +129,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def _get_freq_sysfs(self, key, cpus, limit=False):
         """Yield CPU frequency from the Linux "cpufreq" sysfs file."""
+
+        self._warn_no_ecores_bug()
 
         for cpu in cpus:
             path = self._get_cpu_freq_sysfs_path(key, cpu, limit=limit)
@@ -149,6 +188,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         """
         For every CPU in 'cpus', set CPU frequency by writing to the Linux "cpufreq" sysfs file.
         """
+
+        self._warn_no_ecores_bug()
 
         what = f"{key}. CPU frequency"
 
@@ -508,6 +549,11 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._cpufreq_msr_obj = None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
+
+        # Kernel version running on the target system.
+        self._kver = None
+        # The warning about the disabled E-cores bug was printed.
+        self._check_no_ecores_bug = True
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
