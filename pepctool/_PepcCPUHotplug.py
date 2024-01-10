@@ -51,12 +51,9 @@ def cpu_hotplug_offline_command(args, pman):
         # indirectly specified CPU 0 via '--cpus all' or '--packages 0'.
         skip_unsupported = args.cpus in ("all", None)
 
-        try:
-            optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
-                                       modules=args.modules, dies=args.dies, packages=args.packages,
-                                       core_siblings=args.core_siblings,
-                                       module_siblings=args.module_siblings)
-        except _OpTarget.ErrorNoTarget:
-            raise Error("please, specify the CPUs to offline") from None
+        optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
+                                   modules=args.modules, dies=args.dies, packages=args.packages,
+                                   core_siblings=args.core_siblings,
+                                   module_siblings=args.module_siblings)
 
         onl.offline(cpus=optar.get_cpus(), skip_unsupported=skip_unsupported)
