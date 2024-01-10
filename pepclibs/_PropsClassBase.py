@@ -485,17 +485,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         to get or set a property for dies in 'dies' using mechanisms in 'mnames'.
         """
 
-        dies_strs = []
-        for package, pkg_dies in dies.items():
-            if len(pkg_dies) > 1:
-                dies_str = Human.rangify(pkg_dies)
-                dies_strs.append(f"package {package} dies {dies_str}")
-            else:
-                dies_strs.append(f"package {package} die {pkg_dies[0]}")
-
-        dies_str = ", ".join(dies_strs[:-1])
-        dies_str += ", and "
-        dies_str += dies_strs[-1]
+        dies_str = self._cpuinfo.dies_to_str(dies)
         self._do_prop_not_supported(pname, dies_str, mnames, action, exceptions=exceptions)
 
     def _prop_not_supported_packages(self, pname, packages, mnames, action, exceptions=None):
