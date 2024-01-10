@@ -441,9 +441,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         * 'select_core_siblings()'
         * 'select_module_siblings()'
     7. "Divide" list of CPUs.
-        * By cores: 'cpus_div_cores()'.
-        * By dies: 'cpus_div_dies()'.
-        * By packages: 'cpus_div_packages()'.
+        * 'cpus_div_cores()' - by cores.
+        * 'cpus_div_dies()' - by dies.
+        * 'cpus_div_packages()' - by packages.
+    8. Miscellaneous.
+        * 'dies_to_str()' - turn a die numbers dictionary into a string.
     """
 
     def get_topology(self, levels=None, order="CPU"):
@@ -1647,6 +1649,32 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                     self._cacheinfo[name][key] = val
 
         return self._cacheinfo
+
+    @staticmethod
+    def dies_to_str(dies):
+        """
+        Turn the die numbers dictionary into a user-readable string and return the result. The
+        arguments are as follows.
+          * dies - a dictionary indexed by the package numbers with values being lists of die
+                   numbers.
+        """
+
+        dies_strs = []
+        for package, pkg_dies in dies.items():
+            if len(pkg_dies) > 1:
+                dstr = Human.rangify(pkg_dies)
+                dies_strs.append(f"package {package} dies {dstr}")
+            else:
+                dies_strs.append(f"package {package} die {pkg_dies[0]}")
+
+        if len(dies_strs) > 1:
+            dstr = ", ".join(dies_strs[:-1])
+            dstr += ", and "
+            dstr += dies_strs[-1]
+        else:
+            dstr = str(dies_strs[0])
+
+        return dstr
 
     def _get_cpu_info(self):
         """Get general CPU information (model, architecture, etc)."""
