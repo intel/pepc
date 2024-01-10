@@ -19,7 +19,11 @@ from pepctool import _PepcCommon, _OpTarget
 _LOG = logging.getLogger()
 
 def cpu_hotplug_info_command(_, pman):
-    """Implements the 'cpu-hotplug info' command."""
+    """
+    Implements the 'cpu-hotplug info' command. The arguments are as follows:
+      * _ - ignored.
+      * pman - the process manager object that defines the target host.
+    """
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         for func, word in (("get_cpus", "online"), ("get_offline_cpus", "offline")):
@@ -31,7 +35,11 @@ def cpu_hotplug_info_command(_, pman):
                 _LOG.info("No %s CPUs%s", word, pman.hostmsg)
 
 def cpu_hotplug_online_command(args, pman):
-    """Implements the 'cpu-hotplug online' command."""
+    """
+    Implements the 'cpu-hotplug online' command. The arguments are as follows:
+      * args - the command line arguments.
+      * pman - the process manager object that defines the target host.
+    """
 
     if not args.cpus:
         raise Error("please, specify the CPUs to online")
@@ -40,10 +48,14 @@ def cpu_hotplug_online_command(args, pman):
         onl.online(cpus=_PepcCommon.parse_cpus_string(args.cpus))
 
 def cpu_hotplug_offline_command(args, pman):
-    """Implements the 'cpu-hotplug offline' command."""
+    """
+    Implements the 'cpu-hotplug offline' command. The arguments are as follows:
+      * args - the command line arguments.
+      * pman - the process manager object that defines the target host.
+    """
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-        CPUOnline.CPUOnline(progress=logging.INFO, pman=pman, cpuinfo=cpuinfo) as onl:
+         CPUOnline.CPUOnline(progress=logging.INFO, pman=pman, cpuinfo=cpuinfo) as onl:
 
         # Some CPUs may not support offlining. Suppose it is CPU 0. If CPU 0 is in the 'cpus' list,
         # the 'onl.offline()' method will error out. This is OK in a situation when the user
