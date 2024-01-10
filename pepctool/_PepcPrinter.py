@@ -162,7 +162,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         elif prop["type"] in ("list[int]", "list[float]"):
             step = _detect_progression(val, 4)
             tar = False
-            if not step and len(val) > 1:
+
+            if len(val) == 1:
+                val = _format_unit(val[0], unit)
+            elif not step and len(val) > 1:
                 # The frequency numbers are expected to be sorted in the ascending order. The last
                 # frequency number is often the Turbo Activation Ration (TAR) - a value just
                 # slightly higher than the base frequency to activate turbo. Detect this situation
