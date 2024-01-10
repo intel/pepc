@@ -21,6 +21,12 @@ _LOG = logging.getLogger()
 class ErrorNoTarget(Error):
     """No operation target was specified or found."""
 
+class ErrorNoCPUTarget(Error):
+    """
+    The operation target was specified, but it does not include any CPUs (e.g., only I/O dies were
+    specified).
+    """
+
 class OpTarget(ClassHelpers.SimpleCloseContext):
     """
     This class represents the "target" of a pepc operation in terms of what CPU, core, module, die,
@@ -79,12 +85,49 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         return self._cpuinfo.normalize_cpus(cpus, offline_ok=self._offline_ok)
 
+    def _only_io_dies(self):
+        """
+        Return 'True' if only I/O dies were specified as a target, return 'False' otherwise (no
+        target dies at all, or some of the target dies are comput dies).
+        """
+
+        dies = self.get_dies()
+        if not dies:
+            return False
+
+        for package, pkg_dies in dies.items():
+            io_dies = self._cpuinfo.get_dies(package=package, compute_dies_ok=False,
+                                             io_dies_ok=True)
+            if not set(pkg_dies).issubset(set(io_dies)):
+                return False
+
+        return True
+
     def get_cpus(self):
-        """Return list of target CPU numbers."""
+        """
+        Return list of target CPU numbers. Raise 'ErrorNoTarget' if no CPUs, cores, modules, dies,
+        or packages were specified (i.e., there is no operation target at all). Raise
+        'ErrorNoCPUTarget' if there is an operation target, but it does not include CPUs (e.g., only
+        I/O dies were specified).
+        """
 
         if "cpus" not in self._cache:
             self._cache["cpus"] = self._get_cpus()
-        return self._cache["cpus"]
+
+        if len(self._cache["cpus"]) != 0:
+            return self._cache["cpus"]
+
+        if not self.dies:
+            raise ErrorNoTarget("no CPU numbers were specified")
+
+        # Supposedly only I/O dies were specified, and they do not have CPUs. Verify this
+        # assumption, and if it is true, format a helpful error message.
+        if not self._only_io_dies():
+            raise ErrorNoTarget("BUG: failed to figure out CPU numbers")
+
+        dies_str = self._cpuinfo.dies_to_str(self.get_dies())
+        raise ErrorNoCPUTarget(f"no CPU numbers were specified.\n  The following I/O dies were "
+                               f"specified, but they do not have CPUs: {dies_str}.")
 
     def get_dies(self, strict=True):
         """
