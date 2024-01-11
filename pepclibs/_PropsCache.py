@@ -38,7 +38,7 @@ class PropsCache():
     def find(self, pname, cpu, mnames=None):
         """
         Similar to 'get()', but 'mnames' argument specifies the list of mechanism names. Search for
-        the '(pname, cpu)' item with mechanimsm name from 'mnames', and return the first matched
+        the '(pname, cpu)' item with mechanism name from 'mnames', and return the first matched
         item, along with the mechanism name. The argument are as follows.
           * pname - name of the property to find.
           * cpu - an integer CPU number.
