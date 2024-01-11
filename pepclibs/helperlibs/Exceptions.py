@@ -10,11 +10,15 @@
 Exception types used by all the modules in this package.
 """
 
+import re
+
 class Error(Exception):
     """The base class for all exceptions raised by this project."""
 
     def __init__(self, msg, *args, **kwargs):
-        """The exception class constructor."""
+        """
+        The exception class constructor.
+        """
 
         msg = str(msg)
         super().__init__(msg)
@@ -27,15 +31,21 @@ class Error(Exception):
         else:
             self.msg = msg
 
-    def indent(self, indent):
+    def indent(self, indent, capitalize=True):
         """
         Prefix each line in the error message. The arguments are as follows.
           * indent - can be an integer or a string. In case of an integer, each line of the error
                      string is prefixed with the 'indent' count of white-spaces. In case of a
                      string, each line is prefixed with the 'indent' string.
+          * capitalize - if 'True', make sure the message starts with a capital letter.
 
         The intended usage is combining several multi-line error messages into a single message.
         """
+
+        def capitalize_mobj(mobj):
+            """Capitalize a message matched with 're.sub()' ('mobj' is the match object)."""
+
+            return mobj.group(1) + mobj.group(2).capitalize()
 
         if isinstance(indent, int):
             pfx = " " * indent
@@ -43,6 +53,9 @@ class Error(Exception):
             pfx = indent
 
         msg = pfx + self.msg.replace("\n", f"\n{pfx}")
+        if capitalize:
+            msg = re.sub(r"^(\s*)(\S)", capitalize_mobj, msg)
+
         return msg
 
     def __str__(self):
