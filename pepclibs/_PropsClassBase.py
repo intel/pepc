@@ -1108,7 +1108,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         cpus = []
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
-                cpu += self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+                cpus += self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
 
         cpus = self._reduce_cpus_ioscope(cpus, self._props[pname]["iosname"])
         return self._set_prop_cpus_mnames(pname, val, cpus, mnames=(mname,))
