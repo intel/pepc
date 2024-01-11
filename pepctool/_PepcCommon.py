@@ -13,7 +13,7 @@ Misc. helpers shared between various 'pepc' commands.
 import logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import Systemctl, Trivial, ArgParse
-from pepctool._OpTarget import ErrorNoTarget
+from pepctool._OpTarget import ErrorNoTarget, ErrorNoCPUTarget
 
 _LOG = logging.getLogger()
 
@@ -149,7 +149,11 @@ def get_prop_sname(pobj, pname, optar, mnames, override_sname=None):
                          scope name.
     """
 
-    sname, nums = _get_sname_and_nums(pobj, pname, optar, override_sname=override_sname)
+    try:
+        sname, nums = _get_sname_and_nums(pobj, pname, optar, override_sname=override_sname)
+    except ErrorNoCPUTarget as err:
+        name = pobj.props[pname]["name"]
+        raise ErrorNoCPUTarget(f"impossible to get {name}:\n{err.indent(2)}") from err
 
     if sname == "CPU":
         yield from pobj.get_prop_cpus(pname, nums, mnames=mnames)
@@ -170,7 +174,11 @@ def set_prop_sname(pobj, pname, optar, val, mnames):
                  '_PropsClassBase.MECHANISMS').
     """
 
-    sname, nums = _get_sname_and_nums(pobj, pname, optar)
+    try:
+        sname, nums = _get_sname_and_nums(pobj, pname, optar)
+    except ErrorNoCPUTarget as err:
+        name = pobj.props[pname]["name"]
+        raise ErrorNoCPUTarget(f"impossible to set {name}:\n{err.indent(2)}") from err
 
     if sname == "CPU":
         return pobj.set_prop_cpus(pname, val, nums, mnames=mnames)
