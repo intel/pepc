@@ -1068,6 +1068,37 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self.set_prop_cpus(pname, val, (cpu,), mnames=mnames)
 
+    def _reduce_cpus_ioscope(self, cpus, iosname):
+        """
+        Reduce the list of CPUs in 'cpus' to only one CPU in the scope 'iosname'. The arguments are
+        as follows.
+          * cpus - list of integer CPU numbers to reduce.
+          * iosname - I/O scope name to reduce the 'cpus' list to.
+
+        Return the reduced list of CPU numbers.
+        """
+
+        if iosname == "CPU":
+            return cpus
+
+        handled = set()
+        reduced = set()
+        for cpu in cpus:
+            if cpu in handled:
+                continue
+
+            siblings = self._cpuinfo.get_cpu_siblings(cpu, iosname)
+            reduced.add(siblings[0])
+            if len(siblings) > 1:
+                handled.update(siblings[1:])
+
+        result = []
+        for cpu in cpus:
+            if cpu in reduced:
+                result.append(cpu)
+
+        return result
+
     def _set_prop_dies(self, pname, val, dies, mname):
         """
         The default implementation of 'set_prop_dies()' using the per-CPU method. Subclasses may
@@ -1077,9 +1108,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         cpus = []
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
-                cpu = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))[0]
-                cpus.append(cpu)
+                cpu += self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
 
+        cpus = self._reduce_cpus_ioscope(cpus, self._props[pname]["iosname"])
         return self._set_prop_cpus_mnames(pname, val, cpus, mnames=(mname,))
 
     def _set_prop_dies_mnames(self, pname, val, dies, mnames):
@@ -1160,9 +1191,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         cpus = []
         for package in packages:
-            cpu = self._cpuinfo.packages_to_cpus(packages=(package,))[0]
-            cpus.append(cpu)
+            cpus += self._cpuinfo.packages_to_cpus(packages=(package,))
 
+        cpus = self._reduce_cpus_ioscope(cpus, self._props[pname]["iosname"])
         return self._set_prop_cpus_mnames(pname, val, cpus, mnames=(mname,))
 
     def _set_prop_packages_mnames(self, pname, val, packages, mnames):
