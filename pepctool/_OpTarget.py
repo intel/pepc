@@ -96,8 +96,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             return False
 
         for package, pkg_dies in dies.items():
-            io_dies = self._cpuinfo.get_dies(package=package, compute_dies_ok=False,
-                                             io_dies_ok=True)
+            io_dies = self._cpuinfo.get_dies(package=package, compute_dies=False, io_dies=True)
             if not set(pkg_dies).issubset(set(io_dies)):
                 return False
 

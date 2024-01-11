@@ -19,7 +19,7 @@ from pepclibs.helperlibs import Human, YAML
 from pepclibs import CPUInfo, PStates
 
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
-# supported. Ignore these failurs.
+# supported. Ignore these failures.
 _IGNORE = { ErrorNotSupported : "--mechanism" }
 
 @pytest.fixture(name="params", scope="module")

@@ -59,7 +59,7 @@ def _get_level_nums(lvl, cpuinfo, order=None):
 
     if lvl == "die":
         # TODO: cover I/O dies too.
-        return get_method(order=order, io_dies_ok=False)
+        return get_method(order=order, io_dies=False)
     return get_method(order=order)
 
 def _get_levels_and_nums(cpuinfo):
@@ -225,7 +225,7 @@ def test_cpuinfo_get_count(params):
             kwargs = {}
             if lvl == "die":
                 # TODO: cover I/O dies too.
-                kwargs = {"io_dies_ok" : False}
+                kwargs = {"io_dies" : False}
             _run_method(f"get_{lvl}s_count", cpuinfo, kwargs=kwargs, exp_res=len(nums))
 
         offline_cpus = cpuinfo.get_offline_cpus()
