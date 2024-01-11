@@ -333,7 +333,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         Raise 'ErrorVerifyFailed' if the value read was not the same as value written.
         """
 
-        intval = val
+        intval = int(val)
         val = str(intval)
 
         self.cache_remove(path)
@@ -346,10 +346,10 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             self._write(path, val, what=what)
             try:
                 self._verify(path, val, what, retries, sleep)
-            except ErrorNotFound as err:
+            except ErrorVerifyFailed as err:
                 # Make sure the expected and actual values are of an integer time.
                 setattr(err, "expected", intval)
-                if hasattr("actual") and Trivial.is_int(err.actual):
+                if hasattr(err, "actual") and Trivial.is_int(err.actual):
                     err.actual = int(err.actual)
                 raise err
 
