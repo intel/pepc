@@ -471,7 +471,6 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         what = "CPU frequency governor"
 
         for cpu, governors in self.get_available_governors(cpus):
-            print(cpu, governors)
             if governor not in governors:
                 governors = ", ".join(governors)
                 raise Error(f"bad governor name '{governor}' for CPU {cpu}{self._pman.hostmsg}, "
