@@ -6,6 +6,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
  - Improve formatting of values in 'pepc info' commands.
+ - Fix warning when using the '--pkg-cstate-limit' option (regression
+   introduced in v1.5.1).
 ### Added
 ### Removed
 ### Changed
