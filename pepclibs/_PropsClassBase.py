@@ -435,8 +435,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if not self._sysfs_io:
             from pepclibs import _SysfsIO # pylint: disable=import-outside-toplevel
 
-            self._sysfs_io = _SysfsIO.SysfsIO(self._pman, cpuinfo=self._cpuinfo,
-                                              enable_cache=self._enable_cache)
+            self._sysfs_io = _SysfsIO.SysfsIO(self._pman, enable_cache=self._enable_cache)
 
         return self._sysfs_io
 

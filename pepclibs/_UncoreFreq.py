@@ -578,7 +578,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
         if not self._sysfs_io:
-            self._sysfs_io = _SysfsIO.SysfsIO(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache)
+            self._sysfs_io = _SysfsIO.SysfsIO(pman=pman, enable_cache=enable_cache)
 
         vendor = self._cpuinfo.info["vendor"]
         if vendor != "GenuineIntel":
