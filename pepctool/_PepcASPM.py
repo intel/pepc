@@ -81,7 +81,7 @@ def _handle_1l_aspm_options(args, aspm, pman, state):
     if not device:
         raise Error("please, provide a valid PCI device using the '--device' option")
 
-    if state:
+    if not state:
         _print_l1_aspm_state(args, aspm)
         return
 
@@ -91,10 +91,9 @@ def _handle_1l_aspm_options(args, aspm, pman, state):
         valid_vals = ", ".join(valid_vals)
         raise Error(f"bad L1 ASPM state value '{state}', use one of: {valid_vals}")
 
-    enable = state in ["false", "off", "disable"]
+    enable = state in ["true", "on", "enable"]
     aspm.toggle_l1_aspm_state(device, enable)
-    _LOG.info("Changed L1 ASPM to '%s'%s succeeded for the '%s' device",
-              state, pman.hostmsg, device)
+    _LOG.info("Changed L1 ASPM to '%s'%s for device '%s'", state, pman.hostmsg, device)
 
 def aspm_config_command(args, pman):
     """
