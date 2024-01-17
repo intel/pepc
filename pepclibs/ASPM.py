@@ -8,9 +8,13 @@
 
 """This module provides an API to control PCI Active State Power Management (ASPM)."""
 
+import logging
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
+from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorPermissionDenied
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+
+_LOG = logging.getLogger()
 
 class ASPM(ClassHelpers.SimpleCloseContext):
     """This class provides an API to control PCI ASPM."""
@@ -68,71 +72,73 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         for policy in self._get_policies():
             yield policy
 
-    def _sysfs_file_not_found(self, pci_address, err):
+    def _l1_aspm_file_not_found(self, pci_address, err):
         """Print error message in case L1 ASPM file operation fails."""
 
         path = self._sysfs_base / pci_address
-        if self._pman.exists(path):
-            kopts = "CONFIG_PCIEASPM and CONFIG_PCIEASPM_DEFAULT"
-            raise Error(f"device '{pci_address}' doesn't support L1 ASPM{self._pman.hostmsg}:\n"
-                        f"{err.indent(2)}\n"
-                        f"Possible reasons for L1 ASPM not being supported on '{pci_address}' "
-                        f"device:\n"
-                        f"1. this device's hardware doesn't support L1 ASPM.\n"
-                        f"2. this platform's hardware doesn't support ASPM. To get more "
-                        f"information please run 'journalctl -b | grep ASPM'.\n"
-                        f"3. the kernel is old and doesn't have PCIe ASPM support. The support was "
-                        f"introduced in kernel 5.5.\n"
-                        f"4. the kernel was built without {kopts}. Try to compile the kernel with "
-                        f"{kopts} set to 'y'.")
-        raise Error(f"device '{pci_address}' was not found{self._pman.hostmsg}:\n{err.indent(2)}")
+        msg = f"the '{pci_address}' PCI device was not found{self._pman.hostmsg}:\n{err.indent(2)}"
+        if not self._pman.exists(path):
+            raise Error(msg)
 
-    def read_l1_aspm_state(self, pci_address): # pylint: disable=inconsistent-return-statements
+        if not self._kver:
+            # Check if kernel version is new enough.
+            try:
+                self._kver = KernelVersion.get_kver(pman=self._pman)
+            except Error as err1:
+                _LOG.warn_once("failed to detect kernel version%s:\n%s",
+                               self._pman.hostmsg, err1.indent(2))
+
+        if self._kver:
+            if KernelVersion.kver_lt(self._kver, "5.5"):
+                raise ErrorNotSupported(f"{msg}\nKernel version{self._pman.hostmsg} is "
+                                        f"{self._kver} and it is not new enough - PCI L1 ASPM "
+                                        f"support was added in kernel version 5.5.")
+
+        raise ErrorNotSupported(f"{msg}.\nPossible reasons:\n"
+                                f"  1. The '{pci_address}' device's doesn't support L1 ASPM.\n"
+                                f"  2. The PCI controller{self._pman.hostmsg} does not support "
+                                f"L1 ASPM.\n"
+                                f"  3. The Linux kernel is older than version 5.5, so it doesn't "
+                                f"support L1 ASPM.\n"
+                                f"  4. The 'CONFIG_PCIEASPM' kernel configuration option is "
+                                f"disabled.")
+
+    def is_l1_aspm_enabled(self, device):
         """
-        Returns the state of L1 ASPM for a specified PCI device. The arguments are as follows.
-         * pci_address - PCI address in extended BDF notation format that contains the domain.
+        Return 'True' if L1 ASPM is enabled for a PCI device 'device' and 'False' otherwise. The
+        arguments are as follows.
+         * device - PCI address in the extended BDF notation format that contains the domain.
 
-        If the specified device is present and has L1 ASPM support the return value can be either
-        True or False. Otherwise an error is raised.
+        Raise 'ErrorNotSupported' if the device does not support L1 ASPM.
         """
 
-        path = self._sysfs_base / pci_address / Path("link/l1_aspm")
+        path = self._sysfs_base / device / Path("link/l1_aspm")
 
         try:
             with self._pman.open(path, "r") as fobj:
-                return Trivial.str_to_int(fobj.read(), what="L1 ASPM state")
+                return bool(Trivial.str_to_int(fobj.read(), what="L1 ASPM state"))
         except ErrorNotFound as err:
-            self._sysfs_file_not_found(pci_address, err)
+            return self._l1_aspm_file_not_found(device, err)
         except Error as err:
             raise Error(f"read failed{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-    def write_l1_aspm_state(self, pci_address, value):
+    def toggle_l1_aspm_state(self, device, enable):
         """
-        Enable or disable a L1 ASPM on a specified PCI device. The arguments are as follows.
-         * pci_address - PCI address in extended BDF notation format that contains the domain.
-         * value - case-insensitive string indicating if L1 ASPM should be enabled or disabled.
-                   Valid values are 'false', 'true', 'off', 'on', 'disable','enable'
+        Enable or disable a L1 ASPM for a PCI device. The arguments are as follows.
+         * device - PCI address in the extended BDF notation format that contains the domain.
+         * enable - enable L1 ASPM if 'True', otherwise disable.
 
-        If the passed address points to a valid PCI device that supports L1 ASPM, either '0' or '1'
-        is written into sysfs which changes the devices state.
+        Raise 'ErrorNotSupported' if the device does not support L1 ASPM.
         """
 
-        if value.lower() not in ["false", "true", "off", "on", "disable", "enable"]:
-            raise Error(f"bad value {value.lower()} for modifying L1 ASPM state.\n"
-                        f"Valid values are 'false', 'true', 'off', 'on', 'disable', 'enable'")
-
-        if value.lower() in ["false", "off", "disable"]:
-            pci_value = "0"
-        else:
-            pci_value = "1"
-
-        path = self._sysfs_base / pci_address / Path("link/l1_aspm")
+        val = "1" if enable else "0"
+        path = self._sysfs_base / device / Path("link/l1_aspm")
 
         try:
             with self._pman.open(path, "w") as fobj:
-                fobj.write(pci_value)
-        except (ErrorNotFound, ErrorPermissionDenied) as err:
-            self._sysfs_file_not_found(pci_address, err)
+                fobj.write(val)
+        except ErrorNotFound as err:
+            self._l1_aspm_file_not_found(device, err)
         except Error as err:
             raise Error(f"write failed{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
@@ -144,6 +150,8 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         self._close_pman = pman is None
         self._policy_path = Path("/sys/module/pcie_aspm/parameters/policy")
         self._sysfs_base = Path("/sys/bus/pci/devices/")
+
+        self._kver = None
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()

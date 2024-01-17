@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module includes the "aspm" 'pepc' command implementation.
+Implement the 'aspm' command of the 'pepc' tool
 """
 
 import logging
@@ -16,8 +16,20 @@ from pepclibs import ASPM
 
 _LOG = logging.getLogger()
 
+def _print_l1_aspm_state(args, aspm):
+    """
+    Print the L1 ASPM status for the device specified via the '--device' option.
+    """
+
+    state = "enabled" if aspm.is_l1_aspm_enabled(args.device) else "disabled"
+    _LOG.info("L1 ASPM: %s for device '%s'", state, args.device)
+
 def aspm_info_command(args, pman):
-    """Implements the 'aspm info' command."""
+    """
+    Implement the 'aspm info' command. The arguments are as follows.
+      * args - the command line arguments.
+      * pman - the process manager object that defines the host to get ASPM info for.
+    """
 
     opt = []
     if hasattr(args, "oargs"):
@@ -26,20 +38,19 @@ def aspm_info_command(args, pman):
     with ASPM.ASPM(pman=pman) as aspm:
         if "l1_aspm" in opt or args.device:
             if args.device:
-                state = "enabled" if aspm.read_l1_aspm_state(args.device) else "disabled"
-                _LOG.info("L1 ASPM is %s for the '%s' device", state, args.device)
+                _print_l1_aspm_state(args, aspm)
             else:
                 raise Error("please, provide a valid PCI device using the '--device' option")
-            if args.device and not opt:
-                return
+
         if "policy" in opt or not opt:
             cur_policy = aspm.get_policy()
             _LOG.info("ASPM policy: %s", cur_policy)
+
         if "policies" in opt or not opt:
             available_policies = ", ".join(aspm.get_policies())
             _LOG.info("Available policies: %s", available_policies)
 
-def _handle_policy_option(pman, aspm, name, args):
+def _handle_policy_option(args, aspm, pman, name):
     """Handle the '--policy' option of the "config" command."""
 
     opts = getattr(args, "oargs", {})
@@ -63,22 +74,34 @@ def _handle_policy_option(pman, aspm, name, args):
     else:
         _LOG.info("ASPM policy: '%s'%s", cur_policy, pman.hostmsg)
 
-def _handle_1l_aspm_options(pman, aspm, name, args):
-    """Handle the '--li-aspm' option for the "config" command."""
+def _handle_1l_aspm_options(args, aspm, pman, state):
+    """Handle the '--l1-aspm' option for the "config" command."""
 
     device = args.device
-    if device and not name:
-        state = "enabled" if aspm.read_l1_aspm_state(device) else "disabled"
-        _LOG.info("L1 ASPM is %s for the '%s' device", state, device)
-    elif device:
-        aspm.write_l1_aspm_state(device, name)
-        _LOG.info("Changed L1 ASPM to '%s'%s succeeded for the '%s' device",
-                  name, pman.hostmsg, device)
-    else:
-        raise Error("please, provide a valid PCI device, using the '--device' option")
+    if not device:
+        raise Error("please, provide a valid PCI device using the '--device' option")
+
+    if state:
+        _print_l1_aspm_state(args, aspm)
+        return
+
+    state = state.lower()
+    valid_vals = ["false", "true", "off", "on", "disable", "enable"]
+    if state not in valid_vals:
+        valid_vals = ", ".join(valid_vals)
+        raise Error(f"bad L1 ASPM state value '{state}', use one of: {valid_vals}")
+
+    enable = state in ["false", "off", "disable"]
+    aspm.toggle_l1_aspm_state(device, enable)
+    _LOG.info("Changed L1 ASPM to '%s'%s succeeded for the '%s' device",
+              state, pman.hostmsg, device)
 
 def aspm_config_command(args, pman):
-    """Implements the 'aspm config' command."""
+    """
+    Implement the 'aspm config' command. The arguments are as follows.
+      * args - the command line arguments.
+      * pman - the process manager object that defines the host to configure ASPM info for.
+    """
 
     if not hasattr(args, "oargs"):
         raise Error("please, provide a configuration option")
@@ -86,8 +109,6 @@ def aspm_config_command(args, pman):
     with ASPM.ASPM(pman=pman) as aspm:
         opts = getattr(args, "oargs", {})
         if "policy" in opts:
-            name = opts["policy"]
-            _handle_policy_option(pman, aspm, name, args)
+            _handle_policy_option(args, aspm, pman, opts["policy"])
         if "l1_aspm" in opts:
-            name = opts["l1_aspm"]
-            _handle_1l_aspm_options(pman, aspm, name, args)
+            _handle_1l_aspm_options(args, aspm, pman, opts["l1_aspm"])
