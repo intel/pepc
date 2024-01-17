@@ -6,6 +6,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add the '--l1-aspm' option to 'pepc aspm' to get/set L1 ASPM for
+   individual PCI devices.
 ### Removed
 ### Changed
 
