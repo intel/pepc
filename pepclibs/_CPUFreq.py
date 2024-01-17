@@ -75,25 +75,33 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             return
 
         hybrid_info = self._cpuinfo.get_hybrid_cpu_topology()
+        if hybrid_info["ecore"] or hybrid_info["pcore"]:
+            return
 
-        if not hybrid_info["ecore"] and hybrid_info["pcore"]:
-            if not self._kver:
-                self._kver = KernelVersion.get_kver()
-
-            if KernelVersion.kver_ge(self._kver, "6.5"):
+        if not self._kver:
+            try:
+                self._kver = KernelVersion.get_kver(pman=self._pman)
+            except Error as err:
+                _LOG.warning("failed to detect kernel version%s:\n%s",
+                             self._pman.hostmsg, err.indent(2))
                 self._check_no_ecores_bug = False
                 return
 
-            # It is possible that there are E-cores, but they are offline. To avoid false-positives,
-            # warn only if there are no offline CPUs.
-            if self._cpuinfo.get_offline_cpus():
-                return
-
+        if KernelVersion.kver_ge(self._kver, "6.5"):
             self._check_no_ecores_bug = False
-            _LOG.warning("there is a bug in Linux kernel versions older than version 6.5 that "
-                         "affects hybrid systems with disabled E-cores: CPU frequency in sysfs "
-                         "files is incorrect. See kernel commit "
-                         "'0fcfc9e51990246a9813475716746ff5eb98c6aa'.")
+            return
+
+        # It is possible that there are E-cores, but they are offline. To avoid false-positives,
+        # warn only if there are no offline CPUs.
+        if self._cpuinfo.get_offline_cpus():
+            return
+
+        self._check_no_ecores_bug = False
+        _LOG.warning("kernel version%s is %s, and the processor is hybrid with no E-cores or all "
+                     "E-cores disabled.\nKernel versions prior to 6.5 have a bug: sysfs CPU "
+                     "frequency files have incorrect numbers on systems like this.\nThe fix is in "
+                     "Linux kernel commit '0fcfc9e51990246a9813475716746ff5eb98c6aa'.",
+                     {self._pman.hostmsg}, {self._kver})
 
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
