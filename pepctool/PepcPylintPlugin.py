@@ -1213,6 +1213,7 @@ class PepcASTChecker(BaseChecker):
             msgtype = "error"
 
         firstline = True
+        multidot = txt.count(".") > 1
 
         for line in txt.split("\n", 1):
             line = line.replace("\n", " ")
@@ -1222,7 +1223,7 @@ class PepcASTChecker(BaseChecker):
                     # If this is the first line of a multiline string, attempt to match a single dot
                     # at the end of the line for an error condition.
                     match = re.match(r"[^.]*\.\s*$", line)
-                    if match:
+                    if match and not multidot:
                         self.add_message(f"pepc-dot-{msgtype}-message", node=node)
                 else:
                     # For rest of the string (can be multiple lines), there should be at least one
@@ -1234,7 +1235,7 @@ class PepcASTChecker(BaseChecker):
             match = re.match(r"^[%{]", line)
             if not match:
                 match = re.match(r"^[A-Z]([a-z]+|\s+)", line)
-                if match and firstline:
+                if match and firstline and not multidot:
                     self.add_message(f"pepc-cap-{msgtype}-message", node=node)
                 if not match and not firstline:
                     self.add_message(f"pepc-lower-case-{msgtype}-message-cont", node=node)
