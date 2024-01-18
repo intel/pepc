@@ -38,6 +38,136 @@ def _check_generic_string(obj, txt, msg, node=None, lineno=None):
 class IndentValidator():
     """Helper class for validating code indentation."""
 
+    def _validate_string(self, token, lineno, txt):
+        """Validate string indentation, if it is a multiline string."""
+
+        if not txt.startswith("\"\"\""):
+            return
+
+        base = token.start[1]
+        current = base
+        tag = None
+        levels = {}
+
+        prevline = None
+        linecache = None
+        lineno -= 1
+
+        txt = txt.lstrip("\"\"\"").rstrip("\"\"\"")
+
+        for line in txt.split("\n"):
+            lineno += 1
+
+            prevline = linecache
+            linecache = line
+
+            match = re.match(r".*\t", line)
+            if match:
+                self._parent.add_message("pepc-string-unexpected-tab", line=lineno)
+                line = line.expandtabs(4)
+
+            stripline = line.lstrip(" ")
+            if prevline is None and line != "":
+                base += 3
+                linecache = stripline
+                current = base
+                continue
+
+            if stripline == "":
+                # Blank line resets indent levels.
+                levels = {}
+                linecache = ""
+                current = base
+                continue
+
+            indent = len(line) - len(stripline)
+
+            bracket_map = {"(": ")", "{": "}", "[": "]"}
+
+            i = base
+
+            while i < len(line):
+                ch = line[i]
+                if i > 0:
+                    prevch = line[i - 1]
+                else:
+                    prevch = None
+
+                if i < len(line) - 1:
+                    nextch = line[i + 1]
+                else:
+                    nextch = None
+
+                i += 1
+
+                if ch == " ":
+                    continue
+                if (ch in ("*", "-", "o") and prevch == " " and nextch == " ") \
+                   or ch in ("(", "{", "[", ":"):
+                    offset = 0
+                    while i + offset < len(line) and line[i + offset] == " ":
+                        offset += 1
+                    if offset:
+                        lvl_offset = i + 1
+                    else:
+                        lvl_offset = i
+                    offset += 1
+                    levels[lvl_offset] = {"offset": offset, "tag": ch}
+                    continue
+                if ch in (")", "}", "]") and levels:
+                    prev = levels[list(levels)[-1]]
+                    if prev["tag"] in bracket_map and bracket_map[prev["tag"]] == ch:
+                        levels.popitem()
+                        if not levels:
+                            current = base
+
+            tag = None
+
+            match = re.match(r"([A-Z]+|[0-9\.]*[0-9]+)\. ", stripline)
+            if match:
+                offset = len(match.group(1)) + 2
+                match = re.match(r"[A-Z]", stripline)
+                if match:
+                    tag = "str"
+                else:
+                    tag = "num"
+
+            if tag:
+                if indent + offset not in levels:
+                    levels[indent + offset] = {"offset": offset, "tag": tag}
+                    current = indent + offset
+                else:
+                    if levels[indent + offset]["tag"] != tag:
+                        self._parent.add_message("pepc-string-reused-indent-level",
+                                                 args=(tag, levels[indent + offset]["tag"]),
+                                                 line=lineno)
+                continue
+
+            if indent != current:
+                if indent == base:
+                    current = indent
+                else:
+                    for lvl_indent, lvl in levels.items():
+                        if indent == lvl_indent:
+                            current = lvl_indent
+                            break
+                        if indent == lvl_indent - lvl["offset"]:
+                            indent = lvl_indent
+                            current = lvl_indent
+
+            if current != indent:
+                closest = current
+                min_diff = abs(current - indent)
+
+                for lvl in levels:
+                    diff = abs(lvl - indent)
+                    if not closest or diff < min_diff:
+                        closest = lvl
+                        min_diff = diff
+
+                self._parent.add_message("pepc-string-bad-indent", line=lineno,
+                                         args=(closest, indent))
+
     def validate(self, token, lineno, txt):
         """
         Verify the alignment of a token, if it is the first token on a line. The arguments are as
@@ -51,6 +181,9 @@ class IndentValidator():
         if self._new_indent:
             self._indent = self._new_indent
             self._new_indent = None
+
+        if token.type == tokenize.STRING:
+            self._validate_string(token, lineno, txt)
 
         # Bracket immediately followed by a newline marks the start of a data struct level. In this
         # case, force the indent level to base + 4, and update the saved indent level in the stack
@@ -258,10 +391,32 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
                 "Used when code is badly indented."
             ),
         ),
+        "W9918": (
+            "Unexpected tab",
+            "pepc-string-unexpected-tab",
+            (
+                "Unexpected tab character in multiline string."
+            ),
+        ),
+        "W9919": (
+            "Reused indent level in string by '%s', already used by '%s'",
+            "pepc-string-reused-indent-level",
+            (
+                "Used when multiple bullets / lists use the same indent level."
+            ),
+        ),
+        "W9920": (
+            "Bad indentation, expected %s, got %s spaces",
+            "pepc-string-bad-indent",
+            (
+                "Used when bad indent level is used in a multiline string."
+            ),
+        ),
     }
     options = ()
 
     def _end_comment(self):
+        # pylint: disable=pepc-string-bad-indent
         """
         Tag the end of the current comment and verify that it ends with either '}', ']', ')' or '.'.
         If the comment contains some data structure snippet, it can end with closing parenthesis,
