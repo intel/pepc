@@ -380,5 +380,5 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_pman")
+        close_attrs = ("_pman",)
         ClassHelpers.close(self, close_attrs=close_attrs)
