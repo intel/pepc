@@ -73,7 +73,10 @@ class ASPM(ClassHelpers.SimpleCloseContext):
             yield policy
 
     def _l1_aspm_file_not_found(self, pci_address, err):
-        """Print error message in case L1 ASPM file operation fails."""
+        """
+        Raise an exception with a helpful error message when the per-device L1 ASPM sysfs file does
+        not exist.
+        """
 
         path = self._sysfs_base / pci_address
         msg = f"the '{pci_address}' PCI device was not found{self._pman.hostmsg}:\n{err.indent(2)}"
