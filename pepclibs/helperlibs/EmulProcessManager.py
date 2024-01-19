@@ -200,8 +200,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def _set_seek_method(self, fobj, path):
         """
-        Some files needs special handling for the 'seek()' syscal. Replace the 'seek()' method of
-        'fobj' with a custom method in order to properly emulate the behavior of the file in 'path'.
+        Some files needs special 'seek()' handling. Replace the 'seek()' method of 'fobj' with a
+        custom method in order to properly emulate the behavior of the file in 'path'.
         """
 
         def _seek_offset(self, offset, whence=0):
