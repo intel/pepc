@@ -5,11 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix incorrect uncore frequency configure result on systems that use the TPMI
-   uncore frequency driver (regression since v1.5.0).
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.4] - 2024-01-22
+### Fixed
+ - Fix incorrect uncore frequency configure result on systems that use the TPMI
+   uncore frequency driver (regression since v1.5.0).
 
 ## [1.5.3] - 2024-01-22
 ### Fixed
