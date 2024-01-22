@@ -238,13 +238,15 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         # but not dies.
         for package in self._get_dies_info():
             for key in "min", "max":
-                path = self._get_sysfs_path_dies(key, package, 0, limit=True)
+                path = self._get_legacy_sysfs_api_path(key, package, 0, limit=True)
                 what = f"{key}. uncore frequency limit"
                 limit = self._sysfs_io.read_int(path, what=what)
 
-                path = self._get_sysfs_path_dies(key, package, 0, limit=False)
+                path = self._get_legacy_sysfs_api_path(key, package, 0, limit=False)
                 what = f"{key}. uncore frequency"
                 self._sysfs_io.write_verify(path, str(limit), what=what)
+
+        self._new_sysfs_api_unlocked = True
 
     def _set_freq_dies(self, freq, key, dies):
         """For every die in 'dies', set the min. or max. uncore frequency for the die."""
