@@ -419,7 +419,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         Enable or disable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
           * csnames - same as in 'get_cstates_info()'.
           * cpus - same as in 'get_cstates_info()'.
-          * enabled - if 'True', the specified C-states should be enabled on the specified CPUS,
+          * enabled - if 'True', the specified C-states should be enabled on the specified CPUs,
                       otherwise disabled.
         """
 
