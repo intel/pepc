@@ -36,7 +36,6 @@ from pepclibs import CPUInfo, _SysfsIO
 from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, KernelModule, FSHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 _LOG = logging.getLogger()
 
@@ -244,7 +243,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
                 path = self._get_legacy_sysfs_api_path(key, package, 0, limit=False)
                 what = f"{key}. uncore frequency"
-                self._sysfs_io.write_verify_int(path, limit, what=what)
+                self._sysfs_io.write_int(path, limit, what=what)
 
         self._new_sysfs_api_unlocked = True
 
@@ -258,12 +257,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
                 path = self._get_sysfs_path_dies(key, package, die)
-                try:
-                    self._sysfs_io.write_verify_int(path, freq // 1000, what=what)
-                except ErrorVerifyFailed as err:
-                    setattr(err, "package", package)
-                    setattr(err, "die", die)
-                    raise err
+                self._sysfs_io.write_int(path, freq // 1000, what=what)
 
     def set_min_freq_dies(self, freq, dies):
         """
@@ -387,11 +381,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         for cpu in cpus:
             path = self._get_sysfs_path_cpu(key, cpu)
-            try:
-                self._sysfs_io.write_verify_int(path, freq // 1000, what=what)
-            except ErrorVerifyFailed as err:
-                setattr(err, "cpu", cpu)
-                raise err
+            self._sysfs_io.write_int(path, freq // 1000, what=what)
 
     def set_min_freq_cpus(self, freq, cpus):
         """
