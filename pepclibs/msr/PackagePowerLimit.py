@@ -19,27 +19,27 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 MSR_PKG_POWER_LIMIT = 0x610
 
 # CPU models supporting the "Package Power Limit" MSR.
-_PPL_CPUS = CPUInfo.GNRS +         \
-            CPUInfo.EMRS +         \
-            CPUInfo.METEORLAKES +  \
-            CPUInfo.SPRS +         \
-            CPUInfo.RAPTORLAKES +  \
-            CPUInfo.ALDERLAKES +   \
-            CPUInfo.ROCKETLAKES +  \
-            CPUInfo.TIGERLAKES +   \
-            CPUInfo.ICELAKES +     \
-            CPUInfo.COMETLAKES +   \
-            CPUInfo.KABYLAKES +    \
-            CPUInfo.CANNONLAKES +  \
-            CPUInfo.SKYLAKES +     \
-            CPUInfo.BROADWELLS +   \
-            CPUInfo.HASWELLS +     \
-            CPUInfo.IVYBRIDGES +   \
-            CPUInfo.SANDYBRIDGES + \
-            CPUInfo.WESTMERES +    \
-            CPUInfo.TREMONTS +     \
-            CPUInfo.GOLDMONTS +    \
-            CPUInfo.PHIS
+_PPL_CPUS = CPUInfo.CPU_GROUPS["GNR"] +         \
+            CPUInfo.CPU_GROUPS["EMR"] +         \
+            CPUInfo.CPU_GROUPS["METEORLAKE"] +  \
+            CPUInfo.CPU_GROUPS["SPR"] +         \
+            CPUInfo.CPU_GROUPS["RAPTORLAKE"] +  \
+            CPUInfo.CPU_GROUPS["ALDERLAKE"] +   \
+            CPUInfo.CPU_GROUPS["ROCKETLAKE"] +  \
+            CPUInfo.CPU_GROUPS["TIGERLAKE"] +   \
+            CPUInfo.CPU_GROUPS["ICELAKE"] +     \
+            CPUInfo.CPU_GROUPS["COMETLAKE"] +   \
+            CPUInfo.CPU_GROUPS["KABYLAKE"] +    \
+            CPUInfo.CPU_GROUPS["CANNONLAKE"] +  \
+            CPUInfo.CPU_GROUPS["SKYLAKE"] +     \
+            CPUInfo.CPU_GROUPS["BROADWELL"] +   \
+            CPUInfo.CPU_GROUPS["HASWELL"] +     \
+            CPUInfo.CPU_GROUPS["IVYBRIDGE"] +   \
+            CPUInfo.CPU_GROUPS["SANDYBRIDGE"] + \
+            CPUInfo.CPU_GROUPS["WESTMERE"] +    \
+            CPUInfo.CPU_GROUPS["TREMONT"] +     \
+            CPUInfo.CPU_GROUPS["GOLDMONT"] +    \
+            CPUInfo.CPU_GROUPS["PHI"]
 
 # Description of CPU features controlled by the Package Power Limit MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.

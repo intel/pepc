@@ -18,54 +18,54 @@ from pepclibs.msr import _FeaturedMSR
 MSR_PLATFORM_INFO = 0xCE
 
 # CPU models supporting the "maximum efficiency ratio" feature.
-_EFREQ_CPUS = CPUInfo.GNRS +         \
-              CPUInfo.EMRS +         \
-              CPUInfo.METEORLAKES +  \
-              CPUInfo.SPRS +         \
-              CPUInfo.RAPTORLAKES +  \
-              CPUInfo.ALDERLAKES +   \
-              CPUInfo.ROCKETLAKES +  \
-              CPUInfo.TIGERLAKES +   \
-              CPUInfo.ICELAKES +     \
-              CPUInfo.COMETLAKES +   \
-              CPUInfo.KABYLAKES +    \
-              CPUInfo.CANNONLAKES +  \
-              CPUInfo.SKYLAKES +     \
-              CPUInfo.BROADWELLS +   \
-              CPUInfo.HASWELLS +     \
-              CPUInfo.IVYBRIDGES +   \
-              CPUInfo.SANDYBRIDGES + \
-              CPUInfo.WESTMERES +    \
-              CPUInfo.NEHALEMS +     \
-              CPUInfo.CRESTMONTS +   \
-              CPUInfo.TREMONTS +     \
-              CPUInfo.GOLDMONTS +    \
-              CPUInfo.PHIS
+_EFREQ_CPUS = CPUInfo.CPU_GROUPS["GNR"] +         \
+              CPUInfo.CPU_GROUPS["EMR"] +         \
+              CPUInfo.CPU_GROUPS["METEORLAKE"] +  \
+              CPUInfo.CPU_GROUPS["SPR"] +         \
+              CPUInfo.CPU_GROUPS["RAPTORLAKE"] +  \
+              CPUInfo.CPU_GROUPS["ALDERLAKE"] +   \
+              CPUInfo.CPU_GROUPS["ROCKETLAKE"] +  \
+              CPUInfo.CPU_GROUPS["TIGERLAKE"] +   \
+              CPUInfo.CPU_GROUPS["ICELAKE"] +     \
+              CPUInfo.CPU_GROUPS["COMETLAKE"] +   \
+              CPUInfo.CPU_GROUPS["KABYLAKE"] +    \
+              CPUInfo.CPU_GROUPS["CANNONLAKE"] +  \
+              CPUInfo.CPU_GROUPS["SKYLAKE"] +     \
+              CPUInfo.CPU_GROUPS["BROADWELL"] +   \
+              CPUInfo.CPU_GROUPS["HASWELL"] +     \
+              CPUInfo.CPU_GROUPS["IVYBRIDGE"] +   \
+              CPUInfo.CPU_GROUPS["SANDYBRIDGE"] + \
+              CPUInfo.CPU_GROUPS["WESTMERE"] +    \
+              CPUInfo.CPU_GROUPS["NEHALEM"] +     \
+              CPUInfo.CPU_GROUPS["CRESTMONT"] +   \
+              CPUInfo.CPU_GROUPS["TREMONT"] +     \
+              CPUInfo.CPU_GROUPS["GOLDMONT"] +    \
+              CPUInfo.CPU_GROUPS["PHI"]
 
 # CPU models supporting the "minimum operating ratio" feature.
-_MIN_OPER_RATIO_CPUS = CPUInfo.GNRS +                      \
-                       CPUInfo.EMRS +                      \
-                       CPUInfo.METEORLAKES +               \
-                       CPUInfo.SPRS +                      \
-                       CPUInfo.RAPTORLAKES +               \
-                       CPUInfo.ALDERLAKES +                \
-                       CPUInfo.ROCKETLAKES +               \
-                       CPUInfo.TIGERLAKES +                \
-                       CPUInfo.ICELAKES +                  \
-                       CPUInfo.COMETLAKES +                \
-                       CPUInfo.KABYLAKES +                 \
-                       CPUInfo.CANNONLAKES +               \
-                       CPUInfo.SKYLAKES +                  \
-                       CPUInfo.BROADWELLS +                \
-                       CPUInfo.HASWELLS +                  \
+_MIN_OPER_RATIO_CPUS = CPUInfo.CPU_GROUPS["GNR"] +                      \
+                       CPUInfo.CPU_GROUPS["EMR"] +                      \
+                       CPUInfo.CPU_GROUPS["METEORLAKE"] +               \
+                       CPUInfo.CPU_GROUPS["SPR"] +                      \
+                       CPUInfo.CPU_GROUPS["RAPTORLAKE"] +               \
+                       CPUInfo.CPU_GROUPS["ALDERLAKE"] +                \
+                       CPUInfo.CPU_GROUPS["ROCKETLAKE"] +               \
+                       CPUInfo.CPU_GROUPS["TIGERLAKE"] +                \
+                       CPUInfo.CPU_GROUPS["ICELAKE"] +                  \
+                       CPUInfo.CPU_GROUPS["COMETLAKE"] +                \
+                       CPUInfo.CPU_GROUPS["KABYLAKE"] +                 \
+                       CPUInfo.CPU_GROUPS["CANNONLAKE"] +               \
+                       CPUInfo.CPU_GROUPS["SKYLAKE"] +                  \
+                       CPUInfo.CPU_GROUPS["BROADWELL"] +                \
+                       CPUInfo.CPU_GROUPS["HASWELL"] +                  \
                        (CPUInfo.CPUS["IVYBRIDGE"]["model"], ) +  \
-                       CPUInfo.CRESTMONTS +                \
-                       CPUInfo.TREMONTS +                  \
-                       CPUInfo.GOLDMONTS +                 \
-                       CPUInfo.PHIS
+                       CPUInfo.CPU_GROUPS["CRESTMONT"] +                \
+                       CPUInfo.CPU_GROUPS["TREMONT"] +                  \
+                       CPUInfo.CPU_GROUPS["GOLDMONT"] +                 \
+                       CPUInfo.CPU_GROUPS["PHI"]
 
 # CPU models supporting the "maximum non-turbo ratio" feature.
-_BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS
+_BASEFREQ_CPUS = _EFREQ_CPUS + CPUInfo.CPU_GROUPS["SILVERMONT"] + CPUInfo.CPU_GROUPS["AIRMONT"]
 
 # Description of CPU features controlled by the the Platform Information MSR. Please, refer to the
 # notes for '_FeaturedMSR.FEATURES' for more comments.

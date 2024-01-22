@@ -20,14 +20,14 @@ MSR_UNCORE_RATIO_LIMIT = 0x620
 #
 # CPU models that support the uncore ratio limit MSR.
 #
-_CPUS = CPUInfo.EMRS +                            \
-        CPUInfo.METEORLAKES +                     \
-        CPUInfo.SPRS +                            \
-        CPUInfo.RAPTORLAKES +                     \
+_CPUS = CPUInfo.CPU_GROUPS["EMR"] +               \
+        CPUInfo.CPU_GROUPS["METEORLAKE"] +        \
+        CPUInfo.CPU_GROUPS["SPR"] +               \
+        CPUInfo.CPU_GROUPS["RAPTORLAKE"] +        \
         (CPUInfo.CPUS["ALDERLAKE"]["model"],      \
          CPUInfo.CPUS["ALDERLAKE_L"]["model"],) + \
-        CPUInfo.ICXES +                           \
-        CPUInfo.SKXES +                           \
+        CPUInfo.CPU_GROUPS["ICX"] +               \
+        CPUInfo.CPU_GROUPS["SKX"] +               \
         (CPUInfo.CPUS["BROADWELL_G"]["model"],    \
          CPUInfo.CPUS["BROADWELL_D"]["model"],    \
          CPUInfo.CPUS["BROADWELL_X"]["model"],)

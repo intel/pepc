@@ -18,8 +18,8 @@ from pepclibs.msr import _FeaturedMSR
 MSR_ENERGY_PERF_BIAS = 0x1B0
 
 # MSR_ENERGY_PERF_BIAS features have CPU scope, except for the following CPU models.
-_CORE_SCOPE_CPUS = CPUInfo.SILVERMONTS
-_PACKAGE_SCOPE_CPUS = CPUInfo.WESTMERES + CPUInfo.SANDYBRIDGES
+_CORE_SCOPE_CPUS = CPUInfo.CPU_GROUPS["SILVERMONT"]
+_PACKAGE_SCOPE_CPUS = CPUInfo.CPU_GROUPS["WESTMERE"] + CPUInfo.CPU_GROUPS["SANDYBRIDGE"]
 
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.

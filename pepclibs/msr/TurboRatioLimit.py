@@ -21,22 +21,22 @@ MSR_TURBO_RATIO_LIMIT = 0x1AD
 # CPU models that include core turbo ratios in the MSR (as apposed to group turbo ratio). "CT" in
 # the names stands for "Core Turbo".
 #
-_CT_CPUS = CPUInfo.METEORLAKES +  \
-           CPUInfo.RAPTORLAKES +  \
-           CPUInfo.ALDERLAKES +   \
-           CPUInfo.ROCKETLAKES +  \
-           CPUInfo.TIGERLAKES +   \
-           CPUInfo.LAKEFIELDS +   \
-           CPUInfo.ICL_CLIENTS +  \
-           CPUInfo.SKL_CLIENTS +  \
-           CPUInfo.COMETLAKES +   \
-           CPUInfo.KABYLAKES +    \
-           CPUInfo.CANNONLAKES +  \
-           CPUInfo.BROADWELLS +   \
+_CT_CPUS = CPUInfo.CPU_GROUPS["METEORLAKE"] +  \
+           CPUInfo.CPU_GROUPS["RAPTORLAKE"] +  \
+           CPUInfo.CPU_GROUPS["ALDERLAKE"] +   \
+           CPUInfo.CPU_GROUPS["ROCKETLAKE"] +  \
+           CPUInfo.CPU_GROUPS["TIGERLAKE"] +   \
+           CPUInfo.CPU_GROUPS["LAKEFIELD"] +   \
+           CPUInfo.CPU_GROUPS["ICL_CLIENT"] +  \
+           CPUInfo.CPU_GROUPS["SKL_CLIENT"] +  \
+           CPUInfo.CPU_GROUPS["COMETLAKE"] +   \
+           CPUInfo.CPU_GROUPS["KABYLAKE"] +    \
+           CPUInfo.CPU_GROUPS["CANNONLAKE"] +  \
+           CPUInfo.CPU_GROUPS["BROADWELL"] +   \
            (CPUInfo.CPUS["ATOM_SILVERMONT_D"]["model"], ) + \
-           CPUInfo.HASWELLS +     \
-           CPUInfo.IVYBRIDGES +   \
-           CPUInfo.SANDYBRIDGES + \
+           CPUInfo.CPU_GROUPS["HASWELL"] +     \
+           CPUInfo.CPU_GROUPS["IVYBRIDGE"] +   \
+           CPUInfo.CPU_GROUPS["SANDYBRIDGE"] + \
            (CPUInfo.CPUS["NEHALEM"]["model"],
             CPUInfo.CPUS["NEHALEM_G"]["model"],
             CPUInfo.CPUS["NEHALEM_EP"]["model"])
@@ -46,13 +46,13 @@ _CT_CPUS = CPUInfo.METEORLAKES +  \
 # MSR is named 'MSR_TURBO_GROUP_CORECNT' for Atom CPUs and 'MSR_TURBO_RATIO_LIMIT_CORES' for "big
 # core" CPUs. The same MSR is called 'MSR_TURBO_RATIO_LIMIT1' for CPUs that do not have groups in
 # 'MSR_TURBO_RATIO_LIMIT'.
-_GT_CPUS = CPUInfo.GNRS + \
-           CPUInfo.CRESTMONTS + \
-           CPUInfo.EMRS + \
-           CPUInfo.SPRS + \
+_GT_CPUS = CPUInfo.CPU_GROUPS["GNR"] + \
+           CPUInfo.CPU_GROUPS["CRESTMONT"] + \
+           CPUInfo.CPU_GROUPS["EMR"] + \
+           CPUInfo.CPU_GROUPS["SPR"] + \
            (CPUInfo.CPUS["TREMONT_D"]["model"],) +  \
-           CPUInfo.ICXES + \
-           CPUInfo.SKXES + \
+           CPUInfo.CPU_GROUPS["ICX"] + \
+           CPUInfo.CPU_GROUPS["SKX"] + \
            (CPUInfo.CPUS["GOLDMONT_D"]["model"],
             CPUInfo.CPUS["ATOM_GOLDMONT"]["model"],
             CPUInfo.CPUS["ATOM_GOLDMONT_PLUS"]["model"],)

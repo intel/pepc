@@ -37,7 +37,7 @@ LTR_CPUS = (CPUInfo.CPUS["GRANITERAPIDS_X"]["model"],
             CPUInfo.CPUS["ICELAKE_X"]["model"],)
 
 # CPU models supporting the PCH negotiation feature.
-_PCH_NEGOTIATION_CPUS = (CPUInfo.CPUS["EMERALDRAPIDS_X"]["model"],)
+_PCH_NEGOTIATION_CPUS = CPUInfo.CPU_GROUPS["EMR"]
 
 # Description of CPU features controlled by the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.

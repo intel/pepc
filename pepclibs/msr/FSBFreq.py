@@ -59,7 +59,7 @@ _FSB_CODES = {
 }
 
 # MSR_FSB_FREQ features have core scope, except for the following CPU models.
-_MODULE_SCOPE_CPUS = CPUInfo.SILVERMONTS + CPUInfo.AIRMONTS
+_MODULE_SCOPE_CPUS = CPUInfo.CPU_GROUPS["SILVERMONT"] + CPUInfo.CPU_GROUPS["AIRMONT"]
 
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.

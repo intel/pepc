@@ -309,77 +309,77 @@ CPUS = {
 #
 # Various handy combinations of CPU models.
 #
-GNRS =         (CPUS["GRANITERAPIDS_X"]["model"],
-                CPUS["GRANITERAPIDS_D"]["model"])
-EMRS =         (CPUS["EMERALDRAPIDS_X"]["model"],)
-METEORLAKES =  (CPUS["METEORLAKE"]["model"],
-                CPUS["METEORLAKE_L"]["model"],)
-SPRS =         (CPUS["SAPPHIRERAPIDS_X"]["model"],)
-RAPTORLAKES =  (CPUS["RAPTORLAKE"]["model"],
-                CPUS["RAPTORLAKE_P"]["model"],
-                CPUS["RAPTORLAKE_S"]["model"],)
-ALDERLAKES =   (CPUS["ALDERLAKE"]["model"],
-                CPUS["ALDERLAKE_L"]["model"],
-                CPUS["ALDERLAKE_N"]["model"],)
-ROCKETLAKES =  (CPUS["ROCKETLAKE"]["model"],)
-TIGERLAKES =   (CPUS["TIGERLAKE"]["model"],
-                CPUS["TIGERLAKE_L"]["model"],)
-LAKEFIELDS =   (CPUS["LAKEFIELD"]["model"],)
-ICELAKES =     (CPUS["ICELAKE"]["model"],
-                CPUS["ICELAKE_L"]["model"],
-                CPUS["ICELAKE_D"]["model"],
-                CPUS["ICELAKE_X"]["model"],)
-ICL_CLIENTS =  (CPUS["ICELAKE"]["model"],
-                CPUS["ICELAKE_L"]["model"],)
-ICXES       =  (CPUS["ICELAKE_D"]["model"],
-                CPUS["ICELAKE_X"]["model"],)
-COMETLAKES =   (CPUS["COMETLAKE"]["model"],
-                CPUS["COMETLAKE_L"]["model"],)
-KABYLAKES =    (CPUS["KABYLAKE"]["model"],
-                CPUS["KABYLAKE_L"]["model"],)
-CANNONLAKES =  (CPUS["CANNONLAKE_L"]["model"],)
-SKYLAKES =     (CPUS["SKYLAKE"]["model"],
-                CPUS["SKYLAKE_L"]["model"],
-                CPUS["SKYLAKE_X"]["model"],)
-SKL_CLIENTS =  (CPUS["SKYLAKE"]["model"],
-                CPUS["SKYLAKE_L"]["model"])
-SKXES =        (CPUS["SKYLAKE_X"]["model"],)
-BROADWELLS =   (CPUS["BROADWELL"]["model"],
-                CPUS["BROADWELL_G"]["model"],
-                CPUS["BROADWELL_D"]["model"],
-                CPUS["BROADWELL_X"]["model"],)
-HASWELLS =     (CPUS["HASWELL"]["model"],
-                CPUS["HASWELL_L"]["model"],
-                CPUS["HASWELL_G"]["model"],
-                CPUS["HASWELL_X"]["model"],)
-IVYBRIDGES =   (CPUS["IVYBRIDGE"]["model"],
-                CPUS["IVYBRIDGE_X"]["model"],)
-SANDYBRIDGES = (CPUS["SANDYBRIDGE"]["model"],
-                CPUS["SANDYBRIDGE_X"]["model"],)
-WESTMERES =    (CPUS["WESTMERE"]["model"],
-                CPUS["WESTMERE_EP"]["model"],
-                CPUS["WESTMERE_EX"]["model"],)
-NEHALEMS =     (CPUS["NEHALEM"]["model"],
-                CPUS["NEHALEM_G"]["model"],
-                CPUS["NEHALEM_EP"]["model"],
-                CPUS["NEHALEM_EX"]["model"])
-
-CRESTMONTS =   (CPUS["GRANDRIDGE"]["model"],
-                CPUS["SIERRAFOREST_X"]["model"])
-TREMONTS =     (CPUS["ATOM_TREMONT"]["model"],
-                CPUS["ATOM_TREMONT_L"]["model"],
-                CPUS["TREMONT_D"]["model"],)
-GOLDMONTS =    (CPUS["ATOM_GOLDMONT"]["model"],
-                CPUS["GOLDMONT_D"]["model"],
-                CPUS["ATOM_GOLDMONT_PLUS"]["model"],)
-AIRMONTS =     (CPUS["ATOM_AIRMONT"]["model"],)
-SILVERMONTS =  (CPUS["ATOM_SILVERMONT"]["model"],
-                CPUS["ATOM_SILVERMONT_MID"]["model"],
-                CPUS["ATOM_SILVERMONT_MID1"]["model"],
-                CPUS["ATOM_SILVERMONT_D"]["model"],)
-
-PHIS =         (CPUS["XEON_PHI_KNL"]["model"],
-                CPUS["XEON_PHI_KNM"]["model"],)
+CPU_GROUPS = {
+    "GNR":        (CPUS["GRANITERAPIDS_X"]["model"],
+                   CPUS["GRANITERAPIDS_D"]["model"]),
+    "EMR":        (CPUS["EMERALDRAPIDS_X"]["model"],),
+    "METEORLAKE": (CPUS["METEORLAKE"]["model"],
+                   CPUS["METEORLAKE_L"]["model"],),
+    "SPR":        (CPUS["SAPPHIRERAPIDS_X"]["model"],),
+    "RAPTORLAKE": (CPUS["RAPTORLAKE"]["model"],
+                   CPUS["RAPTORLAKE_P"]["model"],
+                   CPUS["RAPTORLAKE_S"]["model"],),
+    "ALDERLAKE":  (CPUS["ALDERLAKE"]["model"],
+                   CPUS["ALDERLAKE_L"]["model"],
+                   CPUS["ALDERLAKE_N"]["model"],),
+    "ROCKETLAKE": (CPUS["ROCKETLAKE"]["model"],),
+    "TIGERLAKE":  (CPUS["TIGERLAKE"]["model"],
+                   CPUS["TIGERLAKE_L"]["model"],),
+    "LAKEFIELD":  (CPUS["LAKEFIELD"]["model"],),
+    "ICELAKE":    (CPUS["ICELAKE"]["model"],
+                   CPUS["ICELAKE_L"]["model"],
+                   CPUS["ICELAKE_D"]["model"],
+                   CPUS["ICELAKE_X"]["model"],),
+    "ICL_CLIENT": (CPUS["ICELAKE"]["model"],
+                   CPUS["ICELAKE_L"]["model"],),
+    "ICX":        (CPUS["ICELAKE_D"]["model"],
+                   CPUS["ICELAKE_X"]["model"],),
+    "COMETLAKE":  (CPUS["COMETLAKE"]["model"],
+                   CPUS["COMETLAKE_L"]["model"],),
+    "KABYLAKE":   (CPUS["KABYLAKE"]["model"],
+                   CPUS["KABYLAKE_L"]["model"],),
+    "CANNONLAKE": (CPUS["CANNONLAKE_L"]["model"],),
+    "SKYLAKE":    (CPUS["SKYLAKE"]["model"],
+                   CPUS["SKYLAKE_L"]["model"],
+                   CPUS["SKYLAKE_X"]["model"],),
+    "SKL_CLIENT": (CPUS["SKYLAKE"]["model"],
+                   CPUS["SKYLAKE_L"]["model"]),
+    "SKX":        (CPUS["SKYLAKE_X"]["model"],),
+    "BROADWELL":  (CPUS["BROADWELL"]["model"],
+                   CPUS["BROADWELL_G"]["model"],
+                   CPUS["BROADWELL_D"]["model"],
+                   CPUS["BROADWELL_X"]["model"],),
+    "HASWELL":    (CPUS["HASWELL"]["model"],
+                   CPUS["HASWELL_L"]["model"],
+                   CPUS["HASWELL_G"]["model"],
+                   CPUS["HASWELL_X"]["model"],),
+    "IVYBRIDGE":  (CPUS["IVYBRIDGE"]["model"],
+                   CPUS["IVYBRIDGE_X"]["model"],),
+    "SANDYBRIDGE":(CPUS["SANDYBRIDGE"]["model"],
+                   CPUS["SANDYBRIDGE_X"]["model"],),
+    "WESTMERE":   (CPUS["WESTMERE"]["model"],
+                   CPUS["WESTMERE_EP"]["model"],
+                   CPUS["WESTMERE_EX"]["model"],),
+    "NEHALEM":    (CPUS["NEHALEM"]["model"],
+                   CPUS["NEHALEM_G"]["model"],
+                   CPUS["NEHALEM_EP"]["model"],
+                   CPUS["NEHALEM_EX"]["model"]),
+    "CRESTMONT":  (CPUS["GRANDRIDGE"]["model"],
+                   CPUS["SIERRAFOREST_X"]["model"]),
+    "TREMONT":    (CPUS["ATOM_TREMONT"]["model"],
+                   CPUS["ATOM_TREMONT_L"]["model"],
+                   CPUS["TREMONT_D"]["model"],),
+    "GOLDMONT":   (CPUS["ATOM_GOLDMONT"]["model"],
+                   CPUS["GOLDMONT_D"]["model"],
+                   CPUS["ATOM_GOLDMONT_PLUS"]["model"],),
+    "AIRMONT":    (CPUS["ATOM_AIRMONT"]["model"],),
+    "SILVERMONT": (CPUS["ATOM_SILVERMONT"]["model"],
+                   CPUS["ATOM_SILVERMONT_MID"]["model"],
+                   CPUS["ATOM_SILVERMONT_MID1"]["model"],
+                   CPUS["ATOM_SILVERMONT_D"]["model"],),
+    "PHI":        (CPUS["XEON_PHI_KNL"]["model"],
+                   CPUS["XEON_PHI_KNM"]["model"],),
+}
 
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
 LEVELS = ("CPU", "core", "module", "die", "node", "package")

@@ -17,7 +17,7 @@ from pepclibs.msr import _FeaturedMSR
 MSR_PM_LOGICAL_ID = 0x54
 
 # CPU models supporting the "PM Logical ID" MSR.
-_PLI_CPUS = CPUInfo.GNRS + CPUInfo.CRESTMONTS
+_PLI_CPUS = CPUInfo.CPU_GROUPS["GNR"] + CPUInfo.CPU_GROUPS["CRESTMONT"]
 
 # Description of CPU features controlled by the PM Logical ID. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
