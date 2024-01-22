@@ -1044,10 +1044,10 @@ class PStates(_PropsClassBase.PropsClassBase):
                 self._raise_wrong_freq_order(pname, new_freq, cur_freq_limit, is_min, what=what)
 
             if new_freq not in freq2dies:
-                freq2dies[new_freq] = freq_dies = {}
-            if package not in freq_dies:
-                freq_dies[package] = []
-            freq_dies[package].append(die)
+                freq2dies[new_freq] = {}
+            if package not in freq2dies[new_freq]:
+                freq2dies[new_freq][package] = []
+            freq2dies[new_freq][package].append(die)
 
         for new_freq, freq_dies in freq2dies.items():
             self._set_uncore_freq_prop_dies(pname, new_freq, freq_dies)
