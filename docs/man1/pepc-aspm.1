@@ -81,6 +81,14 @@ Get currently configured PCI ASPM policy to name.
 .TP
 \f[B]--policies\f[R] \f[I]NAME\f[R]
 Get list of available PCI ASPM policy to names.
+.TP
+\f[B]--device\f[R] \f[I]ADDR\f[R]
+PCI device address for the \[aq]--l1-aspm\[aq] option.
+Example: \[aq]0000:00:02.0\[aq].
+.TP
+\f[B]--l1-aspm\f[R]
+Enable or disable L1 ASPM for the PCI device specified with
+\[aq]--device option\[aq].
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
 .PP
 Change PCI ASPM configuration.
@@ -88,3 +96,13 @@ Change PCI ASPM configuration.
 \f[B]--policy\f[R] \f[I]NAME\f[R]
 The PCI ASPM policy to set, use \[dq]default\[dq] to set the default
 policy.
+.TP
+\f[B]--device\f[R] \f[I]ADDR\f[R]
+PCI device address for the \[aq]--l1-aspm\[aq] option.
+Example \[aq]0000:00:02.0\[aq].
+.TP
+\f[B]--l1-aspm\f[R] \f[I]OPTION\f[R]
+Enable or disable L1 ASPM for a particular device.
+Valid arguments are \[aq]on\[aq], \[aq]off\[aq], \[aq]enable\[aq],
+\[aq]disable\[aq], \[aq]true\[aq], \[aq]false\[aq].
+The argument is case insensitive.
