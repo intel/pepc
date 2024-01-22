@@ -15,7 +15,6 @@ Provide a capability of reading and writing sysfs files. Implement caching.
 import time
 import logging
 import contextlib
-from pepclibs import CPUInfo
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorVerifyFailed
