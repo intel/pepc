@@ -294,6 +294,18 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             self._write(path, val, what=what)
         self.cache_add(path, val)
 
+    def write_int(self, path, val, what=None):
+        """
+        Write an integer value 'val' to a sysfs file at 'path'. The arguments are as follows.
+          * path - path of the sysfs file to write to.
+          * val - the value to write.
+          * what - short description of the file at 'path', will be included to the exception
+                   message in case of a failure.
+        """
+
+        val = Trivial.str_to_int(val, what=what)
+        self.write(path, str(val), what=what)
+
     def write_verify(self, path, val, what=None, retries=0, sleep=0):
         """
         Write value 'val' to a sysfs file at 'path' and verify that it was "accepted" by the kernel
@@ -332,7 +344,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         Raise 'ErrorVerifyFailed' if the value read was not the same as value written.
         """
 
-        intval = int(val)
+        intval = Trivial.str_to_int(val, what=what)
         val = str(intval)
 
         self.cache_remove(path)
