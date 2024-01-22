@@ -244,7 +244,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
                 path = self._get_legacy_sysfs_api_path(key, package, 0, limit=False)
                 what = f"{key}. uncore frequency"
-                self._sysfs_io.write_verify(path, str(limit), what=what)
+                self._sysfs_io.write_verify_int(path, limit, what=what)
 
         self._new_sysfs_api_unlocked = True
 
@@ -388,7 +388,7 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         for cpu in cpus:
             path = self._get_sysfs_path_cpu(key, cpu)
             try:
-                self._sysfs_io.write_verify(path, str(freq // 1000), what=what)
+                self._sysfs_io.write_verify_int(path, freq // 1000, what=what)
             except ErrorVerifyFailed as err:
                 setattr(err, "cpu", cpu)
                 raise err
