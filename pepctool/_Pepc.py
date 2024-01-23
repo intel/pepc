@@ -271,6 +271,31 @@ def _add_config_subcommand_options(props, subpars):
         option = f"--{name.replace('_', '-')}"
         subpars.add_argument(option, **kwargs)
 
+def _add_tpmi_subcommand_options(subpars):
+    """Add options to the TPMI subcommands."""
+
+    text = "Name of the TPMI feature to use."
+    subpars.add_argument("feature", help=text)
+
+    text = "TPMI device to use."
+    subpars.add_argument("--addr", help=text)
+
+    text = """Package to use. By default, uses package 0 if the TPMI device has not been defined by
+              the '--addr' option."""
+    subpars.add_argument("--package", help=text)
+
+    text = """TPMI instance to use. A special value 'all' can be used to specify all instances, and
+              this is the default."""
+    subpars.add_argument("--instance", help=text, default="all")
+
+    text = """Name of the TPMI register to use. A special value 'all' can be used to specify all
+              registers, and this is the default."""
+    subpars.add_argument("--register", help=text, default="all")
+
+    text = """Name of the TPMI register bitfield to use. A special value 'all' can be used to
+              specify all fields, and this is the default."""
+    subpars.add_argument("--bitfield", help=text, default="all")
+
 def build_arguments_parser():
     """Build and return the the command-line arguments parser object."""
 
@@ -674,6 +699,15 @@ def build_arguments_parser():
               available for them."""
     subpars2.add_argument("--all", action="store_true", help=text)
 
+    #
+    # Create parser for the 'tpmi info' command.
+    #
+    text = "Get TPMI information."
+    descr = """Read and parse the contents for the specified TPMI registers. """ + man_msg
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2.set_defaults(func=_tpmi_info_command)
+    _add_tpmi_subcommand_options(subpars2)
+
     if argcomplete:
         argcomplete.autocomplete(parser)
 
@@ -714,6 +748,13 @@ def _tpmi_ls_command(args, pman):
     from pepctool import _PepcTpmi
 
     _PepcTpmi.tpmi_ls_command(args, pman)
+
+def _tpmi_info_command(args, pman):
+    """Implements the 'tpmi info' command."""
+
+    from pepctool import _PepcTpmi
+
+    _PepcTpmi.tpmi_info_command(args, pman)
 
 def _cpu_hotplug_info_command(args, pman):
     """Implement the 'cpu-hotplug info' command."""
