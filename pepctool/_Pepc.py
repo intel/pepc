@@ -647,6 +647,34 @@ def build_arguments_parser():
             {columns}. Example: --columns Package,Core,CPU."""
     subpars2.add_argument("--columns", help=text)
 
+    #
+    # Create parser for the 'tpmi' command.
+    #
+    text = "TPMI read/write commands."
+    man_msg = """Please, refer to 'pepc-tpmi' manual page for more information."""
+    descr = "TPMI read/write commands. " + man_msg
+    subpars = subparsers.add_parser("tpmi", help=text, description=descr)
+
+    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subparsers2.required = True
+
+    #
+    # Create parser for the 'tpmi ls' command.
+    #
+    text = "List available TPMI features."
+    descr = """
+            Parse the available TPMI features based on both sysfs contents on the target system
+            and the available TPMI register specifications.
+            """ + man_msg
+    subpars2 = subparsers2.add_parser("ls", help=text, description=descr, epilog=man_msg)
+    subpars2.set_defaults(func=tpmi_ls_command)
+
+    text = """
+           List every available TPMI feature, including also the ones that don't have spec data
+           available for them.
+           """
+    subpars2.add_argument("--all", action="store_true", help=text)
+
     if argcomplete:
         argcomplete.autocomplete(parser)
 
@@ -680,6 +708,13 @@ def topology_info_command(args, pman):
     from pepctool import _PepcTopology
 
     _PepcTopology.topology_info_command(args, pman)
+
+def tpmi_ls_command(args, pman):
+    """Implements the 'tpmi ls' command."""
+
+    from pepctool import _PepcTpmi
+
+    _PepcTpmi.tpmi_ls_command(args, pman)
 
 def cpu_hotplug_info_command(args, pman):
     """Implements the 'cpu-hotplug info' command."""
@@ -836,6 +871,7 @@ def _get_emul_pman(args, path):
         "power" : ["CPUInfo", "Power"],
         "topology" : ["CPUInfo"],
         "cpu_hotplug" : ["CPUInfo", "CPUOnline", "Systemctl"],
+        "tpmi" : ["TPMI"],
     }
 
     for cmd, _modules in required_cmd_modules.items():
