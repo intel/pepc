@@ -32,7 +32,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from pepclibs.helperlibs import ProjectFiles, YAML
+from pepclibs.helperlibs import ProjectFiles, YAML, ClassHelpers
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 _SPECS_PATH_ENVVAR = "PEPC_TPMI_DATA_PATH"
@@ -84,9 +84,68 @@ class Tpmi():
             fid = fdict["feature-id"]
             yield fname, fid
 
-    def __init__(self):
-        """The class constructor."""
+    def get_features(self):
+        """
+        Parse and return a tuple of two lists for TPMI features for the platform. First list
+        contains the fully supported features, meaning features that have both spec files and
+        hardware support available. The second list contains the features that are available on
+        hardware, but there are no spec files available for them.
+        """
 
+        path = None
+
+        for dirname, _, _ in self._pman.lsdir("/sys/kernel/debug"):
+            # Full filename to match is of format:
+            #   /sys/kernel/debug/tpmi-.*.
+            match = re.match(r"^tpmi-.*$", dirname)
+            if match:
+                path = Path("/sys/kernel/debug") / dirname
+                break
+
+        if not path:
+            msg = f"TPMI operations are not supported{self._pman.hostmsg}. Here are the possible " \
+                  "reasons:\n" \
+                  " 1. Hardware does not support TPMI.\n" \
+                  " 2. The kernel is old and doesn't have the TPMI driver.\n" \
+                  " 3. The TPMI driver is not loaded. Try to compile the kernel with the\n" \
+                  "    CONFIG_INTEL_TPMI option.\n" \
+                  " 4. Debugfs support is not enabled. Try to compile the kernel with the\n" \
+                  "    CONFIG_DEBUG_FS option.\n" \
+                  "Address these issues or contact project maintainers."
+
+            raise ErrorNotSupported(msg)
+
+        avail_features = set()
+
+        for dirname, _, _ in self._pman.lsdir(path):
+            match = re.match(r"^tpmi-id-([0-9a-f]+)$", dirname)
+            if match:
+                avail_features.add(int(match.group(1), 16))
+
+        supported_features = {}
+        for fname, fid in self._get_supported_fnames_and_fids():
+            supported_features[fid] = fname
+
+        supported = []
+        missing = []
+
+        for fid in avail_features:
+            if fid in supported_features:
+                supported.append(supported_features[fid])
+            else:
+                missing.append(fid)
+
+        missing.sort()
+
+        return (supported, list(map(hex, missing)))
+
+    def __init__(self, pman):
+        """
+        The class constructor. The arguments are as follows.
+          * pman - the process manager object that defines the target host.
+        """
+
+        self._pman = pman
         self._fdict_cache = {}
         self._spec_dirs = []
 
@@ -101,3 +160,7 @@ class Tpmi():
 
         self._spec_dirs.append(ProjectFiles.find_project_data("pepc", "tpmi",
                                                               what="TPMI spec files"))
+
+    def close(self):
+        """Uninitialize the class object."""
+        ClassHelpers.close(self, unref_attrs=("_pman",))
