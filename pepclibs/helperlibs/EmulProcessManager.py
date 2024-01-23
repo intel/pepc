@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2024 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
@@ -94,7 +94,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         def _online_read(self):
             """
-            Mimic the '/sys/devices/system/cpu/online' file. It contents depends on the per-CPU
+            Mimic the '/sys/devices/system/cpu/online' file. It's contents depends on the per-CPU
             online files. For example if the per-cpu files contain the following:
 
             '/sys/devices/system/cpu/cpu0/online' : "1"
@@ -102,7 +102,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             '/sys/devices/system/cpu/cpu2/online' : "0"
             '/sys/devices/system/cpu/cpu3/online' : "1"
 
-            The global file contains th following:
+            The global file contains the following:
             '/sys/devices/system/cpu/online' : "0-1,3"
             """
 
