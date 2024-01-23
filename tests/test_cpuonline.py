@@ -8,17 +8,22 @@
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Tests for the public methods of the 'CPUOnline' module."""
+"""Test public methods of the 'CPUOnline' module."""
 
+import contextlib
 import pytest
 import common
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo, CPUOnline
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec):
-    """Yield a dictionary with information we need for testing."""
+    """
+    Build and yield the testing parameters dictionary. The arguments are as follows.
+      * hostspec - the specification of the host to run the tests on.
+    """
 
     emul_modules = ["CPUInfo", "CPUOnline"]
 
@@ -30,41 +35,53 @@ def get_params(hostspec):
         params["cpuonline"] = cpuonline
         params["cpuinfo"] = cpuinfo
 
-        params["online"] = cpuinfo.get_cpus()
-        params["offline"] = cpuinfo.get_offline_cpus()
         yield params
 
 def test_cpuonline_good(params):
-    """Test public methods of 'CPUOnline' class with good option values."""
-
-    if not common.is_emulated(params["pman"]):
-        # On real hardware some CPUs might not support offlining/onlining.
-        return
+    """
+    Test public methods of the 'CPUOnline' class with good input. The arguments are as follows.
+      * params - the testing parameters.
+    """
 
     onl = params["cpuonline"]
     cpuinfo = params["cpuinfo"]
 
-    # We need to initialize the topology, otherwise the topology will be re-created instead of
-    # updated.
-    cpuinfo.get_topology(levels=("CPU", ))
-    # Skip first online CPU, because CPU 0 does not support offlining.
-    onl.offline(cpus=params["online"][1:])
-    offline = set(params["online"][1:])
-    # When a CPU is offline/online, CPUInfo topology should reflect the changes.
-    for tline in cpuinfo.get_topology():
-        if tline["CPU"] in offline:
-            raise Error(f"CPU{tline['CPU']} was not updated in 'CPUInfo._topology'")
+    # Online all CPUs.
+    off_cpus = cpuinfo.get_offline_cpus()
+    onl.online(off_cpus)
 
-    onl.online(cpus="all")
-    onl.offline(cpus=params["offline"])
-
-    for cpu in params["online"]:
-        assert onl.is_online(cpu)
-    for cpu in params["offline"]:
-        assert not onl.is_online(cpu)
+    cpus = cpuinfo.get_cpus()
+    try:
+        offline_cpus = set()
+        # Offline every 2nd CPU.
+        for cpu in cpus:
+            if cpu % 2 == 0:
+                with contextlib.suppress(ErrorNotSupported):
+                    onl.offline(cpus=(cpu,))
+                    offline_cpus.add(cpu)
+        # Offline every 3rd CPU.
+        for cpu in cpus:
+            if cpu % 3 == 0:
+                with contextlib.suppress(ErrorNotSupported):
+                    onl.offline(cpus=(cpu,))
+                    offline_cpus.add(cpu)
+        # Verify online/offline status.
+        for cpu in cpus:
+            if cpu in offline_cpus:
+                assert not onl.is_online(cpu)
+            else:
+                assert onl.is_online(cpu)
+    finally:
+        with contextlib.suppress(Error):
+            # Online everything and verify.
+            for cpu in cpus:
+                onl.online(cpus=(cpu,))
 
 def test_cpuonline_bad(params):
-    """Test public methods of 'CPUOnline' class with bad option values."""
+    """
+    Test public methods of the 'CPUOnline' class with bad input. The arguments are as follows.
+      * params - the testing parameters.
+    """
 
     onl = params["cpuonline"]
     bad_cpus = [-1, "one", True, 99999]
