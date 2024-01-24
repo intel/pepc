@@ -4,6 +4,6 @@ inlinefiles:
   readonly: false
   dirname: CPUOnline/cpuonline-info
   filename: cpuonline.txt
-directories:
+inlinedirs:
 - dirname: CPUOnline/cpuonline-info
   filename: cpuonline-dirs.txt
