@@ -1307,7 +1307,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
           * rem_cpus - list of remaining CPUs that cannot be converted to a core number.
 
         The return value is inconsistent with 'cpus_div_packages()' because core numbers are
-        realtive to package numbers.
+        relative to package numbers.
 
         Consider an example of a system with 2 packages, 1 core per package, 2 CPUs per core.
           * package 0 includes core 0 and CPUs 0 and 1
@@ -1506,21 +1506,21 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                       "all modules".
         """
 
-        allmdls = self.get_modules()
+        all_modules = self.get_modules()
 
         if modules == "all":
-            return allmdls
+            return all_modules
 
-        allmdls = set(allmdls)
+        all_modules = set(all_modules)
         modules = Trivial.list_dedup(modules)
         for mdl in modules:
             if type(mdl) is not int: # pylint: disable=unidiomatic-typecheck
                 raise Error(f"'{mdl}' is not an integer, module numbers must be integers")
 
-            if mdl not in allmdls:
-                mdls_str = Human.rangify(allmdls)
+            if mdl not in all_modules:
+                modules_str = Human.rangify(all_modules)
                 raise Error(f"module '{mdl}' is not available{self._pman.hostmsg}, available "
-                            f"modules are: {mdls_str}")
+                            f"modules are: {modules_str}")
 
         return modules
 
@@ -1667,19 +1667,19 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         dies_strs = []
         for package, pkg_dies in dies.items():
             if len(pkg_dies) > 1:
-                dstr = Human.rangify(pkg_dies)
-                dies_strs.append(f"package {package} dies {dstr}")
+                dies_str = Human.rangify(pkg_dies)
+                dies_strs.append(f"package {package} dies {dies_str}")
             else:
                 dies_strs.append(f"package {package} die {pkg_dies[0]}")
 
         if len(dies_strs) > 1:
-            dstr = ", ".join(dies_strs[:-1])
-            dstr += ", and "
-            dstr += dies_strs[-1]
+            dies_str = ", ".join(dies_strs[:-1])
+            dies_str += ", and "
+            dies_str += dies_strs[-1]
         else:
-            dstr = str(dies_strs[0])
+            dies_str = str(dies_strs[0])
 
-        return dstr
+        return dies_str
 
     def _get_cpu_info(self):
         """Get general CPU information (model, architecture, etc)."""
