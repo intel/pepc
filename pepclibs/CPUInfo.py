@@ -11,16 +11,14 @@
 Provide information about CPU topology and other CPU details.
 """
 
-import re
 import copy
 import json
 import logging
 from pathlib import Path
 from contextlib import suppress
-from pepclibs import CPUModels
+from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.helperlibs import ArgParse, LocalProcessManager, Trivial, ClassHelpers, Human
-from pepclibs.helperlibs import KernelVersion
+from pepclibs.helperlibs import Trivial, Human
 
 _LOG = logging.getLogger()
 
@@ -31,7 +29,7 @@ LEVELS = ("CPU", "core", "module", "die", "node", "package")
 # modules. Use a very large number to make sure the the 'NA' numbers go last when sorting.
 NA = 0xFFFFFFFF
 
-class CPUInfo(ClassHelpers.SimpleCloseContext):
+class CPUInfo(_CPUInfoBase.CPUInfoBase):
     """
     Provide information about CPU topology and other CPU details.
 
@@ -194,12 +192,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         topology = self._get_topology(levels=levels, order=order)
         return copy.deepcopy(topology)
 
-    def _read_range(self, path, must_exist=True):
-        """Read number range string from path 'path', and return it as a list of integers."""
-
-        str_of_ranges = self._pman.read(path, must_exist=must_exist).strip()
-        return ArgParse.parse_int_list(str_of_ranges, ints=True)
-
     def _sort_topology(self, topology, order):
         """Sorts and save the topology list by 'order' in sorting map"""
 
@@ -209,7 +201,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
     def _update_topology(self):
         """Update topology information with online/offline CPUs."""
 
-        new_online_cpus = self._get_online_cpus()
+        new_online_cpus = self._read_online_cpus()
         old_online_cpus = {tline["CPU"] for tline in self._topology["CPU"]}
         if new_online_cpus != old_online_cpus:
             online = list(new_online_cpus - old_online_cpus)
@@ -299,53 +291,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
                 # Suppress 'KeyError' in case the 'shared_cpu_list' file included an offline CPU.
                 with suppress(KeyError):
                     tinfo[sibling]["module"] = module
-
-    def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
-
-        if not self._msr:
-            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
-
-            # Disable caching because it does not add value - the MSR should be read only once for
-            # every online CPU, and also to exclude usage of the 'cpuinfo' object by the 'MSR'
-            # module, which happens when 'MSR' module uses 'PerCPUCache'.
-            self._msr = MSR.MSR(self, pman=self._pman, enable_cache=False)
-
-        return self._msr
-
-    def _get_pliobj(self):
-        """Returns a 'PMLogicalId.PMLogicalID()' object."""
-
-        if not self._pliobj:
-            if not self._pli_msr_supported:
-                return None
-
-            from pepclibs.msr import PMLogicalId # pylint: disable=import-outside-toplevel
-
-            msr = self._get_msr()
-
-            try:
-                self._pliobj = PMLogicalId.PMLogicalId(pman=self._pman, cpuinfo=self, msr=msr)
-            except ErrorNotSupported:
-                self._pli_msr_supported = False
-
-        return self._pliobj
-
-    def _get_uncfreq_obj(self):
-        """Return an '_UncoreFreq' object."""
-
-        if not self._uncfreq_supported:
-            return None
-
-        if not self._uncfreq_obj:
-            from pepclibs import _UncoreFreq # pylint: disable=import-outside-toplevel
-
-            try:
-                self._uncfreq_obj = _UncoreFreq.UncoreFreq(self, pman=self._pman)
-            except ErrorNotSupported:
-                self._uncfreq_supported = False
-
-        return self._uncfreq_obj
 
     def _add_io_dies(self, topology):
         """Add I/O dies to the 'topology' topology table (list of dictionaries)."""
@@ -457,11 +402,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             return self._topology[order]
 
         if not self._topology:
-            tinfo = {cpu: {"CPU": cpu} for cpu in self._get_online_cpus()}
+            tinfo = {cpu: {"CPU": cpu} for cpu in self._read_online_cpus()}
         else:
             tinfo = {tline["CPU"]: tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
 
-        cpus = self._get_online_cpus()
+        cpus = self._read_online_cpus()
         self._add_cores_and_packages(tinfo, cpus)
         levels.update({"package", "core"})
 
@@ -579,7 +524,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         """Return list of online CPU numbers."""
 
         if order == "CPU":
-            return sorted(self._get_online_cpus())
+            return sorted(self._read_online_cpus())
 
         return self._get_level_nums("CPU", "CPU", "all", order=order)
 
@@ -648,18 +593,11 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
         return self._all_cpus
 
-    def _get_online_cpus(self):
-        """Return set of online CPU numbers."""
-
-        if not self._cpus:
-            self._cpus = set(self._read_range("/sys/devices/system/cpu/online"))
-        return self._cpus
-
     def get_offline_cpus(self):
         """Return list of offline CPU numbers sorted in ascending order."""
 
         cpus = self._get_all_cpus()
-        online_cpus = self._get_online_cpus()
+        online_cpus = self._read_online_cpus()
         return list(cpu for cpu in cpus if cpu not in online_cpus)
 
     def cpus_hotplugged(self):
@@ -789,7 +727,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
     def get_cpus_count(self):
         """Return count of online CPUs."""
-        return len(self._get_online_cpus())
+        return len(self._read_online_cpus())
 
     def get_cores_count(self, package=0):
         """
@@ -1094,7 +1032,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         if offline_ok:
             allcpus = self._get_all_cpus()
         else:
-            allcpus = self._get_online_cpus()
+            allcpus = self._read_online_cpus()
 
         if cpus == "all":
             return sorted(allcpus)
@@ -1324,92 +1262,13 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         return dies_str
 
-    def _get_cpu_info(self):
-        """Get general CPU information (model, architecture, etc)."""
-
-        if self.info:
-            return self.info
-
-        self.info = cpuinfo = {}
-        lscpu, _ = self._pman.run_verify("lscpu", join=False)
-
-        # Parse misc. information about the CPU.
-        patterns = ((r"^Architecture:\s*(.*)$", "arch"),
-                    (r"^Byte Order:\s*(.*)$", "byteorder"),
-                    (r"^Vendor ID:\s*(.*)$", "vendor"),
-                    (r"^Socket\(s\):\s*(.*)$", "packages"),
-                    (r"^CPU family:\s*(.*)$", "family"),
-                    (r"^Model:\s*(.*)$", "model"),
-                    (r"^Model name:\s*(.*)$", "modelname"),
-                    (r"^Model name:.*@\s*(.*)GHz$", "basefreq"),
-                    (r"^Stepping:\s*(.*)$", "stepping"),
-                    (r"^Flags:\s*(.*)$", "flags"))
-
-        for line in lscpu:
-            for pattern, key in patterns:
-                match = re.match(pattern, line.strip())
-                if not match:
-                    continue
-
-                val = match.group(1)
-                if Trivial.is_int(val):
-                    cpuinfo[key] = int(val)
-                else:
-                    cpuinfo[key] = val
-
-        if cpuinfo.get("flags"):
-            cpuflags = set(cpuinfo["flags"].split())
-            cpuinfo["flags"] = {}
-            # In current implementation we assume all CPUs have the same flags. But ideally, we
-            # should read the flags for each CPU from '/proc/cpuinfo', instead of using 'lscpu'.
-            for cpu in self._get_online_cpus():
-                cpuinfo["flags"][cpu] = cpuflags
-
-        if self._pman.exists("/sys/devices/cpu_atom/cpus"):
-            cpuinfo["hybrid"] = True
-        else:
-            cpuinfo["hybrid"] = False
-            with suppress(Error):
-                kver = KernelVersion.get_kver(pman=self._pman)
-                if KernelVersion.kver_lt(kver, "5.13"):
-                    _LOG.debug("kernel v%s does not support hybrid CPU topology. The minimum "
-                               "required kernel version is v5.13.", kver)
-
-        return cpuinfo
-
-    def _get_cpu_description(self):
-        """Build and return a string identifying and describing the processor."""
-
-        if "Genuine Intel" in self.info["modelname"]:
-            # Pre-release firmware on Intel CPU describes them as "Genuine Intel", which is not very
-            # helpful.
-            cpudescr = f"Intel processor model {self.info['model']:#x}"
-
-            for info in CPUModels.MODELS.values():
-                if info["model"] == self.info["model"]:
-                    cpudescr += f" (codename: {info['codename']})"
-                    break
-        else:
-            cpudescr = self.info["modelname"]
-
-        return cpudescr
-
     def __init__(self, pman=None):
         """
         The class constructor. The arguments are as follows.
           * pman - the process manager object that defines the target host.
         """
 
-        self._pman = pman
-        self._close_pman = pman is None
-
-        self._msr = None
-        self._pliobj = None
-        # 'True' if 'MSR_PM_LOGICAL_ID' is supported by the system, otherwise 'False'. When this MSR
-        # is supported, it provides the die IDs enumeration.
-        self._pli_msr_supported = True
-        self._uncfreq_obj = None
-        self._uncfreq_supported = True
+        super().__init__(pman=pman)
 
         # The topology dictionary. See 'get_topology()' for more information.
         self._topology = {}
@@ -1431,8 +1290,6 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
 
         # Set of online and offline CPUs.
         self._all_cpus = None
-        # Set of online CPUs.
-        self._cpus = None
         # Dictionary of P-core/E-core CPUs.
         self._hybrid_cpus = None
         # Per-package compute die numbers (dies which have CPUs) and I/O die numbers (dies which do
@@ -1440,20 +1297,5 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
         self._compute_dies = {}
         self._io_dies = {}
 
-        # General CPU information.
-        self.info = None
-        # A short CPU description string.
-        self.cpudescr = None
-
         # CPU cache information dictionary.
         self._cacheinfo = None
-
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-
-        self.info = self._get_cpu_info()
-        self.cpudescr = self._get_cpu_description()
-
-    def close(self):
-        """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_pman", "_msr", "_pliobj", "_uncfreq_obj"))
