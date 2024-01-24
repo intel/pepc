@@ -11,6 +11,8 @@
 """Test data generator, for collecting and creating data used for testing."""
 
 import os
+import re
+import stat
 import sys
 import logging
 from pathlib import Path
@@ -341,6 +343,38 @@ def copy_file(pman, src, outdir):
     with open(dst, "w", encoding="utf-8") as fobj:
         fobj.write(res.stdout)
 
+def copy_dir(pman, src, outdir):
+    """
+    Copy directory contents recursively. The arguments are as follows.
+      * pman - the process manager object that defines the remote host to copy the directory from.
+      * src - path to the source directory. The last part of the 'src' can be a regular expression,
+              in which case all the matching directories will be copied.
+      * outdir - path to the destination directory.
+
+    Return a list of dictionaries for the files that were copied.
+    """
+
+    src = Path(src)
+    files = []
+
+    for name, path, mode in pman.lsdir(src.parent):
+        if not re.fullmatch(src.name, name):
+            continue
+
+        is_dir = stat.S_ISDIR(mode)
+        is_readonly = not mode & stat.S_IWUSR
+
+        if is_dir:
+            files += copy_dir(pman, path / ".*", outdir)
+        else:
+            copy_file(pman, str(path), outdir)
+            files += [{"path": path, "readonly": is_readonly}]
+
+    if not files:
+        files = [{"path": src.parent}]
+
+    return files
+
 def generate_config_file(modname, testdata, outdir):
     """Generate configuration file for python module name 'modname' from testdata 'testdata'."""
 
@@ -378,6 +412,14 @@ def main():
                     for cmdinfo in testdata["commands"]:
                         collect_cmd_output(cmdinfo, pman, datapath)
                         cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
+
+                if "recursive_copy" in testdata:
+                    files = []
+                    for directory in testdata["recursive_copy"]:
+                        files += copy_dir(pman, directory["path"], datapath)
+
+                    del testdata["recursive_copy"]
+                    testdata["recursive_copy"] = files
 
                 if "files" in testdata:
                     for file in testdata["files"]:
