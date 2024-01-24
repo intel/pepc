@@ -119,7 +119,7 @@ CPUOnlineData = {
          "readonly": False,
          "dirname": "cpuonline-info",
          "filename": "cpuonline.txt"}],
-    "directories" : [
+    "inlinedirs" : [
         {"command": r"find /sys/devices/system/cpu -type d -regextype posix-extended -regex " \
                     r"'.*cpu([[:digit:]]+)'",
          "dirname": "cpuonline-info",
@@ -383,7 +383,7 @@ def main():
                     for file in testdata["files"]:
                         copy_file(pman, file["path"], datapath)
 
-                for section in ("directories", "inlinefiles"):
+                for section in ("inlinedirs", "inlinefiles"):
                     if section not in testdata:
                         continue
 
