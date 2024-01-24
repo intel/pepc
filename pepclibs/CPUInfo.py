@@ -8,7 +8,7 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module provides API for getting CPU information.
+Provide information about CPU topology and other CPU details.
 """
 
 import re
@@ -390,7 +390,7 @@ NA = 0xFFFFFFFF
 
 class CPUInfo(ClassHelpers.SimpleCloseContext):
     """
-    Provide information about the CPU of a local or remote host.
+    Provide information about CPU topology and other CPU details.
 
     Public methods overview.
 
