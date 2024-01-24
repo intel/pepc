@@ -81,7 +81,8 @@ def search_project_data(basepath, subpath, pman=None, what=None, env_var=None):
         dirs = " * " + "\n * ".join(searched)
 
         raise ErrorNotFound(f"cannot find {what}{wpman.hostmsg}, searched in the following "
-                            f"locations:\n{dirs}")
+                            f"locations:\n{dirs}.\nPlease set '{env_var}' to specify custom "
+                            f"location for {what}.")
 
 def find_project_data(prjname, subpath, pman=None, what=None):
     """
