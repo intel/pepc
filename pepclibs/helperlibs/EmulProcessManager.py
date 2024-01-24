@@ -391,7 +391,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                     path = self._get_basepath() / path.lstrip("/")
                     populate_rw_file(path, data)
 
-    def _init_directories(self, finfos, datapath):
+    def _init_inline_dirs(self, finfos, datapath):
         """
         Directories are defined as paths in a text file. Create emulated directories as defined by
         dictionary 'finfos'.
@@ -493,8 +493,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         config = YAML.load(confpath)
 
-        if "directories" in config:
-            self._init_directories(config["directories"], datapath)
+        if "inlinedirs" in config:
+            self._init_inline_dirs(config["inlinedirs"], datapath)
 
         if "commands" in config:
             self._init_commands(config["commands"], datapath)
