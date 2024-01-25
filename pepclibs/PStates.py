@@ -318,7 +318,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
             sysfs_io = self._get_sysfs_io()
             try:
-                self._uncfreq_obj = _UncoreFreq.UncoreFreq(cpuinfo=self._cpuinfo, pman=self._pman,
+                self._uncfreq_obj = _UncoreFreq.UncoreFreq(self._cpuinfo, pman=self._pman,
                                                            sysfs_io=sysfs_io,
                                                            enable_cache=self._enable_cache)
             except ErrorNotSupported as err:

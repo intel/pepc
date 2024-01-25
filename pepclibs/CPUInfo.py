@@ -698,7 +698,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             from pepclibs import _UncoreFreq # pylint: disable=import-outside-toplevel
 
             try:
-                self._uncfreq_obj = _UncoreFreq.UncoreFreq(pman=self._pman, cpuinfo=self)
+                self._uncfreq_obj = _UncoreFreq.UncoreFreq(self, pman=self._pman)
             except ErrorNotSupported:
                 self._uncfreq_supported = False
 
