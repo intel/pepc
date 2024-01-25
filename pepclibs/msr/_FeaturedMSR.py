@@ -72,7 +72,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     def validate_feature_supported(self, fname, cpus="all"):
         """
-        Validate if a feature is supported by all CPUs in 'cpus'.
+        Validate that a feature is supported by all CPUs in 'cpus'. The arguments are as follows.
           * fname - name of the feature to validate.
           * cpus - the CPUs to validate the feature for (same as in 'read_feature()').
 
@@ -107,8 +107,11 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     def is_feature_supported(self, fname, cpus="all"):
         """
-        Same as 'validate_feature_supported()', except return 'False' if exception was raised,
-        otherwise return 'True'.
+        Check if a feature is supported by all CPUs in 'cpus'. The arguments are as follows.
+          * fname - name of the feature to check.
+          * cpus - CPU numbers to check (same as in 'read_feature()').
+
+        Return 'True' if the feature is supported on all CPUs, and 'False' otherwise.
         """
 
         try:
@@ -118,9 +121,15 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             return False
 
     def is_cpu_feature_supported(self, fname, cpu):
-        """Same as 'is_feature_supported()' but for a single CPU."""
+        """
+        Check if a feature is supported by CPU 'cpu'. The arguments are as follows.
+          * fname - name of the feature to check.
+          * cpu - the CPU number to check.
 
-        return self.is_feature_supported(fname, cpus=(cpu, ))
+        Return 'True' if CPU 'cpu' supports the feature, and 'False' otherwise.
+        """
+
+        return self.is_feature_supported(fname, cpus=(cpu,))
 
     def _check_fname(self, fname):
         """Check if feature 'fname' is known."""
@@ -132,7 +141,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
     def msr_bits_str(self, fname):
         """
         Return a string including MSR register address and bits range for feature 'fname'. The
-        returned string looks like 'MSR 0xABC bits (a:b)'.
+        arguments are as follows.
+          * fname - name of the feature to return the MSR address and bits range for.
+
+        Example of a string that could be returned: "MSR 0xABC bits (3:9)"
         """
 
         self._check_fname(fname)
