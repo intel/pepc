@@ -13,8 +13,8 @@ found on many Intel platforms.
 """
 
 import logging
+from pepclibs import CPUModels
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR
 
 _LOG = logging.getLogger()
@@ -72,53 +72,53 @@ _CLIENT_PC7S_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC
 # CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
         # Xeons.
-        CPUInfo.CPUS["SIERRAFOREST_X"]["model"]:   _ICX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["GRANITERAPIDS_X"]["model"]:  _ICX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["GRANITERAPIDS_D"]["model"]:  _ICX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["EMERALDRAPIDS_X"]["model"]:  _SKX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["SAPPHIRERAPIDS_X"]["model"]: _SKX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["ICELAKE_X"]["model"]:        _ICX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["ICELAKE_D"]["model"]:        _ICX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["SKYLAKE_X"]["model"]:        _SKX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["BROADWELL_X"]["model"]:      _HSX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["BROADWELL_D"]["model"]:      _BDWD_PKG_CST_LIMITS,
-        CPUInfo.CPUS["BROADWELL_G"]["model"]:      _BDWD_PKG_CST_LIMITS,
-        CPUInfo.CPUS["HASWELL_X"]["model"]:        _HSX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["IVYBRIDGE_X"]["model"]:      _IVT_PKG_CST_LIMITS,
+        CPUModels.MODELS["SIERRAFOREST_X"]["model"]:   _ICX_PKG_CST_LIMITS,
+        CPUModels.MODELS["GRANITERAPIDS_X"]["model"]:  _ICX_PKG_CST_LIMITS,
+        CPUModels.MODELS["GRANITERAPIDS_D"]["model"]:  _ICX_PKG_CST_LIMITS,
+        CPUModels.MODELS["EMERALDRAPIDS_X"]["model"]:  _SKX_PKG_CST_LIMITS,
+        CPUModels.MODELS["SAPPHIRERAPIDS_X"]["model"]: _SKX_PKG_CST_LIMITS,
+        CPUModels.MODELS["ICELAKE_X"]["model"]:        _ICX_PKG_CST_LIMITS,
+        CPUModels.MODELS["ICELAKE_D"]["model"]:        _ICX_PKG_CST_LIMITS,
+        CPUModels.MODELS["SKYLAKE_X"]["model"]:        _SKX_PKG_CST_LIMITS,
+        CPUModels.MODELS["BROADWELL_X"]["model"]:      _HSX_PKG_CST_LIMITS,
+        CPUModels.MODELS["BROADWELL_D"]["model"]:      _BDWD_PKG_CST_LIMITS,
+        CPUModels.MODELS["BROADWELL_G"]["model"]:      _BDWD_PKG_CST_LIMITS,
+        CPUModels.MODELS["HASWELL_X"]["model"]:        _HSX_PKG_CST_LIMITS,
+        CPUModels.MODELS["IVYBRIDGE_X"]["model"]:      _IVT_PKG_CST_LIMITS,
         # Xeon Phi.
-        CPUInfo.CPUS["XEON_PHI_KNM"]["model"]:     _SKX_PKG_CST_LIMITS,
-        CPUInfo.CPUS["XEON_PHI_KNL"]["model"]:     _SKX_PKG_CST_LIMITS,
+        CPUModels.MODELS["XEON_PHI_KNM"]["model"]:     _SKX_PKG_CST_LIMITS,
+        CPUModels.MODELS["XEON_PHI_KNL"]["model"]:     _SKX_PKG_CST_LIMITS,
         # Atom microservers.
-        CPUInfo.CPUS["GOLDMONT_D"]["model"]:       _DNV_PKG_CST_LIMITS,
+        CPUModels.MODELS["GOLDMONT_D"]["model"]:       _DNV_PKG_CST_LIMITS,
         # Clients.
         # Deepest: PC10.
-        CPUInfo.CPUS["ROCKETLAKE"]["model"]:       _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["ALDERLAKE"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["ALDERLAKE_L"]["model"]:      _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["ALDERLAKE_N"]["model"]:      _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["TIGERLAKE"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["TIGERLAKE_L"]["model"]:      _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["LAKEFIELD"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["COMETLAKE"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["COMETLAKE_L"]["model"]:      _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["KABYLAKE_L"]["model"]:       _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["KABYLAKE"]["model"]:         _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["ICELAKE_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["ICELAKE_NNPI"]["model"]:     _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["CANNONLAKE_L"]["model"]:     _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["SKYLAKE"]["model"]:          _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["SKYLAKE_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["BROADWELL"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["HASWELL_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-        CPUInfo.CPUS["METEORLAKE_L"]["model"]:     _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["ROCKETLAKE"]["model"]:       _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["ALDERLAKE"]["model"]:        _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["ALDERLAKE_L"]["model"]:      _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["ALDERLAKE_N"]["model"]:      _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["TIGERLAKE"]["model"]:        _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["TIGERLAKE_L"]["model"]:      _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["LAKEFIELD"]["model"]:        _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["COMETLAKE"]["model"]:        _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["COMETLAKE_L"]["model"]:      _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["KABYLAKE_L"]["model"]:       _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["KABYLAKE"]["model"]:         _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["ICELAKE_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["ICELAKE_NNPI"]["model"]:     _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["CANNONLAKE_L"]["model"]:     _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["SKYLAKE"]["model"]:          _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["SKYLAKE_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["BROADWELL"]["model"]:        _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["HASWELL_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
+        CPUModels.MODELS["METEORLAKE_L"]["model"]:     _CLIENT_PC10_CST_LIMITS,
         # Deepest: PC7S.
-        CPUInfo.CPUS["HASWELL"]["model"]:          _CLIENT_PC7S_CST_LIMITS,
-        CPUInfo.CPUS["HASWELL_G"]["model"]:        _CLIENT_PC7S_CST_LIMITS,
+        CPUModels.MODELS["HASWELL"]["model"]:          _CLIENT_PC7S_CST_LIMITS,
+        CPUModels.MODELS["HASWELL_G"]["model"]:        _CLIENT_PC7S_CST_LIMITS,
 }
 
 # MSR_PKG_CST_CONFIG_CONTROL features have core scope, except for the following CPU models.
-_MODULE_SCOPE_CPUS = CPUInfo.CPU_GROUPS["SILVERMONT"] + CPUInfo.CPU_GROUPS["AIRMONT"]
-_PACKAGE_SCOPE_CPUS = CPUInfo.CPU_GROUPS["PHI"]
+_MODULE_SCOPE_CPUS = CPUModels.MODEL_GROUPS["SILVERMONT"] + CPUModels.MODEL_GROUPS["AIRMONT"]
+_PACKAGE_SCOPE_CPUS = CPUModels.MODEL_GROUPS["PHI"]
 
 # Map of features available on various CPU models. Please, refer to the notes for
 # '_FeaturedMSR.FEATURES' for more comments.

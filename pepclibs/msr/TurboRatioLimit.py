@@ -11,7 +11,7 @@ This module provides API to MSR 0x1AD (MSR_TURBO_RATIO_LIMIT). This MSR provides
 information on Intel platforms.
 """
 
-from pepclibs import CPUInfo
+from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 # The Turbo Ratio Limit Model Specific Register.
@@ -21,41 +21,41 @@ MSR_TURBO_RATIO_LIMIT = 0x1AD
 # CPU models that include core turbo ratios in the MSR (as apposed to group turbo ratio). "CT" in
 # the names stands for "Core Turbo".
 #
-_CT_CPUS = CPUInfo.CPU_GROUPS["METEORLAKE"] +  \
-           CPUInfo.CPU_GROUPS["RAPTORLAKE"] +  \
-           CPUInfo.CPU_GROUPS["ALDERLAKE"] +   \
-           CPUInfo.CPU_GROUPS["ROCKETLAKE"] +  \
-           CPUInfo.CPU_GROUPS["TIGERLAKE"] +   \
-           CPUInfo.CPU_GROUPS["LAKEFIELD"] +   \
-           CPUInfo.CPU_GROUPS["ICL_CLIENT"] +  \
-           CPUInfo.CPU_GROUPS["SKL_CLIENT"] +  \
-           CPUInfo.CPU_GROUPS["COMETLAKE"] +   \
-           CPUInfo.CPU_GROUPS["KABYLAKE"] +    \
-           CPUInfo.CPU_GROUPS["CANNONLAKE"] +  \
-           CPUInfo.CPU_GROUPS["BROADWELL"] +   \
-           (CPUInfo.CPUS["ATOM_SILVERMONT_D"]["model"], ) + \
-           CPUInfo.CPU_GROUPS["HASWELL"] +     \
-           CPUInfo.CPU_GROUPS["IVYBRIDGE"] +   \
-           CPUInfo.CPU_GROUPS["SANDYBRIDGE"] + \
-           (CPUInfo.CPUS["NEHALEM"]["model"],
-            CPUInfo.CPUS["NEHALEM_G"]["model"],
-            CPUInfo.CPUS["NEHALEM_EP"]["model"])
+_CT_CPUS = CPUModels.MODEL_GROUPS["METEORLAKE"] +  \
+           CPUModels.MODEL_GROUPS["RAPTORLAKE"] +  \
+           CPUModels.MODEL_GROUPS["ALDERLAKE"] +   \
+           CPUModels.MODEL_GROUPS["ROCKETLAKE"] +  \
+           CPUModels.MODEL_GROUPS["TIGERLAKE"] +   \
+           CPUModels.MODEL_GROUPS["LAKEFIELD"] +   \
+           CPUModels.MODEL_GROUPS["ICL_CLIENT"] +  \
+           CPUModels.MODEL_GROUPS["SKL_CLIENT"] +  \
+           CPUModels.MODEL_GROUPS["COMETLAKE"] +   \
+           CPUModels.MODEL_GROUPS["KABYLAKE"] +    \
+           CPUModels.MODEL_GROUPS["CANNONLAKE"] +  \
+           CPUModels.MODEL_GROUPS["BROADWELL"] +   \
+           (CPUModels.MODELS["ATOM_SILVERMONT_D"]["model"], ) + \
+           CPUModels.MODEL_GROUPS["HASWELL"] +     \
+           CPUModels.MODEL_GROUPS["IVYBRIDGE"] +   \
+           CPUModels.MODEL_GROUPS["SANDYBRIDGE"] + \
+           (CPUModels.MODELS["NEHALEM"]["model"],
+            CPUModels.MODELS["NEHALEM_G"]["model"],
+            CPUModels.MODELS["NEHALEM_EP"]["model"])
 
 # CPU models that include group turbo ratios in the MSR. "GT" in the names stands for "Group
 # Turbo". In this case MSR 0x1AE should be decoded to get count of cores in a group. In SDM, this
 # MSR is named 'MSR_TURBO_GROUP_CORECNT' for Atom CPUs and 'MSR_TURBO_RATIO_LIMIT_CORES' for "big
 # core" CPUs. The same MSR is called 'MSR_TURBO_RATIO_LIMIT1' for CPUs that do not have groups in
 # 'MSR_TURBO_RATIO_LIMIT'.
-_GT_CPUS = CPUInfo.CPU_GROUPS["GNR"] + \
-           CPUInfo.CPU_GROUPS["CRESTMONT"] + \
-           CPUInfo.CPU_GROUPS["EMR"] + \
-           CPUInfo.CPU_GROUPS["SPR"] + \
-           (CPUInfo.CPUS["TREMONT_D"]["model"],) +  \
-           CPUInfo.CPU_GROUPS["ICX"] + \
-           CPUInfo.CPU_GROUPS["SKX"] + \
-           (CPUInfo.CPUS["GOLDMONT_D"]["model"],
-            CPUInfo.CPUS["ATOM_GOLDMONT"]["model"],
-            CPUInfo.CPUS["ATOM_GOLDMONT_PLUS"]["model"],)
+_GT_CPUS = CPUModels.MODEL_GROUPS["GNR"] + \
+           CPUModels.MODEL_GROUPS["CRESTMONT"] + \
+           CPUModels.MODEL_GROUPS["EMR"] + \
+           CPUModels.MODEL_GROUPS["SPR"] + \
+           (CPUModels.MODELS["TREMONT_D"]["model"],) +  \
+           CPUModels.MODEL_GROUPS["ICX"] + \
+           CPUModels.MODEL_GROUPS["SKX"] + \
+           (CPUModels.MODELS["GOLDMONT_D"]["model"],
+            CPUModels.MODELS["ATOM_GOLDMONT"]["model"],
+            CPUModels.MODELS["ATOM_GOLDMONT_PLUS"]["model"],)
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
 # notes for '_FeaturedMSR.FEATURES' for more comments.

@@ -10,14 +10,14 @@
 This module provides API to MSR 0x0x54 (MSR_PM_LOGICAL_ID).
 """
 
-from pepclibs import CPUInfo
+from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 # The PM Logical ID Model Specific Register.
 MSR_PM_LOGICAL_ID = 0x54
 
 # CPU models supporting the "PM Logical ID" MSR.
-_PLI_CPUS = CPUInfo.CPU_GROUPS["GNR"] + CPUInfo.CPU_GROUPS["CRESTMONT"]
+_PLI_CPUS = CPUModels.MODEL_GROUPS["GNR"] + CPUModels.MODEL_GROUPS["CRESTMONT"]
 
 # Description of CPU features controlled by the PM Logical ID. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.

@@ -30,9 +30,9 @@ Terminology.
 
 import copy
 import logging
+from pepclibs import CPUModels, CPUInfo
 from pepclibs.helperlibs import LocalProcessManager, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs import CPUInfo
 from pepclibs.msr import MSR
 
 _LOG = logging.getLogger()
@@ -463,7 +463,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         """
 
         model = self._cpuinfo.info["model"]
-        if model == CPUInfo.CPUS["SKYLAKE_X"]["model"] and \
+        if model == CPUModels.MODELS["SKYLAKE_X"]["model"] and \
            len(self._cpuinfo.get_dies(package=0)) > 1:
             return "die"
         return "package"

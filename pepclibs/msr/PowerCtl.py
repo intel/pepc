@@ -12,32 +12,32 @@ This module provides API to MSR 0x1FC (MSR_POWER_CTL). This is a model-specific 
 many Intel platforms.
 """
 
-from pepclibs import CPUInfo
+from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 # The Power Control Model Specific Register.
 MSR_POWER_CTL = 0x1FC
 
 # CPU models supporting the C-state pre-wake feature.
-_CSTATE_PREWAKE_CPUS = (CPUInfo.CPUS["GRANITERAPIDS_X"]["model"],
-                        CPUInfo.CPUS["GRANITERAPIDS_D"]["model"],
-                        CPUInfo.CPUS["EMERALDRAPIDS_X"]["model"],
-                        CPUInfo.CPUS["SAPPHIRERAPIDS_X"]["model"],
-                        CPUInfo.CPUS["ICELAKE_X"]["model"],
-                        CPUInfo.CPUS["ICELAKE_D"]["model"],
-                        CPUInfo.CPUS["SKYLAKE_X"]["model"],
-                        CPUInfo.CPUS["BROADWELL_X"]["model"],
-                        CPUInfo.CPUS["HASWELL_X"]["model"],
-                        CPUInfo.CPUS["IVYBRIDGE_X"]["model"],)
+_CSTATE_PREWAKE_CPUS = (CPUModels.MODELS["GRANITERAPIDS_X"]["model"],
+                        CPUModels.MODELS["GRANITERAPIDS_D"]["model"],
+                        CPUModels.MODELS["EMERALDRAPIDS_X"]["model"],
+                        CPUModels.MODELS["SAPPHIRERAPIDS_X"]["model"],
+                        CPUModels.MODELS["ICELAKE_X"]["model"],
+                        CPUModels.MODELS["ICELAKE_D"]["model"],
+                        CPUModels.MODELS["SKYLAKE_X"]["model"],
+                        CPUModels.MODELS["BROADWELL_X"]["model"],
+                        CPUModels.MODELS["HASWELL_X"]["model"],
+                        CPUModels.MODELS["IVYBRIDGE_X"]["model"],)
 
 # CPU models supporting the LTR feature.
-LTR_CPUS = (CPUInfo.CPUS["GRANITERAPIDS_X"]["model"],
-            CPUInfo.CPUS["EMERALDRAPIDS_X"]["model"],
-            CPUInfo.CPUS["SAPPHIRERAPIDS_X"]["model"],
-            CPUInfo.CPUS["ICELAKE_X"]["model"],)
+LTR_CPUS = (CPUModels.MODELS["GRANITERAPIDS_X"]["model"],
+            CPUModels.MODELS["EMERALDRAPIDS_X"]["model"],
+            CPUModels.MODELS["SAPPHIRERAPIDS_X"]["model"],
+            CPUModels.MODELS["ICELAKE_X"]["model"],)
 
 # CPU models supporting the PCH negotiation feature.
-_PCH_NEGOTIATION_CPUS = CPUInfo.CPU_GROUPS["EMR"]
+_PCH_NEGOTIATION_CPUS = CPUModels.MODEL_GROUPS["EMR"]
 
 # Description of CPU features controlled by the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.

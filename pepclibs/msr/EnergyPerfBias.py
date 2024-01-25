@@ -11,15 +11,15 @@ This module provides API to MSR 0x1B1 (MSR_ENERGY_PERF_BIAS). This is an archite
 many Intel platforms.
 """
 
-from pepclibs import CPUInfo
+from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 # The Energy Performance Bias Model Specific Register.
 MSR_ENERGY_PERF_BIAS = 0x1B0
 
 # MSR_ENERGY_PERF_BIAS features have CPU scope, except for the following CPU models.
-_CORE_SCOPE_CPUS = CPUInfo.CPU_GROUPS["SILVERMONT"]
-_PACKAGE_SCOPE_CPUS = CPUInfo.CPU_GROUPS["WESTMERE"] + CPUInfo.CPU_GROUPS["SANDYBRIDGE"]
+_CORE_SCOPE_CPUS = CPUModels.MODEL_GROUPS["SILVERMONT"]
+_PACKAGE_SCOPE_CPUS = CPUModels.MODEL_GROUPS["WESTMERE"] + CPUModels.MODEL_GROUPS["SANDYBRIDGE"]
 
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.

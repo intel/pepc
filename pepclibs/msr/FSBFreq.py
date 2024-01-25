@@ -12,7 +12,7 @@ This module provides API to MSR 0xCD (MSR_FSB_FREQ). This MSR provides bus clock
 on some Intel platforms.
 """
 
-from pepclibs import CPUInfo
+from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 # The Scalable Bus Speed Model Specific Register.
@@ -46,20 +46,20 @@ _AIRMONT_FSB_CODES = {"codes": {83.3  : 0b0000, 100.0 : 0b0001,
 
 # CPU ID -> FSB codes map.
 _FSB_CODES = {
-    CPUInfo.CPUS["CORE2_MEROM"]["model"]:          _CORE2_FSB_CODES,
-    CPUInfo.CPUS["ATOM_BONNELL_MID"]["model"]:     _OLD_ATOM_FSB_CODES,
-    CPUInfo.CPUS["ATOM_BONNELL"]["model"]:         _OLD_ATOM_FSB_CODES,
-    CPUInfo.CPUS["ATOM_SALTWELL"]["model"]:        _OLD_ATOM_FSB_CODES,
-    CPUInfo.CPUS["ATOM_SALTWELL_MID"]["model"]:    _OLD_ATOM_FSB_CODES,
-    CPUInfo.CPUS["ATOM_SALTWELL_TABLET"]["model"]: _OLD_ATOM_FSB_CODES,
-    CPUInfo.CPUS["ATOM_SILVERMONT"]["model"]:      _SILVERMONT_FSB_CODES,
-    CPUInfo.CPUS["ATOM_SILVERMONT_MID"]["model"]:  _SILVERMONT_FSB_CODES,
-    CPUInfo.CPUS["ATOM_SILVERMONT_MID1"]["model"]: _SILVERMONT_FSB_CODES,
-    CPUInfo.CPUS["ATOM_AIRMONT"]["model"]:         _AIRMONT_FSB_CODES,
+    CPUModels.MODELS["CORE2_MEROM"]["model"]:          _CORE2_FSB_CODES,
+    CPUModels.MODELS["ATOM_BONNELL_MID"]["model"]:     _OLD_ATOM_FSB_CODES,
+    CPUModels.MODELS["ATOM_BONNELL"]["model"]:         _OLD_ATOM_FSB_CODES,
+    CPUModels.MODELS["ATOM_SALTWELL"]["model"]:        _OLD_ATOM_FSB_CODES,
+    CPUModels.MODELS["ATOM_SALTWELL_MID"]["model"]:    _OLD_ATOM_FSB_CODES,
+    CPUModels.MODELS["ATOM_SALTWELL_TABLET"]["model"]: _OLD_ATOM_FSB_CODES,
+    CPUModels.MODELS["ATOM_SILVERMONT"]["model"]:      _SILVERMONT_FSB_CODES,
+    CPUModels.MODELS["ATOM_SILVERMONT_MID"]["model"]:  _SILVERMONT_FSB_CODES,
+    CPUModels.MODELS["ATOM_SILVERMONT_MID1"]["model"]: _SILVERMONT_FSB_CODES,
+    CPUModels.MODELS["ATOM_AIRMONT"]["model"]:         _AIRMONT_FSB_CODES,
 }
 
 # MSR_FSB_FREQ features have core scope, except for the following CPU models.
-_MODULE_SCOPE_CPUS = CPUInfo.CPU_GROUPS["SILVERMONT"] + CPUInfo.CPU_GROUPS["AIRMONT"]
+_MODULE_SCOPE_CPUS = CPUModels.MODEL_GROUPS["SILVERMONT"] + CPUModels.MODEL_GROUPS["AIRMONT"]
 
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.

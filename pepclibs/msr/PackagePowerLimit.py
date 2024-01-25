@@ -10,7 +10,7 @@
 This module provides API to MSR 0x610 (MSR_PKG_POWER_LIMIT).
 """
 
-from pepclibs import CPUInfo
+from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 from pepclibs.helperlibs import ClassHelpers, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
@@ -19,27 +19,27 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 MSR_PKG_POWER_LIMIT = 0x610
 
 # CPU models supporting the "Package Power Limit" MSR.
-_PPL_CPUS = CPUInfo.CPU_GROUPS["GNR"] +         \
-            CPUInfo.CPU_GROUPS["EMR"] +         \
-            CPUInfo.CPU_GROUPS["METEORLAKE"] +  \
-            CPUInfo.CPU_GROUPS["SPR"] +         \
-            CPUInfo.CPU_GROUPS["RAPTORLAKE"] +  \
-            CPUInfo.CPU_GROUPS["ALDERLAKE"] +   \
-            CPUInfo.CPU_GROUPS["ROCKETLAKE"] +  \
-            CPUInfo.CPU_GROUPS["TIGERLAKE"] +   \
-            CPUInfo.CPU_GROUPS["ICELAKE"] +     \
-            CPUInfo.CPU_GROUPS["COMETLAKE"] +   \
-            CPUInfo.CPU_GROUPS["KABYLAKE"] +    \
-            CPUInfo.CPU_GROUPS["CANNONLAKE"] +  \
-            CPUInfo.CPU_GROUPS["SKYLAKE"] +     \
-            CPUInfo.CPU_GROUPS["BROADWELL"] +   \
-            CPUInfo.CPU_GROUPS["HASWELL"] +     \
-            CPUInfo.CPU_GROUPS["IVYBRIDGE"] +   \
-            CPUInfo.CPU_GROUPS["SANDYBRIDGE"] + \
-            CPUInfo.CPU_GROUPS["WESTMERE"] +    \
-            CPUInfo.CPU_GROUPS["TREMONT"] +     \
-            CPUInfo.CPU_GROUPS["GOLDMONT"] +    \
-            CPUInfo.CPU_GROUPS["PHI"]
+_PPL_CPUS = CPUModels.MODEL_GROUPS["GNR"] +         \
+            CPUModels.MODEL_GROUPS["EMR"] +         \
+            CPUModels.MODEL_GROUPS["METEORLAKE"] +  \
+            CPUModels.MODEL_GROUPS["SPR"] +         \
+            CPUModels.MODEL_GROUPS["RAPTORLAKE"] +  \
+            CPUModels.MODEL_GROUPS["ALDERLAKE"] +   \
+            CPUModels.MODEL_GROUPS["ROCKETLAKE"] +  \
+            CPUModels.MODEL_GROUPS["TIGERLAKE"] +   \
+            CPUModels.MODEL_GROUPS["ICELAKE"] +     \
+            CPUModels.MODEL_GROUPS["COMETLAKE"] +   \
+            CPUModels.MODEL_GROUPS["KABYLAKE"] +    \
+            CPUModels.MODEL_GROUPS["CANNONLAKE"] +  \
+            CPUModels.MODEL_GROUPS["SKYLAKE"] +     \
+            CPUModels.MODEL_GROUPS["BROADWELL"] +   \
+            CPUModels.MODEL_GROUPS["HASWELL"] +     \
+            CPUModels.MODEL_GROUPS["IVYBRIDGE"] +   \
+            CPUModels.MODEL_GROUPS["SANDYBRIDGE"] + \
+            CPUModels.MODEL_GROUPS["WESTMERE"] +    \
+            CPUModels.MODEL_GROUPS["TREMONT"] +     \
+            CPUModels.MODEL_GROUPS["GOLDMONT"] +    \
+            CPUModels.MODEL_GROUPS["PHI"]
 
 # Description of CPU features controlled by the Package Power Limit MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.

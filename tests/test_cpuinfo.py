@@ -13,7 +13,7 @@
 import random
 import pytest
 import common
-from pepclibs import CPUInfo, CPUOnline
+from pepclibs import CPUModels, CPUInfo, CPUOnline
 from pepclibs.helperlibs.Exceptions import Error
 
 # A unique object used in '_run_method()' for ignoring method's return value by default.
@@ -102,7 +102,7 @@ def _get_emulated_cpuinfos(pman):
             yield cpuinfo
             cpuonline.online(cpus=cpus)
 
-        if cpuinfo.info["model"] == CPUInfo.CPUS["ICELAKE_X"]["model"]:
+        if cpuinfo.info["model"] == CPUModels.MODELS["ICELAKE_X"]["model"]:
             # Yield CPUInfo object with unknown CPU model number.
             cpuinfo.info["model"] = 255
             yield cpuinfo
