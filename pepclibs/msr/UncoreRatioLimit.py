@@ -11,7 +11,7 @@ This module provides API to MSR 0x620 (MSR_UNCORE_RATIO_LIMIT). This MSR provide
 uncore frequency on Intel platforms.
 """
 
-from pepclibs import CPUModels, CPUInfo
+from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 # The Uncore Ratio Limit Model Specific Register.
@@ -20,16 +20,16 @@ MSR_UNCORE_RATIO_LIMIT = 0x620
 #
 # CPU models that support the uncore ratio limit MSR.
 #
-_CPUS = CPUModels.MODEL_GROUPS["EMR"] +               \
-        CPUModels.MODEL_GROUPS["METEORLAKE"] +        \
-        CPUModels.MODEL_GROUPS["SPR"] +               \
-        CPUModels.MODEL_GROUPS["RAPTORLAKE"] +        \
-        (CPUModels.MODELS["ALDERLAKE"]["model"],      \
+_CPUS = CPUModels.MODEL_GROUPS["EMR"] + \
+        CPUModels.MODEL_GROUPS["METEORLAKE"] + \
+        CPUModels.MODEL_GROUPS["SPR"] + \
+        CPUModels.MODEL_GROUPS["RAPTORLAKE"] + \
+        (CPUModels.MODELS["ALDERLAKE"]["model"],
          CPUModels.MODELS["ALDERLAKE_L"]["model"],) + \
-        CPUModels.MODEL_GROUPS["ICX"] +               \
-        CPUModels.MODEL_GROUPS["SKX"] +               \
-        (CPUModels.MODELS["BROADWELL_G"]["model"],    \
-         CPUModels.MODELS["BROADWELL_D"]["model"],    \
+        CPUModels.MODEL_GROUPS["ICX"] + \
+        CPUModels.MODEL_GROUPS["SKX"] + \
+        (CPUModels.MODELS["BROADWELL_G"]["model"],
+         CPUModels.MODELS["BROADWELL_D"]["model"],
          CPUModels.MODELS["BROADWELL_X"]["model"],)
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
