@@ -209,6 +209,11 @@ SystemctlData = {
 
 PowerData = {
 }
+
+TpmiData = {
+    "recursive_copy" : [
+        {"path": "/sys/kernel/debug/tpmi-.*"}],
+}
 # pylint: disable=line-too-long
 
 MODULE_TESTDATA = {
@@ -219,6 +224,7 @@ MODULE_TESTDATA = {
     "PStates" : PStatesData,
     "Systemctl" : SystemctlData,
     "Power" : PowerData,
+    "TPMI" : TpmiData,
     }
 
 def build_arguments_parser():
