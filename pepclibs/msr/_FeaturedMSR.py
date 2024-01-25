@@ -61,8 +61,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
        * Read/write feature: 'read_cpu_feature()', 'write_cpu_feature()'.
        * Enable/disable a feature: 'cpu_enable_feature()'.
        * Check if feature is enabled: 'is_cpu_feature_enabled()'.
-       * Check if feature is supported: 'is_cpu_feature_supported()',
-                                        'validate_cpu_feature_supported()'.
+       * Check if feature is supported: 'is_cpu_feature_supported()'.
     3. Message formatting helpers.
        * Return string in form of 'MSR 0xABC bits (a:b)': msr_bits_str()
     """
@@ -105,11 +104,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                                     f"{unsupported_cpus}.\n{self._cpuinfo.cpudescr} supports "
                                     f"{self._features[fname]['name']} only on the following CPUs: "
                                     f"{supported_cpus}")
-
-    def validate_cpu_feature_supported(self, fname, cpu):
-        """Same as 'validate_feature_supported()' but for a single CPU."""
-
-        self.validate_feature_supported(fname, cpus=(cpu, ))
 
     def is_feature_supported(self, fname, cpus="all"):
         """
