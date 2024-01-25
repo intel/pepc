@@ -19,29 +19,29 @@ from pepclibs.msr import _FeaturedMSR
 MSR_FSB_FREQ = 0xCD
 
 # Core 2 clients.
-_CORE2_FSB_CODES = {"codes": {100.0  : 0b101, 133.33 : 0b001,
-                              166.67 : 0b011, 200.0  : 0b010,
-                              266.67 : 0b000, 333.33 : 0b100,
-                              400.0  : 0b110},
+_CORE2_FSB_CODES = {"codes": {100.0:  0b101, 133.33: 0b001,
+                              166.67: 0b011, 200.0:  0b010,
+                              266.67: 0b000, 333.33: 0b100,
+                              400.0:  0b110},
                     "bits": (2, 0)}
 
 # Pre-Silvermont Atoms.
-_OLD_ATOM_FSB_CODES = {"codes": {83.0   : 0b111, 100.0  : 0b101,
-                                 133.33 : 0b001, 166.67 : 0b011},
+_OLD_ATOM_FSB_CODES = {"codes": {83.0:   0b111, 100.0:  0b101,
+                                 133.33: 0b001, 166.67: 0b011},
                        "bits": (2, 0)}
 
 # Silvermont Atoms.
-_SILVERMONT_FSB_CODES = {"codes": {80.0  : 0b100, 83.3  : 0b000,
-                                   100.0 : 0b001, 133.3 : 0b010,
-                                   116.7 : 0b011},
+_SILVERMONT_FSB_CODES = {"codes": {80.0:  0b100, 83.3:  0b000,
+                                   100.0: 0b001, 133.3: 0b010,
+                                   116.7: 0b011},
                          "bits": (2, 0)}
 
 # Airmont Atoms.
-_AIRMONT_FSB_CODES = {"codes": {83.3  : 0b0000, 100.0 : 0b0001,
-                                133.3 : 0b0010, 116.7 : 0b0011,
-                                80.0  : 0b0100, 93.3  : 0b0101,
-                                90.0  : 0b0110, 88.9  : 0b0111,
-                                87.5  : 0b1000},
+_AIRMONT_FSB_CODES = {"codes": {83.3:  0b0000, 100.0: 0b0001,
+                                133.3: 0b0010, 116.7: 0b0011,
+                                80.0:  0b0100, 93.3:  0b0101,
+                                90.0:  0b0110, 88.9:  0b0111,
+                                87.5:  0b1000},
                       "bits": (3, 0)}
 
 # CPU ID -> FSB codes map.
