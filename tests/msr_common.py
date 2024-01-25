@@ -47,7 +47,7 @@ def get_msr_objs(params):
     """
 
     for enable_cache in (True, False):
-        with MSR.MSR(pman=params["pman"], enable_cache=enable_cache) as msr:
+        with MSR.MSR(params["cpuinfo"], pman=params["pman"], enable_cache=enable_cache) as msr:
             yield msr
 
 @pytest.fixture(name="params", scope="module")
@@ -59,6 +59,8 @@ def get_params(hostspec):
     with common.get_pman(hostspec, modules=emul_modules) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         params = common.build_params(pman)
+
+        params["cpuinfo"] = cpuinfo
 
         allcpus = cpuinfo.get_cpus()
         params["cpus"] = allcpus

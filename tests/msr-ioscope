@@ -391,7 +391,7 @@ def main():
         with ProcessManager.get_pman(args.hostname, username=args.username,
                                      privkeypath=args.privkey, timeout=args.timeout) as pman, \
              CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-             MSR.MSR(pman, cpuinfo=cpuinfo, enable_cache=False) as msr:
+             MSR.MSR(cpuinfo, pman=pman, enable_cache=False) as msr:
 
             if cpuinfo.get_offline_cpus_count():
                 raise Error("please online all CPUs")

@@ -666,7 +666,7 @@ class CPUInfo(ClassHelpers.SimpleCloseContext):
             # Disable caching because it does not add value - the MSR should be read only once for
             # every online CPU, and also to exclude usage of the 'cpuinfo' object by the 'MSR'
             # module, which happens when 'MSR' module uses 'PerCPUCache'.
-            self._msr = MSR.MSR(self._pman, cpuinfo=self, enable_cache=False)
+            self._msr = MSR.MSR(self, pman=self._pman, enable_cache=False)
 
         return self._msr
 

@@ -84,7 +84,7 @@ def pstates_config_command(args, pman):
         if args.override_cpu_model:
             _PepcCommon.override_cpu_model(cpuinfo, args.override_cpu_model)
 
-        msr = MSR.MSR(pman=pman, cpuinfo=cpuinfo)
+        msr = MSR.MSR(cpuinfo, pman=pman)
         stack.enter_context(msr)
 
         sysfs_io = _SysfsIO.SysfsIO(pman=pman)
@@ -162,7 +162,7 @@ def pstates_restore_command(args, pman):
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
-        msr = MSR.MSR(pman=pman, cpuinfo=cpuinfo)
+        msr = MSR.MSR(cpuinfo, pman=pman)
         stack.enter_context(msr)
 
         sysfs_io = _SysfsIO.SysfsIO(pman=pman)

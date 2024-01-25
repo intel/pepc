@@ -515,7 +515,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                                     f"only available on {self.vendor} CPUs")
 
         if not self._msr:
-            self._msr = MSR.MSR(pman=self._pman, cpuinfo=self._cpuinfo)
+            self._msr = MSR.MSR(self._cpuinfo, pman=self._pman)
 
         self._set_baseclass_attributes()
         self._features = copy.deepcopy(self.features)

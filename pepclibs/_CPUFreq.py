@@ -776,7 +776,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         if not self._msr:
             from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
 
-            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
+            self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
 
         return self._msr
 

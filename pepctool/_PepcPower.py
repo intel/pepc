@@ -85,7 +85,7 @@ def power_config_command(args, pman):
         if args.override_cpu_model:
             _PepcCommon.override_cpu_model(cpuinfo, args.override_cpu_model)
 
-        msr = MSR.MSR(pman, cpuinfo=cpuinfo)
+        msr = MSR.MSR(cpuinfo, pman=pman)
         stack.enter_context(msr)
 
         pobj = Power.Power(pman=pman, msr=msr, cpuinfo=cpuinfo)
@@ -159,7 +159,7 @@ def power_restore_command(args, pman):
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
-        msr = MSR.MSR(pman, cpuinfo=cpuinfo)
+        msr = MSR.MSR(cpuinfo, pman=pman)
         stack.enter_context(msr)
 
         pobj = Power.Power(pman=pman, msr=msr, cpuinfo=cpuinfo)

@@ -27,7 +27,7 @@ def _get_msr_feature_objs(params):
     for msr_feature_class in params["feature_classes"]:
         for enable_cache in (True, False):
             with CPUInfo.CPUInfo(pman=params["pman"]) as cpuinfo, \
-                 MSR.MSR(pman=params["pman"], cpuinfo=cpuinfo, enable_cache=enable_cache) as msr, \
+                 MSR.MSR(cpuinfo, pman=params["pman"], enable_cache=enable_cache) as msr, \
                  msr_feature_class(pman=params["pman"], cpuinfo=cpuinfo, msr=msr) as feature_msr:
                 yield feature_msr
 
