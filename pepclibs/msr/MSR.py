@@ -501,8 +501,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
         self._unload_msr_drv = False
 
         # The write-through per-CPU MSR values cache.
-        self._cache = _PerCPUCache.PerCPUCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                               enable_cache=self._enable_cache)
+        self._cache = _PerCPUCache.PerCPUCache(self._cpuinfo, enable_cache=self._enable_cache)
         # Stores new MSR values to be written when 'commit_transaction()' is called.
         self._transaction_buffer = {}
         # Whether there is an ongoing transaction.

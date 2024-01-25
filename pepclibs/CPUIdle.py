@@ -521,9 +521,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
-        # Write-through, Linux "cpuidle" subsystem information cache.
-        self._cache = _PerCPUCache.PerCPUCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                               enable_cache=self._enable_cache)
+        # Write-through "cpuidle" subsystem information cache.
+        self._cache = _PerCPUCache.PerCPUCache(self._cpuinfo, enable_cache=self._enable_cache)
 
     def close(self):
         """Uninitialize the class object."""
