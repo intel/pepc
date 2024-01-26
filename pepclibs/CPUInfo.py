@@ -838,7 +838,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
     def cpus_div_packages(self, cpus, packages="all"):
         """
         Split CPU numbers in 'cpus' into by-package groups (an operation inverse to
-        'packagess_to_cpus()'). The arguments are as follows.
+        'packages_to_cpus()'). The arguments are as follows.
           * cpus - a collection of integer CPU numbers to split by package numbers.
           * packages - package numbers to check for CPU numbers in (all packages by default).
 
