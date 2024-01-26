@@ -19,6 +19,10 @@ inlinefiles:
 - separator: ':'
   readonly: false
   dirname: PStates/pstates
+  filename: cppc.txt
+- separator: ':'
+  readonly: false
+  dirname: PStates/pstates
   filename: epp.txt
 - separator: ':'
   readonly: true
