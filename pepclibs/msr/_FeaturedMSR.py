@@ -526,6 +526,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs=("_msr", "_pman",)
+        close_attrs = ("_msr", "_pman",)
         unref_attrs = ("_cpuinfo",)
         ClassHelpers.close(self, close_attrs=close_attrs, unref_attrs=unref_attrs)
