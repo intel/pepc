@@ -158,9 +158,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         def _aspm_write(self, data):
             """
-            Mimic the sysfs ASPM policy file behavior. For example, writing "powersave" to the file
-            results in the following file contents:
-                "default performance [powersave] powersupersave"
+            Mimic the sysfs ASPM policy file behavior.
+
+            For example, writing "powersave" to the file results in the following file contents:
+            "default performance [powersave] powersupersave".
             """
 
             line = fobj._policies.replace(data, f"[{data}]")
@@ -251,11 +252,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def run_verify(self, cmd, join=True, **kwargs):
         """
-        Does not really run commands, just pretends running them and returns the pre-defined output
-        values. Works only for a limited set of known commands. If the command is not known, raises
-        'ErrorNotSupported'.
+        Emulate running command 'cmd' and verifying the result. The arguments are as follows.
+          * cmd - the command to run (only a pre-defined set of commands is supported).
+          * join - whether the output of the command should be returned as a single string or as a
+                   list of lines (trailing newlines are not stripped).
+          * kwargs - the other arguments. Please, refer to '_ProcessManagerBase.run_verify()' for
+                     the details.
 
-        Refer to 'ProcessManagerBase.run_verify()' for more information.
+        Pretend running the 'cmd' command return the pre-defined output data. Accept only a limited
+        set of known commands, raise 'ErrorNotSupported' for any unknown command.
         """
 
         # pylint: disable=unused-argument,arguments-differ
@@ -271,8 +276,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def run(self, cmd, join=True, **kwargs): # pylint: disable=unused-argument
         """
-        Similarly to 'run_verify()', emulates a pre-defined set of commands. Refer to
-        'ProcessManagerBase.run_verify()' for more information.
+        Emulate running command 'cmd'. The arguments are as follows.
+          * cmd - the command to run (only a pre-defined set of commands is supported).
+          * join - whether the output of the command should be returned as a single string or as a
+                   list of lines (trailing newlines are not stripped).
+          * kwargs - the other arguments. Please, refer to '_ProcessManagerBase.run_verify()' for
+                     the details.
+
+        Pretend running the 'cmd' command return the pre-defined output data. Accept only a limited
+        set of known commands, raise 'ErrorNotSupported' for any unknown command.
         """
 
         # pylint: disable=unused-argument,arguments-differ
@@ -330,7 +342,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         return fobj
 
     def open(self, path, mode):
-        """Create a file in the temporary directory and return the file object."""
+        """
+        Open a file on the at 'path' and return a file-like object. The arguments are as follows.
+          * path - path to the file to open.
+          * mode - the same as in the standard python 'open()'.
+
+        Open a file at path 'path' relative to the emulation base directory. Create it if necessary.
+        """
 
         path = str(path)
         if path in self._ro_files:
@@ -526,8 +544,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def mkdir(self, dirpath, parents=False, exist_ok=False):
         """
-        Create a directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdir()' for more
-        information.
+        Create a directory. The a arguments are as follows.
+          * dirpath - path to the directory to create.
+          * parents - if 'True', the parent directories are created as well.
+          * exist_ok - if the directory already exists, this method raises an exception if
+                       'exist_ok' is 'True', and it returns without an error if 'exist_ok' is
+                       'False'.
+
+        Create a directory at 'dirpath' relative to the emulation base directory.
         """
 
         dirpath = self._get_basepath() / str(dirpath).lstrip("/")
@@ -535,47 +559,86 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def lsdir(self, path, must_exist=True):
         """
-        List directory entries in 'path'. Refer to
-        '_ProcessManagerBase.ProcessManagerBase().lsdir()' for more information.
+        List directory entries at 'path'. The arguments are as follows.
+          * path - path to list the directory entries at.
+          * must_exist - same as in '_ProcessManagerBase.ProcessManagerBase().lsdir()'.
+
+        Yield a ('name', 'path', 'mode') tuple for every directory entry in 'path' (relative to the
+        emulation base directory). More information in
+        '_ProcessManagerBase.ProcessManagerBase().lsdir()'.
         """
 
         emul_path = Path(self._get_basepath() / str(path).lstrip("/"))
         yield from super().lsdir(emul_path, must_exist=must_exist)
 
     def exists(self, path):
-        """Returns 'True' if path 'path' exists."""
+        """
+        Check if a file-system object at 'path' (relative to the emulation base directory) exists.
+        The arguments are as follows.
+          * path - the path to check.
+
+        Return 'True' if path 'path' exists.
+        """
 
         emul_path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().exists(emul_path) or path in self._ro_files
 
     def is_file(self, path):
-        """Return 'True' if path 'path' exists an it is a regular file."""
+        """
+        Check if a file-system object at 'path' (relative to the emulation base directory) is a
+        regular file. The arguments are as follows.
+          * path - the path to check.
+
+        Return 'True' 'path' exists and it is a regular file, return 'False' otherwise.
+        """
 
         emul_path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().is_file(emul_path) or path in self._ro_files
 
     def is_dir(self, path):
-        """Return 'True' if path 'path' exists an it is a directory."""
+        """
+        Check if a file-system object at 'path' (relative to the emulation base directory) is a
+        directory. The arguments are as follows.
+          * path - the path to check.
+
+        Return 'True' 'path' exists and it is a directory, return 'False' otherwise.
+        """
 
         path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().is_dir(path)
 
     def is_exe(self, path):
-        """Return 'True' if path 'path' exists an it is an executable file."""
+        """
+        Check if a file-system object at 'path' (relative to the emulation base directory) is a
+        an executable file. The arguments are as follows.
+          * path - the path to check.
+
+        Return 'True' 'path' exists and it is an executable file, return 'False' otherwise.
+        """
 
         path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().is_exe(path)
 
     def is_socket(self, path):
-        """Return 'True' if path 'path' exists an it is a Unix socket file."""
+        """
+        Check if a file-system object at 'path' (relative to the emulation base directory) is a
+        socket file. The arguments are as follows.
+          * path - the path to check.
+
+        Return 'True' 'path' exists and it is a socket file, return 'False' otherwise.
+        """
 
         path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().is_socket(path)
 
     def mkdtemp(self, prefix=None, basedir=None):
         """
-        Create a temporary directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdtemp()'
-        for more information.
+        Create a temporary directory. The arguments are as follows.
+          * prefix - specifies the temporary directory name prefix.
+          * basedir - path to the base directory where the temporary directory should be created.
+
+        Create a temporary file at 'basdir' path relative to the emulation base directory. Return
+        the path to the created temporary file.
         """
 
         path = self._get_basepath()
@@ -586,7 +649,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         return temppath.relative_to(self._get_basepath())
 
     def __init__(self, hostname=None):
-        """Initialize the class instance."""
+        """
+        Initialize a class instance. The arguments are as follows.
+          * hostname - name of the host to emulate.
+        """
 
         super().__init__()
 
