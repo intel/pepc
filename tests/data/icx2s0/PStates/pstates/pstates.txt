@@ -7,7 +7,7 @@
 /sys/devices/system/cpu/cpufreq/policy0/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy0/related_cpus:0
 /sys/devices/system/cpu/cpufreq/policy0/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq:800686
+/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy0/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy0/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq:3500000
@@ -22,7 +22,7 @@
 /sys/devices/system/cpu/cpufreq/policy100/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy100/related_cpus:100
 /sys/devices/system/cpu/cpufreq/policy100/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy100/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy100/scaling_cur_freq:800340
 /sys/devices/system/cpu/cpufreq/policy100/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy100/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy100/scaling_max_freq:3500000
@@ -97,7 +97,7 @@
 /sys/devices/system/cpu/cpufreq/policy105/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy105/related_cpus:105
 /sys/devices/system/cpu/cpufreq/policy105/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy105/scaling_cur_freq:800324
+/sys/devices/system/cpu/cpufreq/policy105/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy105/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy105/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy105/scaling_max_freq:3500000
@@ -142,7 +142,7 @@
 /sys/devices/system/cpu/cpufreq/policy108/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy108/related_cpus:108
 /sys/devices/system/cpu/cpufreq/policy108/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy108/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy108/scaling_cur_freq:2400000
 /sys/devices/system/cpu/cpufreq/policy108/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy108/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy108/scaling_max_freq:3500000
@@ -202,7 +202,7 @@
 /sys/devices/system/cpu/cpufreq/policy111/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy111/related_cpus:111
 /sys/devices/system/cpu/cpufreq/policy111/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy111/scaling_cur_freq:801109
+/sys/devices/system/cpu/cpufreq/policy111/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy111/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy111/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy111/scaling_max_freq:3500000
@@ -247,7 +247,7 @@
 /sys/devices/system/cpu/cpufreq/policy114/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy114/related_cpus:114
 /sys/devices/system/cpu/cpufreq/policy114/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy114/scaling_cur_freq:2400000
+/sys/devices/system/cpu/cpufreq/policy114/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy114/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy114/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy114/scaling_max_freq:3500000
@@ -262,7 +262,7 @@
 /sys/devices/system/cpu/cpufreq/policy115/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy115/related_cpus:115
 /sys/devices/system/cpu/cpufreq/policy115/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy115/scaling_cur_freq:1400000
+/sys/devices/system/cpu/cpufreq/policy115/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy115/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy115/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy115/scaling_max_freq:3500000
@@ -382,7 +382,7 @@
 /sys/devices/system/cpu/cpufreq/policy122/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy122/related_cpus:122
 /sys/devices/system/cpu/cpufreq/policy122/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy122/scaling_cur_freq:800374
+/sys/devices/system/cpu/cpufreq/policy122/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy122/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy122/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy122/scaling_max_freq:3500000
@@ -397,7 +397,7 @@
 /sys/devices/system/cpu/cpufreq/policy123/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy123/related_cpus:123
 /sys/devices/system/cpu/cpufreq/policy123/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy123/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy123/scaling_cur_freq:800288
 /sys/devices/system/cpu/cpufreq/policy123/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy123/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy123/scaling_max_freq:3500000
@@ -532,7 +532,7 @@
 /sys/devices/system/cpu/cpufreq/policy131/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy131/related_cpus:131
 /sys/devices/system/cpu/cpufreq/policy131/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy131/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy131/scaling_cur_freq:800215
 /sys/devices/system/cpu/cpufreq/policy131/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy131/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy131/scaling_max_freq:3500000
@@ -562,7 +562,7 @@
 /sys/devices/system/cpu/cpufreq/policy133/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy133/related_cpus:133
 /sys/devices/system/cpu/cpufreq/policy133/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy133/scaling_cur_freq:800479
+/sys/devices/system/cpu/cpufreq/policy133/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy133/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy133/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy133/scaling_max_freq:3500000
@@ -652,7 +652,7 @@
 /sys/devices/system/cpu/cpufreq/policy139/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy139/related_cpus:139
 /sys/devices/system/cpu/cpufreq/policy139/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy139/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy139/scaling_cur_freq:800137
 /sys/devices/system/cpu/cpufreq/policy139/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy139/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy139/scaling_max_freq:3500000
@@ -667,7 +667,7 @@
 /sys/devices/system/cpu/cpufreq/policy13/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy13/related_cpus:13
 /sys/devices/system/cpu/cpufreq/policy13/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy13/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy13/scaling_cur_freq:800280
 /sys/devices/system/cpu/cpufreq/policy13/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy13/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy13/scaling_max_freq:3500000
@@ -757,7 +757,7 @@
 /sys/devices/system/cpu/cpufreq/policy15/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy15/related_cpus:15
 /sys/devices/system/cpu/cpufreq/policy15/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy15/scaling_cur_freq:800128
+/sys/devices/system/cpu/cpufreq/policy15/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy15/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy15/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy15/scaling_max_freq:3500000
@@ -787,7 +787,7 @@
 /sys/devices/system/cpu/cpufreq/policy17/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy17/related_cpus:17
 /sys/devices/system/cpu/cpufreq/policy17/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy17/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy17/scaling_cur_freq:800457
 /sys/devices/system/cpu/cpufreq/policy17/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy17/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy17/scaling_max_freq:3500000
@@ -832,7 +832,7 @@
 /sys/devices/system/cpu/cpufreq/policy1/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy1/related_cpus:1
 /sys/devices/system/cpu/cpufreq/policy1/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy1/scaling_cur_freq:800158
+/sys/devices/system/cpu/cpufreq/policy1/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy1/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy1/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy1/scaling_max_freq:3500000
@@ -922,7 +922,7 @@
 /sys/devices/system/cpu/cpufreq/policy25/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy25/related_cpus:25
 /sys/devices/system/cpu/cpufreq/policy25/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy25/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy25/scaling_cur_freq:800342
 /sys/devices/system/cpu/cpufreq/policy25/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy25/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy25/scaling_max_freq:3500000
@@ -967,7 +967,7 @@
 /sys/devices/system/cpu/cpufreq/policy28/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy28/related_cpus:28
 /sys/devices/system/cpu/cpufreq/policy28/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy28/scaling_cur_freq:800368
+/sys/devices/system/cpu/cpufreq/policy28/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy28/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy28/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy28/scaling_max_freq:3500000
@@ -982,7 +982,7 @@
 /sys/devices/system/cpu/cpufreq/policy29/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy29/related_cpus:29
 /sys/devices/system/cpu/cpufreq/policy29/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy29/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy29/scaling_cur_freq:800564
 /sys/devices/system/cpu/cpufreq/policy29/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy29/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy29/scaling_max_freq:3500000
@@ -1117,7 +1117,7 @@
 /sys/devices/system/cpu/cpufreq/policy37/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy37/related_cpus:37
 /sys/devices/system/cpu/cpufreq/policy37/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy37/scaling_cur_freq:800103
+/sys/devices/system/cpu/cpufreq/policy37/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy37/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy37/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy37/scaling_max_freq:3500000
@@ -1192,7 +1192,7 @@
 /sys/devices/system/cpu/cpufreq/policy41/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy41/related_cpus:41
 /sys/devices/system/cpu/cpufreq/policy41/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy41/scaling_cur_freq:800120
+/sys/devices/system/cpu/cpufreq/policy41/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy41/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy41/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy41/scaling_max_freq:3500000
@@ -1237,7 +1237,7 @@
 /sys/devices/system/cpu/cpufreq/policy44/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy44/related_cpus:44
 /sys/devices/system/cpu/cpufreq/policy44/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy44/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy44/scaling_cur_freq:800224
 /sys/devices/system/cpu/cpufreq/policy44/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy44/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy44/scaling_max_freq:3500000
@@ -1297,7 +1297,7 @@
 /sys/devices/system/cpu/cpufreq/policy48/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy48/related_cpus:48
 /sys/devices/system/cpu/cpufreq/policy48/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy48/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy48/scaling_cur_freq:800243
 /sys/devices/system/cpu/cpufreq/policy48/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy48/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy48/scaling_max_freq:3500000
@@ -1327,7 +1327,7 @@
 /sys/devices/system/cpu/cpufreq/policy4/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy4/related_cpus:4
 /sys/devices/system/cpu/cpufreq/policy4/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy4/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy4/scaling_cur_freq:800327
 /sys/devices/system/cpu/cpufreq/policy4/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy4/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq:3500000
@@ -1387,7 +1387,7 @@
 /sys/devices/system/cpu/cpufreq/policy53/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy53/related_cpus:53
 /sys/devices/system/cpu/cpufreq/policy53/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy53/scaling_cur_freq:800625
+/sys/devices/system/cpu/cpufreq/policy53/scaling_cur_freq:800383
 /sys/devices/system/cpu/cpufreq/policy53/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy53/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy53/scaling_max_freq:3500000
@@ -1417,7 +1417,7 @@
 /sys/devices/system/cpu/cpufreq/policy55/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy55/related_cpus:55
 /sys/devices/system/cpu/cpufreq/policy55/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy55/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy55/scaling_cur_freq:800218
 /sys/devices/system/cpu/cpufreq/policy55/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy55/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy55/scaling_max_freq:3500000
@@ -1447,7 +1447,7 @@
 /sys/devices/system/cpu/cpufreq/policy57/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy57/related_cpus:57
 /sys/devices/system/cpu/cpufreq/policy57/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy57/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy57/scaling_cur_freq:800349
 /sys/devices/system/cpu/cpufreq/policy57/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy57/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy57/scaling_max_freq:3500000
@@ -1462,7 +1462,7 @@
 /sys/devices/system/cpu/cpufreq/policy58/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy58/related_cpus:58
 /sys/devices/system/cpu/cpufreq/policy58/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy58/scaling_cur_freq:800311
+/sys/devices/system/cpu/cpufreq/policy58/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy58/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy58/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy58/scaling_max_freq:3500000
@@ -1627,7 +1627,7 @@
 /sys/devices/system/cpu/cpufreq/policy68/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy68/related_cpus:68
 /sys/devices/system/cpu/cpufreq/policy68/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy68/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy68/scaling_cur_freq:800241
 /sys/devices/system/cpu/cpufreq/policy68/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy68/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy68/scaling_max_freq:3500000
@@ -1747,7 +1747,7 @@
 /sys/devices/system/cpu/cpufreq/policy75/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy75/related_cpus:75
 /sys/devices/system/cpu/cpufreq/policy75/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy75/scaling_cur_freq:800000
+/sys/devices/system/cpu/cpufreq/policy75/scaling_cur_freq:800123
 /sys/devices/system/cpu/cpufreq/policy75/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy75/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy75/scaling_max_freq:3500000
@@ -1867,7 +1867,7 @@
 /sys/devices/system/cpu/cpufreq/policy82/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy82/related_cpus:82
 /sys/devices/system/cpu/cpufreq/policy82/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy82/scaling_cur_freq:826445
+/sys/devices/system/cpu/cpufreq/policy82/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy82/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy82/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy82/scaling_max_freq:3500000
@@ -2002,7 +2002,7 @@
 /sys/devices/system/cpu/cpufreq/policy90/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy90/related_cpus:90
 /sys/devices/system/cpu/cpufreq/policy90/scaling_available_governors:performance powersave
-/sys/devices/system/cpu/cpufreq/policy90/scaling_cur_freq:800339
+/sys/devices/system/cpu/cpufreq/policy90/scaling_cur_freq:800000
 /sys/devices/system/cpu/cpufreq/policy90/scaling_driver:intel_pstate
 /sys/devices/system/cpu/cpufreq/policy90/scaling_governor:powersave
 /sys/devices/system/cpu/cpufreq/policy90/scaling_max_freq:3500000
