@@ -90,15 +90,20 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def get_topology(self, levels=None, order="CPU"):
         """
-        Build and return copy of internal topology list. The topology includes dictionaries, one
-        dictionary per CPU. By default each dictionary includes the following keys.
-          * CPU     - CPU number.
+        Return the topology table. The arguments are as follows.
+          * levels - the levels to include (all levels by default).
+          * order - the topology sorting order.
+
+        The topology table is a list of dictionaries, one dictionary per CPU (plus dictionaries for
+        I/O dies, which do not include CPUs). By default each dictionary includes the following
+        keys.
+          * CPU     - CPU number ('NA' in case on an I/O die).
                     - Globally unique.
-          * core    - Core number.
+          * core    - Core number ('NA' in case on an I/O die).
                     - Per-package numbering, not globally unique.
                     - There can be gaps in the numbering.
-          * module  - Module number.
-                    - Shares same L2 cache.
+          * module  - Module number ('NA' in case on an I/O die).
+                    - Cores in a module share the L2 cache.
                     - Globally unique.
           * die     - Die number.
                     - Per-package numbering, not globally unique.
@@ -107,11 +112,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
           * package - Package number.
                     - Globally unique.
 
-        The 'levels' agreement can be used for limiting the levels this method initializes. Partial
-        topology initialization is faster than full initialization. By default ('levels=None'), all
-        levels are initialized.
-
-        Example topology list for the following hypothetical system:
+        Consider the following hypothetical system:
           * 2 packages, numbers 0, 1.
           * 2 nodes, numbers 0, 1.
           * 1 die per package, numbers 0.
@@ -275,25 +276,55 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return list(result)
 
     def get_cpus(self, order="CPU"):
-        """Return list of online CPU numbers."""
+        """
+        Return list of online CPU numbers. The arguments are as follows.
+          * order - the sorting order of the returned CPU numbers list.
+
+        CPU numbers are globally unique (unlike, for example, core numbers).
+        """
 
         if order == "CPU":
             return sorted(self._read_online_cpus())
 
         return self._get_level_nums("CPU", "CPU", "all", order=order)
 
+    def _get_all_cpus_set(self):
+        """Return online and offline CPU numbers as a set."""
+
+        if not self._all_cpus:
+            self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
+        return self._all_cpus
+
+    def get_offline_cpus(self):
+        """Return list of offline CPU numbers sorted in ascending order."""
+
+        cpus = self._get_all_cpus_set()
+        online_cpus = self._read_online_cpus()
+        return list(cpu for cpu in cpus if cpu not in online_cpus)
+
     def get_cores(self, package=0, order="core"):
         """
-        Return list of core numbers in package 'package', only cores containing at least one online
-        CPU will be included.
+        Return list of core numbers in package 'package'. The arguments are as follows.
+          * package - the package to get core numbers for.
+          * order - the sorting order of the returned core numbers list.
+
+        Only cores containing at least one online CPU will be included in the result, because Linux
+        does not provide topology information for offline CPUs. Core numbers are relative to the
+        package (e.g., there may be core 0 in package 0 and package 1).
         """
+
         return self._get_level_nums("core", "package", package, order=order)
 
     def get_modules(self, order="module"):
         """
-        Return list of module numbers, only modules containing at least one online CPU will be
-        included.
+        Return list of module numbers. The arguments are as follows.
+          * order - the sorting order of the returned module numbers list.
+
+        Only modules containing at least one online CPU will be included in the result, because
+        Linux does not provide topology information for offline CPUs. Module numbers are globally
+        unique (unlike, for example, core numbers).
         """
+
         return self._get_level_nums("module", "module", "all", order=order)
 
     def get_dies(self, package=0, order="die", compute_dies=True, io_dies=True):
@@ -306,7 +337,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
           * io_dies - include I/O dies to the result if 'True', otherwise exclude them. I/O dies
                       are the dies that do not have any CPUs.
 
-        Only dies containing at least one online CPU will be included to the result.
+        Only dies containing at least one online CPU will be included to the result, because Linux
+        does not provide topology information for offline CPUs. Die numbers are relative to the
+        package (e.g., there may be die 0 in package 0 and package 1).
         """
 
         dies = self._get_level_nums("die", "package", package, order=order)
@@ -328,34 +361,33 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def get_nodes(self, order="node"):
         """
-        Return list of node numbers, only nodes containing at least one online CPU will be
-        included.
+        Return list of NUMA node numbers. The arguments are as follows.
+          * order - the sorting order of the returned node numbers list.
+
+        Only NUMA nodes containing at least one online CPU will be included in the result, because
+        Linux does not provide topology information for offline CPUs. Module numbers are globally
+        unique (unlike, for example, core numbers).
         """
+
         return self._get_level_nums("node", "node", "all", order=order)
 
     def get_packages(self, order="package"):
         """
-        Return list of package numbers, only packages containing at least one online CPU will be
-        included.
+        Return list of package numbers. The arguments are as follows.
+          * order - the sorting order of the returned package numbers list.
+
+        Only packages containing at least one online CPU will be included in the result, because
+        Linux does not provide topology information for offline CPUs. Module numbers are globally
+        unique (unlike, for example, core numbers).
         """
+
         return self._get_level_nums("package", "package", "all", order=order)
 
-    def _get_all_cpus(self):
-        """Return set of online and offline CPU numbers."""
-
-        if not self._all_cpus:
-            self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
-        return self._all_cpus
-
-    def get_offline_cpus(self):
-        """Return list of offline CPU numbers sorted in ascending order."""
-
-        cpus = self._get_all_cpus()
-        online_cpus = self._read_online_cpus()
-        return list(cpu for cpu in cpus if cpu not in online_cpus)
-
     def cpus_hotplugged(self):
-        """This method informs CPUInfo to update online/offline CPUs and topology lists."""
+        """
+        Must be called when a CPU goes online or offline. Informs this class object that the
+        topology lists may be invalid and has to be updated.
+        """
 
         self._cpus = None
         self._hybrid_cpus = None
@@ -364,8 +396,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def get_cpu_levels(self, cpu, levels=None):
         """
-        Return a dictionary of levels an online CPU 'cpu' belongs to. By default all levels are
-        included.
+        Return a dictionary of levels an online CPU 'cpu' belongs to. The arguments are as follows.
+          * cpu - CPU number to get the levels for.
+          * levels - level names to include to the result (all levels by default).
         """
 
         cpu = Trivial.str_to_int(cpu, what="CPU number")
@@ -387,11 +420,11 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
     def get_cpu_siblings(self, cpu, level):
         """
         Return a list of 'level' siblings. The arguments are as follows:
-         * cpu - the CPU whose siblings to return.
-         * level - the siblings level (e.g. "package", "core").
+         * cpu - CPU number to return the siblings for.
+         * level - the siblings level name to return (e.g. "package", "core").
 
-        For example, if 'level' is "package", this method returns a list of CPUs sharing the same
-        package as CPU 'cpu'.
+        For example, if 'level' is "package", this method returns list of CPU numbers sharing
+        the same package as CPU 'cpu'.
         """
 
         if level == "CPU":
@@ -415,30 +448,63 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         raise Error(f"unsupported scope name \"{level}\"")
 
     def package_to_cpus(self, package, order="CPU"):
-        """Return list of cpu numbers belonging to package 'package', sorted by 'order'."""
+        """
+        Return list of CPU numbers in package 'package'. The arguments are as follows.
+          * package - package number to return CPU numbers for.
+          * order - the sorting order of the returned CPU numbers list.
+        """
+
         return self._get_level_nums("CPU", "package", (package,), order=order)
 
     def package_to_cores(self, package, order="core"):
-        """Similar to 'package_to_cpus()', but for cores."""
+        """
+        Return list of core numbers in package 'package'. The arguments are as follows.
+          * package - package number to return core numbers for.
+          * order - the sorting order of the returned core numbers list.
+        """
+
         return self._get_level_nums("core", "package", (package,), order=order)
 
     def package_to_modules(self, package, order="module"):
-        """Similar to 'package_to_cpus()', but for modules."""
+        """
+        Return list of module numbers in package 'package'. The arguments are as follows.
+          * package - package number to return module numbers for.
+          * order - the sorting order of the returned module numbers list.
+        """
+
         return self._get_level_nums("module", "package", (package,), order=order)
 
     def package_to_dies(self, package, order="die"):
-        """Similar to 'package_to_cpus()', but for dies."""
+        """
+        Return list of dies numbers in package 'package'. The arguments are as follows.
+          * package - package number to return dies numbers for.
+          * order - the sorting order of the returned dies numbers list.
+
+        Note, die numbers are not globally unique. They are per-package. E.g., there may be die 0 in
+        packages 0 and 1.
+        """
+
         return self._get_level_nums("die", "package", (package,), order=order)
 
     def package_to_nodes(self, package, order="node"):
-        """Similar to 'package_to_cpus()', but for nodes."""
+        """
+        Return list of NUMA node numbers in package 'package'. The arguments are as follows.
+          * package - package number to return node numbers for.
+          * order - the sorting order of the returned node numbers list.
+        """
+
         return self._get_level_nums("node", "package", (package,), order=order)
 
     def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
         """
-        Return list of online CPU numbers belonging to cores 'cores' in packages 'packages'.
+        Return list of CPU numbers in cores 'cores' of package 'package'. The arguments are as
+        follows.
+          * cores - a collection of core numbers in package 'package' to return CPU numbers for.
+          * packages - a collection of integer package number core numbers in 'cores' belong to.
+          * order - the sorting order of the returned CPU numbers list.
 
-        Note: core numbers are per-package.
+        Note, core numbers are not globally unique. They are per-package. E.g., there may be core 0
+        in packages 0 and 1.
         """
 
         by_core = self._get_level_nums("CPU", "core", cores, order=order)
@@ -452,13 +518,26 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return cpus
 
     def modules_to_cpus(self, modules="all", order="CPU"):
-        """Return list of online CPU numbers belonging to modules 'modules'."""
+        """
+        Return list of CPU numbers in modules 'modules'. The arguments are as follows.
+          * modules - a collection of module numbers to return CPU numbers for.
+          * order - the sorting order of the returned CPU numbers list.
+
+        Note, module numbers are globally unique (unlike, for example, core numbers).
+        """
+
         return self._get_level_nums("CPU", "module", modules, order=order)
 
     def dies_to_cpus(self, dies="all", packages="all", order="CPU"):
         """
-        Return list of online CPU numbers belonging to dies 'dies' in packages 'packages'.
-        Note: die numbers are per-package.
+        Return list of CPU numbers in dies 'dies' of package 'package'. The arguments are as
+        follows.
+          * dies - a collection of die numbers in package 'package' to return CPU numbers for.
+          * packages - a collection of integer package number die numbers in 'dies' belong to.
+          * order - the sorting order of the returned CPU numbers list.
+
+        Note, die numbers are not globally unique. They are per-package. E.g., there may be die 0
+        in packages 0 and 1.
         """
 
         by_die = self._get_level_nums("CPU", "die", dies, order=order)
@@ -472,49 +551,75 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return cpus
 
     def nodes_to_cpus(self, nodes="all", order="CPU"):
-        """Return list of online CPU numbers belonging to nodes 'nodes'."""
+        """
+        Return list of CPU numbers in NUMA nodes 'nodes'. The arguments are as follows.
+          * nodes - a collection of node numbers to return CPU numbers for.
+          * order - the sorting order of the returned CPU numbers list.
+
+        Note, NUMA node numbers are globally unique (unlike, for example, core numbers).
+        """
+
         return self._get_level_nums("CPU", "node", nodes, order=order)
 
     def packages_to_cpus(self, packages="all", order="CPU"):
-        """Return list of online CPU numbers belonging to packages 'packages'."""
+        """
+        Return list of CPU numbers in packages 'packages'. The arguments are as follows.
+          * packages - a collection of package numbers to return CPU numbers for.
+          * order - the sorting order of the returned CPU numbers list.
+
+        Note, package numbers are globally unique (unlike, for example, core numbers).
+        """
+
         return self._get_level_nums("CPU", "package", packages, order=order)
 
     def get_cpus_count(self):
         """Return count of online CPUs."""
+
         return len(self._read_online_cpus())
+
+    def get_offline_cpus_count(self):
+        """Return count of offline CPUs."""
+
+        return len(self.get_offline_cpus())
 
     def get_cores_count(self, package=0):
         """
-        Return cores count in a package. The arguments are as follows.
+        Return cores count in package 'package'. The arguments are as follows.
           * package - package number to get cores count for.
+
+        Only core numbers containing at least one online CPU will be counted.
         """
         return len(self.get_cores(package=package))
 
     def get_modules_count(self):
-        """Return modules count."""
+        """
+        Return modules count. Only module numbers containing at least one online CPU will be
+        counted.
+        """
+
         return len(self.get_modules())
 
     def get_dies_count(self, package=0, compute_dies=True, io_dies=True):
         """
-        Return dies count in a package. The arguments are as follows.
+        Return dies count in package 'package'. The arguments are as follows.
           * package - package number to get dies count for.
           * compute_dies - include compute dies to the result if 'True', otherwise exclude them.
                            Compute dies are the dies that have CPUs.
           * io_dies - include I/O dies to the result if 'True', otherwise exclude them. I/O dies
                       are the dies that do not have any CPUs.
 
-        Only dies containing at least one online CPU will be counted.
+        Only dies numbers containing at least one online CPU will be counted.
         """
 
         return len(self.get_dies(package=package, compute_dies=compute_dies, io_dies=io_dies))
 
     def get_packages_count(self):
-        """Return packages count."""
-        return len(self.get_packages())
+        """
+        Return packages count. Only package numbers containing at least one online CPU will be
+        counted.
+        """
 
-    def get_offline_cpus_count(self):
-        """Return count of offline CPUs."""
-        return len(self.get_offline_cpus())
+        return len(self.get_packages())
 
     def select_core_siblings(self, cpus, indexes):
         """
@@ -631,10 +736,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def cpus_div_cores(self, cpus):
         """
-        This method is similar to 'cpus_div_packages()', but it checks which CPU numbers in 'cpus'
-        cover entire core(s). So it is inverse to the 'cores_to_cpus()' method. The arguments are as
-        follows.
-          * cpus - same as in 'normalize_cpus()'.
+        Split CPU numbers in 'cpus' into by-core groups (an operation inverse to 'cores_to_cpus()').
+        The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to split by core numbers.
 
         Return a tuple of ('cores', 'rem_cpus').
           * cores - a dictionary indexed by the package numbers with values being lists of core
@@ -678,10 +782,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def cpus_div_dies(self, cpus):
         """
-        This method is similar to 'cpus_div_packages()', but it checks which CPU numbers in 'cpus'
-        cover entire die(s). So it is inverse to the 'dies_to_cpus()' method. The arguments are as
-        follows.
-          * cpus - same as in 'normalize_cpus()'.
+        Split CPU numbers in 'cpus' into by-die groups (an operation inverse to 'dies_to_cpus()').
+        The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to split by die numbers.
 
         Return a tuple of ('dies', 'rem_cpus').
           * dies - a dictionary indexed by the package numbers with values being lists of die
@@ -734,11 +837,10 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def cpus_div_packages(self, cpus, packages="all"):
         """
-        Check which CPU numbers in 'cpus' cover entire package(s). In other words, this method is
-        inverse to 'packages_to_cpus()' and turns list of CPUs into a list of packages. The
-        arguments are as follows.
-          * cpus - same as in 'normalize_cpus()'.
-          * packages - the packages to check for CPU numbers in.
+        Split CPU numbers in 'cpus' into by-package groups (an operation inverse to
+        'packagess_to_cpus()'). The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to split by package numbers.
+          * packages - package numbers to check for CPU numbers in (all packages by default).
 
         Return a tuple of two lists: ('packages', 'rem_cpus').
           * packages - list of packages with all CPUs present in 'cpus'.
@@ -784,7 +886,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         if offline_ok:
-            allcpus = self._get_all_cpus()
+            allcpus = self._get_all_cpus_set()
         else:
             allcpus = self._read_online_cpus()
 
@@ -916,19 +1018,45 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return packages
 
     def normalize_cpu(self, cpu):
-        """Same as 'normalize_cpus()', but for a single CPU number."""
+        """
+        Validate CPU number 'cpu'. The arguments are as follows.
+          * cpu - an integer CPU number to validate.
+
+        Return 'cpu' if it is valid, raise an 'Error' exception otherwise.
+        """
+
         return self.normalize_cpus((cpu,))[0]
 
     def normalize_core(self, core, package=0):
-        """Same as 'normalize_packages()', but for a single package number."""
+        """
+        Validate core number 'core'. The arguments are as follows.
+          * core - an integer core number to validate.
+          * package - package number the core belongs to.
+
+        Return 'core' if it is valid, raise an 'Error' exception otherwise.
+        """
+
         return self.normalize_cores((core,), package=package)[0]
 
     def normalize_die(self, die, package=0):
-        """Same as 'normalize_packages()', but for a single package number."""
+        """
+        Validate die number 'die'. The arguments are as follows.
+          * die - an integer die number to validate.
+          * package - package number the die belongs to.
+
+        Return 'die' if it is valid, raise an 'Error' exception otherwise.
+        """
+
         return self.normalize_dies((die,), package=package)[0]
 
     def normalize_package(self, package):
-        """Same as 'normalize_packages()', but for a single package number."""
+        """
+        Validate package number 'package'. The arguments are as follows.
+          * package - an integer package number to validate.
+
+        Return 'package' if it is valid, raise an 'Error' exception otherwise.
+        """
+
         return self.normalize_packages((package,))[0]
 
     def get_hybrid_cpu_topology(self):
