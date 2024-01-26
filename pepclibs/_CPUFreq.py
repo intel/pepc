@@ -64,8 +64,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Kernels prior to v6.5 had a bug that affected hybrid systems with disabled E-cores. This
         issue was fixed by the following Linux kernel commit:
 
-          0fcfc9e51990 cpufreq: intel_pstate: Fix scaling for hybrid-capable systems with disabled
-          E-cores
+        0fcfc9e51990 cpufreq: intel_pstate: Fix scaling for hybrid-capable systems with disabled
+        E-cores
 
         Detect if the target system is affected and print a warning.
         """
@@ -75,8 +75,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         if not self._cpuinfo.info["hybrid"]:
             return
 
-        hybrid_info = self._cpuinfo.get_hybrid_cpu_topology()
-        if hybrid_info["ecore"] or hybrid_info["pcore"]:
+        ecore_cpus, pcore_cpus = self._cpuinfo.get_hybrid_cpus()
+        if ecore_cpus or pcore_cpus:
             return
 
         if not self._kver:
@@ -773,8 +773,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """Returns an 'MSR.MSR()' object."""
 
         if not self._msr:
-            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
-
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
 
         return self._msr
@@ -858,20 +856,19 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         Convert the performance units to CPU frequency in Hz.
         """
 
-        if self._cpuinfo.info["hybrid"]:
-            pcore_cpus = set(self._cpuinfo.get_hybrid_cpu_topology()["pcore"])
+        if self._cpuinfo.info["hybrid"] and cpu in self._pcore_cpus:
             # In HWP mode, the Linux 'intel_pstate' driver changes CPU frequency by programming
             # 'MSR_HWP_REQUEST'.
             # On many Intel platforms,the MSR is programmed in terms of frequency ratio (frequency
             # divided by 100MHz). But on hybrid Intel platform (e.g., Alder Lake), the MSR works in
             # terms of platform-dependent abstract performance units on P-cores. Convert the
             # performance units to CPU frequency in Hz.
-            if cpu in pcore_cpus:
-                freq = perf * self._perf_to_freq_factor
-                # Round the frequency down to bus clock.
-                # * Why rounding? CPU frequency changes in bus-clock increments.
-                # * Why rounding down? Following how Linux 'intel_pstate' driver example.
-                return freq - (freq % bclk)
+            freq = perf * self._perf_to_freq_factor
+
+            # Round the frequency down to bus clock.
+            # * Why rounding? CPU frequency changes in bus-clock increments.
+            # * Why rounding down? Following how Linux 'intel_pstate' driver example.
+            return freq - (freq % bclk)
 
         return perf * bclk
 
@@ -959,16 +956,11 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                     pkg_control_cpus.append(cpu)
             hwpreq.write_feature(f"{feature_name}_valid", "on", cpus=pkg_control_cpus)
 
-        if self._cpuinfo.info["hybrid"]:
-            pcore_cpus = set(self._cpuinfo.get_hybrid_cpu_topology()["pcore"])
-        else:
-            pcore_cpus = set()
-
         # Prepare the values dictionary, which maps each value to the list of CPUs to write this
         # value to.
         vals = {}
         for cpu, bclk in self._get_bclks(cpus):
-            if cpu in pcore_cpus:
+            if cpu in self._pcore_cpus:
                 perf = int((freq + self._perf_to_freq_factor - 1) / self._perf_to_freq_factor)
             else:
                 perf = freq // bclk
@@ -1144,12 +1136,17 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         # Performance to frequency factor.
         self._perf_to_freq_factor = 78740157
+        self._pcore_cpus = set()
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
 
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+
+        if self._cpuinfo.info["hybrid"]:
+            _, pcore_cpus = self._cpuinfo.get_hybrid_cpus()
+            self._pcore_cpus = set(pcore_cpus)
 
     def close(self):
         """Uninitialize the class object."""
