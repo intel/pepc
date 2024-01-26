@@ -163,7 +163,7 @@ PStatesData = {
          "dirname": "pstates",
          "filename": "intel_pstates.txt"},
         {"command" : r"grep -H --directories=skip '.*' "
-                     r"/sys/devices/system/cpu/intel_uncore_frequency/package_[0-9]*_die_[0-9]*/*",
+                     r"/sys/devices/system/cpu/intel_uncore_frequency/*/*",
          "separator": ":",
          "readonly": False,
          "dirname": "pstates",
