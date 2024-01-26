@@ -5,7 +5,7 @@ model		: 95
 model name	: Intel(R) Atom(TM) CPU C3850 @ 2.10GHz
 stepping	: 1
 microcode	: 0x38
-cpu MHz		: 800.000
+cpu MHz		: 2398.284
 cache size	: 2048 KB
 physical id	: 0
 siblings	: 12
@@ -33,7 +33,7 @@ model		: 95
 model name	: Intel(R) Atom(TM) CPU C3850 @ 2.10GHz
 stepping	: 1
 microcode	: 0x38
-cpu MHz		: 800.000
+cpu MHz		: 2400.000
 cache size	: 2048 KB
 physical id	: 0
 siblings	: 12
@@ -61,7 +61,7 @@ model		: 95
 model name	: Intel(R) Atom(TM) CPU C3850 @ 2.10GHz
 stepping	: 1
 microcode	: 0x38
-cpu MHz		: 2400.000
+cpu MHz		: 1600.000
 cache size	: 2048 KB
 physical id	: 0
 siblings	: 12
@@ -89,7 +89,7 @@ model		: 95
 model name	: Intel(R) Atom(TM) CPU C3850 @ 2.10GHz
 stepping	: 1
 microcode	: 0x38
-cpu MHz		: 2400.000
+cpu MHz		: 1400.000
 cache size	: 2048 KB
 physical id	: 0
 siblings	: 12
@@ -117,7 +117,7 @@ model		: 95
 model name	: Intel(R) Atom(TM) CPU C3850 @ 2.10GHz
 stepping	: 1
 microcode	: 0x38
-cpu MHz		: 800.000
+cpu MHz		: 2400.000
 cache size	: 2048 KB
 physical id	: 0
 siblings	: 12
@@ -173,7 +173,7 @@ model		: 95
 model name	: Intel(R) Atom(TM) CPU C3850 @ 2.10GHz
 stepping	: 1
 microcode	: 0x38
-cpu MHz		: 2400.000
+cpu MHz		: 800.000
 cache size	: 2048 KB
 physical id	: 0
 siblings	: 12
@@ -229,7 +229,7 @@ model		: 95
 model name	: Intel(R) Atom(TM) CPU C3850 @ 2.10GHz
 stepping	: 1
 microcode	: 0x38
-cpu MHz		: 2400.000
+cpu MHz		: 800.000
 cache size	: 2048 KB
 physical id	: 0
 siblings	: 12
@@ -257,7 +257,7 @@ model		: 95
 model name	: Intel(R) Atom(TM) CPU C3850 @ 2.10GHz
 stepping	: 1
 microcode	: 0x38
-cpu MHz		: 800.000
+cpu MHz		: 2400.000
 cache size	: 2048 KB
 physical id	: 0
 siblings	: 12
@@ -285,7 +285,7 @@ model		: 95
 model name	: Intel(R) Atom(TM) CPU C3850 @ 2.10GHz
 stepping	: 1
 microcode	: 0x38
-cpu MHz		: 800.000
+cpu MHz		: 2402.301
 cache size	: 2048 KB
 physical id	: 0
 siblings	: 12
@@ -313,7 +313,7 @@ model		: 95
 model name	: Intel(R) Atom(TM) CPU C3850 @ 2.10GHz
 stepping	: 1
 microcode	: 0x38
-cpu MHz		: 2400.000
+cpu MHz		: 2359.407
 cache size	: 2048 KB
 physical id	: 0
 siblings	: 12
