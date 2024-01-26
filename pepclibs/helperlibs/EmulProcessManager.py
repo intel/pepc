@@ -454,17 +454,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             path = self._get_basepath() / path.lstrip("/")
             _populate_sparse_file(path, data)
 
-    def _init_directories(self, finfos, datapath, module):
-        """Initialize directories."""
-
-        for finfo in finfos:
-            src = datapath / module / finfo["path"].lstrip("/")
-            if not src.exists() or src.is_dir():
-                path = self._get_basepath() / finfo["path"].lstrip("/")
-                path.mkdir(parents=True)
-            else:
-                self._init_files((finfo,), datapath, module)
-
     def _init_files(self, finfos, datapath, module):
         """Initialize plain files, which are just copies of the original files."""
 
@@ -482,6 +471,17 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             else:
                 path = self._get_basepath() / finfo["path"].lstrip("/")
                 populate_rw_file(path, data)
+
+    def _init_directories(self, finfos, datapath, module):
+        """Initialize directories."""
+
+        for finfo in finfos:
+            src = datapath / module / finfo["path"].lstrip("/")
+            if not src.exists() or src.is_dir():
+                path = self._get_basepath() / finfo["path"].lstrip("/")
+                path.mkdir(parents=True)
+            else:
+                self._init_files((finfo,), datapath, module)
 
     def init_testdata(self, module, datapath):
         """Initialize the testdata for module 'module' from directory 'datapath'."""
@@ -516,11 +516,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if "msrs" in config:
             self._init_msrs(config["msrs"], datapath)
 
-        if "recursive_copy" in config:
-            self._init_directories(config["recursive_copy"], datapath, module)
-
         if "files" in config:
             self._init_files(config["files"], datapath, module)
+
+        if "recursive_copy" in config:
+            self._init_directories(config["recursive_copy"], datapath, module)
 
         self.datapath = datapath
 
