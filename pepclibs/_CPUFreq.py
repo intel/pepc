@@ -17,6 +17,7 @@ import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, KernelVersion
+from pepclibs.msr import MSR
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
@@ -107,9 +108,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         """Returns an 'MSR.MSR()' object."""
 
         if not self._msr:
-            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
-
-            self._msr = MSR.MSR(self._pman, cpuinfo=self._cpuinfo, enable_cache=self._enable_cache)
+            self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
 
         return self._msr
 
