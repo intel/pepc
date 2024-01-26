@@ -5,7 +5,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 799.082
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -845,7 +845,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 1535.904
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -1013,7 +1013,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 800.082
+cpu MHz		: 800.158
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -2469,7 +2469,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 1391.339
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -2525,7 +2525,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 1900.000
+cpu MHz		: 800.000
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -2609,7 +2609,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 800.000
+cpu MHz		: 800.015
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -2637,7 +2637,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 800.000
+cpu MHz		: 1500.569
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -2665,7 +2665,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 800.000
+cpu MHz		: 1000.649
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
@@ -2693,7 +2693,7 @@ model		: 143
 model name	: Intel(R) Xeon(R) w9-3495X
 stepping	: 6
 microcode	: 0x2b000390
-cpu MHz		: 800.000
+cpu MHz		: 1900.000
 cache size	: 107520 KB
 physical id	: 0
 siblings	: 112
