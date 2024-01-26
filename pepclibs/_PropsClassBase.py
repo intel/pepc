@@ -682,7 +682,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 # next mechanism.
                 if die is not None:
                     name = self._props[pname]["name"]
-                    got_pkg = list[dies][0]
+                    got_pkg = list(dies)[0]
                     got_die = dies[got_pkg][0]
                     raise Error(f"failed to get {name} for package {package}, die {die}, "
                                 f"using the '{mname}' mechanism:\n{err.indent(2)}\n"
