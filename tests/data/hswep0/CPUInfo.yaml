@@ -45,6 +45,7 @@ msrs:
   - 1556
   - 1542
   - 2562
+  - 84
   separator1: ':'
   separator2: '|'
   dirname: CPUInfo/msr
