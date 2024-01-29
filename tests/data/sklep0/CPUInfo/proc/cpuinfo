@@ -5,7 +5,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.000
+cpu MHz		: 1000.026
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 52
@@ -369,7 +369,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 999.967
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 52
@@ -537,7 +537,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.000
+cpu MHz		: 3500.662
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 52
@@ -1545,7 +1545,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.000
+cpu MHz		: 999.987
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 52
@@ -1881,7 +1881,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.000
+cpu MHz		: 1000.438
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 52
@@ -2021,7 +2021,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.000
+cpu MHz		: 1000.217
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 52
@@ -2105,7 +2105,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.000
+cpu MHz		: 999.998
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 52
@@ -2189,7 +2189,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 999.996
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 52
@@ -2301,7 +2301,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.076
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 52
@@ -2357,7 +2357,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.000
+cpu MHz		: 1000.460
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 52
@@ -2413,7 +2413,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.226
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 52
@@ -2469,7 +2469,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.000
+cpu MHz		: 1000.632
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 52
@@ -2553,7 +2553,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1000.000
+cpu MHz		: 1000.118
 cache size	: 36608 KB
 physical id	: 1
 siblings	: 52
@@ -2637,7 +2637,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Platinum 8170M CPU @ 2.10GHz
 stepping	: 4
 microcode	: 0x2006e05
-cpu MHz		: 1100.004
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 52
