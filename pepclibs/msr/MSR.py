@@ -215,7 +215,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
         mask = (1 << bits_cnt) - 1
         return (regval >> bits[1]) & mask
 
-    def _read_cpu(self, regaddr, cpu):
+    def _read_cpu_nocache(self, regaddr, cpu):
         """Read an MSR at address 'regaddr' on CPU 'cpu'."""
 
         path = Path(f"/dev/cpu/{cpu}/msr")
@@ -337,7 +337,7 @@ for cpu in cpus:
                 regval = self._cache.get(regaddr, cpu)
             except ErrorNotFound:
                 # Not in the cache, read from the HW.
-                regval = self._read_cpu(regaddr, cpu)
+                regval = self._read_cpu_nocache(regaddr, cpu)
                 self._cache.add(regaddr, cpu, regval, sname=iosname)
 
             yield cpu, regval
@@ -412,7 +412,7 @@ for cpu in cpus:
         set_mask = val << bits[1]
         return (regval & ~clear_mask) | set_mask
 
-    def _write_cpu(self, regaddr, regval, cpu, regval_bytes=None):
+    def _write_cpu_nocache(self, regaddr, regval, cpu, regval_bytes=None):
         """Write value 'regval' to MSR at 'regaddr' on CPU 'cpu."""
 
         if regval_bytes is None:
@@ -456,7 +456,7 @@ for cpu in cpus:
             if not self._in_transaction:
                 if regval_bytes is None:
                     regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
-                self._write_cpu(regaddr, regval, cpu, regval_bytes=regval_bytes)
+                self._write_cpu_nocache(regaddr, regval, cpu, regval_bytes=regval_bytes)
             else:
                 self._add_for_transation(regaddr, regval, cpu, verify, iosname)
 
