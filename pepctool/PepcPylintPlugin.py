@@ -207,6 +207,7 @@ class IndentValidator():
             self._was_bracket = True
         elif txt in (")", "}", "]"):
             self._indent = self._stack.pop()
+            return
 
         if token.type == tokenize.INDENT:
             self._indent += 4
@@ -222,7 +223,7 @@ class IndentValidator():
             return
 
         if self._indent == self._base_indent and self._new_indent is None and \
-           (self._parent.is_reserved(token) or token.type == tokenize.OP):
+           (self._parent.is_reserved(token) or (token.type == tokenize.OP and txt != ".")):
             self._new_indent = token.end[1] + 1
 
         prevtok = self._parent.get_token(0)
