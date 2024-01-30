@@ -226,7 +226,7 @@ class IndentValidator():
            (self._parent.is_reserved(token) or (token.type == tokenize.OP and txt != ".")):
             self._new_indent = token.end[1] + 1
 
-        prevtok = self._parent.get_token(0)
+        prevtok = self._parent.get_token(0, skip=(tokenize.NL,))
         if not prevtok:
             return
 
@@ -670,16 +670,23 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
 
         return None
 
-    def get_token(self, index=0):
+    def get_token(self, index=0, skip=None):
         """
         Get token from the token history. 'index' is a positive number for how far into the history
-        we go. 'index' 0 nominates current token.
+        we go. 'index' 0 nominates current token. 'skip' can be used to indicate token types we want
+        to skip.
         """
 
-        if index >= len(self._tokens):
-            return None
+        while True:
+            if index >= len(self._tokens):
+                return None
 
-        return self._tokens[-index - 1]
+            token = self._tokens[-index - 1]
+            if skip and token.type in skip:
+                index += 1
+                continue
+
+            return token
 
     def _check_operand_spacing(self, nexttoken):
         """
