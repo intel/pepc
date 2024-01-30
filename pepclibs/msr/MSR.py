@@ -313,19 +313,8 @@ for cpu in cpus:
                 regval = self._cache.get(regaddr, cpu)
             yield cpu, regval
 
-    def read(self, regaddr, cpus="all", iosname="CPU"):
-        """
-        Read an MSR on CPUs 'cpus' and yield the result. The arguments are as follows.
-          * regaddr - address of the MSR to read.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * iosname - the 'regaddr' MSR I/O scope name (e.g. "package", "core").
-
-        Yields tuples of '(cpu, regval)'.
-          * cpu - the CPU number the MSR was read from.
-          * regval - the read MSR value.
-        """
-
-        cpus = self._cpuinfo.normalize_cpus(cpus)
+    def _read(self, regaddr, cpus, iosname):
+        """Implement 'read()'."""
 
         if self._pman.is_remote and len(cpus) > 1:
             yield from self._read_remote_optimized(regaddr, cpus, iosname)
@@ -341,6 +330,21 @@ for cpu in cpus:
                 self._cache.add(regaddr, cpu, regval, sname=iosname)
 
             yield cpu, regval
+
+    def read(self, regaddr, cpus="all", iosname="CPU"):
+        """
+        Read an MSR on CPUs 'cpus' and yield the result. The arguments are as follows.
+          * regaddr - address of the MSR to read.
+          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+          * iosname - the 'regaddr' MSR I/O scope name (e.g. "package", "core").
+
+        Yields tuples of '(cpu, regval)'.
+          * cpu - the CPU number the MSR was read from.
+          * regval - the read MSR value.
+        """
+
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+        yield from self._read(regaddr, cpus, iosname)
 
     def read_cpu(self, regaddr, cpu, iosname="CPU"):
         """
