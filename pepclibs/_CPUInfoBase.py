@@ -150,25 +150,22 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             self._compute_dies[package].add(die)
 
         pli_obj = self._get_pliobj()
-
-        for cpu in cpus:
-            if "die" in tinfo[cpu]:
-                continue
-
-            if pli_obj:
-                # Domain IDs match the die numbers.
-                die = pli_obj.read_cpu_feature("domain_id", cpu)
+        if pli_obj:
+            for cpu, die in pli_obj.read_feature("domain_id", cpus=cpus):
                 _add_compute_die(tinfo, cpu, die)
-                continue
+        else:
+            for cpu in cpus:
+                if "die" in tinfo[cpu]:
+                    continue
 
-            base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
-            data = self._pman.read(base / "topology/die_id")
-            die = Trivial.str_to_int(data, "die number")
-            siblings = self._read_range(base / "topology/die_cpus_list")
-            for _ in siblings:
-                # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
-                with contextlib.suppress(KeyError):
-                    _add_compute_die(tinfo, cpu, die)
+                base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
+                data = self._pman.read(base / "topology/die_id")
+                die = Trivial.str_to_int(data, "die number")
+                siblings = self._read_range(base / "topology/die_cpus_list")
+                for _ in siblings:
+                    # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
+                    with contextlib.suppress(KeyError):
+                        _add_compute_die(tinfo, cpu, die)
 
     def _add_nodes(self, tinfo):
         """Adds NUMA node numbers to 'tinfo'."""
