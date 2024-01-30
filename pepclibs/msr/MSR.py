@@ -232,6 +232,87 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         return regval
 
+    def _read_remote_optimized(self, regaddr, cpus, iosname):
+        """
+        An optimized implementation of 'read()' method for a remote host.
+
+        Observation: opening and reading multiple remote '/dev/msr/{cpu}' files from the local
+        system is significantly slower than running a script on the remote system and having the
+        script open/read the files.
+
+        Optimized solution: generate a small python script that reads the 'regaddr' MSR on 'cpus'
+        and prints the values, run the script on the remote host, parse script output.
+        """
+
+        # CPU numbers to read the MSR for (subset of 'cpus').
+        do_read = []
+        # CPU numbers the MSR should not be read for. Instead, the MSR values for these CPU numbres
+        # are available from the cache, or will be available from the cache when a sibling CPU from
+        # 'do_read' is read.
+        dont_read = set()
+
+        for cpu in cpus:
+            if cpu in dont_read:
+                continue
+
+            try:
+                self._cache.get(regaddr, cpu)
+                continue
+            except ErrorNotFound:
+                if self._enable_cache:
+                    # The cache is enabled, but MSR value is not available from there. Read the MSR
+                    # only for 'ioscope' sibling CPU, because MSR value should be the same for the
+                    # siblings.
+                    for sibling in self._cpuinfo.get_cpu_siblings(cpu, iosname):
+                        if sibling == cpu:
+                            do_read.append(sibling)
+                        else:
+                            dont_read.add(sibling)
+                else:
+                    # The cache is disabled. Technically, it is not necessary to do anything
+                    # differently in this case. But emulate the 'read()' method behavior for
+                    # consistency: ignore the 'ioscope' and just read the MSR for all CPUs in
+                    # 'cpus'.
+                    do_read.append(cpu)
+
+        if not do_read:
+            for cpu in cpus:
+                yield cpu, self._cache.get(regaddr, cpu)
+            return
+
+        python_path = self._pman.get_python_path()
+        cpus_str = ",".join([str(cpu) for cpu in do_read])
+        cmd = f"""{python_path} -c '
+cpus = [{cpus_str}]
+for cpu in cpus:
+    path = "/dev/cpu/%d/msr" % cpu
+    with open(path, "rb") as fobj:
+        fobj.seek({regaddr})
+        regval = fobj.read({self.regbytes})
+        regval = int.from_bytes(regval, byteorder="{_CPU_BYTEORDER}")
+        print("%d,%d" % (cpu, regval))
+'"""
+
+        stdout, _ = self._pman.run_verify(cmd, shell=True)
+        regvals = {}
+
+        for line in stdout.splitlines():
+            split = Trivial.split_csv_line(line.strip())
+            if len(split) != 2:
+                raise Error("BUG: bad MSR read script line '{line}'")
+
+            cpu = Trivial.str_to_int(split[0], what="CPU number")
+            regval = Trivial.str_to_int(split[1], what=f"MSR {regaddr:#x} value on CPU {cpu}")
+
+            regvals[cpu] = regval
+            self._cache.add(regaddr, cpu, regval, sname=iosname)
+
+        for cpu in cpus:
+            regval = regvals.get(cpu)
+            if regval is None:
+                regval = self._cache.get(regaddr, cpu)
+            yield cpu, regval
+
     def read(self, regaddr, cpus="all", iosname="CPU"):
         """
         Read an MSR on CPUs 'cpus' and yield the result. The arguments are as follows.
@@ -246,6 +327,10 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
 
+        if self._pman.is_remote and len(cpus) > 1:
+            yield from self._read_remote_optimized(regaddr, cpus, iosname)
+            return
+
         for cpu in cpus:
             # Return the cached value if possible.
             try:
@@ -255,7 +340,7 @@ class MSR(ClassHelpers.SimpleCloseContext):
                 regval = self._read_cpu(regaddr, cpu)
                 self._cache.add(regaddr, cpu, regval, sname=iosname)
 
-            yield (cpu, regval)
+            yield cpu, regval
 
     def read_cpu(self, regaddr, cpu, iosname="CPU"):
         """
