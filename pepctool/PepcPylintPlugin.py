@@ -237,6 +237,9 @@ class IndentValidator():
             self._pending.append(token)
             return
 
+        if prevtok.type == tokenize.STRING and token.type == tokenize.STRING:
+            self._indent = prevtok.start[1]
+
         tokens = [token]
         tokens += self._pending
 
