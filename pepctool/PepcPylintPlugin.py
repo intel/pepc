@@ -14,7 +14,7 @@ import re
 import tokenize
 from astroid import nodes
 from pylint.checkers import BaseChecker, BaseTokenChecker, BaseRawFileChecker
-from pepctool.linterlibs import IndentValidator
+from pepctool.linterlibs import ClassInitValidator, IndentValidator
 
 STATE_COMMENT = 1
 STATE_COMMENT_NL = 2
@@ -755,67 +755,6 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         self._parenthesis_line = None
         self._alignment = IndentValidator.IndentValidator(self)
 
-_CLASS_INIT_VALID_TYPES = (nodes.Name, nodes.Assign, nodes.AssignName, nodes.If, nodes.Const)
-
-class ClassInitValidator():
-    """Validate the ordering of code in class '__init__()' method."""
-
-    def _validate_node_type(self, node):
-        """
-        Check that the type of single line of execution is valid for the data initialization
-        section.
-        """
-
-        valid = isinstance(node, _CLASS_INIT_VALID_TYPES)
-
-        if not valid:
-            # Check if we are calling super().__init__().
-            if node.as_string().find("super().__init__(") >= 0:
-                return True
-
-        if not valid:
-            return False
-
-        for child in node.get_children():
-            if not self._validate_node_type(child):
-                return False
-
-        return True
-
-    def validate(self, node, current_valid=None):
-        """
-        Validate a single line of code for '__init__()' method. This will check that
-        initialization of all the class internal data is done before any complex execution happens.
-        Arguments are as follows.
-          * node - AST node declaring the code line to be processed.
-          * current_valid - True, if the given node is known to be valid.
-        """
-
-        if not node:
-            return True
-
-        if node == self._prev_node:
-            return self._prev_ok
-
-        # Check if previous node is ok.
-        prev = node.previous_sibling()
-        valid = self.validate(prev)
-
-        # Validate current node.
-        if valid and not current_valid:
-            valid = self._validate_node_type(node)
-
-        self._prev_node = node
-        self._prev_ok = valid
-
-        return valid
-
-    def __init__(self):
-        """Constructor for 'ClassInitValidator'."""
-
-        self._prev_node = None
-        self._prev_ok = True
-
 class ScopeStack():
     """Provide push/pop functionality for scopes, and variable access data."""
 
@@ -885,7 +824,7 @@ class ScopeStack():
             self._class_stack.append(scope)
             self._class_scope = scope
             self._classes[node.name] = scope
-            scope["validator"] = ClassInitValidator()
+            scope["validator"] = ClassInitValidator.ClassInitValidator()
 
         if scope_type == "module":
             self._global_scope = scope
