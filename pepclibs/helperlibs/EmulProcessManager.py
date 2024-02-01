@@ -13,34 +13,15 @@
 # pylint: disable=arguments-differ
 # pylint: disable=arguments-renamed
 
-import io
 import types
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers, YAML, Human
+from pepclibs.helperlibs import LocalProcessManager, Trivial, YAML, _EmulFile
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
-from pepclibs.helperlibs.Exceptions import ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = logging.getLogger()
-
-def _get_err_prefix(fobj, method):
-    """Return the error message prefix."""
-    return f"method '{method}()' failed for {fobj.name}"
-
-def populate_rw_file(path, data):
-    """Create text file 'path' and write 'data' into it."""
-
-    if not path.parent.exists():
-        path.parent.mkdir(parents=True)
-
-    with open(path, "w", encoding="utf-8") as fobj:
-        try:
-            fobj.write(data)
-        except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to write into file '{path}':\n{msg}") from err
 
 def _populate_sparse_file(path, data):
     """Create sparse file 'path' and write sparse data 'data' into it."""
@@ -56,47 +37,6 @@ def _populate_sparse_file(path, data):
     except OSError as err:
         msg = Error(err).indent(2)
         raise Error(f"failed to prepare sparse file '{path}':\n{msg}") from err
-
-def open_ro(data, mode): # pylint: disable=unused-argument
-    """Return an emulated read-only file object using a 'StringIO' object."""
-
-    def _ro_write(data):
-        """Write method for emulating RO file."""
-        raise Error("not writable")
-
-    fobj = io.StringIO(data)
-    fobj.write = types.MethodType(_ro_write, fobj)
-    return fobj
-
-def open_rw(path, mode, basepath):
-    """Create a file in the temporary directory and return the file object."""
-
-    tmppath = basepath / str(path).strip("/")
-
-    # Disabling buffering is only allowed in binary mode.
-    if "b" in mode:
-        buffering = 0
-        encoding = None
-    else:
-        buffering = -1
-        encoding = "utf-8"
-
-    errmsg = f"cannot open file '{path}' with mode '{mode}': "
-    try:
-        # pylint: disable=consider-using-with
-        fobj = open(tmppath, mode, buffering=buffering, encoding=encoding)
-    except PermissionError as err:
-        msg = Error(err).indent(2)
-        raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
-    except FileNotFoundError as err:
-        msg = Error(err).indent(2)
-        raise ErrorNotFound(f"{errmsg}\n{msg}") from None
-    except OSError as err:
-        msg = Error(err).indent(2)
-        raise Error(f"{errmsg}\n{msg}") from None
-
-    # Make sure methods of 'fobj' always raise the 'Error' exceptions.
-    return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
 
 class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     """
@@ -125,120 +65,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self._basepath = super().mkdtemp(prefix=f"emulprocs_{pid}_")
 
         return self._basepath
-
-    def _set_read_method(self, fobj, path):
-        """
-        Contents of some read-only sysfs files can change depending on other files. Replace the
-        'read()' method of 'fobj' with a custom method in order to properly emulate the behavior of
-        a read-only file in 'path'.
-        """
-
-        def _online_read(self):
-            """
-            Mimic the '/sys/devices/system/cpu/online' file. It's contents depends on the per-CPU
-            online files. For example if the per-cpu files contain the following:
-
-            '/sys/devices/system/cpu/cpu0/online' : "1"
-            '/sys/devices/system/cpu/cpu1/online' : "1"
-            '/sys/devices/system/cpu/cpu2/online' : "0"
-            '/sys/devices/system/cpu/cpu3/online' : "1"
-
-            The global file contains the following:
-            '/sys/devices/system/cpu/online' : "0-1,3"
-            """
-
-            online = []
-            for dirname in self._base_path.iterdir():
-                if not dirname.name.startswith("cpu"):
-                    continue
-
-                cpunum = dirname.name[3:]
-                if not Trivial.is_int(cpunum):
-                    continue
-
-                try:
-                    with open(dirname / "online", "r", encoding="utf-8") as fobj:
-                        data = fobj.read().strip()
-                except FileNotFoundError:
-                    # CPU 0 does not have a "online" file, but it is online. So, we assume the same
-                    # for any other CPU that has a folder but no "online" file.
-                    online.append(cpunum)
-                    continue
-
-                if data == "1":
-                    online.append(cpunum)
-
-            return Human.rangify(online)
-
-        if path.endswith("cpu/online"):
-            fobj._base_path = self._get_basepath() / "sys" / "devices" / "system" / "cpu"
-            fobj._orig_read = fobj.read
-            fobj.read = types.MethodType(_online_read, fobj)
-
-    def _set_write_method(self, fobj, path, mode):
-        """
-        Some files needs special handling when written to. Replace the 'write()' method of 'fobj'
-        with a custom method in order to properly emulate the behavior of the file in 'path'.
-        """
-
-        def _epb_write(self, data):
-            """
-            Mimic the sysfs 'energy_perf_bias' file behavior. In addition to supporting numbers, it
-            also supports policies.
-            """
-
-            policies = {"performance": 0, "balance-performance": 4, "normal": 6,
-                        "balance-power": 8, "power": 15}
-
-            key = data.strip()
-            if key in policies:
-                data = f"{policies[key]}\n"
-            self.truncate(len(data))
-            self.seek(0)
-            self._orig_write(data)
-
-        def _aspm_write(self, data):
-            """
-            Mimic the sysfs ASPM policy file behavior.
-
-            For example, writing "powersave" to the file results in the following file contents:
-            "default performance [powersave] powersupersave".
-            """
-
-            line = fobj._policies.replace(data, f"[{data}]")
-            self.truncate(len(data))
-            self.seek(0)
-            self._orig_write(line)
-
-        def _truncate_write(self, data):
-            """
-            Mimic behavior of most sysfs files: writing does not continue from the current file
-            offset, but instead, starts from file offset 0. For example, writing "performance" to
-            the 'scaling_governor' results in the file containing only "performance", regardless of
-            what the file contained before the write operation.
-            """
-
-            self.truncate(len(data))
-            self.seek(0)
-            self._orig_write(data)
-
-        if path.startswith("/sys/"):
-            if "w" in mode:
-                raise Error("BUG: use 'r+' mode when opening sysfs virtual files")
-
-            if mode != "r+":
-                return
-
-            fobj._orig_write = fobj.write
-
-            if path.endswith("pcie_aspm/parameters/policy"):
-                policies = fobj.read().strip()
-                fobj._policies = policies.replace("[", "").replace("]", "")
-                fobj.write = types.MethodType(_aspm_write, fobj)
-            elif path.endswith("/energy_perf_bias"):
-                fobj.write = types.MethodType(_epb_write, fobj)
-            else:
-                fobj.write = types.MethodType(_truncate_write, fobj)
 
     def _set_seek_method(self, fobj, path):
         """
@@ -351,12 +177,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """
 
         path = str(path)
+        if path in self._emuls:
+            return self._emuls[path].open(mode)
+
         if path in self._ro_files:
-            fobj = open_ro(self._ro_files[path], mode)
-            self._set_read_method(fobj, path)
+            fobj = _EmulFile.open_ro(self._ro_files[path], mode)
         else:
-            fobj = open_rw(path, mode, self._get_basepath())
-            self._set_write_method(fobj, path, mode)
+            fobj = _EmulFile.open_rw(path, mode, self._get_basepath())
 
         self._set_seek_method(fobj, path)
         return fobj
@@ -404,17 +231,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                     raise Error(f"unexpected line format, expected <path>{sep}<value>, received\n"
                                 f"{line}")
 
-                # Create file in temporary directory. Here is an example.
-                #   * Emulated path: "/sys/devices/system/cpu/cpu0".
-                #   * Real path: "/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0".
-                path = split[0]
-                data = split[1]
+                finfo["path"] = split[0]
+                finfo["data"] = split[1]
 
-                if finfo.get("readonly"):
-                    self._ro_files[path] = data
-                else:
-                    path = self._get_basepath() / path.lstrip("/")
-                    populate_rw_file(path, data)
+                emul = _EmulFile.EmulFile(finfo, datapath, self._get_basepath)
+                self._emuls[emul.path] = emul
 
     def _init_inline_dirs(self, finfos, datapath):
         """
@@ -483,19 +304,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """Initialize plain files, which are just copies of the original files."""
 
         for finfo in finfos:
-            src = datapath / module / finfo["path"].lstrip("/")
-
-            try:
-                with open(src, "r", encoding="utf-8") as fobj:
-                    data = fobj.read()
-            except ErrorNotFound:
-                continue
-
-            if finfo.get("readonly"):
-                self._ro_files[finfo["path"]] = data
-            else:
-                path = self._get_basepath() / finfo["path"].lstrip("/")
-                populate_rw_file(path, data)
+            emul = _EmulFile.EmulFile(finfo, datapath, self._get_basepath, module)
+            self._emuls[emul.path] = emul
 
     def _init_directories(self, finfos, datapath, module):
         """Initialize directories."""
@@ -679,6 +489,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self._basepath = None
         # Set of all modules that were initialized.
         self._modules = set()
+        # A dictionary mapping paths to emulated file objects.
+        self._emuls = {}
 
     def close(self):
         """Stop emulation."""
