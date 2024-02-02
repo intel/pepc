@@ -59,7 +59,7 @@ def _populate_sparse_file(path, data):
 
 class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     """
-    An process manager which pretends that it runs commands, but in reality it just returns
+    A process manager which pretends that it runs commands, but in reality it just returns
     pre-defined command output. This class is used for testing purposes.
     """
 
