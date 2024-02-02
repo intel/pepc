@@ -11,6 +11,7 @@
 Provide a capability to read and write CPU Model Specific Registers.
 """
 
+import pprint
 import logging
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, FSHelpers, KernelModule, Trivial, ClassHelpers
@@ -129,6 +130,42 @@ class MSR(ClassHelpers.SimpleCloseContext):
                                     f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
                                     f"{err.indent(2)}") from err
 
+    def _transaction_write_remote_optimized(self):
+        """
+        An optmimized implementation of transaction '_transaction_write()' for a remote host.
+
+        Observation: opening and writing to multiple remote '/dev/msr/{cpu}' files from the local
+        system is significantly slower than running a script on the remote system and having the
+        script open/write to the files.
+
+        Optimized solution: generate a small python script that writes to the MSRs and run it on the
+        remote host.
+        """
+
+        python_path = self._pman.get_python_path()
+
+        printer = pprint.PrettyPrinter(compact=True, sort_dicts=False)
+        transaction_buffer_str = printer.pformat(self._transaction_buffer)
+
+        # Single quotes are used for the as the code delimiters in "python -c '<code>'". Replace
+        # them with double quotes.
+        transaction_buffer_str = transaction_buffer_str.replace("'", "\"")
+
+        cmd = f"""{python_path} -c '
+transaction_buffer = {transaction_buffer_str}
+for cpu, cpus_info in transaction_buffer.items():
+    path = "/dev/cpu/%d/msr" % cpu
+    with open(path, "r+b") as fobj:
+        for regaddr, regval_info in cpus_info.items():
+            regval = regval_info["regval"]
+            fobj.seek(regaddr)
+            regval_bytes = regval.to_bytes({self.regbytes}, byteorder="{_CPU_BYTEORDER}")
+            fobj.write(regval_bytes)
+            fobj.flush()
+'"""
+
+        self._pman.run_verify(cmd, shell=True)
+
     def flush_transaction(self):
         """
         Flush the transaction buffer. Write all the buffered data to the MSRs. If there are multiple
@@ -145,7 +182,10 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("flushing MSR transaction buffer")
 
-        self._transaction_write()
+        if self._pman.is_remote and len(self._transaction_buffer) > 1:
+            self._transaction_write_remote_optimized()
+        else:
+            self._transaction_write()
 
         # Form a temporary dictionary for verifying the contents of the MSRs written to by the
         # transaction.
