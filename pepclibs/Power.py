@@ -145,38 +145,49 @@ class Power(_PropsClassBase.PropsClassBase):
             ppiobj = self._get_ppiobj()
             yield from ppiobj.read_feature(pname, cpus=cpus)
 
+    def _validate_ppl(self, pname, val, cpus):
+        """
+        Validate that the new PPL1 or PPL2 value 'val' is within reasonable limits.
+
+        Even though accourding to Intel SDM, the min. and max. PPL values could be acquired from an
+        MSR, this method does not use it because it does not seem to provide reasonable numbers on
+        some platforms.
+        """
+
+        name = self._props[pname]["name"]
+        check_pname = "ppl2" if pname == "ppl1" else "ppl1"
+        fval = float(val)
+
+        iterator = zip(self._get_prop_cpus_mnames("tdp", cpus),
+                       self._get_prop_cpus_mnames(check_pname, cpus))
+        for (cpu, tdp), (_, check_ppl_val) in iterator:
+            if pname == "ppl1":
+                minval = tdp / 8
+                maxval = tdp
+                if fval > check_ppl_val:
+                    raise Error(f"cannot set CPU{cpu} {name} to {fval}W{self._pman.hostmsg} - it "
+                                f"is higher than current RAPL PPL2 value {check_ppl_val}W")
+            else:
+                # Apply a reasonable limit for PPL2. This is empirical limit, based on general
+                # observations.
+                minval = tdp / 8
+                maxval = tdp * 4
+                if fval < check_ppl_val:
+                    raise Error(f"cannot set CPU{cpu} {name} to {fval}W{self._pman.hostmsg} - it "
+                                f"is lower than current RAPL PPL1 value {check_ppl_val}W")
+
+            if fval > maxval or fval < minval:
+                raise Error(f"cannot set CPU{cpu} {name} to {val}W{self._pman.hostmsg} - it is out "
+                            f"of range ({minval}W-{maxval}W) for CPU{cpu}{self._pman.hostmsg}")
+
     def _do_set_prop(self, pname, val, cpus):
         """Implements '_set_prop_cpus()'."""
 
+        if pname in ("ppl1", "ppl2"):
+            self._validate_ppl(pname, val, cpus)
+
         fname = self._pname2fname(pname)
-
-        for cpu in cpus:
-            # RAPL contains min/max values for the PPL in an MSR register, however the register
-            # contents are unreliable so we derive ranges here from TDP.
-            if pname in ("ppl1", "ppl2"):
-                tdp = self._get_cpu_prop_mnames("tdp", cpu)
-
-                fval = float(val)
-
-                if pname == "ppl1":
-                    minval = tdp / 8
-                    maxval = tdp
-                    if fval > self._get_cpu_prop_mnames("ppl2", cpu):
-                        raise Error(f"{pname} can't be higher than RAPL PPL2 for CPU{cpu}")
-                else:
-                    # Apply a reasonable limit for PPL2. This is empirical limit, based on general
-                    # observations.
-                    minval = tdp / 8
-                    maxval = tdp * 4
-                    if fval < self._get_cpu_prop_mnames("ppl1", cpu):
-                        raise Error(f"{pname} can't be lower than RAPL PPL1 for CPU{cpu}")
-
-                if fval > maxval or fval < minval:
-                    errmsg = f"value {val}W for {pname} out of range ({minval}W-" \
-                             f"{maxval}W) for CPU{cpu}"
-                    raise Error(errmsg)
-
-            self._get_pplobj().write_cpu_feature(fname, val, cpu)
+        self._get_pplobj().write_feature(fname, val, cpus=cpus)
 
     def _set_prop_cpus(self, pname, val, cpus, mname):
         """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
@@ -184,13 +195,15 @@ class Power(_PropsClassBase.PropsClassBase):
         if mname != "msr":
             raise Error(f"BUG: unsupported mechanism '{mname}'")
 
+        name = self._props[pname]["name"]
+
         try:
             self._do_set_prop(pname, val, cpus)
         except ErrorVerifyFailed as err:
             if pname in ("ppl1_enable", "ppl2_enable"):
                 state = "enab" if val else "disab"
-                errmsg = f"failed to {state}le {pname}. Keep in mind some platforms " \
-                         f"forbid {state}ling {pname}."
+                errmsg = f"failed to {state}le {name}. Keep in mind some platforms " \
+                         f"forbid {state}ling {name}."
                 raise ErrorVerifyFailed(errmsg) from err
             raise
 
