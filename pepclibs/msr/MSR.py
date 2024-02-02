@@ -78,9 +78,9 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
     def start_transaction(self):
         """
-        Start transaction. All writes to MSR registers will be cached, and will only be written
-        to the actual hardware on 'commit_transaction()' or 'flush_transaction(). Writes to the same
-        MSR registers will be merged.
+        Start transaction. All writes to MSRs will be cached, and will only be written to the actual
+        hardware on 'commit_transaction()' or 'flush_transaction(). Writes to the same MSRs will be
+        merged.
 
         The purpose of a transaction is to reduce the amount of I/O. There is no atomicity and
         roll-back functionality, it is only about buffering the I/O and merging multiple writes to
@@ -110,9 +110,9 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
     def flush_transaction(self):
         """
-        Flush the transaction buffer. Write all the buffered data to the MSR registers. If there are
-        multiple writes to the same MSR register, they will be merged into a single write operation.
-        The transaction does not stop after flushing.
+        Flush the transaction buffer. Write all the buffered data to the MSRs. If there are multiple
+        writes to the same MSR, they will be merged into a single write operation. The transaction
+        does not stop after flushing.
         """
 
         if not self._enable_cache:
@@ -161,9 +161,9 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
     def commit_transaction(self):
         """
-        Commit the transaction. Write all the buffered data to the MSR registers and close the
-        transaction. Note, there is no atomicity guarantee, this is not like a database transaction,
-        this is just an optimization to reduce the amount of MSR I/O.
+        Commit the transaction. Write all the buffered data to MSRs and close the transaction. Note,
+        there is no atomicity guarantee, this is not like a database transaction, this is just an
+        optimization to reduce the amount of MSR I/O.
         """
 
         if not self._in_transaction:
@@ -389,7 +389,7 @@ for cpu in cpus:
         """
         Set bits 'bits' to value 'val' in an MSR value 'regval', and return the result. The
         arguments are as follows.
-          * regval - an MSR register value to set the bits in.
+          * regval - an MSR value to set the bits in.
           * bits - the bits range to set (similar to the 'bits' argument in 'get_bits()').
           * val - the value to set the bits to.
         """
@@ -526,8 +526,8 @@ for cpu in cpus:
 
     def _ensure_dev_msr(self):
         """
-        Make sure that device nodes for accessing MSR registers are available. Try to load the MSR
-        driver if necessary.
+        Make sure that device nodes for accessing MSRs are available. Try to load the MSR driver if
+        necessary.
         """
 
         cpus = self._cpuinfo.get_cpus()
@@ -578,7 +578,7 @@ for cpu in cpus:
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
 
-        # MSR registers' size in bits and bytes.
+        # MSR size in bits and bytes.
         self.regbits = 64
         self.regbytes = self.regbits // 8
 
