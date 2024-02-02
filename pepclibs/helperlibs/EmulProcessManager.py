@@ -9,34 +9,17 @@
 
 """Emulated version or the 'LocalProcessManager' module for testing purposes."""
 
-# pylint: disable=protected-access
 # pylint: disable=arguments-differ
 # pylint: disable=arguments-renamed
 
-import types
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, Trivial, YAML, _EmulFile
+from pepclibs.helperlibs import _EmulDevMSR, LocalProcessManager, Trivial, YAML, _EmulFile
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = logging.getLogger()
-
-def _populate_sparse_file(path, data):
-    """Create sparse file 'path' and write sparse data 'data' into it."""
-
-    if not path.parent.exists():
-        path.parent.mkdir(parents=True)
-
-    try:
-        with open(path, "wb") as fobj:
-            for offset, value in data.items():
-                fobj.seek(offset)
-                fobj.write(value)
-    except OSError as err:
-        msg = Error(err).indent(2)
-        raise Error(f"failed to prepare sparse file '{path}':\n{msg}") from err
 
 class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     """
@@ -65,23 +48,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self._basepath = super().mkdtemp(prefix=f"emulprocs_{pid}_")
 
         return self._basepath
-
-    def _set_seek_method(self, fobj, path):
-        """
-        Some files needs special 'seek()' handling. Replace the 'seek()' method of 'fobj' with a
-        custom method in order to properly emulate the behavior of the file in 'path'.
-        """
-
-        def _seek_offset(self, offset, whence=0):
-            """
-            Mimic '/dev/msr/*' files' 'seek()' behavior. MSR register address are offset by 8 bytes,
-            meaning register address 10 is 80 bytes from start of file.
-            """
-            self._orig_seek(offset * 8, whence)
-
-        if path.endswith("/msr"):
-            fobj._orig_seek = fobj.seek
-            fobj.seek = types.MethodType(_seek_offset, fobj)
 
     def _extract_path(self, cmd):
         """
@@ -180,13 +146,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emuls:
             return self._emuls[path].open(mode)
 
-        if path in self._ro_files:
-            fobj = _EmulFile.open_ro(self._ro_files[path], mode)
-        else:
-            fobj = _EmulFile.open_rw(path, mode, self._get_basepath())
-
-        self._set_seek_method(fobj, path)
-        return fobj
+        return _EmulFile.open_rw(path, mode, self._get_basepath())
 
     def _init_commands(self, cmdinfos, datapath):
         """
@@ -297,8 +257,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 # MSR register address are offset by 8 bytes.
                 data[regaddr * 8] = int.to_bytes(regval, 8, byteorder="little")
 
-            path = self._get_basepath() / path.lstrip("/")
-            _populate_sparse_file(path, data)
+            msrinfo["path"] = path
+            msrinfo["data"] = data
+            emul = _EmulDevMSR.EmulDevMSR(msrinfo, self._get_basepath())
+            self._emuls[emul.path] = emul
 
     def _init_files(self, finfos, datapath, module):
         """Initialize plain files, which are just copies of the original files."""
