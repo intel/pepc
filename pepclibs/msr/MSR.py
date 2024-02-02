@@ -108,6 +108,27 @@ class MSR(ClassHelpers.SimpleCloseContext):
                                         f"{self._pman.hostmsg}:\n  wrote '{regval:#x}', read back "
                                         f"'{new_val:#x}'", cpu=cpu, expected=regval, actual=new_val)
 
+    def _transaction_write(self):
+        """Write the contents of the transaction buffer to the MSRs."""
+
+        for cpu, cpus_info in self._transaction_buffer.items():
+            # Write all the dirty data.
+            path = Path(f"/dev/cpu/{cpu}/msr")
+            with self._pman.open(path, "r+b") as fobj:
+                for regaddr, regval_info in cpus_info.items():
+                    regval = regval_info["regval"]
+                    try:
+                        fobj.seek(regaddr)
+                        regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
+                        fobj.write(regval_bytes)
+                        fobj.flush()
+                        _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x%s",
+                                   cpu, regaddr, regval, self._pman.hostmsg)
+                    except Error as err:
+                        raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
+                                    f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
+                                    f"{err.indent(2)}") from err
+
     def flush_transaction(self):
         """
         Flush the transaction buffer. Write all the buffered data to the MSRs. If there are multiple
@@ -124,34 +145,23 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("flushing MSR transaction buffer")
 
+        self._transaction_write()
+
+        # Form a temporary dictionary for verifying the contents of the MSRs written to by the
+        # transaction.
         verify_info = {}
-
         for cpu, cpus_info in self._transaction_buffer.items():
-            # Write all the dirty data.
-            path = Path(f"/dev/cpu/{cpu}/msr")
-            with self._pman.open(path, "r+b") as fobj:
-                for regaddr, regval_info in cpus_info.items():
-                    regval = regval_info["regval"]
-                    verify = regval_info["verify"]
-                    try:
-                        fobj.seek(regaddr)
-                        regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
-                        fobj.write(regval_bytes)
-                        fobj.flush()
-                        _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x%s",
-                                   cpu, regaddr, regval, self._pman.hostmsg)
-                    except Error as err:
-                        raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
-                                    f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
-                                    f"{err.indent(2)}") from err
-
-                    if verify:
-                        if regval not in verify_info:
-                            verify_info[regval] = {}
-                        if regaddr not in verify_info[regval]:
-                            verify_info[regval][regaddr] = {"iosname": None, "cpus": []}
-                        verify_info[regval][regaddr]["iosname"] = regval_info["iosname"]
-                        verify_info[regval][regaddr]["cpus"].append(cpu)
+            for regaddr, regval_info in cpus_info.items():
+                verify = regval_info["verify"]
+                if not verify:
+                    continue
+                regval = regval_info["regval"]
+                if regval not in verify_info:
+                    verify_info[regval] = {}
+                if regaddr not in verify_info[regval]:
+                    verify_info[regval][regaddr] = {"iosname": None, "cpus": []}
+                verify_info[regval][regaddr]["iosname"] = regval_info["iosname"]
+                verify_info[regval][regaddr]["cpus"].append(cpu)
 
         self._transaction_buffer.clear()
 
@@ -412,7 +422,7 @@ for cpu in cpus:
         set_mask = val << bits[1]
         return (regval & ~clear_mask) | set_mask
 
-    def _write_cpu_nocache(self, regaddr, regval, cpu, regval_bytes=None):
+    def _write_cpu_nocache(self, regaddr, regval, cpu, regval_bytes=None, verify=False):
         """Write value 'regval' to MSR at 'regaddr' on CPU 'cpu."""
 
         if regval_bytes is None:
