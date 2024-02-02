@@ -57,6 +57,47 @@ def _populate_sparse_file(path, data):
         msg = Error(err).indent(2)
         raise Error(f"failed to prepare sparse file '{path}':\n{msg}") from err
 
+def open_ro(data, mode): # pylint: disable=unused-argument
+    """Return an emulated read-only file object using a 'StringIO' object."""
+
+    def _ro_write(data):
+        """Write method for emulating RO file."""
+        raise Error("not writable")
+
+    fobj = io.StringIO(data)
+    fobj.write = types.MethodType(_ro_write, fobj)
+    return fobj
+
+def open_rw(path, mode, basepath):
+    """Create a file in the temporary directory and return the file object."""
+
+    tmppath = basepath / str(path).strip("/")
+
+    # Disabling buffering is only allowed in binary mode.
+    if "b" in mode:
+        buffering = 0
+        encoding = None
+    else:
+        buffering = -1
+        encoding = "utf-8"
+
+    errmsg = f"cannot open file '{path}' with mode '{mode}': "
+    try:
+        # pylint: disable=consider-using-with
+        fobj = open(tmppath, mode, buffering=buffering, encoding=encoding)
+    except PermissionError as err:
+        msg = Error(err).indent(2)
+        raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
+    except FileNotFoundError as err:
+        msg = Error(err).indent(2)
+        raise ErrorNotFound(f"{errmsg}\n{msg}") from None
+    except OSError as err:
+        msg = Error(err).indent(2)
+        raise Error(f"{errmsg}\n{msg}") from None
+
+    # Make sure methods of 'fobj' always raise the 'Error' exceptions.
+    return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
+
 class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     """
     A process manager which pretends that it runs commands, but in reality it just returns
@@ -300,47 +341,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         return ProcResult(stdout=stdout, stderr=stderr, exitcode=0)
 
-    def _open_rw(self, path, mode):
-        """Create a file in the temporary directory and return the file object."""
-
-        tmppath = self._get_basepath() / str(path).strip("/")
-
-        # Disabling buffering is only allowed in binary mode.
-        if "b" in mode:
-            buffering = 0
-            encoding = None
-        else:
-            buffering = -1
-            encoding = "utf-8"
-
-        errmsg = f"cannot open file '{path}' with mode '{mode}': "
-        try:
-            # pylint: disable=consider-using-with
-            fobj = open(tmppath, mode, buffering=buffering, encoding=encoding)
-        except PermissionError as err:
-            msg = Error(err).indent(2)
-            raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
-        except FileNotFoundError as err:
-            msg = Error(err).indent(2)
-            raise ErrorNotFound(f"{errmsg}\n{msg}") from None
-        except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"{errmsg}\n{msg}") from None
-
-        # Make sure methods of 'fobj' always raise the 'Error' exceptions.
-        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
-
-    def _open_ro(self, path, mode): # pylint: disable=unused-argument
-        """Return an emulated read-only file object using a 'StringIO' object."""
-
-        def _ro_write(self, data):
-            """Write method for emulating RO file."""
-            raise Error("not writable")
-
-        fobj = io.StringIO(self._ro_files[path])
-        fobj.write = types.MethodType(_ro_write, fobj)
-        return fobj
-
     def open(self, path, mode):
         """
         Open a file on the at 'path' and return a file-like object. The arguments are as follows.
@@ -352,10 +352,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         path = str(path)
         if path in self._ro_files:
-            fobj = self._open_ro(path, mode)
+            fobj = open_ro(self._ro_files[path], mode)
             self._set_read_method(fobj, path)
         else:
-            fobj = self._open_rw(path, mode)
+            fobj = open_rw(path, mode, self._get_basepath())
             self._set_write_method(fobj, path, mode)
 
         self._set_seek_method(fobj, path)
