@@ -15,9 +15,10 @@
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import _EmulDevMSR, LocalProcessManager, Trivial, YAML, _EmulFile
+from pepclibs.helperlibs import LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.emul import _EmulDevMSR, _EmulFile
 
 _LOG = logging.getLogger()
 

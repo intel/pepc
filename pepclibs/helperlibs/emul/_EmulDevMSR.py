@@ -10,7 +10,7 @@
 """Emulate the '/dev/msr/*' device node files."""
 
 import types
-from pepclibs.helperlibs import _EmulFile
+from pepclibs.helperlibs.emul import _EmulFile
 from pepclibs.helperlibs.Exceptions import Error
 
 def _populate_sparse_file(path, data):
