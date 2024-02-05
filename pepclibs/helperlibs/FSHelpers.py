@@ -19,12 +19,15 @@ _LOG = logging.getLogger()
 
 def wait_for_a_file(path, interval=1, timeout=60, pman=None):
     """
-    Wait for a file or directory defined by path 'path' to get created. This function just
-    periodically polls for the file every 'interval' seconds. If the file does not get created
-    within 'timeout' seconds, then this function fails with an exception.
+    Wait for a file or directory to get created. The arguments are as follows.
+      * path - path to the file of directory to wait for.
+      * interval - the interval in seconds to poll for 'path'.
+      * timeout - for how many seconds to poll until raising an exception.
+      * pman - the process manager object defining the host 'path' resides on (local host by
+               default).
 
-    The 'pman' argument is the process manger object which defines the host 'path' resides on. By
-    default, 'path' is assumed to be on the local host.
+    Periodically poll for the file or directory at 'path' every 'interval' seconds. If the file does
+    not get created within 'timeout' seconds, raise an exception.
     """
 
     with ProcessManager.pman_or_local(pman) as wpman:
