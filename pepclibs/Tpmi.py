@@ -19,10 +19,16 @@ Terminology.
               processor registers related to processor's Running Average Power Limit (RAPL) feature.
               The "sst" feature includes processor registers related to Intel Speed Select
               Technology (SST) feature.
+
   * feature ID - a unique integer number assigned to a feature.
+
   * spec file - a YAML file describing the registers and bitfields for a TPMI feature. Each
                 supported feature has a spec file, and each spec file corresponds to a feature. A
                 spec file is also required to decode the TPMI feature's PCIe VSEC table.
+
+  * spec files directory - a directory containing spec files (one or many). There may be multiple
+                           spec files directories.
+
   * feature dictionary - a dictionary describing a TPMI feature registers, bit fields and other
                          details. Feature dictionary is formed based on the feature spec file
                          contents.
