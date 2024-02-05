@@ -34,12 +34,13 @@ Terminology.
                          contents.
 """
 
-import logging
 import os
 import re
+import logging
+import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import YAML, ClassHelpers
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+from pepclibs.helperlibs import YAML, ClassHelpers, FSHelpers
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = logging.getLogger()
 
@@ -99,12 +100,12 @@ class Tpmi():
 
         path = None
 
-        for dirname, _, _ in self._pman.lsdir("/sys/kernel/debug"):
+        for dirname, _, _ in self._pman.lsdir(self._debugfs_mnt):
             # Full filename to match is of format:
             #   /sys/kernel/debug/tpmi-.*.
             match = re.match(r"^tpmi-.*$", dirname)
             if match:
-                path = Path("/sys/kernel/debug") / dirname
+                path = Path(self._debugfs_mnt) / dirname
                 break
 
         if not path:
@@ -155,8 +156,20 @@ class Tpmi():
         self._spec_dirs = spec_dirs
         self._pman = pman
 
+        # The feature dictionaries cache, indexed by feature name.
         self._fdict_cache = {}
+        # The debugfs mount point.
+        self._debugfs_mnt = None
+        # Whether debugfs should be unmounted on 'close()'.
+        self._unmount_debufs = None
+
+        self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
 
     def close(self):
         """Uninitialize the class object."""
+
+        if getattr(self, "_unmount_debugfs", None):
+            with contextlib.suppress(Error):
+                self._pman.run(f"unmount {self._debugfs_mnt}")
+
         ClassHelpers.close(self, unref_attrs=("_pman",))
