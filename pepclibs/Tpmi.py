@@ -39,10 +39,34 @@ import re
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import YAML, ClassHelpers, FSHelpers
+from pepclibs.helperlibs import YAML, ClassHelpers, FSHelpers, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
+# Users can define this environment variable to extend the default spec files.
+_SPECS_PATH_ENVVAR = "PEPC_TPMI_DATA_PATH"
+
 _LOG = logging.getLogger()
+
+def _find_spec_dirs():
+    """Find paths to TPMI specs directories and return them as a list."""
+
+    spec_dirs = []
+
+    # Add the user-defined spec files directory. This directory is optional and can be used for
+    # extending the standard spec files.
+    path = os.getenv(_SPECS_PATH_ENVVAR)
+    if path:
+        path = Path(path)
+        if not path.exists():
+            _LOG.warning("TPMI spec files path '%s' specified in the '%s' environment "
+                         "variable does not exist, ignoring it", path, _SPECS_PATH_ENVVAR)
+        else:
+            spec_dirs.append(path)
+
+    # Find the standard spec-files.
+    spec_dirs.append(ProjectFiles.find_project_data("pepc", "tpmi", what="TPMI spec files"))
+
+    return spec_dirs
 
 class Tpmi():
     """
@@ -143,12 +167,12 @@ class Tpmi():
 
         return (supported, list(map(hex, missing)))
 
-    def __init__(self, spec_dirs, pman):
+    def __init__(self, pman, spec_dirs=None):
         """
         The class constructor. The arguments are as follows.
-          * spec_dirs - a collection of spec file directory paths on the target host to look for
-                        spec files in.
           * pman - the process manager object that defines the target host.
+          * spec_dirs - a collection of spec file directory paths on the target host to look for
+                        spec files in (auto-detect by default).
         """
 
         self._spec_dirs = spec_dirs
@@ -160,6 +184,9 @@ class Tpmi():
         self._debugfs_mnt = None
         # Whether debugfs should be unmounted on 'close()'.
         self._unmount_debufs = None
+
+        if not self._spec_dirs:
+            self._spec_dirs = _find_spec_dirs()
 
         self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
 
