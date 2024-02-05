@@ -26,10 +26,10 @@ def tpmi_ls_command(args, pman):
 
     features, no_specs = tpmi_obj.get_features()
     if features:
-        print("Following features are fully supported:")
+        _LOG.info("Following features are fully supported:")
         txt = ", ".join(features)
-        print(f"  {txt}")
+        _LOG.info("  %s", txt)
     if no_specs and args.all:
-        print("Following features are supported by hardware, but have no spec data available:")
+        _LOG.info("Following features are supported by hardware, but have no spec data available:")
         txt = ", ".join(no_specs)
-        print(f"  {txt}")
+        _LOG.info("  %s", txt)
