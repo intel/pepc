@@ -6,8 +6,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - New command: pepc tpmi.
 ### Removed
 ### Changed
+ - Improve multi-CPU MSR read speed for the remote usage scenario.
 
 ## [1.5.4] - 2024-01-22
 ### Fixed
