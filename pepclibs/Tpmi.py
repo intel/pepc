@@ -115,8 +115,6 @@ class Tpmi():
                   " 2. The kernel is old and doesn't have the TPMI driver.\n" \
                   " 3. The TPMI driver is not loaded. Try to compile the kernel with the\n" \
                   "    CONFIG_INTEL_TPMI option.\n" \
-                  " 4. Debugfs support is not enabled. Try to compile the kernel with the\n" \
-                  "    CONFIG_DEBUG_FS option.\n" \
                   "Address these issues or contact project maintainers."
 
             raise ErrorNotSupported(msg)
