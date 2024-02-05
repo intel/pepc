@@ -145,6 +145,27 @@ class Tpmi():
 
         return (supported, list(map(hex, missing)))
 
+    def _find_spec_dirs(self):
+        """Find paths to TPMI specs directories and return them as a list."""
+
+        spec_dirs = []
+
+        # Add the user-defined spec files directory. This directory is optional and can be used for
+        # extending the standard spec files.
+        path = os.getenv(_SPECS_PATH_ENVVAR)
+        if path:
+            path = Path(path)
+            if not path.exists():
+                _LOG.warning("TPMI spec files path '%s' specified in the '%s' environment "
+                             "variable does not exist, ignoring it", path, _SPECS_PATH_ENVVAR)
+            else:
+                spec_dirs.append(path)
+
+        # Find the standard spec-files.
+        spec_dirs.append(ProjectFiles.find_project_data("pepc", "tpmi", what="TPMI spec files"))
+
+        return spec_dirs
+
     def __init__(self, pman):
         """
         The class constructor. The arguments are as follows.
@@ -155,17 +176,7 @@ class Tpmi():
         self._fdict_cache = {}
         self._spec_dirs = []
 
-        path = os.getenv(_SPECS_PATH_ENVVAR)
-        if path:
-            path = Path(path)
-            if not path.exists():
-                _LOG.warning("TPMI spec files path '%s' specified in the '%s' environment "
-                             "variable does not exist, ignoring it", path, _SPECS_PATH_ENVVAR)
-            else:
-                self._spec_dirs.append(path)
-
-        self._spec_dirs.append(ProjectFiles.find_project_data("pepc", "tpmi",
-                                                              what="TPMI spec files"))
+        self._spec_dirs = self._find_spec_dirs()
 
     def close(self):
         """Uninitialize the class object."""
