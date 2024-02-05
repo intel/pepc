@@ -56,7 +56,8 @@ setup(
     version=get_version("pepctool/_Pepc.py"),
     scripts=["pepc"],
     packages=find_packages(exclude=["test*"]),
-    data_files=get_data_files("share/man/man1", "docs/man1"),
+    data_files=get_data_files("share/man/man1", "docs/man1") + \
+               get_data_files("share/pepc/tpmi", "tpmi"),
     long_description="""A tool configuring various power and performance aspects of a Linux
                         system.""",
     install_requires=["paramiko", "pyyaml", "colorama", "argcomplete"],
