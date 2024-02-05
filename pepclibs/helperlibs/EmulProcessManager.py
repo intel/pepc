@@ -377,6 +377,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             self._cmds[cmdinfo["command"]] = (stdout, stderr)
 
+    def _init_default_files(self):
+        """Initialize default files that should exist for any emulated platform."""
+
+        # Create '/proc/mounts' as a read only file.
+        txt = "debugfs /sys/kernel/debug debugfs rw,nosuid,nodev,noexec,relatime 0 0"
+        self._ro_files["/proc/mounts"] = txt
+
     def _init_inline_files(self, finfos, datapath):
         """
         Inline files are defined in text file where single line defines path and content for single
@@ -521,6 +528,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                                     f"({confpath})")
 
         config = YAML.load(confpath)
+
+        self._init_default_files()
 
         if "inlinedirs" in config:
             self._init_inline_dirs(config["inlinedirs"], datapath)
