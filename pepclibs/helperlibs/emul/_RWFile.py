@@ -13,7 +13,7 @@ import types
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
-from pepclibs.helperlibs.emul import _EmulFile
+from pepclibs.helperlibs.emul import _EmulFileBase
 
 def _get_err_prefix(fobj, method):
     """Return the error message prefix."""
@@ -68,7 +68,7 @@ def open_rw(path, mode, basepath):
     # Make sure methods of 'fobj' always raise the 'Error' exceptions.
     return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
 
-class RWFile(_EmulFile.EmulFile):
+class RWFile(_EmulFileBase.EmulFileBase):
     """Emulate read-write sysfs, procfs, and debugfs files."""
 
     def _set_write_method(self, fobj, path, mode):

@@ -13,6 +13,7 @@ import io
 import types
 from pepclibs.helperlibs import Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.emul import _EmulFileBase
 
 def open_ro(data, mode): # pylint: disable=unused-argument
     """
@@ -28,7 +29,7 @@ def open_ro(data, mode): # pylint: disable=unused-argument
     fobj.write = types.MethodType(_ro_write, fobj) # pylint: disable=pepc-unused-variable
     return fobj
 
-class ROFile:
+class ROFile(_EmulFileBase.EmulFileBase):
     """Emulate read-only sysfs, procfs, and debugfs files."""
 
     def _set_read_method(self, fobj, path):
@@ -113,4 +114,4 @@ class ROFile:
         self.ro = True
         self.ro_data = data
 
-        self.path = str(finfo["path"])
+        super().__init__(str(finfo["path"]))

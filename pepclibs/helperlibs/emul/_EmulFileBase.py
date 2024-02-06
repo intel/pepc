@@ -7,10 +7,10 @@
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
-"""Emulate sysfs, procfs, and debugfs files."""
+"""Provide the base class for sub-classes emulateing sysfs, procfs, and debugfs files."""
 
-class EmulFile:
-    """Provide API for emulating sysfs, procfs, and debugfs files."""
+class EmulFileBase:
+    """Base class for sub-classes emulateing sysfs, procfs, and debugfs files."""
 
     def open(self, mode):
         """Create a file in the temporary directory and return the file object with 'mode'."""
