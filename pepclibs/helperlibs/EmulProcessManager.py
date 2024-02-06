@@ -18,7 +18,7 @@ from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs.emul import _EmulDevMSR, _EmulFile, _ROFile
+from pepclibs.helperlibs.emul import _EmulDevMSR, _ROFile, _RWFile
 
 _LOG = logging.getLogger()
 
@@ -147,7 +147,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emuls:
             return self._emuls[path].open(mode)
 
-        return _EmulFile.open_rw(path, mode, self._get_basepath())
+        return _RWFile.open_rw(path, mode, self._get_basepath())
 
     def _init_commands(self, cmdinfos, datapath):
         """
@@ -198,7 +198,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 if finfo.get("readonly", False):
                     emul = _ROFile.ROFile(finfo, datapath, self._get_basepath)
                 else:
-                    emul = _EmulFile.EmulFile(finfo, datapath, self._get_basepath)
+                    emul = _RWFile.RWFile(finfo, datapath, self._get_basepath)
                 self._emuls[emul.path] = emul
 
     def _init_inline_dirs(self, finfos, datapath):
@@ -273,7 +273,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             if finfo.get("readonly", False):
                 emul = _ROFile.ROFile(finfo, datapath, self._get_basepath, module)
             else:
-                emul = _EmulFile.EmulFile(finfo, datapath, self._get_basepath, module)
+                emul = _RWFile.RWFile(finfo, datapath, self._get_basepath, module)
             self._emuls[emul.path] = emul
 
     def _init_directories(self, finfos, datapath, module):

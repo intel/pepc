@@ -10,7 +10,7 @@
 """Emulate the '/dev/msr/*' device node files."""
 
 import types
-from pepclibs.helperlibs.emul import _EmulFile
+from pepclibs.helperlibs.emul import _RWFile
 from pepclibs.helperlibs.Exceptions import Error
 
 def _populate_sparse_file(path, data):
@@ -53,7 +53,7 @@ class EmulDevMSR:
         Create a file in the temporary directory and return the file object, opened with 'mode'.
         """
 
-        fobj = _EmulFile.open_rw(self.path, mode, self._basepath)
+        fobj = _RWFile.open_rw(self.path, mode, self._basepath)
         self._set_seek_method(fobj, self.path)
         return fobj
 
