@@ -196,7 +196,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 finfo["data"] = split[1]
 
                 if finfo.get("readonly", False):
-                    emul = _ROFile.ROFile(finfo, datapath, self._get_basepath)
+                    if finfo["path"].endswith("cpu/online"):
+                        emul = _ROFile.ROSysfsFile(finfo, datapath, self._get_basepath)
+                    else:
+                        emul = _ROFile.ROFile(finfo, datapath, self._get_basepath)
                 else:
                     emul = _RWFile.RWFile(finfo, datapath, self._get_basepath)
                 self._emuls[emul.path] = emul

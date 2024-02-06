@@ -32,7 +32,39 @@ def open_ro(data, mode): # pylint: disable=unused-argument
 class ROFile(_EmulFileBase.EmulFileBase):
     """Emulate read-only sysfs, procfs, and debugfs files."""
 
-    def _set_read_method(self, fobj, path):
+    def open(self, mode):
+        """Create a file in the temporary directory and return the file object with 'mode'."""
+
+        return open_ro(self.ro_data, mode)
+
+    def __init__(self, finfo, datapath, get_basepath, module=None):
+        """
+        Class constructor. Arguments are as follows:
+         * finfo - file info dictionary.
+         * datapath - path to the directory containing data which is used for emulation.
+         * get_basepath - a function which can be called to access the basepath. The basepath is a
+                          path to the directory where emulated files should be created.
+         * module - the name of the module which the file is a part of.
+        """
+
+        self._get_basepath = get_basepath
+
+        if "data" in finfo:
+            data = finfo["data"]
+        else:
+            src = datapath / module / finfo["path"].lstrip("/")
+            with open(src, "r", encoding="utf-8") as fobj:
+                data = fobj.read()
+
+        self.ro = True
+        self.ro_data = data
+
+        super().__init__(str(finfo["path"]))
+
+class ROSysfsFile(ROFile):
+    """This class provides the API to interact with emulated read-only Sysfs files."""
+
+    def _set_read_method(self, fobj):
         """
         Contents of some read-only sysfs files can change depending on other files. Replace the
         'read()' method of 'fobj' with a custom method in order to properly emulate the behavior of
@@ -76,42 +108,18 @@ class ROFile(_EmulFileBase.EmulFileBase):
 
             return Human.rangify(online)
 
-        if path.endswith("cpu/online"):
-            fobj._base_path = self._get_basepath() / "sys" / "devices" / "system" / "cpu"
-            fobj._orig_read = fobj.read
-            fobj.read = types.MethodType(_online_read, fobj)
+        # pylint: disable=pepc-unused-variable,protected-access
+        fobj._base_path = self._get_basepath() / "sys" / "devices" / "system" / "cpu"
+        fobj._orig_read = fobj.read
+        # pylint: enable=pepc-unused-variable,protected-access
+        fobj.read = types.MethodType(_online_read, fobj)
 
     def open(self, mode):
         """
         Return an emulated read-only file object, opened with 'mode', representing the emulated
-        read-only file.
+        read-only Sysfs file.
         """
 
-        fobj = open_ro(self.ro_data, mode)
-        self._set_read_method(fobj, self.path)
-
+        fobj = super().open(mode)
+        self._set_read_method(fobj)
         return fobj
-
-    def __init__(self, finfo, datapath, get_basepath, module=None):
-        """
-        Class constructor. Arguments are as follows:
-         * finfo - file info dictionary.
-         * datapath - path to the directory containing data which is used for emulation.
-         * get_basepath - a function which can be called to access the basepath. The basepath is a
-                          path to the directory where emulated files should be created.
-         * module - the name of the module which the file is a part of.
-        """
-
-        self._get_basepath = get_basepath
-
-        if "data" in finfo:
-            data = finfo["data"]
-        else:
-            src = datapath / module / finfo["path"].lstrip("/")
-            with open(src, "r", encoding="utf-8") as fobj:
-                data = fobj.read()
-
-        self.ro = True
-        self.ro_data = data
-
-        super().__init__(str(finfo["path"]))
