@@ -18,7 +18,7 @@ from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs.emul import _EmulDevMSR, _EmulFile
+from pepclibs.helperlibs.emul import _EmulDevMSR, _EmulFile, _ROFile
 
 _LOG = logging.getLogger()
 
@@ -195,7 +195,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 finfo["path"] = split[0]
                 finfo["data"] = split[1]
 
-                emul = _EmulFile.EmulFile(finfo, datapath, self._get_basepath)
+                if finfo.get("readonly", False):
+                    emul = _ROFile.ROFile(finfo, datapath, self._get_basepath)
+                else:
+                    emul = _EmulFile.EmulFile(finfo, datapath, self._get_basepath)
                 self._emuls[emul.path] = emul
 
     def _init_inline_dirs(self, finfos, datapath):
@@ -267,7 +270,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """Initialize plain files, which are just copies of the original files."""
 
         for finfo in finfos:
-            emul = _EmulFile.EmulFile(finfo, datapath, self._get_basepath, module)
+            if finfo.get("readonly", False):
+                emul = _ROFile.ROFile(finfo, datapath, self._get_basepath, module)
+            else:
+                emul = _EmulFile.EmulFile(finfo, datapath, self._get_basepath, module)
             self._emuls[emul.path] = emul
 
     def _init_directories(self, finfos, datapath, module):

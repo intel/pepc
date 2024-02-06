@@ -11,9 +11,8 @@
 
 # pylint: disable=protected-access
 
-import io
 import types
-from pepclibs.helperlibs import Trivial, ClassHelpers, Human
+from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
@@ -33,20 +32,6 @@ def populate_rw_file(path, data):
         except OSError as err:
             msg = Error(err).indent(2)
             raise Error(f"failed to write into file '{path}':\n{msg}") from err
-
-def open_ro(data, mode): # pylint: disable=unused-argument
-    """
-    Return an emulated read-only file object using a 'StringIO' object, containing 'data' and
-    opened with 'mode'.
-    """
-
-    def _ro_write(data):
-        """Write 'data' to emulated RO file."""
-        raise Error("not writable")
-
-    fobj = io.StringIO(data)
-    fobj.write = types.MethodType(_ro_write, fobj)
-    return fobj
 
 def open_rw(path, mode, basepath):
     """
@@ -87,55 +72,6 @@ def open_rw(path, mode, basepath):
 class EmulFile:
     """Provide API for emulating sysfs, procfs, and debugfs files."""
 
-    def _set_read_method(self, fobj, path):
-        """
-        Contents of some read-only sysfs files can change depending on other files. Replace the
-        'read()' method of 'fobj' with a custom method in order to properly emulate the behavior of
-        a read-only file in 'path'.
-        """
-
-        def _online_read(self):
-            """
-            Mimic the '/sys/devices/system/cpu/online' file. It's contents depends on the per-CPU
-            online files. For example if the per-cpu files contain the following:
-
-            '/sys/devices/system/cpu/cpu0/online' : "1"
-            '/sys/devices/system/cpu/cpu1/online' : "1"
-            '/sys/devices/system/cpu/cpu2/online' : "0"
-            '/sys/devices/system/cpu/cpu3/online' : "1"
-
-            The global file contains the following:
-            '/sys/devices/system/cpu/online' : "0-1,3"
-            """
-
-            online = []
-            for dirname in self._base_path.iterdir():
-                if not dirname.name.startswith("cpu"):
-                    continue
-
-                cpunum = dirname.name[3:]
-                if not Trivial.is_int(cpunum):
-                    continue
-
-                try:
-                    with open(dirname / "online", "r", encoding="utf-8") as fobj:
-                        data = fobj.read().strip()
-                except FileNotFoundError:
-                    # CPU 0 does not have a "online" file, but it is online. So, we assume the same
-                    # for any other CPU that has a folder but no "online" file.
-                    online.append(cpunum)
-                    continue
-
-                if data == "1":
-                    online.append(cpunum)
-
-            return Human.rangify(online)
-
-        if path.endswith("cpu/online"):
-            fobj._base_path = self._get_basepath() / "sys" / "devices" / "system" / "cpu"
-            fobj._orig_read = fobj.read
-            fobj.read = types.MethodType(_online_read, fobj)
-
     def _set_write_method(self, fobj, path, mode):
         """
         Some files needs special handling when written to. Replace the 'write()' method of 'fobj'
@@ -166,7 +102,7 @@ class EmulFile:
             "default performance [powersave] powersupersave".
             """
 
-            line = fobj._policies.replace(data, f"[{data}]")
+            line = fobj._policies.replace(data, f"[{data}]") # pylint: disable=protected-access
             self.truncate(len(data))
             self.seek(0)
             self._orig_write(line)
@@ -190,6 +126,7 @@ class EmulFile:
             if mode != "r+":
                 return
 
+            # pylint: disable=protected-access, pepc-unused-variable
             fobj._orig_write = fobj.write
 
             if path.endswith("pcie_aspm/parameters/policy"):
@@ -200,16 +137,13 @@ class EmulFile:
                 fobj.write = types.MethodType(_epb_write, fobj)
             else:
                 fobj.write = types.MethodType(_truncate_write, fobj)
+            # pylint: enable=protected-access, pepc-unused-variable
 
     def open(self, mode):
         """Create a file in the temporary directory and return the file object with 'mode'."""
 
-        if self.ro:
-            fobj = open_ro(self.ro_data, mode)
-            self._set_read_method(fobj, self.path)
-        else:
-            fobj = open_rw(self.path, mode, self._get_basepath())
-            self._set_write_method(fobj, self.path, mode)
+        fobj = open_rw(self.path, mode, self._get_basepath())
+        self._set_write_method(fobj, self.path, mode)
 
         return fobj
 
@@ -232,15 +166,11 @@ class EmulFile:
             with open(src, "r", encoding="utf-8") as fobj:
                 data = fobj.read()
 
-        if finfo.get("readonly"):
-            self.ro = True
-            self.ro_data = data
-        else:
-            # Create file in temporary directory. Here is an example.
-            #   * Emulated path: "/sys/devices/system/cpu/cpu0".
-            #   * Real path: "/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0".
-            self.ro = False
-            path = self._get_basepath() / finfo["path"].lstrip("/")
-            populate_rw_file(path, data)
+        # Create file in temporary directory. Here is an example.
+        #   * Emulated path: "/sys/devices/system/cpu/cpu0".
+        #   * Real path: "/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0".
+        self.ro = False
+        path = self._get_basepath() / finfo["path"].lstrip("/")
+        populate_rw_file(path, data)
 
         self.path = str(finfo["path"])
