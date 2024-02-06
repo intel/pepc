@@ -2648,7 +2648,7 @@ registers:
     SST_PP_HEADER:
         fields:
             ALLOWED_LEVEL_MASK:
-                bits: "17:20"
+                bits: "27:20"
                 desc: "Allowed level mask used for dynamic config level switching"
             DYNAMIC_SWITCHING:
                 bits: "42:42"
