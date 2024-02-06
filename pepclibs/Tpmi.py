@@ -122,30 +122,9 @@ class Tpmi():
         hardware, but there are no spec files available for them.
         """
 
-        path = None
-
-        for dirname, _, _ in self._pman.lsdir(self._debugfs_mnt):
-            # Full filename to match is of format:
-            #   /sys/kernel/debug/tpmi-.*.
-            match = re.match(r"^tpmi-.*$", dirname)
-            if match:
-                path = Path(self._debugfs_mnt) / dirname
-                break
-
-        if not path:
-            msg = f"TPMI operations are not supported{self._pman.hostmsg}. Here are the possible " \
-                  "reasons:\n" \
-                  " 1. Hardware does not support TPMI.\n" \
-                  " 2. The kernel is old and doesn't have the TPMI driver.\n" \
-                  " 3. The TPMI driver is not loaded. Try to compile the kernel with the\n" \
-                  "    CONFIG_INTEL_TPMI option.\n" \
-                  "Address these issues or contact project maintainers."
-
-            raise ErrorNotSupported(msg)
-
         avail_features = set()
 
-        for dirname, _, _ in self._pman.lsdir(path):
+        for dirname, _, _ in self._pman.lsdir(self._tpmi_pci_paths[0]):
             match = re.match(r"^tpmi-id-([0-9a-f]+)$", dirname)
             if match:
                 avail_features.add(int(match.group(1), 16))
@@ -167,6 +146,29 @@ class Tpmi():
 
         return (supported, list(map(hex, missing)))
 
+    def _get_debugfs_tpmi_dirs(self):
+        """
+        Scan the debugfs root directory for TPMI-related sub-directories and return their paths in
+        the form of a list.
+        """
+
+        debugfs_tpmi_dirs = []
+        for dirname, path, _ in self._pman.lsdir(self._debugfs_mnt):
+            if dirname.startswith("tpmi-"):
+                debugfs_tpmi_dirs.append(path)
+
+        if debugfs_tpmi_dirs:
+            return debugfs_tpmi_dirs
+
+        raise ErrorNotSupported(f"No TPMI-related sub-directories fount in '{self._debugfs_mnt}'"
+                                f"{self._pman.hostmsg}.\nTPMI does not appear to be supported "
+                                f"'{self._pman.hostmsg}. Here are the possible reasons:\n"
+                                f" 1. Hardware does not support TPMI.\n"
+                                f" 2. The kernel is old and doesn't have the TPMI driver. TPMI "
+                                f" support was added in kernel version 6.6.\n"
+                                f" 3. The TPMI driver is not enabled. Try to compile the kernel "
+                                f"with 'CONFIG_INTEL_TPMI' enabled.\n")
+
     def __init__(self, pman, spec_dirs=None):
         """
         The class constructor. The arguments are as follows.
@@ -183,12 +185,15 @@ class Tpmi():
         # The debugfs mount point.
         self._debugfs_mnt = None
         # Whether debugfs should be unmounted on 'close()'.
-        self._unmount_debufs = None
+        self._unmount_debugfs = None
+        # TPMI-related sub-directories in 'self._debugfs_mnt' (one per TPMI PCI device).
+        self._tpmi_pci_paths = None
 
         if not self._spec_dirs:
             self._spec_dirs = _find_spec_dirs()
 
         self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
+        self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
 
     def close(self):
         """Uninitialize the class object."""
