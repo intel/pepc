@@ -15,7 +15,7 @@ registers:
         bits: "28:21"
         desc: base frequency for low priority cores
       RESERVED:
-        bits: 63:61
+        bits: "63:61"
         desc: Reserved
       RSVD0:
         bits: "31:29"
@@ -63,7 +63,7 @@ registers:
   L1_SST_PP_INFO-01:
     fields:
       COOLING_TYPE:
-        bits: 63:62
+        bits: "63:62"
         desc: Cooling Type
       FUSED_CORE_COUNT:
         bits: "7:0"
@@ -571,7 +571,7 @@ registers:
         bits: "28:21"
         desc: base frequency for low priority cores
       RESERVED:
-        bits: 63:61
+        bits: "63:61"
         desc: Reserved
       RSVD0:
         bits: "31:29"
@@ -619,7 +619,7 @@ registers:
   L2_SST_PP_INFO-01:
     fields:
       COOLING_TYPE:
-        bits: 63:62
+        bits: "63:62"
         desc: Cooling Type
       FUSED_CORE_COUNT:
         bits: "7:0"
@@ -1127,7 +1127,7 @@ registers:
         bits: "28:21"
         desc: base frequency for low priority cores
       RESERVED:
-        bits: 63:61
+        bits: "63:61"
         desc: Reserved
       RSVD0:
         bits: "31:29"
@@ -1175,7 +1175,7 @@ registers:
   L3_SST_PP_INFO-01:
     fields:
       COOLING_TYPE:
-        bits: 63:62
+        bits: "63:62"
         desc: Cooling Type
       FUSED_CORE_COUNT:
         bits: "7:0"
@@ -1683,7 +1683,7 @@ registers:
         bits: "28:21"
         desc: base frequency for low priority cores
       RESERVED:
-        bits: 63:61
+        bits: "63:61"
         desc: Reserved
       RSVD0:
         bits: "31:29"
@@ -1731,7 +1731,7 @@ registers:
   L4_SST_PP_INFO-01:
     fields:
       COOLING_TYPE:
-        bits: 63:62
+        bits: "63:62"
         desc: Cooling Type
       FUSED_CORE_COUNT:
         bits: "7:0"
@@ -2239,7 +2239,7 @@ registers:
         bits: "28:21"
         desc: base frequency for low priority cores
       RESERVED:
-        bits: 63:61
+        bits: "63:61"
         desc: Reserved
       RSVD0:
         bits: "31:29"
@@ -2289,7 +2289,7 @@ registers:
         bits: "59:56"
         desc: CLOS_ID for Core 14
       CLOS_ID_core15:
-        bits: 63:60
+        bits: "63:60"
         desc: CLOS_ID for Core 15
       CLOS_ID_core2:
         bits: "11:8"
@@ -2365,7 +2365,7 @@ registers:
         bits: "59:56"
         desc: CLOS_ID for Core 30
       CLOS_ID_core31:
-        bits: 63:60
+        bits: "63:60"
         desc: CLOS_ID for Core 31
     offset: 72
     width: 64
@@ -2417,7 +2417,7 @@ registers:
         bits: "59:56"
         desc: CLOS_ID for Core 46
       CLOS_ID_core47:
-        bits: 63:60
+        bits: "63:60"
         desc: CLOS_ID for Core 47
     offset: 80
     width: 64
@@ -2469,7 +2469,7 @@ registers:
         bits: "59:56"
         desc: CLOS_ID for Core 62
       CLOS_ID_core63:
-        bits: 63:60
+        bits: "63:60"
         desc: CLOS_ID for Core 63
     offset: 88
     width: 64
@@ -2561,7 +2561,7 @@ registers:
         bits: "63:12"
         desc: Reserved
       SST_CP_ENABLE:
-        bits: 0:0
+        bits: "0:0"
         desc: "1: Enable SST-CP. 0: Disable SST-CP"
       SST_CP_PRIORITY_TYPE:
         bits: "1:1"
@@ -2599,7 +2599,7 @@ registers:
         bits: "63:12"
         desc: Reserved
       SST_CP_ENABLE:
-        bits: 0:0
+        bits: "0:0"
         desc: "1: Enable SST-CP. 0: Disable SST-CP"
       SST_CP_PRIORITY_TYPE:
         bits: "1:1"
@@ -2698,7 +2698,7 @@ registers:
   SST_PP_INFO-01:
     fields:
       COOLING_TYPE:
-        bits: 63:62
+        bits: "63:62"
         desc: Cooling Type
       FUSED_CORE_COUNT:
         bits: "7:0"

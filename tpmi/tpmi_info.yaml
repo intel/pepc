@@ -15,7 +15,7 @@ registers:
         bits: "2:0"
         desc: Function number of the TPMI device
       LOCK:
-        bits: 63:63
+        bits: "63:63"
         desc: When set to 1 the register is locked and becomes read-only until next
           reset. BIOS writes 1 to this bit after initializing the register
       PACKAGE_ID:

@@ -4,7 +4,7 @@ registers:
   DOMAIN_INFO:
     fields:
       LOCK:
-        bits: 63:63
+        bits: "63:63"
         desc: When set, all settings in this register are locked
       RSVD:
         bits: "62:4"
@@ -13,7 +13,7 @@ registers:
         bits: "3:1"
         desc: The domain ID to which this package belongs to.
       ROOT:
-        bits: 0:0
+        bits: "0:0"
         desc: 1=The package is a domain root. 0=not a domain root
     offset: 80
     width: 64
@@ -52,7 +52,7 @@ registers:
   INTERRUPT:
     fields:
       MASK:
-        bits: 0:0
+        bits: "0:0"
         desc: Bit set if interrupt is disabled.
       RDVD:
         bits: "63:2"
@@ -75,13 +75,13 @@ registers:
   PL1:
     fields:
       LOCK:
-        bits: 63:63
+        bits: "63:63"
         desc: When set, all settings in this register are locked
       PWR_LIM:
         bits: "17:0"
         desc: Power limitation for the socket RAPL domain
       PWR_LIM_EN:
-        bits: 62:62
+        bits: "62:62"
         desc: Enable(1) or Disable(0)
       RSVD:
         bits: "61:25"
@@ -94,13 +94,13 @@ registers:
   PL2:
     fields:
       LOCK:
-        bits: 63:63
+        bits: "63:63"
         desc: When set, all settings in this register are locked
       PWR_LIM:
         bits: "17:0"
         desc: Power limitation for the socket RAPL domain
       PWR_LIM_EN:
-        bits: 62:62
+        bits: "62:62"
         desc: Enable(1) or Disable(0)
       RSVD:
         bits: "61:25"
@@ -120,13 +120,13 @@ registers:
   PL4:
     fields:
       LOCK:
-        bits: 63:63
+        bits: "63:63"
         desc: When set, all settings in this register are locked
       PWR_LIM:
         bits: "17:0"
         desc: Power limitation for the socket RAPL domain
       PWR_LIM_EN:
-        bits: 62:62
+        bits: "62:62"
         desc: Enable(1) or Disable(0)
       RSVD:
         bits: "61:18"
@@ -136,7 +136,7 @@ registers:
   PL_INFO:
     fields:
       LOCK:
-        bits: 63:63
+        bits: "63:63"
         desc: When set, all settings in this register are locked
       MAX_PL1:
         bits: "17:0"
@@ -151,7 +151,7 @@ registers:
         bits: "35:18"
         desc: MIN PL1, meaning depends on domain type
       RSVD:
-        bits: 62:61
+        bits: "62:61"
         desc: Reserved
     offset: 72
     width: 64
