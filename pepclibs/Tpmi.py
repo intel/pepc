@@ -114,9 +114,10 @@ class Tpmi():
             fid = fdict["feature-id"]
             yield fname, fid
 
-    def get_features(self):
+    def list_features(self):
         """
-        Parse and return a tuple of two lists for TPMI features for the platform. First list
+        Detect the list of features supported by the target platform, scan the spec file directories
+        and detect the list of available spec files, and return a tuple of two lists. First list
         contains the fully supported features, meaning features that have both spec files and
         hardware support available. The second list contains the features that are available on
         hardware, but there are no spec files available for them.

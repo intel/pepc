@@ -24,7 +24,7 @@ def tpmi_ls_command(args, pman):
 
     tpmi_obj = Tpmi.Tpmi(pman)
 
-    features, no_specs = tpmi_obj.get_features()
+    features, no_specs = tpmi_obj.list_features()
     if features:
         _LOG.info("Following features are fully supported:")
         txt = ", ".join(features)
