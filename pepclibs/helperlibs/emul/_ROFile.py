@@ -7,7 +7,7 @@
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
-"""This module provides the API to interact with emulated read-only files."""
+"""Emulate read-only sysfs, procfs, and debugfs files."""
 
 import io
 import types
@@ -29,7 +29,7 @@ def open_ro(data, mode): # pylint: disable=unused-argument
     return fobj
 
 class ROFile:
-    """This class provides an API to interact with emulated read-only files."""
+    """Emulate read-only sysfs, procfs, and debugfs files."""
 
     def _set_read_method(self, fobj, path):
         """
