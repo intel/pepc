@@ -32,6 +32,13 @@ Terminology.
   * feature dictionary - a dictionary describing a TPMI feature registers, bit fields and other
                          details. Feature dictionary is formed based on the feature spec file
                          contents.
+
+  * supported feature - a TPMI feature supported by the processor.
+
+  * known feature - a supported feature for which the spec file was found, so that the feature can
+                    be decoded and used.
+
+  * unknown feature - a supported feature for which the spec file was not found.
 """
 
 import os
@@ -94,11 +101,10 @@ class Tpmi():
 
         return self._fdict_cache[fname]
 
-    def _get_supported_fnames_and_fids(self):
+    def _get_known_fnames_and_fids(self):
         """
-        Yield '(fname, fid)' tuples for every feature supported via the available spec files. Note,
-        this method ends up loading the spec file for every supported feature so it may be
-        expensive.
+        Yield '(fname, fid)' tuples for every known feature. Note, this method ends up loading the
+        spec file for every supported feature so it may be expensive.
         """
 
         if not self._fdict_cache:
@@ -117,35 +123,36 @@ class Tpmi():
     def list_features(self):
         """
         Detect the list of features supported by the target platform, scan the spec file directories
-        and detect the list of available spec files, and return a tuple of two lists. First list
-        contains the fully supported features, meaning features that have both spec files and
-        hardware support available. The second list contains the features that are available on
-        hardware, but there are no spec files available for them.
+        and detect the list of available spec files, and return a tuple of two lists:
+        '(known_fnames, unknown_fids)'.
+        The lists are as follows.
+          * known_fnames - a list of known feature names.
+          * unknown_fids - a list of unknown feature IDs (supported, but no spec file found).
         """
 
-        avail_fids = set()
+        supported_fids = set()
 
         for dirname, _, _ in self._pman.lsdir(self._tpmi_pci_paths[0]):
             match = re.match(r"^tpmi-id-([0-9a-f]+)$", dirname)
             if match:
-                avail_fids.add(int(match.group(1), 16))
+                supported_fids.add(int(match.group(1), 16))
 
-        supported_features = {}
-        for fname, fid in self._get_supported_fnames_and_fids():
-            supported_features[fid] = fname
+        known_fids = {}
+        for fname, fid in self._get_known_fnames_and_fids():
+            known_fids[fid] = fname
 
-        supported = []
-        missing = []
+        known_fnames = []
+        unknown_fids = []
 
-        for fid in avail_fids:
-            if fid in supported_features:
-                supported.append(supported_features[fid])
+        for fid in supported_fids:
+            if fid in known_fids:
+                known_fnames.append(known_fids[fid])
             else:
-                missing.append(fid)
+                unknown_fids.append(fid)
 
-        missing.sort()
+        unknown_fids.sort()
 
-        return (supported, list(map(hex, missing)))
+        return (known_fnames, list(map(hex, unknown_fids)))
 
     def _get_debugfs_tpmi_dirs(self):
         """
