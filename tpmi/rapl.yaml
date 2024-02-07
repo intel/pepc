@@ -1,5 +1,4 @@
 feature-id: 0
-multi-instance: "true"
 registers:
   DOMAIN_INFO:
     fields:
