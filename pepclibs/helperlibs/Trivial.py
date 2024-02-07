@@ -67,7 +67,7 @@ def str_to_int(snum, what="value"):
     """
 
     try:
-        num = int(str(snum))
+        num = int(str(snum), 0)
     except (ValueError, TypeError):
         raise Error(f"bad {what} '{snum}': should be an integer") from None
 
@@ -81,7 +81,7 @@ def str_to_num(snum, what="value"):
     """
 
     try:
-        num = int(str(snum))
+        num = int(str(snum), 0)
     except (ValueError, TypeError):
         try:
             num = float(str(snum))
