@@ -7,7 +7,7 @@
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
-"""This module provides the API to interact with emulated files."""
+"""Emulate read-write sysfs, procfs, and debugfs files."""
 
 import types
 from pepclibs.helperlibs import ClassHelpers
@@ -69,7 +69,7 @@ def open_rw(path, mode, basepath):
     return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
 
 class RWFile(_EmulFile.EmulFile):
-    """This class provides an API to interact with emulated files."""
+    """Emulate read-write sysfs, procfs, and debugfs files."""
 
     def _set_write_method(self, fobj, path, mode):
         """
