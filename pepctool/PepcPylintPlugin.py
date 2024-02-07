@@ -995,7 +995,7 @@ class PepcASTChecker(BaseChecker):
         args = []
 
         for arg in node:
-            if arg.name in ("self", "_"):
+            if arg.name in ("self", "cls", "_"):
                 continue
             args.append(arg.name)
 
