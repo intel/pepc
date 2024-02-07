@@ -30,7 +30,7 @@ def open_ro(data, mode): # pylint: disable=unused-argument
     return fobj
 
 class ROFile(_EmulFileBase.EmulFileBase):
-    """Emulate read-only sysfs, procfs, and debugfs files."""
+    """Emulate read-only procfs and debugfs files."""
 
     def open(self, mode):
         """Create a file in the temporary directory and return the file object with 'mode'."""
@@ -62,7 +62,7 @@ class ROFile(_EmulFileBase.EmulFileBase):
         super().__init__(str(finfo["path"]))
 
 class ROSysfsFile(ROFile):
-    """This class provides the API to interact with emulated read-only Sysfs files."""
+    """Emulate read-only sysfs files."""
 
     def _set_read_method(self, fobj):
         """
