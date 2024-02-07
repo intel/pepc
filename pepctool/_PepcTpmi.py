@@ -24,12 +24,12 @@ def tpmi_ls_command(args, pman):
 
     tpmi_obj = Tpmi.Tpmi(pman)
 
-    known_fnames, unknown_fids = tpmi_obj.list_features()
-    if known_fnames:
+    known, unknown = tpmi_obj.list_features()
+    if known:
         _LOG.info("Supported TPMI features")
-        txt = ", ".join(known_fnames)
-        _LOG.info("  %s", txt)
-    if unknown_fids and args.all:
-        _LOG.info("Unknown TPMI features (supported%s, but no spec file found):", pman.hostmsg)
-        txt = ", ".join(unknown_fids)
-        _LOG.info("  %s", txt)
+        for scan_info in known:
+            _LOG.info(" - %s: %s", scan_info["name"], scan_info["desc"].strip())
+    if unknown and args.all:
+        _LOG.info("Unknown TPMI features (available%s, but no spec file found)", pman.hostmsg)
+        txt = ", ".join(unknown)
+        _LOG.info(" - %s", txt)

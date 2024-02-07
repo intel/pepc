@@ -101,10 +101,13 @@ class Tpmi():
 
         return self._fdict_cache[fname]
 
-    def _get_known_fnames_and_fids(self):
+    def _scan_spec_dirs(self):
         """
-        Yield '(fname, fid)' tuples for every known feature. Note, this method ends up loading the
-        spec file for every supported feature so it may be expensive.
+        Scan the spec file directories an yield a "scan_info" dictionary for every known feature.
+        Scan dictionaries include basic feature information, such as name, feature ID and
+        description.
+
+        Note, this method ends up loading all spec files, so it may be expensive.
         """
 
         if not self._fdict_cache:
@@ -116,9 +119,12 @@ class Tpmi():
                         fdict = YAML.load(spec_dir / specname)
                         self._fdict_cache[fname] = fdict
 
-        for fname, fdict in self._fdict_cache.items():
-            fid = fdict["feature-id"]
-            yield fname, fid
+        for fdict in self._fdict_cache.values():
+            scan_info = {}
+            scan_info["name"] = fdict["name"]
+            scan_info["desc"] = fdict["desc"].rstrip()
+            scan_info["feature-id"] = fdict["feature-id"]
+            yield scan_info
 
     def list_features(self):
         """
@@ -126,8 +132,15 @@ class Tpmi():
         and detect the list of available spec files, and return a tuple of two lists:
         '(known_fnames, unknown_fids)'.
         The lists are as follows.
-          * known_fnames - a list of known feature names.
-          * unknown_fids - a list of unknown feature IDs (supported, but no spec file found).
+          * known - a list of "scan_info" dictionaries for every known feature (supported and have
+                    the spec file).
+          * unknown - a list of feature IDs for every unknown feature (supported, but no spec file
+                      found).
+
+        The "scan_info" dictionaries include the following keys.
+          * name - feature name.
+          * desc - feature description.
+          * feature-id - an integer feature ID.
         """
 
         supported_fids = set()
@@ -137,22 +150,22 @@ class Tpmi():
             if match:
                 supported_fids.add(int(match.group(1), 16))
 
-        known_fids = {}
-        for fname, fid in self._get_known_fnames_and_fids():
-            known_fids[fid] = fname
+        scan_infos = {}
+        for scan_info in self._scan_spec_dirs():
+            scan_infos[scan_info["feature-id"]] = scan_info
 
-        known_fnames = []
-        unknown_fids = []
+        known = []
+        unknown = []
 
         for fid in supported_fids:
-            if fid in known_fids:
-                known_fnames.append(known_fids[fid])
+            if fid in scan_infos:
+                known.append(scan_infos[fid])
             else:
-                unknown_fids.append(fid)
+                unknown.append(fid)
 
-        unknown_fids.sort()
+        unknown.sort()
 
-        return (known_fnames, list(map(hex, unknown_fids)))
+        return (known, list(map(hex, unknown)))
 
     def _get_debugfs_tpmi_dirs(self):
         """
