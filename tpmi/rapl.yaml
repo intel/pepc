@@ -5,210 +5,210 @@ registers:
     fields:
       LOCK:
         bits: "63:63"
-        desc: When set, all settings in this register are locked
+        desc: "1 - all settings in this register are locked, othewise unlocked"
       RSVD:
         bits: "62:4"
-        desc: Reserved
+        desc: "Reserved"
       DOMAIN_ID:
         bits: "3:1"
-        desc: The domain ID to which this package belongs to.
+        desc: "Domain ID to this package belongs to"
       ROOT:
         bits: "0:0"
-        desc: 1=The package is a domain root. 0=not a domain root
+        desc: "1 - this package is the domain root, otherwise it is not the domain root"
     offset: 80
     width: 64
   DOMAIN_HEADER_0:
     fields:
       FLAGS:
         bits: "47:32"
-        desc: Bit mask of the supported domain register
+        desc: "Bit mask of the supported domain register"
       INTERFACE_VERSION:
         bits: "7:0"
-        desc: Version number for this interface
+        desc: "Version number for this interface"
       PARENT_DOMAIN_INDEX:
         bits: "31:24"
-        desc: parent domain index number
+        desc: "Parent domain index number"
       RESERVED:
         bits: "63:48"
-        desc: Reserved
+        desc: "Reserved"
       SIZE:
         bits: "23:16"
-        desc: units of 128 bytes
+        desc: "Units of 128 bytes"
       TYPE:
         bits: "15:8"
-        desc: package rapl, dram rapl, platform rapl, etc
+        desc: "Package RAPL, DRAM RAPL, platform RAPL, etc"
     offset: 0
     width: 64
   ENERGY_STATUS:
     fields:
       ENERGY:
         bits: "31:0"
-        desc: Total amount of energy consumed since last reset
+        desc: "Total amount of energy consumed since last reset"
       TIME:
         bits: "63:32"
-        desc: Total time elapsed when the energy was last update
+        desc: "Total time elapsed when the energy was last update"
     offset: 56
     width: 64
   INTERRUPT:
     fields:
       MASK:
         bits: "0:0"
-        desc: Bit set if interrupt is disabled.
+        desc: "0 - interrupt is enabled, 1 - interrupt is disabled"
       RDVD:
         bits: "63:2"
-        desc: Reserved
+        desc: "Reserved"
       STATUS:
         bits: "1:1"
-        desc: Bit set if pending
+        desc: "1 - there is a pending interrupt, 0 otherwise"
     offset: 88
     width: 64
   PERF_STATUS:
     fields:
       PWR_LIMIT_THROTTLE_CTR:
         bits: "31:0"
-        desc: Reports the number of times the Power is clipped
+        desc: "Number of times power was clipped"
       RSVD:
         bits: "63:32"
-        desc: Reserved
+        desc: "Reserved"
     offset: 64
     width: 64
   PL1:
     fields:
       LOCK:
         bits: "63:63"
-        desc: When set, all settings in this register are locked
+        desc: "1 - all settings in this register are locked, othewise unlocked"
       PWR_LIM:
         bits: "17:0"
-        desc: Power limitation for the socket RAPL domain
+        desc: "Power limitation for the package RAPL domain"
       PWR_LIM_EN:
         bits: "62:62"
-        desc: Enable(1) or Disable(0)
+        desc: "1 - enable, 0 - disable"
       RSVD:
         bits: "61:25"
-        desc: Reserved
+        desc: "Reserved"
       TIME_WINDOW:
         bits: "24:18"
-        desc: length of time window over which the power limit
+        desc: "Time window length for the power limit"
     offset: 16
     width: 64
   PL2:
     fields:
       LOCK:
         bits: "63:63"
-        desc: When set, all settings in this register are locked
+        desc: "1 - all settings in this register are locked, othewise unlocked"
       PWR_LIM:
         bits: "17:0"
-        desc: Power limitation for the socket RAPL domain
+        desc: "Power limitation for the package RAPL domain"
       PWR_LIM_EN:
         bits: "62:62"
-        desc: Enable(1) or Disable(0)
+        desc: "1 - enable, 0 - disable"
       RSVD:
         bits: "61:25"
-        desc: Reserved
+        desc: "Reserved"
       TIME_WINDOW:
         bits: "24:18"
-        desc: length of time window over which the power limit
+        desc: "Time window length for the power limit"
     offset: 24
     width: 64
   PL3:
     fields:
       RSVD:
         bits: "63:0"
-        desc: Reserved
+        desc: "Reserved"
     offset: 32
     width: 64
   PL4:
     fields:
       LOCK:
         bits: "63:63"
-        desc: When set, all settings in this register are locked
+        desc: "1 - all settings in this register are locked, othewise unlocked"
       PWR_LIM:
         bits: "17:0"
-        desc: Power limitation for the socket RAPL domain
+        desc: "Power limitation for the package RAPL domain"
       PWR_LIM_EN:
         bits: "62:62"
-        desc: Enable(1) or Disable(0)
+        desc: "1 - enable, 0 - disable"
       RSVD:
         bits: "61:18"
-        desc: Reserved
+        desc: "Reserved"
     offset: 40
     width: 64
   PL_INFO:
     fields:
       LOCK:
         bits: "63:63"
-        desc: When set, all settings in this register are locked
+        desc: "1 - all settings in this register are locked, othewise unlocked"
       MAX_PL1:
         bits: "17:0"
-        desc: MAX PL1, meaning depends on domain type
+        desc: "MAX PL1, meaning depends on domain type"
       MAX_PL2:
         bits: "53:36"
-        desc: MAX PL2, meaning depends on domain type
+        desc: "MAX PL2, meaning depends on domain type"
       MAX_TW:
         bits: "60:54"
-        desc: The maximal time window allowed
+        desc: "The maximum time window allowed"
       MIN_PL1:
         bits: "35:18"
-        desc: MIN PL1, meaning depends on domain type
+        desc: "MIN PL1, meaning depends on domain type"
       RSVD:
         bits: "62:61"
-        desc: Reserved
+        desc: "Reserved"
     offset: 72
     width: 64
   PL_OFFSET:
     fields:
       RSVD:
         bits: "63:0"
-        desc: Reserved
+        desc: "Reserved"
     offset: 48
     width: 64
   POWER_UNIT:
     fields:
       ENERGY_UNIT:
         bits: "10:6"
-        desc: Energy Units used for power control registers.
+        desc: "Energy unit used for power control registers"
       PWR_UNIT:
         bits: "3:0"
-        desc: Power Units used for power control registers
+        desc: "Power unit used for power control registers"
       RSVD1:
         bits: "5:4"
-        desc: Reserved
+        desc: "Reserved"
       RSVD2:
         bits: "11:11"
-        desc: Reserved
+        desc: "Reserved"
       RSVD3:
         bits: "63:16"
-        desc: Reserved
+        desc: "Reserved"
       TIME_UNIT:
         bits: "15:12"
-        desc: Time Units used for power control registers
+        desc: "Time units used for power control registers"
     offset: 8
     width: 64
   RESERVED_1:
     fields:
       RSVD:
         bits: "63:0"
-        desc: Reserved
+        desc: "Reserved"
     offset: 96
     width: 64
   RESERVED_2:
     fields:
       RSVD:
         bits: "63:0"
-        desc: Reserved
+        desc: "Reserved"
     offset: 104
     width: 64
   RESERVED_3:
     fields:
       RSVD:
         bits: "63:0"
-        desc: Reserved
+        desc: "Reserved"
     offset: 112
     width: 64
   RESERVED_4:
     fields:
       RSVD:
         bits: "63:0"
-        desc: Reserved
+        desc: "Reserved"
     offset: 120
     width: 64

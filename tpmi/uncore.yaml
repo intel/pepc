@@ -4,140 +4,151 @@ registers:
     fields:
       BASE_1:
         bits: "15:8"
-        desc: The core frequency below which mesh frequency is brought down when socket
-          is power limited. (S7.0 format)
+        desc: >-
+          Core frequency below which mesh frequency is brought down when socket
+          is power limited (S7.0 format)
       RSVD:
         bits: "63:16"
-        desc: Reserved
+        desc: "Reserved"
       SLOPE_1:
         bits: "7:0"
-        desc: Slope that controls how fast the mesh frequency is brought down with
-          core frequency when the socket is power limited. In 1/16 ratio bins (S4.3
-          format).
+        desc: >-
+          Slope that controls how fast the mesh frequency is brought down with
+          core frequency when the socket is power limited (in 1/16 ratio bins,
+          S4.3 format)
     offset: 32
     width: 64
   UFS_ADV_CONTROL_2:
     fields:
       BASE_2:
         bits: "15:8"
-        desc: The core frequency below which mesh frequency is brought down when socket
-          is power limited. (S7.0 format)
+        desc: >-
+          Core frequency below which mesh frequency is brought down when socket
+          is power limited (S7.0 format)
       HBM_BW_THRESHOLD:
         bits: "31:24"
-        desc: HBM BW Threshold
+        desc: "HBM bandwidth threshold"
       RSVD:
         bits: "63:32"
-        desc: Reserved
+        desc: "Reserved"
       SLOPE_2:
         bits: "7:0"
-        desc: Slope that controls how fast the mesh frequency is brought down with
-          core frequency when the socket is power limited. In 1/16 ratio bins (S4.3
-          format).
+        desc: >-
+          Slope that controls how fast the mesh frequency is brought down with
+          core frequency when the socket is power limited (in 1/16 ratio bins,
+          S4.3 format)
       UTILIZATION_THRESHOLD:
         bits: "23:16"
-        desc: Mesh Utilization Threshold. 255 = 100% utilization, 0 = 0% utilization.
+        desc: "Mesh utilization threshold (255 - 100% utilization, 0 - 0% utilization)"
     offset: 40
     width: 64
   UFS_CONTROL:
     fields:
       EFFICIENCY_LATENCY_CTRL_RATIO:
         bits: "28:22"
-        desc: Fabric domain frequency ratio floor while in the low power activity
-          region determined by Efficiency_Latency_Ctrl.
+        desc: >-
+          Fabric domain frequency ratio floor while in the low power activity
+          region determined by Efficiency_Latency_Ctrl
       EFFICIENCY_LATENCY_CTRL_THRESHOLD:
         bits: "38:32"
-        desc: This field provides the flexibility to alter the region of low power
-          activity. It deteremines the region of utilization points to which the Efficiency_Latency_Ctrl
-          mode will be applied.
+        desc: >-
+          Low power activity alert threshold - the region of utilization points to which
+          the Efficiency_Latency_Ctrl mode will be applied
       MAX_RATIO:
         bits: "14:8"
-        desc: Max fabric domain frequency ratio
+        desc: "Max fabric domain frequency ratio"
       MIN_RATIO:
         bits: "21:15"
-        desc: Min fabric domain frequency ratio
+        desc: "Min fabric domain frequency ratio"
       RSVD1:
         bits: "7:2"
-        desc: Reserved
+        desc: "Reserved"
       RSVD2:
         bits: "31:29"
-        desc: Reserved
+        desc: "Reserved"
       RSVD3:
         bits: "63:39"
-        desc: Reserved
+        desc: "Reserved"
       UFS_THROTTLE_MODE:
         bits: "1:0"
-        desc: Select one of the UFS throttle modes
+        desc: "UFS throttle mode"
     offset: 24
     width: 64
   UFS_FABRIC_CLUSTER_OFFSET:
     fields:
       OFFSET0:
         bits: "7:0"
-        desc: Offset (Qword, 8 bytes) for status and control registers belonging to
-          local cluster ID 0
+        desc: >-
+          Offset for status and control registers belonging to local cluster ID 0
+          in 8-byte Qwords
       RSVD:
         bits: "63:8"
-        desc: reserved
+        desc: "Reserved"
     offset: 8
     width: 64
   UFS_HEADER:
     fields:
       AUTONOMOUS_UFS_DISABLED:
         bits: "32:32"
-        desc: 0=Autonomous UFS algorithm is supported. 1=not supported
+        desc: "0 - autonomous UFS algorithm is supported, 1 - not supported"
       FLAGS:
         bits: "31:16"
-        desc: Bit mask of the supported domain register.Pcode populates default setting.
-          SW use it to discover which register is valid in the UFS register bank.
+        desc: >-
+           Bit mask of the supported domain register, can be used for discovering
+           which register is valid in the UFS register bank
       FUSION:
         bits: "33:33"
-        desc: "FUSION: FABRIC UTILIZATION SCENARIO OPTIMIZATION. 1=Mesh Boot Algorithm
-          is supported. 0=not supported"
+        desc: "1 - mesh boot algorithm is supported, 0 - not supported"
       INTERFACE_VERSION:
         bits: "7:0"
-        desc: Version number for this interface
+        desc: "Version number for this interface"
       LOCAL_FABRIC_CLUSTER_ID_MASK:
         bits: "15:8"
-        desc: ID assigned for each Fabric V/F Domain
+        desc: "ID assigned for each fabric V/F domain"
       RATIO_UNIT:
         bits: "35:34"
-        desc: "Frequency ratio unit. 00: 100MHz. All others : Reserved."
+        desc: "Frequency ratio unit: 00 - 100MHz, all others - reserved"
       RSVD:
         bits: "63:36"
-        desc: reserved
+        desc: "Reserved"
     offset: 0
     width: 64
   UFS_STATUS:
     fields:
       AGENT_TYPE_CACHE:
         bits: "24:24"
-        desc: "1: At least one cache agent exists on the fabric cluster; 0: No cache
-          agent is present on the fabric cluster."
+        desc: >-
+          1 - at least one cache agent exists on the fabric cluster, 0 - no cache
+          agent is present on the fabric cluster
       AGENT_TYPE_CORE:
         bits: "23:23"
-        desc: "1: At least one core agent exists on the fabric cluster; 0: No core
-          agent is present on the fabric cluster."
+        desc: >-
+          1 - at least one core agent exists on the fabric cluster, 0 - no core
+          agent is present on the fabric cluster
       AGENT_TYPE_IO:
         bits: "26:26"
-        desc: "1: At least one IO agent exists on the fabric cluster; 0: No IO agent
-          is present on the fabric cluster."
+        desc: >-
+          1 - at least one I/O agent exists on the fabric cluster, 0 - no I/O
+          agent is present on the fabric cluster
       AGENT_TYPE_MEMORY:
         bits: "25:25"
-        desc: "1: At least one memory agent exists on the fabric cluster; 0: No memory
-          agent is present on the fabric cluster."
+        desc: >-
+          1 - at least one memory agent exists on the fabric cluster, 0 - no memory
+          agent is present on the fabric cluster
       CURRENT_RATIO:
         bits: "6:0"
-        desc: "Instantaenous fabric frequency ratio "
+        desc: "Instantaneous fabric frequency ratio"
       CURRENT_VOLTAGE:
         bits: "22:7"
-        desc: Indicates current Fabric voltage in U3.13 format
+        desc: "Current Fabric voltage in U3.13 format"
       RSVD:
         bits: "31:27"
-        desc: Reserved
+        desc: "Reserved"
       THROTTLE_COUNTER:
         bits: "63:32"
-        desc: Count the number of 1ms intervals in which the fabric frequency violated
-          the freq bound provided in UFS control register. Increment counter only
-          once within a 1ms interval if there is violation.
+        desc: >-
+          Count of 1ms intervals in which the fabric frequency violated the frequency
+          limit in the UFS control register. Increments only once within a 1ms interval
+          if there is a violation
     offset: 16
     width: 64
