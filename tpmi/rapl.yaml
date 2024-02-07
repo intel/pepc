@@ -1,4 +1,8 @@
-feature-id: 0
+name: "rapl"
+desc: >-
+  Running Average Power Limit (RAPL) reporting and control
+feature-id: 0x0
+
 registers:
   DOMAIN_INFO:
     fields:
