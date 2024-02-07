@@ -123,12 +123,12 @@ class Tpmi():
         hardware, but there are no spec files available for them.
         """
 
-        avail_features = set()
+        avail_fids = set()
 
         for dirname, _, _ in self._pman.lsdir(self._tpmi_pci_paths[0]):
             match = re.match(r"^tpmi-id-([0-9a-f]+)$", dirname)
             if match:
-                avail_features.add(int(match.group(1), 16))
+                avail_fids.add(int(match.group(1), 16))
 
         supported_features = {}
         for fname, fid in self._get_supported_fnames_and_fids():
@@ -137,7 +137,7 @@ class Tpmi():
         supported = []
         missing = []
 
-        for fid in avail_features:
+        for fid in avail_fids:
             if fid in supported_features:
                 supported.append(supported_features[fid])
             else:
