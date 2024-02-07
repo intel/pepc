@@ -201,7 +201,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                     else:
                         emul = _ROFile.ROFile(finfo, datapath, self._get_basepath)
                 else:
-                    emul = _RWFile.RWFile(finfo, datapath, self._get_basepath)
+                    if finfo["path"].startswith("/sys/"):
+                        emul = _RWFile.RWSysinfoFile(finfo, datapath, self._get_basepath)
+                    else:
+                        emul = _RWFile.RWFile(finfo, datapath, self._get_basepath)
                 self._emuls[emul.path] = emul
 
     def _init_inline_dirs(self, finfos, datapath):

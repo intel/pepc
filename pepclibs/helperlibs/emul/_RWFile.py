@@ -71,6 +71,41 @@ def open_rw(path, mode, basepath):
 class RWFile(_EmulFileBase.EmulFileBase):
     """Emulate read-write sysfs, procfs, and debugfs files."""
 
+    def open(self, mode):
+        """Create a file in the temporary directory and return the file object with 'mode'."""
+        return open_rw(self.path, mode, self._get_basepath())
+
+    def __init__(self, finfo, datapath, get_basepath, module=None):
+        """
+        Class constructor. Arguments are as follows:
+         * finfo - file info dictionary.
+         * datapath - path to the directory containing data which is used for emulation.
+         * get_basepath - a function which can be called to access the basepath. The basepath is a
+                          path to the directory where emulated files should be created.
+         * module - the name of the module which the file is a part of.
+        """
+
+        self._get_basepath = get_basepath
+        self.ro = False
+
+        if "data" in finfo:
+            data = finfo["data"]
+        else:
+            src = datapath / module / finfo["path"].lstrip("/")
+            with open(src, "r", encoding="utf-8") as fobj:
+                data = fobj.read()
+
+        # Create file in temporary directory. Here is an example.
+        #   * Emulated path: "/sys/devices/system/cpu/cpu0".
+        #   * Real path: "/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0".
+        path = self._get_basepath() / finfo["path"].lstrip("/")
+        populate_rw_file(path, data)
+
+        super().__init__(str(finfo["path"]))
+
+class RWSysinfoFile(RWFile):
+    """This class provides the API to interact with emulated read-write Sysfs files."""
+
     def _set_write_method(self, fobj, path, mode):
         """
         Some files needs special handling when written to. Replace the 'write()' method of 'fobj'
@@ -118,58 +153,28 @@ class RWFile(_EmulFileBase.EmulFileBase):
             self.seek(0)
             self._orig_write(data)
 
-        if path.startswith("/sys/"):
-            if "w" in mode:
-                raise Error("BUG: use 'r+' mode when opening sysfs virtual files")
+        if "w" in mode:
+            raise Error("BUG: use 'r+' mode when opening sysfs virtual files")
 
-            if mode != "r+":
-                return
+        if mode != "r+":
+            return
 
-            # pylint: disable=pepc-unused-variable,protected-access
-            fobj._orig_write = fobj.write
+        # pylint: disable=pepc-unused-variable,protected-access
+        fobj._orig_write = fobj.write
 
-            if path.endswith("pcie_aspm/parameters/policy"):
-                policies = fobj.read().strip()
-                fobj._policies = policies.replace("[", "").replace("]", "")
-                fobj.write = types.MethodType(_aspm_write, fobj)
-            elif path.endswith("/energy_perf_bias"):
-                fobj.write = types.MethodType(_epb_write, fobj)
-            else:
-                fobj.write = types.MethodType(_truncate_write, fobj)
-            # pylint: enable=pepc-unused-variable,protected-access
+        if path.endswith("pcie_aspm/parameters/policy"):
+            policies = fobj.read().strip()
+            fobj._policies = policies.replace("[", "").replace("]", "")
+            fobj.write = types.MethodType(_aspm_write, fobj)
+        elif path.endswith("/energy_perf_bias"):
+            fobj.write = types.MethodType(_epb_write, fobj)
+        else:
+            fobj.write = types.MethodType(_truncate_write, fobj)
+        # pylint: enable=pepc-unused-variable,protected-access
 
     def open(self, mode):
         """Create a file in the temporary directory and return the file object with 'mode'."""
 
-        fobj = open_rw(self.path, mode, self._get_basepath())
+        fobj = super().open(mode)
         self._set_write_method(fobj, self.path, mode)
-
         return fobj
-
-    def __init__(self, finfo, datapath, get_basepath, module=None):
-        """
-        Class constructor. Arguments are as follows:
-         * finfo - file info dictionary.
-         * datapath - path to the directory containing data which is used for emulation.
-         * get_basepath - a function which can be called to access the basepath. The basepath is a
-                          path to the directory where emulated files should be created.
-         * module - the name of the module which the file is a part of.
-        """
-
-        self._get_basepath = get_basepath
-        self.ro = False
-
-        if "data" in finfo:
-            data = finfo["data"]
-        else:
-            src = datapath / module / finfo["path"].lstrip("/")
-            with open(src, "r", encoding="utf-8") as fobj:
-                data = fobj.read()
-
-        # Create file in temporary directory. Here is an example.
-        #   * Emulated path: "/sys/devices/system/cpu/cpu0".
-        #   * Real path: "/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0".
-        path = self._get_basepath() / finfo["path"].lstrip("/")
-        populate_rw_file(path, data)
-
-        super().__init__(str(finfo["path"]))
