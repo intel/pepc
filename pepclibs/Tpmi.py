@@ -46,7 +46,8 @@ import re
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import YAML, ClassHelpers, FSHelpers, ProjectFiles
+import yaml
+from pepclibs.helperlibs import YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 # Users can define this environment variable to extend the default spec files.
@@ -74,6 +75,67 @@ def _find_spec_dirs():
     spec_dirs.append(ProjectFiles.find_project_data("pepc", "tpmi", what="TPMI spec files"))
 
     return spec_dirs
+
+def _load_scan_info(specpath):
+    """
+    Partially load spec file at 'specpath', just enough to get feature name, description, and ID.
+    Create and return the "scan_info" dictionary for the spec file.
+
+    The implementation is optimized to avoid loading the entire spec file and instead, only look at
+    the beginning of the file.
+    """
+
+    fobj = None
+
+    try:
+        try:
+            fobj = open(specpath, "r", encoding="utf-8") # pylint: disable=consider-using-with
+        except OSError as err:
+            msg = Error(str(err)).indent(2)
+            raise Error(f"failed to open spec file '{specpath}:\n{msg}") from err
+
+        loader = yaml.SafeLoader(fobj)
+        event = None
+        while True:
+            event = loader.peek_event()
+            if not event:
+                raise Error("bad spec file '{specpath}': 'feature-id' key was not found")
+            if isinstance(event, yaml.ScalarEvent):
+                break
+            loader.get_event()
+
+        # The first 3 keys must be: name, desc, and feature-id.
+        valid_keys = {"name", "desc", "feature-id"}
+        left_keys = set(valid_keys)
+        scan_info = {}
+        while len(scan_info) < len(valid_keys):
+            event = loader.get_event()
+            if not event:
+                keys = ", ".join(left_keys)
+                raise Error(f"bad spec file '{specpath}': missing keys '{keys}'")
+
+            key = str(event.value)
+            if key not in valid_keys:
+                raise Error(f"bad spec file '{specpath}' format: the first 3 keys must be "
+                            f"'name', 'desc', and 'feature-id', got key '{key}' instead")
+            if key in scan_info:
+                raise Error("bad spec file '{specpath}': repeating key '{key}'")
+
+            event = loader.get_event()
+            if not event:
+                raise Error("bad spec file '{specpath}': no value for key '{key}'")
+
+            if key == "feature-id":
+                value = Trivial.str_to_int(event.value, what="'feature-id' key value")
+            else:
+                value = str(event.value)
+            scan_info[key] = value
+            left_keys.remove(key)
+    finally:
+        if fobj:
+            fobj.close()
+
+    return scan_info
 
 class Tpmi():
     """
@@ -106,25 +168,12 @@ class Tpmi():
         Scan the spec file directories an yield a "scan_info" dictionary for every known feature.
         Scan dictionaries include basic feature information, such as name, feature ID and
         description.
-
-        Note, this method ends up loading all spec files, so it may be expensive.
         """
 
-        if not self._fdict_cache:
-            for spec_dir in self._spec_dirs:
-                for specname in os.listdir(spec_dir):
-                    match = re.match(r"^(.*).yaml", specname)
-                    if match:
-                        fname = match.group(1)
-                        fdict = YAML.load(spec_dir / specname)
-                        self._fdict_cache[fname] = fdict
-
-        for fdict in self._fdict_cache.values():
-            scan_info = {}
-            scan_info["name"] = fdict["name"]
-            scan_info["desc"] = fdict["desc"].rstrip()
-            scan_info["feature-id"] = fdict["feature-id"]
-            yield scan_info
+        for spec_dir in self._spec_dirs:
+            for specname in os.listdir(spec_dir):
+                scan_info = _load_scan_info(spec_dir / specname)
+                yield scan_info
 
     def list_features(self):
         """
