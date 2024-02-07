@@ -18,7 +18,7 @@ from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs.emul import _EmulDevMSR, _ROFile, _RWFile, _EmulFile
+from pepclibs.helperlibs.emul import _EmulDevMSR, _RWFile, _EmulFile
 
 _LOG = logging.getLogger()
 
@@ -169,8 +169,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """Initialize default files that should exist for any emulated platform."""
 
         # Create '/proc/mounts' as a read only file.
-        txt = "debugfs /sys/kernel/debug debugfs rw,nosuid,nodev,noexec,relatime 0 0"
-        self._ro_files["/proc/mounts"] = txt
+        finfo = {
+            "data": "debugfs /sys/kernel/debug debugfs rw,nosuid,nodev,noexec,relatime 0 0",
+            "path": "/prov/mounts",
+            "readonly": True
+        }
+        emul = _EmulFile.get_emul_file(finfo, self.datapath, self._get_basepath)
+        self._emuls[finfo["path"]] = emul
 
     def _init_inline_files(self, finfos, datapath):
         """
