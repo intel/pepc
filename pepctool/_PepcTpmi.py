@@ -17,19 +17,19 @@ _LOG = logging.getLogger()
 
 def tpmi_ls_command(args, pman):
     """
-    Implements the 'tpmi info' command. Arguments are as follows.
+    Implement the 'tpmi sl' command. The arguments are as follows.
       * args - command line arguments.
-      * pman - process manager.
+      * pman - the process manager object that defines the target host.
     """
 
     tpmi_obj = Tpmi.Tpmi(pman)
 
-    features, no_specs = tpmi_obj.list_features()
-    if features:
-        _LOG.info("Following features are fully supported:")
-        txt = ", ".join(features)
+    known_fnames, unknown_fids = tpmi_obj.list_features()
+    if known_fnames:
+        _LOG.info("Supported TPMI features")
+        txt = ", ".join(known_fnames)
         _LOG.info("  %s", txt)
-    if no_specs and args.all:
-        _LOG.info("Following features are supported by hardware, but have no spec data available:")
-        txt = ", ".join(no_specs)
+    if unknown_fids and args.all:
+        _LOG.info("Unknown TPMI features (supported%s, but no spec file found):", pman.hostmsg)
+        txt = ", ".join(unknown_fids)
         _LOG.info("  %s", txt)
