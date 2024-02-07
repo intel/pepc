@@ -69,7 +69,7 @@ def open_rw(path, mode, basepath):
     return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
 
 class RWFile(_EmulFileBase.EmulFileBase):
-    """Emulate read-write sysfs, procfs, and debugfs files."""
+    """Emulate read-write procfs and debugfs files."""
 
     def open(self, mode):
         """Create a file in the temporary directory and return the file object with 'mode'."""
@@ -104,7 +104,7 @@ class RWFile(_EmulFileBase.EmulFileBase):
         super().__init__(str(finfo["path"]))
 
 class RWSysinfoFile(RWFile):
-    """This class provides the API to interact with emulated read-write Sysfs files."""
+    """Emulate read-write sysfs files."""
 
     def _set_write_method(self, fobj, path, mode):
         """
