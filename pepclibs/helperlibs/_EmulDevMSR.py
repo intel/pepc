@@ -7,7 +7,7 @@
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
-"""This module provides the API to emulate 'msr' driver device nodes."""
+"""Emulate the '/dev/msr/*' device node files."""
 
 import types
 from pepclibs.helperlibs import _EmulFile
@@ -29,7 +29,7 @@ def _populate_sparse_file(path, data):
         raise Error(f"failed to prepare sparse file '{path}':\n{msg}") from err
 
 class EmulDevMSR:
-    """This class provides the API to emulate 'msr' driver device nodes."""
+    """Emulate the '/dev/msr/*' device node files."""
 
     def _set_seek_method(self, fobj, path):
         """

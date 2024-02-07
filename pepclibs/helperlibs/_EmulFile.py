@@ -7,7 +7,7 @@
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
-"""This module provides the API to interact with emulated files."""
+"""Emulate sysfs, procfs, and debugfs files."""
 
 # pylint: disable=protected-access
 
@@ -85,7 +85,7 @@ def open_rw(path, mode, basepath):
     return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
 
 class EmulFile:
-    """This class provides an API to interact with emulated files."""
+    """Provide API for emulating sysfs, procfs, and debugfs files."""
 
     def _set_read_method(self, fobj, path):
         """
