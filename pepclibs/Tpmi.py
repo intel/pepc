@@ -39,6 +39,10 @@ Terminology.
                     be decoded and used.
 
   * unknown feature - a supported feature for which the spec file was not found.
+
+  * scan dictionary - a dictionary including basic TPMI feature information - name, ID, and
+                      description. Build by partially reading the spec file during the initial
+                      scanning of the spec file directories.
 """
 
 import os
@@ -76,10 +80,10 @@ def _find_spec_dirs():
 
     return spec_dirs
 
-def _load_scan_info(specpath):
+def _load_sdict(specpath):
     """
     Partially load spec file at 'specpath', just enough to get feature name, description, and ID.
-    Create and return the "scan_info" dictionary for the spec file.
+    Create and return the scan dictionary for the spec file.
 
     The implementation is optimized to avoid loading the entire spec file and instead, only look at
     the beginning of the file.
@@ -107,8 +111,8 @@ def _load_scan_info(specpath):
         # The first 3 keys must be: name, desc, and feature-id.
         valid_keys = {"name", "desc", "feature-id"}
         left_keys = set(valid_keys)
-        scan_info = {}
-        while len(scan_info) < len(valid_keys):
+        sdict = {}
+        while len(sdict) < len(valid_keys):
             event = loader.get_event()
             if not event:
                 keys = ", ".join(left_keys)
@@ -118,7 +122,7 @@ def _load_scan_info(specpath):
             if key not in valid_keys:
                 raise Error(f"bad spec file '{specpath}' format: the first 3 keys must be "
                             f"'name', 'desc', and 'feature-id', got key '{key}' instead")
-            if key in scan_info:
+            if key in sdict:
                 raise Error("bad spec file '{specpath}': repeating key '{key}'")
 
             event = loader.get_event()
@@ -129,13 +133,13 @@ def _load_scan_info(specpath):
                 value = Trivial.str_to_int(event.value, what="'feature-id' key value")
             else:
                 value = str(event.value)
-            scan_info[key] = value
+            sdict[key] = value
             left_keys.remove(key)
     finally:
         if fobj:
             fobj.close()
 
-    return scan_info
+    return sdict
 
 class Tpmi():
     """
@@ -169,12 +173,12 @@ class Tpmi():
         and detect the list of available spec files, and return a tuple of two lists:
         '(known_fnames, unknown_fids)'.
         The lists are as follows.
-          * known - a list of "scan_info" dictionaries for every known feature (supported and have
-                    the spec file).
+          * known - a list of scan dictionaries for every known feature (supported and have the spec
+                    file).
           * unknown - a list of feature IDs for every unknown feature (supported, but no spec file
                       found).
 
-        The "scan_info" dictionaries include the following keys.
+        The scan dictionaries include the following keys.
           * name - feature name.
           * desc - feature description.
           * feature-id - an integer feature ID.
@@ -187,16 +191,16 @@ class Tpmi():
             if match:
                 supported_fids.add(int(match.group(1), 16))
 
-        scan_infos = {}
-        for scan_info in self._scan_infos.values():
-            scan_infos[scan_info["feature-id"]] = scan_info
+        sdicts = {}
+        for sdict in self._sdicts.values():
+            sdicts[sdict["feature-id"]] = sdict
 
         known = []
         unknown = []
 
         for fid in supported_fids:
-            if fid in scan_infos:
-                known.append(scan_infos[fid])
+            if fid in sdicts:
+                known.append(sdicts[fid])
             else:
                 unknown.append(fid)
 
@@ -229,20 +233,20 @@ class Tpmi():
 
     def _scan_spec_dirs(self):
         """
-        Scan the spec file directories, build a "scan_info" dictionary for every known feature, and
-        return a dictionary of "scan_info" dictionaries with keys being feature names.
+        Scan the spec file directories, build a "sdict" dictionary for every known feature, and
+        return a dictionary of "sdict" dictionaries with keys being feature names.
 
         The dictionaries include basic feature information, such as name, feature ID and
         description.
         """
 
-        scan_infos = {}
+        sdicts = {}
         for spec_dir in self._spec_dirs:
             for fname in os.listdir(spec_dir):
-                scan_info = _load_scan_info(spec_dir / fname)
-                scan_infos[scan_info["name"]] = scan_info
+                sdict = _load_sdict(spec_dir / fname)
+                sdicts[sdict["name"]] = sdict
 
-        return scan_infos
+        return sdicts
 
     def __init__(self, pman, spec_dirs=None):
         """
@@ -263,15 +267,15 @@ class Tpmi():
         self._unmount_debugfs = None
         # TPMI-related sub-directories in 'self._debugfs_mnt' (one per TPMI PCI device).
         self._tpmi_pci_paths = None
-        # Spec files "scan_info" dictionaries for every supported feature.
-        self._scan_infos = None
+        # Spec files "sdict" dictionaries for every supported feature.
+        self._sdicts = None
 
         if not self._spec_dirs:
             self._spec_dirs = _find_spec_dirs()
 
         self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
-        self._scan_infos = self._scan_spec_dirs()
+        self._sdicts = self._scan_spec_dirs()
 
     def close(self):
         """Uninitialize the class object."""
