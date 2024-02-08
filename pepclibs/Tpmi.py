@@ -33,16 +33,17 @@ Terminology.
                          details. Feature dictionary is formed based on the feature spec file
                          contents.
 
+  * spec dictionary - a dictionary including basic TPMI spec file information - name, ID, and
+                      description of the feature it describes, path to the spec file. Spec
+                      dictionaries are built by partially reading the spec file during the initial
+                      scanning of spec directories.
+
   * supported feature - a TPMI feature supported by the processor.
 
   * known feature - a supported feature for which the spec file was found, so that the feature can
                     be decoded and used.
 
   * unknown feature - a supported feature for which the spec file was not found.
-
-  * scan dictionary - a dictionary including basic TPMI feature information - name, ID, and
-                      description, path to the spec file. Built by partially reading the spec file
-                      during the initial scanning of the spec directories.
 """
 
 import os
@@ -90,7 +91,7 @@ def _find_spec_dirs():
 def _load_sdict(specpath):
     """
     Partially load spec file at 'specpath', just enough to get feature name, description, and ID.
-    Create and return the scan dictionary for the spec file.
+    Create and return the spec dictionary for the spec file.
 
     The implementation is optimized to avoid loading the entire spec file and instead, only look at
     the beginning of the file.
@@ -181,12 +182,12 @@ class Tpmi():
         detect the list of available spec files, and return a tuple of two lists:
         '(known_fnames, unknown_fids)'.
         The lists are as follows.
-          * known - a list of scan dictionaries for every known feature (supported and have the spec
+          * known - a list of sped dictionaries for every known feature (supported and have the spec
                     file).
           * unknown - a list of feature IDs for every unknown feature (supported, but no spec file
                       found).
 
-        The scan dictionaries include the following keys.
+        The spec dictionaries include the following keys.
           * name - feature name.
           * desc - feature description.
           * feature-id - an integer feature ID.
@@ -242,8 +243,8 @@ class Tpmi():
 
     def _scan_spec_dirs(self):
         """
-        Scan the spec directories, build scan dictionary for every known feature, and return a
-        dictionary of scan dictionaries with keys being feature names.
+        Scan the spec directories, build spec dictionary for every known feature, and return a
+        dictionary of spec dictionaries with keys being feature names.
 
         The dictionaries include basic feature information, such as name, feature ID and
         description.
