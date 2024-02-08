@@ -250,14 +250,8 @@ class Tpmi():
                                 f" 3. The TPMI driver is not enabled. Try to compile the kernel "
                                 f"with 'CONFIG_INTEL_TPMI' enabled.\n")
 
-    def _scan_spec_dirs(self):
-        """
-        Scan the spec directories, build spec dictionary for every known feature, and return a
-        dictionary of spec dictionaries with keys being feature names.
-
-        The dictionaries include basic feature information, such as name, feature ID and
-        description.
-        """
+    def _build_sdicts(self):
+        """Scan the spec directories and build the spec dictionaries."""
 
         sdicts = {}
         for specdir in self._specdirs:
@@ -291,7 +285,14 @@ class Tpmi():
 
                 sdicts[sdict["name"]] = sdict
 
-        return sdicts
+        if not sdicts:
+            paths = "\n * ".join([str(path) for path in self._specdirs])
+            raise ErrorNotSupported(f"no TPMI spec files found, checked the following paths:\n"
+                                    f" * {paths}")
+
+        self._sdicts = sdicts
+        for fname, sdict in sdicts.items():
+            self._fid2fname[sdict["feature-id"]] = fname
 
     def _build_features_map(self):
         """Build the TPMI feature map."""
@@ -366,15 +367,7 @@ class Tpmi():
         self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
 
-        self._sdicts = self._scan_spec_dirs()
-        if not self._sdicts:
-            paths = "\n * ".join([str(path) for path in self._specdirs])
-            raise ErrorNotSupported(f"no TPMI spec files found, checked the following paths:\n"
-                                    f" * {paths}")
-
-        for fname, sdict in self._sdicts.items():
-            self._fid2fname[sdict["feature-id"]] = fname
-
+        self._build_sdicts()
         self._build_features_map()
 
     def close(self):
