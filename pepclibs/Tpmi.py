@@ -57,6 +57,13 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 # Users can define this environment variable to extend the default spec files.
 _SPECS_PATH_ENVVAR = "PEPC_TPMI_DATA_PATH"
 
+# Maximum count of spec files per directory.
+_MAX_SPEC_FILES = 256
+# Maximum count of non-YAML files (extention is other than '.yml' or '.yaml') per directory.
+_MAX_NON_YAML = 32
+# Maximum count of spec file loading/parsing errors during scanning per spec files directory.
+_MAX_SCAN_LOAD_ERRORS = 4
+
 _LOG = logging.getLogger()
 
 def _find_spec_dirs():
@@ -244,8 +251,34 @@ class Tpmi():
 
         sdicts = {}
         for spec_dir in self._spec_dirs:
+            spec_files_cnt = 0
+            non_yaml_cnt = 0
+            load_errors_cnt = 0
+
             for fname in os.listdir(spec_dir):
-                sdict = _load_sdict(spec_dir / fname)
+                if not fname.endswith(".yml") and not fname.endswith(".yaml"):
+                    non_yaml_cnt += 1
+                    if non_yaml_cnt > _MAX_NON_YAML:
+                        raise Error(f"too many non-YAML files in '{spec_dir}', maximum allowed "
+                                    f"count is {_MAX_NON_YAML}")
+                    continue
+
+                try:
+                    spec_path = spec_dir / fname
+                    sdict = _load_sdict(spec_path)
+                except Error as err:
+                    load_errors_cnt += 1
+                    if load_errors_cnt > _MAX_SCAN_LOAD_ERRORS:
+                        raise Error(f"failed to load spec file '{spec_path}':\n{err.indent(2)}\n"
+                                    f"Reached the maximum spec file load errors count of "
+                                    f"{_MAX_SCAN_LOAD_ERRORS}") from err
+                    continue
+
+                spec_files_cnt += 1
+                if spec_files_cnt > _MAX_SPEC_FILES:
+                    raise Error(f"too many spec files in '{spec_dir}, maximum allowed spec files "
+                                f"count is {_MAX_SPEC_FILES}")
+
                 sdicts[sdict["name"]] = sdict
 
         return sdicts
