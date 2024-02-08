@@ -48,11 +48,12 @@ Terminology.
 
 import os
 import re
+import stat
 import logging
 import contextlib
 from pathlib import Path
 import yaml
-from pepclibs.helperlibs import YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial
+from pepclibs.helperlibs import YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 # Users can define this environment variable to extend the default spec files.
@@ -64,6 +65,8 @@ _MAX_SPEC_FILES = 256
 _MAX_NON_YAML = 32
 # Maximum count of spec file loading/parsing errors during scanning per spec directory.
 _MAX_SCAN_LOAD_ERRORS = 4
+# Maximum spec file size in bytes.
+_MAX_SPEC_FILE_BYTES = 4 * 1024 * 1024 * 1024
 
 _LOG = logging.getLogger()
 
@@ -98,6 +101,20 @@ def _load_sdict(specpath):
     """
 
     fobj = None
+
+    # Basic spec file validation.
+    try:
+        st = specpath.stat()
+    except OSError as err:
+        msg = Error(str(err)).indent(2)
+        raise Error(f"failed to open spec file '{specpath}:\n{msg}") from err
+
+    if st.st_size > _MAX_SPEC_FILE_BYTES:
+        maxsize = Human.bytesize(_MAX_SPEC_FILE_BYTES)
+        raise Error(f"too large spec file '{specpath}', maximum allow size is {maxsize}")
+
+    if not stat.S_ISREG(st.st_mode):
+        raise Error(f"'{specpath}' is not a regular file")
 
     try:
         try:
