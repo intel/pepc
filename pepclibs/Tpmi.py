@@ -364,6 +364,13 @@ class Tpmi():
         if not self._specdirs:
             self._specdirs = _find_spec_dirs()
 
+        # Keep absolute paths to spec directories - in case of an error a directory path like 'tpmi'
+        # may look confusing comparint to a path like '/my/path/tpmi'.
+        specdirs = self._specdirs
+        self._specdirs = []
+        for specdir in specdirs:
+            self._specdirs.append(Path(specdir).resolve().absolute())
+
         self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
 
