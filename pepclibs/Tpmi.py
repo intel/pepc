@@ -215,7 +215,7 @@ class Tpmi():
 
         unknown.sort()
 
-        return (known, list(map(hex, unknown)))
+        return known, unknown
 
     def _get_debugfs_tpmi_dirs(self):
         """

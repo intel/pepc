@@ -31,5 +31,5 @@ def tpmi_ls_command(args, pman):
             _LOG.info(" - %s: %s", scan_info["name"], scan_info["desc"].strip())
     if unknown and args.all:
         _LOG.info("Unknown TPMI features (available%s, but no spec file found)", pman.hostmsg)
-        txt = ", ".join(unknown)
+        txt = ", ".join(hex(fid) for fid in unknown)
         _LOG.info(" - %s", txt)
