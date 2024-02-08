@@ -218,16 +218,13 @@ class Tpmi():
             if match:
                 supported_fids.add(int(match.group(1), 16))
 
-        sdicts = {}
-        for sdict in self._sdicts.values():
-            sdicts[sdict["feature-id"]] = sdict
-
         known = []
         unknown = []
 
         for fid in supported_fids:
-            if fid in sdicts:
-                known.append(sdicts[fid])
+            if fid in self._fid2fname:
+                sdict = self._sdicts[self._fid2fname[fid]]
+                known.append(sdict)
             else:
                 unknown.append(fid)
 
@@ -322,6 +319,8 @@ class Tpmi():
         self._tpmi_pci_paths = None
         # Spec files "sdict" dictionaries for every supported feature.
         self._sdicts = None
+        # The feature ID -> feature name dictionary (supported features only).
+        self._fid2fname = {}
 
         if not self._specdirs:
             self._specdirs = _find_spec_dirs()
@@ -329,6 +328,9 @@ class Tpmi():
         self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
         self._sdicts = self._scan_spec_dirs()
+
+        for fname, sdict in self._sdicts.items():
+            self._fid2fname[sdict["feature-id"]] = fname
 
     def close(self):
         """Uninitialize the class object."""
