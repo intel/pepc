@@ -171,7 +171,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # Create '/proc/mounts' as a read only file.
         finfo = {
             "data": "debugfs /sys/kernel/debug debugfs rw,nosuid,nodev,noexec,relatime 0 0",
-            "path": "/prov/mounts",
+            "path": "/proc/mounts",
             "readonly": True
         }
         emul = _EmulFile.get_emul_file(finfo, self.datapath, self._get_basepath)
