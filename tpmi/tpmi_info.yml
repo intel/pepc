@@ -1,44 +1,44 @@
 name: "tpmi_info"
 desc: >-
-  Topology Aware Register and PM Capsule Interface (TPMI) information
+    Topology Aware Register and PM Capsule Interface (TPMI) information
 feature-id: 0x81
 
 registers:
-  TPMI_BUS_INFO:
-    fields:
-      BUS:
-        bits: "15:8"
-        desc: "Bus number of the TPMI device"
-      CD_MASK:
-        bits: "49:34"
-        desc: "Bitmap of compute die IDs the partition supports"
-      DEV:
-        bits: "7:3"
-        desc: "Device number of the TPMI device"
-      FUN:
-        bits: "2:0"
-        desc: "Function number of the TPMI device"
-      LOCK:
-        bits: "63:63"
-        desc: "1 - the register is locked and becomes read-only until next reset"
-      PACKAGE_ID:
-        bits: "23:16"
-        desc: "X2APIC Package ID"
-      PARTITION:
-        bits: "33:32"
-        desc: "Partition number"
-      RSVD:
-        bits: "62:50"
-        desc: "Reserved"
-      SEGMENT:
-        bits: "31:24"
-        desc: "Segment number of the TPMI device"
-    offset: 8
-    width: 64
-  TPMI_INFO_HEADER:
-    fields:
-      INTERFACE_VERSION:
-        bits: "7:0"
-        desc: "Version number for this interface"
-    offset: 0
-    width: 64
+    TPMI_BUS_INFO:
+        fields:
+            BUS:
+                bits: "15:8"
+                desc: "Bus number of the TPMI device"
+            CD_MASK:
+                bits: "49:34"
+                desc: "Bitmap of compute die IDs the partition supports"
+            DEV:
+                bits: "7:3"
+                desc: "Device number of the TPMI device"
+            FUN:
+                bits: "2:0"
+                desc: "Function number of the TPMI device"
+            LOCK:
+                bits: "63:63"
+                desc: "1 - the register is locked and becomes read-only until next reset"
+            PACKAGE_ID:
+                bits: "23:16"
+                desc: "X2APIC Package ID"
+            PARTITION:
+                bits: "33:32"
+                desc: "Partition number"
+            RSVD:
+                bits: "62:50"
+                desc: "Reserved"
+            SEGMENT:
+                bits: "31:24"
+                desc: "Segment number of the TPMI device"
+        offset: 8
+        width: 64
+    TPMI_INFO_HEADER:
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                desc: "Version number for this interface"
+        offset: 0
+        width: 64
