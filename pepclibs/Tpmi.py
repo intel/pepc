@@ -367,6 +367,11 @@ class Tpmi():
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
 
         self._sdicts = self._scan_spec_dirs()
+        if not self._sdicts:
+            paths = "\n * ".join([str(path) for path in self._specdirs])
+            raise ErrorNotSupported(f"no TPMI spec files found, checked the following paths:\n"
+                                    f" * {paths}")
+
         for fname, sdict in self._sdicts.items():
             self._fid2fname[sdict["feature-id"]] = fname
 
