@@ -69,7 +69,7 @@ _LOG = logging.getLogger()
 def _find_spec_dirs():
     """Find paths to TPMI specs directories and return them as a list."""
 
-    spec_dirs = []
+    specdirs = []
 
     # Add the user-defined spec files directory. This directory is optional and can be used for
     # extending the standard spec files.
@@ -80,12 +80,12 @@ def _find_spec_dirs():
             _LOG.warning("TPMI spec files path '%s' specified in the '%s' environment "
                          "variable does not exist, ignoring it", path, _SPECS_PATH_ENVVAR)
         else:
-            spec_dirs.append(path)
+            specdirs.append(path)
 
     # Find the standard spec-files.
-    spec_dirs.append(ProjectFiles.find_project_data("pepc", "tpmi", what="TPMI spec files"))
+    specdirs.append(ProjectFiles.find_project_data("pepc", "tpmi", what="TPMI spec files"))
 
-    return spec_dirs
+    return specdirs
 
 def _load_sdict(specpath):
     """
@@ -163,8 +163,8 @@ class Tpmi():
         if fname in self._fdict_cache:
             return self._fdict_cache[fname]
 
-        for spec_dir in self._spec_dirs:
-            specpath = spec_dir / (fname + ".yaml")
+        for specdir in self._specdirs:
+            specpath = specdir / (fname + ".yaml")
             if specpath.exists():
                 spec = YAML.load(specpath)
 
@@ -250,48 +250,48 @@ class Tpmi():
         """
 
         sdicts = {}
-        for spec_dir in self._spec_dirs:
+        for specdir in self._specdirs:
             spec_files_cnt = 0
             non_yaml_cnt = 0
             load_errors_cnt = 0
 
-            for fname in os.listdir(spec_dir):
-                if not fname.endswith(".yml") and not fname.endswith(".yaml"):
+            for specname in os.listdir(specdir):
+                if not specname.endswith(".yml") and not specname.endswith(".yaml"):
                     non_yaml_cnt += 1
                     if non_yaml_cnt > _MAX_NON_YAML:
-                        raise Error(f"too many non-YAML files in '{spec_dir}', maximum allowed "
+                        raise Error(f"too many non-YAML files in '{specdir}', maximum allowed "
                                     f"count is {_MAX_NON_YAML}")
                     continue
 
                 try:
-                    spec_path = spec_dir / fname
-                    sdict = _load_sdict(spec_path)
+                    specpath = specdir / specname
+                    sdict = _load_sdict(specpath)
                 except Error as err:
                     load_errors_cnt += 1
                     if load_errors_cnt > _MAX_SCAN_LOAD_ERRORS:
-                        raise Error(f"failed to load spec file '{spec_path}':\n{err.indent(2)}\n"
+                        raise Error(f"failed to load spec file '{specpath}':\n{err.indent(2)}\n"
                                     f"Reached the maximum spec file load errors count of "
                                     f"{_MAX_SCAN_LOAD_ERRORS}") from err
                     continue
 
                 spec_files_cnt += 1
                 if spec_files_cnt > _MAX_SPEC_FILES:
-                    raise Error(f"too many spec files in '{spec_dir}, maximum allowed spec files "
+                    raise Error(f"too many spec files in '{specdir}, maximum allowed spec files "
                                 f"count is {_MAX_SPEC_FILES}")
 
                 sdicts[sdict["name"]] = sdict
 
         return sdicts
 
-    def __init__(self, pman, spec_dirs=None):
+    def __init__(self, pman, specdirs=None):
         """
         The class constructor. The arguments are as follows.
           * pman - the process manager object that defines the target host.
-          * spec_dirs - a collection of spec file directory paths on the target host to look for
-                        spec files in (auto-detect by default).
+          * specdirs - a collection of spec file directory paths on the target host to look for
+                       spec files in (auto-detect by default).
         """
 
-        self._spec_dirs = spec_dirs
+        self._specdirs = specdirs
         self._pman = pman
 
         # The feature dictionaries cache, indexed by feature name.
@@ -305,8 +305,8 @@ class Tpmi():
         # Spec files "sdict" dictionaries for every supported feature.
         self._sdicts = None
 
-        if not self._spec_dirs:
-            self._spec_dirs = _find_spec_dirs()
+        if not self._specdirs:
+            self._specdirs = _find_spec_dirs()
 
         self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
