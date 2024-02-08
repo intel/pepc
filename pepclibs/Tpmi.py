@@ -163,18 +163,6 @@ class Tpmi():
 
         return self._fdict_cache[fname]
 
-    def _scan_spec_dirs(self):
-        """
-        Scan the spec file directories an yield a "scan_info" dictionary for every known feature.
-        Scan dictionaries include basic feature information, such as name, feature ID and
-        description.
-        """
-
-        for spec_dir in self._spec_dirs:
-            for specname in os.listdir(spec_dir):
-                scan_info = _load_scan_info(spec_dir / specname)
-                yield scan_info
-
     def list_features(self):
         """
         Detect the list of features supported by the target platform, scan the spec file directories
@@ -200,7 +188,7 @@ class Tpmi():
                 supported_fids.add(int(match.group(1), 16))
 
         scan_infos = {}
-        for scan_info in self._scan_spec_dirs():
+        for scan_info in self._scan_infos.values():
             scan_infos[scan_info["feature-id"]] = scan_info
 
         known = []
@@ -239,6 +227,23 @@ class Tpmi():
                                 f" 3. The TPMI driver is not enabled. Try to compile the kernel "
                                 f"with 'CONFIG_INTEL_TPMI' enabled.\n")
 
+    def _scan_spec_dirs(self):
+        """
+        Scan the spec file directories, build a "scan_info" dictionary for every known feature, and
+        return a dictionary of "scan_info" dictionaries with keys being feature names.
+
+        The dictionaries include basic feature information, such as name, feature ID and
+        description.
+        """
+
+        scan_infos = {}
+        for spec_dir in self._spec_dirs:
+            for fname in os.listdir(spec_dir):
+                scan_info = _load_scan_info(spec_dir / fname)
+                scan_infos[scan_info["name"]] = scan_info
+
+        return scan_infos
+
     def __init__(self, pman, spec_dirs=None):
         """
         The class constructor. The arguments are as follows.
@@ -258,12 +263,15 @@ class Tpmi():
         self._unmount_debugfs = None
         # TPMI-related sub-directories in 'self._debugfs_mnt' (one per TPMI PCI device).
         self._tpmi_pci_paths = None
+        # Spec files "scan_info" dictionaries for every supported feature.
+        self._scan_infos = None
 
         if not self._spec_dirs:
             self._spec_dirs = _find_spec_dirs()
 
         self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
+        self._scan_infos = self._scan_spec_dirs()
 
     def close(self):
         """Uninitialize the class object."""
