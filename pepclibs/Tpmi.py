@@ -380,7 +380,7 @@ class Tpmi():
     def close(self):
         """Uninitialize the class object."""
 
-        if getattr(self, "_unmount_debugfs", None):
+        if self._unmount_debugfs:
             with contextlib.suppress(Error):
                 self._pman.run(f"unmount {self._debugfs_mnt}")
 
