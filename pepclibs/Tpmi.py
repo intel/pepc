@@ -174,6 +174,12 @@ def _load_sdict(specpath):
 class Tpmi():
     """
     Provide API for reading and writing TPMI registers on Intel CPUs.
+
+    Public methods overview.
+
+    1. Getting features information.
+        * 'get_known_features()' - known features information.
+        * 'get_unknown_features()' - unknown features information.
     """
 
     def _get_fdict(self, fname):
@@ -197,18 +203,11 @@ class Tpmi():
 
         return self._fdict_cache[fname]
 
-    def list_features(self):
+    def get_known_features(self):
         """
-        Detect the list of features supported by the target platform, scan the spec directories and
-        detect the list of available spec files, and return a tuple of two lists:
-        '(known_fnames, unknown_fids)'.
-        The lists are as follows.
-          * known - a list of spec dictionaries for every known feature (supported and have the spec
-                    file).
-          * unknown - a list of feature IDs for every unknown feature (supported, but no spec file
-                      found).
-
-        The spec dictionaries include the following keys.
+        Return a list of spec dictionaries for all known features (features that are suported by the
+        target host and there is a spec file available). The spec dictionary includes the following
+        keys.
           * name - feature name.
           * desc - feature description.
           * feature-id - an integer feature ID.
@@ -218,8 +217,15 @@ class Tpmi():
         known = []
         for fname in self._fmap:
             known.append(self._sdicts[fname].copy())
+        return known
 
-        return known, sorted(self._unknown_fids)
+    def get_unknown_features(self):
+        """
+        Return a list of feature IDs for all unknown features (features that are suported by the
+        target host and there is no spec file available).
+        """
+
+        return list(self._unknown_fids)
 
     def _get_debugfs_tpmi_dirs(self):
         """
