@@ -33,6 +33,10 @@ Terminology.
                          details. Feature dictionary is formed based on the feature spec file
                          contents.
 
+  * feature map - a dictionary that maps known feature names to corresponding debugfs file paths on
+                  the target host. This data structure is built by scanning the TPMI debugfs
+                  hierarcy of the target host.
+
   * spec dictionary - a dictionary including basic TPMI spec file information - name, ID, and
                       description of the feature it describes, path to the spec file. Spec
                       dictionaries are built by partially reading the spec file during the initial
@@ -199,7 +203,7 @@ class Tpmi():
         detect the list of available spec files, and return a tuple of two lists:
         '(known_fnames, unknown_fids)'.
         The lists are as follows.
-          * known - a list of sped dictionaries for every known feature (supported and have the spec
+          * known - a list of spec dictionaries for every known feature (supported and have the spec
                     file).
           * unknown - a list of feature IDs for every unknown feature (supported, but no spec file
                       found).
@@ -211,26 +215,11 @@ class Tpmi():
           * path - path to the spec file of the feature.
         """
 
-        supported_fids = set()
-
-        for dirname, _, _ in self._pman.lsdir(self._tpmi_pci_paths[0]):
-            match = re.match(r"^tpmi-id-([0-9a-f]+)$", dirname)
-            if match:
-                supported_fids.add(int(match.group(1), 16))
-
         known = []
-        unknown = []
+        for fname in self._fmap:
+            known.append(self._sdicts[fname].copy())
 
-        for fid in supported_fids:
-            if fid in self._fid2fname:
-                sdict = self._sdicts[self._fid2fname[fid]]
-                known.append(sdict)
-            else:
-                unknown.append(fid)
-
-        unknown.sort()
-
-        return known, unknown
+        return known, sorted(self._unknown_fids)
 
     def _get_debugfs_tpmi_dirs(self):
         """
@@ -298,6 +287,45 @@ class Tpmi():
 
         return sdicts
 
+    def _build_features_map(self):
+        """Build the TPMI feature map."""
+
+        # A dictionary mapping feature IDs to debugfs paths corresponding to the feature.
+        fid2paths = {}
+        for pci_path in self._tpmi_pci_paths:
+            for dirname, dirpath, _ in self._pman.lsdir(pci_path):
+                match = re.match(r"^tpmi-id-([0-9a-f]+)$", dirname)
+                if not match:
+                    continue
+
+                fid = int(match.group(1), 16)
+                if fid not in fid2paths:
+                    fid2paths[fid] = []
+
+                fid2paths[fid].append(dirpath)
+
+        if not fid2paths:
+            paths = "\n * ".join([str(path) for path in self._tpmi_pci_paths])
+            raise ErrorNotSupported(f"no TPMI features found{self._pman.hostmsg}, checked the "
+                                    f"following paths:\n * {paths}")
+
+        fmap = {}
+        unknown_fids = []
+
+        for fid, fpaths in fid2paths.items():
+            fname = self._fid2fname.get(fid)
+            if not fname:
+                # Unknown feature, no spec file for it.
+                unknown_fids.append(fid)
+                continue
+
+            if fname not in fmap:
+                fmap[fname] = {}
+            fmap[fname] = fpaths
+
+        self._fmap = fmap
+        self._unknown_fids = unknown_fids
+
     def __init__(self, pman, specdirs=None):
         """
         The class constructor. The arguments are as follows.
@@ -321,16 +349,22 @@ class Tpmi():
         self._sdicts = None
         # The feature ID -> feature name dictionary (supported features only).
         self._fid2fname = {}
+        # The features map.
+        self._fmap = None
+        # Unknown feature IDs (no spec file).
+        self._unknown_fids = None
 
         if not self._specdirs:
             self._specdirs = _find_spec_dirs()
 
         self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
-        self._sdicts = self._scan_spec_dirs()
 
+        self._sdicts = self._scan_spec_dirs()
         for fname, sdict in self._sdicts.items():
             self._fid2fname[sdict["feature-id"]] = fname
+
+        self._build_features_map()
 
     def close(self):
         """Uninitialize the class object."""
