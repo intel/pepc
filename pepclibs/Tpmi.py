@@ -41,8 +41,8 @@ Terminology.
   * unknown feature - a supported feature for which the spec file was not found.
 
   * scan dictionary - a dictionary including basic TPMI feature information - name, ID, and
-                      description. Build by partially reading the spec file during the initial
-                      scanning of the spec file directories.
+                      description, path to the spec file. Built by partially reading the spec file
+                      during the initial scanning of the spec file directories.
 """
 
 import os
@@ -139,6 +139,7 @@ def _load_sdict(specpath):
         if fobj:
             fobj.close()
 
+    sdict["specpath"] = specpath
     return sdict
 
 class Tpmi():
@@ -182,6 +183,7 @@ class Tpmi():
           * name - feature name.
           * desc - feature description.
           * feature-id - an integer feature ID.
+          * specpath - path to the spec file of the feature.
         """
 
         supported_fids = set()
