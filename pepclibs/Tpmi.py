@@ -26,8 +26,8 @@ Terminology.
                 supported feature has a spec file, and each spec file corresponds to a feature. A
                 spec file is also required to decode the TPMI feature's PCIe VSEC table.
 
-  * spec files directory - a directory containing spec files (one or many). There may be multiple
-                           spec files directories.
+  * spec directory - a directory containing one or multiple spec files. There may be multiple spec
+                     directories.
 
   * feature dictionary - a dictionary describing a TPMI feature registers, bit fields and other
                          details. Feature dictionary is formed based on the feature spec file
@@ -42,7 +42,7 @@ Terminology.
 
   * scan dictionary - a dictionary including basic TPMI feature information - name, ID, and
                       description, path to the spec file. Built by partially reading the spec file
-                      during the initial scanning of the spec file directories.
+                      during the initial scanning of the spec directories.
 """
 
 import os
@@ -61,18 +61,18 @@ _SPECS_PATH_ENVVAR = "PEPC_TPMI_DATA_PATH"
 _MAX_SPEC_FILES = 256
 # Maximum count of non-YAML files (extention is other than '.yml' or '.yaml') per directory.
 _MAX_NON_YAML = 32
-# Maximum count of spec file loading/parsing errors during scanning per spec files directory.
+# Maximum count of spec file loading/parsing errors during scanning per spec directory.
 _MAX_SCAN_LOAD_ERRORS = 4
 
 _LOG = logging.getLogger()
 
 def _find_spec_dirs():
-    """Find paths to TPMI specs directories and return them as a list."""
+    """Find paths to TPMI spec directories and return them as a list."""
 
     specdirs = []
 
-    # Add the user-defined spec files directory. This directory is optional and can be used for
-    # extending the standard spec files.
+    # Add the user-defined spec directory. This directory is optional and can be used for extending
+    # the standard spec files.
     path = os.getenv(_SPECS_PATH_ENVVAR)
     if path:
         path = Path(path)
@@ -177,8 +177,8 @@ class Tpmi():
 
     def list_features(self):
         """
-        Detect the list of features supported by the target platform, scan the spec file directories
-        and detect the list of available spec files, and return a tuple of two lists:
+        Detect the list of features supported by the target platform, scan the spec directories and
+        detect the list of available spec files, and return a tuple of two lists:
         '(known_fnames, unknown_fids)'.
         The lists are as follows.
           * known - a list of scan dictionaries for every known feature (supported and have the spec
@@ -242,8 +242,8 @@ class Tpmi():
 
     def _scan_spec_dirs(self):
         """
-        Scan the spec file directories, build a "sdict" dictionary for every known feature, and
-        return a dictionary of "sdict" dictionaries with keys being feature names.
+        Scan the spec directories, build scan dictionary for every known feature, and return a
+        dictionary of scan dictionaries with keys being feature names.
 
         The dictionaries include basic feature information, such as name, feature ID and
         description.
@@ -287,8 +287,8 @@ class Tpmi():
         """
         The class constructor. The arguments are as follows.
           * pman - the process manager object that defines the target host.
-          * specdirs - a collection of spec file directory paths on the target host to look for
-                       spec files in (auto-detect by default).
+          * specdirs - a collection of spec directory paths on the target host to look for spec
+                       files in (auto-detect by default).
         """
 
         self._specdirs = specdirs
