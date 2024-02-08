@@ -18,7 +18,7 @@ from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs.emul import _EmulDevMSR, _ROFile, _RWFile
+from pepclibs.helperlibs.emul import _EmulDevMSR, _ROFile, _RWFile, _EmulFile
 
 _LOG = logging.getLogger()
 
@@ -195,16 +195,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 finfo["path"] = split[0]
                 finfo["data"] = split[1]
 
-                if finfo.get("readonly", False):
-                    if finfo["path"].endswith("cpu/online"):
-                        emul = _ROFile.ROSysfsFile(finfo, datapath, self._get_basepath)
-                    else:
-                        emul = _ROFile.ROFile(finfo, datapath, self._get_basepath)
-                else:
-                    if finfo["path"].startswith("/sys/"):
-                        emul = _RWFile.RWSysinfoFile(finfo, datapath, self._get_basepath)
-                    else:
-                        emul = _RWFile.RWFile(finfo, datapath, self._get_basepath)
+                emul = _EmulFile.get_emul_file(finfo, datapath, self._get_basepath)
                 self._emuls[emul.path] = emul
 
     def _init_inline_dirs(self, finfos, datapath):
@@ -276,10 +267,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """Initialize plain files, which are just copies of the original files."""
 
         for finfo in finfos:
-            if finfo.get("readonly", False):
-                emul = _ROFile.ROFile(finfo, datapath, self._get_basepath, module)
-            else:
-                emul = _RWFile.RWFile(finfo, datapath, self._get_basepath, module)
+            emul = _EmulFile.get_emul_file(finfo, datapath, self._get_basepath, module)
             self._emuls[emul.path] = emul
 
     def _init_directories(self, finfos, datapath, module):
