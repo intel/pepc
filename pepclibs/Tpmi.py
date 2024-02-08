@@ -147,7 +147,7 @@ def _load_sdict(specpath):
         if fobj:
             fobj.close()
 
-    sdict["specpath"] = specpath
+    sdict["path"] = specpath
     return sdict
 
 class Tpmi():
@@ -191,7 +191,7 @@ class Tpmi():
           * name - feature name.
           * desc - feature description.
           * feature-id - an integer feature ID.
-          * specpath - path to the spec file of the feature.
+          * path - path to the spec file of the feature.
         """
 
         supported_fids = set()
