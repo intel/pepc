@@ -879,7 +879,7 @@ class PepcASTChecker(BaseChecker):
     def debug(self, txt):
         """Print a debug message given in 'txt', if debug is enabled."""
 
-        if self.config.pepc_plugin_debug:
+        if self.linter.config.pepc_plugin_debug:
             print(txt)
 
     def _check_string(self, node, args, islog=False):
@@ -1050,7 +1050,7 @@ class PepcASTChecker(BaseChecker):
                 if "found" in arg:
                     continue
                 if not local:
-                    if not self.config.pepc_plugin_strict:
+                    if not self.linter.config.pepc_plugin_strict:
                         continue
 
                     self.add_message("pepc-arg-doc-ref-not-local", args=arg["name"],
@@ -1099,7 +1099,7 @@ class PepcASTChecker(BaseChecker):
         if not public and name == "__init__":
             public = True
 
-        if not public and not self.config.pepc_plugin_strict:
+        if not public and not self.linter.config.pepc_plugin_strict:
             return
 
         # Generate name for current function.
