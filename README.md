@@ -176,7 +176,7 @@ Create the standalone version of 'pepc'.
 git clone https://github.com/intel/pepc.git --branch release pepc
 cd pepc
 echo '#!/usr/bin/python3' > pepc.standalone
-git archive --format zip release >> pepc.standalone
+git archive --format zip HEAD >> pepc.standalone
 chmod ug+x pepc.standalone
 ```
 
