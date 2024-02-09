@@ -113,7 +113,9 @@ sed -i -e "s/^Version:\(\s\+\)$VERSION_REGEX$/Version:\1$new_ver/" "$SPEC_FILE"
 
 # Update the man pages.
 for file in $PEPC_RST_FILES; do
-    pandoc -f rst -s "$file" -t man -o "${PEPC_MAN_DIR}/$(basename "$file" ".rst").1"
+    manfile="${PEPC_MAN_DIR}/$(basename "$file" ".rst").1"
+    pandoc -f rst -s "$file" -t man -o "$manfile"
+    git add "$manfile"
 done
 
 # Commit the changes.
