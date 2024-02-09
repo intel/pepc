@@ -355,8 +355,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         '_ProcessManagerBase.ProcessManagerBase().lsdir()'.
         """
 
-        emul_path = Path(self._get_basepath() / str(path).lstrip("/"))
-        yield from super().lsdir(emul_path, must_exist=must_exist)
+        basepath = self._get_basepath()
+        emul_path = Path(basepath / str(path).lstrip("/"))
+        for name, fpath, mode in super().lsdir(emul_path, must_exist=must_exist):
+            yield name, fpath.relative_to(basepath), mode
 
     def exists(self, path):
         """
