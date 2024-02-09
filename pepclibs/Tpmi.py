@@ -241,7 +241,7 @@ class Tpmi():
         if debugfs_tpmi_dirs:
             return debugfs_tpmi_dirs
 
-        raise ErrorNotSupported(f"No TPMI-related sub-directories fount in '{self._debugfs_mnt}'"
+        raise ErrorNotSupported(f"no TPMI-related sub-directories found in '{self._debugfs_mnt}'"
                                 f"{self._pman.hostmsg}.\nTPMI does not appear to be supported "
                                 f"'{self._pman.hostmsg}. Here are the possible reasons:\n"
                                 f" 1. Hardware does not support TPMI.\n"
