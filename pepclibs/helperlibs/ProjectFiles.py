@@ -55,7 +55,7 @@ def search_project_data(basepath, subpath, pman=None, what=None, env_var=None):
     searched = []
     paths = []
 
-    paths.append(Path(sys.argv[0]).parent)
+    paths.append(Path(sys.argv[0]).parent.resolve().absolute())
 
     if env_var:
         path = os.environ.get(env_var)
