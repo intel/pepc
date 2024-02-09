@@ -8,7 +8,7 @@
 
 """
 Provide capability for reading and writing TPMI registers on Intel CPUs. TPMI stands for "Topology
-Aware Register and PM Capsule Interface" and is a  memory mapped interface for accessing power
+Aware Register and PM Capsule Interface" and it is a  memory mapped interface for accessing power
 management features on Intel CPUs, in addition to the existing MSRs.
 
 Terminology.
