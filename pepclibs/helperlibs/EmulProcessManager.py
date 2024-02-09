@@ -168,6 +168,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     def _init_default_files(self):
         """Initialize default files that should exist for any emulated platform."""
 
+        if self._initialised_default_files:
+            return
+
         # Create '/proc/mounts' as a read only file.
         finfo = {
             "data": "debugfs /sys/kernel/debug debugfs rw,nosuid,nodev,noexec,relatime 0 0",
@@ -176,6 +179,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         }
         emul = _EmulFile.get_emul_file(finfo, self.datapath, self._get_basepath)
         self._emuls[finfo["path"]] = emul
+
+        self._initialised_default_files = True
 
     def _init_inline_files(self, finfos, datapath):
         """
@@ -461,6 +466,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self._modules = set()
         # A dictionary mapping paths to emulated file objects.
         self._emuls = {}
+        # Boolean indicating if default files which should be emulated for every platform have
+        # already been initialised.
+        self._initialised_default_files = False
 
     def close(self):
         """Stop emulation."""
