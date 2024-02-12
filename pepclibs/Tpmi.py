@@ -365,7 +365,7 @@ class Tpmi():
         """
 
         known = []
-        for fname in self._fmaps:
+        for fname in self._fmaps[0]:
             known.append(self._sdicts[fname].copy())
         return known
 
@@ -470,6 +470,7 @@ class Tpmi():
 
         fmap = {}
         unknown_fids = []
+        dev2package = {}
 
         for fid, fpaths in fid2paths.items():
             fname = self._fid2fname.get(fid)
@@ -478,9 +479,29 @@ class Tpmi():
                 unknown_fids.append(fid)
                 continue
 
-            if fname not in fmap:
-                fmap[fname] = {}
-            fmap[fname] = fpaths
+            if fname == "tpmi_info":
+                continue
+
+            for fpath in fpaths:
+                addr = str(fpath.parent.name)
+                addr = addr[len("tpmi-"):]
+
+                if addr not in dev2package:
+                    mdmap = self._build_mdmap(addr, "tpmi_info")
+                    package = self._read_register(addr, "tpmi_info", 0, "TPMI_BUS_INFO",
+                                                  bitname="PACKAGE_ID", mdmap=mdmap)
+                    dev2package[addr] = package
+                    if package not in fmap:
+                        fmap[package] = {"tpmi_info": []}
+
+                    fmap[package]["tpmi_info"] += [{"addr":addr, "mdmap": mdmap}]
+                else:
+                    package = dev2package[addr]
+
+                if fname not in fmap[package]:
+                    fmap[package][fname] = []
+
+                fmap[package][fname] += [{"addr":addr, "mdmap": None}]
 
         self._fmaps = fmap
         self._unknown_fids = unknown_fids
