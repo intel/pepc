@@ -192,14 +192,13 @@ class Tpmi():
             return self._fdict_cache[fname]
 
         for specdir in self._specdirs:
-            specpath = specdir / (fname + ".yaml")
+            specpath = specdir / (fname + ".yml")
             if specpath.exists():
                 spec = YAML.load(specpath)
-
-            self._fdict_cache[fname] = spec
+                self._fdict_cache[fname] = spec
 
         if fname not in self._fdict_cache:
-            raise ErrorNotSupported("TPMI feature '{fname}' is not supported")
+            raise ErrorNotSupported(f"TPMI feature '{fname}' is not supported")
 
         return self._fdict_cache[fname]
 
