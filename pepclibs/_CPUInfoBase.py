@@ -128,7 +128,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     tinfo[cpu]["module"] = tinfo[cpu]["core"]
                     continue
 
-            module = Trivial.str_to_int(data, "module number")
+            module = Trivial.str_to_int(data, what="module number")
             siblings = self._read_range(base / "cache/index2/shared_cpu_list")
             for sibling in siblings:
                 # Suppress 'KeyError' in case the 'shared_cpu_list' file included an offline CPU.
@@ -160,7 +160,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
                 base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
                 data = self._pman.read(base / "topology/die_id")
-                die = Trivial.str_to_int(data, "die number")
+                die = Trivial.str_to_int(data, what="die number")
                 siblings = self._read_range(base / "topology/die_cpus_list")
                 for _ in siblings:
                     # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
