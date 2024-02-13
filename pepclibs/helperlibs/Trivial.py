@@ -59,17 +59,34 @@ def get_username(uid=None):
         msg = Error(err).indent(2)
         raise Error(f"failed to get user name for UID {uid}:\n{msg}") from None
 
-def str_to_int(snum, what="value"):
+def str_to_int(snum, base=0, what="value"):
     """
     Convert a string to an integer numeric value. The arguments are as follows.
       * snum - the value to convert to 'int'. Should be a string or an integer.
+      * base - base of 'snum' (default - auto-detect based on the prefix).
       * what - a string describing the value to convert, for the possible error message.
     """
 
     try:
-        num = int(str(snum), 0)
+        num = int(str(snum), base)
     except (ValueError, TypeError):
-        raise Error(f"bad {what} '{snum}': should be an integer") from None
+        # Make sure the 'base' was a sane number.
+        try:
+            str_to_int(base)
+        except (ValueError, TypeError) as err:
+            msg = Error(str(err)).indent(2)
+            raise Error(f"BUG: bad base value {base} when converting bad {what} '{snum}':\n"
+                        f"{msg}") from err
+
+        if base != 0 and base < 2:
+            raise Error(f"BUG: bad base value {base} when converting bad {what} '{snum}': "
+                        f"must be greater than 2 or 0") from None
+
+        if base:
+            msg = "a base {base} integer"
+        else:
+            msg = "an integer"
+        raise Error(f"bad {what} '{snum}': should be {msg}") from None
 
     return num
 
