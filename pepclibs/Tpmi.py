@@ -372,6 +372,29 @@ class Tpmi():
 
         return path
 
+    def _read(self, addr, fname, instance, offset, mdmap):
+        """Reads memory location from TPMI debugfs memory dump file."""
+
+        if instance not in mdmap:
+            available = Human.rangify(mdmap.keys())
+            raise Error(f"bad instance number '{instance}' for feature '{fname}', for device "
+                        f"'{addr}{self._pman.hostmsg}', available instances: {available}")
+
+        if offset not in mdmap[instance]:
+            max_offset = max(mdmap[instance])
+            raise Error(f"bad offset '{offset}' for instance '{instance}', feature '{fname}', "
+                        f"device '{addr}'{self._pman.hostmsg}, maximum offset '{max_offset}'")
+
+        path = self._get_debugfs_feature_path(addr, fname)
+        path = path / "mem_dump"
+
+        with self._pman.open(path, "r") as fobj:
+            fobj.seek(mdmap[instance][offset])
+
+            val = Trivial.str_to_int(fobj.read(8), base=16, what="TPMI memory value")
+
+        return val
+
     def _build_mdmap(self, addr, fname):
         """
         Build and return mdmap for feature 'fname' of TPMI device at address 'addr'. The arguments
