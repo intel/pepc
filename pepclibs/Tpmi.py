@@ -455,6 +455,47 @@ class Tpmi():
 
         return mdmap
 
+    def _get_fdict_registers(self, fname):
+        """Get registers for a feature."""
+        return self._get_fdict(fname)["registers"]
+
+    def _get_fdict_register(self, fname, regname):
+        """Get register specification for a TPMI register."""
+
+        regname = regname.upper()
+
+        regsdict = self._get_fdict_registers(fname)
+
+        if regname not in regsdict:
+            avail_regs = ", ".join(regsdict.keys())
+            raise Error(f"bad register name: {regname}, available: {avail_regs}")
+
+        return regsdict[regname]
+
+    def _read_register(self, fname, addr, instance, regname, mdmap=None):
+        """
+        Reads the contents of the named TPMI register. Arguments are as follows.
+          * fname - Name of the TPMI feature to use.
+          * addr - TPMI device address.
+          * instance - TPMI instance to read.
+          * regname - Name of the TPMI register to read.
+          * mdmap - Memory dump map.
+        """
+
+        regdict = self._get_fdict_register(fname, regname)
+
+        offset = regdict["offset"]
+        width = regdict["width"]
+
+        if not mdmap:
+            mdmap = self._build_mdmap(addr, fname)
+
+        val = self._read(addr, fname, instance, offset, mdmap)
+        if width > 32:
+            val = val + (self._read(addr, fname, instance, offset + 4, mdmap) << 32)
+
+        return val
+
     def __init__(self, pman, specdirs=None):
         """
         The class constructor. The arguments are as follows.
