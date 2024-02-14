@@ -1036,20 +1036,20 @@ for entry in os.listdir(path):
                     if os.path.exists(cfgfile):
                         cfgfiles.append(cfgfile)
 
-            config = paramiko.SSHConfig()
             for cfgfile in cfgfiles:
-                with open(cfgfile, "r", encoding="utf-8") as fobj:
-                    config.parse(fobj)
+                config = paramiko.SSHConfig().from_path(cfgfile)
 
-            cfg = config.lookup(hostname)
-            if optname in cfg:
-                return cfg[optname]
-            if "include" in cfg:
-                cfgfiles = glob.glob(cfg['include'])
-                return self._cfg_lookup(optname, hostname, username, cfgfiles=cfgfiles)
-            return None
+                cfg = config.lookup(hostname)
+                if optname in cfg:
+                    return cfg[optname]
+
+                if "include" in cfg:
+                    cfgfiles = glob.glob(cfg['include'])
+                    return self._cfg_lookup(optname, hostname, username, cfgfiles=cfgfiles)
         finally:
             os.environ["USER"] = old_username
+
+        return None
 
     def _lookup_privkey(self, hostname, username, cfgfiles=None):
         """Lookup for private SSH authentication keys for host 'hostname'."""
@@ -1057,6 +1057,9 @@ for entry in os.listdir(path):
         privkeypath = self._cfg_lookup("identityfile", hostname, username, cfgfiles=cfgfiles)
         if isinstance(privkeypath, list):
             privkeypath = privkeypath[0]
+
+        if privkeypath:
+            privkeypath = Path(privkeypath)
         return privkeypath
 
     def __init__(self, hostname=None, ipaddr=None, port=None, username=None, password="",
@@ -1127,8 +1130,11 @@ for entry in os.listdir(path):
         if not self.privkeypath:
             # Try finding the key filename from the SSH configuration files.
             look_for_keys = True
-            with contextlib.suppress(BaseException):
-                self.privkeypath = Path(self._lookup_privkey(hostname, self.username))
+            try:
+                self.privkeypath = self._lookup_privkey(hostname, self.username)
+            except Exception as err:
+                msg = Error(str(err)).indent(2)
+                _LOG.debug(f"private key lookup falied:\n{msg}")
 
         key_filename = str(self.privkeypath) if self.privkeypath else None
 
