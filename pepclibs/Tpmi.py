@@ -690,14 +690,16 @@ class Tpmi():
 
         return val
 
-    def _write_register(self, value, fname, addr, instance, regname):
+    def _write_register(self, value, fname, addr, instance, regname, bfname=None):
         """
         Write to a TPMI register. The arguments are as follows.
           * value - the value to write to the register.
           * fname - name of the TPMI feature the register belongs to.
           * addr - the TPMI device address.
           * instance - the TPMI instance to write the register to.
-          * regname - name of the TPMI register to write.
+          * regname - name of the TPMI register to write to.
+          * bfname - name of the register bit field to write to (write to the entire register by
+                     default).
         """
 
         regdict = self._get_regdict(fname, regname)
@@ -722,6 +724,10 @@ class Tpmi():
 
         _LOG.debug("writing 0x%x to '%s' register '%s', instance '%d' at offset 0x%x of TPMI "
                    "device '%s'", value, fname, regname, instance, offset, addr)
+
+        if bfname:
+            regval = self._read_register(fname, addr, instance, regname, bfname=bfname)
+            value = self._set_bitfield(regval, value, fname, regname, bfname)
 
         with self._pman.open(path, "r+") as fobj:
             while width > 0:
