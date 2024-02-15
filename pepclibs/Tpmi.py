@@ -648,6 +648,20 @@ class Tpmi():
 
         return (regval & bfdict["bitmask"]) >> bfdict["bitshift"]
 
+    def _set_bitfield(self, regval, bitval, fname, regname, bfname):
+        """
+        Set a register bit field to value 'value' and return the new register value. The arguments
+        are as follows.
+          * regval - value of the entire register.
+          * bitval - the bit field value to set in 'regval'.
+          * fname - name of the TPMI feature.
+          * regname - name of the TPMI register to set.
+          * bfname - name of the bit field to set.
+        """
+
+        bfdict = self._get_bfdict(fname, regname, bfname)
+        return regval | (bitval << bfdict["bitshift"])
+
     def _read_register(self, fname, addr, instance, regname, bfname=None, mdmap=None):
         """
         Read a TPMI register. The arguments are as follows.
