@@ -89,7 +89,7 @@ import contextlib
 from pathlib import Path
 import yaml
 from pepclibs.helperlibs import YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 
 # Users can define this environment variable to extend the default spec files.
 _SPECS_PATH_ENVVAR = "PEPC_TPMI_DATA_PATH"
@@ -591,7 +591,43 @@ class Tpmi():
         what = f"value of a TPMI register at offset '{offset:#x}', {msg_ifd}"
         return Trivial.str_to_int(val, base=16, what=what)
 
-    def _read_register(self, addr, fname, instance, regname, mdmap=None):
+    def _get_bitfield(self, regvalue, fname, regname, fieldname):
+        """
+        Extract and return the value of a bit field from a register value. Arguments are as
+        follows.
+          * regvalue - value of the register.
+          * fname - name of the TPMI feature.
+          * regname - name of the TPMI register.
+          * fieldname - name of the TPMI register bitfield to extract.
+        """
+
+        regdict = self._get_regdict(fname, regname)
+        regfields_dict = regdict["fields"]
+
+        if fieldname not in regfields_dict:
+            available = ", ".join(regfields_dict.keys())
+            raise ErrorNotFound(f"bit field '{fieldname}' not found for register '{regname}', "
+                                f"feature '{fname}', available fields: {available}")
+
+        bitdict = regfields_dict[fieldname]
+        if "bitmask" not in bitdict:
+            bits = bitdict["bits"]
+            match = re.match(r"^(\d+):(\d+)$", bits)
+            if not match:
+                raise Error(f"bad bits definition '{bits}' for bit field '{fieldname}', "
+                            f"register '{regname}', feature '{fname}', expected format "
+                            "'<high-bit>:<low-bit>")
+
+            highbit = int(match.group(1))
+            lowbit = int(match.group(2))
+            bitmask = ((1 << (highbit + 1)) - 1) - ((1 << lowbit) - 1)
+
+            bitdict["bitshift"] = lowbit
+            bitdict["bitmask"] = bitmask
+
+        return (regvalue & bitdict["bitmask"]) >> bitdict["bitshift"]
+
+    def _read_register(self, addr, fname, instance, regname, mdmap=None, bitfield=None):
         """
         Read a TPMI register. The arguments are as follows.
           * addr - the TPMI device address.
@@ -599,6 +635,7 @@ class Tpmi():
           * instance - the TPMI instance to read the register from.
           * regname - name of the TPMI register to read.
           * mdmap - the mdmap to use fro reading the register.
+          * bitfield - bit field name to read, or None to read whole register.
         """
 
         regname = regname.upper()
@@ -613,6 +650,9 @@ class Tpmi():
         val = self._read(addr, fname, instance, offset, mdmap)
         if width > 32:
             val = val + (self._read(addr, fname, instance, offset + 4, mdmap) << 32)
+
+        if bitfield:
+            val = self._get_bitfield(val, fname, regname, bitfield)
 
         return val
 
