@@ -88,6 +88,7 @@ Terminology.
 
 import os
 import re
+import copy
 import stat
 import logging
 import contextlib
@@ -782,6 +783,90 @@ class Tpmi():
         addr, mdmap = self._fmap_lookup(fname, instance, addr=addr, package=package)
 
         return self._read_register(addr, fname, instance, regname, mdmap=mdmap, bfname=bfname)
+
+    def get_regdict(self, fname):
+        """
+        Returns a copy of the register dictionary for a feature. Arguments are as follows.
+          * fname - name of the TPMI feature to get registers for.
+        """
+
+        return copy.deepcopy(self._get_fdict(fname))
+
+    def iter_feature(self, fname, addr=None, package=None):
+        """
+        Iterates over a feature, yielding tuples of (addr, package, instance). If any of the (addr,
+        package) are defined in the arguments, they are handled as filters yielding only the matched
+        items. Arguments are as follows.
+          * fname - name of the TPMI feature to iterate.
+          * addr - TPMI device PCI address to iterate, by default iterates all addresses.
+          * package - package number to iterate, by default iterates all packages.
+        """
+
+        fname_found = False
+        available_fnames = set()
+        package_found = package is None
+        available_packages = set()
+        addr_found = addr is None
+        available_addrs = set()
+
+        if addr is not None and package is not None:
+            raise Error("either package or TPMI device PCI address can be provided, not both")
+
+        if package is not None:
+            what = f" for package '{package}'"
+        elif addr is not None:
+            what = f" for TPMI device '{addr}'"
+        else:
+            what = ""
+
+        for try_package, fmap_pkg in self._fmaps.items():
+            available_packages.add(try_package)
+            available_fnames.update(list(fmap_pkg))
+
+            if package is not None and try_package != package:
+                continue
+
+            package_found = True
+
+            if fname not in fmap_pkg:
+                continue
+
+            fname_found = True
+
+            for try_addr in fmap_pkg[fname]:
+                available_addrs.add(try_addr)
+
+                if addr is not None and try_addr != addr:
+                    continue
+
+                addr_found = True
+
+                mdmap = self._get_mdmap(try_addr, try_package, fname)
+
+                for instance in mdmap:
+                    yield (try_addr, try_package, instance)
+
+        if not addr_found:
+            addrs = "\n * ".join(available_addrs)
+            if addr is not None:
+                what = ""
+
+            raise Error(f"unknown TPMI device address '{addr}'{what}{self._pman.hostmsg}, "
+                        f"available devices are:\n * {addrs}")
+
+        if not package_found:
+            packages = Human.rangify(available_packages)
+            if package is not None:
+                what = ""
+
+            raise Error(f"invalid package number '{package}'{what}{self._pman.hostmsg}, valid "
+                        f" package numbers are: {packages}")
+
+        if not fname_found:
+            known = ", ".join(available_fnames)
+
+            raise Error(f"unknown feature '{fname}'{what}{self._pman.hostmsg}, known features "
+                        f"are:\n  {known}")
 
     def __init__(self, pman, specdirs=None):
         """
