@@ -950,6 +950,25 @@ class Tpmi():
         self._validate_fname(fname)
         return self._get_bitfield(regval, fname, regname, bfname)
 
+    def write_register(self, value, fname, addr, instance, regname, bfname=None):
+        """
+        Write bit field value of a TPMI register. Arguments are as follows.
+          * value - value to write to the register or bit field.
+          * fname - name of the TPMI feature to write.
+          * addr - TPMI device PCI address.
+          * instance - the TPMI instance to write the register to.
+          * regname - name of the TPMI register to write.
+          * bfname - optional name of the bit field to write to (write the entire register by
+                     default.)
+        """
+
+        self._validate_fname(fname)
+        self._validate_addr(fname, addr)
+        self._validate_regname(fname, regname, bfname=bfname)
+        self._validate_instance(fname, addr, instance)
+
+        return self._write_register(value, fname, addr, instance, regname, bfname=bfname)
+
     def __init__(self, pman, specdirs=None):
         """
         The class constructor. The arguments are as follows.
