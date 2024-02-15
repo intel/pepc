@@ -680,6 +680,77 @@ class Tpmi():
 
         return val
 
+    def _fmap_lookup(self, fname, addr, package, instance):
+        """
+        Searches for a feature instance in the fmap. If found, returns the matching TPMI device
+        address and mdmap dictionary.
+        """
+
+        if package is None and addr is None:
+            raise Error("either package or address must be defined")
+
+        if addr is None:
+            addrs = list(self._fmaps[package][fname].keys())
+            if len(addrs) == 1:
+                addr = addrs[0]
+            else:
+                available = ", ".join(addrs)
+                raise Error(f"multiple TPMI devices available on package '{package}', available "
+                            f"devices: {available}")
+
+        if package is None:
+            addrs = set()
+            for pkg, fmap in self._fmaps.items():
+                for pkg_addr in fmap[fname].keys():
+                    addrs.add(pkg_addr)
+                if addr in fmap[fname]:
+                    package = pkg
+                    break
+
+            if package is None:
+                available = ", ".join(addrs)
+                raise Error(f"unavailable TPMI device '{addr}', available devices: {available}")
+        elif package not in self._fmaps:
+            available = Human.rangify(self._fmaps)
+            raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, available "
+                        f"packages are: {available}")
+
+        if addr not in self._fmaps[package][fname]:
+            available = ", ".join(self._fmaps[package][fname].keys())
+            raise Error(f"unavailable TPMI device '{addr}', available devices: {available}")
+
+        if fname not in self._fmaps[package]:
+            known = ", ".join(self._fmaps[package])
+            raise Error(f"unknown feature '{fname}'{self._pman.hostmsg}, known features are: "
+                        f"{known}")
+
+        mdmap = self._fmaps[package][fname][addr]
+        if not mdmap:
+            mdmap = self._build_mdmap(addr, fname)
+            self._fmaps[package][fname][addr] = mdmap
+
+        if instance in mdmap:
+            return addr, mdmap
+
+        available = Human.rangify(range(max(mdmap.keys()) + 1))
+        raise Error(f"instance {instance} not available for feature {fname}"
+                    f"{self._pman.hostmsg}, available instances: {available}")
+
+    def read_register(self, fname, instance, regname, package=None, addr=None, bitname=None):
+        """
+        Reads the value of a TPMI register. Arguments are as follows.
+          * fname - name of the TPMI feature to use.
+          * instance - TPMI instance to read.
+          * regname - name of the TPMI register to read.
+          * package - package number.
+          * addr - TPMI device address.
+          * bitname - bit field name to read.
+        """
+
+        addr, mdmap = self._fmap_lookup(fname, addr, package, instance)
+
+        return self._read_register(addr, fname, instance, regname, mdmap=mdmap, bitname=bitname)
+
     def __init__(self, pman, specdirs=None):
         """
         The class constructor. The arguments are as follows.
