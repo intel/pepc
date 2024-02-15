@@ -613,14 +613,12 @@ class Tpmi():
         what = f"value of register '{regname}' (offset '{offset:#x}') of TPMI feature '{fname}'"
         return Trivial.str_to_int(val, base=16, what=what)
 
-    def _get_bitfield(self, regval, fname, regname, bfname):
+    def _get_bitdict(self, fname, regname, bfname):
         """
-        Extract and return the value of a bit field from a register value. The arguments are as
-        follows.
-          * regval - value of the register.
+        Return the bit field definition for a register. The arguments are as follows.
           * fname - name of the TPMI feature.
           * regname - name of the TPMI register.
-          * bfname - name of the TPMI register bit field to extract.
+          * bfname - name of the TPMI register bit field.
         """
 
         regdict = self._get_regdict(fname, regname)
@@ -631,7 +629,20 @@ class Tpmi():
             raise Error(f"bit field '{bfname}' not found for TPMI register '{regname}', feature "
                         f"'{fname}', available bit fields: {available}")
 
-        bitdict = fieldsdict[bfname]
+        return fieldsdict[bfname]
+
+    def _get_bitfield(self, regval, fname, regname, bfname):
+        """
+        Extract and return the value of a bit field from a register value. The arguments are as
+        follows.
+          * regval - value of the register.
+          * fname - name of the TPMI feature.
+          * regname - name of the TPMI register.
+          * bfname - name of the TPMI register bit field to extract.
+        """
+
+        bitdict = self._get_bitdict(fname, regname, bfname)
+
         return (regval & bitdict["bitmask"]) >> bitdict["bitshift"]
 
     def _read_register(self, fname, addr, instance, regname, bfname=None, mdmap=None):
