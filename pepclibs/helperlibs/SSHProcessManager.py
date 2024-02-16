@@ -1036,7 +1036,8 @@ for entry in os.listdir(path):
                     if os.path.exists(cfgfile):
                         cfgfiles.append(cfgfile)
 
-            for cfgfile in cfgfiles:
+            # Sort configuration file paths to make the order somewhat predictable, as opposed to random.
+            for cfgfile in sorted(cfgfiles):
                 config = paramiko.SSHConfig().from_path(cfgfile)
 
                 cfg = config.lookup(hostname)
