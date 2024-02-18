@@ -48,11 +48,13 @@ Terminology.
                     be decoded and used.
 
   * unknown feature - a supported feature for which the spec file was not found.
+
   * memory dump map - a dictionary storing the offsets of specific TPMI memory locations within
                       their memory dump file. The dictionary has two levels, first indexed via the
                       instance number, and the second via the memory offset in bytes. The
                       dictionary is parsed from TPMI debugfs memory dump file, e.g.
                       /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump for 'rapl' feature.
+
   * instance - TPMI features are split into instances, each one corresponding to a logical entity.
                For example, if 'rapl' has 4 instances under it, there are four power domains under
                the 'rapl', each with their own settings and status registers.
