@@ -350,14 +350,15 @@ class Tpmi():
         self._fmap = fmap
         self._unknown_fids = unknown_fids
 
-    def _get_debugfs_path(self, addr, fname=None):
-        """Get sysfs path for a specified TPMI bus address and feature."""
+    def _get_debugfs_feature_path(self, addr, fname):
+        """
+        Return path to the Linux debugfs directory represinting feature 'fname' of a TPMI device at
+        address 'addr'.
+        """
 
         path = self._debugfs_mnt / f"tpmi-{addr}"
-
-        if fname is not None:
-            fid = self._get_fdict(fname)["feature-id"]
-            path = path / f"tpmi-id-{fid:02x}"
+        fid = self._get_fdict(fname)["feature-id"]
+        path = path / f"tpmi-id-{fid:02x}"
 
         return path
 
@@ -376,7 +377,7 @@ class Tpmi():
         from position 95 of the corresponding 'mem_dump' Linux debugfs file.
         """
 
-        path = self._get_debugfs_path(addr, fname=fname)
+        path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_dump"
 
         _LOG.debug("reading memory dump: '%s'", path)
