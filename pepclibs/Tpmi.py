@@ -361,7 +361,7 @@ class Tpmi():
 
         return path
 
-    def _get_memdump_map(self, addr, fname):
+    def _build_mdmap(self, addr, fname):
         """
         Parse and return memory dump mapping for the feature. Reads the memory dump contents
         from debugfs and return the newly created memory dump mapping. Returned mapping is a two
