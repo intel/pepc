@@ -210,23 +210,23 @@ class Tpmi():
 
     def _get_fdict(self, fname):
         """
-        Return the feature dictionary feature 'fname'. If the dictionary is not available in the
-        cache, loaded it from the spec file.
+        Return fdict for feature 'fname'. If the fdict is not available in the cache, loaded it from
+        the spec file.
         """
 
-        if fname in self._fdict_cache:
-            return self._fdict_cache[fname]
+        if fname in self._fdicts:
+            return self._fdicts[fname]
 
         for specdir in self._specdirs:
             specpath = specdir / (fname + ".yml")
             if specpath.exists():
                 spec = YAML.load(specpath)
-                self._fdict_cache[fname] = spec
+                self._fdicts[fname] = spec
 
-        if fname not in self._fdict_cache:
+        if fname not in self._fdicts:
             raise ErrorNotSupported(f"TPMI feature '{fname}' is not supported")
 
-        return self._fdict_cache[fname]
+        return self._fdicts[fname]
 
     def get_known_features(self):
         """
@@ -437,8 +437,8 @@ class Tpmi():
         self._specdirs = specdirs
         self._pman = pman
 
-        # The feature dictionaries cache, indexed by feature name.
-        self._fdict_cache = {}
+        # Feature dictionaries.
+        self._fdicts = {}
         # The debugfs mount point.
         self._debugfs_mnt = None
         # Whether debugfs should be unmounted on 'close()'.
