@@ -389,7 +389,7 @@ class Tpmi():
         path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_dump"
 
-        _LOG.debug("reading memory dump: '%s'", path)
+        _LOG.debug("reading 'mem_dump' file at '%s'", path)
 
         mdmap = {}
         offset = 0
