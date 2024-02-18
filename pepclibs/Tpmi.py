@@ -405,22 +405,24 @@ class Tpmi():
                 if match:
                     instance = Trivial.str_to_int(match.group(1), what="instance number")
                     mdmap[instance] = {}
-
-                # Matches two different line formats:
-                #   " 00000020: 013afd40 00004000 2244aacc deadbeef" and
-                #   "[00000020] 013afd40 00004000 2244aacc deadbeef".
-                # Some older kernels have the second format in place.
-                match = re.match(r"^( |\[)([0-9a-f]+)(:|\]) (.*)$", line)
-                if match:
-                    offs = Trivial.str_to_int(match.group(2), base=16, what="TPMI offset")
-                    regvals = Trivial.split_csv_line(match.group(4), sep=" ")
-                    line_pos += 3 + len(match.group(2))
-                    for regval in regvals:
-                        # Sanity-check register values and drop them.
-                        Trivial.str_to_int(regval, base=16, what="TPMI value")
-                        mdmap[instance][offs] = pos + line_pos
-                        line_pos += 9
-                        offs += 4
+                else:
+                    # Matches two different line formats:
+                    #   " 00000020: 013afd40 00004000 2244aacc deadbeef" and
+                    #   "[00000020] 013afd40 00004000 2244aacc deadbeef".
+                    # Some older kernels have the second format in place.
+                    match = re.match(r"^( |\[)([0-9a-f]+)(:|\]) (.*)$", line)
+                    if match:
+                        offs = Trivial.str_to_int(match.group(2), base=16, what="TPMI offset")
+                        regvals = Trivial.split_csv_line(match.group(4), sep=" ")
+                        line_pos += 3 + len(match.group(2))
+                        for regval in regvals:
+                            # Sanity-check register values and drop them.
+                            Trivial.str_to_int(regval, base=16, what="TPMI value")
+                            mdmap[instance][offs] = pos + line_pos
+                            line_pos += 9
+                            offs += 4
+                    else:
+                        raise Error("unexpected line in {path}:\n{line}")
 
                 pos += len(line) + 1
 
