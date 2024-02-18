@@ -240,7 +240,7 @@ class Tpmi():
         """
 
         known = []
-        for fname in self._fmap:
+        for fname in self._fmaps:
             known.append(self._sdicts[fname].copy())
         return known
 
@@ -319,8 +319,10 @@ class Tpmi():
         for fname, sdict in sdicts.items():
             self._fid2fname[sdict["feature-id"]] = fname
 
-    def _build_features_map(self):
-        """Build the TPMI feature map."""
+    def _build_fmaps(self):
+        """
+        Build fmap skeletons for every known TPMI feature and save the result in 'self._fmaps'.
+        """
 
         # A dictionary mapping feature IDs to debugfs paths corresponding to the feature.
         fid2paths = {}
@@ -355,7 +357,7 @@ class Tpmi():
                 fmap[fname] = {}
             fmap[fname] = fpaths
 
-        self._fmap = fmap
+        self._fmaps = fmap
         self._unknown_fids = unknown_fids
 
     def _get_debugfs_feature_path(self, addr, fname):
@@ -447,8 +449,8 @@ class Tpmi():
         self._sdicts = None
         # The feature ID -> feature name dictionary (supported features only).
         self._fid2fname = {}
-        # The features map.
-        self._fmap = None
+        # Feature maps.
+        self._fmaps = None
         # Unknown feature IDs (no spec file).
         self._unknown_fids = None
 
@@ -466,7 +468,7 @@ class Tpmi():
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
 
         self._build_sdicts()
-        self._build_features_map()
+        self._build_fmaps()
 
     def close(self):
         """Uninitialize the class object."""
