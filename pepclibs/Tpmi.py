@@ -49,15 +49,23 @@ Terminology.
 
   * unknown feature - a supported feature for which the spec file was not found.
 
-  * memory dump map - a dictionary storing the offsets of specific TPMI memory locations within
-                      their memory dump file. The dictionary has two levels, first indexed via the
-                      instance number, and the second via the memory offset in bytes. The
-                      dictionary is parsed from TPMI debugfs memory dump file, e.g.
-                      /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump for 'rapl' feature.
+  * mdmap - mem_dump map, a dictionary represinting a Linux TPMI 'mem_dump' debugfs file (example
+            path: /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump). The 'mem_dump' files
+            provide TPMI memory data in text format and for all instances. Before a TPMI register
+            can be read from or written to via the 'mem_dump' file, one must find the offset in
+            the 'mem_dump' file to read from or write to, which requires parsing the 'mem_dump'
+            file. The role of mdmap is to avoid parsing 'mem_dump' file on every read or write.
+            Mdmap is a 2-level dictionary. The first level is indexed by the instance number,
+            the second level is indexed with TPMI memory offset, with values being 'mem_dump' file
+            position. In other words, for a given instance number and TPMI register offset, mdmap
+            gives 'mem_dump' file position. Reading from this position or writing to it ends up
+            with reading from or writing to the TPMI register.
 
-  * instance - TPMI features are split into instances, each one corresponding to a logical entity.
-               For example, if 'rapl' has 4 instances under it, there are four power domains under
-               the 'rapl', each with their own settings and status registers.
+  * instance - TPMI features often consist of logical "areas" or "components", which are feature-
+               specific. For example, the "rapl" TPMI feature includes package, power, memory, and
+               other RAPL domains. These logical components are represented by TPMI instances, which
+               are just integer numbers. In order to read/write a TPMI register, one has to specify
+               the instance for the read/write operation.
 """
 
 import os
