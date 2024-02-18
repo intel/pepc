@@ -363,16 +363,17 @@ class Tpmi():
 
     def _build_mdmap(self, addr, fname):
         """
-        Parse and return memory dump mapping for the feature. Reads the memory dump contents
-        from debugfs and return the newly created memory dump mapping. Returned mapping is a two
-        level dictionary with for example following format if there are two instances (0, 1), and
-        4 memory locations available under each:
+        Build and return mdmap for feature 'fname' of TPMI device at address 'addr'. The arguments
+        are as follows.
+          * addr - TPMI device PCI address to build the mdmap for.
+          * fname - TPMI feature name.
+
+        Here is an example of mdmap for a TPMI feature with two instances (0 and 1) and 4 TPMI
+        register offsets in each instance.
           {0: {0: 48, 4: 57, 8: 66, 12: 75},
            1: {0: 77, 4: 86, 8: 95, 12: 104}}.
-        In this example, accessing instance 1, byte offset 8 can be found from the memory dump
-        offset 95. Arguments are as follows.
-          * addr - TPMI device address.
-          * fname - Name of the TPMI feature to use.
+        In this example, in order to read from register with offset 8 in instance 1, one has to read
+        from position 95 of the corresponding 'mem_dump' Linux debugfs file.
         """
 
         path = self._get_debugfs_path(addr, fname=fname)
