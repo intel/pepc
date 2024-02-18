@@ -29,13 +29,12 @@ Terminology.
 
   * feature ID - a unique integer number assigned to a feature.
 
-  * feature dictionary - a dictionary describing a TPMI feature registers, bit fields and other
-                         details. Feature dictionary is formed based on the feature spec file
-                         contents.
+  * fdict - feature dictionary, a dictionary describing a TPMI feature registers, bit fields and
+            other details. Feature dictionary is formed based on the feature spec file contents.
 
-  * feature map - a dictionary that maps known feature names to corresponding debugfs file paths on
-                  the target host. This data structure is built by scanning the TPMI debugfs
-                  hierarchy of the target host.
+  * fmap - feature map, a dictionary that maps known feature names to corresponding debugfs file
+           paths on the target host. This data structure is built by scanning the TPMI debugfs
+           hierarchy of the target host.
 
   * spec file - a YAML file describing the registers and bitfields for a TPMI feature. Each
                 supported feature has a spec file, and each spec file corresponds to a feature. A
@@ -44,10 +43,10 @@ Terminology.
   * spec directory - a directory containing one or multiple spec files. There may be multiple spec
                      directories.
 
-  * spec dictionary - a dictionary including basic TPMI spec file information - name, ID, and
-                      description of the feature it describes, path to the spec file. Spec
-                      dictionaries are built by partially reading the spec file during the initial
-                      scanning of spec directories.
+  * sdict - spec file dictionary, a dictionary including basic TPMI spec file information - name,
+            ID, and description of the feature it describes, path to the spec file. Spec
+            dictionaries are built by partially reading the spec file during the initial scanning of
+            spec directories.
 
   * instance - TPMI features often consist of logical "areas" or "components", which are feature-
                specific. For example, the "rapl" TPMI feature includes package, power, memory, and
