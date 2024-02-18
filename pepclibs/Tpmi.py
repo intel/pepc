@@ -393,12 +393,12 @@ class Tpmi():
         _LOG.debug("reading 'mem_dump' file at '%s'", path)
 
         mdmap = {}
-        offset = 0
+        pos = 0
 
         with self._pman.open(path, "r") as fobj:
             for line in fobj:
                 line = line.rstrip()
-                line_offset = 0
+                line_pos = 0
 
                 # Sample line to match: "TPMI Instance:1 offset:0x40005000".
                 match = re.match(r"TPMI Instance:(\d+) offset:(0x[0-9a-f]+)", line)
@@ -412,17 +412,17 @@ class Tpmi():
                 # Some older kernels have the second format in place.
                 match = re.match(r"^( |\[)([0-9a-f]+)(:|\]) (.*)$", line)
                 if match:
-                    memaddr = Trivial.str_to_int(match.group(2), base=16, what="TPMI offset")
-                    data_arr = Trivial.split_csv_line(match.group(4), sep=" ")
-                    line_offset += 3 + len(match.group(2))
-                    for data_val in data_arr:
-                        # Just verify the value.
-                        Trivial.str_to_int(data_val, base=16, what="TPMI value")
-                        mdmap[instance][memaddr] = offset + line_offset
-                        line_offset += 9
-                        memaddr += 4
+                    offs = Trivial.str_to_int(match.group(2), base=16, what="TPMI offset")
+                    regvals = Trivial.split_csv_line(match.group(4), sep=" ")
+                    line_pos += 3 + len(match.group(2))
+                    for regval in regvals:
+                        # Sanity-check register values and drop them.
+                        Trivial.str_to_int(regval, base=16, what="TPMI value")
+                        mdmap[instance][offs] = pos + line_pos
+                        line_pos += 9
+                        offs += 4
 
-                offset += len(line) + 1
+                pos += len(line) + 1
 
         return mdmap
 
