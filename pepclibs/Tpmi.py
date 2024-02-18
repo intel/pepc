@@ -20,7 +20,22 @@ Terminology.
               The "sst" feature includes processor registers related to Intel Speed Select
               Technology (SST) feature.
 
+  * supported feature - a TPMI feature supported by the processor.
+
+  * known feature - a supported feature for which the spec file was found, so that the feature can
+                    be decoded and used.
+
+  * unknown feature - a supported feature for which the spec file was not found.
+
   * feature ID - a unique integer number assigned to a feature.
+
+  * feature dictionary - a dictionary describing a TPMI feature registers, bit fields and other
+                         details. Feature dictionary is formed based on the feature spec file
+                         contents.
+
+  * feature map - a dictionary that maps known feature names to corresponding debugfs file paths on
+                  the target host. This data structure is built by scanning the TPMI debugfs
+                  hierarchy of the target host.
 
   * spec file - a YAML file describing the registers and bitfields for a TPMI feature. Each
                 supported feature has a spec file, and each spec file corresponds to a feature. A
@@ -29,25 +44,10 @@ Terminology.
   * spec directory - a directory containing one or multiple spec files. There may be multiple spec
                      directories.
 
-  * feature dictionary - a dictionary describing a TPMI feature registers, bit fields and other
-                         details. Feature dictionary is formed based on the feature spec file
-                         contents.
-
-  * feature map - a dictionary that maps known feature names to corresponding debugfs file paths on
-                  the target host. This data structure is built by scanning the TPMI debugfs
-                  hierarcy of the target host.
-
   * spec dictionary - a dictionary including basic TPMI spec file information - name, ID, and
                       description of the feature it describes, path to the spec file. Spec
                       dictionaries are built by partially reading the spec file during the initial
                       scanning of spec directories.
-
-  * supported feature - a TPMI feature supported by the processor.
-
-  * known feature - a supported feature for which the spec file was found, so that the feature can
-                    be decoded and used.
-
-  * unknown feature - a supported feature for which the spec file was not found.
 
   * mdmap - mem_dump map, a dictionary represinting a Linux TPMI 'mem_dump' debugfs file (example
             path: /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump). The 'mem_dump' files
@@ -222,7 +222,7 @@ class Tpmi():
 
     def get_known_features(self):
         """
-        Return a list of spec dictionaries for all known features (features that are suported by the
+        Return a list of spec dictionaries for all known features (features that are supported by the
         target host and there is a spec file available). The spec dictionary includes the following
         keys.
           * name - feature name.
@@ -238,7 +238,7 @@ class Tpmi():
 
     def get_unknown_features(self):
         """
-        Return a list of feature IDs for all unknown features (features that are suported by the
+        Return a list of feature IDs for all unknown features (features that are supported by the
         target host and there is no spec file available).
         """
 
