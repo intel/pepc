@@ -662,17 +662,13 @@ def build_arguments_parser():
     # Create parser for the 'tpmi ls' command.
     #
     text = "List available TPMI features."
-    descr = """
-            Parse the available TPMI features based on both sysfs contents on the target system
-            and the available TPMI register specifications.
-            """ + man_msg
+    descr = """Parse the available TPMI features based on both sysfs contents on the target system
+               and the available TPMI register specifications.""" + man_msg
     subpars2 = subparsers2.add_parser("ls", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=tpmi_ls_command)
 
-    text = """
-           List every available TPMI feature, including also the ones that don't have spec data
-           available for them.
-           """
+    text = """List every available TPMI feature, including also the ones that don't have spec data
+              available for them."""
     subpars2.add_argument("--all", action="store_true", help=text)
 
     if argcomplete:
