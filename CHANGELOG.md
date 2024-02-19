@@ -5,11 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Workaround for connecting to remote hosts becaulse of paramiko failing in
-   Fedora 39.
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.6] - 2024-02-19
+### Fixed
+ - Workaround for connecting to remote hosts becaulse of paramiko failing in
+   Fedora 39.
 
 ## [1.5.5] - 2024-02-09
 ### Added

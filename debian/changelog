@@ -1,3 +1,10 @@
+pepc (1.5.6) unstable; urgency=low
+
+  * Workaround for connecting to remote hosts becaulse of paramiko failing in
+    Fedora 39.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Mon, 19 Feb 2024 00:00:00 +0200
+
 pepc (1.5.5) unstable; urgency=low
 
   * New command: pepc tpmi. Only the "ls" sub-command is implemented so far.

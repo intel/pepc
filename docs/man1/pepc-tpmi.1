@@ -14,9 +14,50 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "ASPM" "" "09-03-2023" "" ""
+.TH "ASPM" "" "09-02-2024" "" ""
 .hy
-.SH Command \f[I]\[aq]aspm\[aq]\f[R]
+.SH Command \f[I]\[aq]tpmi\[aq]\f[R]
+.SS Background
+.PP
+TPMI stands for Topology Aware Register and PM Capsule Interface and it
+is a memory-mapped interface for reading and writing processor\[aq]s
+registers related to power management features on Intel CPUs.
+.PP
+TPMI registers are exposed by the processor via PCIe VSEC
+(Vendor-Specific Extended Capabilities), and the registers are grouped
+into TPMI features.
+For example, the \[dq]uncore\[dq] TPMI feature includes processor
+registers related to uncore frequency scaling.
+The \[dq]rapl\[dq] TPMI feature includes processor registers related to
+processor\[aq]s Running Average Power Limit (RAPL).
+The \[dq]sst\[dq] feature includes processor registers related to Intel
+Speed Select Technology (SST).
+.PP
+In order for the \[aq]pepc\[aq] tool to decode TPMI features, the spec
+file is required.
+The spec file describes the register names, bits, and offsets in the
+memory-mapped PCIe address space.
+If there is no spec file for a feature, it cannot be decoded.
+.PP
+The \[aq]pepc\[aq] project comes with some standard pepc files, which
+will be searched for in the following locations and in the following
+order.
+.RS
+.IP "1." 3
+\[aq]./tpmi\[aq], in the directory of the running program
+.IP "2." 3
+\[aq]$PEPC_DATA_PATH/tpmi\[aq]
+.IP "3." 3
+\[aq]$HOME/.local/share/pepc/tpmi\[aq]
+.IP "4." 3
+\[aq]/usr/local/share/pepc/tpmi\[aq]
+.IP "5." 3
+\[aq]/usr/share/pepc/tpmi\[aq]
+.RE
+.PP
+In addition to this, users can provide custom/private spec files by
+placing them to a directory and specifying the directory path via the
+\[aq]PEPC_TPMI_DATA_PATH\[aq] environment variable.
 .SS General options
 .TP
 \f[B]-h\f[R]
@@ -72,37 +113,10 @@ searched for.
 .TP
 \f[B]--force-color\f[R]
 Force coloring of the text output.
-.SS Subcommand \f[I]\[aq]info\[aq]\f[R]
+.SS Subcommand \f[I]\[aq]ls\[aq]\f[R]
 .PP
-Get information about current PCI ASPM configuration.
+List supported TPMI features.
 .TP
-\f[B]--policy\f[R] \f[I]NAME\f[R]
-Get currently configured PCI ASPM policy to name.
-.TP
-\f[B]--policies\f[R] \f[I]NAME\f[R]
-Get list of available PCI ASPM policy to names.
-.TP
-\f[B]--device\f[R] \f[I]ADDR\f[R]
-PCI device address for the \[aq]--l1-aspm\[aq] option.
-Example: \[aq]0000:00:02.0\[aq].
-.TP
-\f[B]--l1-aspm\f[R]
-Enable or disable L1 ASPM for the PCI device specified with
-\[aq]--device option\[aq].
-.SS Subcommand \f[I]\[aq]config\[aq]\f[R]
-.PP
-Change PCI ASPM configuration.
-.TP
-\f[B]--policy\f[R] \f[I]NAME\f[R]
-The PCI ASPM policy to set, use \[dq]default\[dq] to set the default
-policy.
-.TP
-\f[B]--device\f[R] \f[I]ADDR\f[R]
-PCI device address for the \[aq]--l1-aspm\[aq] option.
-Example \[aq]0000:00:02.0\[aq].
-.TP
-\f[B]--l1-aspm\f[R] \f[I]OPTION\f[R]
-Enable or disable L1 ASPM for a particular device.
-Valid arguments are \[aq]on\[aq], \[aq]off\[aq], \[aq]enable\[aq],
-\[aq]disable\[aq], \[aq]true\[aq], \[aq]false\[aq].
-The argument is case insensitive.
+\f[B]--all\f[R]
+Also print IDs of TPMI features supported by the processor, but for
+which there are no spec files, so they cannot be decoded.
