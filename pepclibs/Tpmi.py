@@ -230,9 +230,9 @@ class Tpmi():
 
     def get_known_features(self):
         """
-        Return a list of spec dictionaries for all known features (features that are supported by the
-        target host and there is a spec file available). The spec dictionary includes the following
-        keys.
+        Return a list of spec dictionaries for all known features (features that are supported by
+        the target host and there is a spec file available). The spec dictionary includes the
+        following keys.
           * name - feature name.
           * desc - feature description.
           * feature-id - an integer feature ID.
