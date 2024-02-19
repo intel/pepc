@@ -32,6 +32,11 @@ def get_datasets():
 
     basepath = Path(__file__).parent.resolve() / "data"
     for dirname in os.listdir(basepath):
+        # The "common" dataset contains data for all SUTs and does not represent a single host, so
+        # skip it.
+        if dirname == "common":
+            continue
+
         datapath = Path(f"{basepath}/{dirname}")
         if datapath.is_dir():
             yield dirname

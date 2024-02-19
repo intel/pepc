@@ -165,20 +165,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             self._cmds[cmdinfo["command"]] = (stdout, stderr)
 
-    def _init_default_files(self):
+    def _init_default_files(self, datapath):
         """Initialize default files that should exist for any emulated platform."""
 
         if self._initialised_default_files:
             return
 
-        # Create '/proc/mounts' as a read only file.
-        finfo = {
-            "data": "debugfs /sys/kernel/debug debugfs rw,nosuid,nodev,noexec,relatime 0 0",
-            "path": "/proc/mounts",
-            "readonly": True
-        }
-        emul = _EmulFile.get_emul_file(finfo, self.datapath, self._get_basepath)
-        self._emuls[finfo["path"]] = emul
+        common_datapath = datapath.parent / "common"
+        self._init_testdata("common", common_datapath)
 
         self._initialised_default_files = True
 
@@ -291,19 +285,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             else:
                 self._init_files((finfo,), datapath, module)
 
-    def init_testdata(self, module, datapath):
-        """Initialize the testdata for module 'module' from directory 'datapath'."""
-
-        if module in self._modules:
-            return
+    def _init_testdata(self, module, datapath):
+        """Implement 'init_testdata()'. Arguments are the same as in 'init_testdata()'."""
 
         if module == "CPUInfo":
             # CPUInfo uses '/sys/devices/system/cpu/online' file, on emulated system the file is
             # constructed using per-CPU '/sys/devices/system/cpu/cpu*/online' files that belong to
             # CPUOnline.
-            self.init_testdata("CPUOnline", datapath)
-
-        self._modules.add(module)
+            self._init_testdata("CPUOnline", datapath)
 
         confpath = datapath / f"{module}.yaml"
         if not confpath.exists():
@@ -311,8 +300,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                                     f"({confpath})")
 
         config = YAML.load(confpath)
-
-        self._init_default_files()
 
         if "inlinedirs" in config:
             self._init_inline_dirs(config["inlinedirs"], datapath)
@@ -330,9 +317,18 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self._init_files(config["files"], datapath, module)
 
         if "recursive_copy" in config:
-            self._init_directories(config["recursive_copy"], datapath, module)
+            self._init_directories(config["recursive_copy"], self.datapath, module)
 
-        self.datapath = datapath
+        self._modules.add(module)
+
+    def init_testdata(self, module, datapath):
+        """Initialize the testdata for module 'module' from directory 'datapath'."""
+
+        if module in self._modules:
+            return
+
+        self._init_default_files(datapath)
+        self._init_testdata(module, datapath)
 
     def mkdir(self, dirpath, parents=False, exist_ok=False):
         """
