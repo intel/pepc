@@ -390,10 +390,9 @@ class Tpmi():
 
         with self._pman.open(path, "r") as fobj:
             fobj.seek(mdmap[instance][offset])
+            val = fobj.read(8)
 
-            val = Trivial.str_to_int(fobj.read(8), base=16, what="TPMI memory value")
-
-        return val
+        return Trivial.str_to_int(val, base=16, what="TPMI memory value")
 
     def _build_mdmap(self, addr, fname):
         """
