@@ -91,7 +91,10 @@ class PepcArgsParser(ArgParse.ArgsParser):
     """
 
     def add_option_from_dict(self, opt_info):
-        """Add add an option from a dictionary describing the option."""
+        """
+        Add add a command-line option described by 'opt_info'. The arguments are as follows.
+          * opt_info - a dictionary describing the option to add.
+        """
 
         args = []
         if opt_info["short"]:
