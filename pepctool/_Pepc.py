@@ -106,7 +106,7 @@ class PepcArgsParser(ArgParse.ArgsParser):
         if opt_info["argcomplete"] and argcomplete:
             arg.completer = getattr(argcomplete.completers, opt_info["argcomplete"])
 
-    def _check_unknow_args(self, args, uargs, gargs):
+    def _check_unknown_args(self, args, uargs, gargs):
         """
         Check unknown arguments 'uargs' for global arguments 'gargs' and add them to 'args'. This is
         a workaround for implementing global arguments.
@@ -135,8 +135,8 @@ class PepcArgsParser(ArgParse.ArgsParser):
         if not uargs:
             return args
 
-        self._check_unknow_args(args, uargs, ArgParse.SSH_OPTIONS)
-        self._check_unknow_args(args, uargs, (_DATASET_OPTION,))
+        self._check_unknown_args(args, uargs, ArgParse.SSH_OPTIONS)
+        self._check_unknown_args(args, uargs, (_DATASET_OPTION,))
 
         if uargs:
             raise Error(f"unrecognized option(s): {' '.join(uargs)}")
