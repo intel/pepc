@@ -459,8 +459,6 @@ class Tpmi():
     def _get_regdict(self, fname, regname):
         """Get regdict for TPMI register 'regname' of feature 'fname'."""
 
-        regname = regname.upper()
-
         fdict = self._get_fdict(fname)
 
         if regname not in fdict:
@@ -506,6 +504,7 @@ class Tpmi():
           * mdmap - the mdmap to use fro reading the register.
         """
 
+        regname = regname.upper()
         regdict = self._get_regdict(fname, regname)
 
         offset = regdict["offset"]
