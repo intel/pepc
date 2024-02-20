@@ -376,7 +376,7 @@ class Tpmi():
         """Read a TPMI register from the 'mem_dump' file."""
 
         if instance not in mdmap:
-            available = Human.rangify(mdmap.keys())
+            available = Human.rangify(mdmap)
             raise Error(f"bad instance number '{instance}' for feature '{fname}', for device "
                         f"'{addr}{self._pman.hostmsg}', available instances: {available}")
 
