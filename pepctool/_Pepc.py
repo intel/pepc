@@ -169,7 +169,7 @@ def _add_target_cpus_arguments(subpars, fmt, exclude=None):
     if "--cores" not in exclude:
         text = fmt % "cores" # pylint: disable=consider-using-f-string
         text += """ The list can include individual core numbers and core number ranges. The format
-                   is similar to '--cpus'. Note, unlike CPU numers, core numbers are relative to
+                   is similar to '--cpus'. Note, unlike CPU numbers, core numbers are relative to
                    package numbers."""
         subpars.add_argument("--cores", help=text)
 
