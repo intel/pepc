@@ -382,7 +382,7 @@ class Tpmi():
 
         if offset not in mdmap[instance]:
             max_offset = max(mdmap[instance])
-            raise Error(f"bad offset '{offset}' for instance '{instance}', feature '{fname}', "
+            raise Error(f"bad offset '{offset:#x}' for instance '{instance}', feature '{fname}', "
                         f"device '{addr}'{self._pman.hostmsg}, max. offset is '{max_offset}'")
 
         path = self._get_debugfs_feature_path(addr, fname)
