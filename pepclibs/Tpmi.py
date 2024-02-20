@@ -30,7 +30,12 @@ Terminology.
   * feature ID - a unique integer number assigned to a feature.
 
   * fdict - feature dictionary, a dictionary describing a TPMI feature registers, bit fields and
-            other details. Feature dictionary is formed based on the feature spec file contents.
+            other details. Fdict contents is corresponds to the feature spec file contents under the
+            "registers" key. Fdict keys are register names, and values are regdister dictionaries
+            (regdicts). The parts of the spec file outside of the 'registers' key are stored in the
+            sdict.
+
+  * regdict - register dictionary, a sub-dictionary of fdict describing a single register.
 
   * fmap - feature map, a dictionary that maps known feature names to corresponding debugfs file
            paths on the target host. This data structure is built by scanning the TPMI debugfs
@@ -432,7 +437,7 @@ class Tpmi():
         """Get registers for a feature."""
         return self._get_fdict(fname)["registers"]
 
-    def _get_fdict_register(self, fname, regname):
+    def _get_regdict(self, fname, regname):
         """Get register specification for a TPMI register."""
 
         regname = regname.upper()
@@ -482,7 +487,7 @@ class Tpmi():
           * mdmap - the mdmap to use fro reading the register.
         """
 
-        regdict = self._get_fdict_register(fname, regname)
+        regdict = self._get_regdict(fname, regname)
 
         offset = regdict["offset"]
         width = regdict["width"]
