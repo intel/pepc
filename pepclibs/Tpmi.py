@@ -461,9 +461,9 @@ class Tpmi():
 
         fdict = self._get_fdict(fname)
 
-        if regname not in fdict:
-            avail_regs = ", ".join(fdict.keys())
-            raise Error(f"unknown register name: {regname} for feature {fname},: {avail_regs}")
+        regdict = fdict.get(regname)
+        if regdict is None:
+            raise Error(f"BUG: bad register '{regname}' for feature {fname}")
 
         return fdict[regname]
 
