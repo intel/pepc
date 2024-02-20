@@ -373,7 +373,7 @@ class Tpmi():
         return path
 
     def _read(self, addr, fname, instance, offset, mdmap):
-        """Reads memory location from TPMI debugfs memory dump file."""
+        """Read a TPMI register from the 'mem_dump' file."""
 
         if instance not in mdmap:
             available = Human.rangify(mdmap.keys())
