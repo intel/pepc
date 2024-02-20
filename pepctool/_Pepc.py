@@ -173,7 +173,7 @@ def _add_target_cpus_arguments(subpars, fmt, exclude=None):
     if "--modules" not in exclude:
         text = fmt % "modules" # pylint: disable=consider-using-f-string
         text += """ The list can include individual module numbers and module number ranges. The
-                format is similar to '--cpus'."""
+                   format is similar to '--cpus'."""
         subpars.add_argument("--modules", help=text)
 
     if "--dies" not in exclude:
@@ -391,7 +391,7 @@ def build_arguments_parser():
     text = "Save C-states settings."
     descr = f"""Save all the modifiable C-state settings into a file. This file can later be used
                 for restoring C-state settings with the '{TOOLNAME} cstates restore' command. """ \
-                + man_msg
+            + man_msg
     subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=cstates_save_command)
 
@@ -466,7 +466,7 @@ def build_arguments_parser():
     text = "Save P-states settings."
     descr = f"""Save all the modifiable P-state settings into a file. This file can later be used
                 for restoring P-state settings with the '{TOOLNAME} pstates restore' command. """ \
-                + man_msg
+            + man_msg
     subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=pstates_save_command)
 
@@ -526,8 +526,8 @@ def build_arguments_parser():
     #
     text = """Configure power settings."""
     descr = """Configure power settings on specified CPUs. All options can be used without
-               a parameter, in which case the currently configured value(s) will be printed. """ \
-               + man_msg
+               a parameter, in which case the currently configured value(s) will be
+               printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=power_config_command)
 
@@ -547,7 +547,7 @@ def build_arguments_parser():
     man_msg = """Please, refer to 'pepc-power' manual page for more information."""
     descr = f"""Save all the modifiable power settings into a file. This file can later be used
                 for restoring power settings with the '{TOOLNAME} power restore' command. """ \
-                + man_msg
+            + man_msg
     subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=power_save_command)
 
@@ -640,7 +640,7 @@ def build_arguments_parser():
     subpars2.add_argument("--order", help=text, default="CPU")
 
     text = """Include only online CPUs. By default offline and online CPUs are included."""
-    subpars2.add_argument("--online-only", action='store_true', help=text)
+    subpars2.add_argument("--online-only", action="store_true", help=text)
 
     columns = ", ".join(list(CPUInfo.LEVELS) + ["hybrid"])
     text = f"""Comma-separated list of the topology columns to print. Available columns are:
