@@ -20,6 +20,8 @@ STATE_COMMENT = 1
 STATE_COMMENT_NL = 2
 STATE_FUNCTION = 3
 
+HAS_FSTRING_TOKENS = hasattr(tokenize, "FSTRING_START")
+
 def dump_node(node, recursive=False):
     """Dump the contents of the given 'node', and all its children also if 'recursive'."""
 
@@ -698,9 +700,31 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         linter.
         """
 
+        fstring_token = None
+        fstring_txt = None
+
         for token in tokens:
             lineno = token.start[0]
             txt = token.string.rstrip()
+
+            # Stitch possible fstring tokens into a single string token.
+            if HAS_FSTRING_TOKENS:
+                if token.type == tokenize.FSTRING_START:
+                    fstring_token = token
+                    fstring_txt = txt
+                    continue
+
+                if fstring_txt:
+                    fstring_txt += txt
+
+                    if token.type == tokenize.FSTRING_END:
+                        txt = fstring_txt
+                        token = tokenize.TokenInfo(tokenize.STRING, txt, fstring_token.start,
+                                                   token.end, token.line)
+                        fstring_token = None
+                        fstring_txt = None
+                    else:
+                        continue
 
             # First, verify alignment.
             self._alignment.validate(token, lineno, txt)
