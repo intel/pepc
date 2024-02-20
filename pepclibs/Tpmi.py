@@ -433,22 +433,18 @@ class Tpmi():
 
         return mdmap
 
-    def _get_fdict_registers(self, fname):
-        """Get registers for a feature."""
-        return self._get_fdict(fname)["registers"]
-
     def _get_regdict(self, fname, regname):
-        """Get register specification for a TPMI register."""
+        """Get regdict TPMI register 'regname' of feature 'fname'."""
 
         regname = regname.upper()
 
-        regsdict = self._get_fdict_registers(fname)
+        regdicts = self._get_fdict(fname)["registers"]
 
-        if regname not in regsdict:
-            avail_regs = ", ".join(regsdict.keys())
+        if regname not in regdicts:
+            avail_regs = ", ".join(regdicts.keys())
             raise Error(f"bad register name: {regname}, available: {avail_regs}")
 
-        return regsdict[regname]
+        return regdicts[regname]
 
     def _read(self, addr, fname, instance, offset, mdmap):
         """Read a TPMI register from the 'mem_dump' file."""
