@@ -472,11 +472,11 @@ class Tpmi():
 
         return regsdict[regname]
 
-    def _read_register(self, fname, addr, instance, regname, mdmap=None):
+    def _read_register(self, addr, fname, instance, regname, mdmap=None):
         """
         Read a TPMI register. The arguments are as follows.
-          * fname - name of the TPMI feature the register belongs to.
           * addr - the TPMI device address.
+          * fname - name of the TPMI feature the register belongs to.
           * instance - the TPMI instance to read the register from.
           * regname - name of the TPMI register to read.
           * mdmap - the mdmap to use fro reading the register.
