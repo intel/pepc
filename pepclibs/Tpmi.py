@@ -375,15 +375,19 @@ class Tpmi():
     def _read(self, addr, fname, instance, offset, mdmap):
         """Read a TPMI register from the 'mem_dump' file."""
 
+        # Feature and device.
+        msg_fd = f"""feature '{fname}', for device '{addr}'"""
+        # Instance, feature and device.
+        msg_ifd = f"""instance '{instance}', {msg_fd}"""
+
         if instance not in mdmap:
             available = Human.rangify(mdmap)
-            raise Error(f"bad instance number '{instance}' for feature '{fname}', for device "
-                        f"'{addr}{self._pman.hostmsg}', available instances: {available}")
+            raise Error(f"bad instance number '{instance}' for {msg_fd}, available instances: "
+                        f"{available}")
 
         if offset not in mdmap[instance]:
             max_offset = max(mdmap[instance])
-            raise Error(f"bad offset '{offset:#x}' for instance '{instance}', feature '{fname}', "
-                        f"device '{addr}'{self._pman.hostmsg}, max. offset is '{max_offset}'")
+            raise Error(f"bad offset '{offset:#x}' for {msg_ifd}, max. offset is '{max_offset}'")
 
         path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_dump"
@@ -392,7 +396,8 @@ class Tpmi():
             fobj.seek(mdmap[instance][offset])
             val = fobj.read(8)
 
-        return Trivial.str_to_int(val, base=16, what="TPMI memory value")
+        what = f"value of a TPMI register at offset '{offset:#x}', {msg_ifd}"
+        return Trivial.str_to_int(val, base=16, what=what)
 
     def _build_mdmap(self, addr, fname):
         """
