@@ -272,7 +272,7 @@ def _add_config_subcommand_options(props, subpars):
         subpars.add_argument(option, **kwargs)
 
 def build_arguments_parser():
-    """A helper function which parses the input arguments."""
+    """Build and return the the command-line arguments parser object."""
 
     text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
     parser = PepcArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
@@ -680,7 +680,7 @@ def build_arguments_parser():
     return parser
 
 def parse_arguments():
-    """Parse input arguments."""
+    """Parse command-line arguments."""
 
     parser = build_arguments_parser()
     args = parser.parse_args()
@@ -702,133 +702,133 @@ def parse_arguments():
 # pylint: disable=import-outside-toplevel
 
 def _topology_info_command(args, pman):
-    """Implements the 'topology info' command."""
+    """Implement the 'topology info' command."""
 
     from pepctool import _PepcTopology
 
     _PepcTopology.topology_info_command(args, pman)
 
 def _tpmi_ls_command(args, pman):
-    """Implements the 'tpmi ls' command."""
+    """Implement the 'tpmi ls' command."""
 
     from pepctool import _PepcTpmi
 
     _PepcTpmi.tpmi_ls_command(args, pman)
 
 def _cpu_hotplug_info_command(args, pman):
-    """Implements the 'cpu-hotplug info' command."""
+    """Implement the 'cpu-hotplug info' command."""
 
     from pepctool import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_info_command(args, pman)
 
 def _cpu_hotplug_online_command(args, pman):
-    """Implements the 'cpu-hotplug online' command."""
+    """Implement the 'cpu-hotplug online' command."""
 
     from pepctool import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_online_command(args, pman)
 
 def _cpu_hotplug_offline_command(args, pman):
-    """Implements the 'cpu-hotplug offline' command."""
+    """Implement the 'cpu-hotplug offline' command."""
 
     from pepctool import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_offline_command(args, pman)
 
 def _cstates_info_command(args, pman):
-    """Implements the 'cstates info' command."""
+    """Implement the 'cstates info' command."""
 
     from pepctool import _PepcCStates
 
     _PepcCStates.cstates_info_command(args, pman)
 
 def _cstates_config_command(args, pman):
-    """Implements the 'cstates config' command."""
+    """Implement the 'cstates config' command."""
 
     from pepctool import _PepcCStates
 
     _PepcCStates.cstates_config_command(args, pman)
 
 def _cstates_save_command(args, pman):
-    """Implements the 'cstates save' command."""
+    """Implement the 'cstates save' command."""
 
     from pepctool import _PepcCStates
 
     _PepcCStates.cstates_save_command(args, pman)
 
 def _cstates_restore_command(args, pman):
-    """Implements the 'cstates restore' command."""
+    """Implement the 'cstates restore' command."""
 
     from pepctool import _PepcCStates
 
     _PepcCStates.cstates_restore_command(args, pman)
 
 def _pstates_info_command(args, pman):
-    """Implements the 'pstates info' command."""
+    """Implement the 'pstates info' command."""
 
     from pepctool import _PepcPStates
 
     _PepcPStates.pstates_info_command(args, pman)
 
 def _pstates_config_command(args, pman):
-    """Implements the 'pstates config' command."""
+    """Implement the 'pstates config' command."""
 
     from pepctool import _PepcPStates
 
     _PepcPStates.pstates_config_command(args, pman)
 
 def _pstates_save_command(args, pman):
-    """Implements the 'pstates save' command."""
+    """Implement the 'pstates save' command."""
 
     from pepctool import _PepcPStates
 
     _PepcPStates.pstates_save_command(args, pman)
 
 def _pstates_restore_command(args, pman):
-    """Implements the 'pstates restore' command."""
+    """Implement the 'pstates restore' command."""
 
     from pepctool import _PepcPStates
 
     _PepcPStates.pstates_restore_command(args, pman)
 
 def _power_info_command(args, pman):
-    """Implements the 'power info' command."""
+    """Implement the 'power info' command."""
 
     from pepctool import _PepcPower
 
     _PepcPower.power_info_command(args, pman)
 
 def _power_config_command(args, pman):
-    """Implements the 'power config' command."""
+    """Implement the 'power config' command."""
 
     from pepctool import _PepcPower
 
     _PepcPower.power_config_command(args, pman)
 
 def _power_save_command(args, pman):
-    """Implements the 'power save' command."""
+    """Implement the 'power save' command."""
 
     from pepctool import _PepcPower
 
     _PepcPower.power_save_command(args, pman)
 
 def _power_restore_command(args, pman):
-    """Implements the 'power restore' command."""
+    """Implement the 'power restore' command."""
 
     from pepctool import _PepcPower
 
     _PepcPower.power_restore_command(args, pman)
 
 def _aspm_info_command(args, pman):
-    """Implements the 'aspm info'. command"""
+    """Implement the 'aspm info'. command"""
 
     from pepctool import _PepcASPM
 
     _PepcASPM.aspm_info_command(args, pman)
 
 def _aspm_config_command(args, pman):
-    """Implements the 'aspm config' command."""
+    """Implement the 'aspm config' command."""
 
     from pepctool import _PepcASPM
 
