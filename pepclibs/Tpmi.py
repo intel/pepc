@@ -213,6 +213,17 @@ class Tpmi():
         * 'get_unknown_features()' - unknown features information.
     """
 
+    def _validate_spec_file(self, fname, spec):
+        """
+        Vaildate a the 'spec' dictionary correspoonding to a spec file of feature 'fname'.
+
+        TODO:
+        Some, but not all of the things that have to be validated.
+        1. Validate that it has "registers" top level key, and no other top level keys after it.
+        2. Validate that register names are "all-capital".
+        3. Check that width is either 32 or 64, and nothing else
+        """
+
     def _get_fdict(self, fname):
         """
         Return fdict for feature 'fname'. If the fdict is not available in the cache, loaded it from
@@ -226,12 +237,24 @@ class Tpmi():
             specpath = specdir / (fname + ".yml")
             if specpath.exists():
                 spec = YAML.load(specpath)
-                self._fdicts[fname] = spec
+                self._validate_spec_file(fname, spec)
+                self._fdicts[fname] = spec["registers"]
 
         if fname not in self._fdicts:
             raise ErrorNotSupported(f"TPMI feature '{fname}' is not supported")
 
         return self._fdicts[fname]
+
+    def _get_sdict(self, fname):
+        """Return sdict for feature 'fname'."""
+
+        sdict = self._sdicts.get(fname)
+        if sdict is None:
+            known = ", ".join(self._sdicts)
+            raise Error(f"unknown feature '{fname}'{self._pman.hostname}, known features are: "
+                        f"{known}")
+
+        return sdict
 
     def get_known_features(self):
         """
@@ -372,7 +395,7 @@ class Tpmi():
         """
 
         path = self._debugfs_mnt / f"tpmi-{addr}"
-        fid = self._get_fdict(fname)["feature-id"]
+        fid = self._get_sdict(fname)["feature-id"]
         path = path / f"tpmi-id-{fid:02x}"
 
         return path
@@ -434,17 +457,17 @@ class Tpmi():
         return mdmap
 
     def _get_regdict(self, fname, regname):
-        """Get regdict TPMI register 'regname' of feature 'fname'."""
+        """Get regdict for TPMI register 'regname' of feature 'fname'."""
 
         regname = regname.upper()
 
-        regdicts = self._get_fdict(fname)["registers"]
+        fdict = self._get_fdict(fname)
 
-        if regname not in regdicts:
-            avail_regs = ", ".join(regdicts.keys())
-            raise Error(f"bad register name: {regname}, available: {avail_regs}")
+        if regname not in fdict:
+            avail_regs = ", ".join(fdict.keys())
+            raise Error(f"unknown register name: {regname} for feature {fname},: {avail_regs}")
 
-        return regdicts[regname]
+        return fdict[regname]
 
     def _read(self, addr, fname, instance, offset, mdmap):
         """Read a TPMI register from the 'mem_dump' file."""
