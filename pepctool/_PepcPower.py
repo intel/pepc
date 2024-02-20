@@ -7,7 +7,7 @@
 # Author: Tero Kristo <tero.kristo@linux.intel.com>
 
 """
-This module includes the "power" 'pepc' command implementation.
+Implement the 'pepc power' command.
 """
 
 import logging
@@ -20,7 +20,7 @@ from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 _LOG = logging.getLogger()
 
 def power_info_command(args, pman):
-    """Implements the 'power info' command."""
+    """Implement the 'power info' command."""
 
     # The output format to use.
     fmt = "yaml" if args.yaml else "human"
@@ -61,7 +61,7 @@ def power_info_command(args, pman):
             _LOG.info("No power properties supported%s.", pman.hostmsg)
 
 def power_config_command(args, pman):
-    """Implements the 'power config' command."""
+    """Implement the 'power config' command."""
 
     if not hasattr(args, "oargs"):
         raise Error("please, provide a configuration option")
@@ -116,7 +116,7 @@ def power_config_command(args, pman):
         _PepcCommon.check_tuned_presence(pman)
 
 def power_save_command(args, pman):
-    """Implements the 'power save' command."""
+    """Implement the 'power save' command."""
 
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
@@ -149,7 +149,7 @@ def power_save_command(args, pman):
             _LOG.info("No writable power properties supported%s.", pman.hostmsg)
 
 def power_restore_command(args, pman):
-    """Implements the 'power restore' command."""
+    """Implement the 'power restore' command."""
 
     if not args.infile:
         raise Error("please, specify the file to restore from (use '-' to restore from standard "

@@ -7,7 +7,7 @@
 # Authors: Tero Kristo <tero.kristo@linux.intel.com>
 
 """
-This feature includes the "tpmi" 'pepc' command implementation.
+Implement the 'pepc tpmi' command.
 """
 
 import logging

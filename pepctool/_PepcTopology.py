@@ -7,7 +7,7 @@
 # Authors: Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module includes the "topology" 'pepc' command implementation.
+Ipmplement the 'pepc topology' command.
 """
 
 import logging
@@ -103,7 +103,7 @@ def _filter_io_dies(optar, topology, colnames):
     return new_topology
 
 def topology_info_command(args, pman):
-    """Implements the 'topology info' command."""
+    """Implement the 'topology info' command."""
 
     show_hybrid = None
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:

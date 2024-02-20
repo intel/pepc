@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Implement the 'aspm' command of the 'pepc' tool
+Implement the 'pepc aspm' command.
 """
 
 import logging

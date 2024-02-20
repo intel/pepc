@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module includes the "cstates" 'pepc' command implementation.
+Implement the 'pepc cstates' command.
 """
 
 import logging
@@ -20,7 +20,7 @@ from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 _LOG = logging.getLogger()
 
 def cstates_info_command(args, pman):
-    """Implements the 'cstates info' command."""
+    """Implement the 'cstates info' command."""
 
     # The output format to use.
     fmt = "yaml" if args.yaml else "human"
@@ -73,7 +73,7 @@ def cstates_info_command(args, pman):
             _LOG.info("No C-states properties supported%s.", pman.hostmsg)
 
 def cstates_config_command(args, pman):
-    """Implements the 'cstates config' command."""
+    """Implement the 'cstates config' command."""
 
     if not hasattr(args, "oargs"):
         raise Error("please, provide a configuration option")
@@ -150,7 +150,7 @@ def cstates_config_command(args, pman):
         _PepcCommon.check_tuned_presence(pman)
 
 def cstates_save_command(args, pman):
-    """Implements the 'cstates save' command."""
+    """Implement the 'cstates save' command."""
 
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
@@ -187,7 +187,7 @@ def cstates_save_command(args, pman):
             _LOG.info("No writable C-states properties supported%s.", pman.hostmsg)
 
 def cstates_restore_command(args, pman):
-    """Implements the 'cstates restore' command."""
+    """Implement the 'cstates restore' command."""
 
     if not args.infile:
         raise Error("please, specify the file to restore from (use '-' to restore from standard "

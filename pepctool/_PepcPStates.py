@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module includes the "pstates" 'pepc' command implementation.
+Implement the 'pepc pstates' command.
 """
 
 import logging
@@ -20,7 +20,7 @@ from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 _LOG = logging.getLogger()
 
 def pstates_info_command(args, pman):
-    """Implements the 'pstates info' command."""
+    """Implement the 'pstates info' command."""
 
     # The output format to use.
     fmt = "yaml" if args.yaml else "human"
@@ -60,7 +60,7 @@ def pstates_info_command(args, pman):
             _LOG.info("No P-states properties supported%s.", pman.hostmsg)
 
 def pstates_config_command(args, pman):
-    """Implements the 'pstates config' command."""
+    """Implement the 'pstates config' command."""
 
     if not hasattr(args, "oargs"):
         raise Error("please, provide a configuration option")
@@ -119,7 +119,7 @@ def pstates_config_command(args, pman):
         _PepcCommon.check_tuned_presence(pman)
 
 def pstates_save_command(args, pman):
-    """Implements the 'pstates save' command."""
+    """Implement the 'pstates save' command."""
 
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
@@ -152,7 +152,7 @@ def pstates_save_command(args, pman):
             _LOG.info("No writable P-states properties supported%s.", pman.hostmsg)
 
 def pstates_restore_command(args, pman):
-    """Implements the 'pstates restore' command."""
+    """Implement the 'pstates restore' command."""
 
     if not args.infile:
         raise Error("please, specify the file to restore from (use '-' to restore from standard "

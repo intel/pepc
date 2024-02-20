@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module includes the "cpu-hotplug" 'pepc' command implementation.
+Implement the 'pepc cpu-hotplug' command.
 """
 
 import logging
@@ -20,7 +20,7 @@ _LOG = logging.getLogger()
 
 def cpu_hotplug_info_command(_, pman):
     """
-    Implements the 'cpu-hotplug info' command. The arguments are as follows:
+    Implement the 'cpu-hotplug info' command. The arguments are as follows:
       * _ - ignored.
       * pman - the process manager object that defines the target host.
     """
@@ -36,7 +36,7 @@ def cpu_hotplug_info_command(_, pman):
 
 def cpu_hotplug_online_command(args, pman):
     """
-    Implements the 'cpu-hotplug online' command. The arguments are as follows:
+    Implement the 'cpu-hotplug online' command. The arguments are as follows:
       * args - the command line arguments.
       * pman - the process manager object that defines the target host.
     """
@@ -49,7 +49,7 @@ def cpu_hotplug_online_command(args, pman):
 
 def cpu_hotplug_offline_command(args, pman):
     """
-    Implements the 'cpu-hotplug offline' command. The arguments are as follows:
+    Implement the 'cpu-hotplug offline' command. The arguments are as follows:
       * args - the command line arguments.
       * pman - the process manager object that defines the target host.
     """
