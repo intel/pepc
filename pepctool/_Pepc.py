@@ -28,8 +28,8 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, PStates, Power, CPUInfo
 from pepclibs._PropsClassBase import MECHANISMS
 
-if sys.version_info < (3,7):
-    raise SystemExit("Error: this tool requires python version 3.7 or higher")
+if sys.version_info < (3, 7):
+    raise SystemExit("this tool requires python version 3.7 or higher")
 
 _VERSION = "1.5.6"
 TOOLNAME = "pepc"
