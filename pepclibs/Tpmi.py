@@ -602,14 +602,14 @@ class Tpmi():
         """
 
         regdict = self._get_regdict(fname, regname)
-        regfields_dict = regdict["fields"]
+        fieldsdict = regdict["fields"]
 
-        if bitname not in regfields_dict:
-            available = ", ".join(regfields_dict.keys())
+        if bitname not in fieldsdict:
+            available = ", ".join(fieldsdict)
             raise ErrorNotFound(f"bit field '{bitname}' not found for register '{regname}', "
                                 f"feature '{fname}', available bit fields: {available}")
 
-        bitdict = regfields_dict[bitname]
+        bitdict = fieldsdict[bitname]
         return (regvalue & bitdict["bitmask"]) >> bitdict["bitshift"]
 
     def _read_register(self, addr, fname, instance, regname, bitname=None, mdmap=None):
