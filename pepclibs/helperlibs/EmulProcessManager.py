@@ -317,7 +317,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self._init_files(config["files"], datapath, module)
 
         if "recursive_copy" in config:
-            self._init_directories(config["recursive_copy"], self.datapath, module)
+            self._init_directories(config["recursive_copy"], datapath, module)
 
         self._modules.add(module)
 
