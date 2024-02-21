@@ -3,3 +3,5 @@ inlinefiles:
   readonly: true
   dirname: procfs
   filename: proc_mounts.txt
+directories:
+- path: /sys/kernel/debug
