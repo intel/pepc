@@ -41,7 +41,7 @@ Terminology.
            paths on the target host. This data structure is built by scanning the TPMI debugfs
            hierarchy of the target host.
 
-  * spec file - a YAML file describing the registers and bitfields for a TPMI feature. Each
+  * spec file - a YAML file describing the registers and bit fields for a TPMI feature. Each
                 supported feature has a spec file, and each spec file corresponds to a feature. A
                 spec file is also required to decode the TPMI feature's PCIe VSEC table.
 
@@ -286,21 +286,21 @@ class Tpmi():
 
             for bitname, bitdict in regdict["fields"].items():
                 if not bitname.isupper():
-                    _raise_exc(f"bad bit-field name '{bitname}' for TPMI register '{regname}': "
+                    _raise_exc(f"bad bit field name '{bitname}' for TPMI register '{regname}': "
                                f"should include only upper case characters")
 
-                # The allowed and the mandatory bit-field dictionary key names.
+                # The allowed and the mandatory bit field dictionary key names.
                 keys = {"bits", "desc"}
-                where = f"in bit-field '{bitname}' of the '{regname}' TPMI register definition"
+                where = f"in bit field '{bitname}' of the '{regname}' TPMI register definition"
                 _check_keys(bitdict, keys, keys, where)
 
                 # Make sure that the description has no newline character.
                 if "\n" in bitdict["desc"]:
-                    _raise_exc(f"bad description of bit-field '{bitname}' of the '{regname}' TPMI "
+                    _raise_exc(f"bad description of bit field '{bitname}' of the '{regname}' TPMI "
                                f"register: includes a newline character")
 
                 # Verify the bits and add "bitshift" and "bitmask".
-                where = f"in bit-field '{bitname}' of the '{regname}' TPMI register"
+                where = f"in bit field '{bitname}' of the '{regname}' TPMI register"
                 bits = Trivial.split_csv_line(bitdict["bits"], sep=":")
                 if len(bits) != 2:
                     bits = bitdict["bits"]
@@ -598,7 +598,7 @@ class Tpmi():
           * regvalue - value of the register.
           * fname - name of the TPMI feature.
           * regname - name of the TPMI register.
-          * bitname - name of the TPMI register bitfield to extract.
+          * bitname - name of the TPMI register bit field to extract.
         """
 
         regdict = self._get_regdict(fname, regname)
