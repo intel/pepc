@@ -89,7 +89,7 @@ import contextlib
 from pathlib import Path
 import yaml
 from pepclibs.helperlibs import YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 # Users can define this environment variable to extend the default spec files.
 _SPECS_PATH_ENVVAR = "PEPC_TPMI_DATA_PATH"
@@ -606,8 +606,8 @@ class Tpmi():
 
         if bitname not in fieldsdict:
             available = ", ".join(fieldsdict)
-            raise ErrorNotFound(f"bit field '{bitname}' not found for register '{regname}', "
-                                f"feature '{fname}', available bit fields: {available}")
+            raise Error(f"bit field '{bitname}' not found for TPMI register '{regname}', feature "
+                        f"'{fname}', available bit fields: {available}")
 
         bitdict = fieldsdict[bitname]
         return (regvalue & bitdict["bitmask"]) >> bitdict["bitshift"]
