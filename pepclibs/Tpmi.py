@@ -213,16 +213,114 @@ class Tpmi():
         * 'get_unknown_features()' - unknown features information.
     """
 
-    def _validate_spec_file(self, fname, spec):
+    def _format_fdict(self, fname, specpath, spec):
         """
-        Vaildate a the 'spec' dictionary correspoonding to a spec file of feature 'fname'.
+        Vaildate a the 'spec' dictionary correspoonding to a spec file of feature 'fname', build and
+        return the corresponding fdict.
 
-        TODO:
-        Some, but not all of the things that have to be validated.
-        1. Validate that it has "registers" top level key, and no other top level keys after it.
-        2. Validate that register names are "all-capital".
-        3. Check that width is either 32 or 64, and nothing else
+        Note, this method modifies the 'spec' dictionary in-place, in order to avoid a costly
+        'spec["registers"]' copy operation.
+
+        Mangle the fdict by adding "bitshift" and "bitmask" keys.
         """
+
+        def _raise_exc(msg):
+            """Raise an exception with message 'msg'."""
+
+            pfx = f"bad '{fname}' spec file '{specpath}'"
+            raise Error(f"{pfx}:\n{Error(msg).indent(2)}")
+
+        def _check_keys(check_dict, allowed_keys, mandatory_keys, where):
+            """
+            Check keys of dictionary 'check_dict', verify the following.
+            * The dictionary keys are in 'allowed_keys'.
+            * The dictionary has 'mandatory_keys' keys.
+            """
+
+            for key in check_dict:
+                if key not in allowed_keys:
+                    allowed_keys = ", ".join(allowed_keys)
+                    _raise_exc(f"unexpected key '{key}' {where}, allowed keys are: {allowed_keys}")
+
+            for key in mandatory_keys:
+                if key not in check_dict:
+                    mandatory_keys = ", ".join(mandatory_keys)
+                    _raise_exc(f"missing key '{key}' {where}, mandatory keys are: {mandatory_keys}")
+
+        if "registers" not in spec:
+            _raise_exc("the 'registers' top-level key was not found")
+
+        # The allowed and the mandatory top-level key names.
+        keys = {"name", "desc", "feature-id", "registers"}
+        where = "at the top level of the spec file"
+        _check_keys(spec, keys, keys, where)
+
+        fdict = spec["registers"]
+        for regname, regdict in fdict.items():
+            if not regname.isupper():
+                _raise_exc(f"bad TPMI register name '{regname}': should include only upper case "
+                           f"characters")
+
+            # The allowed and the mandatory regdict key names.
+            keys = {"fields", "offset", "width"}
+            where = f"in the '{regname}' TPMI register definition"
+            _check_keys(regdict, keys, keys, where)
+
+            # Validate the offset.
+            offset = regdict["offset"]
+            if not isinstance(offset, int):
+                _raise_exc(f"bad offset '{offset}' in TPMI register '{regname}': must be an "
+                           f"integer")
+            if offset % 4:
+                _raise_exc(f"bad offset '{offset}' in TPMI register '{regname}': must be multiple "
+                           f"of 4 bytes")
+
+            # Validate the width.
+            width = regdict["width"]
+            if not isinstance(width, int):
+                _raise_exc(f"bad width '{width}' in TPMI register '{regname}': must be an "
+                           f"integer")
+            if width not in (32, 64):
+                _raise_exc(f"bad width '{width}' in TPMI register '{regname}': must be either 32 "
+                           f"or 64")
+
+            for bitname, bitdict in regdict["fields"].items():
+                if not bitname.isupper():
+                    _raise_exc(f"bad bit-field name '{bitname}' for TPMI register '{regname}': "
+                               f"should include only upper case characters")
+
+                # The allowed and the mandatory bit-field dictionary key names.
+                keys = {"bits", "desc"}
+                where = f"in bit-field '{bitname}' of the '{regname}' TPMI register definition"
+                _check_keys(bitdict, keys, keys, where)
+
+                # Make sure that the description has no newline character.
+                if "\n" in bitdict["desc"]:
+                    _raise_exc(f"bad description of bit-field '{bitname}' of the '{regname}' TPMI "
+                               f"register: includes a newline character")
+
+                # Verify the bits and add "bitshift" and "bitmask".
+                where = f"in bit-field '{bitname}' of the '{regname}' TPMI register"
+                bits = Trivial.split_csv_line(bitdict["bits"], sep=":")
+                if len(bits) != 2:
+                    bits = bitdict["bits"]
+                    _raise_exc(f"bad 'bits' key value '{bits}' {where}: should have the "
+                               f"'<high-bit>:<low-bit>' format")
+
+                what = f"the '%s' value {where}"
+                highbit = Trivial.str_to_int(bits[0], what=what % bits[0])
+                lowbit = Trivial.str_to_int(bits[1], what=what % bits[1])
+
+                if highbit < lowbit:
+                    bits = bitdict["bits"]
+                    _raise_exc(f"bad 'bits' key value '{bits}' {where}: high bit value '{highbit}' "
+                               f"is smaller than low bit value '{lowbit}'")
+
+                bitmask = ((1 << (highbit + 1)) - 1) - ((1 << lowbit) - 1)
+                bitdict["bitshift"] = lowbit
+                bitdict["bitmask"] = bitmask
+
+        return fdict
 
     def _get_fdict(self, fname):
         """
@@ -237,8 +335,7 @@ class Tpmi():
             specpath = specdir / (fname + ".yml")
             if specpath.exists():
                 spec = YAML.load(specpath)
-                self._validate_spec_file(fname, spec)
-                self._fdicts[fname] = spec["registers"]
+                self._fdicts[fname] = self._format_fdict(fname, specpath, spec)
 
         if fname not in self._fdicts:
             raise ErrorNotSupported(f"TPMI feature '{fname}' is not supported")
