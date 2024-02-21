@@ -607,7 +607,7 @@ class Tpmi():
         if bitname not in regfields_dict:
             available = ", ".join(regfields_dict.keys())
             raise ErrorNotFound(f"bit field '{bitname}' not found for register '{regname}', "
-                                f"feature '{fname}', available fields: {available}")
+                                f"feature '{fname}', available bit fields: {available}")
 
         bitdict = regfields_dict[bitname]
         if "bitmask" not in bitdict:
