@@ -274,14 +274,20 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             emul = _EmulFile.get_emul_file(finfo, datapath, self._get_basepath, module)
             self._emuls[emul.path] = emul
 
-    def _init_directories(self, finfos, datapath, module):
-        """Initialize directories."""
+    def _init_empty_dirs(self, finfos):
+        """Initialize empty directories at paths in 'finfos'."""
+
+        for finfo in finfos:
+            path = self._get_basepath() / finfo["path"].lstrip("/")
+            path.mkdir(parents=True, exist_ok=True)
+
+    def _init_copied_dirs(self, finfos, datapath, module):
+        """Initialize copied directories."""
 
         for finfo in finfos:
             src = datapath / module / finfo["path"].lstrip("/")
             if not src.exists() or src.is_dir():
-                path = self._get_basepath() / finfo["path"].lstrip("/")
-                path.mkdir(parents=True)
+                self._init_empty_dirs((finfo,))
             else:
                 self._init_files((finfo,), datapath, module)
 
@@ -317,7 +323,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self._init_files(config["files"], datapath, module)
 
         if "recursive_copy" in config:
-            self._init_directories(config["recursive_copy"], datapath, module)
+            self._init_copied_dirs(config["recursive_copy"], datapath, module)
 
         self._modules.add(module)
 
