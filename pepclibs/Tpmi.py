@@ -610,21 +610,6 @@ class Tpmi():
                                 f"feature '{fname}', available bit fields: {available}")
 
         bitdict = regfields_dict[bitname]
-        if "bitmask" not in bitdict:
-            bits = bitdict["bits"]
-            match = re.match(r"^(\d+):(\d+)$", bits)
-            if not match:
-                raise Error(f"bad bits definition '{bits}' for bit field '{bitname}', "
-                            f"register '{regname}', feature '{fname}', expected format "
-                            "'<high-bit>:<low-bit>")
-
-            highbit = int(match.group(1))
-            lowbit = int(match.group(2))
-            bitmask = ((1 << (highbit + 1)) - 1) - ((1 << lowbit) - 1)
-
-            bitdict["bitshift"] = lowbit
-            bitdict["bitmask"] = bitmask
-
         return (regvalue & bitdict["bitmask"]) >> bitdict["bitshift"]
 
     def _read_register(self, addr, fname, instance, regname, bitname=None, mdmap=None):
