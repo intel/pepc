@@ -83,7 +83,7 @@ Some of the features are hardware-independent, but some are hardware-specific.
 
 ## Fedora
 
-'Pepc' is part of Fedora starting from Fedora 35. To install 'pepc', run
+'Pepc' is available on Fedora 38 and 39. To install 'pepc', run
 
 ```
 sudo dnf install pepc
@@ -91,7 +91,7 @@ sudo dnf install pepc
 
 Fedora packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
 
-In case of Fedora 34 or older Fedora, use the 'pip' installation method. But install
+In case of Fedora 37 or older Fedora, use the 'pip' installation method. But install
 the dependencies by running
 
 ```
@@ -110,19 +110,6 @@ sudo dnf install pepc
 ```
 
 Epel packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
-
-## CentOS 8 Stream
-
-To install 'pepc' in CentOS stream, you can use the
-["copr"](https://copr.fedorainfracloud.org/coprs/aekoroglu/c8s-py39/) repository
-maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
-
-Run the following commands.
-
-```
-sudo dnf copr enable aekoroglu/c8s-py39 centos-stream-8-x86_64
-sudo dnf install pepc
-```
 
 ## Ubuntu and Debian
 
