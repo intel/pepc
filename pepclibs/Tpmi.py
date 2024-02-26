@@ -584,13 +584,11 @@ class Tpmi():
 
         return fdict[regname]
 
-    def _read(self, addr, fname, instance, offset, mdmap):
-        """Read a TPMI register from the 'mem_dump' file."""
-
-        # Feature and device.
-        msg_fd = f"""feature '{fname}', for device '{addr}'"""
-        # Instance, feature and device.
-        msg_ifd = f"""instance '{instance}', {msg_fd}"""
+    def _validate_access(self, instance, offset, mdmap, msg_fd, msg_ifd):
+        """
+        Validate access to a 'mem_dump' file. This checks that the instance is present, and that
+        the memory offset is within supported range.
+        """
 
         if instance not in mdmap:
             available = Human.rangify(mdmap)
@@ -600,6 +598,16 @@ class Tpmi():
         if offset not in mdmap[instance]:
             max_offset = max(mdmap[instance])
             raise Error(f"bad offset '{offset:#x}' for {msg_ifd}, max. offset is '{max_offset}'")
+
+    def _read(self, addr, fname, instance, offset, mdmap):
+        """Read a TPMI register from the 'mem_dump' file."""
+
+        # Feature and device.
+        msg_fd = f"""feature '{fname}', for device '{addr}'"""
+        # Instance, feature and device.
+        msg_ifd = f"""instance '{instance}', {msg_fd}"""
+
+        self._validate_access(instance, offset, mdmap, msg_fd, msg_ifd)
 
         path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_dump"
