@@ -662,6 +662,44 @@ class Tpmi():
 
         return val
 
+    def _write_register(self, value, fname, addr, instance, regname):
+        """
+        Write to a TPMI register. Arguments are as follows.
+          * value - Value to write to the register.
+          * fname - name of the TPMI feature the register belongs to.
+          * addr - the TPMI device address.
+          * instance - the TPMI instance to write the register to.
+          * regname - name of the TPMI register to write.
+        """
+
+        regname = regname.upper()
+        regdict = self._get_regdict(fname, regname)
+
+        offset = regdict["offset"]
+        width = regdict["width"]
+
+        mdmap = self._get_mdmap(fname, addr)
+
+        self._validate_instance_offset(fname, addr, instance, regname, offset, mdmap)
+
+        path = self._get_debugfs_feature_path(addr, fname)
+        path = path / "mem_write"
+
+        _LOG.debug("writing 0x%x to '%s' register '%s', instance '%d' at offset 0x%x of TPMI "
+                   "device '%s'", value, fname, regname, instance, offset, addr)
+
+        while width > 0:
+            writeval = value & 0xffffffff
+            data = f"{instance},{offset},0x{writeval:x}"
+            _LOG.debug("writing '%s' to '%s'", data, path)
+
+            with self._pman.open(path, "r+") as fobj:
+                fobj.write(data)
+
+            width -= 32
+            offset += 4
+            value >>= 32
+
     def _get_mdmap(self, fname, addr):
         """Get mdmap for a TPMI feature."""
 
