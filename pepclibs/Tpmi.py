@@ -468,7 +468,7 @@ class Tpmi():
             raise ErrorNotSupported(f"no TPMI features found{self._pman.hostmsg}, checked the "
                                     f"following paths:\n * {paths}")
 
-        fmap = {}
+        fmaps = {}
         unknown_fids = []
         dev2package = {}
 
@@ -491,19 +491,19 @@ class Tpmi():
                     package = self._read_register(addr, "tpmi_info", 0, "TPMI_BUS_INFO",
                                                   bitname="PACKAGE_ID", mdmap=mdmap)
                     dev2package[addr] = package
-                    if package not in fmap:
-                        fmap[package] = {"tpmi_info": []}
+                    if package not in fmaps:
+                        fmaps[package] = {"tpmi_info": []}
 
-                    fmap[package]["tpmi_info"] += [{"addr":addr, "mdmap": mdmap}]
+                    fmaps[package]["tpmi_info"] += [{"addr":addr, "mdmap": mdmap}]
                 else:
                     package = dev2package[addr]
 
-                if fname not in fmap[package]:
-                    fmap[package][fname] = []
+                if fname not in fmaps[package]:
+                    fmaps[package][fname] = []
 
-                fmap[package][fname] += [{"addr":addr, "mdmap": None}]
+                fmaps[package][fname] += [{"addr":addr, "mdmap": None}]
 
-        self._fmaps = fmap
+        self._fmaps = fmaps
         self._unknown_fids = unknown_fids
 
     def _get_debugfs_feature_path(self, addr, fname):
