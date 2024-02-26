@@ -447,6 +447,11 @@ class Tpmi():
     def _build_fmaps(self):
         """
         Build fmap skeletons for every known TPMI feature and save the result in 'self._fmaps'.
+
+        The structure of the 'self._fmaps' dictionary is as follows.
+          - First level key - package number
+          - Second level key - feature name
+          - Value - the fmap of the feature.
         """
 
         # A dictionary mapping feature IDs to debugfs paths corresponding to the feature.
