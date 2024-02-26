@@ -455,7 +455,7 @@ class Tpmi():
         """
 
         # A dictionary mapping feature IDs to debugfs paths corresponding to the feature.
-        fid2paths = {}
+        fid2fpaths = {}
         for pci_path in self._tpmi_pci_paths:
             for dirname, dirpath, _ in self._pman.lsdir(pci_path):
                 match = re.match(r"^tpmi-id-([0-9a-f]+)$", dirname)
@@ -463,12 +463,12 @@ class Tpmi():
                     continue
 
                 fid = int(match.group(1), 16)
-                if fid not in fid2paths:
-                    fid2paths[fid] = []
+                if fid not in fid2fpaths:
+                    fid2fpaths[fid] = []
 
-                fid2paths[fid].append(dirpath)
+                fid2fpaths[fid].append(dirpath)
 
-        if not fid2paths:
+        if not fid2fpaths:
             paths = "\n * ".join([str(path) for path in self._tpmi_pci_paths])
             raise ErrorNotSupported(f"no TPMI features found{self._pman.hostmsg}, checked the "
                                     f"following paths:\n * {paths}")
@@ -477,7 +477,7 @@ class Tpmi():
         unknown_fids = []
         dev2package = {}
 
-        for fid, fpaths in fid2paths.items():
+        for fid, fpaths in fid2fpaths.items():
             fname = self._fid2fname.get(fid)
             if not fname:
                 # Unknown feature, no spec file for it.
