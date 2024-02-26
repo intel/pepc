@@ -454,9 +454,12 @@ class Tpmi():
           - Value - the fmap of the feature.
         """
 
-        # A dictionary mapping feature IDs to the list of TPMI device addresses that provide this
+        # A dictionary mapping feature names to the list of TPMI device addresses that provide this
         # feature.
-        fid2addrs = {}
+        fname2addrs = {}
+        # List of unknown feature IDs.
+        unknown_fids = []
+
         for pci_path in self._tpmi_pci_paths:
             for dirname, _, _ in self._pman.lsdir(pci_path):
                 match = re.match(r"^tpmi-id-([0-9a-f]+)$", dirname)
@@ -464,28 +467,31 @@ class Tpmi():
                     continue
 
                 fid = int(match.group(1), 16)
-                if fid not in fid2addrs:
-                    fid2addrs[fid] = []
+                fname = self._fid2fname.get(fid)
+                if not fname:
+                    # Unknown feature, no spec file for it.
+                    unknown_fids.append(fid)
+                    continue
+
+                if fname not in fname2addrs:
+                    fname2addrs[fname] = []
 
                 addr = pci_path.name[len("tpmi-"):]
-                fid2addrs[fid].append(addr)
+                fname2addrs[fname].append(addr)
 
-        if not fid2addrs:
+        if not fname2addrs:
             paths = "\n * ".join([str(path) for path in self._tpmi_pci_paths])
             raise ErrorNotSupported(f"no TPMI features found{self._pman.hostmsg}, checked the "
                                     f"following paths:\n * {paths}")
 
-        fmaps = {}
-        unknown_fids = []
+        if "tpmi_info" not in fname2addrs:
+            raise Error(f"spec file for the 'tpmi_info' TPMI feature was not found, checked in the "
+                        f"following directories:\n * {self._specdirs}")
+
         addr2pkg = {}
+        fmaps = {}
 
-        for fid, addrs in fid2addrs.items():
-            fname = self._fid2fname.get(fid)
-            if not fname:
-                # Unknown feature, no spec file for it.
-                unknown_fids.append(fid)
-                continue
-
+        for fname, addrs in fname2addrs.items():
             if fname == "tpmi_info":
                 continue
 
