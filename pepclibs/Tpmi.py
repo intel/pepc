@@ -454,21 +454,23 @@ class Tpmi():
           - Value - the fmap of the feature.
         """
 
-        # A dictionary mapping feature IDs to debugfs paths corresponding to the feature.
-        fid2fpaths = {}
+        # A dictionary mapping feature IDs to the list of TPMI device addresses that provide this
+        # feature.
+        fid2addrs = {}
         for pci_path in self._tpmi_pci_paths:
-            for dirname, dirpath, _ in self._pman.lsdir(pci_path):
+            for dirname, _, _ in self._pman.lsdir(pci_path):
                 match = re.match(r"^tpmi-id-([0-9a-f]+)$", dirname)
                 if not match:
                     continue
 
                 fid = int(match.group(1), 16)
-                if fid not in fid2fpaths:
-                    fid2fpaths[fid] = []
+                if fid not in fid2addrs:
+                    fid2addrs[fid] = []
 
-                fid2fpaths[fid].append(dirpath)
+                addr = pci_path.name[len("tpmi-"):]
+                fid2addrs[fid].append(addr)
 
-        if not fid2fpaths:
+        if not fid2addrs:
             paths = "\n * ".join([str(path) for path in self._tpmi_pci_paths])
             raise ErrorNotSupported(f"no TPMI features found{self._pman.hostmsg}, checked the "
                                     f"following paths:\n * {paths}")
@@ -477,7 +479,7 @@ class Tpmi():
         unknown_fids = []
         dev2package = {}
 
-        for fid, fpaths in fid2fpaths.items():
+        for fid, addrs in fid2addrs.items():
             fname = self._fid2fname.get(fid)
             if not fname:
                 # Unknown feature, no spec file for it.
@@ -487,10 +489,7 @@ class Tpmi():
             if fname == "tpmi_info":
                 continue
 
-            for fpath in fpaths:
-                addr = str(fpath.parent.name)
-                addr = addr[len("tpmi-"):]
-
+            for addr in addrs:
                 if addr not in dev2package:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
                     package = self._read_register(addr, "tpmi_info", 0, "TPMI_BUS_INFO",
