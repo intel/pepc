@@ -43,9 +43,8 @@ Terminology.
 
   * regdict - register dictionary, a sub-dictionary of fdict describing a single register.
 
-  * fmap - feature map, a dictionary that maps known feature names to corresponding debugfs file
-           paths on the target host. This data structure is built by scanning the TPMI debugfs
-           hierarchy of the target host.
+  * fmap - feature map, a dictionary providing TPMI device PCI addresses and debugfs file paths
+           corresponging to the feature.
 
   * spec file - a YAML file describing the registers and bit fields for a TPMI feature. Each
                 supported feature has a spec file, and each spec file corresponds to a feature. A
