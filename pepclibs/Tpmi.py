@@ -682,8 +682,10 @@ class Tpmi():
 
     def _fmap_lookup(self, fname, addr, package, instance):
         """
-        Searches for a feature instance in the fmap. If found, returns the matching TPMI device
-        address and mdmap dictionary.
+        Search for a TPMI feature instance in the fmap. If found, return the following tuple for the
+        matching TPMI device: '(addr, mdmap)'.
+          - addr - PCI address of the matching TPMI device.
+          - mdmap - mdmap of the matching instance.
         """
 
         if package is None and addr is None:
