@@ -485,8 +485,9 @@ class Tpmi():
                                     f"following paths:\n * {paths}")
 
         if "tpmi_info" not in fname2addrs:
+            dirs = "\n * ".join([str(path) for path in self._specdirs])
             raise Error(f"spec file for the 'tpmi_info' TPMI feature was not found, checked in the "
-                        f"following directories:\n * {self._specdirs}")
+                        f"following directories:\n * {dirs}")
 
         addr2pkg = {}
         fmaps = {}
