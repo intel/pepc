@@ -738,13 +738,14 @@ class Tpmi():
 
     def read_register(self, fname, instance, regname, package=None, addr=None, bitname=None):
         """
-        Reads the value of a TPMI register. Arguments are as follows.
-          * fname - name of the TPMI feature to use.
-          * instance - TPMI instance to read.
+        Read a TPMI register or a bit field of a TPMI register and return the result. The arguments
+        are as follows.
+          * fname - name of the TPMI feature to read.
+          * package - optional package number.
           * regname - name of the TPMI register to read.
-          * package - package number.
-          * addr - TPMI device address.
-          * bitname - bit field name to read.
+          * addr - optional TPM device PCI address.
+          * instance - the TPMI instance number to read.
+          * bitname - optional name of the bit field to read (read the entire register by default).
         """
 
         addr, mdmap = self._fmap_lookup(fname, addr, package, instance)
