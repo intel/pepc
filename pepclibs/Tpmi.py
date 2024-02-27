@@ -456,7 +456,8 @@ class Tpmi():
         The structure of the 'self._fmaps' dictionary is as follows.
           - First level key - package number
           - Second level key - feature name
-          - Value - the fmap of the feature.
+          - Third level key - PCI address of the TPMI device
+          - Value - the mdmap of the feature.
         """
 
         # A dictionary mapping feature names to the list of TPMI device addresses that provide this
@@ -504,15 +505,21 @@ class Tpmi():
                     package = self._read_register(addr, "tpmi_info", 0, "TPMI_BUS_INFO",
                                                   bitname="PACKAGE_ID", mdmap=mdmap)
                     addr2pkg[addr] = package
-                    fmaps[package] = {"tpmi_info": [{"addr": addr, "mdmap": mdmap}]}
+
+                    if package not in fmaps:
+                        fmaps[package] = {}
+                    if "tpmi_info" not in fmaps[package]:
+                        fmaps[package]["tpmi_info"] = {}
+
+                    fmaps[package]["tpmi_info"][addr] = mdmap
                 else:
                     package = addr2pkg[addr]
 
                 if fname not in fmaps[package]:
-                    fmaps[package][fname] = []
+                    fmaps[package][fname] = {}
 
                 if fname != "tpmi_info":
-                    fmaps[package][fname] += [{"addr":addr, "mdmap": None}]
+                    fmaps[package][fname][addr] = None
 
         self._fmaps = fmaps
         self._unknown_fids = unknown_fids
