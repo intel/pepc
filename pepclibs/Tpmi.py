@@ -493,26 +493,21 @@ class Tpmi():
         fmaps = {}
 
         for fname, addrs in fname2addrs.items():
-            if fname == "tpmi_info":
-                continue
-
             for addr in addrs:
                 if addr not in addr2pkg:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
                     package = self._read_register(addr, "tpmi_info", 0, "TPMI_BUS_INFO",
                                                   bitname="PACKAGE_ID", mdmap=mdmap)
                     addr2pkg[addr] = package
-                    if package not in fmaps:
-                        fmaps[package] = {"tpmi_info": []}
-
-                    fmaps[package]["tpmi_info"] += [{"addr":addr, "mdmap": mdmap}]
+                    fmaps[package] = {"tpmi_info": [{"addr": addr, "mdmap": mdmap}]}
                 else:
                     package = addr2pkg[addr]
 
                 if fname not in fmaps[package]:
                     fmaps[package][fname] = []
 
-                fmaps[package][fname] += [{"addr":addr, "mdmap": None}]
+                if fname != "tpmi_info":
+                    fmaps[package][fname] += [{"addr":addr, "mdmap": None}]
 
         self._fmaps = fmaps
         self._unknown_fids = unknown_fids
