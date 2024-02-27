@@ -11,6 +11,12 @@ Provide capability for reading and writing TPMI registers on Intel CPUs. TPMI st
 Aware Register and PM Capsule Interface" and it is a  memory mapped interface for accessing power
 management features on Intel CPUs, in addition to the existing MSRs.
 
+Naming convention/logic:
+   * something dict - a dictionary describing something, and it contains information from the spec
+                      file.
+   * something map - a dictionary describing something, and it contains information from the debugfs
+                     files and directories.
+
 Terminology.
   * feature - a group of TPMI registers exposed by the processor via PCIe VSEC (Vendor-Specific
               Extended Capabilities) as a single capability. Typically TPMI feature corresponds to
