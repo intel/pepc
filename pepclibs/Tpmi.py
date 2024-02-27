@@ -76,7 +76,7 @@ Terminology.
             level is indexed by the instance number, the second level is indexed with TPMI memory
             offset, with values being 'mem_dump' file position. In other words, for a given instance
             number and TPMI register offset, mdmap gives 'mem_dump' file position. Reading from this
-            position or writing to it ends up with reading from or writing to the TPMI register.
+            position results in reading from the TPMI register.
 
   * offset - in this module word "offset" is used to refer to TPMI register offsets, which are
              defined in spec files.
