@@ -704,7 +704,7 @@ class Tpmi():
         if package is None:
             addrs = set()
             for pkg, fmap in self._fmaps.items():
-                addrs.update(list(fmap[fname].keys()))
+                addrs.update(list(fmap[fname]))
                 if addr in fmap[fname]:
                     package = pkg
                     break
@@ -718,12 +718,12 @@ class Tpmi():
                         f"packages are: {available}")
 
         if addr is None:
-            addrs = list(self._fmaps[package][fname].keys())
+            addrs = list(self._fmaps[package][fname])
             if len(addrs) == 1:
                 addr = addrs[0]
             else:
                 match = None
-                for lookup_addr in self._fmaps[package][fname].keys():
+                for lookup_addr in self._fmaps[package][fname]:
                     mdmap = self._get_mdmap(lookup_addr, package, fname)
                     if instance in mdmap:
                         if match:
@@ -737,7 +737,7 @@ class Tpmi():
                     addr = match
 
         if addr not in self._fmaps[package][fname]:
-            available = ", ".join(self._fmaps[package][fname].keys())
+            available = ", ".join(self._fmaps[package][fname])
             raise Error(f"unavailable TPMI device '{addr}', available devices: {available}")
 
         if fname not in self._fmaps[package]:
@@ -750,7 +750,7 @@ class Tpmi():
         if instance in mdmap:
             return addr, mdmap
 
-        available = Human.rangify(range(max(mdmap.keys()) + 1))
+        available = Human.rangify(range(max(mdmap) + 1))
         raise Error(f"instance {instance} not available for feature {fname}"
                     f"{self._pman.hostmsg}, available instances: {available}")
 
