@@ -704,8 +704,7 @@ class Tpmi():
         if package is None:
             addrs = set()
             for pkg, fmap in self._fmaps.items():
-                for pkg_addr in fmap[fname].keys():
-                    addrs.add(pkg_addr)
+                addrs.update(list(fmap[fname].keys()))
                 if addr in fmap[fname]:
                     package = pkg
                     break
