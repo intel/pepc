@@ -710,8 +710,9 @@ class Tpmi():
                     break
 
             if package is None:
-                available = ", ".join(addrs)
-                raise Error(f"unavailable TPMI device '{addr}', available devices: {available}")
+                available = "\n * ".join(addrs)
+                raise Error(f"unavailable TPMI device '{addr}' for feature '{fname}'"
+                            f"{self._pman.hostmsg}, available devices are:\n * {available}")
         elif package not in self._fmaps:
             available = Human.rangify(self._fmaps)
             raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, available "
