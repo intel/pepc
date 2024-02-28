@@ -699,7 +699,7 @@ class Tpmi():
         """
 
         if package is None and addr is None:
-            raise Error("either package or address must be defined")
+            raise Error("either package or TPMI device PCI address must be provided")
 
         if package is None:
             addrs = set()
