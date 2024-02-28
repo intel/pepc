@@ -289,23 +289,23 @@ class Tpmi():
                 _raise_exc(f"bad width '{width}' in TPMI register '{regname}': must be either 32 "
                            f"or 64")
 
-            for bitname, bitdict in regdict["fields"].items():
-                if not bitname.isupper():
-                    _raise_exc(f"bad bit field name '{bitname}' for TPMI register '{regname}': "
+            for bfname, bitdict in regdict["fields"].items():
+                if not bfname.isupper():
+                    _raise_exc(f"bad bit field name '{bfname}' for TPMI register '{regname}': "
                                f"should include only upper case characters")
 
                 # The allowed and the mandatory bit field dictionary key names.
                 keys = {"bits", "desc"}
-                where = f"in bit field '{bitname}' of the '{regname}' TPMI register definition"
+                where = f"in bit field '{bfname}' of the '{regname}' TPMI register definition"
                 _check_keys(bitdict, keys, keys, where)
 
                 # Make sure that the description has no newline character.
                 if "\n" in bitdict["desc"]:
-                    _raise_exc(f"bad description of bit field '{bitname}' of the '{regname}' TPMI "
+                    _raise_exc(f"bad description of bit field '{bfname}' of the '{regname}' TPMI "
                                f"register: includes a newline character")
 
                 # Verify the bits and add "bitshift" and "bitmask".
-                where = f"in bit field '{bitname}' of the '{regname}' TPMI register"
+                where = f"in bit field '{bfname}' of the '{regname}' TPMI register"
                 bits = Trivial.split_csv_line(bitdict["bits"], sep=":")
                 if len(bits) != 2:
                     bits = bitdict["bits"]
@@ -503,7 +503,7 @@ class Tpmi():
                 if addr not in addr2pkg:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
                     package = self._read_register(addr, "tpmi_info", 0, "TPMI_BUS_INFO",
-                                                  bitname="PACKAGE_ID", mdmap=mdmap)
+                                                  bfname="PACKAGE_ID", mdmap=mdmap)
                     addr2pkg[addr] = package
 
                     if package not in fmaps:
@@ -630,35 +630,35 @@ class Tpmi():
         what = f"value of a TPMI register at offset '{offset:#x}', {msg_ifd}"
         return Trivial.str_to_int(val, base=16, what=what)
 
-    def _get_bitfield(self, regval, fname, regname, bitname):
+    def _get_bitfield(self, regval, fname, regname, bfname):
         """
         Extract and return the value of a bit field from a register value. The arguments are as
         follows.
           * regval - value of the register.
           * fname - name of the TPMI feature.
           * regname - name of the TPMI register.
-          * bitname - name of the TPMI register bit field to extract.
+          * bfname - name of the TPMI register bit field to extract.
         """
 
         regdict = self._get_regdict(fname, regname)
         fieldsdict = regdict["fields"]
 
-        if bitname not in fieldsdict:
+        if bfname not in fieldsdict:
             available = ", ".join(fieldsdict)
-            raise Error(f"bit field '{bitname}' not found for TPMI register '{regname}', feature "
+            raise Error(f"bit field '{bfname}' not found for TPMI register '{regname}', feature "
                         f"'{fname}', available bit fields: {available}")
 
-        bitdict = fieldsdict[bitname]
+        bitdict = fieldsdict[bfname]
         return (regval & bitdict["bitmask"]) >> bitdict["bitshift"]
 
-    def _read_register(self, addr, fname, instance, regname, bitname=None, mdmap=None):
+    def _read_register(self, addr, fname, instance, regname, bfname=None, mdmap=None):
         """
         Read a TPMI register. The arguments are as follows.
           * addr - the TPMI device address.
           * fname - name of the TPMI feature the register belongs to.
           * instance - the TPMI instance to read the register from.
           * regname - name of the TPMI register to read.
-          * bitname - bit field name to read (read whole register by default).
+          * bfname - bit field name to read (read whole register by default).
           * mdmap - the mdmap to use fro reading the register.
         """
 
@@ -675,8 +675,8 @@ class Tpmi():
         if width > 32:
             val = val + (self._read(addr, fname, instance, offset + 4, mdmap) << 32)
 
-        if bitname:
-            val = self._get_bitfield(val, fname, regname, bitname)
+        if bfname:
+            val = self._get_bitfield(val, fname, regname, bfname)
 
         return val
 
@@ -738,7 +738,7 @@ class Tpmi():
         raise Error(f"instance {instance} not available for feature {fname}"
                     f"{self._pman.hostmsg}, available instances: {available}")
 
-    def read_register(self, fname, instance, regname, package=None, addr=None, bitname=None):
+    def read_register(self, fname, instance, regname, package=None, addr=None, bfname=None):
         """
         Read a TPMI register or a bit field of a TPMI register and return the result. The arguments
         are as follows.
@@ -747,12 +747,12 @@ class Tpmi():
           * regname - name of the TPMI register to read.
           * addr - optional TPM device PCI address.
           * instance - the TPMI instance number to read.
-          * bitname - optional name of the bit field to read (read the entire register by default).
+          * bfname - optional name of the bit field to read (read the entire register by default).
         """
 
         addr, mdmap = self._fmap_lookup(fname, addr, package, instance)
 
-        return self._read_register(addr, fname, instance, regname, mdmap=mdmap, bitname=bitname)
+        return self._read_register(addr, fname, instance, regname, mdmap=mdmap, bfname=bfname)
 
     def __init__(self, pman, specdirs=None):
         """
