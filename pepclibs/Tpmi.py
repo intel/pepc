@@ -680,6 +680,16 @@ class Tpmi():
 
         return val
 
+    def _get_mdmap(self, addr, package, fname):
+        """Get mdmap for a TPMI feature."""
+
+        mdmap = self._fmaps[package][fname][addr]
+        if not mdmap:
+            mdmap = self._build_mdmap(addr, fname)
+            self._fmaps[package][fname][addr] = mdmap
+
+        return mdmap
+
     def _fmap_lookup(self, fname, instance, addr=None, package=None):
         """
         Search for a TPMI feature instance in the fmap. If found, return the following tuple for the
@@ -713,9 +723,19 @@ class Tpmi():
             if len(addrs) == 1:
                 addr = addrs[0]
             else:
-                available = ", ".join(addrs)
-                raise Error(f"multiple TPMI devices available on package '{package}', available "
-                            f"devices: {available}")
+                match = None
+                for lookup_addr in self._fmaps[package][fname].keys():
+                    mdmap = self._get_mdmap(lookup_addr, package, fname)
+                    if instance in mdmap:
+                        if match:
+                            available = ", ".join(addrs)
+                            raise Error(f"multiple TPMI devices available for feature '{fname}', "
+                                        f"package '{package}', instance '{instance}', available "
+                                        f"devices: {available}")
+                        match = lookup_addr
+
+                if match:
+                    addr = match
 
         if addr not in self._fmaps[package][fname]:
             available = ", ".join(self._fmaps[package][fname].keys())
@@ -726,10 +746,7 @@ class Tpmi():
             raise Error(f"unknown feature '{fname}'{self._pman.hostmsg}, known features are: "
                         f"{known}")
 
-        mdmap = self._fmaps[package][fname][addr]
-        if not mdmap:
-            mdmap = self._build_mdmap(addr, fname)
-            self._fmaps[package][fname][addr] = mdmap
+        mdmap = self._get_mdmap(addr, package, fname)
 
         if instance in mdmap:
             return addr, mdmap
