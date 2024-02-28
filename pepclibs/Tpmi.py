@@ -680,7 +680,7 @@ class Tpmi():
 
         return val
 
-    def _fmap_lookup(self, fname, addr, package, instance):
+    def _fmap_lookup(self, fname, instance, addr=None, package=None):
         """
         Search for a TPMI feature instance in the fmap. If found, return the following tuple for the
         matching TPMI device: '(addr, mdmap)'.
@@ -750,7 +750,7 @@ class Tpmi():
           * bfname - optional name of the bit field to read (read the entire register by default).
         """
 
-        addr, mdmap = self._fmap_lookup(fname, addr, package, instance)
+        addr, mdmap = self._fmap_lookup(fname, instance, addr=addr, package=package)
 
         return self._read_register(addr, fname, instance, regname, mdmap=mdmap, bfname=bfname)
 
