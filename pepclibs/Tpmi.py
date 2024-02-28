@@ -728,19 +728,19 @@ class Tpmi():
             if len(addrs) == 1:
                 addr = addrs[0]
             else:
-                match = None
-                for lookup_addr in self._fmaps[package][fname]:
-                    mdmap = self._get_mdmap(lookup_addr, package, fname)
+                matched_addr = None
+                for try_addr in self._fmaps[package][fname]:
+                    mdmap = self._get_mdmap(try_addr, package, fname)
                     if instance in mdmap:
-                        if match:
+                        if matched_addr:
                             available = ", ".join(addrs)
                             raise Error(f"multiple TPMI devices available for feature '{fname}', "
                                         f"package '{package}', instance '{instance}', available "
                                         f"devices: {available}")
-                        match = lookup_addr
+                        matched_addr = try_addr
 
-                if match:
-                    addr = match
+                if matched_addr:
+                    addr = matched_addr
 
         if addr not in self._fmaps[package][fname]:
             available = ", ".join(self._fmaps[package][fname])
