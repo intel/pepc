@@ -691,15 +691,6 @@ class Tpmi():
         if package is None and addr is None:
             raise Error("either package or address must be defined")
 
-        if addr is None:
-            addrs = list(self._fmaps[package][fname].keys())
-            if len(addrs) == 1:
-                addr = addrs[0]
-            else:
-                available = ", ".join(addrs)
-                raise Error(f"multiple TPMI devices available on package '{package}', available "
-                            f"devices: {available}")
-
         if package is None:
             addrs = set()
             for pkg, fmap in self._fmaps.items():
@@ -716,6 +707,15 @@ class Tpmi():
             available = Human.rangify(self._fmaps)
             raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, available "
                         f"packages are: {available}")
+
+        if addr is None:
+            addrs = list(self._fmaps[package][fname].keys())
+            if len(addrs) == 1:
+                addr = addrs[0]
+            else:
+                available = ", ".join(addrs)
+                raise Error(f"multiple TPMI devices available on package '{package}', available "
+                            f"devices: {available}")
 
         if addr not in self._fmaps[package][fname]:
             available = ", ".join(self._fmaps[package][fname].keys())
