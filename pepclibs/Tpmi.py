@@ -710,6 +710,11 @@ class Tpmi():
                     break
 
             if package is None:
+                max_addrs = 8
+                if len(addrs) > max_addrs:
+                    # The list of addresses may potentially be long, limit it.
+                    addrs = list(addrs)[:max_addrs]
+                    addrs.append("... and more ...")
                 available = "\n * ".join(addrs)
                 raise Error(f"unavailable TPMI device '{addr}' for feature '{fname}'"
                             f"{self._pman.hostmsg}, available devices are:\n * {available}")
