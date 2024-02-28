@@ -715,8 +715,8 @@ class Tpmi():
                             f"{self._pman.hostmsg}, available devices are:\n * {available}")
         elif package not in self._fmaps:
             available = Human.rangify(self._fmaps)
-            raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, available "
-                        f"packages are: {available}")
+            raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
+                        f"package numbers are: {available}")
 
         if addr is None:
             addrs = list(self._fmaps[package][fname])
