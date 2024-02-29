@@ -814,13 +814,10 @@ class Tpmi():
         addr_found = addr is None
         available_addrs = set()
 
-        if addr is not None and package is not None:
-            raise Error("either package or TPMI device PCI address can be provided, not both")
-
-        if package is not None:
-            what = f" for package '{package}'"
-        elif addr is not None:
+        if addr is not None:
             what = f" for TPMI device '{addr}'"
+        elif package is not None:
+            what = f" for package '{package}'"
         else:
             what = ""
 
