@@ -216,10 +216,12 @@ class Tpmi():
     Provide API for reading and writing TPMI registers on Intel CPUs.
 
     Public methods overview.
-
-    1. Getting features information.
-        * 'get_known_features()' - known features information.
-        * 'get_unknown_features()' - unknown features information.
+      * 'read_register()' - read a TPMI register.
+      * 'get_known_features()' - known features information.
+      * 'get_unknown_features()' - unknown features information.
+      * 'iter_feature()' - get feature details.
+      * 'get_regdict()' - get regdict for a TPMI register (a dictionary describing the TPMI
+                          register).
     """
 
     def _format_fdict(self, fname, specpath, spec):
