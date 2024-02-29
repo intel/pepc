@@ -164,3 +164,42 @@ def tpmi_read_command(args, pman):
         YAML.dump(info, sys.stdout)
     else:
         _tpmi_read_command_print(fdict, info)
+
+def tpmi_write_command(args, pman):
+    """
+    Implements the 'tpmi write' command. Arguments are as follows.
+      * args - command line arguments.
+      * pman - process manager.
+    """
+
+    addrs = None
+    if args.addrs:
+        addrs = Trivial.split_csv_line(args.addrs, dedup=True)
+        addrs = set(addrs)
+
+    packages = None
+    if args.packages:
+        packages = Trivial.split_csv_line_int(args.packages, dedup=True, what="package numbers")
+
+    instances = None
+    if args.instances:
+        instances = Trivial.split_csv_line_int(args.instances, dedup=True,
+                                               what="TPMI instance numbers")
+
+    regnames = Trivial.split_csv_line(args.register, dedup=True)
+
+    tpmi = Tpmi.Tpmi(pman=pman)
+
+    value = Trivial.str_to_int(args.value, what="value to write")
+
+    if args.bfname:
+        bfname_str = f", bit field '{args.bfname}'"
+    else:
+        bfname_str = ""
+
+    for addr, _, instance in tpmi.iter_feature(args.fname, addrs=addrs, packages=packages,
+                                               instances=instances):
+        for regname in regnames:
+            tpmi.write_register(value, args.fname, addr, instance, regname, bfname=args.bfname)
+            _LOG.info("Wrote '%d' to feature '%s', PCI device '%s', register '%s'%s, instance '%d'", value,
+                      args.fname, addr, regname, bfname_str, instance);

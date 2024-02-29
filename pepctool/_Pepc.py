@@ -709,6 +709,38 @@ def build_arguments_parser():
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
+    #
+    # Create parser for the 'tpmi write' command.
+    #
+    text = "Write TPMI registers."
+    descr = """Write one or multiple TPMI registers. """ + man_msg
+    subpars2 = subparsers2.add_parser("write", help=text, description=descr, epilog=man_msg)
+    subpars2.set_defaults(func=_tpmi_write_command)
+
+    text = "Name of the TPMI feature to write the registers for."
+    subpars2.add_argument("fname", metavar="feature", help=text)
+
+    text = """Comma-separated list of TPMI device PCI addresses to write the registers to (all
+              devices by default)."""
+    subpars2.add_argument("-a", "--addresses", dest="addrs", help=text)
+
+    text = """Comma-separated list of package numbers to write TPMI registers to (all packages by
+              default)."""
+    subpars2.add_argument("--packages", help=text)
+
+    text = """Comma-separated list of integer TPMI instance numbers to write the registers to (all
+              instances by default)."""
+    subpars2.add_argument("-i", "--instances", help=text)
+
+    text = """Name of the TPMI register to write."""
+    subpars2.add_argument("-R", "--register", help=text, required=True)
+
+    text = """Name of the TPMI register bitfield to write (all bitfields by default)."""
+    subpars2.add_argument("-b", "--bitfield", dest="bfname", help=text)
+
+    text = "Value to write to the TPMI register / bitfield."
+    subpars2.add_argument("value", help=text)
+
     if argcomplete:
         argcomplete.autocomplete(parser)
 
@@ -756,6 +788,13 @@ def _tpmi_read_command(args, pman):
     from pepctool import _PepcTpmi
 
     _PepcTpmi.tpmi_read_command(args, pman)
+
+def _tpmi_write_command(args, pman):
+    """Implements the 'tpmi write' command."""
+
+    from pepctool import _PepcTpmi
+
+    _PepcTpmi.tpmi_write_command(args, pman)
 
 def _cpu_hotplug_info_command(args, pman):
     """Implement the 'cpu-hotplug info' command."""
