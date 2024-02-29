@@ -698,6 +698,16 @@ class Tpmi():
           - mdmap - mdmap of the matching instance.
         """
 
+        def _format_addrs(addrs):
+            """Format a list of TPMI device PCI addresses in form of a string."""
+
+            max_addrs = 8
+            if len(addrs) > max_addrs:
+                # The list of addresses may potentially be long, limit it.
+                addrs = list(addrs)[:max_addrs]
+                addrs.append("... and more ...")
+            return "\n * ".join(addrs)
+
         if package is None and addr is None:
             raise Error("either package or TPMI device PCI address must be provided")
 
@@ -708,16 +718,10 @@ class Tpmi():
                 if addr in fmap[fname]:
                     package = pkg
                     break
-
             if package is None:
-                max_addrs = 8
-                if len(addrs) > max_addrs:
-                    # The list of addresses may potentially be long, limit it.
-                    addrs = list(addrs)[:max_addrs]
-                    addrs.append("... and more ...")
-                available = "\n * ".join(addrs)
+                addrs = _format_addrs(addrs)
                 raise Error(f"unavailable TPMI device '{addr}' for feature '{fname}'"
-                            f"{self._pman.hostmsg}, available devices are:\n * {available}")
+                            f"{self._pman.hostmsg}, available devices are:\n * {addrs}")
         elif package not in self._fmaps:
             available = Human.rangify(self._fmaps)
             raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
@@ -728,19 +732,19 @@ class Tpmi():
             if len(addrs) == 1:
                 addr = addrs[0]
             else:
-                matched_addr = None
+                addrs = []
                 for try_addr in self._fmaps[package][fname]:
                     mdmap = self._get_mdmap(try_addr, package, fname)
                     if instance in mdmap:
-                        if matched_addr:
-                            available = ", ".join(addrs)
-                            raise Error(f"multiple TPMI devices available for feature '{fname}', "
-                                        f"package '{package}', instance '{instance}', available "
-                                        f"devices: {available}")
-                        matched_addr = try_addr
+                        addrs.append(try_addr)
 
-                if matched_addr:
-                    addr = matched_addr
+                if len(addrs) > 1:
+                    addrs = _format_addrs(addrs)
+                    raise Error(f"feature '{fname}', package '{package}' and instance '{instance}' "
+                                f"are not enough to identify the TPMI device.\n"
+                                f"Provide one of the following TPMI device PCI addesses to resolve "
+                                f"the ambiguity:\n * {addrs}")
+                addr = addrs[0]
 
         if addr not in self._fmaps[package][fname]:
             available = ", ".join(self._fmaps[package][fname])
