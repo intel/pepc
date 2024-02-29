@@ -727,6 +727,11 @@ class Tpmi():
             raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
                         f"package numbers are: {available}")
 
+        if fname not in self._fmaps[package]:
+            known = ", ".join(self._fmaps[package])
+            raise Error(f"unknown feature '{fname}' for package '{package}', known features are:\n"
+                        f"  {known}")
+
         if addr is None:
             addrs = list(self._fmaps[package][fname])
             if len(addrs) == 1:
@@ -750,11 +755,6 @@ class Tpmi():
             raise Error(f"TPMI device {addr} does not exist for feature '{fname}', package "
                         f"'{package}' and instance '{instance}'{self._pman.hostmsg}.\nAvailable "
                         f"devices are:\n * {addrs}")
-
-        if fname not in self._fmaps[package]:
-            known = ", ".join(self._fmaps[package])
-            raise Error(f"unknown feature '{fname}'{self._pman.hostmsg}, known features are: "
-                        f"{known}")
 
         mdmap = self._get_mdmap(addr, package, fname)
 
