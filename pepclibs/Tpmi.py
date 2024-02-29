@@ -725,9 +725,9 @@ class Tpmi():
                 raise Error(f"TPMI device '{addr}' does not exist for feature '{fname}'"
                             f"{self._pman.hostmsg}, available devices are:\n * {addrs}")
         elif package not in self._fmaps:
-            available = Human.rangify(self._fmaps)
+            packages = Human.rangify(self._fmaps)
             raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
-                        f"package numbers are: {available}")
+                        f"package numbers are: {packages}")
 
         if fname not in self._fmaps[package]:
             known = ", ".join(self._fmaps[package])
@@ -759,13 +759,13 @@ class Tpmi():
                         f"devices are:\n * {addrs}")
 
         mdmap = self._get_mdmap(addr, package, fname)
-
         if instance in mdmap:
             return addr, mdmap
 
-        available = Human.rangify(range(max(mdmap) + 1))
-        raise Error(f"instance {instance} not available for feature {fname}"
-                    f"{self._pman.hostmsg}, available instances: {available}")
+        instances = Human.rangify(list(mdmap))
+        raise Error(f"instance {instance} not available for feature {fname}, TPMI device '{addr}', "
+                    f"package '{package}'{self._pman.hostmsg}.\nAvailable instances are: "
+                    f"{instances}")
 
     def read_register(self, fname, instance, regname, package=None, addr=None, bfname=None):
         """
