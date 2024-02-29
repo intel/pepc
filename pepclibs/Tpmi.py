@@ -11,12 +11,6 @@ Provide capability for reading and writing TPMI registers on Intel CPUs. TPMI st
 Aware Register and PM Capsule Interface" and it is a  memory mapped interface for accessing power
 management features on Intel CPUs, in addition to the existing MSRs.
 
-Naming convention/logic:
-   * something dict - a dictionary describing something, and it contains information from the spec
-                      file.
-   * something map - a dictionary describing something, and it contains information from the debugfs
-                     files and directories.
-
 Terminology.
   * feature - a group of TPMI registers exposed by the processor via PCIe VSEC (Vendor-Specific
               Extended Capabilities) as a single capability. Typically TPMI feature corresponds to
@@ -43,9 +37,6 @@ Terminology.
 
   * regdict - register dictionary, a sub-dictionary of fdict describing a single register.
 
-  * fmap - feature map, a dictionary providing TPMI device PCI addresses and debugfs file paths
-           corresponging to the feature.
-
   * spec file - a YAML file describing the registers and bit fields for a TPMI feature. Each
                 supported feature has a spec file, and each spec file corresponds to a feature. A
                 spec file is also required to decode the TPMI feature's PCIe VSEC table.
@@ -64,27 +55,39 @@ Terminology.
                are just integer numbers. In order to read/write a TPMI register, one has to specify
                the instance for the read/write operation.
 
-  * mem_dump - a Linux TPMI debugfs file named "mem_dump" (example path:
-               /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump). The 'mem_dump' files
-               provide TPMI memory dump a in text format. The 'mem_dump' file includes TPMI memory
-               dump for all instances. TPMI register read operations are performed by reading from
-               the 'mem_dump' file. This requires finding the 'mem_dump' file position to read from,
-               which, in turn, requires parsing the 'mem_dump' file.
-
-  * mdmap - mem_dump map, a dictionary representing a 'mem_dump' file. The role of mdmap is to avoid
-            parsing 'mem_dump' on every TPMI register read. Mdmap is a 2-level dictionary. The first
-            level is indexed by the instance number, the second level is indexed with TPMI memory
-            offset, with values being 'mem_dump' file position. In other words, for a given instance
-            number and TPMI register offset, mdmap gives 'mem_dump' file position. Reading from this
-            position results in reading from the TPMI register.
-
   * offset - in this module word "offset" is used to refer to TPMI register offsets, which are
              defined in spec files.
-
-  * position - in this module word "position" is used to refer to a file position relative to the
-               beginning of the file (e.g., a 'mem_dump' file position). See the standard Unix
-               'fsetpos()' method for more information about a file position.
 """
+
+# Internal terms (not exposed to the user of this module).
+#
+# Naming conventions/logic:
+#   * something dict - a dictionary describing something, and it contains information from the spec
+#                      file.
+#   * something map - a dictionary describing something, and it contains information from the
+#                     debugfs files and directories.
+#
+# Terminology.
+#   * fmap - feature map, a dictionary providing TPMI device PCI addresses and debugfs file paths
+#            corresponging to the feature.
+#
+#   * mem_dump - a Linux TPMI debugfs file named "mem_dump" (example path:
+#                /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump). The 'mem_dump' files
+#                provide TPMI memory dump a in text format. The 'mem_dump' file includes TPMI memory
+#                dump for all instances. TPMI register read operations are performed by reading from
+#                the 'mem_dump' file. This requires finding the 'mem_dump' file position to read
+#                from, which, in turn, requires parsing the 'mem_dump' file.
+#
+#   * mdmap - mem_dump map, a dictionary representing a 'mem_dump' file. The role of mdmap is to
+#             avoid parsing 'mem_dump' on every TPMI register read. Mdmap is a 2-level dictionary.
+#             The first level is indexed by the instance number, the second level is indexed with
+#             TPMI memory offset, with values being 'mem_dump' file position. In other words, for a
+#             given instance number and TPMI register offset, mdmap gives 'mem_dump' file position.
+#             Reading from this position results in reading from the TPMI register.
+#
+#   * position - in this module word "position" is used to refer to a file position relative to the
+#                beginning of the file (e.g., a 'mem_dump' file position). See the standard Unix
+#                'fsetpos()' method for more information about a file position.
 
 import os
 import re
