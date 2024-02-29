@@ -7,7 +7,7 @@
 # Authors: Niklas Neronin <niklas.neronin@intel.com>
 
 """
-Ipmplement the 'pepc topology' command.
+Implement the 'pepc topology' command.
 """
 
 import logging
@@ -103,7 +103,11 @@ def _filter_io_dies(optar, topology, colnames):
     return new_topology
 
 def topology_info_command(args, pman):
-    """Implement the 'topology info' command."""
+    """
+    Implement the 'topology info' command. The arguments are as follows.
+      * args - command line arguments dictionary
+      * pman - the process manager object for the target host
+    """
 
     show_hybrid = None
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
