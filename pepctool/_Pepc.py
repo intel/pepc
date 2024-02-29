@@ -905,13 +905,13 @@ def _get_emul_pman(args, path):
     from pepclibs.helperlibs import EmulProcessManager
 
     required_cmd_modules = {
-        "aspm" : ["ASPM", "Systemctl"],
-        "cstates" : ["CPUInfo", "CStates", "Systemctl"],
-        "pstates" : ["CPUInfo", "PStates", "Systemctl"],
-        "power" : ["CPUInfo", "Power"],
-        "topology" : ["CPUInfo"],
-        "cpu_hotplug" : ["CPUInfo", "CPUOnline", "Systemctl"],
-        "tpmi" : ["TPMI"],
+        "aspm": ["ASPM", "Systemctl"],
+        "cstates": ["CPUInfo", "CStates", "Systemctl"],
+        "pstates": ["CPUInfo", "PStates", "Systemctl"],
+        "power": ["CPUInfo", "Power"],
+        "topology": ["CPUInfo"],
+        "cpu_hotplug": ["CPUInfo", "CPUOnline", "Systemctl"],
+        "tpmi": ["TPMI"],
     }
 
     for cmd, _modules in required_cmd_modules.items():
