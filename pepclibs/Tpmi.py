@@ -786,7 +786,7 @@ class Tpmi():
 
     def get_regdict(self, fname):
         """
-        Returns a copy of the register dictionary for a feature. Arguments are as follows.
+        Return a copy of the register dictionary for a feature. The arguments are as follows.
           * fname - name of the TPMI feature to get registers for.
         """
 
@@ -794,12 +794,12 @@ class Tpmi():
 
     def iter_feature(self, fname, addr=None, package=None):
         """
-        Iterates over a feature, yielding tuples of (addr, package, instance). If any of the (addr,
-        package) are defined in the arguments, they are handled as filters yielding only the matched
-        items. Arguments are as follows.
+        Iterate over a feature, yielding tuples of '(addr, package, instance)'. Optional 'addr' and
+        'package' arguments can be used to limit the yielded tuples to a particular TPMI device PCI
+        addres and/or package. The arguments are as follows.
           * fname - name of the TPMI feature to iterate.
-          * addr - TPMI device PCI address to iterate, by default iterates all addresses.
-          * package - package number to iterate, by default iterates all packages.
+          * addr - TPMI device PCI address to iterate (all addresses by default).
+          * package - package number to iterate (all packages by default).
         """
 
         fname_found = False
