@@ -220,8 +220,8 @@ class Tpmi():
       * 'get_known_features()' - known features information.
       * 'get_unknown_features()' - unknown features information.
       * 'iter_feature()' - get feature details.
-      * 'get_regdict()' - get regdict for a TPMI register (a dictionary describing the TPMI
-                          register).
+      * 'get_fdict()' - get fdict for a TPMI feature (a dictionary describing the TPMI registers of
+                        the feature).
     """
 
     def _format_fdict(self, fname, specpath, spec):
@@ -789,10 +789,10 @@ class Tpmi():
 
         return self._read_register(addr, fname, instance, regname, mdmap=mdmap, bfname=bfname)
 
-    def get_regdict(self, fname):
+    def get_fdict(self, fname):
         """
-        Return a copy of the register dictionary for a feature. The arguments are as follows.
-          * fname - name of the TPMI feature to get registers for.
+        Return a feature dictionary. The arguments are as follows.
+          * fname - name of the TPMI feature to return the fdict for.
         """
 
         return copy.deepcopy(self._get_fdict(fname))

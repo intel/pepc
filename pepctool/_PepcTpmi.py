@@ -72,7 +72,7 @@ def tpmi_info_command(args, pman):
 
     addr, package, feature, instances, registers, bfname = _parse_tpmi_args(args)
 
-    reginfo = tpmi_obj.get_regdict(feature)
+    reginfo = tpmi_obj.get_fdict(feature)
 
     if registers == "all":
         registers = reginfo
