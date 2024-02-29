@@ -72,10 +72,10 @@ def tpmi_info_command(args, pman):
 
     addr, package, feature, instances, registers, bfname = _parse_tpmi_args(args)
 
-    reginfo = tpmi_obj.get_fdict(feature)
+    fdict = tpmi_obj.get_fdict(feature)
 
     if registers == "all":
-        registers = reginfo
+        registers = fdict
 
     if instances == "all":
         instances = (tup[2] for tup in tpmi_obj.iter_feature(feature, addr=addr, package=package))
@@ -84,7 +84,7 @@ def tpmi_info_command(args, pman):
         for regname in registers:
             value = tpmi_obj.read_register(feature, instance, regname, addr=addr, package=package)
             printed = False
-            for fieldname, fieldinfo in reginfo[regname]["fields"].items():
+            for fieldname, fieldinfo in fdict[regname]["fields"].items():
                 if bfname not in ("all", fieldname):
                     continue
 
