@@ -720,7 +720,7 @@ class Tpmi():
                     break
             if package is None:
                 addrs = _format_addrs(addrs)
-                raise Error(f"unavailable TPMI device '{addr}' for feature '{fname}'"
+                raise Error(f"TPMI device '{addr}' does not exist for feature '{fname}'"
                             f"{self._pman.hostmsg}, available devices are:\n * {addrs}")
         elif package not in self._fmaps:
             available = Human.rangify(self._fmaps)
@@ -741,14 +741,15 @@ class Tpmi():
                 if len(addrs) > 1:
                     addrs = _format_addrs(addrs)
                     raise Error(f"feature '{fname}', package '{package}' and instance '{instance}' "
-                                f"are not enough to identify the TPMI device.\n"
+                                f"are not enough to identify the TPMI device{self._pman.hostmsg}.\n"
                                 f"Provide one of the following TPMI device PCI addesses to resolve "
                                 f"the ambiguity:\n * {addrs}")
                 addr = addrs[0]
-
-        if addr not in self._fmaps[package][fname]:
-            available = ", ".join(self._fmaps[package][fname])
-            raise Error(f"unavailable TPMI device '{addr}', available devices: {available}")
+        elif addr not in self._fmaps[package][fname]:
+            addrs = _format_addrs(self._fmaps[package][fname])
+            raise Error(f"TPMI device {addr} does not exist for feature '{fname}', package "
+                        f"'{package}' and instance '{instance}'{self._pman.hostmsg}.\nAvailable "
+                        f"devices are:\n * {addrs}")
 
         if fname not in self._fmaps[package]:
             known = ", ".join(self._fmaps[package])
