@@ -714,6 +714,8 @@ class Tpmi():
         if package is None:
             addrs = set()
             for pkg, fmap in self._fmaps.items():
+                if fname not in fmap:
+                    continue
                 addrs.update(list(fmap[fname]))
                 if addr in fmap[fname]:
                     package = pkg
