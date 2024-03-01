@@ -534,12 +534,12 @@ class Tpmi():
         self._unknown_fids = unknown_fids
 
         # Initialize 'self._known_fnames' and 'self._pkg2sdicts'.
-        known_fnames = set()
+        self._known_fnames_set = set()
         for pkg, fmap in fmaps.items():
             for fname in fmap:
-                if fname not in known_fnames:
+                if fname not in self._known_fnames_set:
                     self._known_fnames.append(fname)
-                    known_fnames.add(fname)
+                    self._known_fnames_set.add(fname)
 
                 if pkg not in self._pkg2sdicts:
                     self._pkg2sdicts[pkg] = {}
@@ -711,23 +711,26 @@ class Tpmi():
 
         return mdmap
 
+    def _format_addrs(self, addrs):
+        """Format a list of TPMI device PCI addresses in form of a string."""
+
+        max_addrs = 8
+        if len(addrs) > max_addrs:
+            # The list of addresses may potentially be long, limit it.
+            addrs = list(addrs)[:max_addrs]
+            addrs.append("... and more ...")
+        return "\n * ".join(addrs)
+
     def _fmap_lookup(self, fname, instance, addr=None, package=None):
         """
         Search for a TPMI feature instance in the fmap. If found, return the following tuple for the
         matching TPMI device: '(addr, mdmap)'.
           - addr - PCI address of the matching TPMI device.
           - mdmap - mdmap of the matching instance.
+
+        Note, this method assumes that 'fname', 'addr', and 'package' have been validated. This
+        method validates only 'instance'.
         """
-
-        def _format_addrs(addrs):
-            """Format a list of TPMI device PCI addresses in form of a string."""
-
-            max_addrs = 8
-            if len(addrs) > max_addrs:
-                # The list of addresses may potentially be long, limit it.
-                addrs = list(addrs)[:max_addrs]
-                addrs.append("... and more ...")
-            return "\n * ".join(addrs)
 
         if package is None and addr is None:
             raise Error("either package or TPMI device PCI address must be provided")
@@ -735,28 +738,13 @@ class Tpmi():
         if package is None:
             addrs = set()
             for pkg, fmap in self._fmaps.items():
-                if fname not in fmap:
-                    continue
                 addrs.update(list(fmap[fname]))
                 if addr in fmap[fname]:
                     package = pkg
                     break
-            if package is None:
-                addrs = _format_addrs(addrs)
-                raise Error(f"TPMI device '{addr}' does not exist for feature '{fname}'"
-                            f"{self._pman.hostmsg}, available devices are:\n * {addrs}")
-        elif package not in self._fmaps:
-            packages = Human.rangify(self._fmaps)
-            raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
-                        f"package numbers are: {packages}")
 
-        if fname not in self._fmaps[package]:
-            known = ", ".join(self._fmaps[package])
-            raise Error(f"unknown feature '{fname}' for package '{package}', known features are:\n"
-                        f"  {known}")
-
-        addrs = list(self._fmaps[package][fname])
         if addr is None:
+            addrs = list(self._fmaps[package][fname])
             if len(addrs) == 1:
                 addr = addrs[0]
             else:
@@ -767,17 +755,12 @@ class Tpmi():
                         matched_addrs.append(try_addr)
 
                 if len(matched_addrs) > 1:
-                    matched_addrs = _format_addrs(matched_addrs)
+                    matched_addrs = self._format_addrs(matched_addrs)
                     raise Error(f"feature '{fname}', package '{package}' and instance '{instance}' "
                                 f"are not enough to identify the TPMI device{self._pman.hostmsg}.\n"
                                 f"Provide one of the following TPMI device PCI addesses to resolve "
                                 f"the ambiguity:\n * {matched_addrs}")
                 addr = matched_addrs[0]
-        elif addr not in addrs:
-            addrs = _format_addrs(addrs)
-            raise Error(f"TPMI device {addr} does not exist for feature '{fname}', package "
-                        f"'{package}' and instance '{instance}'{self._pman.hostmsg}.\nAvailable "
-                        f"devices are:\n * {addrs}")
 
         mdmap = self._get_mdmap(addr, package, fname)
         if instance in mdmap:
@@ -787,6 +770,39 @@ class Tpmi():
         raise Error(f"instance {instance} not available for feature {fname}, TPMI device '{addr}', "
                     f"package '{package}'{self._pman.hostmsg}.\nAvailable instances are: "
                     f"{instances}")
+
+    def _validate_fname_addr_package(self, fname, addr=None, package=None):
+        """
+        Validate input argument for API methods.
+           * fname - feature name to validate.
+           * addr - TPMI device address to validate.
+           * package - package number to validate.
+        """
+
+        if package is None:
+            if addr is not None:
+                # Note, 'addr' was not validated yet, will be done later.
+                package = self._addr2pkg.get(addr)
+            else:
+                known_fnames = self._known_fnames_set
+                what = ""
+        if package is not None:
+            if package not in self._fmaps:
+                packages = Human.rangify(self._fmaps)
+                raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
+                            f"package numbers are: {packages}")
+            known_fnames = self._fmaps[package]
+            what = " for package '{package}'"
+
+        if fname not in known_fnames:
+            known = ", ".join(known_fnames)
+            raise Error(f"unknown feature '{fname}'{what}{self._pman.hostmsg}, known features "
+                        f"are:\n  {known}")
+
+        if addr is not None and addr not in self._addr2pkg:
+            addrs = self._format_addrs(addrs)
+            raise Error(f"TPMI device '{addr}' does not exist for feature '{fname}'"
+                        f"{self._pman.hostmsg}, available devices are:\n * {addrs}")
 
     def read_register(self, fname, instance, regname, addr=None, package=None, bfname=None):
         """
@@ -800,8 +816,8 @@ class Tpmi():
           * bfname - optional name of the bit field to read (read the entire register by default).
         """
 
+        self._validate_fname_addr_package(fname, addr=addr, package=package)
         addr, mdmap = self._fmap_lookup(fname, instance, addr=addr, package=package)
-
         return self._read_register(addr, fname, instance, regname, mdmap=mdmap, bfname=bfname)
 
     def get_fdict(self, fname):
@@ -917,8 +933,9 @@ class Tpmi():
         self._fid2fname = {}
         # Feature maps.
         self._fmaps = None
-        # List of known feature names.
+        # Known feature names - a list and a set.
         self._known_fnames = []
+        self._known_fnames_set = set()
         # Unknown feature IDs (no spec file).
         self._unknown_fids = None
         # Package numbers for TPMI device PCI addresses.
