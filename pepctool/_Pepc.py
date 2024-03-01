@@ -674,14 +674,14 @@ def build_arguments_parser():
     subpars2.add_argument("--all", action="store_true", help=text)
 
     #
-    # Create parser for the 'tpmi info' command.
+    # Create parser for the 'tpmi read' command.
     #
-    text = "Get TPMI information."
-    descr = """Get TPMI information and print TPMI registers. """ + man_msg
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_tpmi_info_command)
+    text = "Read TPMI registers."
+    descr = """Read one or multiple TPMI registers. """ + man_msg
+    subpars2 = subparsers2.add_parser("read", help=text, description=descr, epilog=man_msg)
+    subpars2.set_defaults(func=_tpmi_read_command)
 
-    text = "Name of the TPMI feature to get information about."
+    text = "Name of the TPMI feature to read the registers for."
     subpars2.add_argument("fname", metavar="feature", help=text)
 
     text = "TPMI device to use."
@@ -744,12 +744,12 @@ def _tpmi_ls_command(args, pman):
 
     _PepcTpmi.tpmi_ls_command(args, pman)
 
-def _tpmi_info_command(args, pman):
-    """Implements the 'tpmi info' command."""
+def _tpmi_read_command(args, pman):
+    """Implements the 'tpmi read' command."""
 
     from pepctool import _PepcTpmi
 
-    _PepcTpmi.tpmi_info_command(args, pman)
+    _PepcTpmi.tpmi_read_command(args, pman)
 
 def _cpu_hotplug_info_command(args, pman):
     """Implement the 'cpu-hotplug info' command."""

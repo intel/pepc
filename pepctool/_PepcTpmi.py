@@ -61,9 +61,9 @@ def tpmi_ls_command(args, pman):
             txt = ", ".join(hex(fid) for fid in unknown)
             _LOG.info(" - %s", txt)
 
-def tpmi_info_command(args, pman):
+def tpmi_read_command(args, pman):
     """
-    Implements the 'tpmi info' command. Arguments are as follows.
+    Implements the 'tpmi read' command. Arguments are as follows.
       * args - command line arguments.
       * pman - process manager.
     """
