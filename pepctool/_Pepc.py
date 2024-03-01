@@ -681,8 +681,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_info_command)
 
-    text = "Name of the TPMI feature to use."
-    subpars2.add_argument("feature", help=text)
+    text = "Name of the TPMI feature to get information about."
+    subpars2.add_argument("fname", metavar="feature", help=text)
 
     text = "TPMI device to use."
     subpars2.add_argument("--addr", help=text)

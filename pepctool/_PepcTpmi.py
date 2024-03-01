@@ -35,7 +35,7 @@ def _parse_tpmi_args(args):
         else:
             package = None
 
-    return (args.addr, package, args.feature, instances, registers, args.bitfield)
+    return (args.addr, package, args.fname, instances, registers, args.bitfield)
 
 _LOG = logging.getLogger()
 
@@ -70,19 +70,19 @@ def tpmi_info_command(args, pman):
 
     tpmi_obj = Tpmi.Tpmi(pman=pman)
 
-    addr, package, feature, instances, registers, bfname = _parse_tpmi_args(args)
+    addr, package, fname, instances, registers, bfname = _parse_tpmi_args(args)
 
-    fdict = tpmi_obj.get_fdict(feature)
+    fdict = tpmi_obj.get_fdict(fname)
 
     if registers == "all":
         registers = fdict
 
     if instances == "all":
-        instances = (tup[2] for tup in tpmi_obj.iter_feature(feature, addr=addr, package=package))
+        instances = (tup[2] for tup in tpmi_obj.iter_feature(fname, addr=addr, package=package))
 
     for instance in instances:
         for regname in registers:
-            value = tpmi_obj.read_register(feature, instance, regname, addr=addr, package=package)
+            value = tpmi_obj.read_register(fname, instance, regname, addr=addr, package=package)
             printed = False
             for fieldname, fieldinfo in fdict[regname]["fields"].items():
                 if bfname not in ("all", fieldname):
@@ -92,7 +92,7 @@ def tpmi_info_command(args, pman):
                     printed = True
                     _LOG.info("%s[%d]: 0x%x", regname, instance, value)
 
-                value = tpmi_obj.read_register(feature, instance, regname, addr=addr,
+                value = tpmi_obj.read_register(fname, instance, regname, addr=addr,
                                                package=package, bfname=fieldname)
                 _LOG.info("  %s[%s]: %d", fieldname, fieldinfo["bits"], value)
                 _LOG.info("    %s", fieldinfo["desc"])
