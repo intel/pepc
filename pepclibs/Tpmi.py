@@ -775,6 +775,23 @@ class Tpmi():
             raise Error(f"TPMI device '{addr}' does not exist for feature '{fname}'"
                         f"{self._pman.hostmsg}, available devices are:\n * {addrs}")
 
+    def _validate_fname_addrs_packages(self, fname, addrs=None, packages=None):
+        """
+        Validate input argument for API methods.
+           * fname - feature name to validate.
+           * addrs - an iterable collection of TPMI device address to validate.
+           * packages - an iterable collection of package numbers to validate.
+        """
+
+        if packages is None:
+            packages = (None,)
+        if addrs is None:
+            addrs = (None,)
+
+        for addr in addrs:
+            for package in packages:
+                self._validate_fname_addr_package(fname, addr=addr, package=package)
+
     def get_known_features(self):
         """
         Return a list of spec dictionaries for all known features (features that are supported by
@@ -816,29 +833,41 @@ class Tpmi():
         # avoid the copying.
         return self._get_fdict(fname)
 
-    def iter_feature(self, fname, addr=None, package=None):
+    def iter_feature(self, fname, addrs=None, packages=None):
         """
         Iterate over a feature, yielding tuples of '(addr, package, instance)'. Optional 'addr' and
         'package' arguments can be used to limit the yielded tuples to a particular TPMI device PCI
         addres and/or package. The arguments are as follows.
           * fname - name of the TPMI feature to iterate.
-          * addr - TPMI device PCI address to iterate (all addresses by default).
-          * package - package number to iterate (all packages by default).
+          * addrs - an iterable collection of TPMI device PCI addresses to iterate (all addresses by
+                    default).
+          * packages - an iterable collection of package numbers to iterate (all packages by
+                       default).
         """
 
-        self._validate_fname_addr_package(fname, addr=addr, package=package)
+        self._validate_fname_addrs_packages(fname, addrs=addrs, packages=packages)
 
-        for pkg, fmap in self._fmaps.items():
+        if packages is None:
+            packages = self._fmaps
+
+        for package in packages:
+            fmap = self._fmaps[package]
+
             if fname not in fmap:
                 continue
-            if package is not None and pkg != package:
-                continue
-            for address in fmap[fname]:
-                if addr is not None and address != addr:
+
+            if addrs is None:
+                addresses = fmap[fname]
+            else:
+                addresses = addrs
+
+            for addr in addresses:
+                print(addr)
+                if addr not in fmap[fname]:
                     continue
-                mdmap = self._get_mdmap(address, pkg, fname)
+                mdmap = self._get_mdmap(addr, package, fname)
                 for instance in mdmap:
-                    yield (address, pkg, instance)
+                    yield (addr, package, instance)
 
     def read_register(self, fname, instance, regname, addr=None, package=None, bfname=None):
         """

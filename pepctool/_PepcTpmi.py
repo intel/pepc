@@ -114,8 +114,18 @@ def tpmi_read_command(args, pman):
     if registers == "all":
         registers = fdict
 
+    if addr is None:
+        addrs = None
+    else:
+        addrs = (addr,)
+
+    if package is None:
+        packages = None
+    else:
+        packages = (package,)
+
     if instances == "all":
-        instances = (tup[2] for tup in tpmi.iter_feature(fname, addr=addr, package=package))
+        instances = (tup[2] for tup in tpmi.iter_feature(fname, addrs=addrs, packages=packages))
 
     for instance in instances:
         for regname in registers:
