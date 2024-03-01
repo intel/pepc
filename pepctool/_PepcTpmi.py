@@ -106,10 +106,9 @@ def tpmi_read_command(args, pman):
       * pman - the process manager object that defines the target host.
     """
 
-    tpmi = Tpmi.Tpmi(pman=pman)
-
     addr, package, fname, instances, registers, bfname = _parse_tpmi_args(args)
 
+    tpmi = Tpmi.Tpmi(pman=pman)
     fdict = tpmi.get_fdict(fname)
 
     if registers == "all":
