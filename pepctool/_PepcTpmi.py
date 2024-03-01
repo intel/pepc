@@ -63,9 +63,9 @@ def tpmi_ls_command(args, pman):
 
 def tpmi_read_command(args, pman):
     """
-    Implements the 'tpmi read' command. Arguments are as follows.
+    Implement the 'tpmi read' command. The arguments are as follows.
       * args - command line arguments.
-      * pman - process manager.
+      * pman - the process manager object that defines the target host.
     """
 
     tpmi_obj = Tpmi.Tpmi(pman=pman)
