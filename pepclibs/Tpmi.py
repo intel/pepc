@@ -505,16 +505,15 @@ class Tpmi():
             raise Error(f"spec file for the 'tpmi_info' TPMI feature was not found, checked in the "
                         f"following directories:\n * {dirs}")
 
-        addr2pkg = {}
         fmaps = {}
 
         for fname, addrs in fname2addrs.items():
             for addr in addrs:
-                if addr not in addr2pkg:
+                if addr not in self._addr2pkg:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
                     package = self._read_register(addr, "tpmi_info", 0, "TPMI_BUS_INFO",
                                                   bfname="PACKAGE_ID", mdmap=mdmap)
-                    addr2pkg[addr] = package
+                    self._addr2pkg[addr] = package
 
                     if package not in fmaps:
                         fmaps[package] = {}
@@ -523,7 +522,7 @@ class Tpmi():
 
                     fmaps[package]["tpmi_info"][addr] = mdmap
                 else:
-                    package = addr2pkg[addr]
+                    package = self._addr2pkg[addr]
 
                 if fname not in fmaps[package]:
                     fmaps[package][fname] = {}
@@ -922,6 +921,8 @@ class Tpmi():
         self._known_fnames = []
         # Unknown feature IDs (no spec file).
         self._unknown_fids = None
+        # Package numbers for TPMI device PCI addresses.
+        self._addr2pkg = {}
 
         if not self._specdirs:
             self._specdirs = _find_spec_dirs()
