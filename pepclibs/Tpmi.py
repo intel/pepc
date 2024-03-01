@@ -841,21 +841,21 @@ class Tpmi():
         else:
             what = ""
 
-        for try_package, fmap_pkg in self._fmaps.items():
-            available_packages.add(try_package)
-            available_fnames.update(list(fmap_pkg))
+        for pkg, fmap in self._fmaps.items():
+            available_packages.add(pkg)
+            available_fnames.update(list(fmap))
 
-            if package is not None and try_package != package:
+            if package is not None and pkg != package:
                 continue
 
             package_found = True
 
-            if fname not in fmap_pkg:
+            if fname not in fmap:
                 continue
 
             fname_found = True
 
-            for try_addr in fmap_pkg[fname]:
+            for try_addr in fmap[fname]:
                 available_addrs.add(try_addr)
 
                 if addr is not None and try_addr != addr:
@@ -863,10 +863,10 @@ class Tpmi():
 
                 addr_found = True
 
-                mdmap = self._get_mdmap(try_addr, try_package, fname)
+                mdmap = self._get_mdmap(try_addr, pkg, fname)
 
                 for instance in mdmap:
-                    yield (try_addr, try_package, instance)
+                    yield (try_addr, pkg, instance)
 
         if not addr_found:
             addrs = "\n * ".join(available_addrs)
