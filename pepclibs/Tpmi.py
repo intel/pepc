@@ -91,7 +91,6 @@ Terminology.
 
 import os
 import re
-import copy
 import stat
 import logging
 import contextlib
@@ -373,11 +372,16 @@ class Tpmi():
           * desc - feature description.
           * feature-id - an integer feature ID.
           * path - path to the spec file of the feature.
+
+        Note: the sdict objects in the returned list must be considered read-only and should not be
+        modified.
         """
 
         sdicts = []
         for fname in self._known_fnames:
-            sdicts.append(self._sdicts[fname].copy())
+            # It would be safer to return deep copy of the dictionary, but for optimization
+            # purposes, avoid the copying.
+            sdicts.append(self._sdicts[fname])
         return sdicts
 
     def get_unknown_features(self):
@@ -805,9 +809,13 @@ class Tpmi():
         """
         Return a feature dictionary. The arguments are as follows.
           * fname - name of the TPMI feature to return the fdict for.
+
+        Note: the returned dictionary must be considered read-only and should not be modified.
         """
 
-        return copy.deepcopy(self._get_fdict(fname))
+        # It would be safer to return deep copy of the dictionary, but for optimization purposes,
+        # avoid the copying.
+        return self._get_fdict(fname)
 
     def iter_feature(self, fname, addr=None, package=None):
         """
