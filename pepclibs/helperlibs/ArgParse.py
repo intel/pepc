@@ -174,7 +174,10 @@ class ArgsParser(argparse.ArgumentParser):
         return subparsers
 
     def error(self, message):
-        """Print the error message and exit."""
+        """
+        Print the error message and exit. The arguments are as follows.
+          * message - the error message to print.
+        """
 
         # Check if the user only made a minor typo, and improve the message if they did.
         if "invalid choice: " not in message:
@@ -241,6 +244,7 @@ def parse_int_list(nums, ints=False, dedup=False, sort=False):
     Turn a string containing a comma-separated list of numbers and ranges into a list of numbers and
     return it. For example, a string like "0,1-3,7" would become ["0", "1", "2", "3", "7"].
     Optional arguments are:
+      * nums - the string with numbers to convet to a list.
       * ints - controls whether the resulting list should contain strings or integers.
       * dedup - controls whether returned list should include duplicate values or not.
       * sort - controls whether returned list is sorted or not.
