@@ -271,31 +271,6 @@ def _add_config_subcommand_options(props, subpars):
         option = f"--{name.replace('_', '-')}"
         subpars.add_argument(option, **kwargs)
 
-def _add_tpmi_subcommand_options(subpars):
-    """Add options to the TPMI subcommands."""
-
-    text = "Name of the TPMI feature to use."
-    subpars.add_argument("feature", help=text)
-
-    text = "TPMI device to use."
-    subpars.add_argument("--addr", help=text)
-
-    text = """Package to use. By default, uses package 0 if the TPMI device has not been defined by
-              the '--addr' option."""
-    subpars.add_argument("--package", help=text)
-
-    text = """TPMI instance to use. A special value 'all' can be used to specify all instances, and
-              this is the default."""
-    subpars.add_argument("--instance", help=text, default="all")
-
-    text = """Name of the TPMI register to use. A special value 'all' can be used to specify all
-              registers, and this is the default."""
-    subpars.add_argument("--register", help=text, default="all")
-
-    text = """Name of the TPMI register bitfield to use. A special value 'all' can be used to
-              specify all fields, and this is the default."""
-    subpars.add_argument("--bitfield", help=text, default="all")
-
 def build_arguments_parser():
     """Build and return the the command-line arguments parser object."""
 
@@ -706,7 +681,28 @@ def build_arguments_parser():
     descr = """Read and parse the contents for the specified TPMI registers. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_info_command)
-    _add_tpmi_subcommand_options(subpars2)
+
+    text = "Name of the TPMI feature to use."
+    subpars2.add_argument("feature", help=text)
+
+    text = "TPMI device to use."
+    subpars2.add_argument("--addr", help=text)
+
+    text = """Package to use. By default, uses package 0 if the TPMI device has not been defined by
+              the '--addr' option."""
+    subpars2.add_argument("--package", help=text)
+
+    text = """TPMI instance to use. A special value 'all' can be used to specify all instances, and
+              this is the default."""
+    subpars2.add_argument("--instance", help=text, default="all")
+
+    text = """Name of the TPMI register to use. A special value 'all' can be used to specify all
+              registers, and this is the default."""
+    subpars2.add_argument("--register", help=text, default="all")
+
+    text = """Name of the TPMI register bitfield to use. A special value 'all' can be used to
+              specify all fields, and this is the default."""
+    subpars2.add_argument("--bitfield", help=text, default="all")
 
     if argcomplete:
         argcomplete.autocomplete(parser)
