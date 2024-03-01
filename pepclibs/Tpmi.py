@@ -842,68 +842,19 @@ class Tpmi():
           * package - package number to iterate (all packages by default).
         """
 
-        fname_found = False
-        available_fnames = set()
-        package_found = package is None
-        available_packages = set()
-        addr_found = addr is None
-        available_addrs = set()
-
-        if addr is not None:
-            what = f" for TPMI device '{addr}'"
-        elif package is not None:
-            what = f" for package '{package}'"
-        else:
-            what = ""
+        self._validate_fname_addr_package(fname, addr=addr, package=package)
 
         for pkg, fmap in self._fmaps.items():
-            available_packages.add(pkg)
-            available_fnames.update(list(fmap))
-
-            if package is not None and pkg != package:
-                continue
-
-            package_found = True
-
             if fname not in fmap:
                 continue
-
-            fname_found = True
-
-            for try_addr in fmap[fname]:
-                available_addrs.add(try_addr)
-
-                if addr is not None and try_addr != addr:
+            if package is not None and pkg != package:
+                continue
+            for address in fmap[fname]:
+                if addr is not None and address != addr:
                     continue
-
-                addr_found = True
-
-                mdmap = self._get_mdmap(try_addr, pkg, fname)
-
+                mdmap = self._get_mdmap(address, pkg, fname)
                 for instance in mdmap:
-                    yield (try_addr, pkg, instance)
-
-        if not addr_found:
-            addrs = "\n * ".join(available_addrs)
-            if addr is not None:
-                what = ""
-
-            raise Error(f"unknown TPMI device address '{addr}'{what}{self._pman.hostmsg}, "
-                        f"available devices are:\n * {addrs}")
-
-        if not package_found:
-            packages = Human.rangify(available_packages)
-            if package is not None:
-                what = ""
-
-            raise Error(f"invalid package number '{package}'{what}{self._pman.hostmsg}, valid "
-                        f" package numbers are: {packages}")
-
-        if not fname_found:
-            known = ", ".join(available_fnames)
-
-            raise Error(f"unknown feature '{fname}'{what}{self._pman.hostmsg}, known features "
-                        f"are:\n  {known}")
+                    yield (address, pkg, instance)
 
     def __init__(self, pman, specdirs=None):
         """
