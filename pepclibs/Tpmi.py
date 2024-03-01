@@ -215,12 +215,12 @@ class Tpmi():
     Provide API for reading and writing TPMI registers on Intel CPUs.
 
     Public methods overview.
-      * 'read_register()' - read a TPMI register.
       * 'get_known_features()' - known features information.
       * 'get_unknown_features()' - unknown features information.
-      * 'iter_feature()' - get feature details.
       * 'get_fdict()' - get fdict for a TPMI feature (a dictionary describing the TPMI registers of
                         the feature).
+      * 'iter_feature()' - get feature details.
+      * 'read_register()' - read a TPMI register.
     """
 
     def _format_fdict(self, fname, specpath, spec):
@@ -362,35 +362,6 @@ class Tpmi():
                         f"{known}")
 
         return sdict
-
-    def get_known_features(self):
-        """
-        Return a list of spec dictionaries for all known features (features that are supported by
-        the target host and there is a spec file available). The spec dictionary includes the
-        following keys.
-          * name - feature name.
-          * desc - feature description.
-          * feature-id - an integer feature ID.
-          * path - path to the spec file of the feature.
-
-        Note: the sdict objects in the returned list must be considered read-only and should not be
-        modified.
-        """
-
-        sdicts = []
-        for fname in self._known_fnames:
-            # It would be safer to return deep copy of the dictionary, but for optimization
-            # purposes, avoid the copying.
-            sdicts.append(self._sdicts[fname])
-        return sdicts
-
-    def get_unknown_features(self):
-        """
-        Return a list of feature IDs for all unknown features (features that are supported by the
-        target host and there is no spec file available).
-        """
-
-        return list(self._unknown_fids)
 
     def _get_debugfs_tpmi_dirs(self):
         """
@@ -804,21 +775,34 @@ class Tpmi():
             raise Error(f"TPMI device '{addr}' does not exist for feature '{fname}'"
                         f"{self._pman.hostmsg}, available devices are:\n * {addrs}")
 
-    def read_register(self, fname, instance, regname, addr=None, package=None, bfname=None):
+    def get_known_features(self):
         """
-        Read a TPMI register or a bit field of a TPMI register and return the result. The arguments
-        are as follows.
-          * fname - name of the TPMI feature to read.
-          * regname - name of the TPMI register to read.
-          * addr - optional TPM device PCI address.
-          * package - optional package number.
-          * instance - the TPMI instance number to read.
-          * bfname - optional name of the bit field to read (read the entire register by default).
+        Return a list of spec dictionaries for all known features (features that are supported by
+        the target host and there is a spec file available). The spec dictionary includes the
+        following keys.
+          * name - feature name.
+          * desc - feature description.
+          * feature-id - an integer feature ID.
+          * path - path to the spec file of the feature.
+
+        Note: the sdict objects in the returned list must be considered read-only and should not be
+        modified.
         """
 
-        self._validate_fname_addr_package(fname, addr=addr, package=package)
-        addr, mdmap = self._fmap_lookup(fname, instance, addr=addr, package=package)
-        return self._read_register(addr, fname, instance, regname, mdmap=mdmap, bfname=bfname)
+        sdicts = []
+        for fname in self._known_fnames:
+            # It would be safer to return deep copy of the dictionary, but for optimization
+            # purposes, avoid the copying.
+            sdicts.append(self._sdicts[fname])
+        return sdicts
+
+    def get_unknown_features(self):
+        """
+        Return a list of feature IDs for all unknown features (features that are supported by the
+        target host and there is no spec file available).
+        """
+
+        return list(self._unknown_fids)
 
     def get_fdict(self, fname):
         """
@@ -855,6 +839,22 @@ class Tpmi():
                 mdmap = self._get_mdmap(address, pkg, fname)
                 for instance in mdmap:
                     yield (address, pkg, instance)
+
+    def read_register(self, fname, instance, regname, addr=None, package=None, bfname=None):
+        """
+        Read a TPMI register or a bit field of a TPMI register and return the result. The arguments
+        are as follows.
+          * fname - name of the TPMI feature to read.
+          * regname - name of the TPMI register to read.
+          * addr - optional TPM device PCI address.
+          * package - optional package number.
+          * instance - the TPMI instance number to read.
+          * bfname - optional name of the bit field to read (read the entire register by default).
+        """
+
+        self._validate_fname_addr_package(fname, addr=addr, package=package)
+        addr, mdmap = self._fmap_lookup(fname, instance, addr=addr, package=package)
+        return self._read_register(addr, fname, instance, regname, mdmap=mdmap, bfname=bfname)
 
     def __init__(self, pman, specdirs=None):
         """
