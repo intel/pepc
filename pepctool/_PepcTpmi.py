@@ -40,7 +40,7 @@ def _parse_tpmi_args(args):
 
     return (args.addr, package, args.fname, instances, registers, args.bitfield)
 
-def _ls_long(args, fname, tpmi, prefix=""):
+def _ls_long(fname, tpmi, prefix=""):
     """Print extra information about feature 'fname' (in case of the 'tpmi ls -l' command)."""
 
     # A dictionary with the info that will be printed.
@@ -90,7 +90,7 @@ def tpmi_ls_command(args, pman):
         for sdict in sdicts:
             _LOG.info(" - %s: %s", sdict["name"], sdict["desc"].strip())
             if args.long:
-                _ls_long(args, sdict["name"], tpmi, prefix="   ")
+                _ls_long(sdict["name"], tpmi, prefix="   ")
 
     if args.all:
         fnames = tpmi.get_unknown_features()
