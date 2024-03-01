@@ -8,7 +8,7 @@ registers:
         fields:
             LOCK:
                 bits: "63:63"
-                desc: "1 - all settings in this register are locked, othewise unlocked"
+                desc: "1 - all settings in this register are locked, otherwise unlocked"
             RSVD:
                 bits: "62:4"
                 desc: "Reserved"
@@ -79,7 +79,7 @@ registers:
         fields:
             LOCK:
                 bits: "63:63"
-                desc: "1 - all settings in this register are locked, othewise unlocked"
+                desc: "1 - all settings in this register are locked, otherwise unlocked"
             PWR_LIM:
                 bits: "17:0"
                 desc: "Power limitation for the package RAPL domain"
@@ -98,7 +98,7 @@ registers:
         fields:
             LOCK:
                 bits: "63:63"
-                desc: "1 - all settings in this register are locked, othewise unlocked"
+                desc: "1 - all settings in this register are locked, otherwise unlocked"
             PWR_LIM:
                 bits: "17:0"
                 desc: "Power limitation for the package RAPL domain"
@@ -124,7 +124,7 @@ registers:
         fields:
             LOCK:
                 bits: "63:63"
-                desc: "1 - all settings in this register are locked, othewise unlocked"
+                desc: "1 - all settings in this register are locked, otherwise unlocked"
             PWR_LIM:
                 bits: "17:0"
                 desc: "Power limitation for the package RAPL domain"
@@ -140,7 +140,7 @@ registers:
         fields:
             LOCK:
                 bits: "63:63"
-                desc: "1 - all settings in this register are locked, othewise unlocked"
+                desc: "1 - all settings in this register are locked, otherwise unlocked"
             MAX_PL1:
                 bits: "17:0"
                 desc: "MAX PL1, meaning depends on domain type"
