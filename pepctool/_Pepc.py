@@ -653,9 +653,10 @@ def build_arguments_parser():
     #
     # Create parser for the 'tpmi' command.
     #
-    text = "TPMI read/write commands."
+    text = "TPMI commands."
     man_msg = """Please, refer to 'pepc-tpmi' manual page for more information."""
-    descr = "TPMI read/write commands. " + man_msg
+    descr = """Read, write, and discover TPMI (Topology Aware Register and PM Capsule Interface)
+               registers. """ + man_msg
     subpars = subparsers.add_parser("tpmi", help=text, description=descr)
 
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
@@ -665,20 +666,18 @@ def build_arguments_parser():
     # Create parser for the 'tpmi ls' command.
     #
     text = "List available TPMI features."
-    descr = """Parse the available TPMI features based on both sysfs contents on the target system
-               and the available TPMI register specifications.""" + man_msg
+    descr = """List TPMI features supported by the target system. """ + man_msg
     subpars2 = subparsers2.add_parser("ls", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_ls_command)
 
-    text = """List every available TPMI feature, including also the ones that don't have spec data
-              available for them."""
+    text = """List unknown TPMI features as well (the features without a spec file available)."""
     subpars2.add_argument("--all", action="store_true", help=text)
 
     #
     # Create parser for the 'tpmi info' command.
     #
     text = "Get TPMI information."
-    descr = """Read and parse the contents for the specified TPMI registers. """ + man_msg
+    descr = """Get TPMI information and print TPMI registers. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_info_command)
 
