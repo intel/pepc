@@ -670,6 +670,9 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("ls", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_ls_command)
 
+    text = """Include information about packages, TPMI addresses, and instances."""
+    subpars2.add_argument("-l", "--long", action="store_true", help=text)
+
     text = """List unknown TPMI features as well (the features without a spec file available)."""
     subpars2.add_argument("--all", action="store_true", help=text)
 
