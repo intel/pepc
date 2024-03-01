@@ -788,14 +788,14 @@ class Tpmi():
                     f"package '{package}'{self._pman.hostmsg}.\nAvailable instances are: "
                     f"{instances}")
 
-    def read_register(self, fname, instance, regname, package=None, addr=None, bfname=None):
+    def read_register(self, fname, instance, regname, addr=None, package=None, bfname=None):
         """
         Read a TPMI register or a bit field of a TPMI register and return the result. The arguments
         are as follows.
           * fname - name of the TPMI feature to read.
-          * package - optional package number.
           * regname - name of the TPMI register to read.
           * addr - optional TPM device PCI address.
+          * package - optional package number.
           * instance - the TPMI instance number to read.
           * bfname - optional name of the bit field to read (read the entire register by default).
         """
