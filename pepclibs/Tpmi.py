@@ -476,7 +476,7 @@ class Tpmi():
             raise Error(f"spec file for the 'tpmi_info' TPMI feature was not found, checked in the "
                         f"following directories:\n * {dirs}")
 
-        fmaps = {}
+        fmaps_old = {}
 
         for fname, addrs in fname2addrs.items():
             for addr in addrs:
@@ -486,27 +486,27 @@ class Tpmi():
                                                   bfname="PACKAGE_ID", mdmap=mdmap)
                     self._addr2pkg[addr] = package
 
-                    if package not in fmaps:
-                        fmaps[package] = {}
-                    if "tpmi_info" not in fmaps[package]:
-                        fmaps[package]["tpmi_info"] = {}
+                    if package not in fmaps_old:
+                        fmaps_old[package] = {}
+                    if "tpmi_info" not in fmaps_old[package]:
+                        fmaps_old[package]["tpmi_info"] = {}
 
-                    fmaps[package]["tpmi_info"][addr] = mdmap
+                    fmaps_old[package]["tpmi_info"][addr] = mdmap
                 else:
                     package = self._addr2pkg[addr]
 
-                if fname not in fmaps[package]:
-                    fmaps[package][fname] = {}
+                if fname not in fmaps_old[package]:
+                    fmaps_old[package][fname] = {}
 
                 if fname != "tpmi_info":
-                    fmaps[package][fname][addr] = None
+                    fmaps_old[package][fname][addr] = None
 
-        self._fmaps_old = fmaps
+        self._fmaps_old = fmaps_old
         self._unknown_fids = unknown_fids
 
         # Initialize 'self._known_fnames' and 'self._known_fnames_set'.
         self._known_fnames_set = set()
-        for fmap in fmaps.values():
+        for fmap in fmaps_old.values():
             for fname in fmap:
                 if fname not in self._known_fnames_set:
                     self._known_fnames.append(fname)
