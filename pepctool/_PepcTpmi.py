@@ -82,21 +82,8 @@ def tpmi_read_command(args, pman):
       * pman - the process manager object that defines the target host.
     """
 
-    if args.package is not None:
-        package = int(args.package)
-    else:
-        if not args.addrs:
-            package = 0
-        else:
-            package = None
-
     tpmi = Tpmi.Tpmi(pman=pman)
     fdict = tpmi.get_fdict(args.fname)
-
-    if package is None:
-        packages = None
-    else:
-        packages = (package,)
 
     if not args.addrs:
         addrs = [tup[0] for tup in tpmi.iter_feature(args.fname)]
@@ -109,16 +96,14 @@ def tpmi_read_command(args, pman):
         Trivial.split_csv_line(args.registers, dedup=True)
 
     if args.instance == "all":
-        instances = (tup[2] for tup in tpmi.iter_feature(args.fname, addrs=addrs,
-                                                         packages=packages))
+        instances = (tup[2] for tup in tpmi.iter_feature(args.fname, addrs=addrs))
     else:
         Trivial.split_csv_line_int(args.registers, dedup=True, what="TPMI instance numbers")
 
     for addr in addrs:
         for instance in instances:
             for regname in registers:
-                value = tpmi.read_register(args.fname, instance, regname, addr=addr,
-                                        package=package)
+                value = tpmi.read_register(args.fname, instance, regname, addr=addr)
                 printed = False
                 for fieldname, fieldinfo in fdict[regname]["fields"].items():
                     if args.bitfield not in ("all", fieldname):
@@ -129,6 +114,6 @@ def tpmi_read_command(args, pman):
                         _LOG.info("%s[%d]: 0x%x", regname, instance, value)
 
                     value = tpmi.read_register(args.fname, instance, regname, addr=addr,
-                                            package=package, bfname=fieldname)
+                                               bfname=fieldname)
                     _LOG.info("  %s[%s]: %d", fieldname, fieldinfo["bits"], value)
                     _LOG.info("    %s", fieldinfo["desc"])

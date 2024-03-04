@@ -691,9 +691,9 @@ def build_arguments_parser():
               devices by default)."""
     subpars2.add_argument("-a", "--addrs", help=text)
 
-    text = """Package to use. By default, uses package 0 if the TPMI device has not been defined by
-              the '--addrs' option."""
-    subpars2.add_argument("--package", help=text)
+    text = """Comma-separated list of package numbers to read TPMI registers for (all packages by
+              default)."""
+    subpars2.add_argument("--packages", help=text)
 
     text = """TPMI instance to use. A special value 'all' can be used to specify all instances, and
               this is the default."""
