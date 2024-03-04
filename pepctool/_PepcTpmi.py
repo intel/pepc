@@ -12,8 +12,7 @@ Implement the 'pepc tpmi' command.
 
 import logging
 from pepclibs import Tpmi
-from pepclibs.helperlibs import Human
-from pepctool import _PepcCommon
+from pepclibs.helperlibs import Human, Trivial
 
 _LOG = logging.getLogger()
 
@@ -83,16 +82,6 @@ def tpmi_read_command(args, pman):
       * pman - the process manager object that defines the target host.
     """
 
-    if args.register == "all":
-        registers = "all"
-    else:
-        registers = args.register.split(",")
-
-    if args.instance == "all":
-        instances = "all"
-    else:
-        instances = _PepcCommon.parse_cpus_string(args.instance)
-
     if args.package is not None:
         package = int(args.package)
     else:
@@ -104,9 +93,6 @@ def tpmi_read_command(args, pman):
     tpmi = Tpmi.Tpmi(pman=pman)
     fdict = tpmi.get_fdict(args.fname)
 
-    if registers == "all":
-        registers = fdict
-
     if args.addr is None:
         addrs = None
     else:
@@ -117,9 +103,16 @@ def tpmi_read_command(args, pman):
     else:
         packages = (package,)
 
-    if instances == "all":
+    if args.register == "all":
+        registers = list(fdict)
+    else:
+        Trivial.split_csv_line(args.registers, dedup=True)
+
+    if args.instance == "all":
         instances = (tup[2] for tup in tpmi.iter_feature(args.fname, addrs=addrs,
                                                          packages=packages))
+    else:
+        Trivial.split_csv_line_int(args.registers, dedup=True, what="TPMI instance numbers")
 
     for instance in instances:
         for regname in registers:
