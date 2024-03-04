@@ -504,17 +504,13 @@ class Tpmi():
         self._fmaps = fmaps
         self._unknown_fids = unknown_fids
 
-        # Initialize 'self._known_fnames' and 'self._pkg2sdicts'.
+        # Initialize 'self._known_fnames' and 'self._known_fnames_set'.
         self._known_fnames_set = set()
-        for pkg, fmap in fmaps.items():
+        for fmap in fmaps.values():
             for fname in fmap:
                 if fname not in self._known_fnames_set:
                     self._known_fnames.append(fname)
                     self._known_fnames_set.add(fname)
-
-                if pkg not in self._pkg2sdicts:
-                    self._pkg2sdicts[pkg] = {}
-                self._pkg2sdicts[pkg][fname] = self._sdicts[fname]
 
     def _get_debugfs_feature_path(self, addr, fname):
         """
@@ -905,9 +901,6 @@ class Tpmi():
         self._tpmi_pci_paths = None
         # Spec files "sdict" dictionaries for every supported feature.
         self._sdicts = None
-        # Similar to 'self._sdicts', but on per-package basis, and includes only known features
-        # (supported and have a spec file).
-        self._pkg2sdicts = {}
         # The feature ID -> feature name dictionary (supported features only).
         self._fid2fname = {}
         # Feature maps.
