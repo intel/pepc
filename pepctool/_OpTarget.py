@@ -13,7 +13,7 @@ terms of what CPU, core, module, die, or package numbers the operation should re
 
 import logging
 from pepclibs import CPUInfo
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, ArgParse, Human, Trivial
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Human, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
@@ -197,7 +197,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         self._cache["packages"] = Trivial.list_dedup(packages)
         return self._cache["packages"]
 
-    def _parse_input_nums(self, nums):
+    def _parse_input_nums(self, nums, what=None):
         """
         Parse an '__init__()' input argument that includes a collection of numbers (such as CPU
         numbers). Return a list of integer numbers.
@@ -205,7 +205,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         if nums == "all":
             return nums
-        return ArgParse.parse_int_list(nums, ints=True, dedup=True)
+        return Trivial.parse_int_list(nums, dedup=True, what=what)
 
     def _raise_no_pkg(self, what):
         """"
@@ -354,13 +354,13 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             packages = "all"
 
         if cpus:
-            nums = self._parse_input_nums(cpus)
+            nums = self._parse_input_nums(cpus, what="CPU numbers")
             self.cpus = self._cpuinfo.normalize_cpus(nums, offline_ok=offline_ok)
         if modules:
-            nums = self._parse_input_nums(modules)
+            nums = self._parse_input_nums(modules, what="module numbers")
             self.modules = self._cpuinfo.normalize_modules(nums)
         if packages:
-            nums = self._parse_input_nums(packages)
+            nums = self._parse_input_nums(packages, what="package numbers")
             self.packages = self._cpuinfo.normalize_packages(nums)
 
         # Core and die numbers are relative to the package number. Store them in a dictionary
@@ -371,7 +371,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         if cores:
             self.cores = {}
             if not isinstance(cores, dict):
-                nums = self._parse_input_nums(cores)
+                nums = self._parse_input_nums(cores, what="core numbers")
                 if not packages and self._cpuinfo.get_packages_count() > 1:
                     self._raise_no_pkg("core")
                 for pkg in pkgs:
@@ -390,7 +390,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         if dies:
             self.dies = {}
             if not isinstance(dies, dict):
-                nums = self._parse_input_nums(dies)
+                nums = self._parse_input_nums(dies, what="die numbers")
                 if not packages and self._cpuinfo.get_packages_count() > 1:
                     self._raise_no_pkg("die")
                 for pkg in pkgs:
@@ -407,12 +407,13 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         _cpus = None
         if core_siblings:
-            self.core_siblings = self._parse_input_nums(core_siblings)
+            self.core_siblings = self._parse_input_nums(core_siblings, what="core sibling numbers")
             _cpus = self._get_cpus()
             self.core_sib_cpus = self._cpuinfo.select_core_siblings(_cpus, self.core_siblings)
 
         if module_siblings:
-            self.module_siblings = self._parse_input_nums(module_siblings)
+            self.module_siblings = self._parse_input_nums(module_siblings,
+                                                          what="module sibling numbers")
             _cpus = self._get_cpus()
             self.module_sib_cpus = self._cpuinfo.select_core_siblings(_cpus, self.module_siblings)
 

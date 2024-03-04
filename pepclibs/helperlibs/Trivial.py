@@ -283,3 +283,30 @@ def split_csv_line_int(csv_line, sep=",", dedup=False, base=0, what=None):
         result += range(range_vals[0], range_vals[1] + 1)
 
     return result
+
+def parse_int_list(nums, sep=",", dedup=False, base=0, what=None):
+    """
+    Same as 'split_csv_line_int()', but also accepts non-strings on input. The arguments are as
+    follows.
+      * nums - the numbers to parse.
+      * sep - the possible separator character (comma by default).
+      * dedup - if 'True', remove duplicated elements from the returned list.
+      * base - base of the values in 'nums' (default - auto-detect based on the prefix).
+      * what - a string describing the values in 'nums', for the possible error message.
+
+    Here are some examples.
+      - Input: nums = "0,1-3,7"
+      - Output: [0, 1, 2, 3, 7].
+      - Input: nums = ["1", "4-7]
+      - Output: [1, 4, 5, 6, 7].
+    """
+
+    if isinstance(nums, int):
+        nums = [nums]
+    elif not is_iterable(nums):
+        nums = [nums]
+
+    if not isinstance(nums, str):
+        nums = sep.join([str(num) for num in nums])
+
+    return split_csv_line_int(nums, sep=sep, dedup=dedup, base=base, what=what)

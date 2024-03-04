@@ -20,7 +20,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from pepclibs.helperlibs import DamerauLevenshtein, Trivial
+from pepclibs.helperlibs import DamerauLevenshtein
 from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
 
 SSH_OPTIONS = [
@@ -238,52 +238,3 @@ class SSHOptsAwareArgsParser(ArgsParser):
 
         args_new = non_ssh_args + ssh_args
         return super().parse_args(args=args_new, **kwargs)
-
-def parse_int_list(nums, ints=False, dedup=False, sort=False):
-    """
-    Turn a string containing a comma-separated list of numbers and ranges into a list of numbers and
-    return it. For example, a string like "0,1-3,7" would become ["0", "1", "2", "3", "7"].
-    Optional arguments are:
-      * nums - the string with numbers to convet to a list.
-      * ints - controls whether the resulting list should contain strings or integers.
-      * dedup - controls whether returned list should include duplicate values or not.
-      * sort - controls whether returned list is sorted or not.
-    """
-
-    if nums is None:
-        return None
-
-    if isinstance(nums, int):
-        nums = [nums]
-    elif isinstance(nums, str):
-        nums = Trivial.split_csv_line(nums)
-    elif not Trivial.is_iterable(nums):
-        nums = [nums]
-
-    result = []
-    for elts in nums:
-        if type(elts) is int: # pylint: disable=unidiomatic-typecheck
-            result.append(elts)
-        elif isinstance(elts, str):
-            if "-" in elts:
-                elts = [Trivial.str_to_int(val) for val in elts.split("-") if val]
-                if len(elts) != 2:
-                    raise Error(f"bad range '{elts}', should be two integers separated by '-'")
-
-                if elts[0] > elts[1]:
-                    raise Error(f"bad range {elts[0]}-{elts[1]}, the first number should be "
-                                f"smaller than thesecond")
-
-                result += range(elts[0], elts[1] + 1)
-            else:
-                result.append(Trivial.str_to_int(elts))
-        else:
-            raise Error(f"bad data '{elts}', should be an integer or string")
-
-    if dedup:
-        result = Trivial.list_dedup(result)
-    if sort:
-        result = sorted(result)
-    if not ints:
-        result = [str(num) for num in result]
-    return result

@@ -12,7 +12,7 @@ Misc. helpers shared between various 'pepc' commands.
 
 import logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.helperlibs import Systemctl, Trivial, ArgParse
+from pepclibs.helperlibs import Systemctl, Trivial
 from pepctool._OpTarget import ErrorNoTarget, ErrorNoCPUTarget
 
 _LOG = logging.getLogger()
@@ -44,7 +44,7 @@ def parse_cpus_string(cpus_str):
 
     if cpus_str == "all":
         return cpus_str
-    return ArgParse.parse_int_list(cpus_str, ints=True, dedup=True)
+    return Trivial.parse_int_list(cpus_str, dedup=True, what="CPU numbers")
 
 def override_cpu_model(cpuinfo, model):
     """

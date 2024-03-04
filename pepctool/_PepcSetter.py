@@ -14,7 +14,7 @@ This module provides API for changing P-state and C-state properties.
 import sys
 import contextlib
 from pepctool import _PepcCommon, _OpTarget
-from pepclibs.helperlibs import ClassHelpers, YAML, ArgParse
+from pepclibs.helperlibs import ClassHelpers, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.PStates import ErrorFreqOrder
 
@@ -201,12 +201,13 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                 else:
                     sname = "die"
 
+                what = f"{sname} numbers"
                 if sname in ("CPU", "package"):
-                    nums = ArgParse.parse_int_list(pinfo[sname], ints=True, dedup=True)
+                    nums = Trivial.parse_int_list(pinfo[sname], dedup=True, what=what)
                 else:
                     nums = {}
                     for pkg, dies in pinfo[sname].items():
-                        nums[pkg] = ArgParse.parse_int_list(dies, ints=True, dedup=True)
+                        nums[pkg] = Trivial.parse_int_list(dies, dedup=True, what=what)
 
                 self._restore_prop(pname, sname, pinfo["value"], nums)
 
