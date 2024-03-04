@@ -862,7 +862,6 @@ class Tpmi():
                 addresses = addrs
 
             for addr in addresses:
-                print(addr)
                 if addr not in fmap[fname]:
                     continue
                 mdmap = self._get_mdmap(addr, package, fname)
