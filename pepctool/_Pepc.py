@@ -687,11 +687,11 @@ def build_arguments_parser():
     text = "Name of the TPMI feature to read the registers for."
     subpars2.add_argument("fname", metavar="feature", help=text)
 
-    text = "TPMI device to use."
-    subpars2.add_argument("--addr", help=text)
+    text = "Comma-separated list of TPMI device PCI addresses to read the registers from."
+    subpars2.add_argument("-a", "--addrs", help=text)
 
     text = """Package to use. By default, uses package 0 if the TPMI device has not been defined by
-              the '--addr' option."""
+              the '--addrs' option."""
     subpars2.add_argument("--package", help=text)
 
     text = """TPMI instance to use. A special value 'all' can be used to specify all instances, and
