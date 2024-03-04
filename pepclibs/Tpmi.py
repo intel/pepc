@@ -494,6 +494,11 @@ class Tpmi():
                                                   bfname="PACKAGE_ID", mdmap=mdmap)
                     fmaps["tpmi_info"][addr] = {"package": package, "mdmap": mdmap}
 
+                    if package not in self._pkg2addrs:
+                        self._pkg2addrs[package] = set()
+
+                    self._pkg2addrs[package].add(addr)
+
                 if fname == "tpmi_info":
                     continue
 
@@ -934,6 +939,8 @@ class Tpmi():
         self._fmaps = None
         # Feature maps (old data structure, will go away soon).
         self._fmaps_old = None
+        # Package number -> set of PCI addresses.
+        self._pkg2addrs = {}
         # Known feature names - a list and a set.
         self._known_fnames = []
         self._known_fnames_set = set()
