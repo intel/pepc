@@ -482,7 +482,7 @@ class Tpmi():
             for addr in addrs:
                 if addr not in self._addr2pkg:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
-                    package = self._read_register(addr, "tpmi_info", 0, "TPMI_BUS_INFO",
+                    package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
                                                   bfname="PACKAGE_ID", mdmap=mdmap)
                     self._addr2pkg[addr] = package
 
@@ -639,11 +639,11 @@ class Tpmi():
         bitdict = fieldsdict[bfname]
         return (regval & bitdict["bitmask"]) >> bitdict["bitshift"]
 
-    def _read_register(self, addr, fname, instance, regname, bfname=None, mdmap=None):
+    def _read_register(self, fname, addr, instance, regname, bfname=None, mdmap=None):
         """
         Read a TPMI register. The arguments are as follows.
-          * addr - the TPMI device address.
           * fname - name of the TPMI feature the register belongs to.
+          * addr - the TPMI device address.
           * instance - the TPMI instance to read the register from.
           * regname - name of the TPMI register to read.
           * bfname - bit field name to read (read whole register by default).
@@ -668,7 +668,7 @@ class Tpmi():
 
         return val
 
-    def _get_mdmap(self, addr, package, fname):
+    def _get_mdmap(self, fname, addr, package):
         """Get mdmap for a TPMI feature."""
 
         mdmap = self._fmaps[package][fname][addr]
@@ -717,7 +717,7 @@ class Tpmi():
             else:
                 matched_addrs = []
                 for try_addr in addrs:
-                    mdmap = self._get_mdmap(try_addr, package, fname)
+                    mdmap = self._get_mdmap(fname, try_addr, package)
                     if instance in mdmap:
                         matched_addrs.append(try_addr)
 
@@ -729,7 +729,7 @@ class Tpmi():
                                 f"the ambiguity:\n * {matched_addrs}")
                 addr = matched_addrs[0]
 
-        mdmap = self._get_mdmap(addr, package, fname)
+        mdmap = self._get_mdmap(fname, addr, package)
         if instance in mdmap:
             return addr, mdmap
 
@@ -860,7 +860,7 @@ class Tpmi():
             for addr in addresses:
                 if addr not in fmap[fname]:
                     continue
-                mdmap = self._get_mdmap(addr, package, fname)
+                mdmap = self._get_mdmap(fname, addr, package)
                 for instance in mdmap:
                     yield (addr, package, instance)
 
@@ -878,7 +878,7 @@ class Tpmi():
 
         self._validate_fname_addr_package(fname, addr=addr, package=package)
         addr, mdmap = self._fmap_lookup(fname, instance, addr=addr, package=package)
-        return self._read_register(addr, fname, instance, regname, mdmap=mdmap, bfname=bfname)
+        return self._read_register(fname, addr, instance, regname, mdmap=mdmap, bfname=bfname)
 
     def __init__(self, pman, specdirs=None):
         """
