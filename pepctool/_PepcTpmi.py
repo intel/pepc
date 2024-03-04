@@ -85,7 +85,7 @@ def tpmi_read_command(args, pman):
     if args.package is not None:
         package = int(args.package)
     else:
-        if not args.addr:
+        if not args.addrs:
             package = 0
         else:
             package = None
@@ -93,15 +93,15 @@ def tpmi_read_command(args, pman):
     tpmi = Tpmi.Tpmi(pman=pman)
     fdict = tpmi.get_fdict(args.fname)
 
-    if args.addr is None:
-        addrs = None
-    else:
-        addrs = (args.addr,)
-
     if package is None:
         packages = None
     else:
         packages = (package,)
+
+    if not args.addrs:
+        addrs = [tup[0] for tup in tpmi.iter_feature(args.fname)]
+    else:
+        addrs = Trivial.split_csv_line(args.addr, dedup=True)
 
     if args.register == "all":
         registers = list(fdict)
@@ -114,20 +114,21 @@ def tpmi_read_command(args, pman):
     else:
         Trivial.split_csv_line_int(args.registers, dedup=True, what="TPMI instance numbers")
 
-    for instance in instances:
-        for regname in registers:
-            value = tpmi.read_register(args.fname, instance, regname, addr=args.addr,
-                                       package=package)
-            printed = False
-            for fieldname, fieldinfo in fdict[regname]["fields"].items():
-                if args.bitfield not in ("all", fieldname):
-                    continue
+    for addr in addrs:
+        for instance in instances:
+            for regname in registers:
+                value = tpmi.read_register(args.fname, instance, regname, addr=addr,
+                                        package=package)
+                printed = False
+                for fieldname, fieldinfo in fdict[regname]["fields"].items():
+                    if args.bitfield not in ("all", fieldname):
+                        continue
 
-                if not printed:
-                    printed = True
-                    _LOG.info("%s[%d]: 0x%x", regname, instance, value)
+                    if not printed:
+                        printed = True
+                        _LOG.info("%s[%d]: 0x%x", regname, instance, value)
 
-                value = tpmi.read_register(args.fname, instance, regname, addr=args.addr,
-                                           package=package, bfname=fieldname)
-                _LOG.info("  %s[%s]: %d", fieldname, fieldinfo["bits"], value)
-                _LOG.info("    %s", fieldinfo["desc"])
+                    value = tpmi.read_register(args.fname, instance, regname, addr=addr,
+                                            package=package, bfname=fieldname)
+                    _LOG.info("  %s[%s]: %d", fieldname, fieldinfo["bits"], value)
+                    _LOG.info("    %s", fieldinfo["desc"])
