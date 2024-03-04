@@ -432,9 +432,9 @@ class Tpmi():
 
     def _build_fmaps(self):
         """
-        Build fmap skeletons for every known TPMI feature and save the result in 'self._fmaps'.
+        Build fmap skeletons for every known TPMI feature and save the result in 'self._fmaps_old'.
 
-        The structure of the 'self._fmaps' dictionary is as follows.
+        The structure of the 'self._fmaps_old' dictionary is as follows.
           - First level key - package number
           - Second level key - feature name
           - Third level key - PCI address of the TPMI device
@@ -501,7 +501,7 @@ class Tpmi():
                 if fname != "tpmi_info":
                     fmaps[package][fname][addr] = None
 
-        self._fmaps = fmaps
+        self._fmaps_old = fmaps
         self._unknown_fids = unknown_fids
 
         # Initialize 'self._known_fnames' and 'self._known_fnames_set'.
@@ -671,10 +671,10 @@ class Tpmi():
     def _get_mdmap(self, fname, addr, package):
         """Get mdmap for a TPMI feature."""
 
-        mdmap = self._fmaps[package][fname][addr]
+        mdmap = self._fmaps_old[package][fname][addr]
         if not mdmap:
             mdmap = self._build_mdmap(addr, fname)
-            self._fmaps[package][fname][addr] = mdmap
+            self._fmaps_old[package][fname][addr] = mdmap
 
         return mdmap
 
@@ -704,14 +704,14 @@ class Tpmi():
 
         if package is None:
             addrs = set()
-            for pkg, fmap in self._fmaps.items():
+            for pkg, fmap in self._fmaps_old.items():
                 addrs.update(list(fmap[fname]))
                 if addr in fmap[fname]:
                     package = pkg
                     break
 
         if addr is None:
-            addrs = list(self._fmaps[package][fname])
+            addrs = list(self._fmaps_old[package][fname])
             if len(addrs) == 1:
                 addr = addrs[0]
             else:
@@ -754,11 +754,11 @@ class Tpmi():
                 known_fnames = self._known_fnames_set
                 what = ""
         if package is not None:
-            if package not in self._fmaps:
-                packages = Human.rangify(self._fmaps)
+            if package not in self._fmaps_old:
+                packages = Human.rangify(self._fmaps_old)
                 raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
                             f"package numbers are: {packages}")
-            known_fnames = self._fmaps[package]
+            known_fnames = self._fmaps_old[package]
             what = " for package '{package}'"
 
         if fname not in known_fnames:
@@ -844,10 +844,10 @@ class Tpmi():
         self._validate_fname_addrs_packages(fname, addrs=addrs, packages=packages)
 
         if packages is None:
-            packages = self._fmaps
+            packages = self._fmaps_old
 
         for package in packages:
-            fmap = self._fmaps[package]
+            fmap = self._fmaps_old[package]
 
             if fname not in fmap:
                 continue
@@ -905,6 +905,8 @@ class Tpmi():
         self._fid2fname = {}
         # Feature maps.
         self._fmaps = None
+        # Feature maps (old data structure, will go away soon).
+        self._fmaps_old = None
         # Known feature names - a list and a set.
         self._known_fnames = []
         self._known_fnames_set = set()
