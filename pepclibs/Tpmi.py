@@ -778,30 +778,30 @@ class Tpmi():
            * package - package number to validate.
         """
 
-        if package is None:
-            if addr is not None:
-                # Note, 'addr' was not validated yet, will be done later.
-                package = self._addr2pkg.get(addr)
-            else:
-                known_fnames = self._known_fnames_set
-                what = ""
-        if package is not None:
-            if package not in self._fmaps_old:
-                packages = Human.rangify(self._fmaps_old)
-                raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
-                            f"package numbers are: {packages}")
-            known_fnames = self._fmaps_old[package]
-            what = " for package '{package}'"
-
-        if fname not in known_fnames:
-            known = ", ".join(known_fnames)
-            raise Error(f"unknown feature '{fname}'{what}{self._pman.hostmsg}, known features "
+        if fname not in self._fmaps:
+            known = ", ".join(self._fmaps)
+            raise Error(f"unknown feature '{fname}'{self._pman.hostmsg}, known features "
                         f"are:\n  {known}")
 
-        if addr is not None and addr not in self._addr2pkg:
-            addrs = self._format_addrs(addrs)
-            raise Error(f"TPMI device '{addr}' does not exist for feature '{fname}'"
-                        f"{self._pman.hostmsg}, available devices are:\n * {addrs}")
+        if addr is None and package is None:
+            return
+
+        if addr is None:
+            if package not in self._pkg2addrs:
+                packages = Human.rangify(self._pkg2addrs)
+                raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
+                            f"package numbers are: {packages}")
+        else:
+            if addr not in self._fmaps[fname]:
+                addrs = self._format_addrs(list(self._fmaps[fname]))
+                raise Error(f"TPMI device '{addr}' does not exist for feature '{fname}'"
+                            f"{self._pman.hostmsg}, available devices are:\n * {addrs}")
+
+            if package is not None:
+                correct_pkg = self._fmaps[fname][addr]["package"]
+                if package != correct_pkg:
+                    raise Error(f"invalid package number '{package}' for TPMI device '{addr}', "
+                                f"correct package numbers is '{correct_pkg}'")
 
     def _validate_fname_addrs_packages(self, fname, addrs=None, packages=None):
         """
