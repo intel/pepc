@@ -17,7 +17,7 @@ import contextlib
 from pathlib import Path
 from pepclibs import _UncoreFreq, CPUModels
 from pepclibs.msr import MSR, PMLogicalId
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, KernelVersion, ArgParse
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 
 _LOG = logging.getLogger()
@@ -316,8 +316,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         integer number rangees. Parse the contents of the file and return it as a list of integers.
         """
 
-        str_of_ranges = self._pman.read(path, must_exist=must_exist).strip()
-        return ArgParse.parse_int_list(str_of_ranges, ints=True)
+        str_of_ranges = self._pman.read(path, must_exist=must_exist)
+        what = f"contents of file at '{path}'{self._pman.hostmsg}"
+        return Trivial.split_csv_line_int(str_of_ranges.strip(), what=what)
 
     def _read_online_cpus(self):
         """Read and return online CPU numbers from sysfs."""
