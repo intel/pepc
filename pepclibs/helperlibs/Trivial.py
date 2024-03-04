@@ -238,19 +238,38 @@ def split_csv_line(csv_line, sep=",", dedup=False, keep_empty=False):
 
 def split_csv_line_int(csv_line, sep=",", dedup=False, base=0, what="value"):
     """
-    Split a comma-separated integer values line (a string with integer values separated by a comma)
-    and return the list of the integer values. The arguments are as follows.
+    Split a comma-separated integer values line (a string with integer values of value rages
+    separated by a comma) and return the list of the integer values. The arguments are as follows.
       * csv_line - the comma-separated line to split.
       * sep - the separator character (comma by default).
       * dedup - if 'True', remove duplicated elements from the returned list.
       * base - base of the values in 'csv_line' (default - auto-detect based on the prefix).
       * what - a string describing the values in 'csv_line', for the possible error message.
+
+    Here is an example.
+      - Input: csv_line = "0,1-3,7"
+      - Output: [0, 1, 2, 3, 7].
     """
 
     vals = split_csv_line(csv_line=csv_line, sep=sep, dedup=dedup)
 
     result = []
     for val in vals:
-        result.append(str_to_int(val, base=base, what=what))
+        if "-" not in val:
+            result.append(str_to_int(val, base=base, what=what))
+            continue
+
+        # Handle a rage.
+        range_vals = [range_val for range_val in val.split("-") if range_val]
+        if len(range_vals) != 2:
+            raise Error(f"bad {what}: error in '{val}': should be two integers separated "
+                        f"by '-'")
+
+        range_vals = [str_to_int(range_val, base=base, what=what) for range_val in range_vals]
+        if range_vals[0] > range_vals[1]:
+            raise Error(f"bad {what}: error in range '{val}': the first number should be smaller "
+                        f"than the second")
+
+        result += range(range_vals[0], range_vals[1] + 1)
 
     return result
