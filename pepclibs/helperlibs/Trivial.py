@@ -66,7 +66,7 @@ def get_username(uid=None):
         msg = Error(err).indent(2)
         raise Error(f"failed to get user name for UID {uid}:\n{msg}") from None
 
-def str_to_int(snum, base=0, what="value"):
+def str_to_int(snum, base=0, what=None):
     """
     Convert a string to an integer numeric value. The arguments are as follows.
       * snum - the value to convert to 'int'. Should be a string or an integer.
@@ -77,6 +77,8 @@ def str_to_int(snum, base=0, what="value"):
     try:
         num = int(str(snum), base)
     except (ValueError, TypeError):
+        if not what is None:
+            what = "value"
         # Make sure the 'base' was a sane number.
         try:
             str_to_int(base)
@@ -97,7 +99,7 @@ def str_to_int(snum, base=0, what="value"):
 
     return num
 
-def str_to_num(snum, what="value"):
+def str_to_num(snum, what=None):
     """
     Convert a string to a numeric value, either 'int' or 'float'. The arguments are as follows.
       * snum - the value to convert to 'int' or 'float'. Should be a string or a numeric value.
@@ -110,6 +112,8 @@ def str_to_num(snum, what="value"):
         try:
             num = float(str(snum))
         except (ValueError, TypeError):
+            if not what is None:
+                what = "value"
             pfx = f"bad {what} '{snum}'"
             raise Error(f"{pfx}: should be an integer of floating point number") from None
 
@@ -159,7 +163,7 @@ def is_num(value):
 
     return True
 
-def validate_value_in_range(value, minval, maxval, what="value"):
+def validate_value_in_range(value, minval, maxval, what=None):
     """
     Validate that value 'value' is in the ['minval', 'maxval'] range. The arguments are as follows.
       * value - the value to validate.
@@ -170,9 +174,11 @@ def validate_value_in_range(value, minval, maxval, what="value"):
     """
 
     if value < minval or value > maxval:
+        if not what is None:
+            what = "value"
         raise Error(f"{what} '{value}' is out of range, should be within [{minval},{maxval}]")
 
-def validate_range(minval, maxval, min_limit=None, max_limit=None, what="range"):
+def validate_range(minval, maxval, min_limit=None, max_limit=None, what=None):
     """
     Validate correctness of range ['minval', 'maxval']. The arguments are as follows.
       * minval - the minimum value (first number in the range).
@@ -183,6 +189,8 @@ def validate_range(minval, maxval, min_limit=None, max_limit=None, what="range")
                messages.
     """
 
+    if not what is None:
+        what = "range"
     pfx = f"bad {what} '[{minval},{maxval}]'"
 
     if minval > maxval:
@@ -236,7 +244,7 @@ def split_csv_line(csv_line, sep=",", dedup=False, keep_empty=False):
         return list_dedup(result)
     return result
 
-def split_csv_line_int(csv_line, sep=",", dedup=False, base=0, what="value"):
+def split_csv_line_int(csv_line, sep=",", dedup=False, base=0, what=None):
     """
     Split a comma-separated integer values line (a string with integer values of value rages
     separated by a comma) and return the list of the integer values. The arguments are as follows.
@@ -252,6 +260,8 @@ def split_csv_line_int(csv_line, sep=",", dedup=False, base=0, what="value"):
     """
 
     vals = split_csv_line(csv_line=csv_line, sep=sep, dedup=dedup)
+    if what is None:
+        what = "value'"
 
     result = []
     for val in vals:
@@ -262,13 +272,13 @@ def split_csv_line_int(csv_line, sep=",", dedup=False, base=0, what="value"):
         # Handle a rage.
         range_vals = [range_val for range_val in val.split("-") if range_val]
         if len(range_vals) != 2:
-            raise Error(f"bad {what}: error in '{val}': should be two integers separated "
-                        f"by '-'")
+            raise Error(f"bad {what} '{csv_line}: error in '{val}': should be two integers "
+                        f"separated by '-'")
 
         range_vals = [str_to_int(range_val, base=base, what=what) for range_val in range_vals]
         if range_vals[0] > range_vals[1]:
-            raise Error(f"bad {what}: error in range '{val}': the first number should be smaller "
-                        f"than the second")
+            raise Error(f"bad {what} '{csv_line}': error in range '{val}': the first number should "
+                        f"be smaller than the second")
 
         result += range(range_vals[0], range_vals[1] + 1)
 
