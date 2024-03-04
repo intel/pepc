@@ -17,29 +17,6 @@ from pepctool import _PepcCommon
 
 _LOG = logging.getLogger()
 
-def _parse_tpmi_args(args):
-    """Parse common TPMI command line arguments."""
-
-    if args.register == "all":
-        registers = "all"
-    else:
-        registers = args.register.split(",")
-
-    if args.instance == "all":
-        instances = "all"
-    else:
-        instances = _PepcCommon.parse_cpus_string(args.instance)
-
-    if args.package is not None:
-        package = int(args.package)
-    else:
-        if not args.addr:
-            package = 0
-        else:
-            package = None
-
-    return (args.addr, package, args.fname, instances, registers, args.bitfield)
-
 def _ls_long(fname, tpmi, prefix=""):
     """Print extra information about feature 'fname' (in case of the 'tpmi ls -l' command)."""
 
@@ -106,18 +83,34 @@ def tpmi_read_command(args, pman):
       * pman - the process manager object that defines the target host.
     """
 
-    addr, package, fname, instances, registers, bfname = _parse_tpmi_args(args)
+    if args.register == "all":
+        registers = "all"
+    else:
+        registers = args.register.split(",")
+
+    if args.instance == "all":
+        instances = "all"
+    else:
+        instances = _PepcCommon.parse_cpus_string(args.instance)
+
+    if args.package is not None:
+        package = int(args.package)
+    else:
+        if not args.addr:
+            package = 0
+        else:
+            package = None
 
     tpmi = Tpmi.Tpmi(pman=pman)
-    fdict = tpmi.get_fdict(fname)
+    fdict = tpmi.get_fdict(args.fname)
 
     if registers == "all":
         registers = fdict
 
-    if addr is None:
+    if args.addr is None:
         addrs = None
     else:
-        addrs = (addr,)
+        addrs = (args.addr,)
 
     if package is None:
         packages = None
@@ -125,21 +118,23 @@ def tpmi_read_command(args, pman):
         packages = (package,)
 
     if instances == "all":
-        instances = (tup[2] for tup in tpmi.iter_feature(fname, addrs=addrs, packages=packages))
+        instances = (tup[2] for tup in tpmi.iter_feature(args.fname, addrs=addrs,
+                                                         packages=packages))
 
     for instance in instances:
         for regname in registers:
-            value = tpmi.read_register(fname, instance, regname, addr=addr, package=package)
+            value = tpmi.read_register(args.fname, instance, regname, addr=args.addr,
+                                       package=package)
             printed = False
             for fieldname, fieldinfo in fdict[regname]["fields"].items():
-                if bfname not in ("all", fieldname):
+                if args.bitfield not in ("all", fieldname):
                     continue
 
                 if not printed:
                     printed = True
                     _LOG.info("%s[%d]: 0x%x", regname, instance, value)
 
-                value = tpmi.read_register(fname, instance, regname, addr=addr, package=package,
-                                           bfname=fieldname)
+                value = tpmi.read_register(args.fname, instance, regname, addr=args.addr,
+                                           package=package, bfname=fieldname)
                 _LOG.info("  %s[%s]: %d", fieldname, fieldinfo["bits"], value)
                 _LOG.info("    %s", fieldinfo["desc"])
