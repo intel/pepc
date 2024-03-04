@@ -204,10 +204,10 @@ def list_dedup(elts):
 
 def split_csv_line(csv_line, sep=",", dedup=False, keep_empty=False):
     """
-    Split a comma-separated values line and return the list of the comma separated values. The
-    arguments are as follows.
-      * csv_line - the string to split.
-      * sep - the separator character.
+    Split a comma-separated values line (a string of values separated by a comma) and return the
+    list of the values. The arguments are as follows.
+      * csv_line - the comma-separated line to split.
+      * sep - the separator character (comma by default).
       * dedup - if 'True', remove duplicated elements from the returned list.
       * keep_empty - if 'True', keep empty values. E.g. split_csv_line(",cpu0", keep_empty=True)
                      would return ["", "cpu0"].
@@ -224,4 +224,23 @@ def split_csv_line(csv_line, sep=",", dedup=False, keep_empty=False):
 
     if dedup:
         return list_dedup(result)
+    return result
+
+def split_csv_line_int(csv_line, sep=",", dedup=False, base=0, what="value"):
+    """
+    Split a comma-separated integer values line (a string with integer values separated by a comma)
+    and return the list of the integer values. The arguments are as follows.
+      * csv_line - the comma-separated line to split.
+      * sep - the separator character (comma by default).
+      * dedup - if 'True', remove duplicated elements from the returned list.
+      * base - base of the values in 'csv_line' (default - auto-detect based on the prefix).
+      * what - a string describing the values in 'csv_line', for the possible error message.
+    """
+
+    vals = split_csv_line(csv_line=csv_line, sep=sep, dedup=dedup)
+
+    result = []
+    for val in vals:
+        result.append(str_to_int(val, base=base, what=what))
+
     return result
