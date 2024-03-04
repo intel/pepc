@@ -35,7 +35,10 @@ def get_pid():
         raise Error(f"failed to get own PID:\n{msg}") from None
 
 def get_pgid(pid):
-    """Return process group ID of a process with PID 'pid'."""
+    """
+    Return process group ID of a process with PID 'pid'. The arguments are as follows.
+      * pid - process ID to return the process group ID for.
+    """
 
     try:
         return os.getpgid(pid)
@@ -44,7 +47,11 @@ def get_pgid(pid):
         raise Error(f"failed to get group ID of process with PID {pid}:\n{msg}") from None
 
 def get_username(uid=None):
-    """Return username of current process."""
+    """
+    Return username of current process of by UID. The arguments are as follows.
+      * uid - an optional integer user ID value to return the user name for (default is UID of the
+              current process).
+    """
 
     try:
         if uid is None:
@@ -110,7 +117,10 @@ def str_to_num(snum, what="value"):
 
 def is_int(value, base=10):
     """
-    Return 'True' if 'value' can be converted to an integer using 'int()' and 'False' otherwise.
+    Return 'True' if 'value' can be converted to an integer using 'int()' and 'False' otherwise. The
+    arguments are as follows.
+      * value - the value to convert to an integer.
+      * base - base of the value.
     """
 
     try:
