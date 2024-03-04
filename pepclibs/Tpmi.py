@@ -476,6 +476,33 @@ class Tpmi():
             raise Error(f"spec file for the 'tpmi_info' TPMI feature was not found, checked in the "
                         f"following directories:\n * {dirs}")
 
+        fmaps = {"tpmi_info": {}}
+
+        for fname, addrs in fname2addrs.items():
+            if fname not in fmaps:
+                fmaps[fname] = {}
+
+            for addr in addrs:
+                if addr in fmaps[fname]:
+                    continue
+
+                # The 'tpmi_info' feature is present in every TPMI device. Use it to read the
+                # package number associated with 'addr'.
+                if addr not in fmaps["tpmi_info"]:
+                    mdmap = self._build_mdmap(addr, "tpmi_info")
+                    package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
+                                                  bfname="PACKAGE_ID", mdmap=mdmap)
+                    fmaps["tpmi_info"][addr] = {"package": package, "mdmap": mdmap}
+
+                if fname == "tpmi_info":
+                    continue
+
+                package = fmaps["tpmi_info"][addr]["package"]
+                fmaps[fname][addr] = {"package": package, "mdmap": None}
+
+        self._fmaps = fmaps
+
+        # Build old fmap (to be removed later).
         fmaps_old = {}
 
         for fname, addrs in fname2addrs.items():
