@@ -115,12 +115,12 @@ def str_to_num(snum, what="value"):
 
     return num
 
-def is_int(value, base=10):
+def is_int(value, base=0):
     """
     Return 'True' if 'value' can be converted to an integer using 'int()' and 'False' otherwise. The
     arguments are as follows.
       * value - the value to convert to an integer.
-      * base - base of the value.
+      * base - base of the value (auto-detect by default based on the prefix).
     """
 
     try:
