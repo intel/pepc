@@ -537,14 +537,6 @@ class Tpmi():
         self._fmaps_old = fmaps_old
         self._unknown_fids = unknown_fids
 
-        # Initialize 'self._known_fnames' and 'self._known_fnames_set'.
-        self._known_fnames_set = set()
-        for fmap in fmaps_old.values():
-            for fname in fmap:
-                if fname not in self._known_fnames_set:
-                    self._known_fnames.append(fname)
-                    self._known_fnames_set.add(fname)
-
     def _get_debugfs_feature_path(self, addr, fname):
         """
         Return path to the Linux debugfs directory represinting feature 'fname' of a TPMI device at
@@ -836,7 +828,7 @@ class Tpmi():
         """
 
         sdicts = []
-        for fname in self._known_fnames:
+        for fname in self._fmaps:
             # It would be safer to return deep copy of the dictionary, but for optimization
             # purposes, avoid the copying.
             sdicts.append(self._sdicts[fname])
@@ -942,9 +934,6 @@ class Tpmi():
         self._fmaps_old = None
         # Package number -> set of PCI addresses.
         self._pkg2addrs = {}
-        # Known feature names - a list and a set.
-        self._known_fnames = []
-        self._known_fnames_set = set()
         # Unknown feature IDs (no spec file).
         self._unknown_fids = None
 
