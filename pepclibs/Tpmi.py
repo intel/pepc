@@ -696,9 +696,11 @@ class Tpmi():
     def _get_mdmap(self, fname, addr, package):
         """Get mdmap for a TPMI feature."""
 
-        mdmap = self._fmaps_old[package][fname][addr]
+        fmap = self._fmaps[fname]
+        mdmap = fmap[addr]["mdmap"]
         if not mdmap:
             mdmap = self._build_mdmap(addr, fname)
+            fmap[addr]["mdmap"] = mdmap
             self._fmaps_old[package][fname][addr] = mdmap
 
         return mdmap
