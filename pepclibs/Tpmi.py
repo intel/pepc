@@ -868,23 +868,20 @@ class Tpmi():
 
         self._validate_fname_addrs_packages(fname, addrs=addrs, packages=packages)
 
+        fmap = self._fmaps[fname]
+
         if packages is None:
-            packages = self._fmaps_old
+            packages = self._pkg2addrs
+        if addrs is None:
+            addrs = fmap
 
-        for package in packages:
-            fmap = self._fmaps_old[package]
-
-            if fname not in fmap:
+        for addr in addrs:
+            if addr not in fmap:
                 continue
-
-            if addrs is None:
-                addresses = fmap[fname]
-            else:
-                addresses = addrs
-
-            for addr in addresses:
-                if addr not in fmap[fname]:
+            for package in packages:
+                if fmap[addr]["package"] != package:
                     continue
+
                 mdmap = self._get_mdmap(fname, addr, package)
                 for instance in mdmap:
                     yield (addr, package, instance)
