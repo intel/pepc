@@ -36,18 +36,15 @@ def _ls_long(fname, tpmi, prefix=""):
         pfx1 = prefix + "- "
         pfx2 = prefix + "  "
 
-        if len(info) > 1:
-            _LOG.info("%sPackage: %s", pfx1, package)
-            pfx1 = pfx2 + "- "
-            pfx2 += "  "
-
         for addr in sorted(info[package]):
             _LOG.info("%sPCI address: %s", pfx1, addr)
             pfx1 = pfx2 + "- "
             pfx2 += "  "
 
+            _LOG.info("%sPackage: %s", pfx2, package)
+
             instances = Human.rangify(info[package][addr])
-            _LOG.info("%sInstances: %s", pfx1, instances)
+            _LOG.info("%sInstances: %s", pfx2, instances)
 
 def tpmi_ls_command(args, pman):
     """
