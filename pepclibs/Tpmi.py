@@ -68,8 +68,12 @@ Terminology.
 #                     debugfs files and directories.
 #
 # Terminology.
-#   * fmap - feature map, a dictionary providing TPMI device PCI addresses and debugfs file paths
-#            corresponging to the feature.
+#   * fmap - feature map, a dictionary providing information about every TPMI device corresponding
+#            to the feature. The fmap dictionary keys are the PCI addresses. Here is an fmap
+#            example, where the feature includes 2 TPMI devices, one device per package.
+#            fmap format:
+#                {"0000:00:03.1" {"package": 0, "mdmap": mdmap},
+#                 "0000:80:03.1" {"package": 1, "mdmap": mdmap}}
 #
 #   * mem_dump - a Linux TPMI debugfs file named "mem_dump" (example path:
 #                /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump). The 'mem_dump' files
@@ -431,15 +435,7 @@ class Tpmi():
             self._fid2fname[sdict["feature-id"]] = fname
 
     def _build_fmaps(self):
-        """
-        Build fmap skeletons for every known TPMI feature and save the result in 'self._fmaps_old'.
-
-        The structure of the 'self._fmaps_old' dictionary is as follows.
-          - First level key - package number
-          - Second level key - feature name
-          - Third level key - PCI address of the TPMI device
-          - Value - the mdmap of the feature.
-        """
+        """Build an fmaps for all TPMI features and save them in the 'self._fmaps' dictionary."""
 
         # A dictionary mapping feature names to the list of TPMI device addresses that provide this
         # feature.
@@ -506,35 +502,6 @@ class Tpmi():
                 fmaps[fname][addr] = {"package": package, "mdmap": None}
 
         self._fmaps = fmaps
-
-        # Build old fmap (to be removed later).
-        fmaps_old = {}
-        addr2pkg = {}
-
-        for fname, addrs in fname2addrs.items():
-            for addr in addrs:
-                if addr not in addr2pkg:
-                    mdmap = self._build_mdmap(addr, "tpmi_info")
-                    package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
-                                                  bfname="PACKAGE_ID", mdmap=mdmap)
-                    addr2pkg[addr] = package
-
-                    if package not in fmaps_old:
-                        fmaps_old[package] = {}
-                    if "tpmi_info" not in fmaps_old[package]:
-                        fmaps_old[package]["tpmi_info"] = {}
-
-                    fmaps_old[package]["tpmi_info"][addr] = mdmap
-                else:
-                    package = addr2pkg[addr]
-
-                if fname not in fmaps_old[package]:
-                    fmaps_old[package][fname] = {}
-
-                if fname != "tpmi_info":
-                    fmaps_old[package][fname][addr] = None
-
-        self._fmaps_old = fmaps_old
         self._unknown_fids = unknown_fids
 
     def _get_debugfs_feature_path(self, addr, fname):
@@ -894,8 +861,6 @@ class Tpmi():
         self._fid2fname = {}
         # Feature maps.
         self._fmaps = None
-        # Feature maps (old data structure, will go away soon).
-        self._fmaps_old = None
         # Package number -> set of PCI addresses.
         self._pkg2addrs = {}
         # Unknown feature IDs (no spec file).
