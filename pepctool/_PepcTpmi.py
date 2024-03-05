@@ -23,7 +23,7 @@ def _ls_long(fname, tpmi, prefix=""):
     # A dictionary with the info that will be printed.
     #   * first level key - package number.
     #   * second level key - PCI address.
-    #   * value - instance numbers.
+    #   * regval - instance numbers.
     info = {}
 
     for addr, package, instance in tpmi.iter_feature(fname):
@@ -102,19 +102,26 @@ def tpmi_read_command(args, pman):
     else:
         registers = Trivial.split_csv_line(args.register, dedup=True)
 
+    pfx = "- "
     for addr in addrs:
+        pfx_indent = 0
+        _LOG.info("%sPCI address: %s", " " * pfx_indent + pfx, addr)
+
         for instance in instances:
+            pfx_indent = 2
+            _LOG.info("%sInstance: %d", " " * pfx_indent + pfx, instance)
+
             for regname in registers:
-                value = tpmi.read_register(args.fname, addr, instance, regname)
-                printed = False
+                regval = tpmi.read_register(args.fname, addr, instance, regname)
+
+                pfx_indent = 4
+                _LOG.info("%s%s: %#x", " " * pfx_indent + pfx, regname, regval)
+
                 for bfname, bfinfo in fdict[regname]["fields"].items():
                     if args.bfname not in (None, bfname):
                         continue
 
-                    if not printed:
-                        printed = True
-                        _LOG.info("%s[%d]: 0x%x", regname, instance, value)
+                    bfval = tpmi.get_bitfield(regval, args.fname, regname, bfname)
 
-                    value = tpmi.read_register(args.fname, addr, instance, regname,
-                                               bfname=bfname)
-                    _LOG.info("  %s[%s]: %d", bfname, bfinfo["bits"], value)
+                    pfx_indent = 6
+                    _LOG.info("%s%s[%s]: %d", " " * pfx_indent + pfx, bfname, bfinfo["bits"], bfval)
