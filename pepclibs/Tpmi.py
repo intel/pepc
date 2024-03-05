@@ -225,6 +225,7 @@ class Tpmi():
                         the feature).
       * 'iter_feature()' - get feature details.
       * 'read_register()' - read a TPMI register.
+      * 'get_bitfield()' - extract a bitfield value from a register value.
     """
 
     def _format_fdict(self, fname, specpath, spec):
@@ -840,6 +841,19 @@ class Tpmi():
 
         addr, mdmap = self._fmap_lookup(fname, addr, instance)
         return self._read_register(fname, addr, instance, regname, mdmap=mdmap, bfname=bfname)
+
+    def get_bitfield(self, regval, fname, regname, bfname):
+        """
+        Extract and return the value of a bit field from a register value. The arguments are as
+        follows.
+          * regval - value of the register.
+          * fname - name of the TPMI feature.
+          * regname - name of the TPMI register.
+          * bfname - name of the TPMI register bit field to extract.
+        """
+
+        self._validate_fname(fname)
+        return self._get_bitfield(regval, fname, regname, bfname)
 
     def __init__(self, pman, specdirs=None):
         """
