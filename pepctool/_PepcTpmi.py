@@ -107,7 +107,7 @@ def tpmi_read_command(args, pman):
             for regname in registers:
                 value = tpmi.read_register(args.fname, addr, instance, regname)
                 printed = False
-                for bfname, fieldinfo in fdict[regname]["fields"].items():
+                for bfname, bfinfo in fdict[regname]["fields"].items():
                     if args.bfname not in (None, bfname):
                         continue
 
@@ -117,5 +117,4 @@ def tpmi_read_command(args, pman):
 
                     value = tpmi.read_register(args.fname, addr, instance, regname,
                                                bfname=bfname)
-                    _LOG.info("  %s[%s]: %d", bfname, fieldinfo["bits"], value)
-                    _LOG.info("    %s", fieldinfo["desc"])
+                    _LOG.info("  %s[%s]: %d", bfname, bfinfo["bits"], value)
