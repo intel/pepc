@@ -509,14 +509,15 @@ class Tpmi():
 
         # Build old fmap (to be removed later).
         fmaps_old = {}
+        addr2pkg = {}
 
         for fname, addrs in fname2addrs.items():
             for addr in addrs:
-                if addr not in self._addr2pkg:
+                if addr not in addr2pkg:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
                     package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
                                                   bfname="PACKAGE_ID", mdmap=mdmap)
-                    self._addr2pkg[addr] = package
+                    addr2pkg[addr] = package
 
                     if package not in fmaps_old:
                         fmaps_old[package] = {}
@@ -525,7 +526,7 @@ class Tpmi():
 
                     fmaps_old[package]["tpmi_info"][addr] = mdmap
                 else:
-                    package = self._addr2pkg[addr]
+                    package = addr2pkg[addr]
 
                 if fname not in fmaps_old[package]:
                     fmaps_old[package][fname] = {}
@@ -946,8 +947,6 @@ class Tpmi():
         self._known_fnames_set = set()
         # Unknown feature IDs (no spec file).
         self._unknown_fids = None
-        # Package numbers for TPMI device PCI addresses.
-        self._addr2pkg = {}
 
         if not self._specdirs:
             self._specdirs = _find_spec_dirs()
