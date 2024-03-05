@@ -698,18 +698,21 @@ class Tpmi():
         raise Error(f"instance {instance} not available for the '{fname}' TPMI device '{addr}'"
                     f"{self._pman.hostmsg}, available instances are: {instances}")
 
-    def _validate_fname_addr_package(self, fname, addr=None, package=None):
-        """
-        Validate input argument for API methods.
-           * fname - feature name to validate.
-           * addr - TPMI device address to validate.
-           * package - package number to validate.
-        """
+    def _validate_fname(self, fname):
+        """Validate feature name 'fname'."""
 
         if fname not in self._fmaps:
             known = ", ".join(self._fmaps)
             raise Error(f"unknown feature '{fname}'{self._pman.hostmsg}, known features "
                         f"are:\n  {known}")
+
+    def _validate_addr(self, fname, addr, package=None):
+        """
+        Validate TPMI device PCI addres 'addr'.
+           * fname - name of the feature 'addr' is supposed to belong to.
+           * addr - the TPMI device PCI address to validate.
+           * package - optional package number 'addr' is supposed to belong to.
+        """
 
         if addr is None and package is None:
             return
@@ -731,12 +734,12 @@ class Tpmi():
                     raise Error(f"invalid package number '{package}' for TPMI device '{addr}', "
                                 f"correct package numbers is '{correct_pkg}'")
 
-    def _validate_fname_addrs_packages(self, fname, addrs=None, packages=None):
+    def _validate_addrs(self, fname, addrs, packages=None):
         """
-        Validate input argument for API methods.
-           * fname - feature name to validate.
-           * addrs - an iterable collection of TPMI device address to validate.
-           * packages - an iterable collection of package numbers to validate.
+        Validate input TPMI device PCI addresses in 'addrs'.
+           * fname - name of the feature 'addrs' are supposed to belong to.
+           * addrs - an iterable collection of TPMI device PCI address to validate.
+           * package - optional package numbers 'addrs' are supposed to belong to.
         """
 
         if packages is None:
@@ -746,7 +749,7 @@ class Tpmi():
 
         for addr in addrs:
             for package in packages:
-                self._validate_fname_addr_package(fname, addr=addr, package=package)
+                self._validate_addr(fname, addr, package=package)
 
     def get_known_features(self):
         """
@@ -801,7 +804,7 @@ class Tpmi():
                        default).
         """
 
-        self._validate_fname_addrs_packages(fname, addrs=addrs, packages=packages)
+        self._validate_addrs(fname, addrs, packages=packages)
 
         fmap = self._fmaps[fname]
 
@@ -832,7 +835,9 @@ class Tpmi():
           * bfname - optional name of the bit field to read (read the entire register by default).
         """
 
-        self._validate_fname_addr_package(fname, addr=addr)
+        self._validate_fname(fname)
+        self._validate_addr(fname, addr)
+
         addr, mdmap = self._fmap_lookup(fname, addr, instance)
         return self._read_register(fname, addr, instance, regname, mdmap=mdmap, bfname=bfname)
 
