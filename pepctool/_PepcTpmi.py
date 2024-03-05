@@ -13,6 +13,7 @@ Implement the 'pepc tpmi' command.
 import logging
 from pepclibs import Tpmi
 from pepclibs.helperlibs import Human, Trivial
+from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = logging.getLogger()
 
@@ -83,27 +84,31 @@ def tpmi_read_command(args, pman):
     fdict = tpmi.get_fdict(args.fname)
 
     if not args.addrs:
-        addrs = [tup[0] for tup in tpmi.iter_feature(args.fname)]
+        addrs = [addr for addr, _, _ in tpmi.iter_feature(args.fname)]
     else:
-        addrs = Trivial.split_csv_line(args.addr, dedup=True)
+        addrs = Trivial.split_csv_line(args.addrs, dedup=True)
 
-    if args.register == "all":
+    if not args.instances:
+        instances = [inst for _, _, inst in tpmi.iter_feature(args.fname, addrs=addrs)]
+        instances = Trivial.list_dedup(instances)
+    else:
+        instances = Trivial.split_csv_line_int(args.instances, dedup=True,
+                                               what="TPMI instance numbers")
+
+    if not args.register:
+        if args.bfname:
+            raise Error("--bfname requires '--register' to be specified")
         registers = list(fdict)
     else:
-        Trivial.split_csv_line(args.registers, dedup=True)
-
-    if args.instance == "all":
-        instances = (tup[2] for tup in tpmi.iter_feature(args.fname, addrs=addrs))
-    else:
-        Trivial.split_csv_line_int(args.registers, dedup=True, what="TPMI instance numbers")
+        registers = Trivial.split_csv_line(args.register, dedup=True)
 
     for addr in addrs:
         for instance in instances:
             for regname in registers:
                 value = tpmi.read_register(args.fname, addr, instance, regname)
                 printed = False
-                for fieldname, fieldinfo in fdict[regname]["fields"].items():
-                    if args.bitfield not in ("all", fieldname):
+                for bfname, fieldinfo in fdict[regname]["fields"].items():
+                    if args.bfname not in (None, bfname):
                         continue
 
                     if not printed:
@@ -111,6 +116,6 @@ def tpmi_read_command(args, pman):
                         _LOG.info("%s[%d]: 0x%x", regname, instance, value)
 
                     value = tpmi.read_register(args.fname, addr, instance, regname,
-                                               bfname=fieldname)
-                    _LOG.info("  %s[%s]: %d", fieldname, fieldinfo["bits"], value)
+                                               bfname=bfname)
+                    _LOG.info("  %s[%s]: %d", bfname, fieldinfo["bits"], value)
                     _LOG.info("    %s", fieldinfo["desc"])

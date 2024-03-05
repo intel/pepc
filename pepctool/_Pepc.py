@@ -689,23 +689,22 @@ def build_arguments_parser():
 
     text = """Comma-separated list of TPMI device PCI addresses to read the registers from (all
               devices by default)."""
-    subpars2.add_argument("-a", "--addrs", help=text)
+    subpars2.add_argument("-a", "--addresses", dest="addrs", help=text)
 
     text = """Comma-separated list of package numbers to read TPMI registers for (all packages by
               default)."""
     subpars2.add_argument("--packages", help=text)
 
-    text = """TPMI instance to use. A special value 'all' can be used to specify all instances, and
-              this is the default."""
-    subpars2.add_argument("--instance", help=text, default="all")
+    text = """Comma-separated list of integer TPMI instance numbers to read the registers from (all
+              instances by default)."""
+    subpars2.add_argument("-i", "--instances", help=text)
 
-    text = """Name of the TPMI register to use. A special value 'all' can be used to specify all
-              registers, and this is the default."""
-    subpars2.add_argument("--register", help=text, default="all")
+    text = """Name of the TPMI register to read (all registers by default). The registers are
+              specified by name"""
+    subpars2.add_argument("-R", "--register", help=text)
 
-    text = """Name of the TPMI register bitfield to use. A special value 'all' can be used to
-              specify all fields, and this is the default."""
-    subpars2.add_argument("--bitfield", help=text, default="all")
+    text = """Name of the TPMI register bitfield to read (all bitfields by default)."""
+    subpars2.add_argument("-b", "--bitfield", dest="bfname", help=text)
 
     if argcomplete:
         argcomplete.autocomplete(parser)
