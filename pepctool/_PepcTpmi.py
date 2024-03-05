@@ -103,7 +103,7 @@ def tpmi_read_command(args, pman):
     for addr in addrs:
         for instance in instances:
             for regname in registers:
-                value = tpmi.read_register(args.fname, instance, regname, addr=addr)
+                value = tpmi.read_register(args.fname, addr, instance, regname)
                 printed = False
                 for fieldname, fieldinfo in fdict[regname]["fields"].items():
                     if args.bitfield not in ("all", fieldname):
@@ -113,7 +113,7 @@ def tpmi_read_command(args, pman):
                         printed = True
                         _LOG.info("%s[%d]: 0x%x", regname, instance, value)
 
-                    value = tpmi.read_register(args.fname, instance, regname, addr=addr,
+                    value = tpmi.read_register(args.fname, addr, instance, regname,
                                                bfname=fieldname)
                     _LOG.info("  %s[%s]: %d", fieldname, fieldinfo["bits"], value)
                     _LOG.info("    %s", fieldinfo["desc"])

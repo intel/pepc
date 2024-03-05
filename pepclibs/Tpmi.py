@@ -693,17 +693,14 @@ class Tpmi():
 
         return val
 
-    def _get_mdmap(self, fname, addr, package):
+    def _get_mdmap(self, fname, addr):
         """Get mdmap for a TPMI feature."""
 
         fmap = self._fmaps[fname]
-        mdmap = fmap[addr]["mdmap"]
-        if not mdmap:
-            mdmap = self._build_mdmap(addr, fname)
-            fmap[addr]["mdmap"] = mdmap
-            self._fmaps_old[package][fname][addr] = mdmap
+        if not fmap[addr]["mdmap"]:
+            fmap[addr]["mdmap"] = self._build_mdmap(addr, fname)
 
-        return mdmap
+        return fmap[addr]["mdmap"]
 
     def _format_addrs(self, addrs):
         """Format a list of TPMI device PCI addresses in form of a string."""
@@ -715,55 +712,24 @@ class Tpmi():
             addrs.append("... and more ...")
         return "\n * ".join(addrs)
 
-    def _fmap_lookup(self, fname, instance, addr=None, package=None):
+    def _fmap_lookup(self, fname, addr, instance):
         """
         Search for a TPMI feature instance in the fmap. If found, return the following tuple for the
         matching TPMI device: '(addr, mdmap)'.
           - addr - PCI address of the matching TPMI device.
           - mdmap - mdmap of the matching instance.
 
-        Note, this method assumes that 'fname', 'addr', and 'package' have been validated. This
-        method validates only 'instance'.
+        Note, this method assumes that 'fname' and 'addr'' have been validated. This method
+        validates only 'instance'.
         """
 
-        if package is None and addr is None:
-            raise Error("either package or TPMI device PCI address must be provided")
-
-        if package is None:
-            addrs = set()
-            for pkg, fmap in self._fmaps_old.items():
-                addrs.update(list(fmap[fname]))
-                if addr in fmap[fname]:
-                    package = pkg
-                    break
-
-        if addr is None:
-            addrs = list(self._fmaps_old[package][fname])
-            if len(addrs) == 1:
-                addr = addrs[0]
-            else:
-                matched_addrs = []
-                for try_addr in addrs:
-                    mdmap = self._get_mdmap(fname, try_addr, package)
-                    if instance in mdmap:
-                        matched_addrs.append(try_addr)
-
-                if len(matched_addrs) > 1:
-                    matched_addrs = self._format_addrs(matched_addrs)
-                    raise Error(f"feature '{fname}', package '{package}' and instance '{instance}' "
-                                f"are not enough to identify the TPMI device{self._pman.hostmsg}.\n"
-                                f"Provide one of the following TPMI device PCI addesses to resolve "
-                                f"the ambiguity:\n * {matched_addrs}")
-                addr = matched_addrs[0]
-
-        mdmap = self._get_mdmap(fname, addr, package)
+        mdmap = self._get_mdmap(fname, addr)
         if instance in mdmap:
             return addr, mdmap
 
         instances = Human.rangify(list(mdmap))
-        raise Error(f"instance {instance} not available for feature {fname}, TPMI device '{addr}', "
-                    f"package '{package}'{self._pman.hostmsg}.\nAvailable instances are: "
-                    f"{instances}")
+        raise Error(f"instance {instance} not available for the '{fname}' TPMI device '{addr}'"
+                    f"{self._pman.hostmsg}, available instances are: {instances}")
 
     def _validate_fname_addr_package(self, fname, addr=None, package=None):
         """
@@ -884,24 +850,23 @@ class Tpmi():
                 if fmap[addr]["package"] != package:
                     continue
 
-                mdmap = self._get_mdmap(fname, addr, package)
+                mdmap = self._get_mdmap(fname, addr)
                 for instance in mdmap:
                     yield (addr, package, instance)
 
-    def read_register(self, fname, instance, regname, addr=None, package=None, bfname=None):
+    def read_register(self, fname, addr, instance, regname, bfname=None):
         """
         Read a TPMI register or a bit field of a TPMI register and return the result. The arguments
         are as follows.
           * fname - name of the TPMI feature to read.
-          * regname - name of the TPMI register to read.
           * addr - optional TPM device PCI address.
-          * package - optional package number.
           * instance - the TPMI instance number to read.
+          * regname - name of the TPMI register to read.
           * bfname - optional name of the bit field to read (read the entire register by default).
         """
 
-        self._validate_fname_addr_package(fname, addr=addr, package=package)
-        addr, mdmap = self._fmap_lookup(fname, instance, addr=addr, package=package)
+        self._validate_fname_addr_package(fname, addr=addr)
+        addr, mdmap = self._fmap_lookup(fname, addr, instance)
         return self._read_register(fname, addr, instance, regname, mdmap=mdmap, bfname=bfname)
 
     def __init__(self, pman, specdirs=None):
