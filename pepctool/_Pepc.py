@@ -706,6 +706,9 @@ def build_arguments_parser():
     text = """Name of the TPMI register bitfield to read (all bitfields by default)."""
     subpars2.add_argument("-b", "--bitfield", dest="bfname", help=text)
 
+    text = """Print information in YAML format."""
+    subpars2.add_argument("--yaml", action="store_true", help=text)
+
     if argcomplete:
         argcomplete.autocomplete(parser)
 
