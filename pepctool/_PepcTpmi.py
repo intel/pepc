@@ -127,12 +127,7 @@ def tpmi_read_command(args, pman):
     # Prepare all the information to print in the 'info' dictionary.
     info = {}
 
-    for addr, _, instance in tpmi.iter_feature(args.fname, addrs=addrs):
-        if addrs is not None and addr not in addrs:
-            continue
-        if instances is not None and instance not in instances:
-            continue
-
+    for addr, _, instance in tpmi.iter_feature(args.fname, addrs=addrs, instances=instances):
         if addr not in info:
             info[addr] = {}
 

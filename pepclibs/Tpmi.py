@@ -796,7 +796,7 @@ class Tpmi():
         # avoid the copying.
         return self._get_fdict(fname)
 
-    def iter_feature(self, fname, addrs=None, packages=None):
+    def iter_feature(self, fname, addrs=None, packages=None, instances=None):
         """
         Iterate over a feature, yielding tuples of '(addr, package, instance)'. Optional 'addr' and
         'package' arguments can be used to limit the yielded tuples to a particular TPMI device PCI
@@ -804,18 +804,20 @@ class Tpmi():
           * fname - name of the TPMI feature to iterate.
           * addrs - an iterable collection of TPMI device PCI addresses to iterate (all addresses by
                     default).
-          * packages - an iterable collection of package numbers to iterate (all packages by
+          * packages - an iterable collection of integer package numbers to iterate (all packages by
                        default).
+          * instances - an iterable collection of integer instance numbers to iterate (all instances
+                        by default).
         """
 
         self._validate_addrs(fname, addrs, packages=packages)
 
         fmap = self._fmaps[fname]
 
-        if packages is None:
-            packages = self._pkg2addrs
         if addrs is None:
             addrs = fmap
+        if packages is None:
+            packages = self._pkg2addrs
 
         for addr in addrs:
             if addr not in fmap:
@@ -824,8 +826,14 @@ class Tpmi():
                 if fmap[addr]["package"] != package:
                     continue
 
-                mdmap = self._get_mdmap(fname, addr)
-                for instance in mdmap:
+                if instances is not None:
+                    for instance in instances:
+                        self._validate_instance(fname, addr, instance)
+                else:
+                    mdmap = self._get_mdmap(fname, addr)
+                    instances = mdmap
+
+                for instance in instances:
                     yield (addr, package, instance)
 
     def read_register(self, fname, addr, instance, regname, bfname=None):
