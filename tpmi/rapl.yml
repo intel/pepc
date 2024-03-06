@@ -9,7 +9,7 @@ registers:
             LOCK:
                 bits: "63:63"
                 desc: "1 - all settings in this register are locked, otherwise unlocked"
-            RSVD:
+            RESERVED:
                 bits: "62:4"
                 desc: "Reserved"
             DOMAIN_ID:
@@ -70,7 +70,7 @@ registers:
             PWR_LIMIT_THROTTLE_CTR:
                 bits: "31:0"
                 desc: "Number of times power was clipped"
-            RSVD:
+            RESERVED:
                 bits: "63:32"
                 desc: "Reserved"
         offset: 64
@@ -86,7 +86,7 @@ registers:
             PWR_LIM_EN:
                 bits: "62:62"
                 desc: "1 - enable, 0 - disable"
-            RSVD:
+            RESERVED:
                 bits: "61:25"
                 desc: "Reserved"
             TIME_WINDOW:
@@ -105,7 +105,7 @@ registers:
             PWR_LIM_EN:
                 bits: "62:62"
                 desc: "1 - enable, 0 - disable"
-            RSVD:
+            RESERVED:
                 bits: "61:25"
                 desc: "Reserved"
             TIME_WINDOW:
@@ -115,7 +115,7 @@ registers:
         width: 64
     PL3:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 32
@@ -131,7 +131,7 @@ registers:
             PWR_LIM_EN:
                 bits: "62:62"
                 desc: "1 - enable, 0 - disable"
-            RSVD:
+            RESERVED:
                 bits: "61:18"
                 desc: "Reserved"
         offset: 40
@@ -153,14 +153,14 @@ registers:
             MIN_PL1:
                 bits: "35:18"
                 desc: "MIN PL1, meaning depends on domain type"
-            RSVD:
+            RESERVED:
                 bits: "62:61"
                 desc: "Reserved"
         offset: 72
         width: 64
     PL_OFFSET:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 48
@@ -173,13 +173,13 @@ registers:
             PWR_UNIT:
                 bits: "3:0"
                 desc: "Power unit used for power control registers"
-            RSVD1:
+            RESERVED_0:
                 bits: "5:4"
                 desc: "Reserved"
-            RSVD2:
+            RESERVED_1:
                 bits: "11:11"
                 desc: "Reserved"
-            RSVD3:
+            RESERVED_2:
                 bits: "63:16"
                 desc: "Reserved"
             TIME_UNIT:
@@ -187,30 +187,30 @@ registers:
                 desc: "Time units used for power control registers"
         offset: 8
         width: 64
-    RESERVED_1:
+    RESERVED_0:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 96
         width: 64
-    RESERVED_2:
+    RESERVED_1:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 104
         width: 64
-    RESERVED_3:
+    RESERVED_2:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 112
         width: 64
-    RESERVED_4:
+    RESERVED_3:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 120

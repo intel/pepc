@@ -27,7 +27,7 @@ registers:
             PARTITION:
                 bits: "33:32"
                 desc: "Partition number"
-            RSVD:
+            RESERVED:
                 bits: "62:50"
                 desc: "Reserved"
             SEGMENT:

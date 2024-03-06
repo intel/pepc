@@ -11,7 +11,7 @@ registers:
                 desc: >-
                     Core frequency below which mesh frequency is brought down when socket
                     is power limited (S7.0 format)
-            RSVD:
+            RESERVED:
                 bits: "63:16"
                 desc: "Reserved"
             SLOPE_1:
@@ -32,7 +32,7 @@ registers:
             HBM_BW_THRESHOLD:
                 bits: "31:24"
                 desc: "HBM bandwidth threshold"
-            RSVD:
+            RESERVED:
                 bits: "63:32"
                 desc: "Reserved"
             SLOPE_2:
@@ -64,13 +64,13 @@ registers:
             MIN_RATIO:
                 bits: "21:15"
                 desc: "Min fabric domain frequency ratio"
-            RSVD1:
+            RESERVED_0:
                 bits: "7:2"
                 desc: "Reserved"
-            RSVD2:
+            RESERVED_1:
                 bits: "31:29"
                 desc: "Reserved"
-            RSVD3:
+            RESERVED_2:
                 bits: "63:39"
                 desc: "Reserved"
             UFS_THROTTLE_MODE:
@@ -85,7 +85,7 @@ registers:
                 desc: >-
                     Offset for status and control registers belonging to local cluster ID 0
                     in 8-byte Qwords
-            RSVD:
+            RESERVED:
                 bits: "63:8"
                 desc: "Reserved"
         offset: 8
@@ -112,7 +112,7 @@ registers:
             RATIO_UNIT:
                 bits: "35:34"
                 desc: "Frequency ratio unit: 00 - 100MHz, all others - reserved"
-            RSVD:
+            RESERVED:
                 bits: "63:36"
                 desc: "Reserved"
         offset: 0
@@ -145,7 +145,7 @@ registers:
             CURRENT_VOLTAGE:
                 bits: "22:7"
                 desc: "Current Fabric voltage in U3.13 format"
-            RSVD:
+            RESERVED:
                 bits: "31:27"
                 desc: "Reserved"
             THROTTLE_COUNTER:

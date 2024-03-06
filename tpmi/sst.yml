@@ -59,7 +59,7 @@ registers:
             P1_SSE:
                 bits: "7:0"
                 desc: "Base frequency ratio of the TDP workload, a.k.a. SSE P1"
-            RSVD1:
+            RESERVED:
                 bits: "63:32"
                 desc: "Reserved"
         offset: 312
@@ -101,7 +101,7 @@ registers:
         width: 64
     L1_SST_PP_INFO-03:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 336
@@ -657,7 +657,7 @@ registers:
         width: 64
     L2_SST_PP_INFO-03:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 512
@@ -1213,7 +1213,7 @@ registers:
         width: 64
     L3_SST_PP_INFO-03:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 688
@@ -1769,7 +1769,7 @@ registers:
         width: 64
     L4_SST_PP_INFO-03:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 864
@@ -2488,10 +2488,10 @@ registers:
             PROPORTIONAL_PRIORITY:
                 bits: "7:4"
                 desc: "Core frequency weight when CLOS_PRIORITY_TYPE is set to 'proportional'"
-            RSVD1:
+            RESERVED_0:
                 bits: "3:0"
                 desc: "Reserved"
-            RSVD2:
+            RESERVED_1:
                 bits: "63:24"
                 desc: "Reserved"
         offset: 32
@@ -2507,10 +2507,10 @@ registers:
             PROPORTIONAL_PRIORITY:
                 bits: "7:4"
                 desc: "Core frequency weight when CLOS_PRIORITY_TYPE is set to 'proportional'"
-            RSVD1:
+            RESERVED_0:
                 bits: "3:0"
                 desc: "Reserved"
-            RSVD2:
+            RESERVED_1:
                 bits: "63:24"
                 desc: "Reserved"
         offset: 40
@@ -2526,10 +2526,10 @@ registers:
             PROPORTIONAL_PRIORITY:
                 bits: "7:4"
                 desc: "Core frequency weight when CLOS_PRIORITY_TYPE is set to 'proportional'"
-            RSVD1:
+            RESERVED_0:
                 bits: "3:0"
                 desc: "Reserved"
-            RSVD2:
+            RESERVED_1:
                 bits: "63:24"
                 desc: "Reserved"
         offset: 48
@@ -2545,10 +2545,10 @@ registers:
             PROPORTIONAL_PRIORITY:
                 bits: "7:4"
                 desc: "Core frequency weight when CLOS_PRIORITY_TYPE is set to 'proportional'"
-            RSVD1:
+            RESERVED_0:
                 bits: "3:0"
                 desc: "Reserved"
-            RSVD2:
+            RESERVED_1:
                 bits: "63:24"
                 desc: "Reserved"
         offset: 56
@@ -2558,10 +2558,10 @@ registers:
             RESET_EXCURSION_TO_MIN:
                 bits: "11:8"
                 desc: "Bitmask for the CLOS groups to clear"
-            RSVD1:
+            RESERVED_0:
                 bits: "7:2"
                 desc: "Reserved"
-            RSVD2:
+            RESERVED_1:
                 bits: "63:12"
                 desc: "Reserved"
             SST_CP_ENABLE:
@@ -2580,7 +2580,7 @@ registers:
             RATIO_UNIT:
                 bits: "13:12"
                 desc: "Frequency ratio unit: 00 - 100MHz"
-            RSVD:
+            RESERVED:
                 bits: "63:14"
                 desc: "Reserved"
             SST_FEATURE_ID:
@@ -2596,10 +2596,10 @@ registers:
             EXCURSION_TO_MIN:
                 bits: "11:8"
                 desc: "Bitmask for the CLOS groups to clear"
-            RSVD1:
+            RESERVED_0:
                 bits: "7:6"
                 desc: "Reserved"
-            RSVD2:
+            RESERVED_1:
                 bits: "63:12"
                 desc: "Reserved"
             SST_CP_ENABLE:
@@ -2665,10 +2665,10 @@ registers:
             RATIO_UNIT:
                 bits: "33:32"
                 desc: "Frequency ratio unit: 00 - 100MHz"
-            RSVD1:
+            RESERVED_0:
                 bits: "31:28"
                 desc: "Reserved"
-            RSVD2:
+            RESERVED_1:
                 bits: "63:45"
                 desc: "Reserved"
             SST_FEATURE_ID:
@@ -2693,7 +2693,7 @@ registers:
             P1_SSE:
                 bits: "7:0"
                 desc: "Base frequency ratio of the TDP workload, a.k.a. SSE P1"
-            RSVD1:
+            RESERVED:
                 bits: "63:32"
                 desc: "Reserved"
         offset: 136
@@ -2735,7 +2735,7 @@ registers:
         width: 64
     SST_PP_INFO-03:
         fields:
-            RSVD:
+            RESERVED:
                 bits: "63:0"
                 desc: "Reserved"
         offset: 160
