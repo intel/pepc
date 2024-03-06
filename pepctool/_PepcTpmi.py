@@ -98,7 +98,8 @@ def tpmi_read_command(args, pman):
     if not args.register:
         if args.bfname:
             raise Error("--bfname requires '--register' to be specified")
-        registers = list(fdict)
+        # Read all registers except for reserved ones.
+        registers = [regname for regname in fdict if not regname.startswith("RESERVED")]
     else:
         registers = Trivial.split_csv_line(args.register, dedup=True)
 
@@ -118,6 +119,9 @@ def tpmi_read_command(args, pman):
                 _LOG.info("%s%s: %#x", " " * pfx_indent + pfx, regname, regval)
 
                 for bfname, bfinfo in fdict[regname]["fields"].items():
+                    if args.bfname is None and bfname.startswith("RESERVED"):
+                        # Skip reserved bit fields.
+                        continue
                     if args.bfname not in (None, bfname):
                         continue
 
