@@ -107,11 +107,14 @@ def tpmi_read_command(args, pman):
         addrs = Trivial.split_csv_line(args.addrs, dedup=True)
         addrs = set(addrs)
 
+    packages = None
+    if args.packages:
+        packages = Trivial.split_csv_line_int(args.packages, dedup=True, what="package numbers")
+
     instances = None
     if args.instances:
         instances = Trivial.split_csv_line_int(args.instances, dedup=True,
                                                what="TPMI instance numbers")
-        instances = set(instances)
 
     tpmi = Tpmi.Tpmi(pman=pman)
     fdict = tpmi.get_fdict(args.fname)
@@ -126,8 +129,8 @@ def tpmi_read_command(args, pman):
 
     # Prepare all the information to print in the 'info' dictionary.
     info = {}
-
-    for addr, _, instance in tpmi.iter_feature(args.fname, addrs=addrs, instances=instances):
+    for addr, _, instance in tpmi.iter_feature(args.fname, addrs=addrs, packages=packages,
+                                                     instances=instances):
         if addr not in info:
             info[addr] = {}
 
