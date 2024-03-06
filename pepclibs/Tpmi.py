@@ -488,7 +488,7 @@ class Tpmi():
                 if addr not in fmaps["tpmi_info"]:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
                     package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
-                                                  bfname="PACKAGE_ID", mdmap=mdmap)
+                                                  bfname="PACKAGE_ID")
                     fmaps["tpmi_info"][addr] = {"package": package, "mdmap": mdmap}
 
                     if package not in self._pkg2addrs:
@@ -632,7 +632,7 @@ class Tpmi():
         bitdict = fieldsdict[bfname]
         return (regval & bitdict["bitmask"]) >> bitdict["bitshift"]
 
-    def _read_register(self, fname, addr, instance, regname, bfname=None, mdmap=None):
+    def _read_register(self, fname, addr, instance, regname, bfname=None):
         """
         Read a TPMI register. The arguments are as follows.
           * fname - name of the TPMI feature the register belongs to.
@@ -640,7 +640,6 @@ class Tpmi():
           * instance - the TPMI instance to read the register from.
           * regname - name of the TPMI register to read.
           * bfname - bit field name to read (read whole register by default).
-          * mdmap - the mdmap to use fro reading the register.
         """
 
         regname = regname.upper()
@@ -649,8 +648,7 @@ class Tpmi():
         offset = regdict["offset"]
         width = regdict["width"]
 
-        if not mdmap:
-            mdmap = self._build_mdmap(addr, fname)
+        mdmap = self._build_mdmap(addr, fname)
 
         val = self._read(addr, fname, instance, offset, mdmap)
         if width > 32:
@@ -679,25 +677,6 @@ class Tpmi():
             addrs = list(addrs)[:max_addrs]
             addrs.append("... and more ...")
         return "\n * ".join(addrs)
-
-    def _fmap_lookup(self, fname, addr, instance):
-        """
-        Search for a TPMI feature instance in the fmap. If found, return the following tuple for the
-        matching TPMI device: '(addr, mdmap)'.
-          - addr - PCI address of the matching TPMI device.
-          - mdmap - mdmap of the matching instance.
-
-        Note, this method assumes that 'fname' and 'addr'' have been validated. This method
-        validates only 'instance'.
-        """
-
-        mdmap = self._get_mdmap(fname, addr)
-        if instance in mdmap:
-            return addr, mdmap
-
-        instances = Human.rangify(list(mdmap))
-        raise Error(f"instance {instance} not available for the '{fname}' TPMI device '{addr}'"
-                    f"{self._pman.hostmsg}, available instances are: {instances}")
 
     def _validate_fname(self, fname):
         """Validate feature name 'fname'."""
@@ -753,9 +732,7 @@ class Tpmi():
                 self._validate_addr(fname, addr, package=package)
 
     def _validate_regname(self, fname, regname, bfname=None):
-        """
-        Validate register name and optionally a bit field name.
-        """
+        """Validate register name and optionally a bit field name."""
 
         fdict = self._get_fdict(fname)
 
@@ -766,6 +743,17 @@ class Tpmi():
         if bfname is not None and bfname not in regdict:
             raise Error(f"bit field '{bfname}' does not exist in register '{regname}' of feature "
                         f"'{fname}'")
+
+    def _validate_instance(self, fname, addr, instance):
+        """Verify that instance 'instance' is valid for 'fname' and 'addr'."""
+
+        mdmap = self._get_mdmap(fname, addr)
+        if instance in mdmap:
+            return
+
+        instances = Human.rangify(list(mdmap))
+        raise Error(f"instance {instance} not available for the '{fname}' TPMI device '{addr}'"
+                    f"{self._pman.hostmsg}, available instances are: {instances}")
 
     def get_known_features(self):
         """
@@ -854,9 +842,9 @@ class Tpmi():
         self._validate_fname(fname)
         self._validate_addr(fname, addr)
         self._validate_regname(fname, regname, bfname=bfname)
+        self._validate_instance(fname, addr, instance)
 
-        addr, mdmap = self._fmap_lookup(fname, addr, instance)
-        return self._read_register(fname, addr, instance, regname, mdmap=mdmap, bfname=bfname)
+        return self._read_register(fname, addr, instance, regname, bfname=bfname)
 
     def get_bitfield(self, regval, fname, regname, bfname):
         """
