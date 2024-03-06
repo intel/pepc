@@ -752,6 +752,21 @@ class Tpmi():
             for package in packages:
                 self._validate_addr(fname, addr, package=package)
 
+    def _validate_regname(self, fname, regname, bfname=None):
+        """
+        Validate register name and optionally a bit field name.
+        """
+
+        fdict = self._get_fdict(fname)
+
+        regdict = fdict.get(regname)
+        if regdict is None:
+            raise Error(f"register '{regname}' does not exist for feature '{fname}'")
+
+        if bfname is not None and bfname not in regdict:
+            raise Error(f"bit field '{bfname}' does not exist in register '{regname}' of feature "
+                        f"'{fname}'")
+
     def get_known_features(self):
         """
         Return a list of spec dictionaries for all known features (features that are supported by
@@ -838,6 +853,7 @@ class Tpmi():
 
         self._validate_fname(fname)
         self._validate_addr(fname, addr)
+        self._validate_regname(fname, regname, bfname=bfname)
 
         addr, mdmap = self._fmap_lookup(fname, addr, instance)
         return self._read_register(fname, addr, instance, regname, mdmap=mdmap, bfname=bfname)
