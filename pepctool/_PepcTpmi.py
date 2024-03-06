@@ -118,7 +118,7 @@ def tpmi_read_command(args, pman):
 
     if not args.register:
         if args.bfname:
-            raise Error("--bfname requires '--register' to be specified")
+            raise Error("'--bfname' requires '--register' to be specified")
         # Read all registers except for the reserved ones.
         regnames = [regname for regname in fdict if not regname.startswith("RESERVED")]
     else:
