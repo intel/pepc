@@ -80,54 +80,75 @@ def tpmi_read_command(args, pman):
       * pman - the process manager object that defines the target host.
     """
 
-    tpmi = Tpmi.Tpmi(pman=pman)
-    fdict = tpmi.get_fdict(args.fname)
-
-    if not args.addrs:
-        addrs = [addr for addr, _, _ in tpmi.iter_feature(args.fname)]
-        addrs = Trivial.list_dedup(addrs)
-    else:
+    addrs = None
+    if args.addrs:
         addrs = Trivial.split_csv_line(args.addrs, dedup=True)
+        addrs = set(addrs)
 
-    if not args.instances:
-        instances = [inst for _, _, inst in tpmi.iter_feature(args.fname, addrs=addrs)]
-        instances = Trivial.list_dedup(instances)
-    else:
+    instances = None
+    if args.instances:
         instances = Trivial.split_csv_line_int(args.instances, dedup=True,
                                                what="TPMI instance numbers")
+        instances = set(instances)
+
+    tpmi = Tpmi.Tpmi(pman=pman)
+    fdict = tpmi.get_fdict(args.fname)
 
     if not args.register:
         if args.bfname:
             raise Error("--bfname requires '--register' to be specified")
-        # Read all registers except for reserved ones.
-        registers = [regname for regname in fdict if not regname.startswith("RESERVED")]
+        # Read all registers except for the reserved ones.
+        regnames = [regname for regname in fdict if not regname.startswith("RESERVED")]
     else:
-        registers = Trivial.split_csv_line(args.register, dedup=True)
+        regnames = Trivial.split_csv_line(args.register, dedup=True)
+
+    # Prepare all the information to print in the 'info' dictionary.
+    info = {}
+
+    for addr, _, instance in tpmi.iter_feature(args.fname, addrs=addrs):
+        if addrs is not None and addr not in addrs:
+            continue
+        if instances is not None and instance not in instances:
+            continue
+
+        if addr not in info:
+            info[addr] = {}
+
+        assert instance not in info[addr]
+        info[addr][instance] = {}
+
+        for regname in regnames:
+            regval = tpmi.read_register(args.fname, addr, instance, regname)
+
+            assert regname not in info[addr][instance]
+            bfinfo = {}
+            info[addr][instance][regname] = {"regval": regval, "bfinfo": bfinfo}
+
+            for bfname, bfinfo in fdict[regname]["fields"].items():
+                if args.bfname is None and bfname.startswith("RESERVED"):
+                    # Skip reserved bit fields.
+                    continue
+
+                if args.bfname not in (None, bfname):
+                    continue
+
+                bfval = tpmi.get_bitfield(regval, args.fname, regname, bfname)
+                bfinfo[bfname] = bfval
 
     pfx = "- "
-    for addr in addrs:
+    for addr, addr_info in info.items():
         pfx_indent = 0
         _LOG.info("%sPCI address: %s", " " * pfx_indent + pfx, addr)
 
-        for instance in instances:
+        for instance, instance_info in addr_info.items():
             pfx_indent = 2
             _LOG.info("%sInstance: %d", " " * pfx_indent + pfx, instance)
 
-            for regname in registers:
-                regval = tpmi.read_register(args.fname, addr, instance, regname)
-
+            for regname, reginfo in instance_info.items():
                 pfx_indent = 4
-                _LOG.info("%s%s: %#x", " " * pfx_indent + pfx, regname, regval)
+                _LOG.info("%s%s: %#x", " " * pfx_indent + pfx, regname, reginfo["regval"])
 
-                for bfname, bfinfo in fdict[regname]["fields"].items():
-                    if args.bfname is None and bfname.startswith("RESERVED"):
-                        # Skip reserved bit fields.
-                        continue
-
-                    if args.bfname not in (None, bfname):
-                        continue
-
-                    bfval = tpmi.get_bitfield(regval, args.fname, regname, bfname)
-
+                for bfname, bfval in reginfo["bfinfo"].items():
+                    bfinfo = fdict[regname]["fields"][bfname]
                     pfx_indent = 6
                     _LOG.info("%s%s[%s]: %d", " " * pfx_indent + pfx, bfname, bfinfo["bits"], bfval)
