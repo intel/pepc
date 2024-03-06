@@ -78,11 +78,13 @@ def _tpmi_read_command_print(fdict, info):
     """Print the 'tpmi read' commnad output from the pre-populated dictionary 'info'."""
 
     pfx = "- "
+    nopfx = "  "
     for addr, addr_info in info.items():
         pfx_indent = 0
         _LOG.info("%sPCI address: %s", " " * pfx_indent + pfx, addr)
+        _LOG.info("%sPackage: %d", " " * pfx_indent + nopfx, addr_info["package"])
 
-        for instance, instance_info in addr_info.items():
+        for instance, instance_info in addr_info["instances"].items():
             pfx_indent = 2
             _LOG.info("%sInstance: %d", " " * pfx_indent + pfx, instance)
 
@@ -129,20 +131,20 @@ def tpmi_read_command(args, pman):
 
     # Prepare all the information to print in the 'info' dictionary.
     info = {}
-    for addr, _, instance in tpmi.iter_feature(args.fname, addrs=addrs, packages=packages,
+    for addr, package, instance in tpmi.iter_feature(args.fname, addrs=addrs, packages=packages,
                                                      instances=instances):
         if addr not in info:
-            info[addr] = {}
+            info[addr] = {"package": package, "instances": {}}
 
-        assert instance not in info[addr]
-        info[addr][instance] = {}
+        assert instance not in info[addr]["instances"]
+        info[addr]["instances"][instance] = {}
 
         for regname in regnames:
             regval = tpmi.read_register(args.fname, addr, instance, regname)
 
-            assert regname not in info[addr][instance]
+            assert regname not in info[addr]["instances"][instance]
             bfinfo = {}
-            info[addr][instance][regname] = {"value": regval, "fields": bfinfo}
+            info[addr]["instances"][instance][regname] = {"value": regval, "fields": bfinfo}
 
             for bfname in fdict[regname]["fields"]:
                 if args.bfname is None and bfname.startswith("RESERVED"):
