@@ -85,6 +85,7 @@ def tpmi_read_command(args, pman):
 
     if not args.addrs:
         addrs = [addr for addr, _, _ in tpmi.iter_feature(args.fname)]
+        addrs = Trivial.list_dedup(addrs)
     else:
         addrs = Trivial.split_csv_line(args.addrs, dedup=True)
 
@@ -122,6 +123,7 @@ def tpmi_read_command(args, pman):
                     if args.bfname is None and bfname.startswith("RESERVED"):
                         # Skip reserved bit fields.
                         continue
+
                     if args.bfname not in (None, bfname):
                         continue
 
