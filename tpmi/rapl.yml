@@ -57,7 +57,7 @@ registers:
             MASK:
                 bits: "0:0"
                 desc: "0 - interrupt is enabled, 1 - interrupt is disabled"
-            RDVD:
+            RESERVED:
                 bits: "63:2"
                 desc: "Reserved"
             STATUS:
