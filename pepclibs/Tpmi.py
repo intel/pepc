@@ -672,7 +672,6 @@ class Tpmi():
           * regname - name of the TPMI register to write.
         """
 
-        regname = regname.upper()
         regdict = self._get_regdict(fname, regname)
 
         offset = regdict["offset"]
