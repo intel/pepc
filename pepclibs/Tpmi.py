@@ -664,8 +664,8 @@ class Tpmi():
 
     def _write_register(self, value, fname, addr, instance, regname):
         """
-        Write to a TPMI register. Arguments are as follows.
-          * value - Value to write to the register.
+        Write to a TPMI register. The arguments are as follows.
+          * value - the value to write to the register.
           * fname - name of the TPMI feature the register belongs to.
           * addr - the TPMI device address.
           * instance - the TPMI instance to write the register to.
