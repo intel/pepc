@@ -697,7 +697,7 @@ class Tpmi():
 
         while width > 0:
             writeval = value & 0xffffffff
-            data = f"{instance},{offset},0x{writeval:x}"
+            data = f"{instance},{offset},{writeval:#x}"
             _LOG.debug("writing '%s' to '%s'", data, path)
 
             with self._pman.open(path, "r+") as fobj:
