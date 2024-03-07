@@ -677,6 +677,14 @@ class Tpmi():
         offset = regdict["offset"]
         width = regdict["width"]
 
+        # Validate the value.
+        if value < 0:
+            raise Error(f"bad value '{value}' for register '{regname}': should be a positive "
+                        f"{width}-bit integer")
+        max_value = (1 << width) - 1
+        if value > max_value:
+            raise Error(f"too large value '{value}' for a {width}-bit register '{regname}")
+
         mdmap = self._get_mdmap(fname, addr)
 
         self._validate_instance_offset(fname, addr, instance, regname, offset, mdmap)
