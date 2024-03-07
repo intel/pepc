@@ -644,7 +644,6 @@ class Tpmi():
           * bfname - bit field name to read (read whole register by default).
         """
 
-        regname = regname.upper()
         regdict = self._get_regdict(fname, regname)
 
         offset = regdict["offset"]
