@@ -695,17 +695,18 @@ class Tpmi():
         _LOG.debug("writing 0x%x to '%s' register '%s', instance '%d' at offset 0x%x of TPMI "
                    "device '%s'", value, fname, regname, instance, offset, addr)
 
-        while width > 0:
-            writeval = value & 0xffffffff
-            data = f"{instance},{offset},{writeval:#x}"
-            _LOG.debug("writing '%s' to '%s'", data, path)
+        with self._pman.open(path, "r+") as fobj:
+            while width > 0:
+                writeval = value & 0xffffffff
+                data = f"{instance},{offset},{writeval:#x}"
+                _LOG.debug("writing '%s' to '%s'", data, path)
 
-            with self._pman.open(path, "r+") as fobj:
                 fobj.write(data)
+                fobj.seek(0)
 
-            width -= 32
-            offset += 4
-            value >>= 32
+                width -= 32
+                offset += 4
+                value >>= 32
 
     def _get_mdmap(self, fname, addr):
         """Get mdmap for a TPMI feature."""
