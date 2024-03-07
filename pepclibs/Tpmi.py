@@ -488,7 +488,7 @@ class Tpmi():
                 if addr not in fmaps["tpmi_info"]:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
                     package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
-                                                  bfname="PACKAGE_ID")
+                                                  bfname="PACKAGE_ID", mdmap=mdmap)
                     fmaps["tpmi_info"][addr] = {"package": package, "mdmap": mdmap}
 
                     if package not in self._pkg2addrs:
@@ -634,7 +634,7 @@ class Tpmi():
         bitdict = fieldsdict[bfname]
         return (regval & bitdict["bitmask"]) >> bitdict["bitshift"]
 
-    def _read_register(self, fname, addr, instance, regname, bfname=None):
+    def _read_register(self, fname, addr, instance, regname, bfname=None, mdmap=None):
         """
         Read a TPMI register. The arguments are as follows.
           * fname - name of the TPMI feature the register belongs to.
@@ -642,6 +642,7 @@ class Tpmi():
           * instance - the TPMI instance to read the register from.
           * regname - name of the TPMI register to read.
           * bfname - bit field name to read (read whole register by default).
+          * mdmap - the mdmap to use (optional).
         """
 
         regdict = self._get_regdict(fname, regname)
@@ -649,7 +650,8 @@ class Tpmi():
         offset = regdict["offset"]
         width = regdict["width"]
 
-        mdmap = self._build_mdmap(addr, fname)
+        if not mdmap:
+            mdmap = self._build_mdmap(addr, fname)
 
         val = self._read(addr, fname, instance, regname, offset, mdmap)
         if width > 32:
