@@ -743,7 +743,7 @@ class Tpmi():
         if regdict is None:
             raise Error(f"register '{regname}' does not exist for feature '{fname}'")
 
-        if bfname is not None and bfname not in regdict:
+        if bfname is not None and bfname not in regdict["fields"]:
             raise Error(f"bit field '{bfname}' does not exist in register '{regname}' of feature "
                         f"'{fname}'")
 
