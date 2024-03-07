@@ -584,7 +584,7 @@ class Tpmi():
 
         return fdict[regname]
 
-    def _validate_instance_offset(self, fname, addr, instance, offset, mdmap):
+    def _validate_instance_offset(self, fname, addr, instance, regname, offset, mdmap):
         """Validated an instance number 'instance' and a register offset 'offset'."""
 
         if instance not in mdmap:
@@ -594,13 +594,14 @@ class Tpmi():
 
         if offset < 0 or offset % 4 != 0 or offset not in mdmap[instance]:
             max_offset = max(mdmap[instance])
-            raise Error(f"bad offset '{offset:#x}' for TPMI feature '{fname}': should be a "
-                        f"positive integer aligned to 4 and not exceeding '{max_offset}'")
+            raise Error(f"bad offset '{offset:#x}' for register '{regname}' of TPMI feature "
+                        f"'{fname}': should be a positive integer aligned to 4 and not "
+                        f"exceeding '{max_offset}'")
 
-    def _read(self, addr, fname, instance, offset, mdmap):
+    def _read(self, addr, fname, instance, regname, offset, mdmap):
         """Read a TPMI register from the 'mem_dump' file."""
 
-        self._validate_instance_offset(fname, addr, instance, offset, mdmap)
+        self._validate_instance_offset(fname, addr, instance, regname, offset, mdmap)
 
         path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_dump"
@@ -609,8 +610,7 @@ class Tpmi():
             fobj.seek(mdmap[instance][offset])
             val = fobj.read(8)
 
-        what = f"value of a TPMI register at offset '{offset:#x}', TPMI feature '{fname}', " \
-               f"device '{addr}"
+        what = f"value of register '{regname}' (offset '{offset:#x}') of TPMI feature '{fname}'"
         return Trivial.str_to_int(val, base=16, what=what)
 
     def _get_bitfield(self, regval, fname, regname, bfname):
@@ -652,9 +652,9 @@ class Tpmi():
 
         mdmap = self._build_mdmap(addr, fname)
 
-        val = self._read(addr, fname, instance, offset, mdmap)
+        val = self._read(addr, fname, instance, regname, offset, mdmap)
         if width > 32:
-            val = val + (self._read(addr, fname, instance, offset + 4, mdmap) << 32)
+            val = val + (self._read(addr, fname, instance, regname, offset + 4, mdmap) << 32)
 
         if bfname:
             val = self._get_bitfield(val, fname, regname, bfname)
