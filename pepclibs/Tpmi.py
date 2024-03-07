@@ -584,30 +584,23 @@ class Tpmi():
 
         return fdict[regname]
 
-    def _validate_access(self, instance, offset, mdmap, msg_fd, msg_ifd):
-        """
-        Validate access to a 'mem_dump' file. This checks that the instance is present, and that
-        the memory offset is within supported range.
-        """
+    def _validate_instance_offset(self, fname, addr, instance, offset, mdmap):
+        """Validated an instance number 'instance' and a register offset 'offset'."""
 
         if instance not in mdmap:
             available = Human.rangify(mdmap)
-            raise Error(f"bad instance number '{instance}' for {msg_fd}, available instances: "
-                        f"{available}")
+            raise Error(f"bad instance number '{instance}' for TPMI feature '{fname}' and "
+                        f"device '{addr}', available instances: {available}")
 
-        if offset not in mdmap[instance]:
+        if offset < 0 or offset % 4 != 0 or offset not in mdmap[instance]:
             max_offset = max(mdmap[instance])
-            raise Error(f"bad offset '{offset:#x}' for {msg_ifd}, max. offset is '{max_offset}'")
+            raise Error(f"bad offset '{offset:#x}' for TPMI feature '{fname}': should be a "
+                        f"positive integer aligned to 4 and not exceeding '{max_offset}'")
 
     def _read(self, addr, fname, instance, offset, mdmap):
         """Read a TPMI register from the 'mem_dump' file."""
 
-        # Feature and device.
-        msg_fd = f"""feature '{fname}', for device '{addr}'"""
-        # Instance, feature and device.
-        msg_ifd = f"""instance '{instance}', {msg_fd}"""
-
-        self._validate_access(instance, offset, mdmap, msg_fd, msg_ifd)
+        self._validate_instance_offset(fname, addr, instance, offset, mdmap)
 
         path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_dump"
@@ -616,7 +609,8 @@ class Tpmi():
             fobj.seek(mdmap[instance][offset])
             val = fobj.read(8)
 
-        what = f"value of a TPMI register at offset '{offset:#x}', {msg_ifd}"
+        what = f"value of a TPMI register at offset '{offset:#x}', TPMI feature '{fname}', " \
+               f"device '{addr}"
         return Trivial.str_to_int(val, base=16, what=what)
 
     def _get_bitfield(self, regval, fname, regname, bfname):
