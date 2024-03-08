@@ -154,7 +154,6 @@ def tpmi_read_command(args, pman):
 
         if not args.registers:
             # Read all registers except for the reserved ones.
-            print("here")
             regnames = [regname for regname in fdict if not regname.startswith("RESERVED")]
 
         for addr, package, instance in tpmi.iter_feature(fname, addrs=addrs, packages=packages,
