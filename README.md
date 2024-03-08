@@ -76,6 +76,7 @@ Pepc supports discovering and configuring the following features.
 * CPU onlining and offlining: [documentation](docs/pepc-cpu-hotplug.rst)
 * ASPM: [documentation](docs/pepc-aspm.rst)
 * CPU topology: [documentation](docs/pepc-topology.rst)
+* TPMI: [documentation](docs/pepc-tpmi.rst)
 
 Some of the features are hardware-independent, but some are hardware-specific.
 
