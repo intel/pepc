@@ -2271,208 +2271,208 @@ registers:
         width: 64
     SST_CLOS_ASSOC_0:
         fields:
-            CLOS_ID_core0:
+            CLOS_ID_CORE0:
                 bits: "3:0"
                 desc: "CLOS_ID for core 0"
-            CLOS_ID_core1:
+            CLOS_ID_CORE1:
                 bits: "7:4"
                 desc: "CLOS_ID for core 1"
-            CLOS_ID_core10:
+            CLOS_ID_CORE10:
                 bits: "43:40"
                 desc: "CLOS_ID for core 10"
-            CLOS_ID_core11:
+            CLOS_ID_CORE11:
                 bits: "47:44"
                 desc: "CLOS_ID for core 11"
-            CLOS_ID_core12:
+            CLOS_ID_CORE12:
                 bits: "51:48"
                 desc: "CLOS_ID for core 12"
-            CLOS_ID_core13:
+            CLOS_ID_CORE13:
                 bits: "55:52"
                 desc: "CLOS_ID for core 13"
-            CLOS_ID_core14:
+            CLOS_ID_CORE14:
                 bits: "59:56"
                 desc: "CLOS_ID for core 14"
-            CLOS_ID_core15:
+            CLOS_ID_CORE15:
                 bits: "63:60"
                 desc: "CLOS_ID for core 15"
-            CLOS_ID_core2:
+            CLOS_ID_CORE2:
                 bits: "11:8"
                 desc: "CLOS_ID for core 2"
-            CLOS_ID_core3:
+            CLOS_ID_CORE3:
                 bits: "15:12"
                 desc: "CLOS_ID for core 3"
-            CLOS_ID_core4:
+            CLOS_ID_CORE4:
                 bits: "19:16"
                 desc: "CLOS_ID for core 4"
-            CLOS_ID_core5:
+            CLOS_ID_CORE5:
                 bits: "23:20"
                 desc: "CLOS_ID for core 5"
-            CLOS_ID_core6:
+            CLOS_ID_CORE6:
                 bits: "27:24"
                 desc: "CLOS_ID for core 6"
-            CLOS_ID_core7:
+            CLOS_ID_CORE7:
                 bits: "31:28"
                 desc: "CLOS_ID for core 7"
-            CLOS_ID_core8:
+            CLOS_ID_CORE8:
                 bits: "35:32"
                 desc: "CLOS_ID for core 8"
-            CLOS_ID_core9:
+            CLOS_ID_CORE9:
                 bits: "39:36"
                 desc: "CLOS_ID for core 9"
         offset: 64
         width: 64
     SST_CLOS_ASSOC_1:
         fields:
-            CLOS_ID_core16:
+            CLOS_ID_CORE16:
                 bits: "3:0"
                 desc: "CLOS_ID for core 16"
-            CLOS_ID_core17:
+            CLOS_ID_CORE17:
                 bits: "7:4"
                 desc: "CLOS_ID for core 17"
-            CLOS_ID_core18:
+            CLOS_ID_CORE18:
                 bits: "11:8"
                 desc: "CLOS_ID for core 18"
-            CLOS_ID_core19:
+            CLOS_ID_CORE19:
                 bits: "15:12"
                 desc: "CLOS_ID for core 19"
-            CLOS_ID_core20:
+            CLOS_ID_CORE20:
                 bits: "19:16"
                 desc: "CLOS_ID for core 20"
-            CLOS_ID_core21:
+            CLOS_ID_CORE21:
                 bits: "23:20"
                 desc: "CLOS_ID for core 21"
-            CLOS_ID_core22:
+            CLOS_ID_CORE22:
                 bits: "27:24"
                 desc: "CLOS_ID for core 22"
-            CLOS_ID_core23:
+            CLOS_ID_CORE23:
                 bits: "31:28"
                 desc: "CLOS_ID for core 23"
-            CLOS_ID_core24:
+            CLOS_ID_CORE24:
                 bits: "35:32"
                 desc: "CLOS_ID for core 24"
-            CLOS_ID_core25:
+            CLOS_ID_CORE25:
                 bits: "39:36"
                 desc: "CLOS_ID for core 25"
-            CLOS_ID_core26:
+            CLOS_ID_CORE26:
                 bits: "43:40"
                 desc: "CLOS_ID for core 26"
-            CLOS_ID_core27:
+            CLOS_ID_CORE27:
                 bits: "47:44"
                 desc: "CLOS_ID for core 27"
-            CLOS_ID_core28:
+            CLOS_ID_CORE28:
                 bits: "51:48"
                 desc: "CLOS_ID for core 28"
-            CLOS_ID_core29:
+            CLOS_ID_CORE29:
                 bits: "55:52"
                 desc: "CLOS_ID for core 29"
-            CLOS_ID_core30:
+            CLOS_ID_CORE30:
                 bits: "59:56"
                 desc: "CLOS_ID for core 30"
-            CLOS_ID_core31:
+            CLOS_ID_CORE31:
                 bits: "63:60"
                 desc: "CLOS_ID for core 31"
         offset: 72
         width: 64
     SST_CLOS_ASSOC_2:
         fields:
-            CLOS_ID_core32:
+            CLOS_ID_CORE32:
                 bits: "3:0"
                 desc: "CLOS_ID for core 32"
-            CLOS_ID_core33:
+            CLOS_ID_CORE33:
                 bits: "7:4"
                 desc: "CLOS_ID for core 33"
-            CLOS_ID_core34:
+            CLOS_ID_CORE34:
                 bits: "11:8"
                 desc: "CLOS_ID for core 34"
-            CLOS_ID_core35:
+            CLOS_ID_CORE35:
                 bits: "15:12"
                 desc: "CLOS_ID for core 35"
-            CLOS_ID_core36:
+            CLOS_ID_CORE36:
                 bits: "19:16"
                 desc: "CLOS_ID for core 36"
-            CLOS_ID_core37:
+            CLOS_ID_CORE37:
                 bits: "23:20"
                 desc: "CLOS_ID for core 37"
-            CLOS_ID_core38:
+            CLOS_ID_CORE38:
                 bits: "27:24"
                 desc: "CLOS_ID for core 38"
-            CLOS_ID_core39:
+            CLOS_ID_CORE39:
                 bits: "31:28"
                 desc: "CLOS_ID for core 39"
-            CLOS_ID_core40:
+            CLOS_ID_CORE40:
                 bits: "35:32"
                 desc: "CLOS_ID for core 40"
-            CLOS_ID_core41:
+            CLOS_ID_CORE41:
                 bits: "39:36"
                 desc: "CLOS_ID for core 41"
-            CLOS_ID_core42:
+            CLOS_ID_CORE42:
                 bits: "43:40"
                 desc: "CLOS_ID for core 42"
-            CLOS_ID_core43:
+            CLOS_ID_CORE43:
                 bits: "47:44"
                 desc: "CLOS_ID for core 43"
-            CLOS_ID_core44:
+            CLOS_ID_CORE44:
                 bits: "51:48"
                 desc: "CLOS_ID for core 44"
-            CLOS_ID_core45:
+            CLOS_ID_CORE45:
                 bits: "55:52"
                 desc: "CLOS_ID for core 45"
-            CLOS_ID_core46:
+            CLOS_ID_CORE46:
                 bits: "59:56"
                 desc: "CLOS_ID for core 46"
-            CLOS_ID_core47:
+            CLOS_ID_CORE47:
                 bits: "63:60"
                 desc: "CLOS_ID for core 47"
         offset: 80
         width: 64
     SST_CLOS_ASSOC_3:
         fields:
-            CLOS_ID_core48:
+            CLOS_ID_CORE48:
                 bits: "3:0"
                 desc: "CLOS_ID for core 48"
-            CLOS_ID_core49:
+            CLOS_ID_CORE49:
                 bits: "7:4"
                 desc: "CLOS_ID for core 49"
-            CLOS_ID_core50:
+            CLOS_ID_CORE50:
                 bits: "11:8"
                 desc: "CLOS_ID for core 50"
-            CLOS_ID_core51:
+            CLOS_ID_CORE51:
                 bits: "15:12"
                 desc: "CLOS_ID for core 51"
-            CLOS_ID_core52:
+            CLOS_ID_CORE52:
                 bits: "19:16"
                 desc: "CLOS_ID for core 52"
-            CLOS_ID_core53:
+            CLOS_ID_CORE53:
                 bits: "23:20"
                 desc: "CLOS_ID for core 53"
-            CLOS_ID_core54:
+            CLOS_ID_CORE54:
                 bits: "27:24"
                 desc: "CLOS_ID for core 54"
-            CLOS_ID_core55:
+            CLOS_ID_CORE55:
                 bits: "31:28"
                 desc: "CLOS_ID for core 55"
-            CLOS_ID_core56:
+            CLOS_ID_CORE56:
                 bits: "35:32"
                 desc: "CLOS_ID for core 56"
-            CLOS_ID_core57:
+            CLOS_ID_CORE57:
                 bits: "39:36"
                 desc: "CLOS_ID for core 57"
-            CLOS_ID_core58:
+            CLOS_ID_CORE58:
                 bits: "43:40"
                 desc: "CLOS_ID for core 58"
-            CLOS_ID_core59:
+            CLOS_ID_CORE59:
                 bits: "47:44"
                 desc: "CLOS_ID for core 59"
-            CLOS_ID_core60:
+            CLOS_ID_CORE60:
                 bits: "51:48"
                 desc: "CLOS_ID for core 60"
-            CLOS_ID_core61:
+            CLOS_ID_CORE61:
                 bits: "55:52"
                 desc: "CLOS_ID for core 61"
-            CLOS_ID_core62:
+            CLOS_ID_CORE62:
                 bits: "59:56"
                 desc: "CLOS_ID for core 62"
-            CLOS_ID_core63:
+            CLOS_ID_CORE63:
                 bits: "63:60"
                 desc: "CLOS_ID for core 63"
         offset: 88
