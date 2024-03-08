@@ -202,10 +202,11 @@ def tpmi_write_command(args, pman):
       * pman - process manager.
     """
 
+    tpmi = Tpmi.Tpmi(pman=pman)
+
     addrs = None
     if args.addrs:
         addrs = Trivial.split_csv_line(args.addrs, dedup=True)
-        addrs = set(addrs)
 
     packages = None
     if args.packages:
@@ -216,20 +217,20 @@ def tpmi_write_command(args, pman):
         instances = Trivial.split_csv_line_int(args.instances, dedup=True,
                                                what="TPMI instance numbers")
 
-    regnames = Trivial.split_csv_line(args.registers, dedup=True)
-
-    tpmi = Tpmi.Tpmi(pman=pman)
-
     value = Trivial.str_to_int(args.value, what="value to write")
 
     if args.bfname:
         bfname_str = f", bit field '{args.bfname}'"
+        val_str = f"{value}"
     else:
         bfname_str = ""
+        val_str = f"{value:#x}"
 
-    for addr, _, instance in tpmi.iter_feature(args.fname, addrs=addrs, packages=packages,
-                                               instances=instances):
-        for regname in regnames:
-            tpmi.write_register(value, args.fname, addr, instance, regname, bfname=args.bfname)
-            _LOG.info("Wrote '%d' to feature '%s', PCI device '%s', register '%s'%s, instance '%d'",
-                      value, args.fname, addr, regname, bfname_str, instance)
+
+    for addr, package, instance in tpmi.iter_feature(args.fname, addrs=addrs, packages=packages,
+                                                     instances=instances):
+        tpmi.write_register(value, args.fname, addr, instance, args.regname, bfname=args.bfname)
+
+        _LOG.info("Wrote '%s' to TPMI register '%s'%s (feature '%s', device '%s', package %d, "
+                  "instance %d)", val_str, args.regname, bfname_str, args.fname, addr, package,
+                  instance)

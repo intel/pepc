@@ -686,7 +686,7 @@ def build_arguments_parser():
 
     text = """Comma-separated list of TPMI feature names to read the register(s) for (all features
               by default)."""
-    subpars2.add_argument("-F", "--features", dest="fnames", help=text)
+    subpars2.add_argument("-F", "--features", metavar="FEATURES", dest="fnames", help=text)
 
     text = """Comma-separated list of TPMI device PCI addresses to read the registers from (all
               devices by default)."""
@@ -703,9 +703,9 @@ def build_arguments_parser():
     text = """Comma-separated list of TPMI registers names to read (all registers by default)."""
     subpars2.add_argument("-R", "--registers", help=text)
 
-    text = """Comma-separated list of TPMI TPMI register bit field names to read (all bit fields by
+    text = """Comma-separated list of TPMI register bit field names to read (all bit fields by
               default)."""
-    subpars2.add_argument("-b", "--bitfields", dest="bfnames", help=text)
+    subpars2.add_argument("-b", "--bitfields", metavar="BITFIELDS", dest="bfnames", help=text)
 
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
@@ -719,7 +719,8 @@ def build_arguments_parser():
     subpars2.set_defaults(func=_tpmi_write_command)
 
     text = "Name of the TPMI feature the register belongs to."
-    subpars2.add_argument("fname", metavar="feature", help=text)
+    subpars2.add_argument("-F", "--feature", metavar="FEATURE", dest="fname", help=text,
+                          required=True)
 
     text = """Comma-separated list of TPMI device PCI addresses to write to."""
     subpars2.add_argument("-a", "--addresses", dest="addrs", help=text)
@@ -728,18 +729,19 @@ def build_arguments_parser():
               by default)."""
     subpars2.add_argument("--packages", help=text)
 
-    text = """Comma-separated list of integer TPMI instance numbers to write the registers to (all
-              instances by default)."""
+    text = """Comma-separated list of integer TPMI instance numbers to write to (all instances by
+              default)."""
     subpars2.add_argument("-i", "--instances", help=text)
 
-    text = """Name of the TPMI register to write."""
-    subpars2.add_argument("-R", "--register", help=text, required=True)
+    text = """Name of the TPMI register to write to."""
+    subpars2.add_argument("-R", "--register", dest="regname", help=text, required=True)
 
-    text = """Name of the TPMI register bitfield to write (all bitfields by default)."""
-    subpars2.add_argument("-b", "--bitfield", dest="bfname", help=text)
+    text = """Name of the TPMI register bitfield to write to. If not specified, write to the
+              register, not a bit field of the register."""
+    subpars2.add_argument("-b", "--bitfield", metavar="BITFIELD", dest="bfname", help=text)
 
-    text = "Value to write to the TPMI register / bitfield."
-    subpars2.add_argument("value", help=text)
+    text = "The value to write to the TPMI register or its bit field."
+    subpars2.add_argument("-V", "--value", help=text, required=True)
 
     if argcomplete:
         argcomplete.autocomplete(parser)
