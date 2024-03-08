@@ -2,7 +2,7 @@
 .. vim: ts=4 sw=4 tw=100 et ai si
 
 :Date:   09-02-2024
-:Title:  ASPM
+:Title:  TPMI
 
 .. Contents::
    :depth: 2
