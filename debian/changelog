@@ -1,3 +1,9 @@
+pepc (1.5.8) unstable; urgency=low
+
+  * Dummy release, no changes comparing to 1.5.8.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 08 Mar 2024 00:00:00 +0200
+
 pepc (1.5.7) unstable; urgency=low
 
   * Add 'pepc tpmi read' and 'pepc tpmi write' commands.

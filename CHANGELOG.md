@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.8] - 2024-03-08
+### Changed
  - Dummy release, no changes comparing to 1.5.8.
 
 ## [1.5.7] - 2024-03-08
