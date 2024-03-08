@@ -117,6 +117,69 @@ Force coloring of the text output.
 .PP
 List supported TPMI features.
 .TP
+\f[B]-l\f[R], \f[B]--long\f[R]
+Provide additional information, such as TPMI device PCI addresses and
+TPMI instance numbers.
+.TP
 \f[B]--all\f[R]
 Also print IDs of TPMI features supported by the processor, but for
 which there are no spec files, so they cannot be decoded.
+.SS Subcommand \f[I]\[aq]read\[aq]\f[R]
+.PP
+Read one or multiple TPMI registers.
+.TP
+\f[B]-F\f[R] FEATURES, \f[B]--features\f[R] FEATURES
+Comma-separated list of TPMI feature names to read the register(s) for.
+Read for all supported features by default.
+.TP
+\f[B]-a\f[R] ADDRS, \f[B]--addresses\f[R] ADDRS
+Comma-separated list of TPMI device PCI addresses to read the registers
+from.
+Read from all devices by default.
+.TP
+\f[B]--packages\f[R] PACKAGES
+Comma-separated list of integer package numbers to read TPMI registers
+for (all packages by default).
+.TP
+\f[B]-i\f[R] INSTANCES, \f[B]--instances\f[R] INSTANCES
+Comma-separated list of integer TPMI instance numbers to read the
+registers from (all instances by default).
+.TP
+\f[B]-R\f[R] REGISTERS, \f[B]--registers\f[R] REGISTERS
+Comma-separated list of TPMI registers names to read (all registers by
+default).
+.TP
+\f[B]-b\f[R] BFNAMES, \f[B]--bitfields\f[R] BFNAMES
+Comma-separated list of TPMI register bit field names to read (all bit
+fields by default).
+.TP
+\f[B]--yaml\f[R]
+Print information in YAML format.
+.SS Subcommand \f[I]\[aq]write\[aq]\f[R]
+.PP
+Write to a TPMI register.
+.TP
+\f[B]-F\f[R] FEATURE, \f[B]--feature\f[R] FEATURE
+Name of the TPMI feature the register belongs to.
+.TP
+\f[B]-a\f[R] ADDRS, \f[B]--addresses\f[R] ADDRS
+Comma-separated list of TPMI device PCI addresses to write to.
+.TP
+\f[B]--packages\f[R] PACKAGES
+Comma-separated list of package numbers to write the TPMI register for
+(all packages by default).
+.TP
+\f[B]-i\f[R] INSTANCES, \f[B]--instances\f[R] INSTANCES
+Comma-separated list of integer TPMI instance numbers to write to (all
+instances by default).
+.TP
+\f[B]-R\f[R] REGNAME, \f[B]--register\f[R] REGNAME
+Name of the TPMI register to write to.
+.TP
+\f[B]-b\f[R] BITFIELD, \f[B]--bitfield\f[R] BITFIELD
+Name of the TPMI register bitfield to write to.
+If not specified, write to the register, not a bit field of the
+register.
+.TP
+\f[B]-V\f[R] VALUE, \f[B]--value\f[R] VALUE
+The value to write to the TPMI register or its bit field.

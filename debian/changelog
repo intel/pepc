@@ -1,3 +1,9 @@
+pepc (1.5.7) unstable; urgency=low
+
+  * Add 'pepc tpmi read' and 'pepc tpmi write' commands.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 08 Mar 2024 00:00:00 +0200
+
 pepc (1.5.6) unstable; urgency=low
 
   * Workaround for connecting to remote hosts becaulse of paramiko failing in

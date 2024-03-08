@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Add 'pepc tpmi read' and 'pepc tpmi write' commands.
 ### Removed
 ### Changed
+
+## [1.5.7] - 2024-03-08
+### Added
+ - Add 'pepc tpmi read' and 'pepc tpmi write' commands.
 
 ## [1.5.6] - 2024-02-19
 ### Fixed
