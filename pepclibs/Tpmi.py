@@ -37,6 +37,9 @@ Terminology.
 
   * regdict - register dictionary, a sub-dictionary of fdict describing a single register.
 
+  * bfdict - bit field dictionary, a sub-dictionary of regdict describing a single bit field of the
+             register.
+
   * spec file - a YAML file describing the registers and bit fields for a TPMI feature. Each
                 supported feature has a spec file, and each spec file corresponds to a feature. A
                 spec file is also required to decode the TPMI feature's PCIe VSEC table.
@@ -299,7 +302,7 @@ class Tpmi():
                 _raise_exc(f"bad width '{width}' in TPMI register '{regname}': must be either 32 "
                            f"or 64")
 
-            for bfname, bitdict in regdict["fields"].items():
+            for bfname, bfdict in regdict["fields"].items():
                 if not bfname.isupper():
                     _raise_exc(f"bad bit field name '{bfname}' for TPMI register '{regname}': "
                                f"should include only upper case characters")
@@ -307,18 +310,18 @@ class Tpmi():
                 # The allowed and the mandatory bit field dictionary key names.
                 keys = {"bits", "desc"}
                 where = f"in bit field '{bfname}' of the '{regname}' TPMI register definition"
-                _check_keys(bitdict, keys, keys, where)
+                _check_keys(bfdict, keys, keys, where)
 
                 # Make sure that the description has no newline character.
-                if "\n" in bitdict["desc"]:
+                if "\n" in bfdict["desc"]:
                     _raise_exc(f"bad description of bit field '{bfname}' of the '{regname}' TPMI "
                                f"register: includes a newline character")
 
                 # Verify the bits and add "bitshift" and "bitmask".
                 where = f"in bit field '{bfname}' of the '{regname}' TPMI register"
-                bits = Trivial.split_csv_line(bitdict["bits"], sep=":")
+                bits = Trivial.split_csv_line(bfdict["bits"], sep=":")
                 if len(bits) != 2:
-                    bits = bitdict["bits"]
+                    bits = bfdict["bits"]
                     _raise_exc(f"bad 'bits' key value '{bits}' {where}: should have the "
                                f"'<high-bit>:<low-bit>' format")
 
@@ -327,13 +330,13 @@ class Tpmi():
                 lowbit = Trivial.str_to_int(bits[1], what=what % bits[1])
 
                 if highbit < lowbit:
-                    bits = bitdict["bits"]
+                    bits = bfdict["bits"]
                     _raise_exc(f"bad 'bits' key value '{bits}' {where}: high bit value '{highbit}' "
                                f"is smaller than low bit value '{lowbit}'")
 
                 bitmask = ((1 << (highbit + 1)) - 1) - ((1 << lowbit) - 1)
-                bitdict["bitshift"] = lowbit
-                bitdict["bitmask"] = bitmask
+                bfdict["bitshift"] = lowbit
+                bfdict["bitmask"] = bitmask
 
         return fdict
 
@@ -613,7 +616,7 @@ class Tpmi():
         what = f"value of register '{regname}' (offset '{offset:#x}') of TPMI feature '{fname}'"
         return Trivial.str_to_int(val, base=16, what=what)
 
-    def _get_bitdict(self, fname, regname, bfname):
+    def _get_bfdict(self, fname, regname, bfname):
         """
         Return the bit field definition for a register. The arguments are as follows.
           * fname - name of the TPMI feature.
@@ -641,9 +644,9 @@ class Tpmi():
           * bfname - name of the TPMI register bit field to extract.
         """
 
-        bitdict = self._get_bitdict(fname, regname, bfname)
+        bfdict = self._get_bfdict(fname, regname, bfname)
 
-        return (regval & bitdict["bitmask"]) >> bitdict["bitshift"]
+        return (regval & bfdict["bitmask"]) >> bfdict["bitshift"]
 
     def _read_register(self, fname, addr, instance, regname, bfname=None, mdmap=None):
         """
