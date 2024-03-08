@@ -228,6 +228,7 @@ class Tpmi():
                         the feature).
       * 'iter_feature()' - get feature details.
       * 'read_register()' - read a TPMI register.
+      * 'write_register()' - write to a TPMI register.
       * 'get_bitfield()' - extract a bitfield value from a register value.
     """
 
@@ -693,7 +694,7 @@ class Tpmi():
     def _write_register(self, value, fname, addr, instance, regname, bfname=None):
         """
         Write to a TPMI register. The arguments are as follows.
-          * value - the value to write to the register.
+          * value - the value to write to the register or its bit field.
           * fname - name of the TPMI feature the register belongs to.
           * addr - the TPMI device address.
           * instance - the TPMI instance to write the register to.
@@ -952,12 +953,12 @@ class Tpmi():
 
     def write_register(self, value, fname, addr, instance, regname, bfname=None):
         """
-        Write bit field value of a TPMI register. Arguments are as follows.
-          * value - value to write to the register or bit field.
-          * fname - name of the TPMI feature to write.
-          * addr - TPMI device PCI address.
+        Write to a TPMI register. The arguments are as follows.
+          * value - the value to write to the register or its bit field.
+          * fname - name of the TPMI feature the register belongs to.
+          * addr - the TPMI device address.
           * instance - the TPMI instance to write the register to.
-          * regname - name of the TPMI register to write.
+          * regname - name of the TPMI register to write to.
           * bfname - optional name of the bit field to write to (write the entire register by
                      default.)
         """
