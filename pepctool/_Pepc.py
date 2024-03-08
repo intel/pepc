@@ -684,8 +684,9 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("read", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_read_command)
 
-    text = "Name of the TPMI feature the register belongs to."
-    subpars2.add_argument("fname", metavar="feature", help=text)
+    text = """Comma-separated list of TPMI feature names to read the register(s) for (all features
+              by default)."""
+    subpars2.add_argument("-F", "--features", dest="fnames", help=text)
 
     text = """Comma-separated list of TPMI device PCI addresses to read the registers from (all
               devices by default)."""
@@ -699,12 +700,12 @@ def build_arguments_parser():
               instances by default)."""
     subpars2.add_argument("-i", "--instances", help=text)
 
-    text = """Name of the TPMI register to read (all registers by default). The registers are
-              specified by name"""
-    subpars2.add_argument("-R", "--register", help=text)
+    text = """Comma-separated list of TPMI registers names to read (all registers by default)."""
+    subpars2.add_argument("-R", "--registers", help=text)
 
-    text = """Name of the TPMI register bitfield to read (all bitfields by default)."""
-    subpars2.add_argument("-b", "--bitfield", dest="bfname", help=text)
+    text = """Comma-separated list of TPMI TPMI register bit field names to read (all bit fields by
+              default)."""
+    subpars2.add_argument("-b", "--bitfields", dest="bfnames", help=text)
 
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
