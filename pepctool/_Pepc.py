@@ -680,11 +680,11 @@ def build_arguments_parser():
     # Create parser for the 'tpmi read' command.
     #
     text = "Read TPMI registers."
-    descr = """Read one or multiple TPMI registers. """ + man_msg
+    descr = """Read TPMI registers. """ + man_msg
     subpars2 = subparsers2.add_parser("read", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_read_command)
 
-    text = "Name of the TPMI feature to read the registers for."
+    text = "Name of the TPMI feature the register belongs to."
     subpars2.add_argument("fname", metavar="feature", help=text)
 
     text = """Comma-separated list of TPMI device PCI addresses to read the registers from (all
@@ -713,19 +713,18 @@ def build_arguments_parser():
     # Create parser for the 'tpmi write' command.
     #
     text = "Write TPMI registers."
-    descr = """Write one or multiple TPMI registers. """ + man_msg
+    descr = """Write to a TPMI register. """ + man_msg
     subpars2 = subparsers2.add_parser("write", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_write_command)
 
-    text = "Name of the TPMI feature to write the registers for."
+    text = "Name of the TPMI feature the register belongs to."
     subpars2.add_argument("fname", metavar="feature", help=text)
 
-    text = """Comma-separated list of TPMI device PCI addresses to write the registers to (all
-              devices by default)."""
+    text = """Comma-separated list of TPMI device PCI addresses to write to."""
     subpars2.add_argument("-a", "--addresses", dest="addrs", help=text)
 
-    text = """Comma-separated list of package numbers to write TPMI registers to (all packages by
-              default)."""
+    text = """Comma-separated list of package numbers to write the TPMI register for (all packages
+              by default)."""
     subpars2.add_argument("--packages", help=text)
 
     text = """Comma-separated list of integer TPMI instance numbers to write the registers to (all
