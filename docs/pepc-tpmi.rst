@@ -91,6 +91,66 @@ Subcommand *'ls'*
 
 List supported TPMI features.
 
+**-l**, **--long**
+   Provide additional information, such as TPMI device PCI addresses and TPMI instance numbers.
+
 **--all**
    Also print IDs of TPMI features supported by the processor, but for which there are no spec files,
    so they cannot be decoded.
+
+Subcommand *'read'*
+===================
+
+Read one or multiple TPMI registers.
+
+**-F** FEATURES, **--features** FEATURES
+  Comma-separated list of TPMI feature names to read the register(s) for. Read for all supported
+  features by default.
+
+**-a** ADDRS, **--addresses** ADDRS
+  Comma-separated list of TPMI device PCI addresses to read the registers from. Read from all
+  devices by default.
+
+**--packages** PACKAGES
+  Comma-separated list of integer package numbers to read TPMI registers for (all packages by
+  default).
+
+**-i** INSTANCES, **--instances** INSTANCES
+   Comma-separated list of integer TPMI instance numbers to read the registers from (all instances
+   by default).
+
+**-R** REGISTERS, **--registers** REGISTERS
+   Comma-separated list of TPMI registers names to read (all registers by default).
+
+**-b** BFNAMES, **--bitfields** BFNAMES
+   Comma-separated list of TPMI register bit field names to read (all bit fields by default).
+
+**--yaml**
+   Print information in YAML format.
+
+Subcommand *'write'*
+====================
+
+Write to a TPMI register.
+
+**-F** FEATURE, **--feature** FEATURE
+  Name of the TPMI feature the register belongs to.
+
+**-a** ADDRS, **--addresses** ADDRS
+  Comma-separated list of TPMI device PCI addresses to write to.
+
+**--packages** PACKAGES
+  Comma-separated list of package numbers to write the TPMI register for (all packages by default).
+
+**-i** INSTANCES, **--instances** INSTANCES
+  Comma-separated list of integer TPMI instance numbers to write to (all instances by default).
+
+**-R** REGNAME, **--register** REGNAME
+  Name of the TPMI register to write to.
+
+**-b** BITFIELD, **--bitfield** BITFIELD
+  Name of the TPMI register bitfield to write to. If not specified, write to the register, not a bit
+  field of the register.
+
+**-V** VALUE, **--value** VALUE
+  The value to write to the TPMI register or its bit field.
