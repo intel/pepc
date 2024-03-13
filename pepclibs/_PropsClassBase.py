@@ -144,7 +144,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             mnames = ", ".join(all_mnames)
             if pname:
                 name = Human.uncapitalize(self._props[pname]["name"])
-                raise ErrorNotSupported(f"cannot access {name} using the '{mname}' mechanism"
+                raise ErrorNotSupported(f"{name} is not available via the '{mname}' mechanism"
                                         f"{self._pman.hostmsg}.\nUse one the following "
                                         f"mechanism(s) instead: {mnames}.", mname=mname)
             raise ErrorNotSupported(f"unsupported mechanism '{mname}', supported mechanisms are: "
