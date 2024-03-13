@@ -105,7 +105,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                      {self._pman.hostmsg}, {self._kver})
 
     def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
+        """Return an 'MSR.MSR()' object."""
 
         if not self._msr:
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
@@ -770,7 +770,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     """
 
     def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
+        """Return an 'MSR.MSR()' object."""
 
         if not self._msr:
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
@@ -789,7 +789,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         return self._fsbfreq
 
     def _get_pmenable(self):
-        """Returns an 'PMEnable.PMEnable()' object."""
+        """Return a 'PMEnable.PMEnable()' object."""
 
         if not self._pmenable:
             from pepclibs.msr import PMEnable # pylint: disable=import-outside-toplevel
@@ -825,7 +825,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         return val
 
     def _get_hwpreq(self):
-        """Returns an 'HWPRequest.HWPRequest()' object."""
+        """Return an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq:
             from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
@@ -836,7 +836,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         return self._hwpreq
 
     def _get_hwpreq_pkg(self):
-        """Returns an 'HWPRequest.HWPRequest()' object."""
+        """Return an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq_pkg:
             from pepclibs.msr import HWPRequestPkg # pylint: disable=import-outside-toplevel
@@ -992,7 +992,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         self._set_freq_msr(freq, "max", cpus)
 
     def _get_platinfo(self):
-        """Returns an 'PlatformInfo.PlatformInfo()' object."""
+        """Return a 'PlatformInfo.PlatformInfo()' object."""
 
         if not self._platinfo:
             from pepclibs.msr import PlatformInfo # pylint: disable=import-outside-toplevel
@@ -1003,7 +1003,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         return self._platinfo
 
     def _get_trl(self):
-        """Returns an 'TurboRatioLimit.TurboRatioLimit()' object."""
+        """Return a 'TurboRatioLimit.TurboRatioLimit()' object."""
 
         if not self._trl:
             from pepclibs.msr import TurboRatioLimit # pylint: disable=import-outside-toplevel
