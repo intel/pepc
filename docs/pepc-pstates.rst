@@ -300,7 +300,7 @@ The following special values are supported:
 
 Note, on some systems 'Pm' is lower than 'lfm'. For example, 'Pm' may be 500MHz,
 while 'lfm' may be 800MHz. On those system, Linux may be using 'lfm' as the minimum
-supported frequency limit. So from Linux perspecitve, the minimum frequency may be 800MHz, not
+supported frequency limit. So from Linux perspective, the minimum frequency may be 800MHz, not
 500MHz. In this case '--min-freq 500MHz --mechanisms sysfs' will fail, while
 '--min-freq 500MHz --mechanisms sysfs' will succeed. And '--min-freq 500MHz' will also
 succeed, because by default, pepc tries all the available mechanisms.
