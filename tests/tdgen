@@ -19,7 +19,7 @@ from pathlib import Path
 from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg, MiscFeatureControl
 from pepclibs.msr import PlatformInfo, PowerCtl, PCStateConfigCtl, PMEnable, TurboRatioLimit
 from pepclibs.msr import TurboRatioLimit1, PackagePowerLimit, PackagePowerInfo, RaplPowerUnit
-from pepclibs.msr import SwLTROvrd, PMLogicalId
+from pepclibs.msr import SwLTROvrd, PMLogicalId, HWPCapabilities
 from pepclibs.helperlibs import ArgParse, Logging, ProcessManager, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -83,6 +83,7 @@ CPUInfoData = {
             FSBFreq.MSR_FSB_FREQ,
             HWPRequest.MSR_HWP_REQUEST,
             HWPRequestPkg.MSR_HWP_REQUEST_PKG,
+            HWPCapabilities.MSR_HWP_CAPABILITIES,
             MiscFeatureControl.MSR_MISC_FEATURE_CONTROL,
             PlatformInfo.MSR_PLATFORM_INFO,
             PowerCtl.MSR_POWER_CTL,
