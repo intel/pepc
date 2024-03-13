@@ -17,7 +17,8 @@ import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, KernelVersion
-from pepclibs.msr import MSR
+from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
+from pepclibs.msr import TurboRatioLimit
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
@@ -781,8 +782,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """Discover bus clock speed."""
 
         if not self._fsbfreq:
-            from pepclibs.msr import FSBFreq # pylint: disable=import-outside-toplevel
-
             msr = self._get_msr()
             self._fsbfreq = FSBFreq.FSBFreq(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
@@ -792,8 +791,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """Return a 'PMEnable.PMEnable()' object."""
 
         if not self._pmenable:
-            from pepclibs.msr import PMEnable # pylint: disable=import-outside-toplevel
-
             msr = self._get_msr()
             self._pmenable = PMEnable.PMEnable(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
@@ -828,8 +825,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """Return an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq:
-            from pepclibs.msr import HWPRequest # pylint: disable=import-outside-toplevel
-
             msr = self._get_msr()
             self._hwpreq = HWPRequest.HWPRequest(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
@@ -839,8 +834,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """Return an 'HWPRequest.HWPRequest()' object."""
 
         if not self._hwpreq_pkg:
-            from pepclibs.msr import HWPRequestPkg # pylint: disable=import-outside-toplevel
-
             msr = self._get_msr()
             self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
                                                            msr=msr)
@@ -995,8 +988,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """Return a 'PlatformInfo.PlatformInfo()' object."""
 
         if not self._platinfo:
-            from pepclibs.msr import PlatformInfo # pylint: disable=import-outside-toplevel
-
             msr = self._get_msr()
             self._platinfo = PlatformInfo.PlatformInfo(pman=self._pman, cpuinfo=self._cpuinfo,
                                                        msr=msr)
@@ -1006,8 +997,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """Return a 'TurboRatioLimit.TurboRatioLimit()' object."""
 
         if not self._trl:
-            from pepclibs.msr import TurboRatioLimit # pylint: disable=import-outside-toplevel
-
             msr = self._get_msr()
             self._trl = TurboRatioLimit.TurboRatioLimit(pman=self._pman, cpuinfo=self._cpuinfo,
                                                         msr=msr)
