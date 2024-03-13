@@ -18,7 +18,7 @@ from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
-from pepclibs.msr import TurboRatioLimit
+from pepclibs.msr import TurboRatioLimit, HWPCapabilities
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
@@ -984,6 +984,16 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         self._set_freq_msr(freq, "max", cpus)
 
+    def _get_hwpcap(self):
+        """Return an 'HWPCapabilities.HWPCapabilities()' object."""
+
+        if not self._hwpcap:
+            msr = self._get_msr()
+            self._hwpcap = HWPCapabilities.HWPCapabilities(pman=self._pman, cpuinfo=self._cpuinfo,
+                                                           msr=msr)
+
+        return self._hwpcap
+
     def _get_platinfo(self):
         """Return a 'PlatformInfo.PlatformInfo()' object."""
 
@@ -1002,69 +1012,129 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                                                         msr=msr)
         return self._trl
 
-    def get_base_freq(self, cpus):
+    def _get_patinfo_freq(self, fname, cpus):
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the base frequency for
-        CPU 'cpu', read from the 'MSR_PLATFORM_INFO' model-specific register. The arguments are as
-        follows.
-          * cpus - a collection of integer CPU numbers to get the turbo frequency for.
+        Yield '(cpu, frequency)' pairs for all CPUs in 'cpus', where frequency is read from feature
+        'fname' of 'MSR_PLATFORM_INFO'.
+        """
 
-        Raise 'ErrorNotSupported' if 'MSR_PLATFORM_INFO' is not supported.
-        """
+        if not cpus:
+            return
 
         platinfo = self._get_platinfo()
         bclks_iter = self._get_bclks(cpus)
-        platinfo_iter = platinfo.read_feature("max_non_turbo_ratio", cpus=cpus)
+        platinfo_iter = platinfo.read_feature(fname, cpus=cpus)
+
         for (cpu1, bclk), (cpu2, ratio) in zip(bclks_iter, platinfo_iter):
             assert cpu1 == cpu2
             yield cpu1, ratio * bclk
+
+    def _get_hwpcap_freq(self, fname, cpus):
+        """
+        Yield '(cpu, frequency)' pairs for all CPUs in 'cpus', where frequency is read from feature
+        'fname' of 'MSR_HWP_CAPABILITIES'.
+        """
+
+        if not cpus:
+            return
+
+        hwpcap = self._get_hwpcap()
+        bclks_iter = self._get_bclks(cpus)
+        hwpcap_iter = hwpcap.read_feature(fname, cpus=cpus)
+
+        for (cpu1, bclk), (cpu2, perf) in zip(bclks_iter, hwpcap_iter):
+            assert cpu1 == cpu2
+            yield cpu1, self._perf_to_freq(cpu1, perf, bclk)
+
+    def _get_from_2_iterators(self, cpus, iter1, iter2):
+        """
+        Yield '(cpu, frequency)' paris for all CPUs in 'cpus'. Get them from 'iter1' or 'iter2'.
+        """
+
+        result = {}
+        for cpu, freq in iter1:
+            result[cpu] = freq
+        for cpu, freq in iter2:
+            if cpu in result:
+                raise Error(f"BUG: CPU {cpu} is covered more than once")
+            result[cpu] = freq
+
+        for cpu in cpus:
+            yield cpu, result[cpu]
+
+    def _split_cpus(self, cpus):
+        """Split CPUs list 'cpus' in two: CPUs not supporting HWP and CPUs supporting HPW."""
+
+        leg_cpus = []
+        hwp_cpus = []
+
+        for cpu in cpus:
+            if "hwp" in self._cpuinfo.info["flags"][cpu]:
+                hwp_cpus.append(cpu)
+            else:
+                leg_cpus.append(cpu)
+
+        return leg_cpus, hwp_cpus
+
+    def get_base_freq(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the base frequency for
+        CPU 'cpu' The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the turbo frequency for.
+
+        For CPU that do not support HWP, read from the 'MSR_PLATFORM_INFO' model-specific register.
+        Otherwise read from the 'MSR_HWP_CAPABILITIES' register. Raise 'ErrorNotSupported' if MSRs
+        are not supported.
+        """
+
+        leg_cpus, hwp_cpus = self._split_cpus(cpus)
+        iter1 = self._get_patinfo_freq("max_non_turbo_ratio", leg_cpus)
+        iter2 = self._get_hwpcap_freq("base_perf", hwp_cpus)
+
+        yield from self._get_from_2_iterators(cpus, iter1, iter2)
 
     def get_min_oper_freq(self, cpus):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum operating
-        frequency for CPU 'cpu', read from the 'MSR_PLATFORM_INFO' model-specific register. The
-        arguments are as follows.
+        frequency for CPU 'cpu'. The arguments are as follows.
           * cpus - a collection of integer CPU numbers to get the minimum operating frequency for.
 
-        Return the minium operating CPU frequency in Hz. Raise 'ErrorNotSupported' if
-        'MSR_PLATFORM_INFO' is not supported.
+        For CPU that do not support HWP, read from the 'MSR_PLATFORM_INFO' model-specific register.
+        Otherwise read from the 'MSR_HWP_CAPABILITIES' register. Raise 'ErrorNotSupported' if MSRs
+        are not supported.
         """
 
-        platinfo = self._get_platinfo()
-        bclks_iter = self._get_bclks(cpus)
-        platinfo_iter = platinfo.read_feature("min_oper_ratio", cpus=cpus)
-        for (cpu1, bclk), (cpu2, ratio) in zip(bclks_iter, platinfo_iter):
-            assert cpu1 == cpu2
-            yield cpu1, ratio * bclk
+        leg_cpus, hwp_cpus = self._split_cpus(cpus)
+        iter1 = self._get_patinfo_freq("min_oper_ratio", leg_cpus)
+        iter2 = self._get_hwpcap_freq("min_perf", hwp_cpus)
+
+        yield from self._get_from_2_iterators(cpus, iter1, iter2)
 
     def get_max_eff_freq(self, cpus):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum efficiency
-        frequency for CPU 'cpu', read from the 'MSR_PLATFORM_INFO' model-specific register. The
-        arguments are as follows.
+        frequency for CPU 'cpu'. The arguments are as follows.
           * cpus - a collection of integer CPU numbers to get the maximum efficiency frequency for.
 
-        Maximum efficiency frequency is the frequency with best CPU performance per watt ratio.
-        Raise 'ErrorNotSupported' if 'MSR_PLATFORM_INFO' is not supported.
+        For CPU that do not support HWP, read from the 'MSR_PLATFORM_INFO' model-specific register.
+        Otherwise read from the 'MSR_HWP_CAPABILITIES' register. Raise 'ErrorNotSupported' if MSRs
+        are not supported.
         """
 
-        platinfo = self._get_platinfo()
-        bclks_iter = self._get_bclks(cpus)
-        platinfo_iter = platinfo.read_feature("max_eff_ratio", cpus=cpus)
-        for (cpu1, bclk), (cpu2, ratio) in zip(bclks_iter, platinfo_iter):
-            assert cpu1 == cpu2
-            yield cpu1, ratio * bclk
+        leg_cpus, hwp_cpus = self._split_cpus(cpus)
+        iter1 = self._get_patinfo_freq("max_eff_ratio", leg_cpus)
+        iter2 = self._get_hwpcap_freq("eff_perf", hwp_cpus)
 
-    def get_max_turbo_freq(self, cpus):
-        """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum 1-core turbo
-        frequency for CPU 'cpu', read from the 'MSR_TURBO_RATIO_LIMIT' model-specific register. The
-        arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the maximum 1-core turbo frequency
-                   for.
+        yield from self._get_from_2_iterators(cpus, iter1, iter2)
 
-        Raise 'ErrorNotSupported' if 'MSR_TURBO_RATIO_LIMIT' is not supported.
+    def _get_max_turbo_freq_trl(self, cpus):
         """
+        Yield '(cpu, frequency)' tuples by reading from 'MSR_TURBO_RATIO_LIMIT'. Raise
+        'ErrorNotSupported' if 'MSR_TURBO_RATIO_LIMIT' is not supported.
+        """
+
+        if not cpus:
+            return
 
         trl = self._get_trl()
         trl_iter = trl.read_feature("max_1c_turbo_ratio", cpus=cpus)
@@ -1089,6 +1159,24 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                                "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
                                "maintainers.", self._cpuinfo.cpudescr, self._pman.hostmsg)
                 raise ErrorNotSupported(f"{err1}\n{err2}") from err2
+
+    def get_max_turbo_freq(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum 1-core turbo
+        frequency for CPU 'cpu' The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the maximum 1-core turbo frequency
+                   for.
+
+        For CPU that do not support HWP, read from the 'MSR_TURBO_RATIO_LIMIT' model-specific
+        register. Otherwise read from the 'MSR_HWP_CAPABILITIES' register. Raise 'ErrorNotSupported'
+        if MSRs are not supported.
+        """
+
+        leg_cpus, hwp_cpus = self._split_cpus(cpus)
+        iter1 = self._get_max_turbo_freq_trl(leg_cpus)
+        iter2 = self._get_hwpcap_freq("max_perf", hwp_cpus)
+
+        yield from self._get_from_2_iterators(cpus, iter1, iter2)
 
     def get_hwp(self, cpus):
         """
@@ -1120,6 +1208,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         self._pmenable = None
         self._hwpreq = None
         self._hwpreq_pkg = None
+        self._hwpcap = None
         self._platinfo = None
         self._trl = None
 
@@ -1141,5 +1230,5 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """Uninitialize the class object."""
 
         close_attrs = ("_trl", "_platinfo", "_fsbfreq", "_pmenable", "_hwpreq", "_hwpreq_pkg",
-                       "_cpuinfo", "_pman")
+                       "_hwpcap", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
