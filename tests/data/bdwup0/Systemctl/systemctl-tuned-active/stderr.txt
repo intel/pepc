@@ -1,0 +1,1 @@
+grep: /sys/devices/system/cpu/cpu[0-9]*/cpufreq/bios_limit: No such file or directory
