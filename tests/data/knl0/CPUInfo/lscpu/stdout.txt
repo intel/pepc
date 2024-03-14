@@ -15,10 +15,10 @@ Thread(s) per core:                 4
 Core(s) per socket:                 68
 Socket(s):                          1
 Stepping:                           1
-CPU(s) scaling MHz:                 81%
+CPU(s) scaling MHz:                 83%
 CPU max MHz:                        1600.0000
 CPU min MHz:                        1000.0000
-BogoMIPS:                           2793.55
+BogoMIPS:                           2793.71
 Flags:                              fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl est tm2 ssse3 fma cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch ring3mwait cpuid_fault epb pti ibrs ibpb fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms avx512f rdseed adx avx512pf avx512er avx512cd xsaveopt dtherm ida arat pln pts
 L1d cache:                          2.1 MiB (68 instances)
 L1i cache:                          2.1 MiB (68 instances)
