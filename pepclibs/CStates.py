@@ -30,92 +30,92 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-imp
 # Some properties have scope name set to 'None' because the scope may be different for different
 # systems. In such cases, the scope can be obtained via 'CStates.get_sname()'.
 PROPS = {
-    "pkg_cstate_limit" : {
-        "name" : "Package C-state limit",
-        "type" : "str",
+    "pkg_cstate_limit": {
+        "name": "Package C-state limit",
+        "type": "str",
         "sname": None,
-        "mnames" : ("msr", ),
-        "writable" : True,
-        "subprops" : ("pkg_cstate_limit_lock", "pkg_cstate_limits", "pkg_cstate_limit_aliases"),
+        "mnames": ("msr",),
+        "writable": True,
+        "subprops": ("pkg_cstate_limit_lock", "pkg_cstate_limits", "pkg_cstate_limit_aliases"),
     },
-    "pkg_cstate_limit_lock" : {
-        "name" : "Package C-state limit lock",
-        "type" : "bool",
+    "pkg_cstate_limit_lock": {
+        "name": "Package C-state limit lock",
+        "type": "bool",
         "sname": None,
-        "mnames" : ("msr", ),
-        "writable" : False,
+        "mnames": ("msr",),
+        "writable": False,
     },
-    "pkg_cstate_limits" : {
-        "name" : "Available package C-state limits",
-        "type" : "list[str]",
+    "pkg_cstate_limits": {
+        "name": "Available package C-state limits",
+        "type": "list[str]",
         # Conceptually this is per-package, but in practice it is global on all current platforms.
         "sname": "global",
-        "mnames" : ("doc", ),
-        "writable" : False,
+        "mnames": ("doc",),
+        "writable": False,
     },
-    "pkg_cstate_limit_aliases" : {
-        "name" : "Package C-state limit aliases",
-        "type" : "dict[str,str]",
+    "pkg_cstate_limit_aliases": {
+        "name": "Package C-state limit aliases",
+        "type": "dict[str,str]",
         # Conceptually this is per-package, but in practice it is global on all current platforms.
         "sname": "global",
-        "mnames" : ("doc", ),
-        "writable" : False,
+        "mnames": ("doc",),
+        "writable": False,
     },
-    "c1_demotion" : {
-        "name" : "C1 demotion",
-        "type" : "bool",
+    "c1_demotion": {
+        "name": "C1 demotion",
+        "type": "bool",
         "sname": None,
-        "mnames" : ("msr", ),
-        "writable" : True,
+        "mnames": ("msr",),
+        "writable": True,
     },
-    "c1_undemotion" : {
-        "name" : "C1 undemotion",
-        "type" : "bool",
+    "c1_undemotion": {
+        "name": "C1 undemotion",
+        "type": "bool",
         "sname": None,
-        "mnames" : ("msr", ),
-        "writable" : True,
+        "mnames": ("msr",),
+        "writable": True,
     },
-    "c1e_autopromote" : {
-        "name" : "C1E autopromote",
-        "type" : "bool",
+    "c1e_autopromote": {
+        "name": "C1E autopromote",
+        "type": "bool",
         "sname": None,
-        "mnames" : ("msr", ),
-        "writable" : True,
+        "mnames": ("msr",),
+        "writable": True,
     },
-    "cstate_prewake" : {
-        "name" : "C-state prewake",
-        "type" : "bool",
+    "cstate_prewake": {
+        "name": "C-state prewake",
+        "type": "bool",
         "sname": None,
-        "mnames" : ("msr", ),
-        "writable" : True,
+        "mnames": ("msr",),
+        "writable": True,
     },
-    "idle_driver" : {
-        "name" : "Idle driver",
-        "type" : "str",
+    "idle_driver": {
+        "name": "Idle driver",
+        "type": "str",
         "sname": "global",
-        "mnames" : ("sysfs", ),
-        "writable" : False,
+        "mnames": ("sysfs",),
+        "writable": False,
     },
-    "governor" : {
-        "name" : "Idle governor",
-        "type" : "str",
+    "governor": {
+        "name": "Idle governor",
+        "type": "str",
         "sname": "global",
-        "mnames" : ("sysfs", ),
-        "writable" : True,
+        "mnames": ("sysfs",),
+        "writable": True,
     },
-    "governors" : {
-        "name" : "Available idle governors",
-        "type" : "list[str]",
+    "governors": {
+        "name": "Available idle governors",
+        "type": "list[str]",
         "sname": "global",
-        "mnames" : ("sysfs", ),
-        "writable" : False,
+        "mnames": ("sysfs",),
+        "writable": False,
     },
-    "pch_negotiation" : {
-        "name" : "PCH negotiation",
-        "type" : "bool",
+    "pch_negotiation": {
+        "name": "PCH negotiation",
+        "type": "bool",
         "sname": None,
-        "writable" : True,
-        "mnames" : ("msr", ),
+        "writable": True,
+        "mnames": ("msr",),
     },
 }
 

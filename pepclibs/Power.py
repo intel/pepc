@@ -23,73 +23,73 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-imp
 # complete. This dictionary is extended by 'Power' objects. Use the full dictionary via
 # 'Power.props'.
 PROPS = {
-    "tdp" : {
-        "name" : "TDP",
-        "unit" : "W",
-        "type" : "float",
+    "tdp": {
+        "name": "TDP",
+        "unit": "W",
+        "type": "float",
         "sname": "package",
-        "mnames" : ("msr", ),
-        "writable" : False,
+        "mnames": ("msr",),
+        "writable": False,
     },
-    "ppl1" : {
-        "name" : "RAPL PPL1",
-        "unit" : "W",
-        "type" : "float",
+    "ppl1": {
+        "name": "RAPL PPL1",
+        "unit": "W",
+        "type": "float",
         "sname": "package",
-        "mnames" : ("msr", ),
-        "writable" : True,
+        "mnames": ("msr",),
+        "writable": True,
     },
-    "ppl1_enable" : {
-        "name" : "RAPL PPL1",
-        "type" : "bool",
+    "ppl1_enable": {
+        "name": "RAPL PPL1",
+        "type": "bool",
         "sname": "package",
-        "mnames" : ("msr", ),
-        "writable" : True,
+        "mnames": ("msr",),
+        "writable": True,
     },
-    "ppl1_clamp" : {
-        "name" : "RAPL PPL1 clamping",
-        "type" : "bool",
+    "ppl1_clamp": {
+        "name": "RAPL PPL1 clamping",
+        "type": "bool",
         "sname": "package",
-        "mnames" : ("msr", ),
-        "writable" : True,
+        "mnames": ("msr",),
+        "writable": True,
     },
-    "ppl1_window" : {
-        "name" : "RAPL PPL1 time window",
-        "unit" : "s",
-        "type" : "float",
+    "ppl1_window": {
+        "name": "RAPL PPL1 time window",
+        "unit": "s",
+        "type": "float",
         "sname": "package",
-        "mnames" : ("msr", ),
-        "writable" : False,
+        "mnames": ("msr",),
+        "writable": False,
     },
-    "ppl2" : {
-        "name" : "RAPL PPL2",
-        "unit" : "W",
-        "type" : "float",
+    "ppl2": {
+        "name": "RAPL PPL2",
+        "unit": "W",
+        "type": "float",
         "sname": "package",
-        "mnames" : ("msr", ),
-        "writable" : True,
+        "mnames": ("msr",),
+        "writable": True,
     },
-    "ppl2_enable" : {
-        "name" : "RAPL PPL2",
-        "type" : "bool",
+    "ppl2_enable": {
+        "name": "RAPL PPL2",
+        "type": "bool",
         "sname": "package",
-        "mnames" : ("msr", ),
-        "writable" : True,
+        "mnames": ("msr",),
+        "writable": True,
     },
-    "ppl2_clamp" : {
-        "name" : "RAPL PPL2 clamping",
-        "type" : "bool",
+    "ppl2_clamp": {
+        "name": "RAPL PPL2 clamping",
+        "type": "bool",
         "sname": "package",
-        "mnames" : ("msr", ),
-        "writable" : True,
+        "mnames": ("msr",),
+        "writable": True,
     },
-    "ppl2_window" : {
-        "name" : "RAPL PPL2 time window",
-        "unit" : "s",
-        "type" : "float",
+    "ppl2_window": {
+        "name": "RAPL PPL2 time window",
+        "unit": "s",
+        "type": "float",
         "sname": "package",
-        "mnames" : ("msr", ),
-        "writable" : False,
+        "mnames": ("msr",),
+        "writable": False,
     },
 }
 
