@@ -15,7 +15,7 @@ Thread(s) per core:                 2
 Core(s) per socket:                 8
 Socket(s):                          1
 Stepping:                           13
-CPU(s) scaling MHz:                 55%
+CPU(s) scaling MHz:                 22%
 CPU max MHz:                        5000.0000
 CPU min MHz:                        800.0000
 BogoMIPS:                           6799.81
@@ -27,7 +27,7 @@ L2 cache:                           2 MiB (8 instances)
 L3 cache:                           16 MiB (1 instance)
 NUMA node(s):                       1
 NUMA node0 CPU(s):                  0-15
-Vulnerability Gather data sampling: Vulnerable: No microcode
+Vulnerability Gather data sampling: Mitigation; Microcode
 Vulnerability Itlb multihit:        KVM: Mitigation: VMX disabled
 Vulnerability L1tf:                 Not affected
 Vulnerability Mds:                  Not affected
