@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix the following options of 'pepc pstates info' on some systems:
+   '--base-freq', '--max-eff-freq', '--min-oper-freq', '--max-turbo-freq'.
 ### Added
 ### Removed
 ### Changed
