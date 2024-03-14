@@ -5,7 +5,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1645.507
+cpu MHz		: 1900.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -61,7 +61,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1400.000
+cpu MHz		: 1900.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -89,7 +89,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 800.000
+cpu MHz		: 1000.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -145,7 +145,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 800.000
+cpu MHz		: 1400.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -173,7 +173,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 800.000
+cpu MHz		: 1400.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -201,7 +201,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1416.415
+cpu MHz		: 1400.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -229,7 +229,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1100.000
+cpu MHz		: 2200.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -285,7 +285,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1700.000
+cpu MHz		: 2200.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -341,7 +341,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 2200.000
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -369,7 +369,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 2200.000
+cpu MHz		: 1695.572
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -397,7 +397,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 946.666
+cpu MHz		: 884.596
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -425,7 +425,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 900.000
+cpu MHz		: 973.742
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -453,7 +453,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1400.000
+cpu MHz		: 799.369
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -481,7 +481,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1365.822
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -509,7 +509,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 800.000
+cpu MHz		: 2200.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -565,7 +565,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 800.000
+cpu MHz		: 1500.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -593,7 +593,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 2200.000
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -621,7 +621,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1618.266
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -649,7 +649,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1500.000
+cpu MHz		: 2200.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
