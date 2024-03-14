@@ -15,7 +15,7 @@ Thread(s) per core:                 2
 Core(s) per socket:                 26
 Socket(s):                          2
 Stepping:                           4
-CPU(s) scaling MHz:                 27%
+CPU(s) scaling MHz:                 28%
 CPU max MHz:                        3700.0000
 CPU min MHz:                        1000.0000
 BogoMIPS:                           4200.00
@@ -30,7 +30,7 @@ NUMA node0 CPU(s):                  0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60
 NUMA node1 CPU(s):                  1,5,9,13,17,21,25,29,33,37,41,45,49,53,57,61,65,69,73,77,81,85,89,93,97,101
 NUMA node2 CPU(s):                  2,6,10,14,18,22,26,30,34,38,42,46,50,54,58,62,66,70,74,78,82,86,90,94,98,102
 NUMA node3 CPU(s):                  3,7,11,15,19,23,27,31,35,39,43,47,51,55,59,63,67,71,75,79,83,87,91,95,99,103
-Vulnerability Gather data sampling: Vulnerable: No microcode
+Vulnerability Gather data sampling: Mitigation; Microcode
 Vulnerability Itlb multihit:        KVM: Mitigation: VMX disabled
 Vulnerability L1tf:                 Mitigation; PTE Inversion; VMX conditional cache flushes, SMT vulnerable
 Vulnerability Mds:                  Mitigation; Clear CPU buffers; SMT vulnerable
