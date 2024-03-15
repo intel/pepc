@@ -5,7 +5,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 400.000
+cpu MHz		: 4200.000
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
@@ -33,7 +33,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 4300.000
+cpu MHz		: 400.000
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
@@ -61,7 +61,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 400.000
+cpu MHz		: 4199.906
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
@@ -117,7 +117,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 3589.092
+cpu MHz		: 3502.651
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
@@ -145,7 +145,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 3408.108
+cpu MHz		: 3501.437
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
@@ -173,7 +173,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 3519.866
+cpu MHz		: 3496.578
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
@@ -201,7 +201,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 3522.188
+cpu MHz		: 400.000
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
@@ -229,7 +229,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 400.000
+cpu MHz		: 3392.101
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
@@ -257,7 +257,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 400.000
+cpu MHz		: 3401.331
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
@@ -285,7 +285,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 3399.080
+cpu MHz		: 400.000
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
@@ -313,7 +313,7 @@ model		: 170
 model name	: Intel(R) CoreTM Ultra 7 165U
 stepping	: 4
 microcode	: 0x17
-cpu MHz		: 3498.696
+cpu MHz		: 3400.071
 cache size	: 12288 KB
 physical id	: 0
 siblings	: 14
