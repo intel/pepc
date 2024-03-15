@@ -1,1 +1,1 @@
-BOOT_IMAGE=http://powerlab/pxelinux/node/genoa0/custom-kernel/kernel initrd=http://powerlab/pxelinux/node/genoa0/custom-kernel/initramfs.img root=UUID=e4c07959-5318-498b-9bc9-81928a72bd88 ro  msr.allow_writes=1 console=ttyS0,115200
+BOOT_IMAGE=http://powerlab/pxelinux/node/genoa0/custom-kernel/kernel initrd=http://powerlab/pxelinux/node/genoa0/custom-kernel/initramfs.img root=UUID=a6edc1ac-15cf-4510-95a7-10d6471f8c1c ro  msr.allow_writes=1 console=ttyS0,115200
