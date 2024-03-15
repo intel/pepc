@@ -27,7 +27,7 @@ L3 cache:                           71.5 MiB (2 instances)
 NUMA node(s):                       2
 NUMA node0 CPU(s):                  0-23,48-71
 NUMA node1 CPU(s):                  24-47,72-95
-Vulnerability Gather data sampling: Vulnerable: No microcode
+Vulnerability Gather data sampling: Mitigation; Microcode
 Vulnerability Itlb multihit:        KVM: Mitigation: VMX unsupported
 Vulnerability L1tf:                 Not affected
 Vulnerability Mds:                  Not affected
