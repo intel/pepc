@@ -52,7 +52,7 @@ setup(
     description="""Power, Energy, and Performance configuration tool""",
     author="Artem Bityutskiy",
     author_email="artem.bityutskiy@linux.intel.com",
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     version=get_version("pepctool/_Pepc.py"),
     scripts=["pepc"],
     packages=find_packages(exclude=["test*"]),
