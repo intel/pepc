@@ -993,7 +993,7 @@ class PepcASTChecker(BaseChecker):
             return
         args = node.exc.args
 
-        if isinstance(args[0], nodes.Const):
+        if args and isinstance(args[0], nodes.Const):
             self._check_string(node, args, islog=False)
 
     def _parse_value(self, node):
