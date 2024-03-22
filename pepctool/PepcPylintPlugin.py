@@ -187,6 +187,16 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
                 "Used when bad indent level is used in a multiline string."
             ),
         ),
+        "W9921": (
+            "Newline should be at the end of string on previous line",
+            "pepc-string-bad-nl-split",
+            (
+                """
+                Used when a string starts with a newline when it should be part of the string on
+                previous line.
+                """
+            ),
+        ),
     }
     options = ()
 
@@ -263,6 +273,13 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
 
         if token.type != tokenize.STRING:
             return
+
+        ptok = self.get_token(1)
+        if ptok.type == tokenize.NL:
+            pptok = self.get_token(2)
+            if pptok.type == tokenize.STRING:
+                if re.match(r"[a-z]{0,1}\"\\n", txt):
+                    self.add_message("pepc-string-bad-nl-split", line=lineno)
 
         if re.match("[a-z]{0,1}'", txt):
             self.add_message("pepc-string-bad-delimiter", line=lineno)
