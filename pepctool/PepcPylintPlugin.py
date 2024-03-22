@@ -312,6 +312,8 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         """
 
         p_tok = self.get_token(2)
+        if p_tok and p_tok.type == tokenize.OP and p_tok.string == ")":
+            return True
         if p_tok and p_tok.type != tokenize.NAME:
             return False
 
