@@ -355,6 +355,7 @@ class Tpmi():
             if specpath.exists():
                 spec = YAML.load(specpath)
                 self._fdicts[fname] = self._format_fdict(fname, specpath, spec)
+                break
 
         if fname not in self._fdicts:
             raise ErrorNotSupported(f"TPMI feature '{fname}' is not supported")
