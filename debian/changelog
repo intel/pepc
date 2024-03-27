@@ -1,3 +1,10 @@
+pepc (1.5.10) unstable; urgency=low
+
+  * Fix TPMI spec files loading defect to ensure 'PEPC_TPMI_DATA_PATH' mechanism
+    works.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 27 Mar 2024 00:00:00 +0200
+
 pepc (1.5.9) unstable; urgency=low
 
   * Fix the following options of 'pepc pstates info' on some systems:
