@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix TPMI spec files loading defect to ensure 'PEPC_TPMI_DATA_PATH' mechanism
+   works.
 ### Added
 ### Removed
 ### Changed
