@@ -151,11 +151,11 @@ You can also create a standalone version of this tool by cloning the repository 
 of commands. Below is an example. You may want to adjust the '#!/usr/bin/python3' shebang in it.
 
 First of all, make sure the below command prints "Good". It verifies that your
-'/usr/bin/python3' version is greater than 3.7:
+'/usr/bin/python3' version is greater than 3.8:
 
 ```
 /usr/bin/python3 -c 'import sys; ver=sys.version_info; \
-print("Good") if ver.major>2 and ver.minor>6 else print("Bad")'
+print("Good") if ver.major>2 and ver.minor>7 else print("Bad")'
 ```
 
 Create the standalone version of 'pepc'.
