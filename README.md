@@ -82,6 +82,9 @@ Some of the features are hardware-independent, but some are hardware-specific.
 
 # Installation
 
+Note, while 'pepc' is available via OS packages, they typically do not provide the latest version.
+Use the "pip" installation method to get the latest 'pepc' version.
+
 ## Fedora
 
 'Pepc' is available on Fedora 38 and 39. To install 'pepc', run
