@@ -63,7 +63,8 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         return output == what
 
     def start(self, units, save=False):
-        """Start systemd unit(s). The arguments are as follows.
+        """
+        Start systemd unit(s). The arguments are as follows.
           * units - unit name or a collection of unit names to start.
           * save - if 'True', save the process state and restore it in the 'restore()' method.
         """
