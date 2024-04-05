@@ -19,13 +19,8 @@ _LOG = logging.getLogger()
 class Systemctl(ClassHelpers.SimpleCloseContext):
     """This module provides python API to the systemctl tool."""
 
-    def _start(self, units, start, save=False):
-        """Start or stop the 'units' systemd units."""
-
-        if start:
-            action = "start"
-        else:
-            action = "stop"
+    def _run_action(self, units, action, save=False):
+        """Run action 'action' for systemd unit 'units'."""
 
         if not Trivial.is_iterable(units):
             units = [units]
@@ -33,7 +28,8 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         for unit in units:
             self._pman.run_verify(f"{self._systemctl_path} {action} -- '{unit}'")
 
-            if self.is_active(unit) == start:
+            started = action in ("start", "restart")
+            if self.is_active(unit) == started:
                 if save:
                     if unit not in self._saved_units:
                         self._saved_units[unit] = action
@@ -54,6 +50,16 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
                 msg += f", here is its current status:\n{status}"
 
             raise Error(msg)
+
+    def _start(self, units, start, save=False):
+        """Start or stop the 'units' systemd units."""
+
+        if start:
+            action = "start"
+        else:
+            action = "stop"
+
+        self._run_action(units, action, save=save)
 
     def _is_smth(self, unit, what):
         """Check if a unit is active/failed or not."""
@@ -79,6 +85,14 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         """
 
         self._start(units, False, save=save)
+
+    def restart(self, units):
+        """
+        Restart systemd unit(s). The arguments are as follows.
+          * units - unit name or a collection of unit names to restart.
+        """
+
+        self._run_action(units, "restart", save=False)
 
     def restore(self):
         """Restore saved units' state."""
