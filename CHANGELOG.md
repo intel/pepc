@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Critical fix: address the issue of the 'pepc tpmi write' operation writing
+   incorrect values in some cases.
 ### Added
 ### Removed
 ### Changed
