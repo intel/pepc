@@ -662,6 +662,8 @@ class Tpmi():
         """
 
         bfdict = self._get_bfdict(fname, regname, bfname)
+
+        regval ^= regval & bfdict["bitmask"]
         return regval | (bitval << bfdict["bitshift"])
 
     def _read_register(self, fname, addr, instance, regname, bfname=None, mdmap=None):
@@ -728,7 +730,7 @@ class Tpmi():
                    "device '%s'", value, fname, regname, instance, offset, addr)
 
         if bfname:
-            regval = self._read_register(fname, addr, instance, regname, bfname=bfname)
+            regval = self._read_register(fname, addr, instance, regname)
             value = self._set_bitfield(regval, value, fname, regname, bfname)
 
         with self._pman.open(path, "r+") as fobj:
