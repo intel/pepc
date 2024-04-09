@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.11] - 2024-04-09
+### Changed
  - Minor change: do not print a message about missing package C-states table.
    Often it is missing for a good reason, like on the Snow Ridge or Grand
    Ridge.
