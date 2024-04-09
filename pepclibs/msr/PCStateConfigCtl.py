@@ -252,8 +252,8 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """Initialize the 'pkg_cstate_limit' information in the 'self._features' dictionary."""
 
         if not self.is_feature_supported("pkg_cstate_limit", cpus="all"):
-            _LOG.notice("no package C-state limit table available for %s%s. Try to contact "
-                        "project maintainers.", self._cpuinfo.cpudescr, self._pman.hostmsg)
+            _LOG.debug("no package C-state limit table available for %s%s",
+                       self._cpuinfo.cpudescr, self._pman.hostmsg)
             return
 
         cpumodel = self._cpuinfo.info["model"]
