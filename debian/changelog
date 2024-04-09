@@ -1,3 +1,10 @@
+pepc (1.5.12) unstable; urgency=low
+
+  * Critical fix: address the issue of the 'pepc tpmi write' operation writing
+    incorrect values in some cases.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Tue, 09 Apr 2024 00:00:00 +0200
+
 pepc (1.5.11) unstable; urgency=low
 
   * Minor change: do not print a message about missing package C-states table.
