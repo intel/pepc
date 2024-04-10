@@ -100,6 +100,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
                 self._has_sysfs_new_api = True
                 break
 
+        _LOG.debug("using the %s uncore frequency sysfs interface",
+                   "new" if self._has_sysfs_new_api else "old")
         return self._has_sysfs_new_api
 
     def _get_dies_info(self):
