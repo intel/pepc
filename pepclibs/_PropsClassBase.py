@@ -540,9 +540,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 # next mechanism.
                 if cpu is not None:
                     name = self._props[pname]["name"]
-                    raise Error(f"failed to get {name} for CPU {cpu} using the '{mname}' "
-                                f"mechanism:\n{err.indent(2)}\nHowever, succeeded getting it for "
-                                f"CPU {cpus[0]}") from err
+                    raise Error(f"failed to get {name} using the '{mname}' mechanism:\n"
+                                f"{err.indent(2)}\nSucceeded getting it for for some CPUs"
+                                f"(e.g., CPU {cpu}), but not for all the requested "
+                                f"CPUs") from err
 
         # None of the methods succeeded.
         if raise_not_supported:
@@ -667,7 +668,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         exceptions = []
 
         for mname in mnames:
-            package = die = None
+            pvinfo = None
             try:
                 for package, die, val in self._get_prop_dies(pname, dies, mname):
                     _LOG.debug("'%s' is '%s' for package %d, die %d, using mechanism '%s'%s",
@@ -680,14 +681,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 exceptions.append(err)
                 # If something was yielded already, this is an error condition. Otherwise, try the
                 # next mechanism.
-                if die is not None:
+                if pvinfo is not None:
                     name = self._props[pname]["name"]
-                    got_pkg = list(dies)[0]
-                    got_die = dies[got_pkg][0]
-                    raise Error(f"failed to get {name} for package {package}, die {die}, "
-                                f"using the '{mname}' mechanism:\n{err.indent(2)}\n"
-                                f"However, succeeded getting it for package {got_pkg}, "
-                                f"die {got_die}") from err
+                    got_pkg = pvinfo["package"]
+                    got_die = pvinfo["die"]
+                    raise Error(f"failed to get {name} using the '{mname}' mechanism:\n"
+                                f"{err.indent(2)}\nSucceeded getting it for for some dies (e.g., "
+                                f"package {got_pkg}, die {got_die}), but not for all the requested "
+                                f"dies") from err
 
         # None of the methods succeeded.
         if raise_not_supported:
@@ -855,9 +856,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 # next mechanism.
                 if package is not None:
                     name = self._props[pname]["name"]
-                    raise Error(f"failed to get {name} for package {package} using the "
-                                f"'{mname}' mechanism:\n{err.indent(2)}\nHowever, succeeded "
-                                f"getting it for package {packages[0]}") from err
+                    raise Error(f"failed to get {name} using the '{mname}' mechanism:\n"
+                                f"{err.indent(2)}\nSucceeded getting it for for some packages "
+                                f"(e.g., package {package}), but not for all the requested "
+                                f"packages") from err
 
         # None of the methods succeeded.
         if raise_not_supported:
