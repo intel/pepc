@@ -165,16 +165,17 @@ def _get_good_config_freq_opts(params, sname="CPU"):
                     "--min-freq min",
                     "--max-freq min"]
 
-            maxfreq = props_common.get_max_cpu_freq(params, cpu)
-            opts += [f"--max-freq {maxfreq}",
-                    f"--min-freq min --max-freq {maxfreq}",
-                    f"--max-freq {maxfreq} --min-freq min"]
-
             if pobj.prop_is_supported_cpu("max_eff_freq", cpu):
                 opts += ["--max-freq lfm",
                         "--max-freq eff",
                         "--min-freq lfm",
                         "--min-freq eff"]
+
+            maxfreq = props_common.get_max_cpu_freq(params, cpu)
+            opts += [f"--max-freq {maxfreq}",
+                    f"--min-freq min --max-freq {maxfreq}",
+                    f"--max-freq {maxfreq} --min-freq min"]
+
             if pobj.prop_is_supported_cpu("base_freq", cpu):
                 opts += ["--max-freq base",
                         "--max-freq hfm",
