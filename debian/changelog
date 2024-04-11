@@ -1,3 +1,10 @@
+pepc (1.5.13) unstable; urgency=low
+
+  * Critical fix: address incorrect 'pepc pastates config --min-uncore-freq'
+    behavior on Grand Ridge, Sierra Forest and Granite Rapids platforms.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 11 Apr 2024 00:00:00 +0200
+
 pepc (1.5.12) unstable; urgency=low
 
   * Critical fix: address the issue of the 'pepc tpmi write' operation writing
