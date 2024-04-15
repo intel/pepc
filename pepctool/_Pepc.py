@@ -104,7 +104,7 @@ class PepcArgsParser(ArgParse.ArgsParser):
 
         arg = self.add_argument(*args, **opt_info["kwargs"])
         if opt_info["argcomplete"] and argcomplete:
-            arg.completer = getattr(argcomplete.completers, opt_info["argcomplete"])
+            setattr(arg, "completer", getattr(argcomplete.completers, opt_info["argcomplete"]))
 
     def _check_unknown_args(self, args, uargs, gargs):
         """
