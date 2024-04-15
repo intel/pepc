@@ -76,7 +76,7 @@ def add_ssh_options(parser):
     for opt in SSH_OPTIONS:
         arg = parser.add_argument(opt["short"], opt["long"], **opt["kwargs"])
         if opt["argcomplete"] and argcomplete:
-            arg.completer = getattr(argcomplete.completers, opt["argcomplete"])
+            setattr(arg, "completer", getattr(argcomplete.completers, opt["argcomplete"]))
 
 class OrderedArg(argparse.Action):
     """
@@ -89,8 +89,8 @@ class OrderedArg(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         """Append the ordered argument to the 'oargs' attribute."""
 
-        if not getattr(namespace, 'oargs', None):
-            setattr(namespace, 'oargs', {})
+        if not getattr(namespace, "oargs", None):
+            setattr(namespace, "oargs", {})
 
         # Also add the standard attribute for compatibility.
         setattr(namespace, self.dest, values)
