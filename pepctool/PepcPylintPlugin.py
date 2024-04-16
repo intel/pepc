@@ -739,7 +739,8 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
                     if token.type == tokenize.FSTRING_END:
                         txt = fstring_txt
                         token = tokenize.TokenInfo(tokenize.STRING, txt, fstring_token.start,
-                                                   token.end, token.line)
+                                                   token.end, fstring_token.line)
+                        lineno = token.start[0]
                         fstring_token = None
                         fstring_txt = None
                     else:
