@@ -300,7 +300,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             return False
 
         if token.string in ("if", "else", "elif", "and", "or", "not", "in", "yield", "return",
-                            "except", "for", "with", "raise", "assert"):
+                            "except", "for", "with", "raise", "assert", "import"):
             return True
 
         return False
