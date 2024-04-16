@@ -51,16 +51,6 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
 
             raise Error(msg)
 
-    def _start(self, units, start, save=False):
-        """Start or stop the 'units' systemd units."""
-
-        if start:
-            action = "start"
-        else:
-            action = "stop"
-
-        self._run_action(units, action, save=save)
-
     def _is_smth(self, unit, what):
         """Check if a unit is active/failed or not."""
 
@@ -75,7 +65,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
           * save - if 'True', save the process state and restore it in the 'restore()' method.
         """
 
-        self._start(units, True, save=save)
+        self._run_action(units, "start", save=save)
 
     def stop(self, units, save=False):
         """
@@ -84,7 +74,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
           * save - if 'True', save the process state and restore it in the 'restore()' method.
         """
 
-        self._start(units, False, save=save)
+        self._run_action(units, "stop", save=save)
 
     def restart(self, units):
         """
@@ -102,8 +92,10 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
             return
 
         for unit, action in self._saved_units.items():
-            start = action == "stop"
-            self._start(unit, start)
+            if action == "stop":
+                self.start(unit)
+            else:
+                self.stop(unit)
 
     def is_active(self, unit):
         """Returns 'True' if a systemd 'unit' is active (started) and 'False' otherwise."""
@@ -124,7 +116,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
 
         for service in services:
             if self.is_active(service):
-                self._start(service, False)
+                self.stop(service)
                 self._saved_ntp_services.append(service)
 
         return self._saved_ntp_services
@@ -136,7 +128,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         """
 
         if self._saved_ntp_services:
-            self._start(self._saved_ntp_services, True)
+            self.start(self._saved_ntp_services)
 
         restored_ntp_services = self._saved_ntp_services
         self._saved_ntp_services = None
@@ -151,7 +143,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         cmd = f"{self._systemctl_path} list-timers"
         timers = [part for part in self._pman.run_verify(cmd)[0].split() if part.endswith(".timer")]
         if timers:
-            self._start(timers, False)
+            self.stop(timers)
 
         self._saved_timers = timers
         return timers
@@ -160,7 +152,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         """Restore systemd timers to the state they had been before 'stop_timers()' was called."""
 
         if self._saved_timers:
-            self._start(self._saved_timers, True)
+            self.start(self._saved_timers)
         self._saved_timers = None
 
     def __init__(self, pman=None):
