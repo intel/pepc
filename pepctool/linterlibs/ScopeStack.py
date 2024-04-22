@@ -43,6 +43,12 @@ class ScopeStack():
             if global_scope and re.match("^[A-Z][A-Z_0-9]+$", name):
                 continue
 
+            # Skip checks for public attributes.
+            name_split = name.rsplit(".", 1)
+
+            if len(name_split) == 2 and not name_split[1].startswith("_"):
+                continue
+
             self._parent.add_message("pepc-unused-variable", args=name, node=var["node"])
 
     def pop(self, scope_type):
