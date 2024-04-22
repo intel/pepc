@@ -54,6 +54,7 @@ def search_project_data(basepath, subpath, pman=None, what=None, env_var=None):
 
     searched = []
     paths = []
+    num_found = 0
 
     paths.append(Path(sys.argv[0]).parent.resolve().absolute())
 
@@ -72,13 +73,17 @@ def search_project_data(basepath, subpath, pman=None, what=None, env_var=None):
         for path in paths:
             path /= subpath
             if wpman.exists(path):
-                return path
+                num_found += 1
+                yield path
             searched.append(path)
 
         if not what:
             what = f"'{subpath}'"
         searched = [str(s) for s in searched]
         dirs = " * " + "\n * ".join(searched)
+
+        if num_found > 0:
+            return
 
         raise ErrorNotFound(f"cannot find {what}{wpman.hostmsg}, searched in the following "
                             f"locations:\n{dirs}.\nPlease set '{env_var}' to specify custom "
@@ -104,8 +109,8 @@ def find_project_data(prjname, subpath, pman=None, what=None):
       * in '/usr/share/<prjname>/', if it exists.
     """
 
-    return search_project_data(prjname, subpath, pman, what,
-                              env_var=get_project_data_envvar(prjname))
+    return next(search_project_data(prjname, subpath, pman, what,
+                                    env_var=get_project_data_envvar(prjname)))
 
 def get_project_data_search_descr(prjname, subpath):
     """
