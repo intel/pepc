@@ -68,7 +68,7 @@ _LIST_MECHANISMS_OPTION = {
     "kwargs": {
         "dest": "list_mechanisms",
         "action": "store_true",
-        "help": """List all supported mechanisms.""",
+        "help": """List all supported mechanisms and exit.""",
     },
 }
 
@@ -1017,7 +1017,9 @@ def main():
 
         if getattr(args, "list_mechanisms", None):
             _list_mechanisms(args)
-        elif args.dataset:
+            return 0
+
+        if args.dataset:
             for path in _get_next_dataset(args.dataset):
                 with _get_emul_pman(args, path) as pman:
                     args.func(args, pman)
