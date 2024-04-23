@@ -197,6 +197,13 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
                 """
             ),
         ),
+        "W9922": (
+            "Should use '%d' instead of '%i'",
+            "pepc-string-bad-integer-formatter",
+            (
+                "Used when %d should be used instead of %i for string format"
+            ),
+        ),
     }
     options = ()
 
@@ -287,6 +294,9 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         if token.start[0] != token.end[0]:
             if not re.match("[a-z]{0,1}\"\"\"", txt):
                 self.add_message("pepc-bad-multiline-string", line=lineno)
+
+        if re.match(r".*[^%]%i", txt):
+            self.add_message("pepc-string-bad-integer-formatter", line=lineno)
 
     def is_reserved(self, token):
         """
