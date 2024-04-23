@@ -1021,6 +1021,24 @@ class PepcASTChecker(BaseChecker):
 
         return value
 
+    def visit_augassign(self, node):
+        """AST callback for binop assignment. Assignment is declared by 'node'."""
+
+        self.debug(f"visit_augassign: {node}")
+
+        if node.op == "+=":
+            add = self._parse_value(node.value)
+
+            val = self._scope.read_variable(node.target)
+            if val == None:
+                val = add
+            else:
+                if type(val) != type(add):
+                    val = "(UNKNOWN)"
+                else:
+                    val = val + add
+            self._scope.write_variable(node.target, val)
+
     def visit_assign(self, node):
         """AST callback for assignment. Assignment is declared by 'node'."""
 
