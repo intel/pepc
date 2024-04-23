@@ -919,8 +919,11 @@ def _aspm_config_command(args, pman):
 
 def _get_next_dataset(dataset):
     """
-    Yield path for each dataset specified with the '-D' option, where 'name' is the dataset name,
-    'path' is the path to the dataset and 'all' all datasets in 'tests/data'.
+    Parse the '-D' option and yield dataset path for every specified dataset. The arguments are as
+    follows.
+      * dataset - the '-D' option value.
+
+    Yield paths of all found datasets if the 'dataset' argument has value "all".
     """
 
     if Path(dataset).is_dir():
