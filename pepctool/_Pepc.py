@@ -929,19 +929,25 @@ def _get_next_dataset(dataset):
     if Path(dataset).is_dir():
         yield Path(dataset)
     elif dataset == "all":
-        base = ProjectFiles.find_project_data(TOOLNAME, "tests/data", what=f"{TOOLNAME} datasets")
-        for name in os.listdir(base):
-            _LOG.info("\n======= emulation:%s =======", name)
-            yield Path(f"{base}/{name}")
-    else:
-        base = ProjectFiles.find_project_data(TOOLNAME, "tests/data", what=f"{TOOLNAME} datasets")
-        path = Path(base / dataset)
-        if not path.is_dir():
-            raise Error(f"couldn't find dataset '{dataset}', '{path}' doesn't exist")
+        datasets = {}
 
+        for base in ProjectFiles.search_project_data(TOOLNAME, "tests/data",
+                                                     what=f"{TOOLNAME} dataset"):
+            for name in os.listdir(base):
+                if name == "common":
+                    continue
+                if name in datasets:
+                    raise Error(f"multiple datasets named '{name}' found. Conflicting locations:\n"
+                                f"  * {datasets[name]}\n  * {base}/{name}")
+                datasets[name] = base / name
+                _LOG.info("\n======= emulation:%s =======", name)
+                yield base / name
+    else:
+        path = ProjectFiles.find_project_data(TOOLNAME, f"tests/data/{dataset}",
+                                              what=f"{TOOLNAME} dataset '{dataset}'")
         yield path
 
-def _get_emul_pman(args, path):
+def _get_emul_pman(args, commonpath, path):
     """
     Configure and return an 'EmulProcessManager' object for the dataset specified with the '-D'
     option.
@@ -970,7 +976,7 @@ def _get_emul_pman(args, path):
 
     try:
         for module in modules:
-            pman.init_testdata(module, path)
+            pman.init_testdata(module, path, common_datapath=commonpath)
     except Error:
         pman.close()
         raise
@@ -1023,8 +1029,10 @@ def main():
             return 0
 
         if args.dataset:
+            commonpath = ProjectFiles.find_project_data(TOOLNAME, "tests/data/common",
+                                                        what=f"common part of {TOOLNAME} datasets")
             for path in _get_next_dataset(args.dataset):
-                with _get_emul_pman(args, path) as pman:
+                with _get_emul_pman(args, commonpath, path) as pman:
                     args.func(args, pman)
         else:
             with ProcessManager.get_pman(args.hostname, username=args.username,
