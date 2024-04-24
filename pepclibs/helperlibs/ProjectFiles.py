@@ -32,24 +32,29 @@ def get_project_helpers_envvar(prjname):
     name = prjname.replace("-", "_").upper()
     return f"{name}_HELPERSPATH"
 
-def search_project_data(basepath, subpath, pman=None, what=None, env_var=None):
+def search_project_data(subpath, datadir, pman=None, what=None, env_var=None):
     """
-    Helper function for 'find_project_data()'. Arguments are the same as in 'find_project_data()'
-    except for the following:
-     * basepath - a directory which will be added to the searched paths that are not defined by an
-                  environment variable or in the directory of the running program. For details,
-                  see the searched path list below.
-     * env_var - the name of an environment variable which, if set, dictates the second path to
-                 search.
+    Search for project data directory (or sub-path) 'datadir' and yield the the results. The
+    arguments are as follows.
+      * subpath - a sub-path which will be appended to the searched paths (not all for them, though,
+                  see the search list description).
+      * datadir - name of the sub-directory containing the project data. This method basically
+                  searches for 'datadir' in a set of pre-defined paths (see below).
+      * pman - the process manager object for the host to find the data on (local host by
+               default).
+      * what - human-readable description of what is searched for, will be used in the error message
+               if an error occurs.
+      * env_var - the name of an environment variable which, if set, dictates the second path to
+                  search in.
 
-    The data are searched for in the 'subpath' sub-path of the following directories (and in the
-    following order).
+    Check for 'datadir' in all of the following paths (and in the following order), and if it
+    exists, yield the path to it.
       * in the directory the of the running program.
-      * in the directory specified by the 'env_var' environment variable.
-      * in '$HOME/.local/share/<basepath>/', if it exists.
-      * in '$HOME/share/<basepath>/', if it exists.
-      * in '/usr/local/share/<basepath>/', if it exists.
-      * in '/usr/share/<basepath>/', if it exists.
+      * in the directory specified by the 'env_var' environment variable, if defined and exists.
+      * in '$HOME/.local/share/<subpath>/', if it exists.
+      * in '$HOME/share/<subpath>/', if it exists.
+      * in '/usr/local/share/<subpath>/', if it exists.
+      * in '/usr/share/<subpath>/', if it exists.
     """
 
     searched = []
@@ -65,20 +70,20 @@ def search_project_data(basepath, subpath, pman=None, what=None, env_var=None):
 
     with ProcessManager.pman_or_local(pman) as wpman:
         homedir = wpman.get_homedir()
-        paths.append(homedir / Path(f".local/share/{basepath}"))
-        paths.append(homedir / Path(f"share/{basepath}"))
-        paths.append(Path(f"/usr/local/share/{basepath}"))
-        paths.append(Path(f"/usr/share/{basepath}"))
+        paths.append(homedir / Path(f".local/share/{subpath}"))
+        paths.append(homedir / Path(f"share/{subpath}"))
+        paths.append(Path(f"/usr/local/share/{subpath}"))
+        paths.append(Path(f"/usr/share/{subpath}"))
 
         for path in paths:
-            path /= subpath
+            path /= datadir
             if wpman.exists(path):
                 num_found += 1
                 yield path
             searched.append(path)
 
         if not what:
-            what = f"'{subpath}'"
+            what = f"'{subpath}/{datadir}'"
         searched = [str(s) for s in searched]
         dirs = " * " + "\n * ".join(searched)
 
@@ -89,18 +94,20 @@ def search_project_data(basepath, subpath, pman=None, what=None, env_var=None):
                             f"locations:\n{dirs}.\nPlease set '{env_var}' to specify custom "
                             f"location for {what}.")
 
-def find_project_data(prjname, subpath, pman=None, what=None):
+def find_project_data(prjname, datadir, pman=None, what=None):
     """
-    Search for project 'prjname' data. The arguments are as follows.
+    Find and return path to the 'datadir' data directory of project 'prjname'. The arguments are as
+    follows.
       * prjname - name of the project the data belongs to.
-      * subpath - the sub-path of the data in the data project installation base directory.
+      * datadir - name of the sub-directory containing the project data. This method basically
+                  searches for 'datadir' in a set of pre-defined paths (see below).
       * pman - the process manager object for the host to find the data on (local host by
                default).
-      * what - human-readable description of 'subpath' (or what is searched for), which will be used
-               in the error message if an error occurs.
+      * what - human-readable description of what is searched for, will be used in the error message
+               if an error occurs.
 
-    The data are searched for in the 'subpath' sub-path of the following directories (and in the
-    following order).
+    Check for 'datadir' in all of the following paths (and in the following order), and if it
+    exists, stop searching and return the path.
       * in the directory the of the running program.
       * in the directory specified by the '<prjname>_DATA_PATH' environment variable.
       * in '$HOME/.local/share/<prjname>/', if it exists.
@@ -109,21 +116,23 @@ def find_project_data(prjname, subpath, pman=None, what=None):
       * in '/usr/share/<prjname>/', if it exists.
     """
 
-    return next(search_project_data(prjname, subpath, pman, what,
+    return next(search_project_data(prjname, datadir, pman, what,
                                     env_var=get_project_data_envvar(prjname)))
 
-def get_project_data_search_descr(prjname, subpath):
+def get_project_data_search_descr(prjname, datadir):
     """
-    This method returns a human-readable string describing the locations the 'find_project_data()'
-    function looks for the data at. The arguments are the same as in 'find_project_data()'.
+    Return a human-readable string describing the locations the 'find_project_data()' function looks
+    for the data at. The arguments are as follows.
+      * prjname - name of the project the data belongs to.
+      * datadir - name of the sub-directory containing the project data.
     """
 
     envvar = get_project_data_envvar(prjname)
-    paths = (f"{Path(sys.argv[0]).parent}/{subpath}",
-             f"${envvar}/{subpath}",
-             f"$HOME/.local/share/{prjname}/{subpath}",
-             f"/usr/local/share/{prjname}/{subpath}",
-             f"/usr/share/{prjname}/{subpath}")
+    paths = (f"{Path(sys.argv[0]).parent}/{datadir}",
+             f"${envvar}/{datadir}",
+             f"$HOME/.local/share/{prjname}/{datadir}",
+             f"/usr/local/share/{prjname}/{datadir}",
+             f"/usr/share/{prjname}/{datadir}")
 
     return ", ".join(paths)
 
@@ -137,8 +146,6 @@ def find_project_helper(prjname, helper, pman=None):
                default).
 
     The helper program is searched for in the following locations (and in the following order).
-    The data are searched for in the 'subpath' sub-path of the following directories (and in the
-    following order).
       * in the paths defined by the 'PATH' environment variable.
       * in the directory of the running program.
       * in the directory specified by the '<prjname>_HELPERSPATH' environment variable.
