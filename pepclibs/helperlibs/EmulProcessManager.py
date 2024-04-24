@@ -165,17 +165,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             self._cmds[cmdinfo["command"]] = (stdout, stderr)
 
-    def _init_default_files(self, datapath):
-        """Initialize default files that should exist for any emulated platform."""
-
-        if self._initialised_default_files:
-            return
-
-        common_datapath = datapath.parent / "common"
-        self._init_testdata("common", common_datapath)
-
-        self._initialised_default_files = True
-
     def _init_inline_files(self, finfos, datapath):
         """
         Inline files are defined in text file where single line defines path and content for single
@@ -330,13 +319,24 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         self._modules.add(module)
 
-    def init_testdata(self, module, datapath):
-        """Initialize the testdata for module 'module' from directory 'datapath'."""
+    def init_testdata(self, module, datapath, common_datapath=None):
+        """
+        Initialize the testdata for module 'module' from directory 'datapath'. Optional argument
+        'common_datapath' can be passed to tell the system where the common datafiles reside.
+        """
 
         if module in self._modules:
             return
 
-        self._init_default_files(datapath)
+        # If 'common' dataset hasn't been initialised, attempt to initialise it first.
+        if not self._initialised_default_files:
+            if not common_datapath:
+                common_datapath = datapath.parent / "common"
+
+            self._init_testdata("common", common_datapath)
+
+            self._initialised_default_files = True
+
         self._init_testdata(module, datapath)
 
     def mkdir(self, dirpath, parents=False, exist_ok=False):
