@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.14] - 2024-04-25
+### Changed
  - Misc. changes in shared modules to support dependent projects, such as
    'stats-collect'. No 'pepc' tool functional changes.
 
