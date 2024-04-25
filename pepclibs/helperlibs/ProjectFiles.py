@@ -32,7 +32,7 @@ def get_project_helpers_envvar(prjname):
     name = prjname.replace("-", "_").upper()
     return f"{name}_HELPERSPATH"
 
-def search_project_data(subpath, datadir, pman=None, what=None, env_var=None):
+def search_project_data(subpath, datadir, pman=None, what=None, envvars=None):
     """
     Search for project data directory (or sub-path) 'datadir' and yield the the results. The
     arguments are as follows.
@@ -44,13 +44,13 @@ def search_project_data(subpath, datadir, pman=None, what=None, env_var=None):
                default).
       * what - human-readable description of what is searched for, will be used in the error message
                if an error occurs.
-      * env_var - the name of an environment variable which, if set, dictates the second path to
-                  search in.
+      * envvars - a collection of environment variable names defining the paths to search the
+                  project data in.
 
     Check for 'datadir' in all of the following paths (and in the following order), and if it
     exists, yield the path to it.
       * in the directory the of the running program.
-      * in the directory specified by the 'env_var' environment variable, if defined and exists.
+      * in the directories specified by environment variables in 'envvars'.
       * in '$HOME/.local/share/<subpath>/', if it exists.
       * in '$HOME/share/<subpath>/', if it exists.
       * in '/usr/local/share/<subpath>/', if it exists.
@@ -63,10 +63,11 @@ def search_project_data(subpath, datadir, pman=None, what=None, env_var=None):
 
     paths.append(Path(sys.argv[0]).parent.resolve().absolute())
 
-    if env_var:
-        path = os.environ.get(env_var)
-        if path:
-            paths.append(Path(path))
+    if envvars:
+        for envvar in envvars:
+            path = os.environ.get(envvar)
+            if path:
+                paths.append(Path(path))
 
     with ProcessManager.pman_or_local(pman) as wpman:
         homedir = wpman.get_homedir()
@@ -90,9 +91,18 @@ def search_project_data(subpath, datadir, pman=None, what=None, env_var=None):
         if num_found > 0:
             return
 
+        if envvars:
+            envvar_msg = f"\nYou can specify custom location for {what} using "
+            if len(envvars) == 1:
+                envvar_msg += f"the '{envvars[0]}' environment variable"
+            else:
+                envvars = ", ".join(envvars)
+                envvar_msg += f"the one of the following environment variables: {envvars}"
+        else:
+            envvar_msg = ""
+
         raise ErrorNotFound(f"cannot find {what}{wpman.hostmsg}, searched in the following "
-                            f"locations:\n{dirs}.\nPlease set '{env_var}' to specify custom "
-                            f"location for {what}.")
+                            f"locations:\n{dirs}.{envvar_msg}")
 
 def find_project_data(prjname, datadir, pman=None, what=None):
     """
@@ -117,7 +127,7 @@ def find_project_data(prjname, datadir, pman=None, what=None):
     """
 
     return next(search_project_data(prjname, datadir, pman, what,
-                                    env_var=get_project_data_envvar(prjname)))
+                                    envvars=(get_project_data_envvar(prjname),)))
 
 def get_project_data_search_descr(prjname, datadir):
     """
