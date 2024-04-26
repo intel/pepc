@@ -321,8 +321,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def init_testdata(self, module, datapath, common_datapath=None):
         """
-        Initialize the testdata for module 'module' from directory 'datapath'. Optional argument
-        'common_datapath' can be passed to tell the system where the common datafiles reside.
+        Initialize the module 'module' using test data in 'datapath' and 'common_datapath'. The
+        arguments are as follows.
+          * module - name of the pepc python module to initialize (e.g., "CPUInfo").
+          * datapath - path to the test data to use for initializing the module.
+          * common_datapath - path to the common part of the test data (there may be multiple
+                              datasets that have a common part, which is stored separately and
+                              shared between datasets).
         """
 
         if module in self._modules:
