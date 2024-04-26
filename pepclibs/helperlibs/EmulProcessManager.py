@@ -328,7 +328,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if module in self._modules:
             return
 
-        # If 'common' dataset hasn't been initialised, attempt to initialise it first.
+        # If 'common' dataset hasn't been initialized, attempt to initialise it first.
         if not self._initialised_default_files:
             if not common_datapath:
                 common_datapath = datapath.parent / "common"
@@ -472,7 +472,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # A dictionary mapping paths to emulated file objects.
         self._emuls = {}
         # Boolean indicating if default files which should be emulated for every platform have
-        # already been initialised.
+        # already been initialized.
         self._initialised_default_files = False
 
     def close(self):
