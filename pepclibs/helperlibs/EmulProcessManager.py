@@ -280,14 +280,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             else:
                 self._init_files((finfo,), datapath, module)
 
-    def _init_testdata(self, module, datapath):
-        """Implement 'init_testdata()'. Arguments are the same as in 'init_testdata()'."""
+    def _init_module(self, module, datapath):
+        """Implement 'init_module()'. Arguments are the same as in 'init_module()'."""
 
         if module == "CPUInfo":
             # CPUInfo uses '/sys/devices/system/cpu/online' file, on emulated system the file is
             # constructed using per-CPU '/sys/devices/system/cpu/cpu*/online' files that belong to
             # CPUOnline.
-            self._init_testdata("CPUOnline", datapath)
+            self._init_module("CPUOnline", datapath)
 
         confpath = datapath / f"{module}.yaml"
         if not confpath.exists():
@@ -319,7 +319,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         self._modules.add(module)
 
-    def init_testdata(self, module, datapath, common_datapath=None):
+    def init_module(self, module, datapath, common_datapath=None):
         """
         Initialize the module 'module' using test data in 'datapath' and 'common_datapath'. The
         arguments are as follows.
@@ -338,11 +338,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             if not common_datapath:
                 common_datapath = datapath.parent / "common"
 
-            self._init_testdata("common", common_datapath)
+            self._init_module("common", common_datapath)
 
             self._initialised_default_files = True
 
-        self._init_testdata(module, datapath)
+        self._init_module(module, datapath)
 
     def mkdir(self, dirpath, parents=False, exist_ok=False):
         """

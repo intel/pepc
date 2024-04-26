@@ -976,7 +976,7 @@ def _get_emul_pman(args, commonpath, path):
 
     try:
         for module in modules:
-            pman.init_testdata(module, path, common_datapath=commonpath)
+            pman.init_module(module, path, common_datapath=commonpath)
     except Error:
         pman.close()
         raise

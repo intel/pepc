@@ -31,7 +31,7 @@ def get_pman(hostspec, modules=None):
     Create and return process manager, the arguments are as follows.
       * hostspec - the host to create a process manager for.
       * modules - the list of python module names to be initialized before testing. Refer to
-                  'EmulProcessManager.init_testdata()' for more information.
+                  'EmulProcessManager.init_module()' for more information.
     """
 
     datapath = None
@@ -48,7 +48,7 @@ def get_pman(hostspec, modules=None):
     if datapath and modules is not None:
         try:
             for module in modules:
-                pman.init_testdata(module, datapath)
+                pman.init_module(module, datapath)
         except Error:
             pman.close()
             raise
