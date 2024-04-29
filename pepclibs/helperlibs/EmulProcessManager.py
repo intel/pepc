@@ -306,7 +306,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         confpath = datapath / f"{module}.yaml"
         if not confpath.exists():
-            raise ErrorNotSupported(f"testdata configuration for module '{module}' not found "
+            raise ErrorNotSupported(f"test data configuration for module '{module}' not found "
                                     f"({confpath})")
 
         config = YAML.load(confpath)
@@ -342,20 +342,21 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
           * datapath - path to the test data to use for initializing the module.
           * common_datapath - path to the common part of the test data (there may be multiple
                               datasets that have a common part, which is stored separately and
-                              shared between datasets).
+                              shared between datasets). Find in the "common" sub-directory of the
+                              'datapath' parent directory by default.
         """
 
         if module in self._modules:
             return
 
-        # If 'common' dataset hasn't been initialized, attempt to initialise it first.
-        if not self._initialised_default_files:
+        if not self._initialised_common_data:
+            # There is a common part in the test data that is always initialized, but only once. By
+            # default, it resides in the "common" sub-directory of the directory where the test data
+            # are stored.
             if not common_datapath:
                 common_datapath = datapath.parent / "common"
-
             self._init_module("common", common_datapath)
-
-            self._initialised_default_files = True
+            self._initialised_common_data = True
 
         self._init_module(module, datapath)
 
@@ -481,9 +482,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self._modules = set()
         # A dictionary mapping paths to emulated file objects.
         self._emuls = {}
-        # Boolean indicating if default files which should be emulated for every platform have
-        # already been initialized.
-        self._initialised_default_files = False
+        # 'True' if common test data has already been initialized.
+        self._initialised_common_data = False
 
     def close(self):
         """Stop emulation."""
