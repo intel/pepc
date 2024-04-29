@@ -24,7 +24,7 @@ if __name__ == "__main__":
         sys.exit(main())
 
     # This is a zipapp archive. It includeds the python code and the data. In order for the data to
-    # be found by the tool, it should be extracted somewhere and made accessible to the too via the
+    # be found by the tool, it should be extracted somewhere and made accessible to the tool via the
     # data path environment variable.
 
     envvar = ProjectFiles.get_project_data_envvar("pepc")
