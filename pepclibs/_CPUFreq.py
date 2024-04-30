@@ -130,10 +130,22 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     def _get_cpu_freq_sysfs_path(self, key, cpu, limit=False):
         """Get the sysfs file path for a CPU frequency read of write operation."""
 
+        if key not in self._path_cache:
+            self._path_cache[key] = {}
+        if cpu not in self._path_cache[key]:
+            self._path_cache[key][cpu] = {}
+
+        path = self._path_cache[key][cpu].get(limit)
+        if path:
+            return path
+
         fname = "scaling_" + key + "_freq"
         prefix = "cpuinfo_" if limit else "scaling_"
         fname = prefix + key + "_freq"
-        return self._get_policy_sysfs_path(cpu, fname)
+
+        path = self._get_policy_sysfs_path(cpu, fname)
+        self._path_cache[key][cpu][limit] = path
+        return path
 
     def _get_freq_sysfs(self, key, cpus, limit=False):
         """Yield CPU frequency from the Linux "cpufreq" sysfs file."""
@@ -555,6 +567,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._sysfs_io = sysfs_io
         self._enable_cache = enable_cache
         self._verify = verify
+        self._path_cache = {}
 
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
