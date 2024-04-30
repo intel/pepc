@@ -36,6 +36,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
        * 'get_max_freq()'
        * 'set_min_freq()'
        * 'set_max_freq()'
+       * 'get_cur_freq()'
     2. Get CPU frequency limits via Linux "cpufreq" sysfs interfaces.
        * 'get_min_freq_limit()'
        * 'get_max_freq_limit()'
@@ -179,6 +180,17 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         """
 
         yield from self._get_freq_sysfs("max", cpus)
+
+    def get_cur_freq(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the current CPU
+        frequency read via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the current frequency for.
+
+        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        """
+
+        yield from self._get_freq_sysfs("cur", cpus)
 
     def get_min_freq_limit(self, cpus):
         """
