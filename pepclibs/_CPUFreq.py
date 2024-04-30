@@ -202,20 +202,24 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         what = f"{key}. CPU frequency"
 
         for cpu in cpus:
-            cpu_info = self._cpuinfo.info
-            if cpu_info["vendor"] == "GenuineIntel" and "hwp" in cpu_info["flags"][cpu]:
-                # On some Intel platforms with HWP enabled the change does not happen immediately.
-                # Retry few times.
-                retries = 2
-                sleep = 0.1
-            else:
-                retries = sleep = 0
+            if self._verify:
+                cpu_info = self._cpuinfo.info
+                if cpu_info["vendor"] == "GenuineIntel" and "hwp" in cpu_info["flags"][cpu]:
+                    # On some Intel platforms with HWP enabled the change does not happen immediately.
+                    # Retry few times.
+                    retries = 2
+                    sleep = 0.1
+                else:
+                    retries = sleep = 0
 
             path = self._get_cpu_freq_sysfs_path(key, cpu)
 
             try:
-                self._sysfs_io.write_verify_int(path, freq // 1000, what=what, retries=retries,
-                                                sleep=sleep)
+                if not self._verify:
+                    self._sysfs_io.write_int(path, freq // 1000, what=what)
+                else:
+                    self._sysfs_io.write_verify_int(path, freq // 1000, what=what, retries=retries,
+                                                    sleep=sleep)
             except ErrorVerifyFailed as err:
                 setattr(err, "cpu", cpu)
                 raise err
@@ -528,7 +532,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_governor"
             self._sysfs_io.write(path, governor, what=what)
 
-    def __init__(self, pman=None, cpuinfo=None, msr=None, sysfs_io=None, enable_cache=True):
+    def __init__(self, pman=None, cpuinfo=None, msr=None, sysfs_io=None, enable_cache=True,
+                 verify=True):
         """
         The class constructor. The argument are as follows.
           * pman - the process manager object that defines the host to get/set CPU frequency on.
@@ -538,6 +543,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
           * sysfs_io - an '_SysfsIO.SysfsIO()' object which should be used for accessing sysfs
                        files.
           * enable_cache - this argument can be used to disable caching.
+          * verify - enable verification of written values, by default verification is enabled.
 
         This class is focused on 'sysfs' interface, but in some cases it may access MSR registers
         via the 'CPUFreqMSR' class.
@@ -548,6 +554,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._msr = msr
         self._sysfs_io = sysfs_io
         self._enable_cache = enable_cache
+        self._verify = verify
 
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
