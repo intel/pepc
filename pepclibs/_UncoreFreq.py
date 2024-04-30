@@ -53,11 +53,13 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
            - 'get_max_freq_dies()'
            - 'set_min_freq_dies()'
            - 'set_max_freq_dies()'
+           - 'get_cur_freq_dies()'
        * On per-CPU basis:
            - 'get_min_freq_cpus()'
            - 'get_max_freq_cpus()'
            - 'set_min_freq_cpus()'
            - 'set_max_freq_cpus()'
+           - 'get_cur_freq_cpus()'
     2. Get uncore frequency limits via Linux sysfs interfaces:
        * On per-die (uncore frequency domain) basis:
            - 'get_min_freq_limit_dies()'
@@ -216,6 +218,19 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         """
 
         yield from self._get_freq_dies("max", dies, limit=True)
+
+    def get_cur_freq_dies(self, dies):
+        """
+        For every die in 'dies', get the current uncore frequency for the die (uncore frequency
+        domain). The arguments are as follows.
+          * dies - a dictionary indexed by the package numbers with values being lists of die
+                   numbers to get the frequency limit for.
+
+        Use the Linux uncore frequency driver sysfs interface to get the current uncore frequency.
+        Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not exist.
+        """
+
+        yield from self._get_freq_dies("current", dies, limit=False)
 
     def _unlock_new_sysfs_api(self):
         """
@@ -384,6 +399,20 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
         """
 
         yield from self._get_freq_cpus("max", cpus, limit=True)
+
+    def get_cur_freq_cpus(self, cpus):
+        """
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the current uncore
+        frequency for the die (uncore frequency domain) corresponding to CPU 'cpu'. The
+        arguments are as follows.
+          * cpus - a collection of integer CPU numbers to get the uncore frequency limit for.
+
+        Use the Linux uncore frequency driver sysfs interface to get and return the current uncore
+        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
+        exist.
+        """
+
+        yield from self._get_freq_cpus("current", cpus, limit=False)
 
     def _set_freq_cpus(self, freq, key, cpus):
         """
