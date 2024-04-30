@@ -142,8 +142,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
     def _get_freq_dies(self, key, dies, limit=False):
         """
         For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
-        the min. or max. uncore frequency or frequency limit for the die 'die' in package 'package'.
-        The arguments are as follows.
+        the uncore frequency for die 'die' in package 'package'. Possible values of the 'key'
+        argument are "min", "max", and "current".
         """
 
         what = f"{key}. uncore frequency"
@@ -313,9 +313,10 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
     def _get_freq_cpus(self, key, cpus, limit=False):
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the min. or max. uncore
-        frequency or frequency limit for the die (uncore frequency domain) corresponding to CPU
-        'cpu'.
+        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' uncore frequency for the
+        die (uncore frequency domain) corresponding to CPU 'cpu'. Possible values of the 'key'
+        argument are "min", "max", and "current".
+
         """
 
         what = f"{key}. uncore frequency"
