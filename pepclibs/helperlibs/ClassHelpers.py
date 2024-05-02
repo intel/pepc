@@ -10,7 +10,6 @@
 Miscellaneous common helpers for class objects.
 """
 
-import types
 import logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNotFound
 
@@ -49,26 +48,6 @@ class WrapExceptions:
         errno = getattr(err, "errno", None)
         return target_exception(msg, errno=errno)
 
-    def _wrap(self, name):
-        """Wrap the 'name' method."""
-
-        def wrapper(self, *args, **kwargs):
-            """The actual wrapper."""
-
-            try:
-                return getattr(self._obj, name)(*args, **kwargs)
-            except Error:
-                # Do not translate exceptions that are already based on 'Error'.
-                raise
-            except PermissionError as err:
-                raise self._get_exception(name, err, ErrorPermissionDenied) from err
-            except FileNotFoundError as err:
-                raise self._get_exception(name, err, ErrorNotFound) from err
-            except Exception as err:
-                raise self._get_exception(name, err, Error) from err
-
-        setattr(self, name, types.MethodType(wrapper, self))
-
     def __init__(self, obj, get_err_prefix=None):
         """
         Intercept and translate exceptions of object 'obj' to exceptions defined in 'Exceptions.py'.
@@ -88,18 +67,6 @@ class WrapExceptions:
         self._obj = obj
         self._get_err_prefix = get_err_prefix
 
-        for name in dir(obj):
-            attr = getattr(obj, name, None)
-            if not attr:
-                continue
-
-            # If the attribute is not a private attribute and it is a function, then wrap it.
-            if not name.startswith("_") and hasattr(attr, "__call__"):
-                self._wrap(name)
-            # But we want to wrap iteration methods.
-            elif name in {"__next__", "__iter__"}:
-                self._wrap(name)
-
     def __enter__(self):
         """The context enter method."""
         return self
@@ -112,8 +79,26 @@ class WrapExceptions:
             _LOG.warning(err)
 
     def __getattr__(self, name):
-        """Fall-back to the wrapped object attributes."""
-        return getattr(self._obj, name)
+        """Accessing an attribute."""
+
+        attr = getattr(self._obj, name)
+
+        try:
+            return getattr(self._obj, name)
+        except Error:
+            # Do not translate exceptions that are already based on 'Error'.
+            raise
+        except Exception as err:
+            if name.startswith("_") or not hasattr(attr, "__call__"):
+                # A private method or not a method.
+                raise
+            if isinstance(err, PermissionError):
+                err_type = ErrorPermissionDenied
+            elif isinstance(err, FileNotFoundError):
+                err_type = ErrorNotFound
+            else:
+                err_type = Error
+            raise self._get_exception(name, err, err_type) from err
 
     def __iter__(self):
         """Return iterator."""
