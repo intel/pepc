@@ -137,9 +137,24 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
     def _get_sysfs_path_dies(self, key, package, die, limit=False):
         """Get the sysfs file path for an uncore frequency read or write operation."""
 
+        if key not in self._path_cache:
+            self._path_cache[key] = {}
+        if package not in self._path_cache[key]:
+            self._path_cache[key][package] = {}
+        if die not in self._path_cache[key][package]:
+            self._path_cache[key][package][die] = {}
+
+        path = self._path_cache[key][package][die].get(limit)
+        if path:
+            return path
+
         if self._use_new_sysfs_api():
-            return self._get_new_sysfs_api_path(key, package, die, limit=limit)
-        return self._get_legacy_sysfs_api_path(key, package, die, limit=limit)
+            path = self._get_new_sysfs_api_path(key, package, die, limit=limit)
+        else:
+            path = self._get_legacy_sysfs_api_path(key, package, die, limit=limit)
+
+        self._path_cache[key][package][die][limit] = path
+        return path
 
     def _get_freq_dies(self, key, dies, limit=False):
         """
@@ -590,6 +605,8 @@ class UncoreFreq(ClassHelpers.SimpleCloseContext):
 
         self._drv = None
         self._unload_drv = False
+
+        self._path_cache = {}
 
         self._sysfs_base = Path("/sys/devices/system/cpu/intel_uncore_frequency")
 
