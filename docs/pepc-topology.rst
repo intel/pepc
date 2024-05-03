@@ -76,7 +76,7 @@ Therefore, unknown topology numbers (e.g., package number) for offline CPUs are 
    List of cores to print topology information for. The list can include individual core numbers and
    core number ranges. For example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10
    to 12. Use the special keyword 'all' to specify all cores. This option has to be accompanied by
-   '--package' option, because core numbers are per-package.
+   the '--package' option, because core numbers are per-package.
 
 **--modules** *MODULES*
    List of dies to print topology information for. The list can include individual module numbers
@@ -87,8 +87,9 @@ Therefore, unknown topology numbers (e.g., package number) for offline CPUs are 
 **--dies** *DIES*
    List of dies to print topology information for. The list can include individual die numbers and
    die number ranges. For example, '0-3,5' would mean dies 0 to 3, and die 5. Use the special
-   keyword 'all' to specify all dies. This option has to be accompanied by '--package' option,
-   because die numbers are per-package.
+   keyword 'all' to specify all dies. On some systems, die numbers are globally unique, while on
+   other systems they are relative to the package. In the latter case, this option has to be
+   accompanied by the '--package' option.
 
 **--packages** *PACKAGES*
    List of packages to print topology information for. The list can include individual package
