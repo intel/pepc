@@ -377,15 +377,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return self._get_level_nums("package", "package", "all", order=order)
 
     def cpus_hotplugged(self):
-        """
-        Must be called when a CPU goes online or offline. Informs this class object that the
-        topology lists may be invalid and has to be updated.
-        """
-
-        self._cpus = None
-        self._hybrid_cpus = None
-        if self._topology:
-            self._must_update_topology = True
+        """Must be called when a CPU goes online or offline."""
+        self._cpus_hotplugged()
 
     def get_cpu_levels(self, cpu, levels=None):
         """
@@ -1065,12 +1058,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             raise ErrorNotSupported(f"can't get E-core/P-core CPU information{self._pman.hostmsg}: "
                                     f"{self.cpudescr} is not a hybrid processor")
 
-        if not self._hybrid_cpus:
-            self._hybrid_cpus = {}
-            for arch, name in (("atom", "ecore_cpus"), ("core", "pcore_cpus")):
-                self._hybrid_cpus[name] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
-
-        return (list(self._hybrid_cpus["ecore_cpus"]), list(self._hybrid_cpus["pcore_cpus"]))
+        hybrid_cpus = self._get_hybrid_cpus()
+        return (list(hybrid_cpus["ecore_cpus"]), list(hybrid_cpus["pcore_cpus"]))
 
     def get_cache_info(self):
         """
@@ -1148,5 +1137,3 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         # CPU cache information dictionary.
         self._cacheinfo = None
-        # Dictionary of P-core/E-core CPUs.
-        self._hybrid_cpus = None

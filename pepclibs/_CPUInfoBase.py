@@ -401,6 +401,25 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return cpudescr
 
+    def _get_hybrid_cpus(self):
+        """Build and return the hybrid CPUs dictionary."""
+
+        self._hybrid_cpus = {}
+        for arch, name in (("atom", "ecore_cpus"), ("core", "pcore_cpus")):
+            self._hybrid_cpus[name] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
+        return self._hybrid_cpus
+
+    def _cpus_hotplugged(self):
+        """
+        Must be called when a CPU goes online or offline. Drop cached numbers and force re-reading
+        topology-related sysfs files.
+        """
+
+        self._cpus = None
+        self._hybrid_cpus = None
+        if self._topology:
+            self._must_update_topology = True
+
     def __init__(self, pman=None):
         """
         The class constructor. The arguments are as follows.
@@ -429,6 +448,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._cpus = set()
         # Set of online and offline CPUs.
         self._all_cpus = None
+        # Dictionary of P-core/E-core CPUs.
+        self._hybrid_cpus = None
 
         # Per-package compute die numbers (dies which have CPUs) and I/O die numbers (dies which do
         # not have CPUs). Dictionaries with package numbers as key and set of die numbers as values.
