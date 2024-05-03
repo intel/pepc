@@ -389,8 +389,8 @@ def _test_div_create_exp_res(lvl, nums, cpus):
 
     The difference is that 'cpus_div_cores()' and 'cpus_div_dies()' return the dictionary n the
     {package: [list of cores or dies]} format. , while 'cpus_div_packages()' returns the list of
-    package numbers. And the reason for this is that core and die numbers are relative to the
-    package.
+    package numbers. And the reason for this is that core and die numbers may relative to the
+    package numbers on some systems.
 
     For globally-numbered levels, such as "package", this function does nothing and just returns the
     ('nums', 'cpus') tuple.

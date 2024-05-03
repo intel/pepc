@@ -331,8 +331,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                       are the dies that do not have any CPUs.
 
         Only dies containing at least one online CPU will be included to the result, because Linux
-        does not provide topology information for offline CPUs. Die numbers are relative to the
-        package (e.g., there may be die 0 in package 0 and package 1).
+        does not provide topology information for offline CPUs. On some systems die numbers may be
+        globally unique, while on other systems they are relative to the package (e.g., there may be
+        die 0 in package 0 and package 1).
         """
 
         dies = self._get_level_nums("die", "package", package, order=order)
@@ -777,8 +778,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                    numbers.
           * rem_cpus - list of remaining CPUs that cannot be converted to a die number.
 
-        The return value is inconsistent with 'cpus_div_packages()' because die numbers are
-        relative to package numbers.
+        The return value is inconsistent with 'cpus_div_packages()' because die numbers may be
+        relative to package numbers on some systems.
 
         Consider an example of a system with 2 packages, 2 dies per package, 1 core per die, 2 CPUs
         per core.

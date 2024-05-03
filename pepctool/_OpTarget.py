@@ -67,10 +67,10 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             for pkg, dies in in_dies.items():
                 cpus += self._cpuinfo.dies_to_cpus(dies=dies, packages=(pkg,))
 
-        # Because cores and dies have relative numbers (as opposed to absolute CPU and package
-        # numbers), when either of them was specified, packages list is treated as "package numbers
-        # for core or die numbers", not as input packages. If no cores or dies were specified,
-        # packages list is treated independently, as input packages.
+        # Because cores and dies numbers may be relative (as opposed to globally unique CPU and
+        # package numbers), when either of them was specified, packages list is treated as
+        # "package numbers for core or die numbers", not as input packages. If no cores or dies were
+        # specified, packages list is treated independently, as input packages.
         if in_packages and not (self.cores or self.dies):
             cpus += self._cpuinfo.packages_to_cpus(packages=in_packages)
 
@@ -231,11 +231,12 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                     integer core number within the package (the key).
           * modules - collection of module numbers.
           * dies - can be either a list or tuple (1) or a dictionary (2). In case of (1), it is a
-                   collection of die numbers. Die numbers are relative to package numbers. If
-                   'package' is not specified, 'dies' are assumed to be for package 0. Otherwise
-                   they are assumed to be for every package in 'packages'. In case of (2), it is a
-                   dictionary with keys being integer package numbers and values being lists of
-                   integer die number within the package (the key).
+                   collection of die numbers. Die numbers may be relative to package numbers (but
+                   this depends on the system and the kernel version - on some systems die numbers
+                   are globally unique). If 'package' is not specified, 'dies' are assumed to be for
+                   package 0. Otherwise they are assumed to be for every package in 'packages'. In
+                   case of (2), it is a dictionary with keys being integer package numbers and
+                   values being lists of integer die number within the package (the key).
           * packages - collection of package numbers.
           * core_siblings - collection of integer core sibling numbers. Will be used to reduce the
                             final list of CPUs using 'CPUInfo.select_core_siblings()'.
@@ -363,7 +364,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             nums = self._parse_input_nums(packages, what="package numbers")
             self.packages = self._cpuinfo.normalize_packages(nums)
 
-        # Core and die numbers are relative to the package number. Store them in a dictionary
+        # Core and die numbers may be relative to the package number. Store them in a dictionary
         # indexed by the package number.
         #
         # Handle input core numbers.

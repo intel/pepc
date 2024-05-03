@@ -49,7 +49,7 @@ def _get_possible_ioscopes(cpuinfo, cpu, siblings):
                 if tline[ioscope] != tinfo[ioscope]:
                     break
             elif tline[ioscope] == tinfo[ioscope]:
-                # The 'core' and 'die' numbers are relative to the package.
+                # The 'core' and 'die' numbers may be relative to the package on some systems.
                 if ioscope in {"core", "die"} and tline["package"] != tinfo["package"]:
                     continue
                 break

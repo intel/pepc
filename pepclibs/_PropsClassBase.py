@@ -738,7 +738,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                      specified in 'mnames'. By default, all mechanisms supported by the 'pname'
                      property will be tried.
 
-        Unlike CPU numbers, die numbers are relative to package numbers. For example, on a two
+        Unlike CPU numbers, die numbers are may be relative to package numbers (depending on the
+        system and kernel version - on some systems they are globally unique). For example, on a two
         socket system there may be die 0 in both packages 0 and 1. Therefore, the 'dies' argument is
         a dictionary, not just a list of integer die numbers.
 
