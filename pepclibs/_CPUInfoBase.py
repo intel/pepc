@@ -327,6 +327,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             self._cpus = set(self._read_range("/sys/devices/system/cpu/online"))
         return self._cpus
 
+    def _get_all_cpus_set(self):
+        """Return online and offline CPU numbers as a set."""
+
+        if not self._all_cpus:
+            self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
+        return self._all_cpus
+
     def _get_cpu_info(self):
         """Get general CPU information (model, architecture, etc)."""
 
@@ -420,6 +427,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         # Online CPU numbers.
         self._cpus = set()
+        # Set of online and offline CPUs.
+        self._all_cpus = None
+
         # Per-package compute die numbers (dies which have CPUs) and I/O die numbers (dies which do
         # not have CPUs). Dictionaries with package numbers as key and set of die numbers as values.
         self._compute_dies = {}

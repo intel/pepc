@@ -288,13 +288,6 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return self._get_level_nums("CPU", "CPU", "all", order=order)
 
-    def _get_all_cpus_set(self):
-        """Return online and offline CPU numbers as a set."""
-
-        if not self._all_cpus:
-            self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
-        return self._all_cpus
-
     def get_offline_cpus(self):
         """Return list of offline CPU numbers sorted in ascending order."""
 
@@ -1155,7 +1148,5 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         # CPU cache information dictionary.
         self._cacheinfo = None
-        # Set of online and offline CPUs.
-        self._all_cpus = None
         # Dictionary of P-core/E-core CPUs.
         self._hybrid_cpus = None
