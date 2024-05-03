@@ -217,8 +217,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             if self._verify:
                 cpu_info = self._cpuinfo.info
                 if cpu_info["vendor"] == "GenuineIntel" and "hwp" in cpu_info["flags"][cpu]:
-                    # On some Intel platforms with HWP enabled the change does not happen immediately.
-                    # Retry few times.
+                    # On some Intel platforms with HWP enabled the change does not happen
+                    # immediately. Retry few times.
                     retries = 2
                     sleep = 0.1
                 else:
