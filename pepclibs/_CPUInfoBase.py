@@ -232,7 +232,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
     def _update_topology(self):
         """Update topology information with online/offline CPUs."""
 
-        new_online_cpus = self._read_online_cpus()
+        new_online_cpus = self._get_online_cpus_set()
         old_online_cpus = {tline["CPU"] for tline in self._topology["CPU"]}
         if new_online_cpus != old_online_cpus:
             online = list(new_online_cpus - old_online_cpus)
@@ -282,11 +282,11 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             return self._topology[order]
 
         if not self._topology:
-            tinfo = {cpu: {"CPU": cpu} for cpu in self._read_online_cpus()}
+            tinfo = {cpu: {"CPU": cpu} for cpu in self._get_online_cpus_set()}
         else:
             tinfo = {tline["CPU"]: tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
 
-        cpus = self._read_online_cpus()
+        cpus = self._get_online_cpus_set()
         self._add_cores_and_packages(tinfo, cpus)
         levels.update({"package", "core"})
 
@@ -320,8 +320,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         what = f"contents of file at '{path}'{self._pman.hostmsg}"
         return Trivial.split_csv_line_int(str_of_ranges.strip(), what=what)
 
-    def _read_online_cpus(self):
-        """Read and return online CPU numbers from sysfs."""
+    def _get_online_cpus_set(self):
+        """Return online CPU numbers as a set."""
 
         if not self._cpus:
             self._cpus = set(self._read_range("/sys/devices/system/cpu/online"))
@@ -362,7 +362,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             cpuinfo["flags"] = {}
             # In current implementation we assume all CPUs have the same flags. But ideally, we
             # should read the flags for each CPU from '/proc/cpuinfo', instead of using 'lscpu'.
-            for cpu in self._read_online_cpus():
+            for cpu in self._get_online_cpus_set():
                 cpuinfo["flags"][cpu] = cpuflags
 
         if self._pman.exists("/sys/devices/cpu_atom/cpus"):

@@ -284,7 +284,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         if order == "CPU":
-            return sorted(self._read_online_cpus())
+            return sorted(self._get_online_cpus_set())
 
         return self._get_level_nums("CPU", "CPU", "all", order=order)
 
@@ -299,7 +299,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """Return list of offline CPU numbers sorted in ascending order."""
 
         cpus = self._get_all_cpus_set()
-        online_cpus = self._read_online_cpus()
+        online_cpus = self._get_online_cpus_set()
         return list(cpu for cpu in cpus if cpu not in online_cpus)
 
     def get_cores(self, package=0, order="core"):
@@ -575,7 +575,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
     def get_cpus_count(self):
         """Return count of online CPUs."""
 
-        return len(self._read_online_cpus())
+        return len(self._get_online_cpus_set())
 
     def get_offline_cpus_count(self):
         """Return count of offline CPUs."""
@@ -888,7 +888,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         if offline_ok:
             allcpus = self._get_all_cpus_set()
         else:
-            allcpus = self._read_online_cpus()
+            allcpus = self._get_online_cpus_set()
 
         if cpus == "all":
             return sorted(allcpus)
