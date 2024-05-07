@@ -180,11 +180,17 @@ def topology_info_command(args, pman):
         if offline_ok:
             topology = _add_offline_cpus(cpus, cpuinfo, topology, colnames)
 
+    printed_tlines = set()
     _LOG.info(fmt, *headers)
     for tline in topology:
         for lvl, val in tline.items():
             if val == CPUInfo.NA:
                 tline[lvl] = "-"
 
-        args = [str(tline[name]) for name in colnames]
-        _LOG.info(fmt, *args)
+        args = tuple(str(tline[name]) for name in colnames)
+        tline_str = fmt % args
+        if tline_str in printed_tlines:
+            continue
+
+        _LOG.info(tline_str)
+        printed_tlines.add(tline_str)
