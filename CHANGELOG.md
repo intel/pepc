@@ -9,6 +9,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
  - Improve 'pepc topology info' output and avoid printing identical lines many times.
+ - Improve '--cores' and '--dies' options handling: do not require '--packages'
+   option if there is no abiguity.
 
 ## [1.5.14] - 2024-04-25
 ### Changed

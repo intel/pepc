@@ -209,9 +209,11 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
     def _build_package_indexed_dict(self, nums, sname):
         """
-        Handle the situation when '__init__()' is called with core and die numbers specified without
-        package numbers. On some systems package and die numbers are relative to packages, so there
-        may be ambiguity. Check the input core or die numbers ('nums') and if they are ambiguous,
+        Handle the situation when '__init__()' is called with core and/or die numbers specified
+        without package numbers. On some systems core and die numbers are relative to package
+        numbers (as opposed to being globally unique), so there may be ambiguity (e.g., user
+        specified die 0 without specifying package number, but there are two dies 0 in packages 0
+        and 1). Check the user-provided core or die numbers ('nums') and if they are ambiguous,
         raise an exception. Otherwise, convert 'nums' into a dictionary indexed by package number
         and return the dictionary.
         """
