@@ -207,14 +207,41 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             return nums
         return Trivial.parse_int_list(nums, dedup=True, what=what)
 
-    def _raise_no_pkg(self, what):
-        """"
-        Raise an exception in case a core or die number was specified without a package number.
+    def _build_package_indexed_dict(self, nums, sname):
+        """
+        Handle the situation when '__init__()' is called with core and die numbers specified without
+        package numbers. On some systems package and die numbers are relative to packages, so there
+        may be ambiguity. Check the input core or die numbers ('nums') and if they are ambiguous,
+        raise an exception. Otherwise, convert 'nums' into a dictionary indexed by package number
+        and return the dictionary.
         """
 
-        raise Error(f"{what} numbers were specified, but not package numbers.\n"
-                    f"Please, specify package numbers as well, because {what} numbers are "
-                    f"relative to package.")
+        if sname not in ("die", "core"):
+            raise Error("BUG: only die and core numbers may be relative to package numbers")
+
+        num2pkg = {}
+        pkg2nums = {}
+
+        method_name = f"package_to_{sname}s"
+        package_to_nums = getattr(self._cpuinfo, method_name)
+        for package in self._cpuinfo.get_packages():
+            pkg_nums = set(package_to_nums(package))
+            for num in nums:
+                if num in pkg_nums:
+                    if not num in num2pkg:
+                        num2pkg[num] = package
+                        if package not in pkg2nums:
+                            pkg2nums[package] = []
+                        pkg2nums[package].append(num)
+                        continue
+
+                    raise Error(f"ambiguous {sname} number {num}: there is {sname} {num} in "
+                                f"packages {num2pkg[num]} and {package}.\n"
+                                f"Please, specify package numbers as well, because {sname} numbers "
+                                f"are not unique{self._pman.hostmsg}, they are relative to "
+                                f"package.")
+
+        return pkg2nums
 
     def __init__(self, pman=None, cpuinfo=None, cpus=None, cores=None, modules=None, dies=None,
                  packages=None, core_siblings=None, module_siblings=None, offline_ok=False):
@@ -362,21 +389,23 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             self.modules = self._cpuinfo.normalize_modules(nums)
         if packages:
             nums = self._parse_input_nums(packages, what="package numbers")
-            self.packages = self._cpuinfo.normalize_packages(nums)
+            pkgs = self.packages = self._cpuinfo.normalize_packages(nums)
+        else:
+            pkgs = (0,)
 
         # Core and die numbers may be relative to the package number. Store them in a dictionary
         # indexed by the package number.
         #
         # Handle input core numbers.
-        pkgs = self.packages if packages else (0,)
         if cores:
             self.cores = {}
             if not isinstance(cores, dict):
                 nums = self._parse_input_nums(cores, what="core numbers")
-                if not packages and self._cpuinfo.get_packages_count() > 1:
-                    self._raise_no_pkg("core")
-                for pkg in pkgs:
-                    self.cores[pkg] = self._cpuinfo.normalize_cores(nums, package=pkg)
+                if not packages:
+                    self.cores = self._build_package_indexed_dict(nums, "core")
+                else:
+                    for pkg in pkgs:
+                        self.cores[pkg] = self._cpuinfo.normalize_cores(nums, package=pkg)
             else:
                 for pkg, pkg_cores in cores.items():
                     pkg = self._cpuinfo.normalize_package(pkg)
@@ -392,10 +421,11 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             self.dies = {}
             if not isinstance(dies, dict):
                 nums = self._parse_input_nums(dies, what="die numbers")
-                if not packages and self._cpuinfo.get_packages_count() > 1:
-                    self._raise_no_pkg("die")
-                for pkg in pkgs:
-                    self.dies[pkg] = self._cpuinfo.normalize_dies(nums, package=pkg)
+                if not packages:
+                    self.dies = self._build_package_indexed_dict(nums, "die")
+                else:
+                    for pkg in pkgs:
+                        self.dies[pkg] = self._cpuinfo.normalize_dies(nums, package=pkg)
             else:
                 for pkg, pkg_dies in dies.items():
                     pkg = self._cpuinfo.normalize_package(pkg)
