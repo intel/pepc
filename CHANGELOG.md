@@ -8,6 +8,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Improve 'pepc topology info' output and avoid printing identical lines many times.
 
 ## [1.5.14] - 2024-04-25
 ### Changed
