@@ -277,47 +277,47 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
           * Each package has two dies: 0 and 1.
           * Each die has two CPUs.
 
-          Here is the topology table.
+        Here is the topology table.
 
-           Package Die CPU
-           ---------------
-           0       0   0
-           0       0   1
-           0       1   2
-           0       1   3
-           1       0   4
-           1       0   5
-           1       1   6
-           1       1   7
+        Package Die CPU
+        ---------------
+        0       0   0
+        0       0   1
+        0       1   2
+        0       1   3
+        1       0   4
+        1       0   5
+        1       1   6
+        1       1   7
 
-          A. If this class was instantiated with 'cpus="all"', then:
-               * it targets all CPUs
-               * it targets all dies
-               * it targets all packages
-          B. If this class was instantiated with 'cpus="0-3"', then:
-               * it targets CPUs 0-3
-               * it targets dies 0,1 of package 0
-               * it targets package 0
-          C. If this class was instantiated with 'cpus="0,1"', then:
-               * it targets CPUs 0,1
-               * it targets die 0 of package 0
-               * it targets no packages
-          D. If this class was instantiated with 'cpus="0"', then:
-               * it targets CPU 0
-               * it targets no dies
-               * it targets no packages
-          E. If this class was instantiated with 'packages="0"', then:
-               * it targets CPUs 0-4
-               * it targets dies 0,1 of package 0
-               * it targets package 0
-          F. If this class was instantiated with 'packages="0", cpus="6"', then:
-               * it targets CPUs 0-4,6
-               * it targets no dies
-               * it targets no packages
-          G. If this class was instantiated with 'packages="0", cpus="6,7"', then:
-               * it targets CPUs 0-4,6,7
-               * it targets no dies 0,1 of package 0 and die 1 of package 1
-               * it targets no packages
+        A. If this class was instantiated with 'cpus="all"', then:
+             * it targets all CPUs
+             * it targets all dies
+             * it targets all packages
+        B. If this class was instantiated with 'cpus="0-3"', then:
+             * it targets CPUs 0-3
+             * it targets dies 0,1 of package 0
+             * it targets package 0
+        C. If this class was instantiated with 'cpus="0,1"', then:
+             * it targets CPUs 0,1
+             * it targets die 0 of package 0
+             * it targets no packages
+        D. If this class was instantiated with 'cpus="0"', then:
+             * it targets CPU 0
+             * it targets no dies
+             * it targets no packages
+        E. If this class was instantiated with 'packages="0"', then:
+             * it targets CPUs 0-4
+             * it targets dies 0,1 of package 0
+             * it targets package 0
+        F. If this class was instantiated with 'packages="0", cpus="6"', then:
+             * it targets CPUs 0-4,6
+             * it targets no dies
+             * it targets no packages
+        G. If this class was instantiated with 'packages="0", cpus="6,7"', then:
+             * it targets CPUs 0-4,6,7
+             * it targets no dies 0,1 of package 0 and die 1 of package 1
+             * it targets no packages
         """
 
         self._pman = pman
