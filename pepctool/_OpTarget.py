@@ -378,7 +378,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                 for pkg in pkgs:
                     self.cores[pkg] = self._cpuinfo.normalize_cores(nums, package=pkg)
             else:
-                for pkg, pkg_cores in pkg_cores.items():
+                for pkg, pkg_cores in cores.items():
                     pkg = self._cpuinfo.normalize_package(pkg)
                     for core in pkg_cores:
                         core = self._cpuinfo.normalize_core(core, package=pkg)
