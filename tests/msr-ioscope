@@ -258,7 +258,6 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
         _find_feature_ioscope(cpuinfo, fmsr, "c1e_autopromote", ("off", "on"), cpu)
         _find_feature_ioscope(cpuinfo, fmsr, "cstate_prewake", ("off", "on"), cpu)
         _find_feature_ioscope(cpuinfo, fmsr, "ltr", ("off", "on"), cpu)
-        _find_feature_ioscope(cpuinfo, fmsr, "pch_negotiation", ("off", "on"), cpu)
     finally:
         fmsr.close()
 

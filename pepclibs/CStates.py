@@ -110,13 +110,6 @@ PROPS = {
         "mnames": ("sysfs",),
         "writable": False,
     },
-    "pch_negotiation": {
-        "name": "PCH negotiation",
-        "type": "bool",
-        "sname": None,
-        "writable": True,
-        "mnames": ("msr",),
-    },
 }
 
 class CStates(_PropsClassBase.PropsClassBase):

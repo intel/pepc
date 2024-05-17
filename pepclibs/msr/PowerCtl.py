@@ -36,9 +36,6 @@ LTR_CPUS = (CPUModels.MODELS["GRANITERAPIDS_X"]["model"],
             CPUModels.MODELS["SAPPHIRERAPIDS_X"]["model"],
             CPUModels.MODELS["ICELAKE_X"]["model"],)
 
-# CPU models supporting the PCH negotiation feature.
-_PCH_NEGOTIATION_CPUS = CPUModels.MODEL_GROUPS["EMR"]
-
 # Description of CPU features controlled by the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
 #
@@ -76,19 +73,6 @@ FEATURES = {
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": (35, 35),
-    },
-    "pch_negotiation": {
-        "name": "PCH negotiation",
-        "sname": None,
-        "iosname": None,
-        "help": """When enabled, processor's PCU (Power Control Unit) informs PCH (Platform
-                   Controller Hub) about entering and exiting package C6 state (PC6). Depending on
-                   configuration, PCH may use this information to minimize its interactions with
-                   the processor. This may improve PC6 residency and drives idle power down.""",
-        "cpumodels": _PCH_NEGOTIATION_CPUS,
-        "type": "bool",
-        "vals": {"on": 0, "off": 1},
-        "bits": (36, 36),
     },
 }
 
