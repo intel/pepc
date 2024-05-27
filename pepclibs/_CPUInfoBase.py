@@ -387,9 +387,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
     def _get_cpu_description(self):
         """Build and return a string identifying and describing the processor."""
 
-        if "Genuine Intel" in self.info["modelname"]:
-            # Pre-release firmware on Intel CPU describes them as "Genuine Intel", which is not very
-            # helpful.
+        if "genuine intel" in self.info["modelname"].lower():
+            # Pre-release firmware on Intel CPU describes them as "Genuine Intel" (sometimes in
+            # upper case), which is not very helpful.
             cpudescr = f"Intel processor model {self.info['model']:#x}"
 
             for info in CPUModels.MODELS.values():
