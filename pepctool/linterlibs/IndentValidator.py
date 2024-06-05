@@ -11,8 +11,391 @@
 import re
 import tokenize
 
+_brackets = {"(": ")", "{": "}", "[": "]"}
+_close_brackets = {v: k for k, v in _brackets.items()}
+
+class IndentStack():
+    """Helper class for handling indent levels."""
+
+    def add_message(self, *args, **kwargs):
+        """Helper for passing a linter message to parent object via 'args' and 'kwargs'."""
+        self._parent.add_message(*args, **kwargs)
+
+    def debug(self, *args, **kwargs):
+        """Helper for passing debug messages specified via 'args' and 'kwargs' to parent object."""
+        self._parent.debug(*args, **kwargs)
+
+    def _dump(self, lineno):
+        """Debug helper for dumping the contents of the indent stack."""
+
+        self.debug("indent", "_dump: C:{current}, LVLs:{levels}", lineno=lineno,
+                   current=self._current, levels=self._levels)
+        return
+
+    def _find_elem(self, indent, tag):
+        """Helper for finding an indent level 'indent' with 'tag' from the stack."""
+
+        level_nums = self._level_nums
+
+        for idx in range(len(level_nums)):
+            elem = self._levels[level_nums[idx]]
+
+            if elem["tag"] != tag:
+                continue
+
+            p_indent = 0
+            n_indent = None
+
+            if idx > 0:
+                p_indent = level_nums[idx - 1]
+
+            if idx + 1 < len(level_nums):
+                n_indent = level_nums[idx + 1]
+
+            if p_indent > indent:
+                continue
+
+            if n_indent and n_indent < indent:
+                continue
+
+            return elem
+
+        return None
+
+    def _push(self, entry):
+        """Helper for pushing a new 'entry' to indent stack."""
+
+        self._levels[entry["level"]] = entry
+        self._level_nums = sorted(list(self._levels))
+
+    def push(self, level=None, tag=None, offset=None, lineno=None):
+        """
+        Push a new indent tag and level to the stack. Arguments are as follows.
+          * level - indent level to push.
+          * tag - tag for the new indent.
+          * offset - offset between the tag position and the indented text.
+          * lineno - optional line number for logging purposes.
+        """
+
+        entry = { "level": level, "tag": tag, "offset": offset, "lineno": lineno }
+
+        if tag in ("*", "-", "o", ":", "num", "str"):
+            old = self._find_elem(level, tag)
+            if old and old["level"] == level:
+                self.pop(elem=old, lineno=lineno)
+                self._push(entry)
+                return
+
+        if level in self._levels:
+            old = self._levels[level]
+
+            if old["level"] != level or old["tag"] != tag or old["offset"] != offset:
+                self.add_message("pepc-string-reused-indent-level",
+                                 args=(level, tag, old["tag"], old["lineno"]),
+                                 line=lineno)
+                self._dump(lineno)
+                old["level"] = level
+                old["tag"] = tag
+                old["offset"] = offset
+                old["lineno"] = lineno
+
+            return
+
+        self._push(entry)
+
+        if tag in _brackets:
+            self._current += 4
+
+        self._dump(lineno)
+
+    def pop(self, level=None, tag=None, offset=0, elem=None, lineno=None):
+        """
+        Pop an indent level from the stack. This removes any indent levels above the specified level
+        also. Arguments are as follows.
+          * level - target indent level, anything above this are removed.
+          * tag - indent tag to match.
+          * offset - offset value between the tag position and actual indented text.
+          * elem - optional indent stack element.
+          * lineno - optional line number for logging purposes.
+        """
+
+        if elem:
+            level = elem["level"]
+            tag = elem["tag"]
+            offset = elem["offset"]
+
+        min_idx = None
+        max_idx = None
+        idx = 0
+
+        if tag in _close_brackets:
+            tag = _close_brackets[tag]
+            if self._current > self._base:
+                self._current -= 4
+
+        level_nums = self._level_nums
+
+        popped = None
+
+        for lvl_num in reversed(level_nums):
+            entry = self._levels[lvl_num]
+
+            if entry["tag"] == tag:
+                popped = entry
+            elif tag in _brackets and entry["tag"] in _brackets:
+                self.add_message("pepc-string-unbalanced-bracket", line=lineno,
+                                 args=(_brackets[tag], level, _brackets[entry["tag"]]))
+                break
+
+            del self._levels[lvl_num]
+
+            if popped:
+                break
+
+        self._level_nums = sorted(list(self._levels))
+
+        self._dump(lineno)
+
+        return popped
+
+    def adjust(self, adjust, lineno=None):
+        """Adjust base indent level by 'adjust'. Optional line number can be provided via 'lineno'
+        for logging purposes.
+        """
+
+        self._base += adjust
+        self.reset(lineno=lineno)
+
+    def reset(self, lineno=None):
+        """
+        Reset indent level to base. Optional line number can be provided via 'lineno' for logging
+        purposes.
+        """
+
+        self._levels = {}
+        self._current = self._base
+
+        elem = { "level": self._base, "tag": "base", "lineno": lineno, "offset": 0 }
+        self._push(elem)
+
+    def current(self):
+        """Return current indent level."""
+        return self._current
+
+    def find_indent(self, indent, tag=None, elem=None):
+        """Find closest indent level to 'indent'. Arguments are as follows.
+          * indent - indent level to find.
+          * tag - tag type to match for optional 'elem'.
+          * elem - optional indent element to match.
+        """
+
+        def _try_indent(indent, lvl, elem, tag):
+            """Internal helper to match indent 'lvl' to 'tag' type and 'elem'."""
+            if tag == elem["tag"]:
+                try_indent = lvl - elem["offset"]
+            else:
+                try_indent = lvl
+
+            return abs(try_indent - indent), try_indent
+
+        min_diff = None
+        min_lvl = None
+
+        if elem:
+            if indent == elem["level"]:
+                return indent
+
+            if tag == elem["tag"] and indent == elem["level"] - elem["offset"]:
+                return indent
+
+            min_diff = abs(indent - elem["level"])
+            min_lvl = elem["level"]
+
+        if indent == self._current:
+            return indent
+
+        if indent in self._levels:
+            return indent
+
+        for lvl, elem in self._levels.items():
+            diff, try_lvl = _try_indent(indent, lvl, elem, tag)
+            if not diff:
+                return indent
+
+            if not min_diff or diff < min_diff:
+                min_diff = diff
+                min_lvl = try_lvl
+
+        if min_lvl:
+            return min_lvl
+
+        return self._current
+
+    def __init__(self, parent, base, debug=False):
+        """
+        Class constructor for 'IndentStack()'. Arguments are as follows.
+          * parent - parent object.
+          * base - base indent level in characters.
+          * debug - True, if debug is enabled.
+        """
+        self._base = base
+        self._parent = parent
+        self._debug = debug
+        self.reset()
+
+class StringIndentValidator():
+    """Helper class for validating string indentation."""
+
+    def add_message(self, *args, **kwargs):
+        """Forward a linter warning to parent object defined by 'args' and 'kwargs'."""
+        self._parent.add_message(*args, **kwargs)
+
+    def debug(self, *args, **kwargs):
+        """Forward a debug message to parent object defined by 'args' and 'kwargs'."""
+        self._parent.debug(*args, **kwargs)
+
+    def match_tag(self, txt):
+        """Find the first tag from 'txt'."""
+        ch = txt[0]
+
+        if len(txt) > 1:
+            nextch = txt[1]
+        else:
+            nextch = None
+
+        if ch in ("*", "o", "-") and nextch == " ":
+            return ch
+
+        if ch in _brackets:
+            return ch
+
+    def validate_line(self, lineno, txt):
+        """
+        Validate a single line of string content. Arguments are as follows.
+          * lineno - line number.
+          * txt - line content.
+        """
+
+        self._num_lines += 1
+
+        match = re.match(r".*\t", txt)
+        if match:
+            self.add_message("pepc-string-unexpected-tab", line=lineno)
+            txt = txt.expandtabs(4)
+
+        striptxt = txt.lstrip(" ")
+
+        # Check if multiline string starter (""") immediately followed by text.
+        if self._num_lines == 1 and txt != "":
+            self._stack.adjust(3, lineno=lineno)
+            self._base += 3
+
+        # Blank line resets indent levels.
+        if striptxt == "":
+            self._stack.reset(lineno=lineno)
+            return
+
+        txtlen = len(txt)
+
+        indent = txtlen - len(striptxt)
+
+        i = indent
+
+        if self._num_lines == 1:
+            indent = indent + self._base
+
+        popped = None
+
+        while i < txtlen:
+            ch = txt[i]
+            if i > 0:
+                prevch = txt[i - 1]
+            else:
+                prevch = None
+
+            if i < txtlen - 1:
+                nextch = txt[i + 1]
+            else:
+                nextch = None
+
+            i += 1
+
+            if ch == " ":
+                continue
+
+            if (ch in ("*", "-", "o") and prevch == " " and nextch == " ") \
+                or ch in _brackets or ch == ":":
+                offset = 0
+                while i + offset < txtlen and txt[i + offset] == " ":
+                    offset += 1
+                if offset:
+                    lvl_offset = i + 1
+                else:
+                    lvl_offset = i
+
+                if self._num_lines == 1:
+                    lvl_offset += indent
+
+                offset += 1
+                self._stack.push(level=lvl_offset, offset=offset, tag=ch,
+                                 lineno=lineno)
+
+            if ch in _close_brackets:
+                popped =  self._stack.pop(level=i, tag=ch, lineno=lineno)
+
+        tag = None
+
+        # Match any alphanumerical list entries ('1.' or 'A.')-
+        match = re.match(r"([A-Z]+|[0-9\.]*[0-9]+)\. ", striptxt)
+        if match:
+            offset = len(match.group(1)) + 2
+            match = re.match(r"[A-Z]", striptxt)
+            if match:
+                tag = "str"
+            else:
+                tag = "num"
+
+        if tag:
+            self._stack.push(level=indent + offset, offset=offset, tag=tag,
+                             lineno=lineno)
+
+        # Attempt to match first character if no tag matched yet.
+        if not tag:
+            tag = self.match_tag(striptxt)
+
+        # Implicitly accept first line content always.
+        if self._num_lines == 1:
+            return
+
+        closest = self._stack.find_indent(indent, tag=tag, elem=popped)
+
+        if indent != closest:
+            self.add_message("pepc-string-bad-indent", line=lineno, args=(closest, indent))
+            self._stack._dump(lineno)
+
+    def __init__(self, parent, base=None, debug=False):
+        """
+        Constructor for 'StringIndentValidator()' class. Arguments are as follows.
+          * parent - parent object.
+          * base - base indent level in characters.
+          * debug - True, if debugging is enabled.
+        """
+        self._parent = parent
+        self._num_lines = 0
+        self._stack = IndentStack(self, base, debug=debug)
+        self._base = base
+        self._debug = debug
+
 class IndentValidator():
     """Helper class for validating code indentation."""
+
+    def add_message(self, *args, **kwargs):
+        """Add a warning message to parent linter based on 'args' and 'kwargs'."""
+        self._parent.add_message(*args, **kwargs)
+
+    def debug(self, *args, **kwargs):
+        """Print a debug message, based on 'args' and 'kwargs'."""
+        self._parent.debug(*args, **kwargs)
 
     def _validate_string(self, token, lineno, txt):
         """Validate string indentation, if it is a multiline string."""
@@ -21,9 +404,13 @@ class IndentValidator():
             return
 
         base = token.start[1]
+        new_base = base
         current = base
+        saved_base = base
         tag = None
         levels = {}
+
+        validator = StringIndentValidator(self, base=base, debug=self._debug)
 
         prevline = None
         linecache = None
@@ -34,115 +421,7 @@ class IndentValidator():
         for line in txt.split("\n"):
             lineno += 1
 
-            prevline = linecache
-            linecache = line
-
-            match = re.match(r".*\t", line)
-            if match:
-                self._parent.add_message("pepc-string-unexpected-tab", line=lineno)
-                line = line.expandtabs(4)
-
-            stripline = line.lstrip(" ")
-            if prevline is None and line != "":
-                base += 3
-                linecache = stripline
-                current = base
-                continue
-
-            if stripline == "":
-                # Blank line resets indent levels.
-                levels = {}
-                linecache = ""
-                current = base
-                continue
-
-            indent = len(line) - len(stripline)
-
-            bracket_map = {"(": ")", "{": "}", "[": "]"}
-
-            i = base
-
-            while i < len(line):
-                ch = line[i]
-                if i > 0:
-                    prevch = line[i - 1]
-                else:
-                    prevch = None
-
-                if i < len(line) - 1:
-                    nextch = line[i + 1]
-                else:
-                    nextch = None
-
-                i += 1
-
-                if ch == " ":
-                    continue
-                if (ch in ("*", "-", "o") and prevch == " " and nextch == " ") \
-                   or ch in ("(", "{", "[", ":"):
-                    offset = 0
-                    while i + offset < len(line) and line[i + offset] == " ":
-                        offset += 1
-                    if offset:
-                        lvl_offset = i + 1
-                    else:
-                        lvl_offset = i
-                    offset += 1
-                    levels[lvl_offset] = {"offset": offset, "tag": ch}
-                    continue
-                if ch in (")", "}", "]") and levels:
-                    prev = levels[list(levels)[-1]]
-                    if prev["tag"] in bracket_map and bracket_map[prev["tag"]] == ch:
-                        levels.popitem()
-                        if not levels:
-                            current = base
-
-            tag = None
-
-            match = re.match(r"([A-Z]+|[0-9\.]*[0-9]+)\. ", stripline)
-            if match:
-                offset = len(match.group(1)) + 2
-                match = re.match(r"[A-Z]", stripline)
-                if match:
-                    tag = "str"
-                else:
-                    tag = "num"
-
-            if tag:
-                if indent + offset not in levels:
-                    levels[indent + offset] = {"offset": offset, "tag": tag}
-                    current = indent + offset
-                else:
-                    if levels[indent + offset]["tag"] != tag:
-                        self._parent.add_message("pepc-string-reused-indent-level",
-                                                 args=(tag, levels[indent + offset]["tag"]),
-                                                 line=lineno)
-                continue
-
-            if indent != current:
-                if indent == base:
-                    current = indent
-                else:
-                    for lvl_indent, lvl in levels.items():
-                        if indent == lvl_indent:
-                            current = lvl_indent
-                            break
-                        if indent == lvl_indent - lvl["offset"]:
-                            indent = lvl_indent
-                            current = lvl_indent
-
-            if current != indent:
-                closest = current
-                min_diff = abs(current - indent)
-
-                for lvl in levels:
-                    diff = abs(lvl - indent)
-                    if not closest or diff < min_diff:
-                        closest = lvl
-                        min_diff = diff
-
-                self._parent.add_message("pepc-string-bad-indent", line=lineno,
-                                         args=(closest, indent))
+            validator.validate_line(lineno, line)
 
     def validate(self, token, lineno, txt):
         """

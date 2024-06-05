@@ -188,7 +188,8 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             ),
         ),
         "W9919": (
-            "Reused indent level in string by '%s', already used by '%s'",
+            "Reused indent level at offset %d in string by '%s', already used by '%s' from line "
+            "%d",
             "pepc-string-reused-indent-level",
             (
                 "Used when multiple bullets / lists use the same indent level."
@@ -216,6 +217,13 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             "pepc-string-bad-integer-formatter",
             (
                 "Used when %d should be used instead of %i for string format"
+            ),
+        ),
+        "W9923": (
+            "Unbalanced bracket '%s' at offset %d, expected '%s'",
+            "pepc-string-unbalanced-bracket",
+            (
+                "Used when unbalanced brackets are used within string"
             ),
         ),
     }
