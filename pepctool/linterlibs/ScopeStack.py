@@ -15,18 +15,19 @@ from pepctool.linterlibs import ClassInitValidator
 class ScopeStack():
     """Provide push/pop functionality for scopes, and variable access data."""
 
-    def _check_variables(self, scope):
+    def _check_variables(self, scope, node):
         """Verify variables for the given 'scope'."""
 
         variables = scope["vars"]
-        self._parent.debug(f"_check_variables for scope {scope['name']}")
+        self._parent.debug("scope", "_check_variables for scope {scope}", scope=scope["name"],
+                           node=node)
 
         class_scope = bool(scope["type"] == "class")
         global_scope = bool(scope["type"] == "module")
 
         for name in variables:
             var = variables[name]
-            self._parent.debug(f"   checking {name}: {var}")
+            self._parent.debug("scope", "   checking {name}: {var}", name=name, var=var, node=node)
             if var["read"]:
                 continue
             # Special check for 'self._close_*'.
@@ -51,14 +52,14 @@ class ScopeStack():
 
             self._parent.add_message("pepc-unused-variable", args=name, node=var["node"])
 
-    def pop(self, scope_type):
+    def pop(self, scope_type, node):
         """Pop scope of type 'scope_type' from the stack."""
 
         if scope_type == "func":
-            self._check_variables(self._current_scope)
+            self._check_variables(self._current_scope, node)
         if scope_type == "module":
             for _, scope in self._classes.items():
-                self._check_variables(scope)
+                self._check_variables(scope, node)
 
         self._stack.pop()
         if self._stack:
@@ -73,7 +74,7 @@ class ScopeStack():
             else:
                 self._class_scope = None
 
-        self._parent.debug(f"popped scope: {self._current_scope}")
+        self._parent.debug("scope", "popped scope: {scope}", scope=self._current_scope, node=node)
 
     def push(self, node, scope_type):
         """Create new scope for 'node' of given type 'scope_type', and push it to the stack."""
@@ -92,7 +93,7 @@ class ScopeStack():
         if scope_type == "module":
             self._global_scope = scope
 
-        self._parent.debug(f"pushed scope: {scope}")
+        self._parent.debug("scope", "pushed scope: {scope}", scope=scope, node=node)
 
     def _parse_scope(self, node):
         """Parse scope for an attribute given in 'node'."""
@@ -128,8 +129,9 @@ class ScopeStack():
 
         name, scope_type = self._parse_scope(node)
 
-        self._parent.debug(f"_access_variable: '{name}' : '{scope_type}' ({node}, read={read}, "
-                           f"value={value})")
+        self._parent.debug("scope", "_access_variable: '{name}' : '{scope_type}' ({node}, "
+                           "read={read}, value={value})", name=name, scope_type=scope_type,
+                           node=node, read=read, value=value)
 
         if name in ("self", "_", None):
             return None
@@ -155,7 +157,8 @@ class ScopeStack():
             if not scope["validator"].validate(node, current_valid=True):
                 self._parent.add_message("pepc-bad-constructor-order", args=name, node=node)
             else:
-                self._parent.debug("validated init order for {name} as ok.")
+                self._parent.debug("scope", "validated init order for {name} as ok.", name=name,
+                                   node=node)
 
         if read:
             scope["vars"][name]["read"] = True

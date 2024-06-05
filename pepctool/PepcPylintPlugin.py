@@ -22,6 +22,20 @@ STATE_FUNCTION = 3
 
 HAS_FSTRING_TOKENS = hasattr(tokenize, "FSTRING_START")
 
+DEBUG_OPTS = [ "all", "strings", "indent", "visit", "scope" ]
+
+def _debug(self, opt, fmt, **kwargs):
+    if opt in self._debug or "all" in self._debug:
+        lineno = self._lineno
+
+        if "lineno" in kwargs:
+            lineno = kwargs["lineno"]
+
+        if "node" in kwargs:
+            lineno = kwargs["node"].lineno
+
+        print(f"L{lineno}: {opt}: ", fmt.format(**kwargs))
+
 def dump_node(node, recursive=False):
     """Dump the contents of the given 'node', and all its children also if 'recursive'."""
 
@@ -206,6 +220,10 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         ),
     }
     options = ()
+
+    def debug(self, opt, *args, **kwargs):
+        """Print a debug message given in 'args' and 'kwargs', if debug is enabled for 'opt'."""
+        _debug(self, opt, *args, **kwargs)
 
     def _end_comment(self):
         # pylint: disable=pepc-string-bad-indent
@@ -736,6 +754,8 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             lineno = token.start[0]
             txt = token.string.rstrip()
 
+            self._lineno = lineno
+
             # Stitch possible fstring tokens into a single string token.
             if HAS_FSTRING_TOKENS:
                 if token.type == tokenize.FSTRING_START:
@@ -803,7 +823,9 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         self._backslash_lines = []
         self._parenthesis_depth = 0
         self._parenthesis_line = None
-        self._alignment = IndentValidator.IndentValidator(self)
+        self._debug = self.linter.config.pepc_plugin_debug
+        self._lineno = None
+        self._alignment = IndentValidator.IndentValidator(self, debug="indent" in self._debug)
 
 class PepcASTChecker(BaseChecker):
     """Pepc linter class using AST nodes."""
@@ -916,8 +938,9 @@ class PepcASTChecker(BaseChecker):
     options = (
         (
             "pepc-plugin-debug",
-            {"default": False, "type": "yn", "metavar": "<y or n>",
-             "help": "Whether to print debugging information or not."
+            {"default": [], "type": "csv", "metavar": "<comma separated list>",
+             "help": "Whether to print debugging information for a sub-feature or not. Available "
+                     f"features: {', '.join(DEBUG_OPTS)}"
             }),
         (
             "pepc-plugin-strict",
@@ -926,11 +949,9 @@ class PepcASTChecker(BaseChecker):
             }),
     )
 
-    def debug(self, txt):
-        """Print a debug message given in 'txt', if debug is enabled."""
-
-        if self.linter.config.pepc_plugin_debug:
-            print(txt)
+    def debug(self, opt, *args, **kwargs):
+        """Print a debug message given in 'args' and 'kwargs' if debug is enabled for 'opt'."""
+        _debug(self, opt, *args, **kwargs)
 
     def _check_string(self, node, args, islog=False):
         """
@@ -1020,7 +1041,7 @@ class PepcASTChecker(BaseChecker):
     def visit_augassign(self, node):
         """AST callback for binop assignment. Assignment is declared by 'node'."""
 
-        self.debug(f"visit_augassign: {node}")
+        self.debug("visit", "visit_augassign: {node}", node=node)
 
         if node.op == "+=":
             add = self._parse_value(node.value)
@@ -1038,7 +1059,7 @@ class PepcASTChecker(BaseChecker):
     def visit_assign(self, node):
         """AST callback for assignment. Assignment is declared by 'node'."""
 
-        self.debug(f"visit_assign: {node}")
+        self.debug("visit", "visit_assign: {node}", node=node)
 
         value = self._parse_value(node.value)
 
@@ -1048,13 +1069,13 @@ class PepcASTChecker(BaseChecker):
     def visit_name(self, node):
         """AST callback for a name access to name defined in 'node'."""
 
-        self.debug(f"visit_name: {node}")
+        self.debug("visit", "visit_name: {node}", node=node)
         self._scope.read_variable(node)
 
     def visit_attribute(self, node):
         """AST callback for attribute access to attribute defined in 'node'."""
 
-        self.debug(f"visit_attr: {node}")
+        self.debug("visit", "visit_attr: {node}", node=node)
         self._scope.read_variable(node)
 
     def _get_args(self, node):
@@ -1220,7 +1241,7 @@ class PepcASTChecker(BaseChecker):
 
         # pylint: disable=unused-argument
         self._verify_cross_ref_args()
-        self._scope.pop("module")
+        self._scope.pop("module", node)
 
     def visit_classdef(self, node):
         """AST callback for a class entry to class defined in 'node'."""
@@ -1232,7 +1253,7 @@ class PepcASTChecker(BaseChecker):
         """AST callback for a class exit from 'node'."""
 
         # pylint: disable=unused-argument
-        self._scope.pop("class")
+        self._scope.pop("class", node)
 
     def visit_functiondef(self, node):
         """AST callback for a function entry to function defined in 'node'."""
@@ -1244,7 +1265,7 @@ class PepcASTChecker(BaseChecker):
         """AST callback for a function exit from 'node'."""
 
         # pylint: disable=unused-argument
-        self._scope.pop("func")
+        self._scope.pop("func", node)
 
     def open(self):
         """Initialize variables for 'PepcASTChecker()'."""
@@ -1252,6 +1273,17 @@ class PepcASTChecker(BaseChecker):
         self._scope = ScopeStack.ScopeStack(self)
         self._documented_args = {}
         self._cross_refer_args = {}
+        self._lineno = None
+        self._debug = self.linter.config.pepc_plugin_debug
+
+def load_configuration(linter):
+    """Verify debug options."""
+
+    for cfg in linter.config.pepc_plugin_debug:
+        if cfg not in DEBUG_OPTS:
+            supported = ", ".join(DEBUG_OPTS)
+            raise Exception(f"Bad value for --pepc-plugin-debug: '{cfg}', supported values are:\n"
+                            f"  {supported}")
 
 def register(linter):
     """

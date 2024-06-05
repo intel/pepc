@@ -229,10 +229,11 @@ class IndentValidator():
 
         self._pending = []
 
-    def __init__(self, parent):
+    def __init__(self, parent, debug=False):
         """
         Class constructor for the 'IndentValidator'. Arguments are as follows.
           * parent - parent 'PepcTokenChecker' object.
+          * debug - True, if debugging is enabled.
         """
 
         self._parent = parent
@@ -242,3 +243,4 @@ class IndentValidator():
         self._stack = []
         self._pending = []
         self._was_bracket = False
+        self._debug = debug
