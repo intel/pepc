@@ -1,3 +1,12 @@
+pepc (1.5.15) unstable; urgency=low
+
+  * Remove the 'pepc cstates --pch-negotiation' option.
+  * Improve 'pepc topology info' output and avoid printing identical lines many times.
+  * Improve '--cores' and '--dies' options handling: do not require '--packages'
+    option if there is no abiguity.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 05 Jun 2024 00:00:00 +0200
+
 pepc (1.5.14) unstable; urgency=low
 
   * Misc. changes in shared modules to support dependent projects, such as

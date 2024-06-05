@@ -89,8 +89,8 @@ The list can include individual core numbers and core number ranges.
 For example, \[aq]1-4,7,8,10-12\[aq] would mean cores 1 to 4, cores 7,
 8, and 10 to 1.
 Use the special keyword \[aq]all\[aq] to specify all cores.
-This option has to be accompanied by \[aq]--package\[aq] option, because
-core numbers are per-package.
+This option has to be accompanied by the \[aq]--package\[aq] option,
+because core numbers are per-package.
 .TP
 \f[B]--modules\f[R] \f[I]MODULES\f[R]
 The list can include individual module numbers and module number ranges.
@@ -103,8 +103,10 @@ Note, unlike core and die numbers, module numbers are absolute.
 The list can include individual die numbers and die number ranges.
 For example, \[aq]0-3,5\[aq] would mean dies 0 to 3, and die 5.
 Use the special keyword \[aq]all\[aq] to specify all dies.
-This option has to be accompanied by \[aq]--package\[aq] option, because
-die numbers are per-package.
+On some systems, die numbers are globally unique, while on other systems
+they are relative to the package.
+In the latter case, this option has to be accompanied by the
+\[aq]--package\[aq] option.
 .TP
 \f[B]--packages\f[R] \f[I]PACKAGES\f[R]
 The list can include individual package numbers and package number
@@ -261,10 +263,6 @@ Enable or disable C-state prewake (details in \[aq]cstate_prewake\[aq]).
 .TP
 \f[B]--governor\f[R] \f[I]NAME\f[R]
 Set idle governor (details in \[aq]governor\[aq]).
-.TP
-\f[B]--pch-negotiation\f[R] \f[I]on|off\f[R]
-Enable or disable PCH negotiation (details in
-\[aq]pch_negotiation\[aq]).
 .SS Subcommand \f[I]\[aq]save\[aq]\f[R]
 .PP
 Save all the modifiable C-state settings into a file.
@@ -521,29 +519,3 @@ Different governors implement different selection policy.
 .SS Scope
 .PP
 This property has global scope.
-.PP
-   *   *   *   *   *
-.SS pch_negotiation
-.PP
-pch_negotiation - PCH negotiation
-.SS Synopsis
-.PP
-pepc cstates \f[I]info\f[R] \f[B]--pch-negotiation\f[R]
-.PD 0
-.P
-.PD
-pepc cstates \f[I]config\f[R] \f[B]--pch-negotiation\f[R]=<on|off>
-.SS Description
-.PP
-When enabled, processor\[aq]s PCU (Power Control Unit) informs PCH
-(Platform Controller Hub) about entering and exiting package C6 state
-(PC6).
-Depending on configuration, PCH may use this information to minimize its
-interactions with the processor.
-This may improve PC6 residency and drives idle power down.
-.SS Source
-.PP
-\f[B]msr\f[R] MSR_POWER_CTL (0x1FC), bit 36.
-.SS Scope
-.PP
-This option has global scope.

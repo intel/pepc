@@ -7,6 +7,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
 ### Added
 ### Removed
+### Changed
+
+## [1.5.15] - 2024-06-05
+### Removed
  - Remove the 'pepc cstates --pch-negotiation' option.
 ### Changed
  - Improve 'pepc topology info' output and avoid printing identical lines many times.
