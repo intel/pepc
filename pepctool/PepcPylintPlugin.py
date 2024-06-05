@@ -788,13 +788,9 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
                 if line.endswith("\\"):
                     self._backslash_lines += [lineno + 1]
 
-    def __init__(self, linter):
-        """
-        Class constructor for the 'PepcTokenChecker'. Arguments are as follows.
-          * linter - parent linter object.
-        """
+    def open(self):
+        """Initialize internal variables for 'PepcTokenChecker()'."""
 
-        super().__init__(linter=linter)
         self._comment = None
         self._commentline = None
         self._commentstate = None
@@ -1250,13 +1246,9 @@ class PepcASTChecker(BaseChecker):
         # pylint: disable=unused-argument
         self._scope.pop("func")
 
-    def __init__(self, linter):
-        """
-        Class constructor for 'PepcASTChecker()'. Arguments are as follows.
-          * linter - parent linter object.
-        """
+    def open(self):
+        """Initialize variables for 'PepcASTChecker()'."""
 
-        super().__init__(linter=linter)
         self._scope = ScopeStack.ScopeStack(self)
         self._documented_args = {}
         self._cross_refer_args = {}
