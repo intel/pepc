@@ -617,7 +617,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
 
         if chars == "  ":
             p_tok = self.get_token(1)
-            if token.string != ":" and p_tok.string != ":":
+            if token.string != ":" and p_tok.string != ":" and token.type != tokenize.COMMENT:
                 self.add_message("pepc-double-space", line=lineno)
                 self.debug("context", "token:{token}, prev_token:{p_tok}", token=token, p_tok=p_tok)
 
