@@ -22,7 +22,7 @@ STATE_FUNCTION = 3
 
 HAS_FSTRING_TOKENS = hasattr(tokenize, "FSTRING_START")
 
-DEBUG_OPTS = [ "all", "strings", "indent", "visit", "scope" ]
+DEBUG_OPTS = [ "all", "strings", "indent", "visit", "scope", "context" ]
 
 def _debug(self, opt, fmt, **kwargs):
     if opt in self._debug or "all" in self._debug:
@@ -619,6 +619,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             p_tok = self.get_token(1)
             if token.string != ":" and p_tok.string != ":":
                 self.add_message("pepc-double-space", line=lineno)
+                self.debug("context", "token:{token}, prev_token:{p_tok}", token=token, p_tok=p_tok)
 
     def _check_func_class_defs(self, token, lineno, txt):
         """Check function and class definitions for whitespace errors."""

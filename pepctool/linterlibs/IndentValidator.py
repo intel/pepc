@@ -25,12 +25,21 @@ class IndentStack():
         """Helper for passing debug messages specified via 'args' and 'kwargs' to parent object."""
         self._parent.debug(*args, **kwargs)
 
-    def _dump(self, lineno):
-        """Debug helper for dumping the contents of the indent stack."""
+    def _dump(self, lineno, context=False):
+        """
+        Debug helper for dumping the contents of the indent stack. Arguments are as follows.
+          * lineno - line number to include in the dump message.
+          * context - if True, changes the dump to be printed with 'context' debug tag instead of
+                      default 'indent'.
+        """
 
-        self.debug("indent", "_dump: C:{current}, LVLs:{levels}", lineno=lineno,
+        if context and not self._debug:
+            debug_tag = "context"
+        else:
+            debug_tag = "indent"
+
+        self.debug(debug_tag, "_dump: C:{current}, LVLs:{levels}", lineno=lineno,
                    current=self._current, levels=self._levels)
-        return
 
     def _find_elem(self, indent, tag):
         """Helper for finding an indent level 'indent' with 'tag' from the stack."""
@@ -93,7 +102,7 @@ class IndentStack():
                 self.add_message("pepc-string-reused-indent-level",
                                  args=(level, tag, old["tag"], old["lineno"]),
                                  line=lineno)
-                self._dump(lineno)
+                self._dump(lineno, context=True)
                 old["level"] = level
                 old["tag"] = tag
                 old["offset"] = offset
@@ -371,7 +380,7 @@ class StringIndentValidator():
 
         if indent != closest:
             self.add_message("pepc-string-bad-indent", line=lineno, args=(closest, indent))
-            self._stack._dump(lineno)
+            self._stack._dump(lineno, context=True)
 
     def __init__(self, parent, base=None, debug=False):
         """
