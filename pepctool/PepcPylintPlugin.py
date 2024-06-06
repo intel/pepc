@@ -22,14 +22,11 @@ STATE_FUNCTION = 3
 
 HAS_FSTRING_TOKENS = hasattr(tokenize, "FSTRING_START")
 
-DEBUG_OPTS = [ "all", "strings", "indent", "visit", "scope", "context" ]
+DEBUG_OPTS = ["all", "strings", "indent", "visit", "scope", "context"]
 
-def _debug(self, opt, fmt, **kwargs):
-    if opt in self._debug or "all" in self._debug:
-        lineno = self._lineno
-
-        if "lineno" in kwargs:
-            lineno = kwargs["lineno"]
+def _debug(opt, fmt, debug=None, lineno=None, **kwargs):
+    if debug and (opt in debug or "all" in debug):
+        lineno = kwargs.get("lineno", lineno)
 
         if "node" in kwargs:
             lineno = kwargs["node"].lineno
@@ -213,6 +210,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             ),
         ),
         "W9922": (
+            # pylint: disable=pepc-string-bad-integer-formatter
             "Should use '%d' instead of '%i'",
             "pepc-string-bad-integer-formatter",
             (
@@ -231,7 +229,10 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
 
     def debug(self, opt, *args, **kwargs):
         """Print a debug message given in 'args' and 'kwargs', if debug is enabled for 'opt'."""
-        _debug(self, opt, *args, **kwargs)
+        if "lineno" not in kwargs:
+            kwargs["lineno"] = self._lineno
+
+        _debug(opt, *args, debug=self._debug, **kwargs)
 
     def _end_comment(self):
         # pylint: disable=pepc-string-bad-indent
@@ -321,7 +322,7 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
             if not re.match("[a-z]{0,1}\"\"\"", txt):
                 self.add_message("pepc-bad-multiline-string", line=lineno)
 
-        if re.match(r".*[^%]%i", txt):
+        if re.match(r".*[^%]%i", txt): # pylint: disable=pepc-string-bad-integer-formatter
             self.add_message("pepc-string-bad-integer-formatter", line=lineno)
 
     def is_reserved(self, token):
@@ -820,6 +821,16 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
     def open(self):
         """Initialize internal variables for 'PepcTokenChecker()'."""
 
+        self._debug = self.linter.config.pepc_plugin_debug
+        self._alignment = IndentValidator.IndentValidator(self, debug="indent" in self._debug)
+
+    def __init__(self, linter):
+        """
+        Class constructor for the 'PepcTokenChecker'. Arguments are as follows.
+          * linter - parent linter object.
+        """
+
+        super().__init__(linter=linter)
         self._comment = None
         self._commentline = None
         self._commentstate = None
@@ -832,9 +843,9 @@ class PepcTokenChecker(BaseTokenChecker, BaseRawFileChecker):
         self._backslash_lines = []
         self._parenthesis_depth = 0
         self._parenthesis_line = None
-        self._debug = self.linter.config.pepc_plugin_debug
+        self._debug = False
         self._lineno = None
-        self._alignment = IndentValidator.IndentValidator(self, debug="indent" in self._debug)
+        self._alignment = None
 
 class PepcASTChecker(BaseChecker):
     """Pepc linter class using AST nodes."""
@@ -960,7 +971,7 @@ class PepcASTChecker(BaseChecker):
 
     def debug(self, opt, *args, **kwargs):
         """Print a debug message given in 'args' and 'kwargs' if debug is enabled for 'opt'."""
-        _debug(self, opt, *args, **kwargs)
+        _debug(opt, *args, lineno=self._lineno, debug=self._debug, **kwargs)
 
     def _check_string(self, node, args, islog=False):
         """
@@ -1056,10 +1067,10 @@ class PepcASTChecker(BaseChecker):
             add = self._parse_value(node.value)
 
             val = self._scope.read_variable(node.target)
-            if val == None:
+            if val is None:
                 val = add
             else:
-                if type(val) != type(add):
+                if type(val) != type(add): # pylint: disable=unidiomatic-typecheck
                     val = "(UNKNOWN)"
                 else:
                     val = val + add
@@ -1278,21 +1289,29 @@ class PepcASTChecker(BaseChecker):
 
     def open(self):
         """Initialize variables for 'PepcASTChecker()'."""
+        self._debug = self.linter.config.pepc_plugin_debug
 
+    def __init__(self, linter):
+        """
+        Class constructor for 'PepcASTChecker()'. Arguments are as follows.
+          * linter - parent linter object.
+        """
+
+        super().__init__(linter=linter)
         self._scope = ScopeStack.ScopeStack(self)
         self._documented_args = {}
         self._cross_refer_args = {}
         self._lineno = None
-        self._debug = self.linter.config.pepc_plugin_debug
+        self._debug = False
 
 def load_configuration(linter):
-    """Verify debug options."""
+    """Verify debug options for 'linter'."""
 
     for cfg in linter.config.pepc_plugin_debug:
         if cfg not in DEBUG_OPTS:
             supported = ", ".join(DEBUG_OPTS)
-            raise Exception(f"Bad value for --pepc-plugin-debug: '{cfg}', supported values are:\n"
-                            f"  {supported}")
+            raise ValueError(f"Bad value for --pepc-plugin-debug: '{cfg}', supported values are:\n"
+                             f"  {supported}")
 
 def register(linter):
     """

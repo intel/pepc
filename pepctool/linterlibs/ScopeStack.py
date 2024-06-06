@@ -53,7 +53,11 @@ class ScopeStack():
             self._parent.add_message("pepc-unused-variable", args=name, node=var["node"])
 
     def pop(self, scope_type, node):
-        """Pop scope of type 'scope_type' from the stack."""
+        """
+        Pop a scope from the stack. Arguments are as follows.
+          * scope_type - type of the scope to pop.
+          * node - associated AST node to the scope.
+        """
 
         if scope_type == "func":
             self._check_variables(self._current_scope, node)
