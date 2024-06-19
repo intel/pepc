@@ -53,11 +53,19 @@ registers:
                 desc: >-
                     Fabric domain frequency ratio floor while in the low power activity
                     region determined by Efficiency_Latency_Ctrl
-            EFFICIENCY_LATENCY_CTRL_THRESHOLD:
+            EFFICIENCY_LATENCY_CTRL_LOW_THRESHOLD:
                 bits: "38:32"
                 desc: >-
                     Low power activity alert threshold - the region of utilization points to which
                     the Efficiency_Latency_Ctrl mode will be applied
+            EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD_ENABLE:
+                bits: "39:39"
+                desc: >-
+                    If set (1), EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD is valid
+            EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD:
+                bits: "46:40"
+                desc: >-
+                    Utilization point above which freq will be optimized to optimize latency.
             MAX_RATIO:
                 bits: "14:8"
                 desc: "Max fabric domain frequency ratio"
@@ -71,7 +79,7 @@ registers:
                 bits: "31:29"
                 desc: "Reserved"
             RESERVED_2:
-                bits: "63:39"
+                bits: "63:47"
                 desc: "Reserved"
             UFS_THROTTLE_MODE:
                 bits: "1:0"
