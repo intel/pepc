@@ -6,11 +6,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Added link to the public TPMI documentation.
 ### Removed
 ### Changed
- - Updated the contents of the uncore.yml TPMI spec file based on documentation
-   updates.
+ - Update the uncore TPMI spec file to include UFS latency control registers.
 
 ## [1.5.15] - 2024-06-05
 ### Removed
