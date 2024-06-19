@@ -38,7 +38,9 @@ locations and in the following order.
    5. '/usr/share/pepc/tpmi'
 
 In addition to this, users can provide custom/private spec files by placing them to a directory
-and specifying the directory path via the 'PEPC_TPMI_DATA_PATH' environment variable.
+and specifying the directory path via the 'PEPC_TPMI_DATA_PATH' environment variable. The contents
+of the standard spec files are based on the public documentation available at
+https://github.com/intel/tpmi_power_management/.
 
 General options
 ===============
