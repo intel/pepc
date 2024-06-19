@@ -6,8 +6,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Added link to the public TPMI documentation.
 ### Removed
 ### Changed
+ - Updated the contents of the uncore.yml TPMI spec file based on documentation
+   updates.
 
 ## [1.5.15] - 2024-06-05
 ### Removed
