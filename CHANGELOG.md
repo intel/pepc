@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.16] - 2024-06-19
+### Changed
  - Update the uncore TPMI spec file to include UFS latency control registers.
 
 ## [1.5.15] - 2024-06-05
