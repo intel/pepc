@@ -732,7 +732,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "governors":
             yield from self._get_governors(cpus)
         else:
-            raise Error("BUG: unknown property '{pname}'")
+            raise Error(f"BUG: unknown property '{pname}'")
 
     def _get_uncore_freq_dies(self, pname, dies):
         """
