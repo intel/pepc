@@ -39,7 +39,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = logging.getLogger()
 
-class UncoreFreq(ClassHelpers.SimpleCloseContext):
+class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
     """
     This class provides a capability of reading and changing uncore frequency on Intel CPUs. This
     class is considered to be an internal "companion" class for other classes, so it does not

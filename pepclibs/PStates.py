@@ -308,7 +308,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         return self._cpufreq_msr_obj
 
     def _get_uncfreq_obj(self):
-        """Return an '_UncoreFreq' object."""
+        """Return an '_UncoreFreqSysfs' object."""
 
         if self._uncfreq_err:
             raise ErrorNotSupported(self._uncfreq_err)
@@ -318,9 +318,9 @@ class PStates(_PropsClassBase.PropsClassBase):
 
             sysfs_io = self._get_sysfs_io()
             try:
-                self._uncfreq_obj = _UncoreFreq.UncoreFreq(self._cpuinfo, pman=self._pman,
-                                                           sysfs_io=sysfs_io,
-                                                           enable_cache=self._enable_cache)
+                self._uncfreq_obj = _UncoreFreq.UncoreFreqSysfs(self._cpuinfo, pman=self._pman,
+                                                                sysfs_io=sysfs_io,
+                                                                enable_cache=self._enable_cache)
             except ErrorNotSupported as err:
                 self._uncfreq_err = err
                 raise

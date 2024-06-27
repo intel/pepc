@@ -62,14 +62,14 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         return self._pliobj
 
     def _get_uncfreq_obj(self):
-        """Return an '_UncoreFreq' object."""
+        """Return an '_UncoreFreqSysfs' object."""
 
         if not self._uncfreq_supported:
             return None
 
         if not self._uncfreq_obj:
             try:
-                self._uncfreq_obj = _UncoreFreq.UncoreFreq(self, pman=self._pman)
+                self._uncfreq_obj = _UncoreFreq.UncoreFreqSysfs(self, pman=self._pman)
             except ErrorNotSupported:
                 self._uncfreq_supported = False
 
@@ -185,7 +185,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         if not uncfreq_obj:
             return
 
-        # The 'UncoreFreq' class is I/O dies-aware.
+        # The 'UncoreFreqSysfs' class is I/O dies-aware.
         dies_info = uncfreq_obj.get_dies_info()
 
         for package, pkg_dies in dies_info.items():
