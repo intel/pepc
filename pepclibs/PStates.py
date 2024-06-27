@@ -307,25 +307,25 @@ class PStates(_PropsClassBase.PropsClassBase):
                                                         msr=msr, enable_cache=self._enable_cache)
         return self._cpufreq_msr_obj
 
-    def _get_uncfreq_obj(self):
+    def _get_uncfreq_sysfs_obj(self):
         """Return an '_UncoreFreqSysfs' object."""
 
-        if self._uncfreq_err:
-            raise ErrorNotSupported(self._uncfreq_err)
+        if self._uncfreq_sysfs_err:
+            raise ErrorNotSupported(self._uncfreq_sysfs_err)
 
-        if not self._uncfreq_obj:
+        if self._uncfreq_sysfs_obj:
             from pepclibs import _UncoreFreq # pylint: disable=import-outside-toplevel
 
             sysfs_io = self._get_sysfs_io()
             try:
-                self._uncfreq_obj = _UncoreFreq.UncoreFreqSysfs(self._cpuinfo, pman=self._pman,
-                                                                sysfs_io=sysfs_io,
-                                                                enable_cache=self._enable_cache)
+                obj = _UncoreFreq.UncoreFreqSysfs(self._cpuinfo, pman=self._pman, sysfs_io=sysfs_io,
+                                                  enable_cache=self._enable_cache)
+                self._uncfreq_sysfs_obj = obj
             except ErrorNotSupported as err:
-                self._uncfreq_err = err
+                self._uncfreq_sysfs_err = err
                 raise
 
-        return self._uncfreq_obj
+        return self._uncfreq_sysfs_obj
 
     def _get_epp(self, cpus, mname):
         """
@@ -512,7 +512,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         the "sysfs" method.
         """
 
-        uncfreq_obj = self._get_uncfreq_obj()
+        uncfreq_obj = self._get_uncfreq_sysfs_obj()
 
         if pname == "min_uncore_freq":
             yield from uncfreq_obj.get_min_freq_cpus(cpus)
@@ -741,7 +741,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         method.
         """
 
-        uncfreq_obj = self._get_uncfreq_obj()
+        uncfreq_obj = self._get_uncfreq_sysfs_obj()
 
         if pname == "min_uncore_freq":
             yield from uncfreq_obj.get_min_freq_dies(dies)
@@ -977,7 +977,7 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _set_uncore_freq_prop_dies(self, pname, freq, dies):
         """Set min. or max. uncore frequency to 'freq' for the dies in 'dies'."""
 
-        uncfreq_obj = self._get_uncfreq_obj()
+        uncfreq_obj = self._get_uncfreq_sysfs_obj()
 
         if pname == "min_uncore_freq":
             uncfreq_obj.set_min_freq_dies(freq, dies)
@@ -1107,8 +1107,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         self._cpufreq_cppc_obj = None
         self._cpufreq_msr_obj = None
 
-        self._uncfreq_obj = None
-        self._uncfreq_err = None
+        self._uncfreq_sysfs_obj = None
+        self._uncfreq_sysfs_err = None
 
         self._init_props_dict()
 
@@ -1116,7 +1116,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         """Uninitialize the class object."""
 
         close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj",
-                       "_cpufreq_msr_obj", "_uncfreq_obj")
+                       "_cpufreq_msr_obj", "_uncfreq_sysfs_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
