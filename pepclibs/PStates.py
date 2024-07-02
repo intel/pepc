@@ -313,14 +313,14 @@ class PStates(_PropsClassBase.PropsClassBase):
         if self._uncfreq_sysfs_err:
             raise ErrorNotSupported(self._uncfreq_sysfs_err)
 
-        if self._uncfreq_sysfs_obj:
+        if not self._uncfreq_sysfs_obj:
             from pepclibs import _UncoreFreq # pylint: disable=import-outside-toplevel
 
             sysfs_io = self._get_sysfs_io()
             try:
-                obj = _UncoreFreq.UncoreFreqSysfs(self._cpuinfo, pman=self._pman, sysfs_io=sysfs_io,
-                                                  enable_cache=self._enable_cache)
-                self._uncfreq_sysfs_obj = obj
+                self._uncfreq_sysfs_obj = \
+                    _UncoreFreq.UncoreFreqSysfs(self._cpuinfo, pman=self._pman, sysfs_io=sysfs_io,
+                                                enable_cache=self._enable_cache)
             except ErrorNotSupported as err:
                 self._uncfreq_sysfs_err = err
                 raise
