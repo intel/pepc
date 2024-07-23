@@ -185,7 +185,7 @@ def find_project_helper(prjname, helper, pman=None):
 
         for path in paths:
             exe_path = path / helper
-            if pman.is_exe(exe_path):
+            if wpman.is_exe(exe_path):
                 return exe_path
             searched.append(str(path))
 
