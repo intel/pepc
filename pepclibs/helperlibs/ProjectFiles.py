@@ -156,9 +156,9 @@ def find_project_helper(prjname, helper, pman=None):
                default).
 
     The helper program is searched for in the following locations (and in the following order).
-      * in the paths defined by the 'PATH' environment variable.
       * in the directory of the running program.
       * in the directory specified by the '<prjname>_HELPERSPATH' environment variable.
+      * in the paths defined by the 'PATH' environment variable.
       * in '$HOME/.local/bin/', if it exists.
       * in '$HOME/bin/', if it exists.
       * in '/usr/local/bin/', if it exists.
@@ -166,16 +166,17 @@ def find_project_helper(prjname, helper, pman=None):
     """
 
     with ProcessManager.pman_or_local(pman) as wpman:
-        exe_path = wpman.which(helper, must_find=False)
-        if exe_path:
-            return exe_path
-
-        searched = ["$PATH"]
         paths = [Path(sys.argv[0]).parent]
 
         path = os.environ.get(get_project_helpers_envvar(prjname))
         if path:
             paths.append(Path(path))
+
+        # Check if the helper is on the PATH.
+        path = wpman.which(helper, must_find=False)
+        if path:
+            paths.append(Path(path))
+        searched = ["$PATH"]
 
         homedir = wpman.get_homedir()
         paths.append(homedir / Path(".local/bin"))
@@ -184,7 +185,10 @@ def find_project_helper(prjname, helper, pman=None):
         paths.append(Path("/usr/bin"))
 
         for path in paths:
-            exe_path = path / helper
+            if path.is_dir():
+                exe_path = path / helper
+            else:
+                exe_path = path
             if wpman.is_exe(exe_path):
                 return exe_path
             searched.append(str(path))
@@ -200,9 +204,9 @@ def get_project_helpers_search_descr(prjname):
     """
 
     envvar = get_project_helpers_envvar(prjname)
-    paths = ("All paths in $PATH"
-             f"{Path(sys.argv[0]).parent}",
+    paths = (f"{Path(sys.argv[0]).parent}",
              f"${envvar}",
+             "All paths in $PATH",
              "$HOME/.local/bin",
              "$HOME/bin",
              "/usr/local/bin",
