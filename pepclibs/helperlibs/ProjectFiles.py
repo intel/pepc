@@ -168,7 +168,14 @@ def find_project_helper(prjname, helper, pman=None):
     with ProcessManager.pman_or_local(pman) as wpman:
         paths = [Path(sys.argv[0]).parent]
 
-        path = os.environ.get(get_project_helpers_envvar(prjname))
+        # First check to see if the environment variable is specified on 'wpman' before also
+        # checking localhost.
+        envvar = get_project_helpers_envvar(prjname)
+        stdout, _ = wpman.run_verify(f"echo ${envvar}")
+        path = stdout.strip()
+        if not path:
+            path = os.environ.get(envvar)
+
         if path:
             paths.append(Path(path))
 
