@@ -106,10 +106,20 @@ def get_good_cpunum_opts(params, sname="package"):
     if sname == "global":
         opts = ["",
                 "--cpus all",
+                "--cores all",
                 "--modules all",
+                "--dies all",
+                "--cores all --cpus all",
+                "--modules all --cores all",
+                "--dies all --modules all"
+                "--dies all --cores all",
+                "--dies all --modules all --cores all --cpus all"
                 "--packages all",
-                "--packages all --dies all",
+                "--packages all --cpus all",
                 "--packages all --cores all",
+                "--packages all --modules all",
+                "--packages all --dies all",
+                "--packages all --dies all --cores all",
                 f"--cpus  0-{params['cpus'][-1]}"]
         return opts
 
