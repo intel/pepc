@@ -26,8 +26,8 @@ def is_prop_supported(pname, cpu0_pinfo):
 
 def get_good_cpunum_opts(params, sname="package"):
     """
-    Return a list of good options that specify CPU numbers (--cpus, --packages, etc). The arguments
-    are as follows.
+    Return a list of good options that specify CPU numbers ('--cpus', '--packages', etc). The
+    arguments are as follows.
       * params - test parameters.
       * sname - scope name to get CPU numbers for.
     """
@@ -55,8 +55,7 @@ def get_good_cpunum_opts(params, sname="package"):
         first_die = params["dies"][pkg][0]
         last_die = params["dies"][pkg][-1]
 
-        opts = [f"--package {pkg} --dies {first_die}"]
-        opts = [f"--package {pkg} --dies all"]
+        opts = [f"--package {pkg} --dies {first_die}", f"--package {pkg} --dies all"]
 
         if first_die != last_die:
             opts.append(f"--package {pkg} --dies {last_die}")
@@ -83,8 +82,7 @@ def get_good_cpunum_opts(params, sname="package"):
         first_module = params["modules"][pkg][0]
         last_module = params["modules"][pkg][-1]
 
-        opts = [f"--package {pkg} --modules {first_module}"]
-        opts = [f"--package {pkg} --modules all"]
+        opts = [f"--package {pkg} --modules {first_module}", f"--package {pkg} --modules all"]
 
         if first_module != last_module:
             opts.append(f"--package {pkg} --modules {last_module}")
@@ -192,8 +190,7 @@ def get_mechanism_opts(params, allow_readonly=True):
     for mname in mnames:
         opts.append(f"--mechanism {mname}")
 
-    opts += ["--mechanism msr,sysfs",
-             "--mechanism sysfs,msr"]
+    opts += ["--mechanism msr,sysfs", "--mechanism sysfs,msr"]
     return opts
 
 def _verify_after_set_per_cpu(pobj, pname, val, cpus):
@@ -376,8 +373,8 @@ def _verify_value_type(pname, ptype, val):
     elif ptype == "bool":
         ret = val in ("on", "off")
     elif ptype == "dict[str,str]":
-        ret = isinstance(val, dict) and all(isinstance(key, str) and isinstance(val, str) \
-                                              for key, val in val.items())
+        ret = isinstance(val, dict) and \
+              all(isinstance(key, str) and isinstance(val, str) for key, val in val.items())
     else:
         assert False, f"Unknown '{pname}' property datatype: {ptype}."
 
@@ -420,26 +417,26 @@ def verify_get_props_mechanisms(params, cpu):
                 pass
             else:
                 assert pvinfo["mname"] == mname, \
-                    f"Bad mechanism name returned by" \
-                    f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mname}\",))'.\n" \
-                    f"Expected '{mname}', got '{pvinfo['mname']}'."
+                       f"Bad mechanism name returned by" \
+                       f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mname}\",))'.\n" \
+                       f"Expected '{mname}', got '{pvinfo['mname']}'."
 
         # Test all mechanisms in reverse order.
         reverse_mnames = list(pinfo["mnames"])
         reverse_mnames.reverse()
         pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=reverse_mnames)
         assert pvinfo["mname"] in reverse_mnames, \
-                f"Bad mechanism name returned by" \
-                f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{reverse_mnames}\",))'.\n" \
-                f"Expected one of '{reverse_mnames}', got '{pvinfo['mname']}'."
+               f"Bad mechanism name returned by" \
+               f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{reverse_mnames}\",))'.\n" \
+               f"Expected one of '{reverse_mnames}', got '{pvinfo['mname']}'."
 
         # Read using the claimed mechanisms and compare.
         mnames = (pvinfo["mname"],)
         pvinfo1 = pobj.get_cpu_prop(pname, cpu, mnames=mnames)
         assert pvinfo1["mname"] == pvinfo["mname"], \
-                f"Bad mechanism name returned by" \
-                f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mnames}\",))'\n" \
-                f"Expected '{pvinfo['mname']}', got '{pvinfo1['mname']}'."
+               f"Bad mechanism name returned by" \
+               f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mnames}\",))'\n" \
+               f"Expected '{pvinfo['mname']}', got '{pvinfo1['mname']}'."
 
 def verify_set_props_mechanisms_bool(params, cpu):
     """
