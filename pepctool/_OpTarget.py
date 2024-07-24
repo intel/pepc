@@ -221,29 +221,49 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         if sname not in ("die", "core"):
             raise Error("BUG: only die and core numbers may be relative to package numbers")
 
-        num2pkg = {}
         pkg2nums = {}
 
-        method_name = f"package_to_{sname}s"
-        package_to_nums = getattr(self._cpuinfo, method_name)
+        package_to_nums = getattr(self._cpuinfo, f"package_to_{sname}s")
         for package in self._cpuinfo.get_packages():
-            pkg_nums = set(package_to_nums(package))
+            pkg2nums[package] = package_to_nums(package)
+
+        if nums != "all":
+            # Verify that core/die numbers in 'nums' are valid: exist in at least one package.
+            all_nums = set()
+            for package, package_nums in pkg2nums.items():
+                all_nums.update(package_nums)
+
+            if not set(nums).issubset(all_nums):
+                bad_nums = set(nums) - all_nums
+                bad_nums = ",".join(str(num) for num in sorted(bad_nums))
+                if len(pkg2nums) > 1:
+                    pkg_str = " in any package"
+                else:
+                    pkg_str = ""
+                raise Error(f"the following {sname} number(s) do not exist{pkg_str}: {bad_nums}")
+
+        num2pkg = {}
+        result = {}
+
+        for package, package_nums in pkg2nums.items():
             for num in nums:
-                if num in pkg_nums:
-                    if not num in num2pkg:
-                        num2pkg[num] = package
-                        if package not in pkg2nums:
-                            pkg2nums[package] = []
-                        pkg2nums[package].append(num)
-                        continue
+                if num not in package_nums:
+                    continue
 
-                    raise Error(f"ambiguous {sname} number {num}: there is {sname} {num} in "
-                                f"packages {num2pkg[num]} and {package}.\n"
-                                f"Please, specify package numbers as well, because {sname} numbers "
-                                f"are not unique{self._pman.hostmsg}, they are relative to "
-                                f"package.")
+                if num not in num2pkg:
+                    num2pkg[num] = package
+                    if package not in result:
+                        result[package] = []
+                    result[package].append(num)
+                    continue
 
-        return pkg2nums
+                raise Error(f"ambiguous {sname} number {num}: there is {sname} {num} in "
+                            f"packages {num2pkg[num]} and {package}.\n"
+                            f"Please, specify package numbers as well, because {sname} numbers "
+                            f"are not unique{self._pman.hostmsg}, they are relative to "
+                            f"package.")
+
+        return result
 
     def __init__(self, pman=None, cpuinfo=None, cpus=None, cores=None, modules=None, dies=None,
                  packages=None, core_siblings=None, module_siblings=None, offline_ok=False):
