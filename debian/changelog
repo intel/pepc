@@ -1,3 +1,10 @@
+pepc (1.5.17) unstable; urgency=low
+
+  * Fix failure when '--dies all' or '--cores all' is specified without
+    specifying package numbers.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 24 Jul 2024 00:00:00 +0200
+
 pepc (1.5.16) unstable; urgency=low
 
   * Update the uncore TPMI spec file to include UFS latency control registers.

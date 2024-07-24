@@ -5,11 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix failure when '--dies all' or '--cores all' is specified without
-   specifying package numbers.
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.17] - 2024-07-24
+### Fixed
+ - Fix failure when '--dies all' or '--cores all' is specified without
+   specifying package numbers.
 
 ## [1.5.16] - 2024-06-19
 ### Changed
