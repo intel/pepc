@@ -403,6 +403,14 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             dies = "all"
             packages = "all"
 
+        if not packages and (dies or cores):
+            # No package numbers were provided, but core ore die numbers were provided. Core and die
+            # numbers are special because they may be relative, so they require package numbers. But
+            # make one convenient exception: if no packages were provided, but all cores and/or dies
+            # are requested, assume that all packages are requested.
+            if dies == "all" or cores == "all":
+                packages = "all"
+
         if cpus:
             nums = self._parse_input_nums(cpus, what="CPU numbers")
             self.cpus = self._cpuinfo.normalize_cpus(nums, offline_ok=offline_ok)

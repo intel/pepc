@@ -111,9 +111,9 @@ def get_good_cpunum_opts(params, sname="package"):
                 "--dies all",
                 "--cores all --cpus all",
                 "--modules all --cores all",
-                "--dies all --modules all"
+                "--dies all --modules all",
                 "--dies all --cores all",
-                "--dies all --modules all --cores all --cpus all"
+                "--dies all --modules all --cores all --cpus all",
                 "--packages all",
                 "--packages all --cpus all",
                 "--packages all --cores all",
