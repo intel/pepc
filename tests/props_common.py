@@ -92,16 +92,16 @@ def get_good_cpunum_opts(params, sname="package"):
             return opts
 
         if len(params["modules"][pkg]) > 1:
-            pkg_modules_range_partial = Human.rangify(params["modules"][pkg][1:])
-            opts.append(f"--packages {pkg} --modules {pkg_modules_range_partial}")
-            pkg_modules_range_partial = Human.rangify(params["modules"][pkg][:-1])
-            opts.append(f"--packages {pkg} --modules {pkg_modules_range_partial}")
+            pkg_modules_range_part = Human.rangify(params["modules"][pkg][1:])
+            opts.append(f"--packages {pkg} --modules {pkg_modules_range_part}")
+            pkg_modules_range_part = Human.rangify(params["modules"][pkg][:-1])
+            opts.append(f"--packages {pkg} --modules {pkg_modules_range_part}")
 
             if len(params["packages"]) > 1:
-                pkgs_range_partial = Human.rangify(params["packages"][1:])
-                opts.append(f"--packages {pkgs_range_partial} --modules {first_module}")
-                pkg_modules_range_partial = Human.rangify(params["modules"][pkg][1:])
-                opts.append(f"--packages {pkgs_range_partial} --modules {pkg_modules_range_partial}")
+                pkgs_range_part = Human.rangify(params["packages"][1:])
+                opts.append(f"--packages {pkgs_range_part} --modules {first_module}")
+                pkg_modules_range_part = Human.rangify(params["modules"][pkg][1:])
+                opts.append(f"--packages {pkgs_range_part} --modules {pkg_modules_range_part}")
 
         return opts
 
