@@ -8,6 +8,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Minor change required to support the 'stats-collect' project. No 'pepc' tool
+   functionality changes.
 
 ## [1.5.17] - 2024-07-24
 ### Fixed
@@ -22,7 +24,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
  - Remove the 'pepc cstates --pch-negotiation' option.
 ### Changed
- - Improve 'pepc topology info' output and avoid printing identical lines many times.
+ - Improve 'pepc topology info' output and avoid printing identical lines many
+   times.
  - Improve '--cores' and '--dies' options handling: do not require '--packages'
    option if there is no abiguity.
 
