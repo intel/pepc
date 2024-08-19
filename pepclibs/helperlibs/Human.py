@@ -262,7 +262,7 @@ def _tokenize(hval, specs, name=None, multiple=True):
     tokens = {}
     rest = hval.lower()
     for spec in specs:
-        split = rest.split(spec.lower(), 1)
+        split = rest.split(spec, 1)
         if len(split) > 1:
             tokens[spec] = split[0]
             rest = split[1]
@@ -330,13 +330,13 @@ def _tokenize_prepare(unit):
                 specs[spec] = spec
             scalers[spec] = _BYTESIZE_SCALERS[pfx]
     elif unit == "s":
-        # For time, allow for day/hour/minute specifiers.
-        specs["d"] = "day"
-        specs["h"] = "hour"
-        specs["m"] = "minute"
-        scalers["d"] = 24 * 60 * 60
-        scalers["h"] = 60 * 60
-        scalers["m"] = 60
+        # For time, allow for day/hour/minute specifiers in upper and lower case.
+        specs["d"] = specs["D"] = "day"
+        specs["h"] = specs["H"] = "hour"
+        specs["m"] = specs["M"] = "minute"
+        scalers["d"] = scalers["D"] = 24 * 60 * 60
+        scalers["h"] = scalers["H"] = 60 * 60
+        scalers["m"] = scalers["M"] = 60
         # Allow for multiple specifiers for time, like in "1d 5h".
         multiple = True
 
