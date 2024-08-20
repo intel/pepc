@@ -90,6 +90,10 @@ MODELS = {
         "codename" : "Nehalem 4S Xeon",
     },
     # Clients.
+    "LUNARLAKE_M" : {
+        "model"    : 0xBD,
+        "codename" : "Lunar Lake mobile",
+    },
     "METEORLAKE" : {
         "model"    : 0xAC,
         "codename" : "Meteor Lake client",

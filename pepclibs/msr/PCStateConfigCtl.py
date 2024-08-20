@@ -63,6 +63,7 @@ _DNV_PKG_CST_LIMITS = {"codes": {"PC2": 2, "PC6": 3, "unlimited": 0}, "bits": (3
 #
 # Clients.
 #
+_CLIENT_LNL_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6": 3, "PC10": 8}, "bits": (3, 0)}
 _CLIENT_PC10_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5,
                                      "PC8": 6, "PC9": 7, "PC10": 8},
                            "bits": (3, 0)}
@@ -111,6 +112,7 @@ _PKG_CST_LIMITS = {
     CPUModels.MODELS["BROADWELL"]["model"]:        _CLIENT_PC10_CST_LIMITS,
     CPUModels.MODELS["HASWELL_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
     CPUModels.MODELS["METEORLAKE_L"]["model"]:     _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["LUNARLAKE_M"]["model"]:      _CLIENT_LNL_CST_LIMITS,
     # Deepest: PC7S.
     CPUModels.MODELS["HASWELL"]["model"]:          _CLIENT_PC7S_CST_LIMITS,
     CPUModels.MODELS["HASWELL_G"]["model"]:        _CLIENT_PC7S_CST_LIMITS,
