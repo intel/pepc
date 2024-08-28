@@ -24,7 +24,7 @@ _LOG = logging.getLogger()
 # The tools information dictionary. Map tool names to OS package names.
 #
 
-# Common for CentOS, Fedora, Debian, and Ubuntu.
+# Common for CentOS, Fedora, RHEL, Debian, and Ubuntu.
 _COMMON_PKGINFO = {
     "cat"       : "coreutils",
     "cc"        : "gcc",
@@ -46,7 +46,7 @@ _COMMON_PKGINFO = {
     "xargs"     : "findutils",
 }
 
-# CentOS and Fedora.
+# CentOS, Fedora, RHEL.
 _FEDORA_PKGINFO = {
     "tc"         : "iproute-tc",
     "bpftool"    : "bpftool",
@@ -75,11 +75,11 @@ _UBUNTU_PKGINFO.update(_COMMON_PKGINFO)
 _DEBIAN_PKGINFO.update(_COMMON_PKGINFO)
 
 _PKGINFO = {
-    "Fedora Linux"     : _FEDORA_PKGINFO,
-    "CentOS Linux"     : _FEDORA_PKGINFO,
-    "CentOS Stream"    : _FEDORA_PKGINFO,
-    "Ubuntu"           : _UBUNTU_PKGINFO,
-    "Debian GNU/Linux" : _DEBIAN_PKGINFO,
+    "fedora"  : _FEDORA_PKGINFO,
+    "centos"  : _FEDORA_PKGINFO,
+    "rhel"    : _FEDORA_PKGINFO,
+    "ubuntu"  : _UBUNTU_PKGINFO,
+    "debian"  : _DEBIAN_PKGINFO,
 }
 
 class ToolChecker(ClassHelpers.SimpleCloseContext):
