@@ -260,7 +260,7 @@ def _tokenize(hval, specs, name=None, multiple=True):
         name = ""
 
     tokens = {}
-    rest = hval.lower()
+    rest = hval
     for spec in specs:
         split = rest.split(spec, 1)
         if len(split) > 1:
