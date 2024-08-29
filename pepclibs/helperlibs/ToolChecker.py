@@ -113,14 +113,14 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
                                          "'key=value' format.", path, self._pman.hostmsg, line)
                             continue
 
-                        osinfo[split_line[0]] = split_line[1].strip('"')
+                        osinfo[split_line[0]] = split_line[1].strip("\"")
             if osinfo:
                 break
 
         if not osinfo:
             files = "\n".join([str(path) for path in paths])
-            raise ErrorNotFound(f"cannot discover OS information{self._pman.hostmsg}, these files were "
-                        f"checked:\n{files}")
+            raise ErrorNotFound(f"cannot discover OS information{self._pman.hostmsg}, these files "
+                                f"were checked:\n{files}")
 
         return osinfo
 
@@ -145,10 +145,9 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
 
         if "NAME" in osinfo:
             return osinfo["NAME"]
-        elif "ID" in osinfo:
+        if "ID" in osinfo:
             return osinfo["ID"].capitalize()
-        else:
-            return "<unknown_OS_NAME>"
+        return "<unknown_OS_NAME>"
 
     def get_osid(self):
         """
