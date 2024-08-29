@@ -10,6 +10,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Changed
 
 ## [1.5.19] - 2024-08-29
+ - Minor change required to support the 'wult' project. No 'pepc' tool
+   functionality changes.
 
 ## [1.5.18] - 2024-08-16
 ### Changed
