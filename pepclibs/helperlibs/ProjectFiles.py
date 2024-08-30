@@ -196,7 +196,7 @@ def find_project_helper(prjname, helper, pman=None):
         paths.append(Path("/usr/bin"))
 
         for path in paths:
-            if path.is_dir():
+            if wpman.is_dir(path):
                 exe_path = path / helper
             else:
                 exe_path = path
