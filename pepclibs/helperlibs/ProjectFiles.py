@@ -156,7 +156,7 @@ def find_project_helper(prjname, helper, pman=None):
                default).
 
     The helper program is searched for in the following locations (and in the following order).
-      * in the directory of the running program.
+      * in the directory of the running program (only when searching on the local host).
       * in the directory specified by the '<prjname>_HELPERSPATH' environment variable.
       * in the paths defined by the 'PATH' environment variable.
       * in '$HOME/.local/bin/', if it exists.
@@ -165,8 +165,10 @@ def find_project_helper(prjname, helper, pman=None):
       * in '/usr/bin', if it exists.
     """
 
+    paths = []
     with ProcessManager.pman_or_local(pman) as wpman:
-        paths = [Path(sys.argv[0]).parent]
+        if not wpman.is_remote:
+            paths.append(Path(sys.argv[0]).parent)
 
         path = None
         envvar = get_project_helpers_envvar(prjname)
