@@ -205,7 +205,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
         pkgname = self.tool_to_pkg(Path(tool).name, osid=osid)
         if pkgname:
             osname = self.get_osname()
-            msg += f".\nTry to install {osname} OS package '{pkgname}'{self._pman.hostmsg}."
+            msg += f".\nTry to install the '{osname}' OS package '{pkgname}'{self._pman.hostmsg}."
 
         raise ErrorNotFound(msg)
 
