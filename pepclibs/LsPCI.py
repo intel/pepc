@@ -25,16 +25,15 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
         line = lines[0].strip().split()
         info = {"pciaddr" : line[0]}
 
-        line = lines[0].split(':')
+        line = lines[0].split(":")
         info["name"] = line[3][:-5]
 
         # Find two 4 digit hex numbers with a colon in between, all inside of square brackets.
         x = re.findall(r"\[([0-9a-fA-F]{4}:[0-9a-fA-F]{4})\]", lines[0])
         if x:
-            line = x[0].split(':')
+            line = x[0].split(":")
             info["vendorid"] = line[0]
             info["devid"] = line[1]
-
 
         for line in lines[1:]:
             line = line.strip()
@@ -92,7 +91,7 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
             if not line.strip():
                 continue
 
-            if re.match(r'\s', line):
+            if re.match(r"\s", line):
                 lines.append(line)
             else:
                 if lines:
@@ -103,7 +102,10 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
             yield self._parse_dev_info(lines)
 
     def __init__(self, pman=None):
-        """Class constructor."""
+        """
+        The class constructor. The arguments are as follows.
+          * pman - the process manager object that defines the target host.
+        """
 
         self._pman = pman
         self._lspci_path = "lspci"
