@@ -35,25 +35,6 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
             info["vendorid"] = line[0]
             info["devid"] = line[1]
 
-        for line in lines[1:]:
-            line = line.strip()
-            if not line:
-                continue
-
-            # Many lines are like "key: val", but not all of them. E.g.:
-            #   LnkCtl: ASPM L1 Enabled; RCB 64 bytes, Disabled- CommClk+
-            #   Memory at b2000000 (32-bit, prefetchable) [size=16M]
-            # Split and strip the former, skip the latter.
-            line = [text.strip() for text in line.split(":", maxsplit=1)]
-            if len(line) != 2:
-                continue
-
-            key, val = line
-
-            # Keep only device name for now, but this can be extended later.
-            if key == "LnkCtl":
-                info["aspm_enabled"] = "Enabled" in val
-
         return info
 
     def get_info(self, devaddr):
