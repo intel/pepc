@@ -25,9 +25,6 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
         line = lines[0].strip().split()
         info = {"pciaddr" : line[0]}
 
-        line = lines[0].split(":")
-        info["name"] = line[3][:-5]
-
         # Find two 4 digit hex numbers with a colon in between, all inside of square brackets.
         x = re.findall(r"\[([0-9a-fA-F]{4}:[0-9a-fA-F]{4})\]", lines[0])
         if x:
