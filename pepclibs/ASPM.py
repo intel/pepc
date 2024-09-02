@@ -39,7 +39,10 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         return policies
 
     def set_policy(self, policy):
-        """Set ASPM policy. Raise an error if requested policy doesn't exist on target system."""
+        """
+        Set global ASPM policy. The arguments are as follows.
+          * policy - ASPM policy name to set.
+        """
 
         policies = self._get_policies()
 
@@ -59,7 +62,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
             raise Error(f"{errmsg}\n{err.indent(2)}") from err
 
     def get_policy(self):
-        """Return currently active ASPM policy."""
+        """Return current global ASPM policy."""
 
         policies = self._get_policies(strip=False)
         active = [policy for policy in policies if policy.startswith("[") and policy.endswith("]")]
@@ -67,7 +70,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         return active[0].strip("[]")
 
     def get_policies(self):
-        """Yield all available policies on target system."""
+        """Yield the available global ASPM policy names."""
 
         for policy in self._get_policies():
             yield policy
@@ -102,7 +105,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
                                 f"  2. The PCI controller{self._pman.hostmsg} does not support "
                                 f"L1 ASPM.\n"
                                 f"  3. The Linux kernel is older than version 5.5, so it doesn't "
-                                f"support L1 ASPM.\n"
+                                f"support the per-device L1 ASPM sysfs files.\n"
                                 f"  4. The 'CONFIG_PCIEASPM' kernel configuration option is "
                                 f"disabled.")
 
@@ -119,11 +122,14 @@ class ASPM(ClassHelpers.SimpleCloseContext):
 
         try:
             with self._pman.open(path, "r") as fobj:
-                return bool(Trivial.str_to_int(fobj.read(), what="L1 ASPM state"))
+                val = fobj.read()
         except ErrorNotFound as err:
             return self._l1_aspm_file_not_found(device, err)
         except Error as err:
-            raise Error(f"read failed{self._pman.hostmsg}:\n{err.indent(2)}") from err
+            raise Error(f"sysfs file read operation failed{self._pman.hostmsg}:\n"
+                        f"{err.indent(2)}") from err
+
+        return bool(Trivial.str_to_int(val, what="L1 ASPM state value from '{path}"))
 
     def toggle_l1_aspm_state(self, device, enable):
         """
@@ -143,16 +149,20 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound as err:
             self._l1_aspm_file_not_found(device, err)
         except Error as err:
-            raise Error(f"write failed{self._pman.hostmsg}:\n{err.indent(2)}") from err
+            raise Error(f"sysfs file write operation failed{self._pman.hostmsg}:\n"
+                        f"{err.indent(2)}") from err
 
     def __init__(self, pman=None):
-        """The class constructor."""
+        """
+        The class constructor. The arguments are as follows.
+          * pman - the process manager object that defines the target host.
+        """
 
         self._pman = pman
 
         self._close_pman = pman is None
         self._policy_path = Path("/sys/module/pcie_aspm/parameters/policy")
-        self._sysfs_base = Path("/sys/bus/pci/devices/")
+        self._sysfs_base = Path("/sys/bus/pci/devices")
 
         self._kver = None
 
