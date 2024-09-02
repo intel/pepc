@@ -75,14 +75,14 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         for policy in self._get_policies():
             yield policy
 
-    def _l1_aspm_file_not_found(self, pci_address, err):
+    def _l1_aspm_file_not_found(self, devaddr, err):
         """
         Raise an exception with a helpful error message when the per-device L1 ASPM sysfs file does
         not exist.
         """
 
-        path = self._sysfs_base / pci_address
-        msg = f"the '{pci_address}' PCI device was not found{self._pman.hostmsg}:\n{err.indent(2)}"
+        path = self._sysfs_base / devaddr
+        msg = f"the '{devaddr}' PCI device was not found{self._pman.hostmsg}:\n{err.indent(2)}"
         if not self._pman.exists(path):
             raise Error(msg)
 
@@ -101,7 +101,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
                                         f"support was added in kernel version 5.5.")
 
         raise ErrorNotSupported(f"{msg}.\nPossible reasons:\n"
-                                f"  1. The '{pci_address}' device's doesn't support L1 ASPM.\n"
+                                f"  1. The '{devaddr}' device's doesn't support L1 ASPM.\n"
                                 f"  2. The PCI controller{self._pman.hostmsg} does not support "
                                 f"L1 ASPM.\n"
                                 f"  3. The Linux kernel is older than version 5.5, so it doesn't "
