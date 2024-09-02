@@ -10,7 +10,7 @@
 
 import re
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
 
 class LsPCI(ClassHelpers.SimpleCloseContext):
     """This is a wrapper class for 'lspci' tool."""
@@ -32,8 +32,12 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
         x = re.findall(r"\[([0-9a-fA-F]{4}:[0-9a-fA-F]{4})\]", lines[0])
         if x:
             line = x[0].split(":")
-            info["vendorid"] = line[0]
-            info["devid"] = line[1]
+
+            what = f"Vendor ID for PCI device {info['pciaddr']}"
+            info["vendorid"] = Trivial.str_to_int(line[0], base=16, what=what)
+
+            what = f"Device ID for PCI device {info['pciaddr']}"
+            info["devid"] = Trivial.str_to_int(line[1], base=16, what=what)
 
         return info
 
