@@ -20,8 +20,9 @@ def get_basic_info(addr, pman=None):
       * pman - the process manager object that defines the target host (local host by default).
 
     The basic PCI device information dictionary includes the following keys.
-      * addr - the PCI device address in the [<domain>:<bus>:<slot>.<func> format] (string).
-      * vendorid - rhe PCI device vendor ID (integer).
+      * addr - the PCI device address in the extended BDF notation
+               ([<domain>:<bus>:<slot>.<func> format]), string.
+      * vendorid - the PCI device vendor ID (integer).
       * devid - the PCI device ID (integer)
     """
 
