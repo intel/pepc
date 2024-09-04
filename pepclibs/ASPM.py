@@ -75,14 +75,14 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         for policy in self._get_policies():
             yield policy
 
-    def _l1_aspm_file_not_found(self, devaddr, err):
+    def _l1_aspm_file_not_found(self, addr, err):
         """
         Raise an exception with a helpful error message when the per-device L1 ASPM sysfs file does
         not exist.
         """
 
-        path = self._sysfs_base / devaddr
-        msg = f"the '{devaddr}' PCI device was not found{self._pman.hostmsg}:\n{err.indent(2)}"
+        path = self._sysfs_base / addr
+        msg = f"the '{addr}' PCI device was not found{self._pman.hostmsg}:\n{err.indent(2)}"
         if not self._pman.exists(path):
             raise Error(msg)
 
@@ -101,7 +101,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
                                         f"support was added in kernel version 5.5.")
 
         raise ErrorNotSupported(f"{msg}.\nPossible reasons:\n"
-                                f"  1. The '{devaddr}' device's doesn't support L1 ASPM.\n"
+                                f"  1. The '{addr}' PCI device doesn't support L1 ASPM.\n"
                                 f"  2. The PCI controller{self._pman.hostmsg} does not support "
                                 f"L1 ASPM.\n"
                                 f"  3. The Linux kernel is older than version 5.5, so it doesn't "
@@ -109,45 +109,47 @@ class ASPM(ClassHelpers.SimpleCloseContext):
                                 f"  4. The 'CONFIG_PCIEASPM' kernel configuration option is "
                                 f"disabled.")
 
-    def is_l1_aspm_enabled(self, device):
+    def is_l1_aspm_enabled(self, addr):
         """
-        Return 'True' if L1 ASPM is enabled for a PCI device 'device' and 'False' otherwise. The
+        Return 'True' if L1 ASPM is enabled for a PCI device 'addr' and 'False' otherwise. The
         arguments are as follows.
-         * device - PCI address in the extended BDF notation format that contains the domain.
+          * addr - the PCI device address in the extended BDF notation
+                   ([<domain>:<bus>:<slot>.<func> format]).
 
         Raise 'ErrorNotSupported' if the device does not support L1 ASPM.
         """
 
-        path = self._sysfs_base / device / Path("link/l1_aspm")
+        path = self._sysfs_base / addr / Path("link/l1_aspm")
 
         try:
             with self._pman.open(path, "r") as fobj:
                 val = fobj.read()
         except ErrorNotFound as err:
-            return self._l1_aspm_file_not_found(device, err)
+            return self._l1_aspm_file_not_found(addr, err)
         except Error as err:
             raise Error(f"sysfs file read operation failed{self._pman.hostmsg}:\n"
                         f"{err.indent(2)}") from err
 
         return bool(Trivial.str_to_int(val, what="L1 ASPM state value from '{path}"))
 
-    def toggle_l1_aspm_state(self, device, enable):
+    def toggle_l1_aspm_state(self, addr, enable):
         """
         Enable or disable a L1 ASPM for a PCI device. The arguments are as follows.
-         * device - PCI address in the extended BDF notation format that contains the domain.
-         * enable - enable L1 ASPM if 'True', otherwise disable.
+          * addr - the PCI device address in the extended BDF notation
+                   ([<domain>:<bus>:<slot>.<func> format]).
+          * enable - enable L1 ASPM if 'True', otherwise disable.
 
         Raise 'ErrorNotSupported' if the device does not support L1 ASPM.
         """
 
         val = "1" if enable else "0"
-        path = self._sysfs_base / device / Path("link/l1_aspm")
+        path = self._sysfs_base / addr / Path("link/l1_aspm")
 
         try:
             with self._pman.open(path, "w") as fobj:
                 fobj.write(val)
         except ErrorNotFound as err:
-            self._l1_aspm_file_not_found(device, err)
+            self._l1_aspm_file_not_found(addr, err)
         except Error as err:
             raise Error(f"sysfs file write operation failed{self._pman.hostmsg}:\n"
                         f"{err.indent(2)}") from err
