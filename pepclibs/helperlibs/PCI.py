@@ -47,8 +47,12 @@ def get_basic_info(devaddr, pman=None):
 class LsPCI(ClassHelpers.SimpleCloseContext):
     """List PCI devices."""
 
-    def get_devices(self):
-        """Yield device info as dictionary for every PCI device on the system."""
+    def lspci(self):
+        """
+        For every PCI device on the target host, yield the basic information dictionary.
+
+        Refer to the 'get_basic_info()' method for the dictionary format information.
+        """
 
         for devaddr, _, _ in self._pman.lsdir(self._sysfs_base):
             yield get_basic_info(devaddr, pman=self._pman)
