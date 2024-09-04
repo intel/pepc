@@ -13,20 +13,20 @@ from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import ProcessManager, LocalProcessManager, ClassHelpers, Trivial
 
-def get_basic_info(devaddr, pman=None):
+def get_basic_info(addr, pman=None):
     """
     Get basic information about a PCI device. The arguments are as follows.
-      * devaddr - the PCI device address in the [<domain>:<bus>:<slot>.<func> format].
+      * addr - the PCI device address in the [<domain>:<bus>:<slot>.<func> format].
       * pman - the process manager object that defines the target host (local host by default).
 
     The basic PCI device information dictionary includes the following keys.
-      * pciaddr - the PCI device address in the [<domain>:<bus>:<slot>.<func> format] (string).
+      * addr - the PCI device address in the [<domain>:<bus>:<slot>.<func> format] (string).
       * vendorid - rhe PCI device vendor ID (integer).
       * devid - the PCI device ID (integer)
     """
 
-    info = {"pciaddr" : devaddr}
-    basepath = Path("/sys/bus/pci/devices") / devaddr
+    info = {"addr" : addr}
+    basepath = Path("/sys/bus/pci/devices") / addr
 
     with ProcessManager.pman_or_local(pman) as wpman:
         for key, descr, fname in (("vendorid", "Vendor DI", "vendor"),
@@ -39,7 +39,7 @@ def get_basic_info(devaddr, pman=None):
                 raise type(err)(f"sysfs file read operation failed{wpman.hostmsg}:\n"
                                 f"{err.indent(2)}") from err
 
-            what = f"{descr} for PCI device {devaddr}"
+            what = f"{descr} for PCI device {addr}"
             info[key] = Trivial.str_to_int(val, base=16, what=what)
 
     return info
@@ -54,8 +54,8 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
         Refer to the 'get_basic_info()' method for the dictionary format information.
         """
 
-        for devaddr, _, _ in self._pman.lsdir(self._sysfs_base):
-            yield get_basic_info(devaddr, pman=self._pman)
+        for addr, _, _ in self._pman.lsdir(self._sysfs_base):
+            yield get_basic_info(addr, pman=self._pman)
 
     def __init__(self, pman=None):
         """
