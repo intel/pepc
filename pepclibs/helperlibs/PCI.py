@@ -11,48 +11,47 @@
 
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
+from pepclibs.helperlibs import ProcessManager, LocalProcessManager, ClassHelpers, Trivial
 
-class LsPCI(ClassHelpers.SimpleCloseContext):
-    """List PCI devices."""
+def get_basic_info(devaddr, pman=None):
+    """
+    Get basic information about a PCI device. The arguments are as follows.
+      * devaddr - the PCI device address in the [<domain>:<bus>:<slot>.<func> format].
+      * pman - the process manager object that defines the target host (local host by default).
 
-    def _get_info(self, devaddr):
-        """Get basic information about a PCI device."""
+    The basic PCI device information dictionary includes the following keys.
+      * pciaddr - the PCI device address in the [<domain>:<bus>:<slot>.<func> format] (string).
+      * vendorid - rhe PCI device vendor ID (integer).
+      * devid - the PCI device ID (integer)
+    """
 
-        info = {"pciaddr" : devaddr}
+    info = {"pciaddr" : devaddr}
+    basepath = Path("/sys/bus/pci/devices") / devaddr
 
-        basepath = self._sysfs_base / devaddr
-
-        for key, descr, fname in (("devid", "Vendor ID", "device"),
-                                  ("vendorid", "Device DI", "vendor")):
+    with ProcessManager.pman_or_local(pman) as wpman:
+        for key, descr, fname in (("vendorid", "Vendor DI", "vendor"),
+                                  ("devid", "Device ID", "device")):
             path = basepath / fname
             try:
-                with self._pman.open(path, "r") as fobj:
+                with wpman.open(path, "r") as fobj:
                     val = fobj.read()
             except Error as err:
-                raise type(err)(f"sysfs file read operation failed{self._pman.hostmsg}:\n"
+                raise type(err)(f"sysfs file read operation failed{wpman.hostmsg}:\n"
                                 f"{err.indent(2)}") from err
 
             what = f"{descr} for PCI device {devaddr}"
             info[key] = Trivial.str_to_int(val, base=16, what=what)
 
-        return info
+    return info
 
-    def get_info(self, devaddr):
-        """
-        Get basic information about a PCI device. The arguments are as follows.
-          * devaddr - the PCI device address (n the [<domain>:<bus>:<slot>.<func> format]).
-
-        Return the device information dictionary.
-        """
-
-        return self._get_info(devaddr)
+class LsPCI(ClassHelpers.SimpleCloseContext):
+    """List PCI devices."""
 
     def get_devices(self):
         """Yield device info as dictionary for every PCI device on the system."""
 
         for devaddr, _, _ in self._pman.lsdir(self._sysfs_base):
-            yield self._get_info(devaddr)
+            yield get_basic_info(devaddr, pman=self._pman)
 
     def __init__(self, pman=None):
         """
