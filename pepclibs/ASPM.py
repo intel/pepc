@@ -75,7 +75,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         for policy in self._get_policies():
             yield policy
 
-    def _l1_aspm_file_not_found(self, addr, err):
+    def _l1_file_not_found(self, addr, err):
         """
         Raise an exception with a helpful error message when the per-device L1 ASPM sysfs file does
         not exist.
@@ -109,7 +109,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
                                 f"  4. The 'CONFIG_PCIEASPM' kernel configuration option is "
                                 f"disabled.")
 
-    def is_l1_aspm_enabled(self, addr):
+    def is_l1_enabled(self, addr):
         """
         Return 'True' if L1 ASPM is enabled for a PCI device 'addr' and 'False' otherwise. The
         arguments are as follows.
@@ -125,14 +125,14 @@ class ASPM(ClassHelpers.SimpleCloseContext):
             with self._pman.open(path, "r") as fobj:
                 val = fobj.read()
         except ErrorNotFound as err:
-            return self._l1_aspm_file_not_found(addr, err)
+            return self._l1_file_not_found(addr, err)
         except Error as err:
             raise Error(f"sysfs file read operation failed{self._pman.hostmsg}:\n"
                         f"{err.indent(2)}") from err
 
         return bool(Trivial.str_to_int(val, what="L1 ASPM state value from '{path}"))
 
-    def toggle_l1_aspm_state(self, addr, enable):
+    def toggle_l1_state(self, addr, enable):
         """
         Enable or disable a L1 ASPM for a PCI device. The arguments are as follows.
           * addr - the PCI device address in the extended BDF notation
@@ -149,7 +149,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
             with self._pman.open(path, "w") as fobj:
                 fobj.write(val)
         except ErrorNotFound as err:
-            self._l1_aspm_file_not_found(addr, err)
+            self._l1_file_not_found(addr, err)
         except Error as err:
             raise Error(f"sysfs file write operation failed{self._pman.hostmsg}:\n"
                         f"{err.indent(2)}") from err
