@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Antti Laakso <antti.laakso@intel.com>
+# Authors: Antti Laakso <antti.laakso@intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""List the PCI devices."""
+"""API to Linux PCI devices control and discovery."""
 
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error
