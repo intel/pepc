@@ -157,7 +157,10 @@ class EPP(_EPBase.EPBase):
         except Error as err:
             if isinstance(err, ErrorNotFound):
                 err = ErrorNotSupported(err)
-            raise type(err)(f"failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
+            err1 = type(err)(f"failed to set EPP for CPU {cpu} to {val}{self._pman.hostmsg}:\n"
+                             f"{err.indent(2)}")
+            err1.cpu = cpu
+            raise err1 from err
 
         return self._pcache.add("epp", cpu, val1, "sysfs")
 

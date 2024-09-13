@@ -318,9 +318,9 @@ class PStates(_PropsClassBase.PropsClassBase):
 
             sysfs_io = self._get_sysfs_io()
             try:
-                self._uncfreq_sysfs_obj = \
-                    _UncoreFreq.UncoreFreqSysfs(self._cpuinfo, pman=self._pman, sysfs_io=sysfs_io,
-                                                enable_cache=self._enable_cache)
+                obj = _UncoreFreq.UncoreFreqSysfs(self._cpuinfo, pman=self._pman, sysfs_io=sysfs_io,
+                                                  enable_cache=self._enable_cache)
+                self._uncfreq_sysfs_obj = obj
             except ErrorNotSupported as err:
                 self._uncfreq_sysfs_err = err
                 raise
@@ -956,11 +956,45 @@ class PStates(_PropsClassBase.PropsClassBase):
         for new_freq, freq_cpus in freq2cpus.items():
             set_freq_method(pname, new_freq, freq_cpus)
 
+    def _handle_epp_set_exception(self, val, mname, err):
+        """Check for the conditions when EPP cannot be changed."""
+
+        # Newer Linux kernels with intel_pstate driver in active mode forbid changing EPP to
+        # anything but 0 or "performance". Provide a helpful error message for this special case.
+
+        if mname != "sysfs":
+            return None
+        if val in ("0", "performance"):
+            return None
+        if not hasattr(err, "cpu"):
+            return None
+
+        cpus = [err.cpu]
+        _, driver = next(self._get_prop_cpus_mnames("driver", cpus))
+        if driver != "intel_pstate":
+            return None
+        _, mode = next(self._get_prop_cpus_mnames("intel_pstate_mode", cpus))
+        if mode != "active":
+            return None
+        _, governor = next(self._get_prop_cpus_mnames("governor", cpus))
+        if governor != "performance":
+            return None
+
+        return f"{err}\nThe 'performance' governor of the 'intel_pstate' driver sets EPP to 0 " \
+               f"(performance) and does not allow for changing it."
+
     def _set_prop_cpus(self, pname, val, cpus, mname):
         """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
 
         if pname == "epp":
-            return self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))
+            try:
+                return self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))
+            except Error as err:
+                msg = self._handle_epp_set_exception(val, mname, err)
+                if msg is None:
+                    raise
+                raise type(err)(msg) from err
+
         if pname == "epb":
             return self._get_epbobj().set_vals(val, cpus=cpus, mnames=(mname,))
         if pname == "turbo":
