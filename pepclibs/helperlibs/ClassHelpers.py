@@ -83,22 +83,32 @@ class WrapExceptions:
 
         attr = getattr(self._obj, name)
 
-        try:
-            return getattr(self._obj, name)
-        except Error:
-            # Do not translate exceptions that are already based on 'Error'.
-            raise
-        except Exception as err:
-            if name.startswith("_") or not hasattr(attr, "__call__"):
-                # A private method or not a method.
+        if name.startswith("_") or not hasattr(attr, "__call__"):
+            # A private method or not a method.
+            return attr
+
+        def wrapper(*args, **kwargs):
+            """Wrap the exceptions."""
+
+            try:
+                return attr(*args, **kwargs)
+            except Error:
+                # Do not translate exceptions that are already based on 'Error'.
                 raise
-            if isinstance(err, PermissionError):
-                err_type = ErrorPermissionDenied
-            elif isinstance(err, FileNotFoundError):
-                err_type = ErrorNotFound
-            else:
-                err_type = Error
-            raise self._get_exception(name, err, err_type) from err
+            except Exception as err:
+                if name.startswith("_") or not hasattr(attr, "__call__"):
+                    # A private method or not a method.
+                    raise
+                if isinstance(err, PermissionError):
+                    err_type = ErrorPermissionDenied
+                elif isinstance(err, FileNotFoundError):
+                    err_type = ErrorNotFound
+                else:
+                    err_type = Error
+
+                raise self._get_exception(name, err, err_type) from err
+
+        return wrapper
 
     def __iter__(self):
         """Return iterator."""
