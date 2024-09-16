@@ -1,6 +1,14 @@
+pepc (1.5.20) unstable; urgency=low
+
+  * Improve error message for 'pepc pstates config --epp=<value>' failing with
+    the performance governor.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Mon, 16 Sep 2024 00:00:00 +0200
+
 pepc (1.5.19) unstable; urgency=low
 
-
+  * Minor change required to support the 'wult' project. No 'pepc' tool
+    functionality changes.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 29 Aug 2024 00:00:00 +0200
 

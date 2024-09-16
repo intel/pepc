@@ -8,6 +8,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.20] - 2024-09-16
+### Changed
  - Improve error message for 'pepc pstates config --epp=<value>' failing with
    the performance governor.
 
