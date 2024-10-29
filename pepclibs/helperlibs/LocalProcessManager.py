@@ -43,7 +43,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
             retries += 1
 
             try:
-                return self._streams[streamid].read(4096)
+                return self._streams[streamid].read(size)
             except Exception as err:
                 if getattr(err, "errno", None) == errno.EAGAIN:
                     continue
