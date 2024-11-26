@@ -987,11 +987,11 @@ def _list_mechanisms(args):
     """Implement the '--list-mechanisms' option."""
 
     fname = args.func.__name__
-    if fname.startswith("pstates_"):
+    if fname.startswith("_pstates_"):
         props = PStates.PROPS
-    elif fname.startswith("cstates_"):
+    elif fname.startswith("_cstates_"):
         props = CStates.PROPS
-    elif fname.startswith("power_"):
+    elif fname.startswith("_power_"):
         props = Power.PROPS
     else:
         raise Error(f"BUG: unknown function '{fname}' for '--list-mechanisms'")
