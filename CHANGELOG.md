@@ -5,6 +5,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+    - Fix '--list-mechanisms' option.
+    - Fix crash when reading topology info on system with all CPUs offline on
+      one package.
 ### Added
 ### Removed
 ### Changed
