@@ -189,6 +189,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         dies_info = uncfreq_obj.get_dies_info()
 
         for package, pkg_dies in dies_info.items():
+            # This must be a package that has all CPUs offline.
+            if package not in self._compute_dies:
+                continue
             for die in pkg_dies:
                 if die in self._compute_dies[package]:
                     continue
