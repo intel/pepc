@@ -268,7 +268,7 @@ MODELS = {
         "codename" : "Diamondville, Pineview",
     },
     # Atom microservers.
-    "GRANDRIDGE" : {
+    "ATOM_CRESTMONT" : {
         "model"    : 0xB6,
         "codename" : "Grand Ridge, Logansville",
     },
@@ -356,7 +356,7 @@ MODEL_GROUPS = {
                    MODELS["NEHALEM_G"]["model"],
                    MODELS["NEHALEM_EP"]["model"],
                    MODELS["NEHALEM_EX"]["model"]),
-    "CRESTMONT":  (MODELS["GRANDRIDGE"]["model"],
+    "CRESTMONT":  (MODELS["ATOM_CRESTMONT"]["model"],
                    MODELS["ATOM_CRESTMONT_X"]["model"]),
     "TREMONT":    (MODELS["ATOM_TREMONT"]["model"],
                    MODELS["ATOM_TREMONT_L"]["model"],
