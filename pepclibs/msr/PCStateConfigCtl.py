@@ -73,7 +73,7 @@ _CLIENT_PC7S_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC
 # CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
     # Xeons.
-    CPUModels.MODELS["SIERRAFOREST_X"]["model"]:   _ICX_PKG_CST_LIMITS,
+    CPUModels.MODELS["ATOM_CRESTMONT_X"]["model"]: _ICX_PKG_CST_LIMITS,
     CPUModels.MODELS["GRANITERAPIDS_X"]["model"]:  _ICX_PKG_CST_LIMITS,
     CPUModels.MODELS["GRANITERAPIDS_D"]["model"]:  _ICX_PKG_CST_LIMITS,
     CPUModels.MODELS["EMERALDRAPIDS_X"]["model"]:  _SKX_PKG_CST_LIMITS,
