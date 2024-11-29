@@ -1,3 +1,12 @@
+pepc (1.5.21) unstable; urgency=low
+
+  * Fix the '--list-mechanisms' option.
+  * Fix 'pepc topology info' crash on multi-package systems with all CPUs
+    offline on one or more packages.
+  * Add Clearwater Forest Xeon support.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 29 Nov 2024 00:00:00 +0200
+
 pepc (1.5.20) unstable; urgency=low
 
   * Improve error message for 'pepc pstates config --epp=<value>' failing with
