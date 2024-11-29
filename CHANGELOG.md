@@ -5,10 +5,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
-    - Fix '--list-mechanisms' option.
-    - Fix crash when reading topology info on system with all CPUs offline on
-      one package.
+  - Fix the '--list-mechanisms' option.
+  - Fix 'pepc topology info' crash on multi-package systems with all CPUs
+    offline on one or more packages.
 ### Added
+  - Add Clearwater Forest Xeon support.
 ### Removed
 ### Changed
 
