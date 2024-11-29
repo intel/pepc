@@ -50,10 +50,10 @@ _GT_CPUS = CPUModels.MODEL_GROUPS["GNR"] + \
            CPUModels.MODEL_GROUPS["CRESTMONT"] + \
            CPUModels.MODEL_GROUPS["EMR"] + \
            CPUModels.MODEL_GROUPS["SPR"] + \
-           (CPUModels.MODELS["TREMONT_D"]["model"],) +  \
+           (CPUModels.MODELS["ATOM_TREMONT_D"]["model"],) +  \
            CPUModels.MODEL_GROUPS["ICX"] + \
            CPUModels.MODEL_GROUPS["SKX"] + \
-           (CPUModels.MODELS["GOLDMONT_D"]["model"],
+           (CPUModels.MODELS["ATOM_GOLDMONT_D"]["model"],
             CPUModels.MODELS["ATOM_GOLDMONT"]["model"],
             CPUModels.MODELS["ATOM_GOLDMONT_PLUS"]["model"],)
 

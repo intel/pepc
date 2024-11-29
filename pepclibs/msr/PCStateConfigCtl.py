@@ -90,7 +90,7 @@ _PKG_CST_LIMITS = {
     CPUModels.MODELS["XEON_PHI_KNM"]["model"]:     _SKX_PKG_CST_LIMITS,
     CPUModels.MODELS["XEON_PHI_KNL"]["model"]:     _SKX_PKG_CST_LIMITS,
     # Atom microservers.
-    CPUModels.MODELS["GOLDMONT_D"]["model"]:       _DNV_PKG_CST_LIMITS,
+    CPUModels.MODELS["ATOM_GOLDMONT_D"]["model"]:  _DNV_PKG_CST_LIMITS,
     # Clients.
     # Deepest: PC10.
     CPUModels.MODELS["ROCKETLAKE"]["model"]:       _CLIENT_PC10_CST_LIMITS,

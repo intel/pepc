@@ -272,11 +272,11 @@ MODELS = {
         "model"    : 0xB6,
         "codename" : "Grand Ridge, Logansville",
     },
-    "TREMONT_D" : {
+    "ATOM_TREMONT_D" : {
         "model"    : 0x86,
         "codename" : "Snow Ridge, Jacobsville",
     },
-    "GOLDMONT_D" : {
+    "ATOM_GOLDMONT_D" : {
         "model"    : 0x5F,
         "codename" : "Denverton, Harrisonville",
     },
@@ -360,9 +360,9 @@ MODEL_GROUPS = {
                    MODELS["ATOM_CRESTMONT_X"]["model"]),
     "TREMONT":    (MODELS["ATOM_TREMONT"]["model"],
                    MODELS["ATOM_TREMONT_L"]["model"],
-                   MODELS["TREMONT_D"]["model"],),
+                   MODELS["ATOM_TREMONT_D"]["model"],),
     "GOLDMONT":   (MODELS["ATOM_GOLDMONT"]["model"],
-                   MODELS["GOLDMONT_D"]["model"],
+                   MODELS["ATOM_GOLDMONT_D"]["model"],
                    MODELS["ATOM_GOLDMONT_PLUS"]["model"],),
     "AIRMONT":    (MODELS["ATOM_AIRMONT"]["model"],),
     "SILVERMONT": (MODELS["ATOM_SILVERMONT"]["model"],
