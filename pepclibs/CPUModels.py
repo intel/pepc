@@ -13,6 +13,10 @@ Provide information about CPU topology and other CPU details.
 
 MODELS = {
     # Xeons.
+    "ATOM_DARKMONT_X" : {
+        "model"    : 0xDD,
+        "codename" : "Clearwater Forest Xeon",
+    },
     "ATOM_CRESTMONT_X" : {
         "model"    : 0xAF,
         "codename" : "Sierra Forest Xeon",
@@ -356,6 +360,7 @@ MODEL_GROUPS = {
                    MODELS["NEHALEM_G"]["model"],
                    MODELS["NEHALEM_EP"]["model"],
                    MODELS["NEHALEM_EX"]["model"]),
+    "DARKMONT":  (MODELS["ATOM_DARKMONT_X"]["model"],),
     "CRESTMONT":  (MODELS["ATOM_CRESTMONT"]["model"],
                    MODELS["ATOM_CRESTMONT_X"]["model"]),
     "TREMONT":    (MODELS["ATOM_TREMONT"]["model"],
