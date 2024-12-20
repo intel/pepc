@@ -35,8 +35,8 @@ CRITICAL = logging.CRITICAL
 # The default prefix for debug messages.
 _DEFAULT_DBG_PREFIX = "[%(created)f] [%(asctime)s] [%(module)s,%(lineno)d]"
 
-def _error_traceback(logger, msgformat, *args):
-    """Print an error message occurred along with the traceback."""
+def _print_traceback(logger, loglevel=ERROR):
+    """Print an exception or stack traceback."""
 
     tback = []
 
@@ -62,16 +62,10 @@ def _error_traceback(logger, msgformat, *args):
             undim = colorama.Style.RESET_ALL
         else:
             dim = undim = ""
-        logger.log(ERRINFO, "--- Debug trace starts here ---")
+        logger.log(loglevel, "--- Debug trace starts here ---")
         tb = "\n".join(tback)
-        logger.log(ERRINFO, "%sAn error occurred, here is the traceback:\n%s%s", dim, tb, undim)
-        logger.log(ERRINFO, "--- Debug trace ends here ---\n")
-
-    if args:
-        errmsg = msgformat % args
-    else:
-        errmsg = str(msgformat)
-    logger.error(errmsg)
+        logger.log(loglevel, "%sAn error occurred, here is the traceback:\n%s%s", dim, tb, undim)
+        logger.log(loglevel, "--- Debug trace ends here ---\n")
 
 def _error_out(logger, msgformat, *args, print_tb=False):
     """
@@ -80,14 +74,15 @@ def _error_out(logger, msgformat, *args, print_tb=False):
     the stack trace is printed out regardless of 'print_tb' value.
     """
 
-    if print_tb or logger.getEffectiveLevel() == DEBUG:
-        _error_traceback(logger, str(msgformat) + "\n", *args)
+    if args:
+        errmsg = msgformat % args
     else:
-        if args:
-            errmsg = msgformat % args
-        else:
-            errmsg = str(msgformat)
-        logger.error(errmsg)
+        errmsg = str(msgformat)
+
+    if print_tb or logger.getEffectiveLevel() == DEBUG:
+        _print_traceback(logger, loglevel=ERRINFO)
+
+    logger.error(errmsg)
 
     raise SystemExit(1)
 
@@ -95,7 +90,7 @@ def _debug_print_stack(logger):
     """If debugging is enabled, print the stack trace."""
 
     if logger.getEffectiveLevel() == DEBUG:
-        traceback.print_stack()
+        _print_traceback(logger, loglevel=DEBUG)
 
 def _notice(logger, fmt, *args):
     """Just a convenient 'notice()' method for the logger."""
