@@ -174,7 +174,7 @@ def close(cls_obj, close_attrs=None, unref_attrs=None):
             run_close = getattr(cls_obj, name)
             if run_close not in (True, False):
                 _LOG.warning("BUG: bad value of attribute '%s' in '%s'", attr, cls_obj)
-                _LOG.debug_print_stack()
+                _LOG.debug_print_stacktrace()
                 setattr(cls_obj, attr, None)
                 continue
 
@@ -183,7 +183,7 @@ def close(cls_obj, close_attrs=None, unref_attrs=None):
                 getattr(obj, "close")()
             else:
                 _LOG.debug("BUG: no 'close()' method in '%s'", obj)
-                _LOG.debug_print_stack()
+                _LOG.debug_print_stacktrace()
 
         setattr(cls_obj, attr, None)
 
