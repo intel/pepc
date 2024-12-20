@@ -33,7 +33,7 @@ ERRINFO = logging.ERROR + 1
 CRITICAL = logging.CRITICAL
 
 # The default prefix for debug messages.
-_DEFAULT_DBG_PREFIX="[%(created)f] [%(asctime)s] [%(module)s,%(lineno)d]"
+_DEFAULT_DBG_PREFIX = "[%(created)f] [%(asctime)s] [%(module)s,%(lineno)d]"
 
 def _error_traceback(logger, msgformat, *args):
     """Print an error message occurred along with the traceback."""
@@ -129,8 +129,8 @@ class _MyFormatter(logging.Formatter):
         The constructor. The arguments are as follows.
           * logger - the 'Logger' object this formatter belongs to.
           * prefix - prefix for non-info and non-debug messages (info messages go without any
-                    formatting, debug message prefix is controlled with 'prefix_debug'). By default,
-                    the prefix is just the log level name.
+                     formatting, debug message prefix is controlled with 'prefix_debug').
+                     By default, the prefix is just the log level name.
           * prefix_debug - prefix for debug messages. The default value is '_DEFAULT_DBG_PREFIX'.
                            See the 'logging' module documentation for the prefix format.
           * colors - a dictionary containing colorama color codes to use for 'prefix' and
@@ -187,7 +187,8 @@ class _MyFormatter(logging.Formatter):
     def format(self, record):
         """
         The formatter which which simply prefixes all debugging messages with a time-stamp and makes
-        sure the info messages stay intact.
+        sure the info messages stay intact. The arguments are as follows.
+          * record - the log record to format.
         """
 
         self._style._fmt = self.myfmt[record.levelno]
@@ -200,13 +201,19 @@ class _MyFilter(logging.Filter):
     """A custom filter which allows only certain log levels to go through."""
 
     def __init__(self, let_go):
-        """The constructor."""
+        """
+        The constructor. The arguments are as follows.
+          * let_go - logging levels to let go through.
+        """
 
         logging.Filter.__init__(self)
         self._let_go = let_go
 
     def filter(self, record):
-        """Filter out all log levels except the ones user specified."""
+        """
+        Filter out all log levels except the ones user specified. The arguments are as follows.
+          * record - the log record to filter.
+        """
 
         if record.levelno in self._let_go:
             return True
@@ -306,7 +313,9 @@ def setup_logger(prefix=None, loglevel=None, colored=None, info_stream=sys.stdou
 def setup_stdout_logging(toolname, logs_path):
     """
     Configure the logger to mirror all stdout and stderr messages to the log file in the 'logs_path'
-    directory.
+    directory. The arguments are as follows.
+      * toolname - name of the tool to setup the logging for.
+      * logs_path - file path to mirror the output to.
     """
 
     # Configure the logger to print to both the console and the log file.
