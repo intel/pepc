@@ -77,6 +77,9 @@ class ErrorNotSupported(Error):
 class ErrorPermissionDenied(Error):
     """Something was not found."""
 
+class ErrorBadFormat(Error):
+    """Bad format of something, e.g., file contents."""
+
 class ErrorVerifyFailed(Error):
     """Verification failed."""
 
