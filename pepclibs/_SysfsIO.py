@@ -140,6 +140,11 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
     def _write(self, path, val, what):
         """Write value 'val' to file at path 'path'."""
 
+        if _LOG.getEffectiveLevel() == logging.DEBUG:
+            what = "" if what is None else f" {what}"
+            _LOG.debug("writing value '%s' to%s sysfs file '%s'%s",
+                       val, what, path, self._pman.hostmsg)
+
         try:
             with self._pman.open(path, "r+") as fobj:
                 try:
