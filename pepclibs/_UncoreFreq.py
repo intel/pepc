@@ -267,25 +267,37 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         # When the new sysfs API is available, the legacy sysfs API exposes sysfs files only for die
         # 0, which actually controls all dies in the package. Therefore, iterate only the packages,
         # but not dies.
-        for package in self._get_dies_info():
+        for package, dies in self._get_dies_info().items():
             for key in "min", "max":
-                # Get the frequency limit value.
-                path_limit = self._get_legacy_sysfs_api_path(key, package, 0, limit=True)
+                # Get the frequency limit value via the legacy API.
+                path_legacy_limit = self._get_legacy_sysfs_api_path(key, package, 0, limit=True)
                 what_limit = f"{key}. uncore frequency limit"
-                limit = self._sysfs_io.read_int(path_limit, what=what_limit)
+                freq_limit_legacy = self._sysfs_io.read_int(path_legacy_limit, what=what_limit)
 
-                # Get the current min. or max. frequency value, in order to restore it later.
-                path_new = self._get_new_sysfs_api_path(key, package, 0, limit=False)
-                what = f"{key}. uncore frequency"
-                freq = self._sysfs_io.read_int(path_new, what=what)
-
-                # Set frequency limit via the legacy interface (effectively get rid of possible
-                # limitations from the legacy sysfs interface).
+                # Get min. or max. frequency value via the legacy API.
                 path_legacy = self._get_legacy_sysfs_api_path(key, package, 0, limit=False)
-                self._sysfs_io.write_int(path_legacy, limit, what=what)
+                what = f"{key}. uncore frequency"
+                freq_legacy = self._sysfs_io.read_int(path_legacy, what=what)
+                if freq_legacy == freq_limit_legacy:
+                    # Nothing to do, the legacy API won't be a limiting factor, because the min.
+                    # or max. frequency is already at its limit value.
+                    continue
 
-                # Restore the min. or max. frequency value.
-                self._sysfs_io.write_int(path_new, freq, what=what)
+                # Get the current min. or max. frequency values via the new API, in order to restore
+                # them later.
+                paths_new = {}
+                freqs_new = {}
+                for die in dies:
+                    paths_new[die] = self._get_new_sysfs_api_path(key, package, die, limit=False)
+                    freqs_new[die] = self._sysfs_io.read_int(paths_new[die], what=what)
+
+                # Set min. or max. frequency limit via the legacy interface. This should "unlock"
+                # the new sysfs API.
+                self._sysfs_io.write_int(path_legacy, freq_limit_legacy, what=what)
+
+                # Restore the current min. or max. frequency values via the new API.
+                for die in dies:
+                    self._sysfs_io.write_int(paths_new[die], freqs_new[die], what=what)
 
         self._new_sysfs_api_unlocked = True
 
