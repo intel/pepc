@@ -170,15 +170,16 @@ for cpu, cpus_info in transaction_buffer.items():
         """
         Flush the transaction buffer. Write all the buffered data to the MSRs. If there are multiple
         writes to the same MSR, they will be merged into a single write operation. The transaction
-        does not stop after flushing.
+        does not stop after flushing. Return 'True' if there was something to flush, return 'False'
+        if there was not taransaction data to flush.
         """
 
         if not self._enable_cache:
-            return
+            return False
         if not self._in_transaction:
-            return
+            return False
         if not self._transaction_buffer:
-            return
+            return False
 
         _LOG.debug("flushing MSR transaction buffer")
 
@@ -209,6 +210,8 @@ for cpu, cpus_info in transaction_buffer.items():
             for regaddr, cpus_info in regaddr_info.items():
                 self._verify(regaddr, regval, cpus_info["cpus"], cpus_info["iosname"])
 
+        return True
+
     def commit_transaction(self):
         """
         Commit the transaction. Write all the buffered data to MSRs and close the transaction. Note,
@@ -219,9 +222,12 @@ for cpu, cpus_info in transaction_buffer.items():
         if not self._in_transaction:
             raise Error("cannot commit a transaction, it did not start")
 
-        self.flush_transaction()
+        flushed = self.flush_transaction()
         self._in_transaction = False
-        _LOG.debug("MSR transaction has been committed")
+        if flushed:
+            _LOG.debug("MSR transaction has been committed")
+        else:
+            _LOG.debug("MSR transaction has been committed, but it was empty")
 
     def _normalize_bits(self, bits):
         """Validate and normalize bits range 'bits'."""
