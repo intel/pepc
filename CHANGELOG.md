@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+  - Fix min. and max. uncore frequency support on Granite Rapids and Sierra
+    Forest Xeons.
 ### Added
 ### Removed
 ### Changed
