@@ -497,7 +497,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                 _LOG.debug("target modules: %s", Human.rangify(self.modules))
             if self.dies:
                 for pkg, nums in self.dies.items():
-                    _LOG.debug("target package %d dies: %s", pkg, Human.rangify(self.dies))
+                    _LOG.debug("target package %d dies: %s", pkg, Human.rangify(nums))
             if self.packages:
                 _LOG.debug("target packages: %s", Human.rangify(self.packages))
             if self.core_siblings:
