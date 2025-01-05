@@ -1,3 +1,10 @@
+pepc (1.5.22) unstable; urgency=low
+
+  * Fix min. and max. uncore frequency support on Granite Rapids and Sierra
+    Forest Xeons.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Sun, 05 Jan 2025 00:00:00 +0200
+
 pepc (1.5.21) unstable; urgency=low
 
   * Fix the '--list-mechanisms' option.
