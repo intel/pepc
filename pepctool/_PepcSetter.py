@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
-#         Antti Laakso <antti.laakso@intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@intel.com>
 
 """
 Provides API for changing properties.
@@ -27,7 +27,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if pname not in spinfo:
             return
 
-        mname = _PepcCommon.set_prop_sname(self._pobj, pname, optar, spinfo[pname]["val"], mnames=mnames)
+        mname = _PepcCommon.set_prop_sname(self._pobj, pname, optar, spinfo[pname]["val"],
+                                           mnames=mnames)
         del spinfo[pname]
         mnames_info[pname] = mname
 
@@ -42,15 +43,29 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                      all mechanisms are allowed).
         """
 
-        if self._sysfs_io:
-            self._sysfs_io.start_transaction()
-        if self._msr:
-            self._msr.start_transaction()
-
         # Remember the mechanism used for every option.
         mnames_info = {}
         # '_set_props()' needs to modify the dictionary, so create a copy for that.
         spinfo_copy = spinfo.copy()
+
+        # Translate values without unit to the default units.
+        for pname, pname_info in spinfo.items():
+            if "default_unit" not in pname_info:
+                continue
+
+            try:
+                val = Trivial.str_to_num(pname_info["val"])
+            except Error:
+                # Not a number, which means there is unit specified.
+                continue
+
+            # Append the default unit.
+            spinfo_copy[pname]["val"] = str(val) + pname_info["default_unit"]
+
+        if self._sysfs_io:
+            self._sysfs_io.start_transaction()
+        if self._msr:
+            self._msr.start_transaction()
 
         for pname in list(spinfo):
             self._set_prop_sname(spinfo_copy, pname, optar, mnames, mnames_info)
@@ -158,6 +173,22 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._sysfs_io:
             self._sysfs_io.commit_transaction()
 
+    def restore(self, infile):
+        """
+        Load and set properties from a YAML file. The arguments are as follows:
+          * infile - path to the properties YAML file ("-" means standard input).
+        """
+
+        if infile == "-":
+            infile = sys.stdin
+
+        ydict = YAML.load(infile)
+
+        known_ykeys = set(self._pobj.props)
+        self._validate_loaded_data(ydict, known_ykeys)
+
+        self._restore_props(ydict)
+
     def __init__(self, pman, pobj, cpuinfo, pcsprint, msr=None, sysfs_io=None):
         """
         Initialize a class instance. The arguments are as follows.
@@ -259,40 +290,11 @@ class PStatesSetter(_PropsSetter):
             self._set_prop(self._pobj, min_freq_pname, sname, "min", nums)
             self._set_prop(self._pobj, max_freq_pname, sname, val, nums)
 
-    def restore(self, infile):
-        """
-        Load and set properties from a YAML file. The arguments are as follows:
-          * infile - path to the properties YAML file ("-" means standard input).
-        """
-
-        if infile == "-":
-            infile = sys.stdin
-
-        ydict = YAML.load(infile)
-
-        known_ykeys = set(self._pobj.props)
-        self._validate_loaded_data(ydict, known_ykeys)
-
-        self._restore_props(ydict)
+class PMQoSSetter(_PropsSetter):
+    """Provides API for changing PM QoS properties."""
 
 class PowerSetter(_PropsSetter):
     """Provide API for changing power properties."""
-
-    def restore(self, infile):
-        """
-        Load and set properties from a YAML file. The arguments are as follows:
-          * infile - path to the properties YAML file ("-" means standard input).
-        """
-
-        if infile == "-":
-            infile = sys.stdin
-
-        ydict = YAML.load(infile)
-
-        known_ykeys = set(self._pobj.props)
-        self._validate_loaded_data(ydict, known_ykeys)
-
-        self._restore_props(ydict)
 
 class CStatesSetter(_PropsSetter):
     """Provide API for changing C-states properties."""

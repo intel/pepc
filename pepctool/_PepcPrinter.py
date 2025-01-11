@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -16,7 +16,7 @@ import sys
 import logging
 from pepctool import _PepcCommon
 from pepclibs import CStates
-from pepclibs.helperlibs import ClassHelpers, Human, YAML
+from pepclibs.helperlibs import ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = logging.getLogger()
@@ -122,7 +122,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         raise Error(f"BUG: unexpected scope name {sname} for message formatting")
 
-    def _format_value_human(self, prop, val):
+    def _format_value_human(self, _, prop, val):
         """Format value 'val' of property described by 'prop' into the "human" format."""
 
         def _detect_progression(vals, min_len):
@@ -144,6 +144,11 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             """Format values with unit."""
 
             if unit:
+                if unit == "s" and val > 100:
+                    # Avoid kiloseconds and the like.
+                    if Trivial.is_int(val):
+                        return f"{int(val)}s"
+                    return f"{val:.2f}s"
                 return Human.num2si(val, unit=unit, decp=2)
             return str(val)
 
@@ -195,10 +200,11 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return val
 
-    def _print_prop_human(self, prop, sname, val, nums, action=None, prefix=None):
+    def _print_prop_human(self, pname, prop, sname, val, nums, action=None, prefix=None):
         """
         Format and print a message about property 'prop' and its value 'val' in the "human" format.
         The arguments are as follows.
+          * pname - name of the property to print.
           * prop - the property information dictionary (for the property to print).
           * sname - scope name corresponding to the API that was used for reading the property. Can
                     be "die", "package", or "CPU" at the moment. Note, there is also
@@ -231,9 +237,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if val is None:
             val = "not supported"
         else:
-            val = self._format_value_human(prop, val)
+            val = self._format_value_human(pname, prop, val)
             if val == "" and (prop["type"].startswith("list") or prop["type"].startswith("dict")):
-                # The list of dictionary is empty. Just do not print the line at all.
+                # The list or dictionary is empty. Just do not print the line at all.
                 return
 
             if sfx and prop["type"] not in {"int", "float", "list[int]", "list[float]"}:
@@ -253,8 +259,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         printed = 0
         for pname, pinfo in aggr_pinfo.items():
             for val, nums, in pinfo["vals"].items():
-                self._print_prop_human(props[pname], pinfo["sname"], val, nums=nums, action=action,
-                                       prefix=prefix)
+                self._print_prop_human(pname, props[pname], pinfo["sname"], val, nums=nums,
+                                       action=action, prefix=prefix)
                 printed += 1
 
         return printed
@@ -398,20 +404,20 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         The aggregate properties dictionary has the following format.
 
-          {mname1: {pname1: {"sname": sname,
-                             "vals": {val1: [list of CPUs/packages having value 'val1'],
-                                      val2: [list of CPUs/packages having value 'val2'],
-                                      ... and so on for all values ...},
-                    ... and so on for all properties ...},
-           ... and so on for all mechanisms ...},
+        {mname1: {pname1: {"sname": sname,
+                           "vals": {val1: [list of CPUs/packages having value 'val1'],
+                                    val2: [list of CPUs/packages having value 'val2'],
+                                    ... and so on for all values ...},
+                  ... and so on for all properties ...},
+         ... and so on for all mechanisms ...},
 
-          * mname1 - name of the first mechanism that was used for reading the properties.
-          * pname1 - the first property name (e.g., 'pkg_cstate_limit').
-          * sname - scope name that was used for reading the property, may be one of "CPU", "die",
-                    "package". If it is "CPU", the per-CPU 'get_prop_cpus()' method was used, if
-                    "die", the per-die 'get_prop_dies()' was used, if "package", the per-package
-                    'get_prop_packages()' was used.
-          * val, val2, etc - all the different values for the property.
+        * mname1 - name of the first mechanism that was used for reading the properties.
+        * pname1 - the first property name (e.g., 'pkg_cstate_limit').
+        * sname - scope name that was used for reading the property, may be one of "CPU", "die",
+                  "package". If it is "CPU", the per-CPU 'get_prop_cpus()' method was used, if
+                  "die", the per-die 'get_prop_dies()' was used, if "package", the per-package
+                  'get_prop_packages()' was used.
+        * val, val2, etc - all the different values for the property.
 
         In other words, the aggregate dictionary essentially maps property values to the list of
         CPUs, dies, or packages having these values. It represents a "by value view". And there is
@@ -529,6 +535,21 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
 class PStatesPrinter(_PropsPrinter):
     """This class provides API for printing P-states information."""
+
+class PMQoSPrinter(_PropsPrinter):
+    """This class provides API for printing PM QoS information."""
+
+    def _format_value_human(self, pname, prop, val):
+        """Format value 'val' of property described by 'prop' into the "human" format."""
+
+        if pname == "latency_limit" and val == 0:
+            # Per-CPU latency limit 0 means "no latency".
+            return "0 (no limit)"
+        if pname == "global_latency_limit" and val == 0:
+            # The global latency limit 0 means "cannot tolerate any latency".
+            return "0 (absolute minimum)"
+
+        return super()._format_value_human(pname, prop, val)
 
 class PowerPrinter(_PropsPrinter):
     """This class provides API for printing power information."""

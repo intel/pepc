@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -25,7 +25,7 @@ except ImportError:
 
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CStates, PStates, Power, CPUInfo
+from pepclibs import CStates, PStates, PMQoS, Power, CPUInfo
 from pepclibs._PropsClassBase import MECHANISMS
 
 if sys.version_info < (3, 7):
@@ -430,7 +430,7 @@ def build_arguments_parser():
     # Create parser for the 'pstates info' command.
     #
     text = "Get P-states information."
-    descr = """Get P-states information for specified CPUs. By default, prints all information for
+    descr = """Get P-states information for specified CPUs. By default, print all information for
                all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_pstates_info_command)
@@ -492,6 +492,81 @@ def build_arguments_parser():
     subpars2.add_argument("-f", "--from", dest="infile", help=text)
 
     #
+    # Create parser for the 'pmqos' command.
+    #
+    text = "PM QoS commands."
+    man_msg = "Please, refer to 'pepc-pmqos' manual page for more information."
+    descr = "Various commands related to PM QoS (Power Management Quality of Service). " + man_msg
+    subpars = subparsers.add_parser("pmqos", help=text, description=descr)
+    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subparsers2.required = True
+
+    #
+    # Create parser for the 'pmqos info' command.
+    #
+    text = "Get PM QoS information."
+    descr = """Get PM QoS information for specified CPUs. By default, print all information for
+               all CPUs. """ + man_msg
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2.set_defaults(func=_pmqos_info_command)
+
+    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
+    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
+
+    _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
+
+    text = """Print information in YAML format."""
+    subpars2.add_argument("--yaml", action="store_true", help=text)
+
+    _add_info_subcommand_options(PMQoS.PROPS, subpars2)
+
+    #
+    # Create parser for the 'pmqos config' command.
+    #
+    text = """Configure PM QoS."""
+    descr = """Configure PM QoS on specified CPUs. All options can be used without a parameter,
+               in which case the currently configured value(s) will be printed. """ + man_msg
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
+    subpars2.set_defaults(func=_pmqos_config_command)
+
+    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
+    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
+    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
+
+    _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
+
+    _add_config_subcommand_options(PMQoS.PROPS, subpars2)
+
+    #
+    # Create parser for the 'pmqos save' command.
+    #
+    text = "Save PM QoS settings."
+    descr = f"""Save all the modifiable PM QoS settings into a file. This file can later be used
+                for restoring PM QoS settings with the '{TOOLNAME} pmqos restore' command. """ \
+            + man_msg
+    subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
+    subpars2.set_defaults(func=_pmqos_save_command)
+
+    _add_target_cpus_arguments(subpars2, "List of %s to save PM QoS information about.")
+
+    text = "Name of the file to save the settings to (printed to standard output by default)."
+    subpars2.add_argument("-o", "--outfile", help=text, default="-")
+
+    #
+    # Create parser for the 'pmqos restore' command.
+    #
+    text = "Restore PM QoS settings."
+    descr = f"""Restore PM QoS settings from a file previously created with the
+               '{TOOLNAME} pmqos save' command. """ + man_msg
+    subpars2 = subparsers2.add_parser("restore", help=text, description=descr, epilog=man_msg)
+    subpars2.set_defaults(func=_pmqos_restore_command)
+
+    text = """Name of the file from which to restore the settings from, use "-" to read from the
+              standard output."""
+    subpars2.add_argument("-f", "--from", dest="infile", help=text)
+
+    #
     # Create parser for the 'power' command.
     #
     text = "Power commands."
@@ -507,7 +582,7 @@ def build_arguments_parser():
     # Create parser for the 'power info' command.
     #
     text = "Get power information."
-    descr = """Get power information for specified CPUs. By default, prints all information for
+    descr = """Get power information for specified CPUs. By default, print all information for
                all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_power_info_command)
@@ -874,6 +949,34 @@ def _pstates_restore_command(args, pman):
     from pepctool import _PepcPStates
 
     _PepcPStates.pstates_restore_command(args, pman)
+
+def _pmqos_info_command(args, pman):
+    """Implement the 'pmqos info' command."""
+
+    from pepctool import _PepcPMQoS
+
+    _PepcPMQoS.pmqos_info_command(args, pman)
+
+def _pmqos_config_command(args, pman):
+    """Implement the 'pmqos config' command."""
+
+    from pepctool import _PepcPMQoS
+
+    _PepcPMQoS.pmqos_config_command(args, pman)
+
+def _pmqos_save_command(args, pman):
+    """Implement the 'pmqos save' command."""
+
+    from pepctool import _PepcPMQoS
+
+    _PepcPMQoS.pmqos_save_command(args, pman)
+
+def _pmqos_restore_command(args, pman):
+    """Implement the 'pmqos restore' command."""
+
+    from pepctool import _PepcPMQoS
+
+    _PepcPMQoS.pmqos_restore_command(args, pman)
 
 def _power_info_command(args, pman):
     """Implement the 'power info' command."""

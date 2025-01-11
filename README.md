@@ -18,6 +18,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [Examples](#examples)
   - [P-states](#p-states)
   - [C-states](#c-states)
+  - [PM QoS](#pm-qos)
   - [Power](#power)
   - [ASPM](#aspm)
   - [CPU hotplug](#cpu-hotplug)
@@ -72,6 +73,7 @@ python projects to use.
 Pepc supports discovering and configuring the following features.
 * C-states: [documentation](docs/pepc-cstates.rst)
 * P-states: [documentation](docs/pepc-pstates.rst)
+* PM QoS: [documentation](docs/pepc-pmqos.rst)
 * Power: [documentation](docs/pepc-power.rst)
 * CPU onlining and offlining: [documentation](docs/pepc-cpu-hotplug.rst)
 * ASPM: [documentation](docs/pepc-aspm.rst)
@@ -407,9 +409,41 @@ $ pepc cstates config --pkg-cstate-limit PC0 --packages all
 Package C-state limit set to 'PC0' for CPUs 0-87 (all CPUs)
 ```
 
+## PM QoS
+
+### Get all the PM QoS information
+
+```
+$ pepc pmqos info
+Source: Linux sysfs file-system
+ - Linux per-CPU PM QoS latency limit: 0 (no limit) for all CPUs
+Source: Linux character device node
+ - Linux global PM QoS latency limit: 2000s
+ ```
+
+### Set the per-CPU latency limits
+
+Set latency limit to 100us for all CPUs in package 1, and also for CPU 0.
+
+```
+$ pepc pmqos config --latency-limit 100us --package 1 --cpus 0
+Linux per-CPU PM QoS latency limit: set to 100us for CPUs 0,56-111,168-223
+```
+
+Verify it.
+
+```
+$ pepc pmqos info
+Source: Linux sysfs file-system
+ - Linux per-CPU PM QoS latency limit: 100us for CPUs 0,56-111,168-223
+ - Linux per-CPU PM QoS latency limit: 0 (no limit) for CPUs 1-55,112-167
+Source: Linux character device node
+ - Linux global PM QoS latency limit: 2000s
+```
+
 ## Power
 
-### Get all the generally interesting power information:
+### Get all the generally interesting power information
 
 ```
 $ pepc power info
@@ -427,7 +461,7 @@ Source: Model Specific Register (MSR)
 
 ## ASPM
 
-### Get all the generally interesting ASPM information:
+### Get all the generally interesting ASPM information
 
 ```
 $ pepc aspm info
