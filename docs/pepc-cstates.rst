@@ -1,8 +1,7 @@
 .. -*- coding: utf-8 -*-
 .. vim: ts=4 sw=4 tw=100 et ai si
 
-:Date:   09-03-2023
-:Title:  CSTATES
+:Title: C-states
 
 .. Contents::
    :depth: 2
@@ -108,7 +107,7 @@ options.
 Subcommand *'info'*
 ===================
 
-Get information about C-states on specified CPUs. By default, prints all information for all CPUs.
+Get information about C-states on specified CPUs. By default, print all information about all CPUs.
 
 Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
 
@@ -219,7 +218,7 @@ C-state settings with the 'pepc cstates restore' command.
 Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
 
 **-o** *OUTFILE*, **--outfile** *OUTFILE*
-   Name of the file to save the settings to.
+   Name of the file to save the settings to (print to standard output by default).
 
 Subcommand *'restore'*
 ======================

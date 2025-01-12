@@ -1,8 +1,7 @@
 .. -*- coding: utf-8 -*-
 .. vim: ts=4 sw=4 tw=100 et ai si
 
-:Date:   09-03-2023
-:Title:  PSTATES
+:Title: P-states
 
 .. Contents::
    :depth: 2
@@ -108,7 +107,7 @@ options.
 Subcommand *'info'*
 ===================
 
-Get P-states information for specified CPUs. By default, prints all information for all CPUs.
+Get P-states information for specified CPUs. By default, print all information about all CPUs.
 
 Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
 

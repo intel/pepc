@@ -185,7 +185,7 @@ power settings with the 'pepc power restore' command.
 Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
 
 **-o** *OUTFILE*, **--outfile** *OUTFILE*
-   Name of the file to save the settings to.
+   Name of the file to save the settings to (print to standard output by default).
 
 Subcommand *'restore'*
 ======================
