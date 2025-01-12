@@ -201,6 +201,16 @@ PStatesData = {
          "filename": "bios_limit.txt"}]
 }
 
+PMQoSData = {
+    "inlinefiles" : [
+        {"command": r"grep -H --directories=skip '.*' "
+                    r"/sys/devices/system/cpu/cpu[0-9]*/power/pm_qos_resume_latency_us",
+         "separator": ":",
+         "readonly": False,
+         "dirname": "pmqos",
+         "filename": "latency_limit.txt"}]
+}
+
 SystemctlData = {
     "commands" : [
         {"command": "systemctl is-active -- 'tuned'",
@@ -223,6 +233,7 @@ MODULE_TESTDATA = {
     "CPUOnline" : CPUOnlineData,
     "CStates" : CStatesData,
     "PStates" : PStatesData,
+    "PMQoS" : PMQoSData,
     "Systemctl" : SystemctlData,
     "Power" : PowerData,
     "TPMI" : TpmiData,
