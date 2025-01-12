@@ -8,7 +8,7 @@
 #         Antti Laakso <antti.laakso@intel.com>
 
 """
-This module provides API for changing P-state and C-state properties.
+Provides API for changing properties.
 """
 
 import sys
@@ -19,62 +19,17 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.PStates import ErrorFreqOrder
 
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
-    """This class provides API for changing P-state and C-state properties."""
+    """Provide API for changing properties."""
 
     def _set_prop_sname(self, spinfo, pname, optar, mnames, mnames_info):
-        """Set property 'pname' and handle frequency properties ordering."""
+        """Set property 'pname'."""
 
         if pname not in spinfo:
             return
 
-        try:
-            mname = _PepcCommon.set_prop_sname(self._pobj, pname, optar,
-                                               spinfo[pname], mnames=mnames)
-            del spinfo[pname]
-            mnames_info[pname] = mname
-            return
-        except ErrorFreqOrder as err:
-            if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
-                raise
-
-            # Setting frequencies may be tricky because of the ordering constraints. Here is an
-            # example illustrating why order matters. Suppose current min. and max. frequencies and
-            # new min. and max. frequencies are as follows:
-            #  ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
-            #
-            # Where the dotted line represents the horizontal frequency axis. Setting min. frequency
-            # before max. frequency leads to a failure (more precisely, the 'ErrorFreqOrder'
-            # exception). Indeed, at step #2 below, current minimum frequency would be set to a
-            # value higher that current maximum frequency.
-            #  1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
-            #  2. ----------------- Cur. Max -------- Cur. Min -- New Max ----------> FAIL!
-            #
-            # To handle this situation, max. frequency should be set first.
-            #  1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
-            #  2. ---- Cur. Min --------------------- New Min --- Cur. Max --------->
-            #  3. ----------------------------------- Cur. Min -- Cur. Max --------->
-            #
-            # Therefore, if both min. and max. frequencies should be changed, try changing them in
-            # different order.
-
-            freq_pname = pname
-            if pname.startswith("min"):
-                # Trying to set minimum frequency to a value higher than currently configured
-                # maximum frequency.
-                other_freq_pname = pname.replace("min", "max")
-            elif pname.startswith("max"):
-                other_freq_pname = pname.replace("max", "mim")
-            else:
-                raise Error(f"BUG: unexpected property {pname}") from err
-
-            if other_freq_pname not in spinfo:
-                raise
-
-            for pnm in (other_freq_pname, freq_pname):
-                mname = _PepcCommon.set_prop_sname(self._pobj, pnm, optar, spinfo[pnm],
-                                                   mnames=mnames)
-                del spinfo[pnm]
-                mnames_info[pnm] = mname
+        mname = _PepcCommon.set_prop_sname(self._pobj, pname, optar, spinfo[pname], mnames=mnames)
+        del spinfo[pname]
+        mnames_info[pname] = mname
 
     def set_props(self, spinfo, optar, mnames=None):
         """
@@ -149,40 +104,21 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                     raise Error(f"found multiple scope name keys in the '{ykey}' sub-dictionary, "
                                 f"expected only one of {', '.join(sname_keys)}")
 
+    @staticmethod
+    def _set_prop(pobj, pname, sname, val, nums):
+        """Set property 'pname' using the method suitable for scope 'sname'."""
+
+        if sname == "CPU":
+            pobj.set_prop_cpus(pname, val, nums)
+        elif sname == "die":
+            pobj.set_prop_dies(pname, val, nums)
+        elif sname == "package":
+            pobj.set_prop_packages(pname, val, nums)
+
     def _restore_prop(self, pname, sname, val, nums):
         """Restore property 'pname' to value 'val' for CPUs, dies, or packages in  'nums'."""
 
-        def _set_prop(pobj, pname, sname, val, nums):
-            """Set property 'pname' using the method suitable for scope 'sname'."""
-
-            if sname == "CPU":
-                pobj.set_prop_cpus(pname, val, nums)
-            elif sname == "die":
-                pobj.set_prop_dies(pname, val, nums)
-            elif sname == "package":
-                pobj.set_prop_packages(pname, val, nums)
-
-        try:
-            _set_prop(self._pobj, pname, sname, val, nums)
-            return
-        except ErrorFreqOrder:
-            if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
-                raise
-
-        # Setting frequency may be tricky because there are ordering constraints.
-        if pname in {"min_freq", "max_freq"}:
-            min_freq_pname = "min_freq"
-            max_freq_pname = "max_freq"
-        else:
-            min_freq_pname = "min_uncore_freq"
-            max_freq_pname = "max_uncore_freq"
-
-        if pname.startswith("min_"):
-            _set_prop(self._pobj, max_freq_pname, sname, "max", nums)
-            _set_prop(self._pobj, min_freq_pname, sname, val, nums)
-        elif pname.startswith("max_"):
-            _set_prop(self._pobj, min_freq_pname, sname, "min", nums)
-            _set_prop(self._pobj, max_freq_pname, sname, val, nums)
+        self._set_prop(self._pobj, pname, sname, val, nums)
 
     def _restore_props(self, ydict):
         """Restore properties from a loaded YAML file and represented by 'ydict'."""
@@ -247,7 +183,81 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                                               "_pman"))
 
 class PStatesSetter(_PropsSetter):
-    """This class provides API for changing P-states properties."""
+    """Provide API for changing P-states properties."""
+
+    def _set_prop_sname(self, spinfo, pname, optar, mnames, mnames_info):
+        """Set property 'pname' and handle frequency properties ordering."""
+
+        try:
+            super()._set_prop_sname(spinfo, pname, optar, mnames, mnames_info)
+            return
+        except ErrorFreqOrder as err:
+            if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
+                raise
+
+            # Setting frequencies may be tricky because of the ordering constraints. Here is an
+            # example illustrating why order matters. Suppose current min. and max. frequencies and
+            # new min. and max. frequencies are as follows:
+            #  ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+            #
+            # Where the dotted line represents the horizontal frequency axis. Setting min. frequency
+            # before max. frequency leads to a failure (more precisely, the 'ErrorFreqOrder'
+            # exception). Indeed, at step #2 below, current minimum frequency would be set to a
+            # value higher that current maximum frequency.
+            #  1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+            #  2. ----------------- Cur. Max -------- Cur. Min -- New Max ----------> FAIL!
+            #
+            # To handle this situation, max. frequency should be set first.
+            #  1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+            #  2. ---- Cur. Min --------------------- New Min --- Cur. Max --------->
+            #  3. ----------------------------------- Cur. Min -- Cur. Max --------->
+            #
+            # Therefore, if both min. and max. frequencies should be changed, try changing them in
+            # different order.
+
+            freq_pname = pname
+            if pname.startswith("min"):
+                # Trying to set minimum frequency to a value higher than currently configured
+                # maximum frequency.
+                other_freq_pname = pname.replace("min", "max")
+            elif pname.startswith("max"):
+                other_freq_pname = pname.replace("max", "mim")
+            else:
+                raise Error(f"BUG: unexpected property {pname}") from err
+
+            if other_freq_pname not in spinfo:
+                raise
+
+            for pnm in (other_freq_pname, freq_pname):
+                mname = _PepcCommon.set_prop_sname(self._pobj, pnm, optar, spinfo[pnm],
+                                                   mnames=mnames)
+                del spinfo[pnm]
+                mnames_info[pnm] = mname
+
+    def _restore_prop(self, pname, sname, val, nums):
+        """Restore property 'pname' to value 'val' for CPUs, dies, or packages in 'nums'."""
+
+        try:
+            super()._restore_prop(pname, sname, val, nums)
+            return
+        except ErrorFreqOrder:
+            if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
+                raise
+
+        # Setting frequency may be tricky because there are ordering constraints.
+        if pname in {"min_freq", "max_freq"}:
+            min_freq_pname = "min_freq"
+            max_freq_pname = "max_freq"
+        else:
+            min_freq_pname = "min_uncore_freq"
+            max_freq_pname = "max_uncore_freq"
+
+        if pname.startswith("min_"):
+            self._set_prop(self._pobj, max_freq_pname, sname, "max", nums)
+            self._set_prop(self._pobj, min_freq_pname, sname, val, nums)
+        elif pname.startswith("max_"):
+            self._set_prop(self._pobj, min_freq_pname, sname, "min", nums)
+            self._set_prop(self._pobj, max_freq_pname, sname, val, nums)
 
     def restore(self, infile):
         """
@@ -266,7 +276,7 @@ class PStatesSetter(_PropsSetter):
         self._restore_props(ydict)
 
 class PowerSetter(_PropsSetter):
-    """This class provides API for changing power settings."""
+    """Provide API for changing power properties."""
 
     def restore(self, infile):
         """
@@ -285,7 +295,7 @@ class PowerSetter(_PropsSetter):
         self._restore_props(ydict)
 
 class CStatesSetter(_PropsSetter):
-    """This class provides API for changing P-states properties."""
+    """Provide API for changing C-states properties."""
 
     def set_cstates(self, csnames="all", cpus="all", enable=True, mnames=None):
         """
