@@ -27,7 +27,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if pname not in spinfo:
             return
 
-        mname = _PepcCommon.set_prop_sname(self._pobj, pname, optar, spinfo[pname], mnames=mnames)
+        mname = _PepcCommon.set_prop_sname(self._pobj, pname, optar, spinfo[pname]["val"], mnames=mnames)
         del spinfo[pname]
         mnames_info[pname] = mname
 
@@ -229,7 +229,7 @@ class PStatesSetter(_PropsSetter):
                 raise
 
             for pnm in (other_freq_pname, freq_pname):
-                mname = _PepcCommon.set_prop_sname(self._pobj, pnm, optar, spinfo[pnm],
+                mname = _PepcCommon.set_prop_sname(self._pobj, pnm, optar, spinfo[pnm]["val"],
                                                    mnames=mnames)
                 del spinfo[pnm]
                 mnames_info[pnm] = mname

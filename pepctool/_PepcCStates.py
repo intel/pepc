@@ -100,7 +100,7 @@ def cstates_config_command(args, pman):
         elif optval is None:
             print_opts.append(optname)
         else:
-            set_opts[optname] = optval
+            set_opts[optname] = {"val" : optval}
 
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
