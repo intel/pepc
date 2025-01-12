@@ -71,10 +71,10 @@ def expand_subprops(pnames, props):
       * pnames - a collection of property names to expand.
       * props - the properties dictionary (e.g., 'CStates.PROPS').
 
-      This helper function takes a list of property names in 'pnames', and if any property in
-      'pnames' has a sub-property, the sub-property names are inserted into 'pnames' right after the
-      main property name. Well, the sub-property names are inserted to a copy of 'pnames', and the
-      resulting copy is returned.
+    Receive a list of property names in 'pnames', and if any property in 'pnames' has a
+    sub-property, insert the sub-property names into 'pnames' right after the main property name.
+    Well, the sub-property names are inserted to a copy of 'pnames', and the resulting copy is
+    returned.
     """
 
     expanded = []
