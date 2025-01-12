@@ -4,4 +4,4 @@
 /sys/devices/system/cpu/intel_pstate/no_turbo:0
 /sys/devices/system/cpu/intel_pstate/num_pstates:39
 /sys/devices/system/cpu/intel_pstate/status:active
-/sys/devices/system/cpu/intel_pstate/turbo_pct:70
+/sys/devices/system/cpu/intel_pstate/turbo_pct:67

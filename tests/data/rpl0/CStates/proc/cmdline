@@ -1,0 +1,1 @@
+BOOT_IMAGE=http://powerlab/pxelinux/node/rpl0/fedora41/kernel initrd=http://powerlab/pxelinux/node/rpl0/fedora41/initramfs.img root=UUID=d3b4a574-c853-4aab-b675-626c75963623 ro console=ttyUSB0,115200 msr.allow_writes=on

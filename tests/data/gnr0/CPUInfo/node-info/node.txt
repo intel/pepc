@@ -1,0 +1,3 @@
+/sys/devices/system/node/online:0-1
+/sys/devices/system/node/node0/cpulist:0-127,256-383
+/sys/devices/system/node/node1/cpulist:128-255,384-511

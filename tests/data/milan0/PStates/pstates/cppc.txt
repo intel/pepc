@@ -1,3 +1,4 @@
+/sys/devices/system/cpu/cpu0/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu0/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu0/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu0/acpi_cppc/lowest_nonlinear_perf:103
@@ -6,6 +7,7 @@
 /sys/devices/system/cpu/cpu0/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu0/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu0/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu100/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu100/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu100/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu100/acpi_cppc/lowest_nonlinear_perf:103
@@ -14,6 +16,7 @@
 /sys/devices/system/cpu/cpu100/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu100/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu100/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu101/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu101/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu101/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu101/acpi_cppc/lowest_nonlinear_perf:103
@@ -22,6 +25,7 @@
 /sys/devices/system/cpu/cpu101/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu101/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu101/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu102/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu102/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu102/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu102/acpi_cppc/lowest_nonlinear_perf:103
@@ -30,6 +34,7 @@
 /sys/devices/system/cpu/cpu102/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu102/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu102/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu103/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu103/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu103/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu103/acpi_cppc/lowest_nonlinear_perf:103
@@ -38,6 +43,7 @@
 /sys/devices/system/cpu/cpu103/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu103/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu103/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu104/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu104/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu104/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu104/acpi_cppc/lowest_nonlinear_perf:103
@@ -46,6 +52,7 @@
 /sys/devices/system/cpu/cpu104/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu104/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu104/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu105/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu105/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu105/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu105/acpi_cppc/lowest_nonlinear_perf:103
@@ -54,6 +61,7 @@
 /sys/devices/system/cpu/cpu105/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu105/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu105/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu106/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu106/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu106/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu106/acpi_cppc/lowest_nonlinear_perf:103
@@ -62,6 +70,7 @@
 /sys/devices/system/cpu/cpu106/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu106/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu106/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu107/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu107/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu107/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu107/acpi_cppc/lowest_nonlinear_perf:103
@@ -70,6 +79,7 @@
 /sys/devices/system/cpu/cpu107/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu107/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu107/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu108/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu108/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu108/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu108/acpi_cppc/lowest_nonlinear_perf:103
@@ -78,6 +88,7 @@
 /sys/devices/system/cpu/cpu108/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu108/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu108/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu109/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu109/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu109/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu109/acpi_cppc/lowest_nonlinear_perf:103
@@ -86,6 +97,7 @@
 /sys/devices/system/cpu/cpu109/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu109/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu109/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu10/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu10/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu10/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu10/acpi_cppc/lowest_nonlinear_perf:103
@@ -94,6 +106,7 @@
 /sys/devices/system/cpu/cpu10/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu10/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu10/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu110/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu110/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu110/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu110/acpi_cppc/lowest_nonlinear_perf:103
@@ -102,6 +115,7 @@
 /sys/devices/system/cpu/cpu110/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu110/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu110/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu111/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu111/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu111/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu111/acpi_cppc/lowest_nonlinear_perf:103
@@ -110,6 +124,7 @@
 /sys/devices/system/cpu/cpu111/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu111/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu111/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu112/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu112/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu112/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu112/acpi_cppc/lowest_nonlinear_perf:103
@@ -118,6 +133,7 @@
 /sys/devices/system/cpu/cpu112/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu112/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu112/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu113/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu113/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu113/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu113/acpi_cppc/lowest_nonlinear_perf:103
@@ -126,6 +142,7 @@
 /sys/devices/system/cpu/cpu113/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu113/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu113/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu114/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu114/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu114/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu114/acpi_cppc/lowest_nonlinear_perf:103
@@ -134,6 +151,7 @@
 /sys/devices/system/cpu/cpu114/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu114/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu114/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu115/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu115/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu115/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu115/acpi_cppc/lowest_nonlinear_perf:103
@@ -142,6 +160,7 @@
 /sys/devices/system/cpu/cpu115/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu115/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu115/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu116/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu116/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu116/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu116/acpi_cppc/lowest_nonlinear_perf:103
@@ -150,6 +169,7 @@
 /sys/devices/system/cpu/cpu116/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu116/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu116/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu117/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu117/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu117/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu117/acpi_cppc/lowest_nonlinear_perf:103
@@ -158,6 +178,7 @@
 /sys/devices/system/cpu/cpu117/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu117/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu117/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu118/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu118/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu118/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu118/acpi_cppc/lowest_nonlinear_perf:103
@@ -166,6 +187,7 @@
 /sys/devices/system/cpu/cpu118/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu118/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu118/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu119/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu119/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu119/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu119/acpi_cppc/lowest_nonlinear_perf:103
@@ -174,6 +196,7 @@
 /sys/devices/system/cpu/cpu119/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu119/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu119/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu11/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu11/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu11/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu11/acpi_cppc/lowest_nonlinear_perf:103
@@ -182,6 +205,7 @@
 /sys/devices/system/cpu/cpu11/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu11/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu11/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu120/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu120/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu120/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu120/acpi_cppc/lowest_nonlinear_perf:103
@@ -190,6 +214,7 @@
 /sys/devices/system/cpu/cpu120/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu120/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu120/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu121/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu121/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu121/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu121/acpi_cppc/lowest_nonlinear_perf:103
@@ -198,6 +223,7 @@
 /sys/devices/system/cpu/cpu121/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu121/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu121/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu122/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu122/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu122/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu122/acpi_cppc/lowest_nonlinear_perf:103
@@ -206,6 +232,7 @@
 /sys/devices/system/cpu/cpu122/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu122/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu122/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu123/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu123/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu123/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu123/acpi_cppc/lowest_nonlinear_perf:103
@@ -214,6 +241,7 @@
 /sys/devices/system/cpu/cpu123/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu123/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu123/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu124/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu124/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu124/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu124/acpi_cppc/lowest_nonlinear_perf:103
@@ -222,6 +250,7 @@
 /sys/devices/system/cpu/cpu124/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu124/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu124/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu125/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu125/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu125/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu125/acpi_cppc/lowest_nonlinear_perf:103
@@ -230,6 +259,7 @@
 /sys/devices/system/cpu/cpu125/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu125/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu125/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu126/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu126/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu126/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu126/acpi_cppc/lowest_nonlinear_perf:103
@@ -238,6 +268,7 @@
 /sys/devices/system/cpu/cpu126/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu126/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu126/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu127/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu127/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu127/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu127/acpi_cppc/lowest_nonlinear_perf:103
@@ -246,6 +277,7 @@
 /sys/devices/system/cpu/cpu127/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu127/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu127/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu12/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu12/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu12/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu12/acpi_cppc/lowest_nonlinear_perf:103
@@ -254,6 +286,7 @@
 /sys/devices/system/cpu/cpu12/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu12/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu12/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu13/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu13/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu13/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu13/acpi_cppc/lowest_nonlinear_perf:103
@@ -262,6 +295,7 @@
 /sys/devices/system/cpu/cpu13/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu13/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu13/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu14/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu14/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu14/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu14/acpi_cppc/lowest_nonlinear_perf:103
@@ -270,6 +304,7 @@
 /sys/devices/system/cpu/cpu14/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu14/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu14/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu15/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu15/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu15/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu15/acpi_cppc/lowest_nonlinear_perf:103
@@ -278,6 +313,7 @@
 /sys/devices/system/cpu/cpu15/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu15/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu15/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu16/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu16/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu16/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu16/acpi_cppc/lowest_nonlinear_perf:103
@@ -286,6 +322,7 @@
 /sys/devices/system/cpu/cpu16/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu16/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu16/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu17/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu17/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu17/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu17/acpi_cppc/lowest_nonlinear_perf:103
@@ -294,6 +331,7 @@
 /sys/devices/system/cpu/cpu17/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu17/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu17/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu18/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu18/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu18/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu18/acpi_cppc/lowest_nonlinear_perf:103
@@ -302,6 +340,7 @@
 /sys/devices/system/cpu/cpu18/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu18/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu18/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu19/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu19/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu19/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu19/acpi_cppc/lowest_nonlinear_perf:103
@@ -310,6 +349,7 @@
 /sys/devices/system/cpu/cpu19/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu19/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu19/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu1/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu1/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu1/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu1/acpi_cppc/lowest_nonlinear_perf:103
@@ -318,6 +358,7 @@
 /sys/devices/system/cpu/cpu1/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu1/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu1/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu20/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu20/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu20/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu20/acpi_cppc/lowest_nonlinear_perf:103
@@ -326,6 +367,7 @@
 /sys/devices/system/cpu/cpu20/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu20/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu20/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu21/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu21/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu21/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu21/acpi_cppc/lowest_nonlinear_perf:103
@@ -334,6 +376,7 @@
 /sys/devices/system/cpu/cpu21/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu21/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu21/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu22/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu22/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu22/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu22/acpi_cppc/lowest_nonlinear_perf:103
@@ -342,6 +385,7 @@
 /sys/devices/system/cpu/cpu22/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu22/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu22/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu23/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu23/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu23/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu23/acpi_cppc/lowest_nonlinear_perf:103
@@ -350,6 +394,7 @@
 /sys/devices/system/cpu/cpu23/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu23/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu23/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu24/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu24/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu24/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu24/acpi_cppc/lowest_nonlinear_perf:103
@@ -358,6 +403,7 @@
 /sys/devices/system/cpu/cpu24/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu24/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu24/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu25/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu25/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu25/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu25/acpi_cppc/lowest_nonlinear_perf:103
@@ -366,6 +412,7 @@
 /sys/devices/system/cpu/cpu25/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu25/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu25/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu26/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu26/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu26/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu26/acpi_cppc/lowest_nonlinear_perf:103
@@ -374,6 +421,7 @@
 /sys/devices/system/cpu/cpu26/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu26/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu26/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu27/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu27/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu27/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu27/acpi_cppc/lowest_nonlinear_perf:103
@@ -382,6 +430,7 @@
 /sys/devices/system/cpu/cpu27/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu27/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu27/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu28/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu28/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu28/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu28/acpi_cppc/lowest_nonlinear_perf:103
@@ -390,6 +439,7 @@
 /sys/devices/system/cpu/cpu28/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu28/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu28/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu29/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu29/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu29/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu29/acpi_cppc/lowest_nonlinear_perf:103
@@ -398,6 +448,7 @@
 /sys/devices/system/cpu/cpu29/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu29/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu29/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu2/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu2/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu2/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu2/acpi_cppc/lowest_nonlinear_perf:103
@@ -406,6 +457,7 @@
 /sys/devices/system/cpu/cpu2/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu2/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu2/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu30/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu30/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu30/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu30/acpi_cppc/lowest_nonlinear_perf:103
@@ -414,6 +466,7 @@
 /sys/devices/system/cpu/cpu30/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu30/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu30/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu31/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu31/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu31/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu31/acpi_cppc/lowest_nonlinear_perf:103
@@ -422,6 +475,7 @@
 /sys/devices/system/cpu/cpu31/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu31/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu31/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu32/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu32/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu32/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu32/acpi_cppc/lowest_nonlinear_perf:103
@@ -430,6 +484,7 @@
 /sys/devices/system/cpu/cpu32/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu32/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu32/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu33/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu33/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu33/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu33/acpi_cppc/lowest_nonlinear_perf:103
@@ -438,6 +493,7 @@
 /sys/devices/system/cpu/cpu33/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu33/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu33/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu34/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu34/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu34/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu34/acpi_cppc/lowest_nonlinear_perf:103
@@ -446,6 +502,7 @@
 /sys/devices/system/cpu/cpu34/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu34/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu34/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu35/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu35/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu35/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu35/acpi_cppc/lowest_nonlinear_perf:103
@@ -454,6 +511,7 @@
 /sys/devices/system/cpu/cpu35/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu35/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu35/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu36/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu36/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu36/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu36/acpi_cppc/lowest_nonlinear_perf:103
@@ -462,6 +520,7 @@
 /sys/devices/system/cpu/cpu36/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu36/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu36/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu37/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu37/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu37/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu37/acpi_cppc/lowest_nonlinear_perf:103
@@ -470,6 +529,7 @@
 /sys/devices/system/cpu/cpu37/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu37/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu37/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu38/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu38/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu38/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu38/acpi_cppc/lowest_nonlinear_perf:103
@@ -478,6 +538,7 @@
 /sys/devices/system/cpu/cpu38/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu38/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu38/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu39/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu39/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu39/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu39/acpi_cppc/lowest_nonlinear_perf:103
@@ -486,6 +547,7 @@
 /sys/devices/system/cpu/cpu39/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu39/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu39/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu3/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu3/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu3/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu3/acpi_cppc/lowest_nonlinear_perf:103
@@ -494,6 +556,7 @@
 /sys/devices/system/cpu/cpu3/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu3/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu3/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu40/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu40/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu40/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu40/acpi_cppc/lowest_nonlinear_perf:103
@@ -502,6 +565,7 @@
 /sys/devices/system/cpu/cpu40/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu40/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu40/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu41/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu41/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu41/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu41/acpi_cppc/lowest_nonlinear_perf:103
@@ -510,6 +574,7 @@
 /sys/devices/system/cpu/cpu41/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu41/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu41/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu42/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu42/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu42/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu42/acpi_cppc/lowest_nonlinear_perf:103
@@ -518,6 +583,7 @@
 /sys/devices/system/cpu/cpu42/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu42/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu42/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu43/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu43/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu43/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu43/acpi_cppc/lowest_nonlinear_perf:103
@@ -526,6 +592,7 @@
 /sys/devices/system/cpu/cpu43/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu43/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu43/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu44/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu44/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu44/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu44/acpi_cppc/lowest_nonlinear_perf:103
@@ -534,6 +601,7 @@
 /sys/devices/system/cpu/cpu44/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu44/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu44/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu45/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu45/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu45/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu45/acpi_cppc/lowest_nonlinear_perf:103
@@ -542,6 +610,7 @@
 /sys/devices/system/cpu/cpu45/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu45/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu45/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu46/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu46/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu46/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu46/acpi_cppc/lowest_nonlinear_perf:103
@@ -550,6 +619,7 @@
 /sys/devices/system/cpu/cpu46/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu46/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu46/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu47/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu47/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu47/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu47/acpi_cppc/lowest_nonlinear_perf:103
@@ -558,6 +628,7 @@
 /sys/devices/system/cpu/cpu47/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu47/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu47/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu48/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu48/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu48/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu48/acpi_cppc/lowest_nonlinear_perf:103
@@ -566,6 +637,7 @@
 /sys/devices/system/cpu/cpu48/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu48/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu48/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu49/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu49/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu49/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu49/acpi_cppc/lowest_nonlinear_perf:103
@@ -574,6 +646,7 @@
 /sys/devices/system/cpu/cpu49/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu49/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu49/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu4/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu4/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu4/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu4/acpi_cppc/lowest_nonlinear_perf:103
@@ -582,6 +655,7 @@
 /sys/devices/system/cpu/cpu4/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu4/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu4/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu50/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu50/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu50/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu50/acpi_cppc/lowest_nonlinear_perf:103
@@ -590,6 +664,7 @@
 /sys/devices/system/cpu/cpu50/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu50/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu50/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu51/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu51/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu51/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu51/acpi_cppc/lowest_nonlinear_perf:103
@@ -598,6 +673,7 @@
 /sys/devices/system/cpu/cpu51/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu51/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu51/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu52/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu52/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu52/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu52/acpi_cppc/lowest_nonlinear_perf:103
@@ -606,6 +682,7 @@
 /sys/devices/system/cpu/cpu52/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu52/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu52/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu53/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu53/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu53/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu53/acpi_cppc/lowest_nonlinear_perf:103
@@ -614,6 +691,7 @@
 /sys/devices/system/cpu/cpu53/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu53/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu53/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu54/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu54/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu54/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu54/acpi_cppc/lowest_nonlinear_perf:103
@@ -622,6 +700,7 @@
 /sys/devices/system/cpu/cpu54/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu54/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu54/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu55/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu55/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu55/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu55/acpi_cppc/lowest_nonlinear_perf:103
@@ -630,6 +709,7 @@
 /sys/devices/system/cpu/cpu55/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu55/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu55/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu56/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu56/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu56/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu56/acpi_cppc/lowest_nonlinear_perf:103
@@ -638,6 +718,7 @@
 /sys/devices/system/cpu/cpu56/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu56/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu56/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu57/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu57/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu57/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu57/acpi_cppc/lowest_nonlinear_perf:103
@@ -646,6 +727,7 @@
 /sys/devices/system/cpu/cpu57/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu57/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu57/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu58/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu58/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu58/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu58/acpi_cppc/lowest_nonlinear_perf:103
@@ -654,6 +736,7 @@
 /sys/devices/system/cpu/cpu58/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu58/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu58/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu59/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu59/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu59/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu59/acpi_cppc/lowest_nonlinear_perf:103
@@ -662,6 +745,7 @@
 /sys/devices/system/cpu/cpu59/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu59/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu59/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu5/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu5/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu5/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu5/acpi_cppc/lowest_nonlinear_perf:103
@@ -670,6 +754,7 @@
 /sys/devices/system/cpu/cpu5/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu5/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu5/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu60/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu60/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu60/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu60/acpi_cppc/lowest_nonlinear_perf:103
@@ -678,6 +763,7 @@
 /sys/devices/system/cpu/cpu60/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu60/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu60/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu61/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu61/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu61/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu61/acpi_cppc/lowest_nonlinear_perf:103
@@ -686,6 +772,7 @@
 /sys/devices/system/cpu/cpu61/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu61/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu61/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu62/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu62/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu62/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu62/acpi_cppc/lowest_nonlinear_perf:103
@@ -694,6 +781,7 @@
 /sys/devices/system/cpu/cpu62/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu62/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu62/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu63/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu63/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu63/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu63/acpi_cppc/lowest_nonlinear_perf:103
@@ -702,6 +790,7 @@
 /sys/devices/system/cpu/cpu63/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu63/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu63/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu64/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu64/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu64/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu64/acpi_cppc/lowest_nonlinear_perf:103
@@ -710,6 +799,7 @@
 /sys/devices/system/cpu/cpu64/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu64/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu64/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu65/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu65/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu65/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu65/acpi_cppc/lowest_nonlinear_perf:103
@@ -718,6 +808,7 @@
 /sys/devices/system/cpu/cpu65/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu65/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu65/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu66/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu66/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu66/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu66/acpi_cppc/lowest_nonlinear_perf:103
@@ -726,6 +817,7 @@
 /sys/devices/system/cpu/cpu66/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu66/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu66/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu67/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu67/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu67/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu67/acpi_cppc/lowest_nonlinear_perf:103
@@ -734,6 +826,7 @@
 /sys/devices/system/cpu/cpu67/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu67/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu67/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu68/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu68/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu68/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu68/acpi_cppc/lowest_nonlinear_perf:103
@@ -742,6 +835,7 @@
 /sys/devices/system/cpu/cpu68/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu68/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu68/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu69/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu69/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu69/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu69/acpi_cppc/lowest_nonlinear_perf:103
@@ -750,6 +844,7 @@
 /sys/devices/system/cpu/cpu69/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu69/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu69/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu6/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu6/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu6/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu6/acpi_cppc/lowest_nonlinear_perf:103
@@ -758,6 +853,7 @@
 /sys/devices/system/cpu/cpu6/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu6/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu6/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu70/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu70/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu70/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu70/acpi_cppc/lowest_nonlinear_perf:103
@@ -766,6 +862,7 @@
 /sys/devices/system/cpu/cpu70/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu70/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu70/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu71/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu71/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu71/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu71/acpi_cppc/lowest_nonlinear_perf:103
@@ -774,6 +871,7 @@
 /sys/devices/system/cpu/cpu71/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu71/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu71/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu72/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu72/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu72/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu72/acpi_cppc/lowest_nonlinear_perf:103
@@ -782,6 +880,7 @@
 /sys/devices/system/cpu/cpu72/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu72/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu72/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu73/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu73/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu73/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu73/acpi_cppc/lowest_nonlinear_perf:103
@@ -790,6 +889,7 @@
 /sys/devices/system/cpu/cpu73/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu73/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu73/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu74/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu74/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu74/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu74/acpi_cppc/lowest_nonlinear_perf:103
@@ -798,6 +898,7 @@
 /sys/devices/system/cpu/cpu74/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu74/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu74/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu75/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu75/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu75/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu75/acpi_cppc/lowest_nonlinear_perf:103
@@ -806,6 +907,7 @@
 /sys/devices/system/cpu/cpu75/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu75/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu75/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu76/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu76/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu76/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu76/acpi_cppc/lowest_nonlinear_perf:103
@@ -814,6 +916,7 @@
 /sys/devices/system/cpu/cpu76/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu76/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu76/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu77/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu77/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu77/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu77/acpi_cppc/lowest_nonlinear_perf:103
@@ -822,6 +925,7 @@
 /sys/devices/system/cpu/cpu77/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu77/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu77/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu78/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu78/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu78/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu78/acpi_cppc/lowest_nonlinear_perf:103
@@ -830,6 +934,7 @@
 /sys/devices/system/cpu/cpu78/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu78/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu78/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu79/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu79/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu79/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu79/acpi_cppc/lowest_nonlinear_perf:103
@@ -838,6 +943,7 @@
 /sys/devices/system/cpu/cpu79/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu79/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu79/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu7/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu7/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu7/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu7/acpi_cppc/lowest_nonlinear_perf:103
@@ -846,6 +952,7 @@
 /sys/devices/system/cpu/cpu7/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu7/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu7/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu80/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu80/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu80/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu80/acpi_cppc/lowest_nonlinear_perf:103
@@ -854,6 +961,7 @@
 /sys/devices/system/cpu/cpu80/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu80/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu80/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu81/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu81/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu81/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu81/acpi_cppc/lowest_nonlinear_perf:103
@@ -862,6 +970,7 @@
 /sys/devices/system/cpu/cpu81/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu81/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu81/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu82/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu82/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu82/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu82/acpi_cppc/lowest_nonlinear_perf:103
@@ -870,6 +979,7 @@
 /sys/devices/system/cpu/cpu82/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu82/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu82/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu83/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu83/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu83/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu83/acpi_cppc/lowest_nonlinear_perf:103
@@ -878,6 +988,7 @@
 /sys/devices/system/cpu/cpu83/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu83/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu83/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu84/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu84/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu84/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu84/acpi_cppc/lowest_nonlinear_perf:103
@@ -886,6 +997,7 @@
 /sys/devices/system/cpu/cpu84/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu84/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu84/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu85/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu85/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu85/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu85/acpi_cppc/lowest_nonlinear_perf:103
@@ -894,6 +1006,7 @@
 /sys/devices/system/cpu/cpu85/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu85/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu85/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu86/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu86/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu86/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu86/acpi_cppc/lowest_nonlinear_perf:103
@@ -902,6 +1015,7 @@
 /sys/devices/system/cpu/cpu86/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu86/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu86/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu87/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu87/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu87/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu87/acpi_cppc/lowest_nonlinear_perf:103
@@ -910,6 +1024,7 @@
 /sys/devices/system/cpu/cpu87/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu87/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu87/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu88/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu88/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu88/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu88/acpi_cppc/lowest_nonlinear_perf:103
@@ -918,6 +1033,7 @@
 /sys/devices/system/cpu/cpu88/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu88/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu88/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu89/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu89/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu89/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu89/acpi_cppc/lowest_nonlinear_perf:103
@@ -926,6 +1042,7 @@
 /sys/devices/system/cpu/cpu89/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu89/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu89/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu8/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu8/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu8/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu8/acpi_cppc/lowest_nonlinear_perf:103
@@ -934,6 +1051,7 @@
 /sys/devices/system/cpu/cpu8/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu8/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu8/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu90/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu90/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu90/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu90/acpi_cppc/lowest_nonlinear_perf:103
@@ -942,6 +1060,7 @@
 /sys/devices/system/cpu/cpu90/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu90/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu90/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu91/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu91/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu91/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu91/acpi_cppc/lowest_nonlinear_perf:103
@@ -950,6 +1069,7 @@
 /sys/devices/system/cpu/cpu91/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu91/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu91/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu92/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu92/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu92/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu92/acpi_cppc/lowest_nonlinear_perf:103
@@ -958,6 +1078,7 @@
 /sys/devices/system/cpu/cpu92/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu92/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu92/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu93/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu93/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu93/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu93/acpi_cppc/lowest_nonlinear_perf:103
@@ -966,6 +1087,7 @@
 /sys/devices/system/cpu/cpu93/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu93/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu93/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu94/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu94/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu94/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu94/acpi_cppc/lowest_nonlinear_perf:103
@@ -974,6 +1096,7 @@
 /sys/devices/system/cpu/cpu94/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu94/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu94/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu95/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu95/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu95/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu95/acpi_cppc/lowest_nonlinear_perf:103
@@ -982,6 +1105,7 @@
 /sys/devices/system/cpu/cpu95/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu95/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu95/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu96/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu96/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu96/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu96/acpi_cppc/lowest_nonlinear_perf:103
@@ -990,6 +1114,7 @@
 /sys/devices/system/cpu/cpu96/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu96/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu96/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu97/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu97/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu97/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu97/acpi_cppc/lowest_nonlinear_perf:103
@@ -998,6 +1123,7 @@
 /sys/devices/system/cpu/cpu97/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu97/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu97/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu98/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu98/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu98/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu98/acpi_cppc/lowest_nonlinear_perf:103
@@ -1006,6 +1132,7 @@
 /sys/devices/system/cpu/cpu98/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu98/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu98/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu99/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu99/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu99/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu99/acpi_cppc/lowest_nonlinear_perf:103
@@ -1014,6 +1141,7 @@
 /sys/devices/system/cpu/cpu99/acpi_cppc/nominal_perf:191
 /sys/devices/system/cpu/cpu99/acpi_cppc/reference_perf:191
 /sys/devices/system/cpu/cpu99/acpi_cppc/wraparound_time:18446744073709551615
+/sys/devices/system/cpu/cpu9/acpi_cppc/guaranteed_perf:0
 /sys/devices/system/cpu/cpu9/acpi_cppc/highest_perf:255
 /sys/devices/system/cpu/cpu9/acpi_cppc/lowest_freq:400
 /sys/devices/system/cpu/cpu9/acpi_cppc/lowest_nonlinear_perf:103

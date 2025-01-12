@@ -11,6 +11,14 @@
 /sys/devices/system/cpu/cpu10/online:1
 /sys/devices/system/cpu/cpu110/online:1
 /sys/devices/system/cpu/cpu111/online:1
+/sys/devices/system/cpu/cpu112/online:1
+/sys/devices/system/cpu/cpu113/online:1
+/sys/devices/system/cpu/cpu114/online:1
+/sys/devices/system/cpu/cpu115/online:1
+/sys/devices/system/cpu/cpu116/online:1
+/sys/devices/system/cpu/cpu117/online:1
+/sys/devices/system/cpu/cpu118/online:1
+/sys/devices/system/cpu/cpu119/online:1
 /sys/devices/system/cpu/cpu11/online:1
 /sys/devices/system/cpu/cpu12/online:1
 /sys/devices/system/cpu/cpu13/online:1

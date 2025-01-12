@@ -12,6 +12,14 @@
 /sys/devices/system/cpu/cpufreq/policy10/energy_performance_available_preferences:default performance balance_performance balance_power power 
 /sys/devices/system/cpu/cpufreq/policy110/energy_performance_available_preferences:default performance balance_performance balance_power power 
 /sys/devices/system/cpu/cpufreq/policy111/energy_performance_available_preferences:default performance balance_performance balance_power power 
+/sys/devices/system/cpu/cpufreq/policy112/energy_performance_available_preferences:default performance balance_performance balance_power power 
+/sys/devices/system/cpu/cpufreq/policy113/energy_performance_available_preferences:default performance balance_performance balance_power power 
+/sys/devices/system/cpu/cpufreq/policy114/energy_performance_available_preferences:default performance balance_performance balance_power power 
+/sys/devices/system/cpu/cpufreq/policy115/energy_performance_available_preferences:default performance balance_performance balance_power power 
+/sys/devices/system/cpu/cpufreq/policy116/energy_performance_available_preferences:default performance balance_performance balance_power power 
+/sys/devices/system/cpu/cpufreq/policy117/energy_performance_available_preferences:default performance balance_performance balance_power power 
+/sys/devices/system/cpu/cpufreq/policy118/energy_performance_available_preferences:default performance balance_performance balance_power power 
+/sys/devices/system/cpu/cpufreq/policy119/energy_performance_available_preferences:default performance balance_performance balance_power power 
 /sys/devices/system/cpu/cpufreq/policy11/energy_performance_available_preferences:default performance balance_performance balance_power power 
 /sys/devices/system/cpu/cpufreq/policy12/energy_performance_available_preferences:default performance balance_performance balance_power power 
 /sys/devices/system/cpu/cpufreq/policy13/energy_performance_available_preferences:default performance balance_performance balance_power power 
