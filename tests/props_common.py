@@ -68,12 +68,6 @@ def get_good_cpunum_opts(params, sname="package"):
             pkg_dies_range_partial = Human.rangify(params["dies"][pkg][:-1])
             opts.append(f"--packages {pkg} --dies {pkg_dies_range_partial}")
 
-            if len(params["packages"]) > 1:
-                pkgs_range_partial = Human.rangify(params["packages"][1:])
-                opts.append(f"--packages {pkgs_range_partial} --dies {first_die}")
-                pkg_dies_range_partial = Human.rangify(params["dies"][pkg][1:])
-                opts.append(f"--packages {pkgs_range_partial} --dies {pkg_dies_range_partial}")
-
         return opts
 
     def _get_module_opts(params, pkg):
