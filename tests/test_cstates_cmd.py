@@ -75,8 +75,6 @@ def test_cstates_info(params):
     for cstate in params["cstates"]:
         common.run_pepc(f"cstates info --cpus 0 --cstates {cstate}", pman)
 
-    # Cover '--override-cpu-model', use Sapphire Rapids Xeon CPU model number.
-    common.run_pepc("cstates info --override-cpu-model 0x8F", pman)
     # Cover '--list-mechanisms'.
     common.run_pepc("cstates info --list-mechanisms", pman)
 

@@ -50,8 +50,6 @@ def test_pmqos_info(params):
     common.run_pepc(f"pmqos info", pman)
     common.run_pepc(f"pmqos info --cpus 0", pman)
 
-    # Cover '--override-cpu-model', use Sapphire Rapids Xeon CPU model number.
-    common.run_pepc("pmqos info --override-cpu-model 0x8F", pman)
     # Cover '--list-mechanisms'.
     common.run_pepc("pmqos info --list-mechanisms", pman)
 

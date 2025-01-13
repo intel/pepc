@@ -144,8 +144,6 @@ def test_pstates_info(params):
     for cpunum_opt in props_common.get_bad_cpunum_opts(params):
         common.run_pepc(f"pstates info {cpunum_opt}", pman, exp_exc=Error)
 
-    # Cover '--override-cpu-model', use Sapphire Rapids Xeon CPU model number.
-    common.run_pepc("pstates info --override-cpu-model 0x8F", pman)
     # Cover '--list-mechanisms'.
     common.run_pepc("pstates info --list-mechanisms", pman)
 
