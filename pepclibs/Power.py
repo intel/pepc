@@ -163,7 +163,7 @@ class Power(_PropsClassBase.PropsClassBase):
         for (cpu, tdp), (_, check_ppl_val) in iterator:
             if pname == "ppl1":
                 minval = tdp / 8
-                maxval = tdp
+                maxval = tdp * 2
                 if fval > check_ppl_val:
                     raise Error(f"cannot set CPU{cpu} {name} to {fval}W{self._pman.hostmsg} - it "
                                 f"is higher than current RAPL PPL2 value {check_ppl_val}W")
@@ -171,7 +171,7 @@ class Power(_PropsClassBase.PropsClassBase):
                 # Apply a reasonable limit for PPL2. This is empirical limit, based on general
                 # observations.
                 minval = tdp / 8
-                maxval = tdp * 4
+                maxval = tdp * 5
                 if fval < check_ppl_val:
                     raise Error(f"cannot set CPU{cpu} {name} to {fval}W{self._pman.hostmsg} - it "
                                 f"is lower than current RAPL PPL1 value {check_ppl_val}W")
