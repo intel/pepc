@@ -7,6 +7,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
 ### Added
  - Add PM QoS support.
+ - Require python version 3.9 (was 3.8).
 ### Removed
 ### Changed
 
