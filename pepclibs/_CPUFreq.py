@@ -15,7 +15,7 @@ This module provides a capability of reading and changing CPU frequency.
 import logging
 import contextlib
 from pathlib import Path
-from pepclibs import CPUInfo, _SysfsIO
+from pepclibs import CPUInfo, CPUModels, _SysfsIO
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
 from pepclibs.msr import TurboRatioLimit, HWPCapabilities
@@ -1219,6 +1219,19 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         pmenable = self._get_pmenable()
         yield from pmenable.is_feature_enabled("hwp", cpus=cpus)
 
+    def _init_scaling_factor(self):
+        """
+        Initialize the performance-to-frequency scaling factor for hybrid platforms.
+        """
+
+        if self._cpuinfo.ifno["model"] in CPUModels.MODEL_GROUPS["METEORLAKE"]:
+            self._perf_to_freq_factor = 80000000
+        elif self._cpuinfo.ifno["model"] in CPUModels.MODEL_GROUPS["LUNARRLAKE"]:
+            self._perf_to_freq_factor = 86957000
+        else:
+            # ADL and RPL.
+            self._perf_to_freq_factor = 78741000
+
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
         """
         The class constructor. The argument are as follows.
@@ -1244,9 +1257,9 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         self._platinfo = None
         self._trl = None
 
-        # Performance to frequency factor.
-        self._perf_to_freq_factor = 78740157
         self._pcore_cpus = set()
+        # Performance to frequency factor.
+        self._perf_to_freq_factor = None
 
         if not self._pman:
             self._pman = LocalProcessManager.LocalProcessManager()
@@ -1255,6 +1268,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
         if self._cpuinfo.info["hybrid"]:
+            self._init_scaling_factor()
             _, pcore_cpus = self._cpuinfo.get_hybrid_cpus()
             self._pcore_cpus = set(pcore_cpus)
 

@@ -306,6 +306,7 @@ MODELS = {
 # Various handy combinations of CPU models.
 #
 MODEL_GROUPS = {
+    "LUNARLAKE": (MODELS["METEORLAKE"]["model"],),
     "GNR":        (MODELS["GRANITERAPIDS_X"]["model"],
                    MODELS["GRANITERAPIDS_D"]["model"]),
     "EMR":        (MODELS["EMERALDRAPIDS_X"]["model"],),
