@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix frequency reporting via MSR on Meteor Lake and Lunar Lake.
 ### Added
  - Add PM QoS support.
  - Require python version 3.9 (was 3.8).
