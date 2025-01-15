@@ -15,8 +15,14 @@ uniform manner. However, over time, the process manager grew file I/O-related op
 as if it was a local host.
 """
 
+import typing
 import contextlib
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs import LocalProcessManager, SSHProcessManager, EmulProcessManager
+
+ProcessManagerType = typing.Union[LocalProcessManager.LocalProcessManager,
+                                  SSHProcessManager.SSHProcessManager,
+                                  EmulProcessManager.EmulProcessManager]
 
 def _check_for_none(hostname, **kwargs):
     """
@@ -28,7 +34,7 @@ def _check_for_none(hostname, **kwargs):
             raise Error(f"BUG: get_pman: hostname is '{hostname}', but argument '{name}' is not "
                         f"'None'. Instead, it is '{val}'")
 
-def get_pman(hostname, username=None, privkeypath=None, timeout=None):
+def get_pman(hostname, username=None, privkeypath=None, timeout=None) -> ProcessManagerType:
     """
     Creates and returns a process manager object for host 'hostname'. At the moment there are
     basically 3 possibilities.
@@ -69,21 +75,14 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None):
               pman.close()
     """
 
-    # pylint: disable=import-outside-toplevel
+    pman: ProcessManagerType | None = None
 
     if hostname == "localhost" and username is None:
         _check_for_none(hostname, username=username, privkeypath=privkeypath, timeout=timeout)
-
-        from pepclibs.helperlibs import LocalProcessManager
-
         pman = LocalProcessManager.LocalProcessManager()
     elif hostname.startswith("emulation"):
-        from pepclibs.helperlibs import EmulProcessManager
-
         pman = EmulProcessManager.EmulProcessManager(hostname=hostname)
     else:
-        from pepclibs.helperlibs import SSHProcessManager
-
         pman = SSHProcessManager.SSHProcessManager(hostname=hostname, username=username,
                                                    privkeypath=privkeypath, timeout=timeout)
 
@@ -112,7 +111,5 @@ def pman_or_local(pman):
 
     if pman:
         return contextlib.nullcontext(enter_result=pman)
-
-    from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
 
     return LocalProcessManager.LocalProcessManager()
