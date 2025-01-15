@@ -1,7 +1,7 @@
 %bcond_without tests
 
 Name:		pepc
-Version:	1.5.22
+Version:	1.5.23
 Release:	1%{?dist}
 Summary:	Power, Energy, and Performance configuration tool
 

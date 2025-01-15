@@ -14,7 +14,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "CSTATES" "" "09-03-2023" "" ""
+.TH "C-states" "" "" "" ""
 .hy
 .SH Command \f[I]\[aq]cstates\[aq]\f[R]
 .SS General options
@@ -137,7 +137,7 @@ In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index
 .SS Subcommand \f[I]\[aq]info\[aq]\f[R]
 .PP
 Get information about C-states on specified CPUs.
-By default, prints all information for all CPUs.
+By default, print all information about all CPUs.
 .PP
 Use target CPU specification options to specify the subset of CPUs,
 cores, dies, or packages.
@@ -273,7 +273,8 @@ Use target CPU specification options to specify the subset of CPUs,
 cores, dies, or packages.
 .TP
 \f[B]-o\f[R] \f[I]OUTFILE\f[R], \f[B]--outfile\f[R] \f[I]OUTFILE\f[R]
-Name of the file to save the settings to.
+Name of the file to save the settings to (print to standard output by
+default).
 .SS Subcommand \f[I]\[aq]restore\[aq]\f[R]
 .PP
 Restore C-state settings from a file previously created with the

@@ -1,3 +1,11 @@
+pepc (1.5.23) unstable; urgency=low
+
+  * Fix frequency reporting via MSR on Meteor Lake and Lunar Lake.
+  * Add PM QoS support.
+  * Require python version 3.9 (was 3.8).
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 15 Jan 2025 00:00:00 +0200
+
 pepc (1.5.22) unstable; urgency=low
 
   * Fix min. and max. uncore frequency support on Granite Rapids and Sierra
