@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix crashes caused by typos in v1.5.23.
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.24] - 2025-01-16
+### Fixed
+ - Fix crashes caused by typos in v1.5.23.
 
 ## [1.5.23] - 2025-01-15
 ### Fixed
