@@ -163,10 +163,15 @@ def num2si(value, unit=None, sep="", decp=1):
 
     result = f"%.{decp}f" % value
     result = result.rstrip("0").rstrip(".")
-    if pfx:
+
+    # Avoid things like 0nHz. If the result is 0 after the rounding, do not add the SI prefix.
+    if pfx and float(result) != 0:
         result += sep + pfx
-    if base_unit:
-        result += base_unit
+        if base_unit:
+            result += base_unit
+    elif base_unit:
+            result += sep + base_unit
+
     return result
 
 def scale_si_val(val, unit):
