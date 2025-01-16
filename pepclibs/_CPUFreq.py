@@ -1226,7 +1226,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         if self._cpuinfo.info["model"] in CPUModels.MODEL_GROUPS["METEORLAKE"]:
             self._perf_to_freq_factor = 80000000
-        elif self._cpuinfo.info["model"] in CPUModels.MODEL_GROUPS["LUNARRLAKE"]:
+        elif self._cpuinfo.info["model"] in CPUModels.MODEL_GROUPS["LUNARLAKE"]:
             self._perf_to_freq_factor = 86957000
         else:
             # ADL and RPL.
