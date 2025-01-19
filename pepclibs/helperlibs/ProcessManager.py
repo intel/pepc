@@ -15,14 +15,14 @@ uniform manner. However, over time, the process manager grew file I/O-related op
 as if it was a local host.
 """
 
-import typing
+from __future__ import annotations # Remove when switching to Python 3.10+.
 import contextlib
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import LocalProcessManager, SSHProcessManager, EmulProcessManager
 
-ProcessManagerType = typing.Union[LocalProcessManager.LocalProcessManager,
-                                  SSHProcessManager.SSHProcessManager,
-                                  EmulProcessManager.EmulProcessManager]
+ProcessManagerType = LocalProcessManager.LocalProcessManager | \
+                     SSHProcessManager.SSHProcessManager | \
+                     EmulProcessManager.EmulProcessManager
 
 def _check_for_none(hostname, **kwargs):
     """
