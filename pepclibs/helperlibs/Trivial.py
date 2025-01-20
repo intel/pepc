@@ -13,7 +13,7 @@ Common trivial helpers.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 import os
 import pwd
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat
 
 def is_root() -> bool:
     """
@@ -95,6 +95,9 @@ def str_to_int(snum: str | int, base: int = 0, what: str | None = None) -> int:
 
     Returns:
         int: The converted integer value.
+
+    Raises:
+        ErrorBadFormat: If 'snum' cannot be converted to an integer.
     """
 
     try:
@@ -117,7 +120,7 @@ def str_to_int(snum: str | int, base: int = 0, what: str | None = None) -> int:
             msg = f"a base {base} integer"
         else:
             msg = "an integer"
-        raise Error(f"Bad {what} '{snum}': should be {msg}") from None
+        raise ErrorBadFormat(f"Bad {what} '{snum}': should be {msg}") from None
 
     return num
 
@@ -131,6 +134,9 @@ def str_to_num(snum: str | int, what: str | None = None) -> int | float:
 
     Returns:
         int or float: The converted numeric value.
+
+    Raises:
+        ErrorBadFormat: If 'snum' cannot be converted to a numeric value.
     """
 
     try:
@@ -142,7 +148,7 @@ def str_to_num(snum: str | int, what: str | None = None) -> int | float:
             if what is None:
                 what = "value"
             pfx = f"Bad {what} '{snum}'"
-            raise Error(f"{pfx}: should be an integer or floating point number") from None
+            raise ErrorBadFormat(f"{pfx}: should be an integer or floating point number") from None
 
 def is_int(value: str | int, base: int = 0) -> bool:
     """
@@ -326,6 +332,9 @@ def split_csv_line_int(csv_line: str, sep: str = ",", dedup: bool = False, base:
     Returns:
         list: A list of integer values.
 
+    Raises:
+        ErrorBadFormat: If 'csv_line' cannot be converted to a list of integers.
+
     Example:
         Input: csv_line = "0,1-3,7"
         Output: [0, 1, 2, 3, 7].
@@ -343,13 +352,13 @@ def split_csv_line_int(csv_line: str, sep: str = ",", dedup: bool = False, base:
 
         range_vals = [range_val for range_val in val.split("-") if range_val]
         if len(range_vals) != 2:
-            raise Error(f"Bad {what} '{csv_line}': error in '{val}': should be two integers "
-                        f"separated by '-'")
+            raise ErrorBadFormat(f"Bad {what} '{csv_line}': error in '{val}': should be two "
+                                 f"integers separated by '-'")
 
         rvals = [str_to_int(rval, base=base, what=what) for rval in range_vals]
         if rvals[0] > rvals[1]:
-            raise Error(f"Bad {what} '{csv_line}': error in range '{val}': the first number should "
-                        f"be smaller than the second")
+            raise ErrorBadFormat(f"Bad {what} '{csv_line}': error in range '{val}': the first "
+                                 f"number should be smaller than the second")
 
         result += range(rvals[0], rvals[1] + 1)
 
