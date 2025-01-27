@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix compatibility with python <= 3.10.
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.26] - 2025-01-27
+### Fixed
+ - Fix compatibility with python <= 3.10.
 
 ## [1.5.25] - 2025-01-16
 ### Fixed

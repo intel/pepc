@@ -1,3 +1,9 @@
+pepc (1.5.26) unstable; urgency=low
+
+  * Fix compatibility with python <= 3.10.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Mon, 27 Jan 2025 00:00:00 +0200
+
 pepc (1.5.25) unstable; urgency=low
 
   * Fix another crash caused by a typo in v1.5.23.
