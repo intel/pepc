@@ -11,6 +11,7 @@ Common trivial helpers.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import os
 import pwd
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat
