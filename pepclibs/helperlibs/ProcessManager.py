@@ -24,6 +24,8 @@ ProcessManagerType = Union[LocalProcessManager.LocalProcessManager,
                            SSHProcessManager.SSHProcessManager,
                            EmulProcessManager.EmulProcessManager]
 
+ProcessType = Union[LocalProcessManager.LocalProcess, SSHProcessManager.SSHProcess]
+
 def _check_for_none(hostname, **kwargs):
     """
     A helper function that makes sure that argument 'kwargs' are all set to 'None'.
