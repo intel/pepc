@@ -68,12 +68,15 @@ SSH_OPTIONS = [
     },
 ]
 
-def add_ssh_options(parser):
+def add_ssh_options(parser, ssh_options=None):
     """
     Add the '--host', '--timeout' and other SSH-related options to argument parser object 'parser'.
     """
 
-    for opt in SSH_OPTIONS:
+    if not ssh_options:
+        ssh_options = SSH_OPTIONS
+
+    for opt in ssh_options:
         arg = parser.add_argument(opt["short"], opt["long"], **opt["kwargs"])
         if opt["argcomplete"] and argcomplete:
             setattr(arg, "completer", getattr(argcomplete.completers, opt["argcomplete"]))
