@@ -13,13 +13,12 @@ This module provides API for printing properties.
 """
 
 import sys
-import logging
 from pepctool import _PepcCommon
 from pepclibs import CStates
-from pepclibs.helperlibs import ClassHelpers, Human, YAML, Trivial
+from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     """The base class for printing properties."""

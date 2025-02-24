@@ -10,10 +10,10 @@
 Miscellaneous common helpers for class objects.
 """
 
-import logging
+from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNotFound
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class SimpleCloseContext():
     """

@@ -16,15 +16,14 @@ between different process manager implementations.
 import re
 import queue
 import codecs
-import logging
 import threading
 import contextlib
 from pathlib import Path
 from collections import namedtuple
-from pepclibs.helperlibs import Human, Trivial, ClassHelpers
+from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 # The default process timeout in seconds.
 TIMEOUT = 24 * 60 * 60
@@ -338,7 +337,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             timeout = self.timeout
 
         cmd = self.cmd
-        if _LOG.getEffectiveLevel() == logging.DEBUG:
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
             if self.cmd != self.real_cmd:
                 cmd += f"\nReal command: {self.real_cmd}"
 
@@ -529,7 +528,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     def _rsync_add_debug_opts(opts):
         """Add the '-v' option to rsync options 'opts' if debug-level logging is enabled."""
 
-        if _LOG.getEffectiveLevel() == logging.DEBUG:
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
             if opts:
                 opts = f"{opts} -v"
             else:
@@ -543,7 +542,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         If debug-level logging is enabled, log the 'stdout' output of the 'rsync' command.
         """
 
-        if stdout and _LOG.getEffectiveLevel() == logging.DEBUG:
+        if stdout and _LOG.getEffectiveLevel() == Logging.DEBUG:
             _LOG.debug("rsync output:\n%s", stdout)
 
     def rsync(self, src, dst, opts="-rlD", remotesrc=False, remotedst=False):

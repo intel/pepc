@@ -22,15 +22,14 @@ Terminology:
 # pylint: disable=arguments-differ
 # pylint: disable=arguments-renamed
 
-import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, Trivial, YAML
+from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulDevMSR, _RWFile, _EmulFile
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     """

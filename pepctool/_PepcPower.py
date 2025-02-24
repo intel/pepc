@@ -10,14 +10,14 @@
 Implement the 'pepc power' command.
 """
 
-import logging
 import contextlib
+from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import MSR
 from pepclibs import Power, CPUInfo
 from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 def power_info_command(args, pman):
     """

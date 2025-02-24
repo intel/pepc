@@ -14,10 +14,10 @@ This module provides convenient API for running Linux 'dmesg' tool.
 
 import itertools
 import difflib
-import logging
+from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class Dmesg(ClassHelpers.SimpleCloseContext):
     """This class provides convenient API to the 'dmesg' tool."""

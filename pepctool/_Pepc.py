@@ -13,7 +13,6 @@ pepc - Power, Energy, and Performance Configuration tool for Linux.
 
 import os
 import sys
-import logging
 import argparse
 from pathlib import Path
 
@@ -34,8 +33,9 @@ if sys.version_info < (3, 7):
 _VERSION = "1.5.26"
 TOOLNAME = "pepc"
 
-_LOG = logging.getLogger()
-Logging.setup_logger(prefix=TOOLNAME)
+# Note, logger name is the project name, not the tool name.
+_LOG = Logging.getLogger("pepc")
+_LOG.configure(prefix=TOOLNAME)
 
 _DATASET_OPTION = {
     "short": "-D",

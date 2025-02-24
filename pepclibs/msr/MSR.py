@@ -12,9 +12,9 @@ Provide a capability to read and write CPU Model Specific Registers.
 """
 
 import pprint
-import logging
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, FSHelpers, KernelModule, Trivial, ClassHelpers
+from pepclibs.helperlibs import Logging, LocalProcessManager, FSHelpers, KernelModule, Trivial
+from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed, ErrorNotFound
 from pepclibs import _PerCPUCache
 
@@ -24,7 +24,7 @@ _CPU_BYTEORDER = "little"
 # 'write_bits()'.
 ALL_BITS_1 = object()
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class MSR(ClassHelpers.SimpleCloseContext):
     """

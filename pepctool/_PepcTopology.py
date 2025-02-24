@@ -10,13 +10,12 @@
 Implement the 'pepc topology' command.
 """
 
-import logging
-from pepclibs.helperlibs import Trivial
+from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 from pepctool import _OpTarget
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 def _get_default_colnames(cpuinfo):
     """

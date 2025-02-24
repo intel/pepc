@@ -12,12 +12,12 @@ This module provides API to MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL). This is a mod
 found on many Intel platforms.
 """
 
-import logging
 from pepclibs import CPUModels
+from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import _FeaturedMSR
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 # Package C-state configuration control Model Specific Register.
 MSR_PKG_CST_CONFIG_CONTROL = 0xE2

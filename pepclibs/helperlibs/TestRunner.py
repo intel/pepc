@@ -9,11 +9,10 @@
 
 """This module contains helper functions for test runners."""
 
-import logging
 import sys
+from pepclibs.helperlibs import Logging
 
-logging.basicConfig(level=logging.DEBUG)
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 def run_tool(tool, toolname, arguments, pman=None, exp_exc=None, ignore=None):
     """

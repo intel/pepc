@@ -12,17 +12,16 @@
 This module provides a capability of reading and changing CPU frequency.
 """
 
-import logging
 import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, CPUModels, _SysfsIO
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, KernelVersion
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
 from pepclibs.msr import TurboRatioLimit, HWPCapabilities
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     """

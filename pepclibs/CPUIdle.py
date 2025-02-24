@@ -13,14 +13,13 @@ This class provides API for Linux "cpuidle" subsystem sysfs knobs.
 """
 
 import re
-import logging
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers
+from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs import CPUInfo, _PerCPUCache
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 # The C-state sysfs file names which are read by 'get_cstates_info()'. The C-state
 # information dictionary returned by 'get_cstates_info()' uses these file names as keys as well.

@@ -12,13 +12,12 @@ This module contains misc. helper functions related to file-system operations.
 
 import os
 import time
-import logging
 from pathlib import Path
 from collections import namedtuple
-from pepclibs.helperlibs import ProcessManager, Human
+from pepclibs.helperlibs import Logging, ProcessManager, Human
 from pepclibs.helperlibs.Exceptions import Error
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 # The debugfs mount point path.
 DEBUGFS_MOUNT_POINT = Path("/sys/kernel/debug")

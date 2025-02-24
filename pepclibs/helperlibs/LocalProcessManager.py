@@ -17,16 +17,15 @@ import time
 import shlex
 import errno
 import shutil
-import logging
 import subprocess
 from pathlib import Path
 from operator import itemgetter
-from pepclibs.helperlibs import _ProcessManagerBase, ClassHelpers
+from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class LocalProcess(_ProcessManagerBase.ProcessBase):
     """

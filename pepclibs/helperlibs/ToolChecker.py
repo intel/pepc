@@ -12,13 +12,12 @@ Provide a capability of checking if a tool is installed on a Linux host, and gen
 suggestion if the OS package is not installed.
 """
 
-import logging
 import contextlib
 from pathlib import Path
+from pepclibs.helperlibs import Logging, ClassHelpers
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
-from pepclibs.helperlibs import ClassHelpers
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 #
 # The tools information dictionary. Map tool names to OS package names.

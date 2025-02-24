@@ -11,12 +11,11 @@ This module provides the 'OpTarget' class, which represents the "target" of a pe
 terms of what CPU, core, module, die, or package numbers the operation should read or modify.
 """
 
-import logging
 from pepclibs import CPUInfo
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Human, Trivial
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Human, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class ErrorNoTarget(Error):
     """No operation target was specified or found."""
@@ -487,7 +486,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         if _cpus is not None:
             self._cache["cpus"] = _cpus
 
-        if _LOG.getEffectiveLevel() == logging.DEBUG:
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
             if self.cpus:
                 _LOG.debug("target CPUs: %s", Human.rangify(self.cpus))
             if self.cores:

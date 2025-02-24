@@ -10,13 +10,12 @@
 Implement the 'pepc cpu-hotplug' command.
 """
 
-import logging
+from pepclibs.helperlibs import Logging, Human
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import Human
 from pepclibs import CPUInfo, CPUOnline
 from pepctool import _PepcCommon, _OpTarget
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 def cpu_hotplug_info_command(_, pman):
     """
@@ -44,7 +43,7 @@ def cpu_hotplug_online_command(args, pman):
     if not args.cpus:
         raise Error("please, specify the CPUs to online")
 
-    with CPUOnline.CPUOnline(progress=logging.INFO, pman=pman) as onl:
+    with CPUOnline.CPUOnline(progress=Logging.INFO, pman=pman) as onl:
         onl.online(cpus=_PepcCommon.parse_cpus_string(args.cpus))
 
 def cpu_hotplug_offline_command(args, pman):
@@ -55,7 +54,7 @@ def cpu_hotplug_offline_command(args, pman):
     """
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CPUOnline.CPUOnline(progress=logging.INFO, pman=pman, cpuinfo=cpuinfo) as onl:
+         CPUOnline.CPUOnline(progress=Logging.INFO, pman=pman, cpuinfo=cpuinfo) as onl:
 
         # Some CPUs may not support offlining. Suppose it is CPU 0. If CPU 0 is in the 'cpus' list,
         # the 'onl.offline()' method will error out. This is OK in a situation when the user

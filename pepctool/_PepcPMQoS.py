@@ -10,13 +10,13 @@
 Implement the 'pepc pmqos' command.
 """
 
-import logging
 import contextlib
+from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import PMQoS, CPUInfo, _SysfsIO
 from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 def pmqos_info_command(args, pman):
     """

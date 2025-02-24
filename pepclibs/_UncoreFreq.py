@@ -30,14 +30,14 @@ same as die IDs, and in this project uncore domains are referred to as "dies".
 """
 
 import re
-import logging
 from pathlib import Path
 from pepclibs import _SysfsIO
 from pepclibs.msr import UncoreRatioLimit
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, KernelModule, FSHelpers, Trivial
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, KernelModule, FSHelpers
+from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
     """

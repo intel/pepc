@@ -11,12 +11,11 @@ Implement the 'pepc tpmi' command.
 """
 
 import sys
-import logging
 from pepclibs import Tpmi
-from pepclibs.helperlibs import Human, Trivial, YAML
+from pepclibs.helperlibs import Logging, Human, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 def _ls_long(fname, tpmi, prefix=""):
     """Print extra information about feature 'fname' (in case of the 'tpmi ls -l' command)."""

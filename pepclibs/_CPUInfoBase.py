@@ -12,15 +12,14 @@ Provide the base class for the 'CPUInfo.CPUInfo' class.
 """
 
 import re
-import logging
 import contextlib
 from pathlib import Path
 from pepclibs import _UncoreFreq, CPUModels
 from pepclibs.msr import MSR, PMLogicalId
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, KernelVersion
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
 LEVELS = ("CPU", "core", "module", "die", "node", "package")

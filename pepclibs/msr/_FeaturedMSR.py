@@ -29,13 +29,12 @@ Terminology.
 """
 
 import copy
-import logging
 from pepclibs import CPUModels
-from pepclibs.helperlibs import LocalProcessManager, Human, ClassHelpers
+from pepclibs.helperlibs import Logging, LocalProcessManager, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.msr import MSR
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 # Map of features available on various CPU models. Must be defined by sub-classes and describe every
 # supported feature.
@@ -297,7 +296,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                         f"read-only")
 
         dbg_msg = ""
-        if _LOG.getEffectiveLevel() == logging.DEBUG:
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
             cpus_str = Human.rangify(self._cpuinfo.normalize_cpus(cpus))
             dbg_msg = f"writing '{val}' to {fname}' in MSR {self.regaddr:#x} ({self.regname}) " \
                       f"for CPUs {cpus_str}{self._pman.hostmsg}"

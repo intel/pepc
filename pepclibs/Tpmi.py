@@ -99,11 +99,10 @@ Terminology.
 import os
 import re
 import stat
-import logging
 import contextlib
 from pathlib import Path
 import yaml
-from pepclibs.helperlibs import YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
+from pepclibs.helperlibs import Logging, YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 # Users can define this environment variable to extend the default spec files.
@@ -118,7 +117,7 @@ _MAX_SCAN_LOAD_ERRORS = 4
 # Maximum spec file size in bytes.
 _MAX_SPEC_FILE_BYTES = 4 * 1024 * 1024 * 1024
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 def _find_spec_dirs():
     """Find paths to TPMI spec directories and return them as a list."""

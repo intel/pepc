@@ -8,13 +8,12 @@
 
 """This module provides an API to control PCI Active State Power Management (ASPM)."""
 
-import logging
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, Trivial, ClassHelpers, KernelVersion
+from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class ASPM(ClassHelpers.SimpleCloseContext):
     """This class provides an API to control PCI ASPM."""

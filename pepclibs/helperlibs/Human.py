@@ -11,12 +11,11 @@ This module contains misc. helper functions with the common theme of representin
 human-readable format, or turning human-oriented data into a machine format.
 """
 
-import logging
 from itertools import groupby
-from pepclibs.helperlibs import Trivial
+from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 # The units this module supports.
 SUPPORTED_UNITS = {

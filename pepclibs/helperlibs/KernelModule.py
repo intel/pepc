@@ -10,11 +10,10 @@
 This module provides API for loading and unloading Linux kernel modules (drivers).
 """
 
-import logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import LocalProcessManager, Dmesg, ClassHelpers
+from pepclibs.helperlibs import Logging, LocalProcessManager, Dmesg, ClassHelpers
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 # The drivers supported by this module.
 DRIVERS = {}
@@ -60,7 +59,7 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
             except Error as err:
                 raise Error(f"{err}\n{self._get_new_dmesg()}") from err
 
-            if _LOG.getEffectiveLevel() == logging.DEBUG:
+            if _LOG.getEffectiveLevel() == Logging.DEBUG:
                 _LOG.debug("the following command finished: %s\n%s", cmd, self._get_new_dmesg())
         else:
             self._pman.run_verify(cmd)
@@ -96,7 +95,7 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
             opts = f"{opts}"
         else:
             opts = ""
-        if _LOG.getEffectiveLevel() == logging.DEBUG:
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
             opts += " dyndbg=+pf"
         self._run_mod_cmd(f"modprobe {self.name} {opts}")
 

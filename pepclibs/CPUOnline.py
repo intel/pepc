@@ -10,13 +10,12 @@
 This module provides an API for onlining and offlining CPUs.
 """
 
-import logging
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs import CPUInfo
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class CPUOnline(ClassHelpers.SimpleCloseContext):
     """
@@ -176,7 +175,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
         self._close_cpuinfo = cpuinfo is None
 
         if progress is None:
-            progress = logging.DEBUG
+            progress = Logging.DEBUG
 
         self._loglevel = progress
         self._sysfs_base = Path("/sys/devices/system/cpu")

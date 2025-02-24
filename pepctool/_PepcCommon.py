@@ -10,12 +10,11 @@
 Misc. helpers shared between various 'pepc' commands.
 """
 
-import logging
+from pepclibs.helperlibs import Logging, Systemctl, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.helperlibs import Systemctl, Trivial
 from pepctool._OpTarget import ErrorNoTarget, ErrorNoCPUTarget
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 def check_tuned_presence(pman):
     """

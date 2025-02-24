@@ -47,12 +47,12 @@ import contextlib
 from pathlib import Path
 from operator import itemgetter
 import paramiko
-from pepclibs.helperlibs import _ProcessManagerBase, ClassHelpers, Trivial
+from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 # Paramiko is a bit too noisy, lower its log level.
 logging.getLogger("paramiko").setLevel(logging.WARNING)

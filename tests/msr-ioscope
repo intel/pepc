@@ -14,7 +14,6 @@ value changes, not by the functional impact of the MSR.
 """
 
 import sys
-import logging
 import contextlib
 
 try:
@@ -24,14 +23,14 @@ except ImportError:
     argcomplete = None
 
 from pepctool._Pepc import ArgParse
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs import Logging, ProcessManager, Human
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.msr import MSR
 from pepclibs import CPUInfo
 
 TOOLNAME = "msrscope"
 VERSION = "0.2"
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 Logging.setup_logger(prefix=TOOLNAME)
 
 def _get_possible_ioscopes(cpuinfo, cpu, siblings):

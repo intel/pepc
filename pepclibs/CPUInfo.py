@@ -13,13 +13,12 @@ Provide information about CPU topology and other CPU details.
 
 import copy
 import json
-import logging
 from pepclibs import _CPUInfoBase
+from pepclibs.helperlibs import Logging, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs import Trivial, Human
 from pepclibs._CPUInfoBase import LEVELS, NA
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class CPUInfo(_CPUInfoBase.CPUInfoBase):
     """

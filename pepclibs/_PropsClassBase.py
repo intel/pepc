@@ -35,12 +35,11 @@ Naming conventions.
 """
 
 import copy
-import logging
 from pepclibs import CPUInfo
-from pepclibs.helperlibs import Trivial, Human, ClassHelpers, LocalProcessManager
+from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 MECHANISMS = {
     "sysfs" : {

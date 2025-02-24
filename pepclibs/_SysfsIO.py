@@ -13,13 +13,12 @@ Provide a capability of reading and writing sysfs files. Implement caching.
 """
 
 import time
-import logging
 import contextlib
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorVerifyFailed
 
-_LOG = logging.getLogger()
+_LOG = Logging.getLogger(f"pepc.{__name__}")
 
 class SysfsIO(ClassHelpers.SimpleCloseContext):
     """
@@ -140,7 +139,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
     def _write(self, path, val, what):
         """Write value 'val' to file at path 'path'."""
 
-        if _LOG.getEffectiveLevel() == logging.DEBUG:
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
             what = "" if what is None else f" {what}"
             _LOG.debug("writing value '%s' to%s sysfs file '%s'%s",
                        val, what, path, self._pman.hostmsg)
