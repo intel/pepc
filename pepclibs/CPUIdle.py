@@ -19,7 +19,7 @@ from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelp
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs import CPUInfo, _PerCPUCache
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 # The C-state sysfs file names which are read by 'get_cstates_info()'. The C-state
 # information dictionary returned by 'get_cstates_info()' uses these file names as keys as well.

@@ -37,6 +37,9 @@ ERROR = logging.ERROR
 ERRINFO = logging.ERROR + 1
 CRITICAL = logging.CRITICAL
 
+# Name of the main logger instance. Other project loggers are supposed to be children of this one.
+MAIN_LOGGER_NAME = "main"
+
 # The default prefix for debug messages.
 _DEFAULT_DBG_PREFIX = "[%(created)f] [%(asctime)s] [%(module)s,%(lineno)d]"
 
@@ -251,6 +254,9 @@ class Logger(logging.Logger):
             info_stream: The stream for 'INFO' level messages. Default is 'sys.stdout'.
             error_stream: The stream for messages of all levels except 'INFO'. Default is
                           'sys.stderr'.
+
+        Returns:
+            Logger: The configured logger instance.
         """
 
         if not prefix:

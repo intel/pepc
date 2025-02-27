@@ -17,7 +17,7 @@ from collections import namedtuple
 from pepclibs.helperlibs import Logging, ProcessManager, Human
 from pepclibs.helperlibs.Exceptions import Error
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 # The debugfs mount point path.
 DEBUGFS_MOUNT_POINT = Path("/sys/kernel/debug")

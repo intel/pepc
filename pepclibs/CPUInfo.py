@@ -18,7 +18,7 @@ from pepclibs.helperlibs import Logging, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs._CPUInfoBase import LEVELS, NA
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class CPUInfo(_CPUInfoBase.CPUInfoBase):
     """

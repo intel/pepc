@@ -13,7 +13,7 @@ This module provides python API to the systemctl tool.
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class Systemctl(ClassHelpers.SimpleCloseContext):
     """This module provides python API to the systemctl tool."""

@@ -24,7 +24,7 @@ _CPU_BYTEORDER = "little"
 # 'write_bits()'.
 ALL_BITS_1 = object()
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class MSR(ClassHelpers.SimpleCloseContext):
     """

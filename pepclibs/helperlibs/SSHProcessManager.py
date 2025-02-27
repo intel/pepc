@@ -52,7 +52,7 @@ from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 # Paramiko is a bit too noisy, lower its log level.
 logging.getLogger("paramiko").setLevel(logging.WARNING)

@@ -12,7 +12,7 @@
 import sys
 from pepclibs.helperlibs import Logging
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 def run_tool(tool, toolname, arguments, pman=None, exp_exc=None, ignore=None):
     """

@@ -33,9 +33,7 @@ if sys.version_info < (3, 7):
 _VERSION = "1.5.26"
 TOOLNAME = "pepc"
 
-# Note, logger name is the project name, not the tool name.
-_LOG = Logging.getLogger("pepc")
-_LOG.configure(prefix=TOOLNAME)
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=TOOLNAME)
 
 _DATASET_OPTION = {
     "short": "-D",

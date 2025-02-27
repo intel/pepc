@@ -15,7 +15,7 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, CPUOnline
 from pepctool import _PepcCommon, _OpTarget
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 def cpu_hotplug_info_command(_, pman):
     """

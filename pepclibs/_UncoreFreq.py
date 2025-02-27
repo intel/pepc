@@ -37,7 +37,7 @@ from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Kern
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
     """

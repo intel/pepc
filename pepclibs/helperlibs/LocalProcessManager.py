@@ -25,7 +25,7 @@ from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class LocalProcess(_ProcessManagerBase.ProcessBase):
     """

@@ -34,7 +34,7 @@ from pepclibs.helperlibs import Logging, LocalProcessManager, Human, ClassHelper
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.msr import MSR
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 # Map of features available on various CPU models. Must be defined by sub-classes and describe every
 # supported feature.

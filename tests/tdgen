@@ -26,8 +26,7 @@ TOOLNAME = "tdgen"
 VERSION = "0.1"
 
 # Note, logger name is the project name, not the tool name.
-_LOG = Logging.getLogger("pepc")
-_LOG.configure(prefix=TOOLNAME)
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=TOOLNAME)
 
 # pylint: disable=line-too-long
 CPUInfoData = {

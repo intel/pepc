@@ -14,7 +14,7 @@ from pepclibs.helperlibs import Logging, Systemctl, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepctool._OpTarget import ErrorNoTarget, ErrorNoCPUTarget
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 def check_tuned_presence(pman):
     """

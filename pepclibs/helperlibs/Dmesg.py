@@ -17,7 +17,7 @@ import difflib
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class Dmesg(ClassHelpers.SimpleCloseContext):
     """This class provides convenient API to the 'dmesg' tool."""

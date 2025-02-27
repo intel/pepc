@@ -16,7 +16,7 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import PMQoS, CPUInfo, _SysfsIO
 from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 def pmqos_info_command(args, pman):
     """

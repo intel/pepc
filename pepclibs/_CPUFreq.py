@@ -21,7 +21,7 @@ from pepclibs.msr import TurboRatioLimit, HWPCapabilities
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     """

@@ -117,7 +117,7 @@ _MAX_SCAN_LOAD_ERRORS = 4
 # Maximum spec file size in bytes.
 _MAX_SPEC_FILE_BYTES = 4 * 1024 * 1024 * 1024
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 def _find_spec_dirs():
     """Find paths to TPMI spec directories and return them as a list."""

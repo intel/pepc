@@ -15,7 +15,7 @@ from itertools import groupby
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 # The units this module supports.
 SUPPORTED_UNITS = {
@@ -169,7 +169,7 @@ def num2si(value, unit=None, sep="", decp=1):
         if base_unit:
             result += base_unit
     elif base_unit:
-            result += sep + base_unit
+        result += sep + base_unit
 
     return result
 

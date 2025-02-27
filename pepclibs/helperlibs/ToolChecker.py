@@ -17,7 +17,7 @@ from pathlib import Path
 from pepclibs.helperlibs import Logging, ClassHelpers
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 #
 # The tools information dictionary. Map tool names to OS package names.

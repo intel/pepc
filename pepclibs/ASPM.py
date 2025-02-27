@@ -13,7 +13,7 @@ from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelp
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class ASPM(ClassHelpers.SimpleCloseContext):
     """This class provides an API to control PCI ASPM."""

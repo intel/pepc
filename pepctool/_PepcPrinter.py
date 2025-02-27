@@ -18,7 +18,7 @@ from pepclibs import CStates
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     """The base class for printing properties."""

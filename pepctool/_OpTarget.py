@@ -15,7 +15,7 @@ from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Human, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
-_LOG = Logging.getLogger(f"pepc.{__name__}")
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class ErrorNoTarget(Error):
     """No operation target was specified or found."""
