@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.5.27] - 2025-02-27
+### Changed
+ - No functional changes, improvements to support dependent projects.
+
 ## [1.5.26] - 2025-01-27
 ### Fixed
  - Fix compatibility with python <= 3.10.

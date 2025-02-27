@@ -1,3 +1,9 @@
+pepc (1.5.27) unstable; urgency=low
+
+  * No functional changes, improvements to support dependent projects.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 27 Feb 2025 00:00:00 +0200
+
 pepc (1.5.26) unstable; urgency=low
 
   * Fix compatibility with python <= 3.10.
