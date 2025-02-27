@@ -24,7 +24,7 @@ def is_prop_supported(pname, cpu0_pinfo):
 
     return cpu0_pinfo[pname] is not None
 
-def get_good_cpunum_opts(params, sname="package"):
+def get_good_cpu_opts(params, sname="package"):
     """
     Return a list of good options that specify CPU numbers ('--cpus', '--packages', etc). The
     arguments are as follows.
@@ -160,7 +160,7 @@ def get_good_cpunum_opts(params, sname="package"):
 
     assert False, f"BUG: bad scope name {sname}"
 
-def get_bad_cpunum_opts(params):
+def get_bad_cpu_opts(params):
     """
     Return bad target CPU specification options. The arguments are as follows.
       * params - test parameters.

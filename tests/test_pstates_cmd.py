@@ -91,58 +91,58 @@ def test_pstates_info(params):
 
     for opt in _get_good_info_opts(sname="CPU"):
         for mopt in props_common.get_mechanism_opts(params):
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="CPU"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="CPU"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="module"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="die"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="die"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
     for opt in _get_good_info_opts(sname="die"):
         for mopt in props_common.get_mechanism_opts(params):
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="die"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="die"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
     for opt in _get_good_info_opts(sname="package"):
         for mopt in props_common.get_mechanism_opts(params):
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
     for opt in _get_good_info_opts(sname="global"):
         for mopt in props_common.get_mechanism_opts(params):
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
-                cmd = f"pstates info {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
+                cmd = f"pstates info {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-    for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-        common.run_pepc(f"pstates info {cpunum_opt}", pman, exp_exc=Error)
+    for cpu_opt in props_common.get_bad_cpu_opts(params):
+        common.run_pepc(f"pstates info {cpu_opt}", pman, exp_exc=Error)
 
     # Cover '--list-mechanisms'.
     common.run_pepc("pstates info --list-mechanisms", pman)
@@ -218,45 +218,45 @@ def test_pstates_config_freq_good(params):
 
     for opt in _get_good_config_freq_opts(params, sname="die"):
         for mopt in props_common.get_mechanism_opts(params, allow_readonly=True):
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="die"):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="die"):
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-                common.run_pepc(f"pstates config {opt} {cpunum_opt} {mopt}", pman, exp_exc=Error)
+            for cpu_opt in props_common.get_bad_cpu_opts(params):
+                common.run_pepc(f"pstates config {opt} {cpu_opt} {mopt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_freq_opts(params, sname="CPU"):
         for mopt in props_common.get_mechanism_opts(params, allow_readonly=True):
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="CPU"):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="CPU"):
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="module"):
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="die"):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="die"):
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+            for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-                common.run_pepc(f"pstates config {opt} {cpunum_opt} {mopt}", pman, exp_exc=Error)
+            for cpu_opt in props_common.get_bad_cpu_opts(params):
+                common.run_pepc(f"pstates config {opt} {cpu_opt} {mopt}", pman, exp_exc=Error)
 
 def test_pstates_config_freq_bad(params):
     """Test 'pepc pstates config' command with bad frequency options."""
@@ -267,8 +267,8 @@ def test_pstates_config_freq_bad(params):
         common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_freq_opts(params):
-        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-            common.run_pepc(f"pstates config {opt} {cpunum_opt}", pman, exp_exc=Error)
+        for cpu_opt in props_common.get_bad_cpu_opts(params):
+            common.run_pepc(f"pstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
 def _get_good_config_opts(params, sname="package"):
     """Return good options for testing 'pepc pstates config'."""
@@ -339,33 +339,33 @@ def test_pstates_config_good(params):
     pman = params["pman"]
 
     for opt in _get_good_config_opts(params, sname="CPU"):
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="CPU"):
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="CPU"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
     for opt in _get_good_config_opts(params, sname="module"):
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="module"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
     for opt in _get_good_config_opts(params, sname="die"):
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="die"):
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="die"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
     for opt in _get_good_config_opts(params, sname="package"):
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
     for opt in _get_good_config_opts(params, sname="global"):
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"pstates config {opt} {cpunum_opt} {mopt}"
+                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
 def test_pstates_config_bad(params):
@@ -389,17 +389,17 @@ def test_pstates_save_restore(params):
     opts = ("", f"-o {tmp_path}/pstates.{hostname}")
 
     for opt in opts:
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="CPU"):
-            common.run_pepc(f"pstates save {opt} {cpunum_opt}", pman)
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="module"):
-            common.run_pepc(f"pstates save {opt} {cpunum_opt}", pman)
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-            common.run_pepc(f"pstates save {opt} {cpunum_opt}", pman)
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
-            common.run_pepc(f"pstates save {opt} {cpunum_opt}", pman)
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="CPU"):
+            common.run_pepc(f"pstates save {opt} {cpu_opt}", pman)
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="module"):
+            common.run_pepc(f"pstates save {opt} {cpu_opt}", pman)
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
+            common.run_pepc(f"pstates save {opt} {cpu_opt}", pman)
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
+            common.run_pepc(f"pstates save {opt} {cpu_opt}", pman)
 
-        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-            common.run_pepc(f"pstates save {opt} {cpunum_opt}", pman, exp_exc=Error)
+        for cpu_opt in props_common.get_bad_cpu_opts(params):
+            common.run_pepc(f"pstates save {opt} {cpu_opt}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
     common.run_pepc(f"pstates save -o {state_path}", pman)

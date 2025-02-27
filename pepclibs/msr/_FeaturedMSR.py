@@ -248,8 +248,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
           * fname - name of the feature to read and check.
           * cpus - the CPUs to read the feature from (same as in 'read_feature()').
 
-        The yielded tuples are '(cpunum, enabled)'.
-          * cpunum - the CPU number the MSR was read from.
+        The yielded tuples are '(cpu, enabled)'.
+          * cpu - the CPU number the MSR was read from.
           * enabled - 'True' if the feature is enabled, 'False' otherwise.
         """
 

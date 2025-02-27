@@ -189,7 +189,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     def _get_pkg_cstate_limit(self, cpus="all"):
         """
         Get package C-state limit for CPUs in 'cpus'. For every CPU in 'cpus', yields a tuple of
-        '(cpunum, info)', where 'cpunum' is the CPU number the limits were read from, and 'info' is
+        '(cpu, info)', where 'cpu' is the CPU number the limits were read from, and 'info' is
         the package C-state information dictionary. Here are the 'info' dictionary keys.
           * limit - the package C-state limit name (small letters, e.g., PC0).
           * limits - list of possible package C-state limits.

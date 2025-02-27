@@ -90,8 +90,8 @@ class ROSysfsFile(ROFile):
                 if not dirname.name.startswith("cpu"):
                     continue
 
-                cpunum = dirname.name[3:]
-                if not Trivial.is_int(cpunum):
+                cpu = dirname.name[3:]
+                if not Trivial.is_int(cpu):
                     continue
 
                 try:
@@ -100,11 +100,11 @@ class ROSysfsFile(ROFile):
                 except FileNotFoundError:
                     # CPU 0 does not have a "online" file, but it is online. So, we assume the same
                     # for any other CPU that has a folder but no "online" file.
-                    online.append(cpunum)
+                    online.append(cpu)
                     continue
 
                 if data == "1":
-                    online.append(cpunum)
+                    online.append(cpu)
 
             return Human.rangify(online)
 

@@ -453,9 +453,9 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                       containing a comma-separated list of names. Value 'all' mean "all C-states".
 
         Returns a dictionary of the following structure:
-          { cpunum: { "csnames" : [ cstate1, cstate2, ...]}}
-            * cpunum - integer CPU number.
-            * [cstate1, cstate2, ...] - list of C-states names enabled for CPU 'cpunum'.
+          { cpu: { "csnames" : [ cstate1, cstate2, ...]}}
+            * cpu - integer CPU number.
+            * [cstate1, cstate2, ...] - list of C-states names enabled for CPU 'cpu'.
         """
 
         return self._toggle_cstates(csnames, cpus, True)

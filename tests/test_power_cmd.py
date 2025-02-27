@@ -56,18 +56,18 @@ def test_power_info(params):
 
     pman = params["pman"]
 
-    for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+    for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
         for mopt in props_common.get_mechanism_opts(params):
-            cmd = f"power info {cpunum_opt} {mopt}"
+            cmd = f"power info {cpu_opt} {mopt}"
             common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-    for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="global"):
+    for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
         for mopt in props_common.get_mechanism_opts(params):
-            cmd = f"power info {cpunum_opt} {mopt}"
+            cmd = f"power info {cpu_opt} {mopt}"
             common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-    for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-        common.run_pepc(f"power info {cpunum_opt}", pman, exp_exc=Error)
+    for cpu_opt in props_common.get_bad_cpu_opts(params):
+        common.run_pepc(f"power info {cpu_opt}", pman, exp_exc=Error)
 
     # Cover '--list-mechanisms'.
     common.run_pepc("power info --list-mechanisms", pman)
@@ -113,13 +113,13 @@ def test_power_config(params):
     ignore[ErrorVerifyFailed] = "clamp"
 
     for opt in  _get_good_config_opts(params):
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"power config {opt} {cpunum_opt} {mopt}"
+                cmd = f"power config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=ignore)
 
-        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-            common.run_pepc(f"power config {opt} {cpunum_opt}", pman, exp_exc=Error)
+        for cpu_opt in props_common.get_bad_cpu_opts(params):
+            common.run_pepc(f"power config {opt} {cpu_opt}", pman, exp_exc=Error)
 
 def _try_change_value(pname, new_val, current_val, pobj):
     """
@@ -166,11 +166,11 @@ def test_power_save_restore(params):
 
     opts = ("", f"-o {tmp_path}/power.{hostname}")
     for opt in opts:
-        for cpunum_opt in props_common.get_good_cpunum_opts(params, sname="package"):
-            common.run_pepc(f"power save {opt} {cpunum_opt}", pman)
+        for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
+            common.run_pepc(f"power save {opt} {cpu_opt}", pman)
 
-        for cpunum_opt in props_common.get_bad_cpunum_opts(params):
-            common.run_pepc(f"power save {opt} {cpunum_opt}", pman, exp_exc=Error)
+        for cpu_opt in props_common.get_bad_cpu_opts(params):
+            common.run_pepc(f"power save {opt} {cpu_opt}", pman, exp_exc=Error)
 
     state_path = tmp_path / f"state.{hostname}"
     common.run_pepc(f"power save -o {state_path}", pman)
