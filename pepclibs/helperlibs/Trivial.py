@@ -27,7 +27,7 @@ def is_root() -> bool:
     try:
         return os.getuid() == 0 or os.geteuid() == 0
     except OSError as err:
-        msg = Error(err).indent(2)
+        msg = Error(str(err)).indent(2)
         raise Error(f"Failed to get process UID:\n{msg}") from None
 
 def get_pid() -> int:
@@ -41,7 +41,7 @@ def get_pid() -> int:
     try:
         return os.getpid()
     except OSError as err:
-        msg = Error(err).indent(2)
+        msg = Error(str(err)).indent(2)
         raise Error(f"Failed to get own PID:\n{msg}") from None
 
 def get_pgid(pid: int) -> int:
@@ -58,7 +58,7 @@ def get_pgid(pid: int) -> int:
     try:
         return os.getpgid(pid)
     except OSError as err:
-        msg = Error(err).indent(2)
+        msg = Error(str(err)).indent(2)
         raise Error(f"Failed to get process group ID for PID {pid}:\n{msg}") from None
 
 def get_username(uid: int | None = None) -> str:
@@ -76,13 +76,13 @@ def get_username(uid: int | None = None) -> str:
         if uid is None:
             uid = os.getuid()
     except OSError as err:
-        msg = Error(err).indent(2)
+        msg = Error(str(err)).indent(2)
         raise Error(f"Failed to detect username of current process:\n{msg}") from None
 
     try:
         return pwd.getpwuid(uid).pw_name
     except KeyError as err:
-        msg = Error(err).indent(2)
+        msg = Error(str(err)).indent(2)
         raise Error(f"Failed to get username for UID {uid}:\n{msg}") from None
 
 def str_to_int(snum: str | int, base: int = 0, what: str | None = None) -> int:
@@ -225,7 +225,8 @@ def validate_value_in_range(value: int | float, minval: int | float,
     if value < minval or value > maxval:
         if what is None:
             what = "value"
-        raise Error(f"{what} '{value}' is out of range, should be within [{minval},{maxval}]")
+        raise Error(f"{what.capitalize()} '{value}' is out of range, should be within "
+                    f"[{minval},{maxval}]")
 
 def validate_range(minval: int | float, maxval: int | float, min_limit: int | float | None = None,
                    max_limit: int | float | None = None, what: str | None = None):
