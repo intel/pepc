@@ -1,23 +1,32 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Exception types used by all the modules in this package.
+Exception types used in this project.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+from pathlib import Path
+from typing import Any, Match
 import re
 
 class Error(Exception):
     """The base class for all exceptions raised by this project."""
 
-    def __init__(self, msg, *args, **kwargs):
+    def __init__(self, msg: str, *args: Any, **kwargs: Any):
         """
-        The exception class constructor.
+        Initialize the exception object..
+
+        Args:
+            msg: The exception message.
+            *args: Positional arguments for the message.
+            **kwargs: Additional keyword arguments.
         """
 
         msg = str(msg)
@@ -31,19 +40,30 @@ class Error(Exception):
         else:
             self.msg = msg
 
-    def indent(self, indent, capitalize=True):
+    def indent(self, indent: int | str, capitalize: bool = True) -> str:
         """
-        Prefix each line in the error message. The arguments are as follows.
-          * indent - can be an integer or a string. In case of an integer, each line of the error
-                     string is prefixed with the 'indent' count of white-spaces. In case of a
-                     string, each line is prefixed with the 'indent' string.
-          * capitalize - if 'True', make sure the message starts with a capital letter.
+        Indent/prefix each line in the error message.
 
-        The intended usage is combining several multi-line error messages into a single message.
+        Args:
+            indent: Can be an integer or a string. If an integer, each line of the error message is
+                    prefixed with the specified number of white spaces. If a string, each line is
+                    prefixed with the specified string.
+            capitalize: If True, ensures the message starts with a capital letter.
+
+        Returns:
+            str: The modified error message.
         """
 
-        def capitalize_mobj(mobj):
-            """Capitalize a message matched with 're.sub()' ('mobj' is the match object)."""
+        def capitalize_mobj(mobj: Match[str]):
+            """
+            Capitalize the intended/prefixed message.
+
+            Args:
+                mobj: The match object from a regex search.
+
+            Returns:
+                str: The capitalized version of the message.
+            """
 
             return mobj.group(1) + mobj.group(2).capitalize()
 
@@ -83,14 +103,27 @@ class ErrorBadFormat(Error):
 class ErrorVerifyFailed(Error):
     """Verification failed."""
 
-    def __init__(self, msg, *args, cpu=None, expected=None, actual=None, path=None, **kwargs):
+    def __init__(self,
+                 msg: str,
+                 *args: Any,
+                 cpu: int | None = None,
+                 expected: Any | None = None,
+                 actual: Any | None = None,
+                 path: Path | None = None,
+                 **kwargs: Any):
         """
-        The exception class constructor. The arguments are as follows.
-          * cpu - CPU number the associated with the operation that failed the verification
-          * expected - the expected value or result of an operation
-          * actual - the actual value or result of operation, which was expected to be the same as
-                     'expected', but it is different
-          * path - a file-system path associated with the operation that failed the verification
+        Initialize the exception object..
+
+        Args:
+            msg: The exception message.
+            *args: Positional arguments for the message.
+            cpu: CPU number associated with the operation that failed the
+                  verification.
+            expected: The expected value or result of an operation.
+            actual: The actual value or result of the operation, which was expected to be the same
+                    as 'expected', but is different.
+            path: A path associated with the operation that failed the verification.
+            **kwargs: Additional keyword arguments.
         """
 
         self.cpu = cpu
@@ -103,9 +136,19 @@ class ErrorVerifyFailed(Error):
 class ErrorConnect(Error):
     """Failed to connect to a remote host."""
 
-    def __init__(self, msg, *args, host=None, **kwargs):
-        """The exception class constructor."""
+    def __init__(self, msg: str, *args: Any, host: str | None = None, **kwargs: Any):
+        """
+        Initialize the exception object..
+
+        Args:
+            msg: The exception message.
+            *args: Positional arguments for the message.
+            **kwargs: Additional keyword arguments.
+            host: The host the connection failed to.
+            **kwargs: Additional keyword arguments.
+        """
 
         if host:
-            msg = f"cannot connect to host '{host}'\n{msg}"
+            msg = f"Cannot connect to host '{host}'\n{msg}"
+
         super().__init__(msg, *args, **kwargs)
