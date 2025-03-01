@@ -322,7 +322,7 @@ class Logger(logging.Logger):
                 with fpath.open("w+", encoding="utf-8") as fobj:
                     fobj.write(contents)
             except OSError as err:
-                msg = Error(err).indent(2)
+                msg = Error(str(err)).indent(2)
                 raise Error(f"Failed to write to '{fpath}':\n{msg}") from None
 
         if self.colored:
