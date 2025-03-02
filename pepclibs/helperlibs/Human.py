@@ -27,31 +27,6 @@ SUPPORTED_UNITS = {
     "W"  : "watt",
 }
 
-_SIPFX_LARGE = ["k", "M", "G", "T", "P", "E"]
-_SIPFX_SMALL = ["m", "u", "n"]
-_SIPFX_SCALERS = {
-    "E": 1000000000000000000,
-    "P": 1000000000000000,
-    "T": 1000000000000,
-    "G": 1000000000,
-    "M": 1000000,
-    "k": 1000,
-    "m": 0.001,
-    "u": 0.000001,
-    "n": 0.000000001,
-}
-_SIPFX_FULLNAMES = {
-    "E": "exa",
-    "P": "peta",
-    "T": "tera",
-    "G": "giga",
-    "M": "mega",
-    "k": "kilo",
-    "m": "milli",
-    "u": "micro",
-    "n": "nano",
-}
-
 _BYTESIZE_PREFIXES = ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB"]
 _BYTESIZE_FULLNAMES = {
     "Ei": "exbi",
@@ -120,6 +95,31 @@ def bytesize(size: int,
 
     return f"{result}{sep}{unit}"
 
+_SIPFX_LARGE = ["k", "M", "G", "T", "P", "E"]
+_SIPFX_SMALL = ["m", "u", "n"]
+_SIPFX_SCALERS = {
+    "E": 1000000000000000000,
+    "P": 1000000000000000,
+    "T": 1000000000000,
+    "G": 1000000000,
+    "M": 1000000,
+    "k": 1000,
+    "m": 0.001,
+    "u": 0.000001,
+    "n": 0.000000001,
+}
+_SIPFX_FULLNAMES = {
+    "E": "exa",
+    "P": "peta",
+    "T": "tera",
+    "G": "giga",
+    "M": "mega",
+    "k": "kilo",
+    "m": "milli",
+    "u": "micro",
+    "n": "nano",
+}
+
 def separate_si_prefix(unit: str) -> tuple[str | None, str]:
     """
     Split a SI-unit prefix from the base unit.
@@ -153,52 +153,83 @@ def separate_si_prefix(unit: str) -> tuple[str | None, str]:
 
     return sipfx, base_unit
 
-def num2si(value, unit=None, sep="", decp=1):
+def num2si(value: int | float,
+           unit: str | None = None,
+           decp: int = 1,
+           sep: str | None = None,
+           strip_zeroes: bool = False) -> str:
     """
-    Convert a number into a human-readable form using suffixes like "k" (Kilo), "M" (Mega), etc.
-    The arguments are as follows.
-      * value - an integer or floating point value to convert.
-      * unit - the unit used with 'value', including any SI-prefixes.
-      * sep - the separator string to use between the resulting number and its unit.
-      * decp - maximum number of decimal places the result should include.
+    Convert a number into a human-readable form using SI suffixes like "k" (Kilo), "M" (Mega), etc.
 
-    Return the result as a string.
+    Args:
+        value: The number to convert.
+        unit: The unit used with 'value', including any SI-prefixes.
+        decp: Maximum number of decimal places the result should include.
+        sep: The separator string to use between the resulting number and its unit.
+        strip_zeroes: if True, strip trailing zeroes after the decimal point.
+
+    Returns:
+        str: The human-readable string representation of the number with its unit.
+
+    Examples:
+        >>> num2si(0.1, unit="W", decp=0)
+        "100mW"
+        >>> num2si(0.1, unit="W", decp=1)
+        "100.0mW"
+        >>> num2si(1, unit="W", decp=0, sep=" ", strip_zeroes=True)
+        "1 W"
+        >>> num2si(1999, unit="uW", decp=1, sep=" ")
+        "2.0 mW"
+        >>> num2si(1999, unit="uW", decp=3, sep=" ")
+        "1.999 mW"
     """
 
     if not Trivial.is_num(value):
-        raise Error("bad input - not a number")
-    if sep and not unit:
-        raise Error("please, specify the separator only if unit was specified")
-    if decp < 1 or decp > 8:
-        raise Error("please, specify at max. 8 decimal places")
+        raise Error("Bad input '{value}: Not a number")
 
     if unit is None:
         unit = ""
 
+    if decp < 0:
+        raise Error("BUG: decimal places number bust be a positive integer")
+    if decp > 8:
+        raise Error("Specify at max. 8 decimal places")
+
+    if sep is None:
+        sep = ""
+    if sep and not unit:
+        raise Error("Specify the separator only if unit was specified")
+
     sipfx, base_unit = separate_si_prefix(unit)
     value = float(value)
 
+    if abs(value) >= 1 and abs(value) < 1000:
+        result = f"{value:.{decp}f}"
+        if strip_zeroes and "." in result:
+            result = result.rstrip("0").rstrip(".")
+        return f"{result}{sep}{base_unit}"
+
     if sipfx:
         factor = _SIPFX_SCALERS[sipfx]
-        if value > 500 or value < 1:
+        if abs(value) >= 500 or abs(value) < 1:
             value *= factor
 
     pfx = None
-    if value > 500:
+    if abs(value) > 500:
         for pfx in _SIPFX_LARGE:
             value /= 1000.0
-            if value < 1000:
+            if abs(value) < 1000:
                 break
-    elif value < 1:
+    elif abs(value) < 1:
         for pfx in _SIPFX_SMALL:
             value *= 1000.0
-            if value >= 1:
+            if abs(value) >= 1:
                 break
     else:
         pfx = sipfx
 
     result = f"{value:.{decp}f}"
-    if "." in result:
+    if strip_zeroes and "." in result:
         result = result.rstrip("0").rstrip(".")
 
     # Avoid things like 0nHz. If the result is 0 after the rounding, do not add the SI prefix.

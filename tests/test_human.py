@@ -118,3 +118,72 @@ def test_separate_si_prefix():
         assert result == expected, \
                f"Bad result of separate_si_prefix('{unit}'):\n" \
                f"expected '{expected}', got '{result}'"
+
+_NUM2SI_TEST_DATA = [
+    {"value": 0.00009999001,
+     "unit": "uW", "decp": 5, "sep": " ", "strip_zeroes": False, "result": "0.09999 nW"},
+    {"value": 0.00009999001,
+     "unit": "W", "decp": 4, "sep": " ", "strip_zeroes": True, "result": "99.99 uW"},
+    {"value": 0.00009999001,
+     "unit": "W", "decp": 4, "sep": " ", "strip_zeroes": False, "result": "99.9900 uW"},
+    {"value": 0.00009999001,
+     "unit": "W", "decp": 5, "sep": " ", "strip_zeroes": False, "result": "99.99001 uW"},
+    {"value": 0.04,
+     "unit": "W", "decp": 2, "sep": " ", "strip_zeroes": False, "result": "40.00 mW"},
+    {"value": 0.04,
+     "unit": "mW", "decp": 2, "sep": " ", "strip_zeroes": False, "result": "40.00 uW"},
+    {"value": 0.1, "unit": "W", "decp": 1, "sep": " ", "strip_zeroes": True, "result": "100 mW"},
+    {"value": 0.1, "unit": "W", "decp": 0, "sep": None, "strip_zeroes": False, "result": "100mW"},
+    {"value": 0.1, "unit": "W", "decp": 1, "sep": None, "strip_zeroes": False, "result": "100.0mW"},
+    {"value": 0.0, "unit": "W", "decp": 0, "sep": None, "strip_zeroes": True, "result": "0W"},
+    {"value": 0, "unit": "W", "decp": 0, "sep": None, "strip_zeroes": True, "result": "0W"},
+    {"value": 0, "unit": "W", "decp": 0, "sep": " ", "strip_zeroes": True, "result": "0 W"},
+    {"value": 0, "unit": "W", "decp": 1, "sep": " ", "strip_zeroes": True, "result": "0 W"},
+    {"value": 0, "unit": "W", "decp": 1, "sep": " ", "strip_zeroes": False, "result": "0.0 W"},
+    {"value": -0, "unit": "W", "decp": 1, "sep": " ", "strip_zeroes": True, "result": "0 W"},
+    {"value": 0.0, "unit": "W", "decp": 0, "sep": " ", "strip_zeroes": True, "result": "0 W"},
+    {"value": 1, "unit": "W", "decp": 0, "sep": " ", "strip_zeroes": True, "result": "1 W"},
+    {"value": 1, "unit": "W", "decp": 2, "sep": " ", "strip_zeroes": False, "result": "1.00 W"},
+    {"value": -1, "unit": "W", "decp": 2, "sep": " ", "strip_zeroes": False, "result": "-1.00 W"},
+    {"value": -1.5, "unit": "W", "decp": 2, "sep": " ", "strip_zeroes": False, "result": "-1.50 W"},
+    {"value": 999, "unit": "W", "decp": 2, "sep": " ", "strip_zeroes": True, "result": "999 W"},
+    {"value": 1000, "unit": "W", "decp": 2, "sep": None, "strip_zeroes": False, "result": "1.00kW"},
+    {"value": 1000.0, "unit": "W", "decp": 2, "sep": " ", "strip_zeroes": True, "result": "1 kW"},
+    {"value": 1999.1, "unit": "W", "decp": 1, "sep": " ", "strip_zeroes": True, "result": "2 kW"},
+    {"value": 1999, "unit": "W", "decp": 1, "sep": " ", "strip_zeroes": False, "result": "2.0 kW"},
+    {"value": 1999, "unit": "uW", "decp": 1, "sep": " ", "strip_zeroes": False, "result": "2.0 mW"},
+    {"value": 1999,
+     "unit": "uW", "decp": 3, "sep": " ", "strip_zeroes": False, "result": "1.999 mW"},
+    {"value": 1999, "unit": "W", "decp": 2, "sep": " ", "strip_zeroes": False, "result": "2.00 kW"},
+    {"value": 1999, "unit": "W", "decp": 3, "sep": "", "strip_zeroes": False, "result": "1.999kW"},
+    {"value": 1999 * 1000.0,
+     "unit": "W", "decp": 1, "sep": " ", "strip_zeroes": False, "result": "2.0 MW"},
+    {"value": 1999 * 1000 * 1000,
+     "unit": "W", "decp": 1, "sep": " ", "strip_zeroes": True, "result": "2 GW"},
+    {"value": 1999 * 1000 * 1000 * 1000,
+     "unit": "W", "decp": 1, "sep": "", "strip_zeroes": False, "result": "2.0TW"},
+    {"value": 1999 * 1000 * 1000 * 1000 * 1000,
+     "unit": "W", "decp": 2, "sep": " ", "strip_zeroes": False, "result": "2.00 PW"},
+    {"value": 1999 * 1000 * 1000 * 1000 * 1000 * 1000,
+     "unit": "W", "decp": 0, "sep": " ", "strip_zeroes": False, "result": "2 EW"},
+    {"value": 1999 * 1000 * 1000 * 1000 * 1000 * 1000,
+     "unit": "MW", "decp": 0, "sep": " ", "strip_zeroes": False, "result": "1999000 EW"},
+]
+
+def test_num2si():
+    """Test the 'num2si()' function."""
+
+    for entry in _NUM2SI_TEST_DATA:
+        value = entry["value"]
+        unit = entry["unit"]
+        sep = entry["sep"]
+        decp = entry["decp"]
+        strip_zeroes = entry["strip_zeroes"]
+        expected = entry["result"]
+
+        result = Human.num2si(value, unit=unit, decp=decp, sep=sep, strip_zeroes=strip_zeroes)
+
+        assert result == expected, \
+               f"Bad result of num2si({value}, '{unit}', decp={decp}, sep='{sep}'" \
+               f"strip_zeroes={strip_zeroes}):\n" \
+               f"expected '{expected}', got '{result}'"
