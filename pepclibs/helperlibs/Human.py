@@ -120,12 +120,22 @@ def bytesize(size: int,
 
     return f"{result}{sep}{unit}"
 
-def separate_si_prefix(unit):
+def separate_si_prefix(unit: str) -> tuple[str | None, str]:
     """
-    Split any SI-unit prefix from the base unit and return a tuple containing both. If 'unit' does
-    not contain any SI-unit prefixes, then returns the prefix as 'None'. Example behaviour:
-     * "kHz" -> "k", "Hz"
-     * "Hz" -> None, "Hz"
+    Split a SI-unit prefix from the base unit.
+
+    Args:
+        unit: The unit string which may contain a SI-unit prefix.
+
+    Returns:
+        A tuple containing the SI-unit prefix and the base unit. If 'unit' does not contain a
+        SI-unit prefix, the first element of the tuple is None.
+
+    Examples:
+        >>> separate_si_prefix("kHz")
+        ("k", "Hz")
+        >>> separate_si_prefix("Hz")
+        (None, "Hz")
     """
 
     if len(unit) < 2:
@@ -138,7 +148,7 @@ def separate_si_prefix(unit):
         return None, unit
 
     if base_unit not in SUPPORTED_UNITS:
-        _LOG.warning("unsupported unit '%s' was split into SI-prefix '%s' and base unit '%s'",
+        _LOG.warning("Unsupported unit '%s' was split into SI-prefix '%s' and base unit '%s'",
                      unit, sipfx, base_unit)
 
     return sipfx, base_unit

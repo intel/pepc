@@ -94,3 +94,27 @@ def test_bytesize():
                f"Bad result of bytesize({size}, decp={decp}, sep='{sep}', " \
                f"strip_zeroes={strip_zeroes}):\n" \
                f"expected '{expected}', got '{result}'"
+
+_SEPARATE_SI_PREFIX_TEST_DATA = [
+    {"unit": "B", "result": (None, "B")},
+    {"unit": "kB", "result": ("k", "B")},
+    {"unit": "MB", "result": ("M", "B")},
+    {"unit": "GB", "result": ("G", "B")},
+    {"unit": "TB", "result": ("T", "B")},
+    {"unit": "PB", "result": ("P", "B")},
+    {"unit": "EB", "result": ("E", "B")},
+    {"unit": "byte", "result": (None, "byte")},
+]
+
+def test_separate_si_prefix():
+    """Test the 'separate_si_prefix()' function."""
+
+    for entry in _SEPARATE_SI_PREFIX_TEST_DATA:
+        unit = entry["unit"]
+        expected = entry["result"]
+
+        result = Human.separate_si_prefix(unit)
+
+        assert result == expected, \
+               f"Bad result of separate_si_prefix('{unit}'):\n" \
+               f"expected '{expected}', got '{result}'"
