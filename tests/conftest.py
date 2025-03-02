@@ -15,6 +15,9 @@ import os
 from pathlib import Path
 import pytest
 
+# The test modules that are host-agnostic.
+_NOHOST_MODULES = {"test_human"}
+
 def pytest_addoption(parser):
     """Add custom pytest options."""
 
@@ -43,6 +46,9 @@ def get_datasets():
 
 def pytest_generate_tests(metafunc):
     """Generate tests with custom options."""
+
+    if metafunc.module.__name__ in _NOHOST_MODULES:
+        return
 
     hostname = metafunc.config.getoption("hostname")
     dataset = metafunc.config.getoption("dataset")

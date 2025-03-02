@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module contains misc. helper functions with the common theme of representing something in a
-human-readable format, or turning human-oriented data into a machine format.
+Miscellaneous helper functions for converting data between human-readable and machine-readable
+formats.
 """
+
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from itertools import groupby
 from pepclibs.helperlibs import Logging, Trivial
@@ -68,30 +70,55 @@ _BYTESIZE_SCALERS = {
     "Ki": 1024,
 }
 
-# pylint: disable=undefined-loop-variable, consider-using-f-string
-def bytesize(size, precision=1, sep=""):
+def bytesize(size: int,
+             decp: int = 1,
+             sep: str | None = None,
+             strip_zeroes = False) -> str:
     """
-	Transform size in bytes into a human-readable form. The 'precision' argument can be use to
-    specify the amount of fractional digits to print.
-	"""
+    Convert a size in bytes into a human-friendly string.
 
-    if size == 1:
-        return "1 byte"
+    Args:
+        size: The size in bytes.
+        decp: Maximum number of decimal places the result should include.
+        sep: The separator string to use between the number and the unit. Default is " "
+             (white-space).
+        strip_zeroes: if True, strip trailing zeroes after the decimal point.
 
-    if size < 512:
-        return "%d bytes" % size
+    Returns:
+        str: The human-readable string representation of the size.
 
+    Examples:
+        >>> bytesize(1025, decp=1, sep=None, strip_zeroes=True)
+        "1 KiB"
+        >>> bytesize(1025, decp=1, sep=None, strip_zeroes=False)
+        "1.0 KiB"
+        >>> bytesize(1025, decp=2, sep=None, strip_zeroes=False)
+        "1.00 KiB"
+    """
+
+    if decp < 0:
+        raise Error(f"BUG: Bad decimal points count '{decp}'")
+
+    if sep is None:
+        sep = " "
+
+    if abs(size) == 1:
+        return f"{size}{sep}byte"
+
+    if abs(size) < 1024:
+        return f"{int(size)}{sep}bytes"
+
+    sz = float(size)
     for unit in _BYTESIZE_PREFIXES:
-        size /= 1024.0
-        if size < 1024:
+        sz /= 1024.0
+        if abs(sz) < 1024:
             break
 
-    if precision <= 0:
-        return "%d%s%s" % (int(size), sep, unit)
+    result = f"{sz:.{decp}f}"
+    if strip_zeroes and "." in result:
+        result = result.rstrip("0").rstrip(".")
 
-    pattern = "%%.%df %%s" % int(precision)
-    return pattern % (size, unit)
-# pylint: enable=undefined-loop-variable
+    return f"{result}{sep}{unit}"
 
 def separate_si_prefix(unit):
     """
@@ -160,8 +187,9 @@ def num2si(value, unit=None, sep="", decp=1):
     else:
         pfx = sipfx
 
-    result = f"%.{decp}f" % value
-    result = result.rstrip("0").rstrip(".")
+    result = f"{value:.{decp}f}"
+    if "." in result:
+        result = result.rstrip("0").rstrip(".")
 
     # Avoid things like 0nHz. If the result is 0 after the rounding, do not add the SI prefix.
     if pfx and float(result) != 0:
