@@ -151,7 +151,7 @@ def str_to_num(snum: str | int, what: str | None = None) -> int | float:
             pfx = f"Bad {what} '{snum}'"
             raise ErrorBadFormat(f"{pfx}: should be an integer or floating point number") from None
 
-def is_int(value: str | int, base: int = 0) -> bool:
+def is_int(value: str | int | float, base: int = 0) -> bool:
     """
     Check if 'value' can be converted to 'int' type'.
 
