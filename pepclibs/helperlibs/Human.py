@@ -322,26 +322,6 @@ def duration(seconds: int | float, s: bool = True) -> str:
 
 _NSTIME_UNITS = ["us", "ms", "s"]
 
-def duration_ns(value, sep=""):
-    """
-    Transform a supposedly large integer amount of nanoseconds into a human-readable form using
-    suffixes like "us" (microseconds), etc.
-    """
-
-    scaler = None
-    if value >= 500:
-        for scaler in _NSTIME_UNITS:
-            value /= 1000.0
-            if value < 1000:
-                break
-
-    result = "%f" % value
-    result = result.rstrip("0").rstrip(".")
-    if not scaler:
-        scaler = "ns"
-    result += sep + scaler
-    return result
-
 def _tokenize(hval, specs, name=None, multiple=True):
     """
     Split human-provided value 'hval' according unit names in the 'specs' dictionary. Returns the
