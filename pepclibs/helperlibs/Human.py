@@ -270,37 +270,55 @@ def scale_si_val(val: int | float, unit: str) -> float:
     scale_factor = _SIPFX_SCALERS[prefix]
     return val * scale_factor
 
-def duration(seconds, s=True, ms=False):
+def duration(seconds: int | float, s: bool = True) -> str:
     """
-    Transform duration in seconds to the human-readable format. The 's' and 'ms' arguments control
-    whether seconds/milliseconds should be printed or not.
+    Convert a duration in seconds to a human-readable format. If the amount of seconds is less than
+    1, return the result of 'num2si()' with the unit "s".
+
+    Args:
+        second: The duration in seconds.
+        s: Whether to include seconds in the output for durations greater than 1 minute.
+
+    Returns:
+        str: The human-readable duration string.
+
+    Examples:
+        >>> duration(3661)
+        "1h 1m 1s"
+        >>> duration(3661, s=False)
+        "1h 1m"
+        >>> duration(0.001, s=True)
+        "1ms"
     """
 
-    if not isinstance(seconds, int):
-        msecs = int((float(seconds) - int(seconds)) * 1000)
+    if abs(seconds) < 1:
+        return num2si(seconds, unit="s", decp=1, strip_zeroes=True)
+
+    if seconds < 0:
+        sign = "-"
+        seconds = -seconds
     else:
-        msecs = 0
+        sign = ""
 
-    (mins, secs) = divmod(int(seconds), 60)
+    (mins, secs) = divmod(round(seconds), 60)
     (hours, mins) = divmod(mins, 60)
     (days, hours) = divmod(hours, 24)
 
     result = ""
     if days:
-        result += "%d days " % days
+        result += f"{days} days "
     if hours:
-        result += "%dh " % hours
+        result += f"{hours}h "
     if mins:
-        result += "%dm " % mins
-    if s or seconds < 60:
-        if ms or seconds < 1 or (msecs and seconds < 10):
-            result += "%f" % (secs + float(msecs) / 1000)
-            result = result.rstrip("0").rstrip(".")
+        result += f"{mins}m "
+    if s or abs(seconds) < 60:
+        if abs(seconds) < 1:
+            result += f"{secs}".rstrip("0").rstrip(".")
             result += "s"
         elif secs:
-            result += "%ds " % secs
+            result += f"{secs}s "
 
-    return result.strip()
+    return sign + result.strip()
 
 _NSTIME_UNITS = ["us", "ms", "s"]
 

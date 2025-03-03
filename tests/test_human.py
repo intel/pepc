@@ -209,3 +209,27 @@ def test_scale_si_val():
         assert result == expected, \
                f"Bad result of scale_si_val({value}, '{unit}'):\n" \
                f"expected '{expected}', got '{result}'"
+
+_DURATION_TEST_DATA = [
+    {"seconds": 0.001, "s": True, "result": "1ms"},
+    {"seconds": 0, "s": True, "result": "0s"},
+    {"seconds": -0, "s": True, "result": "0s"},
+    {"seconds": 1, "s": True, "result": "1s"},
+    {"seconds": -1, "s": True, "result": "-1s"},
+    {"seconds": 3661, "s": False, "result": "1h 1m"},
+    {"seconds": 3661001.9, "s": True, "result": "42 days 8h 56m 42s"},
+    {"seconds": 3661001.9, "s": False, "result": "42 days 8h 56m"},
+]
+
+def test_duration():
+    """Test the 'duration()' function."""
+
+    for entry in _DURATION_TEST_DATA:
+        value = entry["seconds"]
+        s = entry["s"]
+        expected = entry["result"]
+
+        result = Human.duration(value, s=s)
+
+        assert result == expected, \
+               f"Bad result of duration({value}, s={s}):\nexpected '{expected}', got '{result}'"
