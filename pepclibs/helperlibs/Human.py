@@ -242,13 +242,24 @@ def num2si(value: int | float,
 
     return result
 
-def scale_si_val(val, unit):
+def scale_si_val(val: int | float, unit: str) -> float:
     """
-    Scale 'val' which has unit 'unit'. The data will be scaled so that the unit representing the
-    data does not contain any SI-unit prefix. Example behaviour:
-     * 5, "kHz" -> 5000
-     * 10, "ms" -> 0.01
-     * 10, "s" -> 10
+    Scale a value based on a SI unit prefix.
+
+    Args:
+        val: The numerical value to be scaled.
+        unit: The unit of the value, which may include a SI prefix (e.g., "kHz", "ms").
+
+    Returns:
+        float: The scaled value with the SI prefix removed from the unit.
+
+    Examples:
+        >>> scale_si_val(5, unit="kHz")
+        5000
+        >>> scale_si_val(10, unit="ms")
+        0.01
+        >>> scale_si_val(10, unit="s")
+        10
     """
 
     prefix, _ = separate_si_prefix(unit)

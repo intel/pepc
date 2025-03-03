@@ -187,3 +187,25 @@ def test_num2si():
                f"Bad result of num2si({value}, '{unit}', decp={decp}, sep='{sep}'" \
                f"strip_zeroes={strip_zeroes}):\n" \
                f"expected '{expected}', got '{result}'"
+
+
+_SCALE_SI_VAL_TEST_DATA = [
+    {"value": 0, "unit": "kW", "result": 0},
+    {"value": -5, "unit": "kW", "result": -5000},
+    {"value": 1000000, "unit": "uHz", "result": 1},
+    {"value": 5, "unit": "kHz", "result": 5000},
+]
+
+def test_scale_si_val():
+    """Test the 'scale_si_val()' function."""
+
+    for entry in _SCALE_SI_VAL_TEST_DATA:
+        value = entry["value"]
+        unit = entry["unit"]
+        expected = entry["result"]
+
+        result = Human.scale_si_val(value, unit)
+
+        assert result == expected, \
+               f"Bad result of scale_si_val({value}, '{unit}'):\n" \
+               f"expected '{expected}', got '{result}'"
