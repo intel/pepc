@@ -322,7 +322,7 @@ def duration(seconds: int | float, s: bool = True) -> str:
 
 _NSTIME_UNITS = ["us", "ms", "s"]
 
-def _tokenize(hval, specs, name=None, multiple=True):
+def _tokenize(hval, specs, what=None, multiple=True):
     """
     Split human-provided value 'hval' according unit names in the 'specs' dictionary. Returns the
     dictionary of tokens.
@@ -336,10 +336,10 @@ def _tokenize(hval, specs, name=None, multiple=True):
     In the above example, if 'multiple' is 'False', this function would raise an error.
     """
 
-    if name:
-        name = f" {name}"
+    if what:
+        what = f" {what}"
     else:
-        name = ""
+        what = ""
 
     tokens = {}
     rest = hval
@@ -352,10 +352,10 @@ def _tokenize(hval, specs, name=None, multiple=True):
             rest = split[0]
 
     if rest.strip():
-        raise Error(f"failed to parse{name} value '{hval}'")
+        raise Error(f"failed to parse{what} value '{hval}'")
 
     if not multiple and len(tokens) > 1:
-        raise Error(f"failed to parse{name} value '{hval}': should be one value")
+        raise Error(f"failed to parse{what} value '{hval}': should be one value")
 
     for idx, (spec, val) in enumerate(tokens.items()):
         if idx < len(tokens) - 1:
@@ -363,14 +363,14 @@ def _tokenize(hval, specs, name=None, multiple=True):
             try:
                 tokens[spec] = int(val)
             except:
-                raise Error(f"failed to parse{name} value '{hval}': non-integer amount of "
+                raise Error(f"failed to parse{what} value '{hval}': non-integer amount of "
                             f"{specs[spec]}") from None
         else:
             # This is the last element. It can be a floating point or integer.
             try:
                 tokens[spec] = float(val)
             except:
-                raise Error(f"failed to parse{name} value '{hval}': non-numeric amount of "
+                raise Error(f"failed to parse{what} value '{hval}': non-numeric amount of "
                             f"{specs[spec]}") from None
 
             if Trivial.is_int(val):
@@ -427,7 +427,7 @@ def _tokenize_prepare(unit):
 
     return specs, scalers, multiple
 
-def parse_human(hval, unit, target_unit=None, integer=True, name=None):
+def parse_human(hval, unit, target_unit=None, integer=True, what=None):
     """
     Convert a user-provided value 'hval' into an integer of float amount of 'unit' units (hertz,
     seconds, etc). The arguments are as follows.
@@ -438,7 +438,7 @@ def parse_human(hval, unit, target_unit=None, integer=True, name=None):
                       prefix by default).
       * integer - if 'True', round the result to the nearest integer and return an 'int' type,
                   otherwise return the result as a floating point number ('float' type).
-      * name - an optional name associated with the value, will be used only in case of an error for
+      * what - an optional name associated with the value, will be used only in case of an error for
                formatting a nicer message.
 
     Examples.
@@ -469,7 +469,7 @@ def parse_human(hval, unit, target_unit=None, integer=True, name=None):
         hval = f"{hval}{base_unit}"
 
     specs, scalers, multiple = _tokenize_prepare(base_unit)
-    tokens = _tokenize(hval, specs, name, multiple=multiple)
+    tokens = _tokenize(hval, specs, what, multiple=multiple)
 
     result = 0.0
     for base_unit, val in tokens.items():

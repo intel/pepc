@@ -1000,7 +1000,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 # something like that.
                 is_integer = prop["type"] == "int"
                 name = Human.uncapitalize(prop["name"])
-                val = Human.parse_human(val, unit=prop["unit"], integer=is_integer, name=name)
+                val = Human.parse_human(val, unit=prop["unit"], integer=is_integer, what=name)
 
         return val
 
