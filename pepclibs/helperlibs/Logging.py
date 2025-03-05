@@ -276,7 +276,7 @@ class Logger(logging.Logger):
 
         self.setLevel(level)
 
-        if not colorama:
+        if not colorama_imported:
             colored = False
 
         if colored is None:
