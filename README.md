@@ -2,7 +2,7 @@
 -*- coding: utf-8 -*-
 vim: ts=4 sw=4 tw=100 et ai si
 
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 
 Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -12,7 +12,13 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [Authors](#authors-and-contributors)
 - [What is supported](#what-is-supported)
 - [Installation](#installation)
-  - [Using 'pip'](#using-pip)
+  - [Fedora](#fedora)
+  - [CentOS 9 Stream](#centos-9-stream)
+  - [Other distributions](#other-distributions)
+  - [Dependencies](#dependencies)
+    - [Fedora](#fedora-1)
+    - [Ubuntu](#ubuntu)
+  - [Using pip](#using-pip)
   - [Standalone version](#standalone-version)
   - [Tab completions](#tab-completions)
 - [Examples](#examples)
@@ -27,36 +33,35 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Introduction
 
-Pepc stands for "Power, Energy, and Performance Configurator". This is a command-line tool for
+Pepc stands for "Power, Energy, and Performance Configurator". It is a command-line tool for
 configuring CPU power management features.
 
-**IMPORTANT**: this is tool is for debug and research purposes only. It requires root permissions,
-and must only be used in an isolated lab environment, not in production.
+**IMPORTANT**: This tool is intended for debugging and research purposes only. It requires root
+permissions and should only be used in a lab environment, not in production.
 
 ## Context
 
-There are many Linux tools for configuring power management in Linux, and this sub-section tries to
-explain why we created yet another one.
+There are many Linux tools for configuring power management in Linux, and this sub-section explains
+why we created yet another one.
 
 We are doing a lot of work related to power and performance, such as measuring C-states latency
-using [wult](https://github.com/intel/wult), running various workloads and collecting power and
-performance statistics using [stats-collect](https://github.com/intel/stats-collect). We often
-need to configure various power and performance aspects of the system, for example, enable or
-disable C-states, limit CPU or uncore frequency, tweak hardware features like C1 demotion, and
-so on.
+using [wult](https://github.com/intel/wult), running various workloads, and collecting power and
+performance statistics using [stats-collect](https://github.com/intel/stats-collect). We often need
+to configure various power and performance aspects of the system, for example, enabling or disabling
+C-states, limiting CPU or uncore frequency, tweaking hardware features like C1 demotion, and so on.
 
-Before 'pepc' was created, we had to use many different tools, such as 'cpupower' or 'lscpu',
-remember sysfs paths for various knobs, such a path to disable a C-state. This was difficult
+Before pepc was created, we had to use many different tools, such as cpupower or lscpu, and
+remember sysfs paths for various knobs, such as the path to disable a C-state. This was difficult
 and error-prone. It was also not flexible enough for us. For example, disabling C1 only for one CPU
-module was a difficult task, because one has to first figure out what are the CPU numbers in that
-module, and then disable C1 on every CPU. And finally, many hardware features like C1 demotion
-requires knowledge of the MSR register and the bit number to toggle. The 'wrmsr' and 'rdmsr' are
-helpful tools, but they were not easy enough for us to use on a regular basis.
+module was a difficult task because one has to first figure out what the CPU numbers in that module
+are, and then disable C1 on every CPU. Finally, many hardware features like C1 demotion require
+knowledge of the MSR register and the bit number to toggle. The wrmsr and rdmsr tools are
+helpful, but they were not easy enough for us to use regularly.
 
-We created 'pepc' to make power and performance configuration tasks easier. With pepc, we do not
+We created pepc to make power and performance configuration tasks easier. With pepc, we do not
 have to remember sysfs paths and platform-specific MSR (Model Specific Register) numbers. The tool
-is flexible, supports many CPU models, well-structured, and also provides Python API for other
-python projects to use.
+is flexible, supports many CPU models, is well-structured, and also provides a Python API for other
+Python projects to use.
 
 # Authors and contributors
 
@@ -84,12 +89,12 @@ Some of the features are hardware-independent, but some are hardware-specific.
 
 # Installation
 
-Note, while 'pepc' is available via OS packages, they typically do not provide the latest version.
-Use the "pip" installation method to get the latest 'pepc' version.
+Note, while pepc is available via OS packages, they typically do not provide the latest version.
+Use the "pip" installation method to get the latest pepc version.
 
 ## Fedora
 
-'Pepc' is available on Fedora 38 and 39. To install 'pepc', run
+Pepc is available in Fedora starting from Fedora 38. To install pepc, run
 
 ```
 sudo dnf install pepc
@@ -97,18 +102,10 @@ sudo dnf install pepc
 
 Fedora packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
 
-In case of Fedora 37 or older Fedora, use the 'pip' installation method. But install
-the dependencies by running
-
-```
-sudo dnf install -y rsync openssl-devel util-linux procps-ng
-sudo dnf install -y python3-colorama python3-paramiko python3-argcomplete
-```
-
 ## CentOS 9 Stream
 
-'Pepc' is available for CentOS 9 Stream via the 'epel' repository. Here is how to add 'epel' and
-install 'pepc'.
+Pepc is available for CentOS 9 Stream via the epel repository. Here is how to add epel and
+install pepc.
 
 ```
 sudo dnf install epel-release
@@ -117,28 +114,40 @@ sudo dnf install pepc
 
 Epel packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
 
-## Ubuntu and Debian
+## Other distributions
 
-We do not provide Ubuntu/Debian packages, so you'll need to use the 'pip' installation method.
-Install the following dependencies, though.
+Use the pip installation method in other Linux distributions.
+
+## Dependencies
+
+The pepc tool requires Python version 3.9 or higher. It also depends on some system tools and
+libraries. Here is how to install them.
+
+### Fedora
 
 ```
-sudo apt install -y rsync libssl-dev util-linux procps python3 git
-sudo apt install -y python3-pip python3-colorama python3-paramiko python3-argcomplete
+sudo dnf install -y rsync util-linux procps-ng python3-colorama python3-yaml
 ```
 
-## Using 'pip'
+### Ubuntu
 
-Run the following command:
+```
+sudo apt install -y rsync util-linux procps python3-colorama python3-yaml
+```
+
+## Using pip
+
+To install pepc using pip, run the following command:
+
 
 ```
 sudo pip3 install --upgrade git+https://github.com/intel/pepc.git@release
 ```
 
-This command will download 'pepc' from the 'release' branch of the git repository and
-install it to the system.
+This command downloads pepc from the release branch of the git repository and install it to the
+system.
 
-The other way of doing this is by first cloning the git repository and running
+Alternatively, you can first clone the git repository and then install it:
 
 ```
 git clone https://github.com/intel/pepc.git --branch release pepc
@@ -146,24 +155,26 @@ cd pepc
 pip3 install --upgrade .
 ```
 
-Note, 'pepc' has to be run with superuser (root) privileges in many cases, and if you install it
-with the '--user' option of 'pip3', it won't work "out of the box". This is why we do not recommend
-using '--user'.
+Note: pepc needs to be run with superuser (root) privileges in many cases. If you install it using
+the --user option of pip3, it won't work "out of the box". Therefore, we do not recommend using the
+--user option.
 
 ## Standalone version
 
-You can also create a standalone version of this tool by cloning the repository and running a couple
-of commands. Below is an example. You may want to adjust the '#!/usr/bin/python3' shebang in it.
+You can also create a standalone version of this tool, but it still requires the dependencies to be
+installed on the target system.
 
-First of all, make sure the below command prints "Good". It verifies that your
-'/usr/bin/python3' version is greater than 3.8:
+Here is how to create a standalone pepc version.
+
+First of all, make sure the below command prints "Good". It verifies that your '/usr/bin/python3'
+version is greater than 3.8:
 
 ```
 /usr/bin/python3 -c 'import sys; ver=sys.version_info; \
-print("Good") if ver.major>2 and ver.minor>7 else print("Bad")'
+print("Good") if ver.major>2 and ver.minor>8 else print("Bad")'
 ```
 
-Create the standalone version of 'pepc'.
+Create the standalone version of pepc.
 
 ```
 git clone https://github.com/intel/pepc.git --branch release pepc
@@ -173,19 +184,19 @@ git archive --format zip HEAD >> pepc.standalone
 chmod ug+x pepc.standalone
 ```
 
-This will create the 'pepc.standalone' file, which you can rename and copy anywhere. It will work
-as a standalone program.
+This will create the pepc.standalone file, which you can rename and copy anywhere. It will work as
+a standalone program.
 
 ## Tab completions
 
-'Pepc' has tab completions support, but this will only work if you have certain environment
+Pepc has tab completions support, but this will only work if you have certain environment
 variables defined. The following command will do it:
 
 ```
 eval "$(register-python-argcomplete pepc)"
 ```
 
-You can put this line to your '.bashrc' file in order to have 'pepc' tab completions enabled by
+You can put this line in your .bashrc file in order to have pepc tab completions enabled by
 default.
 
 # Examples
@@ -553,11 +564,11 @@ to each other.
 
 ## What to do if my platform is not supported?
 
-Some 'pepc' features (e.g., '--pkg-cstate-limit') are implemented only for certain Intel platforms.
+Some pepc features (e.g., --pkg-cstate-limit) are implemented only for certain Intel platforms.
 This does not necessarily mean that the feature is not supported by other platforms, it only means
 that we verified it on a limited amount of platforms. Just to be on a safe side, we refuse changing
 the underlying MSR registers on platforms we did not verify.
 
-If 'pepc' fails with a message like "this feature is not supported on this platform" for you, feel
+If pepc fails with a message like "this feature is not supported on this platform" for you, feel
 free to contact the authors with a request. Very often it ends up with just adding a CPU ID to the
 list of supported platforms, and may be you can do it yourself and submit a patch/pull request.
