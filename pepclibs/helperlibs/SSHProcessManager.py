@@ -46,7 +46,10 @@ import threading
 import contextlib
 from pathlib import Path
 from operator import itemgetter
-import paramiko
+try:
+    import paramiko
+except (ModuleNotFoundError, ImportError):
+    from pepclibs.helperlibs import DummyParamiko as paramiko
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
 from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
