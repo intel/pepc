@@ -794,6 +794,12 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.get_mtime")
 
+    def unlink(self, path):
+        """Remove a file a path 'path'."""
+
+        # pylint: disable=unused-argument
+        return _bug_method_not_defined("ProcessManagerBase.rmtree")
+
     def rmtree(self, path):
         """
         Recursively remove a file or directory at path 'path'. If 'path' is a symlink, the link is

@@ -460,6 +460,16 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"'stat()' failed for '{path}':\n{msg}") from None
 
     @staticmethod
+    def unlink(path):
+        """Remove a file a path 'path'."""
+
+        try:
+            os.unlink(Path(path))
+        except OSError as err:
+            msg = Error(err).indent(2)
+            raise Error(f"failed to remove '{path}':\n{msg}") from None
+
+    @staticmethod
     def rmtree(path):
         """
         Create a temporary directory. Refer to '_ProcessManagerBase.ProcessManagerBase().rmtree()'

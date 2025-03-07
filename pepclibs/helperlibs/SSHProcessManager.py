@@ -936,6 +936,11 @@ for entry in os.listdir(path):
             raise Error(f"got erroneous modification time of '{path}'{self.hostmsg}:\n{mtime}")
         return float(mtime)
 
+    def unlink(self, path):
+        """Remove a file a path 'path'."""
+
+        self.run_verify(f"unlink -- '{path}'")
+
     def rmtree(self, path):
         """
         Recursively remove a file or directory at path 'path'. If 'path' is a symlink, the link is
