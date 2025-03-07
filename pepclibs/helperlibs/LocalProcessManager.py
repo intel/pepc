@@ -12,6 +12,9 @@ This module implements a process manager for running and monitoring local proces
 
 # pylint: disable=arguments-differ
 
+# TODO: finish adding type hints to this module.
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
 import os
 import time
 import shlex
@@ -124,7 +127,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """
 
     def _run_async(self, command, cwd=None, shell=True, stdin=None, stdout=None, stderr=None,
-                   bufsize=0, env=None, newgrp=False):
+                   bufsize=0, env=None, newgrp=False) -> LocalProcess:
         """Implements 'run_async()'."""
 
         # pylint: disable=consider-using-with

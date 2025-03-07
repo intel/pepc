@@ -33,6 +33,9 @@ hash to 'stdout' when it finishes.
 # pylint: disable=no-member
 # pylint: disable=protected-access
 
+# TODO: finish adding type hints to this module.
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
 import os
 import re
 import glob
@@ -541,7 +544,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             return self._run_in_new_session(command, cwd=cwd, shell=shell)
 
     def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
-                  stderr=None):
+                  stderr=None) -> SSHProcess:
         """
         Run command 'command' on the remote host. Refer to 'ProcessManagerBase.run_async()' for more
         information.
