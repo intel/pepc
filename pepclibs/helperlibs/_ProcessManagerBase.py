@@ -285,7 +285,11 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         if self.exitcode == 127 and self._lines_cnt[0] == 0 and self._lines_cnt[1] == 1:
             # Exit code 127 is a typical shell exit code for the "command not found" case. We expect
             # a single output line in stderr in this case.
-            raise self.pman._command_not_found(self.cmd, output[1][0])
+            if len(output[1]) > 0:
+                errmsg = output
+            else:
+                errmsg = None
+            raise self.pman._command_not_found(self.cmd, errmsg=errmsg)
 
         stdout = stderr = ""
         if output[0]:
@@ -571,7 +575,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.rsync")
 
-    def _command_not_found(self, cmd, errmsg, toolname=None):
+    def _command_not_found(self, cmd, errmsg=None, toolname=None):
         """
         This method is called when command 'cmd' could not be executed be it was not found. This
         method formats a helpful error message and returns an exception object.
@@ -596,8 +600,14 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         else:
             what = f"'{toolname}' program"
 
-        return ErrorNotFound(f"cannot execute the following command{self.hostmsg}:\n{cmd}\n"
-                             f"The error is: {errmsg}\nTry to install the {what}{self.hostmsg}")
+        msg = f"cannot execute the following command{self.hostmsg}:\n{cmd}\n"
+        if errmsg:
+            msg += f"The error is: {errmsg}\n"
+        else:
+            msg += "Command not found\n"
+        msg += f"Try to install the {what}{self.hostmsg}"
+
+        return ErrorNotFound(msg)
 
     def get_cmd_failure_msg(self, cmd, stdout, stderr, exitcode, timeout=None, startmsg=None):
         """
