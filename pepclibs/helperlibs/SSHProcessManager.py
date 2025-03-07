@@ -842,6 +842,24 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         cmd += f" -- '{dirpath}'"
         self.run_verify(cmd)
 
+    def mkfifo(self, path, exist_ok=False):
+        """
+        Create a named pipe. The a arguments are as follows.
+          * path - path to the named pipe to create.
+          * exist_ok - if the named pipe already exists, this method raises an exception if
+                       'exist_ok' is 'True', and it returns without an error if 'exist_ok' is
+                       'False'.
+        """
+
+        if self.shell_test(path, "-e"):
+            if exist_ok:
+                return
+            raise ErrorExists(f"path '{path}' already exists{self.hostmsg}")
+
+        cmd = "mkfifo"
+        cmd += f" -- '{path}'"
+        self.run_verify(cmd)
+
     def lsdir(self, path, must_exist=True):
         """
         For each directory entry in 'path', yield the ('name', 'path', 'mode') tuple, where 'name'

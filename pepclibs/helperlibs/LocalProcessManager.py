@@ -345,6 +345,22 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"failed to create directory '{dirpath}':\n{msg}") from None
 
     @staticmethod
+    def mkfifo(path, exist_ok=False):
+        """
+        Create a named pipe. Refer to '_ProcessManagerBase.ProcessManagerBase().mkpipe()' for more
+        information.
+        """
+
+        try:
+            os.mkfifo(path)
+        except FileExistsError:
+            if not exist_ok:
+                raise ErrorExists(f"path '{path}' already exists") from None
+        except OSError as err:
+            msg = Error(err).indent(2)
+            raise Error(f"failed to create named pipe '{path}':\n{msg}") from None
+
+    @staticmethod
     def lsdir(path, must_exist=True):
         """
         List directory entries in 'path'. Refer to

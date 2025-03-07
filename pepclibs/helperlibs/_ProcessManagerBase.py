@@ -730,6 +730,18 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.mkdir")
 
+    def mkfifo(self, path, exist_ok=False):
+        """
+        Create a named pipe. The a arguments are as follows.
+          * path - path to the named pipe to create.
+          * exist_ok - if the named pipe already exists, this method raises an exception if
+                       'exist_ok' is 'True', and it returns without an error if 'exist_ok' is
+                       'False'.
+        """
+
+        # pylint: disable=unused-argument
+        return _bug_method_not_defined("ProcessManagerBase.mkdir")
+
     def lsdir(self, path, must_exist=True):
         """
         For each directory entry in 'path', yield the ('name', 'path', 'mode') tuple, where 'name'
