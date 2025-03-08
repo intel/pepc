@@ -331,7 +331,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         """
         return _bug_method_not_defined("ProcessBase.poll")
 
-    def get_cmd_failure_msg(self, stdout, stderr, exitcode, timeout=None, startmsg=None):
+    def get_cmd_failure_msg(self, stdout, stderr, exitcode, timeout=None, startmsg=None,
+                            failed=True):
         """
         Format and return the command failure message. The arguments are the same as in
         'ProcessManagerBase.get_cmd_failure_msg()'.
@@ -343,10 +344,10 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         cmd = self.cmd
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             if self.cmd != self.real_cmd:
-                cmd += f"\nReal command: {self.real_cmd}"
+                cmd += f"\nReal command:\n  {self.real_cmd}"
 
         return self.pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode, timeout=timeout,
-                                             startmsg=startmsg)
+                                             startmsg=startmsg, failed=failed)
 
     def _reinit(self, cmd, real_cmd, shell):
         """
@@ -609,7 +610,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         return ErrorNotFound(msg)
 
-    def get_cmd_failure_msg(self, cmd, stdout, stderr, exitcode, timeout=None, startmsg=None):
+    def get_cmd_failure_msg(self, cmd, stdout, stderr, exitcode, timeout=None, startmsg=None,
+                            failed=True):
         """
         Format and return the command failure message. The arguments are as follows.
             * cmd - the failed command.
@@ -618,6 +620,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             * exitcode - exit code of the failed command.
             * timeout - command time out.
             * startmsg - a string to start the error message with.
+            * failed - if True, consider the command as failed, otherwise consider it as just
+                       finished.
         """
 
         if timeout is None:
@@ -627,7 +631,11 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             human_tout = Human.duration(timeout)
             exitcode_msg = f"did not finish within {timeout} seconds ({human_tout})"
         else:
-            exitcode_msg = f"failed with exit code {exitcode}"
+            if failed:
+                verb = "failed"
+            else:
+                verb = "finished"
+            exitcode_msg = f"{verb} with exit code {exitcode}"
 
         msg = ""
         for stream in (stdout, stderr):
@@ -643,12 +651,12 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             startmsg += ".\n"
 
         if self.is_remote:
-            startmsg += f"ran the following command on host '{self.hostname}', but it " \
+            startmsg += f"Ran the following command on host '{self.hostname}', but it " \
                         f"{exitcode_msg}:"
         else:
-            startmsg += f"the following command {exitcode_msg}:"
+            startmsg += f"The following command {exitcode_msg}:"
 
-        result = f"{startmsg}\n{cmd}"
+        result = f"{startmsg}\n  {cmd}"
         if msg:
             result += f"\n\n{msg.strip()}"
         return result
