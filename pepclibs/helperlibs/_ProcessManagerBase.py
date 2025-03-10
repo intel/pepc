@@ -637,7 +637,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             * stderr - standard error of the failed command.
             * exitcode - exit code of the failed command.
             * timeout - command time out.
-            * startmsg - a string to start the error message with.
+            * startmsg - the first line of the resulting message.
             * failed - if True, consider the command as failed, otherwise consider it as just
                        finished.
         """
@@ -666,7 +666,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         if not startmsg:
             startmsg = ""
         else:
-            startmsg += ".\n"
+            startmsg += "\n"
 
         if self.is_remote:
             startmsg += f"Ran the following command on host '{self.hostname}', but it " \
