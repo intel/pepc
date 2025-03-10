@@ -11,3 +11,6 @@ allow-init-docstring = true
 arg-type-hints-in-docstring = false
 check-return-types = false
 skip-checking-raises = true
+
+[tool.mypy]
+check_untyped_defs = true
