@@ -24,7 +24,8 @@ import subprocess
 from pathlib import Path
 from operator import itemgetter
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers
-from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
+# pylint: disable-next=unused-import
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 

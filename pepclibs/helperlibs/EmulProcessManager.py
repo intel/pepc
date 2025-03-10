@@ -22,10 +22,13 @@ Terminology:
 # pylint: disable=arguments-differ
 # pylint: disable=arguments-renamed
 
+# TODO: finish adding type hints to this module.
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
-from pepclibs.helperlibs._ProcessManagerBase import ProcResult
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulDevMSR, _RWFile, _EmulFile
 
@@ -122,7 +125,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 return super().run_verify(cmd, join=join, **kwargs)
             raise
 
-    def run(self, cmd, join=True, **kwargs): # pylint: disable=unused-argument
+    def run(self, cmd, join=True, **kwargs) -> ProcWaitResultType: # pylint: disable=unused-argument
         """
         Emulate running command 'cmd'. The arguments are as follows.
           * cmd - the command to run (only a pre-defined set of commands is supported).
@@ -146,7 +149,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 return super().run(cmd, join=join, **kwargs)
             raise
 
-        return ProcResult(stdout=stdout, stderr=stderr, exitcode=0)
+        return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=0)
 
     def open(self, path, mode):
         """

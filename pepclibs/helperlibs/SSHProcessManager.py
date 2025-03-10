@@ -54,7 +54,8 @@ try:
 except (ModuleNotFoundError, ImportError):
     from pepclibs.helperlibs import DummyParamiko as paramiko
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
-from pepclibs.helperlibs._ProcessManagerBase import ProcResult # pylint: disable=unused-import
+# pylint: disable-next=unused-import
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
@@ -578,7 +579,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return self._run_async(str(command), cwd=cwd, shell=shell, intsh=intsh)
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-            output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
+            output_fobjs=(None, None), cwd=None, shell=True, intsh=None) -> ProcWaitResultType:
         """
         Run command 'command' on the remote host and wait for it to finish. Refer to
         'ProcessManagerBase.run()' for more information.
@@ -1065,7 +1066,8 @@ for entry in os.listdir(path):
                     if os.path.exists(cfgfile):
                         cfgfiles.append(cfgfile)
 
-            # Sort configuration file paths to make the order somewhat predictable, as opposed to random.
+            # Sort configuration file paths to make the order somewhat predictable, as opposed to
+            # random.
             for cfgfile in sorted(cfgfiles):
                 config = paramiko.SSHConfig().from_path(cfgfile)
 

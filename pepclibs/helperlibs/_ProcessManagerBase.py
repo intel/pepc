@@ -13,23 +13,40 @@ between different process manager implementations.
 
 # pylint: disable=protected-access
 
+# TODO: finish adding type hints to this module.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import re
 import queue
 import codecs
 import threading
 import contextlib
+from typing import NamedTuple
 from pathlib import Path
-from collections import namedtuple
 from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
+class ProcWaitResultType(NamedTuple):
+    """
+    The result of the 'wait()' method for a process.
+
+    Attributes:
+        stdout: The standard output of the process. Can be a single string or a list of strings
+                lines. The tailing newline is not stripped.
+        stderr: The standard error of the process. Can be a single string or a list of strings
+                lines. The tailing newline is not stripped.
+        exitcode: The exit code of the process. Can be an integer or None if the process is still
+                  running.
+    """
+
+    stdout: str | list[str]
+    stderr: str | list[str]
+    exitcode: int | None
+
 # The default process timeout in seconds.
 TIMEOUT = 24 * 60 * 60
-
-# Results of a process finished its execution.
-ProcResult = namedtuple("proc_result", ["stdout", "stderr", "exitcode"])
 
 def _get_err_prefix(fobj, method):
     """Return the error message prefix for a wrapped file-like object 'fobj'."""
@@ -208,7 +225,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         return _bug_method_not_defined("ProcessBase._wait")
 
     def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(None, None),
-             join=True):
+             join=True) -> ProcWaitResultType:
         """
         This method waits for the process to exit or print something to stdout or stderr. The
         arguments are as follows.
@@ -236,7 +253,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                    single string, or no joining is needed and the output should be returned as a
                    list of strings.
 
-        This function returns the 'ProcResult' named tuple.
+        This function returns the 'ProcWaitResultType' named tuple.
         """
 
         if timeout is None:
@@ -265,7 +282,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             raise Error("this process has 'threads_exit' flag set and it cannot be used")
 
         if self._process_is_done():
-            return ProcResult(stdout="", stderr="", exitcode=self.exitcode)
+            return ProcWaitResultType(stdout="", stderr="", exitcode=self.exitcode)
 
         if not self._queue:
             self._queue = queue.Queue()
@@ -312,7 +329,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             self._dbg("wait: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
                       exitcode, sout.rstrip(), serr.rstrip())
 
-        return ProcResult(stdout=stdout, stderr=stderr, exitcode=exitcode)
+        return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=exitcode)
 
     def _dbg(self, fmt, *args):
         """Print a debugging message."""
@@ -483,7 +500,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         return _bug_method_not_defined("ProcessManagerBase.run_async")
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-            output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
+            output_fobjs=(None, None), cwd=None, shell=True, intsh=None) -> ProcWaitResultType:
         """
         Run command 'command' wait for it to finish. The arguments are as follows.
           * command - the command to run.
@@ -506,7 +523,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
           * intsh - whether the command should run in an already running interactive shell or in a
                     new shell. The former should be more efficient.
 
-        This function returns the 'ProcResult' named tuple of '(exitcode, stdout, stderr)' elements.
+        This function returns the 'ProcWaitResultType' named tuple of '(exitcode, stdout, stderr)'
+        elements.
           * 'stdout' - stdout executed command.
           * 'stderr' - stdout executed command.
           * 'exitcode' - exit code of the executed command.

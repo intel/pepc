@@ -19,6 +19,8 @@ import contextlib
 from typing import Union
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import LocalProcessManager, SSHProcessManager, EmulProcessManager
+# pylint: disable-next=unused-import
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 
 ProcessManagerType = Union[LocalProcessManager.LocalProcessManager,
                            SSHProcessManager.SSHProcessManager,
