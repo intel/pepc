@@ -1,0 +1,13 @@
+[tool.ruff.lint]
+
+# F401 = unused-import, disable because pylint checks for this too, and it is
+# more convenient to add exceptions for pylint than for ruff.
+ignore = ["F401"]
+
+[tool.pydoclint]
+style = 'google'
+exclude = '\.git'
+allow-init-docstring = true
+arg-type-hints-in-docstring = false
+check-return-types = false
+skip-checking-raises = true
