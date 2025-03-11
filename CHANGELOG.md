@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.5.29] - 2025-03-11
+### Changed
+ - Minor changes to support dependent projects.
+
 ## [1.5.28] - 2025-03-05
 ### Fixed
  - Fix crash when paramiko and colorama packages are not installed.
