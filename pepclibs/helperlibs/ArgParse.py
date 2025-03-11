@@ -10,6 +10,9 @@
 This module contains helpers related to parsing command-line arguments.
 """
 
+# TODO: finish adding type hints to this module.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import sys
 import types
 import argparse
@@ -22,6 +25,10 @@ except ImportError:
 
 from pepclibs.helperlibs import DamerauLevenshtein
 from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
+
+# The class type returned by the 'add_subparsers()' method of the arguments classes. Even though the
+# class is private, it is documented and will unlikely to change.
+SubParsersType = argparse._SubParsersAction # pylint: disable=protected-access
 
 SSH_OPTIONS = [
     {
