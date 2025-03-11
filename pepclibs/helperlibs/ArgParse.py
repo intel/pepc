@@ -19,9 +19,10 @@ import argparse
 
 try:
     import argcomplete
+    argcomplete_imported = True
 except ImportError:
     # We can live without argcomplete, we only lose tab completions.
-    argcomplete = None
+    argcomplete_imported = False
 
 from pepclibs.helperlibs import DamerauLevenshtein
 from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
@@ -85,7 +86,7 @@ def add_ssh_options(parser, ssh_options=None):
 
     for opt in ssh_options:
         arg = parser.add_argument(opt["short"], opt["long"], **opt["kwargs"])
-        if opt["argcomplete"] and argcomplete:
+        if opt["argcomplete"] and argcomplete_imported:
             setattr(arg, "completer", getattr(argcomplete.completers, opt["argcomplete"]))
 
 class OrderedArg(argparse.Action):
