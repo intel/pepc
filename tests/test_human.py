@@ -229,7 +229,47 @@ def test_duration():
         s = entry["s"]
         expected = entry["result"]
 
-        result = Human.duration(value, s=s)
+        result = Human.duration(value, s=s) # type: ignore
 
         assert result == expected, \
                f"Bad result of duration({value}, s={s}):\nexpected '{expected}', got '{result}'"
+
+_PARSE_HUMAN_DATA = [
+    {"hval": "0", "unit": "s", "target_unit": "s", "integer": True, "result": 0},
+    {"hval": 0, "unit": "s", "target_unit": "s", "integer": True, "result": 0},
+    {"hval": 0.0, "unit": "s", "target_unit": "s", "integer": True, "result": 0},
+    {"hval": "-0", "unit": "s", "target_unit": "s", "integer": True, "result": 0},
+    {"hval": "1.1", "unit": "s", "target_unit": "s", "integer": True, "result": 1},
+    {"hval": "1.5", "unit": "s", "target_unit": "s", "integer": True, "result": 2},
+    {"hval": "1.1", "unit": "s", "target_unit": "s", "integer": False, "result": 1.1},
+    {"hval": "1.1", "unit": "s", "target_unit": "ms", "integer": False, "result": 1100.0},
+    {"hval": "1200", "unit": "ms", "target_unit": "s", "integer": True, "result": 1},
+    {"hval": "1200", "unit": "us", "target_unit": "s", "integer": False, "result": 0.0012},
+    {"hval": 1200, "unit": "us", "target_unit": "s", "integer": False, "result": 0.0012},
+    {"hval": "-1200us", "unit": "us", "target_unit": "s", "integer": False, "result": -0.0012},
+    {"hval": "10%", "unit": "%", "target_unit": "%", "integer": True, "result": 10},
+    {"hval": "10%", "unit": "%", "integer": True, "result": 10},
+    {"hval": "1m", "unit": "s", "target_unit": "s", "integer": True, "result": 60},
+    {"hval": "100s", "unit": "s", "target_unit": "ns", "integer": True, "result": 100000000000},
+    {"hval": "1us", "unit": "s", "target_unit": "ns", "integer": True, "result": 1000},
+    {"hval": "1h 10m 5s", "unit": "s", "target_unit": "s", "integer": True, "result": 4205},
+    {"hval": "1h 10m 5s", "unit": "s", "target_unit": "us", "integer": True, "result": 4205000000},
+    {"hval": "101ns", "unit": "s", "target_unit": "ns", "integer": True, "result": 101},
+    {"hval": "101ns", "unit": "s", "target_unit": "us", "integer": False, "result": 0.101},
+]
+
+def test_parse_human():
+    """Test the 'parse_human()' function."""
+
+    for entry in _PARSE_HUMAN_DATA:
+        hval = entry["hval"]
+        unit = entry["unit"]
+        target_unit = entry.get("target_unit", 0)
+        integer = entry["integer"]
+        expected = entry["result"]
+
+        result = Human.parse_human(hval, unit, target_unit, integer) # type: ignore
+
+        assert result == expected, \
+               f"Bad result of parse_human('{hval}', '{unit}', target_unit='{target_unit}', " \
+               f"integet={integer}):\nexpected '{expected}', got '{result}'"
