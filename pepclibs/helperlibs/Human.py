@@ -44,7 +44,7 @@ _BYTESIZE_SCALERS = {
     "Ki": 1024,
 }
 
-def bytesize(size: int,
+def bytesize(size: int | float,
              decp: int = 1,
              sep: str | None = None,
              strip_zeroes = False) -> str:
@@ -319,20 +319,30 @@ def duration(seconds: int | float, s: bool = True) -> str:
 
     return sign + result.strip()
 
-_NSTIME_UNITS = ["us", "ms", "s"]
-
-def _tokenize(hval, specs, what=None, multiple=True):
+def _tokenize(hval: str,
+              specs: dict[str, str],
+              what: str | None = None,
+              multiple: bool = True) -> dict[str, int | float]:
     """
-    Split human-provided value 'hval' according unit names in the 'specs' dictionary. Returns the
-    dictionary of tokens.
+    Split a human-provided value string into tokens based on unit names specified in the 'specs'
+    dictionary.
 
-    Example.
-        * hval = "1d 4m 1s"
-        * specs = {"d" : "days", "m" : "minutes", "s" : "seconds"}
-        * Result: {'d': '1', 'm': '4', 's': '1'}
+    Args:
+        hval: The human-provided value string to be tokenized.
+        specs: The specifiers dictionary, where keys are unit symbols and values are their
+               corresponding names.
+        what: A description of what is being parsed, used in error messages.
+        multiple: If True, allow multiple unit-value pairs in 'hval' (e.g., "1d 5h"). If False,
+                  restricts to a single unit-value pair.
 
-    The 'multiple' argument can be used to limit the input value to just a single number and unit.
-    In the above example, if 'multiple' is 'False', this function would raise an error.
+    Returns:
+        A dictionary where keys are unit symbols and values are the corresponding numeric values.
+
+    Example:
+        >>> hval = "1d 4m 1s"
+        >>> specs = {"d": "days", "m": "minutes", "s": "seconds"}
+        >>> _tokenize(hval, specs)
+        {'d': 1, 'm': 4, 's': 1}
     """
 
     if what:
@@ -340,36 +350,38 @@ def _tokenize(hval, specs, what=None, multiple=True):
     else:
         what = ""
 
-    tokens = {}
+    tokens_str: dict[str, str] = {}
+    tokens: dict[str, int | float] = {}
     rest = hval
+
     for spec in specs:
         split = rest.split(spec, 1)
         if len(split) > 1:
-            tokens[spec] = split[0]
+            tokens_str[spec] = split[0]
             rest = split[1]
         else:
             rest = split[0]
 
     if rest.strip():
-        raise Error(f"failed to parse{what} value '{hval}'")
+        raise Error(f"Failed to parse{what} value '{hval}'")
 
-    if not multiple and len(tokens) > 1:
-        raise Error(f"failed to parse{what} value '{hval}': should be one value")
+    if not multiple and len(tokens_str) > 1:
+        raise Error(f"Failed to parse{what} value '{hval}': should be one value")
 
-    for idx, (spec, val) in enumerate(tokens.items()):
-        if idx < len(tokens) - 1:
+    for idx, (spec, val) in enumerate(tokens_str.items()):
+        if idx < len(tokens_str) - 1:
             # This is not the last element, it must be an integer.
             try:
                 tokens[spec] = int(val)
-            except:
-                raise Error(f"failed to parse{what} value '{hval}': non-integer amount of "
+            except ValueError:
+                raise Error(f"Failed to parse{what} value '{hval}': non-integer amount of "
                             f"{specs[spec]}") from None
         else:
             # This is the last element. It can be a floating point or integer.
             try:
                 tokens[spec] = float(val)
-            except:
-                raise Error(f"failed to parse{what} value '{hval}': non-numeric amount of "
+            except ValueError:
+                raise Error(f"Failed to parse{what} value '{hval}': non-numeric amount of "
                             f"{specs[spec]}") from None
 
             if Trivial.is_int(val):
@@ -377,22 +389,28 @@ def _tokenize(hval, specs, what=None, multiple=True):
 
     return tokens
 
-def _tokenize_prepare(unit):
+def _tokenize_prepare(unit: str) -> tuple[dict[str, str], dict[str, int | float], bool]:
     """
-    Prepare for tokenizing a human-oriented value where the expected unit is 'unit'. Returns a tuple
-    of the following 3 elements.
-      * specs - the specifiers dictionary, suitable for passing to the '_tokenize()' function.
-      * scalers - the scalers dictionary, with key being the specifiers from 'specs' and values
-                  being the scaling factors.
-      * multiple - value of the 'multiple' argument that can be passed to '_tokenize()'.
+    Prepare for tokenizing a human-oriented value which has unit 'unit'.
+
+    Args:
+        unit: The unit of measurement to prepare for tokenizing.
+
+    Returns:
+        A tuple containing:
+            specs: The specifiers dictionary, suitable for passing to the '_tokenize()' function.
+            scalers: The scalers dictionary, with keys being the specifiers from 'specs' and values
+                     being the corresponding scaling factors.
+            multiple: Whether multiple specifiers can be used, such as in "1d 5h" for time.
     """
 
-    # Create the specifiers dictionary.
-    specs = {}
-    scalers = {}
+    specs: dict[str, str] = {}
+    scalers: dict[str, int | float] = {}
     multiple = False
+
     fullname = SUPPORTED_UNITS.get(unit, unit)
 
+    # Create the specifiers dictionary.
     for pfx, pfx_fullname in _SIPFX_FULLNAMES.items():
         spec = f"{pfx}{unit}"
         if fullname != unit:
@@ -474,6 +492,7 @@ def parse_human(hval: str | float | int,
         if target_base_unit != base_unit:
             raise Error(f"the target base unit has to be '{base_unit}', not '{target_base_unit}")
 
+    hval = str(hval)
     if Trivial.is_num(hval):
         if sipfx:
             hval = f"{hval}{sipfx}"
