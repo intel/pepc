@@ -426,32 +426,44 @@ def _tokenize_prepare(unit):
 
     return specs, scalers, multiple
 
-def parse_human(hval, unit, target_unit=None, integer=True, what=None):
+def parse_human(hval: str | float | int,
+                unit: str,
+                target_unit: str | None = None,
+                integer: bool = True,
+                what: str | None = None):
     """
-    Convert a user-provided value 'hval' into an integer of float amount of 'unit' units (hertz,
-    seconds, etc). The arguments are as follows.
-      * hval - the value to convert. Can be a of a string, int, float type. If it is a string, may
-               include the unit.
-      * unit - the unit of 'hval', including any SI prefixes.
-      * target_unit - the unit of the result, including any SI prefixes (same 'unit' without a SI
-                      prefix by default).
-      * integer - if 'True', round the result to the nearest integer and return an 'int' type,
-                  otherwise return the result as a floating point number ('float' type).
-      * what - an optional name associated with the value, will be used only in case of an error for
-               formatting a nicer message.
+    Convert a user-provided value 'hval' into an integer or float amount of 'unit' units (hertz,
+    seconds, etc).
 
-    Examples.
-      * 100,         unit="Hz",                    integer=False  -> 100.0
-      * 100,         unit="kHz",                   integer=True   -> 100000
-      * "100kHz",    unit="Hz", target_unit="kHz", integer=False  -> 100.0
-      * "100MHz",    unit="Hz", target_unit="kHz", integer=False  -> 100000.0
-      * "1m",        unit="s",  target_unit="s",   integer=True    -> 60
-      * "100s",      unit="s",  target_unit="ns",  integer=True    -> 100000000000
-      * "1us",       unit="s",  target_unit="ns",  integer=True    -> 1000
-      * "1h 10m 5s", unit="s",  target_unit="s",   integer=True    -> 4205
-      * "1h 10m 5s", unit="s",  target_unit="us",  integer=True    -> 4205000000
-      * "101ns",     unit="s",  target_unit="ns",  integer=True    -> 101
-      * "101ns",     unit="s",  target_unit="us",  integer=False   -> 0.101
+    Args:
+        hval: The value to convert. Can be of type string, int, or float. If it is a string, it may
+              include the unit.
+        unit: The unit of 'hval', including any SI prefixes.
+        target_unit: The unit of the result, including any SI prefixes. Defaults to the same 'unit'
+                     without a SI prefix.
+        integer: If True, round the result to the nearest integer and return an 'int' type,
+                 otherwise return the result as a floating point number.
+        what: An optional name associated with the value, used only in case of an error for
+              formatting a nicer message.
+
+    Returns:
+        int or float: The converted value in the target unit.
+
+    Examples:
+        >>> parse_human("1m", unit="s", target_unit="s", integer=True)
+        60
+        >>> parse_human("100s", unit="s", target_unit="ns", integer=True)
+        100000000000
+        >>> parse_human("1us", unit="s", target_unit="ns", integer=True)
+        1000
+        >>> parse_human("1h 10m 5s", unit="s", target_unit="s", integer=True)
+        4205
+        >>> parse_human("1h 10m 5s", unit="s", target_unit="us", integer=True)
+        4205000000
+        >>> parse_human("101ns", unit="s", target_unit="ns", integer=True)
+        101
+        >>> parse_human("101ns", unit="s", target_unit="us", integer=False)
+        0.101
     """
 
     sipfx, base_unit = separate_si_prefix(unit)
