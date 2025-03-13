@@ -513,6 +513,59 @@ def parse_human(hval: str | float | int,
 
     return result
 
+def parse_human_range(rng: str,
+                      unit: str,
+                      target_unit: str | None = None,
+                      integer: bool = True,
+                      sep: str = ",",
+                      what: str | None = None) -> tuple[int | float, int | float]:
+    """
+    Convert a user-provided range  'rng' into a pair of an integer or float numbers, taking into
+    account the unit. The range is expected to be in the form of two numbers separated by 'sep'.
+    Each number is parsed with 'human_range()'.
+
+    Args:
+        rng: The range string to parse, expected to contain two numbers separated by 'sep'.
+        unit: The unit of the 2 numbers in 'rng'.
+        target_unit: The unit of the numbers, including any SI prefixes. Defaults to the same 'unit'
+                     without a SI prefix.
+        integer: Whether to round the parsed values to integers.
+        sep: The separator used in the range string.
+        what: An optional name associated with the values in 'rng', used only in case of an error
+        for formatting a nicer message.
+
+    Returns:
+        A tuple containing the parsed range.
+
+    Example.
+      * parse_human_range("1m, 2m", unit="s", target_unit="s", integer=True)
+        (60, 120)
+      * parse_human_range("500us - 1ms", unit="s", target_unit="ms", sep="-", integer=True)
+        (0.5, 1)
+    """
+
+    split_rng = Trivial.split_csv_line(rng, sep=sep)
+
+    if len(split_rng) != 2:
+        raise Error(f"Bad {what} range '{rng}', it should include 2 numbers separated with '{sep}'")
+
+    vals = [0, 0]
+
+    for idx, val in enumerate(split_rng):
+        vals[idx] = parse_human(val, unit=unit, target_unit=target_unit, integer=integer, what=what)
+
+    if len(vals) == 2:
+        if vals[1] - vals[0] < 0:
+            raise Error(f"Bad {what} range '{rng}', first number cannot be greater than the second "
+                        f"number")
+        if vals[0] == vals[1]:
+            raise Error(f"Bad {what} range '{rng}', first number cannot be the same as the second "
+                        f"number")
+
+    if integer:
+        return round(vals[0]), round(vals[1])
+    return vals[0], vals[1]
+
 def uncapitalize(sentence: str) -> str:
     """
     Convert the first letter of the first word in the sentence from uppercase to lowercase, with
