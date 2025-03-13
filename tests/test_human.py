@@ -10,9 +10,18 @@
 Tests for the 'Human' module.
 """
 
+from typing import TypedDict
 from pepclibs.helperlibs import Human
 
-_BYTESIZE_TEST_DATA = [
+class _BytesizeTestDataType(TypedDict, total=False):
+    """Type for the '_BYTESIZE_TEST_DATA' list."""
+    size: int | float
+    decp: int
+    sep: str | None
+    strip_zeroes: bool
+    result: str
+
+_BYTESIZE_TEST_DATA: list[_BytesizeTestDataType] = [
     {"size": 0, "decp": 0, "sep": None, "strip_zeroes": True, "result": "0 bytes"},
     {"size": 0, "decp": 1, "sep": None, "strip_zeroes": True, "result": "0 bytes"},
     {"size": 0, "decp": 1, "sep": None, "strip_zeroes": False, "result": "0 bytes"},
@@ -95,7 +104,12 @@ def test_bytesize():
                f"strip_zeroes={strip_zeroes}):\n" \
                f"expected '{expected}', got '{result}'"
 
-_SEPARATE_SI_PREFIX_TEST_DATA = [
+class _SeparateSiPrefixTestDataType(TypedDict, total=False):
+    """Type for the '_SEPARATE_SI_PREFIX_TEST_DATA' list."""
+    unit: str
+    result: tuple[str | None, str]
+
+_SEPARATE_SI_PREFIX_TEST_DATA: list[_SeparateSiPrefixTestDataType] = [
     {"unit": "B", "result": (None, "B")},
     {"unit": "kB", "result": ("k", "B")},
     {"unit": "MB", "result": ("M", "B")},
@@ -119,7 +133,16 @@ def test_separate_si_prefix():
                f"Bad result of separate_si_prefix('{unit}'):\n" \
                f"expected '{expected}', got '{result}'"
 
-_NUM2SI_TEST_DATA = [
+class _Num2SiTestDataType(TypedDict, total=False):
+    """Type for the '_NUM2SI_TEST_DATA' list."""
+    value: float
+    unit: str
+    decp: int
+    sep: str | None
+    strip_zeroes: bool
+    result: str
+
+_NUM2SI_TEST_DATA: list[_Num2SiTestDataType] = [
     {"value": 0.00009999001,
      "unit": "uW", "decp": 5, "sep": " ", "strip_zeroes": False, "result": "0.09999 nW"},
     {"value": 0.00009999001,
@@ -189,7 +212,14 @@ def test_num2si():
                f"expected '{expected}', got '{result}'"
 
 
-_SCALE_SI_VAL_TEST_DATA = [
+class _ScaleSiValTestDataType(TypedDict, total=False):
+    """Type for the '_SCALE_SI_VAL_TEST_DATA' list."""
+
+    value: float
+    unit: str
+    result: float
+
+_SCALE_SI_VAL_TEST_DATA: list[_ScaleSiValTestDataType] = [
     {"value": 0, "unit": "kW", "result": 0},
     {"value": -5, "unit": "kW", "result": -5000},
     {"value": 1000000, "unit": "uHz", "result": 1},
@@ -210,7 +240,14 @@ def test_scale_si_val():
                f"Bad result of scale_si_val({value}, '{unit}'):\n" \
                f"expected '{expected}', got '{result}'"
 
-_DURATION_TEST_DATA = [
+class _DurationTestDataType(TypedDict, total=False):
+    """Type for the '_DURATION_TEST_DATA' list."""
+
+    seconds: float
+    s: bool
+    result: str
+
+_DURATION_TEST_DATA: list[_DurationTestDataType] = [
     {"seconds": 0.001, "s": True, "result": "1ms"},
     {"seconds": 0, "s": True, "result": "0s"},
     {"seconds": -0, "s": True, "result": "0s"},
@@ -234,7 +271,16 @@ def test_duration():
         assert result == expected, \
                f"Bad result of duration({value}, s={s}):\nexpected '{expected}', got '{result}'"
 
-_PARSE_HUMAN_DATA = [
+class _ParseHumanTestDataType(TypedDict, total=False):
+    """Type for the '_PARSE_HUMAN_DATA' list."""
+
+    hval: str | int | float
+    unit: str
+    target_unit: str | None
+    integer: bool
+    result: int | float
+
+_PARSE_HUMAN_DATA: list[_ParseHumanTestDataType] = [
     {"hval": "0", "unit": "s", "target_unit": "s", "integer": True, "result": 0},
     {"hval": 0, "unit": "s", "target_unit": "s", "integer": True, "result": 0},
     {"hval": 0.0, "unit": "s", "target_unit": "s", "integer": True, "result": 0},
@@ -248,7 +294,7 @@ _PARSE_HUMAN_DATA = [
     {"hval": 1200, "unit": "us", "target_unit": "s", "integer": False, "result": 0.0012},
     {"hval": "-1200us", "unit": "us", "target_unit": "s", "integer": False, "result": -0.0012},
     {"hval": "10%", "unit": "%", "target_unit": "%", "integer": True, "result": 10},
-    {"hval": "10%", "unit": "%", "integer": True, "result": 10},
+    {"hval": "10%", "unit": "%", "target_unit": None, "integer": True, "result": 10},
     {"hval": "1m", "unit": "s", "target_unit": "s", "integer": True, "result": 60},
     {"hval": "100s", "unit": "s", "target_unit": "ns", "integer": True, "result": 100000000000},
     {"hval": "1us", "unit": "s", "target_unit": "ns", "integer": True, "result": 1000},
@@ -264,7 +310,7 @@ def test_parse_human():
     for entry in _PARSE_HUMAN_DATA:
         hval = entry["hval"]
         unit = entry["unit"]
-        target_unit = entry.get("target_unit", 0)
+        target_unit = entry["target_unit"]
         integer = entry["integer"]
         expected = entry["result"]
 
