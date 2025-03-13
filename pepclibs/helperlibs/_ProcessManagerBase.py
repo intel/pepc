@@ -856,7 +856,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.abspath")
 
-    def mkdtemp(self, prefix=None, basedir=None):
+    def mkdtemp(self, prefix: str | None  = None, basedir: Path | None = None) -> Path:
         """
         Create a temporary directory and return its path. The arguments are as follows.
           * prefix - specifies the temporary directory name prefix.

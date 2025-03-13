@@ -517,7 +517,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return rpath
 
     @staticmethod
-    def mkdtemp(prefix=None, basedir=None):
+    def mkdtemp(prefix: str | None  = None, basedir: Path | None = None) -> Path:
         """
         Create a temporary directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdtemp()'
         for more information.

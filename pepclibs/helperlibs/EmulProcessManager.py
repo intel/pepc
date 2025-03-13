@@ -446,7 +446,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         path = Path(self._get_basepath() / str(path).lstrip("/"))
         return super().is_socket(path)
 
-    def mkdtemp(self, prefix=None, basedir=None):
+    def mkdtemp(self, prefix: str | None  = None, basedir: Path | None = None) -> Path:
         """
         Create a temporary directory and return its path. The arguments are as follows.
           * prefix - specifies the temporary directory name prefix.

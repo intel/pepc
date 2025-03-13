@@ -969,7 +969,7 @@ for entry in os.listdir(path):
 
         return Path(rpath)
 
-    def mkdtemp(self, prefix=None, basedir=None):
+    def mkdtemp(self, prefix: str | None  = None, basedir: Path | None = None) -> Path:
         """
         Create a temporary directory and return its path. The arguments are as follows.
           * prefix - specifies the temporary directory name prefix.
