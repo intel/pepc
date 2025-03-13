@@ -11,7 +11,7 @@
 
 import io
 import types
-from pepclibs.helperlibs import Trivial, Human
+from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.emul import _EmulFileBase
 
@@ -106,7 +106,7 @@ class ROSysfsFile(ROFile):
                 if data == "1":
                     online.append(cpu)
 
-            return Human.rangify(online)
+            return Trivial.rangify(online)
 
         # pylint: disable=pepc-unused-variable,protected-access
         fobj._base_path = self._get_basepath() / "sys" / "devices" / "system" / "cpu"

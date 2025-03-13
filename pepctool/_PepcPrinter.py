@@ -34,7 +34,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def _fmt_cpus(self, cpus):
         """Format and return a string describing CPU numbers in the 'cpus' list."""
 
-        cpus_range = Human.rangify(cpus)
+        cpus_range = Trivial.rangify(cpus)
         if len(cpus) == 1:
             return f"CPU {cpus_range}"
 
@@ -46,7 +46,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         pkgs, rem_cpus = self._cpuinfo.cpus_div_packages(cpus)
         if pkgs and not rem_cpus:
             # CPUs in 'cpus' are actually the packages in 'pkgs'.
-            pkgs_range = Human.rangify(pkgs)
+            pkgs_range = Trivial.rangify(pkgs)
             if len(pkgs) == 1:
                 msg += f" (package {pkgs_range})"
             else:
@@ -63,7 +63,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 return "all CPUs"
             return "all packages"
 
-        pkgs_range = Human.rangify(packages)
+        pkgs_range = Trivial.rangify(packages)
         if len(packages) == 1:
             return f"package {pkgs_range}"
         return f"packages {pkgs_range}"
@@ -92,7 +92,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             if len(dies) == self._cpuinfo.get_dies_count(package=pkg):
                 dies_str = "all dies"
             else:
-                dies_str = Human.rangify(dies)
+                dies_str = Trivial.rangify(dies)
                 if len(dies) == 1:
                     plural = ""
                 else:
@@ -315,11 +315,11 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                         val = dict(val)
 
                     if sname != "die":
-                        nums_range = Human.rangify(nums)
+                        nums_range = Trivial.rangify(nums)
                     else:
                         nums_range = {}
                         for pkg, dies in nums.items():
-                            nums_range[pkg] = Human.rangify(dies)
+                            nums_range[pkg] = Trivial.rangify(dies)
 
                     yaml_pinfo[pname].append({"value" : val, sname: nums_range})
 
@@ -699,7 +699,7 @@ class CStatesPrinter(_PropsPrinter):
                     if csname not in yaml_rcsinfo:
                         yaml_rcsinfo[csname] = []
 
-                    yaml_rcsinfo[csname].append({key: val, "CPU": Human.rangify(cpus)})
+                    yaml_rcsinfo[csname].append({key: val, "CPU": Trivial.rangify(cpus)})
 
         self._yaml_dump(yaml_rcsinfo)
         return len(yaml_rcsinfo)

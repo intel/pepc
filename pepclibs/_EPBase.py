@@ -12,7 +12,7 @@
 This is the base class for 'EPP' and 'EPB' modules which includes common functionality.
 """
 
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial, Human
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
 from pepclibs import CPUInfo, _PropsCache
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
@@ -64,7 +64,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         else:
             mnames_str = f"using the {mnames[0]} method"
 
-        cpus_range = Human.rangify(cpus)
+        cpus_range = Trivial.rangify(cpus)
         if errors:
             sub_errmsgs = "\n" + "\n".join([err.indent(2) for err in errors])
         else:

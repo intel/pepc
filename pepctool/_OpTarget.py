@@ -12,7 +12,7 @@ terms of what CPU, core, module, die, or package numbers the operation should re
 """
 
 from pepclibs import CPUInfo
-from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Human, Trivial
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -147,7 +147,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         cpus = self._get_cpus(exclude=["die"])
         dies, rem_cpus = self._cpuinfo.cpus_div_dies(cpus)
         if strict and rem_cpus:
-            human_cpus = Human.rangify(rem_cpus)
+            human_cpus = Trivial.rangify(rem_cpus)
             raise ErrorNoTarget(f"the following CPUs do not comprise a die: {human_cpus}",
                                 cpus=rem_cpus)
 
@@ -187,7 +187,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         cpus = self._get_cpus(exclude=["package"])
         packages, rem_cpus = self._cpuinfo.cpus_div_packages(cpus)
         if strict and rem_cpus:
-            human_cpus = Human.rangify(rem_cpus)
+            human_cpus = Trivial.rangify(rem_cpus)
             raise ErrorNoTarget(f"the following CPUs do not comprise a package: {human_cpus}",
                                 cpus=rem_cpus)
 
@@ -488,21 +488,21 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             if self.cpus:
-                _LOG.debug("target CPUs: %s", Human.rangify(self.cpus))
+                _LOG.debug("target CPUs: %s", Trivial.rangify(self.cpus))
             if self.cores:
                 for pkg, nums in self.cores.items():
-                    _LOG.debug("target package %d cores: %s", pkg, Human.rangify(self.cores))
+                    _LOG.debug("target package %d cores: %s", pkg, Trivial.rangify(self.cores))
             if self.modules:
-                _LOG.debug("target modules: %s", Human.rangify(self.modules))
+                _LOG.debug("target modules: %s", Trivial.rangify(self.modules))
             if self.dies:
                 for pkg, nums in self.dies.items():
-                    _LOG.debug("target package %d dies: %s", pkg, Human.rangify(nums))
+                    _LOG.debug("target package %d dies: %s", pkg, Trivial.rangify(nums))
             if self.packages:
-                _LOG.debug("target packages: %s", Human.rangify(self.packages))
+                _LOG.debug("target packages: %s", Trivial.rangify(self.packages))
             if self.core_siblings:
-                _LOG.debug("target core sibling CPUs: %s", Human.rangify(self.core_sib_cpus))
+                _LOG.debug("target core sibling CPUs: %s", Trivial.rangify(self.core_sib_cpus))
             if self.module_siblings:
-                _LOG.debug("target module sibling CPUs: %s", Human.rangify(self.module_sib_cpus))
+                _LOG.debug("target module sibling CPUs: %s", Trivial.rangify(self.module_sib_cpus))
 
     def close(self):
         """Uninitialize the class object."""

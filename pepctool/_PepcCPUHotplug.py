@@ -10,7 +10,7 @@
 Implement the 'pepc cpu-hotplug' command.
 """
 
-from pepclibs.helperlibs import Logging, Human
+from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, CPUOnline
 from pepctool import _PepcCommon, _OpTarget
@@ -29,7 +29,7 @@ def cpu_hotplug_info_command(_, pman):
             cpus = getattr(cpuinfo, func)()
             if cpus:
                 _LOG.info("The following CPUs are %s%s: %s",
-                          word, pman.hostmsg, Human.rangify(cpus))
+                          word, pman.hostmsg, Trivial.rangify(cpus))
             else:
                 _LOG.info("No %s CPUs%s", word, pman.hostmsg)
 

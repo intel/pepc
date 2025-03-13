@@ -14,7 +14,7 @@ Provide information about CPU topology and other CPU details.
 import copy
 import json
 from pepclibs import _CPUInfoBase
-from pepclibs.helperlibs import Logging, Trivial, Human
+from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs._CPUInfoBase import LEVELS, NA
 
@@ -267,8 +267,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             return list(result)
 
         if not nums.issubset(valid_nums):
-            valid = Human.rangify(valid_nums)
-            invalid = Human.rangify(nums - valid_nums)
+            valid = Trivial.rangify(valid_nums)
+            invalid = Trivial.rangify(nums - valid_nums)
             raise Error(f"{lvl} {invalid} do not exist{self._pman.hostmsg}, valid {lvl} numbers "
                         f"are: {valid}")
 
@@ -885,7 +885,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                 raise Error(f"'{cpu}' is not an integer, CPU numbers must be integers")
 
             if cpu not in allcpus:
-                cpus_str = Human.rangify(allcpus)
+                cpus_str = Trivial.rangify(allcpus)
                 raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}, available CPUs are: "
                             f"{cpus_str}")
 
@@ -915,7 +915,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                 raise Error(f"'{core}' is not an integer, core numbers must be integers")
 
             if core not in pkg_cores:
-                cores_str = Human.rangify(pkg_cores)
+                cores_str = Trivial.rangify(pkg_cores)
                 raise Error(f"core '{core}' is not available in package "
                             f"'{package}'{self._pman.hostmsg}, available cores are: {cores_str}")
 
@@ -941,7 +941,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                 raise Error(f"'{mdl}' is not an integer, module numbers must be integers")
 
             if mdl not in all_modules:
-                modules_str = Human.rangify(all_modules)
+                modules_str = Trivial.rangify(all_modules)
                 raise Error(f"module '{mdl}' is not available{self._pman.hostmsg}, available "
                             f"modules are: {modules_str}")
 
@@ -971,7 +971,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                 raise Error(f"'{die}' is not an integer, die numbers must be integers")
 
             if die not in pkg_dies:
-                dies_str = Human.rangify(pkg_dies)
+                dies_str = Trivial.rangify(pkg_dies)
                 raise Error(f"die '{die}' is not available in package "
                             f"'{package}'{self._pman.hostmsg}, available dies are: {dies_str}")
 
@@ -997,7 +997,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                 raise Error(f"'{pkg}' is not an integer, package numbers must be integers")
 
             if pkg not in allpkgs:
-                pkgs_str = Human.rangify(allpkgs)
+                pkgs_str = Trivial.rangify(allpkgs)
                 raise Error(f"package '{pkg}' is not available{self._pman.hostmsg}, available "
                             f"packages are: {pkgs_str}")
 
@@ -1110,7 +1110,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         dies_strs = []
         for package, pkg_dies in dies.items():
             if len(pkg_dies) > 1:
-                dies_str = Human.rangify(pkg_dies)
+                dies_str = Trivial.rangify(pkg_dies)
                 dies_strs.append(f"package {package} dies {dies_str}")
             else:
                 dies_strs.append(f"package {package} die {pkg_dies[0]}")

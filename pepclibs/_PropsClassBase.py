@@ -263,7 +263,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         mapping = ""
         for pkg in self._cpuinfo.get_packages():
             pkg_cpus = self._cpuinfo.package_to_cpus(pkg)
-            pkg_cpus_str = Human.rangify(pkg_cpus)
+            pkg_cpus_str = Trivial.rangify(pkg_cpus)
             mapping += f"\n  * package {pkg}: CPUs: {pkg_cpus_str}"
 
             if sname in {"core", "die"}:
@@ -272,7 +272,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 # they actually mean "die".
 
                 pkg_cores = getattr(self._cpuinfo, f"package_to_{sname}s")(pkg)
-                pkg_cores_str = Human.rangify(pkg_cores)
+                pkg_cores_str = Trivial.rangify(pkg_cores)
                 mapping += f"\n               {sname}s: {pkg_cores_str}"
 
                 # Build the cores to CPUs mapping string.
@@ -282,7 +282,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                         cpus = self._cpuinfo.cores_to_cpus(cores=(core,), packages=(pkg,))
                     else:
                         cpus = self._cpuinfo.dies_to_cpus(dies=(core,), packages=(pkg,))
-                    cpus_str = Human.rangify(cpus)
+                    cpus_str = Trivial.rangify(cpus)
                     clist.append(f"{core}:{cpus_str}")
 
                 # The core/die->CPU mapping may be very long, wrap it to 100 symbols.
@@ -296,7 +296,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
                 mapping += f"\n{clist_str}"
 
-        rem_cpus_str = Human.rangify(rem_cpus)
+        rem_cpus_str = Trivial.rangify(rem_cpus)
 
         if sname == "core":
             mapping_name = "relation between CPUs, cores, and packages"
@@ -476,7 +476,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         if len(cpus) > 1:
-            cpus_str = f"the following CPUs: {Human.rangify(cpus)}"
+            cpus_str = f"the following CPUs: {Trivial.rangify(cpus)}"
         else:
             cpus_str = f"CPU {cpus[0]}"
 
@@ -498,7 +498,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         if len(packages) > 1:
-            packages_str = f"the following packages: {Human.rangify(packages)}"
+            packages_str = f"the following packages: {Trivial.rangify(packages)}"
         else:
             packages_str = f"CPU {packages[0]}"
 

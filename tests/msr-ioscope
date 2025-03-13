@@ -23,7 +23,7 @@ except ImportError:
     argcomplete = None
 
 from pepctool._Pepc import ArgParse
-from pepclibs.helperlibs import Logging, ProcessManager, Human
+from pepclibs.helperlibs import Logging, ProcessManager, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.msr import MSR
 from pepclibs import CPUInfo
@@ -106,7 +106,7 @@ def _find_msr_ioscope(pman, cpuinfo, msr, regaddr, bits, values, cpu):
                   regaddr, ":".join(bits), ", ".join(scopes), pman.hostmsg)
     else:
         _LOG.info("Could not determine I/O scope of MSR %#x bits %s. Modified the following "
-                  "CPUs:\n%s", regaddr, ":".join(bits), Human.rangify(cpus))
+                  "CPUs:\n%s", regaddr, ":".join(bits), Trivial.rangify(cpus))
 
 def _test_specific_msr(pman, cpuinfo, msr, args):
     """Test a specific MSR register."""
@@ -184,7 +184,7 @@ def _find_feature_ioscope(cpuinfo, fmsr, fname, values, cpu):
 
     if not scopes:
         _LOG.info("'%s' (%#x %d:%d) I/O scope couldn't be determined. Modified the following "
-                  "CPUs:\n%s", fname, regaddr, bits[0], bits[1], Human.rangify(cpus))
+                  "CPUs:\n%s", fname, regaddr, bits[0], bits[1], Trivial.rangify(cpus))
     elif iosname in scopes:
         _LOG.info("'%s' (%#x %d:%d) %s I/O scope is correct.",
                   fname, regaddr, bits[0], bits[1], iosname)

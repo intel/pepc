@@ -30,7 +30,7 @@ Terminology.
 
 import copy
 from pepclibs import CPUModels
-from pepclibs.helperlibs import Logging, LocalProcessManager, Human, ClassHelpers
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.msr import MSR
 
@@ -97,8 +97,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                 raise ErrorNotSupported(f"{self._features[fname]['name']} is not supported on "
                                         f"{self._cpuinfo.cpudescr}")
 
-            supported_cpus = Human.rangify(supported_cpus)
-            unsupported_cpus = Human.rangify(unsupported_cpus)
+            supported_cpus = Trivial.rangify(supported_cpus)
+            unsupported_cpus = Trivial.rangify(unsupported_cpus)
             raise ErrorNotSupported(f"{self._features[fname]['name']} is not supported on CPUs "
                                     f"{unsupported_cpus}.\n{self._cpuinfo.cpudescr} supports "
                                     f"{self._features[fname]['name']} only on the following CPUs: "
@@ -297,7 +297,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         dbg_msg = ""
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
-            cpus_str = Human.rangify(self._cpuinfo.normalize_cpus(cpus))
+            cpus_str = Trivial.rangify(self._cpuinfo.normalize_cpus(cpus))
             dbg_msg = f"writing '{val}' to {fname}' in MSR {self.regaddr:#x} ({self.regname}) " \
                       f"for CPUs {cpus_str}{self._pman.hostmsg}"
 

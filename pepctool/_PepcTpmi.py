@@ -12,7 +12,7 @@ Implement the 'pepc tpmi' command.
 
 import sys
 from pepclibs import Tpmi
-from pepclibs.helperlibs import Logging, Human, Trivial, YAML
+from pepclibs.helperlibs import Logging, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -44,7 +44,7 @@ def _ls_long(fname, tpmi, prefix=""):
 
             _LOG.info("%sPackage: %s", pfx2, package)
 
-            instances = Human.rangify(info[package][addr])
+            instances = Trivial.rangify(info[package][addr])
             _LOG.info("%sInstances: %s", pfx2, instances)
 
 def tpmi_ls_command(args, pman):

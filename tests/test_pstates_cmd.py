@@ -15,7 +15,7 @@ import pytest
 import common
 import props_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs import Human, YAML
+from pepclibs.helperlibs import Trivial, YAML
 from pepclibs import CPUInfo, PStates
 
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
@@ -481,7 +481,7 @@ def _set_freq_pairs(params, min_pname, max_pname):
 
     sname = pobj.get_sname(min_pname)
     siblings = params["cpuinfo"].get_cpu_siblings(0, level=sname)
-    cpus_opt = f"--cpus {Human.rangify(siblings)}"
+    cpus_opt = f"--cpus {Trivial.rangify(siblings)}"
 
     # [Min ------------------ Max ----------------------------------------------------------]
     freq_opts = f"{min_opt} {freq0} {max_opt} {freq1}"

@@ -592,7 +592,7 @@ class Tpmi():
         """Validated an instance number 'instance' and a register offset 'offset'."""
 
         if instance not in mdmap:
-            available = Human.rangify(mdmap)
+            available = Trivial.rangify(mdmap)
             raise Error(f"bad instance number '{instance}' for TPMI feature '{fname}' and "
                         f"device '{addr}', available instances: {available}")
 
@@ -785,7 +785,7 @@ class Tpmi():
 
         if addr is None:
             if package not in self._pkg2addrs:
-                packages = Human.rangify(self._pkg2addrs)
+                packages = Trivial.rangify(self._pkg2addrs)
                 raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
                             f"package numbers are: {packages}")
         else:
@@ -837,7 +837,7 @@ class Tpmi():
         if instance in mdmap:
             return
 
-        instances = Human.rangify(list(mdmap))
+        instances = Trivial.rangify(list(mdmap))
         raise Error(f"instance {instance} not available for the '{fname}' TPMI device '{addr}'"
                     f"{self._pman.hostmsg}, available instances are: {instances}")
 

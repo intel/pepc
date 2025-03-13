@@ -10,7 +10,7 @@
 
 """Common functions for the property class tests (e.g., 'CStates', 'PStates')."""
 
-from pepclibs.helperlibs import Human
+from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 def is_prop_supported(pname, cpu0_pinfo):
@@ -36,9 +36,9 @@ def get_good_cpu_opts(params, sname="package"):
         """Return package scope options for package 'pkg'."""
 
         pkg = params["packages"][0]
-        pkg_cores_range = Human.rangify(params["cores"][pkg])
-        pkg_modules_range = Human.rangify(params["modules"][pkg])
-        pkg_dies_range = Human.rangify(params["dies"][pkg])
+        pkg_cores_range = Trivial.rangify(params["cores"][pkg])
+        pkg_modules_range = Trivial.rangify(params["modules"][pkg])
+        pkg_dies_range = Trivial.rangify(params["dies"][pkg])
         opts = [f"--packages {pkg} --cpus all",
                 f"--packages {pkg} --modules all",
                 f"--modules {pkg_modules_range}",
@@ -63,9 +63,9 @@ def get_good_cpu_opts(params, sname="package"):
             return opts
 
         if len(params["dies"][pkg]) > 1:
-            pkg_dies_range_partial = Human.rangify(params["dies"][pkg][1:])
+            pkg_dies_range_partial = Trivial.rangify(params["dies"][pkg][1:])
             opts.append(f"--packages {pkg} --dies {pkg_dies_range_partial}")
-            pkg_dies_range_partial = Human.rangify(params["dies"][pkg][:-1])
+            pkg_dies_range_partial = Trivial.rangify(params["dies"][pkg][:-1])
             opts.append(f"--packages {pkg} --dies {pkg_dies_range_partial}")
 
         return opts
@@ -84,15 +84,15 @@ def get_good_cpu_opts(params, sname="package"):
             return opts
 
         if len(params["modules"][pkg]) > 1:
-            pkg_modules_range_part = Human.rangify(params["modules"][pkg][1:])
+            pkg_modules_range_part = Trivial.rangify(params["modules"][pkg][1:])
             opts.append(f"--packages {pkg} --modules {pkg_modules_range_part}")
-            pkg_modules_range_part = Human.rangify(params["modules"][pkg][:-1])
+            pkg_modules_range_part = Trivial.rangify(params["modules"][pkg][:-1])
             opts.append(f"--packages {pkg} --modules {pkg_modules_range_part}")
 
             if len(params["packages"]) > 1:
-                pkgs_range_part = Human.rangify(params["packages"][1:])
+                pkgs_range_part = Trivial.rangify(params["packages"][1:])
                 opts.append(f"--packages {pkgs_range_part} --modules {first_module}")
-                pkg_modules_range_part = Human.rangify(params["modules"][pkg][1:])
+                pkg_modules_range_part = Trivial.rangify(params["modules"][pkg][1:])
                 opts.append(f"--packages {pkgs_range_part} --modules {pkg_modules_range_part}")
 
         return opts
@@ -173,7 +173,7 @@ def get_bad_cpu_opts(params):
     # Option '--cores' must be used with '--packages', except for 1-package systems, or single
     # socket system.
     if len(params["packages"]) > 1:
-        pkg0_core_ranges = Human.rangify(params["cores"][0])
+        pkg0_core_ranges = Trivial.rangify(params["cores"][0])
         opts += [f"--cores {pkg0_core_ranges}"]
 
     return opts
