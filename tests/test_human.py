@@ -319,3 +319,22 @@ def test_parse_human():
         assert result == expected, \
                f"Bad result of parse_human('{hval}', '{unit}', target_unit='{target_unit}', " \
                f"integet={integer}):\nexpected '{expected}', got '{result}'"
+
+_UNCAPITALIZE_TEST_DATA = [
+    {"sentence": "Hello, world!", "result": "hello, world!"},
+    {"sentence": "DMA latency", "result": "DMA latency"},
+    {"sentence": "C-state latency", "result": "C-state latency"},
+]
+
+def test_uncapitalize():
+    """Test the 'uncapitalize()' function."""
+
+    for entry in _UNCAPITALIZE_TEST_DATA:
+        sentence = entry["sentence"]
+        expected = entry["result"]
+
+        result = Human.uncapitalize(sentence)
+
+        assert result == expected, \
+               f"Bad result of uncapitalize('{sentence}'):\n" \
+               f"expected '{expected}', got '{result}'"

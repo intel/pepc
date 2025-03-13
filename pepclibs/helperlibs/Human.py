@@ -513,10 +513,22 @@ def parse_human(hval: str | float | int,
 
     return result
 
-def uncapitalize(sentence):
+def uncapitalize(sentence: str) -> str:
     """
-    Return 'sentence' but with the first letter in the first word modified from capital to small.
-    This function includes some heuristics to avoid un-capitalizing words like "C1" or "C-state".
+    Convert the first letter of the first word in the sentence from uppercase to lowercase, with
+    some heuristics to avoid un-capitalizing certain words.
+
+    The following kind of words will not be un-capitalized:
+    - Include a hyphen, where the first part is a single character (e.g., "C-state").
+    - Have the first character already in lowercase.
+    - Have both the first and second characters in uppercase (e.g., abbreviations like "DNA").
+    - Contain any digits.
+
+    Args:
+        sentence: The input sentence to be modified.
+
+    Returns:
+        The modified sentence with the first letter of the first word in lowercase, if applicable.
     """
 
     # Separate out the first word by splitting the sentence. If the word include a hyphen, separate
