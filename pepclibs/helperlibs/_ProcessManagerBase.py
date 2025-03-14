@@ -303,6 +303,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             # Exit code 127 is a typical shell exit code for the "command not found" case. We expect
             # a single output line in stderr in this case.
             if len(output[1]) > 0:
+                errmsg = output[1]
                 if not join:
                     errmsg = "".join(output[1])
                 errmsg = errmsg.strip()
