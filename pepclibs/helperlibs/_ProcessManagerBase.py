@@ -303,7 +303,9 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             # Exit code 127 is a typical shell exit code for the "command not found" case. We expect
             # a single output line in stderr in this case.
             if len(output[1]) > 0:
-                errmsg = output
+                if not join:
+                    errmsg = "".join(output[1])
+                errmsg = errmsg.strip()
             else:
                 errmsg = None
             raise self.pman._command_not_found(self.cmd, errmsg=errmsg)
@@ -599,7 +601,6 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         This method is called when command 'cmd' could not be executed be it was not found. This
         method formats a helpful error message and returns an exception object.
         """
-
         from pepclibs.helperlibs import ToolChecker # pylint: disable=import-outside-toplevel
 
         pkgname = None
@@ -619,9 +620,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         else:
             what = f"'{toolname}' program"
 
-        msg = f"cannot execute the following command{self.hostmsg}:\n{cmd}\n"
+        msg = f"cannot execute the following command{self.hostmsg}:\n  {cmd}\n"
         if errmsg:
-            msg += f"The error is: {errmsg}\n"
+            msg += f"The error is:\n{Error(errmsg).indent(2)}\n"
         else:
             msg += "Command not found\n"
         msg += f"Try to install the {what}{self.hostmsg}"
