@@ -15,6 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 import types
+from typing import TypedDict
 import argparse
 
 try:
@@ -31,7 +32,38 @@ from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
 # class is private, it is documented and will unlikely to change.
 SubParsersType = argparse._SubParsersAction # pylint: disable=protected-access
 
-SSH_OPTIONS = [
+class SSHOptionsKwargsDictType(TypedDict, total=False):
+    """
+    The dictionary type representing the "kwargs" sub-dictionary of the SSH options definitions
+    dictionary ()'SSH_OPTIONS').
+
+    Attributes:
+        dest: The 'argparse' attribute name where the command line argument will be stored.
+        default: The default value for the argument.
+        help: A brief description of the argument.
+    """
+
+    dest: str
+    default: str | int
+    help: str
+
+class SSHOptionsDictType(TypedDict, total=False):
+    """
+    A dictionary type the SSH options definitions dictionary ('SSH_OPTIONS').
+
+    Attributes:
+        short: The short option name.
+        long: The long option name.
+        argcomplete: The 'argcomplete' class name to use for tab completion of the option.
+        kwargs: Additional keyword arguments for 'argparse.add_argument()'.
+    """
+
+    short: str
+    long: str
+    argcomplete: str | None
+    kwargs: SSHOptionsKwargsDictType
+
+SSH_OPTIONS: list[SSHOptionsDictType] = [
     {
         "short" : "-H",
         "long" : "--host",
