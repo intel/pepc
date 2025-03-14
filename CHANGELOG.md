@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.5.30] - 2025-03-14
+### Changed
+ - Minor changes to support dependent projects.
+
 ## [1.5.29] - 2025-03-11
 ### Changed
  - Minor changes to support dependent projects.
