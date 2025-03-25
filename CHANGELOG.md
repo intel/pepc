@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.5.31] - 2025-03-25
+### Added
+ - Support python "VIRTUAL_ENV" environment variable in 'wult deploy'.
+
 ## [1.5.30] - 2025-03-14
 ### Changed
  - Minor changes to support dependent projects.
