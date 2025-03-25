@@ -27,8 +27,8 @@ if __name__ == "__main__":
     # be found by the tool, it should be extracted somewhere and made accessible to the tool via the
     # data path environment variable.
 
-    envvar = ProjectFiles.get_project_data_envvar("pepc")
-    if envvar in os.environ:
+    envar = ProjectFiles.get_project_data_envar("pepc")
+    if envar in os.environ:
         # The environment variable is already set, assume the test data are there, nothing to do.
         sys.exit(main())
 
@@ -40,5 +40,5 @@ if __name__ == "__main__":
             if path.startswith("tpmi/"):
                 zf.extract(path, tmpdir)
 
-        os.environ[envvar] = tmpdir
+        os.environ[envar] = tmpdir
         sys.exit(main())

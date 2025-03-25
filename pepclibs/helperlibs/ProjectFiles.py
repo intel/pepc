@@ -14,7 +14,7 @@ from pathlib import Path
 from pepclibs.helperlibs import ProcessManager
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
-def get_project_data_envvar(prjname):
+def get_project_data_envar(prjname):
     """
     Return the name of the environment variable that points to the data location of project
     'prjname'.
@@ -23,7 +23,7 @@ def get_project_data_envvar(prjname):
     name = prjname.replace("-", "_").upper()
     return f"{name}_DATA_PATH"
 
-def get_project_helpers_envvar(prjname):
+def get_project_helpers_envar(prjname):
     """
     Return the name of the environment variable that points to the helper programs location of
     project 'prjname'.
@@ -32,7 +32,7 @@ def get_project_helpers_envvar(prjname):
     name = prjname.replace("-", "_").upper()
     return f"{name}_HELPERSPATH"
 
-def search_project_data(subpath, datadir, pman=None, what=None, envvars=None):
+def search_project_data(subpath, datadir, pman=None, what=None, envars=None):
     """
     Search for project data directory (or sub-path) 'datadir' and yield the the results. The
     arguments are as follows.
@@ -44,15 +44,17 @@ def search_project_data(subpath, datadir, pman=None, what=None, envvars=None):
                default).
       * what - human-readable description of what is searched for, will be used in the error message
                if an error occurs.
-      * envvars - a collection of environment variable names defining the paths to search the
+      * envars - a collection of environment variable names defining the paths to search the
                   project data in.
 
     Check for 'datadir' in all of the following paths (and in the following order), and if it
     exists, yield the path to it.
       * in the directory the of the running program.
-      * in the directories specified by environment variables in 'envvars'.
+      * in the directories specified by environment variables in 'envars'.
       * in '$HOME/.local/share/<subpath>/', if it exists.
       * in '$HOME/share/<subpath>/', if it exists.
+      * in '$VIRTUAL_ENV/share/<subpath>/', if the environment variable is defined and the directory
+            exists.
       * in '/usr/local/share/<subpath>/', if it exists.
       * in '/usr/share/<subpath>/', if it exists.
     """
@@ -63,16 +65,22 @@ def search_project_data(subpath, datadir, pman=None, what=None, envvars=None):
 
     paths.append(Path(sys.argv[0]).parent.resolve().absolute())
 
-    if envvars:
-        for envvar in envvars:
-            path = os.environ.get(envvar)
-            if path:
-                paths.append(Path(path))
-
     with ProcessManager.pman_or_local(pman) as wpman:
+        if envars:
+            for envar in envars:
+                path = wpman.get_envar(envar)
+                if not path:
+                    path = os.environ.get(envar)
+                if path:
+                    paths.append(Path(path))
+
         homedir = wpman.get_envar("HOME")
-        paths.append(homedir / Path(f".local/share/{subpath}"))
-        paths.append(homedir / Path(f"share/{subpath}"))
+        if homedir:
+            paths.append(homedir / Path(f".local/share/{subpath}"))
+            paths.append(homedir / Path(f"share/{subpath}"))
+        venvdir = wpman.get_envar("VIRTUAL_ENV")
+        if venvdir:
+            paths.append(Path(venvdir) / Path(f"share/{subpath}"))
         paths.append(Path(f"/usr/local/share/{subpath}"))
         paths.append(Path(f"/usr/share/{subpath}"))
 
@@ -91,18 +99,18 @@ def search_project_data(subpath, datadir, pman=None, what=None, envvars=None):
         if num_found > 0:
             return
 
-        if envvars:
-            envvar_msg = f"\nYou can specify custom location for {what} using "
-            if len(envvars) == 1:
-                envvar_msg += f"the '{envvars[0]}' environment variable"
+        if envars:
+            envar_msg = f"\nYou can specify custom location for {what} using "
+            if len(envars) == 1:
+                envar_msg += f"the '{envars[0]}' environment variable"
             else:
-                envvars = ", ".join(envvars)
-                envvar_msg += f"the one of the following environment variables: {envvars}"
+                envars = ", ".join(envars)
+                envar_msg += f"the one of the following environment variables: {envars}"
         else:
-            envvar_msg = ""
+            envar_msg = ""
 
         raise ErrorNotFound(f"cannot find {what}{wpman.hostmsg}, searched in the following "
-                            f"locations:\n{dirs}.{envvar_msg}")
+                            f"locations:\n{dirs}.{envar_msg}")
 
 def find_project_data(prjname, datadir, pman=None, what=None):
     """
@@ -127,7 +135,7 @@ def find_project_data(prjname, datadir, pman=None, what=None):
     """
 
     return next(search_project_data(prjname, datadir, pman, what,
-                                    envvars=(get_project_data_envvar(prjname),)))
+                                    envars=(get_project_data_envar(prjname),)))
 
 def get_project_data_search_descr(prjname, datadir):
     """
@@ -137,9 +145,9 @@ def get_project_data_search_descr(prjname, datadir):
       * datadir - name of the sub-directory containing the project data.
     """
 
-    envvar = get_project_data_envvar(prjname)
+    envar = get_project_data_envar(prjname)
     paths = (f"{Path(sys.argv[0]).parent}/{datadir}",
-             f"${envvar}/{datadir}",
+             f"${envar}/{datadir}",
              f"$HOME/.local/share/{prjname}/{datadir}",
              f"/usr/local/share/{prjname}/{datadir}",
              f"/usr/share/{prjname}/{datadir}")
@@ -161,6 +169,7 @@ def find_project_helper(prjname, helper, pman=None):
       * in the paths defined by the 'PATH' environment variable.
       * in '$HOME/.local/bin/', if it exists.
       * in '$HOME/bin/', if it exists.
+      * in '$VIRTUAL_ENV/bin/', if the environment variable is defined and the directory exists.
       * in '/usr/local/bin/', if it exists.
       * in '/usr/bin', if it exists.
     """
@@ -171,14 +180,14 @@ def find_project_helper(prjname, helper, pman=None):
             paths.append(Path(sys.argv[0]).parent)
 
         path = None
-        envvar = get_project_helpers_envvar(prjname)
+        envar = get_project_helpers_envar(prjname)
         # First check to see if the environment variable is specified on 'wpman' before also
         # checking localhost.
-        path = wpman.get_envar(envvar)
+        path = wpman.get_envar(envar)
         if path:
             paths.append(Path(path))
         else:
-            path = os.environ.get(envvar)
+            path = os.environ.get(envar)
 
         # Check if the helper is on the PATH.
         path = wpman.which(helper, must_find=False)
@@ -187,8 +196,12 @@ def find_project_helper(prjname, helper, pman=None):
         searched = ["$PATH"]
 
         homedir = wpman.get_envar("HOME")
-        paths.append(homedir / Path(".local/bin"))
-        paths.append(homedir / Path("bin"))
+        if homedir:
+            paths.append(homedir / Path(".local/bin"))
+            paths.append(homedir / Path("bin"))
+        venvdir = wpman.get_envar("VIRTUAL_ENV")
+        if venvdir:
+            paths.append(Path(venvdir) / Path("bin"))
         paths.append(Path("/usr/local/bin"))
         paths.append(Path("/usr/bin"))
 
@@ -211,12 +224,13 @@ def get_project_helpers_search_descr(prjname):
     function looks for the helper at. The argument is the same as in 'find_project_helper()'.
     """
 
-    envvar = get_project_helpers_envvar(prjname)
+    envar = get_project_helpers_envar(prjname)
     paths = (f"{Path(sys.argv[0]).parent}",
-             f"${envvar}",
+             f"${envar}",
              "All paths in $PATH",
              "$HOME/.local/bin",
              "$HOME/bin",
+             "$VIRTUAL_ENV/bin",
              "/usr/local/bin",
              "/usr/bin")
 
