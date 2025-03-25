@@ -991,14 +991,14 @@ for entry in os.listdir(path):
         _LOG.debug("created a temporary directory '%s'%s", path, self.hostmsg)
         return Path(path)
 
-    def get_homedir(self):
-        """Return return the home directory path for the logged in user."""
+    def get_envar(self, envar):
+        """Return the value of the environment variable 'envar'."""
 
         try:
-            return Path(self.run_verify("echo $HOME")[0].strip())
+            return Path(self.run_verify(f"echo ${envar}")[0].strip())
         except ErrorNotFound:
             # See commentaries in 'shell_test()', this is a similar case.
-            return Path(self.run_verify("sh -c -l \"echo $HOME\"")[0].strip())
+            return Path(self.run_verify(f"sh -c -l \"echo ${envar}\"")[0].strip())
 
     def which(self, program, must_find=True):
         """

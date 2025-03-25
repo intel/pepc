@@ -70,7 +70,7 @@ def search_project_data(subpath, datadir, pman=None, what=None, envvars=None):
                 paths.append(Path(path))
 
     with ProcessManager.pman_or_local(pman) as wpman:
-        homedir = wpman.get_homedir()
+        homedir = wpman.get_envar("HOME")
         paths.append(homedir / Path(f".local/share/{subpath}"))
         paths.append(homedir / Path(f"share/{subpath}"))
         paths.append(Path(f"/usr/local/share/{subpath}"))
@@ -174,14 +174,11 @@ def find_project_helper(prjname, helper, pman=None):
         envvar = get_project_helpers_envvar(prjname)
         # First check to see if the environment variable is specified on 'wpman' before also
         # checking localhost.
-        if wpman.is_remote:
-            stdout, _ = wpman.run_verify(f"echo ${envvar}")
-            path = stdout.strip()
-        if not path:
-            path = os.environ.get(envvar)
-
+        path = wpman.get_envar(envvar)
         if path:
             paths.append(Path(path))
+        else:
+            path = os.environ.get(envvar)
 
         # Check if the helper is on the PATH.
         path = wpman.which(helper, must_find=False)
@@ -189,7 +186,7 @@ def find_project_helper(prjname, helper, pman=None):
             paths.append(Path(path))
         searched = ["$PATH"]
 
-        homedir = wpman.get_homedir()
+        homedir = wpman.get_envar("HOME")
         paths.append(homedir / Path(".local/bin"))
         paths.append(homedir / Path("bin"))
         paths.append(Path("/usr/local/bin"))

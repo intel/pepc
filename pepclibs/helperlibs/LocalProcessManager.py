@@ -535,9 +535,9 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return Path(path)
 
     @staticmethod
-    def get_homedir():
-        """Return return the home directory of the current user."""
-        return Path("~").expanduser()
+    def get_envar(envar):
+        """Return the value of the environment variable 'envar'."""
+        return os.environ.get(envar)
 
     @staticmethod
     def get(src, dst):

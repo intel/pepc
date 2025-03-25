@@ -865,11 +865,11 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessManagerBase.mkdtemp")
 
-    def get_homedir(self):
-        """Return return the home directory path for the logged in user."""
+    def get_envar(self, envar):
+        """Return the value of the environment variable 'envar'."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.get_homedir")
+        return _bug_method_not_defined("ProcessManagerBase.get_envar")
 
     def which(self, program, must_find=True):
         """
