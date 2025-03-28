@@ -107,7 +107,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
             while not self._threads_exit:
                 if not self._streams[streamid]:
-                    self._dbg("stream %d: stream is closed", streamid)
+                    self._dbg("_stream_fetcher: stream %d: stream is closed", streamid)
                     break
 
                 data = None
@@ -119,22 +119,22 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                     break
 
                 if not data:
-                    self._dbg("stream %d: no more data", streamid)
+                    self._dbg("_stream_fetcher: stream %d: no more data", streamid)
                     break
 
                 data = decoder.decode(data)
                 if not data:
-                    self._dbg("stream %d: read more data", streamid)
+                    self._dbg("_stream_fetcher: stream %d: read more data", streamid)
                     continue
 
-                self._dbg("stream %d: read data:\n%s", streamid, data)
+                self._dbg("_stream_fetcher: stream %d: read data:\n%s", streamid, data)
                 self._queue.put((streamid, data))
         except BaseException as err: # pylint: disable=broad-except
             _LOG.error(err)
 
         # The end of stream indicator.
         self._queue.put((streamid, None))
-        self._dbg("stream %d: thread exists", streamid)
+        self._dbg("_stream_fetcher: stream %d: thread exists", streamid)
 
     def _get_next_queue_item(self, timeout):
         """
@@ -451,7 +451,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Free allocated resources."""
 
-        self._dbg("close()")
+        self._dbg("_ProcessManagerBase: close()")
 
         if hasattr(self, "_threads_exit"):
             self._threads_exit = True
@@ -462,7 +462,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         """Class destructor."""
 
         with contextlib.suppress(BaseException):
-            self._dbg("__del__()")
+            self._dbg("_ProcesManagerBase: __del__()")
 
         if hasattr(self, "_threads_exit"):
             self._threads_exit = True

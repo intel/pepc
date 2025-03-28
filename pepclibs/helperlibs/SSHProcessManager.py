@@ -396,7 +396,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
     def close(self):
         """Free allocated resources."""
 
-        self._dbg("close()")
+        self._dbg("SSHProcessManager: close()")
 
         # If this is the special interactive shell process - do not close it. It'll be closed in
         # 'SSHProcessManager.close()' instead.
