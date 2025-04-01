@@ -261,7 +261,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                 break
 
             streamid, data = self._get_next_queue_item(timeout)
-            self._dbg("_get_next_queue_item(): returned: %d, %s", streamid, data)
+            self._dbg("_wait_nointsh: _get_next_queue_item() returned: stream %d, data:\n %s",
+                      streamid, data)
             if streamid == -1:
                 self._dbg("_wait_nointsh: nothing in the queue for %d seconds", timeout)
             elif data is not None:

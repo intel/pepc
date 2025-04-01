@@ -176,6 +176,9 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             if output_fobjs[streamid]:
                 output_fobjs[streamid].write(line)
 
+        if output_fobjs[streamid]:
+            output_fobjs[streamid].flush()
+
     def _get_lines_to_return(self, lines):
         """
         Figure out what part of captured output should be returned to the user, and what part should
