@@ -8,6 +8,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Fixes in SSH process manager library that affect the 'wult' project.
 
 ## [1.5.31] - 2025-03-25
 ### Added
