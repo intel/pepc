@@ -30,7 +30,7 @@ from pepclibs._PropsClassBase import MECHANISMS
 if sys.version_info < (3, 7):
     raise SystemExit("this tool requires python version 3.7 or higher")
 
-_VERSION = "1.5.31"
+_VERSION = "1.5.32"
 TOOLNAME = "pepc"
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=TOOLNAME)

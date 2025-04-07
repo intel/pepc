@@ -1,3 +1,9 @@
+pepc (1.5.32) unstable; urgency=low
+
+  * Fixes in SSH process manager library that affect the 'wult' project.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Mon, 07 Apr 2025 00:00:00 +0200
+
 pepc (1.5.31) unstable; urgency=low
 
   * Support python "VIRTUAL_ENV" environment variable in 'wult deploy'.
