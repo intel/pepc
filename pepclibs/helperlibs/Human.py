@@ -241,7 +241,7 @@ def num2si(value: int | float,
 
     return result
 
-def scale_si_val(val: int | float, unit: str) -> float:
+def scale_si_val(val: int | float, unit: str) -> int | float:
     """
     Scale a value based on a SI unit prefix.
 
