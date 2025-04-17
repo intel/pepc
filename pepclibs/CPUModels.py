@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -11,7 +11,23 @@
 Provide information about CPU topology and other CPU details.
 """
 
-MODELS = {
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+from typing import TypedDict
+
+class CPUModelTypedDict(TypedDict):
+    """
+    CPU model information.
+
+    Attributes:
+        model: The model number of the CPU.
+        codename: The codename of the CPU.
+    """
+
+    model: int
+    codename: str
+
+MODELS: dict[str, CPUModelTypedDict] = {
     # Xeons.
     "ATOM_DARKMONT_X" : {
         "model"    : 0xDD,
@@ -305,7 +321,7 @@ MODELS = {
 #
 # Various handy combinations of CPU models.
 #
-MODEL_GROUPS = {
+MODEL_GROUPS: dict[str, tuple[int, ...]] = {
     "LUNARLAKE":  (MODELS["LUNARLAKE_M"]["model"],),
     "GNR":        (MODELS["GRANITERAPIDS_X"]["model"],
                    MODELS["GRANITERAPIDS_D"]["model"]),
