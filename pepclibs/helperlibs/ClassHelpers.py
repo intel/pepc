@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -10,6 +10,9 @@
 Miscellaneous common helpers for class objects.
 """
 
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
+from typing import Any, Callable
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNotFound
 
@@ -17,147 +20,206 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class SimpleCloseContext():
     """
-    Many classes we that we have use the same context manager '__enter__()' and '__exit__()' methods
-    implementation. This class helps avoid code duplication and can be sub-classed to get the
-    default implementation of the context manager that just calls 'close()' on exit.
+    Provide a simple context manager implementation for classes.
+
+    This class can be subclassed to avoid duplicating the implementation of the
+    '__enter__()' and '__exit__()' methods. It ensures that the 'close()' method
+    is called automatically when exiting the runtime context.
     """
 
-    def __enter__(self):
+    def close(self):
+        """Uninitialize the class object. Supposed to be implemented by the subclass."""
+
+    def __enter__(self) -> Any:
         """Enter the run-time context."""
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context."""
-        self.close() # pylint: disable=no-member
+    def __exit__(self, *_: Any):
+        """Exit from the runtime context."""
+
+        self.close()
 
 class WrapExceptions:
-    """This class allows for wrapping objects in order to intercept their exceptions."""
+    """
+    A class to wrap objects, intercept their exceptions and translate them into custom exceptions.
 
-    def _get_exception(self, name, err, target_exception):
+    Exception Translation:
+        - PermissionError -> ErrorPermissionDenied
+        - FileNotFoundError -> ErrorNotFound
+        - Other exceptions derived from 'Exception' -> Error
+        - Exceptions not derived from 'Exception' are not translated.
+    """
+
+    def __init__(self, obj: Any, get_err_prefix: Callable[[Any, str], str] | None = None):
         """
-        Format and return a 'target_exception' exception object for exception 'err' happened in
-        method 'name'.
-        """
+        Initialize the instance and set up exception interception and translation.
 
-        errmsg = Error(err).indent(2)
-        if self._get_err_prefix:
-            msg = f"{self._get_err_prefix(self._obj, name)}:\n{errmsg}"
-        else:
-            msg = f"method '{name}()' failed:\n{errmsg}"
-
-        errno = getattr(err, "errno", None)
-        return target_exception(msg, errno=errno)
-
-    def __init__(self, obj, get_err_prefix=None):
-        """
-        Intercept and translate exceptions of object 'obj' to exceptions defined in 'Exceptions.py'.
-        The arguments are as follows.
-          * obj - the object to intercept and translate exceptions for.
-          * get_err_prefix - a method which will be called when forming the exception message.
-                             Should return a string, which will be used as the exception message
-                             prefix.
-
-        The translation is as follows.
-           * PermissionError -> ErrorPermissionDenied
-           * FileNotFoundError -> ErrorNotFound
-           * If source exception is based on 'Exception', translate to 'Error', otherwise do not
-             translate.
+        Args:
+            obj: The object to intercept and translate exceptions for.
+            get_err_prefix: A callable that generates a prefix for exception messages. Called when
+                            forming the exception message. The callable should return a string to be
+                            used as the exception message prefix. The arguments are the object and
+                            the object method name where the exception occurred.
         """
 
         self._obj = obj
         self._get_err_prefix = get_err_prefix
 
-    def __enter__(self):
-        """The context enter method."""
-        return self
+    def _format_exception(self, name: str, err: Exception, exc_type: type[Error]) -> Error:
+        """
+        Format and return a custom exception object for an exception raised by a method of the
+        wrapped object.
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        """The context exit method."""
-        try:
-            self.close()
-        except Exception as err: # pylint: disable=broad-exception-caught
-            _LOG.warning(err)
+        Args:
+            name: Name of the wrapped object method where the exception occurred.
+            err: The original exception that was raised by the method.
+            exc_type: The type of the custom exception to format and return.
 
-    def __getattr__(self, name):
-        """Accessing an attribute."""
+        Returns:
+            A formatted exception object of the specified type.
+        """
+
+        errmsg = Error(str(err)).indent(2)
+        if self._get_err_prefix:
+            msg = f"{self._get_err_prefix(self._obj, name)}:\n{errmsg}"
+        else:
+            msg = f"method '{name}()' failed:\n{errmsg}"
+
+        kwargs: dict[str, Any] = {}
+        if hasattr(err, "errno"):
+            kwargs["errno"] = getattr(err, "args", None)
+
+        return exc_type(msg, **kwargs)
+
+    def _handle_exception(self, name: str, err: Exception):
+        """
+        Handle an exception from a method of the wrapped object.
+
+        Args:
+            name: The name of the method that raised the exception.
+            err: The exception object raised by the method.
+
+        Raises:
+            # noqa: DAR401
+            # noqa: DAR402
+            ErrorPermissionDenied: If the exception is a PermissionError.
+            ErrorNotFound: If the exception is a FileNotFoundError.
+            Error: For all other types of exceptions.
+        """
+
+        exc_type: type[Error]
+        if isinstance(err, PermissionError):
+            exc_type = ErrorPermissionDenied
+        elif isinstance(err, FileNotFoundError):
+            exc_type = ErrorNotFound
+        else:
+            exc_type = Error
+
+        raise self._format_exception(name, err, exc_type)
+
+    def _get_wapper(self, name: str, method: Callable) -> Callable:
+        """
+        Wrap exceptions for a method.
+
+        Args:
+            name: The name of the method to wrap exceptions for.
+            method: The method to wrap exceptions for.
+
+        Returns:
+            The wrapped version of the method.
+        """
+
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            """Wrap the exceptions."""
+
+            try:
+                return method(*args, **kwargs)
+            except Error:
+                # Do not translate exceptions that are already based on 'Error'.
+                raise
+            except Exception as err: # pylint: disable=broad-except
+                # Translate the exception into a custom exception.
+                self._handle_exception(name, err)
+
+            return None
+
+        return wrapper
+
+    def __getattr__(self, name: str) -> Callable:
+        """
+        Override attribute access to wrap method calls with exception handling.
+
+        Args:
+            name: The name of the attribute to access.
+
+        Returns:
+            The attribute value or a wrapped callable method.
+        """
 
         attr = getattr(self._obj, name)
 
         if name.startswith("_") or not hasattr(attr, "__call__"):
-            # A private method or not a method.
+            # A private method or not a method, do not wrap exceptions.
             return attr
 
-        def wrapper(*args, **kwargs):
-            """Wrap the exceptions."""
+        return self._get_wapper(name, attr)
 
-            try:
-                return attr(*args, **kwargs)
-            except Error:
-                # Do not translate exceptions that are already based on 'Error'.
-                raise
-            except Exception as err:
-                if name.startswith("_") or not hasattr(attr, "__call__"):
-                    # A private method or not a method.
-                    raise
-                if isinstance(err, PermissionError):
-                    err_type = ErrorPermissionDenied
-                elif isinstance(err, FileNotFoundError):
-                    err_type = ErrorNotFound
-                else:
-                    err_type = Error
+    def __enter__(self):
+        """Enter the run-time context."""
 
-                raise self._get_exception(name, err, err_type) from err
+        name = "__enter__"
+        method = getattr(self._obj, name)
+        return self._get_wapper(name, method)()
 
-        return wrapper
+    def __exit__(self, *args: Any):
+        """Exit from the runtime context."""
+
+        name = "__exit__"
+        method = getattr(self._obj, name)
+        return self._get_wapper(name, method)(*args)
 
     def __iter__(self):
-        """Return iterator."""
+        """Return an iterator for the wrapped object."""
 
-        if hasattr(self._obj, "__iter__"):
-            return self
-        raise self._target_exception(f"object of type '{type(self._obj)}' is not iterable")
+        name = "__iter__"
+        method = getattr(self._obj, name)
+        return self._get_wapper(name, method)()
 
     def __next__(self):
-        """Next iteration."""
-        return self._obj.__next__()
+        """Return the next iteration item."""
 
-def close(cls_obj, close_attrs=None, unref_attrs=None):
+        name = "__next__"
+        method = getattr(self._obj, name)
+        return self._get_wapper(name, method)()
+
+def close(cls_obj: Any,
+          close_attrs: list[str] | tuple[str, ...] = tuple(),
+          unref_attrs: list[str] | tuple[str, ...] = tuple()):
     """
-    Uninitialize a class object 'cls_obj' by freeing objects referred to by attributes in 'attrs'.
+    Uninitialize a class object by freeing objects referred to by its attributes.
 
-    1. The 'cls_obj' class object may store references to other objects, which were created outside
-       of 'cls_obj' (for example, were provided to 'cls_obj.__init__()'). A typical example:
-       'self._pman'. The list of 'cls_obj' attribute names of this sort should be provided via
-       'unref_attrs'. In this case, this method will set the attributes to 'None', thus removing a
-       reference to the object.
+    Args:
+        cls_obj: The class object to uninitialize.
+        close_attrs: Attribute names referring to objects created by the class object. These objects
+                     will be closed by calling their 'close()' method, and then set to 'None' to
+                     remove references. Note, calling the 'close()' can be influenced by an
+                     additional attribute named '_close_{attr}' in the class object.
+        unref_attrs: Attribute names referring to objects created outside the class object. These
+                     attributes will be set to 'None' to remove references.
 
-    2. The 'cls_obj' class object may store references to other objects, which were created by
-       'cls_obj'. The list of 'cls_obj' attribute names of this sort should be provided via
-       'close_attrs'. In this case, this method will first close the object by calling its 'close()'
-       method, then set the attribute to 'None' to remove a reference.
-
-    3. Some attributes of the 'cls_obj' class may store references to other objects which are of
-       type #1 or #2, depending on various factors. For example, 'self._pman' may be provided by the
-       user, or may be created by 'cls_obj'. In this situation, this method expects the 'cls_obj' to
-       have an extra attribute named as '_close_{attr}', containing a boolean which tells whether
-       the object in '{attr}' have to be closed. For example, if 'self._close_pman' attribute exists
-       and it is 'True', then the 'self._pman' object should be closed. Otherwise it won't be
-       closed.
-
-    Note, the implementation uses a lot of 'getattr()' and 'hasattr()' because the assumption is
-    that this function can be called from the destructor, which may happen even before the
-    '__init__()' has finished (consider a crash in the middle of '__init__()'), so the attributes
-    may not even exists.
+    Behavior:
+        1. For attributes in 'close_attrs', check if the attribute exists in the class object. If it
+           exists and is not 'None', determine whether to close the object by checking for an
+           additional attribute named '_close_{attr}'. If '_close_{attr}' exists and is 'True', call
+           the 'close()' method of the object (if available) and set the attribute to 'None'. If
+           '_close_{attr}' does not exist, assume the object should be closed.
+        2. For attributes in 'unref_attrs', check if the attribute exists in the class object. If it
+           exists and is not 'None', set the attribute to 'None' to remove the reference.
     """
-
-    if unref_attrs is None:
-        unref_attrs = []
-    if close_attrs is None:
-        close_attrs = []
 
     for attr in close_attrs:
         if not hasattr(cls_obj, attr):
-            _LOG.warning("close(close_attrs=<list>): non-existing attribute '%s' in '%s'",
+            _LOG.warning("close(close_attrs=<attrs>): non-existing attribute '%s' in '%s'",
                          attr, cls_obj)
 
         obj = getattr(cls_obj, attr, None)
@@ -173,7 +235,7 @@ def close(cls_obj, close_attrs=None, unref_attrs=None):
         if hasattr(cls_obj, name):
             run_close = getattr(cls_obj, name)
             if run_close not in (True, False):
-                _LOG.warning("BUG: bad value of attribute '%s' in '%s'", attr, cls_obj)
+                _LOG.warning("Bad value of attribute '%s' in '%s'", attr, cls_obj)
                 _LOG.debug_print_stacktrace()
                 setattr(cls_obj, attr, None)
                 continue
@@ -182,7 +244,7 @@ def close(cls_obj, close_attrs=None, unref_attrs=None):
             if hasattr(obj, "close"):
                 getattr(obj, "close")()
             else:
-                _LOG.debug("BUG: no 'close()' method in '%s'", obj)
+                _LOG.debug("No 'close()' method in '%s'", obj)
                 _LOG.debug_print_stacktrace()
 
         setattr(cls_obj, attr, None)
