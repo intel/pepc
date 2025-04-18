@@ -14,7 +14,7 @@ Provide information about CPU topology and other CPU details.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from typing import TypedDict
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 class CPUModelTypedDict(TypedDict):
     """
@@ -58,7 +58,7 @@ def make_vfm(vendor: int | str, family: int, model: int) -> int:
     if isinstance(vendor, str):
         vendor_code = X86_CPU_VENDORS.get(vendor, -1)
         if vendor_code == -1:
-            raise Error(f"Unknown CPU vendor '{vendor}'")
+            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'")
     else:
         vendor_code = vendor
 

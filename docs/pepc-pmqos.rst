@@ -104,6 +104,16 @@ options.
    CPUs. In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index '1' would mean
    CPU 5.
 
+**--override-cpu-model** *VFM*
+   This option is for debugging and testing purposes only. Override the target host CPU model and
+   force {TOOLNAME} treat the host as a specific CPU model. The format is
+   '[<Vendor>:][<Family>:]<Model>', where '<Vendor>' is the CPU vendor (e.g., 'GenuineIntel' or
+   'AuthenticAMD'), '<Family>' is the CPU family (e.g., 6), and '<Model>' is the CPU model (e.g.,
+   0x8F). Example: 'GenuineIntel:6:0x8F' will force the tool treating the target host CPU as a
+   Sapphire Rapids Xeon. The vendor and family are optional and if not specified, the tool will use
+   the vendor and family of the target host CPU. The family and model can be specified in decimal
+   or hexadecimal format.
+
 Subcommand *'info'*
 ===================
 
@@ -114,11 +124,6 @@ Use target CPU specification options to specify the subset of CPUs, cores, dies,
 
 **--yaml**
    Print information in YAML format.
-
-**--override-cpu-model** *MODEL*
-   This option is for debugging and testing purposes only. Provide the CPU model number which the
-   tool treats the target system CPU as. For example, use 0x8F to treat the target system as
-   Sapphire Rapids Xeon.
 
 **--list-mechanisms**
    List mechanisms available for reading PM QoS information.
@@ -136,11 +141,6 @@ Configure PM QoS (Power Management Quality of Service) on specified CPUs. All op
 without a parameter, in which case the currently configured value(s) will be printed.
 
 Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
-
-**--override-cpu-model** *MODEL*
-   This option is for debugging and testing purposes only. Provide the CPU model number which the
-   tool treats the target system CPU as. For example, use 0x8F to treat the target system as
-   Sapphire Rapids Xeon.
 
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
     Comma-separated list of mechanisms that are allowed to be used for configuring PM QoS. Use

@@ -52,10 +52,11 @@ _OVERRIDE_CPU_OPTION = {
     "long":  "--override-cpu-model",
     "argcomplete": None,
     "kwargs": {
-        "metavar": "MODEL",
+        "metavar": "VFM",
         "dest": "override_cpu_model",
-        "help": """This option is for debugging and testing purposes only. Please, provide the CPU
-                   model number which the tool treats the target system CPU as."""
+        "help": f"""This option is for debugging and testing purposes only. Override the target host
+                    CPU model and force {TOOLNAME} treat the host as a specific CPU model. The
+                    format is '[<Vendor>:][<Family>:]<Model>'."""
     },
 }
 
