@@ -384,6 +384,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     _LOG.debug("kernel v%s does not support hybrid CPU topology. The minimum "
                                "required kernel version is v5.13.", kver)
 
+        cpuinfo["vfm"] = CPUModels.make_vfm(cpuinfo["vendor"], cpuinfo["family"], cpuinfo["model"])
         return cpuinfo
 
     def _get_cpu_description(self):

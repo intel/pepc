@@ -14,6 +14,7 @@ Provide information about CPU topology and other CPU details.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from typing import TypedDict
+from pepclibs.helperlibs.Exceptions import Error
 
 class CPUModelTypedDict(TypedDict):
     """
@@ -34,13 +35,19 @@ class CPUModelTypedDict(TypedDict):
     codename: str
 
 X86_VENDOR_INTEL = 0
+X86_VENDOR_AMD = 2
 
-def make_vfm(vendor: int, family: int, model: int) -> int:
+X86_CPU_VENDORS = {
+    "GenuineIntel": X86_VENDOR_INTEL,
+    "AuthenticAMD": X86_VENDOR_AMD,
+}
+
+def make_vfm(vendor: int | str, family: int, model: int) -> int:
     """
-    Create and return the VFM (Vendor, Family, Model) code for an Intel CPU.
+    Create and return the VFM (Vendor, Family, Model) code for an x86 CPU.
 
     Args:
-        vendor: The vendor of the CPU.
+        vendor: The vendor ID or vendor name of the CPU.
         family: The family of the CPU.
         model: The model number of the CPU.
 
@@ -48,7 +55,14 @@ def make_vfm(vendor: int, family: int, model: int) -> int:
         The VFM code of the CPU.
     """
 
-    return (vendor << 16) | (family << 8) | model
+    if isinstance(vendor, str):
+        vendor_code = X86_CPU_VENDORS.get(vendor, -1)
+        if vendor_code == -1:
+            raise Error(f"Unknown CPU vendor '{vendor}'")
+    else:
+        vendor_code = vendor
+
+    return (vendor_code << 16) | (family << 8) | model
 
 def make_intel_vfm(family: int, model: int) -> int:
     """
