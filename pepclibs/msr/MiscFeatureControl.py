@@ -18,38 +18,38 @@ from pepclibs.msr import _FeaturedMSR
 # The Hardware Power Management Request Model Specific Register.
 MSR_MISC_FEATURE_CONTROL = 0x1A4
 
-# CPU models that support only the 'l2_hw_prefetcher' and 'dcu_hw_prefetcher' features.
-_L2_AND_DCU_CPUS = CPUModels.MODEL_GROUPS["TREMONT"] +   \
-                   CPUModels.MODEL_GROUPS["GOLDMONT"] +  \
-                   (CPUModels.MODELS["ATOM_SILVERMONT_D"]["model"],) + \
-                   CPUModels.MODEL_GROUPS["PHI"]
+# CPUs that support only the 'l2_hw_prefetcher' and 'dcu_hw_prefetcher' features.
+_L2_AND_DCU_VFMS = CPUModels.CPU_GROUPS["TREMONT"] +   \
+                   CPUModels.CPU_GROUPS["GOLDMONT"] +  \
+                   (CPUModels.MODELS["ATOM_SILVERMONT_D"]["vfm"],) + \
+                   CPUModels.CPU_GROUPS["PHI"]
 
-# CPU models that support 'l2_hw_prefetcher', 'l2_adj_prefetcher', 'dcu_hw_prefetcher', and
+# CPUs that support 'l2_hw_prefetcher', 'l2_adj_prefetcher', 'dcu_hw_prefetcher', and
 # 'dcu_ip_prefetcher' prefetchers.
-_ALL_PREFETCHERS_CPUS = CPUModels.MODEL_GROUPS["CRESTMONT"] +   \
-                        CPUModels.MODEL_GROUPS["GNR"] +         \
-                        CPUModels.MODEL_GROUPS["METEORLAKE"] +  \
-                        CPUModels.MODEL_GROUPS["EMR"] +         \
-                        CPUModels.MODEL_GROUPS["RAPTORLAKE"] +  \
-                        CPUModels.MODEL_GROUPS["ALDERLAKE"] +   \
-                        CPUModels.MODEL_GROUPS["ROCKETLAKE"] +  \
-                        CPUModels.MODEL_GROUPS["SPR"] +         \
-                        CPUModels.MODEL_GROUPS["TIGERLAKE"] +   \
-                        CPUModels.MODEL_GROUPS["ICELAKE"] +     \
-                        CPUModels.MODEL_GROUPS["COMETLAKE"] +   \
-                        CPUModels.MODEL_GROUPS["KABYLAKE"] +    \
-                        CPUModels.MODEL_GROUPS["CANNONLAKE"] +  \
-                        CPUModels.MODEL_GROUPS["SKYLAKE"] +     \
-                        CPUModels.MODEL_GROUPS["BROADWELL"] +   \
-                        CPUModels.MODEL_GROUPS["HASWELL"] +     \
-                        CPUModels.MODEL_GROUPS["IVYBRIDGE"] +   \
-                        CPUModels.MODEL_GROUPS["SANDYBRIDGE"] + \
-                        CPUModels.MODEL_GROUPS["WESTMERE"]
+_ALL_PREFETCHERS_VFMS = CPUModels.CPU_GROUPS["CRESTMONT"] +   \
+                        CPUModels.CPU_GROUPS["GNR"] +         \
+                        CPUModels.CPU_GROUPS["METEORLAKE"] +  \
+                        CPUModels.CPU_GROUPS["EMR"] +         \
+                        CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
+                        CPUModels.CPU_GROUPS["ALDERLAKE"] +   \
+                        CPUModels.CPU_GROUPS["ROCKETLAKE"] +  \
+                        CPUModels.CPU_GROUPS["SPR"] +         \
+                        CPUModels.CPU_GROUPS["TIGERLAKE"] +   \
+                        CPUModels.CPU_GROUPS["ICELAKE"] +     \
+                        CPUModels.CPU_GROUPS["COMETLAKE"] +   \
+                        CPUModels.CPU_GROUPS["KABYLAKE"] +    \
+                        CPUModels.CPU_GROUPS["CANNONLAKE"] +  \
+                        CPUModels.CPU_GROUPS["SKYLAKE"] +     \
+                        CPUModels.CPU_GROUPS["BROADWELL"] +   \
+                        CPUModels.CPU_GROUPS["HASWELL"] +     \
+                        CPUModels.CPU_GROUPS["IVYBRIDGE"] +   \
+                        CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
+                        CPUModels.CPU_GROUPS["WESTMERE"]
 
-# 'l2_hw_prefetcher' feature has core scope, except for the following CPU models.
-_MODULE_SCOPE_L2_HW_PREFETCHER = CPUModels.MODEL_GROUPS["TREMONT"] + \
-                                 CPUModels.MODEL_GROUPS["PHI"] +     \
-                                 CPUModels.MODEL_GROUPS["GOLDMONT"]
+# 'l2_hw_prefetcher' feature has core scope, except for the following CPUs.
+_MODULE_SCOPE_L2_HW_PREFETCHER = CPUModels.CPU_GROUPS["TREMONT"] + \
+                                 CPUModels.CPU_GROUPS["PHI"] +     \
+                                 CPUModels.CPU_GROUPS["GOLDMONT"]
 
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
@@ -59,7 +59,7 @@ FEATURES = {
         "sname": None,
         "iosname": None,
         "help": """Enable/disable the L2 cache hardware prefetcher.""",
-        "cpumodels": _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
+        "vfms": _L2_AND_DCU_VFMS + _ALL_PREFETCHERS_VFMS,
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": None,
@@ -70,7 +70,7 @@ FEATURES = {
         "iosname": "core",
         "help": """Enable/disable the L2 adjacent cache lines prefetcher, which fetches cache
                     lines that comprise a cache line pair.""",
-        "cpumodels": _ALL_PREFETCHERS_CPUS,
+        "vfms": _ALL_PREFETCHERS_VFMS,
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": None,
@@ -81,7 +81,7 @@ FEATURES = {
         "iosname": "core",
         "help": """Enable/disable the DCU hardware prefetcher, which fetches the next cache line
                     into L1 data cache.""",
-        "cpumodels": _L2_AND_DCU_CPUS + _ALL_PREFETCHERS_CPUS,
+        "vfms": _L2_AND_DCU_VFMS + _ALL_PREFETCHERS_VFMS,
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": None,
@@ -93,7 +93,7 @@ FEATURES = {
         "help": """Enable/disable the DCU IP prefetcher, which uses sequential load history (based
                     on instruction pointer of previous loads) to determine whether to prefetch
                     additional lines.""",
-        "cpumodels": _ALL_PREFETCHERS_CPUS,
+        "vfms": _ALL_PREFETCHERS_VFMS,
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": None,
@@ -113,8 +113,8 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
     def _init_features_dict_bits(self):
         """Initialize the 'bits' key in the 'self._features' dictionary."""
 
-        cpumodel = self._cpuinfo.info["model"]
-        if cpumodel in CPUModels.MODEL_GROUPS["PHI"]:
+        vfm = self._cpuinfo.info["vfm"]
+        if vfm in CPUModels.CPU_GROUPS["PHI"]:
             # Xeon Phi platforms have different bit numbers comparing to all other platforms.
             self._features["l2_hw_prefetcher"]["bits"] = (1, 1)
             self._features["dcu_hw_prefetcher"]["bits"] = (0, 0)
@@ -136,9 +136,9 @@ class MiscFeatureControl(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
-        model = self._cpuinfo.info["model"]
+        vfm = self._cpuinfo.info["vfm"]
 
-        if model in _MODULE_SCOPE_L2_HW_PREFETCHER:
+        if vfm in _MODULE_SCOPE_L2_HW_PREFETCHER:
             sname = "module"
         else:
             sname = "core"

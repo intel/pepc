@@ -543,12 +543,12 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         Raise 'ErrorNotSupported' if the uncore frequency driver fails to load.
         """
 
-        cpumodel = self._cpuinfo.info["model"]
+        vfm = self._cpuinfo.info["vfm"]
         errmsg = None
 
         # If the CPU supports MSR_UNCORE_RATIO_LIMIT, the uncore frequency driver is
         # "intel_uncore_frequency".
-        if cpumodel in UncoreRatioLimit.FEATURES["max_ratio"]["cpumodels"]:
+        if vfm in UncoreRatioLimit.FEATURES["max_ratio"]["vfms"]:
             drvname = "intel_uncore_frequency"
             kopt = "CONFIG_INTEL_UNCORE_FREQ_CONTROL"
             msr_addr = UncoreRatioLimit.MSR_UNCORE_RATIO_LIMIT

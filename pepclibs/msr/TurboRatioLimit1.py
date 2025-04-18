@@ -29,7 +29,7 @@ FEATURES = {
         "help": """Count of cores in group 0. This group is used in MSR 0x1AD
                    (MSR_TURBO_RATIO_LIMIT) for encoding the maximum group of cores turbo
                    frequency.""",
-        "cpumodels": TurboRatioLimit.FEATURES["max_g0_turbo_ratio"]["cpumodels"],
+        "vfms": TurboRatioLimit.FEATURES["max_g0_turbo_ratio"]["vfms"],
         "type": "int",
         "writable": False,
         "bits": (7, 0),

@@ -18,23 +18,23 @@ from pepclibs.msr import _FeaturedMSR
 # The Power Control Model Specific Register.
 MSR_POWER_CTL = 0x1FC
 
-# CPU models supporting the C-state pre-wake feature.
-_CSTATE_PREWAKE_CPUS = (CPUModels.MODELS["GRANITERAPIDS_X"]["model"],
-                        CPUModels.MODELS["GRANITERAPIDS_D"]["model"],
-                        CPUModels.MODELS["EMERALDRAPIDS_X"]["model"],
-                        CPUModels.MODELS["SAPPHIRERAPIDS_X"]["model"],
-                        CPUModels.MODELS["ICELAKE_X"]["model"],
-                        CPUModels.MODELS["ICELAKE_D"]["model"],
-                        CPUModels.MODELS["SKYLAKE_X"]["model"],
-                        CPUModels.MODELS["BROADWELL_X"]["model"],
-                        CPUModels.MODELS["HASWELL_X"]["model"],
-                        CPUModels.MODELS["IVYBRIDGE_X"]["model"],)
+# CPUs supporting the C-state pre-wake feature.
+_CSTATE_PREWAKE_VFMS = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
+                        CPUModels.MODELS["GRANITERAPIDS_D"]["vfm"],
+                        CPUModels.MODELS["EMERALDRAPIDS_X"]["vfm"],
+                        CPUModels.MODELS["SAPPHIRERAPIDS_X"]["vfm"],
+                        CPUModels.MODELS["ICELAKE_X"]["vfm"],
+                        CPUModels.MODELS["ICELAKE_D"]["vfm"],
+                        CPUModels.MODELS["SKYLAKE_X"]["vfm"],
+                        CPUModels.MODELS["BROADWELL_X"]["vfm"],
+                        CPUModels.MODELS["HASWELL_X"]["vfm"],
+                        CPUModels.MODELS["IVYBRIDGE_X"]["vfm"],)
 
-# CPU models supporting the LTR feature.
-LTR_CPUS = (CPUModels.MODELS["GRANITERAPIDS_X"]["model"],
-            CPUModels.MODELS["EMERALDRAPIDS_X"]["model"],
-            CPUModels.MODELS["SAPPHIRERAPIDS_X"]["model"],
-            CPUModels.MODELS["ICELAKE_X"]["model"],)
+# CPU supporting the LTR feature.
+LTR_VFMS = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
+            CPUModels.MODELS["EMERALDRAPIDS_X"]["vfm"],
+            CPUModels.MODELS["SAPPHIRERAPIDS_X"]["vfm"],
+            CPUModels.MODELS["ICELAKE_X"]["vfm"],)
 
 # Description of CPU features controlled by the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
@@ -58,7 +58,7 @@ FEATURES = {
         "iosname": None,
         "help": """When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                    the next local APIC timer event.""",
-        "cpumodels": _CSTATE_PREWAKE_CPUS,
+        "vfms": _CSTATE_PREWAKE_VFMS,
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": (30, 30),
@@ -69,7 +69,7 @@ FEATURES = {
         "iosname": None,
         "help": """When enabled, the CPU will take LTR constraints into account when making power
                    management decisions, such as selecting package C-state.""",
-        "cpumodels": LTR_CPUS,
+        "vfms": LTR_VFMS,
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": (35, 35),

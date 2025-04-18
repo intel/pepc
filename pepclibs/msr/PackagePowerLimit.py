@@ -18,28 +18,28 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 # The Package Power Limit Model Specific Register.
 MSR_PKG_POWER_LIMIT = 0x610
 
-# CPU models supporting the "Package Power Limit" MSR.
-_PPL_CPUS = CPUModels.MODEL_GROUPS["GNR"] +         \
-            CPUModels.MODEL_GROUPS["EMR"] +         \
-            CPUModels.MODEL_GROUPS["METEORLAKE"] +  \
-            CPUModels.MODEL_GROUPS["SPR"] +         \
-            CPUModels.MODEL_GROUPS["RAPTORLAKE"] +  \
-            CPUModels.MODEL_GROUPS["ALDERLAKE"] +   \
-            CPUModels.MODEL_GROUPS["ROCKETLAKE"] +  \
-            CPUModels.MODEL_GROUPS["TIGERLAKE"] +   \
-            CPUModels.MODEL_GROUPS["ICELAKE"] +     \
-            CPUModels.MODEL_GROUPS["COMETLAKE"] +   \
-            CPUModels.MODEL_GROUPS["KABYLAKE"] +    \
-            CPUModels.MODEL_GROUPS["CANNONLAKE"] +  \
-            CPUModels.MODEL_GROUPS["SKYLAKE"] +     \
-            CPUModels.MODEL_GROUPS["BROADWELL"] +   \
-            CPUModels.MODEL_GROUPS["HASWELL"] +     \
-            CPUModels.MODEL_GROUPS["IVYBRIDGE"] +   \
-            CPUModels.MODEL_GROUPS["SANDYBRIDGE"] + \
-            CPUModels.MODEL_GROUPS["WESTMERE"] +    \
-            CPUModels.MODEL_GROUPS["TREMONT"] +     \
-            CPUModels.MODEL_GROUPS["GOLDMONT"] +    \
-            CPUModels.MODEL_GROUPS["PHI"]
+# CPUs supporting the "Package Power Limit" MSR.
+_PPL_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
+            CPUModels.CPU_GROUPS["EMR"] +         \
+            CPUModels.CPU_GROUPS["METEORLAKE"] +  \
+            CPUModels.CPU_GROUPS["SPR"] +         \
+            CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
+            CPUModels.CPU_GROUPS["ALDERLAKE"] +   \
+            CPUModels.CPU_GROUPS["ROCKETLAKE"] +  \
+            CPUModels.CPU_GROUPS["TIGERLAKE"] +   \
+            CPUModels.CPU_GROUPS["ICELAKE"] +     \
+            CPUModels.CPU_GROUPS["COMETLAKE"] +   \
+            CPUModels.CPU_GROUPS["KABYLAKE"] +    \
+            CPUModels.CPU_GROUPS["CANNONLAKE"] +  \
+            CPUModels.CPU_GROUPS["SKYLAKE"] +     \
+            CPUModels.CPU_GROUPS["BROADWELL"] +   \
+            CPUModels.CPU_GROUPS["HASWELL"] +     \
+            CPUModels.CPU_GROUPS["IVYBRIDGE"] +   \
+            CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
+            CPUModels.CPU_GROUPS["WESTMERE"] +    \
+            CPUModels.CPU_GROUPS["TREMONT"] +     \
+            CPUModels.CPU_GROUPS["GOLDMONT"] +    \
+            CPUModels.CPU_GROUPS["PHI"]
 
 # Description of CPU features controlled by the Package Power Limit MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
@@ -50,7 +50,7 @@ FEATURES = {
         "iosname": "package",
         "help": """Average power usage limit of the package domain corresponding to time
                    window #1.""",
-        "cpumodels": _PPL_CPUS,
+        "vfms": _PPL_VFMS,
         "type": "float",
         "bits": (14, 0),
     },
@@ -59,7 +59,7 @@ FEATURES = {
         "sname": "package",
         "iosname": "package",
         "help": """Enable/disable RAPL package power limit #1.""",
-        "cpumodels": _PPL_CPUS,
+        "vfms": _PPL_VFMS,
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (15, 15),
@@ -70,7 +70,7 @@ FEATURES = {
         "iosname": "package",
         "help": """Clamp the package power usage to specified limit during time window #1.
                    This may result in the system running below the requested frequency/voltage.""",
-        "cpumodels": _PPL_CPUS,
+        "vfms": _PPL_VFMS,
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (16, 16),
@@ -81,7 +81,7 @@ FEATURES = {
         "iosname": "package",
         "help": """Time window for package power limit #1: the system makes sure that average
                    package power over the time window does not exceed power limit #1.""",
-        "cpumodels": _PPL_CPUS,
+        "vfms": _PPL_VFMS,
         "type": "float",
         "bits": (23, 17),
         "writable": False,
@@ -92,7 +92,7 @@ FEATURES = {
         "iosname": "package",
         "help": """Average power usage limit of the package domain corresponding to time
                    window #2.""",
-        "cpumodels": _PPL_CPUS,
+        "vfms": _PPL_VFMS,
         "type": "float",
         "bits": (46, 32),
     },
@@ -101,7 +101,7 @@ FEATURES = {
         "sname": "package",
         "iosname": "package",
         "help": """Enable/disable RAPL package power limit #2.""",
-        "cpumodels": _PPL_CPUS,
+        "vfms": _PPL_VFMS,
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (47, 47),
@@ -112,7 +112,7 @@ FEATURES = {
         "iosname": "package",
         "help": """Clamp the package power usage to specified limit during time window #2.
                    This may result in the system running below the requested frequency/voltage.""",
-        "cpumodels": _PPL_CPUS,
+        "vfms": _PPL_VFMS,
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (48, 48),
@@ -123,7 +123,7 @@ FEATURES = {
         "iosname": "package",
         "help": """Time window for package power limit #2: the system makes sure that average
                    package power over the time window does not exceed power limit #2.""",
-        "cpumodels": _PPL_CPUS,
+        "vfms": _PPL_VFMS,
         "type": "float",
         "bits": (55, 49),
         "writable": False,

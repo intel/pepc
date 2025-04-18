@@ -73,58 +73,58 @@ _CLIENT_PC7S_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC
 # CPU ID -> Package C-state limit map.
 _PKG_CST_LIMITS = {
     # Xeons.
-    CPUModels.MODELS["ATOM_DARKMONT_X"]["model"]:  _ICX_PKG_CST_LIMITS,
-    CPUModels.MODELS["ATOM_CRESTMONT_X"]["model"]: _ICX_PKG_CST_LIMITS,
-    CPUModels.MODELS["GRANITERAPIDS_X"]["model"]:  _ICX_PKG_CST_LIMITS,
-    CPUModels.MODELS["GRANITERAPIDS_D"]["model"]:  _ICX_PKG_CST_LIMITS,
-    CPUModels.MODELS["EMERALDRAPIDS_X"]["model"]:  _SKX_PKG_CST_LIMITS,
-    CPUModels.MODELS["SAPPHIRERAPIDS_X"]["model"]: _SKX_PKG_CST_LIMITS,
-    CPUModels.MODELS["ICELAKE_X"]["model"]:        _ICX_PKG_CST_LIMITS,
-    CPUModels.MODELS["ICELAKE_D"]["model"]:        _ICX_PKG_CST_LIMITS,
-    CPUModels.MODELS["SKYLAKE_X"]["model"]:        _SKX_PKG_CST_LIMITS,
-    CPUModels.MODELS["BROADWELL_X"]["model"]:      _HSX_PKG_CST_LIMITS,
-    CPUModels.MODELS["BROADWELL_D"]["model"]:      _BDWD_PKG_CST_LIMITS,
-    CPUModels.MODELS["BROADWELL_G"]["model"]:      _BDWD_PKG_CST_LIMITS,
-    CPUModels.MODELS["HASWELL_X"]["model"]:        _HSX_PKG_CST_LIMITS,
-    CPUModels.MODELS["IVYBRIDGE_X"]["model"]:      _IVT_PKG_CST_LIMITS,
+    CPUModels.MODELS["ATOM_DARKMONT_X"]["vfm"]:  _ICX_PKG_CST_LIMITS,
+    CPUModels.MODELS["ATOM_CRESTMONT_X"]["vfm"]: _ICX_PKG_CST_LIMITS,
+    CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"]:  _ICX_PKG_CST_LIMITS,
+    CPUModels.MODELS["GRANITERAPIDS_D"]["vfm"]:  _ICX_PKG_CST_LIMITS,
+    CPUModels.MODELS["EMERALDRAPIDS_X"]["vfm"]:  _SKX_PKG_CST_LIMITS,
+    CPUModels.MODELS["SAPPHIRERAPIDS_X"]["vfm"]: _SKX_PKG_CST_LIMITS,
+    CPUModels.MODELS["ICELAKE_X"]["vfm"]:        _ICX_PKG_CST_LIMITS,
+    CPUModels.MODELS["ICELAKE_D"]["vfm"]:        _ICX_PKG_CST_LIMITS,
+    CPUModels.MODELS["SKYLAKE_X"]["vfm"]:        _SKX_PKG_CST_LIMITS,
+    CPUModels.MODELS["BROADWELL_X"]["vfm"]:      _HSX_PKG_CST_LIMITS,
+    CPUModels.MODELS["BROADWELL_D"]["vfm"]:      _BDWD_PKG_CST_LIMITS,
+    CPUModels.MODELS["BROADWELL_G"]["vfm"]:      _BDWD_PKG_CST_LIMITS,
+    CPUModels.MODELS["HASWELL_X"]["vfm"]:        _HSX_PKG_CST_LIMITS,
+    CPUModels.MODELS["IVYBRIDGE_X"]["vfm"]:      _IVT_PKG_CST_LIMITS,
     # Xeon Phi.
-    CPUModels.MODELS["XEON_PHI_KNM"]["model"]:     _SKX_PKG_CST_LIMITS,
-    CPUModels.MODELS["XEON_PHI_KNL"]["model"]:     _SKX_PKG_CST_LIMITS,
+    CPUModels.MODELS["XEON_PHI_KNM"]["vfm"]:     _SKX_PKG_CST_LIMITS,
+    CPUModels.MODELS["XEON_PHI_KNL"]["vfm"]:     _SKX_PKG_CST_LIMITS,
     # Atom microservers.
-    CPUModels.MODELS["ATOM_GOLDMONT_D"]["model"]:  _DNV_PKG_CST_LIMITS,
+    CPUModels.MODELS["ATOM_GOLDMONT_D"]["vfm"]:  _DNV_PKG_CST_LIMITS,
     # Clients.
     # Deepest: PC10.
-    CPUModels.MODELS["ROCKETLAKE"]["model"]:       _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ALDERLAKE"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ALDERLAKE_L"]["model"]:      _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ALDERLAKE_N"]["model"]:      _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["TIGERLAKE"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["TIGERLAKE_L"]["model"]:      _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["LAKEFIELD"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["COMETLAKE"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["COMETLAKE_L"]["model"]:      _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["KABYLAKE_L"]["model"]:       _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["KABYLAKE"]["model"]:         _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ICELAKE_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ICELAKE_NNPI"]["model"]:     _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["CANNONLAKE_L"]["model"]:     _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["SKYLAKE"]["model"]:          _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["SKYLAKE_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["BROADWELL"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["HASWELL_L"]["model"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["METEORLAKE_L"]["model"]:     _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["LUNARLAKE_M"]["model"]:      _CLIENT_LNL_CST_LIMITS,
+    CPUModels.MODELS["ROCKETLAKE"]["vfm"]:       _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["ALDERLAKE"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["ALDERLAKE_L"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["ALDERLAKE_N"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["TIGERLAKE"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["TIGERLAKE_L"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["LAKEFIELD"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["COMETLAKE"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["COMETLAKE_L"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["KABYLAKE_L"]["vfm"]:       _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["KABYLAKE"]["vfm"]:         _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["ICELAKE_L"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["ICELAKE_NNPI"]["vfm"]:     _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["CANNONLAKE_L"]["vfm"]:     _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["SKYLAKE"]["vfm"]:          _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["SKYLAKE_L"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["BROADWELL"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["HASWELL_L"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["METEORLAKE_L"]["vfm"]:     _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["LUNARLAKE_M"]["vfm"]:      _CLIENT_LNL_CST_LIMITS,
     # Deepest: PC7S.
-    CPUModels.MODELS["HASWELL"]["model"]:          _CLIENT_PC7S_CST_LIMITS,
-    CPUModels.MODELS["HASWELL_G"]["model"]:        _CLIENT_PC7S_CST_LIMITS,
+    CPUModels.MODELS["HASWELL"]["vfm"]:          _CLIENT_PC7S_CST_LIMITS,
+    CPUModels.MODELS["HASWELL_G"]["vfm"]:        _CLIENT_PC7S_CST_LIMITS,
 }
 
-# MSR_PKG_CST_CONFIG_CONTROL features have core scope, except for the following CPU models.
-_MODULE_SCOPE_CPUS = CPUModels.MODEL_GROUPS["SILVERMONT"] + CPUModels.MODEL_GROUPS["AIRMONT"]
-_PACKAGE_SCOPE_CPUS = CPUModels.MODEL_GROUPS["PHI"]
+# MSR_PKG_CST_CONFIG_CONTROL features have core scope, except for the following CPUs.
+_MODULE_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"] + CPUModels.CPU_GROUPS["AIRMONT"]
+_PACKAGE_SCOPE_VFMS = CPUModels.CPU_GROUPS["PHI"]
 
-# Map of features available on various CPU models. Please, refer to the notes for
-# '_FeaturedMSR.FEATURES' for more comments.
+# Map of features available on various CPUs. Please, refer to the notes for '_FeaturedMSR.FEATURES'
+# for more comments.
 FEATURES = {
     "pkg_cstate_limit": {
         "name": "Package C-state limit",
@@ -135,7 +135,7 @@ FEATURES = {
                    (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
                    BIOS, in which case the package C-state limit can only be read, but cannot be
                    modified.""",
-        "cpumodels": tuple(_PKG_CST_LIMITS.keys()),
+        "vfms": tuple(_PKG_CST_LIMITS.keys()),
         "type": "dict",
         "vals": None,
         "aliases": {},
@@ -149,7 +149,7 @@ FEATURES = {
                    (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
                    is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
                    MSR.""",
-        "cpumodels": tuple(_PKG_CST_LIMITS.keys()),
+        "vfms": tuple(_PKG_CST_LIMITS.keys()),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (15, 15),
@@ -259,7 +259,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                        self._cpuinfo.cpudescr, self._pman.hostmsg)
             return
 
-        cpumodel = self._cpuinfo.info["model"]
+        cpumodel = self._cpuinfo.info["vfm"]
         cpumodel_info = _PKG_CST_LIMITS[cpumodel]
 
         finfo = self._features["pkg_cstate_limit"]
@@ -280,11 +280,11 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
-        model = self._cpuinfo.info["model"]
+        model = self._cpuinfo.info["vfm"]
 
-        if model in _MODULE_SCOPE_CPUS:
+        if model in _MODULE_SCOPE_VFMS:
             iosname = "module"
-        elif model in _PACKAGE_SCOPE_CPUS:
+        elif model in _PACKAGE_SCOPE_VFMS:
             iosname = "package"
         else:
             iosname = "core"

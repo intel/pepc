@@ -396,7 +396,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             cpudescr = f"Intel processor model {self.info['model']:#x}"
 
             for info in CPUModels.MODELS.values():
-                if info["model"] == self.info["model"]:
+                if info["vfm"] == self.info["vfm"]:
                     cpudescr += f" (codename: {info['codename']})"
                     break
         else:

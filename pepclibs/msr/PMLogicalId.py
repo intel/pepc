@@ -16,8 +16,8 @@ from pepclibs.msr import _FeaturedMSR
 # The PM Logical ID Model Specific Register.
 MSR_PM_LOGICAL_ID = 0x54
 
-# CPU models supporting the "PM Logical ID" MSR.
-_PLI_CPUS = CPUModels.MODEL_GROUPS["GNR"] + CPUModels.MODEL_GROUPS["CRESTMONT"]
+# CPUs supporting the "PM Logical ID" MSR.
+_PLI_VFMS = CPUModels.CPU_GROUPS["GNR"] + CPUModels.CPU_GROUPS["CRESTMONT"]
 
 # Description of CPU features controlled by the PM Logical ID. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
@@ -27,7 +27,7 @@ FEATURES = {
         "sname": "CPU",
         "iosname": "CPU",
         "help": """Domain ID.""",
-        "cpumodels": _PLI_CPUS,
+        "vfms": _PLI_VFMS,
         "type": "int",
         "bits": (15, 11),
         "writable": False,
@@ -37,7 +37,7 @@ FEATURES = {
         "sname": "CPU",
         "iosname": "CPU",
         "help": """Module ID.""",
-        "cpumodels": _PLI_CPUS,
+        "vfms": _PLI_VFMS,
         "type": "int",
         "bits": (10, 3),
         "writable": False,
@@ -47,7 +47,7 @@ FEATURES = {
         "sname": "CPU",
         "iosname": "CPU",
         "help": """CPU ID.""",
-        "cpumodels": _PLI_CPUS,
+        "vfms": _PLI_VFMS,
         "type": "int",
         "bits": (2, 0),
         "writable": False,

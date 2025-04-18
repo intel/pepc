@@ -18,44 +18,44 @@ from pepclibs.msr import _FeaturedMSR
 MSR_TURBO_RATIO_LIMIT = 0x1AD
 
 #
-# CPU models that include core turbo ratios in the MSR (as apposed to group turbo ratio). "CT" in
+# CPUs that include core turbo ratios in the MSR (as apposed to group turbo ratio). "CT" in
 # the names stands for "Core Turbo".
 #
-_CT_CPUS = CPUModels.MODEL_GROUPS["METEORLAKE"] +  \
-           CPUModels.MODEL_GROUPS["RAPTORLAKE"] +  \
-           CPUModels.MODEL_GROUPS["ALDERLAKE"] +   \
-           CPUModels.MODEL_GROUPS["ROCKETLAKE"] +  \
-           CPUModels.MODEL_GROUPS["TIGERLAKE"] +   \
-           CPUModels.MODEL_GROUPS["LAKEFIELD"] +   \
-           CPUModels.MODEL_GROUPS["ICL_CLIENT"] +  \
-           CPUModels.MODEL_GROUPS["SKL_CLIENT"] +  \
-           CPUModels.MODEL_GROUPS["COMETLAKE"] +   \
-           CPUModels.MODEL_GROUPS["KABYLAKE"] +    \
-           CPUModels.MODEL_GROUPS["CANNONLAKE"] +  \
-           CPUModels.MODEL_GROUPS["BROADWELL"] +   \
-           (CPUModels.MODELS["ATOM_SILVERMONT_D"]["model"], ) + \
-           CPUModels.MODEL_GROUPS["HASWELL"] +     \
-           CPUModels.MODEL_GROUPS["IVYBRIDGE"] +   \
-           CPUModels.MODEL_GROUPS["SANDYBRIDGE"] + \
-           (CPUModels.MODELS["NEHALEM"]["model"],
-            CPUModels.MODELS["NEHALEM_G"]["model"],
-            CPUModels.MODELS["NEHALEM_EP"]["model"])
+_CT_VFMS = CPUModels.CPU_GROUPS["METEORLAKE"] +  \
+           CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
+           CPUModels.CPU_GROUPS["ALDERLAKE"] +   \
+           CPUModels.CPU_GROUPS["ROCKETLAKE"] +  \
+           CPUModels.CPU_GROUPS["TIGERLAKE"] +   \
+           CPUModels.CPU_GROUPS["LAKEFIELD"] +   \
+           CPUModels.CPU_GROUPS["ICL_CLIENT"] +  \
+           CPUModels.CPU_GROUPS["SKL_CLIENT"] +  \
+           CPUModels.CPU_GROUPS["COMETLAKE"] +   \
+           CPUModels.CPU_GROUPS["KABYLAKE"] +    \
+           CPUModels.CPU_GROUPS["CANNONLAKE"] +  \
+           CPUModels.CPU_GROUPS["BROADWELL"] +   \
+           (CPUModels.MODELS["ATOM_SILVERMONT_D"]["vfm"], ) + \
+           CPUModels.CPU_GROUPS["HASWELL"] +     \
+           CPUModels.CPU_GROUPS["IVYBRIDGE"] +   \
+           CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
+           (CPUModels.MODELS["NEHALEM"]["vfm"],
+            CPUModels.MODELS["NEHALEM_G"]["vfm"],
+            CPUModels.MODELS["NEHALEM_EP"]["vfm"])
 
-# CPU models that include group turbo ratios in the MSR. "GT" in the names stands for "Group
+# CPUs that include group turbo ratios in the MSR. "GT" in the names stands for "Group
 # Turbo". In this case MSR 0x1AE should be decoded to get count of cores in a group. In SDM, this
 # MSR is named 'MSR_TURBO_GROUP_CORECNT' for Atom CPUs and 'MSR_TURBO_RATIO_LIMIT_CORES' for "big
 # core" CPUs. The same MSR is called 'MSR_TURBO_RATIO_LIMIT1' for CPUs that do not have groups in
 # 'MSR_TURBO_RATIO_LIMIT'.
-_GT_CPUS = CPUModels.MODEL_GROUPS["GNR"] + \
-           CPUModels.MODEL_GROUPS["CRESTMONT"] + \
-           CPUModels.MODEL_GROUPS["EMR"] + \
-           CPUModels.MODEL_GROUPS["SPR"] + \
-           (CPUModels.MODELS["ATOM_TREMONT_D"]["model"],) +  \
-           CPUModels.MODEL_GROUPS["ICX"] + \
-           CPUModels.MODEL_GROUPS["SKX"] + \
-           (CPUModels.MODELS["ATOM_GOLDMONT_D"]["model"],
-            CPUModels.MODELS["ATOM_GOLDMONT"]["model"],
-            CPUModels.MODELS["ATOM_GOLDMONT_PLUS"]["model"],)
+_GT_VFMS = CPUModels.CPU_GROUPS["GNR"] + \
+           CPUModels.CPU_GROUPS["CRESTMONT"] + \
+           CPUModels.CPU_GROUPS["EMR"] + \
+           CPUModels.CPU_GROUPS["SPR"] + \
+           (CPUModels.MODELS["ATOM_TREMONT_D"]["vfm"],) +  \
+           CPUModels.CPU_GROUPS["ICX"] + \
+           CPUModels.CPU_GROUPS["SKX"] + \
+           (CPUModels.MODELS["ATOM_GOLDMONT_D"]["vfm"],
+            CPUModels.MODELS["ATOM_GOLDMONT"]["vfm"],
+            CPUModels.MODELS["ATOM_GOLDMONT_PLUS"]["vfm"],)
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
 # notes for '_FeaturedMSR.FEATURES' for more comments.
@@ -66,7 +66,7 @@ FEATURES = {
         "iosname": None,
         "help": """The ratio of maximum turbo frequency in case of 1 active core. This ratio
                    multiplied by bus clock speed gives the maximum 1 core turbo frequency.""",
-        "cpumodels": _CT_CPUS,
+        "vfms": _CT_VFMS,
         "type": "int",
         "writable": False,
         "bits": (7, 0),
@@ -78,7 +78,7 @@ FEATURES = {
         "help": """The ratio of maximum turbo frequency in case "group 0" count of cores are
                    active. This ratio multiplied by bus clock speed gives the frequency. Count of
                    cores in group 0 is provided by MSR 0x1AE.""",
-        "cpumodels": _GT_CPUS,
+        "vfms": _GT_VFMS,
         "type": "int",
         "writable": False,
         "bits": (7, 0),

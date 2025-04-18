@@ -18,7 +18,7 @@ from pepclibs.msr import _FeaturedMSR, PowerCtl
 MSR_SW_LTR_OVRD = 0xA02
 
 # CPU models supporting the LTR feature.
-_LTR_CPUS = PowerCtl.LTR_CPUS
+_LTR_CPUS = PowerCtl.LTR_VFMS
 
 # Description of CPU features controlled by the MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.

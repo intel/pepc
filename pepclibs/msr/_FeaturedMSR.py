@@ -36,7 +36,7 @@ from pepclibs.msr import MSR
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-# Map of features available on various CPU models. Must be defined by sub-classes and describe every
+# Map of features available on various CPU. Must be defined by sub-classes and describe every
 # supported feature.
 #
 # * This is only the initial, general definition. Many things are platform-dependent, so full
@@ -369,12 +369,12 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         """Initialize the 'supported' flag for all features."""
 
         supported = False
-        cpumodel = self._cpuinfo.info["model"]
+        vfm = self._cpuinfo.info["vfm"]
 
         for finfo in self._features.values():
             finfo["supported"] = {}
 
-            if "cpumodels" in finfo and cpumodel not in finfo["cpumodels"]:
+            if "vfms" in finfo and vfm not in finfo["vfms"]:
                 for cpu in self._cpuinfo.get_cpus():
                     finfo["supported"][cpu] = False
                 continue
@@ -467,8 +467,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         package. So most MSRs that has "package" scope on SKX or CLX have "die" scope on CLX-AP.
         """
 
-        model = self._cpuinfo.info["model"]
-        if model == CPUModels.MODELS["SKYLAKE_X"]["model"] and \
+        vfm = self._cpuinfo.info["vfm"]
+        if vfm == CPUModels.MODELS["SKYLAKE_X"]["vfm"] and \
            len(self._cpuinfo.get_dies(package=0)) > 1:
             return "die"
         return "package"

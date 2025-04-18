@@ -17,28 +17,28 @@ from pepclibs.helperlibs import ClassHelpers
 # The Package Power Info Model Specific Register.
 MSR_PKG_POWER_INFO = 0x614
 
-# CPU models supporting the "Package Power Info" MSR.
-_PPI_CPUS = CPUModels.MODEL_GROUPS["GNR"] +         \
-            CPUModels.MODEL_GROUPS["EMR"] +         \
-            CPUModels.MODEL_GROUPS["METEORLAKE"] +  \
-            CPUModels.MODEL_GROUPS["SPR"] +         \
-            CPUModels.MODEL_GROUPS["RAPTORLAKE"] +  \
-            CPUModels.MODEL_GROUPS["ALDERLAKE"] +   \
-            CPUModels.MODEL_GROUPS["ROCKETLAKE"] +  \
-            CPUModels.MODEL_GROUPS["TIGERLAKE"] +   \
-            CPUModels.MODEL_GROUPS["ICELAKE"] +     \
-            CPUModels.MODEL_GROUPS["COMETLAKE"] +   \
-            CPUModels.MODEL_GROUPS["KABYLAKE"] +    \
-            CPUModels.MODEL_GROUPS["CANNONLAKE"] +  \
-            CPUModels.MODEL_GROUPS["SKYLAKE"] +     \
-            CPUModels.MODEL_GROUPS["BROADWELL"] +   \
-            CPUModels.MODEL_GROUPS["HASWELL"] +     \
-            CPUModels.MODEL_GROUPS["IVYBRIDGE"] +   \
-            CPUModels.MODEL_GROUPS["SANDYBRIDGE"] + \
-            CPUModels.MODEL_GROUPS["WESTMERE"] +    \
-            CPUModels.MODEL_GROUPS["TREMONT"] +     \
-            CPUModels.MODEL_GROUPS["GOLDMONT"] +    \
-            CPUModels.MODEL_GROUPS["PHI"]
+# CPUs supporting the "Package Power Info" MSR.
+_PPI_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
+            CPUModels.CPU_GROUPS["EMR"] +         \
+            CPUModels.CPU_GROUPS["METEORLAKE"] +  \
+            CPUModels.CPU_GROUPS["SPR"] +         \
+            CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
+            CPUModels.CPU_GROUPS["ALDERLAKE"] +   \
+            CPUModels.CPU_GROUPS["ROCKETLAKE"] +  \
+            CPUModels.CPU_GROUPS["TIGERLAKE"] +   \
+            CPUModels.CPU_GROUPS["ICELAKE"] +     \
+            CPUModels.CPU_GROUPS["COMETLAKE"] +   \
+            CPUModels.CPU_GROUPS["KABYLAKE"] +    \
+            CPUModels.CPU_GROUPS["CANNONLAKE"] +  \
+            CPUModels.CPU_GROUPS["SKYLAKE"] +     \
+            CPUModels.CPU_GROUPS["BROADWELL"] +   \
+            CPUModels.CPU_GROUPS["HASWELL"] +     \
+            CPUModels.CPU_GROUPS["IVYBRIDGE"] +   \
+            CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
+            CPUModels.CPU_GROUPS["WESTMERE"] +    \
+            CPUModels.CPU_GROUPS["TREMONT"] +     \
+            CPUModels.CPU_GROUPS["GOLDMONT"] +    \
+            CPUModels.CPU_GROUPS["PHI"]
 
 # Description of CPU features controlled by the Package Power Info MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
@@ -48,7 +48,7 @@ FEATURES = {
         "sname": "package",
         "iosname": "package",
         "help": """CPU package thermal design power in Watts.""",
-        "cpumodels": _PPI_CPUS,
+        "vfms": _PPI_VFMS,
         "type": "float",
         "bits": (14, 0),
         "writable": False,

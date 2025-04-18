@@ -17,9 +17,9 @@ from pepclibs.msr import _FeaturedMSR
 # The Energy Performance Bias Model Specific Register.
 MSR_ENERGY_PERF_BIAS = 0x1B0
 
-# MSR_ENERGY_PERF_BIAS features have CPU scope, except for the following CPU models.
-_CORE_SCOPE_CPUS = CPUModels.MODEL_GROUPS["SILVERMONT"]
-_PACKAGE_SCOPE_CPUS = CPUModels.MODEL_GROUPS["WESTMERE"] + CPUModels.MODEL_GROUPS["SANDYBRIDGE"]
+# MSR_ENERGY_PERF_BIAS features have CPU scope, except for the following CPUs.
+_CORE_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"]
+_PACKAGE_SCOPE_VFMS = CPUModels.CPU_GROUPS["WESTMERE"] + CPUModels.CPU_GROUPS["SANDYBRIDGE"]
 
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
@@ -51,11 +51,11 @@ class EnergyPerfBias(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
-        model = self._cpuinfo.info["model"]
+        vfm = self._cpuinfo.info["vfm"]
 
-        if model in _CORE_SCOPE_CPUS:
+        if vfm in _CORE_SCOPE_VFMS:
             sname = "core"
-        elif model in _PACKAGE_SCOPE_CPUS:
+        elif vfm in _PACKAGE_SCOPE_VFMS:
             sname = "package"
         else:
             sname = "CPU"

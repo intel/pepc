@@ -46,20 +46,20 @@ _AIRMONT_FSB_CODES = {"codes": {83.3:  0b0000, 100.0: 0b0001,
 
 # CPU ID -> FSB codes map.
 _FSB_CODES = {
-    CPUModels.MODELS["CORE2_MEROM"]["model"]:          _CORE2_FSB_CODES,
-    CPUModels.MODELS["ATOM_BONNELL_MID"]["model"]:     _OLD_ATOM_FSB_CODES,
-    CPUModels.MODELS["ATOM_BONNELL"]["model"]:         _OLD_ATOM_FSB_CODES,
-    CPUModels.MODELS["ATOM_SALTWELL"]["model"]:        _OLD_ATOM_FSB_CODES,
-    CPUModels.MODELS["ATOM_SALTWELL_MID"]["model"]:    _OLD_ATOM_FSB_CODES,
-    CPUModels.MODELS["ATOM_SALTWELL_TABLET"]["model"]: _OLD_ATOM_FSB_CODES,
-    CPUModels.MODELS["ATOM_SILVERMONT"]["model"]:      _SILVERMONT_FSB_CODES,
-    CPUModels.MODELS["ATOM_SILVERMONT_MID"]["model"]:  _SILVERMONT_FSB_CODES,
-    CPUModels.MODELS["ATOM_SILVERMONT_MID1"]["model"]: _SILVERMONT_FSB_CODES,
-    CPUModels.MODELS["ATOM_AIRMONT"]["model"]:         _AIRMONT_FSB_CODES,
+    CPUModels.MODELS["CORE2_MEROM"]["vfm"]:          _CORE2_FSB_CODES,
+    CPUModels.MODELS["ATOM_BONNELL_MID"]["vfm"]:     _OLD_ATOM_FSB_CODES,
+    CPUModels.MODELS["ATOM_BONNELL"]["vfm"]:         _OLD_ATOM_FSB_CODES,
+    CPUModels.MODELS["ATOM_SALTWELL"]["vfm"]:        _OLD_ATOM_FSB_CODES,
+    CPUModels.MODELS["ATOM_SALTWELL_MID"]["vfm"]:    _OLD_ATOM_FSB_CODES,
+    CPUModels.MODELS["ATOM_SALTWELL_TABLET"]["vfm"]: _OLD_ATOM_FSB_CODES,
+    CPUModels.MODELS["ATOM_SILVERMONT"]["vfm"]:      _SILVERMONT_FSB_CODES,
+    CPUModels.MODELS["ATOM_SILVERMONT_MID"]["vfm"]:  _SILVERMONT_FSB_CODES,
+    CPUModels.MODELS["ATOM_SILVERMONT_MID1"]["vfm"]: _SILVERMONT_FSB_CODES,
+    CPUModels.MODELS["ATOM_AIRMONT"]["vfm"]:         _AIRMONT_FSB_CODES,
 }
 
-# MSR_FSB_FREQ features have core scope, except for the following CPU models.
-_MODULE_SCOPE_CPUS = CPUModels.MODEL_GROUPS["SILVERMONT"] + CPUModels.MODEL_GROUPS["AIRMONT"]
+# MSR_FSB_FREQ features have core scope, except for the following CPUs.
+_MODULE_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"] + CPUModels.CPU_GROUPS["AIRMONT"]
 
 # Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
@@ -69,7 +69,7 @@ FEATURES = {
         "sname": None,
         "iosname": None,
         "help": "Platform bus clock speed (FSB) in megahertz",
-        "cpumodels": tuple(_FSB_CODES.keys()),
+        "vfms": tuple(_FSB_CODES.keys()),
         "type": "float",
         "writable": False,
     },
@@ -91,12 +91,12 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         if not self.is_feature_supported("fsb", cpus="all"):
             return
 
-        cpumodel = self._cpuinfo.info["model"]
-        cpumodel_info = _FSB_CODES[cpumodel]
+        vfm = self._cpuinfo.info["vfm"]
+        fsb_codes = _FSB_CODES[vfm]
 
         finfo = self._features["fsb"]
-        finfo["bits"] = cpumodel_info["bits"]
-        finfo["vals"] = cpumodel_info["codes"]
+        finfo["bits"] = fsb_codes["bits"]
+        finfo["vals"] = fsb_codes["codes"]
 
     def _init_features_dict(self):
         """Initialize the 'features' dictionary with platform-specific information."""
@@ -109,9 +109,9 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         """Set the attributes the superclass requires."""
 
         self.features = FEATURES
-        model = self._cpuinfo.info["model"]
+        vfm = self._cpuinfo.info["vfm"]
 
-        if model in _MODULE_SCOPE_CPUS:
+        if vfm in _MODULE_SCOPE_VFMS:
             sname = "module"
         else:
             sname = "core"

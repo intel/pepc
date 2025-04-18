@@ -18,19 +18,19 @@ from pepclibs.msr import _FeaturedMSR
 MSR_UNCORE_RATIO_LIMIT = 0x620
 
 #
-# CPU models that support the uncore ratio limit MSR.
+# CPUs that support the uncore ratio limit MSR.
 #
-_CPUS = CPUModels.MODEL_GROUPS["EMR"] + \
-        CPUModels.MODEL_GROUPS["METEORLAKE"] + \
-        CPUModels.MODEL_GROUPS["SPR"] + \
-        CPUModels.MODEL_GROUPS["RAPTORLAKE"] + \
-        (CPUModels.MODELS["ALDERLAKE"]["model"],
-         CPUModels.MODELS["ALDERLAKE_L"]["model"],) + \
-        CPUModels.MODEL_GROUPS["ICX"] + \
-        CPUModels.MODEL_GROUPS["SKX"] + \
-        (CPUModels.MODELS["BROADWELL_G"]["model"],
-         CPUModels.MODELS["BROADWELL_D"]["model"],
-         CPUModels.MODELS["BROADWELL_X"]["model"],)
+_VMFS = CPUModels.CPU_GROUPS["EMR"] + \
+        CPUModels.CPU_GROUPS["METEORLAKE"] + \
+        CPUModels.CPU_GROUPS["SPR"] + \
+        CPUModels.CPU_GROUPS["RAPTORLAKE"] + \
+        (CPUModels.MODELS["ALDERLAKE"]["vfm"],
+         CPUModels.MODELS["ALDERLAKE_L"]["vfm"]) + \
+        CPUModels.CPU_GROUPS["ICX"] + \
+        CPUModels.CPU_GROUPS["SKX"] + \
+        (CPUModels.MODELS["BROADWELL_G"]["vfm"],
+         CPUModels.MODELS["BROADWELL_D"]["vfm"],
+         CPUModels.MODELS["BROADWELL_X"]["vfm"])
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
 # notes for '_FeaturedMSR.FEATURES' for more comments.
@@ -41,7 +41,7 @@ FEATURES = {
         "iosname": None,
         "help": """The maximum allowed uncore ratio. This ratio multiplied by bus clock speed gives
                    the maximum allowed uncore frequency.""",
-        "cpumodels": _CPUS,
+        "vfms": _VMFS,
         "type": "int",
         "writable": True,
         "bits": (6, 0),
@@ -52,7 +52,7 @@ FEATURES = {
         "iosname": None,
         "help": """The minimum allowed uncore ratio. This ratio multiplied by bus clock speed gives
                    the minimum allowed uncore frequency.""",
-        "cpumodels": _CPUS,
+        "vfms": _VMFS,
         "type": "int",
         "writable": True,
         "bits": (14, 8),

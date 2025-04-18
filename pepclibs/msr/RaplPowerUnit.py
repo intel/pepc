@@ -16,28 +16,28 @@ from pepclibs.msr import _FeaturedMSR
 # The Energy Performance Bias Model Specific Register.
 RAPL_POWER_UNIT = 0x606
 
-# CPU models supporting the "RAPL Power Unit" MSR.
-_RPU_CPUS = CPUModels.MODEL_GROUPS["GNR"] +         \
-            CPUModels.MODEL_GROUPS["EMR"] +         \
-            CPUModels.MODEL_GROUPS["METEORLAKE"] +  \
-            CPUModels.MODEL_GROUPS["SPR"] +         \
-            CPUModels.MODEL_GROUPS["RAPTORLAKE"] +  \
-            CPUModels.MODEL_GROUPS["ALDERLAKE"] +   \
-            CPUModels.MODEL_GROUPS["ROCKETLAKE"] +  \
-            CPUModels.MODEL_GROUPS["TIGERLAKE"] +   \
-            CPUModels.MODEL_GROUPS["ICELAKE"] +     \
-            CPUModels.MODEL_GROUPS["COMETLAKE"] +   \
-            CPUModels.MODEL_GROUPS["KABYLAKE"] +    \
-            CPUModels.MODEL_GROUPS["CANNONLAKE"] +  \
-            CPUModels.MODEL_GROUPS["SKYLAKE"] +     \
-            CPUModels.MODEL_GROUPS["BROADWELL"] +   \
-            CPUModels.MODEL_GROUPS["HASWELL"] +     \
-            CPUModels.MODEL_GROUPS["IVYBRIDGE"] +   \
-            CPUModels.MODEL_GROUPS["SANDYBRIDGE"] + \
-            CPUModels.MODEL_GROUPS["WESTMERE"] +    \
-            CPUModels.MODEL_GROUPS["TREMONT"] +     \
-            CPUModels.MODEL_GROUPS["GOLDMONT"] +    \
-            CPUModels.MODEL_GROUPS["PHI"]
+# CPUs supporting the "RAPL Power Unit" MSR.
+_RPU_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
+            CPUModels.CPU_GROUPS["EMR"] +         \
+            CPUModels.CPU_GROUPS["METEORLAKE"] +  \
+            CPUModels.CPU_GROUPS["SPR"] +         \
+            CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
+            CPUModels.CPU_GROUPS["ALDERLAKE"] +   \
+            CPUModels.CPU_GROUPS["ROCKETLAKE"] +  \
+            CPUModels.CPU_GROUPS["TIGERLAKE"] +   \
+            CPUModels.CPU_GROUPS["ICELAKE"] +     \
+            CPUModels.CPU_GROUPS["COMETLAKE"] +   \
+            CPUModels.CPU_GROUPS["KABYLAKE"] +    \
+            CPUModels.CPU_GROUPS["CANNONLAKE"] +  \
+            CPUModels.CPU_GROUPS["SKYLAKE"] +     \
+            CPUModels.CPU_GROUPS["BROADWELL"] +   \
+            CPUModels.CPU_GROUPS["HASWELL"] +     \
+            CPUModels.CPU_GROUPS["IVYBRIDGE"] +   \
+            CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
+            CPUModels.CPU_GROUPS["WESTMERE"] +    \
+            CPUModels.CPU_GROUPS["TREMONT"] +     \
+            CPUModels.CPU_GROUPS["GOLDMONT"] +    \
+            CPUModels.CPU_GROUPS["PHI"]
 
 # Description of CPU features controlled by the RAPL Power Unit MSR. Please, refer to the notes
 # for '_FeaturedMSR.FEATURES' for more comments.
@@ -45,7 +45,7 @@ FEATURES = {
     "power_units": {
         "name": "Power units",
         "help": """Scaling factor for translating RAPL Power Units to Watts.""",
-        "cpumodels": _RPU_CPUS,
+        "vfms": _RPU_VFMS,
         "sname": "package",
         "iosname": "package",
         "type": "float",
@@ -55,7 +55,7 @@ FEATURES = {
     "energy_units": {
         "name": "Energy units",
         "help": """Scaling factor for translating RAPL Energy Units to Joules.""",
-        "cpumodels": _RPU_CPUS,
+        "vfms": _RPU_VFMS,
         "sname": "package",
         "iosname": "package",
         "type": "float",
@@ -65,7 +65,7 @@ FEATURES = {
     "time_units": {
         "name": "Time units",
         "help": """Scaling factor for translating RAPL Time Units to seconds.""",
-        "cpumodels": _RPU_CPUS,
+        "vfms": _RPU_VFMS,
         "sname": "package",
         "iosname": "package",
         "type": "float",
@@ -99,7 +99,7 @@ class RaplPowerUnit(_FeaturedMSR.FeaturedMSR):
 
         for cpu, val in self._msr.read_bits(self.regaddr, finfo["bits"], cpus):
             if fname == "energy_units" and \
-               self._cpuinfo.info["model"] == CPUModels.MODELS["ATOM_SILVERMONT"]["model"]:
+               self._cpuinfo.info["vfm"] == CPUModels.MODELS["ATOM_SILVERMONT"]["vfm"]:
                 val = pow(2, val) / 1000000
             else:
                 val = 1 / pow(2, val)

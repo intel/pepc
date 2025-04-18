@@ -102,9 +102,9 @@ def _get_emulated_cpuinfos(pman):
             yield cpuinfo
             cpuonline.online(cpus=cpus)
 
-        if cpuinfo.info["model"] == CPUModels.MODELS["ICELAKE_X"]["model"]:
-            # Yield CPUInfo object with unknown CPU model number.
-            cpuinfo.info["model"] = 255
+        if cpuinfo.info["vfm"] == CPUModels.MODELS["ICELAKE_X"]["vfm"]:
+            # Yield CPUInfo object with unknown CPU VFM (Vendor/Family/Model).
+            cpuinfo.info["vfm"] = 255
             yield cpuinfo
 
 def _get_cpuinfos(params):
