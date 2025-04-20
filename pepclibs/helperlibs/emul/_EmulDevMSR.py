@@ -46,7 +46,7 @@ class EmulDevMSR:
 
         if path.endswith("/msr"):
             fobj._orig_seek = fobj.seek # pylint: disable=protected-access,pepc-unused-variable
-            fobj.seek = types.MethodType(_seek_offset, fobj)
+            setattr(fobj, "seek", types.MethodType(_seek_offset, fobj))
 
     def open(self, mode):
         """

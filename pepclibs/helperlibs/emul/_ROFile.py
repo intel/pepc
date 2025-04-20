@@ -26,7 +26,7 @@ def open_ro(data, mode): # pylint: disable=unused-argument
         raise Error("not writable")
 
     fobj = io.StringIO(data)
-    fobj.write = types.MethodType(_ro_write, fobj) # pylint: disable=pepc-unused-variable
+    setattr(fobj, "write", types.MethodType(_ro_write, fobj))
     return fobj
 
 class ROFile(_EmulFileBase.EmulFileBase):
@@ -112,7 +112,7 @@ class ROSysfsFile(ROFile):
         fobj._base_path = self._get_basepath() / "sys" / "devices" / "system" / "cpu"
         fobj._orig_read = fobj.read
         # pylint: enable=pepc-unused-variable,protected-access
-        fobj.read = types.MethodType(_online_read, fobj)
+        setattr(fobj, "read", types.MethodType(_online_read, fobj))
 
     def open(self, mode):
         """

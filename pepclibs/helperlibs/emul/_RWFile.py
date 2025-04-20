@@ -161,11 +161,11 @@ class RWSysinfoFile(RWFile):
         if path.endswith("pcie_aspm/parameters/policy"):
             policies = fobj.read().strip()
             fobj._policies = policies.replace("[", "").replace("]", "")
-            fobj.write = types.MethodType(_aspm_write, fobj)
+            setattr(fobj, "write", types.MethodType(_aspm_write, fobj))
         elif path.endswith("/energy_perf_bias"):
-            fobj.write = types.MethodType(_epb_write, fobj)
+            setattr(fobj, "write", types.MethodType(_epb_write, fobj))
         else:
-            fobj.write = types.MethodType(_truncate_write, fobj)
+            setattr(fobj, "write", types.MethodType(_truncate_write, fobj))
         # pylint: enable=pepc-unused-variable,protected-access
 
     def open(self, mode):

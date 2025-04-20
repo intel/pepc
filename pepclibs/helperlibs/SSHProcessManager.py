@@ -809,8 +809,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         fobj._orig_fread_ = fobj.read
         fobj._orig_fwrite_ = fobj.write
 
-        fobj.read = types.MethodType(_read_, fobj)
-        fobj.write = types.MethodType(_write_, fobj)
+        setattr(fobj, "read", types.MethodType(_read_, fobj))
+        setattr(fobj, "write", types.MethodType(_write_, fobj))
 
         # Make sure methods of 'fobj' always raise the 'Error' exception.
         return ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)

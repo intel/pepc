@@ -212,7 +212,7 @@ class ArgsParser(argparse.ArgumentParser):
 
         subparsers = super().add_subparsers(*args, **kwargs)
         setattr(subparsers, "__orig_add_parser", subparsers.add_parser)
-        subparsers.add_parser = types.MethodType(_add_parser, subparsers)
+        setattr(subparsers, "add_parser", types.MethodType(_add_parser, subparsers))
 
         return subparsers
 
