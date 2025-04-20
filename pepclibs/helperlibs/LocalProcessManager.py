@@ -297,10 +297,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         information.
         """
 
-        def get_err_prefix(fobj, method):
-            """Return the error message prefix."""
-            return f"method '{method}()' failed for file '{fobj.name}'"
-
         errmsg = f"failed to open file '{path}' with mode '{mode}': "
         try:
             # Binary mode doesn't take an encoding argument.
@@ -319,7 +315,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"{errmsg}\n{msg}") from None
 
         # Make sure all file methods raise only exceptions derived from 'Error'.
-        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
+        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
 
     @staticmethod
     def time_time():

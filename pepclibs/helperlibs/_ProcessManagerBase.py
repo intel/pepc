@@ -21,7 +21,7 @@ import queue
 import codecs
 import threading
 import contextlib
-from typing import NamedTuple
+from typing import NamedTuple, IO
 from pathlib import Path
 from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
@@ -48,9 +48,20 @@ class ProcWaitResultType(NamedTuple):
 # The default process timeout in seconds.
 TIMEOUT = 24 * 60 * 60
 
-def _get_err_prefix(fobj, method):
-    """Return the error message prefix for a wrapped file-like object 'fobj'."""
-    return f"method '{method}()' failed for stream '{fobj.name}'"
+def get_err_prefix(fobj: IO, method_name: str) -> str:
+    """
+    Generate an exception message prefix for a file-like object that will be wrapped by
+    'ClassHelpers.WrapExceptions'.
+
+    Args:
+        fobj: The file-like object to generate the prefix for.
+        method_name: The name of the method that raised the exception.
+
+    Returns:
+        The the exception message prefix string.
+    """
+
+    return f"Method '{method_name}()' failed for '{fobj.name}'"
 
 def extract_full_lines(text):
     """
@@ -449,7 +460,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         if self.stdin:
             if not getattr(self.stdin, "name", None):
                 setattr(self.stdin, "name", "stdin")
-            self.stdin = ClassHelpers.WrapExceptions(self.stdin, get_err_prefix=_get_err_prefix)
+            self.stdin = ClassHelpers.WrapExceptions(self.stdin, get_err_prefix=get_err_prefix)
 
     def close(self):
         """Free allocated resources."""

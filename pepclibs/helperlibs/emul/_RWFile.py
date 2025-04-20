@@ -10,14 +10,10 @@
 """Emulate read-write sysfs, procfs, and debugfs files."""
 
 import types
-from pepclibs.helperlibs import ClassHelpers
+from pepclibs.helperlibs import ClassHelpers, _ProcessManagerBase
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 from pepclibs.helperlibs.emul import _EmulFileBase
-
-def _get_err_prefix(fobj, method):
-    """Return the error message prefix."""
-    return f"method '{method}()' failed for {fobj.name}"
 
 def populate_rw_file(path, data):
     """Create text file 'path' and write 'data' into it."""
@@ -66,7 +62,7 @@ def open_rw(path, mode, basepath):
         raise Error(f"{errmsg}\n{msg}") from None
 
     # Make sure methods of 'fobj' always raise the 'Error' exceptions.
-    return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_get_err_prefix)
+    return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
 
 class RWFile(_EmulFileBase.EmulFileBase):
     """Emulate read-write procfs and debugfs files."""
