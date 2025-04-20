@@ -112,6 +112,90 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
     The base class for processes created using one of the process managers.
     """
 
+    def __init__(self, pman, pobj, cmd, real_cmd, shell, streams):
+        """
+        Initialize a class instance. The arguments are as follows.
+          * pman - the process management object that was used for creating this object.
+          * pobj - the low-level object representing the local or remote process corresponding to
+                   this object.
+          * cmd - the executed command.
+          * real_cmd - sometimes the original command gets slightly amended, e.g., it is sometimes
+                       prefixed with a PID print command. This argument should provide the actual
+                       executed command.
+          * shell - whether the command was executed via shell.
+          * streams - the stdin, stdout and stderr stream objects of the process (collection of 3
+                      elements).
+
+         Note about the stream objects in 'streams'. The stderr stream object must be a file-like
+         object, and it will be exposed via 'self.stderr'. The stdout and stderr stream objects do
+         not have to be file-like objects. They can be just some objects representing the streams
+         (defined by sub-classes). The are not exposed to the user, and they are only accessed via
+         the '_fetch_stream_data()' method, which is defined by the sub-class.
+        """
+
+        self.pman = pman
+        self.pobj = pobj
+        self.cmd = cmd
+        self.real_cmd = real_cmd
+        self.shell = shell
+        self.stdin = streams[0]
+
+        self.timeout = TIMEOUT
+        self.hostname = pman.hostname
+        self.hostmsg = pman.hostmsg
+
+        # ID of the running process. Should be set by the child class. In some cases may be set to
+        # 'None', which should be interpreted as "not known".
+        self.pid = None
+        # Exit code of the process ('None' if it is still running).
+        self.exitcode = None
+        # The stdout and stderr streams.
+        self._streams = [streams[1], streams[2]]
+        # Count of lines the process printed to stdout and stderr.
+        self._lines_cnt = [0, 0]
+
+        # Print debugging messages if 'True'.
+        self.debug = False
+        # Prefix debugging messages with this string. Can be useful to distinguish between debugging
+        # message related to different processes.
+        self.debug_id = None
+
+        # The stream fetcher threads have to exit if the '_threads_exit' flag becomes 'True'.
+        self._threads_exit = False
+        # The output for the process that was read from 'self._queue', but not yet sent to the user
+        # (separate for 'stdout' and 'stderr').
+        self._output = [[], []]
+        # The last partial lines of the stdout and stderr streams of the process.
+        self._partial = ["", ""]
+        # The threads fetching data from the stdout/stderr streams of the process.
+        self._threads = [None, None]
+        # The queue for passing process output from stream fetcher threads.
+        self._queue = None
+
+        if self.stdin:
+            if not getattr(self.stdin, "name", None):
+                setattr(self.stdin, "name", "stdin")
+            self.stdin = ClassHelpers.WrapExceptions(self.stdin, get_err_prefix=get_err_prefix)
+
+    def __del__(self):
+        """Class destructor."""
+
+        with contextlib.suppress(BaseException):
+            self._dbg("_ProcesManagerBase: __del__()")
+
+        if hasattr(self, "_threads_exit"):
+            self._threads_exit = True
+
+    def close(self):
+        """Free allocated resources."""
+
+        self._dbg("_ProcessManagerBase: close()")
+
+        if hasattr(self, "_threads_exit"):
+            self._threads_exit = True
+
+        ClassHelpers.close(self, unref_attrs=("pman", "pobj"))
+
     def _fetch_stream_data(self, streamid, size):
         """
         Fetch up to 'size' bytes of data from stream 'streamid'. Returns 'None' if there are no
@@ -406,96 +490,24 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         self._output = [[], []]
         self._partial = ["", ""]
 
-    def __init__(self, pman, pobj, cmd, real_cmd, shell, streams):
-        """
-        Initialize a class instance. The arguments are as follows.
-          * pman - the process management object that was used for creating this object.
-          * pobj - the low-level object representing the local or remote process corresponding to
-                   this object.
-          * cmd - the executed command.
-          * real_cmd - sometimes the original command gets slightly amended, e.g., it is sometimes
-                       prefixed with a PID print command. This argument should provide the actual
-                       executed command.
-          * shell - whether the command was executed via shell.
-          * streams - the stdin, stdout and stderr stream objects of the process (collection of 3
-                      elements).
-
-         Note about the stream objects in 'streams'. The stderr stream object must be a file-like
-         object, and it will be exposed via 'self.stderr'. The stdout and stderr stream objects do
-         not have to be file-like objects. They can be just some objects representing the streams
-         (defined by sub-classes). The are not exposed to the user, and they are only accessed via
-         the '_fetch_stream_data()' method, which is defined by the sub-class.
-        """
-
-        self.pman = pman
-        self.pobj = pobj
-        self.cmd = cmd
-        self.real_cmd = real_cmd
-        self.shell = shell
-        self.stdin = streams[0]
-
-        self.timeout = TIMEOUT
-        self.hostname = pman.hostname
-        self.hostmsg = pman.hostmsg
-
-        # ID of the running process. Should be set by the child class. In some cases may be set to
-        # 'None', which should be interpreted as "not known".
-        self.pid = None
-        # Exit code of the process ('None' if it is still running).
-        self.exitcode = None
-        # The stdout and stderr streams.
-        self._streams = [streams[1], streams[2]]
-        # Count of lines the process printed to stdout and stderr.
-        self._lines_cnt = [0, 0]
-
-        # Print debugging messages if 'True'.
-        self.debug = False
-        # Prefix debugging messages with this string. Can be useful to distinguish between debugging
-        # message related to different processes.
-        self.debug_id = None
-
-        # The stream fetcher threads have to exit if the '_threads_exit' flag becomes 'True'.
-        self._threads_exit = False
-        # The output for the process that was read from 'self._queue', but not yet sent to the user
-        # (separate for 'stdout' and 'stderr').
-        self._output = [[], []]
-        # The last partial lines of the stdout and stderr streams of the process.
-        self._partial = ["", ""]
-        # The threads fetching data from the stdout/stderr streams of the process.
-        self._threads = [None, None]
-        # The queue for passing process output from stream fetcher threads.
-        self._queue = None
-
-        if self.stdin:
-            if not getattr(self.stdin, "name", None):
-                setattr(self.stdin, "name", "stdin")
-            self.stdin = ClassHelpers.WrapExceptions(self.stdin, get_err_prefix=get_err_prefix)
-
-    def close(self):
-        """Free allocated resources."""
-
-        self._dbg("_ProcessManagerBase: close()")
-
-        if hasattr(self, "_threads_exit"):
-            self._threads_exit = True
-
-        ClassHelpers.close(self, unref_attrs=("pman", "pobj"))
-
-    def __del__(self):
-        """Class destructor."""
-
-        with contextlib.suppress(BaseException):
-            self._dbg("_ProcesManagerBase: __del__()")
-
-        if hasattr(self, "_threads_exit"):
-            self._threads_exit = True
-
 class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     """
     The base class for process managers, which can manage both local and remote processes.
     """
 
     Error = Error
+
+    def __init__(self):
+        """Initialize a class instance."""
+
+        self.is_remote = None
+        self.hostname = None
+        self.hostmsg = None
+
+        # Path to python interpreter on the remote host.
+        self._python_path = None
+        # The command to use for figuring out full paths in the 'which()' method.
+        self._which_cmd = None
 
     def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
                   stderr=None):
@@ -905,18 +917,3 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         # pylint: disable=unused-argument
         raise NotImplementedError("ProcessManagerBase.which")
-
-    def __init__(self):
-        """Initialize a class instance."""
-
-        self.is_remote = None
-        self.hostname = None
-        self.hostmsg = None
-
-        # Path to python interpreter on the remote host.
-        self._python_path = None
-        # The command to use for figuring out full paths in the 'which()' method.
-        self._which_cmd = None
-
-    def close(self):
-        """Free allocated resources."""
