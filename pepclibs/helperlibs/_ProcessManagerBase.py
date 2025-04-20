@@ -88,8 +88,19 @@ def extract_full_lines(text: str) -> tuple[list[str], str]:
 
     return (full, partial)
 
-def have_enough_lines(output, lines=(0, 0)):
-    """Returns 'True' if there are enough lines in the output buffer."""
+def have_enough_lines(output: tuple[list[str], list[str]],
+                      lines: tuple[int, int] = (0, 0)) -> bool:
+    """
+    Check if there are enough lines in the output buffer.
+
+    Args:
+        output: A tuple containing two lists of strings, representing the stdout and stderr output.
+        lines: A tuple of two integers specifying the minimum number of lines required in each
+               stream's output buffer. A value of 0 means no requirement for that stream.
+
+    Returns:
+        True if at least one stream has the required number of lines, False otherwise.
+    """
 
     for streamid in (0, 1):
         if lines[streamid] and len(output[streamid]) >= lines[streamid]:
