@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 # The test modules that are host-agnostic.
-_NOHOST_MODULES = {"test_human"}
+_NOHOST_MODULES = {"test_human", "test_wrap_exceptions"}
 
 def pytest_addoption(parser):
     """Add custom pytest options."""
