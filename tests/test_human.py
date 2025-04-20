@@ -318,11 +318,13 @@ def test_parse_human():
 
         assert result == expected, \
                f"Bad result of parse_human('{hval}', '{unit}', target_unit='{target_unit}', " \
-               f"integet={integer}):\nexpected '{expected}', got '{result}'"
+               f"integer={integer}):\nexpected '{expected}', got '{result}'"
 
 _PARSE_HUMAN_RANGE = [
-    {"hval": "1,2", "unit": "s", "target_unit": "s", "integer": True, "sep": ",", "result": (1, 2)},
-    {"hval": "-1,2", "unit": "s", "target_unit": "s", "integer": True, "sep": ",", "result": (-1, 2)},
+    {"hval": "1,2", "unit": "s", "target_unit": "s", "integer": True, "sep": ",",
+     "result": (1, 2)},
+    {"hval": "-1,2", "unit": "s", "target_unit": "s", "integer": True, "sep": ",",
+     "result": (-1, 2)},
     {"hval": "500us - 1ms", "unit": "s", "target_unit": "ms", "integer": False, "sep": "-",
      "result": (0.5, 1)},
 ]
@@ -341,8 +343,9 @@ def test_parse_human_range():
         result = Human.parse_human_range(hval, unit, target_unit, integer, sep) # type: ignore
 
         assert result == expected, \
-               f"Bad result of parse_human_range('{hval}', '{unit}', target_unit='{target_unit}', " \
-               f"integet={integer}, sep='{sep}):\nexpected '{expected}', got '{result}'"
+               f"Bad result of parse_human_range('{hval}', '{unit}', " \
+               f"target_unit='{target_unit}', integer={integer}, sep='{sep}):\n" \
+               f"expected '{expected}', got '{result}'"
 
 
 _UNCAPITALIZE_TEST_DATA = [
