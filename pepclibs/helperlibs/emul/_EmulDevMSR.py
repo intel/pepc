@@ -10,6 +10,7 @@
 """Emulate the '/dev/msr/*' device node files."""
 
 import types
+from pepclibs.helperlibs import ClassHelpers, _ProcessManagerBase
 from pepclibs.helperlibs.emul import _RWFile
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -55,7 +56,7 @@ class EmulDevMSR:
 
         fobj = _RWFile.open_rw(self.path, mode, self._basepath)
         self._set_seek_method(fobj, self.path)
-        return fobj
+        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
 
     def __init__(self, msrinfo, basepath):
         """

@@ -61,15 +61,17 @@ def open_rw(path, mode, basepath):
         msg = Error(err).indent(2)
         raise Error(f"{errmsg}\n{msg}") from None
 
-    # Make sure methods of 'fobj' always raise the 'Error' exceptions.
-    return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
+    return fobj
 
 class RWFile(_EmulFileBase.EmulFileBase):
     """Emulate read-write procfs and debugfs files."""
 
     def open(self, mode):
         """Create a file in the temporary directory and return the file object with 'mode'."""
-        return open_rw(self.path, mode, self._get_basepath())
+
+        fobj = open_rw(self.path, mode, self._get_basepath())
+        # Make sure methods of 'fobj' always raise the 'Error' exceptions.
+        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
 
     def __init__(self, finfo, datapath, get_basepath, module=None):
         """
@@ -171,6 +173,6 @@ class RWSysinfoFile(RWFile):
     def open(self, mode):
         """Create a file in the temporary directory and return the file object with 'mode'."""
 
-        fobj = super().open(mode)
+        fobj = open_rw(self.path, mode, self._get_basepath())
         self._set_write_method(fobj, self.path, mode)
-        return fobj
+        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)

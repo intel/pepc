@@ -27,7 +27,8 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
+from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML, ClassHelpers
+from pepclibs.helperlibs import _ProcessManagerBase
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulDevMSR, _RWFile, _EmulFile
@@ -164,7 +165,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emuls:
             return self._emuls[path].open(mode)
 
-        return _RWFile.open_rw(path, mode, self._get_basepath())
+        fobj = _RWFile.open_rw(path, mode, self._get_basepath())
+        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
 
     def _init_commands(self, cmdinfos, datapath):
         """
