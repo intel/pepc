@@ -188,7 +188,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         return (cdata, exitcode)
 
     def _wait_intsh(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                    lines=(None, None)):
+                    lines=(0, 0)):
         """
         Implements 'wait()' for the optimized case when the command was executed in the interactive
         shell process. This case allows us to save time on creating a separate session for
@@ -244,7 +244,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         return result
 
     def _wait_nointsh(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                      lines=(None, None)):
+                      lines=(0, 0)):
         """
         Implements 'wait()' for the non-optimized case when the process was executed in its own
         separate SSH session.
@@ -288,8 +288,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         return self._get_lines_to_return(lines)
 
-    def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-              lines=(None, None)):
+    def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(0, 0)):
         """
         Implements 'wait()'. The arguments are the same as in 'wait()', but returns a tuple of two
         lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).

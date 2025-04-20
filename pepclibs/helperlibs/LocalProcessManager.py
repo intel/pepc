@@ -69,7 +69,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
         return exitcode
 
     def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-              lines=(None, None)):
+              lines=(0, 0)):
         """
         Implements 'wait()'. The arguments are the same as in 'wait()', but returns a list of two
         lists: '[stdout_lines, stderr_lines]' (lists of stdout/stderr lines).

@@ -88,7 +88,7 @@ def extract_full_lines(text: str) -> tuple[list[str], str]:
 
     return (full, partial)
 
-def have_enough_lines(output, lines=(None, None)):
+def have_enough_lines(output, lines=(0, 0)):
     """Returns 'True' if there are enough lines in the output buffer."""
 
     for streamid in (0, 1):
@@ -214,7 +214,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         for streamid in (0, 1):
             limit = lines[streamid]
-            if limit is None or len(self._output[streamid]) <= limit:
+            if not limit or len(self._output[streamid]) <= limit:
                 output[streamid] = self._output[streamid]
                 self._output[streamid] = []
             else:
@@ -238,7 +238,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                self._queue.empty()
 
     def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-              lines=(None, None)):
+              lines=(0, 0)):
         """
         Implements 'wait()'. The arguments are the same as in 'wait()', but returns a tuple of two
         lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).
@@ -247,7 +247,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         # pylint: disable=unused-argument
         return _bug_method_not_defined("ProcessBase._wait")
 
-    def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(None, None),
+    def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(0, 0),
              join=True) -> ProcWaitResultType:
         """
         This method waits for the process to exit or print something to stdout or stderr. The
@@ -270,8 +270,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                     until the process exits. The 'line' argument is a tuple, the first element of
                     the tuple is the 'stdout' limit, the second is the 'stderr' limit. For example,
                     'lines=(1, 5)' would mean to wait for one full line in 'stdout' or five full
-                    lines in 'stderr'. And 'lines=(1, None)' would mean to wait for one line in
-                    'stdout' and any amount of lines in 'stderr'.
+                    lines in 'stderr'. And 'lines=(1, 0)' would mean to wait for one line in
+                    'stdout' and and do not use 'stderr' lines as a wait criteria.
           * join - controls whether the captured output lines should be joined and returned as a
                    single string, or no joining is needed and the output should be returned as a
                    list of strings.
@@ -285,15 +285,10 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             raise Error(f"bad timeout value {timeout}, must be > 0")
 
         for streamid in (0, 1):
-            if not lines[streamid]:
-                continue
             if not Trivial.is_int(lines[streamid]):
                 raise Error("the 'lines' argument can only include integers and 'None'")
             if lines[streamid] < 0:
                 raise Error("the 'lines' argument cannot include negative values")
-
-        if lines[0] == 0 and lines[1] == 0:
-            raise Error("the 'lines' argument cannot be (0, 0)")
 
         self.timeout = timeout
 
