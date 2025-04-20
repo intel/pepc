@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -63,13 +63,23 @@ def get_err_prefix(fobj: IO, method_name: str) -> str:
 
     return f"Method '{method_name}()' failed for '{fobj.name}'"
 
-def extract_full_lines(text):
+def extract_full_lines(text: str) -> tuple[list[str], str]:
     """
-    Extract full lines from string 'text'. Return a tuple containing 2 elements - the full lines and
-    the last partial line.
+    Extract full lines and the last partial line from a piece of output of a process.
+
+    Args:
+        text: The input string to process.
+
+    Returns:
+        A tuple containing:
+        - A list of full lines extracted from the input string.
+        - A string representing the last partial line, or an empty string if there is no partial
+          line.
     """
 
-    full, partial = [], ""
+    full: list[str] = []
+    partial = ""
+
     for line_match in re.finditer("(.*[\n\r])|(.+$)", text):
         if line_match.group(2):
             partial = line_match.group(2)
@@ -85,7 +95,6 @@ def have_enough_lines(output, lines=(None, None)):
         if lines[streamid] and len(output[streamid]) >= lines[streamid]:
             return True
     return False
-
 
 def _bug_method_not_defined(method_name):
     """
