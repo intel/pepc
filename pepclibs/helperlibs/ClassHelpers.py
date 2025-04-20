@@ -64,6 +64,7 @@ class WrapExceptions:
 
         self._obj = obj
         self._get_err_prefix = get_err_prefix
+        self._iterable: Any = None
 
     def _format_exception(self, name: str, err: Exception, exc_type: type[Error]) -> Error:
         """
@@ -137,6 +138,10 @@ class WrapExceptions:
             except Error:
                 # Do not translate exceptions that are already based on 'Error'.
                 raise
+            except StopIteration:
+                # Do not translate 'StopIteration' exceptions, they belong to the iteration
+                # protocol.
+                raise
             except Exception as err: # pylint: disable=broad-except
                 # Translate the exception into a custom exception.
                 self._handle_exception(name, err)
@@ -183,13 +188,17 @@ class WrapExceptions:
 
         name = "__iter__"
         method = getattr(self._obj, name)
-        return self._get_wapper(name, method)()
+        self._iterable = self._get_wapper(name, method)()
+        return self
 
     def __next__(self):
         """Return the next iteration item."""
 
+        if self._iterable is None:
+            raise Error("No iterable object found.")
+
         name = "__next__"
-        method = getattr(self._obj, name)
+        method = getattr(self._iterable, name)
         return self._get_wapper(name, method)()
 
 def close(cls_obj: Any,
