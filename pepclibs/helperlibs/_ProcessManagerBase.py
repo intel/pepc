@@ -107,13 +107,6 @@ def have_enough_lines(output: tuple[list[str], list[str]],
             return True
     return False
 
-def _bug_method_not_defined(method_name):
-    """
-    Raise an error if the child class did not define the 'method_name' mandatory method.
-    """
-
-    raise Error(f"BUG: '{method_name}()' was not defined by the child class")
-
 class ProcessBase(ClassHelpers.SimpleCloseContext):
     """
     The base class for processes created using one of the process managers.
@@ -126,7 +119,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessBase._fetch_stream_data")
+        raise NotImplementedError("ProcessBase._fetch_stream_data")
 
     def _stream_fetcher(self, streamid):
         """
@@ -256,7 +249,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessBase._wait")
+        raise NotImplementedError("ProcessBase._wait")
 
     def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(0, 0),
              join=True) -> ProcWaitResultType:
@@ -375,7 +368,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         """
         Check if the process is still running. If it is, return 'None', else return exit status.
         """
-        return _bug_method_not_defined("ProcessBase.poll")
+
+        raise NotImplementedError("ProcessBase.poll")
 
     def get_cmd_failure_msg(self, stdout, stderr, exitcode, timeout=None, startmsg=None,
                             failed=True):
@@ -526,7 +520,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.run_async")
+        raise NotImplementedError("ProcessManagerBase.run_async")
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
             output_fobjs=(None, None), cwd=None, shell=True, intsh=None) -> ProcWaitResultType:
@@ -564,7 +558,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.run")
+        raise NotImplementedError("ProcessManagerBase.run")
 
     def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
                    output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
@@ -574,7 +568,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.run_verify")
+        raise NotImplementedError("ProcessManagerBase.run_verify")
 
     @staticmethod
     def _rsync_add_debug_opts(opts):
@@ -621,7 +615,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.rsync")
+        raise NotImplementedError("ProcessManagerBase.rsync")
 
     def _command_not_found(self, cmd, errmsg=None, toolname=None):
         """
@@ -714,7 +708,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.open")
+        raise NotImplementedError("ProcessManagerBase.open")
 
     def read(self, path, must_exist=True):
         """
@@ -792,7 +786,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.mkdir")
+        raise NotImplementedError("ProcessManagerBase.mkdir")
 
     def mkfifo(self, path, exist_ok=False):
         """
@@ -804,7 +798,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.mkdir")
+        raise NotImplementedError("ProcessManagerBase.mkdir")
 
     def lsdir(self, path, must_exist=True):
         """
@@ -820,49 +814,49 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.lsdir")
+        raise NotImplementedError("ProcessManagerBase.lsdir")
 
     def exists(self, path):
         """Returns 'True' if path 'path' exists."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.exists")
+        raise NotImplementedError("ProcessManagerBase.exists")
 
     def is_file(self, path):
         """Returns 'True' if path 'path' exists an it is a regular file."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.is_file")
+        raise NotImplementedError("ProcessManagerBase.is_file")
 
     def is_dir(self, path):
         """Returns 'True' if path 'path' exists an it is a directory."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.is_dir")
+        raise NotImplementedError("ProcessManagerBase.is_dir")
 
     def is_exe(self, path):
         """Returns 'True' if path 'path' exists an it is an executable file."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.is_exe")
+        raise NotImplementedError("ProcessManagerBase.is_exe")
 
     def is_socket(self, path):
         """Returns 'True' if path 'path' exists an it is a Unix socket file."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.is_socket")
+        raise NotImplementedError("ProcessManagerBase.is_socket")
 
     def get_mtime(self, path):
         """Returns the modification time of a file or directory at path 'path'."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.get_mtime")
+        raise NotImplementedError("ProcessManagerBase.get_mtime")
 
     def unlink(self, path):
         """Remove a file a path 'path'."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.rmtree")
+        raise NotImplementedError("ProcessManagerBase.rmtree")
 
     def rmtree(self, path):
         """
@@ -871,7 +865,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.rmtree")
+        raise NotImplementedError("ProcessManagerBase.rmtree")
 
     def abspath(self, path, must_exist=True):
         """
@@ -882,7 +876,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.abspath")
+        raise NotImplementedError("ProcessManagerBase.abspath")
 
     def mkdtemp(self, prefix: str | None  = None, basedir: Path | None = None) -> Path:
         """
@@ -892,13 +886,13 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.mkdtemp")
+        raise NotImplementedError("ProcessManagerBase.mkdtemp")
 
     def get_envar(self, envar):
         """Return the value of the environment variable 'envar'."""
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.get_envar")
+        raise NotImplementedError("ProcessManagerBase.get_envar")
 
     def which(self, program, must_find=True):
         """
@@ -910,7 +904,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
 
         # pylint: disable=unused-argument
-        return _bug_method_not_defined("ProcessManagerBase.which")
+        raise NotImplementedError("ProcessManagerBase.which")
 
     def __init__(self):
         """Initialize a class instance."""
