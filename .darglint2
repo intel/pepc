@@ -1,2 +1,3 @@
 [darglint2]
 ignore_raise=Error
+strictness=short
