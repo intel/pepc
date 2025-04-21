@@ -200,14 +200,22 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         unref_attrs = ("pman", "pobj", "_streams", "stdin", "_threads", "_queue")
         ClassHelpers.close(self, unref_attrs=unref_attrs)
 
-    def _fetch_stream_data(self, streamid, size):
+    def _fetch_stream_data(self, streamid: int, size: int) -> bytes:
         """
-        Fetch up to 'size' bytes of data from stream 'streamid'. Returns 'None' if there are no
-        data.
+        Fetch up to the specified number of bytes from the given stream.
+
+        Args:
+            streamid: Identifier of the stream to fetch data from.
+            size: Maximum number of bytes to retrieve.
+
+        Returns:
+            The retrieved data as bytes (empty bytes object no data are available).
+
+        Raises:
+            NotImplementedError: The subclass did not implement this method.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessBase._fetch_stream_data")
+        raise NotImplementedError("ProcessBase._fetch_stream_data()")
 
     def _stream_fetcher(self, streamid):
         """
