@@ -140,7 +140,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         self.shell = shell
         self.stdin = streams[0]
 
-        self.timeout = TIMEOUT
+        self.timeout: int | float = TIMEOUT
         self.hostname = pman.hostname
         self.hostmsg = pman.hostmsg
 
@@ -256,8 +256,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
             while not self._threads_exit:
                 if not self._streams[streamid]:
-                    self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: "
-                              "Stream is closed", str(self.pid), streamid)
+                    self._dbg("ProcessBase._stream_fetcher(): streamid %d: Stream is closed",
+                              streamid)
                     break
 
                 bytes_data = bytes()
@@ -270,18 +270,17 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                     break
 
                 if not bytes_data:
-                    self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: No more data",
-                              str(self.pid), streamid)
+                    self._dbg("ProcessBase._stream_fetcher(): streamid %d: No more data", streamid)
                     break
 
                 data = decoder.decode(bytes_data)
                 if not data:
-                    self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: Will read more "
-                              "data", str(self.pid), streamid)
+                    self._dbg("ProcessBase._stream_fetcher(): streamid %d: Will read more data",
+                              streamid)
                     continue
 
-                self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: Read the following "
-                          "data:\n%s", str(self.pid), streamid, data)
+                self._dbg("ProcessBase._stream_fetcher(): streamid %d: Read data:\n%s",
+                          streamid, data)
                 self._queue.put((streamid, data))
         except BaseException as err: # pylint: disable=broad-except
             errmsg = Error(str(err)).indent(2)
@@ -290,15 +289,14 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         # Place the end of stream indicator to the queue.
         self._queue.put((streamid, None))
-        self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: Thread exists",
-                  str(self.pid), streamid)
+        self._dbg("ProcessBase._stream_fetcher(): streamid %d: Thread exists", streamid)
 
-    def _get_next_queue_item(self, timeout: float | None = None) -> tuple[int, str | None]:
+    def _get_next_queue_item(self, timeout: int | float = 0) -> tuple[int, str | None]:
         """
         Retrieve a data item from the stream fetcher queue.
 
         Args:
-            timeout: Maximum amount of seconds to wait for an item. If None, wait indefinitely.
+            timeout: Maximum amount of seconds to wait for an item. If 0, wait indefinitely.
 
         Returns:
             The data item as a tuple in the format (streamid, data):
@@ -336,14 +334,12 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                           (do not write if 'None').
         """
 
-        self._dbg("ProcessBase._handle_queue_item(): got data from PID %s stream %d:\n%s",
-                  str(self.pid), streamid, data)
+        self._dbg("ProcessBase._handle_queue_item(): got data from stream %d:\n%s", streamid, data)
 
         lines, self._partial[streamid] = extract_full_lines(self._partial[streamid] + data)
         if lines and self._partial[streamid]:
-            self._dbg("ProcessBase._handle_queue_item(): PID %s, stream %d: full lines:\n%s\n"
-                      "partial line: %s",
-                      str(self.pid), streamid, "".join(lines), self._partial[streamid])
+            self._dbg("ProcessBase._handle_queue_item(): stream %d: full lines:\n%s\n"
+                      "partial line: %s", streamid, "".join(lines), self._partial[streamid])
 
         self._lines_cnt[streamid] += len(lines)
 
@@ -400,24 +396,23 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             False otherwise.
         """
 
-        assert self._queue is not None
-
         return self.exitcode is not None and \
                not self._output[0] and \
                not self._output[1] and \
-               self._queue.empty()
+               (self._queue is None or self._queue.empty())
 
-    def _wait(self, timeout: float | None = None,
+    def _wait(self,
+              timeout: int | float = 0,
               capture_output: bool = True,
               output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
               lines: tuple[int, int] = (0, 0)) -> tuple[list[str], list[str]]:
         """
         Wait for the process to complete and optionally capture its output.
 
-        Implement the 'wait()' method, the matching arguments are the same.
+        Implement the 'wait()' method, the matching arguments are similar.
 
         Args:
-            timeout: Maximum time to wait for the process to complete. If None, wait indefinitely.
+            timeout: Maximum time to wait for the process to complete. If 0, wait indefinitely.
             capture_output: If True, capture and return process's stdout and stderr.
             output_fobjs: A tuple of file-like objects to write stdout and stderr to, respectively.
                           Not affected by 'capture_output'.
@@ -432,72 +427,92 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessBase._wait()")
 
-    def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(0, 0),
-             join=True) -> ProcWaitResultType:
+    def wait(self,
+             timeout: int | float | None = None,
+             capture_output: bool = True,
+             output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+             lines: tuple[int, int] = (0, 0),
+             join: bool = True) -> ProcWaitResultType:
         """
-        This method waits for the process to exit or print something to stdout or stderr. The
-        arguments are as follows.
-          * timeout - the maximum time in seconds to wait for the process to exit . If it does not
-                      exit, this function returns 'None' as the exit code. The 'timeout' argument
-                      must be a positive floating point number. By default it is 'TIMEOUT' seconds.
-                      If 'timeout' is '0', then this method will just check process status, grab its
-                      output, if any, and return immediately. Note, this method saves the used
-                      timeout in 'self.timeout'.
-          * capture_output - whether the output of the process should be captured. If it is 'False',
-                             the output will simply be discarded and this method will return empty
-                             strings instead of process' stdout and stderr.
-          * output_fobjs - a tuple with two file-like objects where stdout and stderr output of the
-                           process will be echoed. If not specified, then the the output will not be
-                           echoed anywhere. Note, this argument is independent of the
-                           'capture_output' argument.
-          * lines - provides a capability to wait for the process to output certain amount of lines.
-                    By default, there is no limit, and this function will wait either for timeout or
-                    until the process exits. The 'line' argument is a tuple, the first element of
-                    the tuple is the 'stdout' limit, the second is the 'stderr' limit. For example,
-                    'lines=(1, 5)' would mean to wait for one full line in 'stdout' or five full
-                    lines in 'stderr'. And 'lines=(1, 0)' would mean to wait for one line in
-                    'stdout' and and do not use 'stderr' lines as a wait criteria.
-          * join - controls whether the captured output lines should be joined and returned as a
-                   single string, or no joining is needed and the output should be returned as a
-                   list of strings.
+        Wait for the process to exit or produce output on stdout or stderr.
 
-        This function returns the 'ProcWaitResultType' named tuple.
+        Args:
+            timeout: The maximum time in seconds to wait for the process to exit. If the process
+                     does not exit within the timeout, return 'None' as the exit code. Must be a
+                     positive floating-point number. Defaults to 'TIMEOUT'. If 0, check the process
+                     status, possibly grab the available output, and return immediately. Save the
+                     used timeout in 'self.timeout'.
+            capture_output: Determine whether to capture the process output. If False, discard the
+                            output and return empty strings for stdout and stderr.
+            output_fobjs: A tuple of two file-like objects to echo the process's stdout and stderr
+                          output to. If not specified, do not echo the output. This argument is
+                          independent of 'capture_output'.
+            lines: The number of lines from stdout and stderr to wait for. A tuple where the first
+                   element is the stdout line limit and the second is the stderr line limit. For
+                   example, 'lines=(1, 5)' will wait for one full line in stdout or five full lines
+                   in stderr. 'lines=(1, 0)' will wait for one line in stdout any number of lines in
+                   stderr (ignore stderr lines as a wait criterion). Defaults to no limit.
+            join: Whether to join captured output lines into a single string or return them as a
+                  list of strings.
+
+        Returns:
+            A 'ProcWaitResultType' named tuple containing:
+                - stdout: Captured stdout output as a string or list of strings (depending on
+                  'join'). Empty list of string inf 'capture_output' is 'False'.
+                - stderr: Captured stderr output as a string or list of strings (depending on
+                  'join'). Empty list of string inf 'capture_output' is 'False'.
+                - exitcode: Exit code of the process, or 'None' if the process did not exit.
         """
 
         if timeout is None:
             timeout = TIMEOUT
+
         if timeout < 0:
-            raise Error(f"bad timeout value {timeout}, must be > 0")
+            raise Error(f"Bad timeout value {timeout}, must be greater than or equal to 0")
 
         for streamid in (0, 1):
             if not Trivial.is_int(lines[streamid]):
-                raise Error("the 'lines' argument can only include integers and 'None'")
+                raise Error("The 'lines' argument can only include integers")
             if lines[streamid] < 0:
-                raise Error("the 'lines' argument cannot include negative values")
+                raise Error("The 'lines' argument cannot include negative values")
 
         self.timeout = timeout
 
-        self._dbg("wait: timeout %s, capture_output %s, lines: %s, join: %s, command: %s\n"
-                  "real command: %s", timeout, capture_output, str(lines), join, self.cmd,
-                  self.real_cmd)
+        self._dbg("ProcessBase.wait(): timeout %s, capture_output %s, lines: %s, join: %s, "
+                  "command:\n  %s\nreal command:\n  %s", str(timeout), str(capture_output),
+                  str(lines), str(join), self.cmd, self.real_cmd)
 
         if self._threads_exit:
-            raise Error("this process has 'threads_exit' flag set and it cannot be used")
+            raise Error(f"The process (PID {str(self.pid)}) has 'threads_exit' flag set and cannot "
+                        f"be used")
+
+        stdout: str | list[str]
+        stderr: str | list[str]
+        if capture_output:
+            stdout = stderr = ""
+        else:
+            stdout = stderr = []
 
         if self._process_is_done():
-            return ProcWaitResultType(stdout="", stderr="", exitcode=self.exitcode)
+            return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=self.exitcode)
 
         if not self._queue:
             self._queue = queue.Queue()
             for streamid in (0, 1):
                 if self._streams[streamid]:
                     assert self._threads[streamid] is None
-                    self._threads[streamid] = threading.Thread(target=self._stream_fetcher,
-                                                               name='stream-fetcher',
-                                                               args=(streamid,), daemon=True)
-                    self._threads[streamid].start()
+                    try:
+                        thread = threading.Thread(target=self._stream_fetcher,
+                                                  name='stream-fetcher',
+                                                  args=(streamid,), daemon=True)
+                        thread.start()
+                    except Exception as err:
+                        errmsg = Error(str(err)).indent(2)
+                        raise Error(f"Failed to start the stream fetcher thread:\n{errmsg}\n"
+                                    f"PID: {str(self.pid)}\nCommand: {self.cmd}") from err
+                    self._threads[streamid] = thread
         else:
-            self._dbg("wait: queue is empty: %s", self._queue.empty())
+            self._dbg("ProcessBase.wait(): Queue is empty: %s", self._queue.empty())
 
         output = self._wait(timeout=timeout, capture_output=capture_output,
                             output_fobjs=output_fobjs, lines=lines)
@@ -508,10 +523,9 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             if len(output[1]) > 0:
                 errmsg = "".join(output[1]).strip()
             else:
-                errmsg = None
+                errmsg = ""
             raise self.pman._command_not_found(self.cmd, errmsg=errmsg)
 
-        stdout = stderr = ""
         if output[0]:
             stdout = output[0]
             if join:
@@ -527,10 +541,10 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             exitcode = None
 
         if self.debug:
-            sout = "".join(output[0])
-            serr = "".join(output[1])
-            self._dbg("wait: returning, exitcode %s, stdout:\n%s\nstderr:\n%s",
-                      exitcode, sout.rstrip(), serr.rstrip())
+            sout = "".join(output[0]).rstrip()
+            serr = "".join(output[1]).rstrip()
+            self._dbg("ProcessBase.wait(): returning: exitcode %s, stdout:\n%s\nstderr:\n%s",
+                      str(exitcode), sout, serr)
 
         return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=exitcode)
 
