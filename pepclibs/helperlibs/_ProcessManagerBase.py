@@ -728,7 +728,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             intsh: The interactive shell to use.
         """
 
-        raise NotImplementedError("ProcessManagerBase.run_verify")
+        raise NotImplementedError("ProcessManagerBase.run_verify()")
 
     @staticmethod
     def _rsync_add_debug_opts(opts: str) -> str:
@@ -763,31 +763,33 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         if stdout and _LOG.getEffectiveLevel() == Logging.DEBUG:
             _LOG.debug("rsync output:\n%s", stdout)
 
-    def rsync(self, src, dst, opts="-rlD", remotesrc=False, remotedst=False):
+    def rsync(self,
+              src: Path,
+              dst: Path,
+              opts: str = "-rlD",
+              remotesrc: bool = False,
+              remotedst: bool = False):
         """
-        Copy data from path 'src' to path 'dst' using the 'rsync' tool with options specified in
-        'opts'. The arguments are as follows.
-          * src - the source path.
-          * dst - the destination path.
-          * opts - the rsync tool options to use.
-          * remotesrc - if 'True' the 'src' path is a path on the remote host (the host associated
-                         with this object - 'self.hostname'). Otherwise this is a path on the local
-                         host.
-          * remotedst - if 'True', the 'dst' path is a path on the remote host, otherwise on the
-                        local host.
+        Copy data from the source path to the destination path using the 'rsync' tool.
 
-        Notes.
-          1. Please, refer to the 'rsync' tool documentation for the options description.
-          2. The backslash at the end of the paths matters, refer to 'rsync' documentation.
+        Args:
+            src: Source path.
+            dst: Destination path.
+            opts: Options for the 'rsync' tool. Defaults to "-rlD".
+            remotesrc: Set to True if the source path is on the remote host.
+            remotedst: Set to True if the destination path is on the remote host.
 
-        The default options in 'opts' are the following.
-          * r - recursive.
-          * l - copy symlinks as symlinks.
-          * D - preserve device nodes and others special files.
+        Notes:
+            - Refer to the 'rsync' tool documentation for a detailed description of the options.
+            - Pay attention to the trailing slash at the end of paths, as it affects behavior. See
+              the 'rsync' documentation for details.
+            - Default options:
+                * r: Recursive copy.
+                * l: Copy symlinks as symlinks.
+                * D: Preserve device nodes and other special files.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.rsync")
+        raise NotImplementedError("ProcessManagerBase.rsync()")
 
     def _command_not_found(self, cmd, errmsg=None, toolname=None):
         """
