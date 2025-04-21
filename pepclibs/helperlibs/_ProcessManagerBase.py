@@ -1054,29 +1054,57 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.exists()")
 
-    def is_file(self, path):
-        """Returns 'True' if path 'path' exists an it is a regular file."""
+    def is_file(self, path: Path) -> bool:
+        """
+        Check if the given path exists and is a regular file.
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.is_file")
+        Args:
+            path: The path to check.
 
-    def is_dir(self, path):
-        """Returns 'True' if path 'path' exists an it is a directory."""
+        Returns:
+            True if the path exists and is a regular file, False otherwise.
+        """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.is_dir")
+        raise NotImplementedError("ProcessManagerBase.is_file()")
 
-    def is_exe(self, path):
-        """Returns 'True' if path 'path' exists an it is an executable file."""
+    def is_dir(self, path: Path) -> bool:
+        """
+        Check if the given path exists and is a directory.
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.is_exe")
+        Args:
+            path: The path to check.
 
-    def is_socket(self, path):
-        """Returns 'True' if path 'path' exists an it is a Unix socket file."""
+        Returns:
+            True if the path exists and is a directory, False otherwise.
+        """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.is_socket")
+        raise NotImplementedError("ProcessManagerBase.is_dir()")
+
+    def is_exe(self, path: Path) -> bool:
+        """
+        Check if the given path exists and is an executable file.
+
+        Args:
+            path: The path to check.
+
+        Returns:
+            True if the path exists and is an executable file, False otherwise.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.is_exe()")
+
+    def is_socket(self, path: Path) -> bool:
+        """
+        Check if the given path exists and is a Unix socket file.
+
+        Args:
+            path: The path to check.
+
+        Returns:
+            True if the path exists and is a Unix socket file, False otherwise.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.is_socket()")
 
     def get_mtime(self, path):
         """Returns the modification time of a file or directory at path 'path'."""
