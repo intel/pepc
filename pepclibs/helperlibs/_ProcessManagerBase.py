@@ -367,13 +367,17 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                   "\nstderr:\n%s", "".join(output[0]), "".join(output[1]))
         return output
 
-    def _process_is_done(self):
+    def _process_is_done(self) -> bool:
         """
-        Returns 'True' if all output lines of the process have been returned to the user and the
-        process has exited. Returns 'False' otherwise.
+        Check if the process has finished and all the process output has been consumed.
+
+        Returns:
+            True if the process has exited and all the process output lines have been consumed.
+            False otherwise.
         """
 
-        # pylint: disable=protected-access
+        assert self._queue is not None
+
         return self.exitcode is not None and \
                not self._output[0] and \
                not self._output[1] and \
