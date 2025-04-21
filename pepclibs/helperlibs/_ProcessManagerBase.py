@@ -292,31 +292,46 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         except queue.Empty:
             return (-1, None)
 
-    def _handle_queue_item(self, streamid, data, capture_output=True, output_fobjs=(None, None)):
+    def _handle_queue_item(self,
+                           streamid: int,
+                           data: str,
+                           capture_output: bool = True,
+                           output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None)):
         """
-        Handle an item item returned by '_get_next_queue_item()'. The item is the '(streamic, data)'
-        pair. The keyword arguments are the same as in 'wait()'.
+        Handle a queue item returned by '_get_next_queue_item()'.
+
+        Exctract full lines from a stream output data (taking into account the partial line from the
+        previous invocation) and write them to the given file-like objects. Update the internal
+        state (partial line, line counters, etc).
+
+        Args:
+            streamid: The stream ID the data belongs to.
+            data: The stream output data to handle.
+            capture_output: Whether to store the processed lines in the internal output buffer.
+            output_fobjs: Tuple of file-like objects for writing the full lines, one for each stream
+                          (do not write if 'None').
         """
 
-        self._dbg("_handle_queue_item: got data from stream %d:\n%s", streamid, data)
+        self._dbg("ProcessBase._handle_queue_item(): got data from PID %s stream %d:\n%s",
+                  str(self.pid), streamid, data)
 
-        data, self._partial[streamid] = extract_full_lines(self._partial[streamid] + data)
-        if data and self._partial[streamid]:
-            self._dbg("_handle_queue_item: stream %d: full lines:\n%s\npartial line: %s",
-                      streamid, "".join(data), self._partial[streamid])
+        lines, self._partial[streamid] = extract_full_lines(self._partial[streamid] + data)
+        if lines and self._partial[streamid]:
+            self._dbg("ProcessBase._handle_queue_item(): PID %s, stream %d: full lines:\n%s\n"
+                      "partial line: %s",
+                      str(self.pid), streamid, "".join(lines), self._partial[streamid])
 
-        self._lines_cnt[streamid] += len(data)
+        self._lines_cnt[streamid] += len(lines)
 
-        for line in data:
-            if not line:
-                continue
-            if capture_output:
+        if capture_output:
+            for line in lines:
                 self._output[streamid].append(line)
-            if output_fobjs[streamid]:
-                output_fobjs[streamid].write(line)
 
-        if output_fobjs[streamid]:
-            output_fobjs[streamid].flush()
+        fobj = output_fobjs[streamid]
+        if fobj is not None:
+            for line in lines:
+                fobj.write(line)
+            fobj.flush()
 
     def _get_lines_to_return(self, lines):
         """
