@@ -837,18 +837,28 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         return ErrorNotFound(msg)
 
-    def get_cmd_failure_msg(self, cmd, stdout, stderr, exitcode, timeout=None, startmsg=None,
-                            failed=True):
+    def get_cmd_failure_msg(self,
+                            cmd: str,
+                            stdout: str | list[str],
+                            stderr: str | list[str],
+                            exitcode: int | None,
+                            timeout: int | float | None = None,
+                            startmsg: str | None = None,
+                            failed: bool = True):
         """
-        Format and return the command failure message. The arguments are as follows.
-            * cmd - the failed command.
-            * stdout - standard output of the failed command.
-            * stderr - standard error of the failed command.
-            * exitcode - exit code of the failed command.
-            * timeout - command time out.
-            * startmsg - the first line of the resulting message.
-            * failed - if True, consider the command as failed, otherwise consider it as just
-                       finished.
+        Return a formatted message describing that the command has exited or failed.
+
+        Args:
+            cmd: The command that exited of failed.
+            stdout: Standard output of the command.
+            stderr: Standard error of the command.
+            exitcode: Exit code of the command.
+            timeout: Timeout value for the command execution. Defaults to 'TIMEOUT'.
+            startmsg: Optional starting message to include in the resulting message.
+            failed: Whether the command failed or just exited.
+
+        Returns:
+            A string containing the formatted exit/failure message.
         """
 
         if timeout is None:
@@ -886,16 +896,26 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         result = f"{startmsg}\n  {cmd}"
         if msg:
             result += f"\n\n{msg.strip()}"
+
         return result
 
-    def open(self, path, mode):
+    def open(self, path: Path, mode: str) -> IO:
         """
-        Open a file on the at 'path' and return a file-like object. The arguments are the same as in
-        the builtin Python 'open()' function.
+        Open a file at the specified path and return the file-like object.
+
+        Args:
+            path: The path to the file to open.
+            mode: The mode in which to open the file, similar to the built-in Python 'open()'
+                  function.
+
+        Returns:
+            A file-like object corresponding to the opened file.
+
+        Notes:
+            If "b" is not in the mode, the file is opened in text mode with the "utf-8" encoding.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.open")
+        raise NotImplementedError("ProcessManagerBase.open()")
 
     def read(self, path, must_exist=True):
         """
