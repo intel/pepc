@@ -217,44 +217,57 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessBase._fetch_stream_data()")
 
-    def _stream_fetcher(self, streamid):
+    def _stream_fetcher(self, streamid: int):
         """
-        This method runs in a separate thread. All it does is it fetches one of the output streams
-        of the executed program (either stdout or stderr) and puts the result into the queue.
+        Fetch data from a stream in a separate thread.
+
+        Continuously read data from one of the output streams (stdout or stderr) of the executed
+        program and place the data into a queue. Stop when the stream is closed, no more data are
+        available, an error occurs, or the thread is signaled to exit via 'self._threads_exit'.
         """
+
+        assert self._queue is not None
 
         try:
             decoder = codecs.getincrementaldecoder('utf8')(errors="surrogateescape")
             while not self._threads_exit:
                 if not self._streams[streamid]:
-                    self._dbg("_stream_fetcher: stream %d: stream is closed", streamid)
+                    self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: "
+                              "Stream is closed", str(self.pid), streamid)
                     break
 
-                data = None
+                bytes_data = bytes()
                 try:
-                    data = self._fetch_stream_data(streamid, 4096)
+                    bytes_data = self._fetch_stream_data(streamid, 4096)
                 except Error as err:
-                    _LOG.error("failed reading from stream %d: %s\nThe command of the process:\n%s",
-                               streamid, err, self.cmd)
+                    _LOG.error("Failed to read from streamid %d of PID %s: %s\n"
+                               "The command of the process: %s",
+                               streamid, str(self.pid), err, self.cmd)
                     break
 
-                if not data:
-                    self._dbg("_stream_fetcher: stream %d: no more data", streamid)
+                if not bytes_data:
+                    self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: No more data",
+                              str(self.pid), streamid)
                     break
 
-                data = decoder.decode(data)
+                data = decoder.decode(bytes_data)
                 if not data:
-                    self._dbg("_stream_fetcher: stream %d: read more data", streamid)
+                    self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: Will read more "
+                              "data", str(self.pid), streamid)
                     continue
 
-                self._dbg("_stream_fetcher: stream %d: read data:\n%s", streamid, data)
+                self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: Read the following "
+                          "data:\n%s", str(self.pid), streamid, data)
                 self._queue.put((streamid, data))
         except BaseException as err: # pylint: disable=broad-except
-            _LOG.error(err)
+            errmsg = Error(str(err)).indent(2)
+            _LOG.error("Exception in stream fetcher for PID %s, streamid %d:\n%s",
+                       str(self.pid), streamid, errmsg)
 
-        # The end of stream indicator.
+        # Place the end of stream indicator to the queue.
         self._queue.put((streamid, None))
-        self._dbg("_stream_fetcher: stream %d: thread exists", streamid)
+        self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: Thread exists",
+                  str(self.pid), streamid)
 
     def _get_next_queue_item(self, timeout):
         """
