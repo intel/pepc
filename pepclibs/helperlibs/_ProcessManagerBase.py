@@ -269,15 +269,21 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         self._dbg("ProcessBase._stream_fetcher(): PID %s, streamid %d: Thread exists",
                   str(self.pid), streamid)
 
-    def _get_next_queue_item(self, timeout):
+    def _get_next_queue_item(self, timeout: float | None = None) -> tuple[int, str | None]:
         """
-        Read the next data item from the stream fetcher queue. The items in the queue have the
-        following format: '(streamid, data)'.
-           * streamid - 0 for stdout, 1 for stderr.
-           * data - stream data (can be a partial line).
+        Retrieve a data item from the stream fetcher queue.
 
-        Returns '(-1, None)' in case of time out.
+        Args:
+            timeout: Maximum amount of seconds to wait for an item. If None, wait indefinitely.
+
+        Returns:
+            The data item as a tuple in the format (streamid, data):
+              - streamid: 0 for stdout, 1 for stderr.
+              - data: Stream data, which may be a partial line.
+            Return '(-1, None)' if the operation times out.
         """
+
+        assert self._queue is not None
 
         try:
             if timeout:
