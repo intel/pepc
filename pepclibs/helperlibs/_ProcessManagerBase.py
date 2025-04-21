@@ -333,18 +333,26 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                 fobj.write(line)
             fobj.flush()
 
-    def _get_lines_to_return(self, lines):
+    def _get_lines_to_return(self, lines: tuple[int, int]) -> list[list[str]]:
         """
-        Figure out what part of captured output should be returned to the user, and what part should
-        stay in 'self._output'. This depends on the 'lines' argument. The keyword arguments are the
-        same as in 'wait()'.
+        Fetch the portion of captured output to return to the user, and which portion should stay in
+        'self._output'. The decision is based on the user-provided 'lines' argument, which specifies
+        the desired number of lines for each output stream (stdout and stderr).
+
+        Args:
+            lines: A tuple where each element specifies the maximum number of lines to return for
+                   the corresponding output stream. The first element corresponds to stdout, and the
+                   second element corresponds to stderr. Zero means that all available lines should
+                   be returned.
+
+        Returns:
+            A list of two lists, where each inner list contains the lines to be returned for the
+            corresponding output stream (stdout and stderr).
         """
 
-        # pylint: disable=protected-access
-        self._dbg("_get_lines_to_return: start: lines:\n%s\npartial lines:\n%s\noutput:\n%s",
-                  str(lines), self._partial, self._output)
+        self._dbg("ProcessBase._get_lines_to_return(): requested lines:\n%s", str(lines))
 
-        output = [[], []]
+        output: list[list[str]] = [[], []]
 
         for streamid in (0, 1):
             limit = lines[streamid]
@@ -355,8 +363,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                 output[streamid] = self._output[streamid][:limit]
                 self._output[streamid] = self._output[streamid][limit:]
 
-        self._dbg("_get_lines_to_return: end: partial lines:\n%s\noutput:\n%s\nreturning:\n%s",
-                  self._partial, self._output, output)
+        self._dbg("ProcessBase._get_lines_to_return(): returning the following lines:\nstdout:\n%s"
+                  "\nstderr:\n%s", "".join(output[0]), "".join(output[1]))
         return output
 
     def _process_is_done(self):
