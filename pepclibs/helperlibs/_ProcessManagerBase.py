@@ -954,18 +954,19 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             return self._python_path
 
         # The paths to try.
-        paths = ("/usr/bin/python", "/usr/bin/python3", "python", "python3")
+        paths = ("python3", "/usr/bin/python3", "/usr/local/bin/python3",
+                 "python", "/usr/bin/python", "/usr/local/bin/python")
         for path in paths:
             try:
                 self.run_verify(f"{path} --version")
             except Error:
                 continue
 
-            self._python_path = path
-            return Path(path)
+            self._python_path = Path(path)
+            return self._python_path
 
         paths_descr = "\n * " + "\n * ".join(paths)
-        raise ErrorNotFound(f"python interpreter was not found{self.hostmsg}.\n"
+        raise ErrorNotFound(f"Failed to find python interpreter{self.hostmsg}.\n"
                             f"Checked the following paths:{paths_descr}")
 
     def shell_test(self, path, opt):
