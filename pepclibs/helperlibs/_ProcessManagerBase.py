@@ -14,7 +14,6 @@ the command is executed on the local or remote system.
 
 # pylint: disable=protected-access
 
-# TODO: finish adding type hints to this module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
@@ -1154,28 +1153,39 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
     def mkdtemp(self, prefix: str | None  = None, basedir: Path | None = None) -> Path:
         """
-        Create a temporary directory and return its path. The arguments are as follows.
-          * prefix - specifies the temporary directory name prefix.
-          * basedir - path to the base directory where the temporary directory should be created.
+        Create a temporary directory and return its path.
+
+        Args:
+            prefix: A prefix for the temporary directory name.
+            basedir: The base directory where the temporary directory should be created.
+
+        Returns:
+            The path to the created temporary directory.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.mkdtemp")
+        raise NotImplementedError("ProcessManagerBase.mkdtemp()")
 
-    def get_envar(self, envar):
-        """Return the value of the environment variable 'envar'."""
-
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.get_envar")
-
-    def which(self, program, must_find=True):
+    def get_envar(self, envar: str) -> str:
         """
-        Find and return full path to a program 'program' by searching it in '$PATH'. The arguments
-        are as follows.
-          * program - name of the program to find the path to.
-          * must_find - if 'True', raises the 'ErrorNotFound' exception if the program was not
-                        found, otherwise returns 'None' without raising the exception.
+        Get the value of an environment variable.
+
+        Args:
+            envar: The name of the environment variable to retrieve.
+
+        Returns:
+            The value of the environment variable.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.which")
+        raise NotImplementedError("ProcessManagerBase.get_envar()")
+
+    def which(self, program: str, must_find: bool = True):
+        """
+        Locate the full path of a program by searching in PATH.
+
+        Args:
+            program: Name of the program to locate.
+            must_find: If True, raise 'ErrorNotFound' if the program was not found. If False, return
+                       None when the program was not found.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.which()")
