@@ -21,7 +21,7 @@ import queue
 import codecs
 import threading
 import contextlib
-from typing import NamedTuple, IO, Any
+from typing import NamedTuple, IO, Any, cast
 from pathlib import Path
 from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
@@ -118,7 +118,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                  cmd: str,
                  real_cmd: str,
                  shell: bool,
-                 streams: tuple[IO, IO, IO]):
+                 streams: tuple[IO[bytes], IO[bytes], IO[bytes]]):
         """
         Initialize a class instance.
 
@@ -145,10 +145,10 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         self.hostmsg = pman.hostmsg
 
         # ID of the running process. Should be set by the child class. In some cases may be set to
-        # 'None', which should be interpreted as "not known".
-        self.pid = None
+        # 'None', which should be interpreted as "unknown".
+        self.pid: int | None = None
         # Exit code of the process ('None' if it is still running).
-        self.exitcode = None
+        self.exitcode: int | None = None
         # The stdout and stderr streams.
         self._streams = [streams[1], streams[2]]
         # Count of lines the process printed to stdout and stderr.
@@ -158,24 +158,25 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         self.debug = False
         # Prefix debugging messages with this string. Can be useful to distinguish between debugging
         # message related to different processes.
-        self.debug_id = None
+        self.debug_id = ""
 
         # The stream fetcher threads have to exit if the '_threads_exit' flag becomes 'True'.
         self._threads_exit = False
         # The output for the process that was read from 'self._queue', but not yet sent to the user
         # (separate for 'stdout' and 'stderr').
-        self._output = [[], []]
+        self._output: list[list[str]] = [[], []]
         # The last partial lines of the stdout and stderr streams of the process.
         self._partial = ["", ""]
         # The threads fetching data from the stdout/stderr streams of the process.
-        self._threads = [None, None]
+        self._threads: list[threading.Thread | None] = [None, None]
         # The queue for passing process output from stream fetcher threads.
-        self._queue = None
+        self._queue: queue.Queue | None = None
 
         if self.stdin:
             if not getattr(self.stdin, "name", None):
                 setattr(self.stdin, "name", "stdin")
-            self.stdin = ClassHelpers.WrapExceptions(self.stdin, get_err_prefix=get_err_prefix)
+            wrapped = ClassHelpers.WrapExceptions(self.stdin, get_err_prefix=get_err_prefix)
+            self.stdin = cast(IO[bytes], wrapped)
 
     def __del__(self):
         """Class destructor."""
