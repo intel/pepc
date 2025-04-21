@@ -998,30 +998,29 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         return exitcode == 0
 
-    def mkdir(self, dirpath, parents=False, exist_ok=False):
+    def mkdir(self, dirpath: Path, parents: bool = False, exist_ok: bool = False):
         """
-        Create a directory. The a arguments are as follows.
-          * dirpath - path to the directory to create.
-          * parents - if 'True', the parent directories are created as well.
-          * exist_ok - if the directory already exists, this method raises an exception if
-                       'exist_ok' is 'True', and it returns without an error if 'exist_ok' is
-                       'False'.
+        Create a directory.
+
+        Args:
+            dirpath: Path to the directory to create.
+            parents: Create parent directories as needed if True. Otherwise, raise an exception if
+                     a parent directory does not exist.
+            exist_ok: Do not raise an exception if the directory already exists when True.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.mkdir")
+        raise NotImplementedError("ProcessManagerBase.mkdir()")
 
-    def mkfifo(self, path, exist_ok=False):
+    def mkfifo(self, path: Path, exist_ok: bool = False):
         """
-        Create a named pipe. The a arguments are as follows.
-          * path - path to the named pipe to create.
-          * exist_ok - if the named pipe already exists, this method raises an exception if
-                       'exist_ok' is 'True', and it returns without an error if 'exist_ok' is
-                       'False'.
+        Create a named pipe.
+
+        Args:
+            path: The path where the named pipe to create.
+            exist_ok: Do not raise an exception if the named pipe already exists when True.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.mkdir")
+        raise NotImplementedError("ProcessManagerBase.mkfifo()")
 
     def lsdir(self, path, must_exist=True):
         """
