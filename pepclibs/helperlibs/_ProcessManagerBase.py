@@ -917,13 +917,21 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.open()")
 
-    def read(self, path, must_exist=True):
+    def read(self, path: Path, must_exist: bool = True):
         """
-        Read file at path 'path'. The arguments are as follows.
-          * path - path to the file to read.
-          * must_exist - if file 'path' does not exist, raise the 'ErrorNotFound' error if
-                         'must_exist' is 'True'. Otherwise, return 'None' without raising an
-                         exception.
+        Read a file.
+
+        Args:
+            path: The path to the file to read.
+            must_exist: If True, raise an 'ErrorNotFound' exception if the file does not exist.
+                        If False, return None when the file does not exist.
+
+        Returns:
+            The contents of the file as a string, or None if the file does not exist and
+            must_exist is False.
+
+        Raises:
+            ErrorNotFound: If the file does not exist and must_exist is True.
         """
 
         try:
@@ -931,7 +939,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                 val = fobj.read()
         except ErrorNotFound as err:
             if must_exist:
-                raise ErrorNotFound(f"file '{path}' does not exist{self.hostmsg}") from err
+                raise ErrorNotFound(f"File '{path}' does not exist{self.hostmsg}") from err
             return None
 
         return val
