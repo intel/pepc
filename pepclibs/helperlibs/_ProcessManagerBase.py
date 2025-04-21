@@ -701,14 +701,33 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.run()")
 
-    def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-                   output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
+    def run_verify(self,
+                   command: str,
+                   timeout: int | float | None = None,
+                   capture_output: bool = True,
+                   mix_output: bool = False,
+                   join: bool = True,
+                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                   cwd: str | None = None,
+                   shell: bool = True,
+                   intsh: bool | None = None):
         """
-        Similar as the "run()" method, but and raises the 'Error' exception if the command has
-        failed.
+        Execute a command and wait for it to finish and verify its success. Similar to 'run()', but
+        it with a verification step. Refer to the 'run()' method for a more verbose argument
+        descriptions.
+
+        Args:
+            command: The command to execute.
+            timeout: The maximum time to wait for the command to complete.
+            capture_output: Whether to capture the command's output.
+            mix_output: Whether to merge stdout and stderr into a single stream.
+            join: Whether to join the output streams.
+            output_fobjs: File-like objects to write the command's stdout and stderr.
+            cwd: The working directory to execute the command in.
+            shell: Whether to execute the command through the shell.
+            intsh: The interactive shell to use.
         """
 
-        # pylint: disable=unused-argument
         raise NotImplementedError("ProcessManagerBase.run_verify")
 
     @staticmethod
