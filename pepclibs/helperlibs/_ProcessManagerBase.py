@@ -7,8 +7,9 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides the base class for process managers, as well as common bits and pieces shared
-between different process manager implementations.
+Base classes for process managers. Process managers provide an interface for executing commands and
+managing files and processes. The idea is to have the same API for doing these regardless on whether
+the command is executed on the local or remote system.
 """
 
 # pylint: disable=protected-access
@@ -109,7 +110,7 @@ def have_enough_lines(output: tuple[list[str], list[str]],
 
 class ProcessBase(ClassHelpers.SimpleCloseContext):
     """
-    The base class for representing a processes created by one of the process managers.
+    The base class for representing a processes created and managed by a process manager.
     """
 
     def __init__(self,
@@ -605,22 +606,25 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
 class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     """
-    The base class for process managers, which can manage both local and remote processes.
+    Base class for process managers.
+
+    Process managers provide an interface for executing commands and managing files and processes.
+    The idea is to have the same API for doing these regardless on whether the command is executed
+    on the local or remote system.
     """
 
-    Error = Error
-
     def __init__(self):
-        """Initialize a class instance."""
+        """Initialize the class instance."""
 
-        self.is_remote = None
-        self.hostname = None
-        self.hostmsg = None
+        # Whether the process manager is managing a remote host.
+        self.is_remote = False
+        # The hostname of the host.
+        self.hostname = "localhost"
+        # The message referring to the host to add to error messages.
+        self.hostmsg = ""
 
-        # Path to python interpreter on the remote host.
-        self._python_path = None
-        # The command to use for figuring out full paths in the 'which()' method.
-        self._which_cmd = None
+        # Path to python interpreter.
+        self._python_path: Path | None = None
 
     def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
                   stderr=None):

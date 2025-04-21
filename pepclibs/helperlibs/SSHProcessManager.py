@@ -1133,6 +1133,9 @@ for entry in os.listdir(path):
         self.password = password
         self.privkeypath = privkeypath
 
+        # The command to use for figuring out full paths in the 'which()' method.
+        self._which_cmd = None
+
         self._sftp = None
         # The interactive shell session.
         self._intsh = None
