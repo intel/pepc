@@ -731,8 +731,17 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         raise NotImplementedError("ProcessManagerBase.run_verify")
 
     @staticmethod
-    def _rsync_add_debug_opts(opts):
-        """Add the '-v' option to rsync options 'opts' if debug-level logging is enabled."""
+    def _rsync_add_debug_opts(opts: str) -> str:
+        """
+        Add the '-v' option to the rsync options if debug-level logging is enabled.
+
+        Args:
+            opts: A string containing the current rsync options.
+
+        Returns:
+            A string with the updated rsync options, including the '-v' option if debug-level
+            logging is enabled.
+        """
 
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             if opts:
@@ -743,9 +752,12 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         return opts
 
     @staticmethod
-    def _rsync_debug_log(stdout):
+    def _rsync_debug_log(stdout: str):
         """
-        If debug-level logging is enabled, log the 'stdout' output of the 'rsync' command.
+        Log the 'stdout' output of the 'rsync' command if debug-level logging is enabled.
+
+        Args:
+            stdout: The standard output of the 'rsync' command to be logged.
         """
 
         if stdout and _LOG.getEffectiveLevel() == Logging.DEBUG:
