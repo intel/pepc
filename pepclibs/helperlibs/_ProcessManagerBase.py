@@ -383,15 +383,30 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                not self._output[1] and \
                self._queue.empty()
 
-    def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-              lines=(0, 0)):
+    def _wait(self, timeout: float | None = None,
+              capture_output: bool = True,
+              output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+              lines: tuple[int, int] = (0, 0)) -> tuple[list[str], list[str]]:
         """
-        Implements 'wait()'. The arguments are the same as in 'wait()', but returns a tuple of two
-        lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).
+        Wait for the process to complete and optionally capture its output.
+
+        Implement the 'wait()' method, the matching arguments are the same.
+
+        Args:
+            timeout: Maximum time to wait for the process to complete. If None, wait indefinitely.
+            capture_output: If True, capture and return process's stdout and stderr.
+            output_fobjs: A tuple of file-like objects to write stdout and stderr to, respectively.
+                          Not affected by 'capture_output'.
+            lines: A tuple specifying the maximum number of lines to capture from stdout and stderr.
+
+        Returns:
+            A tuple containing two lists: the captured stdout lines and stderr lines.
+
+        Raises:
+            NotImplementedError: The subclass did not implement this method.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessBase._wait")
+        raise NotImplementedError("ProcessBase._wait()")
 
     def wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(0, 0),
              join=True) -> ProcWaitResultType:
