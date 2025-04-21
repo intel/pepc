@@ -969,11 +969,18 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         raise ErrorNotFound(f"Failed to find python interpreter{self.hostmsg}.\n"
                             f"Checked the following paths:{paths_descr}")
 
-    def shell_test(self, path, opt):
+    def shell_test(self, path: Path, opt: str) -> bool:
         """
-        Run the shell 'test' command against path 'path'. The 'opt' argument specifies the 'test'
-        command options. For example, pass '-f' to run 'test -f' which returns 0 if 'path' exists
-        and is a regular file and 1 otherwise.
+        Execute the shell 'test' command to check properties of a file or directory.
+
+        Args:
+            path: The path to the file or directory to test.
+            opt: The option to pass to the 'test' command. For example:
+                 '-f' checks if the path exists and is a regular file,
+                 '-d' checks if the path exists and is a directory.
+
+        Returns:
+            True if the 'test' command succeeds (exit code 0), False otherwise.
         """
 
         cmd = f"sh -c 'test {opt} \"{path}\"'"
