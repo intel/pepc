@@ -234,9 +234,6 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             The retrieved data as bytes (empty bytes object no data are available).
-
-        Raises:
-            NotImplementedError: The subclass did not implement this method.
         """
 
         raise NotImplementedError("ProcessBase._fetch_stream_data()")
@@ -248,6 +245,9 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         Continuously read data from one of the output streams (stdout or stderr) of the executed
         program and place the data into a queue. Stop when the stream is closed, no more data are
         available, an error occurs, or the thread is signaled to exit via 'self._threads_exit'.
+
+        Args:
+            streamid: Identifier of the stream to fetch data from (0 for stdout, 1 for stderr).
         """
 
         assert self._queue is not None
@@ -420,9 +420,6 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             A tuple containing two lists: the captured stdout lines and stderr lines.
-
-        Raises:
-            NotImplementedError: The subclass did not implement this method.
         """
 
         raise NotImplementedError("ProcessBase._wait()")
@@ -548,7 +545,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=exitcode)
 
-    def _dbg(self, fmt, *args):
+    def _dbg(self, fmt: str, *args: Any):
         """Print a debugging message."""
 
         if self.debug:
@@ -559,27 +556,49 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                 pfx += f"PID {self.pid}: "
             _LOG.debug(pfx + fmt, *args)
 
-    def poll(self):
+    def poll(self) -> int | None:
         """
-        Check if the process is still running. If it is, return 'None', else return exit status.
+        Check if the process is still running.
+
+        Returns:
+            None: If the process is still running.
+            int: The exit status of the process if it has terminated.
         """
 
-        raise NotImplementedError("ProcessBase.poll")
+        raise NotImplementedError("ProcessBase.poll()")
 
-    def get_cmd_failure_msg(self, stdout, stderr, exitcode, timeout=None, startmsg=None,
-                            failed=True):
+    def get_cmd_failure_msg(self,
+                            stdout: str | list[str],
+                            stderr: str | list[str],
+                            exitcode: int | None,
+                            timeout: int | float | None = None,
+                            startmsg: str | None = None,
+                            failed: bool = True):
         """
-        Format and return the command failure message. The arguments are the same as in
-        'ProcessManagerBase.get_cmd_failure_msg()'.
+        Return a formatted message describing that the command has exited or failed.
+
+        Args:
+            stdout: Standard output of the command.
+            stderr: Standard error of the command.
+            exitcode: Exit code of the command.
+            timeout: Timeout value for the command execution. Defaults to the timeout value used
+                     in 'wait()', or 'TIMEOUT' if 'wait()' was never called.
+            startmsg: Optional starting message to include in the resulting message.
+            failed: Whether the command failed or just exited.
+
+        Returns:
+            A string containing the formatted exit/failure message.
         """
 
         if timeout is None:
             timeout = self.timeout
+            if timeout is None:
+                timeout = TIMEOUT
 
         cmd = self.cmd
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             if self.cmd != self.real_cmd:
-                cmd += f"\nReal command:\n  {self.real_cmd}"
+                cmd += f"\nReal (full) command:\n  {self.real_cmd}"
 
         return self.pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode, timeout=timeout,
                                              startmsg=startmsg, failed=failed)
