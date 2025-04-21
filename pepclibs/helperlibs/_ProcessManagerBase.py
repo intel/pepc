@@ -21,7 +21,7 @@ import queue
 import codecs
 import threading
 import contextlib
-from typing import NamedTuple, IO
+from typing import NamedTuple, IO, Any
 from pathlib import Path
 from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
@@ -109,28 +109,28 @@ def have_enough_lines(output: tuple[list[str], list[str]],
 
 class ProcessBase(ClassHelpers.SimpleCloseContext):
     """
-    The base class for processes created using one of the process managers.
+    The base class for representing a processes created by one of the process managers.
     """
 
-    def __init__(self, pman, pobj, cmd, real_cmd, shell, streams):
+    def __init__(self,
+                 pman: ProcessManagerBase,
+                 pobj: Any,
+                 cmd: str,
+                 real_cmd: str,
+                 shell: bool,
+                 streams: tuple[IO, IO, IO]):
         """
-        Initialize a class instance. The arguments are as follows.
-          * pman - the process management object that was used for creating this object.
-          * pobj - the low-level object representing the local or remote process corresponding to
-                   this object.
-          * cmd - the executed command.
-          * real_cmd - sometimes the original command gets slightly amended, e.g., it is sometimes
-                       prefixed with a PID print command. This argument should provide the actual
-                       executed command.
-          * shell - whether the command was executed via shell.
-          * streams - the stdin, stdout and stderr stream objects of the process (collection of 3
-                      elements).
+        Initialize a class instance.
 
-         Note about the stream objects in 'streams'. The stderr stream object must be a file-like
-         object, and it will be exposed via 'self.stderr'. The stdout and stderr stream objects do
-         not have to be file-like objects. They can be just some objects representing the streams
-         (defined by sub-classes). The are not exposed to the user, and they are only accessed via
-         the '_fetch_stream_data()' method, which is defined by the sub-class.
+        Args:
+            pman: The process manager object responsible for managing this process.
+            pobj: Low-level object representing the local or remote process corresponding to this
+                  instance (e.g., a 'subprocess.Popen' object in case of a local process).
+            cmd: The command that was executed to start the process.
+            real_cmd: Actual (full) command that was executed, which may differ slightly from the
+                      original command (e.g., prefixed with a PID print statement).
+            shell: Indicates whether the command was executed via a shell.
+            streams: A Tuple containing the stdin, stdout, and stderr stream objects of the process.
         """
 
         self.pman = pman
