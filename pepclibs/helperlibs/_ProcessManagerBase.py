@@ -1022,27 +1022,37 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.mkfifo()")
 
-    def lsdir(self, path, must_exist=True):
+    def lsdir(self, path: Path, must_exist: bool = True):
         """
-        For each directory entry in 'path', yield the ('name', 'path', 'mode') tuple, where 'name'
-        is the direntry name, 'path' is full directory entry path, and 'mode' is the
-        'os.lstat().st_mode' value for the directory entry.
+        Yield directory entries in the specified path as ('name', 'path', 'mode') tuples.
 
-        The directory entries are yielded in ctime (creation time) order.
+        Each tuple contains:
+          - 'name': The name of the directory entry.
+          - 'path': The full path to the directory entry.
+          - 'mode': The file mode (from 'os.lstat().st_mode') of the directory entry.
 
-        If 'path' does not exist, this function raises an exception. However, this behavior can be
-        changed with the 'must_exist' argument. If 'must_exist' is 'False, this function just
-        returns and does not yield anything.
+        Entries are yielded in creation time (ctime) order.
+
+        Args:
+            path: The directory path to list entries from.
+            must_exist: If True, raise an exception if the path does not exist. If False, return
+                        without yielding anything when the path does not exist.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.lsdir")
+        raise NotImplementedError("ProcessManagerBase.lsdir()")
 
-    def exists(self, path):
-        """Returns 'True' if path 'path' exists."""
+    def exists(self, path: Path) -> bool:
+        """
+        Check if the specified path exists.
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.exists")
+        Args:
+            path: The path to check.
+
+        Returns:
+            True if the path exists, False otherwise.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.exists()")
 
     def is_file(self, path):
         """Returns 'True' if path 'path' exists an it is a regular file."""
