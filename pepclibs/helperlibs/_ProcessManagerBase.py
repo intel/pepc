@@ -1106,17 +1106,28 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.is_socket()")
 
-    def get_mtime(self, path):
-        """Returns the modification time of a file or directory at path 'path'."""
+    def get_mtime(self, path: Path) -> float:
+        """
+        Get the modification time of a file or directory.
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.get_mtime")
+        Args:
+            path: The path to the file or directory.
 
-    def unlink(self, path):
-        """Remove a file a path 'path'."""
+        Returns:
+            The modification time as a floating-point number representing seconds since the epoch.
+        """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.rmtree")
+        raise NotImplementedError("ProcessManagerBase.get_mtime()")
+
+    def unlink(self, path: Path):
+        """
+        Remove a file.
+
+        Args:
+            path: The path to the file to remove.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.unlink()")
 
     def rmtree(self, path):
         """
