@@ -626,30 +626,35 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         # Path to python interpreter.
         self._python_path: Path | None = None
 
-    def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
-                  stderr=None):
+    def run_async(self,
+                  command: str,
+                  cwd: str | None = None,
+                  shell: bool = True,
+                  intsh: bool = False,
+                  stdin: IO | str | None = None,
+                  stdout: IO | str | None = None,
+                  stderr: IO | str | None = None) -> ProcessBase:
         """
-        Run command 'command' without waiting for it to complete. The arguments are as follows.
-          * command - the command to run.
-          * cwd - the working directory of the process.
-          * shell - whether the command should be run via shell.
-          * intsh - whether the command should run in an already running interactive shell or in a
-                    new shell. The former should be more efficient.
-          * stdin - the standard input stream to use for the process. Can be one of:
-            - a file-like object
-            - file path
-          * stdout - similar to 'stdin', but for standard output. If a file path is provided and it
-                     does not exist, it will be created.
-          * stderr - similar to 'stdin', but for standard error.
+        Execute a command asynchronously without waiting for it to complete.
 
-        Note, there is only one interactive shell process at the moment, so only one asynchronous
-        process can run in an interactive shell at a time.
+        Args:
+            command: The command to execute.
+            cwd: The working directory for the process.
+            shell: Whether to execute the command through a shell.
+            intsh: If True, use an existing interactive shell or create a new one. Only one
+                   asynchronous process can run in an interactive shell at a time. It takes less
+                   time to start a new process in an existing interactive shell, because it does not
+                   require creating a new shell.
+            stdin: Standard input stream for the process. Can be a file-like object or a file path.
+            stdout: Standard output stream for the process. Can be a file-like object or a file
+                    path.
+            stderr: Standard error stream for the process. Can be a file-like object or a file path.
 
-        Returns the process object.
+        Returns:
+            A process object (subclass of 'ProcessBase') representing the asynchronous process.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.run_async")
+        raise NotImplementedError("ProcessManagerBase.run_async()")
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
             output_fobjs=(None, None), cwd=None, shell=True, intsh=None) -> ProcWaitResultType:
