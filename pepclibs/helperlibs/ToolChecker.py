@@ -15,7 +15,7 @@ suggestion if the OS package is not installed.
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import Logging, ClassHelpers
-from pepclibs.helperlibs.Exceptions import ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -97,7 +97,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
         osinfo = {}
 
         for path in paths:
-            with contextlib.suppress(self._pman.Error):
+            with contextlib.suppress(Error):
                 with self._pman.open(path, "r") as fobj:
                     for line in fobj:
                         line = line.strip()
