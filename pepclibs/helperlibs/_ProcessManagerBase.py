@@ -182,20 +182,23 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         """Class destructor."""
 
         with contextlib.suppress(BaseException):
-            self._dbg("_ProcesManagerBase: __del__()")
+            self._dbg("ProcessBase: __del__()")
 
         if hasattr(self, "_threads_exit"):
+            # Increase chances of threads exiting if something went wrong (resilience).
             self._threads_exit = True
 
     def close(self):
         """Free allocated resources."""
 
-        self._dbg("_ProcessManagerBase: close()")
+        self._dbg("ProcessBase: close()")
 
         if hasattr(self, "_threads_exit"):
+            # Make sure the threads exit.
             self._threads_exit = True
 
-        ClassHelpers.close(self, unref_attrs=("pman", "pobj"))
+        unref_attrs = ("pman", "pobj", "_streams", "stdin", "_threads", "_queue")
+        ClassHelpers.close(self, unref_attrs=unref_attrs)
 
     def _fetch_stream_data(self, streamid, size):
         """
