@@ -178,6 +178,30 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             wrapped = ClassHelpers.WrapExceptions(self.stdin, get_err_prefix=get_err_prefix)
             self.stdin = cast(IO[bytes], wrapped)
 
+    def _reinit(self, cmd: str, real_cmd: str, shell: bool):
+        """
+        Reinitialize the process object for a new command execution.
+
+        Reset the internal state of the process object to allow reusing it for running new command.
+
+        Args:
+            cmd: The new command that was executed to start the process.
+            real_cmd: Actual (full) new command that was executed, which may differ slightly from
+                      the original command (e.g., prefixed with a PID print statement).
+            shell: Indicates whether the new command was executed in a shell.
+        """
+
+        self.cmd = cmd
+        self.real_cmd = real_cmd
+        self.shell = shell
+
+        self.pid = None
+        self.exitcode = None
+
+        self._threads_exit = False
+        self._output = [[], []]
+        self._partial = ["", ""]
+
     def __del__(self):
         """Class destructor."""
 
@@ -545,23 +569,6 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         return self.pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode, timeout=timeout,
                                              startmsg=startmsg, failed=failed)
-
-    def _reinit(self, cmd, real_cmd, shell):
-        """
-        Re-initialize this object in case the process it is associated with is re-used for running a
-        different command (using 'exec', for example).
-        """
-
-        self.cmd = cmd
-        self.real_cmd = real_cmd
-        self.shell = shell
-
-        self.pid = None
-        self.exitcode = None
-
-        self._threads_exit = False
-        self._output = [[], []]
-        self._partial = ["", ""]
 
 class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     """
