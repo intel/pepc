@@ -131,23 +131,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    bufsize=0, env=None, newgrp=False) -> LocalProcess:
         """Implements 'run_async()'."""
 
-        # pylint: disable=consider-using-with
-        try:
-            if stdin and isinstance(stdin, str):
-                fname = stdin
-                stdin = open(fname, "r", encoding="utf-8")
-
-            if stdout and isinstance(stdout, str):
-                fname = stdout
-                stdout = open(fname, "w+", encoding="utf-8")
-
-            if stderr and isinstance(stderr, str):
-                fname = stderr
-                stderr = open(fname, "w+", encoding="utf-8")
-        except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"cannot open file '{fname}':\n{msg}") from None
-
         if not stdin:
             stdin = subprocess.PIPE
         if not stdout:

@@ -631,9 +631,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                   cwd: str | None = None,
                   shell: bool = True,
                   intsh: bool = False,
-                  stdin: IO | str | None = None,
-                  stdout: IO | str | None = None,
-                  stderr: IO | str | None = None) -> ProcessBase:
+                  stdin: IO | None = None,
+                  stdout: IO | None = None,
+                  stderr: IO | None = None) -> ProcessBase:
         """
         Execute a command asynchronously without waiting for it to complete.
 
@@ -645,10 +645,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    asynchronous process can run in an interactive shell at a time. It takes less
                    time to start a new process in an existing interactive shell, because it does not
                    require creating a new shell.
-            stdin: Standard input stream for the process. Can be a file-like object or a file path.
-            stdout: Standard output stream for the process. Can be a file-like object or a file
-                    path.
-            stderr: Standard error stream for the process. Can be a file-like object or a file path.
+            stdin: Standard input stream for the process (file-like object).
+            stdout: Standard output stream for the process (file-like object).
+            stderr: Standard error stream for the process (file-like object).
 
         Returns:
             A process object (subclass of 'ProcessBase') representing the asynchronous process.
