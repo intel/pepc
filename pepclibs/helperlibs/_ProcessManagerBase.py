@@ -89,8 +89,7 @@ def extract_full_lines(text: str) -> tuple[list[str], str]:
 
     return (full, partial)
 
-def have_enough_lines(output: tuple[list[str], list[str]],
-                      lines: tuple[int, int] = (0, 0)) -> bool:
+def have_enough_lines(output: list[list[str]], lines: tuple[int, int] = (0, 0)) -> bool:
     """
     Check if there are enough lines in the output buffer.
 
@@ -451,7 +450,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                    in stderr. 'lines=(1, 0)' will wait for one line in stdout any number of lines in
                    stderr (ignore stderr lines as a wait criterion). Defaults to no limit.
             join: Whether to join captured output lines into a single string or return them as a
-                  list of strings.
+                  list of strings (trailing newlines are preserved in this case).
 
         Returns:
             A 'ProcWaitResultType' named tuple containing:
@@ -655,43 +654,52 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.run_async()")
 
-    def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-            output_fobjs=(None, None), cwd=None, shell=True, intsh=None) -> ProcWaitResultType:
+    def run(self,
+            command: str,
+            timeout: int | float | None = None,
+            capture_output: bool = True,
+            mix_output: bool = False,
+            join: bool = True,
+            output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+            cwd: str | None = None,
+            shell: bool = True,
+            intsh: bool | None = None) -> ProcWaitResultType:
         """
-        Run command 'command' wait for it to finish. The arguments are as follows.
-          * command - the command to run.
-          * timeout - the longest time for this method to block. If the command takes longer to
-                      finish, this method will raise the 'ErrorTimeOut' exception. The default is
-                      4h (see '_ProcessManagerBase.TIMEOUT').
-          * capture_output - if 'True', this method will intercept the output of the executed
-                             command, otherwise the output will be dropped (default) (or echoed to
-                             to 'output_fobjs').
-          * mix_output - if 'True', the standard output and error streams will be mixed together.
-          * join - controls whether the captured output is returned as a single string or as a list
-                   of lines (trailing newlines are not stripped).
-          * output_fobjs - an optional tuple providing 2 file-like objects where stdout and stderr
-                           of the executed command should be echoed to. If 'mix_output' is 'True',
-                           the second element of the tuple will be ignored and all the output will
-                           be echoed to the first element. By default the command output is not
-                           echoed anywhere.
-          * cwd - the working directory of the process.
-          * shell - whether the command should be run via shell.
-          * intsh - whether the command should run in an already running interactive shell or in a
-                    new shell. The former should be more efficient.
+        Execute a command and wait for it to finish.
 
-        This function returns the 'ProcWaitResultType' named tuple of '(exitcode, stdout, stderr)'
-        elements.
-          * 'stdout' - stdout executed command.
-          * 'stderr' - stdout executed command.
-          * 'exitcode' - exit code of the executed command.
+        Args:
+            command: The command to execute.
+            timeout: Maximum amount of seconds to wait for the command to complete. Raises
+                     'ErrorTimeOut' if the command exceeds this time. Defaults to 'TIMEOUT'.
+            capture_output: If True, capture and return process's stdout and stderr.
+            mix_output: If True, combine standard output and error streams into stdout.
+            join: Return captured output as a single string if True, or as a list of lines if False.
+                  Trailing newlines are preserved.
+            output_fobjs: A tuple of two file-like objects to echo stdout and stderr. If
+                         'mix_output' is True, the second object is ignored, and all output is
+                         echoed to the first. Not affected by 'capture_output'.
+            cwd: The working directory for the process.
+            shell: Run the command through a shell if True.
+            intsh: Use an existing interactive shell if True, or a new shell if False. The former
+                   requires less time to start a new process, as it does not require creating a new
+                   shell. The default value is the value of 'shell'.
 
-        If the 'mix_output' argument is 'True', the 'stderr' part of the returned tuple will be an
-        empty string.  If the 'capture_output' argument is not 'True', the 'stdout' and 'stderr'
-        parts of the returned tuple will be empty strings.
+        Returns:
+            A 'ProcWaitResultType' named tuple with the following elements:
+                - exitcode: The exit code of the executed command.
+                - stdout: The standard output of the executed command (either a string or a list of
+                          line, depending on 'join').
+                - stderr: The standard error of the executed command (either a string or a list of
+                          line, depending on 'join').
+
+        Notes:
+            - If 'mix_output' is True, the 'stderr' part of the returned tuple will be an empty
+              string or list.
+            - If 'capture_output' is False, both 'stdout' and 'stderr' in the returned tuple will be
+              empty strings or lists.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.run")
+        raise NotImplementedError("ProcessManagerBase.run()")
 
     def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
                    output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
