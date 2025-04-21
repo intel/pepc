@@ -1129,25 +1129,28 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.unlink()")
 
-    def rmtree(self, path):
+    def rmtree(self, path: Path):
         """
-        Recursively remove a file or directory at path 'path'. If 'path' is a symlink, the link is
-        removed, but the target of the link does not get removed.
+        Recursively remove a file or directory at the specified path. If the path is a symlink,
+        remove only the symlink without affecting the target it points to.
+
+        Args:
+            path: The file or directory path to remove.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.rmtree")
+        raise NotImplementedError("ProcessManagerBase.rmtree()")
 
-    def abspath(self, path, must_exist=True):
+    def abspath(self, path: Path, must_exist: bool = True) -> Path:
         """
-        Returns absolute real path for 'path'. The arguments are as follows.
-          * path - the path to resolve into the absolute real (no symlinks) path.
-          * must_exist - if 'path' does not exist, raise and exception when 'must_exist' is 'True',
-                         otherwise returns the 'path' value.
+        Resolve the given path to an absolute real path.
+
+        Args:
+            path: The path to resolve into an absolute real path.
+            must_exist: If True, raise an exception if the path does not exist. If False, return the
+                        given path even if it does not exist.
         """
 
-        # pylint: disable=unused-argument
-        raise NotImplementedError("ProcessManagerBase.abspath")
+        raise NotImplementedError("ProcessManagerBase.abspath()")
 
     def mkdtemp(self, prefix: str | None  = None, basedir: Path | None = None) -> Path:
         """
