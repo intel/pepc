@@ -24,7 +24,7 @@ import threading
 import contextlib
 from typing import NamedTuple, IO, Any, cast
 from pathlib import Path
-from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers
+from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers, ToolChecker
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -626,7 +626,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         self._python_path: Path | None = None
 
     def run_async(self,
-                  command: str,
+                  cmd: str,
                   cwd: str | None = None,
                   shell: bool = True,
                   intsh: bool = False,
@@ -637,7 +637,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Execute a command asynchronously without waiting for it to complete.
 
         Args:
-            command: The command to execute.
+            cmd: The command to execute.
             cwd: The working directory for the process.
             shell: Whether to execute the command through a shell.
             intsh: If True, use an existing interactive shell or create a new one. Only one
@@ -655,7 +655,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         raise NotImplementedError("ProcessManagerBase.run_async()")
 
     def run(self,
-            command: str,
+            cmd: str,
             timeout: int | float | None = None,
             capture_output: bool = True,
             mix_output: bool = False,
@@ -668,7 +668,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Execute a command and wait for it to finish.
 
         Args:
-            command: The command to execute.
+            cmd: The command to execute.
             timeout: Maximum amount of seconds to wait for the command to complete. Raises
                      'ErrorTimeOut' if the command exceeds this time. Defaults to 'TIMEOUT'.
             capture_output: If True, capture and return process's stdout and stderr.
@@ -702,7 +702,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         raise NotImplementedError("ProcessManagerBase.run()")
 
     def run_verify(self,
-                   command: str,
+                   cmd: str,
                    timeout: int | float | None = None,
                    capture_output: bool = True,
                    mix_output: bool = False,
@@ -717,7 +717,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         descriptions.
 
         Args:
-            command: The command to execute.
+            cmd: The command to execute.
             timeout: The maximum time to wait for the command to complete.
             capture_output: Whether to capture the command's output.
             mix_output: Whether to merge stdout and stderr into a single stream.
@@ -791,14 +791,27 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.rsync()")
 
-    def _command_not_found(self, cmd, errmsg=None, toolname=None):
+    def _command_not_found(self,
+                           cmd: str,
+                           errmsg: str | None = None,
+                           toolname: str | None = None) -> ErrorNotFound:
         """
-        This method is called when command 'cmd' could not be executed be it was not found. This
-        method formats a helpful error message and returns an exception object.
-        """
-        from pepclibs.helperlibs import ToolChecker # pylint: disable=import-outside-toplevel
+        Handle the case when a command cannot be executed because the executable file was not found.
 
-        pkgname = None
+        Format a helpful error message and return an exception object. Attempt to resolve the tool
+        name to its corresponding OS package name for a more informative suggestion.
+
+        Args
+            cmd: The command that could not be executed.
+            errmsg: An optional error message describing the failure.
+            toolname: An optional name of the tool for which the command was not found. If not
+                      provided, it will be extracted from the command.
+
+        Returns
+            An ErrorNotFound exception object with a detailed error message.
+        """
+
+        pkgname: str | None = None
         if not toolname:
             # Get the tool (program) name.
             toolname = cmd.split()[0].split("/")[-1]
@@ -807,15 +820,15 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             # Try to resolve tool name to the OS package name.
             with ToolChecker.ToolChecker(self) as tchk:
                 pkgname = tchk.tool_to_pkg(toolname)
-        except BaseException as err: # pylint: disable=broad-except
-            _LOG.debug("failed to format the command package suggestion: %s", err)
+        except Exception as err: # pylint: disable=broad-except
+            _LOG.debug("Failed to format the command package suggestion: %s", err)
 
         if pkgname:
             what = f"'{pkgname}' OS package"
         else:
             what = f"'{toolname}' program"
 
-        msg = f"cannot execute the following command{self.hostmsg}:\n  {cmd}\n"
+        msg = f"Cannot execute the following command{self.hostmsg}:\n  {cmd}\n"
         if errmsg:
             msg += f"The error is:\n{Error(errmsg).indent(2)}\n"
         else:
