@@ -1068,6 +1068,18 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         return exitcode == 0
 
+    @staticmethod
+    def time_time() -> float:
+        """
+        Get the current time in seconds since the epoch as a floating-point number (similar to the
+        standard Python `time.time()` function).
+
+        Returns:
+            The current time in seconds since the epoch as a floating-point number.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.time_time()")
+
     def mkdir(self, dirpath: Path, parents: bool = False, exist_ok: bool = False):
         """
         Create a directory.

@@ -362,12 +362,14 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return cast(IO, wfobj)
 
     @staticmethod
-    def time_time():
-        """
-        Return the time in seconds since the epoch as a floating point number (just as the standard
-        python 'time.time()' function).
-        """
-        return time.time()
+    def time_time() -> float:
+        """Refer to 'ProcessManagerBase.time_time()'."""
+
+        try:
+            return time.time()
+        except OSError as err:
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to get the current time:\n{msg}") from None
 
     @staticmethod
     def mkdir(dirpath: Path, parents: bool = False, exist_ok: bool = False):
