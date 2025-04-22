@@ -370,27 +370,25 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return time.time()
 
     @staticmethod
-    def mkdir(dirpath, parents=False, exist_ok=False):
-        """
-        Create a directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdir()' for more
-        information.
-        """
+    def mkdir(dirpath: Path, parents: bool = False, exist_ok: bool = False):
+        """Refer to 'ProcessManagerBase.mkdir()'."""
+
+        # pylint: disable=arguments-differ
 
         try:
             Path(dirpath).mkdir(parents=parents, exist_ok=exist_ok)
         except FileExistsError:
             if not exist_ok:
-                raise ErrorExists(f"path '{dirpath}' already exists") from None
+                raise ErrorExists(f"Path '{dirpath}' already exists") from None
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to create directory '{dirpath}':\n{msg}") from None
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to create directory '{dirpath}':\n{msg}") from None
 
     @staticmethod
-    def mkfifo(path, exist_ok=False):
-        """
-        Create a named pipe. Refer to '_ProcessManagerBase.ProcessManagerBase().mkpipe()' for more
-        information.
-        """
+    def mkfifo(path: Path, exist_ok: bool = False):
+        """Refer to 'ProcessManagerBase.mkfifo()'."""
+
+        # pylint: disable=arguments-differ
 
         try:
             os.mkfifo(path)
