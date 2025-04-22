@@ -196,8 +196,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         exitcode = None
         cdata = None
 
-        self._dbg("SSHProcess._watch_for_marker(): starting with self._check_ll:\n%s\n"
-                  "self._ll:\n%s\ndata:\n%s", str(self._check_ll), str(self._ll), data)
+        self._dbg("SSHProcess._watch_for_marker(): Starting with: self._check_ll: %s\n"
+                  "self._ll: %s\ndata:\n%s", str(self._check_ll), str(self._ll), data)
 
         split = data.rsplit("\n", 1)
         if len(split) > 1:
@@ -225,7 +225,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             # 'self._ll' is a real suspect, check if it looks like the marker.
             self._check_ll = self._ll.startswith(self._marker) or self._marker.startswith(self._ll)
 
-        # OK, if 'self._ll' is still a real suspect, do a full check using the regex: full marker
+        # OK, if 'self._ll' is still a real suspect, do a full check using the regex: full marker #
         # line should contain not only the hash, but also the exit status.
         if self._check_ll and re.match(self._marker_regex, self._ll):
             # Extract the exit code from the 'self._ll' string that has the following form:
@@ -242,38 +242,38 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             self._check_ll = False
             exitcode = int(status)
 
-        self._dbg("SSHProcess._watch_for_marker(): ending with exitcode %s, self._check_ll:\n%s\n"
-                  "self._ll:\n%s\ncdata:\n%s", str(exitcode), str(self._check_ll), self._ll, cdata)
+        self._dbg("SSHProcess._watch_for_marker(): Ending with: exitcode %s, self._check_ll: %s\n"
+                  "self._ll: %s\ncdata:\n%s", str(exitcode), str(self._check_ll), self._ll, cdata)
 
         return (cdata, exitcode)
 
-    def _wait_intsh(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                    lines=(0, 0)):
-        """
-        Implements 'wait()' for the optimized case when the command was executed in the interactive
-        shell process. This case allows us to save time on creating a separate session for
-        commands.
-        """
+    def _wait_intsh(self,
+                    timeout: int | float = 0,
+                    capture_output: bool = True,
+                    output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                    lines: tuple[int, int] = (0, 0)) -> list[list[str]]:
+        """Implement '_wait()' for the interactive shell case. Refer to 'ProcessBase._wait()'."""
 
         start_time = time.time()
 
-        self._dbg("_wait_intsh: starting with self._check_ll %s, self._ll: %s, partial: %s, output:"
-                  "\n%s", str(self._check_ll), str(self._ll), self._partial, str(self._output))
+        self._dbg("SSHProcess._wait_intsh(): Starting with(): self._check_ll: %s\nself._ll: %s",
+                  str(self._check_ll), str(self._ll))
+        self._dbg_log_buffered_output(pfx="SSHProcess._wait_intsh(): Starting with")
 
         while not _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
-            if self.exitcode is not None and self._queue.empty():
-                self._dbg("_wait_intsh: process exited with status %d", self.exitcode)
+            if self.exitcode is not None and (not self._queue or self._queue.empty()):
+                self._dbg("SSHProcess._wait_intsh(): Process exited with status %d", self.exitcode)
                 break
 
             streamid, data = self._get_next_queue_item(timeout)
             if streamid == -1:
                 # Note, 'data' is going to be 'None' in this case.
-                self._dbg("_wait_intsh: nothing in the queue for %d seconds", timeout)
+                self._dbg("SSHProcess._wait_intsh(): Nothing in the queue for %d seconds", timeout)
             elif data is None:
-                raise Error(f"the interactive shell process{self.hostmsg} closed stream {streamid} "
+                raise Error(f"The interactive shell process{self.hostmsg} closed stream {streamid} "
                             f"while running the following command:\n{self.cmd}")
             elif streamid == 0:
-                # The indication that the process has exited is our marker in stdout (stream 0). Our
+                # The indication that the process has exited is the marker in stdout (stream 0).The
                 # goal is to watch for this marker, hide it from the user, because it does not
                 # belong to the output of the process. The marker always starts at the beginning of
                 # line.
@@ -284,83 +284,89 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                                         output_fobjs=output_fobjs)
 
             if not timeout:
-                self._dbg(f"_wait_intsh: timeout is {timeout}, exit immediately")
+                self._dbg(f"SSHProcess._wait_intsh(): Timeout is {timeout}, exit immediately")
                 break
             if time.time() - start_time > timeout:
-                self._dbg("_wait_intsh: stop waiting for the process - timeout")
+                self._dbg("SSHProcess._wait_intsh(): Stop waiting for the process - timeout")
                 break
 
         result = self._get_lines_to_return(lines)
 
         if self._process_is_done():
             # Mark the interactive shell process as vacant.
+            # pylint: disable=protected-access
             acquired = self.pman._acquire_intsh_lock(self.cmd)
             if not acquired:
-                _LOG.warning("failed to mark the interactive shell process as free")
+                _LOG.warning("Failed to mark the interactive shell process as free")
             else:
                 self.pman._intsh_busy = False
                 self.pman._intsh_lock.release()
 
         return result
 
-    def _wait_nointsh(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-                      lines=(0, 0)):
-        """
-        Implements 'wait()' for the non-optimized case when the process was executed in its own
-        separate SSH session.
-        """
+    def _wait_nointsh(self,
+                      timeout: int | float = 0,
+                      capture_output: bool = True,
+                      output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                      lines: tuple[int, int] = (0, 0)) -> list[list[str]]:
+        """Implement '_wait()' for the new SSH session case. Refer to 'ProcessBase._wait()'."""
 
         start_time = time.time()
 
-        self._dbg("_wait_nointsh: starting with partial: %s, output:\n%s",
-                  self._partial, str(self._output))
+        self._dbg_log_buffered_output(pfx="SSHProcess._wait_nointsh(): Starting with")
 
         while not _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None:
-                self._dbg("_wait_nointsh: process exited with status %d", self.exitcode)
+                self._dbg("SSHProcess._wait_nointsh(): Process exited with status %d", self.exitcode)
                 break
 
             streamid, data = self._get_next_queue_item(timeout)
-            self._dbg("_wait_nointsh: _get_next_queue_item() returned: stream %d, data:\n %s",
-                      streamid, data)
+            self._dbg("SSHProcess._wait_nointsh(): _get_next_queue_item() returned: stream %d, "
+                      "data:\n %s", streamid, data)
             if streamid == -1:
-                self._dbg("_wait_nointsh: nothing in the queue for %d seconds", timeout)
+                self._dbg("SSHProcess._wait_nointsh(): Nothing in the queue for %d secs", timeout)
             elif data is not None:
                 self._handle_queue_item(streamid, data, capture_output=capture_output,
                                         output_fobjs=output_fobjs)
             else:
-                self._dbg("_wait_nointsh: stream %d closed", streamid)
+                self._dbg("SSHProcess._wait_nointsh(): Stream %d closed", streamid)
                 # One of the output streams closed.
-                self._threads[streamid].join()
-                self._threads[streamid] = self._streams[streamid] = None
 
-                if not self._streams[0] and not self._streams[1]:
-                    self._dbg("_wait_nointsh: both streams closed")
+                thread = self._threads[streamid]
+                self._threads[streamid] = None
+
+                assert thread is not None
+                thread.join()
+
+                if not self._threads[0] and not self._threads[1]:
+                    self._dbg("SSHProcess._wait_nointsh(): Both streams closed")
                     self.exitcode = self._recv_exit_status_timeout(timeout)
                     break
 
             if not timeout:
-                self._dbg(f"_wait_nointsh: timeout is {timeout}, exit immediately")
+                self._dbg(f"SSHProcess._wait_nointsh(): Timeout is {timeout}, exit immediately")
                 break
             if time.time() - start_time > timeout:
-                self._dbg("_wait_nointsh: stop waiting for the process - timeout")
+                self._dbg("SSHProcess._wait_nointsh(): Stop waiting for the process - timeout")
                 break
 
         return self._get_lines_to_return(lines)
 
-    def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None), lines=(0, 0)):
-        """
-        Implements 'wait()'. The arguments are the same as in 'wait()', but returns a tuple of two
-        lists: '(stdout_lines, stderr_lines)' (lists of stdout/stderr lines).
-        """
+    def _wait(self,
+              timeout: int | float = 0,
+              capture_output: bool = True,
+              output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+              lines: tuple[int, int] = (0, 0)) -> list[list[str]]:
+        """Refer to 'ProcessBase._wait()'."""
 
+        # pylint: disable=protected-access
         if self.pman._intsh and self.pobj == self.pman._intsh.pobj:
-            func = self._wait_intsh
+            method = self._wait_intsh
         else:
-            func = self._wait_nointsh
+            method = self._wait_nointsh
 
-        return func(timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
-                    lines=lines)
+        return method(timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
+                      lines=lines)
 
     def poll(self):
         """

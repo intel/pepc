@@ -125,6 +125,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
 
                 thread = self._threads[streamid]
                 self._threads[streamid] = None
+                self._streams[streamid] = None
 
                 assert thread is not None
                 thread.join()
