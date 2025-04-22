@@ -132,14 +132,20 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         except BaseException as err: # pylint: disable=broad-except
             raise Error(str(err)) from err
 
-    def _recv_exit_status_timeout(self, timeout):
+    def _recv_exit_status_timeout(self, timeout: int | float) -> int | None:
         """
-        This is a version of paramiko channel's 'recv_exit_status()' which supports a timeout.
-        Returns the exit status or 'None' in case of 'timeout'.
+        Wait for the exit status of a remote process with a timeout.
+
+        Args:
+            timeout: Maximum time in seconds to wait for the exit status.
+
+        Returns:
+            The exit status of the remote process, or None if the timeout expires.
         """
 
         chan = self.pobj
-        self._dbg("_recv_exit_status_timeout: waiting for exit status, timeout %s sec", timeout)
+        self._dbg("SSHProcess._recv_exit_status_timeout(): Waiting for exit status, timeout %s sec",
+                  timeout)
 
 #        This is non-hacky, but polling implementation.
 #        if timeout:
@@ -153,18 +159,16 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         # This is hacky, but non-polling implementation.
         if not chan.status_event.wait(timeout=timeout):
-            self._dbg("_recv_exit_status_timeout: exit status not ready for %s seconds", timeout)
+            self._dbg("SSHProcess._recv_exit_status_timeout(): Exit status not ready for %s "
+                      "seconds", timeout)
             return None
 
         exitcode = chan.exit_status
-        self._dbg("_recv_exit_status_timeout: exit status %d", exitcode)
+        self._dbg("SSHProcess._recv_exit_status_timeout(): Exit status %d", exitcode)
         return exitcode
 
-    def _process_is_done(self):
-        """
-        Returns 'True' if all output lines of the process have been returned to the user and the
-        process has exited. Returns 'False' otherwise.
-        """
+    def _process_is_done(self) -> bool:
+        """Refer to 'ProcessBase._process_is_done()'."""
 
         return not self._ll and super()._process_is_done()
 
