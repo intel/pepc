@@ -144,7 +144,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                       original command (e.g., prefixed with a PID print statement).
             shell: Indicates whether the command was executed via a shell.
             streams: A Tuple containing objecs that can be used for writing to process' stdin and
-                     reading from process' stdout, and stderr.
+                     reading from process' stdout, and stderr. Value 'None' means that the stream is
+                     not available.
         """
 
         self.pman = pman

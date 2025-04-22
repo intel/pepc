@@ -40,7 +40,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
                  cmd: str,
                  real_cmd: str,
                  shell: bool,
-                 streams: tuple[IO[bytes], IO[bytes], IO[bytes]]):
+                 streams: tuple[IO[bytes] | None, IO[bytes] | None, IO[bytes] | None]):
         """Refer to 'ProcessBase.__init__()'."""
 
         super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
@@ -201,10 +201,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except OSError as err:
             raise Error(f"cannot execute the following command{self.hostmsg}:\n{real_cmd}\n"
                         f"The error is: {err}") from err
-
-        assert pobj.stdin is not None
-        assert pobj.stdout is not None
-        assert pobj.stderr is not None
 
         streams = (pobj.stdin, pobj.stdout, pobj.stderr)
 
