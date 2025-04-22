@@ -12,8 +12,6 @@ managing files and processes. The idea is to have the same API for doing these r
 the command is executed on the local or remote system.
 """
 
-# pylint: disable=protected-access
-
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
@@ -520,6 +518,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                 errmsg = "".join(output[1]).strip()
             else:
                 errmsg = ""
+            # pylint: disable=protected-access
             raise self.pman._command_not_found(self.cmd, errmsg=errmsg)
 
         if output[0]:
@@ -561,7 +560,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             None: If the process is still running.
-            int: The exit status of the process if it has terminated.
+int: The exit status of the process if it has terminated.
         """
 
         raise NotImplementedError("ProcessBase.poll()")
