@@ -32,6 +32,7 @@ import contextlib
 from pathlib import Path
 from operator import itemgetter
 from typing import IO, Generator
+from collections.abc import Callable
 try:
     import paramiko
 except (ModuleNotFoundError, ImportError):
@@ -74,13 +75,15 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                  cmd: str,
                  real_cmd: str,
                  shell: bool,
-                 streams: tuple[IO[bytes], IO[bytes], IO[bytes]]):
+                 streams: tuple[IO[bytes], Callable[[], bytes], Callable[[], bytes]]):
         """Refer to 'ProcessBase.__init__()'."""
 
         super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
 
         self.pman: SSHProcessManager
         self.pobj: paramiko.Channel
+        self.stdin: IO[bytes]
+        self.streams: list[Callable[[], bytes]]
 
         # The below attributes are used when the process runs in an interactive shell.
         #
@@ -126,7 +129,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         try:
             return self._streams[streamid](size)
-        except BaseException as err:
+        except BaseException as err: # pylint: disable=broad-except
             raise Error(str(err)) from err
 
     def _recv_exit_status_timeout(self, timeout):
@@ -428,21 +431,21 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             chan = self.ssh.get_transport().open_session(timeout=self.connection_timeout)
-        except BaseException as err:
+        except BaseException as err: # pylint: disable=broad-except
             msg = Error(err).indent(2)
             raise Error(f"cannot create a new SSH session for running the following "
                         f"command{self.hostmsg}:\n{cmd}\nThe error is:\n{msg}") from err
 
         try:
             chan.exec_command(cmd)
-        except BaseException as err:
+        except BaseException as err: # pylint: disable=broad-except
             msg = Error(err).indent(2)
             raise Error(f"cannot execute the following command in a new SSH session"
                         f"{self.hostmsg}:\n{cmd}\nThe error is:\n{msg}") from err
 
         try:
             stdin = chan.makefile("wb")
-        except BaseException as err:
+        except BaseException as err: # pylint: disable=broad-except
             msg = Error(err).indent(2)
             raise Error(f"failed to create the stdin file-like object:\n{msg}") from err
 
@@ -734,7 +737,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             self._sftp = self.ssh.open_sftp()
-        except BaseException as err:
+        except BaseException as err: # pylint: disable=broad-except
             msg = Error(err).indent(2)
             raise Error(f"failed to establish SFTP session with {self.hostname}:\n{msg}") from err
 
@@ -1199,7 +1202,7 @@ for entry in os.listdir(path):
             msg = Error(err).indent(2)
             raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
                                f"'{self.username}':\n{msg}") from err
-        except BaseException as err:
+        except BaseException as err: # pylint: disable=broad-except
             msg = Error(err).indent(2)
             raise ErrorConnect(f"cannot establish TCP connection to {self._vhostname} with "
                                f"{timeout} secs time-out:\n{msg}") from err

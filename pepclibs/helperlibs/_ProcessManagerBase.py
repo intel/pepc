@@ -131,7 +131,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                  cmd: str,
                  real_cmd: str,
                  shell: bool,
-                 streams: tuple[IO[bytes], IO[bytes], IO[bytes]]):
+                 streams: tuple[Any, Any, Any]):
         """
         Initialize a class instance.
 
@@ -143,7 +143,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             real_cmd: Actual (full) command that was executed, which may differ slightly from the
                       original command (e.g., prefixed with a PID print statement).
             shell: Indicates whether the command was executed via a shell.
-            streams: A Tuple containing the stdin, stdout, and stderr stream objects of the process.
+            streams: A Tuple containing objecs that can be used for writing to process' stdin and
+                     reading from process' stdout, and stderr.
         """
 
         self.pman = pman

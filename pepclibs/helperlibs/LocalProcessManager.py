@@ -47,6 +47,8 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
 
         self.pman: LocalProcessManager
         self.pobj: subprocess.Popen
+        self.stdin: IO[bytes]
+        self.streams: list[IO[bytes]]
 
     def _fetch_stream_data(self, streamid: int, size: int) -> bytes:
         """Refer to 'ProcessBase._fetch_stream_data()'."""
@@ -59,7 +61,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
 
             try:
                 return self._streams[streamid].read(size)
-            except Exception as err:
+            except Exception as err: # pylint: disable=broad-except
                 if getattr(err, "errno", None) == errno.EAGAIN:
                     continue
                 raise
@@ -162,7 +164,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                   stdout: IO | int = subprocess.PIPE,
                   stderr: IO | int = subprocess.PIPE,
                   env: dict[str, str] | None = None,
-                  newgrp: False = False) -> LocalProcess:
+                  newgrp: bool = False) -> LocalProcess:
         """
         Run a command asynchronously. Implemen 'run_async()' using 'subprocess.Popen()'.
 
@@ -220,7 +222,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                   stdout: IO | None = None,
                   stderr: IO | None = None,
                   env: dict[str, str] | None = None,
-                  newgrp: False = False) -> LocalProcess:
+                  newgrp: bool = False) -> LocalProcess:
         """Refer to 'ProcessManagerBase.run_async()'."""
 
         command = str(cmd)
@@ -351,7 +353,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except FileNotFoundError as err:
             msg = Error(str(err)).indent(2)
             raise ErrorNotFound(f"{errmsg}\n{msg}") from None
-        except Exception as err:
+        except Exception as err: # pylint: disable=broad-except
             msg = Error(str(err)).indent(2)
             raise Error(f"{errmsg}\n{msg}") from None
 
