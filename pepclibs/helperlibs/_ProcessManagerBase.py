@@ -228,7 +228,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Free allocated resources."""
 
-        self._dbg("ProcessBase: close()")
+        self._dbg("ProcessBase.close()")
 
         if hasattr(self, "_threads_exit"):
             # Make sure the threads exit.

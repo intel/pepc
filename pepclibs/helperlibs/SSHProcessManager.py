@@ -1,37 +1,19 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module implements a process manager for running and monitoring processes on a remote host over
-SSH. In addition to this, the process manager provides many file I/O methods, such as 'open()' and
-'exists()'. This allows for doing file I/O on a remote host as if it was a local host.
+Provide API for executing commands and managing files and processes on a remote host via SSH.
+Implement the 'ProcessManagerBase' API, with the idea of having a unified API for executing commands
+locally and remotely.
 
 SECURITY NOTICE: this module and any part of it should only be used for debugging and development
 purposes. No security audit had been done. Not for production use.
-
-There are two ways run commands remotely over SSH: in a new paramiko SSH session, and in the
-interactive shell. The latter way adds complexity, but the reason we have it is because it is much
-faster to run a process this way, comparing to establishing a new session.
-
-The first way of running commands is very straight-forward - we just open a new paramiko SSH session
-and run the command. The session gets closed when the command finishes. The next command requires a
-new session. Creating a new SSH session takes time, so if we need to run many commands, the overhead
-becomes very noticeable.
-
-The second way of running commands is via the interactive shell. We run the 'sh -s' process in a new
-paramiko session, and then just run commands in this shell. One command can run at a time. But we do
-not need to create a new SSH session between the commands. The complication with this method is to
-detect when command has finished. We solve this problem my making each command print a unique random
-hash to 'stdout' when it finishes.
 """
-
-# pylint: disable=no-member
-# pylint: disable=protected-access
 
 # TODO: finish adding type hints to this module.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
@@ -49,7 +31,7 @@ import threading
 import contextlib
 from pathlib import Path
 from operator import itemgetter
-from typing import Generator
+from typing import IO, Generator
 try:
     import paramiko
 except (ModuleNotFoundError, ImportError):
@@ -66,8 +48,88 @@ logging.getLogger("paramiko").setLevel(logging.WARNING)
 
 class SSHProcess(_ProcessManagerBase.ProcessBase):
     """
-    This class represents a remote process that was executed by 'SSHProcessManager'.
+    A remote process created and managed by 'SSHProcessManager'.
+
+    Notes about 'intsh' argument in the "run" methods.
+        * There are two ways run commands remotely over SSH: in a new paramiko SSH session, and in
+          the existing interactive shell session.
+        * Running in a new SSH session is straight-forward, but takes time to establish a new SSH
+          session.
+        * Running in the interactive shell is faster, because it does not require establishing a new
+          SSH session. But the implementation is more complicated.
+        * The interactive shell implementation:
+            - Run 'sh -s' process run in a new paramiko session.
+            - Run commands in this shell. One command can run at a time. This means that one cannot
+              run an asychronous command ('run_async()') in the interactive shell and then run
+              another command in the same interactive shell.
+            - No need to create a new SSH session between the commands
+            - The complication with this method is to detect when command has finished.
+            - This is solved by making each command print a unique random hash to 'stdout' when it
+              finishes.
     """
+
+    def __init__(self,
+                 pman: SSHProcessManager,
+                 pobj: paramiko.Channel,
+                 cmd: str,
+                 real_cmd: str,
+                 shell: bool,
+                 streams: tuple[IO[bytes], IO[bytes], IO[bytes]]):
+        """Refer to 'ProcessBase.__init__()'."""
+
+        super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
+
+        self.pman: SSHProcessManager
+        self.pobj: paramiko.Channel
+
+        # The below attributes are used when the process runs in an interactive shell.
+        #
+        # The marker indicating that the command has finished.
+        self._marker = ""
+        # The regular expression the last line of the command output should match.
+        self._marker_regex = re.compile("")
+        # The last line printed by the command to stdout observed so far.
+        self._ll = ""
+        # Whether the last line ('ll') should be checked against the marker. Used as an optimization
+        # in order to avoid matching the 'll' against the marker too often.
+        self._check_ll = True
+
+        if shell:
+            self._read_pid()
+
+    def _reinit_marker(self):
+        """
+        Reinitialize the marker indicates the completion of a command in the interactive shell. The
+        marker ensures reliable detection of command completion in the interactive shell.
+        """
+
+        # Generate a random string which will be used as the marker, which indicates that the
+        # interactive shell command has finished.
+        randbits = random.getrandbits(256)
+        self._marker = f"--- {randbits:064x}"
+        self._marker_regex = re.compile(f"^{self._marker}, \\d+ ---$")
+
+    def _reinit(self, cmd: str, real_cmd: str, shell: bool):
+        """Refer to 'ProcessBase._reinit()'."""
+
+        super()._reinit(cmd, real_cmd, shell)
+
+        self._ll = ""
+        self._check_ll = True
+        self._lines_cnt = [0, 0]
+
+        if shell:
+            self._read_pid()
+
+    def close(self):
+        """Free allocated resources."""
+
+        self._dbg("SSHProcessManager.close()")
+
+        # If this is the an interactive shell process - do not close it. It'll be closed in
+        # 'SSHProcessManager.close()' instead.
+        if not self._marker:
+            super().close()
 
     def _fetch_stream_data(self, streamid, size):
         """Fetch up to 'size' bytes from stdout or stderr of the process."""
@@ -342,66 +404,6 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         self._dbg("_read_pid: PID is %s for command: %s", pid, self.cmd)
         self.pid = int(pid)
-
-    def _reinit_marker(self):
-        """
-        Pick a new interactive shell command marker. The marker is used as an indication that the
-        command executed in the interactive shell finished.
-        """
-
-        # Generate a random string which will be used as the marker, which indicates that the
-        # interactive shell command has finished.
-        randbits = random.getrandbits(256)
-        self._marker = f"--- {randbits:064x}"
-        self._marker_regex = re.compile(f"^{self._marker}, \\d+ ---$")
-
-    def _reinit(self, cmd, real_cmd, shell):
-        """
-        Re-initialize the interactive shell process object when a new command is executed. The
-        arguments are the same as in 'ProcessBase._reinit()'.
-        """
-
-        super()._reinit(cmd, real_cmd, shell)
-
-        self._ll = ""
-        self._check_ll = True
-        self._lines_cnt = [0, 0]
-
-        if shell:
-            self._read_pid()
-
-    def __init__(self, pman, pobj, cmd, real_cmd, shell, streams):
-        """
-        Initialize a class instance. The arguments are the same as in 'ProcessBase.__init__()'.
-        """
-
-        super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
-
-        #
-        # The below attributes are used when the process runs in an interactive shell.
-        #
-        # The marker indicating that the command has finished.
-        self._marker = None
-        # The regular expression the last line of the command output should match.
-        self._marker_regex = None
-        # The last line printed by the command to stdout observed so far.
-        self._ll = ""
-        # Whether the last line ('ll') should be checked against the marker. Used as an optimization
-        # in order to avoid matching the 'll' against the marker too often.
-        self._check_ll = True
-
-        if shell:
-            self._read_pid()
-
-    def close(self):
-        """Free allocated resources."""
-
-        self._dbg("SSHProcessManager: close()")
-
-        # If this is the special interactive shell process - do not close it. It'll be closed in
-        # 'SSHProcessManager.close()' instead.
-        if not self._marker:
-            super().close()
 
 class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """

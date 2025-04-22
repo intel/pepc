@@ -41,7 +41,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
                  real_cmd: str,
                  shell: bool,
                  streams: tuple[IO[bytes], IO[bytes], IO[bytes]]):
-        """Refer to 'ProcessBase._fetch_stream_data()'."""
+        """Refer to 'ProcessBase.__init__()'."""
 
         super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
 
