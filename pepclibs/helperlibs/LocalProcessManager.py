@@ -155,16 +155,40 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     commands locally and remotely.
     """
 
-    def _run_async(self, command, cwd=None, shell=True, stdin=None, stdout=None, stderr=None,
-                   env=None, newgrp=False) -> LocalProcess:
-        """Implements 'run_async()'."""
+    def _run_async(self,
+                  command: str | Path,
+                  cwd: str | None = None,
+                  shell: bool = True,
+                  stdin: IO | None = None,
+                  stdout: IO | None = None,
+                  stderr: IO | None = None,
+                  env: dict[str, str] | None = None,
+                  newgrp: False = False) -> LocalProcess:
+        """
+        Run a command asynchronously. Implemen 'run_async()' using 'subprocess.Popen()'.
 
-        if not stdin:
-            stdin = subprocess.PIPE
-        if not stdout:
-            stdout = subprocess.PIPE
-        if not stderr:
-            stderr = subprocess.PIPE
+        Args:
+            command: The command to execute. Can be a string or a 'pathlib.Path' pointing to the
+                     file to execute.
+            cwd: The working directory for the process.
+            shell: Whether to execute the command through a shell.
+            stdin: The standard input stream to use. Defaults to a pipe.
+            stdout: The standard output stream to use. Defaults to a pipe.
+            stderr: The standard error stream to use. Defaults to a pipe.
+            env: Environment variables for the process.
+            newgrp: Create a new group for the process, as opposed to using the parent process
+                    group.
+
+        Returns:
+            A 'LocalProcess' object representing the executed asynchronous process.
+        """
+
+        popen_stdin: IO | int = stdin if stdin is not None else subprocess.PIPE
+        popen_stdout: IO | int = stdout if stdout is not None else subprocess.PIPE
+        popen_stderr: IO | int = stderr if stderr is not None else subprocess.PIPE
+
+        command = str(command)
+        cmd: str | list[str]
 
         if shell:
             real_cmd = cmd = f"exec {command}"
@@ -173,7 +197,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             cmd = shlex.split(command)
 
         try:
-            pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr,
+            pobj = subprocess.Popen(cmd, stdin=popen_stdin, stdout=popen_stdout, stderr=popen_stderr,
                                     cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
         except FileNotFoundError as err:
             raise self._command_not_found(command, str(err))
@@ -181,33 +205,38 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"cannot execute the following command{self.hostmsg}:\n{real_cmd}\n"
                         f"The error is: {err}") from err
 
+        assert pobj.stdin is not None
+        assert pobj.stdout is not None
+        assert pobj.stderr is not None
+
         streams = (pobj.stdin, pobj.stdout, pobj.stderr)
+
         proc = LocalProcess(self, pobj, command, real_cmd, shell, streams)
         proc.pid = pobj.pid
+
         return proc
 
-    def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
-                  stderr=None, env=None, newgrp=False):
-        """
-        Run command 'command' on the local host using 'Popen'. Refer to
-        'ProcessManagerBase.run_async()' for more information.
+    def run_async(self,
+                  cmd: str | Path,
+                  cwd: str | None = None,
+                  shell: bool = True,
+                  intsh: bool = False,
+                  stdin: IO | None = None,
+                  stdout: IO | None = None,
+                  stderr: IO | None = None,
+                  env: dict[str, str] | None = None,
+                  newgrp: False = False) -> LocalProcess:
+        """Refer to 'ProcessManagerBase.run_async()'."""
 
-        Notes.
+        command = str(cmd)
 
-        2. If the 'newgrp' argument is 'True', then executed process gets a new session ID.
-        3. The 'intsh' argument is ignored.
-        """
-
-        # pylint: disable=unused-argument,arguments-differ
-        if cwd:
-            cwd_msg = f"\nWorking directory: {cwd}"
-        else:
-            cwd_msg = ""
-        _LOG.debug("running the following local command asynchronously (shell %s, newgrp %s):\n"
-                   "%s%s", str(shell), str(newgrp), command, cwd_msg)
-
-        # Allow for 'command' to be a 'pathlib.Path' object which Paramiko does not accept.
-        command = str(command)
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            if cwd:
+                cwd_msg = f"\nWorking directory: {cwd}"
+            else:
+                cwd_msg = ""
+            _LOG.debug("Running the following local command asynchronously (shell %s, newgrp %s):\n"
+                    "%s%s", str(shell), str(newgrp), command, cwd_msg)
 
         return self._run_async(command, cwd=cwd, shell=shell, stdin=stdin, stdout=stdout,
                                stderr=stderr, env=env, newgrp=newgrp)

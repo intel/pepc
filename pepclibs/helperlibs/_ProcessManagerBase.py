@@ -669,7 +669,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         self._python_path: Path | None = None
 
     def run_async(self,
-                  cmd: str,
+                  cmd: str | Path,
                   cwd: str | None = None,
                   shell: bool = True,
                   intsh: bool = False,
@@ -682,7 +682,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Execute a command asynchronously without waiting for it to complete.
 
         Args:
-            cmd: The command to execute.
+            cmd: The command to execute. Can be a string or a 'pathlib.Path' pointing to the file to
+                 execute.
             cwd: The working directory for the process.
             shell: Whether to execute the command through a shell.
             intsh: If True, use an existing interactive shell or create a new one. Only one
