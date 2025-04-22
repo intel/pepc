@@ -36,7 +36,7 @@ from collections.abc import Callable
 try:
     import paramiko
 except (ModuleNotFoundError, ImportError):
-    from pepclibs.helperlibs import DummyParamiko as paramiko
+    from pepclibs.helperlibs import DummyParamiko as paramiko  # type: ignore[no-redef]
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
@@ -411,6 +411,134 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     SECURITY NOTICE: this class and any part of it should only be used for debugging and development
     purposes. No security audit had been done. Not for production use.
     """
+
+    def __init__(self, hostname=None, ipaddr=None, port=None, username=None, password="",
+                 privkeypath=None, timeout=None):
+        """
+        Initialize a class instance and establish SSH connection to host 'hostname'. The arguments
+        are as follows.
+          o hostname - name of the host to connect to.
+          o ipaddr - optional IP address of the host to connect to. If specified, then it is used
+            instead of hostname, otherwise hostname is used.
+          o port - optional port number to connect to, default is 22.
+          o username - optional user name to use when connecting.
+          o password - optional password to authenticate the 'username' user (not secure!).
+          o privkeypath - optional public key path to use for authentication.
+          o timeout - optional SSH connection timeout value in seconds.
+
+        The 'hostname' argument being 'None' is a special case - this module falls-back to using the
+        'LocalProcessManager' module and runs all all operations locally without actually involving
+        SSH or networking. This is different to using 'localhost', which does involve SSH.
+
+        SECURITY NOTICE: this class and any part of it should only be used for debugging and
+        development purposes. No security audit had been done. Not for production use.
+        """
+
+        super().__init__()
+
+        self.ssh = None
+        self.is_remote = True
+        self.hostname = hostname
+        self.hostmsg = f" on host '{hostname}'"
+        if not timeout:
+            timeout = 60
+        self.connection_timeout = float(timeout)
+        if port is None:
+            port = 22
+        self.port = port
+        look_for_keys = False
+        self.username = username
+        self.password = password
+        self.privkeypath = privkeypath
+
+        # The command to use for figuring out full paths in the 'which()' method.
+        self._which_cmd = None
+
+        self._sftp = None
+        # The interactive shell session.
+        self._intsh: SSHProcess | None = None
+        # Whether we already run a process in the interactive shell.
+        self._intsh_busy = False
+        # A lock protecting 'self._intsh_busy' and 'self._intsh'. Basically this lock makes sure we
+        # always run exactly one process in the interactive shell.
+        self._intsh_lock = threading.Lock()
+        # The "verbose" host name. The 'self.hostname', but with more details, like the IP address.
+        self._vhostname = None
+
+        if not self.username:
+            self.username = os.getenv("USER")
+            if not self.username:
+                self.username = Trivial.get_username()
+
+        if ipaddr:
+            connhost = ipaddr
+            self._vhostname = f"{hostname} ({ipaddr})"
+        else:
+            connhost = self._cfg_lookup("hostname", hostname, self.username)
+            if connhost:
+                self._vhostname = f"{hostname} ({connhost})"
+            else:
+                self._vhostname = connhost = hostname
+
+        if not self.privkeypath:
+            # Try finding the key filename from the SSH configuration files.
+            look_for_keys = True
+            try:
+                self.privkeypath = self._lookup_privkey(hostname, self.username)
+            except Exception as err:
+                msg = Error(str(err)).indent(2)
+                _LOG.debug(f"private key lookup falied:\n{msg}")
+
+        key_filename = str(self.privkeypath) if self.privkeypath else None
+
+        if key_filename:
+            # Private SSH key sanity checks.
+            try:
+                mode = os.stat(key_filename).st_mode
+            except OSError:
+                raise Error(f"'stat()' failed for private SSH key at '{key_filename}'") from None
+
+            if not stat.S_ISREG(mode):
+                raise Error(f"private SSH key at '{key_filename}' is not a regular file")
+
+            if mode & (stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH):
+                raise Error(f"private SSH key at '{key_filename}' permissions are too wide: make "
+                            f" sure 'others' cannot read/write/execute it")
+
+        _LOG.debug("establishing SSH connection to %s, port %d, username '%s', timeout '%s', "
+                   "priv. key '%s', SSH pman object ID: %s", self._vhostname, port, self.username,
+                   timeout, self.privkeypath, id(self))
+
+        try:
+            self.ssh = paramiko.SSHClient()
+            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            # We expect to be authenticated either with the key or an empty password.
+            self.ssh.connect(username=self.username, hostname=connhost, port=port,
+                             key_filename=key_filename, timeout=self.connection_timeout,
+                             password=self.password, allow_agent=False, look_for_keys=look_for_keys)
+        except paramiko.AuthenticationException as err:
+            msg = Error(err).indent(2)
+            raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
+                               f"'{self.username}':\n{msg}") from err
+        except BaseException as err: # pylint: disable=broad-except
+            msg = Error(err).indent(2)
+            raise ErrorConnect(f"cannot establish TCP connection to {self._vhostname} with "
+                               f"{timeout} secs time-out:\n{msg}") from err
+
+    def close(self):
+        """Close the SSH connection."""
+
+        _LOG.debug("closing SSH connection to %s (port %d, username '%s', priv. key '%s', SSH pman "
+                   "object ID: %s", self._vhostname, self.port, self.username, self.privkeypath,
+                   id(self))
+
+        if self._intsh:
+            with contextlib.suppress(BaseException):
+                self._intsh.pobj.send("exit\n")
+
+        ClassHelpers.close(self, close_attrs=("_sftp", "_intsh", "ssh",))
+
+        super().close()
 
     @staticmethod
     def _format_cmd_for_pid(cmd, cwd=None):
@@ -1098,131 +1226,3 @@ for entry in os.listdir(path):
         if privkeypath:
             privkeypath = Path(privkeypath)
         return privkeypath
-
-    def __init__(self, hostname=None, ipaddr=None, port=None, username=None, password="",
-                 privkeypath=None, timeout=None):
-        """
-        Initialize a class instance and establish SSH connection to host 'hostname'. The arguments
-        are as follows.
-          o hostname - name of the host to connect to.
-          o ipaddr - optional IP address of the host to connect to. If specified, then it is used
-            instead of hostname, otherwise hostname is used.
-          o port - optional port number to connect to, default is 22.
-          o username - optional user name to use when connecting.
-          o password - optional password to authenticate the 'username' user (not secure!).
-          o privkeypath - optional public key path to use for authentication.
-          o timeout - optional SSH connection timeout value in seconds.
-
-        The 'hostname' argument being 'None' is a special case - this module falls-back to using the
-        'LocalProcessManager' module and runs all all operations locally without actually involving
-        SSH or networking. This is different to using 'localhost', which does involve SSH.
-
-        SECURITY NOTICE: this class and any part of it should only be used for debugging and
-        development purposes. No security audit had been done. Not for production use.
-        """
-
-        super().__init__()
-
-        self.ssh = None
-        self.is_remote = True
-        self.hostname = hostname
-        self.hostmsg = f" on host '{hostname}'"
-        if not timeout:
-            timeout = 60
-        self.connection_timeout = float(timeout)
-        if port is None:
-            port = 22
-        self.port = port
-        look_for_keys = False
-        self.username = username
-        self.password = password
-        self.privkeypath = privkeypath
-
-        # The command to use for figuring out full paths in the 'which()' method.
-        self._which_cmd = None
-
-        self._sftp = None
-        # The interactive shell session.
-        self._intsh = None
-        # Whether we already run a process in the interactive shell.
-        self._intsh_busy = False
-        # A lock protecting 'self._intsh_busy' and 'self._intsh'. Basically this lock makes sure we
-        # always run exactly one process in the interactive shell.
-        self._intsh_lock = threading.Lock()
-        # The "verbose" host name. The 'self.hostname', but with more details, like the IP address.
-        self._vhostname = None
-
-        if not self.username:
-            self.username = os.getenv("USER")
-            if not self.username:
-                self.username = Trivial.get_username()
-
-        if ipaddr:
-            connhost = ipaddr
-            self._vhostname = f"{hostname} ({ipaddr})"
-        else:
-            connhost = self._cfg_lookup("hostname", hostname, self.username)
-            if connhost:
-                self._vhostname = f"{hostname} ({connhost})"
-            else:
-                self._vhostname = connhost = hostname
-
-        if not self.privkeypath:
-            # Try finding the key filename from the SSH configuration files.
-            look_for_keys = True
-            try:
-                self.privkeypath = self._lookup_privkey(hostname, self.username)
-            except Exception as err:
-                msg = Error(str(err)).indent(2)
-                _LOG.debug(f"private key lookup falied:\n{msg}")
-
-        key_filename = str(self.privkeypath) if self.privkeypath else None
-
-        if key_filename:
-            # Private SSH key sanity checks.
-            try:
-                mode = os.stat(key_filename).st_mode
-            except OSError:
-                raise Error(f"'stat()' failed for private SSH key at '{key_filename}'") from None
-
-            if not stat.S_ISREG(mode):
-                raise Error(f"private SSH key at '{key_filename}' is not a regular file")
-
-            if mode & (stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH):
-                raise Error(f"private SSH key at '{key_filename}' permissions are too wide: make "
-                            f" sure 'others' cannot read/write/execute it")
-
-        _LOG.debug("establishing SSH connection to %s, port %d, username '%s', timeout '%s', "
-                   "priv. key '%s', SSH pman object ID: %s", self._vhostname, port, self.username,
-                   timeout, self.privkeypath, id(self))
-
-        try:
-            self.ssh = paramiko.SSHClient()
-            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            # We expect to be authenticated either with the key or an empty password.
-            self.ssh.connect(username=self.username, hostname=connhost, port=port,
-                             key_filename=key_filename, timeout=self.connection_timeout,
-                             password=self.password, allow_agent=False, look_for_keys=look_for_keys)
-        except paramiko.AuthenticationException as err:
-            msg = Error(err).indent(2)
-            raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
-                               f"'{self.username}':\n{msg}") from err
-        except BaseException as err: # pylint: disable=broad-except
-            msg = Error(err).indent(2)
-            raise ErrorConnect(f"cannot establish TCP connection to {self._vhostname} with "
-                               f"{timeout} secs time-out:\n{msg}") from err
-
-    def close(self):
-        """Close the SSH connection."""
-
-        _LOG.debug("closing SSH connection to %s (port %d, username '%s', priv. key '%s', SSH pman "
-                   "object ID: %s", self._vhostname, self.port, self.username, self.privkeypath,
-                   id(self))
-
-        if self._intsh:
-            with contextlib.suppress(BaseException):
-                self._intsh.pobj.send("exit\n")
-
-        ClassHelpers.close(self, close_attrs=("_sftp", "_intsh", "ssh",))
-
-        super().close()
