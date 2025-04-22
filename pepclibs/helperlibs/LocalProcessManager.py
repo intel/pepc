@@ -12,7 +12,6 @@ the 'ProcessManagerBase' API, with the idea of having a unified API for executin
 and remotely.
 """
 
-# TODO: finish adding type hints to this module.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
@@ -20,6 +19,7 @@ import time
 import shlex
 import errno
 import shutil
+import tempfile
 import subprocess
 from pathlib import Path
 from typing import IO, cast, Generator
@@ -113,7 +113,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
             if streamid == -1:
                 self._dbg("LocalProcess._wait(): Nothing in the queue for %d seconds", timeout)
                 break
- 
+
             if data is not None:
                 self._handle_queue_item(streamid, data, capture_output=capture_output,
                                         output_fobjs=output_fobjs)
@@ -395,8 +395,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def lsdir(self, path: Path, must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
-        # pylint: disable=arguments-differ
-
         if not must_exist and not path.exists():
             return
 
@@ -423,88 +421,77 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         yield from sorted(info.values(), key=itemgetter("ctime"), reverse=True)
 
-    @staticmethod
-    def exists(path):
-        """Returns 'True' if path 'path' exists."""
+    def exists(self, path: Path) -> bool:
+        """Refer to 'ProcessManagerBase.exists()'."""
 
         try:
             return Path(path).exists()
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to check if '{path}' exists:\n{msg}") from None
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to check if '{path}' exists:\n{msg}") from None
 
-    @staticmethod
-    def is_file(path):
-        """Return 'True' if path 'path' exists an it is a regular file."""
+    def is_file(self, path: Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_file()'."""
 
         try:
             return Path(path).is_file()
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to check if '{path}' exists and it is a regular file:\n{msg}") \
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to check if '{path}' exists and it is a regular file:\n{msg}") \
                         from None
 
-    @staticmethod
-    def is_dir(path):
-        """Return 'True' if path 'path' exists an it is a directory."""
+    def is_dir(self, path: Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_dir()'."""
 
         try:
             return Path(path).is_dir()
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to check if '{path}' exists and it is a directory:\n{msg}") \
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to check if '{path}' exists and it is a directory:\n{msg}") \
                         from None
 
-    @staticmethod
-    def is_exe(path):
-        """Return 'True' if path 'path' exists an it is an executable file."""
+    def is_exe(self, path: Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_exe()'."""
 
         try:
             return Path(path).is_file() and os.access(path, os.X_OK)
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to check if '{path}' exists and it is an executable file:\n"
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to check if '{path}' exists and it is an executable file:\n"
                         f"{msg}") from None
 
-    @staticmethod
-    def is_socket(path):
-        """Return 'True' if path 'path' exists an it is a Unix socket file."""
+    def is_socket(self, path: Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_socket()'."""
 
         try:
             return Path(path).is_socket()
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to check if '{path}' exists and it is a Unix socket file:\n"
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to check if '{path}' exists and it is a Unix socket file:\n"
                         f"{msg}") from None
 
-    @staticmethod
-    def get_mtime(path):
-        """Returns the modification time of a file or directory at path 'path'."""
+    def get_mtime(self, path: Path) -> float:
+        """Refer to 'ProcessManagerBase.get_mtime()'."""
 
         try:
             return Path(path).stat().st_mtime
         except FileNotFoundError:
             raise ErrorNotFound(f"'{path}' does not exist") from None
         except OSError as err:
-            msg = Error(err).indent(2)
+            msg = Error(str(err)).indent(2)
             raise Error(f"'stat()' failed for '{path}':\n{msg}") from None
 
-    @staticmethod
-    def unlink(path):
-        """Remove a file a path 'path'."""
+    def unlink(self, path: Path):
+        """Refer to 'ProcessManagerBase.unlink()'."""
 
         try:
             os.unlink(Path(path))
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to remove '{path}':\n{msg}") from None
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to remove '{path}':\n{msg}") from None
 
-    @staticmethod
-    def rmtree(path):
-        """
-        Create a temporary directory. Refer to '_ProcessManagerBase.ProcessManagerBase().rmtree()'
-        for more information.
-        """
+    def rmtree(self, path: Path):
+        """Refer to 'ProcessManagerBase.rmtree()'."""
 
         path = Path(path)
 
@@ -523,69 +510,53 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 if retry:
                     retry -= 1
                     continue
-                msg = Error(err).indent(2)
-                raise Error(f"failed to remove {path}:\n{msg}") from err
+                msg = Error(str(err)).indent(2)
+                raise Error(f"Failed to remove {path}:\n{msg}") from err
             break
 
-    @staticmethod
-    def abspath(path, must_exist=True):
-        """
-        Create a temporary directory. Refer to '_ProcessManagerBase.ProcessManagerBase().abspath()'
-        for more information.
-        """
+    def abspath(self, path: Path, must_exist: bool = True) -> Path:
+        """Refer to 'ProcessManagerBase.abspath()'."""
 
         try:
             rpath = Path(path).resolve()
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to get real path for '{path}':\n{msg}") from None
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to get real path for '{path}':\n{msg}") from None
 
         if must_exist and not rpath.exists():
-            raise ErrorNotFound(f"path '{rpath}' does not exist")
+            raise ErrorNotFound(f"Path '{rpath}' does not exist")
 
         return rpath
 
-    @staticmethod
-    def mkdtemp(prefix: str | None  = None, basedir: Path | None = None) -> Path:
-        """
-        Create a temporary directory. Refer to '_ProcessManagerBase.ProcessManagerBase().mkdtemp()'
-        for more information.
-        """
-
-        import tempfile # pylint: disable=import-outside-toplevel
+    def mkdtemp(self, prefix: str | None  = None, basedir: Path | None = None) -> Path:
+        """Refer to 'ProcessManagerBase.mkdtemp()'."""
 
         try:
             path = tempfile.mkdtemp(prefix=prefix, dir=basedir)
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to create a temporary directory:\n{msg}") from err
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to create a temporary directory:\n{msg}") from err
 
-        _LOG.debug("created a temporary directory '%s'", path)
+        _LOG.debug("Created a temporary directory '%s'", path)
         return Path(path)
 
-    @staticmethod
-    def get_envar(envar):
-        """Return the value of the environment variable 'envar'."""
+    def get_envar(self, envar: str) -> str | None:
+        """Refer to 'ProcessManagerBase.get_envar()'."""
+
         return os.environ.get(envar)
 
-    @staticmethod
-    def get(src, dst):
-        """Copy a file or directory from 'src' to 'dst'."""
+    def get(self, src: Path, dst: Path):
+        """Refer to 'ProcessManagerBase.get()'."""
 
         try:
             shutil.copy(src, dst)
         except (OSError, shutil.Error) as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to copy files '{src}' to '{dst}':\n{msg}") from err
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to copy files '{src}' to '{dst}':\n{msg}") from err
 
-    @staticmethod
-    def which(program, must_find=True):
-        """
-        Find and return full path to a program 'program'. Refer to
-        '_ProcessManagerBase.ProcessManagerBase().which()' for more information.
-        """
+    def which(self, program: str | Path, must_find: bool = True):
+        """Refer to 'ProcessManagerBase.which()'."""
 
-        program = Path(program)
         if os.access(program, os.F_OK | os.X_OK) and Path(program).is_file():
             return program
 
@@ -597,5 +568,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 return candidate
 
         if must_find:
-            raise ErrorNotFound(f"program '{program}' was not found in $PATH ({envpaths})")
+            raise ErrorNotFound(f"Program '{program}' was not found in $PATH ({envpaths})")
+
         return None

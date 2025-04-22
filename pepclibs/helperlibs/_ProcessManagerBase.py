@@ -1258,7 +1258,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.mkdtemp()")
 
-    def get_envar(self, envar: str) -> str:
+    def get_envar(self, envar: str) -> str | None:
         """
         Get the value of an environment variable.
 
@@ -1266,12 +1266,23 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             envar: The name of the environment variable to retrieve.
 
         Returns:
-            The value of the environment variable.
+            The value of the environment variable as a string, or None if the variable is not set.
         """
 
         raise NotImplementedError("ProcessManagerBase.get_envar()")
 
-    def which(self, program: str, must_find: bool = True):
+    def get(self, src: Path, dst: Path):
+        """
+        Copy a file or directory from the source path to the destination path.
+
+        Args:
+            src: The source path of the file or directory to copy.
+            dst: The destination path where the file or directory will be copied.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.get()")
+
+    def which(self, program: str | Path, must_find: bool = True):
         """
         Locate the full path of a program by searching in PATH.
 
