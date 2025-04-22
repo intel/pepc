@@ -156,7 +156,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """
 
     def _run_async(self, command, cwd=None, shell=True, stdin=None, stdout=None, stderr=None,
-                   bufsize=0, env=None, newgrp=False) -> LocalProcess:
+                   env=None, newgrp=False) -> LocalProcess:
         """Implements 'run_async()'."""
 
         if not stdin:
@@ -173,7 +173,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             cmd = shlex.split(command)
 
         try:
-            pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, bufsize=bufsize,
+            pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr,
                                     cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
         except FileNotFoundError as err:
             raise self._command_not_found(command, str(err))
@@ -187,14 +187,13 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return proc
 
     def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
-                  stderr=None, bufsize=0, env=None, newgrp=False,):
+                  stderr=None, env=None, newgrp=False,):
         """
         Run command 'command' on the local host using 'Popen'. Refer to
         'ProcessManagerBase.run_async()' for more information.
 
         Notes.
 
-        1. The 'bufsize' and 'env' arguments are the same as in 'Popen()'.
         2. If the 'newgrp' argument is 'True', then executed process gets a new session ID.
         3. The 'intsh' argument is ignored.
         """
@@ -211,10 +210,10 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         command = str(command)
 
         return self._run_async(command, cwd=cwd, shell=shell, stdin=stdin, stdout=stdout,
-                               stderr=stderr, bufsize=bufsize, env=env, newgrp=newgrp)
+                               stderr=stderr, env=env, newgrp=newgrp)
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-            output_fobjs=(None, None), cwd=None, shell=True, intsh=None, bufsize=0, env=None,
+            output_fobjs=(None, None), cwd=None, shell=True, intsh=None, env=None,
             newgrp=False):
         """
         Run command 'command' on the local host and wait for it to finish. Refer to
@@ -222,7 +221,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         Notes.
 
-        1. The 'bufsize' and 'env' arguments are the same as in 'Popen()'.
         2. If the 'newgrp' argument is 'True', then executed process gets a new session ID.
         3. The 'intsh' argument is ignored.
         """
@@ -242,7 +240,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             stderr = subprocess.PIPE
 
         with self._run_async(command, stdout=stdout, stderr=stderr, cwd=cwd, shell=shell,
-                             bufsize=bufsize, env=env, newgrp=newgrp) as proc:
+                             env=env, newgrp=newgrp) as proc:
             # Wait for the command to finish and handle the time-out situation.
             result = proc.wait(capture_output=capture_output, output_fobjs=output_fobjs,
                                timeout=timeout, join=join)
@@ -259,7 +257,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return result
 
     def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-                   output_fobjs=(None, None), cwd=None, shell=True, intsh=None, bufsize=0, env=None,
+                   output_fobjs=(None, None), cwd=None, shell=True, intsh=None, env=None,
                    newgrp=False):
         """
         Same as 'run()' but verifies the command's exit code and raises an exception if it is not 0.
@@ -268,8 +266,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         # pylint: disable=unused-argument,arguments-differ
         result = self.run(command, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs,
-                          cwd=cwd, shell=shell, intsh=intsh, bufsize=bufsize, env=env,
-                          newgrp=newgrp)
+                          cwd=cwd, shell=shell, intsh=intsh, env=env, newgrp=newgrp)
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
