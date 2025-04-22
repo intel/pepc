@@ -402,7 +402,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
               timeout: int | float = 0,
               capture_output: bool = True,
               output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
-              lines: tuple[int, int] = (0, 0)) -> tuple[list[str], list[str]]:
+              lines: tuple[int, int] = (0, 0)) -> list[list[str]]:
         """
         Wait for the process to complete and optionally capture its output.
 
@@ -416,7 +416,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             lines: A tuple specifying the maximum number of lines to capture from stdout and stderr.
 
         Returns:
-            A tuple containing two lists: the captured stdout lines and stderr lines.
+            A list containing two lists: the captured stdout lines and stderr lines.
         """
 
         raise NotImplementedError("ProcessBase._wait()")
@@ -543,24 +543,13 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=exitcode)
 
-    def _dbg(self, fmt: str, *args: Any):
-        """Print a debugging message."""
-
-        if self.debug:
-            pfx = ""
-            if self.debug_id:
-                pfx += f"{self.debug_id}: "
-            if self.pid is not None:
-                pfx += f"PID {self.pid}: "
-            _LOG.debug(pfx + fmt, *args)
-
     def poll(self) -> int | None:
         """
         Check if the process is still running.
 
         Returns:
             None: If the process is still running.
-int: The exit status of the process if it has terminated.
+            int: The exit status of the process if it has terminated.
         """
 
         raise NotImplementedError("ProcessBase.poll()")
@@ -600,6 +589,62 @@ int: The exit status of the process if it has terminated.
 
         return self.pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode, timeout=timeout,
                                              startmsg=startmsg, failed=failed)
+
+    def _dbg(self, fmt: str, *args: Any):
+        """Print a debugging message."""
+
+        if self.debug:
+            pfx = ""
+            if self.debug_id:
+                pfx += f"{self.debug_id}: "
+            if self.pid is not None:
+                pfx += f"PID {self.pid}: "
+            _LOG.debug(pfx + fmt, *args)
+
+    def _dbg_log_buffered_output(self, pfx: str):
+        """
+        Log buffered output contents for debugging purposes.
+
+        Args:
+            pfx: A prefix string to include in the log message.
+
+        Returns:
+            None
+        """
+
+        if _LOG.getEffectiveLevel() != Logging.DEBUG:
+            return
+
+        if self._partial[0]:
+            partial_stdout = "Partial stdout line: " + self._partial[0]
+        else:
+            partial_stdout = "No partial stdout line"
+
+        if self._partial[1]:
+            partial_stderr = "Partial stderr line: " + self._partial[1]
+        else:
+            partial_stderr = "No partial stderr line"
+
+        if self._output[0]:
+            stdout = self._output[0][0]
+            if len(self._output[0]) > 1:
+                stdout += " ... strip ...\n"
+                stdout += self._output[0][-1]
+            stdout = "First and last lines of stdout:\n" + stdout.rstrip()
+        else:
+            stdout = "No buffered stdout"
+
+        if self._output[0]:
+            stderr = self._output[1][0]
+            if len(self._output[1]) > 1:
+                stderr += " ... strip ...\n"
+                stderr += self._output[1][-1]
+            stderr = "First and last lines of stderr:\n" + stderr.rstrip()
+        else:
+            stdout = "No buffered stderr"
+
+        self._dbg("%s: Buffered output:\n%s\n%s\n%s\n%s\n",
+                  pfx, partial_stdout, partial_stderr, stdout, stderr)
 
 class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     """

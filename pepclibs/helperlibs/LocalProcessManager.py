@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Provide API for executing commands and managing files and processes on the local host. Implements
+Provide API for executing commands and managing files and processes on the local host. Implement
 the 'ProcessManagerBase' API, with the idea of having a unified API for executing commands locally
 and remotely.
 """
@@ -42,7 +42,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
                  real_cmd: str,
                  shell: bool,
                  streams: tuple[IO[bytes], IO[bytes], IO[bytes]]):
-        """Refer to '_ProcessManagerBase._fetch_stream_data()'."""
+        """Refer to 'ProcessBase._fetch_stream_data()'."""
 
         super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
 
@@ -50,7 +50,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
         self.pobj: subprocess.Popen
 
     def _fetch_stream_data(self, streamid: int, size: int) -> bytes:
-        """Refer to '_ProcessManagerBase._fetch_stream_data()'."""
+        """Refer to 'ProcessBase._fetch_stream_data()'."""
 
         retries = 0
         max_retries = 16
@@ -90,63 +90,69 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
         self._dbg("LocalProcess._wait_timeout: Exit status %d", exitcode)
         return exitcode
 
-    def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
-              lines=(0, 0)):
-        """
-        Implements 'wait()'. The arguments are the same as in 'wait()', but returns a list of two
-        lists: '[stdout_lines, stderr_lines]' (lists of stdout/stderr lines).
-        """
+    def _wait(self,
+              timeout: int | float = 0,
+              capture_output: bool = True,
+              output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+              lines: tuple[int, int] = (0, 0)) -> list[list[str]]:
+        """Refer to 'ProcessBase._wait()'."""
 
         if not self.pobj.stdout and not self.pobj.stderr:
             self.exitcode = self._wait_timeout(timeout)
             return [[], []]
 
-        start_time = time.time()
+        self._dbg_log_buffered_output("LocalProcess._wait()")
 
-        self._dbg("_wait: starting with partial: %s, output:\n%s", self._partial, str(self._output))
+        start_time = time.time()
 
         while not _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None:
-                self._dbg("_wait: process exited with status %d", self.exitcode)
+                self._dbg("LocalProcess._wait(): Process exited with status %d", self.exitcode)
                 break
 
             streamid, data = self._get_next_queue_item(timeout)
             if streamid == -1:
-                self._dbg("_wait: nothing in the queue for %d seconds", timeout)
+                self._dbg("LocalProcess._wait(): Nothing in the queue for %d seconds", timeout)
                 break
+ 
             if data is not None:
                 self._handle_queue_item(streamid, data, capture_output=capture_output,
                                         output_fobjs=output_fobjs)
             else:
-                self._dbg("_wait: stream %d closed", streamid)
                 # One of the output streams closed.
-                self._threads[streamid].join()
-                self._threads[streamid] = self._streams[streamid] = None
+                self._dbg("LocalProcess._wait(): Stream %d closed", streamid)
 
-                if not self._streams[0] and not self._streams[1]:
-                    self._dbg("_wait: both streams closed")
+                thread = self._threads[streamid]
+                self._threads[streamid] = None
+
+                assert thread is not None
+                thread.join()
+
+                if not self._threads[0] and not self._threads[1]:
+                    self._dbg("LocalProcess._wait(): Both streams closed")
                     self.exitcode = self._wait_timeout(timeout)
                     break
 
             if not timeout:
-                self._dbg(f"_wait: timeout is {timeout}, exit immediately")
+                self._dbg(f"LocalProcess._wait(): Timeout is {timeout}, exit immediately")
                 break
+
             if time.time() - start_time >= timeout:
-                self._dbg("_wait: stop waiting for the process - timeout")
+                self._dbg("LocalProcess._wait(): Stop waiting for the process - timeout")
                 break
 
         return self._get_lines_to_return(lines)
 
-    def poll(self):
-        """
-        Check if the process is still running. If it is, return 'None', else return exit status.
-        """
+    def poll(self) -> int | None:
+        """Refer to 'ProcessBase.poll()'."""
+
         return self.pobj.poll()
 
 class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """
-    This class implements a process manager for running and monitoring local processes. The
-    implementation is based on 'Popen()'.
+    Provide API for executing commands and managing files and processes on the local host.
+    Implements the 'ProcessManagerBase' API, with the idea of having a unified API for executing
+    commands locally and remotely.
     """
 
     def _run_async(self, command, cwd=None, shell=True, stdin=None, stdout=None, stderr=None,
@@ -571,12 +577,3 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if must_find:
             raise ErrorNotFound(f"program '{program}' was not found in $PATH ({envpaths})")
         return None
-
-    def __init__(self):
-        """Initialize a class instance."""
-
-        super().__init__()
-
-        self.is_remote = False
-        self.hostname = "localhost"
-        self.hostmsg = ""
