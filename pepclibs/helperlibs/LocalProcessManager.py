@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module implements a process manager for running and monitoring local processes.
+Provide API for executing commands and managing files and processes on the local host. Implements
+the 'ProcessManagerBase' API, with the idea of having a unified API for executing commands locally
+and remotely.
 """
-
-# pylint: disable=arguments-differ
 
 # TODO: finish adding type hints to this module.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
@@ -22,6 +22,7 @@ import errno
 import shutil
 import subprocess
 from pathlib import Path
+from typing import IO
 from operator import itemgetter
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers
 # pylint: disable-next=unused-import
@@ -32,12 +33,24 @@ from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class LocalProcess(_ProcessManagerBase.ProcessBase):
-    """
-    This class represents a process that was executed by 'LocalProcessManager'.
-    """
+    """A local process created and managed by 'LocalProcessManager'."""
 
-    def _fetch_stream_data(self, streamid, size):
-        """Fetch up to 'size' bytes from stdout or stderr of the process."""
+    def __init__(self,
+                 pman: LocalProcessManager,
+                 pobj: subprocess.Popen,
+                 cmd: str,
+                 real_cmd: str,
+                 shell: bool,
+                 streams: tuple[IO[bytes], IO[bytes], IO[bytes]]):
+        """Refer to '_ProcessManagerBase._fetch_stream_data()'."""
+
+        super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
+
+        self.pman: LocalProcessManager
+        self.pobj: subprocess.Popen
+
+    def _fetch_stream_data(self, streamid: int, size: int) -> bytes:
+        """Refer to '_ProcessManagerBase._fetch_stream_data()'."""
 
         retries = 0
         max_retries = 16
@@ -52,20 +65,29 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
                     continue
                 raise
 
-        raise Error(f"received 'EAGAIN' error {retries} times")
+        raise Error(f"Received 'EAGAIN' error {retries} times")
 
-    def _wait_timeout(self, timeout):
-        """Wait for process to finish with a timeout."""
+    def _wait_timeout(self, timeout: int | float) -> int | None:
+        """
+        Wait for the process to finish within a specified timeout.
 
-        pobj = self.pobj
-        self._dbg("_wait_timeout: waiting for exit status, timeout %s sec", timeout)
+        Args:
+            timeout: The maximum time to wait for the process to finish, in seconds.
+
+        Returns:
+            The exit code of the process if it finishes within the timeout, or None if the timeout
+            expires.
+        """
+
+        self._dbg("LocalProcess._wait_timeout(): Waiting for exit status, timeout %s sec", timeout)
+
         try:
-            exitcode = pobj.wait(timeout=timeout)
+            exitcode = self.pobj.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
-            self._dbg("_wait_timeout: exit status not ready for %s seconds", timeout)
+            self._dbg("LocalProcess._wait_timeout(): Did not exit for %s secs", timeout)
             return None
 
-        self._dbg("_wait_timeout: exit status %d", exitcode)
+        self._dbg("LocalProcess._wait_timeout: Exit status %d", exitcode)
         return exitcode
 
     def _wait(self, timeout=None, capture_output=True, output_fobjs=(None, None),
