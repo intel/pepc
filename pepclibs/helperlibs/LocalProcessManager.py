@@ -308,29 +308,29 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                                        timeout=timeout)
         raise Error(msg)
 
-    def rsync(self, src, dst, opts="-rlD", remotesrc=False, remotedst=False):
-        """
-        Copy data from path 'src' to path 'dst' using the 'rsync' tool with options specified in
-        'opts'. Refer to '_ProcessManagerBase.rsync() for more information.
-
-        Limitation: the 'remotedst' and 'remotesrc' options must be 'False'. Copying from/to a
-        remote host is not supported.
-        """
+    def rsync(self,
+              src: Path,
+              dst: Path,
+              opts: str = "-rlD",
+              remotesrc: bool = False,
+              remotedst: bool = False):
+        """Refer to 'ProcessManagerBase.rsync()'."""
 
         for arg in ("remotesrc", "remotedst"):
             if locals()[arg]:
-                raise Error(f"BUG: the 'LocalProcessManager' class does not support 'rsync' "
+                raise Error(f"The 'LocalProcessManager' class does not support 'rsync' "
                             f"from/to a remote host: the {arg} argument must be 'False'")
 
         opts = self._rsync_add_debug_opts(opts)
 
-        # pylint: disable=unused-argument
         cmd = f"rsync {opts} -- '{src}' '{dst}'"
         try:
             stdout, _ = self.run_verify(cmd)
         except Error as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to copy files '{src}' to '{dst}':\n{msg}") from err
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to copy files '{src}' to '{dst}':\n{msg}") from err
+
+        assert isinstance(stdout, str)
 
         self._rsync_debug_log(stdout)
 
