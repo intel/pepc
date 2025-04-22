@@ -22,7 +22,7 @@ import errno
 import shutil
 import subprocess
 from pathlib import Path
-from typing import IO
+from typing import IO, cast
 from operator import itemgetter
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers
 # pylint: disable-next=unused-import
@@ -335,31 +335,31 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         self._rsync_debug_log(stdout)
 
     @staticmethod
-    def open(path, mode):
-        """
-        Open a file. Refer to '_ProcessManagerBase.ProcessManagerBase().open()' for more
-        information.
-        """
+    def open(path: Path, mode: str) -> IO:
+        """Refer to 'ProcessManagerBase.open()'."""
+
+        # pylint: disable=consider-using-with,unspecified-encoding,arguments-differ
 
         errmsg = f"failed to open file '{path}' with mode '{mode}': "
         try:
             # Binary mode doesn't take an encoding argument.
             if "b" in mode:
-                fobj = open(path, mode) # pylint: disable=consider-using-with,unspecified-encoding
+                fobj = open(path, mode)
             else:
-                fobj = open(path, mode, encoding="utf-8") # pylint: disable=consider-using-with
+                fobj = open(path, mode, encoding="utf-8")
         except PermissionError as err:
-            msg = Error(err).indent(2)
+            msg = Error(str(err)).indent(2)
             raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
         except FileNotFoundError as err:
-            msg = Error(err).indent(2)
+            msg = Error(str(err)).indent(2)
             raise ErrorNotFound(f"{errmsg}\n{msg}") from None
         except Exception as err:
-            msg = Error(err).indent(2)
+            msg = Error(str(err)).indent(2)
             raise Error(f"{errmsg}\n{msg}") from None
 
         # Make sure all file methods raise only exceptions derived from 'Error'.
-        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
+        wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
+        return cast(IO, wfobj)
 
     @staticmethod
     def time_time():
