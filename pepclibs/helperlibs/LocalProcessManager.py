@@ -22,11 +22,10 @@ import errno
 import shutil
 import subprocess
 from pathlib import Path
-from typing import IO, cast
+from typing import IO, cast, Generator
 from operator import itemgetter
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers
-# pylint: disable-next=unused-import
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
@@ -334,11 +333,10 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         self._rsync_debug_log(stdout)
 
-    @staticmethod
-    def open(path: Path, mode: str) -> IO:
+    def open(self, path: Path, mode: str) -> IO:
         """Refer to 'ProcessManagerBase.open()'."""
 
-        # pylint: disable=consider-using-with,unspecified-encoding,arguments-differ
+        # pylint: disable=consider-using-with,unspecified-encoding
 
         errmsg = f"failed to open file '{path}' with mode '{mode}': "
         try:
@@ -361,8 +359,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
         return cast(IO, wfobj)
 
-    @staticmethod
-    def time_time() -> float:
+    def time_time(self) -> float:
         """Refer to 'ProcessManagerBase.time_time()'."""
 
         try:
@@ -371,11 +368,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to get the current time:\n{msg}") from None
 
-    @staticmethod
-    def mkdir(dirpath: Path, parents: bool = False, exist_ok: bool = False):
+    def mkdir(self, dirpath: Path, parents: bool = False, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkdir()'."""
-
-        # pylint: disable=arguments-differ
 
         try:
             Path(dirpath).mkdir(parents=parents, exist_ok=exist_ok)
@@ -386,53 +380,48 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to create directory '{dirpath}':\n{msg}") from None
 
-    @staticmethod
-    def mkfifo(path: Path, exist_ok: bool = False):
+    def mkfifo(self, path: Path, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkfifo()'."""
-
-        # pylint: disable=arguments-differ
 
         try:
             os.mkfifo(path)
         except FileExistsError:
             if not exist_ok:
-                raise ErrorExists(f"path '{path}' already exists") from None
+                raise ErrorExists(f"Path '{path}' already exists") from None
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to create named pipe '{path}':\n{msg}") from None
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to create named pipe '{path}':\n{msg}") from None
 
-    @staticmethod
-    def lsdir(path, must_exist=True):
-        """
-        List directory entries in 'path'. Refer to
-        '_ProcessManagerBase.ProcessManagerBase().lsdir()' for more information.
-        """
+    def lsdir(self, path: Path, must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+        """Refer to 'ProcessManagerBase.lsdir()'."""
 
-        path = Path(path)
+        # pylint: disable=arguments-differ
 
         if not must_exist and not path.exists():
             return
 
-        # Get list of directory entries. For a dummy dictionary out of it. We'll need it later for
-        # sorting by ctime.
         try:
-            entries = {entry : None for entry in os.listdir(path)}
+            entries = [entry for entry in os.listdir(path)]
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to get list of files in '{path}':\n{msg}") from None
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to get list of files in '{path}':\n{msg}") from None
+
+        info: dict[str, LsdirTypedDict] = {}
 
         # For each directory entry, get its file type and ctime. Fill the entry dictionary value.
         for entry in entries:
             try:
                 stinfo = path.joinpath(entry).lstat()
             except OSError as err:
-                msg = Error(err).indent(2)
-                raise Error(f"'stat()' failed for '{entry}':\n{msg}") from None
+                msg = Error(str(err)).indent(2)
+                raise Error(f"'lstat()' failed for '{entry}':\n{msg}") from None
 
-            entries[entry] = {"name": entry, "ctime": stinfo.st_ctime, "mode": stinfo.st_mode}
+            info[entry] = {"name": entry,
+                           "path": path / entry,
+                           "ctime": stinfo.st_ctime,
+                           "mode": stinfo.st_mode}
 
-        for einfo in sorted(entries.values(), key=itemgetter("ctime"), reverse=True):
-            yield (einfo["name"], path / einfo["name"], einfo["mode"])
+        yield from sorted(info.values(), key=itemgetter("ctime"), reverse=True)
 
     @staticmethod
     def exists(path):

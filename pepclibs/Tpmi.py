@@ -379,9 +379,9 @@ class Tpmi():
         """
 
         debugfs_tpmi_dirs = []
-        for dirname, path, _ in self._pman.lsdir(self._debugfs_mnt):
-            if dirname.startswith("tpmi-"):
-                debugfs_tpmi_dirs.append(path)
+        for entry in self._pman.lsdir(self._debugfs_mnt):
+            if entry["name"].startswith("tpmi-"):
+                debugfs_tpmi_dirs.append(entry["path"])
 
         if debugfs_tpmi_dirs:
             return debugfs_tpmi_dirs
@@ -449,8 +449,8 @@ class Tpmi():
         unknown_fids = []
 
         for pci_path in self._tpmi_pci_paths:
-            for dirname, _, _ in self._pman.lsdir(pci_path):
-                match = re.match(r"^tpmi-id-([0-9a-f]+)$", dirname)
+            for entry in self._pman.lsdir(pci_path):
+                match = re.match(r"^tpmi-id-([0-9a-f]+)$", entry["name"])
                 if not match:
                     continue
 

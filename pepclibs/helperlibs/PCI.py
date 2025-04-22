@@ -55,8 +55,8 @@ class LsPCI(ClassHelpers.SimpleCloseContext):
         Refer to the 'get_basic_info()' method for the dictionary format information.
         """
 
-        for addr, _, _ in self._pman.lsdir(self._sysfs_base):
-            yield get_basic_info(addr, pman=self._pman)
+        for entry in self._pman.lsdir(self._sysfs_base):
+            yield get_basic_info(entry["name"], pman=self._pman)
 
     def __init__(self, pman=None):
         """

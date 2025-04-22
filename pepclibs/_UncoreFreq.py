@@ -85,8 +85,8 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
             return self._sysfs_base_lsdir
 
         self._sysfs_base_lsdir = []
-        for dirname, _, _ in self._pman.lsdir(self._sysfs_base):
-            self._sysfs_base_lsdir.append(dirname)
+        for entry in self._pman.lsdir(self._sysfs_base):
+            self._sysfs_base_lsdir.append(entry["name"])
 
         return self._sysfs_base_lsdir
 

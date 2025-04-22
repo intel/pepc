@@ -27,9 +27,10 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 from pathlib import Path
+from typing import Generator
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML, ClassHelpers
 from pepclibs.helperlibs import _ProcessManagerBase
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulDevMSR, _RWFile, _EmulFile
 
@@ -364,33 +365,21 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         self._init_module(module, datapath)
 
-    def mkdir(self, dirpath, parents=False, exist_ok=False):
-        """
-        Create a directory. The a arguments are as follows.
-          * dirpath - path to the directory to create.
-          * parents - if 'True', the parent directories are created as well.
-          * exist_ok - if the directory already exists, this method raises an exception if
-                       'exist_ok' is 'True', and it returns without an error if 'exist_ok' is
-                       'False'.
-        """
+    def mkdir(self, dirpath: Path, parents: bool = False, exist_ok: bool = False):
+        """Refer to 'ProcessManagerBase.mkdir()'."""
 
         dirpath = self._get_basepath() / str(dirpath).lstrip("/")
         super().mkdir(dirpath, parents=parents, exist_ok=exist_ok)
 
-    def lsdir(self, path, must_exist=True):
-        """
-        List directory entries at 'path'. The arguments are as follows.
-          * path - path to list the directory entries at.
-          * must_exist - same as in '_ProcessManagerBase.ProcessManagerBase().lsdir()'.
-
-        Yield a ('name', 'path', 'mode') tuple for every directory entry in 'path'. More information
-        in '_ProcessManagerBase.ProcessManagerBase().lsdir()'.
-        """
+    def lsdir(self, path: Path, must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+        """Refer to 'ProcessManagerBase.lsdir()'."""
 
         basepath = self._get_basepath()
         emul_path = Path(basepath / str(path).lstrip("/"))
-        for name, fpath, mode in super().lsdir(emul_path, must_exist=must_exist):
-            yield name, fpath.relative_to(basepath), mode
+
+        for entry in super().lsdir(emul_path, must_exist=must_exist):
+            entry["path"] = entry["path"].relative_to(basepath)
+            yield entry
 
     def exists(self, path):
         """

@@ -19,7 +19,7 @@ import queue
 import codecs
 import threading
 import contextlib
-from typing import NamedTuple, IO, Any, cast
+from typing import NamedTuple, IO, Any, cast, Generator, TypedDict
 from pathlib import Path
 from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers, ToolChecker
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
@@ -42,6 +42,22 @@ class ProcWaitResultType(NamedTuple):
     stdout: str | list[str]
     stderr: str | list[str]
     exitcode: int | None
+
+class LsdirTypedDict(TypedDict):
+    """
+    A directory entry information dictionary.
+
+    Attributes:
+        name: The name of the directory entry (a file, a directory, etc).
+        path: The full path to the directory entry.
+        mode: The mode (permissions) of the directory entry.
+        ctime: The creation time of the directory entry in seconds since the epoch.
+    """
+
+    name: str
+    path: Path
+    mode: int
+    ctime: float
 
 # The default process timeout in seconds.
 TIMEOUT = 24 * 60 * 60
@@ -1068,8 +1084,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         return exitcode == 0
 
-    @staticmethod
-    def time_time() -> float:
+    def time_time(self) -> float:
         """
         Get the current time in seconds since the epoch as a floating-point number (similar to the
         standard Python `time.time()` function).
@@ -1104,14 +1119,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.mkfifo()")
 
-    def lsdir(self, path: Path, must_exist: bool = True):
+    def lsdir(self, path: Path, must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
         """
-        Yield directory entries in the specified path as ('name', 'path', 'mode') tuples.
-
-        Each tuple contains:
-          - 'name': The name of the directory entry.
-          - 'path': The full path to the directory entry.
-          - 'mode': The file mode (from 'os.lstat().st_mode') of the directory entry.
+        Yield directory entries in the specified path as 'LsdirTypedDict' dictionaries.
 
         Entries are yielded in creation time (ctime) order.
 

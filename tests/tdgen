@@ -375,18 +375,18 @@ def copy_dir(pman, src, outdir):
     src = Path(src)
     files = []
 
-    for name, path, mode in pman.lsdir(src.parent):
-        if not re.fullmatch(src.name, name):
+    for entry in pman.lsdir(src.parent):
+        if not re.fullmatch(src.name, entry["name"]):
             continue
 
-        is_dir = stat.S_ISDIR(mode)
-        is_readonly = not mode & stat.S_IWUSR
+        is_dir = stat.S_ISDIR(entry["mode"])
+        is_readonly = not entry["mode"] & stat.S_IWUSR
 
         if is_dir:
-            files += copy_dir(pman, path / ".*", outdir)
+            files += copy_dir(pman, entry["path"] / ".*", outdir)
         else:
-            copy_file(pman, str(path), outdir)
-            files += [{"path": path, "readonly": is_readonly}]
+            copy_file(pman, str(entry["path"]), outdir)
+            files += [{"path": entry["path"], "readonly": is_readonly}]
 
     if not files:
         files = [{"path": src.parent}]

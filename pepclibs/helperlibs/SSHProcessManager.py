@@ -49,13 +49,13 @@ import threading
 import contextlib
 from pathlib import Path
 from operator import itemgetter
+from typing import Generator
 try:
     import paramiko
 except (ModuleNotFoundError, ImportError):
     from pepclibs.helperlibs import DummyParamiko as paramiko
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
-# pylint: disable-next=unused-import
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
@@ -872,18 +872,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         cmd += f" -- '{path}'"
         self.run_verify(cmd)
 
-    def lsdir(self, path, must_exist=True):
-        """
-        For each directory entry in 'path', yield the ('name', 'path', 'mode') tuple, where 'name'
-        is the direntry name, 'path' is full directory entry path, and 'mode' is the
-        'os.lstat().st_mode' value for the directory entry.
-
-        The directory entries are yielded in ctime (creation time) order.
-
-        If 'path' does not exist, this function raises an exception. However, this behavior can be
-        changed with the 'must_exist' argument. If 'must_exist' is 'False, this function just
-        returns and does not yield anything.
-        """
+    def lsdir(self, path: Path, must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+        """Refer to 'ProcessManagerBase.lsdir()'."""
 
         path = Path(path)
 
@@ -900,16 +890,20 @@ for entry in os.listdir(path):
 
         stdout, _ = self.run_verify(cmd, shell=True)
 
-        entries = {}
+        info: dict[str, LsdirTypedDict] = {}
+
         for line in stdout.splitlines():
             entry = Trivial.split_csv_line(line.strip(), sep=" ")
             if len(entry) != 3:
                 raise Error(f"BUG: failed to list directory '{path}': received the following "
                             f"unexpected line:\n{line}\nExpected line format: 'entry mode ctime'")
-            entries[entry[0]] = {"name": entry[0], "ctime": float(entry[2]), "mode": int(entry[1])}
 
-        for einfo in sorted(entries.values(), key=itemgetter("ctime"), reverse=True):
-            yield (einfo["name"], path / einfo["name"], einfo["mode"])
+            info[entry[0]] = {"name": entry[0],
+                              "path": path / entry[0],
+                              "ctime": float(entry[2]),
+                              "mode": int(entry[1])}
+
+        yield from sorted(info.values(), key=itemgetter("ctime"), reverse=True)
 
     def exists(self, path):
         """Returns 'True' if path 'path' exists."""
