@@ -712,7 +712,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
             cwd: str | None = None,
             shell: bool = True,
-            intsh: bool | None = None) -> ProcWaitResultType:
+            intsh: bool | None = None,
+            env: dict[str, str] | None = None,
+            newgrp: bool = False) -> ProcWaitResultType:
         """
         Execute a command and wait for it to finish.
 
@@ -732,6 +734,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             intsh: Use an existing interactive shell if True, or a new shell if False. The former
                    requires less time to start a new process, as it does not require creating a new
                    shell. The default value is the value of 'shell'.
+            env: Environment variables for the process.
+            newgrp: Create a new group for the process, as opposed to using the parent process
+                    group.
 
         Returns:
             A 'ProcWaitResultType' named tuple with the following elements:
@@ -759,7 +764,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
                    cwd: str | None = None,
                    shell: bool = True,
-                   intsh: bool | None = None):
+                   intsh: bool | None = None,
+                   env: dict[str, str] | None = None,
+                   newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
         """
         Execute a command and wait for it to finish and verify its success. Similar to 'run()', but
         it with a verification step. Refer to the 'run()' method for a more verbose argument
@@ -775,6 +782,16 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             cwd: The working directory to execute the command in.
             shell: Whether to execute the command through the shell.
             intsh: The interactive shell to use.
+            env: Environment variables for the process.
+            newgrp: Create a new group for the process, as opposed to using the parent process
+                    group.
+
+        Returns
+            A tuple of:
+                - stdout: The standard output of the executed command (either a string or a list of
+                          line, depending on 'join').
+                - stderr: The standard error of the executed command (either a string or a list of
+                          line, depending on 'join').
         """
 
         raise NotImplementedError("ProcessManagerBase.run_verify()")

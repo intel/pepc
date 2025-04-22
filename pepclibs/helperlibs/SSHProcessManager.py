@@ -562,8 +562,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         for arg, val in (("stdin", None), ("stdout", None), ("stderr", None), ("env", None),
                          ("newgrp", False)):
             if locals()[arg] != val:
-                raise Error(f"'SSHProcessManager.run_async()' does not support the '{arg}' "
-                            f"argument")
+                raise Error(f"'SSHProcessManager.run_async()' doesn't support the '{arg}' argument")
 
         # Allow for 'command' to be a 'pathlib.Path' object which Paramiko does not accept.
         command = str(command)
@@ -580,7 +579,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return self._run_async(str(command), cwd=cwd, shell=shell, intsh=intsh)
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-            output_fobjs=(None, None), cwd=None, shell=True, intsh=None) -> ProcWaitResultType:
+            output_fobjs=(None, None), cwd=None, shell=True, intsh=None, env=None,
+            newgrp=False) -> ProcWaitResultType:
         """
         Run command 'command' on the remote host and wait for it to finish. Refer to
         'ProcessManagerBase.run()' for more information.
@@ -595,6 +595,10 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
            time.  By default, 'intsh' is the same as 'shell' ('True' if using shell is allowed,
            'False' otherwise).
         """
+
+        for arg, val in (("env", None), ("newgrp", False)):
+            if locals()[arg] != val:
+                raise Error(f"'SSHProcessManager.run()' doesn't support the '{arg}' argument")
 
         # pylint: disable=unused-argument
         msg = f"running the following command{self.hostmsg} (shell {shell}, intsh {intsh}):\n" \
@@ -627,11 +631,17 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return result
 
     def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-                   output_fobjs=(None, None), cwd=None, shell=True, intsh=None):
+                   output_fobjs=(None, None), cwd=None, shell=True, intsh=None, env=None,
+                   newgrp=False):
         """
         Same as the "run()" method, but also verifies the exit status and if the command failed,
         raises the "Error" exception.
         """
+
+        for arg, val in (("env", None), ("newgrp", False)):
+            if locals()[arg] != val:
+                raise Error(f"'SSHProcessManager.run_verify()' doesn't support the '{arg}' "
+                            f"argument")
 
         result = self.run(command, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs, cwd=cwd,
