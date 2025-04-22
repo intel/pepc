@@ -172,45 +172,46 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         return not self._ll and super()._process_is_done()
 
-    def _watch_for_marker(self, data):
+    def _watch_for_marker(self, data: str) -> tuple[str, int | None]:
         """
-        When we run a command in the interactive shell (as opposed to running in a dedicated SSH
-        session), the way we can detect that the command has ended is by watching for a special
-        marker in 'stdout' of the interactive shell process.
+        Check for the marker in the stdout data of the interactive shell to determine if process has
+        exited.
 
-        This is a helper for '_wait_intsh()' which takes a piece of 'stdout' data that came from the
-        stream fetcher and checks for the marker in it. Returns a tuple of '(cdata, exitcode)',
-        where 'cdata' is the stdout data that has to be captured, and exitcode is the exit code of
-        the command.
+        Should be used only when running a command in the interactive shell session. Processes a
+        piece of stdout data from the process and check for a marker that indicates that the process
+        has exited.
 
-        In other words, if no marker was not found, this function returns '(cdata, None)', and
-        'cdata' may not be the same as 'data', because part of it may be saved in 'self._ll',
-        because it looks like the beginning of the marker. I marker was found, this function returns
-        '(cdata, exitcode)'. Again, 'cdata' does not have to be the same as 'data', because 'data'
-        could contain the marker, which will not be present in 'cdata'. The 'exitcode' will contain
-        an integer exit code of the command.
+        Returns:
+            A tuple containing the captured stdout data ('cdata') and process exit code
+            ('exitcode'), or 'None' if the marker is not found.
+                - 'cdata': A portion of stdout data that without the marker. If the marker was
+                           found, 'cdata' is 'data' minus the marker. If the marker was not found,
+                           'cdata' is going to be just some portion of 'data', because part of
+                           'data' might be saved in 'self._ll' if it resembles the beginning of the
+                           marker.
+                - 'exitcode': The exit code of the command if the marker is found. If the marker was
+                              not found, alwayse return 'None' for the exit code.
         """
 
         exitcode = None
         cdata = None
 
-        self._dbg("_watch_for_marker: starting with self._check_ll %s, self._ll: %s, data:\n%s",
-                  str(self._check_ll), str(self._ll), data)
+        self._dbg("SSHProcess._watch_for_marker(): starting with self._check_ll:\n%s\n"
+                  "self._ll:\n%s\ndata:\n%s", str(self._check_ll), str(self._ll), data)
 
         split = data.rsplit("\n", 1)
         if len(split) > 1:
-            # We have got a new line. This is our new marker suspect. Keep it in 'self._ll', while
-            # old 'self._ll' and the rest of 'data' can be returned up for capturing. Set
-            # 'self._check_ll' to 'True' to indicate that 'self._ll' has to be checked for the
-            # marker.
+            # Got a new marker suspect. Keep it in 'self._ll', while old 'self._ll' and the rest of
+            # 'data' can be returned up for capturing. Set 'self._check_ll' to 'True' to indicate
+            # that 'self._ll' has to be checked for the marker.
             cdata = self._ll + split[0] + "\n"
             self._check_ll = True
             self._ll = split[1]
         else:
-            # We have got a continuation of the previous line. The 'check_ll' flag is 'True' when
-            # 'self._ll' being a marker is a real possibility. If we already checked 'self._ll' and
-            # it starts with data that is different to the marker, there is not reason to check it
-            # again, and we can send it up for capturing.
+            # Got a continuation of the previous line. The 'check_ll' flag is 'True' when 'self._ll'
+            # being a marker is a real possibility. If we already checked 'self._ll' and it starts
+            # with data that is different to the marker, there is not reason to check it again, and
+            # we can send it up for capturing.
             if not self._ll:
                 self._check_ll = True
             if self._check_ll:
@@ -231,18 +232,18 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             # --- hash, <exitcode> ---
             split = self._ll.rsplit(", ", 1)
             assert len(split) == 2
-            exitcode = split[1].rstrip(" ---")
-            if not Trivial.is_int(exitcode):
-                raise Error(f"the process was running{self.hostmsg} under the interactive "
-                            f"shell and finished with a correct marker, but unexpected exit "
-                            f"code '{exitcode}'.\nThe command was: {self.cmd}")
+            status = split[1].rstrip(" ---")
+            if not Trivial.is_int(status):
+                raise Error(f"The process was running{self.hostmsg} under the interactive "
+                            f"shell and finished with a correct marker, but an unexpected exit "
+                            f"code '{status}'.\nThe command was: {self.cmd}")
 
             self._ll = ""
             self._check_ll = False
-            exitcode = int(exitcode)
+            exitcode = int(status)
 
-        self._dbg("_watch_for_marker: ending with self._check_ll %s, self._ll %s, exitcode %s, "
-                  "cdata:\n%s", str(self._check_ll), self._ll, str(exitcode), cdata)
+        self._dbg("SSHProcess._watch_for_marker(): ending with exitcode %s, self._check_ll:\n%s\n"
+                  "self._ll:\n%s\ncdata:\n%s", str(exitcode), str(self._check_ll), self._ll, cdata)
 
         return (cdata, exitcode)
 
