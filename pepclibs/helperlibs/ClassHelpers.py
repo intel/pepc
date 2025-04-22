@@ -30,7 +30,7 @@ class SimpleCloseContext():
     def close(self):
         """Uninitialize the class object. Supposed to be implemented by the subclass."""
 
-    def __enter__(self) -> Any:
+    def __enter__(self):
         """Enter the run-time context."""
         return self
 

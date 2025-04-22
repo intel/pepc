@@ -159,9 +159,9 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                   command: str | Path,
                   cwd: str | None = None,
                   shell: bool = True,
-                  stdin: IO | None = None,
-                  stdout: IO | None = None,
-                  stderr: IO | None = None,
+                  stdin: IO | int = subprocess.PIPE,
+                  stdout: IO | int = subprocess.PIPE,
+                  stderr: IO | int = subprocess.PIPE,
                   env: dict[str, str] | None = None,
                   newgrp: False = False) -> LocalProcess:
         """
@@ -183,10 +183,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             A 'LocalProcess' object representing the executed asynchronous process.
         """
 
-        popen_stdin: IO | int = stdin if stdin is not None else subprocess.PIPE
-        popen_stdout: IO | int = stdout if stdout is not None else subprocess.PIPE
-        popen_stderr: IO | int = stderr if stderr is not None else subprocess.PIPE
-
         command = str(command)
         cmd: str | list[str]
 
@@ -197,8 +193,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             cmd = shlex.split(command)
 
         try:
-            pobj = subprocess.Popen(cmd, stdin=popen_stdin, stdout=popen_stdout, stderr=popen_stderr,
-                                    cwd=cwd, env=env, shell=shell, start_new_session=newgrp)
+            pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd,
+                                    env=env, shell=shell, start_new_session=newgrp)
         except FileNotFoundError as err:
             raise self._command_not_found(command, str(err))
         except OSError as err:
@@ -236,31 +232,38 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             else:
                 cwd_msg = ""
             _LOG.debug("Running the following local command asynchronously (shell %s, newgrp %s):\n"
-                    "%s%s", str(shell), str(newgrp), command, cwd_msg)
+                       "%s%s", str(shell), str(newgrp), command, cwd_msg)
 
-        return self._run_async(command, cwd=cwd, shell=shell, stdin=stdin, stdout=stdout,
-                               stderr=stderr, env=env, newgrp=newgrp)
+        popen_stdin: IO | int = stdin if stdin is not None else subprocess.PIPE
+        popen_stdout: IO | int = stdout if stdout is not None else subprocess.PIPE
+        popen_stderr: IO | int = stderr if stderr is not None else subprocess.PIPE
 
-    def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-            output_fobjs=(None, None), cwd=None, shell=True, intsh=None, env=None,
-            newgrp=False):
-        """
-        Run command 'command' on the local host and wait for it to finish. Refer to
-        'ProcessManagerBase.run()' for more information.
+        return self._run_async(command, cwd=cwd, shell=shell, stdin=popen_stdin,
+                               stdout=popen_stdout, stderr=popen_stderr, env=env, newgrp=newgrp)
 
-        Notes.
+    def run(self,
+            cmd: str | Path,
+            timeout: int | float | None = None,
+            capture_output: bool = True,
+            mix_output: bool = False,
+            join: bool = True,
+            output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+            cwd: str | None = None,
+            shell: bool = True,
+            intsh: bool | None = None,
+            env: dict[str, str] | None = None,
+            newgrp: bool = False) -> ProcWaitResultType:
+        """Refer to 'ProcessManagerBase.run()'."""
 
-        2. If the 'newgrp' argument is 'True', then executed process gets a new session ID.
-        3. The 'intsh' argument is ignored.
-        """
+        cmd = str(cmd)
 
-        # pylint: disable=unused-argument,arguments-differ
-        if cwd:
-            cwd_msg = f"\nWorking directory: {cwd}"
-        else:
-            cwd_msg = ""
-        _LOG.debug("running the following local command (shell %s, newgrp %s):\n%s%s",
-                   str(shell), str(newgrp), command, cwd_msg)
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            if cwd:
+                cwd_msg = f"\nWorking directory: {cwd}"
+            else:
+                cwd_msg = ""
+            _LOG.debug("Running the following local command (shell %s, newgrp %s):\n%s%s",
+                       str(shell), str(newgrp), cmd, cwd_msg)
 
         stdout = subprocess.PIPE
         if mix_output:
@@ -268,38 +271,42 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         else:
             stderr = subprocess.PIPE
 
-        with self._run_async(command, stdout=stdout, stderr=stderr, cwd=cwd, shell=shell,
+        with self._run_async(cmd, stdout=stdout, stderr=stderr, cwd=cwd, shell=shell,
                              env=env, newgrp=newgrp) as proc:
             # Wait for the command to finish and handle the time-out situation.
             result = proc.wait(capture_output=capture_output, output_fobjs=output_fobjs,
                                timeout=timeout, join=join)
 
         if result.exitcode is None:
-            msg = self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout)
+            msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode,
+                                           timeout=timeout)
             raise ErrorTimeOut(msg)
-
-        if output_fobjs[0]:
-            output_fobjs[0].flush()
-        if output_fobjs[1]:
-            output_fobjs[1].flush()
 
         return result
 
-    def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-                   output_fobjs=(None, None), cwd=None, shell=True, intsh=None, env=None,
-                   newgrp=False):
-        """
-        Same as 'run()' but verifies the command's exit code and raises an exception if it is not 0.
-        """
+    def run_verify(self,
+                   cmd: str | Path,
+                   timeout: int | float | None = None,
+                   capture_output: bool = True,
+                   mix_output: bool = False,
+                   join: bool = True,
+                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                   cwd: str | None = None,
+                   shell: bool = True,
+                   intsh: bool | None = None,
+                   env: dict[str, str] | None = None,
+                   newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
+        """Refer to 'ProcessManagerBase.run_verify()'."""
 
-        # pylint: disable=unused-argument,arguments-differ
-        result = self.run(command, timeout=timeout, capture_output=capture_output,
+        result = self.run(cmd, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs,
                           cwd=cwd, shell=shell, intsh=intsh, env=env, newgrp=newgrp)
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
-        raise Error(self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout))
+        msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode,
+                                       timeout=timeout)
+        raise Error(msg)
 
     def rsync(self, src, dst, opts="-rlD", remotesrc=False, remotedst=False):
         """

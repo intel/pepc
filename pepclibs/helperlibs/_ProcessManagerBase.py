@@ -704,7 +704,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         raise NotImplementedError("ProcessManagerBase.run_async()")
 
     def run(self,
-            cmd: str,
+            cmd: str | Path,
             timeout: int | float | None = None,
             capture_output: bool = True,
             mix_output: bool = False,
@@ -719,7 +719,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Execute a command and wait for it to finish.
 
         Args:
-            cmd: The command to execute.
+            cmd: The command to execute. Can be a string or a 'pathlib.Path' pointing to the file to
+                 execute.
             timeout: Maximum amount of seconds to wait for the command to complete. Raises
                      'ErrorTimeOut' if the command exceeds this time. Defaults to 'TIMEOUT'.
             capture_output: If True, capture and return process's stdout and stderr.
@@ -756,7 +757,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         raise NotImplementedError("ProcessManagerBase.run()")
 
     def run_verify(self,
-                   cmd: str,
+                   cmd: str | Path,
                    timeout: int | float | None = None,
                    capture_output: bool = True,
                    mix_output: bool = False,
@@ -773,7 +774,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         descriptions.
 
         Args:
-            cmd: The command to execute.
+            cmd: The command to execute. Can be a string or a 'pathlib.Path' pointing to the file to
+                 execute.
             timeout: The maximum time to wait for the command to complete.
             capture_output: Whether to capture the command's output.
             mix_output: Whether to merge stdout and stderr into a single stream.
@@ -904,7 +906,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         return ErrorNotFound(msg)
 
     def get_cmd_failure_msg(self,
-                            cmd: str,
+                            cmd: str | Path,
                             stdout: str | list[str],
                             stderr: str | list[str],
                             exitcode: int | None,
@@ -915,7 +917,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Return a formatted message describing that the command has exited or failed.
 
         Args:
-            cmd: The command that exited of failed.
+            cmd: The command that exited or failed. Can be a string or a 'pathlib.Path' pointing to
+                 the file to execute.
             stdout: Standard output of the command.
             stderr: Standard error of the command.
             exitcode: Exit code of the command.
@@ -959,6 +962,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         else:
             startmsg += f"The following command {exitcode_msg}:"
 
+        cmd = str(cmd)
         result = f"{startmsg}\n  {cmd}"
         if msg:
             result += f"\n\n{msg.strip()}"
