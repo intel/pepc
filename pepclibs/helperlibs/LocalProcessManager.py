@@ -195,7 +195,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd,
-                                    env=env, shell=shell, start_new_session=newgrp)
+                                    bufsize=0, env=env, shell=shell, start_new_session=newgrp)
         except FileNotFoundError as err:
             raise self._command_not_found(command, str(err))
         except OSError as err:
