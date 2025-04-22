@@ -675,7 +675,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                   intsh: bool = False,
                   stdin: IO | None = None,
                   stdout: IO | None = None,
-                  stderr: IO | None = None) -> ProcessBase:
+                  stderr: IO | None = None,
+                  env: dict[str, str] | None = None,
+                  newgrp: bool = False) -> ProcessBase:
         """
         Execute a command asynchronously without waiting for it to complete.
 
@@ -690,6 +692,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             stdin: Standard input stream for the process (file-like object).
             stdout: Standard output stream for the process (file-like object).
             stderr: Standard error stream for the process (file-like object).
+            env: Environment variables for the process.
+            newgrp: Create a new group for the process, as opposed to using the parent process
+                    group.
 
         Returns:
             A process object (subclass of 'ProcessBase') representing the asynchronous process.

@@ -187,7 +187,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return proc
 
     def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
-                  stderr=None, env=None, newgrp=False,):
+                  stderr=None, env=None, newgrp=False):
         """
         Run command 'command' on the local host using 'Popen'. Refer to
         'ProcessManagerBase.run_async()' for more information.

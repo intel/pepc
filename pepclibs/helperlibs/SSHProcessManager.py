@@ -545,7 +545,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             return self._run_in_new_session(command, cwd=cwd, shell=shell)
 
     def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
-                  stderr=None) -> SSHProcess:
+                  stderr=None, env=None, newgrp=False) -> SSHProcess:
         """
         Run command 'command' on the remote host. Refer to 'ProcessManagerBase.run_async()' for more
         information.
@@ -559,8 +559,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """
 
         # pylint: disable=unused-argument
-        for arg in ('stdin', 'stdout', 'stderr'):
-            if locals()[arg] is not None:
+        for arg, val in (("stdin", None), ("stdout", None), ("stderr", None), ("env", None),
+                         ("newgrp", False)):
+            if locals()[arg] != val:
                 raise Error(f"'SSHProcessManager.run_async()' does not support the '{arg}' "
                             f"argument")
 
