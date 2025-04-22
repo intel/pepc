@@ -368,10 +368,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         return method(timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
                       lines=lines)
 
-    def poll(self):
-        """
-        Check if the process is still running. If it is, return 'None', else return exit status.
-        """
+    def poll(self) -> int | None:
+        """Refer to 'ProcessBase.poll()'."""
 
         chan = self.pobj
         if chan.exit_status_ready():
@@ -379,9 +377,15 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         return None
 
     def _read_pid(self):
-        """Read 'PID' for the just executed process and store it in 'self.pid'."""
+        """
+        Read the process ID (PID) of the executed command and store it in 'self.pid'.
 
-        self._dbg("_read_pid: reading PID for command: %s", self.cmd)
+        Notes:
+            - The reason this method exists is that paramiko does not have a mechanism to get PID.
+              So this is a workaround.
+        """
+
+        self._dbg("SSHProcess._read_pid(): Reading PID for the following command: %s", self.cmd)
         assert self.shell
 
         stdout, stderr, _ = self.wait(timeout=60, lines=(1, 0), join=False)
@@ -390,23 +394,24 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
               f"\nThe actual (real) command was:\n{self.real_cmd}"
 
         if len(stdout) != 1:
-            raise Error(f"expected only one line with PID in stdout, got {len(stdout)} lines "
+            raise Error(f"Expected only one line with PID in stdout, got {len(stdout)} lines "
                         f"instead.{msg}")
         if stderr:
-            raise Error(f"expected only one line with PID in stdout and no lines in stderr, got "
+            raise Error(f"Expected only one line with PID in stdout and no lines in stderr, got "
                         f"{len(stderr)} lines in stderr instead.{msg}")
 
         pid = stdout[0].strip()
 
-        # The 'PID' line does not belong to the process, so decrement the lines counter.
+        # The 'PID' line does not belong to the process output, it was printed by the shell. So
+        # decrement the lines counter.
         self._lines_cnt[0] -= 1
 
         if len(pid) > 128:
-            raise Error(f"received too long and probably bogus PID: {pid}{msg}")
+            raise Error(f"Received too long and probably bogus PID: {pid}{msg}")
         if not Trivial.is_int(pid):
-            raise Error(f"received a bogus non-integer PID: {pid}{msg}")
+            raise Error(f"Received a bogus non-integer PID: {pid}{msg}")
 
-        self._dbg("_read_pid: PID is %s for command: %s", pid, self.cmd)
+        self._dbg("SSHProcess._read_pid(): PID is %s for the following command: %s", pid, self.cmd)
         self.pid = int(pid)
 
 class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
