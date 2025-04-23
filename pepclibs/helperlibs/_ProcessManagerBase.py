@@ -1085,7 +1085,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         raise ErrorNotFound(f"Failed to find python interpreter{self.hostmsg}.\n"
                             f"Checked the following paths:{paths_descr}")
 
-    def shell_test(self, path: Path, opt: str) -> bool:
+    def shell_test(self, path: str | Path, opt: str) -> bool:
         """
         Execute the shell 'test' command to check properties of a file or directory.
 
@@ -1125,7 +1125,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.time_time()")
 
-    def mkdir(self, dirpath: Path, parents: bool = False, exist_ok: bool = False):
+    def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """
         Create a directory.
 
@@ -1138,7 +1138,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.mkdir()")
 
-    def mkfifo(self, path: Path, exist_ok: bool = False):
+    def mkfifo(self, path: str | Path, exist_ok: bool = False):
         """
         Create a named pipe.
 
@@ -1149,7 +1149,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.mkfifo()")
 
-    def lsdir(self, path: Path, must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self,
+              path: str | Path,
+              must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
         """
         Yield directory entries in the specified path as 'LsdirTypedDict' dictionaries.
 
@@ -1163,7 +1165,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.lsdir()")
 
-    def exists(self, path: Path) -> bool:
+    def exists(self, path: str | Path) -> bool:
         """
         Check if the specified path exists.
 
@@ -1176,7 +1178,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.exists()")
 
-    def is_file(self, path: Path) -> bool:
+    def is_file(self, path: str | Path) -> bool:
         """
         Check if the given path exists and is a regular file.
 
@@ -1189,7 +1191,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.is_file()")
 
-    def is_dir(self, path: Path) -> bool:
+    def is_dir(self, path: str | Path) -> bool:
         """
         Check if the given path exists and is a directory.
 
@@ -1202,7 +1204,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.is_dir()")
 
-    def is_exe(self, path: Path) -> bool:
+    def is_exe(self, path: str | Path) -> bool:
         """
         Check if the given path exists and is an executable file.
 
@@ -1215,7 +1217,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.is_exe()")
 
-    def is_socket(self, path: Path) -> bool:
+    def is_socket(self, path: str | Path) -> bool:
         """
         Check if the given path exists and is a Unix socket file.
 
@@ -1228,7 +1230,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.is_socket()")
 
-    def get_mtime(self, path: Path) -> float:
+    def get_mtime(self, path: str | Path) -> float:
         """
         Get the modification time of a file or directory.
 
@@ -1241,7 +1243,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.get_mtime()")
 
-    def unlink(self, path: Path):
+    def unlink(self, path: str | Path):
         """
         Remove a file.
 
@@ -1251,7 +1253,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.unlink()")
 
-    def rmtree(self, path: Path):
+    def rmtree(self, path: str | Path):
         """
         Recursively remove a file or directory at the specified path. If the path is a symlink,
         remove only the symlink without affecting the target it points to.
@@ -1262,7 +1264,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.rmtree()")
 
-    def abspath(self, path: Path, must_exist: bool = True) -> Path:
+    def abspath(self, path: str | Path, must_exist: bool = True) -> Path:
         """
         Resolve the given path to an absolute real path.
 

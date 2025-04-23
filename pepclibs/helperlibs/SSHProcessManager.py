@@ -1093,7 +1093,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         what = f"current time on {self.hostname} acquired via SSH using {cmd}"
         return Trivial.str_to_float(time, what=what)
 
-    def mkdir(self, dirpath: Path, parents: bool = False, exist_ok: bool = False):
+    def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkdir()'."""
 
         if self.shell_test(dirpath, "-e"):
@@ -1107,7 +1107,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         cmd += f" -- '{dirpath}'"
         self.run_verify(cmd)
 
-    def mkfifo(self, path: Path, exist_ok: bool = False):
+    def mkfifo(self, path: str | Path, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkfifo()'."""
 
         if self.shell_test(path, "-e"):
@@ -1118,7 +1118,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         cmd = f"mkfifo -- '{path}'"
         self.run_verify(cmd)
 
-    def lsdir(self, path: Path, must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self,
+              path: str | Path,
+              must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
         path = Path(path)
@@ -1151,32 +1153,32 @@ for entry in os.listdir(path):
 
         yield from sorted(info.values(), key=itemgetter("ctime"), reverse=True)
 
-    def exists(self, path: Path) -> bool:
+    def exists(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.exists()'."""
 
         return self.shell_test(path, "-e")
 
-    def is_file(self, path: Path) -> bool:
+    def is_file(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_file()'."""
 
         return self.shell_test(path, "-f")
 
-    def is_dir(self, path: Path) -> bool:
+    def is_dir(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_dir()'."""
 
         return self.shell_test(path, "-d")
 
-    def is_exe(self, path: Path) -> bool:
+    def is_exe(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_exe()'."""
 
         return self.shell_test(path, "-x")
 
-    def is_socket(self, path: Path) -> bool:
+    def is_socket(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_socket()'."""
 
         return self.shell_test(path, "-S")
 
-    def get_mtime(self, path: Path) -> float:
+    def get_mtime(self, path: str | Path) -> float:
         """Refer to 'ProcessManagerBase.get_mtime()'."""
 
         python_path = self.get_python_path()
@@ -1193,17 +1195,17 @@ for entry in os.listdir(path):
             raise Error(f"Got erroneous modification time of '{path}'{self.hostmsg}:\n{mtime}")
         return float(mtime)
 
-    def unlink(self, path: Path):
+    def unlink(self, path: str | Path):
         """Refer to 'ProcessManagerBase.unlink()'."""
 
         self.run_verify(f"unlink -- '{path}'")
 
-    def rmtree(self, path: Path):
+    def rmtree(self, path: str | Path):
         """Refer to 'ProcessManagerBase.rmtree()'."""
 
         self.run_verify(f"rm -rf -- '{path}'")
 
-    def abspath(self, path: Path, must_exist: bool = True) -> Path:
+    def abspath(self, path: str | Path, must_exist: bool = True) -> Path:
         """Refer to 'ProcessManagerBase.abspath()'."""
 
         python_path = self.get_python_path()
@@ -1213,7 +1215,7 @@ for entry in os.listdir(path):
         rpath = cast(str, stdout).strip()
 
         if must_exist and not self.exists(rpath):
-            raise ErrorNotFound(f"path '{rpath}' does not exist")
+            raise ErrorNotFound(f"Path '{rpath}' does not exist")
 
         return Path(rpath)
 

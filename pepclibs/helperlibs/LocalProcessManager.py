@@ -383,7 +383,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to get the current time:\n{msg}") from None
 
-    def mkdir(self, dirpath: Path, parents: bool = False, exist_ok: bool = False):
+    def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkdir()'."""
 
         try:
@@ -395,7 +395,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to create directory '{dirpath}':\n{msg}") from None
 
-    def mkfifo(self, path: Path, exist_ok: bool = False):
+    def mkfifo(self, path: str | Path, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkfifo()'."""
 
         try:
@@ -407,7 +407,9 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to create named pipe '{path}':\n{msg}") from None
 
-    def lsdir(self, path: Path, must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self,
+              path: str | Path,
+              must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
         if not must_exist and not path.exists():
@@ -436,7 +438,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         yield from sorted(info.values(), key=itemgetter("ctime"), reverse=True)
 
-    def exists(self, path: Path) -> bool:
+    def exists(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.exists()'."""
 
         try:
@@ -445,7 +447,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to check if '{path}' exists:\n{msg}") from None
 
-    def is_file(self, path: Path) -> bool:
+    def is_file(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_file()'."""
 
         try:
@@ -455,7 +457,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"Failed to check if '{path}' exists and it is a regular file:\n{msg}") \
                         from None
 
-    def is_dir(self, path: Path) -> bool:
+    def is_dir(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_dir()'."""
 
         try:
@@ -465,7 +467,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"Failed to check if '{path}' exists and it is a directory:\n{msg}") \
                         from None
 
-    def is_exe(self, path: Path) -> bool:
+    def is_exe(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_exe()'."""
 
         try:
@@ -475,7 +477,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"Failed to check if '{path}' exists and it is an executable file:\n"
                         f"{msg}") from None
 
-    def is_socket(self, path: Path) -> bool:
+    def is_socket(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_socket()'."""
 
         try:
@@ -485,7 +487,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"Failed to check if '{path}' exists and it is a Unix socket file:\n"
                         f"{msg}") from None
 
-    def get_mtime(self, path: Path) -> float:
+    def get_mtime(self, path: str | Path) -> float:
         """Refer to 'ProcessManagerBase.get_mtime()'."""
 
         try:
@@ -496,7 +498,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"'stat()' failed for '{path}':\n{msg}") from None
 
-    def unlink(self, path: Path):
+    def unlink(self, path: str | Path):
         """Refer to 'ProcessManagerBase.unlink()'."""
 
         try:
@@ -505,7 +507,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to remove '{path}':\n{msg}") from None
 
-    def rmtree(self, path: Path):
+    def rmtree(self, path: str | Path):
         """Refer to 'ProcessManagerBase.rmtree()'."""
 
         path = Path(path)
@@ -529,7 +531,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 raise Error(f"Failed to remove {path}:\n{msg}") from err
             break
 
-    def abspath(self, path: Path, must_exist: bool = True) -> Path:
+    def abspath(self, path: str | Path, must_exist: bool = True) -> Path:
         """Refer to 'ProcessManagerBase.abspath()'."""
 
         try:

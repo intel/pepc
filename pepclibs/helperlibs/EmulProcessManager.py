@@ -365,13 +365,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         self._init_module(module, datapath)
 
-    def mkdir(self, dirpath: Path, parents: bool = False, exist_ok: bool = False):
+    def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkdir()'."""
 
         dirpath = self._get_basepath() / str(dirpath).lstrip("/")
         super().mkdir(dirpath, parents=parents, exist_ok=exist_ok)
 
-    def lsdir(self, path: Path, must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self,
+              path: str | Path,
+              must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
         basepath = self._get_basepath()
