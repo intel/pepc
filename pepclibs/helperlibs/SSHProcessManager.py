@@ -31,7 +31,7 @@ import threading
 import contextlib
 from pathlib import Path
 from operator import itemgetter
-from typing import IO, Generator
+from typing import IO, cast, Generator
 from collections.abc import Callable
 try:
     import paramiko
@@ -881,40 +881,48 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             ssh_opts += f" -o \"IdentityFile={self.privkeypath}\""
         return ssh_opts
 
-    def rsync(self, src, dst, opts="-rlD", remotesrc=False, remotedst=False):
-        """
-        Copy data from path 'src' to path 'dst' using the 'rsync' tool with options specified in
-        'opts'. Refer to '_ProcessManagerBase.rsync() for more information.
-        """
+    def rsync(self,
+              src: Path,
+              dst: Path,
+              opts: str = "-rlD",
+              remotesrc: bool = False,
+              remotedst: bool = False):
+        """Refer to 'ProcessManagerBase.rsync()'."""
 
         opts = self._rsync_add_debug_opts(opts)
-        cmd = f"rsync {opts}"
 
         if remotesrc and remotedst:
-            pman = self
+            cmd = f"rsync {opts} -- '{src}' '{dst}'"
+            result = self.run(cmd)
+            is_local = False
         else:
             from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
 
-            pman = LocalProcessManager.LocalProcessManager()
-            cmd += f" -e 'ssh {self.get_ssh_opts()}'"
             if remotesrc:
-                src = f"{self.hostname}:{src}"
+                source = f"{self.hostname}:{src}"
+            else:
+                source = str(src)
             if remotedst:
-                dst = f"{self.hostname}:{dst}"
+                destination = f"{self.hostname}:{dst}"
+            else:
+                destination = str(dst)
 
-        command = f"{cmd} -- '{src}' '{dst}'"
-        result = pman.run(command)
+            cmd = f"rsync {opts} -e 'ssh {self.get_ssh_opts()}' -- '{source}' '{destination}'"
+            result = LocalProcessManager.LocalProcessManager().run(cmd)
+            is_local = True
+
         if result.exitcode == 0:
             self._rsync_debug_log(result.stdout)
             return
 
-        if not pman.is_remote and result.exitcode == 12 and "command not found" in result.stderr:
+        if is_local and result.exitcode == 12 and "command not found" in result.stderr:
             # This is special case. We ran 'rsync' on the local system in order to copy files
             # to/from the remote system. The 'rsync' is available on the local system, but it is not
             # installed on the remote system.
-            raise self._command_not_found(command, result.stderr, toolname="rsync")
+            errmsg = cast(str, result.stderr)
+            raise self._command_not_found(cmd, errmsg=errmsg, toolname="rsync")
 
-        msg = self.get_cmd_failure_msg(command, *tuple(result))
+        msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode)
         raise Error(msg)
 
     def _scp(self, src, dst):

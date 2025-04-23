@@ -840,7 +840,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         return opts
 
     @staticmethod
-    def _rsync_debug_log(stdout: str):
+    def _rsync_debug_log(stdout: str | list[str]):
         """
         Log the 'stdout' output of the 'rsync' command if debug-level logging is enabled.
 
@@ -848,8 +848,12 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             stdout: The standard output of the 'rsync' command to be logged.
         """
 
-        if stdout and _LOG.getEffectiveLevel() == Logging.DEBUG:
-            _LOG.debug("rsync output:\n%s", stdout)
+        if stdout and _LOG.getEffectiveLevel() != Logging.DEBUG:
+            return
+
+        if isinstance(stdout, list):
+            stdout = "".join(stdout)
+        _LOG.debug("rsync output:\n%s", stdout)
 
     def rsync(self,
               src: Path,
