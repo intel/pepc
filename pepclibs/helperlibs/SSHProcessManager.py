@@ -568,7 +568,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         super().close()
 
     @staticmethod
-    def _format_cmd_for_pid(cmd: str, cwd: Path | None = None) -> str:
+    def _format_cmd_for_pid(cmd: str, cwd: str | Path | None = None) -> str:
         """
         Modify the command so that it prints own PID.
 
@@ -591,7 +591,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
     def _run_in_new_session(self,
                             command: str,
-                            cwd: Path | None = None,
+                            cwd: str | Path | None = None,
                             shell: bool = True) -> SSHProcess:
         """
         Run a command in a new SSH session.
@@ -635,7 +635,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         streams = (stdin, chan.recv, chan.recv_stderr)
         return SSHProcess(self, chan, command, cmd, shell, streams)
 
-    def _run_in_intsh(self, command: str, cwd: Path | None = None) -> SSHProcess:
+    def _run_in_intsh(self, command: str, cwd: str | Path | None = None) -> SSHProcess:
         """
         Execute a command in an interactive shell session.
 
@@ -695,7 +695,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
     def _run_async(self,
                   command: str | Path,
-                  cwd: Path | None = None,
+                  cwd: str | Path | None = None,
                   shell: bool = True,
                   intsh: bool = False) -> SSHProcess:
         """
@@ -764,7 +764,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
     def run_async(self,
                   cmd: str | Path,
-                  cwd: Path | None = None,
+                  cwd: str | Path | None = None,
                   shell: bool = True,
                   intsh: bool = False,
                   stdin: IO | None = None,
@@ -801,7 +801,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             mix_output: bool = False,
             join: bool = True,
             output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
-            cwd: Path | None = None,
+            cwd: str | Path | None = None,
             shell: bool = True,
             intsh: bool | None = None,
             env: dict[str, str] | None = None,
@@ -844,7 +844,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    mix_output: bool = False,
                    join: bool = True,
                    output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
-                   cwd: Path | None = None,
+                   cwd: str | Path | None = None,
                    shell: bool = True,
                    intsh: bool | None = None,
                    env: dict[str, str] | None = None,
