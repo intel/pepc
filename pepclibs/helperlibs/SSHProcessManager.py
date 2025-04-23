@@ -75,15 +75,15 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                  cmd: str,
                  real_cmd: str,
                  shell: bool,
-                 streams: tuple[IO[bytes], Callable[[], bytes], Callable[[], bytes]]):
+                 streams: tuple[paramiko.ChannelFile, Callable[[int], bytes], Callable[[int], bytes]]):
         """Refer to 'ProcessBase.__init__()'."""
 
         super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
 
         self.pman: SSHProcessManager
         self.pobj: paramiko.Channel
-        self.stdin: IO[bytes]
-        self.streams: list[Callable[[], bytes]]
+        self.stdin: paramiko.ChannelFile
+        self.streams: list[Callable[[int], bytes]]
 
         # The below attributes are used when the process runs in an interactive shell.
         #
@@ -589,52 +589,80 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             prefix += f""" cd "{cwd}" &&"""
         return prefix + " exec " + cmd
 
-    def _run_in_new_session(self, command, cwd=None, shell=True):
-        """Run command 'command' in a new session."""
+    def _run_in_new_session(self,
+                            command: str,
+                            cwd: Path | None = None,
+                            shell: bool = True) -> SSHProcess:
+        """
+        Run a command in a new SSH session.
+
+        Args:
+            command: The command to execute on the remote host.
+            cwd: The working directory to set for the command.
+            shell: Whether to execute the command via shell.
+
+        Returns:
+            An `SSHProcess` object representing the process running the command.
+        """
 
         cmd = command
         if shell:
             cmd = self._format_cmd_for_pid(command, cwd=cwd)
 
         try:
-            chan = self.ssh.get_transport().open_session(timeout=self.connection_timeout)
+            transport = self.ssh.get_transport()
+            if not transport:
+                raise Error(f"SSH transport is not available{self.hostmsg}")
+            chan = transport.open_session(timeout=self.connection_timeout)
         except BaseException as err: # pylint: disable=broad-except
-            msg = Error(err).indent(2)
-            raise Error(f"cannot create a new SSH session for running the following "
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Cannot create a new SSH session for running the following "
                         f"command{self.hostmsg}:\n{cmd}\nThe error is:\n{msg}") from err
 
         try:
             chan.exec_command(cmd)
         except BaseException as err: # pylint: disable=broad-except
-            msg = Error(err).indent(2)
-            raise Error(f"cannot execute the following command in a new SSH session"
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Cannot execute the following command in a new SSH session"
                         f"{self.hostmsg}:\n{cmd}\nThe error is:\n{msg}") from err
 
         try:
             stdin = chan.makefile("wb")
         except BaseException as err: # pylint: disable=broad-except
-            msg = Error(err).indent(2)
-            raise Error(f"failed to create the stdin file-like object:\n{msg}") from err
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to create the stdin file-like object:\n{msg}") from err
 
         streams = (stdin, chan.recv, chan.recv_stderr)
         return SSHProcess(self, chan, command, cmd, shell, streams)
 
-    def _run_in_intsh(self, command, cwd=None):
-        """Run command 'command' in the interactive shell."""
+    def _run_in_intsh(self, command: str, cwd: Path | None = None) -> SSHProcess:
+        """
+        Execute a command in an interactive shell session.
+
+        Args:
+            command: The command to execute in the interactive shell.
+            cwd: The current working directory for the command.
+
+        Returns:
+            An SSHProcess object representing the interactive shell process running the command.
+        """
 
         if not self._intsh:
             cmd = "sh -s"
-            _LOG.debug("starting interactive shell%s: %s", self.hostmsg, cmd)
+            _LOG.debug("Starting interactive shell%s: %s", self.hostmsg, cmd)
             self._intsh = self._run_in_new_session(cmd, shell=False)
 
         proc = self._intsh
         cmd = self._format_cmd_for_pid(command, cwd=cwd)
 
         # Pick a new marker for the new interactive shell command.
+        # pylint: disable=protected-access
         proc._reinit_marker()
+
         # Run the command.
         cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{proc._marker}" "$?"\n'
-        proc.pobj.send(cmd)
+        proc.pobj.send(cmd.encode())
+
         # Re-initialize the interactive shell process object to match the new command.
         proc._reinit(command, cmd, True)
 
