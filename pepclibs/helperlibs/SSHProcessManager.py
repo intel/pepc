@@ -925,25 +925,23 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode)
         raise Error(msg)
 
-    def _scp(self, src, dst):
+    def _scp(self, src: str, dst: str):
         """
-        Helper that copies 'src' to 'dst' using 'scp'. File names should be already quoted. The
-        remote path should use double quoting, otherwise 'scp' fails if path contains symbols like
-        ')'.
+        Copy a file or directory from 'src' to 'dst' using 'scp'.
+
+        Args:
+            src: The source file or directory path.
+            dst: The destination file or directory path.
         """
 
         from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
-        pman = LocalProcessManager.LocalProcessManager()
 
-        opts = f"-o \"Port={self.port}\" -o \"User={self.username}\""
-        if self.privkeypath:
-            opts += f" -o \"IdentityFile={self.privkeypath}\""
-        cmd = f"scp -r {opts}"
+        cmd = f"scp -r {self.get_ssh_opts()} -- {src} {dst}"
 
         try:
-            pman.run_verify(f"{cmd} -- {src} {dst}")
+            LocalProcessManager.LocalProcessManager().run_verify(cmd)
         except Error as err:
-            raise Error(f"failed to copy files '{src}' to '{dst}':\n{err.indent(2)}") from err
+            raise Error(f"Failed to copy files '{src}' to '{dst}':\n{err.indent(2)}") from err
 
     def get(self, remote_path, local_path):
         """
