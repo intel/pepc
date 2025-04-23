@@ -555,13 +555,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def close(self):
         """Close the SSH connection."""
 
-        _LOG.debug("closing SSH connection to %s (port %d, username '%s', priv. key '%s', SSH pman "
+        _LOG.debug("Closing SSH connection to %s (port %d, username '%s', priv. key '%s', SSH pman "
                    "object ID: %s", self._vhostname, self.port, self.username, self.privkeypath,
                    id(self))
 
         if self._intsh:
             with contextlib.suppress(BaseException):
-                self._intsh.pobj.send("exit\n")
+                self._intsh.pobj.send("exit\n".encode())
 
         ClassHelpers.close(self, close_attrs=("_sftp", "_intsh", "ssh",))
 
