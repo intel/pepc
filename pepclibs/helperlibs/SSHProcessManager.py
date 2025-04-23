@@ -444,8 +444,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         Args:
             hostname: The name of the host to connect to.
-            ipaddr: IP address of the host. If provided, it is used instead of `hostname` for
-                    connecting, and `hostname` is used for logging purposes.
+            ipaddr: IP address of the host. If provided, it is used instead of 'hostname' for
+                    connecting, and 'hostname' is used for logging purposes.
             port: The port number to connect to. Defaults to 22.
             username: Username for authentication. Defaults to the current system user.
             password: Password for the specified username. Defaults to an empty string.
@@ -602,7 +602,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             shell: Whether to execute the command via shell.
 
         Returns:
-            An `SSHProcess` object representing the process running the command.
+            An 'SSHProcess' object representing the process running the command.
         """
 
         cmd = command
@@ -1257,22 +1257,17 @@ for entry in os.listdir(path):
             return result
         return None
 
-    def which(self, program, must_find=True):
-        """
-        Find and return full path to a program 'program' by searching it in '$PATH'. The arguments
-        are as follows.
-          * program - name of the program to find the path to.
-          * must_find - if 'True', raises the 'ErrorNotFound' exception if the program was not
-                        found, otherwise returns 'None' without raising the exception.
-        """
+    def which(self, program: str | Path, must_find: bool = True):
+        """Refer to 'ProcessManagerBase.which()'."""
 
         def raise_or_return(): # pylint: disable=useless-return
-            """This helper is called when the 'program' program was not found."""
+            """Handle the situation when 'program' program was not found."""
 
             if must_find:
-                raise ErrorNotFound(f"program '{program}' was not found in $PATH{self.hostmsg}")
+                raise ErrorNotFound(f"Program '{program}' was not found in $PATH{self.hostmsg}")
             return None
 
+        which_cmds: tuple[str, ...]
         if self._which_cmd is None:
             which_cmds = ("which", "command -v")
         else:
@@ -1281,7 +1276,7 @@ for entry in os.listdir(path):
         for which_cmd in which_cmds:
             cmd = f"{which_cmd} -- '{program}'"
             try:
-                stdout, stderr, exitcode = self.run(cmd)
+                stdout, stderr, exitcode = self.run(cmd, join=False)
             except ErrorNotFound:
                 if which_cmd != which_cmds[-1]:
                     # We have more commands to try.
@@ -1293,7 +1288,7 @@ for entry in os.listdir(path):
 
         if not exitcode:
             # Which could return several paths. They may contain aliases.
-            for line in stdout.strip().splitlines():
+            for line in cast(list[str], stdout):
                 line = line.strip()
                 if not line.startswith("alias"):
                     return Path(line)
