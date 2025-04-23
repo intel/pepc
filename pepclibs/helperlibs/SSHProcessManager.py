@@ -1138,10 +1138,10 @@ for entry in os.listdir(path):
 
         info: dict[str, LsdirTypedDict] = {}
 
-        for line in stdout.splitlines():
+        for line in cast(str, stdout).splitlines():
             entry = Trivial.split_csv_line(line.strip(), sep=" ")
             if len(entry) != 3:
-                raise Error(f"BUG: failed to list directory '{path}': received the following "
+                raise Error(f"Failed to list directory '{path}': received the following "
                             f"unexpected line:\n{line}\nExpected line format: 'entry mode ctime'")
 
             info[entry[0]] = {"name": entry[0],
