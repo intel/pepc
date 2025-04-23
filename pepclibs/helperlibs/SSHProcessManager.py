@@ -1151,28 +1151,33 @@ for entry in os.listdir(path):
 
         yield from sorted(info.values(), key=itemgetter("ctime"), reverse=True)
 
-    def exists(self, path):
-        """Returns 'True' if path 'path' exists."""
+    def exists(self, path: Path) -> bool:
+        """Refer to 'ProcessManagerBase.exists()'."""
+
         return self.shell_test(path, "-e")
 
-    def is_file(self, path):
-        """Returns 'True' if path 'path' exists an it is a regular file."""
+    def is_file(self, path: Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_file()'."""
+
         return self.shell_test(path, "-f")
 
-    def is_dir(self, path):
-        """Returns 'True' if path 'path' exists an it is a directory."""
+    def is_dir(self, path: Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_dir()'."""
+
         return self.shell_test(path, "-d")
 
-    def is_exe(self, path):
-        """Returns 'True' if path 'path' exists an it is an executable file."""
+    def is_exe(self, path: Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_exe()'."""
+
         return self.shell_test(path, "-x")
 
-    def is_socket(self, path):
-        """Returns 'True' if path 'path' exists an it is a Unix socket file."""
+    def is_socket(self, path: Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_socket()'."""
+
         return self.shell_test(path, "-S")
 
-    def get_mtime(self, path):
-        """Returns the modification time of a file or directory at path 'path'."""
+    def get_mtime(self, path: Path) -> float:
+        """Refer to 'ProcessManagerBase.get_mtime()'."""
 
         python_path = self.get_python_path()
         cmd = f"{python_path} -c 'import os; print(os.stat(\"{path}\").st_mtime)'"
@@ -1183,37 +1188,29 @@ for entry in os.listdir(path):
                 raise ErrorNotFound(f"'{path}' does not exist{self.hostmsg}") from None
             raise
 
-        mtime = stdout.strip()
+        mtime = cast(str, stdout).strip()
         if not Trivial.is_float(mtime):
-            raise Error(f"got erroneous modification time of '{path}'{self.hostmsg}:\n{mtime}")
+            raise Error(f"Got erroneous modification time of '{path}'{self.hostmsg}:\n{mtime}")
         return float(mtime)
 
-    def unlink(self, path):
-        """Remove a file a path 'path'."""
+    def unlink(self, path: Path):
+        """Refer to 'ProcessManagerBase.unlink()'."""
 
         self.run_verify(f"unlink -- '{path}'")
 
-    def rmtree(self, path):
-        """
-        Recursively remove a file or directory at path 'path'. If 'path' is a symlink, the link is
-        removed, but the target of the link does not get removed.
-        """
+    def rmtree(self, path: Path):
+        """Refer to 'ProcessManagerBase.rmtree()'."""
 
         self.run_verify(f"rm -rf -- '{path}'")
 
-    def abspath(self, path, must_exist=True):
-        """
-        Returns absolute real path for 'path'. The arguments are as follows.
-          * path - the path to resolve into the absolute real (no symlinks) path.
-          * must_exist - if 'path' does not exist, raise and exception when 'must_exist' is 'True',
-                         otherwise returns the 'path' value.
-        """
+    def abspath(self, path: Path, must_exist: bool = True) -> Path:
+        """Refer to 'ProcessManagerBase.abspath()'."""
 
         python_path = self.get_python_path()
         cmd = f"{python_path} -c 'from pathlib import Path; print(Path(\"{path}\").resolve())'"
         stdout, _ = self.run_verify(cmd)
 
-        rpath = stdout.strip()
+        rpath = cast(str, stdout).strip()
 
         if must_exist and not self.exists(rpath):
             raise ErrorNotFound(f"path '{rpath}' does not exist")
