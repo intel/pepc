@@ -412,6 +412,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
               must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
+        path = Path(path)
         if not must_exist and not path.exists():
             return
 

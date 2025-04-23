@@ -15,7 +15,6 @@ SECURITY NOTICE: this module and any part of it should only be used for debuggin
 purposes. No security audit had been done. Not for production use.
 """
 
-# TODO: finish adding type hints to this module.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
@@ -75,7 +74,9 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                  cmd: str,
                  real_cmd: str,
                  shell: bool,
-                 streams: tuple[paramiko.ChannelFile, Callable[[int], bytes], Callable[[int], bytes]]):
+                 streams: tuple[paramiko.ChannelFile,
+                                Callable[[int], bytes],
+                                Callable[[int], bytes]]):
         """Refer to 'ProcessBase.__init__()'."""
 
         super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
@@ -327,7 +328,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         while not _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
             if self.exitcode is not None:
-                self._dbg("SSHProcess._wait_nointsh(): Process exited with status %d", self.exitcode)
+                self._dbg("SSHProcess._wait_nointsh(): Process exited with status %d",
+                          self.exitcode)
                 break
 
             streamid, data = self._get_next_queue_item(timeout)
@@ -450,7 +452,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             username: Username for authentication. Defaults to the current system user.
             password: Password for the specified username. Defaults to an empty string.
             privkeypath: Optional path to the private key for authentication. If no private key path
-                         is provided, the method attempts to locate one using SSH configuration files.
+                         is provided, the method attempts to locate one using SSH configuration
+                         files.
             timeout: Timeout value for the establishing the SSH connection in seconds. Defaults to
                      60 seconds.
 
@@ -500,8 +503,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             connhost = ipaddr
             self._vhostname = f"{hostname} ({ipaddr})"
         else:
-            connhost = self._cfg_lookup("hostname", hostname, self.username)
-            if connhost:
+            name = self._cfg_lookup("hostname", hostname, self.username)
+            if isinstance(name, str) and name:
+                connhost = name
                 self._vhostname = f"{hostname} ({connhost})"
             else:
                 self._vhostname = connhost = hostname
@@ -516,21 +520,21 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 msg = Error(str(err)).indent(2)
                 _LOG.debug(f"Private key lookup falied:\n{msg}")
 
-        key_filename = str(self.privkeypath) if self.privkeypath else None
-
-        if key_filename:
+        if self.privkeypath:
             # Private SSH key sanity checks.
             try:
-                mode = os.stat(key_filename).st_mode
-            except OSError:
-                raise Error(f"'stat()' failed for private SSH key at '{key_filename}'") from None
+                mode = os.stat(self.privkeypath).st_mode
+            except OSError as err:
+                msg = Error(str(err)).indent(2)
+                raise Error(f"'stat()' failed for private SSH key at '{self.privkeypath}':\n"
+                            f"{msg}") from None
 
             if not stat.S_ISREG(mode):
-                raise Error(f"Private SSH key at '{key_filename}' is not a regular file")
+                raise Error(f"Private SSH key at '{self.privkeypath}' is not a regular file")
 
             if mode & (stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH):
-                raise Error(f"Private SSH key at '{key_filename}' permissions are too wide: Make "
-                            f" sure 'others' cannot read/write/execute it")
+                raise Error(f"Private SSH key at '{self.privkeypath}' permissions are too wide: "
+                            f"Make sure 'others' cannot read/write/execute it")
 
         _LOG.debug("Establishing SSH connection to %s, port %d, username '%s', timeout '%s', "
                    "priv. key '%s', SSH pman object ID: %s", self._vhostname, port, self.username,
@@ -541,7 +545,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             # We expect to be authenticated either with the key or an empty password.
             self.ssh.connect(username=self.username, hostname=connhost, port=port,
-                             key_filename=key_filename, timeout=self.connection_timeout,
+                             key_filename=self.privkeypath, timeout=self.connection_timeout,
                              password=self.password, allow_agent=False, look_for_keys=look_for_keys)
         except paramiko.AuthenticationException as err:
             msg = Error(str(err)).indent(2)
@@ -566,6 +570,81 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         ClassHelpers.close(self, close_attrs=("_sftp", "_intsh", "ssh",))
 
         super().close()
+
+    def _cfg_lookup(self,
+                    optname: str,
+                    hostname: str,
+                    username: str,
+                    cfgfiles: list[str] | None = None) -> str | list[str] | None:
+        """
+        Search for an SSH configuration option for a given host and user in SSH config files.
+
+        Args:
+            optname: The name of the SSH configuration option to search for.
+            hostname: The hostname for which the configuration option is being queried.
+            username: The username to for possible SSH tokens expansion (%u in SSH options is
+                      expanded with the user name)
+            cfgfiles: A list of SSH configuration file paths to search. Use standard paths by
+                      default.
+
+        Returns:
+            The value of the SSH configuration option if found, otherwise None.
+        """
+
+        old_username = None
+        try:
+            old_username = os.getenv("USER")
+            os.environ["USER"] = username
+
+            if not cfgfiles:
+                cfgfiles = []
+                for cfgfile in ["/etc/ssh/ssh_config", os.path.expanduser("~/.ssh/config")]:
+                    if os.path.exists(cfgfile):
+                        cfgfiles.append(cfgfile)
+
+            # Sort configuration file paths to make the order somewhat predictable, as opposed to
+            # random.
+            for cfgfile in sorted(cfgfiles):
+                config = paramiko.SSHConfig().from_path(cfgfile)
+
+                cfg = config.lookup(hostname)
+                if optname in cfg:
+                    return cfg[optname]
+
+                if "include" in cfg:
+                    cfgfiles = glob.glob(cfg["include"])
+                    return self._cfg_lookup(optname, hostname, username, cfgfiles=cfgfiles)
+        finally:
+            if old_username:
+                os.environ["USER"] = old_username
+            else:
+                # Remove the USER environment variable if it was not set before.
+                os.environ.pop("USER", None)
+
+        return None
+
+    def _lookup_privkey(self,
+                        hostname: str,
+                        username: str,
+                        cfgfiles: list[str] | None = None) -> str | None:
+        """
+        Look up the private SSH authentication key for a given host and user.
+
+        Args:
+            hostname: The hostname of the target SSH server.
+            username: The username for the SSH connection.
+            cfgfiles: List of configuration files to search for the key. Use standard files by
+                      default.
+
+        Returns:
+            The path to the private key if found, or None if no key is found.
+        """
+
+        privkeypath = self._cfg_lookup("identityfile", hostname, username, cfgfiles=cfgfiles)
+        if isinstance(privkeypath, list):
+            privkeypath = privkeypath[0]
+
+        return privkeypath
 
     @staticmethod
     def _format_cmd_for_pid(cmd: str, cwd: str | Path | None = None) -> str:
@@ -995,7 +1074,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             """
 
             orig_fread = getattr(fobj, "_orig_fread_")
-            # Note, paramiko SFTP file objects support only binary mode, and the "b" flag is ignored.
+            # Paramiko SFTP file objects support only binary mode, and the "b" flag is ignored.
             data: bytes = orig_fread(size=size)
 
             orig_fmode = getattr(fobj, "_orig_fmode_")
@@ -1032,7 +1111,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 except BaseException as err: # pylint: disable=broad-except
                     msg = Error(str(err)).indent(2)
                     errmsg = get_err_prefix(fobj, "write")
-                    raise Error(f"{errmsg}:\nFailed to encode data before writing:\n{msg}") from None
+                    raise Error(f"{errmsg}:\nFailed to encode data before writing:\n"
+                                f"{msg}") from None
 
             orig_fwrite = getattr(fobj, "_orig_fwrite_")
             return orig_fwrite(data)
@@ -1089,9 +1169,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         cmd = "date +%s"
         stdout, _ = self.run_verify(cmd, shell=True)
-        time = cast(str, stdout).strip()
+        tt = cast(str, stdout).strip()
         what = f"current time on {self.hostname} acquired via SSH using {cmd}"
-        return Trivial.str_to_float(time, what=what)
+        return Trivial.str_to_float(tt, what=what)
 
     def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkdir()'."""
@@ -1300,48 +1380,3 @@ for entry in os.listdir(path):
             raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
 
         return raise_or_return()
-
-    def _cfg_lookup(self, optname, hostname, username, cfgfiles=None):
-        """
-        Search for option 'optname' in SSH configuration files. Only consider host 'hostname'
-        options.
-        """
-
-        old_username = None
-        try:
-            old_username = os.getenv("USER")
-            os.environ["USER"] = username
-
-            if not cfgfiles:
-                cfgfiles = []
-                for cfgfile in ["/etc/ssh/ssh_config", os.path.expanduser('~/.ssh/config')]:
-                    if os.path.exists(cfgfile):
-                        cfgfiles.append(cfgfile)
-
-            # Sort configuration file paths to make the order somewhat predictable, as opposed to
-            # random.
-            for cfgfile in sorted(cfgfiles):
-                config = paramiko.SSHConfig().from_path(cfgfile)
-
-                cfg = config.lookup(hostname)
-                if optname in cfg:
-                    return cfg[optname]
-
-                if "include" in cfg:
-                    cfgfiles = glob.glob(cfg['include'])
-                    return self._cfg_lookup(optname, hostname, username, cfgfiles=cfgfiles)
-        finally:
-            os.environ["USER"] = old_username
-
-        return None
-
-    def _lookup_privkey(self, hostname, username, cfgfiles=None):
-        """Lookup for private SSH authentication keys for host 'hostname'."""
-
-        privkeypath = self._cfg_lookup("identityfile", hostname, username, cfgfiles=cfgfiles)
-        if isinstance(privkeypath, list):
-            privkeypath = privkeypath[0]
-
-        if privkeypath:
-            privkeypath = Path(privkeypath)
-        return privkeypath
