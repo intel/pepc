@@ -568,15 +568,22 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         super().close()
 
     @staticmethod
-    def _format_cmd_for_pid(cmd, cwd=None):
+    def _format_cmd_for_pid(cmd: str, cwd: Path | None = None) -> str:
         """
-        When we run a process via the shell, we do not know it's PID. This function modifies the
-        'cmd' command so that it prints the PID as the first line of its output to 'stdout'. This
-        requires a shell.
+        Modify the command so that it prints own PID.
+
+        Problem: paramiko does not provide a way of getting PID of the executed command.
+        Soulution: start shell first, print its PID, then exec the command in the shell. The command
+                   will inherit the PID of the shell.
+
+        Args:
+            cmd: The command to be executed.
+            cwd: The working directory to switch to before executing the command.
+
+        Returns:
+            string that prints the PID before executing the original command.
         """
 
-        # Prepend the command with a shell statement which prints the PID of the shell where the
-        # command will be run. Then use 'exec' to make sure that the command inherits the PID.
         prefix = r'printf "%s\n" "$$";'
         if cwd:
             prefix += f""" cd "{cwd}" &&"""
