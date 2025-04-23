@@ -985,7 +985,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return self._sftp
 
-    def open(self, path: Path, mode: str) -> IO:
+    def open(self, path: str | Path, mode: str) -> IO:
         """Refer to 'ProcessManagerBase.open()'."""
 
         def _read_(fobj: IO, size: int | None = None) -> bytes | str:
@@ -1052,12 +1052,12 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             orig_fpath = getattr(fobj, "_orig_fpath_")
             return f"Method '{method}()' failed for file '{orig_fpath}'"
 
-        path_str = str(path)
+        path = str(path)
         sftp = self._get_sftp()
 
-        errmsg = f"Failed to open file '{path_str}' with mode '{mode}' on {self.hostname} via SFTP: "
+        errmsg = f"Failed to open file '{path}' with mode '{mode}' on {self.hostname} via SFTP: "
         try:
-            fobj = sftp.file(path_str, mode)
+            fobj = sftp.file(path, mode)
         except PermissionError as err:
             msg = Error(str(err)).indent(2)
             raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
@@ -1069,7 +1069,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"{errmsg}\n{msg}") from err
 
         # Save the path and the mode in the file object.
-        setattr(fobj, "_orig_fpath_", path_str)
+        setattr(fobj, "_orig_fpath_", path)
         setattr(fobj, "_orig_fmode_", mode)
 
         # Replace read and write methods.

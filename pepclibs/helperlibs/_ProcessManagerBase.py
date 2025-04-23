@@ -1015,7 +1015,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         return result
 
-    def open(self, path: Path, mode: str) -> IO:
+    def open(self, path: str | Path, mode: str) -> IO:
         """
         Open a file at the specified path and return the file-like object.
 

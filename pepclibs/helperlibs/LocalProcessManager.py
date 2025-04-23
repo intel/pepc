@@ -346,7 +346,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         self.get(src, dst)
 
-    def open(self, path: Path, mode: str) -> IO:
+    def open(self, path: str | Path, mode: str) -> IO:
         """Refer to 'ProcessManagerBase.open()'."""
 
         # pylint: disable=consider-using-with,unspecified-encoding
