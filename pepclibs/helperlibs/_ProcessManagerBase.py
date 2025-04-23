@@ -630,7 +630,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             None
         """
 
-        if _LOG.getEffectiveLevel() != Logging.DEBUG:
+        if not self.debug:
             return
 
         if self._partial[0]:
@@ -659,7 +659,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                 stderr += self._output[1][-1]
             stderr = "First and last lines of stderr:\n" + stderr.rstrip()
         else:
-            stdout = "No buffered stderr"
+            stderr = "No buffered stderr"
 
         self._dbg("%s: Buffered output:\n%s\n%s\n%s\n%s\n",
                   pfx, partial_stdout, partial_stderr, stdout, stderr)
