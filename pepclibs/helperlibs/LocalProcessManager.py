@@ -195,6 +195,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             cmd = shlex.split(command)
 
         try:
+            # pylint: disable=consider-using-with
             pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd,
                                     bufsize=0, env=env, shell=shell, start_new_session=newgrp)
         except FileNotFoundError as err:

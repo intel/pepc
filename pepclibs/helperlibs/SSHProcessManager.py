@@ -192,6 +192,9 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         piece of stdout data from the process and check for a marker that indicates that the process
         has exited.
 
+        Args:
+            data: A piece of stdout data from the process.
+
         Returns:
             A tuple containing the captured stdout data ('cdata') and process exit code
             ('exitcode'), or 'None' if the marker is not found.
@@ -1069,8 +1072,15 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         def _read_(fobj: IO, size: int | None = None) -> bytes | str:
             """
-            This wrapper improves exceptions message and adds text mode support (SFTP file objects
-            support only binary mode).
+            Read data from a file object with enhanced exception handling and text mode support.
+
+            Args:
+                fobj: The file object to read from.
+                size: The number of bytes to read. If None, reads until EOF.
+
+            Returns:
+                The data read from the file object. Return a string if the file is in text mode,
+                otherwise return bytes.
             """
 
             orig_fread = getattr(fobj, "_orig_fread_")
@@ -1096,6 +1106,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             Args:
                 fobj: The file object to write to.
                 data: The data to write.
+
+            Returns:
+                Count of bytes or charaters written to the file object.
             """
 
             orig_fmode = getattr(fobj, "_orig_fmode_")
@@ -1300,11 +1313,7 @@ for entry in os.listdir(path):
         return Path(rpath)
 
     def mkdtemp(self, prefix: str | None  = None, basedir: str | Path | None = None) -> Path:
-        """
-        Create a temporary directory and return its path. The arguments are as follows.
-          * prefix - specifies the temporary directory name prefix.
-          * basedir - path to the base directory where the temporary directory should be created.
-        """
+        """Refer to 'ProcessManagerBase.mkdtemp()'."""
 
         cmd = "mktemp -d -t '"
         if prefix:

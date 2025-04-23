@@ -1060,10 +1060,15 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         return val
 
-    def get_python_path(self):
+    def get_python_path(self) -> Path:
         """
-        Some FS operations have to execute python scripts. This method finds and returns python
-        interpreter path.
+        Locate and return the path to the Python interpreter.
+
+        Returns:
+            Path: The path to the Python interpreter.
+
+        Raises:
+            ErrorNotFound: If no valid Python interpreter is found in the predefined paths.
         """
 
         if self._python_path:
