@@ -688,7 +688,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
     def run_async(self,
                   cmd: str | Path,
-                  cwd: str | None = None,
+                  cwd: Path | None = None,
                   shell: bool = True,
                   intsh: bool = False,
                   stdin: IO | None = None,
@@ -728,7 +728,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             mix_output: bool = False,
             join: bool = True,
             output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
-            cwd: str | None = None,
+            cwd: Path | None = None,
             shell: bool = True,
             intsh: bool | None = None,
             env: dict[str, str] | None = None,
@@ -781,7 +781,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    mix_output: bool = False,
                    join: bool = True,
                    output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
-                   cwd: str | None = None,
+                   cwd: Path | None = None,
                    shell: bool = True,
                    intsh: bool | None = None,
                    env: dict[str, str] | None = None,
@@ -800,8 +800,10 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             join: Whether to join the output streams.
             output_fobjs: File-like objects to write the command's stdout and stderr.
             cwd: The working directory to execute the command in.
-            shell: Whether to execute the command through the shell.
-            intsh: The interactive shell to use.
+            shell: Run the command through a shell if True.
+            intsh: Use an existing interactive shell if True, or a new shell if False. The former
+                   requires less time to start a new process, as it does not require creating a new
+                   shell. The default value is the value of 'shell'.
             env: Environment variables for the process.
             newgrp: Create a new group for the process, as opposed to using the parent process
                     group.

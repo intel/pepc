@@ -693,12 +693,31 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return acquired
 
-    def _run_async(self, command, cwd=None, shell=True, intsh=False):
-        """Implements 'run_async()'."""
+    def _run_async(self,
+                  command: str | Path,
+                  cwd: Path | None = None,
+                  shell: bool = True,
+                  intsh: bool = False) -> SSHProcess:
+        """
+        Run a command asynchronously. Implemen 'run_async()'.
+
+        Args:
+            command: The command to execute. Can be a string or a 'pathlib.Path' pointing to the
+                     file to execute.
+            cwd: The working directory for the process.
+            shell: Whether to execute the command through a shell.
+            intsh: Use an existing interactive shell if True, or a new shell if False. The former
+                   requires less time to start a new process, as it does not require creating a new
+                   shell. The default value is the value of 'shell'.
+
+        Returns:
+            A 'SSHProcess' object representing the executed remote asynchronous process.
+        """
 
         if not shell and intsh:
-            raise Error("'shell' argument must be 'True' when 'intsh' is 'True'")
+            raise Error("The 'shell' argument must be 'True' when 'intsh' is 'True'")
 
+        command = str(command)
         if not shell or not intsh:
             return self._run_in_new_session(command, cwd=cwd, shell=shell)
 
@@ -715,15 +734,16 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 self._intsh_lock.release()
 
         if not intsh:
-            _LOG.warning("interactive shell is busy, running the following command in a new "
+            _LOG.warning("The interactive shell is busy, running the following command in a new "
                          "SSH session:\n%s", command)
             return self._run_in_new_session(command, cwd=cwd, shell=shell)
 
         try:
             return self._run_in_intsh(command, cwd=cwd)
         except BaseException as err: # pylint: disable=broad-except
-            _LOG.warning("failed to run the following command in an interactive shell: %s\n"
-                         "The error was: %s", command, err)
+            msg = Error(str(err)).indent(2)
+            _LOG.warning("Failed to run the following command in an interactive shell:  %s\n"
+                         "The error was:\n%s", command, msg)
 
             # Close the internal shell and try to run in a new session.
             with contextlib.suppress(BaseException):
@@ -734,11 +754,11 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 self._intsh_lock.release()
                 if self._intsh:
                     with contextlib.suppress(BaseException):
-                        self._intsh.pobj.send("exit\n")
+                        self._intsh.pobj.send("exit\n".encode())
                         self._intsh.close()
                     self._intsh = None
             else:
-                _LOG.warning("failed to acquire the interactive shell process lock")
+                _LOG.warning("Failed to acquire the interactive shell process lock")
 
             return self._run_in_new_session(command, cwd=cwd, shell=shell)
 
