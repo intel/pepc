@@ -794,31 +794,26 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return self._run_async(cmd, cwd=cwd, shell=shell, intsh=intsh)
 
-    def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-            output_fobjs=(None, None), cwd=None, shell=True, intsh=None, env=None,
-            newgrp=False) -> ProcWaitResultType:
-        """
-        Run command 'command' on the remote host and wait for it to finish. Refer to
-        'ProcessManagerBase.run()' for more information.
+    def run(self,
+            cmd: str | Path,
+            timeout: int | float | None = None,
+            capture_output: bool = True,
+            mix_output: bool = False,
+            join: bool = True,
+            output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+            cwd: Path | None = None,
+            shell: bool = True,
+            intsh: bool | None = None,
+            env: dict[str, str] | None = None,
+            newgrp: bool = False) -> ProcWaitResultType:
+        """Refer to 'ProcessManagerBase.run()'."""
 
-        Notes.
-
-        1. Standard Unix systems have some sort of shell, so it is safe to use 'shell=True'. But
-           this is not always the case. E.g., Dell's iDRACs do not run a shell when you log into
-           them. Use 'shell=False' in such cases.
-        2. The 'intsh' argument indicates whether the command should run in an interactive shell or
-           in a separate SSH session. The former is faster because creating a new SSH session takes
-           time.  By default, 'intsh' is the same as 'shell' ('True' if using shell is allowed,
-           'False' otherwise).
-        """
-
+        # pylint: disable=unused-argument
         for arg, val in (("env", None), ("newgrp", False)):
             if locals()[arg] != val:
                 raise Error(f"'SSHProcessManager.run()' doesn't support the '{arg}' argument")
 
-        # pylint: disable=unused-argument
-        msg = f"running the following command{self.hostmsg} (shell {shell}, intsh {intsh}):\n" \
-              f"{command}"
+        msg = f"Running the following command{self.hostmsg} (shell {shell}, intsh {intsh}):\n{cmd}"
         if cwd:
             msg += f"\nWorking directory: {cwd}"
         _LOG.debug(msg)
@@ -827,7 +822,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             intsh = shell
 
         # Execute the command on the remote host.
-        with self._run_async(command, cwd=cwd, shell=shell, intsh=intsh) as proc:
+        with self._run_async(cmd, cwd=cwd, shell=shell, intsh=intsh) as proc:
             if mix_output:
                 proc.pobj.set_combine_stderr(True)
 
@@ -836,13 +831,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                                output_fobjs=output_fobjs, join=join)
 
         if result.exitcode is None:
-            msg = self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout)
+            msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode,
+                                           timeout=timeout)
             raise ErrorTimeOut(msg)
-
-        if output_fobjs[0]:
-            output_fobjs[0].flush()
-        if output_fobjs[1]:
-            output_fobjs[1].flush()
 
         return result
 
