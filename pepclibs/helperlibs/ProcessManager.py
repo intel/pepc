@@ -87,7 +87,7 @@ def get_pman(hostname, username=None, privkeypath=None, timeout=None) -> Process
     elif hostname.startswith("emulation"):
         pman = EmulProcessManager.EmulProcessManager(hostname=hostname)
     else:
-        pman = SSHProcessManager.SSHProcessManager(hostname=hostname, username=username,
+        pman = SSHProcessManager.SSHProcessManager(hostname, username=username,
                                                    privkeypath=privkeypath, timeout=timeout)
 
     return pman

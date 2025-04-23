@@ -426,33 +426,36 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
 class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """
-    This class implements a process manager for running and monitoring processes on a remote host
-    over SSH.
-
-    SECURITY NOTICE: this class and any part of it should only be used for debugging and development
-    purposes. No security audit had been done. Not for production use.
+    Provide API for executing commands and managing files and processes on a remote host via SSH.
+    Implement the 'ProcessManagerBase' API, with the idea of having a unified API for executing
+    commands locally and remotely.
     """
 
-    def __init__(self, hostname=None, ipaddr=None, port=None, username=None, password="",
-                 privkeypath=None, timeout=None):
+    def __init__(self,
+                 hostname: str,
+                 ipaddr: str | None = None,
+                 port: int | None = None,
+                 username: str | None = None,
+                 password: str | None = None,
+                 privkeypath: str | None = None,
+                 timeout: int | float | None = None):
         """
-        Initialize a class instance and establish SSH connection to host 'hostname'. The arguments
-        are as follows.
-          o hostname - name of the host to connect to.
-          o ipaddr - optional IP address of the host to connect to. If specified, then it is used
-            instead of hostname, otherwise hostname is used.
-          o port - optional port number to connect to, default is 22.
-          o username - optional user name to use when connecting.
-          o password - optional password to authenticate the 'username' user (not secure!).
-          o privkeypath - optional public key path to use for authentication.
-          o timeout - optional SSH connection timeout value in seconds.
+        Initialize a class instance and establish SSH connection to a remote host.
 
-        The 'hostname' argument being 'None' is a special case - this module falls-back to using the
-        'LocalProcessManager' module and runs all all operations locally without actually involving
-        SSH or networking. This is different to using 'localhost', which does involve SSH.
+        Args:
+            hostname: The name of the host to connect to.
+            ipaddr: IP address of the host. If provided, it is used instead of `hostname` for
+                    connecting, and `hostname` is used for logging purposes.
+            port: The port number to connect to. Defaults to 22.
+            username: Username for authentication. Defaults to the current system user.
+            password: Password for the specified username. Defaults to an empty string.
+            privkeypath: Optional path to the private key for authentication. If no private key path
+                         is provided, the method attempts to locate one using SSH configuration files.
+            timeout: Timeout value for the establishing the SSH connection in seconds. Defaults to
+                     60 seconds.
 
-        SECURITY NOTICE: this class and any part of it should only be used for debugging and
-        development purposes. No security audit had been done. Not for production use.
+        Raises:
+            ErrorConnect: If SSH connection cannot be established (e.g., authentication fails).
         """
 
         super().__init__()
@@ -464,11 +467,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if not timeout:
             timeout = 60
         self.connection_timeout = float(timeout)
-        if port is None:
+        if not port:
             port = 22
         self.port = port
         look_for_keys = False
         self.username = username
+        if not password:
+            password = ""
         self.password = password
         self.privkeypath = privkeypath
 
