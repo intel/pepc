@@ -545,7 +545,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return rpath
 
-    def mkdtemp(self, prefix: str | None  = None, basedir: Path | None = None) -> Path:
+    def mkdtemp(self, prefix: str | None  = None, basedir: str | Path | None = None) -> Path:
         """Refer to 'ProcessManagerBase.mkdtemp()'."""
 
         try:

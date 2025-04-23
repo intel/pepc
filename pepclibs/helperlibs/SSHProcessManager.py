@@ -1219,7 +1219,7 @@ for entry in os.listdir(path):
 
         return Path(rpath)
 
-    def mkdtemp(self, prefix: str | None  = None, basedir: Path | None = None) -> Path:
+    def mkdtemp(self, prefix: str | None  = None, basedir: str | Path | None = None) -> Path:
         """
         Create a temporary directory and return its path. The arguments are as follows.
           * prefix - specifies the temporary directory name prefix.
@@ -1233,12 +1233,13 @@ for entry in os.listdir(path):
         if basedir:
             cmd += f" -p '{basedir}'"
 
-        path = self.run_verify(cmd)[0].strip()
+        stdout, _ = self.run_verify(cmd)
+        path = cast(str, stdout).strip()
         if not path:
-            raise Error(f"cannot create a temporary directory{self.hostmsg}, the following command "
+            raise Error(f"Cannot create a temporary directory{self.hostmsg}, the following command "
                         f"returned an empty string:\n{cmd}")
 
-        _LOG.debug("created a temporary directory '%s'%s", path, self.hostmsg)
+        _LOG.debug("Created a temporary directory '%s'%s", path, self.hostmsg)
         return Path(path)
 
     def get_envar(self, envar):

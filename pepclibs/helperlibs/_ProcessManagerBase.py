@@ -1276,7 +1276,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.abspath()")
 
-    def mkdtemp(self, prefix: str | None  = None, basedir: Path | None = None) -> Path:
+    def mkdtemp(self, prefix: str | None  = None, basedir: str | Path | None = None) -> Path:
         """
         Create a temporary directory and return its path.
 
