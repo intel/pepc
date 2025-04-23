@@ -88,7 +88,7 @@ def get_username(uid: int | None = None) -> str:
 
 def str_to_int(snum: str | int, base: int = 0, what: str | None = None) -> int:
     """
-    Convert a string to an integer numeric value.
+    Convert a string to an integer value.
 
     Args:
         snum: The value to convert to 'int'.
@@ -125,6 +125,29 @@ def str_to_int(snum: str | int, base: int = 0, what: str | None = None) -> int:
         raise ErrorBadFormat(f"Bad {what} '{snum}': should be {msg}") from None
 
     return num
+
+def str_to_float(snum: str | float, what: str | None = None) -> float:
+    """
+    Convert a string to a floating point number.
+
+    Args:
+        snum: The value to convert to 'float'.
+        what: A string describing the value to convert, for the possible error message.
+
+    Returns:
+        float: The converted floating point value.
+
+    Raises:
+        ErrorBadFormat: If 'snum' cannot be converted to a floating point value.
+    """
+
+    try:
+        return float(str(snum))
+    except (ValueError, TypeError):
+        if what is None:
+            what = "value"
+        pfx = f"Bad {what} '{snum}'"
+        raise ErrorBadFormat(f"{pfx}: should be a floating point number") from None
 
 def str_to_num(snum: str | int, what: str | None = None) -> int | float:
     """

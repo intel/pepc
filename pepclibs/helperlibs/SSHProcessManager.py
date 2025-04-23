@@ -1084,28 +1084,22 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             return cast(IO[bytes], wfobj)
         return cast(IO[str], wfobj)
 
-    def time_time(self):
-        """
-        Return the time in seconds since the epoch as a floating point number (just as the standard
-        python 'time.time()' function).
-        """
+    def time_time(self) -> float:
+        """Refer to 'ProcessManagerBase.time_time()'."""
 
-        return float(self.run_verify("date +%s")[0].strip())
+        cmd = "date +%s"
+        stdout, _ = self.run_verify(cmd, shell=True)
+        time = cast(str, stdout).strip()
+        what = f"current time on {self.hostname} acquired via SSH using {cmd}"
+        return Trivial.str_to_float(time, what=what)
 
-    def mkdir(self, dirpath, parents=False, exist_ok=False):
-        """
-        Create a directory. The a arguments are as follows.
-          * dirpath - path to the directory to create.
-          * parents - if 'True', the parent directories are created as well.
-          * exist_ok - if the directory already exists, this method raises an exception if
-                       'exist_ok' is 'True', and it returns without an error if 'exist_ok' is
-                       'False'.
-        """
+    def mkdir(self, dirpath: Path, parents: bool = False, exist_ok: bool = False):
+        """Refer to 'ProcessManagerBase.mkdir()'."""
 
         if self.shell_test(dirpath, "-e"):
             if exist_ok:
                 return
-            raise ErrorExists(f"path '{dirpath}' already exists{self.hostmsg}")
+            raise ErrorExists(f"Path '{dirpath}' already exists{self.hostmsg}")
 
         cmd = "mkdir"
         if parents:
