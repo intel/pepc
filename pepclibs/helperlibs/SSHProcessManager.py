@@ -668,21 +668,29 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return proc
 
-    def _acquire_intsh_lock(self, command=None):
+    def _acquire_intsh_lock(self, command: str | None = None):
         """
-        Acquire the interactive shell lock. It should be acquired only for short period of times.
+        Acquire the interactive shell lock.
+
+        Args:
+            command: Optional command string for which the lock is being acquired. Used for logging
+                     purposes.
+
+        Returns:
+            True if the lock was successfully acquired, False otherwise.
         """
 
         timeout = 5
         acquired = self._intsh_lock.acquire(timeout=timeout) # pylint: disable=consider-using-with
         if not acquired:
-            msg = "failed to acquire the interactive shell lock"
+            msg = "Failed to acquire the interactive shell lock"
             if command:
                 msg += f" for for the following command:\n{command}\n"
             else:
                 msg += "."
             msg += f"Waited for {timeout} seconds."
             _LOG.warning(msg)
+
         return acquired
 
     def _run_async(self, command, cwd=None, shell=True, intsh=False):
