@@ -460,27 +460,34 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         super().__init__()
 
-        self.ssh = None
         self.is_remote = True
         self.hostname = hostname
         self.hostmsg = f" on host '{hostname}'"
+
         if not timeout:
             timeout = 60
         self.connection_timeout = float(timeout)
+
         if not port:
             port = 22
         self.port = port
-        look_for_keys = False
+
+        if not username:
+            username = os.getenv("USER")
+            if not username:
+                username = Trivial.get_username()
         self.username = username
+
         if not password:
             password = ""
         self.password = password
         self.privkeypath = privkeypath
 
         # The command to use for figuring out full paths in the 'which()' method.
-        self._which_cmd = None
+        self._which_cmd: str | None = None
 
-        self._sftp = None
+        self._sftp: paramiko.SFTPClient | None = None
+
         # The interactive shell session.
         self._intsh: SSHProcess | None = None
         # Whether we already run a process in the interactive shell.
@@ -488,13 +495,6 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         # A lock protecting 'self._intsh_busy' and 'self._intsh'. Basically this lock makes sure we
         # always run exactly one process in the interactive shell.
         self._intsh_lock = threading.Lock()
-        # The "verbose" host name. The 'self.hostname', but with more details, like the IP address.
-        self._vhostname = None
-
-        if not self.username:
-            self.username = os.getenv("USER")
-            if not self.username:
-                self.username = Trivial.get_username()
 
         if ipaddr:
             connhost = ipaddr
@@ -506,6 +506,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             else:
                 self._vhostname = connhost = hostname
 
+        look_for_keys = False
         if not self.privkeypath:
             # Try finding the key filename from the SSH configuration files.
             look_for_keys = True
@@ -513,7 +514,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 self.privkeypath = self._lookup_privkey(hostname, self.username)
             except Exception as err: # pylint: disable=broad-except
                 msg = Error(str(err)).indent(2)
-                _LOG.debug(f"private key lookup falied:\n{msg}")
+                _LOG.debug(f"Private key lookup falied:\n{msg}")
 
         key_filename = str(self.privkeypath) if self.privkeypath else None
 
@@ -525,15 +526,15 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 raise Error(f"'stat()' failed for private SSH key at '{key_filename}'") from None
 
             if not stat.S_ISREG(mode):
-                raise Error(f"private SSH key at '{key_filename}' is not a regular file")
+                raise Error(f"Private SSH key at '{key_filename}' is not a regular file")
 
             if mode & (stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH):
-                raise Error(f"private SSH key at '{key_filename}' permissions are too wide: make "
+                raise Error(f"Private SSH key at '{key_filename}' permissions are too wide: Make "
                             f" sure 'others' cannot read/write/execute it")
 
-        _LOG.debug("establishing SSH connection to %s, port %d, username '%s', timeout '%s', "
+        _LOG.debug("Establishing SSH connection to %s, port %d, username '%s', timeout '%s', "
                    "priv. key '%s', SSH pman object ID: %s", self._vhostname, port, self.username,
-                   timeout, self.privkeypath, id(self))
+                   self.connection_timeout, self.privkeypath, id(self))
 
         try:
             self.ssh = paramiko.SSHClient()
@@ -543,12 +544,12 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                              key_filename=key_filename, timeout=self.connection_timeout,
                              password=self.password, allow_agent=False, look_for_keys=look_for_keys)
         except paramiko.AuthenticationException as err:
-            msg = Error(err).indent(2)
+            msg = Error(str(err)).indent(2)
             raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
                                f"'{self.username}':\n{msg}") from err
         except BaseException as err: # pylint: disable=broad-except
-            msg = Error(err).indent(2)
-            raise ErrorConnect(f"cannot establish TCP connection to {self._vhostname} with "
+            msg = Error(str(err)).indent(2)
+            raise ErrorConnect(f"Cannot establish TCP connection to {self._vhostname} with "
                                f"{timeout} secs time-out:\n{msg}") from err
 
     def close(self):
