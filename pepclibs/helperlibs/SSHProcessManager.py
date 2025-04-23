@@ -1242,14 +1242,20 @@ for entry in os.listdir(path):
         _LOG.debug("Created a temporary directory '%s'%s", path, self.hostmsg)
         return Path(path)
 
-    def get_envar(self, envar):
-        """Return the value of the environment variable 'envar'."""
+    def get_envar(self, envar: str) -> str | None:
+        """Refer to 'ProcessManagerBase.get_envar()'."""
 
         try:
-            return Path(self.run_verify(f"echo ${envar}")[0].strip())
+            stdout, _ = self.run_verify(f"echo ${envar}")
         except ErrorNotFound:
             # See commentaries in 'shell_test()', this is a similar case.
-            return Path(self.run_verify(f"sh -c -l \"echo ${envar}\"")[0].strip())
+            stdout, _ = self.run_verify(f"sh -c -l \"echo ${envar}\"")
+
+
+        result = cast(str, stdout).strip()
+        if result:
+            return result
+        return None
 
     def which(self, program, must_find=True):
         """
