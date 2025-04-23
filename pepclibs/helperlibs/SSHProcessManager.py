@@ -943,20 +943,27 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except Error as err:
             raise Error(f"Failed to copy files '{src}' to '{dst}':\n{err.indent(2)}") from err
 
-    def get(self, remote_path, local_path):
+    def get(self, src: Path, dst: Path):
         """
-        Copy a file or directory 'remote_path' from the remote host to 'local_path' on the local
-        machine.
+        Copy a file or directory from remote source path to local destination path.
+
+        Args:
+            src: The remote source path of the file or directory to copy.
+            dst: The local destination path where the file or directory will be copied.
         """
 
-        self._scp(f"{self.hostname}:\"{remote_path}\"", f"\"{local_path}\"")
+        self._scp(f"{self.hostname}:\"{src}\"", f"\"{dst}\"")
 
-    def put(self, local_path, remote_path):
+    def put(self, src: Path, dst: Path):
         """
-        Copy local file or directory defined by 'local_path' to 'remote_path' on the remote host.
+        Copy a file or directory from a local source path to remote destination path.
+
+        Args:
+            src: The loal source path of the file or directory to copy.
+            dst: The remote destination path where the file or directory will be copied.
         """
 
-        self._scp(f"\"{local_path}\"", f"{self.hostname}:\"{remote_path}\"")
+        self._scp(f"\"{src}\"", f"{self.hostname}:\"{dst}\"")
 
     def _get_sftp(self):
         """Get an SFTP server object."""

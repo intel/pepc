@@ -1290,6 +1290,17 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.get()")
 
+    def put(self, src: Path, dst: Path):
+        """
+        Copy a file or directory from the source path to the destination path.
+
+        Args:
+            src: The source path of the file or directory to copy.
+            dst: The destination path where the file or directory will be copied.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.put()")
+
     def which(self, program: str | Path, must_find: bool = True):
         """
         Locate the full path of a program by searching in PATH.

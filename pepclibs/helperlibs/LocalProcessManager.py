@@ -553,6 +553,11 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to copy files '{src}' to '{dst}':\n{msg}") from err
 
+    def put(self, src: Path, dst: Path):
+        """Refer to 'ProcessManagerBase.put()'."""
+
+        self.get(src, dst)
+
     def which(self, program: str | Path, must_find: bool = True):
         """Refer to 'ProcessManagerBase.which()'."""
 
