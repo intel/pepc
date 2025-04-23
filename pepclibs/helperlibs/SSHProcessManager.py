@@ -124,8 +124,18 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         if shell:
             self._read_pid()
 
-    def _fetch_stream_data(self, streamid: int, size: int) -> bytes:
-        """Refer to 'ProcessBase._fetch_stream_data()'."""
+    def close(self):
+        """Free allocated resources."""
+
+        self._dbg("SSHProcessManager.close()")
+
+        # If this is the an interactive shell process - do not close it. It'll be closed in
+        # 'SSHProcessManager.close()' instead.
+        if not self._marker:
+            super().close()
+
+    def _fetch_stream_data(self, streamid, size):
+        """Fetch up to 'size' bytes from stdout or stderr of the process."""
 
         try:
             return self._streams[streamid](size)
