@@ -332,6 +332,20 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         self._rsync_debug_log(stdout)
 
+    def get(self, src: Path, dst: Path):
+        """Refer to 'ProcessManagerBase.get()'."""
+
+        try:
+            shutil.copy(src, dst)
+        except (OSError, shutil.Error) as err:
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to copy files '{src}' to '{dst}':\n{msg}") from err
+
+    def put(self, src: Path, dst: Path):
+        """Refer to 'ProcessManagerBase.put()'."""
+
+        self.get(src, dst)
+
     def open(self, path: Path, mode: str) -> IO:
         """Refer to 'ProcessManagerBase.open()'."""
 
@@ -356,7 +370,9 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         # Make sure all file methods raise only exceptions derived from 'Error'.
         wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
-        return cast(IO, wfobj)
+        if "b" in mode:
+            return cast(IO[bytes], wfobj)
+        return cast(IO[str], wfobj)
 
     def time_time(self) -> float:
         """Refer to 'ProcessManagerBase.time_time()'."""
@@ -543,20 +559,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """Refer to 'ProcessManagerBase.get_envar()'."""
 
         return os.environ.get(envar)
-
-    def get(self, src: Path, dst: Path):
-        """Refer to 'ProcessManagerBase.get()'."""
-
-        try:
-            shutil.copy(src, dst)
-        except (OSError, shutil.Error) as err:
-            msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to copy files '{src}' to '{dst}':\n{msg}") from err
-
-    def put(self, src: Path, dst: Path):
-        """Refer to 'ProcessManagerBase.put()'."""
-
-        self.get(src, dst)
 
     def which(self, program: str | Path, must_find: bool = True):
         """Refer to 'ProcessManagerBase.which()'."""

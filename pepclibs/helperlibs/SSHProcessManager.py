@@ -965,8 +965,14 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         self._scp(f"\"{src}\"", f"{self.hostname}:\"{dst}\"")
 
-    def _get_sftp(self):
-        """Get an SFTP server object."""
+    def _get_sftp(self) -> paramiko.SFTPClient:
+        """
+        Get an SFTP server object. If an SFTP session is already established, return the existing
+        session. Otherwise, create a new SFTP session using the SSH connection.
+
+        Returns:
+            An 'SFTPClient' object representing the SFTP session.
+        """
 
         if self._sftp:
             return self._sftp
@@ -974,87 +980,109 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             self._sftp = self.ssh.open_sftp()
         except BaseException as err: # pylint: disable=broad-except
-            msg = Error(err).indent(2)
-            raise Error(f"failed to establish SFTP session with {self.hostname}:\n{msg}") from err
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to establish SFTP session with {self.hostname}:\n{msg}") from err
 
         return self._sftp
 
-    def open(self, path, mode):
-        """
-        Open a file. Refer to '_ProcessManagerBase.ProcessManagerBase().open()' for more
-        information.
-        """
+    def open(self, path: Path, mode: str) -> IO:
+        """Refer to 'ProcessManagerBase.open()'."""
 
-        def _read_(fobj, size=None):
+        def _read_(fobj: IO, size: int | None = None) -> bytes | str:
             """
             This wrapper improves exceptions message and adds text mode support (SFTP file objects
             support only binary mode).
             """
 
-            data = fobj._orig_fread_(size=size)
+            orig_fread = getattr(fobj, "_orig_fread_")
+            # Note, paramiko SFTP file objects support only binary mode, and the "b" flag is ignored.
+            data: bytes = orig_fread(size=size)
 
-            if "b" not in fobj._orig_fmode_:
+            orig_fmode = getattr(fobj, "_orig_fmode_")
+            if "b" not in orig_fmode:
                 try:
-                    data = data.decode("utf-8")
-                except UnicodeError as err:
-                    msg = Error(err).indent(2)
-                    errmsg = get_err_prefix(fobj._obj, "read")
-                    raise Error(f"{errmsg}: failed to decode data after reading:\n{msg}") from None
+                    return data.decode("utf-8")
+                except BaseException as err: # pylint: disable=broad-except
+                    msg = Error(str(err)).indent(2)
+                    errmsg = get_err_prefix(fobj, "read")
+                    raise Error(f"{errmsg}: Failed to decode data after reading:\n{msg}") from None
 
             return data
 
-        def _write_(fobj, data):
+        def _write_(fobj: IO, data: str | bytes):
             """
-            This wrapper improves exceptions message and adds text mode support (SFTP file objects
-            support only binary mode).
+            Write data to a SFTP-backed file object with enhanced exception handling and text mode
+            support.
+
+            Args:
+                fobj: The file object to write to.
+                data: The data to write.
             """
 
-            if "b" not in fobj._orig_fmode_:
+            orig_fmode = getattr(fobj, "_orig_fmode_")
+
+            if "b" not in orig_fmode:
+                if not isinstance(data, str):
+                    errmsg = get_err_prefix(fobj, "write")
+                    raise Error(f"{errmsg}: The data to write must be a string, but not "
+                                f"{type(data).__name__}") from None
+
                 try:
                     data = data.encode("utf-8")
-                except UnicodeError as err:
-                    msg = Error(err).indent(2)
+                except BaseException as err: # pylint: disable=broad-except
+                    msg = Error(str(err)).indent(2)
                     errmsg = get_err_prefix(fobj, "write")
-                    raise Error(f"{errmsg}:\n{msg}\nFailed to encode data before writing") from None
-                except AttributeError as err:
-                    msg = Error(err).indent(2)
-                    errmsg = get_err_prefix(fobj, "write")
-                    raise Error(f"{errmsg}:\n{msg}\nThe data to write must be a string") from None
+                    raise Error(f"{errmsg}:\nFailed to encode data before writing:\n{msg}") from None
 
-            return fobj._orig_fwrite_(data)
+            orig_fwrite = getattr(fobj, "_orig_fwrite_")
+            return orig_fwrite(data)
 
-        def get_err_prefix(fobj, method):
-            """Return the error message prefix."""
-            return f"method '{method}()' failed for file '{fobj._orig_fpath_}'"
+        def get_err_prefix(fobj: IO, method: str) -> str:
+            """
+            Generate an error message prefix for a failed file operation.
 
-        path = str(path) # In case it is a pathlib.Path() object.
+            Args:
+                fobj: The file object associated with the failed operation.
+                method: The name of the method that failed.
+
+            Returns:
+                An error message prefix containing the method name and the original file path.
+            """
+
+            orig_fpath = getattr(fobj, "_orig_fpath_")
+            return f"Method '{method}()' failed for file '{orig_fpath}'"
+
+        path_str = str(path)
         sftp = self._get_sftp()
 
-        errmsg = f"failed to open file '{path}' with mode '{mode}' on {self.hostname} via SFTP: "
+        errmsg = f"Failed to open file '{path_str}' with mode '{mode}' on {self.hostname} via SFTP: "
         try:
-            fobj = sftp.file(path, mode)
+            fobj = sftp.file(path_str, mode)
         except PermissionError as err:
-            msg = Error(err).indent(2)
+            msg = Error(str(err)).indent(2)
             raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
         except FileNotFoundError as err:
-            msg = Error(err).indent(2)
+            msg = Error(str(err)).indent(2)
             raise ErrorNotFound(f"{errmsg}\n{msg}") from None
         except BaseException as err:
             msg = Error(err).indent(2)
             raise Error(f"{errmsg}\n{msg}") from err
 
-        # Save the path and the mode in the object.
-        fobj._orig_fpath_ = path
-        fobj._orig_fmode_ = mode
+        # Save the path and the mode in the file object.
+        setattr(fobj, "_orig_fpath_", path_str)
+        setattr(fobj, "_orig_fmode_", mode)
 
-        fobj._orig_fread_ = fobj.read
-        fobj._orig_fwrite_ = fobj.write
-
+        # Replace read and write methods.
+        setattr(fobj, "_orig_fread_", fobj.read)
         setattr(fobj, "read", types.MethodType(_read_, fobj))
+        setattr(fobj, "_orig_fwrite_", fobj.write)
         setattr(fobj, "write", types.MethodType(_write_, fobj))
 
         # Make sure methods of 'fobj' always raise the 'Error' exception.
-        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
+        wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
+        if "b" in mode:
+            return cast(IO[bytes], wfobj)
+        return cast(IO[str], wfobj)
 
     def time_time(self):
         """
