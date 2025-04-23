@@ -856,8 +856,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         _LOG.debug("rsync output:\n%s", stdout)
 
     def rsync(self,
-              src: Path,
-              dst: Path,
+              src: str | Path,
+              dst: str | Path,
               opts: str = "-rlD",
               remotesrc: bool = False,
               remotedst: bool = False):
@@ -883,7 +883,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.rsync()")
 
-    def get(self, src: Path, dst: Path):
+    def get(self, src: str | Path, dst: str | Path):
         """
         Copy a file or directory from the source path to the destination path.
 
@@ -894,7 +894,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.get()")
 
-    def put(self, src: Path, dst: Path):
+    def put(self, src: str | Path, dst: str | Path):
         """
         Copy a file or directory from the source path to the destination path.
 

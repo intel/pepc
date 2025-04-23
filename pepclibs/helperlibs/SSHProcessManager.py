@@ -882,8 +882,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return ssh_opts
 
     def rsync(self,
-              src: Path,
-              dst: Path,
+              src: str | Path,
+              dst: str | Path,
               opts: str = "-rlD",
               remotesrc: bool = False,
               remotedst: bool = False):
@@ -899,15 +899,15 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
 
             if remotesrc:
-                source = f"{self.hostname}:{src}"
+                src = f"{self.hostname}:{src}"
             else:
-                source = str(src)
+                src = str(src)
             if remotedst:
-                destination = f"{self.hostname}:{dst}"
+                dst = f"{self.hostname}:{dst}"
             else:
-                destination = str(dst)
+                dst = str(dst)
 
-            cmd = f"rsync {opts} -e 'ssh {self.get_ssh_opts()}' -- '{source}' '{destination}'"
+            cmd = f"rsync {opts} -e 'ssh {self.get_ssh_opts()}' -- '{src}' '{dst}'"
             result = LocalProcessManager.LocalProcessManager().run(cmd)
             is_local = True
 
@@ -943,7 +943,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except Error as err:
             raise Error(f"Failed to copy files '{src}' to '{dst}':\n{err.indent(2)}") from err
 
-    def get(self, src: Path, dst: Path):
+    def get(self, src: str | Path, dst: str | Path):
         """
         Copy a file or directory from remote source path to local destination path.
 
@@ -954,7 +954,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         self._scp(f"{self.hostname}:\"{src}\"", f"\"{dst}\"")
 
-    def put(self, src: Path, dst: Path):
+    def put(self, src: str | Path, dst: str | Path):
         """
         Copy a file or directory from a local source path to remote destination path.
 

@@ -307,8 +307,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         raise Error(msg)
 
     def rsync(self,
-              src: Path,
-              dst: Path,
+              src: str | Path,
+              dst: str | Path,
               opts: str = "-rlD",
               remotesrc: bool = False,
               remotedst: bool = False):
@@ -332,7 +332,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         self._rsync_debug_log(stdout)
 
-    def get(self, src: Path, dst: Path):
+    def get(self, src: str | Path, dst: str | Path):
         """Refer to 'ProcessManagerBase.get()'."""
 
         try:
@@ -341,7 +341,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to copy files '{src}' to '{dst}':\n{msg}") from err
 
-    def put(self, src: Path, dst: Path):
+    def put(self, src: str | Path, dst: str | Path):
         """Refer to 'ProcessManagerBase.put()'."""
 
         self.get(src, dst)
