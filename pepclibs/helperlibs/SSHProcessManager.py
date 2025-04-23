@@ -762,19 +762,17 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
             return self._run_in_new_session(command, cwd=cwd, shell=shell)
 
-    def run_async(self, command, cwd=None, shell=True, intsh=False, stdin=None, stdout=None,
-                  stderr=None, env=None, newgrp=False) -> SSHProcess:
-        """
-        Run command 'command' on the remote host. Refer to 'ProcessManagerBase.run_async()' for more
-        information.
-
-        Notes.
-
-        1. The 'stdin', 'stdout' and 'stderr' arguments are not supported.
-        2. Standard Unix systems have some sort of shell, so it is safe to use 'shell=True'. But
-           this is not always the case. E.g., Dell's iDRACs do not run a shell when you log into
-           them.  Use 'shell=False' in such cases.
-        """
+    def run_async(self,
+                  cmd: str | Path,
+                  cwd: Path | None = None,
+                  shell: bool = True,
+                  intsh: bool = False,
+                  stdin: IO | None = None,
+                  stdout: IO | None = None,
+                  stderr: IO | None = None,
+                  env: dict[str, str] | None = None,
+                  newgrp: bool = False) -> SSHProcess:
+        """Refer to 'ProcessManagerBase.run_async()'."""
 
         # pylint: disable=unused-argument
         for arg, val in (("stdin", None), ("stdout", None), ("stderr", None), ("env", None),
@@ -782,8 +780,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             if locals()[arg] != val:
                 raise Error(f"'SSHProcessManager.run_async()' doesn't support the '{arg}' argument")
 
-        # Allow for 'command' to be a 'pathlib.Path' object which Paramiko does not accept.
-        command = str(command)
+        cmd = str(cmd)
 
         if cwd:
             if not shell:
@@ -791,10 +788,11 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             cwd_msg = f"\nWorking directory: {cwd}"
         else:
             cwd_msg = ""
-        _LOG.debug("running the following command asynchronously%s (shell %s, intsh %s):\n%s%s",
-                   self.hostmsg, str(shell), str(intsh), command, cwd_msg)
 
-        return self._run_async(str(command), cwd=cwd, shell=shell, intsh=intsh)
+        _LOG.debug("Running the following command asynchronously%s (shell %s, intsh %s):\n%s%s",
+                   self.hostmsg, str(shell), str(intsh), cmd, cwd_msg)
+
+        return self._run_async(cmd, cwd=cwd, shell=shell, intsh=intsh)
 
     def run(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
             output_fobjs=(None, None), cwd=None, shell=True, intsh=None, env=None,
