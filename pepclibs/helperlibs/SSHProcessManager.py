@@ -837,26 +837,34 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return result
 
-    def run_verify(self, command, timeout=None, capture_output=True, mix_output=False, join=True,
-                   output_fobjs=(None, None), cwd=None, shell=True, intsh=None, env=None,
-                   newgrp=False):
-        """
-        Same as the "run()" method, but also verifies the exit status and if the command failed,
-        raises the "Error" exception.
-        """
+    def run_verify(self,
+                   cmd: str | Path,
+                   timeout: int | float | None = None,
+                   capture_output: bool = True,
+                   mix_output: bool = False,
+                   join: bool = True,
+                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                   cwd: Path | None = None,
+                   shell: bool = True,
+                   intsh: bool | None = None,
+                   env: dict[str, str] | None = None,
+                   newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
+        """Refer to 'ProcessManagerBase.run_verify()'."""
 
+        # pylint: disable=unused-argument
         for arg, val in (("env", None), ("newgrp", False)):
             if locals()[arg] != val:
                 raise Error(f"'SSHProcessManager.run_verify()' doesn't support the '{arg}' "
                             f"argument")
 
-        result = self.run(command, timeout=timeout, capture_output=capture_output,
+        result = self.run(cmd, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs, cwd=cwd,
                           shell=shell, intsh=intsh)
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
-        msg = self.get_cmd_failure_msg(command, *tuple(result), timeout=timeout)
+        msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode,
+                                       timeout=timeout)
         raise Error(msg)
 
     def get_ssh_opts(self):
