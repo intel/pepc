@@ -867,10 +867,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                                        timeout=timeout)
         raise Error(msg)
 
-    def get_ssh_opts(self):
+    def get_ssh_opts(self) -> str:
         """
-        Returns 'ssh' command-line tool options that are necessary to establish an SSH connection
-        similar to the current connection.
+        Generate SSH command-line options for establishing a connection.
+
+        Returns:
+            str: A string containing SSH options, including port, username, and optionally the
+                 private key file path if specified.
         """
 
         ssh_opts = f"-o \"Port={self.port}\" -o \"User={self.username}\""
