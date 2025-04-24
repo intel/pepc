@@ -271,7 +271,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         self._dbg_log_buffered_output(pfx="SSHProcess._wait_intsh(): Starting with")
 
         while not _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
-            if self.exitcode is not None and (not self._queue or self._queue.empty()):
+            if self.exitcode is not None and self._queue.empty():
                 self._dbg("SSHProcess._wait_intsh(): Process exited with status %d", self.exitcode)
                 break
 

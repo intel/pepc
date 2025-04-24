@@ -236,7 +236,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             # Make sure the threads exit.
             self._threads_exit = True
 
-        unref_attrs = ("pman", "pobj", "_streams", "stdin", "_threads", "_queue")
+        unref_attrs = ("pman", "pobj", "_streams", "stdin", "_threads")
         ClassHelpers.close(self, unref_attrs=unref_attrs)
 
     def _fetch_stream_data(self, streamid: int, size: int) -> bytes:
@@ -414,7 +414,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         return self.exitcode is not None and \
                not self._output[0] and \
                not self._output[1] and \
-               (self._queue is None or self._queue.empty())
+               self._queue.empty()
 
     def _wait(self,
               timeout: int | float = 0,
