@@ -414,7 +414,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         return self.exitcode is not None and \
                not self._output[0] and \
                not self._output[1] and \
-               self._queue.empty()
+               (not self._queue or self._queue.empty())
 
     def _wait(self,
               timeout: int | float = 0,
