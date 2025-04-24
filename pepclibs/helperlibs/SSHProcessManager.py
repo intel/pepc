@@ -506,7 +506,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             look_for_keys = True
             try:
                 self.privkeypath = self._lookup_privkey(hostname, self.username)
-            except Exception as err:
+            except Exception as err: # pylint: disable=broad-except
                 msg = Error(str(err)).indent(2)
                 _LOG.debug(f"private key lookup falied:\n{msg}")
 
@@ -957,7 +957,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except FileNotFoundError as err:
             msg = Error(err).indent(2)
             raise ErrorNotFound(f"{errmsg}\n{msg}") from None
-        except Exception as err:
+        except BaseException as err:
             msg = Error(err).indent(2)
             raise Error(f"{errmsg}\n{msg}") from err
 
