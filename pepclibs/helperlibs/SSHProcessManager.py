@@ -275,6 +275,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         self._dbg_log_buffered_output(pfx="SSHProcess._wait_intsh(): Starting with")
 
         while not _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
+            assert self._queue is not None
+
             if self.exitcode is not None and self._queue.empty():
                 self._dbg("SSHProcess._wait_intsh(): Process exited with status %d", self.exitcode)
                 break
@@ -1158,7 +1160,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise ErrorNotFound(f"{errmsg}\n{msg}") from None
         except BaseException as err:
-            msg = Error(err).indent(2)
+            msg = Error(str(err)).indent(2)
             raise Error(f"{errmsg}\n{msg}") from err
 
         # Save the path and the mode in the file object.
