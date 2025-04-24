@@ -1,63 +1,114 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides helpers for loading and saving YAML files.
+Provide YAML file reading and writing capabilities with extended functionality. For the loading,
+support "include" statements and pre-rendering.
 """
 
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
 from pathlib import Path, PosixPath
+from typing import Any, IO, cast
 import yaml
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-def dump(data, path, float_format=None, skip_none=False):
+def _drop_none(data: dict[str, Any]) -> dict[str, Any]:
     """
-    Dump dictionary 'data' to a file. The arguments as follows.
-      * path - either the path the to the file to dump to or a file object to dump to.
-      * float_format - the floating point output format. For example, if 'float_format' is '%.2f'
-                       then only 2 numbers after the decimal points will be used.
-      * skip_none: do not dump keys that have 'None' values.
+    Create a copy of the input dictionary, excluding keys with 'None' values.
+
+    Args:
+        data: The input dictionary to process.
+
+    Returns:
+        A new dictionary without keys that had 'None' values.
     """
 
-    def represent_none(dumper, _):
-        """This representer makes 'yaml.dump()' use empty string for 'None' values."""
-        return dumper.represent_scalar("tag:yaml.org,2002:null", "")
+    copy = {}
+    for key, val in data.items():
+        if val is None:
+            continue
+        if isinstance(val, dict):
+            copy[key] = _drop_none(val)
+        else:
+            copy[key] = val
 
-    def represent_float(dumper, data):
-        """Apply the floating point format."""
-        return dumper.represent_scalar("tag:yaml.org,2002:float", float_format % data)
+    return copy
 
-    def represent_posixpath(dumper, value):
-        """Convert 'PosixPath' values to strings."""
-        return dumper.represent_scalar("tag:yaml.org,2002:str", str(value))
+def _represent_none(dumper: yaml.Dumper, _) -> yaml.ScalarNode:
+    """
+    Represent 'None' values as empty strings in YAML output.
 
-    def copy_skip_none(data):
-        """Create a copy of the 'data' dictionary and skip 'None' values."""
-        copy = {}
-        for key, val in data.items():
-            if val is None:
-                continue
-            if isinstance(val, dict):
-                copy[key] = copy_skip_none(val)
-            else:
-                copy[key] = val
-        return copy
+    Args:
+        dumper: The YAML dumper instance used for serialization.
+        _: The value to be represented (ignored in this case).
+
+    Returns:
+        A YAML scalar node representing an empty string.
+    """
+
+    return dumper.represent_scalar("tag:yaml.org,2002:null", "")
+
+def _represent_posixpath(dumper: yaml.Dumper, value: PosixPath) -> yaml.ScalarNode:
+    """
+    Represent a 'PosixPath' object as a YAML scalar node.
+
+    Args:
+        dumper: The YAML dumper instance used to serialize the object.
+        value: The 'PosixPath' object to be converted and represented.
+
+    Returns:
+        A YAML scalar node representing the 'PosixPath' object as a string.
+    """
+
+    return dumper.represent_scalar("tag:yaml.org,2002:str", str(value))
+
+def dump(data: dict[str, Any],
+         path: Path | IO[str],
+         float_format: str | None = None,
+         skip_none: bool = False):
+    """
+    Dump a dictionary to a YAML file.
+
+    Args:
+        data: The dictionary to dump.
+        path: The file path or file object to write the YAML data to.
+        float_format: The floating-point output format. For example, if set to '%.2f', only two
+                      decimal places will be used for floating-point numbers. Use python 'yaml'
+                      module default format if None.
+        skip_none: If True, exclude keys with 'None' values from the output.
+    """
+
+    def _represent_float(dumper: yaml.Dumper, data: float) -> yaml.ScalarNode:
+        """
+        Represent a floating-point number in YAML format using format in 'float_format'.
+
+        Args:
+            dumper: The YAML dumper instance used to serialize the data.
+            data: The floating-point number to be formatted and represented.
+
+        Returns:
+            A YAML scalar node representing the formatted floating-point number.
+        """
+
+        return dumper.represent_scalar("tag:yaml.org,2002:float", cast(str, float_format) % data)
 
     if skip_none:
-        data = copy_skip_none(data)
+        data = _drop_none(data)
 
-    yaml.add_representer(type(None), represent_none)
-    yaml.add_representer(PosixPath, represent_posixpath)
+    yaml.add_representer(type(None), _represent_none)
+    yaml.add_representer(PosixPath, _represent_posixpath)
 
     if float_format:
-        yaml.add_representer(float, represent_float)
+        yaml.add_representer(float, _represent_float)
 
     try:
         if hasattr(path, "write"):
@@ -68,8 +119,8 @@ def dump(data, path, float_format=None, skip_none=False):
                 yaml.dump(data, fobj, default_flow_style=False, sort_keys=False)
             _LOG.debug("wrote YAML file at '%s'", path)
     except OSError as err:
-        msg = Error(err).indent(2)
-        raise Error(f"failed to write YAML file '{path}:{msg}") from err
+        msg = Error(str(err)).indent(2)
+        raise Error(f"failed to write YAML file '{path}':\n{msg}") from err
 
 def _load(path, included, render=None):
     """
