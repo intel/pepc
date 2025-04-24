@@ -11,41 +11,81 @@
 
 """Common bits for the 'pepc' tests."""
 
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
 from pathlib import Path
-from pepclibs.helperlibs import ProcessManager, TestRunner
+from typing import TypedDict
+from pepclibs.helperlibs import ProcessManager, EmulProcessManager, TestRunner
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.helperlibs.Exceptions import Error
 from pepctool import _Pepc
 
-def _get_datapath(dataset):
-    """Return path to test data for the dataset 'dataset'."""
+class CommonTestParamsTypedDict(TypedDict):
+    """
+    A dictionary of common test parameters.
+
+    Attributes:
+        hostname: The hostname of the target system.
+        pman: The process manager instance for managing processes on the target system.
+    """
+
+    hostname: str
+    pman: ProcessManagerType
+
+def _get_datapath(dataset: str) -> Path:
+    """
+    Get the path to the test data for the specified dataset.
+
+    Args:
+        dataset: Name of the dataset for which to retrieve the path.
+
+    Returns:
+        Path to the test data directory for the specified dataset.
+    """
 
     return Path(__file__).parent.resolve() / "data" / dataset
 
-def is_emulated(pman):
-    """Returns 'True' if 'pman' corresponds to an emulated system."""
+def is_emulated(pman: ProcessManagerType) -> bool:
+    """
+    Determine if the provided process manager corresponds to an emulated system.
+
+    Args:
+        pman: The process manager instance to check.
+
+    Returns:
+        True if the process manager corresponds to an emulated system, False otherwise.
+    """
 
     return hasattr(pman, "datapath")
 
-def get_pman(hostspec, modules=None):
+def get_pman(hostspec: str, modules: list[str] | None = None) -> ProcessManagerType:
     """
-    Create and return process manager, the arguments are as follows.
-      * hostspec - the host to create a process manager for.
-      * modules - the list of python module names to be initialized before testing. Refer to
-                  'EmulProcessManager.init_module()' for more information.
+    Create and return a process manager for the specified host.
+
+    Args:
+        hostspec: The host specification/name to create a process manager for. If the hostspec
+                  starts with "emulation:", it indicates an emulated environment.
+        modules: A list of Python module names to initialize for testing in an emulated environment.
+
+    Returns:
+        A process manager instance for the specified host. 'EmulProcessManager' in case of
+        emulation, 'LocalProcessManager' for the localhost, and 'SSHProcessManager' for remote
+        hosts.
     """
 
-    datapath = None
-    username = None
+    datapath: Path | None = None
+    username: str | None = None
     if hostspec.startswith("emulation:"):
         dataset = hostspec.split(":", maxsplit=2)[1]
         datapath = _get_datapath(dataset)
-
     elif hostspec != "localhost":
         username = "root"
 
     pman = ProcessManager.get_pman(hostspec, username=username)
 
-    if datapath and modules is not None:
+    if modules and datapath:
+        assert isinstance(pman, EmulProcessManager.EmulProcessManager)
+
         try:
             for module in modules:
                 pman.init_module(module, datapath)
@@ -55,25 +95,34 @@ def get_pman(hostspec, modules=None):
 
     return pman
 
-def build_params(pman):
-    """Build the test parameters dictionary (the common part of it)."""
+def build_params(pman: ProcessManagerType) -> CommonTestParamsTypedDict:
+    """
+    Build and return a dictionary containing common test parameters.
 
-    params = {}
-    params["hostname"] = pman.hostname
-    params["pman"] = pman
+    Args:
+        pman: The process manager object that defines the host where the tests will be run.
 
-    return params
+    Returns:
+        A 'CommonTestParams' object initialized with the hostname and process manager.
+    """
+
+    return CommonTestParamsTypedDict(hostname=pman.hostname, pman=pman)
 
 def run_pepc(arguments, pman, exp_exc=None, ignore=None):
     """
-    Run pepc command and verify the outcome. The arguments are as follows.
-      * arguments - the arguments to run the command with, e.g. 'pstate info --cpus 0-43'.
-      * pman - the process manager object that defines the host to run the measurements on.
-      * exp_exc - the expected exception, by default, any exception is considered to be a failure.
-                  But when set if the command did not raise the expected exception then the test is
-                  considered to be a failure.
-      * ignore - a map of error type and command argument strings to look for in case of errors.
-                 Ignore matching exceptions.
+    Execute the 'pepc' command and validate its outcome.
+
+    Args:
+        arguments: The command-line arguments to execute the 'pepc' command with, e.g.,
+                   'pstate info --cpus 0-43'.
+        pman: The process manager object that specifies the host to run the command on.
+        exp_exc: The expected exception. If set, the test fails if the command does not raise the
+                 expected exception. By default, any exception is considered a failure.
+        ignore: A dictionary mapping error types to command argument strings. Can be used for
+                ignoring ceratin exceptions.
+
+    Raises:
+        AssertionError: If the command execution does not match the expected outcome.
     """
 
     TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman=pman, exp_exc=exp_exc,
