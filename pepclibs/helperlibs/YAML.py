@@ -196,6 +196,21 @@ def _get_yaml_file_info_msg(fobj, basepath: str | Path | None) -> str:
 
     return msg
 
+def _merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]):
+    """
+    Merge two dictionaries recursively.
+
+    Args:
+        dict1: The dictionary to merge into.
+        dict2: The dictionary to merge from.
+    """
+
+    for key2, val2 in dict2.items():
+        if isinstance(val2, dict) and key2 in dict1 and isinstance(dict1[key2], dict):
+            _merge_dicts(dict1[key2], val2)
+        else:
+            dict1[key2] = val2
+
 def _load(fobj: IO[str],
           included: set[Path],
           basepath: str | Path | None,
@@ -271,7 +286,7 @@ def _load(fobj: IO[str],
             included.add(path)
             with open(path, "r", encoding="utf-8") as fobj:
                 contents = _load(fobj, included, basepath=path.parent, render=render)
-            result.update(contents)
+            _merge_dicts(result, contents)
         else:
             file_msg = _get_yaml_file_info_msg(fobj, basepath=basepath)
             raise Error(f"Circular dependency found: Include path '{path}' in '{file_msg}' "
@@ -289,6 +304,9 @@ def load(fobj: IO[str],
     Load a YAML file. Extend the standard YAML loader by adding support for the 'include' statement,
     which allows including other YAML files. Optionally, it can render the file using a custom
     function before loading it as YAML (e.g., for Jinja2 rendering).
+ 
+    If the the included file overrides a key in the main file, the value from the the
+    sub-dictionaries will be merged.
 
     Args:
         fobj: The file-like object to read the YAML contents from.

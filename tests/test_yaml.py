@@ -136,6 +136,7 @@ def test_yaml_load_include(tmp_path: Path):
     sut1:
         type: qemu
         misc: "descr"
+        cpus: 2
 include: "file2.yaml"
 include: "{tmp_path}/file3.yaml"
 """
@@ -151,7 +152,7 @@ include: "{tmp_path}/file3.yaml"
         type: "baremetal"
         misc: false
     sut2:
-        cpus: 5"""
+        cpus: 4"""
 
     with open(tmp_path / "file1.yaml", "w+", encoding="utf-8") as file_obj1, \
          open(tmp_path / "file2.yaml", "w+", encoding="utf-8") as file_obj2, \
@@ -172,9 +173,11 @@ include: "{tmp_path}/file3.yaml"
                 "sut1": {
                     "type": "baremetal",
                     "misc": False,
+                    "cpus": 2,
                 },
                 "sut2": {
-                    "cpus": 5,
+                    "type": "qemu",
+                    "cpus": 4,
                 }
             },
         }
