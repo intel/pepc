@@ -13,13 +13,30 @@ support "include" statements and pre-rendering.
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
+import io
 from pathlib import Path, PosixPath
-from typing import Any, IO, cast
+from typing import Any, IO, cast, TypedDict
+from collections.abc import Callable
 import yaml
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
+
+class RenderTypedDict(TypedDict):
+    """
+    A dictionary type for the 'render' argument in the 'load()' function.
+
+    Attributes:
+        func: The function to call for rendering the file. It should accept the path to the file to
+              render. It should return one of the following:
+              - The contents of the rendered file as a string
+              - A file-like object with the rendered contents.
+        args: The arguments to pass to the 'func' function.
+    """
+
+    func: Callable[[Path, Any], str | IO[str]]
+    args: tuple[Any, ...] | list[Any]
 
 def _drop_none(data: dict[str, Any]) -> dict[str, Any]:
     """
@@ -122,63 +139,97 @@ def dump(data: dict[str, Any],
         msg = Error(str(err)).indent(2)
         raise Error(f"failed to write YAML file '{path}':\n{msg}") from err
 
-def _load(path, included, render=None):
+def _dict_constructor(loader: yaml.Loader, node: yaml.Node) -> dict[str, Any]:
     """
-    Implements the 'load()' function. The additional 'included' argument is a dictionary containing
-    information on what files have already been included before, this is used as a countermeasure
-    against circular includes.
+    Process a YAML mapping node and rename 'include' keys to ensure uniqueness.
+
+    Args:
+        loader: The YAML loader instance.
+        node: The YAML node representing the mapping.
+
+    Returns:
+        A dictionary with modified "include" keys.
     """
 
-    def path_constructor(_, node):
-        """Convert strings marked with '!path' tag to pathlib.Path objects."""
-        return Path(node.value)
+    # Rename 'include' keys to be unique so they don't overwrite each other in the dictionary.
+    includes = 0
+    pairs = loader.construct_pairs(node)
+    for idx, pair in enumerate(pairs):
+        if pair[0] == "include":
+            pairs[idx] = (f"__include_{includes}", pair[1])
+            includes += 1
+        elif str(pair[0]).startswith("include_"):
+            raise Error(f"illegal key '{pair[0]}', keys beginning with '__include_' are reserved "
+                        f"for internal functions")
+    return dict(pairs)
 
-    def dict_constructor(loader, node):
-        """
-        Rename 'include' keys to be unique so they don't overwrite each other in the dictionary.
-        """
+def _path_constructor(_, node: yaml.ScalarNode) -> Path:
+    """
+    Convert a YAML scalar node with the '!path' tag to a pathlib.Path object.
 
-        # Rename 'include' keys to be unique so they don't overwrite each other in the dictionary.
-        includes = 0
-        pairs = loader.construct_pairs(node)
-        for idx, pair in enumerate(pairs):
-            if pair[0] == "include":
-                pairs[idx] = (f"include_{includes}", pair[1])
-                includes += 1
-            elif str(pair[0]).startswith("include_"):
-                raise Error(f"illegal key '{pair[0]}', keys beginning with 'include_' are reserved "
-                            f"for internal functions")
-        return dict(pairs)
+    Args:
+        _: The YAML loader or dumper instance (unused).
+        node: The YAML scalar node containing the string to convert.
+
+    Returns:
+        A pathlib.Path object representing the path from the node's value.
+    """
+
+    return Path(node.value)
+
+def _load(path: str | Path | IO[str],
+          included: dict[str, Path],
+          render: RenderTypedDict | None = None) -> dict[str, Any]:
+    """
+    Load and parse a YAML file.
+
+    Args:
+        path: Path to the YAML file or a file-like object to read from.
+        included: Dictionary tracking files that have already been included to prevent circular
+                  includes.
+        render: Optional dictionary containing a rendering function and its arguments. If provided,
+                the rendering function is used to preprocess the file contents before parsing.
+
+    Returns:
+        A dictionary representing the loaded YAML content.
+    """
 
     yaml.SafeLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-                                    dict_constructor)
-    yaml.SafeLoader.add_constructor("!path", path_constructor)
+                                    _dict_constructor)
+    yaml.SafeLoader.add_constructor("!path", _path_constructor)
 
-    fobj = None
+    fobj: IO[str] | None = None
+    contents: str | IO[str]
+
+    if isinstance(path, str):
+        path = Path(path)
+
     if render:
+        if isinstance(path, io.IOBase):
+            raise Error("File-like objects are not supported with 'render' argument, provide the "
+                        "path instead")
         func = render["func"]
         args = render["args"]
-        contents = func(path.resolve(), *args)
+        contents = func(cast(Path, path).resolve(), *args)
     else:
-        # We allow 'path' to be a file-like object.
-        if hasattr(path, "read"):
-            fobj = path
+        if not isinstance(path, io.IOBase):
+            fobj = cast(IO[str], path)
         else:
             try:
                 fobj = open(path, "r", encoding="utf-8") # pylint: disable=consider-using-with
             except OSError as err:
-                msg = Error(err).indent(2)
+                msg = Error(str(err)).indent(2)
                 raise Error(f"failed to open file '{path}':\n{msg}") from None
         contents = fobj
 
     try:
-        loaded = yaml.safe_load(contents)
+        loaded: dict[str, Any] = yaml.safe_load(contents)
     except (TypeError, ValueError, yaml.YAMLError) as err:
-        msg = Error(err).indent(2)
-        raise Error(f"failed to parse YAML file '{path}':\n{msg}") from None
+        msg = Error(str(err)).indent(2)
+        raise Error(f"Failed to parse YAML file '{path}':\n{msg}") from None
     except OSError as err:
-        msg = Error(err).indent(2)
-        raise Error(f"failed to read YAML file '{path}':\n{msg}") from None
+        msg = Error(str(err)).indent(2)
+        raise Error(f"Failed to read YAML file '{path}':\n{msg}") from None
     finally:
         if fobj and fobj is not path:
             fobj.close()
@@ -186,54 +237,53 @@ def _load(path, included, render=None):
     if not loaded:
         return {}
 
-    # Handle "include" statements.
     result = {}
-    if not included:
-        included = {}
 
     for key, value in loaded.items():
-        if not str(key).startswith("include_"):
+        # Keep in mind that "include" keys are renamed to "__include_0", "__include_1", etc, because
+        # there may be multiple of them in the same file.
+        if not str(key).startswith("__include_"):
             result[key] = value
-        elif value:
-            try:
-                value = Path(value)
-            except TypeError as err:
-                msg = Error(err).indent(2)
-                raise Error(f"bad include statement in YAML file at '{path}':\n{msg}") from None
+            continue
 
-            if not value.is_absolute():
-                value = path.parent / value
+        if isinstance(path, io.IOBase):
+            raise Error("File-like objects are not supported for YAML files that contain the "
+                        "'include' statement, provide the path instead")
+        path = cast(Path, path)
 
-            if value not in included:
-                included[value] = path
-                result.update(_load(value, included, render=render))
-            else:
-                raise Error(f"can't include path '{value}' in YAML file '{path}' - it is already "
-                            f"included in '{included[value]}'")
+        try:
+            value = Path(value)
+        except TypeError as err:
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Bad 'include' statement in YAML file at '{path}':\n{msg}") from None
 
-    _LOG.debug("loaded YAML file at '%s'", path)
+        if not value.is_absolute():
+            value = path.parent / value
+
+        if value not in included:
+            included[value] = path
+            result.update(_load(value, included, render=render))
+        else:
+            raise Error(f"Circular dependency found: Include path '{value}' in YAML file '{path}' "
+                        f"was already from '{included[value]}'")
+
+    if not isinstance(path, io.IOBase):
+        _LOG.debug("Loaded YAML file at '%s'", path)
+
     return result
 
-def load(path, render=None):
+def load(path: str | Path | IO[str], render: RenderTypedDict | None = None) -> dict[str, Any]:
     """
-    Load a YAML file at 'path' while preserving its order. This method extends the standard YAML
-    loader and adds support for the 'include' statement, which allows for including other YAML
-    files. The arguments are as follows.
-      * path - path to the YAML file to load or a file-like object to read the YAML contents from.
-      * render - and optional argument which can be used for rendering the file at 'path' before
-                 loading it. This can be useful if the file at 'path' requires a jinja2 pass before
-                 being loaded a YAML file. The 'render' argument should be a dictionary with the
-                 following keys:
-                   o func - the function to call to render the file at 'path'. This function should
-                             return the rendered contents which will then be treated as the YAML
-                             file contents and will be passed to the YAML loader.
-                   o args - the arguments to pass to the 'func' function. So the function will be
-                            called as 'func(path, *args)', where 'path' is path to the file to
-                            render.
+    Load a YAML file. Extend the standard YAML loader by adding support for the 'include' statement,
+    which allows including other YAML files. Optionally, it can render the file using a custom
+    function before loading it as YAML (e.g., for Jinja2 rendering).
+
+    Args:
+        path: Path to the YAML file to load or a file-like object to read the YAML contents from.
+        render: Optional argument for rendering the file before loading it.
+
+    Returns:
+        A dictionary representing the contents of the loaded YAML file.
     """
 
-    if render and hasattr(path, "read"):
-        # Can be implemented later if needed.
-        raise Error("file-like objects are not supported")
-
-    return _load(path, False, render=render)
+    return _load(path, {}, render=render)
