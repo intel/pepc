@@ -300,7 +300,7 @@ def _load(fobj: IO[str],
 
     return result
 
-def load(path: Path, fobj: IO[str] | None = None,
+def load(path: str | Path, fobj: IO[str] | None = None,
          render: RenderTypedDict | None = None) -> dict[str, Any]:
     """
     Load a YAML file. Extend the standard YAML loader by adding support for the 'include'
@@ -325,6 +325,8 @@ def load(path: Path, fobj: IO[str] | None = None,
     Returns:
         A dictionary representing the contents of the loaded YAML file.
     """
+
+    path = Path(path)
 
     try:
         path = path.resolve().absolute()
