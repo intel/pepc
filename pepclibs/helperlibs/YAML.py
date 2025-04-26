@@ -27,13 +27,22 @@ class RenderTypedDict(TypedDict):
     A dictionary type for the 'render' argument in the 'load()' function.
 
     Attributes:
-        func: The function to call for rendering the file. It should accept a file-like object for
-              the file to render, and any additional arguments. The function should return a
-              file-like object with the rendered contents.
+        func: The function to call for rendering the file. It accepts the following arguments.
+                - 'path': The path to the file to render, used for logging, messages, may be
+                          resolving some relative paths, but not for reading the contents.
+                - 'fobj': A file-like object for the file to render, will be used for reading the
+                          contents of the file.
+              The function returns a tuple containing the following:
+                - 'path': The path to the rendered file.
+                - 'fobj': An optional file-like object for the rendered file. If provided, it will
+                          be used for reading the contents of the rendered file, and 'path' will not
+                          be used for reading the contents (will only be used for logging and
+                          resolving relative 'include' paths) If not provided (None value), 'path'
+                          will be used for reading the contents of the rendered file.
         args: The arguments to pass to the 'func' function.
     """
 
-    func: Callable[[IO[str], Any], IO[str]]
+    func: Callable[[Path, IO[str], Any], tuple[Path, IO[str] | None]]
     args: tuple[Any, ...] | list[Any]
 
 def _drop_none(data: dict[str, Any]) -> dict[str, Any]:
@@ -176,26 +185,6 @@ def _path_constructor(_, node: yaml.ScalarNode) -> Path:
 
     return Path(node.value)
 
-def _get_yaml_file_info_msg(fobj, basepath: str | Path | None) -> str:
-    """
-    Generate a descriptive message for a YAML file.
-
-    Args:
-        fobj: File object representing the YAML file.
-        basepath: Optional YAML file base path to include in the message.
-
-    Returns:
-        A string containing the descriptive message for the YAML file.
-    """
-
-    msg = "YAML file"
-    if hasattr(fobj, "name"):
-        msg += f" '{fobj.name}'"
-    if basepath:
-        msg += f" (basepath '{basepath}')"
-
-    return msg
-
 def _merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]):
     """
     Merge two dictionaries recursively.
@@ -212,23 +201,27 @@ def _merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]):
             dict1[key2] = val2
 
 def _load(fobj: IO[str],
-          included: set[Path],
-          basepath: str | Path | None,
+          path: Path,
+          included: dict[Path, Path | str],
           render: RenderTypedDict | None = None) -> dict[str, Any]:
     """
     Load and parse a YAML file.
 
     Args:
         fobj: The file-like object to read the YAML content from.
-        included: A set with file paths that have already been included to prevent circular
-                  includes.
-        basepath: The base path for resolving relative "include" paths in the YAML file.
+        path: The path to the YAML file, used for error messages and resolving relative "include"
+              paths. Not used for reading the contents.
+        included: A dictionary with keys being file paths that have already been included, and
+                  values being the paths to the YAML files that included them. This dictionary is
+                  used to track included files and prevent circular dependencies.
         render: Optional dictionary containing a rendering function and its arguments. If provided,
                 the rendering function is used to preprocess the file contents before parsing.
 
     Returns:
         A dictionary representing the loaded YAML content.
     """
+
+    _LOG.debug("Loading YAML file at '%s'", path)
 
     yaml.SafeLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
                                     _dict_constructor)
@@ -239,19 +232,26 @@ def _load(fobj: IO[str],
     if render:
         func = render["func"]
         args = render["args"]
-        fobj = func(fobj, *args)
-        close_fobj = True
+        path, rendered_fobj = func(path, fobj, *args)
+        if rendered_fobj is None:
+            try:
+                # pylint: disable=consider-using-with
+                fobj = open(path, "r", encoding="utf-8")
+            except OSError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"Failed to open rendered YAML file '{path}':\n{errmsg}") from None
+            close_fobj = True
+        else:
+            fobj = rendered_fobj
 
     try:
         loaded: dict[str, Any] = yaml.safe_load(fobj)
     except (TypeError, ValueError, yaml.YAMLError) as err:
         errmsg = Error(str(err)).indent(2)
-        file_msg = _get_yaml_file_info_msg(fobj, basepath=basepath)
-        raise Error(f"Failed to parse {file_msg}:\n{errmsg}") from None
+        raise Error(f"Failed to parse YAML file {path}:\n{errmsg}") from None
     except OSError as err:
         errmsg = Error(str(err)).indent(2)
-        file_msg = _get_yaml_file_info_msg(fobj, basepath=basepath)
-        raise Error(f"Failed to read {file_msg}:\n{errmsg}") from None
+        raise Error(f"Failed to read YAML file {path}:\n{errmsg}") from None
     finally:
         if close_fobj:
             fobj.close()
@@ -269,52 +269,76 @@ def _load(fobj: IO[str],
             continue
 
         try:
-            path = Path(value)
+            incl_path = Path(value)
         except TypeError as err:
             errmsg = Error(str(err)).indent(2)
-            file_msg = _get_yaml_file_info_msg(fobj, basepath=basepath)
-            raise Error(f"Bad 'include' statement in {file_msg}':\n{errmsg}") from None
+            raise Error(f"Bad 'include' statement in YAML file '{path}':\n{errmsg}") from None
 
-        if not path.is_absolute():
-            if basepath is None:
-                file_msg = _get_yaml_file_info_msg(fobj, basepath=basepath)
-                raise Error(f"Relative 'include' path '{path}' in {file_msg} but no base path "
-                            "was provided")
-            path = basepath / path
+        try:
+            if not incl_path.is_absolute():
+                incl_path = path.parent / incl_path
+                incl_path = incl_path.resolve().absolute()
+        except OSError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise Error(f"Failed to resolve 'include' path '{incl_path}' in YAML file '{path}':\n"
+                        f"{errmsg}") from None
 
-        if path not in included:
-            included.add(path)
-            with open(path, "r", encoding="utf-8") as fobj:
-                contents = _load(fobj, included, basepath=path.parent, render=render)
-            _merge_dicts(result, contents)
-        else:
-            file_msg = _get_yaml_file_info_msg(fobj, basepath=basepath)
-            raise Error(f"Circular dependency found: Include path '{path}' in '{file_msg}' "
-                        f"was already included")
+        if incl_path in included:
+            raise Error(f"Circular dependency found:\n"
+                        f"  * {path} includes {incl_path}\n"
+                        f"  * {included[incl_path]} includes {incl_path}")
 
-    if not hasattr(fobj, "read"):
-        _LOG.debug("Loaded YAML file at '%s'", fobj)
+        included[incl_path] = path
+        try:
+            with open(incl_path, "r", encoding="utf-8") as incl_fobj:
+                contents = _load(incl_fobj, path, included, render=render)
+        except OSError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise Error(f"Failed to open included YAML file '{incl_path}':\n"
+                        f"{errmsg}") from None
+        _merge_dicts(result, contents)
 
     return result
 
-def load(fobj: IO[str],
-         basepath: str | Path | None = None,
+def load(path: Path, fobj: IO[str] | None = None,
          render: RenderTypedDict | None = None) -> dict[str, Any]:
     """
-    Load a YAML file. Extend the standard YAML loader by adding support for the 'include' statement,
-    which allows including other YAML files. Optionally, it can render the file using a custom
-    function before loading it as YAML (e.g., for Jinja2 rendering).
- 
-    If the the included file overrides a key in the main file, the value from the the
-    sub-dictionaries will be merged.
+    Load a YAML file. Extend the standard YAML loader by adding support for the 'include'
+    statements, which allows YAML files including other YAML files. Optionally, render the file
+    using a custom function before loading it as YAML (e.g., the YAML file can be a Jinja2 template,
+    which will be pre-rendered before YAML parser reads it).
+
+    If file YAML file A includes file B, the contents of file B will be merged into file A. For
+    example, if file A has a key "key1" and file B has a key "key2", the resulting dictionary will
+    contain both keys. If file A has a key "key1" and file B has a sub-dictionary with the same key,
+    the sub-dictionary will be merged into the "key1" dictionary in file A. If file A has a key
+    "key1" and file B has a key "key1", and they are leaf nodes (not dictionaries), then the value
+    from file B will override the value in file A.
 
     Args:
-        fobj: The file-like object to read the YAML contents from.
-        path: The base path for resolving relative "include" paths in the YAML file.
+        path: The path to the YAML file to load.
+        fobj: Optional file-like object to read the YAML contents from. If provided, the data
+               will be read from this object instead of the file at 'path', and 'path' will be used
+               for resolving relative "include" paths.
         render: Optional argument for rendering the file before loading it.
 
     Returns:
         A dictionary representing the contents of the loaded YAML file.
     """
 
-    return _load(fobj, set(), basepath=basepath, render=render)
+    try:
+        path = path.resolve().absolute()
+    except OSError as err:
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to resolve path '{path}':\n{errmsg}") from None
+
+    included: dict[Path, str | Path] = {path: "the original (top level) YAML file"}
+    if not fobj:
+        try:
+            with open(path, "r", encoding="utf-8") as load_fobj:
+                return _load(load_fobj, path, included, render=render)
+        except OSError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise Error(f"Failed to open YAML file '{path}':\n{errmsg}") from None
+
+    return _load(fobj, path, included, render=render)
