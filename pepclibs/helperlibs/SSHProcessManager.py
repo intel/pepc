@@ -657,8 +657,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         Modify the command so that it prints own PID.
 
         Problem: paramiko does not provide a way of getting PID of the executed command.
-        Soulution: start shell first, print its PID, then exec the command in the shell. The command
-                   will inherit the PID of the shell.
+        Solution: start shell first, print its PID, then exec the command in the shell. The command
+                  will inherit the PID of the shell.
 
         Args:
             cmd: The command to be executed.

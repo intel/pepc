@@ -500,7 +500,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         stdout: str | list[str]
         stderr: str | list[str]
-        if capture_output:
+        if join:
             stdout = stderr = ""
         else:
             stdout = stderr = []
