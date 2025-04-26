@@ -167,7 +167,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                   env: dict[str, str] | None = None,
                   newgrp: bool = False) -> LocalProcess:
         """
-        Run a command asynchronously. Implemen 'run_async()' using 'subprocess.Popen()'.
+        Run a command asynchronously. Implement 'run_async()' using 'subprocess.Popen()'.
 
         Args:
             command: The command to execute. Can be a string or a 'pathlib.Path' pointing to the

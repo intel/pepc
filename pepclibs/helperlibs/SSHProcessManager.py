@@ -60,7 +60,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         * The interactive shell implementation:
             - Run 'sh -s' process run in a new paramiko session.
             - Run commands in this shell. One command can run at a time. This means that one cannot
-              run an asychronous command ('run_async()') in the interactive shell and then run
+              run an asynchronous command ('run_async()') in the interactive shell and then run
               another command in the same interactive shell.
             - No need to create a new SSH session between the commands
             - The complication with this method is to detect when command has finished.
@@ -204,7 +204,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                            'data' might be saved in 'self._ll' if it resembles the beginning of the
                            marker.
                 - 'exitcode': The exit code of the command if the marker is found. If the marker was
-                              not found, alwayse return 'None' for the exit code.
+                              not found, always return 'None' for the exit code.
         """
 
         exitcode = None
@@ -523,7 +523,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 self.privkeypath = self._lookup_privkey(hostname, self.username)
             except Exception as err: # pylint: disable=broad-except
                 msg = Error(str(err)).indent(2)
-                _LOG.debug(f"Private key lookup falied:\n{msg}")
+                _LOG.debug(f"Private key lookup failed:\n{msg}")
 
         if self.privkeypath:
             # Private SSH key sanity checks.
@@ -783,7 +783,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                   shell: bool = True,
                   intsh: bool = False) -> SSHProcess:
         """
-        Run a command asynchronously. Implemen 'run_async()'.
+        Run a command asynchronously. Implement 'run_async()'.
 
         Args:
             command: The command to execute. Can be a string or a 'pathlib.Path' pointing to the
@@ -907,8 +907,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         # Execute the command on the remote host.
         with self._run_async(cmd, cwd=cwd, shell=shell, intsh=intsh) as proc:
-            if mix_output:
-                proc.pobj.set_combine_stderr(True)
+            proc.pobj.set_combine_stderr(mix_output)
 
             # Wait for the command to finish and handle the time-out situation.
             result = proc.wait(timeout=timeout, capture_output=capture_output,
@@ -1043,7 +1042,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         Copy a file or directory from a local source path to remote destination path.
 
         Args:
-            src: The loal source path of the file or directory to copy.
+            src: The goal source path of the file or directory to copy.
             dst: The remote destination path where the file or directory will be copied.
         """
 
