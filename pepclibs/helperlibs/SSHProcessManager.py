@@ -859,8 +859,11 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                   newgrp: bool = False) -> SSHProcess:
         """Refer to 'ProcessManagerBase.run_async()'."""
 
+        # The 'newgrp' argument is ignored, because it makes no sense in a remote host case.
+        # The 'stdin', 'stdout', and 'stderr' arguments are not supported.
+
         # pylint: disable=unused-argument
-        for arg, val in (("stdin", None), ("stdout", None), ("stderr", None), ("newgrp", False)):
+        for arg, val in (("stdin", None), ("stdout", None), ("stderr", None)):
             if locals()[arg] != val:
                 raise Error(f"'SSHProcessManager.run_async()' doesn't support the '{arg}' argument")
 
@@ -889,8 +892,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             newgrp: bool = False) -> ProcWaitResultType:
         """Refer to 'ProcessManagerBase.run()'."""
 
-        if newgrp:
-            raise Error("'SSHProcessManager.run()' doesn't support the 'newgrp' argument")
+        # pylint: disable=unused-argument
 
         msg = f"Running the following command{self.hostmsg} (intsh {intsh}):\n{cmd}"
         if cwd:
@@ -926,8 +928,6 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """Refer to 'ProcessManagerBase.run_verify()'."""
 
         # pylint: disable=unused-argument
-        if newgrp:
-            raise Error("'SSHProcessManager.run_verify()' doesn't support the 'newgrp' argument")
 
         result = self.run(cmd, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs, cwd=cwd,
