@@ -164,7 +164,7 @@ for cpu, cpus_info in transaction_buffer.items():
             fobj.flush()
 '"""
 
-        self._pman.run_verify(cmd, shell=True)
+        self._pman.run_verify(cmd)
 
     def flush_transaction(self):
         """
@@ -345,7 +345,7 @@ for cpu in cpus:
         print("%d,%d" % (cpu, regval))
 '"""
 
-        stdout, _ = self._pman.run_verify(cmd, shell=True)
+        stdout, _ = self._pman.run_verify(cmd)
         regvals = {}
 
         for line in stdout.splitlines():
