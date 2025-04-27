@@ -648,7 +648,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         return privkeypath
 
     @staticmethod
-    def _format_cmd_for_pid(cmd: str, cwd: str | Path | None = None) -> str:
+    def _format_cmd(cmd: str,
+                    cwd: str | Path | None = None,
+                    env: dict[str, str] | None = None) -> str:
         """
         Modify the command so that it prints own PID.
 
@@ -659,31 +661,38 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         Args:
             cmd: The command to be executed.
             cwd: The working directory to switch to before executing the command.
+            env: Environment variables to set before executing the command.
 
         Returns:
             string that prints the PID before executing the original command.
         """
 
-        prefix = r'printf "%s\n" "$$";'
+        prefix = ""
+        if env:
+            for key, value in env.items():
+                prefix += f'export {key}="{value}"; '
+        prefix += r'printf "%s\n" "$$";'
         if cwd:
             prefix += f""" cd "{cwd}" &&"""
         return prefix + " exec " + cmd
 
     def _run_in_new_session(self,
                             command: str,
-                            cwd: str | Path | None = None) -> SSHProcess:
+                            cwd: str | Path | None = None,
+                            env: dict[str, str] | None = None) -> SSHProcess:
         """
         Run a command in a new SSH session.
 
         Args:
             command: The command to execute on the remote host.
             cwd: The working directory to set for the command.
+            env: Environment variables for the process.
 
         Returns:
             An 'SSHProcess' object representing the process running the command.
         """
 
-        cmd = self._format_cmd_for_pid(command, cwd=cwd)
+        cmd = self._format_cmd(command, cwd=cwd, env=env)
 
         try:
             transport = self.ssh.get_transport()
@@ -711,13 +720,17 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         streams = (stdin, chan.recv, chan.recv_stderr)
         return SSHProcess(self, chan, command, cmd, streams)
 
-    def _run_in_intsh(self, command: str, cwd: str | Path | None = None) -> SSHProcess:
+    def _run_in_intsh(self,
+                      command: str,
+                      cwd: str | Path | None = None,
+                      env: dict[str, str] | None = None) -> SSHProcess:
         """
         Execute a command in an interactive shell session.
 
         Args:
             command: The command to execute in the interactive shell.
             cwd: The current working directory for the command.
+            env: Environment variables to set for the command.
 
         Returns:
             An SSHProcess object representing the interactive shell process running the command.
@@ -729,7 +742,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             self._intsh = self._run_in_new_session(cmd)
 
         proc = self._intsh
-        cmd = self._format_cmd_for_pid(command, cwd=cwd)
+        cmd = self._format_cmd(command, cwd=cwd, env=env)
 
         # Pick a new marker for the new interactive shell command.
         # pylint: disable=protected-access
@@ -772,7 +785,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def _run_async(self,
                   command: str | Path,
                   cwd: str | Path | None = None,
-                  intsh: bool = False) -> SSHProcess:
+                  intsh: bool = False,
+                  env: dict[str, str] | None = None) -> SSHProcess:
         """
         Run a command asynchronously. Implement 'run_async()'.
 
@@ -783,6 +797,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             intsh: Use an existing interactive shell if True, or a new shell if False. The former
                    requires less time to start a new process, as it does not require creating a new
                    shell.
+            env: Environment variables for the process.
 
         Returns:
             A 'SSHProcess' object representing the executed remote asynchronous process.
@@ -790,7 +805,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         command = str(command)
         if not intsh:
-            return self._run_in_new_session(command, cwd=cwd)
+            return self._run_in_new_session(command, cwd=cwd, env=env)
 
         try:
             acquired = self._acquire_intsh_lock(command=command)
@@ -807,10 +822,10 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if not intsh:
             _LOG.warning("The interactive shell is busy, running the following command in a new "
                          "SSH session:\n%s", command)
-            return self._run_in_new_session(command, cwd=cwd)
+            return self._run_in_new_session(command, cwd=cwd, env=env)
 
         try:
-            return self._run_in_intsh(command, cwd=cwd)
+            return self._run_in_intsh(command, cwd=cwd, env=env)
         except BaseException as err: # pylint: disable=broad-except
             msg = Error(str(err)).indent(2)
             _LOG.warning("Failed to run the following command in an interactive shell:  %s\n"
@@ -831,7 +846,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             else:
                 _LOG.warning("Failed to acquire the interactive shell process lock")
 
-            return self._run_in_new_session(command, cwd=cwd)
+            return self._run_in_new_session(command, cwd=cwd, env=env)
 
     def run_async(self,
                   cmd: str | Path,
@@ -845,8 +860,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """Refer to 'ProcessManagerBase.run_async()'."""
 
         # pylint: disable=unused-argument
-        for arg, val in (("stdin", None), ("stdout", None), ("stderr", None), ("env", None),
-                         ("newgrp", False)):
+        for arg, val in (("stdin", None), ("stdout", None), ("stderr", None), ("newgrp", False)):
             if locals()[arg] != val:
                 raise Error(f"'SSHProcessManager.run_async()' doesn't support the '{arg}' argument")
 
@@ -860,7 +874,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         _LOG.debug("Running the following command asynchronously%s (intsh %s):\n%s%s",
                    self.hostmsg, str(intsh), cmd, cwd_msg)
 
-        return self._run_async(cmd, cwd=cwd, intsh=intsh)
+        return self._run_async(cmd, cwd=cwd, intsh=intsh, env=env)
 
     def run(self,
             cmd: str | Path,
@@ -875,10 +889,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             newgrp: bool = False) -> ProcWaitResultType:
         """Refer to 'ProcessManagerBase.run()'."""
 
-        # pylint: disable=unused-argument
-        for arg, val in (("env", None), ("newgrp", False)):
-            if locals()[arg] != val:
-                raise Error(f"'SSHProcessManager.run()' doesn't support the '{arg}' argument")
+        if newgrp:
+            raise Error("'SSHProcessManager.run()' doesn't support the 'newgrp' argument")
 
         msg = f"Running the following command{self.hostmsg} (intsh {intsh}):\n{cmd}"
         if cwd:
@@ -886,7 +898,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         _LOG.debug(msg)
 
         # Execute the command on the remote host.
-        with self._run_async(cmd, cwd=cwd, intsh=intsh) as proc:
+        with self._run_async(cmd, cwd=cwd, intsh=intsh, env=env) as proc:
             proc.pobj.set_combine_stderr(mix_output)
 
             # Wait for the command to finish and handle the time-out situation.
@@ -914,14 +926,12 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """Refer to 'ProcessManagerBase.run_verify()'."""
 
         # pylint: disable=unused-argument
-        for arg, val in (("env", None), ("newgrp", False)):
-            if locals()[arg] != val:
-                raise Error(f"'SSHProcessManager.run_verify()' doesn't support the '{arg}' "
-                            f"argument")
+        if newgrp:
+            raise Error("'SSHProcessManager.run_verify()' doesn't support the 'newgrp' argument")
 
         result = self.run(cmd, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs, cwd=cwd,
-                          intsh=intsh)
+                          intsh=intsh, env=env)
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
