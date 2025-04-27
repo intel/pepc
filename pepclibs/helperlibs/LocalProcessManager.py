@@ -16,7 +16,6 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
 import time
-import shlex
 import errno
 import shutil
 import tempfile
@@ -39,11 +38,10 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
                  pobj: subprocess.Popen,
                  cmd: str,
                  real_cmd: str,
-                 shell: bool,
                  streams: tuple[IO[bytes] | None, IO[bytes] | None, IO[bytes] | None]):
         """Refer to 'ProcessBase.__init__()'."""
 
-        super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
+        super().__init__(pman, pobj, cmd, real_cmd, streams)
 
         self.pman: LocalProcessManager
         self.pobj: subprocess.Popen
@@ -160,7 +158,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def _run_async(self,
                   command: str | Path,
                   cwd: str | Path | None = None,
-                  shell: bool = True,
                   stdin: IO | int = subprocess.PIPE,
                   stdout: IO | int = subprocess.PIPE,
                   stderr: IO | int = subprocess.PIPE,
@@ -173,7 +170,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             command: The command to execute. Can be a string or a 'pathlib.Path' pointing to the
                      file to execute.
             cwd: The working directory for the process.
-            shell: Whether to execute the command through a shell.
             stdin: The standard input stream to use. Defaults to a pipe.
             stdout: The standard output stream to use. Defaults to a pipe.
             stderr: The standard error stream to use. Defaults to a pipe.
@@ -188,16 +184,12 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         command = str(command)
         cmd: str | list[str]
 
-        if shell:
-            real_cmd = cmd = f"exec {command}"
-        else:
-            real_cmd = command
-            cmd = shlex.split(command)
+        real_cmd = cmd = f"exec {command}"
 
         try:
             # pylint: disable=consider-using-with
             pobj = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd,
-                                    bufsize=0, env=env, shell=shell, start_new_session=newgrp)
+                                    bufsize=0, env=env, shell=True, start_new_session=newgrp)
         except FileNotFoundError as err:
             raise self._command_not_found(command, str(err))
         except OSError as err:
@@ -206,7 +198,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         streams = (pobj.stdin, pobj.stdout, pobj.stderr)
 
-        proc = LocalProcess(self, pobj, command, real_cmd, shell, streams)
+        proc = LocalProcess(self, pobj, command, real_cmd, streams)
         proc.pid = pobj.pid
 
         return proc
@@ -214,7 +206,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def run_async(self,
                   cmd: str | Path,
                   cwd: str | Path | None = None,
-                  shell: bool = True,
                   intsh: bool = False,
                   stdin: IO | None = None,
                   stdout: IO | None = None,
@@ -230,15 +221,15 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 cwd_msg = f"\nWorking directory: {cwd}"
             else:
                 cwd_msg = ""
-            _LOG.debug("Running the following local command asynchronously (shell %s, newgrp %s):\n"
-                       "%s%s", str(shell), str(newgrp), command, cwd_msg)
+            _LOG.debug("Running the following local command asynchronously (newgrp %s):\n"
+                       "%s%s", str(newgrp), command, cwd_msg)
 
         popen_stdin: IO | int = stdin if stdin is not None else subprocess.PIPE
         popen_stdout: IO | int = stdout if stdout is not None else subprocess.PIPE
         popen_stderr: IO | int = stderr if stderr is not None else subprocess.PIPE
 
-        return self._run_async(command, cwd=cwd, shell=shell, stdin=popen_stdin,
-                               stdout=popen_stdout, stderr=popen_stderr, env=env, newgrp=newgrp)
+        return self._run_async(command, cwd=cwd, stdin=popen_stdin, stdout=popen_stdout,
+                               stderr=popen_stderr, env=env, newgrp=newgrp)
 
     def run(self,
             cmd: str | Path,
@@ -248,7 +239,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             join: bool = True,
             output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
             cwd: str | Path | None = None,
-            shell: bool = True,
             intsh: bool | None = None,
             env: dict[str, str] | None = None,
             newgrp: bool = False) -> ProcWaitResultType:
@@ -261,8 +251,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 cwd_msg = f"\nWorking directory: {cwd}"
             else:
                 cwd_msg = ""
-            _LOG.debug("Running the following local command (shell %s, newgrp %s):\n%s%s",
-                       str(shell), str(newgrp), cmd, cwd_msg)
+            _LOG.debug("Running the following local command (newgrp %s):\n%s%s",
+                       str(newgrp), cmd, cwd_msg)
 
         stdout = subprocess.PIPE
         if mix_output:
@@ -270,8 +260,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         else:
             stderr = subprocess.PIPE
 
-        with self._run_async(cmd, stdout=stdout, stderr=stderr, cwd=cwd, shell=shell,
-                             env=env, newgrp=newgrp) as proc:
+        with self._run_async(cmd, stdout=stdout, stderr=stderr, cwd=cwd, env=env,
+                             newgrp=newgrp) as proc:
             # Wait for the command to finish and handle the time-out situation.
             result = proc.wait(capture_output=capture_output, output_fobjs=output_fobjs,
                                timeout=timeout, join=join)
@@ -291,7 +281,6 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    join: bool = True,
                    output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
                    cwd: str | Path | None = None,
-                   shell: bool = True,
                    intsh: bool | None = None,
                    env: dict[str, str] | None = None,
                    newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
@@ -299,7 +288,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         result = self.run(cmd, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs,
-                          cwd=cwd, shell=shell, intsh=intsh, env=env, newgrp=newgrp)
+                          cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 

@@ -73,13 +73,12 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                  pobj: paramiko.Channel,
                  cmd: str,
                  real_cmd: str,
-                 shell: bool,
                  streams: tuple[paramiko.ChannelFile,
                                 Callable[[int], bytes],
                                 Callable[[int], bytes]]):
         """Refer to 'ProcessBase.__init__()'."""
 
-        super().__init__(pman, pobj, cmd, real_cmd, shell, streams)
+        super().__init__(pman, pobj, cmd, real_cmd, streams)
 
         self.pman: SSHProcessManager
         self.pobj: paramiko.Channel
@@ -98,8 +97,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         # in order to avoid matching the 'll' against the marker too often.
         self._check_ll = True
 
-        if shell:
-            self._read_pid()
+        self._read_pid()
 
     def _reinit_marker(self):
         """
@@ -113,17 +111,16 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         self._marker = f"--- {randbits:064x}"
         self._marker_regex = re.compile(f"^{self._marker}, \\d+ ---$")
 
-    def _reinit(self, cmd: str, real_cmd: str, shell: bool):
+    def _reinit(self, cmd: str, real_cmd: str):
         """Refer to 'ProcessBase._reinit()'."""
 
-        super()._reinit(cmd, real_cmd, shell)
+        super()._reinit(cmd, real_cmd)
 
         self._ll = ""
         self._check_ll = True
         self._lines_cnt = [0, 0]
 
-        if shell:
-            self._read_pid()
+        self._read_pid()
 
     def close(self):
         """Free allocated resources."""
@@ -403,7 +400,6 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         """
 
         self._dbg("SSHProcess._read_pid(): Reading PID for the following command: %s", self.cmd)
-        assert self.shell
 
         stdout, stderr, _ = self.wait(timeout=60, lines=(1, 0), join=False)
 
@@ -675,23 +671,19 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
     def _run_in_new_session(self,
                             command: str,
-                            cwd: str | Path | None = None,
-                            shell: bool = True) -> SSHProcess:
+                            cwd: str | Path | None = None) -> SSHProcess:
         """
         Run a command in a new SSH session.
 
         Args:
             command: The command to execute on the remote host.
             cwd: The working directory to set for the command.
-            shell: Whether to execute the command via shell.
 
         Returns:
             An 'SSHProcess' object representing the process running the command.
         """
 
-        cmd = command
-        if shell:
-            cmd = self._format_cmd_for_pid(command, cwd=cwd)
+        cmd = self._format_cmd_for_pid(command, cwd=cwd)
 
         try:
             transport = self.ssh.get_transport()
@@ -717,7 +709,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"Failed to create the stdin file-like object:\n{msg}") from err
 
         streams = (stdin, chan.recv, chan.recv_stderr)
-        return SSHProcess(self, chan, command, cmd, shell, streams)
+        return SSHProcess(self, chan, command, cmd, streams)
 
     def _run_in_intsh(self, command: str, cwd: str | Path | None = None) -> SSHProcess:
         """
@@ -734,7 +726,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if not self._intsh:
             cmd = "sh -s"
             _LOG.debug("Starting interactive shell%s: %s", self.hostmsg, cmd)
-            self._intsh = self._run_in_new_session(cmd, shell=False)
+            self._intsh = self._run_in_new_session(cmd)
 
         proc = self._intsh
         cmd = self._format_cmd_for_pid(command, cwd=cwd)
@@ -748,7 +740,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         proc.pobj.send(cmd.encode())
 
         # Re-initialize the interactive shell process object to match the new command.
-        proc._reinit(command, cmd, True)
+        proc._reinit(command, cmd)
 
         return proc
 
@@ -780,7 +772,6 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def _run_async(self,
                   command: str | Path,
                   cwd: str | Path | None = None,
-                  shell: bool = True,
                   intsh: bool = False) -> SSHProcess:
         """
         Run a command asynchronously. Implement 'run_async()'.
@@ -789,21 +780,17 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             command: The command to execute. Can be a string or a 'pathlib.Path' pointing to the
                      file to execute.
             cwd: The working directory for the process.
-            shell: Whether to execute the command through a shell.
             intsh: Use an existing interactive shell if True, or a new shell if False. The former
                    requires less time to start a new process, as it does not require creating a new
-                   shell. The default value is the value of 'shell'.
+                   shell.
 
         Returns:
             A 'SSHProcess' object representing the executed remote asynchronous process.
         """
 
-        if not shell and intsh:
-            raise Error("The 'shell' argument must be 'True' when 'intsh' is 'True'")
-
         command = str(command)
-        if not shell or not intsh:
-            return self._run_in_new_session(command, cwd=cwd, shell=shell)
+        if not intsh:
+            return self._run_in_new_session(command, cwd=cwd)
 
         try:
             acquired = self._acquire_intsh_lock(command=command)
@@ -820,7 +807,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if not intsh:
             _LOG.warning("The interactive shell is busy, running the following command in a new "
                          "SSH session:\n%s", command)
-            return self._run_in_new_session(command, cwd=cwd, shell=shell)
+            return self._run_in_new_session(command, cwd=cwd)
 
         try:
             return self._run_in_intsh(command, cwd=cwd)
@@ -829,7 +816,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             _LOG.warning("Failed to run the following command in an interactive shell:  %s\n"
                          "The error was:\n%s", command, msg)
 
-            # Close the internal shell and try to run in a new session.
+            # Close the interactive shell and try to run in a new session.
             with contextlib.suppress(BaseException):
                 acquired = self._acquire_intsh_lock(command=command)
 
@@ -844,12 +831,11 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             else:
                 _LOG.warning("Failed to acquire the interactive shell process lock")
 
-            return self._run_in_new_session(command, cwd=cwd, shell=shell)
+            return self._run_in_new_session(command, cwd=cwd)
 
     def run_async(self,
                   cmd: str | Path,
                   cwd: str | Path | None = None,
-                  shell: bool = True,
                   intsh: bool = False,
                   stdin: IO | None = None,
                   stdout: IO | None = None,
@@ -867,16 +853,14 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         cmd = str(cmd)
 
         if cwd:
-            if not shell:
-                raise Error(f"cannot set working directory to '{cwd}' - using shell is disallowed")
             cwd_msg = f"\nWorking directory: {cwd}"
         else:
             cwd_msg = ""
 
-        _LOG.debug("Running the following command asynchronously%s (shell %s, intsh %s):\n%s%s",
-                   self.hostmsg, str(shell), str(intsh), cmd, cwd_msg)
+        _LOG.debug("Running the following command asynchronously%s (intsh %s):\n%s%s",
+                   self.hostmsg, str(intsh), cmd, cwd_msg)
 
-        return self._run_async(cmd, cwd=cwd, shell=shell, intsh=intsh)
+        return self._run_async(cmd, cwd=cwd, intsh=intsh)
 
     def run(self,
             cmd: str | Path,
@@ -886,8 +870,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             join: bool = True,
             output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
             cwd: str | Path | None = None,
-            shell: bool = True,
-            intsh: bool | None = None,
+            intsh: bool = True,
             env: dict[str, str] | None = None,
             newgrp: bool = False) -> ProcWaitResultType:
         """Refer to 'ProcessManagerBase.run()'."""
@@ -897,16 +880,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             if locals()[arg] != val:
                 raise Error(f"'SSHProcessManager.run()' doesn't support the '{arg}' argument")
 
-        msg = f"Running the following command{self.hostmsg} (shell {shell}, intsh {intsh}):\n{cmd}"
+        msg = f"Running the following command{self.hostmsg} (intsh {intsh}):\n{cmd}"
         if cwd:
             msg += f"\nWorking directory: {cwd}"
         _LOG.debug(msg)
 
-        if intsh is None:
-            intsh = shell
-
         # Execute the command on the remote host.
-        with self._run_async(cmd, cwd=cwd, shell=shell, intsh=intsh) as proc:
+        with self._run_async(cmd, cwd=cwd, intsh=intsh) as proc:
             proc.pobj.set_combine_stderr(mix_output)
 
             # Wait for the command to finish and handle the time-out situation.
@@ -928,8 +908,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    join: bool = True,
                    output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
                    cwd: str | Path | None = None,
-                   shell: bool = True,
-                   intsh: bool | None = None,
+                   intsh: bool = True,
                    env: dict[str, str] | None = None,
                    newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
         """Refer to 'ProcessManagerBase.run_verify()'."""
@@ -942,7 +921,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         result = self.run(cmd, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs, cwd=cwd,
-                          shell=shell, intsh=intsh)
+                          intsh=intsh)
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
@@ -1182,7 +1161,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """Refer to 'ProcessManagerBase.time_time()'."""
 
         cmd = "date +%s"
-        stdout, _ = self.run_verify(cmd, shell=True)
+        stdout, _ = self.run_verify(cmd)
         tt = cast(str, stdout).strip()
         what = f"current time on {self.hostname} acquired via SSH using {cmd}"
         return Trivial.str_to_float(tt, what=what)
@@ -1230,7 +1209,7 @@ for entry in os.listdir(path):
     stinfo = os.lstat(os.path.join(path, entry))
     print(entry, stinfo.st_mode, stinfo.st_ctime)'"""
 
-        stdout, _ = self.run_verify(cmd, shell=True)
+        stdout, _ = self.run_verify(cmd)
 
         info: dict[str, LsdirTypedDict] = {}
 

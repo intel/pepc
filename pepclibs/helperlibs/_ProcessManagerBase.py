@@ -130,7 +130,6 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                  pobj: Any,
                  cmd: str,
                  real_cmd: str,
-                 shell: bool,
                  streams: tuple[Any, Any, Any]):
         """
         Initialize a class instance.
@@ -142,7 +141,6 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             cmd: The command that was executed to start the process.
             real_cmd: Actual (full) command that was executed, which may differ slightly from the
                       original command (e.g., prefixed with a PID print statement).
-            shell: Indicates whether the command was executed via a shell.
             streams: A Tuple containing objects that can be used for writing to process' stdin and
                      reading from process' stdout, and stderr. Value 'None' means that the stream is
                      not available.
@@ -152,7 +150,6 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         self.pobj = pobj
         self.cmd = cmd
         self.real_cmd = real_cmd
-        self.shell = shell
         self.stdin = streams[0]
 
         self.timeout: int | float = TIMEOUT
@@ -193,7 +190,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             wrapped = ClassHelpers.WrapExceptions(self.stdin, get_err_prefix=get_err_prefix)
             self.stdin = cast(IO[bytes], wrapped)
 
-    def _reinit(self, cmd: str, real_cmd: str, shell: bool):
+    def _reinit(self, cmd: str, real_cmd: str):
         """
         Reinitialize the process object for a new command execution.
 
@@ -203,12 +200,10 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             cmd: The new command that was executed to start the process.
             real_cmd: Actual (full) new command that was executed, which may differ slightly from
                       the original command (e.g., prefixed with a PID print statement).
-            shell: Indicates whether the new command was executed in a shell.
         """
 
         self.cmd = cmd
         self.real_cmd = real_cmd
-        self.shell = shell
 
         self.pid = None
         self.exitcode = None
@@ -689,7 +684,6 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     def run_async(self,
                   cmd: str | Path,
                   cwd: str | Path | None = None,
-                  shell: bool = True,
                   intsh: bool = False,
                   stdin: IO | None = None,
                   stdout: IO | None = None,
@@ -703,7 +697,6 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             cmd: The command to execute. Can be a string or a 'pathlib.Path' pointing to the file to
                  execute.
             cwd: The working directory for the process.
-            shell: Whether to execute the command through a shell.
             intsh: If True, use an existing interactive shell or create a new one. Only one
                    asynchronous process can run in an interactive shell at a time. It takes less
                    time to start a new process in an existing interactive shell, because it does not
@@ -729,8 +722,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             join: bool = True,
             output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
             cwd: str | Path | None = None,
-            shell: bool = True,
-            intsh: bool | None = None,
+            intsh: bool = True,
             env: dict[str, str] | None = None,
             newgrp: bool = False) -> ProcWaitResultType:
         """
@@ -749,10 +741,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                          'mix_output' is True, the second object is ignored, and all output is
                          echoed to the first. Not affected by 'capture_output'.
             cwd: The working directory for the process.
-            shell: Run the command through a shell if True.
             intsh: Use an existing interactive shell if True, or a new shell if False. The former
                    requires less time to start a new process, as it does not require creating a new
-                   shell. The default value is the value of 'shell'.
+                   shell.
             env: Environment variables for the process.
             newgrp: Create a new group for the process, as opposed to using the parent process
                     group.
@@ -782,8 +773,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    join: bool = True,
                    output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
                    cwd: str | Path | None = None,
-                   shell: bool = True,
-                   intsh: bool | None = None,
+                   intsh: bool = True,
                    env: dict[str, str] | None = None,
                    newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
         """
@@ -800,10 +790,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             join: Whether to join the output streams.
             output_fobjs: File-like objects to write the command's stdout and stderr.
             cwd: The working directory to execute the command in.
-            shell: Run the command through a shell if True.
             intsh: Use an existing interactive shell if True, or a new shell if False. The former
                    requires less time to start a new process, as it does not require creating a new
-                   shell. The default value is the value of 'shell'.
+                   shell.
             env: Environment variables for the process.
             newgrp: Create a new group for the process, as opposed to using the parent process
                     group.
