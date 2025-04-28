@@ -152,3 +152,7 @@ class ErrorConnect(Error):
             msg = f"Cannot connect to host '{host}'\n{msg}"
 
         super().__init__(msg, *args, **kwargs)
+
+ExceptionType = type[Error] | type[ErrorTimeOut] | type[ErrorExists] | type[ErrorNotFound] | \
+    type[ErrorNotSupported] | type[ErrorPermissionDenied] | type[ErrorBadFormat] | \
+    type[ErrorVerifyFailed] | type[ErrorConnect]
