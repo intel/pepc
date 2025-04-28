@@ -12,7 +12,7 @@
 
 import pytest
 import common
-from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
+from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ExceptionType
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec):
@@ -46,7 +46,7 @@ def test_aspm_config(params):
         "--policy powersave",
         "--policy powersupersave"]
 
-    ignore = None
+    ignore: dict[ExceptionType, str] | None = None
     pman = params["pman"]
 
     if pman.is_remote:

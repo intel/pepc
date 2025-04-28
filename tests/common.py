@@ -14,10 +14,10 @@
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, Mapping
 from pepclibs.helperlibs import ProcessManager, EmulProcessManager, TestRunner
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ExceptionType
 from pepctool import _Pepc
 
 class CommonTestParamsTypedDict(TypedDict):
@@ -108,7 +108,10 @@ def build_params(pman: ProcessManagerType) -> CommonTestParamsTypedDict:
 
     return CommonTestParamsTypedDict(hostname=pman.hostname, pman=pman)
 
-def run_pepc(arguments, pman, exp_exc=None, ignore=None):
+def run_pepc(arguments: str,
+             pman: ProcessManagerType,
+             exp_exc: ExceptionType | None = None,
+             ignore: Mapping[ExceptionType, str] | None = None):
     """
     Execute the 'pepc' command and validate its outcome.
 
