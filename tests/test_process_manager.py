@@ -208,7 +208,7 @@ def test_run_verify_fail(params: CommonTestParamsTypedDict):
         pman.run_verify(cmd)
 
 def test_run_fail(params: CommonTestParamsTypedDict):
-    """Test the 'run()' method."""
+    """Test the 'run()' method. Cover 'get_cmd_failure_msg()' too."""
 
     # The 'run_verify()' method has already been tested, and it is a wrapper around the 'run()'
     # method. So test only the aspects of 'run()' that are not covered by the 'run_verify()' tests.
@@ -221,3 +221,18 @@ def test_run_fail(params: CommonTestParamsTypedDict):
     assert stdout == "1: hello\n2: world\n"
     assert stderr == "1: hello-x\n2: world-x\n"
     assert exitcode == 7
+
+    errmsg = pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode, startmsg="Test")
+    assert errmsg.startswith("Test\n")
+
+    # And do the same with "join=False".
+    stdout, stderr, exitcode = pman.run(cmd, join=False)
+    assert stdout == ["1: hello\n", "2: world\n"]
+    assert stderr == ["1: hello-x\n", "2: world-x\n"]
+    assert exitcode == 7
+
+    errmsg = pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode, startmsg="Test_")
+    assert errmsg.startswith("Test_\n")
+
+    errmsg = pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode)
+    assert "hello-x" in errmsg
