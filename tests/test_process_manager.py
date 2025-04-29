@@ -236,3 +236,52 @@ def test_run_fail(params: CommonTestParamsTypedDict):
 
     errmsg = pman.get_cmd_failure_msg(cmd, stdout, stderr, exitcode)
     assert "hello-x" in errmsg
+
+def test_run_async_wait(params: CommonTestParamsTypedDict):
+    """Test the 'run_async()' and 'wait()' methods."""
+
+    # The already tested 'run_verify()' method is based on 'run_async()' and then "wait for the
+    # command to finish" call to 'wait()'. So a big part of the 'run_async()' functionality is
+    # covered by the 'run_verify()' tests. Focus on testing 'run_async()' and 'wait()' methods with
+    # use-cases that were not yet covered.
+
+    pman = params["pman"]
+    python_path = pman.get_python_path()
+
+    cmd = f"{python_path} {_HELLO_WORLD_CMD}"
+    for intsh in (True, False):
+        proc = pman.run_async(cmd, intsh=intsh)
+
+        res = proc.wait(lines=(1, 1))
+        assert res.stdout == "1: hello\n"
+        assert res.stderr == "1: hello-x\n"
+        assert res.exitcode is None
+
+        res = proc.wait(lines=(1, 1))
+        assert res.stdout == "2: world\n"
+        assert res.stderr == "2: world-x\n"
+
+        res = proc.wait()
+        assert res.stdout == ""
+        assert res.stderr == ""
+        assert res.exitcode == 0
+
+        proc = pman.run_async(cmd, intsh=intsh)
+
+        stdouts = ""
+        res = proc.wait(lines=(0, 1))
+        stdouts += cast(str, res.stdout)
+        assert res.stderr == "1: hello-x\n"
+        assert res.exitcode is None
+
+        res = proc.wait(lines=(0, 1))
+        stdouts += cast(str, res.stdout)
+        assert res.stderr == "2: world-x\n"
+        assert res.exitcode is None
+
+        res = proc.wait()
+        stdouts += cast(str, res.stdout)
+        assert res.stderr == ""
+        assert res.exitcode == 0
+
+        assert stdouts == "1: hello\n2: world\n"
