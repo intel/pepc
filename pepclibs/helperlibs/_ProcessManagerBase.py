@@ -115,10 +115,20 @@ def have_enough_lines(output: list[list[str]], lines: tuple[int, int] = (0, 0)) 
         True if at least one stream has the required number of lines, False otherwise.
     """
 
+    any_amount = [False, False]
+    result = [False, False]
+
     for streamid in (0, 1):
-        if lines[streamid] and len(output[streamid]) >= lines[streamid]:
-            return True
-    return False
+        if lines[streamid] <= 0:
+            any_amount[streamid] = True
+        if len(output[streamid]) >= lines[streamid]:
+            result[streamid] = True
+
+    if all(any_amount):
+        # Both streams do not have a limit set, so no amount of lines in "enough", return False.
+        return False
+
+    return all(result)
 
 class ProcessBase(ClassHelpers.SimpleCloseContext):
     """
@@ -386,6 +396,9 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         for streamid in (0, 1):
             limit = lines[streamid]
+            if limit == -1:
+                continue
+
             if not limit or len(self._output[streamid]) <= limit:
                 output[streamid] = self._output[streamid]
                 self._output[streamid] = []
@@ -468,8 +481,14 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             lines: The number of lines from stdout and stderr to wait for. A tuple where the first
                    element is the stdout line limit and the second is the stderr line limit. For
                    example, 'lines=(1, 5)' will wait for one full line in stdout or five full lines
-                   in stderr. 'lines=(1, 0)' will wait for one line in stdout any number of lines in
-                   stderr (ignore stderr lines as a wait criterion). Defaults to no limit.
+                   in stderr (or wait until timeout, whatever happens first). Value 0 means
+                   "whatever is available". For example 'lines=(1, 0)' will wait for one line in
+                   stdout any number of lines in stderr. Value -1 means "nothing". For example,
+                   'lines=(-1, 2)' will wait for 2 lines in stderr and will collect all the
+                   available stdout lines, but won't return them. They will be returned if/when they
+                   are requested by a next 'wait()' call. The default value is (0, 0), which means
+                   wait for 'timeout' amount of seconds or until the process exits, whichever
+                   happens first, and return all the available lines.
             join: Whether to join captured output lines into a single string or return them as a
                   list of strings (trailing newlines are preserved in this case).
 
@@ -491,8 +510,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         for streamid in (0, 1):
             if not Trivial.is_int(lines[streamid]):
                 raise Error("The 'lines' argument can only include integers")
-            if lines[streamid] < 0:
-                raise Error("The 'lines' argument cannot include negative values")
+            if lines[streamid] < 0 and lines[streamid] != -1:
+                raise Error("The 'lines' argument cannot include negative values, except for -1")
 
         self.timeout = timeout
 
