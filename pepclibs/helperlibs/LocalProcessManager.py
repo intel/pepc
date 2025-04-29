@@ -89,6 +89,11 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
         self._dbg("LocalProcess._wait_timeout: Exit status %d", exitcode)
         return exitcode
 
+    def poll(self) -> int | None:
+        """Refer to 'ProcessBase.poll()'."""
+
+        return self.pobj.poll()
+
     def _wait(self,
               timeout: int | float = 0,
               capture_output: bool = True,
@@ -142,11 +147,6 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
                 break
 
         return self._get_lines_to_return(lines)
-
-    def poll(self) -> int | None:
-        """Refer to 'ProcessBase.poll()'."""
-
-        return self.pobj.poll()
 
 class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     """

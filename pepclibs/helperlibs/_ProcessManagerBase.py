@@ -411,6 +411,17 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                not self._output[1] and \
                (not self._queue or self._queue.empty())
 
+    def poll(self) -> int | None:
+        """
+        Check if the process is still running.
+
+        Returns:
+            None: If the process is still running.
+            int: The exit status of the process if it has terminated.
+        """
+
+        raise NotImplementedError("ProcessBase.poll()")
+
     def _wait(self,
               timeout: int | float = 0,
               capture_output: bool = True,
@@ -555,17 +566,6 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                       str(exitcode), sout, serr)
 
         return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=exitcode)
-
-    def poll(self) -> int | None:
-        """
-        Check if the process is still running.
-
-        Returns:
-            None: If the process is still running.
-            int: The exit status of the process if it has terminated.
-        """
-
-        raise NotImplementedError("ProcessBase.poll()")
 
     def get_cmd_failure_msg(self,
                             stdout: str | list[str],

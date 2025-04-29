@@ -258,6 +258,14 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         return (cdata, exitcode)
 
+    def poll(self) -> int | None:
+        """Refer to 'ProcessBase.poll()'."""
+
+        chan = self.pobj
+        if chan.exit_status_ready():
+            return chan.recv_exit_status()
+        return None
+
     def _wait_intsh(self,
                     timeout: int | float = 0,
                     capture_output: bool = True,
@@ -381,14 +389,6 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         return method(timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
                       lines=lines)
-
-    def poll(self) -> int | None:
-        """Refer to 'ProcessBase.poll()'."""
-
-        chan = self.pobj
-        if chan.exit_status_ready():
-            return chan.recv_exit_status()
-        return None
 
     def _read_pid(self):
         """
