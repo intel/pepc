@@ -91,11 +91,12 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         self._marker = ""
         # The regular expression the last line of the command output should match.
         self._marker_regex = re.compile("")
-        # The last line printed by the command to stdout observed so far.
-        self._ll = ""
-        # Whether the last line ('ll') should be checked against the marker. Used as an optimization
-        # in order to avoid matching the 'll' against the marker too often.
-        self._check_ll = True
+        # The last line printed by the command to stdout or stderr observed so far.
+        self._ll = ["", ""]
+        # Whether the last line ('ll[0]' for stdout and 'll[1] for stderr) should be checked against
+        # the marker. Used as an optimization in order to avoid matching the 'll' against the marker
+        # too often.
+        self._check_ll = [True, True]
 
         self._read_pid()
 
@@ -116,8 +117,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         super()._reinit(cmd, real_cmd)
 
-        self._ll = ""
-        self._check_ll = True
+        self._ll = ["", ""]
+        self._check_ll = [True, True]
         self._lines_cnt = [0, 0]
 
         self._read_pid()
@@ -178,70 +179,68 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
     def _process_is_done(self) -> bool:
         """Refer to 'ProcessBase._process_is_done()'."""
 
-        return not self._ll and super()._process_is_done()
+        return not self._ll[0] and not self._ll[1] and super()._process_is_done()
 
-    def _watch_for_marker(self, data: str) -> tuple[str, int | None]:
+    def _watch_for_marker(self, data: str, streamid: int) -> tuple[str, int | None]:
         """
-        Check for the marker in the stdout data of the interactive shell to determine if process has
-        exited.
-
-        Should be used only when running a command in the interactive shell session. Processes a
-        piece of stdout data from the process and check for a marker that indicates that the process
-        has exited.
+        Check for the marker in the stdout or stderr data of the interactive shell to determine if
+        process has exited.
 
         Args:
-            data: A piece of stdout data from the process.
+            data: A piece of stdout or stderr data from the process.
+            streamid: The stream ID (0 for stdout, 1 for stderr) from which the data was received.
 
         Returns:
             A tuple containing the captured stdout data ('cdata') and process exit code
             ('exitcode'), or 'None' if the marker is not found.
-                - 'cdata': A portion of stdout data that without the marker. If the marker was
-                           found, 'cdata' is 'data' minus the marker. If the marker was not found,
-                           'cdata' is going to be just some portion of 'data', because part of
-                           'data' might be saved in 'self._ll' if it resembles the beginning of the
-                           marker.
+                - 'cdata': A portion of data without the marker. If the marker was found, 'cdata' is
+                           'data' minus the marker. If the marker was not found, 'cdata' is going to
+                           be just some portion of 'data', because part of 'data' might be saved in
+                           'self._ll[streamid]' if it resembles the beginning of the marker.
                 - 'exitcode': The exit code of the command if the marker is found. If the marker was
                               not found, always return 'None' for the exit code.
         """
 
-        exitcode = None
-        cdata = None
+        exitcode: int | None = None
+        cdata: str | None = None
+        ll = self._ll[streamid]
+        check_ll = self._check_ll[streamid]
 
-        self._dbg("SSHProcess._watch_for_marker(): Starting with: check_ll: %s\nll: %s\ndata:\n%s",
-                  str(self._check_ll), repr(self._ll), repr(data))
+        self._dbg("SSHProcess._watch_for_marker(): Starting with: streamid: %d, check_ll: %s\n"
+                  "ll: %s\ndata:\n%s", streamid, str(check_ll), repr(ll), repr(data))
 
         split = data.rsplit("\n", 1)
         if len(split) > 1:
-            # Got a new marker suspect. Keep it in 'self._ll', while old 'self._ll' and the rest of
-            # 'data' can be returned up for capturing. Set 'self._check_ll' to 'True' to indicate
-            # that 'self._ll' has to be checked for the marker.
-            cdata = self._ll + split[0] + "\n"
-            self._check_ll = True
-            self._ll = split[1]
+            # Got a new marker suspect. Keep it in 'll', while old 'll' and the rest of
+            # 'data' can be returned up for capturing. Set 'check_ll' to 'True' to indicate
+            # that 'll' has to be checked for the marker.
+            cdata = ll + split[0] + "\n"
+            check_ll = True
+            ll = split[1]
         else:
-            # Got a continuation of the previous line. The 'check_ll' flag is 'True' when 'self._ll'
-            # being a marker is a real possibility. If we already checked 'self._ll' and it starts
+            # Got a continuation of the previous line. The 'check_ll' flag is 'True' when 'll'
+            # being a marker is a real possibility. If we already checked 'll' and it starts
             # with data that is different to the marker, there is not reason to check it again, and
             # we can send it up for capturing.
-            if not self._ll:
-                self._check_ll = True
-            if self._check_ll:
-                self._ll += split[0]
+            if not ll:
+                check_ll = True
+            if check_ll:
+                ll += split[0]
                 cdata = ""
             else:
-                cdata = self._ll + data
-                self._ll = ""
+                cdata = ll + data
+                ll = ""
 
-        if self._check_ll:
-            # 'self._ll' is a real suspect, check if it looks like the marker.
-            self._check_ll = self._ll.startswith(self._marker) or self._marker.startswith(self._ll)
+        if check_ll:
+            # 'll' is a real suspect, check if it looks like the marker.
+            check_ll = ll.startswith(self._marker) or self._marker.startswith(ll)
 
-        # OK, if 'self._ll' is still a real suspect, do a full check using the regex: full marker #
+        # OK, if 'll' is still a real suspect, do a full check using the regex: full marker #
         # line should contain not only the hash, but also the exit status.
-        if self._check_ll and re.match(self._marker_regex, self._ll):
-            # Extract the exit code from the 'self._ll' string that has the following form:
+        if check_ll and re.match(self._marker_regex, ll):
+            # Extract the exit code from the 'll' string that has the following form:
             # --- hash, <exitcode> ---
-            split = self._ll.rsplit(", ", 1)
+            split = ll.rsplit(", ", 1)
             assert len(split) == 2
             status = split[1].rstrip(" ---")
             if not Trivial.is_int(status):
@@ -249,13 +248,17 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                             f"shell and finished with a correct marker, but an unexpected exit "
                             f"code '{status}'.\nThe command was: {self.cmd}")
 
-            self._ll = ""
-            self._check_ll = False
+            ll = ""
+            check_ll = False
             exitcode = int(status)
 
-        self._dbg("SSHProcess._watch_for_marker(): Ending with: exitcode %s, self._check_ll: %s\n"
-                  "self._ll: %s\ncdata:\n%s",
-                  str(exitcode), str(self._check_ll), self._ll, repr(cdata))
+        self._ll[streamid] = ll
+        self._check_ll[streamid] = check_ll
+
+        self._dbg("SSHProcess._watch_for_marker(): Ending with: streamid %d, exitcode %d, "
+                  "check_ll: %s\nll: %s\ncdata:\n%s",
+                  streamid, str(exitcode), str(check_ll), ll, repr(cdata))
+
         return (cdata, exitcode)
 
     def poll(self) -> int | None:
@@ -298,7 +301,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                 # goal is to watch for this marker, hide it from the user, because it does not
                 # belong to the output of the process. The marker always starts at the beginning of
                 # line.
-                data, self.exitcode = self._watch_for_marker(data)
+                data, self.exitcode = self._watch_for_marker(data, streamid)
 
             if data is not None:
                 self._handle_queue_item(streamid, data, capture_output=capture_output,
