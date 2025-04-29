@@ -46,6 +46,7 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 # Paramiko is a bit too noisy, lower its log level.
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 
+_FAKE_EXIT_CODE = 69696969
 class SSHProcess(_ProcessManagerBase.ProcessBase):
     """
     A remote process created and managed by 'SSHProcessManager'.
@@ -238,7 +239,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         # OK, if 'll' is still a real suspect, do a full check using the regex: full marker #
         # line should contain not only the hash, but also the exit status.
         if check_ll and re.match(self._marker_regex, ll):
-            # Extract the exit code from the 'll' string that has the following form:
+            # Extract the exit code from stdout, the 'll' string should have the following format:
             # --- hash, <exitcode> ---
             split = ll.rsplit(", ", 1)
             assert len(split) == 2
@@ -255,7 +256,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         self._ll[streamid] = ll
         self._check_ll[streamid] = check_ll
 
-        self._dbg("SSHProcess._watch_for_marker(): Ending with: streamid %d, exitcode %d, "
+        self._dbg("SSHProcess._watch_for_marker(): Ending with: streamid %d, exitcode %s, "
                   "check_ll: %s\nll: %s\ncdata:\n%s",
                   streamid, str(exitcode), str(check_ll), ll, repr(cdata))
 
@@ -282,12 +283,30 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                   str(self._check_ll), str(self._ll))
         self._dbg_log_buffered_output(pfx="SSHProcess._wait_intsh(): Starting with")
 
-        while not _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
+        exitcode: list[int | None] = [None, None]
+
+        while True:
             assert self._queue is not None
+
+            self._dbg("SSHProcess._wait_intsh(): New iteration, exitcode[0] %s, exitcode[1], %s",
+                      str(exitcode[0]), str(exitcode[1]))
+
+            if exitcode[0] is not None and exitcode[1] is not None:
+                self.exitcode = exitcode[0]
 
             if self.exitcode is not None and self._queue.empty():
                 self._dbg("SSHProcess._wait_intsh(): Process exited with status %d", self.exitcode)
                 break
+
+            if _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
+                # Enough lines were captured, return them, but only if no markers were yet found. If
+                # at least one was found, keep waiting for the other one.
+                if exitcode[0] is None and exitcode[1] is None:
+                    self._dbg("SSHProcess._wait_intsh(): Enough lines were captured, stop looping")
+                    break
+                else:
+                    self._dbg("SSHProcess._wait_intsh(): Enough lines were captured, but waiting "
+                              "for the second marker")
 
             streamid, data = self._get_next_queue_item(timeout)
             if streamid == -1:
@@ -296,12 +315,21 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             elif data is None:
                 raise Error(f"The interactive shell process{self.hostmsg} closed stream {streamid} "
                             f"while running the following command:\n{self.cmd}")
-            elif streamid == 0:
-                # The indication that the process has exited is the marker in stdout (stream 0).The
-                # goal is to watch for this marker, hide it from the user, because it does not
-                # belong to the output of the process. The marker always starts at the beginning of
-                # line.
-                data, self.exitcode = self._watch_for_marker(data, streamid)
+            else:
+                if exitcode[streamid] is not None:
+                    raise Error(f"The marker for and interactive shell process{self.hostmsg} "
+                                f"stream {streamid} was already observed, but new data were "
+                                f"received, the data:\n{data}")
+
+                # The indication that the process has exited are 2 markers, one in stdout (stream 0)
+                # and the other in stderr (stream 1).The goal is to watch for this marker, hide it
+                # from the user, because it does not belong to the output of the process. The marker
+                # always starts at the beginning of line.
+                #
+                # Both markers must be observed before concluding that the command has finished.
+                # Observing the marker only in one stream is not enough to guarantee that the output
+                # from the other stream was fully consumed.
+                data, exitcode[streamid] = self._watch_for_marker(data, streamid)
 
             if data is not None:
                 self._handle_queue_item(streamid, data, capture_output=capture_output,
@@ -757,7 +785,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         proc._reinit_marker()
 
         # Print the marker as soon as the command is finished.
-        cmd += f'; printf "%s, %d ---" "{proc._marker}" "$?"\n'
+        cmd += f'; printf "%s, %d ---" "{proc._marker}" "$?"'
+        cmd += f'; printf "%s, {_FAKE_EXIT_CODE} ---" "{proc._marker}" 1>&2\n'
 
         # Run the command.
         proc.pobj.send(cmd.encode())
