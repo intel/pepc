@@ -440,7 +440,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                  port: int | None = None,
                  username: str | None = None,
                  password: str | None = None,
-                 privkeypath: str | None = None,
+                 privkeypath: str | Path | None = None,
                  timeout: int | float | None = None):
         """
         Initialize a class instance and establish SSH connection to a remote host.
@@ -485,7 +485,10 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if not password:
             password = ""
         self.password = password
-        self.privkeypath = privkeypath
+        if privkeypath:
+            self.privkeypath: str | None = str(privkeypath)
+        else:
+            self.privkeypath = None
 
         # The command to use for figuring out full paths in the 'which()' method.
         self._which_cmd: str | None = None
