@@ -207,8 +207,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         exitcode = None
         cdata = None
 
-        self._dbg("SSHProcess._watch_for_marker(): Starting with: self._check_ll: %s\n"
-                  "self._ll: %s\ndata:\n%s", str(self._check_ll), str(self._ll), data)
+        self._dbg("SSHProcess._watch_for_marker(): Starting with: check_ll: %s\nll: %s\ndata:\n%s",
+                  str(self._check_ll), repr(self._ll), repr(data))
 
         split = data.rsplit("\n", 1)
         if len(split) > 1:
@@ -254,8 +254,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             exitcode = int(status)
 
         self._dbg("SSHProcess._watch_for_marker(): Ending with: exitcode %s, self._check_ll: %s\n"
-                  "self._ll: %s\ncdata:\n%s", str(exitcode), str(self._check_ll), self._ll, cdata)
-
+                  "self._ll: %s\ncdata:\n%s",
+                  str(exitcode), str(self._check_ll), self._ll, repr(cdata))
         return (cdata, exitcode)
 
     def poll(self) -> int | None:
@@ -344,7 +344,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
             streamid, data = self._get_next_queue_item(timeout)
             self._dbg("SSHProcess._wait_nointsh(): _get_next_queue_item() returned: stream %d, "
-                      "data:\n %s", streamid, data)
+                      "data:\n%s", streamid, repr(data))
             if streamid == -1:
                 self._dbg("SSHProcess._wait_nointsh(): Nothing in the queue for %d secs", timeout)
             elif data is not None:

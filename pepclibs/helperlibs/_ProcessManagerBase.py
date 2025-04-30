@@ -300,7 +300,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                     continue
 
                 self._dbg("ProcessBase._stream_fetcher(): streamid %d: Read data:\n%s",
-                          streamid, data)
+                          streamid, repr(data))
                 self._queue.put((streamid, data))
         except BaseException as err: # pylint: disable=broad-except
             errmsg = Error(str(err)).indent(2)
@@ -354,12 +354,13 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                           (do not write if 'None').
         """
 
-        self._dbg("ProcessBase._handle_queue_item(): got data from stream %d:\n%s", streamid, data)
+        self._dbg("ProcessBase._handle_queue_item(): got data from stream %d:\n%s",
+                  streamid, repr(data))
 
         lines, self._partial[streamid] = extract_full_lines(self._partial[streamid] + data)
         if lines and self._partial[streamid]:
             self._dbg("ProcessBase._handle_queue_item(): stream %d: full lines:\n%s\n"
-                      "partial line: %s", streamid, "".join(lines), self._partial[streamid])
+                      "partial line: %s", streamid, repr(lines), repr(self._partial[streamid]))
 
         self._lines_cnt[streamid] += len(lines)
 
@@ -390,7 +391,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             corresponding output stream (stdout and stderr).
         """
 
-        self._dbg("ProcessBase._get_lines_to_return(): requested lines:\n%s", str(lines))
+        self._dbg("ProcessBase._get_lines_to_return(): Requested lines:\n%s", str(lines))
 
         output: list[list[str]] = [[], []]
 
@@ -406,8 +407,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                 output[streamid] = self._output[streamid][:limit]
                 self._output[streamid] = self._output[streamid][limit:]
 
-        self._dbg("ProcessBase._get_lines_to_return(): returning the following lines:\nstdout:\n%s"
-                  "\nstderr:\n%s", "".join(output[0]), "".join(output[1]))
+        self._dbg("ProcessBase._get_lines_to_return(): Returning the following lines:\nstdout:\n%s"
+                  "\nstderr:\n%s", repr(output[0]), repr(output[1]))
         return output
 
     def _process_is_done(self) -> bool:
@@ -582,7 +583,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             sout = "".join(output[0]).rstrip()
             serr = "".join(output[1]).rstrip()
             self._dbg("ProcessBase.wait(): returning: exitcode %s, stdout:\n%s\nstderr:\n%s",
-                      str(exitcode), sout, serr)
+                      str(exitcode), repr(sout), repr(serr))
 
         return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=exitcode)
 
@@ -648,12 +649,12 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             return
 
         if self._partial[0]:
-            partial_stdout = "Partial stdout line: " + self._partial[0]
+            partial_stdout = "Partial stdout line: " + repr(self._partial[0])
         else:
             partial_stdout = "No partial stdout line"
 
         if self._partial[1]:
-            partial_stderr = "Partial stderr line: " + self._partial[1]
+            partial_stderr = "Partial stderr line: " + repr(self._partial[1])
         else:
             partial_stderr = "No partial stderr line"
 
@@ -662,20 +663,20 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             if len(self._output[0]) > 1:
                 stdout += " ... strip ...\n"
                 stdout += self._output[0][-1]
-            stdout = "First and last lines of stdout:\n" + stdout.rstrip()
+            stdout = "First and last lines of stdout:\n" + repr(stdout)
         else:
             stdout = "No buffered stdout"
 
-        if self._output[0]:
-            stderr = self._output[1][0]
+        if self._output[1]:
+            stderr = repr(self._output[1][0])
             if len(self._output[1]) > 1:
                 stderr += " ... strip ...\n"
-                stderr += self._output[1][-1]
-            stderr = "First and last lines of stderr:\n" + stderr.rstrip()
+                stderr += repr(self._output[1][-1])
+            stderr = "First and last lines of stderr:\n" + repr(stderr)
         else:
             stderr = "No buffered stderr"
 
-        self._dbg("%s: Buffered output:\n%s\n%s\n%s\n%s\n",
+        self._dbg("%s: Buffered output:\n%s\n%s\n%s\n%s",
                   pfx, partial_stdout, partial_stderr, stdout, stderr)
 
 class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
