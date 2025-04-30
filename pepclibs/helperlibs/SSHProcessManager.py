@@ -747,12 +747,16 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         proc = self._intsh
         cmd = self._format_cmd(command, cwd=cwd, env=env)
 
+        cmd = "sh -c " + shlex.quote(cmd)
+
         # Pick a new marker for the new interactive shell command.
         # pylint: disable=protected-access
         proc._reinit_marker()
 
+        # Print the marker as soon as the command is finished.
+        cmd += f'; printf "%s, %d ---" "{proc._marker}" "$?"\n'
+
         # Run the command.
-        cmd = "sh -c " + shlex.quote(cmd) + "\n" + f'printf "%s, %d ---" "{proc._marker}" "$?"\n'
         proc.pobj.send(cmd.encode())
 
         # Re-initialize the interactive shell process object to match the new command.
