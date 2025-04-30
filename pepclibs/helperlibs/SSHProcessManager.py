@@ -109,7 +109,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         # interactive shell command has finished.
         randbits = random.getrandbits(256)
         self._marker = f"--- {randbits:064x}"
-        self._marker_regex = re.compile(f"^{self._marker}, \\d+ ---$")
+        self._marker_regex = re.compile(rf"^{self._marker}, \d+ ---$")
 
     def _reinit(self, cmd: str, real_cmd: str):
         """Refer to 'ProcessBase._reinit()'."""
