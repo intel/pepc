@@ -517,8 +517,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         self.timeout = timeout
 
         self._dbg("ProcessBase.wait(): timeout %s, capture_output %s, lines: %s, join: %s, "
-                  "command:\n  %s\nreal command:\n  %s", str(timeout), str(capture_output),
-                  str(lines), str(join), self.cmd, self.real_cmd)
+                  "real command:\n  %s", str(timeout), str(capture_output), str(lines), str(join),
+                  self.real_cmd)
 
         if self._threads_exit:
             raise Error(f"The process (PID {str(self.pid)}) has 'threads_exit' flag set and cannot "
@@ -580,8 +580,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             exitcode = None
 
         if self.debug:
-            sout = "".join(output[0]).rstrip()
-            serr = "".join(output[1]).rstrip()
+            sout = "".join(output[0])
+            serr = "".join(output[1])
             self._dbg("ProcessBase.wait(): returning: exitcode %s, stdout:\n%s\nstderr:\n%s",
                       str(exitcode), repr(sout), repr(serr))
 
