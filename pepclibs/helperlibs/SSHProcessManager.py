@@ -291,13 +291,6 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             self._dbg("SSHProcess._wait_intsh(): New iteration, exitcode[0] %s, exitcode[1], %s",
                       str(exitcode[0]), str(exitcode[1]))
 
-            if exitcode[0] is not None and exitcode[1] is not None:
-                self.exitcode = exitcode[0]
-
-            if self.exitcode is not None and self._queue.empty():
-                self._dbg("SSHProcess._wait_intsh(): Process exited with status %d", self.exitcode)
-                break
-
             if _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
                 # Enough lines were captured, return them, but only if no markers were yet found. If
                 # at least one was found, keep waiting for the other one.
@@ -307,6 +300,13 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                 else:
                     self._dbg("SSHProcess._wait_intsh(): Enough lines were captured, but waiting "
                               "for the second marker")
+
+            if exitcode[0] is not None and exitcode[1] is not None:
+                self.exitcode = exitcode[0]
+
+            if self.exitcode is not None and self._queue.empty():
+                self._dbg("SSHProcess._wait_intsh(): Process exited with status %d", self.exitcode)
+                break
 
             streamid, data = self._get_next_queue_item(timeout)
             if streamid == -1:
@@ -713,7 +713,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def _run_in_new_session(self,
                             command: str,
                             cwd: str | Path | None = None,
-                            env: dict[str, str] | None = None) -> SSHProcess:
+                            env: dict[str, str] | None = None,
+                            mix_output: bool = False) -> SSHProcess:
         """
         Run a command in a new SSH session.
 
@@ -721,6 +722,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             command: The command to execute on the remote host.
             cwd: The working directory to set for the command.
             env: Environment variables for the process.
+            mix_output: If True, combine standard output and error streams into stdout.
 
         Returns:
             An 'SSHProcess' object representing the process running the command.
@@ -736,20 +738,29 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except BaseException as err: # pylint: disable=broad-except
             msg = Error(str(err)).indent(2)
             raise Error(f"Cannot create a new SSH session for running the following "
-                        f"command{self.hostmsg}:\n{cmd}\nThe error is:\n{msg}") from err
+                        f"command{self.hostmsg}:\n  {cmd}\nThe error is:\n{msg}") from err
 
         try:
             chan.exec_command(cmd)
         except BaseException as err: # pylint: disable=broad-except
             msg = Error(str(err)).indent(2)
             raise Error(f"Cannot execute the following command in a new SSH session"
-                        f"{self.hostmsg}:\n{cmd}\nThe error is:\n{msg}") from err
+                        f"{self.hostmsg}:\n  {cmd}\nThe error is:\n{msg}") from err
 
         try:
             stdin = chan.makefile("wb")
         except BaseException as err: # pylint: disable=broad-except
             msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to create the stdin file-like object:\n{msg}") from err
+            raise Error(f"Failed to create the stdin file-like object for the following "
+                        f"command{self.hostmsg}:\n  {cmd}\nThe Error is:\n{msg}") from err
+
+        if mix_output:
+            try:
+                chan.set_combine_stderr(True)
+            except BaseException as err: # pylint: disable=broad-except
+                msg = Error(str(err)).indent(2)
+                raise Error(f"Failed combind stdout and stderrt for the following "
+                            f"command{self.hostmsg}:\n  {cmd}\nThe Error is:\n{msg}") from err
 
         streams = (stdin, chan.recv, chan.recv_stderr)
         return SSHProcess(self, chan, command, cmd, streams)
@@ -757,7 +768,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def _run_in_intsh(self,
                       command: str,
                       cwd: str | Path | None = None,
-                      env: dict[str, str] | None = None) -> SSHProcess:
+                      env: dict[str, str] | None = None,
+                      mix_output: bool = False) -> SSHProcess:
         """
         Execute a command in an interactive shell session.
 
@@ -765,6 +777,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             command: The command to execute in the interactive shell.
             cwd: The current working directory for the command.
             env: Environment variables to set for the command.
+            mix_output: If True, combine standard output and error streams into stdout.
 
         Returns:
             An SSHProcess object representing the interactive shell process running the command.
@@ -777,6 +790,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         proc = self._intsh
         cmd = self._format_cmd(command, cwd=cwd, env=env)
+
+        if mix_output:
+            cmd += " 2>&1"
 
         cmd = "sh -c " + shlex.quote(cmd)
 
@@ -825,7 +841,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                   command: str | Path,
                   cwd: str | Path | None = None,
                   intsh: bool = False,
-                  env: dict[str, str] | None = None) -> SSHProcess:
+                  env: dict[str, str] | None = None,
+                  mix_output: bool = False) -> SSHProcess:
         """
         Run a command asynchronously. Implement 'run_async()'.
 
@@ -837,6 +854,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    requires less time to start a new process, as it does not require creating a new
                    shell.
             env: Environment variables for the process.
+            mix_output: If True, combine standard output and error streams into stdout.
 
         Returns:
             A 'SSHProcess' object representing the executed remote asynchronous process.
@@ -844,7 +862,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         command = str(command)
         if not intsh:
-            return self._run_in_new_session(command, cwd=cwd, env=env)
+            return self._run_in_new_session(command, cwd=cwd, env=env, mix_output=mix_output)
 
         try:
             acquired = self._acquire_intsh_lock(command=command)
@@ -861,10 +879,10 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if not intsh:
             _LOG.warning("The interactive shell is busy, running the following command in a new "
                          "SSH session:\n%s", command)
-            return self._run_in_new_session(command, cwd=cwd, env=env)
+            return self._run_in_new_session(command, cwd=cwd, env=env, mix_output=mix_output)
 
         try:
-            return self._run_in_intsh(command, cwd=cwd, env=env)
+            return self._run_in_intsh(command, cwd=cwd, env=env, mix_output=mix_output)
         except BaseException as err: # pylint: disable=broad-except
             msg = Error(str(err)).indent(2)
             _LOG.warning("Failed to run the following command in an interactive shell:  %s\n"
@@ -885,7 +903,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             else:
                 _LOG.warning("Failed to acquire the interactive shell process lock")
 
-            return self._run_in_new_session(command, cwd=cwd, env=env)
+            return self._run_in_new_session(command, cwd=cwd, env=env, mix_output=mix_output)
 
     def run_async(self,
                   cmd: str | Path,
@@ -939,9 +957,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         _LOG.debug(msg)
 
         # Execute the command on the remote host.
-        with self._run_async(cmd, cwd=cwd, intsh=intsh, env=env) as proc:
-            proc.pobj.set_combine_stderr(mix_output)
-
+        with self._run_async(cmd, cwd=cwd, intsh=intsh, env=env, mix_output=mix_output) as proc:
             # Wait for the command to finish and handle the time-out situation.
             result = proc.wait(timeout=timeout, capture_output=capture_output,
                                output_fobjs=output_fobjs, join=join)

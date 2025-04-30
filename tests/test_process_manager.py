@@ -268,20 +268,22 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
 
         proc = pman.run_async(cmd, intsh=intsh)
 
-        stdouts = ""
-        res = proc.wait(lines=(0, 1))
-        stdouts += cast(str, res.stdout)
-        assert res.stderr == "1: hello-x\n"
-        assert res.exitcode is None
+        stdouts = []
+        res = proc.wait(lines=(0, 1), join=False)
+        stdouts += cast(list[str], res.stdout)
+        assert res.stderr == ["1: hello-x\n"]
+        if len(stdouts) < 2:
+            assert res.exitcode is None
 
-        res = proc.wait(lines=(0, 1))
-        stdouts += cast(str, res.stdout)
-        assert res.stderr == "2: world-x\n"
-        assert res.exitcode is None
+        res = proc.wait(lines=(0, 1), join=False)
+        stdouts += cast(list[str], res.stdout)
+        assert res.stderr == ["2: world-x\n"]
+        if len(stdouts) < 2:
+            assert res.exitcode is None
 
-        res = proc.wait()
-        stdouts += cast(str, res.stdout)
-        assert res.stderr == ""
+        res = proc.wait(join=False)
+        stdouts += cast(list[str], res.stdout)
+        assert res.stderr == []
         assert res.exitcode == 0
 
-        assert stdouts == "1: hello\n2: world\n"
+        assert stdouts == ["1: hello\n", "2: world\n"]
