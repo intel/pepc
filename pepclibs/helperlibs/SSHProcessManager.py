@@ -1231,10 +1231,39 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         what = f"current time on {self.hostname} acquired via SSH using {cmd}"
         return Trivial.str_to_float(tt, what=what)
 
+    def _shell_test(self, path: str | Path, opt: str) -> bool:
+        """
+        Execute the shell 'test' command to check properties of a file or directory.
+
+        Args:
+            path: The path to the file or directory to test.
+            opt: The option to pass to the 'test' command. For example:
+                 '-f' check if the path exists and is a regular file,
+                 '-d' check if the path exists and is a directory.
+
+        Returns:
+            True if the 'test' command succeeds (exit code 0), False otherwise.
+        """
+
+        cmd = f"sh -c 'test {opt} \"{path}\"'"
+        try:
+            stdout, stderr, exitcode = self.run(cmd)
+        except ErrorNotFound:
+            # For some reason the 'test' command was not recognized as a built-in shell command and
+            # the external 'test' program was not fond in '$PATH'. Let's try running 'sh' with '-l',
+            # which will make it read '/etc/profile' and possibly ensure that 'test' is in '$PATH'.
+            cmd = f"sh -c -l 'test {opt} \"{path}\"'"
+            stdout, stderr, exitcode = self.run(cmd)
+
+        if stdout or stderr or exitcode not in (0, 1):
+            raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
+
+        return exitcode == 0
+
     def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkdir()'."""
 
-        if self.shell_test(dirpath, "-e"):
+        if self._shell_test(dirpath, "-e"):
             if exist_ok:
                 return
             raise ErrorExists(f"Path '{dirpath}' already exists{self.hostmsg}")
@@ -1276,7 +1305,7 @@ except OSError as err:
     def mkfifo(self, path: str | Path, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkfifo()'."""
 
-        if self.shell_test(path, "-e"):
+        if self._shell_test(path, "-e"):
             if exist_ok:
                 return
             raise ErrorExists(f"Path '{path}' already exists{self.hostmsg}")
@@ -1322,32 +1351,32 @@ for entry in os.listdir(path):
     def exists(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.exists()'."""
 
-        return self.shell_test(path, "-e")
+        return self._shell_test(path, "-e")
 
     def is_file(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_file()'."""
 
-        return self.shell_test(path, "-f")
+        return self._shell_test(path, "-f")
 
     def is_dir(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_dir()'."""
 
-        return self.shell_test(path, "-d")
+        return self._shell_test(path, "-d")
 
     def is_exe(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_exe()'."""
 
-        return self.shell_test(path, "-x")
+        return self._shell_test(path, "-x")
 
     def is_socket(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_socket()'."""
 
-        return self.shell_test(path, "-S")
+        return self._shell_test(path, "-S")
 
     def is_fifo(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_fifo()'."""
 
-        return self.shell_test(path, "-p")
+        return self._shell_test(path, "-p")
 
     def get_mtime(self, path: str | Path) -> float:
         """Refer to 'ProcessManagerBase.get_mtime()'."""
@@ -1415,7 +1444,7 @@ for entry in os.listdir(path):
         try:
             stdout, _ = self.run_verify(f"echo ${envar}")
         except ErrorNotFound:
-            # See commentaries in 'shell_test()', this is a similar case.
+            # See commentaries in '_shell_test()', this is a similar case.
             stdout, _ = self.run_verify(f"sh -c -l \"echo ${envar}\"")
 
 

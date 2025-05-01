@@ -1104,35 +1104,6 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         raise ErrorNotFound(f"Failed to find python interpreter{self.hostmsg}.\n"
                             f"Checked the following paths:{paths_descr}")
 
-    def shell_test(self, path: str | Path, opt: str) -> bool:
-        """
-        Execute the shell 'test' command to check properties of a file or directory.
-
-        Args:
-            path: The path to the file or directory to test.
-            opt: The option to pass to the 'test' command. For example:
-                 '-f' check if the path exists and is a regular file,
-                 '-d' check if the path exists and is a directory.
-
-        Returns:
-            True if the 'test' command succeeds (exit code 0), False otherwise.
-        """
-
-        cmd = f"sh -c 'test {opt} \"{path}\"'"
-        try:
-            stdout, stderr, exitcode = self.run(cmd)
-        except ErrorNotFound:
-            # For some reason the 'test' command was not recognized as a built-in shell command and
-            # the external 'test' program was not fond in '$PATH'. Let's try running 'sh' with '-l',
-            # which will make it read '/etc/profile' and possibly ensure that 'test' is in '$PATH'.
-            cmd = f"sh -c -l 'test {opt} \"{path}\"'"
-            stdout, stderr, exitcode = self.run(cmd)
-
-        if stdout or stderr or exitcode not in (0, 1):
-            raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
-
-        return exitcode == 0
-
     def time_time(self) -> float:
         """
         Get the current time in seconds since the epoch as a floating-point number (similar to the
