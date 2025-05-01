@@ -359,3 +359,27 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
     assert res.stdout == ""
     assert res.stderr == ""
     assert res.exitcode == 0
+
+def test_mkdtemp(params: CommonTestParamsTypedDict):
+    """Test the 'mkdtemp()' method."""
+
+    pman = params["pman"]
+
+    # Test creating a temporary.
+    tmpdir = pman.mkdtemp()
+    assert pman.is_dir(tmpdir)
+
+    # Create a sub-directory in it to test that the directory is writable.
+    subdir = tmpdir / "subdir"
+    pman.mkdir(subdir)
+    assert pman.is_dir(subdir)
+
+    # Test creating a temporary with a prefix and a base directory.
+    tmpdir1 = pman.mkdtemp(prefix="test_", basedir=subdir)
+    assert str(tmpdir1.name).startswith("test_")
+    assert str(tmpdir1).startswith(str(subdir))
+    assert pman.is_dir(tmpdir1)
+
+    # Delete the temporary directory (cleanup step).
+    pman.rmtree(tmpdir)
+    assert not pman.exists(tmpdir)
