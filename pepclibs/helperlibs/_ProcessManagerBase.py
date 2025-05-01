@@ -882,8 +882,10 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         Notes:
             - Refer to the 'rsync' tool documentation for a detailed description of the options.
-            - Pay attention to the trailing slash at the end of paths, as it affects behavior. See
-              the 'rsync' documentation for details.
+            - Pay attention to the trailing slash at the end of paths, as it affects behavior. If
+              there is a trailing slash in the end of the source path, the contents of the source
+              directory will be copied to the destination directory. If there is no trailing slash,
+              the source directory itself will be copied to the destination directory.
             - Default options:
                 * r: Recursive copy.
                 * l: Copy symlinks as symlinks.
@@ -1109,8 +1111,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Args:
             path: The path to the file or directory to test.
             opt: The option to pass to the 'test' command. For example:
-                 '-f' checks if the path exists and is a regular file,
-                 '-d' checks if the path exists and is a directory.
+                 '-f' check if the path exists and is a regular file,
+                 '-d' check if the path exists and is a directory.
 
         Returns:
             True if the 'test' command succeeds (exit code 0), False otherwise.
