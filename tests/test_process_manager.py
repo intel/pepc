@@ -18,7 +18,7 @@ import pytest
 import common
 from common import CommonTestParamsTypedDict
 from pepclibs.helperlibs import Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorExists, ErrorNotFound
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None]:
@@ -371,6 +371,17 @@ def test_mkdir(params: CommonTestParamsTypedDict):
     pman.mkdir(test_dir)
     assert pman.is_dir(test_dir)
 
+    # Test the 'parents' argument.
+    test_dir = tmpdir / "test_dir1" / "test_dir2" / "test_dir3"
+    pman.mkdir(test_dir, parents=True)
+    assert pman.is_dir(test_dir)
+
+    # Test the 'exist_ok' argument.
+    pman.mkdir(test_dir, exist_ok=True)
+
+    with pytest.raises(ErrorExists):
+        pman.mkdir(test_dir, exist_ok=False)
+
     # Cleanup step.
     pman.rmtree(tmpdir)
 
@@ -383,7 +394,11 @@ def test_mksocket(params: CommonTestParamsTypedDict):
     test_socket = tmpdir / "test_socket"
 
     pman.mksocket(test_socket)
-    assert pman.is_socket(test_socket)
+
+    # Test the 'exist_ok' argument.
+    pman.mksocket(test_socket, exist_ok=True)
+    with pytest.raises(ErrorExists):
+        pman.mksocket(test_socket, exist_ok=False)
 
     # Cleanup step.
     pman.rmtree(tmpdir)
@@ -398,6 +413,11 @@ def test_mkfifo(params: CommonTestParamsTypedDict):
 
     pman.mkfifo(test_fifo)
     assert pman.is_fifo(test_fifo)
+
+    # Test the 'exist_ok' argument.
+    pman.mkfifo(test_fifo, exist_ok=True)
+    with pytest.raises(ErrorExists):
+        pman.mkfifo(test_fifo, exist_ok=False)
 
     # Cleanup step.
     pman.rmtree(tmpdir)
