@@ -422,6 +422,10 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             entries = [entry for entry in os.listdir(path)]
+        except FileNotFoundError:
+            if not must_exist:
+                return
+            raise ErrorNotFound(f"Directory '{path}' does not exist") from None
         except OSError as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to get list of files in '{path}':\n{msg}") from None

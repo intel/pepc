@@ -1326,12 +1326,31 @@ except OSError as err:
         # A small python program to get the list of directories with some metadata.
         python_path = self.get_python_path()
         cmd = f"""{python_path} -c 'import os
+import sys
 path = "{path}"
-for entry in os.listdir(path):
-    stinfo = os.lstat(os.path.join(path, entry))
-    print(entry, stinfo.st_mode, stinfo.st_ctime)'"""
+try:
+    entries = os.listdir(path)
+except FileNotFoundError as err:
+    raise SystemExit(2)
+except OSError as err:
+    print(str(err), file=sys.stderr)
+    raise SystemExit(1)
+for ent in entries:
+    try:
+        stinfo = os.lstat(os.path.join(path, ent))
+    except OSError as err:
+        print(str(err), file=sys.stderr)
+        raise SystemExit(1)
+    print(ent, stinfo.st_mode, stinfo.st_ctime)'"""
 
-        stdout, _ = self.run_verify(cmd)
+        stdout, stderr, exitcode = self.run(cmd)
+
+        if exitcode == 2:
+            if must_exist:
+                raise ErrorNotFound(f"Directory '{path}' does not exists{self.hostmsg}") from None
+            return
+        elif exitcode != 0:
+            raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
 
         info: dict[str, LsdirTypedDict] = {}
 
