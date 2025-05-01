@@ -366,11 +366,24 @@ def test_mkdir(params: CommonTestParamsTypedDict):
     pman = params["pman"]
 
     tmpdir = pman.mkdtemp()
-
     test_dir = tmpdir / "test_dir"
 
     pman.mkdir(test_dir)
     assert pman.is_dir(test_dir)
+
+    # Cleanup step.
+    pman.rmtree(tmpdir)
+
+def test_mkfifo(params: CommonTestParamsTypedDict):
+    """Test the 'mkfifo()' and 'is_fifo()' methods."""
+
+    pman = params["pman"]
+
+    tmpdir = pman.mkdtemp()
+    test_fifo = tmpdir / "test_fifo"
+
+    pman.mkfifo(test_fifo)
+    assert pman.is_fifo(test_fifo)
 
     # Cleanup step.
     pman.rmtree(tmpdir)
