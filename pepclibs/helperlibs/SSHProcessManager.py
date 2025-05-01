@@ -759,7 +759,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 chan.set_combine_stderr(True)
             except BaseException as err: # pylint: disable=broad-except
                 msg = Error(str(err)).indent(2)
-                raise Error(f"Failed combind stdout and stderrt for the following "
+                raise Error(f"Failed combind stdout and stdert for the following "
                             f"command{self.hostmsg}:\n  {cmd}\nThe Error is:\n{msg}") from err
 
         streams = (stdin, chan.recv, chan.recv_stderr)

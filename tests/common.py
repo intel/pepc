@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Antti Laakso <antti.laakso@linux.intel.com>
@@ -122,7 +122,7 @@ def run_pepc(arguments: str,
         exp_exc: The expected exception. If set, the test fails if the command does not raise the
                  expected exception. By default, any exception is considered a failure.
         ignore: A dictionary mapping error types to command argument strings. Can be used for
-                ignoring ceratin exceptions.
+                ignoring certain exceptions.
 
     Raises:
         AssertionError: If the command execution does not match the expected outcome.

@@ -21,12 +21,11 @@ from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec) -> Generator[CommonTestParamsTypedDict, None, None]:
+def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None]:
     """
     Generate a dictionary with testing parameters.
 
-    This function establishes a connection to the process manager (pman) 
-    for the given host specification and builds a dictionary of parameters 
+    Establish a connection to the host described by 'hostspec' and build a dictionary of parameters
     required for testing.
 
     Args:
@@ -268,22 +267,95 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
 
         proc = pman.run_async(cmd, intsh=intsh)
 
-        stdouts = []
+        res = proc.wait(lines=(1, -1))
+        assert res.stdout == "1: hello\n"
+        assert res.stderr == ""
+        assert res.exitcode is None
+
+        res = proc.wait(lines=(-1, 1))
+        assert res.stdout == ""
+        assert res.stderr == "1: hello-x\n"
+
+        res = proc.wait(lines=(1, -1))
+        assert res.stdout == "2: world\n"
+        assert res.stderr == ""
+        assert res.exitcode is None
+
+        res = proc.wait(lines=(-1, 1))
+        assert res.stdout == ""
+        assert res.stderr == "2: world-x\n"
+
+        res = proc.wait()
+        assert res.stdout == ""
+        assert res.stderr == ""
+        assert res.exitcode == 0
+
+        proc = pman.run_async(cmd, intsh=intsh)
+
+        stdouts: list[str] = []
         res = proc.wait(lines=(0, 1), join=False)
-        stdouts += cast(list[str], res.stdout)
+        stdouts += res.stdout
         assert res.stderr == ["1: hello-x\n"]
         if len(stdouts) < 2:
             assert res.exitcode is None
 
         res = proc.wait(lines=(0, 1), join=False)
-        stdouts += cast(list[str], res.stdout)
+        stdouts += res.stdout
         assert res.stderr == ["2: world-x\n"]
         if len(stdouts) < 2:
             assert res.exitcode is None
 
         res = proc.wait(join=False)
-        stdouts += cast(list[str], res.stdout)
+        stdouts += res.stdout
         assert res.stderr == []
         assert res.exitcode == 0
 
         assert stdouts == ["1: hello\n", "2: world\n"]
+
+    # Test running several async processes in parallel.
+    proc1 = pman.run_async(cmd, intsh=False)
+    proc2 = pman.run_async(cmd, intsh=True)
+    proc3 = pman.run_async(cmd, intsh=False)
+
+    res = proc1.wait(lines=(1, 1))
+    assert res.stdout == "1: hello\n"
+    assert res.stderr == "1: hello-x\n"
+    assert res.exitcode is None
+
+    res = proc2.wait(lines=(1, 0), join=False)
+    assert res.stdout == ["1: hello\n"]
+    assert res.exitcode is None
+
+    res = proc3.wait(lines=(0, 1))
+    assert res.stderr == "1: hello-x\n"
+    assert res.exitcode is None
+
+    res = proc1.wait()
+    assert res.exitcode == 0
+    res = proc2.wait()
+    assert res.exitcode == 0
+    res = proc3.wait()
+    assert res.exitcode == 0
+
+    # Test unusual 'lines' values.
+    proc = pman.run_async(cmd)
+    res = proc.wait(lines=(-1, -1))
+    assert res.stdout == ""
+    assert res.stderr == ""
+    assert res.exitcode is None
+
+    res = proc.wait(lines=(-1, 0))
+    assert res.stdout == ""
+    assert res.exitcode is None
+
+    res = proc.wait(lines=(0, -1))
+    assert res.stderr == ""
+
+    res = proc.wait()
+    assert res.exitcode == 0
+
+    # Test running 'wait()' on a finished process.
+    res = proc.wait()
+    assert res.stdout == ""
+    assert res.stderr == ""
+    assert res.exitcode == 0
