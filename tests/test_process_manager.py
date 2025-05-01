@@ -423,3 +423,41 @@ def test_open(params: CommonTestParamsTypedDict):
 
     # Cleanup step.
     pman.rmtree(tmpdir)
+
+def test_get(params: CommonTestParamsTypedDict, tmp_path: Path):
+    """Test the 'get()' method."""
+
+    pman = params["pman"]
+
+    # Test getting a file.
+    remote_tmpdir = pman.mkdtemp()
+    remote_src_file = remote_tmpdir / "test.txt"
+    with pman.open(remote_src_file, "w") as fobj:
+        fobj.write("Hello, dude!")
+
+    local_dst_file = tmp_path / "test_copy.txt"
+    pman.get(remote_src_file, local_dst_file)
+    with open(local_dst_file, "r", encoding="utf-8") as fobj:
+        assert fobj.read() == "Hello, dude!"
+
+    # Cleanup step.
+    pman.rmtree(remote_tmpdir)
+
+def test_put(params: CommonTestParamsTypedDict, tmp_path: Path):
+    """Test the 'put()' method."""
+
+    pman = params["pman"]
+    local_src_file = tmp_path / "test.txt"
+    with open(local_src_file, "w", encoding="utf-8") as fobj:
+        fobj.write("Hello, dude!")
+
+    remote_tmpdir = pman.mkdtemp()
+    remote_dst_file = remote_tmpdir / "test_copy.txt"
+    pman.put(local_src_file, remote_dst_file)
+    assert pman.is_file(remote_dst_file)
+
+    with pman.open(remote_dst_file, "r") as fobj:
+        assert fobj.read() == "Hello, dude!"
+
+    # Cleanup step.
+    pman.rmtree(remote_tmpdir)
