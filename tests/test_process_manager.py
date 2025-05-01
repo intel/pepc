@@ -41,12 +41,22 @@ def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None
         yield params
 
 def test_get_python_path(params: CommonTestParamsTypedDict):
-    """Test the 'get_python_path()' and 'is_exe()' method."""
+    """Test the 'get_python_path()', 'is_exe()' and 'exists()' methods."""
 
     pman = params["pman"]
     python_path = pman.get_python_path()
 
+    assert pman.exists(python_path)
     assert pman.is_exe(python_path)
+
+def test_time_time(params: CommonTestParamsTypedDict):
+    """Test the 'time_time()' method."""
+
+    pman = params["pman"]
+    time = pman.time_time()
+
+    assert isinstance(time, float)
+    assert time > 0
 
 _HELLO_WORLD_START = """-c 'import sys
 print("1: hello")
