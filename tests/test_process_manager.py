@@ -632,3 +632,27 @@ def test_rsync(params: CommonTestParamsTypedDict, tmp_path: Path):
 
     # Cleanup step.
     pman.rmtree(tmpdir)
+
+def test_read(params: CommonTestParamsTypedDict):
+    """Test the 'read()' method."""
+
+    pman = params["pman"]
+
+    # Create a test file.
+    tmpdir = pman.mkdtemp()
+    test_file = tmpdir / "test.txt"
+    with pman.open(test_file, "w") as fobj:
+        fobj.write("Hello, world!")
+
+    # Test reading the file.
+    assert pman.read(test_file) == "Hello, world!"
+
+    # Test the 'must_exist' argument.
+    bogus_path = tmpdir / "bogus.txt"
+    with pytest.raises(ErrorNotFound):
+        pman.read(bogus_path, must_exist=True)
+
+    assert pman.read(bogus_path, must_exist=False) is None
+
+    # Cleanup step.
+    pman.rmtree(tmpdir)
