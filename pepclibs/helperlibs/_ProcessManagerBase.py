@@ -1092,6 +1092,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             except Error:
                 continue
 
+            if not path.startswith("/"):
+                path = self.which(path, must_find=True)
+
             self._python_path = Path(path)
             return self._python_path
 
