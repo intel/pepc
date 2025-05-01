@@ -383,3 +383,43 @@ def test_mkdtemp(params: CommonTestParamsTypedDict):
     # Delete the temporary directory (cleanup step).
     pman.rmtree(tmpdir)
     assert not pman.exists(tmpdir)
+
+def test_open(params: CommonTestParamsTypedDict):
+    """Test the 'open()' method."""
+
+    pman = params["pman"]
+
+    tmpdir = pman.mkdtemp()
+    test_file = tmpdir / "test.txt"
+
+    # Test opening a file for writing.
+    with pman.open(test_file, "w") as fobj:
+        fobj.write("Hello, world!")
+        assert pman.is_file(test_file)
+    assert pman.is_file(test_file)
+
+    # Test opening a file for reading.
+    with pman.open(test_file, "r") as fobj:
+        assert fobj.read(6) == "Hello,"
+        assert fobj.read(1) == " "
+        assert fobj.read(6) == "world!"
+        assert fobj.read(1) == ""
+        assert fobj.read() == ""
+
+    # Test binary mode.
+    fobj = pman.open(test_file, "bw+")
+    fobj.write(b"Hello, world!")
+    assert pman.is_file(test_file)
+    fobj.seek(0)
+    assert fobj.read() == b"Hello, world!"
+    assert fobj.read() == b""
+    fobj.close()
+
+    # Test truncate.
+    with pman.open(test_file, "r+") as fobj:
+        fobj.truncate(6)
+        fobj.seek(0)
+        assert fobj.read() == "Hello,"
+
+    # Cleanup step.
+    pman.rmtree(tmpdir)
