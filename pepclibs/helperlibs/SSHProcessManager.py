@@ -1260,6 +1260,7 @@ except OSError as err:
         print(str(err), file=sys.stderr)
         raise SystemExit(1)
     raise SystemExit(2)'"""
+
         stdout, stderr, exitcode = self.run(cmd)
 
         if exitcode == 0:

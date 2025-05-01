@@ -374,6 +374,20 @@ def test_mkdir(params: CommonTestParamsTypedDict):
     # Cleanup step.
     pman.rmtree(tmpdir)
 
+def test_mksocket(params: CommonTestParamsTypedDict):
+    """Test the 'mksocket()' and 'is_socket()' methods."""
+
+    pman = params["pman"]
+
+    tmpdir = pman.mkdtemp()
+    test_socket = tmpdir / "test_socket"
+
+    pman.mksocket(test_socket)
+    assert pman.is_socket(test_socket)
+
+    # Cleanup step.
+    pman.rmtree(tmpdir)
+
 def test_mkfifo(params: CommonTestParamsTypedDict):
     """Test the 'mkfifo()' and 'is_fifo()' methods."""
 
