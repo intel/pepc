@@ -478,6 +478,16 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             raise Error(f"Failed to check if '{path}' exists and it is a Unix socket file:\n"
                         f"{msg}") from None
 
+    def is_fifo(self, path: str | Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_fifo()'."""
+
+        try:
+            return Path(path).is_fifo()
+        except OSError as err:
+            msg = Error(str(err)).indent(2)
+            raise Error(f"Failed to check if '{path}' exists and it is a named pipe (FIFO):\n"
+                        f"{msg}") from None
+
     def get_mtime(self, path: str | Path) -> float:
         """Refer to 'ProcessManagerBase.get_mtime()'."""
 

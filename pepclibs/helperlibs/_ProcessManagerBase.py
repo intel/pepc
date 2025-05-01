@@ -1244,6 +1244,19 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.is_socket()")
 
+    def is_fifo(self, path: str | Path) -> bool:
+        """
+        Check if the given path exists and is a named pipe.
+
+        Args:
+            path: The path to check.
+
+        Returns:
+            True if the path exists and is a named pipe, False otherwise.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.is_fifo()")
+
     def get_mtime(self, path: str | Path) -> float:
         """
         Get the modification time of a file or directory.

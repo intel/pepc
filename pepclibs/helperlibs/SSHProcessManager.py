@@ -1316,6 +1316,11 @@ for entry in os.listdir(path):
 
         return self.shell_test(path, "-S")
 
+    def is_fifo(self, path: str | Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_fifo()'."""
+
+        return self.shell_test(path, "-p")
+
     def get_mtime(self, path: str | Path) -> float:
         """Refer to 'ProcessManagerBase.get_mtime()'."""
 
