@@ -17,7 +17,8 @@ from typing import Generator, cast
 import pytest
 import common
 from common import CommonTestParamsTypedDict
-from pepclibs.helperlibs import Trivial
+from pepclibs.helperlibs import Trivial, LocalProcessManager
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.helperlibs.Exceptions import Error, ErrorExists, ErrorNotFound
 
 @pytest.fixture(name="params", scope="module")
@@ -531,3 +532,103 @@ def test_put(params: CommonTestParamsTypedDict, tmp_path: Path):
 
     # Cleanup step.
     pman.rmtree(remote_tmpdir)
+
+def _create_test_dir(pman: ProcessManagerType, path: Path):
+    """
+    Create a test directory with a test sub-directory and test files.
+
+    Args:
+        pman: The process manager defining the host to create the test directory on.
+        path: The path to the test directory.
+    """
+
+    pman.mkdir(path)
+
+    subdir = path / "subdir"
+    pman.mkdir(subdir)
+    with pman.open(subdir/ "test.txt", "w") as fobj:
+        fobj.write("Hello, test!")
+
+    pman.mksocket(path / "test.socket")
+    pman.mkfifo(path / "test.fifo")
+
+def _check_test_dir(pman: ProcessManagerType, path: Path):
+    """
+    Check the contents of a test directory.
+
+    Args:
+        pman: The process manager defining the host to check the test directory on.
+        path: The path to the test directory.
+    """
+
+    assert pman.is_dir(path)
+
+    subdir = path / "subdir"
+    assert pman.is_dir(subdir)
+    assert pman.is_file(subdir / "test.txt")
+
+    with pman.open(subdir / "test.txt", "r") as fobj:
+        assert fobj.read() == "Hello, test!"
+
+    assert pman.is_socket(path / "test.socket")
+    assert pman.is_fifo(path / "test.fifo")
+
+def test_rsync(params: CommonTestParamsTypedDict, tmp_path: Path):
+    """Test the 'rsync()' method."""
+
+    pman = params["pman"]
+
+    if pman.is_remote:
+        tmpdir = pman.mkdtemp()
+    else:
+        tmpdir = tmp_path
+
+    # Create a test directory.
+    src = tmpdir / "src"
+    _create_test_dir(pman, src)
+    _check_test_dir(pman, src)
+
+    if not pman.is_remote:
+        dst = tmpdir / "dst"
+        pman.rsync(str(src) + "/", dst, remotesrc=False, remotedst=False)
+        _check_test_dir(pman, dst)
+
+        pman.rsync(src, dst, remotesrc=False, remotedst=False)
+        _check_test_dir(pman, dst / src.name)
+
+        # Check over-writing the destination directory.
+        pman.rsync(src, dst, remotesrc=False, remotedst=False)
+        _check_test_dir(pman, dst / src.name)
+
+        # Local process manager supports only local-to-local rsync. There is nothing more to test.
+        return
+
+    # Test remote-to-remote rsync.
+    dst = tmpdir / "dst"
+    pman.rsync(str(src) + "/", dst, remotesrc=True, remotedst=True)
+    _check_test_dir(pman, dst)
+
+    pman.rsync(src, dst, remotesrc=True, remotedst=True)
+    _check_test_dir(pman, dst / src.name)
+
+    # Check over-writing the destination directory.
+    pman.rsync(src, dst, remotesrc=True, remotedst=True)
+    _check_test_dir(pman, dst / src.name)
+
+    # Test remote-to-local rsync.
+    dst = tmp_path / "dst"
+    pman.rsync(str(src) + "/", dst, remotesrc=True, remotedst=False)
+    with LocalProcessManager.LocalProcessManager() as lpman:
+        _check_test_dir(lpman, dst)
+
+    pman.rsync(src, dst, remotesrc=True, remotedst=False)
+    with LocalProcessManager.LocalProcessManager() as lpman:
+        _check_test_dir(lpman, dst)
+
+    # Check over-writing the destination directory.
+    pman.rsync(src, dst, remotesrc=True, remotedst=False)
+    with LocalProcessManager.LocalProcessManager() as lpman:
+        _check_test_dir(lpman, dst)
+
+    # Cleanup step.
+    pman.rmtree(tmpdir)
