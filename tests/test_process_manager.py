@@ -360,8 +360,23 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
     assert res.stderr == ""
     assert res.exitcode == 0
 
+def test_mkdir(params: CommonTestParamsTypedDict):
+    """Test the 'mkdir()' and 'is_dir()' methods."""
+
+    pman = params["pman"]
+
+    tmpdir = pman.mkdtemp()
+
+    test_dir = tmpdir / "test_dir"
+
+    pman.mkdir(test_dir)
+    assert pman.is_dir(test_dir)
+
+    # Cleanup step.
+    pman.rmtree(tmpdir)
+
 def test_mkdtemp(params: CommonTestParamsTypedDict):
-    """Test the 'mkdtemp()' method."""
+    """Test the 'mkdtemp()' method and 'rmtree()' methods."""
 
     pman = params["pman"]
 
@@ -385,7 +400,7 @@ def test_mkdtemp(params: CommonTestParamsTypedDict):
     assert not pman.exists(tmpdir)
 
 def test_open(params: CommonTestParamsTypedDict):
-    """Test the 'open()' method."""
+    """Test the 'open()' method and 'is_file()' methods."""
 
     pman = params["pman"]
 
