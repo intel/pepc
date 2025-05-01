@@ -12,13 +12,14 @@ Tests for the 'ProcessManager', 'LocalProcessManager', and 'SSHProcessManager' m
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
+import stat
 from pathlib import Path
 from typing import Generator, cast
 import pytest
 import common
 from common import CommonTestParamsTypedDict
 from pepclibs.helperlibs import Trivial, LocalProcessManager
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorExists, ErrorNotFound
 
 @pytest.fixture(name="params", scope="module")
@@ -663,6 +664,48 @@ def test_read(params: CommonTestParamsTypedDict):
         pman.read(bogus_path, must_exist=True)
 
     assert pman.read(bogus_path, must_exist=False) is None
+
+    # Cleanup step.
+    pman.rmtree(tmpdir)
+
+def test_lsdir(params: CommonTestParamsTypedDict):
+    """Test the 'lsdir()' method."""
+
+    pman = params["pman"]
+
+    # Create a test directory.
+    tmpdir = pman.mkdtemp()
+    test_dir = tmpdir / "test_dir"
+    _create_test_dir(pman, test_dir)
+
+    # Test listing the directory.
+    count = 0
+    for info in pman.lsdir(test_dir):
+        count += 1
+        if info["name"] == "subdir":
+            assert stat.S_ISDIR(info["mode"])
+        elif info["name"] == "test.socket":
+            assert stat.S_ISSOCK(info["mode"])
+        elif info["name"] == "test.fifo":
+            assert stat.S_ISFIFO(info["mode"])
+        else:
+            assert False, f"Unexpected file name: {info['name']}"
+
+        assert info["path"] == test_dir / info["name"]
+        assert isinstance(info["ctime"], float)
+
+    # Test the 'must_exist' argument.
+    bogus_dir = test_dir / "bogus"
+    with pytest.raises(ErrorNotFound):
+        for info in pman.lsdir(bogus_dir, must_exist=True):
+            pass
+
+    unique = object()
+    lsdir_info: object | LsdirTypedDict = unique
+    for lsdir_info in pman.lsdir(bogus_dir, must_exist=False):
+        pass
+    # Nothing should be yielded.
+    assert lsdir_info is unique
 
     # Cleanup step.
     pman.rmtree(tmpdir)

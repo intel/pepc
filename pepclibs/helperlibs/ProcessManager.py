@@ -22,7 +22,7 @@ from typing import Union, Any, cast
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import LocalProcessManager, SSHProcessManager, EmulProcessManager
 # pylint: disable-next=unused-import
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 
 ProcessManagerType = Union[LocalProcessManager.LocalProcessManager,
                            SSHProcessManager.SSHProcessManager,
