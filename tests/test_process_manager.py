@@ -39,6 +39,14 @@ def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None
         params = common.build_params(pman)
         yield params
 
+def test_get_python_path(params: CommonTestParamsTypedDict):
+    """Test the 'get_python_path()' and 'is_exe()' method."""
+
+    pman = params["pman"]
+    python_path = pman.get_python_path()
+
+    assert pman.is_exe(python_path)
+
 _HELLO_WORLD_START = """-c 'import sys
 print("1: hello")
 print("2: world")
