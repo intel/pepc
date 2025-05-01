@@ -27,7 +27,7 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 from pathlib import Path
-from typing import Generator
+from typing import Generator, cast, IO
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML, ClassHelpers
 from pepclibs.helperlibs import _ProcessManagerBase
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
@@ -167,7 +167,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             return self._emuls[path].open(mode)
 
         fobj = _RWFile.open_rw(path, mode, self._get_basepath())
-        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
+        wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
+        return cast(IO, wfobj)
 
     def _init_commands(self, cmdinfos, datapath):
         """
