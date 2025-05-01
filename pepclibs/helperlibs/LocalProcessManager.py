@@ -18,6 +18,7 @@ import os
 import time
 import errno
 import shutil
+import socket
 import tempfile
 import subprocess
 from pathlib import Path
@@ -384,6 +385,19 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except OSError as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to create directory '{dirpath}':\n{msg}") from None
+
+    def mksocket(self, path: str | Path, exist_ok: bool = False):
+        """Refer to 'ProcessManagerBase.mksocket()'."""
+
+        try:
+            with socket.socket(socket.AF_UNIX) as sock:
+                sock.bind(str(path))
+        except OSError as err:
+            if err.errno != errno.EADDRINUSE:
+                msg = Error(str(err)).indent(2)
+                raise Error(f"Failed to create socket '{path}':\n{msg}") from None
+            if not exist_ok:
+                raise ErrorExists(f"Path '{path}' already exists") from None
 
     def mkfifo(self, path: str | Path, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkfifo()'."""

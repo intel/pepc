@@ -1144,7 +1144,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Create a directory.
 
         Args:
-            dirpath: Path to the directory to create.
+            path: The path where the directory should be created.
             parents: Create parent directories as needed if True. Otherwise, raise an exception if
                      a parent directory does not exist.
             exist_ok: Do not raise an exception if the directory already exists when True.
@@ -1152,12 +1152,23 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.mkdir()")
 
+    def mksocket(self, path: str | Path, exist_ok: bool = False):
+        """
+        Create a Unix socket file.
+
+        Args:
+            path: The path where the Unix socket file should be created.
+            exist_ok: Do not raise an exception if the unix socket file already exists when True.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.mksocket()")
+
     def mkfifo(self, path: str | Path, exist_ok: bool = False):
         """
         Create a named pipe.
 
         Args:
-            path: The path where the named pipe to create.
+            path: The path where the named pipe should be created.
             exist_ok: Do not raise an exception if the named pipe already exists when True.
         """
 

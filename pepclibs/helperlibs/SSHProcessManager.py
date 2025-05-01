@@ -1245,6 +1245,33 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         cmd += f" -- '{dirpath}'"
         self.run_verify(cmd)
 
+    def mksocket(self, path: str | Path, exist_ok: bool = False):
+        """Refer to 'ProcessManagerBase.mksocket()'."""
+
+        python_path = self.get_python_path()
+
+        cmd = f"""{python_path} -c 'import socket
+try:
+    with socket.socket(socket.AF_UNIX) as s:
+        s.bind("{path}")
+except OSError as err:
+    import errno
+    if err.errno != errno.EADDRINUSE:
+        print(str(err), file=sys.stderr)
+        raise SystemExit(1)
+    raise SystemExit(2)'"""
+        stdout, stderr, exitcode = self.run(cmd)
+
+        if exitcode == 0:
+            return
+
+        if exitcode == 2:
+            if not exist_ok:
+                raise ErrorExists(f"Path '{path}' already exists{self.hostmsg}") from None
+            return
+
+        raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
+
     def mkfifo(self, path: str | Path, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkfifo()'."""
 
