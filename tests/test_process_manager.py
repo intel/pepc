@@ -41,6 +41,31 @@ def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None
         params = common.build_params(pman)
         yield params
 
+def test_get_envar(params: CommonTestParamsTypedDict):
+    """Test the 'get_envar()' method."""
+
+    pman = params["pman"]
+
+    # Let's assume the 'SHELL' environment variable is set.
+    shell = pman.get_envar("SHELL")
+    assert shell is not None
+    assert isinstance(shell, str)
+
+def test_which(params: CommonTestParamsTypedDict):
+    """Test the 'which()' method."""
+
+    pman = params["pman"]
+
+    path = pman.which("sh")
+    assert path is not None
+    assert pman.is_exe(path)
+
+    # Test the 'must_find' argument.
+    with pytest.raises(ErrorNotFound):
+        pman.which("_bogus_777", must_find=True)
+
+    assert pman.which("_bogus_777", must_find=False) is None
+
 def test_get_python_path(params: CommonTestParamsTypedDict):
     """Test the 'get_python_path()', 'is_exe()' and 'exists()' methods."""
 
@@ -769,18 +794,3 @@ def test_abspath(params: CommonTestParamsTypedDict):
         pman.abspath(bogus_path, must_exist=True)
 
     assert pman.abspath(bogus_path, must_exist=False) == bogus_path
-
-def test_which(params: CommonTestParamsTypedDict):
-    """Test the 'which()' method."""
-
-    pman = params["pman"]
-
-    path = pman.which("sh")
-    assert path is not None
-    assert pman.is_exe(path)
-
-    # Test the 'must_find' argument.
-    with pytest.raises(ErrorNotFound):
-        pman.which("_bogus_777", must_find=True)
-
-    assert pman.which("_bogus_777", must_find=False) is None
