@@ -15,10 +15,9 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
   - [Dependencies](#dependencies)
     - [Fedora](#fedora-1)
     - [Ubuntu](#ubuntu)
+  - [Using pip](#using-pip)
   - [Fedora](#fedora)
   - [CentOS 9 Stream](#centos-9-stream)
-  - [Other distributions](#other-distributions)
-  - [Using pip](#using-pip)
   - [Standalone version](#standalone-version)
   - [Tab completions](#tab-completions)
 - [Examples](#examples)
@@ -97,6 +96,29 @@ Use the "pip" installation method to get the latest pepc version.
 The pepc tool requires Python version 3.9 or higher. It also depends on some system tools and
 libraries. Here is how to install them.
 
+## Using pip
+
+To install pepc using pip, run the following command:
+
+```
+sudo pip3 install --upgrade git+https://github.com/intel/pepc.git@release
+```
+
+This command downloads pepc from the release branch of the git repository and install it to the
+system.
+
+Alternatively, you can first clone the git repository and then install it:
+
+```
+git clone https://github.com/intel/pepc.git --branch release pepc
+cd pepc
+pip3 install --upgrade .
+```
+
+Note: pepc needs to be run with superuser (root) privileges in many cases. If you install it using
+the --user option of pip3, it won't work "out of the box". Therefore, we do not recommend using the
+--user option.
+
 ### Fedora
 
 ```
@@ -131,34 +153,6 @@ sudo dnf install pepc
 
 Epel packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
 
-## Other distributions
-
-Use the pip installation method in other Linux distributions.
-
-## Using pip
-
-To install pepc using pip, run the following command:
-
-
-```
-sudo pip3 install --upgrade git+https://github.com/intel/pepc.git@release
-```
-
-This command downloads pepc from the release branch of the git repository and install it to the
-system.
-
-Alternatively, you can first clone the git repository and then install it:
-
-```
-git clone https://github.com/intel/pepc.git --branch release pepc
-cd pepc
-pip3 install --upgrade .
-```
-
-Note: pepc needs to be run with superuser (root) privileges in many cases. If you install it using
-the --user option of pip3, it won't work "out of the box". Therefore, we do not recommend using the
---user option.
-
 ## Standalone version
 
 You can also create a standalone version of this tool, but it still requires the dependencies to be
@@ -186,6 +180,7 @@ chmod ug+x pepc.standalone
 
 This will create the pepc.standalone file, which you can rename and copy anywhere. It will work as
 a standalone program.
+
 
 ## Tab completions
 
