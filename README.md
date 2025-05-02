@@ -15,6 +15,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
   - [Dependencies](#dependencies)
     - [Fedora](#fedora-1)
     - [Ubuntu](#ubuntu)
+  - [Requirements](#requirements)
   - [Using pip](#using-pip)
   - [Fedora](#fedora)
   - [CentOS 9 Stream](#centos-9-stream)
@@ -31,36 +32,33 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [FAQ](#faq)
 
 # Introduction
-
-Pepc stands for "Power, Energy, and Performance Configurator". It is a command-line tool for
-configuring CPU power management features.
+Pepc, short for "Power, Energy, and Performance Configurator," is a command-line tool designed for
+managing and optimizing CPU power management features.
 
 **IMPORTANT**: This tool is intended for debugging and research purposes only. It requires root
 permissions and should only be used in a lab environment, not in production.
 
 ## Context
 
-There are many Linux tools for configuring power management in Linux, and this sub-section explains
-why we created yet another one.
+There are numerous Linux tools for power management configuration. This section explains why we
+created another one.
 
-We are doing a lot of work related to power and performance, such as measuring C-states latency
-using [wult](https://github.com/intel/wult), running various workloads, and collecting power and
-performance statistics using [stats-collect](https://github.com/intel/stats-collect). We often need
-to configure various power and performance aspects of the system, for example, enabling or disabling
-C-states, limiting CPU or uncore frequency, tweaking hardware features like C1 demotion, and so on.
+We work on power and performance, including measuring C-state latencies using
+[wult](https://github.com/intel/wult) and collecting power and performance statistics using
+[stats-collect](https://github.com/intel/stats-collect). We frequently configure power and
+performance  settings, such as enabling/disabling C-states, limiting CPU/uncore frequency,
+or tweaking features like C1 demotion, among others.
 
-Before pepc was created, we had to use many different tools, such as cpupower or lscpu, and
-remember sysfs paths for various knobs, such as the path to disable a C-state. This was difficult
-and error-prone. It was also not flexible enough for us. For example, disabling C1 only for one CPU
-module was a difficult task because one has to first figure out what the CPU numbers in that module
-are, and then disable C1 on every CPU. Finally, many hardware features like C1 demotion require
-knowledge of the MSR register and the bit number to toggle. The wrmsr and rdmsr tools are
-helpful, but they were not easy enough for us to use regularly.
+Before pepc, we relied on multiple tools like cpupower and lscpu, and memorized sysfs paths for
+various settings, such as disabling a C-state. This approach was cumbersome and error-prone. It
+lacked flexibility; for instance, disabling C1 for a single CPU module required identifying the
+CPU numbers in that module and disabling C1 for each CPU individually. Additionally, configuring
+hardware features like C1 demotion required knowledge of MSR registers and specific bit toggles.
+While tools like wrmsr and rdmsr were useful, they were not user-friendly for frequent use.
 
-We created pepc to make power and performance configuration tasks easier. With pepc, we do not
-have to remember sysfs paths and platform-specific MSR (Model Specific Register) numbers. The tool
-is flexible, supports many CPU models, is well-structured, and also provides a Python API for other
-Python projects to use.
+Pepc simplifies power and performance configuration by eliminating the need to remember sysfs paths
+and platform-specific MSR numbers. It is flexible, supports various CPU models, well-structured,
+and offers a Python API for integration with other Python projects.
 
 # Authors and contributors
 
@@ -84,17 +82,32 @@ Pepc supports discovering and configuring the following features.
 * CPU topology: [documentation](docs/pepc-topology.rst)
 * TPMI: [documentation](docs/pepc-tpmi.rst)
 
-Some of the features are hardware-independent, but some are hardware-specific.
+Some features are hardware-agnostic, while others depend on specific hardware capabilities.
 
 # Installation
 
-Note, while pepc is available via OS packages, they typically do not provide the latest version.
-Use the "pip" installation method to get the latest pepc version.
-
 ## Dependencies
 
-The pepc tool requires Python version 3.9 or higher. It also depends on some system tools and
-libraries. Here is how to install them.
+Pepc requires certain system tools and libraries. Below are the installation instructions.
+
+### Fedora
+
+```
+sudo dnf install -y rsync util-linux procps-ng
+```
+
+### Ubuntu
+
+```
+sudo apt install -y rsync util-linux procps
+```
+
+## Requirements
+
+* Pepc requires Python 3.9 or newer.
+* Run pepc as a superuser (e.g., using "sudo").
+* Many options need access to MSRs (Model Specific Registers), requiring the "msr" kernel driver
+  Ensure the "msr" kernel driver is available, as some Linux distributions may disable it by default.
 
 ## Using pip
 
@@ -119,18 +132,6 @@ Note: pepc needs to be run with superuser (root) privileges in many cases. If yo
 the --user option of pip3, it won't work "out of the box". Therefore, we do not recommend using the
 --user option.
 
-### Fedora
-
-```
-sudo dnf install -y rsync util-linux procps-ng
-```
-
-### Ubuntu
-
-```
-sudo apt install -y rsync util-linux procps
-```
-
 ## Fedora
 
 Pepc is available in Fedora starting from Fedora 38. To install pepc, run
@@ -140,6 +141,9 @@ sudo dnf install pepc
 ```
 
 Fedora packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
+
+Note: Fedora packages may not provide the latest pepc version. Use "pip" to install the latest
+release.
 
 ## CentOS 9 Stream
 
@@ -152,6 +156,9 @@ sudo dnf install pepc
 ```
 
 Epel packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
+
+Note: Epel packages may not provide the latest pepc version. Use "pip" to install the latest
+release.
 
 ## Standalone version
 
