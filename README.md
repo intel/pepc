@@ -12,12 +12,12 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [Authors](#authors-and-contributors)
 - [What is supported](#what-is-supported)
 - [Installation](#installation)
-  - [Fedora](#fedora)
-  - [CentOS 9 Stream](#centos-9-stream)
-  - [Other distributions](#other-distributions)
   - [Dependencies](#dependencies)
     - [Fedora](#fedora-1)
     - [Ubuntu](#ubuntu)
+  - [Fedora](#fedora)
+  - [CentOS 9 Stream](#centos-9-stream)
+  - [Other distributions](#other-distributions)
   - [Using pip](#using-pip)
   - [Standalone version](#standalone-version)
   - [Tab completions](#tab-completions)
@@ -92,6 +92,23 @@ Some of the features are hardware-independent, but some are hardware-specific.
 Note, while pepc is available via OS packages, they typically do not provide the latest version.
 Use the "pip" installation method to get the latest pepc version.
 
+## Dependencies
+
+The pepc tool requires Python version 3.9 or higher. It also depends on some system tools and
+libraries. Here is how to install them.
+
+### Fedora
+
+```
+sudo dnf install -y rsync util-linux procps-ng
+```
+
+### Ubuntu
+
+```
+sudo apt install -y rsync util-linux procps
+```
+
 ## Fedora
 
 Pepc is available in Fedora starting from Fedora 38. To install pepc, run
@@ -117,23 +134,6 @@ Epel packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.
 ## Other distributions
 
 Use the pip installation method in other Linux distributions.
-
-## Dependencies
-
-The pepc tool requires Python version 3.9 or higher. It also depends on some system tools and
-libraries. Here is how to install them.
-
-### Fedora
-
-```
-sudo dnf install -y rsync util-linux procps-ng python3-colorama python3-yaml
-```
-
-### Ubuntu
-
-```
-sudo apt install -y rsync util-linux procps python3-colorama python3-yaml
-```
 
 ## Using pip
 
