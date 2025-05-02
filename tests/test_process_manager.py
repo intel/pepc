@@ -469,18 +469,28 @@ def test_mkdtemp(params: CommonTestParamsTypedDict):
     assert not pman.exists(tmpdir)
 
 def test_open(params: CommonTestParamsTypedDict):
-    """Test the 'open()' method and 'is_file()' methods."""
+    """Test the 'open()', 'get_mtime()', and 'is_file()' methods."""
 
     pman = params["pman"]
 
     tmpdir = pman.mkdtemp()
+
+    mtime = pman.get_mtime(tmpdir)
+    assert isinstance(mtime, float)
+    assert mtime > 0
+
     test_file = tmpdir / "test.txt"
 
     # Test opening a file for writing.
     with pman.open(test_file, "w") as fobj:
         fobj.write("Hello, world!")
         assert pman.is_file(test_file)
+
     assert pman.is_file(test_file)
+
+    mtime = pman.get_mtime(test_file)
+    assert isinstance(mtime, float)
+    assert mtime > 0
 
     # Test opening a file for reading.
     with pman.open(test_file, "r") as fobj:
