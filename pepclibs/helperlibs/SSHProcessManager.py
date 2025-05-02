@@ -265,6 +265,9 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
     def poll(self) -> int | None:
         """Refer to 'ProcessBase.poll()'."""
 
+        if self.exitcode is not None:
+            return self.exitcode
+
         chan = self.pobj
         if chan.exit_status_ready():
             return chan.recv_exit_status()
