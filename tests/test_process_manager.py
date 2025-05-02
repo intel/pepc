@@ -763,9 +763,24 @@ def test_abspath(params: CommonTestParamsTypedDict):
     assert pman.abspath(test_dir / ".." / "test_dir") == test_dir
     assert pman.abspath(test_dir / "..") == tmpdir
 
-    # Thest the 'must_exist' argument.
+    # Test the 'must_exist' argument.
     bogus_path = tmpdir / "bogus"
     with pytest.raises(ErrorNotFound):
         pman.abspath(bogus_path, must_exist=True)
 
     assert pman.abspath(bogus_path, must_exist=False) == bogus_path
+
+def test_which(params: CommonTestParamsTypedDict):
+    """Test the 'which()' method."""
+
+    pman = params["pman"]
+
+    path = pman.which("sh")
+    assert path is not None
+    assert pman.is_exe(path)
+
+    # Test the 'must_find' argument.
+    with pytest.raises(ErrorNotFound):
+        pman.which("_bogus_777", must_find=True)
+
+    assert pman.which("_bogus_777", must_find=False) is None
