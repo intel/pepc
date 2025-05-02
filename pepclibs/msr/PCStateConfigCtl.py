@@ -120,8 +120,13 @@ _PKG_CST_LIMITS = {
 }
 
 # MSR_PKG_CST_CONFIG_CONTROL features have core scope, except for the following CPUs.
-_MODULE_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"] + CPUModels.CPU_GROUPS["AIRMONT"]
-_PACKAGE_SCOPE_VFMS = CPUModels.CPU_GROUPS["PHI"]
+_MODULE_IO_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"] + CPUModels.CPU_GROUPS["AIRMONT"]
+_PACKAGE_IO_SCOPE_VFMS = CPUModels.CPU_GROUPS["PHI"]
+
+# Platforms that where C1 demotion/undemotion I/O scope is "core".
+_CORE_C1D_SCOPE_VFMS = CPUModels.CPU_GROUPS["EMR"] + \
+                       CPUModels.CPU_GROUPS["SPR"] + \
+                       CPUModels.CPU_GROUPS["ICX"]
 
 # Map of features available on various CPUs. Please, refer to the notes for '_FeaturedMSR.FEATURES'
 # for more comments.
@@ -282,9 +287,9 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         self.features = FEATURES
         model = self._cpuinfo.info["vfm"]
 
-        if model in _MODULE_SCOPE_VFMS:
+        if model in _MODULE_IO_SCOPE_VFMS:
             iosname = "module"
-        elif model in _PACKAGE_SCOPE_VFMS:
+        elif model in _PACKAGE_IO_SCOPE_VFMS:
             iosname = "package"
         else:
             iosname = "core"
@@ -295,7 +300,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         sname = self._get_clx_ap_adjusted_msr_scope()
 
         for fname, finfo in self.features.items():
-            if fname.startswith("pkg_"):
+            if fname.startswith("pkg_") or model in _CORE_C1D_SCOPE_VFMS:
                 finfo["sname"] = sname
             else:
                 finfo["sname"] = iosname
