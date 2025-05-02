@@ -721,3 +721,28 @@ def test_lsdir(params: CommonTestParamsTypedDict):
 
     # Cleanup step.
     pman.rmtree(tmpdir)
+
+def test_unlink(params: CommonTestParamsTypedDict):
+    """Test the 'unlink()' method."""
+
+    pman = params["pman"]
+
+    # Create a test file.
+    tmpdir = pman.mkdtemp()
+    test_dir= tmpdir / "tst_dir"
+    _create_test_dir(pman, test_dir)
+
+    test_file = test_dir / "subdir" / "test.txt"
+    pman.unlink(test_file)
+    assert not pman.is_file(test_file)
+
+    test_file = test_dir / "test.socket"
+    pman.unlink(test_file)
+    assert not pman.is_socket(test_file)
+
+    test_file = test_dir / "test.fifo"
+    pman.unlink(test_file)
+    assert not pman.is_fifo(test_file)
+
+    # Cleanup step.
+    pman.rmtree(tmpdir)
