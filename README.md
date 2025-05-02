@@ -16,6 +16,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
     - [Fedora](#fedora-1)
     - [Ubuntu](#ubuntu)
   - [Requirements](#requirements)
+  - [Using uv](#using-uv)
   - [Using pip](#using-pip)
   - [Fedora](#fedora)
   - [CentOS 9 Stream](#centos-9-stream)
@@ -32,6 +33,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [FAQ](#faq)
 
 # Introduction
+
 Pepc, short for "Power, Energy, and Performance Configurator," is a command-line tool designed for
 managing and optimizing CPU power management features.
 
@@ -109,32 +111,101 @@ sudo apt install -y rsync util-linux procps
 * Many options need access to MSRs (Model Specific Registers), requiring the "msr" kernel driver
   Ensure the "msr" kernel driver is available, as some Linux distributions may disable it by default.
 
+## Using uv
+
+Uv is a modern Python project and package management tool. Install it on your system. Many Linux
+distributions provide a package for it. Also install git. For example, in Fedora, run:
+
+```
+sudo dnf install uv git
+```
+
+Install pepc by running the following command.
+
+```
+uv tool install git+https://github.com/intel/pepc.git@release
+```
+
+uv installs projects to '$HOME/.local'. Ensure '$HOME/.local/bin' is in your 'PATH'.
+
+```
+$ which pepc
+~/.local/bin/pepc
+```
+
+If you installed pepc as root and plan to use pepc as root, no additional steps are required.
+
+### sudo complication
+
+Unfortunately, running pepc with sudo works only when you provide the full path to the executable.
+
+```
+sudo ~/.local/bin/pepc --version
+1.5.32
+```
+
+Using only the command name causes an error.
+
+```
+sudo pepc
+sudo: pepc: command not found
+```
+
+To overcome this, create an alias as shown below and add it to your `$HOME/.bashrc` file:
+
+```
+alias pepc="sudo $HOME/.local/bin/pepc"
+```
+You can now run `pepc` directly. For example:
+
+```
+pepc pstates info
+[sudo] password for user: 
+Source: Linux sysfs file-system
+ - Turbo: on
+ - Min. CPU frequency: 800.00MHz for all CPUs
+... snip ...
+```
+
 ## Using pip
 
-To install pepc using pip, run the following command:
+Install pip on your system. Most modern Linux distributions include a package for pip installation.
+Also install git. For example, in Fedora, run
 
 ```
-sudo pip3 install --upgrade git+https://github.com/intel/pepc.git@release
+dnf install python-pip git
 ```
 
-This command downloads pepc from the release branch of the git repository and install it to the
-system.
-
-Alternatively, you can first clone the git repository and then install it:
+Install pepc into a python virtual enviroment using the following commands.
 
 ```
-git clone https://github.com/intel/pepc.git --branch release pepc
-cd pepc
-pip3 install --upgrade .
+python3 -m venv ~/.pmtools
+~/.pmtools/bin/pip3 install git+https://github.com/intel/pepc.git@release
 ```
 
-Note: pepc needs to be run with superuser (root) privileges in many cases. If you install it using
-the --user option of pip3, it won't work "out of the box". Therefore, we do not recommend using the
---user option.
+Ensure that '$HOME/.pmtools/bin' is in your 'PATH'. Verify this as follows.
+
+```
+$ which pepc
+~/.pmtools/bin/pepc
+```
+
+If you installed pepc as root and plan to use pepc as root, no additional steps are required.
+
+### sudo complication
+
+Similar to the "using uv" case, create an alias and add it to your `$HOME/.bashrc` file as shown below:
+
+```
+alias pepc="sudo VIRTUAL_ENV=$HOME/.pmtools $HOME/.pmtools/bin/pepc"
+```
 
 ## Fedora
 
-Pepc is available in Fedora starting from Fedora 38. To install pepc, run
+Pepc is available in Fedora starting from version 38. However, Fedora packages may not provide the
+latest version. To install the latest release, use the "uv" or "pip" methods.
+
+To install pepc, run:
 
 ```
 sudo dnf install pepc
@@ -142,13 +213,12 @@ sudo dnf install pepc
 
 Fedora packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
 
-Note: Fedora packages may not provide the latest pepc version. Use "pip" to install the latest
-release.
-
 ## CentOS 9 Stream
+Pepc is available for CentOS 8 Stream via the EPEL repository. Note that EPEL packages may not
+always provide the latest version. To get the latest release, consider using the "uv" or "pip"
+installation methods.
 
-Pepc is available for CentOS 9 Stream via the epel repository. Here is how to add epel and
-install pepc.
+To add EPEL and install Pepc, follow these steps:
 
 ```
 sudo dnf install epel-release
@@ -157,22 +227,13 @@ sudo dnf install pepc
 
 Epel packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
 
-Note: Epel packages may not provide the latest pepc version. Use "pip" to install the latest
-release.
-
 ## Standalone version
-
-You can also create a standalone version of this tool, but it still requires the dependencies to be
-installed on the target system.
-
-Here is how to create a standalone pepc version.
-
-First of all, make sure the below command prints "Good". It verifies that your '/usr/bin/python3'
-version is greater than 3.8:
+To create a standalone version of pepc, ensure your Python version is greater than 3.8.
+Run the following command, which should print "Good" if the version is compatible:
 
 ```
 /usr/bin/python3 -c 'import sys; ver=sys.version_info; \
-print("Good") if ver.major>2 and ver.minor>8 else print("Bad")'
+print("Good") if ver.major > 2 and ver.minor > 8 else print("Bad")'
 ```
 
 Create the standalone version of pepc.
@@ -184,22 +245,18 @@ echo '#!/usr/bin/python3' > pepc.standalone
 git archive --format zip HEAD >> pepc.standalone
 chmod ug+x pepc.standalone
 ```
-
-This will create the pepc.standalone file, which you can rename and copy anywhere. It will work as
-a standalone program.
-
+This creates the 'pepc.standalone' file, which you can rename and copy anywhere for standalone use.
 
 ## Tab completions
 
-Pepc has tab completions support, but this will only work if you have certain environment
-variables defined. The following command will do it:
+Pepc supports tab completions, but it requires specific environment variables to be set. Use the
+following:
 
 ```
 eval "$(register-python-argcomplete pepc)"
 ```
 
-You can put this line in your .bashrc file in order to have pepc tab completions enabled by
-default.
+Add this line to '$HOME/.bashrc' file to enable tab completion by default.
 
 # Examples
 
