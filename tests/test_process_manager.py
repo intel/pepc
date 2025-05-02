@@ -383,7 +383,7 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
     assert res.exitcode == 0
 
 def test_mkdir(params: CommonTestParamsTypedDict):
-    """Test the 'mkdir()' and 'is_dir()' methods."""
+    """Test the 'mkdir()', 'rmtree()', and 'is_dir()' methods."""
 
     pman = params["pman"]
 
@@ -746,3 +746,26 @@ def test_unlink(params: CommonTestParamsTypedDict):
 
     # Cleanup step.
     pman.rmtree(tmpdir)
+
+def test_abspath(params: CommonTestParamsTypedDict):
+    """Test the 'abspath()' method."""
+
+    pman = params["pman"]
+    tmpdir = pman.mkdtemp()
+
+    test_dir = tmpdir / "test_dir"
+    pman.mkdir(test_dir)
+
+    assert pman.abspath(test_dir) == test_dir
+    assert pman.abspath(str(test_dir)) == test_dir
+    assert pman.abspath(str(test_dir) + "/") == test_dir
+
+    assert pman.abspath(test_dir / ".." / "test_dir") == test_dir
+    assert pman.abspath(test_dir / "..") == tmpdir
+
+    # Thest the 'must_exist' argument.
+    bogus_path = tmpdir / "bogus"
+    with pytest.raises(ErrorNotFound):
+        pman.abspath(bogus_path, must_exist=True)
+
+    assert pman.abspath(bogus_path, must_exist=False) == bogus_path
