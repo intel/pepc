@@ -1,5 +1,37 @@
-[tool.ruff.lint]
+[project]
+name = "pepc"
+version = "1.5.32"
+description = "A tool configuring various power and performance aspects of a Linux system."
+authors = [
+    { name = "Artem Bityutskiy", email = "dedekind@gmail.com" }
+]
+requires-python = ">=3.9"
+license = "BSD-3-Clause"
+readme = "README.md"
+keywords = ["linux", "power", "performance", "configuration", "C-state", "P-state"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: System :: Hardware",
+    "Topic :: System :: Operating System Kernels :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+    "argcomplete",
+    "colorama",
+    "paramiko",
+    "pyyaml",
+]
 
+[project.urls]
+Documentation = "https://github.com/intel/pepc/blob/main/README.md"
+Repository = "https://github.com/intel/pepc"
+Changelog = "https://github.com/intel/pepc/blob/main/CHANGELOG.md"
+
+[tool.uv]
+package = false
+
+[tool.ruff.lint]
 # F401 = unused-import, disable because pylint checks for this too, and it is
 # more convenient to add exceptions for pylint than for ruff.
 ignore = ["F401"]
