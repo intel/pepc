@@ -17,18 +17,12 @@ Document author: Artem Bityutskiy <dedekind1@gmail.com>
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Examples](#examples)
-  - [P-states](#p-states)
-  - [C-states](#c-states)
-  - [PM QoS](#pm-qos)
-  - [Power](#power)
-  - [ASPM](#aspm)
-  - [CPU hotplug](#cpu-hotplug)
-  - [CPU topology](#cpu-topology)
+- [Helpful resources](#helpful-resources)
 - [FAQ](#faq)
 
 # Introduction
 
-Pepc, short for "Power, Energy, and Performance Configurator," is a command-line tool designed for
+Pepc, short for "Power, Energy, and Performance Configurator", is a command-line tool designed for
 managing and optimizing CPU power management features.
 
 **IMPORTANT**: This tool is intended for debugging and research purposes only. It requires root
@@ -80,7 +74,7 @@ Pepc supports discovering and configuring the following features.
 
 Some features are hardware-agnostic, while others depend on specific hardware capabilities.
 
-## Requirements
+# Requirements
 
 * Pepc requires Python 3.9 or newer.
 * Run pepc as a superuser (e.g., using "sudo").
@@ -95,6 +89,10 @@ Please, refer to the [installation guide](docs/guide-install.md) document.
 # Examples
 
 Please, refer to the [usage examples](docs/guide-examples.md) document.
+
+# Helpful resources
+
+* A document describing Intel C-state namespaces: [here](docs/misc-cstate-namespaces.md).
 
 # FAQ
 
