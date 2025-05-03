@@ -93,6 +93,8 @@ Please, refer to the [usage examples](docs/guide-examples.md) document.
 # Helpful resources
 
 * A document describing Intel C-state namespaces: [here](docs/misc-cstate-namespaces.md).
+* A document explaining MSR scope and how pepc simplifies understanding a complex processor
+  configuration: [here](doc/misc-msr-scope.md).
 
 # FAQ
 
