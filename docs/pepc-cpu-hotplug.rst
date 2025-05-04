@@ -60,62 +60,55 @@ General options
 Subcommand *'info'*
 ===================
 
-List all online and offline CPUs.
+Display the list of online and offline CPUs.
 
 Subcommand *'online'*
 =====================
 
-Bring CPUs online.
+Bring specified CPUs online.
 
 **--cpus** *CPUS*
-   List of CPUs to online. The list can include individual CPU numbers and CPU number ranges.
-   For example,'1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special
-   keyword 'all' to specify all CPUs.
+   List of CPUs to bring online. Specify individual CPU numbers or ranges, e.g., '1-4,7,8,10-12'
+   for CPUs 1 to 4, 7, 8, and 10 to 12. Use 'all' to specify all CPUs.
 
 Subcommand *'offline'*
 ======================
 
-Bring CPUs offline.
+Bring specified CPUs offline.
 
 **--cpus** *CPUS*
-   List of CPUs to offline. The list can include individual CPU numbers and CPU number ranges.
-   For example,'1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special
-   keyword 'all' to specify all CPUs.
+   List of CPUs to bring offline. Specify individual CPU numbers or ranges, e.g., '1-4,7,8,10-12'
+   for CPUs 1 to 4, 7, 8, and 10 to 12. Use 'all' to specify all CPUs.
 
 **--cores** *CORES*
-   List of cores to offline. The list can include individual core numbers and core number ranges.
-   For example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special
-   keyword 'all' to specify all cores. This option has to be accompanied by the '--package' option,
-   because core numbers are per-package.
+   LIst of cores to bring offline using individual core numbers or ranges, e.g., '1-4,7,9-11' for
+   cores 1 to 4, 7, and 9 to 11. Use 'all' to specify all cores. This option requires the
+   '--package' option, as core numbers are package-specific.
 
 **--modules** *MODULES*
-   List of modules to offline. The list can include individual module numbers and module number
-   ranges. For example, '0,2-5' would mean module 0 and modules 2, 3, 4, and 5. Use the special
-   keyword 'all' to specify all modules. Note, unlike core and die numbers, module numbers are
-   absolute.
+   List of modules to offline, specified as individual module numbers or ranges (e.g., '0,2-5' for
+   module 0 and modules 2 to 5). Use 'all' to specify all modules. Unlike core and die numbers,
+   module numbers are absolute.
 
 **--dies** *DIES*
-   List of dies to offline. The list can include individual die numbers and die number ranges. For
-   example, '0-3,5' would mean dies 0 to 3, and die 5. Use the special keyword 'all' to specify all
-   dies. On some systems, die numbers are globally unique, while on other systems they are relative
-   to the package. In the latter case, this option has to be accompanied by the '--package' option.
+   List dies to bring offline using, specified as individual die numbers or ranges, e.g., '0-3,5'
+   for dies 0 to 3 and 5.  Use 'all' to specify all dies. On some systems, die numbers are globally
+   unique, while on others they are relative to the package. In the latter case, the '--package'
+   option must be specified.
 
 **--packages** *PACKAGES*
-   List of packages to offline. The list can include individual package numbers and package number
-   ranges. For example, '0,2-4' would mean package 0 and packages 2 to 4. Use the special keyword
-   'all' to specify all packages.
+   List of packages to bring offline, specified as individual package numbers or ranges (e.g.,
+   '0,2-4' for package 0 and packages 2 to 4). Use 'all' to specify all packages.
 
 **--core-siblings** *CORE_SIBLINGS*
-   Core siblings are CPUs sharing the same core. The list can include individual core sibling
-   indices or index ranges. For example, if a core includes CPUs 3 and 4, index '0' would mean CPU 3
-   and index '1' would mean CPU 4. This option can only be used to reference online CPUs, because
-   Linux does not provide topology information for offline CPUs. In the example with CPUs 3 and 4,
-   if CPU 3 was offline, then index '0' would mean CPU 4.
+   List of core sibling indices (CPUs sharing the same core) to bring offline. Specify individual
+   indices or ranges. For example, if a core includes CPUs 2 and 3, index '0' refers to CPU 2, and
+   index '1' refers to CPU 3. This option applies only to online CPUs, as Linux lacks topology
+   details for offline CPUs. If CPU 2 is offline, index '0' refers to CPU 3. On Intel processors
+   with hyper-threading, this is typically used to offline hyperthreads.
 
 **--module-siblings** *MODULE_SIBLINGS*
-   Module siblings are CPUs sharing the same module. The list can include individual module sibling
-   indices or index ranges. For example, if a module includes CPUs 3, 4, 5, and 6, index '0' would
-   mean CPU 3, index '1' would mean CPU 4, and idex '3' would mean CPU 5. This option can only be
-   used to reference online CPUs, because Linux does not provide topology information for offline
-   CPUs. In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index '1' would mean
-   CPU 5.
+   List of module sibling indices (CPUs sharing the same module) to bring offline. Specify individual
+   indices or ranges. For example, if a module includes CPUs 4, 5, 6, and 7, index '0' refers to CPU 4,
+   index '1' to CPU 5, and index '4' to CPU 7. This option applies only to online CPUs, as Linux lacks
+   topology details for offline CPUs. In the example, if CPU 5 is offline, index '1' refers to CPU 6.

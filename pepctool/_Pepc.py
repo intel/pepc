@@ -158,51 +158,45 @@ def _add_target_cpus_arguments(subpars, fmt, exclude=None):
 
     if "--cpus" not in exclude:
         text = fmt % "CPUs" # pylint: disable=consider-using-f-string
-        text += """ The list can include individual CPU numbers and CPU number ranges. For example,
-                   '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special
-                   keyword 'all' to specify all CPUs. If the CPUs/cores/packages were not specified,
-                   all CPUs will be used as the default value."""
+        text += """ Specify individual CPU numbers or ranges (e.g., '1-4,7,8,10-12'). Use 'all' for
+                    all CPUs. If not specified, all CPUs are used by default."""
         subpars.add_argument("--cpus", help=text)
 
     if "--cores" not in exclude:
         text = fmt % "cores" # pylint: disable=consider-using-f-string
-        text += """ The list can include individual core numbers and core number ranges. The format
-                   is similar to '--cpus'. Note, unlike CPU numbers, core numbers are relative to
-                   package numbers."""
+        text += """ The list can include individual core numbers or ranges (e.g., '0-3,5'). Core
+                   numbers are relative to their package."""
         subpars.add_argument("--cores", help=text)
 
     if "--modules" not in exclude:
         text = fmt % "modules" # pylint: disable=consider-using-f-string
-        text += """ The list can include individual module numbers and module number ranges. The
-                   format is similar to '--cpus'."""
+        text += """ Specify individual module numbers or ranges (e.g., '0-3,5'). Format is similar
+                    to '--cpus'."""
         subpars.add_argument("--modules", help=text)
 
     if "--dies" not in exclude:
         text = fmt % "dies" # pylint: disable=consider-using-f-string
-        text += """ The list can include individual die numbers and die number ranges. The format is
-                   similar to '--cpus'."""
+        text += """ Specify die numbers or ranges (e.g., '0-3,5'). Format is similar to '--cpus'."""
         subpars.add_argument("--dies", help=text)
 
     if "--packages" not in exclude:
         text = fmt % "packages" # pylint: disable=consider-using-f-string
-        text += """ The list can include individual package numbers and package number ranges. The
-                   format is similar to '--cpus'."""
+        text += """ Specify individual package numbers or ranges (e.g., '0-3,5'). Format is similar
+                   to '--cpus'."""
         subpars.add_argument("--packages", help=text)
 
     if "--core-siblings" not in exclude:
         text = fmt % "core sibling indices" # pylint: disable=consider-using-f-string
-        text += """ Core soblings are the CPUs sharing the same core. The list can include
-                   individual core sibling indices or index ranges. For example, core x includes
-                   CPUs 3 and 4, '0' would mean CPU 3 and '1' would mean CPU 4. This option can only
-                   be used to reference online CPUs, because Linux does not provide topology
-                   information for offline CPUs. In the previous example if CPU 3 was offline, then
-                   '0' would mean CPU 4."""
+        text += """ Specify core sibling indices or ranges (e.g., '0-1'). Core siblings are CPUs
+                    sharing the same core. For example, if a core includes CPUs 2 and 3, '0' refers
+                    to CPU 2 and '1' to CPU 3."""
         subpars.add_argument("--core-siblings", help=text)
 
     if "--module-siblings" not in exclude:
         text = fmt % "module sibling indices" # pylint: disable=consider-using-f-string
-        text += """ module soblings are the CPUs sharing the same module. This option is similar to
-                   '--core-siblings', but it accepts module sibling indices."""
+        text += """ Specify module sibling indices or ranges (e.g., '0-1'). Core siblings are CPUs
+                    sharing the same module. For example, if a module includes CPUs 4, 5, 6, and 7,
+                    index '0' refers to CPU 4, index '1' to CPU 5, and index '4' to CPU 7."""
         subpars.add_argument("--module-siblings", help=text)
 
 def _get_info_subcommand_prop_help_text(prop):
@@ -297,8 +291,8 @@ def build_arguments_parser():
     #
     # Create parser for the 'cpu-hotplug info' command.
     #
-    text = """List online and offline CPUs."""
-    descr = "List online and offline CPUs. " + man_msg
+    text = "Display the list of online and offline CPUs."
+    text = "Display the list of online and offline CPUs. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cpu_hotplug_info_command)
 
@@ -306,24 +300,23 @@ def build_arguments_parser():
     # Create parser for the 'cpu-hotplug online' command.
     #
     text = """Bring CPUs online."""
-    descr = "Bring CPUs online. " + man_msg
+    descr = "Bring specified CPUs online. " + man_msg
     subpars2 = subparsers2.add_parser("online", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cpu_hotplug_online_command)
 
-    text = """List of CPUs to online. The list can include individual CPU numbers and CPU number
-              ranges. For example, '1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12.
-              Use the special keyword 'all' to specify all CPUs."""
+    text = """List of CPUs to bring online. Specify individual CPU numbers or ranges, e.g.,
+              '1-4,7,8,10-12' for CPUs 1 to 4, 7, 8, and 10 to 12. Use 'all' to specify all CPUs."""
     subpars2.add_argument("--cpus", help=text)
 
     #
     # Create parser for the 'cpu-hotplug offline' command.
     #
     text = """Bring CPUs offline."""
-    descr = "Bring CPUs offline. " + man_msg
+    descr = "Bring specified CPUs offline. " + man_msg
     subpars2 = subparsers2.add_parser("offline", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cpu_hotplug_offline_command)
 
-    _add_target_cpus_arguments(subpars2, "List of %s to offline.")
+    _add_target_cpus_arguments(subpars2, "List of %s to bring offline.")
 
     #
     # Create parser for the 'cstates' command.
