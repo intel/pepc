@@ -62,7 +62,7 @@ Print debugging information.
 Print version and exit.
 .TP
 \f[B]\-H\f[R] \f[I]HOSTNAME\f[R], \f[B]\-\-host\f[R] \f[I]HOSTNAME\f[R]
-Name of the host to run the command on.
+User name for SSH login to the remote host. Defaults to 'root.
 .TP
 \f[B]\-U\f[R] \f[I]USERNAME\f[R], \f[B]\-\-username\f[R] \f[I]USERNAME\f[R]
 Name of the user to use for logging into the remote host over SSH.
@@ -75,7 +75,7 @@ By default the key is automatically found from standard paths like
 \[aq]$HOME/.ssh\[aq].
 .TP
 \f[B]\-T\f[R] \f[I]TIMEOUT\f[R], \f[B]\-\-timeout\f[R] \f[I]TIMEOUT\f[R]
-SSH connection timeout in seconds, default is 8.
+Timeout for establishing an SSH connection in seconds. Defaults to 8.
 .TP
 \f[B]\-D\f[R] \f[I]DATASET\f[R], \f[B]\-\-dataset\f[R] \f[I]DATASET\f[R]
 This option is for debugging and testing purposes only, it defines the

@@ -41,9 +41,8 @@ _DATASET_OPTION = {
     "argcomplete": None,
     "kwargs": {
         "dest": "dataset",
-        "help": """This option is for debugging and testing purposes only, it defines the dataset
-                   that will be used to emulate a host for running the command on. Please, specify
-                   dataset path, name or "all" to specify all available datasets."""
+        "help": """This option is for debugging and testing. It specifies the dataset to emulate a
+                   host for running the command. The argument can be a dataset path or name."""
     },
 }
 
@@ -279,7 +278,8 @@ def build_arguments_parser():
     ArgParse.add_ssh_options(parser)
     parser.add_option_from_dict(_DATASET_OPTION)
 
-    text = "Force coloring of the text output."
+    text = """Force colorized output even if the output stream is not a terminal (adds ANSI escape
+              codes)."""
     parser.add_argument("--force-color", action="store_true", help=text)
     subparsers = parser.add_subparsers(title="commands", dest="a command")
     subparsers.required = True
@@ -288,7 +288,7 @@ def build_arguments_parser():
     # Create parser for the 'cpu-hotplug' command.
     #
     text = "CPU online/offline commands"
-    man_msg = """Please, refer to 'pepc-cpu-hotplug' manual page for more information."""
+    man_msg = """Refer to 'pepc-cpu-hotplug' manual page for more information."""
     descr = "CPU online/offline commands. " + man_msg
     subpars = subparsers.add_parser("cpu-hotplug", help=text, description=descr)
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
@@ -329,7 +329,7 @@ def build_arguments_parser():
     # Create parser for the 'cstates' command.
     #
     text = "CPU C-state commands."
-    man_msg = "Please, refer to 'pepc-cstates' manual page for more information."
+    man_msg = "Refer to 'pepc-cstates' manual page for more information."
     descr = "Various commands related to CPU C-states. " + man_msg
     subpars = subparsers.add_parser("cstates", help=text, description=descr)
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
@@ -419,7 +419,7 @@ def build_arguments_parser():
     # Create parser for the 'pstates' command.
     #
     text = "P-state commands."
-    man_msg = "Please, refer to 'pepc-pstates' manual page for more information."
+    man_msg = "Refer to 'pepc-pstates' manual page for more information."
     descr = "Various commands related to P-states (CPU performance states). " + man_msg
     subpars = subparsers.add_parser("pstates", help=text, description=descr)
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
@@ -494,7 +494,7 @@ def build_arguments_parser():
     # Create parser for the 'pmqos' command.
     #
     text = "PM QoS commands."
-    man_msg = "Please, refer to 'pepc-pmqos' manual page for more information."
+    man_msg = "Refer to 'pepc-pmqos' manual page for more information."
     descr = "Various commands related to PM QoS (Power Management Quality of Service). " + man_msg
     subpars = subparsers.add_parser("pmqos", help=text, description=descr)
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
@@ -569,7 +569,7 @@ def build_arguments_parser():
     # Create parser for the 'power' command.
     #
     text = "Power commands."
-    man_msg = "Please refer to 'pepc-power' manual page for more information."
+    man_msg = "Refer to 'pepc-power' manual page for more information."
     descr = "Various commands related to power configuration. " + man_msg
     subpars = subparsers.add_parser("power", help=text, description=descr)
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
@@ -621,7 +621,7 @@ def build_arguments_parser():
     # Create parser for the 'power save' command.
     #
     text = "Save power settings."
-    man_msg = """Please, refer to 'pepc-power' manual page for more information."""
+    man_msg = """Refer to 'pepc-power' manual page for more information."""
     descr = f"""Save all the modifiable power settings into a file. This file can later be used
                 for restoring power settings with the '{TOOLNAME} power restore' command. """ \
             + man_msg
@@ -651,7 +651,7 @@ def build_arguments_parser():
     # Create parser for the 'aspm' command.
     #
     text = "PCI ASPM commands."
-    man_msg = "Please, refer to 'pepc-aspm' manual page for more information."
+    man_msg = "Refer to 'pepc-aspm' manual page for more information."
     descr = "Manage Active State Power Management configuration. " + man_msg
     subpars = subparsers.add_parser("aspm", help=text, description=descr)
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
@@ -662,16 +662,17 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_aspm_info_command)
 
-    text = """Get current PCI ASPM policy."""
+    text = """Display the current global PCI ASPM policy. The "default" policy indicates the
+              system's default."""
     subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs=0, help=text)
 
-    text = """List the available PCI ASPM policies."""
+    text = "List available PCI ASPM policies from '/sys/module/pcie_aspm/parameters/policy'."
     subpars2.add_argument("--policies", action=ArgParse.OrderedArg, nargs=0, help=text)
 
-    text = """PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."""
+    text = "Specify the PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."
     subpars2.add_argument("--device", metavar="ADDR", action="store", help=text)
 
-    text = """Get current L1 ASPM status for a device chosen with the '--device' option."""
+    text = "Retrieve the L1 ASPM status (on/off) for the PCI device specified by '--device'."
     subpars2.add_argument("--l1-aspm", action=ArgParse.OrderedArg, nargs=0, help=text)
 
     text = "Change PCI ASPM configuration."
@@ -679,15 +680,15 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_aspm_config_command)
 
-    text = """The PCI ASPM policy to set, use "default" to set the default policy."""
+    text = """Set the global PCI ASPM policy. Use "default" to reset the policy to the system's
+              default setting."""
     subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs="?", help=text)
 
-    text = """PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."""
+    text = "Specify the PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."
     subpars2.add_argument("--device", metavar="ADDR", action="store", help=text)
 
-    text = """Enable or disable L1 ASPM on a PCI device chosen with the '--device' option. Valid
-              arguments are 'on', 'off', 'enable', 'disable', 'true', 'false'. The argument is case
-              insensitive."""
+    text = """Enable or disable L1 ASPM for the PCI device specified by '--device'. Valid values are
+              'on', 'off', 'enable', 'disable', 'true', or 'false'."""
     subpars2.add_argument("--l1-aspm", metavar="on/off", action=ArgParse.OrderedArg, nargs="?",
                           help=text)
 
@@ -695,7 +696,7 @@ def build_arguments_parser():
     # Create parser for the 'topology' command.
     #
     text = "CPU topology commands."
-    man_msg = "Please, refer to 'pepc-topology' manual page for more information."
+    man_msg = "Refer to 'pepc-topology' manual page for more information."
     descr = "Various commands related to CPU topology. " + man_msg
     subpars = subparsers.add_parser("topology", help=text, description=descr)
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
@@ -703,8 +704,8 @@ def build_arguments_parser():
 
     text = "Print CPU topology."
     descr = """Print CPU topology information. Note, the topology information for some offline CPUs
-               may be unavailable, in these cases the number will be substituted with "?". Please,
-               refer to 'pepc-topology' manual page for more information."""
+               may be unavailable, in these cases the number will be substituted with "?". Refer to
+               'pepc-topology' manual page for more information."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_topology_info_command)
 
@@ -728,7 +729,7 @@ def build_arguments_parser():
     # Create parser for the 'tpmi' command.
     #
     text = "TPMI commands."
-    man_msg = """Please, refer to 'pepc-tpmi' manual page for more information."""
+    man_msg = """Refer to 'pepc-tpmi' manual page for more information."""
     descr = """Read, write, and discover TPMI (Topology Aware Register and PM Capsule Interface)
                registers. """ + man_msg
     subpars = subparsers.add_parser("tpmi", help=text, description=descr)

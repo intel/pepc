@@ -71,7 +71,7 @@ SSH_OPTIONS: list[SSHOptionsDictType] = [
         "kwargs" : {
             "dest" : "hostname",
             "default" : "localhost",
-            "help" : "Name of the host to run the command on."
+            "help" : "User name for SSH login to the remote host. Defaults to 'root."
         },
     },
     {
@@ -91,9 +91,8 @@ SSH_OPTIONS: list[SSHOptionsDictType] = [
         "argcomplete" : "FilesCompleter",
         "kwargs" : {
             "dest" : "privkey",
-            "help" : "Path to the private SSH key that should be used for logging into the remote "
-                     "host. By default the key is automatically found from standard paths like "
-                     "'~/.ssh'."
+            "help" : "Path to the private SSH key for logging into the remote host. Defaults to "
+                     "keys in standard paths like '$HOME/.ssh'."
         },
     },
     {
@@ -103,7 +102,7 @@ SSH_OPTIONS: list[SSHOptionsDictType] = [
         "kwargs" : {
             "dest" : "timeout",
             "default" : 8,
-            "help" : "SSH connect timeout in seconds, default is 8."
+            "help" : "Timeout for establishing an SSH connection in seconds. Defaults to 8."
         },
     },
 ]

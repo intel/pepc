@@ -28,35 +28,35 @@ General options
    Print version and exit.
 
 **-H** *HOSTNAME*, **--host** *HOSTNAME*
-   Name of the host to run the command on.
+   User name for SSH login to the remote host. Defaults to 'root.
 
 **-U** *USERNAME*, **--username** *USERNAME*
    Name of the user to use for logging into the remote host over SSH. The default user name is
    'root'.
 
 **-K** *PRIVKEY*, **--priv-key** *PRIVKEY*
-   Path to the private SSH key that should be used for logging into the remote host. By default the
-   key is automatically found from standard paths like '$HOME/.ssh'.
+   Path to the private SSH key for logging into the remote host. Defaults to keys in standard paths
+   like '$HOME/.ssh'.
 
 **-T** *TIMEOUT*, **--timeout** *TIMEOUT*
-   SSH connection timeout in seconds, default is 8.
+   Timeout for establishing an SSH connection in seconds. Defaults to 8.
 
 **-D** *DATASET*, **--dataset** *DATASET*
-   This option is for debugging and testing purposes only, it defines the dataset that will be used
-   to emulate a host for running the command on. This option is typically used when running 'pepc'
-   from the source code directory, which includes datasets for many different systems.
+   This option is for debugging and testing. It specifies the dataset to emulate a host for running
+   the command. Typically used when running 'pepc' from the source directory, which includes datasets
+   for various systems.
 
-   The argument can be the dataset path, 'all' to specify all available dataset or name in which
-   case the following locations will be searched for.
+   The argument can be a dataset path or name. If specified by name, the following locations are
+   searched for the dataset.
 
-   1. './tests/data', in the directory of the running program
+   1. './tests/data' in the program's directory
    2. '$PEPC_DATA_PATH/tests/data'
    3. '$HOME/.local/share/pepc/tests/data'
    4. '/usr/local/share/pepc/tests/data'
    5. '/usr/share/pepc/tests/data'
 
 **--force-color**
-   Force coloring of the text output.
+   Force colorized output even if the output stream is not a terminal (adds ANSI escape codes).
 
 **--override-cpu-model** *VFM*
    This option is for debugging and testing purposes only. Override the target host CPU model and
