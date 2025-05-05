@@ -14,32 +14,29 @@ Command *'tpmi'*
 Background
 ==========
 
-TPMI stands for Topology Aware Register and PM Capsule Interface and it is a memory-mapped interface
-for reading and writing processor's registers related to power management features on Intel CPUs.
+TPMI, or Topology Aware Register and PM Capsule Interface, is a memory-mapped interface for
+accessing processor registers related to power management on Intel CPUs.
 
-TPMI registers are exposed by the processor via PCIe VSEC (Vendor-Specific Extended Capabilities),
-and the registers are grouped into TPMI features. For example, the "uncore" TPMI feature includes
-processor registers related to uncore frequency scaling. The "rapl" TPMI feature includes processor
-registers related to processor's Running Average Power Limit (RAPL). The "sst" feature includes
-processor registers related to Intel Speed Select Technology (SST).
+These registers are exposed via PCIe VSEC (Vendor-Specific Extended Capabilities) and grouped into
+TPMI features. For instance, the "uncore" feature includes registers for uncore frequency scaling,
+the "rapl" feature covers Running Average Power Limit (RAPL) registers, and the "sst" feature
+includes registers for Intel Speed Select Technology (SST).
 
-In order for the 'pepc' tool to decode TPMI features, the spec file is required. The spec file
-describes the register names, bits, and offsets in the memory-mapped PCIe address space. If there
-is no spec file for a feature, it cannot be decoded.
+To decode TPMI features, the 'pepc' tool requires a spec file describing register names, bits, and
+offsets in the PCIe memory-mapped address space. Features without a spec file cannot be decoded.
 
-The 'pepc' project comes with some standard pepc files, which will be searched for in the following
-locations and in the following order.
+The 'pepc' project includes standard spec files searched in the following locations and order:
 
    1. './tpmi', in the directory of the running program
    2. '$PEPC_DATA_PATH/tpmi'
    3. '$HOME/.local/share/pepc/tpmi'
-   4. '/usr/local/share/pepc/tpmi'
-   5. '/usr/share/pepc/tpmi'
+   4. '$VIRTUAL_ENV/share/pepc/tpmi'
+   5. '/usr/local/share/pepc/tpmi'
+   6. '/usr/share/pepc/tpmi'
 
-In addition to this, users can provide custom/private spec files by placing them to a directory
-and specifying the directory path via the 'PEPC_TPMI_DATA_PATH' environment variable. The contents
-of the standard spec files are based on the public documentation available at
-https://github.com/intel/tpmi_power_management/.
+Users can also provide custom spec files by placing them in a directory and setting its path via the
+'PEPC_TPMI_DATA_PATH' environment variable. Standard spec files are based on public documentation
+available at https://github.com/intel/tpmi_power_management/.
 
 General options
 ===============
@@ -91,68 +88,65 @@ General options
 Subcommand *'ls'*
 =================
 
-List supported TPMI features.
+Display supported TPMI features.
 
 **-l**, **--long**
-   Provide additional information, such as TPMI device PCI addresses and TPMI instance numbers.
+   Include details like TPMI device PCI addresses and instance numbers for more specific output.
 
 **--all**
-   Also print IDs of TPMI features supported by the processor, but for which there are no spec files,
-   so they cannot be decoded.
+   Include IDs of TPMI features supported by the processor but lacking spec files for decoding.
 
 Subcommand *'read'*
 ===================
 
-Read one or multiple TPMI registers.
+Read one or more TPMI registers.
 
 **-F** FEATURES, **--features** FEATURES
-  Comma-separated list of TPMI feature names to read the register(s) for. Read for all supported
-  features by default.
+   Comma-separated list of TPMI feature names to read the registers for. Defaults to all supported
+   features.
 
 **-a** ADDRS, **--addresses** ADDRS
-  Comma-separated list of TPMI device PCI addresses to read the registers from. Read from all
-  devices by default.
+   Comma-separated list of TPMI device PCI addresses to read the registers from. Defaults to all
+   devices.
 
 **--packages** PACKAGES
-  Comma-separated list of integer package numbers to read TPMI registers for (all packages by
-  default).
+   Comma-separated list of package numbers to read TPMI registers for (defaults to all packages).
 
 **-i** INSTANCES, **--instances** INSTANCES
-   Comma-separated list of integer TPMI instance numbers to read the registers from (all instances
-   by default).
+   Comma-separated list of TPMI instance numbers to read registers from (defaults to all instances).
 
 **-R** REGISTERS, **--registers** REGISTERS
-   Comma-separated list of TPMI registers names to read (all registers by default).
+   Comma-separated list of TPMI register names to read. Defaults to all registers.
 
 **-b** BFNAMES, **--bitfields** BFNAMES
-   Comma-separated list of TPMI register bit field names to read (all bit fields by default).
+   Comma-separated list of TPMI register bit field names to read. Defaults to all bit fields.
 
 **--yaml**
-   Print information in YAML format.
+   Output information in YAML format.
 
 Subcommand *'write'*
 ====================
 
-Write to a TPMI register.
+Write a value to a TPMI register or its bit field.
 
 **-F** FEATURE, **--feature** FEATURE
-  Name of the TPMI feature the register belongs to.
+   Name of the TPMI feature the register belongs to.
 
 **-a** ADDRS, **--addresses** ADDRS
-  Comma-separated list of TPMI device PCI addresses to write to.
+   Comma-separated list of PCI addresses of TPMI devices to write to.
 
 **--packages** PACKAGES
-  Comma-separated list of package numbers to write the TPMI register for (all packages by default).
+   Comma-separated list of package numbers to write to (defaults to all packages).
 
 **-i** INSTANCES, **--instances** INSTANCES
-  Comma-separated list of integer TPMI instance numbers to write to (all instances by default).
+   Comma-separated list of TPMI instance numbers to write to. Defaults to all instances.
 
 **-R** REGNAME, **--register** REGNAME
-  Name of the TPMI register to write to.
+   Name of the TPMI register to write.
 
 **-b** BITFIELD, **--bitfield** BITFIELD
-  Name of the TPMI register bitfield to write to. If not specified, write to the register, not a bit
-  field of the register.
+   Name of the TPMI register bitfield to write. Defaults to writing to the entire register if not
+   specified.
 
 **-V** VALUE, **--value** VALUE
-  The value to write to the TPMI register or its bit field.
+   Value to write to the TPMI register or bit field.
