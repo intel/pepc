@@ -71,7 +71,7 @@ General options
 Target CPU specification options
 ================================
 
-All sub-commans (*'info'*, *'config'*, *'save'*) support the following target CPU specification
+All sub-commans (*'info'*, *'config'*) support the following target CPU specification
 options.
 
 **--cpus** *CPUS*
@@ -118,920 +118,234 @@ options.
 Subcommand *'info'*
 ===================
 
-Get P-states information for specified CPUs. By default, print all information about all CPUs.
-
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
+Retrieve P-states information for specified CPUs. By default, display all details for all CPUs. Use
+target CPU specification options to define a subset of CPUs, cores, dies, or packages.
 
 **--yaml**
-   Print information in YAML format.
+   Display output in YAML format.
+
+**-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
+   A comma-separated list of mechanisms for retrieving information. Use '--list-mechanisms' to
+   view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while
+   others may support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried in the specified
+   order. By default, all mechanisms are allowed, and the most preferred ones are tried first.
 
 **--list-mechanisms**
-   List mechanisms available for reading P-states information.
+   Display available mechanisms for retrieving P-states information.
 
 **--min-freq**
-   Get minimum CPU frequency (details in 'min_freq_').
+   Retrieve the minimum CPU frequency using 'sysfs' (preferred) or 'msr'. The 'sysfs' mechanism reads
+   '/sys/devices/system/cpu/policy<NUMBER>/scaling_min_freq', while 'msr' reads the MSR_HWP_REQUEST
+   (0x774) register, bits 7:0.
 
 **--max-freq**
-   Get maximum CPU frequency (details in 'max_freq_').
+   Retrieve the maximum CPU frequency using 'sysfs' (preferred) or 'msr'. The 'sysfs' mechanism reads
+   '/sys/devices/system/cpu/policy<NUMBER>/scaling_max_freq', while 'msr' reads the MSR_HWP_REQUEST
+   (0x774) register, bits 15:8.
 
 **--min-freq-limit**
-   Get minimum supported CPU frequency (details in 'min_freq_limit_').
+   Retrieve the minimum CPU frequency supported by the Linux kernel from
+   "/sys/devices/system/cpu/policy<NUMBER>/cpuinfo_min_freq".
 
 **--max-freq-limit**
-   Get maximum supported CPU frequency (details in 'max_freq_limit_').
+   Retrieve the maximum CPU frequency supported by the Linux kernel from
+   "/sys/devices/system/cpu/policy<NUMBER>/cpuinfo_max_freq".
 
 **--frequencies**
-   Get acceptable CPU frequencies (details in 'frequencies_').
+   List CPU frequencies supported by the Linux kernel for '--min-freq' and '--max-freq' options.
+   The 'sysfs' mechanism reads
+   '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_available_frequencies'. The 'doc'
+   mechanism assumes all frequencies from '--min-freq-limit' to '--max-freq-limit' are available
+   with a step equal to '--bus-clock'.
 
 **--base-freq**
-   Get base CPU frequency (details in 'base_freq_').
+   Retrieve the base CPU frequency, also known as the "guaranteed frequency," HFM (High Frequency
+   Mode), or P1. Preferred mechanism is 'sysfs', which reads
+   '/sys/devices/system/cpu/policy<NUMBER>/base_frequency'. If unavailable, it falls back to
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit'. The 'msr' mechanism reads it from
+   MSR_PLATFORM_INFO (0xCE), bits 15:8.
 
 **--bus-clock**
-   Get bus clock speed (details in 'bus_clock_').
+   Retrieve the bus clock frequency, one of the CPU's reference clocks. The 'msr' mechanism reads
+   MSR_FSB_FREQ (0xCD), bits 2:0, for legacy Intel platforms. For modern Intel platforms, the 'doc'
+   mechanism assumes a 100MHz bus clock.
 
 **--min-oper-freq**
-   Get minimum CPU operating frequency (details in 'min_oper_freq_').
+   Retrieve the minimum CPU operating frequency, the lowest frequency the CPU can operate at. This
+   frequency, also known as Pm, may not always be directly available to the OS but can be used by
+   the platform in certain scenarios (e.g., some C-states). Mechanism: 'msr', reads MSR_PLATFORM_INFO
+   (0xCE), bits 55:48.
 
 **--max-eff-freq**
-   Get maximum CPU efficiency frequency (details in 'max_eff_freq_').
+   Retrieve the maximum CPU efficiency frequency, also known as LFM (Low Frequency Mode) or Pn.
+   Mechanism: 'msr', reads MSR_PLATFORM_INFO (0xCE), bits 47:40.
 
 **--turbo**
-   Check if turbo is enabled or disabled (details in 'turbo_').
+   Check if turbo is enabled or disabled. When enabled, CPUs can run at frequencies above the base
+   frequency if allowed by the OS and thermal conditions. Reads the sysfs file based on the CPU
+   frequency driver: intel_pstate - '/sys/devices/system/cpu/intel_pstate/no_turbo', acpi-cpufreq -
+   '/sys/devices/system/cpu/cpufreq/boost'. The setting has global scope.
 
 **--max-turbo-freq**
-   Get maximum CPU turbo frequency (details in 'max_turbo_freq_').
+   Retrieve the maximum turbo frequency, the highest frequency a single CPU can achieve. Also known
+   as max 1-core turbo or P01. Mechanism: MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
 
 **--min-uncore-freq**
-   Get minimum uncore frequency (details in 'min_uncore_freq_').
+   Retrieve the minimum uncore frequency. In case of the 'intel_uncore_frequency_tpmi' driver, read
+   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/min_freq_khz'. In case of the
+   'intel_uncore_frequency' driver, read
+   '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/min_freq_khz'.
 
 **--max-uncore-freq**
-   Get maximum uncore frequency (details in 'max_uncore_freq_').
+   Retrieve the maximum uncore frequency. In case of the 'intel_uncore_frequency_tpmi' driver, read
+   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/max_freq_khz'. In case of the
+   'intel_uncore_frequency' driver, read
+   '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/max_freq_khz'.
 
 **--min-uncore-freq-limit**
-   Get minimum supported uncore frequency (details in 'min_uncore_freq_limit_').
+   Get minimum uncore frequency limit supported but the kernel. In case of the
+   'intel_uncore_frequency_tpmi' driver, read
+   /sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/initial_min_freq_khz'. In case of
+   the 'intel_uncore_frequency' driver, read
+   '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/initial_min_freq_khz'.
 
 **--max-uncore-freq-limit**
-   Get maximum supported uncore frequency (details in 'max_uncore_freq_limit_').
+   Get maximum uncore frequency limit supported but the kernel. In case of the
+   'intel_uncore_frequency_tpmi' driver, read
+   /sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/initial_max_freq_khz'. In case of
+   the 'intel_uncore_frequency' driver, read
+   '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/initial_max_freq_khz'.
 
 **--hwp**
-   Check if hardware power management is enabled or disabled (details in 'hwp_').
+   Check if hardware power management is enabled. When enabled, CPUs can scale their frequency
+   automatically without OS involvement. Mechanism: 'msr', reads MSR_PM_ENABLE (0x770), bit 0.
+   This setting has global scope.
 
 **--epp**
-   Get EPP via sysfs (details in 'epp_').
+   Retrieve EPP (Energy Performance Preference) using 'sysfs' (preferred) or 'msr' mechanisms. EPP
+   is a hint to the CPU on energy efficiency vs performance. The value ranges from 0-255 (maximum
+   energy efficiency to maximum performance) or can be a policy name (supported by 'sysfs' only).
+   The 'sysfs' mechanism reads
+   '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/energy_performance_preference', while the 'msr'
+   mechanism reads MSR_HWP_REQUEST (0x774), bits 31:24.
 
 **--epb**
-   Get EPB via sysfs (details in 'epb_').
+   Retrieve EPB (Energy Performance Bias) using 'sysfs' (preferred) or 'msr' mechanisms. EPB is a
+   hint to the CPU on energy efficiency versus performance. The value ranges from 0-15 (maximum
+   performance to maximum energy efficiency) or can be a policy name (supported by 'sysfs' only).
+   The 'sysfs' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/power/energy_perf_bias', while
+   the 'msr' mechanism reads MSR_ENERGY_PERF_BIAS (0x1B0), bits 3:0.
 
 **--driver**
-   Get CPU frequency driver (details in 'driver_').
+   Retrieve the CPU frequency driver name. The driver enumerates and manages P-states on the
+   platform. The name is read from '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_driver'.
+   While sysfs provides a per-CPU API, Intel platforms typically use a single driver.
 
 **--intel-pstate-mode**
-   Get operation mode of 'intel_pstate' driver (details in 'intel_pstate_mode_').
+   Retrieve the 'intel_pstate' driver mode: 'active', 'passive', or 'off'. In 'active' mode, custom
+   'intel_pstate' governors are used. In 'passive' mode, generic Linux governors are employed.
+   The mode is read from '/sys/devices/system/cpu/intel_pstate/status'.
 
 **--governor**
-   Get CPU frequency governor (details in 'governor_').
+   Retrieve the CPU frequency governor, which determines the P-state based on CPU load and other
+   factors. The governor name is read from
+   '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_governor'.
 
 **--governors**
-   Get list of available CPU frequency governors (details in 'governors_').
+   Retrieve the list of available CPU frequency governors. Governors determine the P-state of a CPU
+   based on its activity and other factors, each implementing a unique selection policy. Available
+   governors are listed in
+   '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_available_governors'.
 
 Subcommand *'config'*
 =====================
 
-Configure P-states on specified CPUs. All options can be used without a parameter, in which case the
-currently configured value(s) will be printed.
-
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
+Configure P-states for specified CPUs. If no parameter is provided, the current value(s) will be
+displayed. Use target CPU specification options to define the subset of CPUs, cores, dies, or
+packages.
 
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
-    Comma-separated list of mechanisms that are allowed to be used for configuring P-states. Use
-    '--list-mechanisms' to get the list of available mechanisms. Note, many options support only one
-    mechanism (e.g., 'sysfs'), some may support multiple (e.g., 'sysfs' and 'msr'). The mechanisms
-    are tried in the specified order. By default, all mechanisms are allowed and the most
-    preferred mechanisms will be tried first.
+   A comma-separated list of mechanisms allowed for configuring P-states. Use '--list-mechanisms'
+   to view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while
+   some support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried in the specified order.
+   By default, all mechanisms are allowed, and the most preferred ones are tried first.
 
 **--list-mechanisms**
-   List mechanisms available for configuring P-states.
+   Display available mechanisms for configuring P-states.
 
 **--min-freq** *MIN_FREQ*
-   Set minimum CPU frequency (details in 'min_freq_').
+   Set the minimum CPU frequency. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be
+   used (for example "900MHz"). Preferred mechanism is 'sysfs', which uses
+   '/sys/devices/system/cpu/policy<NUMBER>/scaling_min_freq'. The 'msr' mechanism uses the
+   MSR_HWP_REQUEST (0x774) register, bits 7:0.
+
+   The following special values can also be used:
+   **min**
+      Minimum frequency supported by the Linux CPU frequency driver (see '--min-freq-limit').
+   **max**
+      Maximum frequency supported by the Linux CPU frequency driver (see '--max-freq-limit').
+   **base**, **hfm**, **P1**
+      Base CPU frequency (see '--base-freq').
+   **eff**, **lfm**, **Pn**
+      Maximum CPU efficiency frequency (see '--max-eff-freq').
+   **Pm**
+      Minimum CPU operating frequency (see '--min-oper-freq').
+
+   Note, on some systems 'Pm' is lower than 'Pn'. For example, 'Pm' may be 500MHz, while 'Pn' may
+   be 800MHz. On such systems, Linux may use 'Pn' as the minimum supported frequency limit. From
+   Linux's perspective, the minimum frequency could be 800MHz, not 500MHz. In this case, using
+   '--min-freq 500MHz --mechanisms sysfs' will fail, while '--min-freq 500MHz --mechanisms msr'
+   will succeed. By default, '--min-freq 500MHz' will also succeed as pepc tries all available
+   mechanisms.
 
 **--max-freq** *MAX_FREQ*
-   Set maximum CPU frequency (details in 'max_freq_').
+   Set the maximum CPU frequency. Similar to '--min-freq', but applies to the maximum frequency.
 
 **--turbo** *on|off*
-   Enable or disable turbo (details in 'turbo_').
+   Toggle turbo mode globally via sysfs. When enabled, CPUs can exceed the base frequency if allowed
+   by the OS and thermal conditions. In case of 'intel_pstate' driver, use
+   '/sys/devices/system/cpu/intel_pstate/no_turbo', in case of 'acpi-cpufreq' driver, use
+   '/sys/devices/system/cpu/cpufreq/boost'.
 
 **--min-uncore-freq** *MIN_UNCORE_FREQ*
-   Set minimum uncore frequency (details in 'min_uncore_freq_').
+   Set the minimum uncore frequency. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also
+   be used (for example '900MHz'). In case of the 'intel_uncore_frequency_tpmi' driver, use
+   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/min_freq_khz'. In case of the
+   'intel_uncore_frequency' driver, use
+   '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/min_freq_khz'.
+
+   The following special values can also be used:
+   **min**
+      Minimum uncore frequency supported (see '--min-freq-limit').
+   **max**
+      Maximum uncore frequency supported (see '--max-freq-limit').
+   **mdl**
+      Middle uncore frequency between minimum and maximum rounded to nearest 100MHz.
 
 **--max-uncore-freq** *MAX_UNCORE_FREQ*
-   Set maximum uncore frequency (details in 'max_uncore_freq_').
+   Set the maximum uncore frequency. Similar to '--min-uncore-freq', but applies to the maximum
+   frequency.
 
 **--epp** *EPP*
-   Set EPP via sysfs (details in 'epp_').
+   Set EPP (Energy Performance Preference) using 'sysfs' (preferred) or 'msr' mechanisms. EPP
+   is a hint to the CPU on energy efficiency vs performance. The value ranges from 0-255 (maximum
+   energy efficiency to maximum performance) or can be a policy name (supported by 'sysfs' only).
+   The 'sysfs' mechanism writes to
+   '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/energy_performance_preference', while the 'msr'
+   mechanism writes to MSR_HWP_REQUEST (0x774), bits 31:24.
 
 **--epb** *EPB*
-   Set EPB via sysfs (details in 'epb_').
+   Set EPB (Energy Performance Bias) using 'sysfs' (preferred) or 'msr' mechanisms. EPB is a
+   hint to the CPU on energy efficiency versus performance. The value ranges from 0-15 (maximum
+   performance to maximum energy efficiency) or can be a policy name (supported by 'sysfs' only).
+   The 'sysfs' mechanism writes to '/sys/devices/system/cpu/cpu<NUMBER>/power/energy_perf_bias',
+   while the 'msr' mechanism writes to MSR_ENERGY_PERF_BIAS (0x1B0), bits 3:0.
 
 **--intel-pstate-mode** *[MODE]*
-   Set operation mode of 'intel_pstate' driver (details in 'intel_pstate_mode_').
+   Set the 'intel_pstate' driver mode: 'active', 'passive', or 'off'. In 'active' mode, custom
+   'intel_pstate' governors are used. In 'passive' mode, generic Linux governors are employed.
+   Writes to '/sys/devices/system/cpu/intel_pstate/status'.
 
 **--governor** *[NAME]*
-   Set CPU frequency governor (details in 'governor_').
-
-Subcommand *'save'*
-===================
-
-Save all the modifiable P-state settings into a file. This file can later be used for restoring
-P-state settings with the 'pepc pstates restore' command.
-
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
-
-**-o** *OUTFILE*, **--outfile** *OUTFILE*
-   Name of the file to save the settings to (printed to standard output
-   by default).
-
-Subcommand *'restore'*
-======================
-
-Restore P-state settings from a file previously created with the 'pepc pstates save' command.
-
-**-f** *INFILE*, **--from** *INFILE*
-   Name of the file from which to restore the settings from, use "-" to read from the standard
-   output.
-
-----------------------------------------------------------------------------------------------------
-
-==========
-Properties
-==========
-
-min_freq
-========
-
-min_freq - Minimum CPU frequency
-
-Synopsis
---------
-
-| pepc pstates *info* **--min-freq**
-| pepc pstates *config* **--min-freq**\ =<value>
-
-Description
------------
-
-Minimum CPU frequency is the lowest frequency the CPU was configured the CPU to run at.
-
-The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used
-(for example "900MHz").
-
-The following special values are supported:
-
-**min**
-   Minimum frequency supported by the Linux CPU frequency driver (see 'min_freq_limit_').
-**max**
-   Maximum frequency supported by the Linux CPU frequency driver (see 'max_freq_limit_').
-**base**, **hfm**, **P1**
-   Base CPU frequency (see 'base_freq_').
-**eff**, **lfm**, **Pn**
-   Maximum CPU efficiency frequency (see 'max_eff_freq_').
-**Pm**
-   Minimum CPU operating frequency (see 'min_oper_freq_').
-
-Note, on some systems 'Pm' is lower than 'lfm'. For example, 'Pm' may be 500MHz,
-while 'lfm' may be 800MHz. On those system, Linux may be using 'lfm' as the minimum
-supported frequency limit. So from Linux perspective, the minimum frequency may be 800MHz, not
-500MHz. In this case '--min-freq 500MHz --mechanisms sysfs' will fail, while
-'--min-freq 500MHz --mechanisms sysfs' will succeed. And '--min-freq 500MHz' will also
-succeed, because by default, pepc tries all the available mechanisms.
-
-Mechanisms
-----------
-
-**sysfs**
-"/sys/devices/system/cpu/policy0/scaling_min_freq", where '0' is replaced with desired CPU
-number.
-
-**msr**
-MSR_HWP_REQUEST (0x774), bits 7:0.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-max_freq
-========
-
-max_freq - Maximum CPU frequency
-
-Synopsis
---------
-
-| pepc pstates *info* **--max-freq**
-| pepc pstates *config* **--max-freq**\ =<value>
-
-Description
------------
-
-Maximum CPU frequency is the highest frequency the CPU was configured to run at.
-
-The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used (for example '900MHz').
-
-The following special values are supported:
-
-**min**
-   Minimum frequency supported by the Linux CPU frequency driver (see 'min_freq_limit_').
-**max**
-   Maximum frequency supported by the Linux CPU frequency driver (see 'max_freq_limit_').
-**base**, **hfm**, **P1**
-   Base CPU frequency (see 'base_freq_').
-**eff**, **lfm**, **Pn**
-   Maximum CPU efficiency frequency (see 'max_eff_freq_').
-**Pm**
-   Minimum CPU operating frequency (see 'min_oper_freq_').
-
-Mechanisms
-----------
-
-**sysfs**
-"/sys/devices/system/cpu/policy0/scaling_max_freq", where '0' is replaced with desired CPU
-number.
-
-**msr**
-MSR_HWP_REQUEST (0x774), bits 15:8.
-
------
-
-This property has CPU scope.
-
-min_freq_limit
-==============
-
-min_freq_limit - Minimum supported CPU frequency
-
-Synopsis
---------
-
-pepc pstates *info* **--min-freq-limit**
-
-Description
------------
-
-Minimum supported CPU frequency is the lowest frequency the CPU can be configured to run at.
-
-Mechanism
----------
-
-**sysfs**
-"/sys/devices/system/cpu/policy0/cpuinfo_min_freq", where '0' is replaced with desired CPU
-number.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-max_freq_limit
-==============
-
-max_freq_limit - Maximum supported CPU frequency
-
-Synopsis
---------
-
-pepc pstates *info* **--min-freq-limit**
-
-Description
------------
-
-Maximum supported CPU frequency is the highest frequency the CPU can be configured to run at.
-
-Mechanism
----------
-
-**sysfs**
-"/sys/devices/system/cpu/policy0/cpuinfo_max_freq", where '0' is replaced with desired CPU
-number.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-frequencies
-===========
-
-frequencies - acceptable CPU frequencies
-
-Synopsis
---------
-
-| pepc pstates *info* **--frequencies**
-
-Description
------------
-
-List of CPU frequencies exposed by the Linux CPU frequency driver and available for the users via
-'--min-freq' and '--max-freq' options.
-
-Mechanisms
-----------
-
-**sysfs**
-"/sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies", '0' is replaced
-with desired CPU number.
-
-**doc**
-In case of Intel CPUs and 'intel_idle' driver, assume all frequencies from 'min_freq_limit_' to
-'max_freq_limit_' with 'bus_clock_' step.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-base_freq
-=========
-
-base_freq - Base CPU frequency
-
-Synopsis
---------
-
-pepc pstates *info* **--base-freq**
-
-Description
------------
-
-Base CPU frequency is the highest sustainable CPU frequency. This frequency is also referred to as
-"guaranteed frequency", HFM (High Frequency Mode), or P1.
-
-The base frequency is acquired from a sysfs file or from an MSR register, depending on platform and
-the CPU frequency driver.
-
-Mechanisms
-----------
-
-**sysfs**
-"/sys/devices/system/cpu/policy0/base_frequency", where '0' is replaced with desired CPU
-number. If this file does not exist, the "/sys/devices/system/cpu/cpu0/cpufreq/bios_limit"
-sysfs file is used (where '0' is replaced with desired CPU number).
-
-**msr**
-MSR_PLATFORM_INFO (0xCE), bits 15:8.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-bus_clock
-=========
-
-bus_clock - Bus clock speed.
-
-Synopsis
---------
-
-pepc pstates *info* **--bus-clock**
-
-Description
------------
-
-Bus clock refers to how quickly the system bus can move data from one computer component to the
-other.
-
-Mechanisms
-----------
-
-**msr**
-MSR_FSB_FREQ (0xCD), bits 2:0.
-**doc**
-100MHz on modern Intel platforms.
-
-Scope
------
-
-This property has package scope. Exceptions: Silvermonts and Airmonts have module scope.
-
-----------------------------------------------------------------------------------------------------
-
-min_oper_freq
-=============
-
-min_oper_freq - Minimum CPU operating frequency
-
-Synopsis
---------
-
-pepc pstates *info* **--min-oper-freq**
-
-Description
------------
-
-Minimum operating frequency is the lowest possible frequency the CPU can operate at. Depending on
-the CPU model, this frequency may or may not be directly available to the OS, but the
-platform may use it in certain situations (e.g., in some C-states). This frequency is also referred
-to as Pm.
-
-Mechanism
----------
-
-**msr**
-MSR_PLATFORM_INFO (0xCE), bits 55:48.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-max_eff_freq
-============
-
-max_eff_freq - Maximum CPU efficiency frequency
-
-Synopsis
---------
-
-pepc pstates *info* **--max-eff-freq**
-
-Description
------------
-
-Maximum efficiency frequency is the most energy efficient CPU frequency. This frequency is also
-referred to as LFM (Low Frequency Mode) or Pn.
-
-Mechanism
----------
-
-**msr**
-MSR_PLATFORM_INFO (0xCE), bits 47:40.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-turbo
-=====
-
-turbo - Turbo
-
-Synopsis
---------
-
-| pepc pstates *info* **--turbo**
-| pepc pstates *config* **--turbo**\ =<on|off>
-
-Description
------------
-
-When turbo is enabled, the CPUs can automatically run at a frequency greater than base frequency.
-
-Mechanism
----------
-
-**sysfs**
-Location of the turbo knob in sysfs depends on the CPU frequency driver.
-
-intel_pstate - "/sys/devices/system/cpu/intel_pstate/no_turbo"
-
-acpi-cpufreq - "/sys/devices/system/cpu/cpufreq/boost"
-
-Scope
------
-
-This property has global scope.
-
-----------------------------------------------------------------------------------------------------
-
-max_turbo_freq
-==============
-
-max_turbo_freq - Maximum CPU turbo frequency
-
-Synopsis
---------
-
-| pepc pstates *info* **--max-turbo-freq**
-
-Description
------------
-
-Maximum 1-core turbo frequency is the highest frequency a single CPU can operate at. This frequency
-is also referred to as max. 1-core turbo and P01.
-
-Mechanism
----------
-
-**msr**
-MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-min_uncore_freq
-===============
-
-min_uncore_freq - Minimum uncore frequency
-
-Synopsis
---------
-
-| pepc pstates *info* **--min-uncore-freq**
-| pepc pstates *config* **--min-uncore-freq**\ =<value>
-
-Description
------------
-
-Minimum uncore frequency is the lowest frequency the OS configured the CPU to run at, via sysfs knobs.
-
-The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used
-(for example '900MHz').
-
-The following special values are supported:
-
-**min**
-   Minimum uncore frequency supported (see 'min_freq_limit_').
-**max**
-   Maximum uncore frequency supported (see 'max_freq_limit_').
-**mdl**
-   Middle uncore frequency between minimum and maximum rounded to nearest 100MHz.
-
-Mechanism
----------
-
-**sysfs**
-
-In case of 'intel_uncore_frequency_tpmi' driver, file
-"/sys/devices/system/cpu/intel_uncore_frequency/uncore00/min_freq_khz",
-where '00' is replaced with the uncore number corresponding to the desired package
-and die numbers.
-
-In case of 'intel_uncore_frequency' driver, file
-"/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/min_freq_khz",
-where '00' is replaced with desired package number and '01' is replaced with desired die number.
-
-Scope
------
-
-This property has die scope.
-
-----------------------------------------------------------------------------------------------------
-
-max_uncore_freq
-===============
-
-max_uncore_freq - Maximum uncore frequency
-
-Synopsis
---------
-
-| pepc pstates *info* **--max-uncore-freq**
-| pepc pstates *config* **--max-uncore-freq**\ =<value>
-
-Description
------------
-
-Maximum uncore frequency is the highest frequency the OS configured the CPU to run at, via sysfs knobs.
-
-The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used
-(for example "900MHz").
-
-The following special values are supported:
-
-**min**
-   Minimum uncore frequency supported (see 'min_freq_limit_').
-**max**
-   Maximum uncore frequency supported (see 'max_freq_limit_').
-**mdl**
-   Middle uncore frequency between minimum and maximum rounded to nearest 100MHz.
-
-Mechanism
----------
-
-**sysfs**
-
-In case of 'intel_uncore_frequency_tpmi' driver, file
-"/sys/devices/system/cpu/intel_uncore_frequency/uncore00/max_freq_khz",
-where '00' is replaced with the uncore number corresponding to the desired package
-and die numbers.
-
-In case of 'intel_uncore_frequency' driver, file
-"/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/max_freq_khz",
-where '00' is replaced with desired package number and '01' is replaced with desired die number.
-
-Scope
------
-
-This property has die scope.
-
-----------------------------------------------------------------------------------------------------
-
-min_uncore_freq_limit
-=====================
-
-min_uncore_freq_limit - Minimum supported uncore frequency
-
-Synopsis
---------
-
-pepc pstates *info* **--min-uncore-freq-limit**
-
-Description
------------
-
-Minimum supported uncore frequency is the lowest uncore frequency supported by the OS.
-
-Mechanism
----------
-
-**sysfs**
-
-In case of 'intel_uncore_frequency_tpmi' driver, file
-"/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_min_freq_khz",
-where '00' is replaced with the uncore number corresponding to the desired package
-and die numbers.
-
-"/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/initial_min_freq_khz",
-where '00' is replaced with desired package number and '01' is replaced with desired
-die number.
-
-Scope
------
-
-This property has die scope.
-
-----------------------------------------------------------------------------------------------------
-
-max_uncore_freq_limit
-=====================
-
-max_uncore_freq_limit - Maximum supported uncore frequency
-
-Synopsis
---------
-
-pepc pstates *info* **--max-uncore-freq-limit**
-
-Description
------------
-
-Maximum supported uncore frequency is the highest uncore frequency supported by the OS.
-
-Mechanism
----------
-
-**sysfs**
-
-In case of 'intel_uncore_frequency_tpmi' driver, file
-"/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_max_freq_khz",
-where '00' is replaced with the uncore number corresponding to the desired package
-and die numbers.
-
-"/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_01/initial_max_freq_khz",
-where '00' is replaced with desired package number and '01' with desired
-die number.
-
-Scope
------
-
-This property has die scope.
-
-----------------------------------------------------------------------------------------------------
-
-hwp
-===
-
-hwp - Hardware power management
-
-Synopsis
---------
-
-pepc pstates *info* **--hwp**
-
-Description
------------
-
-When hardware power management is enabled, CPUs can automatically scale their frequency without
-active OS involvement.
-
-Mechanism
----------
-
-**msr**
-MSR_PM_ENABLE (0x770), bit 0.
-
-Scope
------
-
-This property has global scope.
-
-----------------------------------------------------------------------------------------------------
-
-epp
-===
-
-epp - Energy Performance Preference
-
-Synopsis
---------
-
-| pepc pstates *info* **--epp**
-| pepc pstates *config* **--epp**\ =<value>
-
-Description
------------
-
-Energy Performance Preference is a hint to the CPU on energy efficiency vs performance. EPP value is
-a number in range of 0-255 (maximum energy efficiency to maximum performance), or a policy name.
-
-Mechanisms
----------
-
-**sysfs**
-"/sys/devices/system/cpu/cpufreq/policy0/energy_performance_preference", where '0' is replaced
-with desired CPU number.
-
-**msr**
-MSR_HWP_REQUEST (0x774), bits 31:24.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-epb
-===
-epb - Energy Performance Bias
-
-Synopsis
---------
-
-| pepc pstates *info* **--epb**
-| pepc pstates *config* **--epb**\ =<value>
-
-Description
------------
-
-Energy Performance Bias is a hint to the CPU on energy efficiency vs performance. EBP value is a
-number in range of 0-15 (maximum performance to maximum energy efficiency), or a policy name.
-
-Mechanisms
-----------
-
-**sysfs**
-"/sys/devices/system/cpu/cpu0/power/energy_perf_bias", where '0' is replaced with desired CPU
-number.
-
-**msr**
-MSR_ENERGY_PERF_BIAS (0x1B0), bits 3:0.
-
-Scope
------
-
-This property has CPU scope on most platforms. However, on Silvermont systems it has core
-scope and on Westmere and Sandybridge systems it has package scope.
-
-----------------------------------------------------------------------------------------------------
-
-driver
-======
-
-driver - CPU frequency driver
-
-Synopsis
---------
-
-pepc pstates *info* **--driver**
-
-Description
------------
-
-CPU frequency driver enumerates and requests the P-states available on the platform.
-
-Mechanism
----------
-
-**sysfs**
-"/sys/devices/system/cpu/cpufreq/policy0/scaling_driver", where '0' is replaced with desired
-CPU number.
-
-Scope
------
-
-This property has global scope.
-
-----------------------------------------------------------------------------------------------------
-
-intel_pstate_mode
-=================
-
-intel_pstate_mode - Operation mode of 'intel_pstate' driver
-
-Synopsis
---------
-
-| pepc pstates *info* **--intel-pstate-mode**
-| pepc pstates *config* **--intel-pstate-mode**\ =<mode>
-
-Description
------------
-
-The 'intel_pstate' driver has 3 operation modes: 'active', 'passive' and 'off'. The main
-difference between the active and passive mode is in which frequency governors are used - the
-generic Linux governors (passive mode) or the custom, built-in 'intel_pstate' driver governors
-(active mode).
-
-Mechanism
----------
-
-**sysfs**
-"/sys/devices/system/cpu/intel_pstate/status".
-
-Scope
------
-
-This property has global scope.
-
-----------------------------------------------------------------------------------------------------
-
-governor
-========
-
-governor - CPU frequency governor
-
-Synopsis
---------
-
-| pepc pstates *info* **--governor**
-| pepc pstates *config* **--governor**\ =<name>
-
-Description
------------
-
-CPU frequency governor decides which P-state to select on a CPU depending on CPU business and other
-factors.
-
-Mechanism
----------
-
-**sysfs**
-"/sys/devices/system/cpu/cpufreq/policy0/scaling_governor", where '0' is replaced with desired
-CPU number.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-governors
-=========
-
-governors - Available CPU frequency governors
-
-Synopsis
---------
-
-pepc pstates *info* **--governors**
-
-Description
------------
-
-CPU frequency governors decide which P-state to select on a CPU depending on CPU business and other
-factors. Different governors implement different selection policy.
-
-Mechanism
----------
-
-**sysfs**
-"/sys/devices/system/cpu/cpufreq/policy0/scaling_available_governors", where '0' is replaced
-with desired CPU number.
-
-Scope
------
-
-This property has global scope.
+   Set the CPU frequency governor, which determines the P-state based on CPU load and other factors.
+   Writes to '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_governor'.
