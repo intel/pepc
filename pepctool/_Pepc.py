@@ -381,34 +381,6 @@ def build_arguments_parser():
     _add_config_subcommand_options(CStates.PROPS, subpars2)
 
     #
-    # Create parser for the 'cstates save' command.
-    #
-    text = "Save C-states settings."
-    descr = f"""Save all the modifiable C-state settings into a file. This file can later be used
-                for restoring C-state settings with the '{TOOLNAME} cstates restore' command. """ \
-            + man_msg
-    subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_cstates_save_command)
-
-    _add_target_cpus_arguments(subpars2, "List of %s to save C-state information about.")
-
-    text = "Name of the file to save the settings to."
-    subpars2.add_argument("-o", "--outfile", help=text)
-
-    #
-    # Create parser for the 'cstates restore' command.
-    #
-    text = "Restore C-states settings."
-    descr = f"""Restore C-state settings from a file previously created with the
-               '{TOOLNAME} cstates save' command. """ + man_msg
-    subpars2 = subparsers2.add_parser("restore", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_cstates_restore_command)
-
-    text = """Name of the file from which to restore the settings from, use "-" to read from the
-              standard output."""
-    subpars2.add_argument("-f", "--from", dest="infile", help=text)
-
-    #
     # Create parser for the 'pstates' command.
     #
     text = "P-state commands."
@@ -456,34 +428,6 @@ def build_arguments_parser():
     _add_config_subcommand_options(PStates.PROPS, subpars2)
 
     #
-    # Create parser for the 'pstates save' command.
-    #
-    text = "Save P-states settings."
-    descr = f"""Save all the modifiable P-state settings into a file. This file can later be used
-                for restoring P-state settings with the '{TOOLNAME} pstates restore' command. """ \
-            + man_msg
-    subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_pstates_save_command)
-
-    _add_target_cpus_arguments(subpars2, "List of %s to save P-state information about.")
-
-    text = "Name of the file to save the settings to (printed to standard output by default)."
-    subpars2.add_argument("-o", "--outfile", help=text, default="-")
-
-    #
-    # Create parser for the 'pstates restore' command.
-    #
-    text = "Restore P-states settings."
-    descr = f"""Restore P-state settings from a file previously created with the
-               '{TOOLNAME} pstates save' command. """ + man_msg
-    subpars2 = subparsers2.add_parser("restore", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_pstates_restore_command)
-
-    text = """Name of the file from which to restore the settings from, use "-" to read from the
-              standard output."""
-    subpars2.add_argument("-f", "--from", dest="infile", help=text)
-
-    #
     # Create parser for the 'pmqos' command.
     #
     text = "PM QoS commands."
@@ -521,34 +465,6 @@ def build_arguments_parser():
     _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
 
     _add_config_subcommand_options(PMQoS.PROPS, subpars2)
-
-    #
-    # Create parser for the 'pmqos save' command.
-    #
-    text = "Save PM QoS settings."
-    descr = f"""Save all the modifiable PM QoS settings into a file. This file can later be used
-                for restoring PM QoS settings with the '{TOOLNAME} pmqos restore' command. """ \
-            + man_msg
-    subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_pmqos_save_command)
-
-    _add_target_cpus_arguments(subpars2, "List of %s to save PM QoS information about.")
-
-    text = "Name of the file to save the settings to (printed to standard output by default)."
-    subpars2.add_argument("-o", "--outfile", help=text, default="-")
-
-    #
-    # Create parser for the 'pmqos restore' command.
-    #
-    text = "Restore PM QoS settings."
-    descr = f"""Restore PM QoS settings from a file previously created with the
-               '{TOOLNAME} pmqos save' command. """ + man_msg
-    subpars2 = subparsers2.add_parser("restore", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_pmqos_restore_command)
-
-    text = """Name of the file from which to restore the settings from, use "-" to read from the
-              standard output."""
-    subpars2.add_argument("-f", "--from", dest="infile", help=text)
 
     #
     # Create parser for the 'power' command.
@@ -601,36 +517,6 @@ def build_arguments_parser():
                                exclude=power_exclude)
 
     _add_config_subcommand_options(Power.PROPS, subpars2)
-
-    #
-    # Create parser for the 'power save' command.
-    #
-    text = "Save power settings."
-    man_msg = """Refer to 'pepc-power' manual page for more information."""
-    descr = f"""Save all the modifiable power settings into a file. This file can later be used
-                for restoring power settings with the '{TOOLNAME} power restore' command. """ \
-            + man_msg
-    subpars2 = subparsers2.add_parser("save", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_power_save_command)
-
-    _add_target_cpus_arguments(subpars2, "List of %s to save power information about.",
-                               exclude=power_exclude)
-
-    text = "Name of the file to save the settings to (printed to standard output by default)."
-    subpars2.add_argument("-o", "--outfile", help=text, default="-")
-
-    #
-    # Create parser for the 'power restore' command.
-    #
-    text = "Restore power settings."
-    descr = f"""Restore power settings from a file previously created with the
-               '{TOOLNAME} power save' command. """ + man_msg
-    subpars2 = subparsers2.add_parser("restore", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_power_restore_command)
-
-    text = """Name of the file from which to restore the settings from, use "-" to read from the
-              standard output."""
-    subpars2.add_argument("-f", "--from", dest="infile", help=text)
 
     #
     # Create parser for the 'aspm' command.
@@ -893,20 +779,6 @@ def _cstates_config_command(args, pman):
 
     _PepcCStates.cstates_config_command(args, pman)
 
-def _cstates_save_command(args, pman):
-    """Implement the 'cstates save' command."""
-
-    from pepctool import _PepcCStates
-
-    _PepcCStates.cstates_save_command(args, pman)
-
-def _cstates_restore_command(args, pman):
-    """Implement the 'cstates restore' command."""
-
-    from pepctool import _PepcCStates
-
-    _PepcCStates.cstates_restore_command(args, pman)
-
 def _pstates_info_command(args, pman):
     """Implement the 'pstates info' command."""
 
@@ -920,20 +792,6 @@ def _pstates_config_command(args, pman):
     from pepctool import _PepcPStates
 
     _PepcPStates.pstates_config_command(args, pman)
-
-def _pstates_save_command(args, pman):
-    """Implement the 'pstates save' command."""
-
-    from pepctool import _PepcPStates
-
-    _PepcPStates.pstates_save_command(args, pman)
-
-def _pstates_restore_command(args, pman):
-    """Implement the 'pstates restore' command."""
-
-    from pepctool import _PepcPStates
-
-    _PepcPStates.pstates_restore_command(args, pman)
 
 def _pmqos_info_command(args, pman):
     """Implement the 'pmqos info' command."""
@@ -949,20 +807,6 @@ def _pmqos_config_command(args, pman):
 
     _PepcPMQoS.pmqos_config_command(args, pman)
 
-def _pmqos_save_command(args, pman):
-    """Implement the 'pmqos save' command."""
-
-    from pepctool import _PepcPMQoS
-
-    _PepcPMQoS.pmqos_save_command(args, pman)
-
-def _pmqos_restore_command(args, pman):
-    """Implement the 'pmqos restore' command."""
-
-    from pepctool import _PepcPMQoS
-
-    _PepcPMQoS.pmqos_restore_command(args, pman)
-
 def _power_info_command(args, pman):
     """Implement the 'power info' command."""
 
@@ -976,20 +820,6 @@ def _power_config_command(args, pman):
     from pepctool import _PepcPower
 
     _PepcPower.power_config_command(args, pman)
-
-def _power_save_command(args, pman):
-    """Implement the 'power save' command."""
-
-    from pepctool import _PepcPower
-
-    _PepcPower.power_save_command(args, pman)
-
-def _power_restore_command(args, pman):
-    """Implement the 'power restore' command."""
-
-    from pepctool import _PepcPower
-
-    _PepcPower.power_restore_command(args, pman)
 
 def _aspm_info_command(args, pman):
     """Implement the 'aspm info'. command"""

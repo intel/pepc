@@ -379,62 +379,6 @@ def test_pstates_config_bad(params):
     for opt in _get_bad_config_opts(params, sname="global"):
         common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
-def test_pstates_save_restore(params):
-    """Test 'pepc pstates save' and 'pepc pstates restore' commands."""
-
-    pman = params["pman"]
-    hostname = params["hostname"]
-    tmp_path = params["tmp_path"]
-
-    opts = ("", f"-o {tmp_path}/pstates.{hostname}")
-
-    for opt in opts:
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="CPU"):
-            common.run_pepc(f"pstates save {opt} {cpu_opt}", pman)
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="module"):
-            common.run_pepc(f"pstates save {opt} {cpu_opt}", pman)
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
-            common.run_pepc(f"pstates save {opt} {cpu_opt}", pman)
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
-            common.run_pepc(f"pstates save {opt} {cpu_opt}", pman)
-
-        for cpu_opt in props_common.get_bad_cpu_opts(params):
-            common.run_pepc(f"pstates save {opt} {cpu_opt}", pman, exp_exc=Error)
-
-    state_path = tmp_path / f"state.{hostname}"
-    common.run_pepc(f"pstates save -o {state_path}", pman)
-    state = YAML.load(state_path)
-
-    state_modified = copy.deepcopy(state)
-    for pname in state_modified.keys():
-        if pname in ("min_freq", "max_freq"):
-            val = state["min_freq"][0]["value"]
-        elif pname.endswith("_uncore_freq"):
-            val = state["min_uncore_freq"][0]["value"]
-        elif state[pname][0]["value"] == "on":
-            val = "off"
-        elif state[pname][0]["value"] == "off":
-            val = "on"
-        else:
-            continue
-
-        yaml_dict = state_modified[pname][0]
-        yaml_dict["value"] = val
-
-    state_modified_path = tmp_path / f"state_modified.{hostname}"
-    YAML.dump(state_modified, state_modified_path)
-    common.run_pepc(f"pstates restore -f {state_modified_path}", pman)
-
-    state_read_back_path = tmp_path / f"state_read_back.{hostname}"
-    common.run_pepc(f"pstates save -o {state_read_back_path}", pman)
-    read_back = YAML.load(state_read_back_path)
-    assert read_back == state_modified, "restoring P-states configuration failed"
-
-    common.run_pepc(f"pstates restore -f {state_path}", pman)
-    common.run_pepc(f"pstates save -o {state_read_back_path}", pman)
-    read_back = YAML.load(state_read_back_path)
-    assert read_back == state, "restoring P-states configuration failed"
-
 def _set_freq_pairs(params, min_pname, max_pname):
     """
     Set min. and max frequencies to various values in order to verify that the 'PState' modules set

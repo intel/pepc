@@ -156,38 +156,3 @@ def _power_generate_restore_data(state, pobj):
                 pinfo["value"] = pinfo["value"] - 1
 
     return new_state
-
-def test_power_save_restore(params):
-    """Test 'pepc power save' and 'pepc power restore' commands."""
-
-    pman = params["pman"]
-    hostname = params["hostname"]
-    tmp_path = params["tmp_path"]
-
-    opts = ("", f"-o {tmp_path}/power.{hostname}")
-    for opt in opts:
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
-            common.run_pepc(f"power save {opt} {cpu_opt}", pman)
-
-        for cpu_opt in props_common.get_bad_cpu_opts(params):
-            common.run_pepc(f"power save {opt} {cpu_opt}", pman, exp_exc=Error)
-
-    state_path = tmp_path / f"state.{hostname}"
-    common.run_pepc(f"power save -o {state_path}", pman)
-    state = YAML.load(state_path)
-
-    state_swap = _power_generate_restore_data(state, params["pobj"])
-    state_swap_path = tmp_path / f"state_swap.{hostname}"
-    YAML.dump(state_swap, state_swap_path)
-    common.run_pepc(f"power restore -f {state_swap_path}", pman)
-
-    state_read_back_path = tmp_path / f"state_read_back.{hostname}"
-    common.run_pepc(f"power save -o {state_read_back_path}", pman)
-    read_back = YAML.load(state_read_back_path)
-
-    assert read_back == state_swap, "restoring power configuration failed"
-
-    common.run_pepc(f"power restore -f {state_path}", pman)
-    common.run_pepc(f"power save -o {state_read_back_path}", pman)
-    read_back = YAML.load(state_read_back_path)
-    assert read_back == state, "restoring power configuration failed"

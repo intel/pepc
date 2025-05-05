@@ -130,65 +130,6 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         elif sname == "package":
             pobj.set_prop_packages(pname, val, nums)
 
-    def _restore_prop(self, pname, sname, val, nums):
-        """Restore property 'pname' to value 'val' for CPUs, dies, or packages in  'nums'."""
-
-        self._set_prop(self._pobj, pname, sname, val, nums)
-
-    def _restore_props(self, ydict):
-        """Restore properties from a loaded YAML file and represented by 'ydict'."""
-
-        if self._sysfs_io:
-            self._sysfs_io.start_transaction()
-        if self._msr:
-            self._msr.start_transaction()
-
-        for pname, pinfos in ydict.items():
-            for pinfo in pinfos:
-                if "CPU" in pinfo:
-                    sname = "CPU"
-                elif "package" in pinfo:
-                    sname = "package"
-                else:
-                    sname = "die"
-
-                what = f"{sname} numbers"
-                if sname in ("CPU", "package"):
-                    nums = Trivial.parse_int_list(pinfo[sname], dedup=True, what=what)
-                else:
-                    nums = {}
-                    for pkg, dies in pinfo[sname].items():
-                        nums[pkg] = Trivial.parse_int_list(dies, dedup=True, what=what)
-
-                self._restore_prop(pname, sname, pinfo["value"], nums)
-
-                if self._pcsprint:
-                    kwargs = {f"{sname.lower()}s": nums}
-                    optar = _OpTarget.OpTarget(pman=self._pman, cpuinfo=self._cpuinfo, **kwargs)
-                    self._pcsprint.print_props((pname,), optar, skip_ro=True,
-                                               skip_unsupported=False, action="restored to")
-
-        if self._msr:
-            self._msr.commit_transaction()
-        if self._sysfs_io:
-            self._sysfs_io.commit_transaction()
-
-    def restore(self, infile):
-        """
-        Load and set properties from a YAML file. The arguments are as follows:
-          * infile - path to the properties YAML file ("-" means standard input).
-        """
-
-        if infile == "-":
-            infile = sys.stdin
-
-        ydict = YAML.load(infile)
-
-        known_ykeys = set(self._pobj.props)
-        self._validate_loaded_data(ydict, known_ykeys)
-
-        self._restore_props(ydict)
-
     def __init__(self, pman, pobj, cpuinfo, pcsprint, msr=None, sysfs_io=None):
         """
         Initialize a class instance. The arguments are as follows.
@@ -265,31 +206,6 @@ class PStatesSetter(_PropsSetter):
                 del spinfo[pnm]
                 mnames_info[pnm] = mname
 
-    def _restore_prop(self, pname, sname, val, nums):
-        """Restore property 'pname' to value 'val' for CPUs, dies, or packages in 'nums'."""
-
-        try:
-            super()._restore_prop(pname, sname, val, nums)
-            return
-        except ErrorFreqOrder:
-            if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
-                raise
-
-        # Setting frequency may be tricky because there are ordering constraints.
-        if pname in {"min_freq", "max_freq"}:
-            min_freq_pname = "min_freq"
-            max_freq_pname = "max_freq"
-        else:
-            min_freq_pname = "min_uncore_freq"
-            max_freq_pname = "max_uncore_freq"
-
-        if pname.startswith("min_"):
-            self._set_prop(self._pobj, max_freq_pname, sname, "max", nums)
-            self._set_prop(self._pobj, min_freq_pname, sname, val, nums)
-        elif pname.startswith("max_"):
-            self._set_prop(self._pobj, min_freq_pname, sname, "min", nums)
-            self._set_prop(self._pobj, max_freq_pname, sname, val, nums)
-
 class PMQoSSetter(_PropsSetter):
     """Provides API for changing PM QoS properties."""
 
@@ -316,57 +232,3 @@ class CStatesSetter(_PropsSetter):
             self._pobj.disable_cstates(csnames=csnames, cpus=cpus)
 
         self._pcsprint.print_cstates(csnames=csnames, cpus=cpus, skip_ro=True, action="set to")
-
-    def _restore_cstates(self, ydict):
-        """
-        Restore C-states on/off status using information loaded from a YAML file and represented by
-        the 'ydict' dictionary.
-        """
-
-        for csname, yvals in ydict.items():
-            for yval in yvals:
-                cpus = _PepcCommon.parse_cpus_string(yval["CPU"])
-                value = yval["value"]
-                if value == "on":
-                    self._pobj.enable_cstates(csname, cpus=cpus)
-                elif value == "off":
-                    self._pobj.disable_cstates(csname, cpus=cpus)
-                else:
-                    raise Error(f"bad C-state {csname} on/off status value {value}, should be 'on' "
-                                f"or 'off'")
-
-                self._pcsprint.print_cstates(csnames=(csname,), cpus=cpus, skip_ro=True,
-                                             action="set to")
-
-    def restore(self, infile):
-        """
-        Load and set C-state settings and properties from a YAML file. The arguments are as follows:
-          * infile - path to the properties YAML file ("-" means standard input).
-        """
-
-        csnames = set()
-        with contextlib.suppress(ErrorNotSupported):
-            for _, csinfo in self._pobj.get_cstates_info(csnames="all", cpus="all"):
-                for csname in csinfo:
-                    csnames.add(csname)
-
-        if infile == "-":
-            infile = sys.stdin
-
-        ydict = YAML.load(infile)
-
-        known_ykeys = set(self._pobj.props)
-        known_ykeys.update(csnames)
-        self._validate_loaded_data(ydict, known_ykeys)
-
-        # Separate out C-states and properties information from 'ydict'.
-        props_ydict = {}
-        cs_ydict = {}
-        for ykey, yval in ydict.items():
-            if ykey in csnames:
-                cs_ydict[ykey] = yval
-            else:
-                props_ydict[ykey] = yval
-
-        self._restore_cstates(cs_ydict)
-        self._restore_props(props_ydict)
