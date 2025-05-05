@@ -10,17 +10,10 @@
 
 """Test module for 'pepc' project 'pmqos' command."""
 
-import copy
 import pytest
 import common
-import props_common
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs import YAML
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, PMQoS
-
-# If the '--mechanism' option is present, the command may fail because the mechanism may not be
-# supported. Ignore these failures.
-_IGNORE = {ErrorNotSupported : "--mechanism"}
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec, tmp_path_factory):
@@ -50,9 +43,6 @@ def test_pmqos_info(params):
     common.run_pepc(f"pmqos info", pman)
     common.run_pepc(f"pmqos info --cpus 0", pman)
 
-    # Cover '--list-mechanisms'.
-    common.run_pepc("pmqos info --list-mechanisms", pman)
-
 def _get_good_config_opts(params):
     """Return good options for testing 'pepc pmqos config'."""
 
@@ -79,9 +69,8 @@ def test_pmqos_config_good(params):
     pman = params["pman"]
 
     for opt in _get_good_config_opts(params):
-        for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-            cmd = f"pmqos config {opt} --cpus 0 {mopt}"
-            common.run_pepc(cmd, pman, ignore=_IGNORE)
+            cmd = f"pmqos config {opt} --cpus 0"
+            common.run_pepc(cmd, pman)
 
 def test_pmqos_config_bad(params):
     """Test 'pepc pmqos config' command with bad options."""
@@ -91,8 +80,6 @@ def test_pmqos_config_bad(params):
     for opt in _get_bad_config_opts():
         common.run_pepc(f"pmqos config {opt}", pman, exp_exc=Error)
         common.run_pepc(f"pmqos config --cpus 0 {opt}", pman, exp_exc=Error)
-        for mopt in props_common.get_mechanism_opts(params):
-            common.run_pepc(f"pmqos config {opt} {mopt}", pman, exp_exc=Error)
 
 def test_pmqos_save_restore(params):
     """Test 'pepc pmqos save' and 'pepc pmqos restore' commands."""
@@ -132,3 +119,5 @@ def test_pmqos_save_restore(params):
     common.run_pepc(f"pmqos save -o {state_read_back_path}", pman)
     read_back = YAML.load(state_read_back_path)
     assert read_back == state, "restoring PM QoS configuration failed"
+=======
+>>>>>>> e120b5a2 (f pmqos)

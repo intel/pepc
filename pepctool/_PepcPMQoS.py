@@ -32,18 +32,11 @@ def pmqos_info_command(args, pman):
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
-        if args.override_cpu_model:
-            _PepcCommon.override_cpu_model(cpuinfo, args.override_cpu_model)
-
         pobj = PMQoS.PMQoS(pman=pman, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
         psprint = _PepcPrinter.PMQoSPrinter(pobj, cpuinfo, fmt=fmt)
         stack.enter_context(psprint)
-
-        mnames = None
-        if args.mechanisms:
-            mnames = _PepcCommon.parse_mechanisms(args.mechanisms, pobj)
 
         optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
                                    modules=args.modules, dies=args.dies, packages=args.packages,
@@ -52,12 +45,12 @@ def pmqos_info_command(args, pman):
         stack.enter_context(optar)
 
         if not hasattr(args, "oargs"):
-            printed = psprint.print_props("all", optar, mnames=mnames, skip_unsupported=True,
+            printed = psprint.print_props("all", optar, skip_unsupported=True,
                                           group=True)
         else:
             pnames = list(getattr(args, "oargs"))
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
-            printed = psprint.print_props(pnames, optar, mnames=mnames, skip_unsupported=False)
+            printed = psprint.print_props(pnames, optar, skip_unsupported=False)
 
         if not printed:
             _LOG.info("No PM QoS properties supported%s.", pman.hostmsg)
@@ -90,18 +83,11 @@ def pmqos_config_command(args, pman):
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
-        if args.override_cpu_model:
-            _PepcCommon.override_cpu_model(cpuinfo, args.override_cpu_model)
-
         sysfs_io = _SysfsIO.SysfsIO(pman=pman)
         stack.enter_context(sysfs_io)
 
         pobj = PMQoS.PMQoS(pman=pman, sysfs_io=sysfs_io, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
-
-        mnames = None
-        if args.mechanisms:
-            mnames = _PepcCommon.parse_mechanisms(args.mechanisms, pobj)
 
         psprint = _PepcPrinter.PMQoSPrinter(pobj, cpuinfo)
         stack.enter_context(psprint)
@@ -113,12 +99,12 @@ def pmqos_config_command(args, pman):
         stack.enter_context(optar)
 
         if print_opts:
-            psprint.print_props(print_opts, optar, mnames=mnames, skip_unsupported=False)
+            psprint.print_props(print_opts, optar, skip_unsupported=False)
 
         if set_opts:
             psset = _PepcSetter.PMQoSSetter(pman, pobj, cpuinfo, psprint, sysfs_io=sysfs_io)
             stack.enter_context(psset)
-            psset.set_props(set_opts, optar, mnames=mnames)
+            psset.set_props(set_opts, optar)
 
     if set_opts:
         _PepcCommon.check_tuned_presence(pman)

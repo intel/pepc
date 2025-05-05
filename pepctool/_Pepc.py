@@ -502,10 +502,6 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_pmqos_info_command)
 
-    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
-    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
-    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
-
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
     text = """Print information in YAML format."""
@@ -521,10 +517,6 @@ def build_arguments_parser():
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_pmqos_config_command)
-
-    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
-    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
-    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
 
@@ -1055,6 +1047,7 @@ def _get_emul_pman(args, commonpath, path):
         "aspm": ["ASPM", "Systemctl"],
         "cstates": ["CPUInfo", "CStates", "Systemctl"],
         "pstates": ["CPUInfo", "PStates", "Systemctl"],
+        "pmqos": ["CPUInfo", "PMQoS"],
         "power": ["CPUInfo", "Power"],
         "topology": ["CPUInfo"],
         "cpu_hotplug": ["CPUInfo", "CPUOnline", "Systemctl"],
