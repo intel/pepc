@@ -72,8 +72,7 @@ General options
 Target CPU specification options
 ================================
 
-All sub-commans (*'info'*, *'config'*, *'save'*) support the following target CPU specification
-options.
+All sub-commans (*'info'*, *'config'*) support the following target CPU specification options.
 
 **--cpus** *CPUS*
    The list can include individual CPU numbers and CPU number ranges. For example,'1-4,7,8,10-12'
@@ -104,348 +103,87 @@ options.
 Subcommand *'info'*
 ===================
 
-Get information about power on specified CPUs. By default, prints all information for all CPUs.
+Retrieve power-related information for specified CPUs. By default, displays all details for all CPUs.
 
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
+Use target CPU specification options to define the subset of CPUs, cores, dies, or packages.
 
 **--yaml**
-   Print information in YAML format.
+   Display information in YAML format.
 
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
-    Comma-separated list of mechanisms that are allowed to be used for configuring power. Use
-    '--list-mechanisms' to get the list of available mechanisms. Note, many options support only one
-    mechanism (e.g., 'sysfs'), some may support multiple (e.g., 'sysfs' and 'msr'). The mechanisms
-    are tried in the specified order. By default, all mechanisms are allowed and the most
-    preferred mechanisms will be tried first.
+   Comma-separated list of mechanisms for retrieving power information. Currently, only the 'msr'
+   mechanism is supported.
 
 **--list-mechanisms**
-   List mechanisms available for reading power information.
+   List available mechanisms for retrieving power information.
 
 **--tdp**
-   Get CPU package thermal design power (details in 'tdp_')
+   Retrieve the CPU package thermal design power (TDP) in Watts from MSR_PKG_POWER_INFO (**0x614**),
+   bits **14:0**.
 
 **--ppl1**
-   Get RAPL package power limit #1 value via MSR (details in 'ppl1_').
+   Retrieve RAPL package power limit #1 in Watts from MSR_PKG_POWER_LIMIT (**0x610**), bits **14:0**.
 
 **--ppl1-enable**
-   Get RAPL package power limit #1 enable status via MSR (details in 'ppl1_enable_').
+   Check if RAPL package power limit #1 is enabled via MSR_PKG_POWER_LIMIT (**0x610**, bit **15**)
+   and display the result.
 
 **--ppl1-clamp**
-   Get RAPL package power limit #1 clamping enable status via MSR (details in 'ppl1_clamp_')
+   Check if RAPL package power limit #1 clamping is enabled via MSR_PKG_POWER_LIMIT (**0x610**, bit
+   **16**) and display the result.
 
 **--ppl1-window**
-   Get RAPL package power limit #1 window size via MSR (details in 'ppl1_window_').
+   Retrieve the RAPL package power limit #1 window size in seconds from MSR_PKG_POWER_LIMIT
+   (**0x610**), bits **23:17**.
 
 **--ppl2**
-   Get RAPL package power limit #2 value via MSR (details in 'ppl2_').
+   Retrieve RAPL package power limit #2 in Watts from MSR_PKG_POWER_LIMIT (**0x610**), bits
+   **46:32**.
 
 **--ppl2-enable**
-   Get RAPL package power limit #2 enable status via MSR (details in 'ppl2_enable_').
+   Check if RAPL package power limit #2 is enabled via MSR_PKG_POWER_LIMIT (**0x610**, bit **47**)
+   and display the result.
 
 **--ppl2-clamp**
-   Get RAPL package power limit #2 clamping enable status via MSR (details in 'ppl2_clamp_')
+   Get RAPL package power limit #2 clamping enable status via MSR_PKG_POWER_LIMIT (**0x610**, bit
+   **48**) and display the result.
 
 **--ppl2-window**
-   Get RAPL package power limit #2 window size via MSR (details in 'ppl2_window_').
+   Retrieve the RAPL package power limit #2 window size in seconds from MSR_PKG_POWER_LIMIT
+   (**0x610**), bit **55:49**.
 
 Subcommand *'config'*
 =====================
 
-Configure power on specified CPUs. All options can be used without a parameter, in which case the
-currently configured value(s) will be printed.
+Configure power for specified CPUs. If no parameter is provided, the current value(s) will be
+displayed.
 
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
+Use target CPU specification options to define the subset of CPUs, cores, dies, or packages.
+
+**-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
+   Comma-separated list of mechanisms for configuring power. Currently, only the 'msr' mechanism
+   is supported.
 
 **--list-mechanisms**
-   List mechanisms available for configuring power.
+   List available mechanisms for configuring power.
 
 **--ppl1** *PPL1*
-   Set RAPL package power limit #1 value via MSR (details in 'ppl1_').
+   Configure RAPL package power limit #1 in Watts using MSR_PKG_POWER_LIMIT (**0x610**), bits
+   **14:0**.
 
 **--ppl1-enable** *on|off*
-   Enable or disable RAPL package power limit #1 via MSR (details in 'ppl1_enable_').
+   Toggle RAPL package power limit #1 using MSR_PKG_POWER_LIMIT (**0x610**, bit **15**).
 
 **--ppl1-clamp** *on|off*
-   Enable or disable RAPL package power limit #1 clamping via MSR (details in 'ppl1_clamp_')
+   Toggle RAPL package power limit #1 clamping using MSR_PKG_POWER_LIMIT (**0x610**, bit **16**).
 
 **--ppl2** *PPL2*
-   Set RAPL package power limit #2 value via MSR (details in 'ppl2_').
+   Configure RAPL package power limit #2 in Watts using MSR_PKG_POWER_LIMIT (**0x610**), bits
+   **46:32**.
 
 **--ppl2-enable** *on|off*
-   Enable or disable RAPL package power limit #2 via MSR (details in 'ppl2_enable_').
+   Toggle RAPL package power limit #2 using MSR_PKG_POWER_LIMIT (**0x610**, bit **47**).
 
 **--ppl2-clamp** *on|off*
-   Enable or disable RAPL package power limit #2 clamping via MSR (details in 'ppl2_clamp_')
-
-Subcommand *'save'*
-===================
-
-Save all the modifiable power settings into a file. This file can later be used for restoring
-power settings with the 'pepc power restore' command.
-
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
-
-**-o** *OUTFILE*, **--outfile** *OUTFILE*
-   Name of the file to save the settings to (print to standard output by default).
-
-Subcommand *'restore'*
-======================
-
-Restore power settings from a file previously created with the 'pepc power save' command.
-
-**-f** *INFILE*, **--from** *INFILE*
-   Name of the file from which to restore the settings from, use "-" to read from the standard
-   output.
-
-----------------------------------------------------------------------------------------------------
-
-==========
-Properties
-==========
-
-tdp
-===
-
-tdp - CPU package thermal design power
-
-Synopsis
---------
-
-| pepc power *info* [**--tdp**]
-
-Description
------------
-
-CPU package thermal design power in Watts.
-
-Mechanism
----------
-
-MSR_PKG_POWER_INFO (**0x614**), bits **14:0**.
-
-Scope
------
-
-This option has **package** scope.
-
-----------------------------------------------------------------------------------------------------
-
-ppl1
-====
-
-ppl1 - RAPL package power limit #1 value in Watts
-
-Synopsis
---------
-
-| pepc power *info* **--ppl1**
-| pepc power *config* **--ppl1**\ =<value>
-
-Description
------------
-
-Average power usage limit of the package domain corresponding to time window #1.
-
-Mechanism
----------
-
-MSR_PKG_POWER_LIMIT (**0x610**), bits **14:0**.
-
-Scope
------
-
-This option has **package** scope.
-
-----------------------------------------------------------------------------------------------------
-
-ppl1_enable
-===========
-
-ppl1_enable - Enable or disable RAPL package power limit #1
-
-Synopsis
---------
-
-| pepc power *info* **--ppl1-enable**
-| pepc power *config* **--ppl1-enable**\ =<on|off>
-
-Description
------------
-
-Enable or disable RAPL package power limit #1.
-
-Mechanism
----------
-
-MSR_PKG_POWER_LIMIT (**0x610**), bit **15**.
-
-Scope
------
-
-This option has **package** scope.
-
-----------------------------------------------------------------------------------------------------
-
-ppl1_clamp
-==========
-
-ppl1_clamp - Enable or disable package power clamping for limit #1
-
-Synopsis
---------
-
-| pepc power *info* **--ppl1-clamp**
-| pepc power *config* **--ppl1-clamp**\ =<on|off>
-
-Description
------------
-
-Enable or disable package power clamping for limit #1.
-
-Mechanism
----------
-
-MSR_PKG_POWER_LIMIT (**0x610**), bit **16**.
-
-Scope
------
-
-This option has **package** scope.
-
-----------------------------------------------------------------------------------------------------
-
-ppl1_window
-===========
-
-ppl1_window - RAPL package power limit #1 window size in seconds
-
-Synopsis
---------
-
-| pepc power *info* **--ppl1-window**
-
-Description
------------
-
-RAPL package power limit #1 window size in seconds.
-
-Mechanism
----------
-
-MSR_PKG_POWER_LIMIT (**0x610**), bit **23:17**.
-
-Scope
------
-
-This option has **package** scope.
-
-----------------------------------------------------------------------------------------------------
-
-ppl2
-====
-
-ppl2 - RAPL package power limit #2 value in Watts
-
-Synopsis
---------
-
-| pepc power *info* **--ppl2**
-| pepc power *config* **--ppl2**\ =<value>
-
-Description
------------
-
-Average power usage limit of the package domain corresponding to time window #2.
-
-Mechanism
----------
-
-MSR_PKG_POWER_LIMIT (**0x610**), bits **46:32**.
-
-Scope
------
-
-This option has **package** scope.
-
-----------------------------------------------------------------------------------------------------
-
-ppl2_enable
-===========
-
-ppl2_enable - Enable or disable RAPL package power limit #2
-
-Synopsis
---------
-
-| pepc power *info* **--ppl2-enable**
-| pepc power *config* **--ppl2-enable**\ =<on|off>
-
-Description
------------
-
-Enable or disable RAPL package power limit #2.
-
-Mechanism
----------
-
-MSR_PKG_POWER_LIMIT (**0x610**), bit **47**.
-
-Scope
------
-
-This option has **package** scope.
-
-----------------------------------------------------------------------------------------------------
-
-ppl2_clamp
-==========
-
-ppl2_clamp - Enable or disable package power clamping for limit #2
-
-Synopsis
---------
-
-| pepc power *info* **--ppl2-clamp**
-| pepc power *config* **--ppl2-clamp**\ =<on|off>
-
-Description
------------
-
-Enable or disable package power clamping for limit #2.
-
-Mechanism
----------
-
-MSR_PKG_POWER_LIMIT (**0x610**), bit **48**.
-
-Scope
------
-
-This option has **package** scope.
-
-----------------------------------------------------------------------------------------------------
-
-ppl2_window
-===========
-
-ppl2_window - RAPL package power limit #2 window size in seconds
-
-Synopsis
---------
-
-| pepc power *info* **--ppl2-window**
-
-Description
------------
-
-RAPL package power limit #2 window size in seconds.
-
-Mechanism
----------
-
-MSR_PKG_POWER_LIMIT (**0x610**), bit **55:49**.
-
-Scope
------
-
-This option has **package** scope.
+   Toggle RAPL package power limit #2 clamping using MSR_PKG_POWER_LIMIT (**0x610**, bit
+   **48**).
