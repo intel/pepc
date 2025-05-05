@@ -61,204 +61,77 @@ General options
 Target CPU specification options
 ================================
 
-All sub-commans (*'info'*, *'config'*, *'save'*) support the following target CPU specification
+All subcommands (*'info'*, *'config'*) accept the following target CPU specification
 options.
 
 **--cpus** *CPUS*
-   The list can include individual CPU numbers and CPU number ranges. For example,'1-4,7,8,10-12'
-   would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
-   CPUs.
+   Specify individual CPU numbers or ranges (e.g., '1-4,7,8,10-12'). Use 'all' for all CPUs.
 
 **--cores** *CORES*
-   The list can include individual core numbers and core number ranges. For example, '1-4,7,8,10-12'
-   would mean cores 1 to 4, cores 7, 8, and 10 to 1. Use the special keyword 'all' to specify all
-   cores. This option has to be accompanied by the '--package' option, because core numbers are
-   per-package.
+   Specify individual core numbers or ranges (e.g., '1-4,7,8,10-12'). Use 'all' for all cores. Must
+   be used with '--package' as core numbers are per-package.
 
 **--modules** *MODULES*
-   The list can include individual module numbers and module number ranges. For example, '0,2-5'
-   would mean module 0 and modules 2, 3, 4, and 5. Use the special keyword 'all' to specify all
-   modules. Note, unlike core and die numbers, module numbers are absolute.
+   Specify individual module numbers or ranges (e.g., '0,2-5'). Use 'all' for all modules. Unlike
+   core and die numbers, module numbers are absolute.
 
 **--dies** *DIES*
-   The list can include individual die numbers and die number ranges. For example, '0-3,5' would
-   mean dies 0 to 3, and die 5. Use the special keyword 'all' to specify all dies. On some systems,
-   die numbers are globally unique, while on other systems they are relative to the package. In the
-   latter case, this option has to be accompanied by the '--package' option.
+   Specify individual die numbers or ranges (e.g., '0-3,5'). Use 'all' for all dies. Die numbers
+   may be globally unique or relative to the package. If relative, use with '--package'.
 
 **--packages** *PACKAGES*
-   The list can include individual package numbers and package number ranges. For example, '0,2-4'
-   would mean package 0 and packages 2 to 4. Use the special keyword 'all' to specify all packages.
+   Specify individual package numbers or ranges (e.g., '0,2-4'). Use 'all' for all packages.
 
 **--core-siblings** *CORE_SIBLINGS*
-   Core siblings are CPUs sharing the same core. The list can include individual core sibling
-   indices or index ranges. For example, if a core includes CPUs 3 and 4, index '0' would mean CPU 3
-   and index '1' would mean CPU 4. This option can only be used to reference online CPUs, because
-   Linux does not provide topology information for offline CPUs. In the example with CPUs 3 and 4,
-   if CPU 3 was offline, then index '0' would mean CPU 4.
+   Specify core sibling indices (CPUs sharing the same core) as individual indices or ranges. For
+   example, if a core includes CPUs 2 and 3, index '0' refers to CPU 2, and index '1' refers to CPU 3.
+   Applies only to online CPUs, as Linux lacks topology details for offline CPUs. If CPU 2 is offline,
+   index '0' refers to CPU 3. On Intel processors with hyper-threading, this is often used to offline
+   hyperthreads.
 
 **--module-siblings** *MODULE_SIBLINGS*
-   Module siblings are CPUs sharing the same module. The list can include individual module sibling
-   indices or index ranges. For example, if a module includes CPUs 3, 4, 5, and 6, index '0' would
-   mean CPU 3, index '1' would mean CPU 4, and idex '3' would mean CPU 5. This option can only be
-   used to reference online CPUs, because Linux does not provide topology information for offline
-   CPUs. In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index '1' would mean
-   CPU 5.
-
-**--override-cpu-model** *VFM*
-   This option is for debugging and testing purposes only. Override the target host CPU model and
-   force {TOOLNAME} treat the host as a specific CPU model. The format is
-   '[<Vendor>:][<Family>:]<Model>', where '<Vendor>' is the CPU vendor (e.g., 'GenuineIntel' or
-   'AuthenticAMD'), '<Family>' is the CPU family (e.g., 6), and '<Model>' is the CPU model (e.g.,
-   0x8F). Example: 'GenuineIntel:6:0x8F' will force the tool treating the target host CPU as a
-   Sapphire Rapids Xeon. The vendor and family are optional and if not specified, the tool will use
-   the vendor and family of the target host CPU. The family and model can be specified in decimal
-   or hexadecimal format.
+   Specify module sibling indices (CPUs sharing the same module) as individual indices or ranges.
+   For example, if a module includes CPUs 4, 5, 6, and 7, index '0' refers to CPU 4, index '1' to CPU 5,
+   and index '3' to CPU 7. Applies only to online CPUs, as Linux lacks topology details for offline
+   CPUs. If CPU 5 is offline, index '1' refers to CPU 6.
 
 Subcommand *'info'*
 ===================
 
-Get PM QoS (Power Management Quality of Service) information for specified CPUs. By default, print
-all information about all CPUs.
+Retrieve PM QoS (Power Management Quality of Service) details for specified CPUs. By default,
+displays all information for all CPUs.
 
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
+Use target CPU specification options to define the subset of CPUs, cores, dies, or packages to
+retrieve information for.
 
 **--yaml**
-   Print information in YAML format.
-
-**--list-mechanisms**
-   List mechanisms available for reading PM QoS information.
+   Display information in YAML format.
 
 **--latency-limit**
-   Get the per-CPU Linux PM QoS limit (details in 'latency_limit_').
+   Retrieve the per-CPU Linux PM QoS limit. This limit affects C-state selection by restricting the
+   kernel from using C-states with latencies exceeding the specified limit. For example, a 50us
+   limit ensures the kernel only selects C-states with latencies ≤ 50us. The limit is read from
+   '/sys/devices/system/cpu/cpu<NUMBER>/power/pm_qos_resume_latency_us'.
 
 **--global-latency-limit**
-   Get the global Linux PM QoS limit (details in 'global_latency_limit_').
+   Retrieve the global Linux PM QoS limit. This limit, unlike the per-CPU latency limit, applies
+   globally. It is read from the '/dev/cpu_dma_latency' device node.
 
 Subcommand *'config'*
 =====================
 
-Configure PM QoS (Power Management Quality of Service) on specified CPUs. All options can be used
-without a parameter, in which case the currently configured value(s) will be printed.
+Configure PM QoS (Power Management Quality of Service) for specified CPUs.
 
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
-
-**-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
-    Comma-separated list of mechanisms that are allowed to be used for configuring PM QoS. Use
-    '--list-mechanisms' to get the list of available mechanisms. Note, many options support only one
-    mechanism (e.g., 'sysfs'), some may support multiple (e.g., 'sysfs' and 'msr'). The mechanisms
-    are tried in the specified order. By default, all mechanisms are allowed and the most
-    preferred mechanisms will be tried first.
-
-**--list-mechanisms**
-   List mechanisms available for configuring PM QoS.
+Use target CPU specification options to define the subset of CPUs, cores, dies, or packages.
 
 **--latency-limit** *LIMIT*
-   Set the per-CPU Linux PM QoS limit (details in 'latency_limit_').
+   Set the per-CPU Linux PM QoS limit, which restricts the kernel from using C-states with latencies
+   exceeding the specified value. For example, a 50us limit ensures the kernel selects only C-states
+   with latencies ≤ 50us. The limit is configured via
+   '/sys/devices/system/cpu/cpu<NUMBER>/power/pm_qos_resume_latency_us'. The default unit is 'us'
+   (microseconds), but 'ns', 'ms', and 's' units are also supported (e.g., "1ms"). Value 0 disables
+   the limit. If no argument is provided, the current value is displayed.
 
-Subcommand *'save'*
-===================
-
-Save all the modifiable PM QoS (Power Management Quality of Service) settings into a file. This file
-can later be used for restoring PM QoS settings with the 'pepc pmqos restore' command.
-
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
-
-**-o** *OUTFILE*, **--outfile** *OUTFILE*
-   Name of the file to save the settings to (print to standard output by default).
-
-Subcommand *'restore'*
-======================
-
-Restore PM QoS (Power Management Quality of Service)e settings from a file previously created with
-the 'pepc pmqos save' command.
-
-**-f** *INFILE*, **--from** *INFILE*
-   Name of the file from which to restore the settings from, use "-" to read from the standard
-   output.
-
-----------------------------------------------------------------------------------------------------
-
-==========
-Properties
-==========
-
-latency_limit
-=============
-
-latency_limit - per-CPU Linux PM QoS limit
-
-Synopsis
---------
-
-| pepc pmqos *info* **--latency-limit**
-| pepc pmqos *config* **--latency-limit**\ =<value>
-
-Description
------------
-
-Get or set Linux per-CPU PM QoS limit via the sysfs interface.
-
-Linux kernel includes the Power Management Quality of Service (PM QoS) subsystem, which allows
-user-space programs to specify latency limits. These limits influence various aspects of system
-performance, including C-state selection: the Linux kernel will avoid using C-states with latencies
-greater than the strictest specified limit. For example, if user sets a 50us latency limit for
-CPU0, the Linux idle governors will only request C-states with latency of less or equivalent to
-50us. For more information, please refer Linux kernel PM QoS documentation.
-
-The default unit is 'us' (microseconds), but 'ns', 'us', 'ms' and 's' units can also be used
-(for example "1ms").
-
-Value 0 is special, and it means "no latency limit".
-
-Mechanisms
-----------
-
-**sysfs**
-"/sys/devices/system/cpu/cpu0/power/pm_qos_resume_latency_us", where '0' is replaced with desired
-CPU number.
-
-Scope
------
-
-This property has CPU scope.
-
-----------------------------------------------------------------------------------------------------
-
-global_latency_limit
-====================
-
-global_latency_limit - global Linux PM QoS limit
-
-Synopsis
---------
-
-| pepc pmqos *info* **--global-latency-limit**
-
-Description
------------
-
-Get Linux global PM QoS limit via the '/dev/cpu_dma_latency' device node.
-
-Linux kernel includes the Power Management Quality of Service (PM QoS) subsystem, which allows
-user-space programs to specify latency limits. These limits influence various aspects of system
-performance, including C-state selection: the Linux kernel will avoid using C-states with latencies
-greater than the strictest specified limit. For example, if a process sets a 50us global latency
-limit, the Linux idle governors will only request C-states with latency of less or equivalent to
-50us. For more information, please refer Linux kernel PM QoS documentation.
-
-The default unit is 'us' (microseconds), but 'ns', 'us', 'ms' and 's' units can also be used
-(for example "1ms").
-
-Value 0 is means the minimum latency, Linux will only request the POLL state in this case.
-
-Mechanisms
-----------
-
-**cdev**
-The "/dev/cpu_dma_latency" character device node.
-
-Scope
------
-
-This property has global scope.
+Note: Setting the global latency limit is unsupported because the '/dev/cpu_dma_latency' API
+requires the setter to keep the device open for the limit to remain effective. The limit is
+removed as soon as the device is closed.
