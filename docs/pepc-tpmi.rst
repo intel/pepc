@@ -81,8 +81,9 @@ General options
    1. './tests/data' in the program's directory
    2. '$PEPC_DATA_PATH/tests/data'
    3. '$HOME/.local/share/pepc/tests/data'
-   4. '/usr/local/share/pepc/tests/data'
-   5. '/usr/share/pepc/tests/data'
+   4. '$VIRTUAL_ENV/share/tests/data'
+   5. '/usr/local/share/pepc/tests/data'
+   6. '/usr/share/pepc/tests/data'
 
 **--force-color**
    Force colorized output even if the output stream is not a terminal (adds ANSI escape codes).
