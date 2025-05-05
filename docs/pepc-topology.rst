@@ -61,66 +61,57 @@ General options
 Subcommand *'info'*
 ===================
 
-Print CPU topology information.
+Display CPU topology details.
 
-**Note**, Linux kernel provides topology information only for online CPUs, but not for offline CPUs.
-Therefore, unknown topology numbers (e.g., package number) for offline CPUs are substituted with
-"?".
+**Note**: The Linux kernel provides topology data only for online CPUs. For offline CPUs, unknown
+topology values (e.g., package number) are replaced with "?".
 
 **--cpus** *CPUS*
-   List of CPUs to print topology information for. The list can include individual CPU numbers and
-   CPU number ranges. For example,'1-4,7,8,10-12' would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12.
-   Use the special keyword 'all' to specify all CPUs.
+   Specify CPUs to display topology information for. Accepts individual CPU numbers or ranges,
+   e.g., '1-4,7,8,10-12' for CPUs 1 to 4, 7, 8, and 10 to 12. Use 'all' to include all CPUs.
 
 **--cores** *CORES*
-   List of cores to print topology information for. The list can include individual core numbers and
-   core number ranges. For example, '1-4,7,8,10-12' would mean cores 1 to 4, cores 7, 8, and 10
-   to 12. Use the special keyword 'all' to specify all cores. This option has to be accompanied by
-   the '--package' option, because core numbers are per-package.
+   Specify cores to display topology information for. Accepts individual core numbers or ranges,
+   e.g., '1-4,7,8,10-12' for cores 1 to 4, 7, 8, and 10 to 12. Use 'all' to include all cores. This
+   option requires the '--package' option, as core numbers are relative to the package.
 
 **--modules** *MODULES*
-   List of dies to print topology information for. The list can include individual module numbers
-   and module number ranges. For example, '0,2-5' would mean module 0 and modules 2, 3, 4, and 5.
-   Use the special keyword 'all' to specify all modules. Note, unlike core and die numbers, module
-   numbers are absolute.
+   Specify modules to display topology information for. Accepts individual module numbers or ranges,
+   e.g., '0,2-5' for modules 0, 2, 3, 4, and 5. Use 'all' to include all modules.
 
 **--dies** *DIES*
-   List of dies to print topology information for. The list can include individual die numbers and
-   die number ranges. For example, '0-3,5' would mean dies 0 to 3, and die 5. Use the special
-   keyword 'all' to specify all dies. On some systems, die numbers are globally unique, while on
-   other systems they are relative to the package. In the latter case, this option has to be
-   accompanied by the '--package' option.
+   Specify dies to display topology information for. Accepts individual die numbers or ranges,
+   e.g., '0-3,5' for dies 0 to 3 and die 5. Use 'all' to include all dies. On some systems, die
+   numbers are globally unique, while on others they are relative to the package. In the latter
+   case, this option requires the '--package' option.
 
 **--packages** *PACKAGES*
-   List of packages to print topology information for. The list can include individual package
-   numbers and package number ranges. For example, '0,2-4' would mean package 0 and packages 2 to 4.
-   Use the special keyword 'all' to specify all packages.
+   Specify packages to display topology information for. Accepts individual package numbers or
+   ranges, e.g., '0,2-4' for package 0 and packages 2 to 4. Use 'all' to include all packages.
 
 **--core-siblings** *CORE_SIBLINGS*
-   Core siblings are CPUs sharing the same core. The list can include individual core sibling
-   indices or index ranges. For example, if a core includes CPUs 3 and 4, index '0' would mean CPU 3
-   and index '1' would mean CPU 4. This option can only be used to reference online CPUs, because
-   Linux does not provide topology information for offline CPUs. In the example with CPUs 3 and 4,
-   if CPU 3 was offline, then index '0' would mean CPU 4.
+   List of core sibling indices (CPUs sharing the same core). Specify individual indices or ranges.
+   For example, if a core includes CPUs 2 and 3, index '0' refers to CPU 2, and index '1' refers to
+   CPU 3. This option applies only to online CPUs, as Linux lacks topology details for offline CPUs.
+   If CPU 2 is offline, index '0' refers to CPU 3. On Intel processors with hyper-threading, this is
+   typically used to offline hyperthreads.
 
 **--module-siblings** *MODULE_SIBLINGS*
-   Module siblings are CPUs sharing the same module. The list can include individual module sibling
-   indices or index ranges. For example, if a module includes CPUs 3, 4, 5, and 6, index '0' would
-   mean CPU 3, index '1' would mean CPU 4, and idex '3' would mean CPU 5. This option can only be
-   used to reference online CPUs, because Linux does not provide topology information for offline
-   CPUs. In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index '1' would mean
-   CPU 5.
+   List of module sibling indices (CPUs sharing the same module). Specify individual indices or
+   ranges. For example, if a module includes CPUs 4, 5, 6, and 7, index '0' refers to CPU 4, index
+   '1' to CPU 5, and index '4' to CPU 7. This option applies only to online CPUs, as Linux lacks
+   topology details for offline CPUs. In the example, if CPU 5 is offline, index '1' refers to
+   CPU 1.
 
 **--order** *ORDER*
-   By default, the topology table is printed in CPU number order. Use this option to print it in a
-   different order (e.g., core or package number order). Here are the supported order names: cpu,
-   core, module, die, node, package.
+   By default, the topology table is sorted by CPU number. Use this option to sort by core, module,
+   die, node, or package number instead. Supported values: cpu, core, module, die, node, package.
 
 **--online-only**
-   Include only online CPUs. By default offline and online CPUs are included.
+   Include only online CPUs. By default, both online and offline CPUs are included.
 
 **--columns** *COLUMNS*
-   Comma-separated list of the topology columns to print. Available columns are: CPU, core, module,
-   die, node, package, hybrid. Example: --columns Package,Core,CPU. By default, all columns that are
-   meaningful for the platform are printed. If the platform does not have modules or dies, the
-   corresponding columns won't be printed. The "hybrid" column is not printed for non-hybrid
+   Comma-separated list of topology columns to display. Available columns: CPU, core, module, die,
+   node, package, hybrid. Example: --columns Package,Core,CPU. By default, all relevant columns for
+   the platform are shown. Columns like "module" or "die" are omitted if not applicable. The "hybrid"
+   column is shown only for hybrid platforms.
