@@ -58,10 +58,20 @@ General options
 **--force-color**
    Force colorized output even if the output stream is not a terminal (adds ANSI escape codes).
 
+**--override-cpu-model** *VFM*
+   This option is for debugging and testing purposes only. Override the target host CPU model and
+   force {TOOLNAME} treat the host as a specific CPU model. The format is
+   '[<Vendor>:][<Family>:]<Model>', where '<Vendor>' is the CPU vendor (e.g., 'GenuineIntel' or
+   'AuthenticAMD'), '<Family>' is the CPU family (e.g., 6), and '<Model>' is the CPU model (e.g.,
+   0x8F). Example: 'GenuineIntel:6:0x8F' will force the tool treating the target host CPU as a
+   Sapphire Rapids Xeon. The vendor and family are optional and if not specified, the tool will use
+   the vendor and family of the target host CPU. The family and model can be specified in decimal
+   or hexadecimal format.
+
 Target CPU specification options
 ================================
 
-All sub-commans (*'info'*, *'config'*, *'save'*) support the following target CPU specification
+All sub-commans (*'info'*, *'config'*) support the following target CPU specification
 options.
 
 **--cpus** *CPUS*
@@ -105,454 +115,121 @@ options.
    CPUs. In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index '1' would mean
    CPU 5.
 
-**--override-cpu-model** *VFM*
-   This option is for debugging and testing purposes only. Override the target host CPU model and
-   force {TOOLNAME} treat the host as a specific CPU model. The format is
-   '[<Vendor>:][<Family>:]<Model>', where '<Vendor>' is the CPU vendor (e.g., 'GenuineIntel' or
-   'AuthenticAMD'), '<Family>' is the CPU family (e.g., 6), and '<Model>' is the CPU model (e.g.,
-   0x8F). Example: 'GenuineIntel:6:0x8F' will force the tool treating the target host CPU as a
-   Sapphire Rapids Xeon. The vendor and family are optional and if not specified, the tool will use
-   the vendor and family of the target host CPU. The family and model can be specified in decimal
-   or hexadecimal format.
-
 Subcommand *'info'*
 ===================
 
-Get information about C-states on specified CPUs. By default, print all information about all CPUs.
-
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
+Retrieve C-state information for specified CPUs. By default, display all details for all CPUs. Use
+target CPU specification options to limit the scope to specific CPUs, cores, dies, or packages.
 
 **--yaml**
    Print information in YAML format.
 
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
-    Comma-separated list of mechanisms that are allowed to be used for configuring C-states. Use
-    '--list-mechanisms' to get the list of available mechanisms. Note, many options support only one
-    mechanism (e.g., 'sysfs'), some may support multiple (e.g., 'sysfs' and 'msr'). The mechanisms
-    are tried in the specified order. By default, all mechanisms are allowed and the most
-    preferred mechanisms will be tried first.
+   Comma-separated list of mechanisms to use for retrieving C-states information. Use
+   '--list-mechanisms' to view available mechanisms. Many options support only one mechanism
+   (e.g., 'sysfs'), while some support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried
+   in the specified order. By default, all mechanisms are allowed, with the most preferred tried
+   first.
 
 **--list-mechanisms**
-   List mechanisms available for reading C-states information.
+   List available mechanisms for retrieving C-states information.
 
 **--cstates** *[CSTATES]*
-   Comma-separated list of C-states to get information about. C-states should be specified by name
-   (e.g., 'C1'). Use 'all' to specify all the available Linux C-states (this is the default). Note,
-   there is a difference between Linux C-states (e.g., 'C6') and hardware C-states (e.g., Core C6 or
-   Package C6 on many Intel platforms). The former is what Linux can request, and on Intel hardware
-   this is usually about various 'mwait' instruction hints. The latter are platform-specific
-   hardware state, entered upon a Linux request.
+   Comma-separated list of C-states to retrieve information about, specified by name (e.g., C1).
+   Use 'all' to include all available Linux C-states (default). Remember, Linux C-states (e.g., C6)
+   are requests Linux can make, while hardware C-states (e.g., Core C6 or Package C6 on Intel
+   platforms) are platform-specific states entered upon such requests. See the
+   'https://github.com/intel/pepc/blob/main/docs/misc-cstate-namespaces.md' document for details.
 
 **--pkg-cstate-limit**
-   Get package C-state limit (details in 'pkg_cstate_limit_'), available package C-state limits
-   (details in 'pkg_cstate_limits_'), package C-state limit lock (details in
-   'pkg_cstate_limit_lock_'), and package C-state limit aliases (details in
-   'pkg_cstate_limit_aliases_').
+   Retrieve the current package C-state limit, available limits, and lock status. The package
+   C-state limit defines the deepest hardware package C-state the platform can enter. It is read
+   from MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0, depending on the CPU model. The lock
+   bit (bit 15) in the same MSR determines if the OS can modify the limit.
 
 **--c1-demotion**
-   Check if C1 demotion is enabled or disabled (details in 'c1_demotion_').
+   Check if C1 demotion is enabled or disabled. On Intel platforms, this feature monitors CPU
+   wake-up rates. If the rate exceeds a threshold, deep C-state requests are demoted to C1 to
+   improve performance, potentially increasing power consumption. Read from
+   MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 26.
 
 **--c1-undemotion**
-   Check if C1 undemotion is enabled or disabled (details in 'c1_undemotion_').
+   Check if C1 undemotion is enabled or disabled. When enabled, the CPU can reverse previously
+   demoted requests from C1 back to deeper C-states (e.g., C6) if frequent wake-ups have stopped.
+   Read from MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 28.
 
 **--c1e-autopromote**
-   Check if C1E autopromote is enabled or disabled (details in 'c1e_autopromote_').
+   Check if C1E autopromotion is enabled. When enabled, the CPU converts all C1 C-state requests
+   to C1E requests. Read from MSR_POWER_CTL (0x1FC), bit 1.
 
 **--cstate-prewake**
-   Check if C-state prewake is enabled or disabled (details in 'cstate_prewake_').
+   Check if C-state prewake is enabled. When enabled, the CPU considers idle timers and starts
+   exiting deep C-states early, before the next local APIC timer event. This ensures the CPU is
+   nearly awake by the tim the timer fires. Read from MSR_POWER_CTL (0x1FC), bit 30.
 
 **--idle-driver**
-   Get idle driver (details in 'idle_driver_').
+   Retrieve the idle driver name. The idle driver enumerates available C-states and issues
+   C-state requests. Read from '/sys/devices/system/cpu/cpuidle/current_governor'.
 
 **--governor**
-   Get idle governor (details in 'governor_').
+   Retrieve the idle governor name, which determines the C-state to request for an idle CPU. Read
+   from '/sys/devices/system/cpu/cpuidle/scaling_governor'.
 
 **--governors**
-   Get list of available idle governors (details in 'governors_').
+   Retrieve the list of available idle governors, which determine the C-state to request for an
+   idle CPU. Different governors implement various selection policies. Read from
+   '/sys/devices/system/cpu/cpuidle/available_governors'.
 
 Subcommand *'config'*
 =====================
 
-Configure C-states on specified CPUs. All options can be used without a parameter, in which case the
-currently configured value(s) will be printed.
+Configure C-states for specified CPUs. If no parameter is provided, the current configuration will
+be displayed. Use target CPU specification options to limit the scope to specific CPUs, cores, dies,
+or packages.
 
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
+**-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
+   Comma-separated list of mechanisms to use for configuring C-states. Use '--list-mechanisms' to
+   view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while some
+   support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried in the specified order. By
+   default, all mechanisms are allowed, with the most preferred tried first.
 
 **--list-mechanisms**
-   List mechanisms available for configuring C-states.
+   List available mechanisms for configuring C-states.
 
 **--enable** *CSTATES*
-   Comma-separated list of C-states to enable. C-states should be specified by name (e.g., 'C1').
-   Use 'all' to specify all the available Linux C-states (this is the default). Note, there is a
-   difference between Linux C-states (e.g., 'C6') and hardware C-states (e.g., Core C6 or Package C6
-   on many Intel platforms). The former is what Linux can request, and on Intel hardware this is
-   usually about various 'mwait' instruction hints. The latter are platform-specific hardware state,
-   entered upon a Linux request.
+   Comma-separated list of C-state names to enable. Use 'all' to include all available Linux
+   C-states (default). Remember, Linux C-states (e.g., C6) are requests Linux can make, while
+   hardware C-states (e.g., Core C6 or Package C6 on Intel platforms) are platform-specific states
+   entered upon such requests. See the
+   'https://github.com/intel/pepc/blob/main/docs/misc-cstate-namespaces.md' document for details.
 
 **--disable** *CSTATES*
-   Similar to '--enable', but specifies the list of C-states to disable.
+   Similar to '--enable', but specifies the C-states to disable.
 
 **--pkg-cstate-limit** *PKG_CSTATE_LIMIT*
-   Set package C-state limit (details in 'pkg_cstate_limit_').
+   Set the package C-state limit, defining the deepest hardware package C-state the platform can
+   enter. Writes to MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0, depending on the CPU model.
+   Writing is refused if the lock bit (bit 15) in the same MSR is set.
 
 **--c1-demotion** *on|off*
-   Enable or disable C1 demotion (details in 'c1_demotion_').
+   Enable or disable C1 demotion. On Intel platforms, this feature monitors CPU wake-up rates. If
+   the rate exceeds a threshold, deep C-state requests are demoted to C1 to improve performance at
+   the cost of higher power consumption. Writes to MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 26.
 
 **--c1-undemotion** *on|off*
-   Enable or disable C1 undemotion (details in 'c1_undemotion_').
+   Enable or disable C1 undemotion. When enabled, the CPU can reverse previously demoted C1
+   requests back to deeper C-states (e.g., C6) if frequent wake-ups have stopped. Writes to
+   MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 28.
 
 **--c1e-autopromote** *on|off*
-   Enable or disable C1E autopromote (details in 'c1e_autopromote_').
+   Enable or disable C1E autopromotion. When enabled, all C1 C-state requests are converted to
+   C1E. Writes to MSR_POWER_CTL (0x1FC), bit 1.
 
 **--cstate-prewake** *on|off*
-   Enable or disable C-state prewake (details in 'cstate_prewake_').
+   Enable or disable C-state prewake. When enabled, the CPU considers idle timers and starts
+   exiting deep C-states early, before the next local APIC timer event. This ensures the CPU is
+   nearly awake by the tim the timer fires. Writes to MSR_POWER_CTL (0x1FC), bit 30.
 
 **--governor** *NAME*
-   Set idle governor (details in 'governor_').
-
-Subcommand *'save'*
-===================
-
-Save all the modifiable C-state settings into a file. This file can later be used for restoring
-C-state settings with the 'pepc cstates restore' command.
-
-Use target CPU specification options to specify the subset of CPUs, cores, dies, or packages.
-
-**-o** *OUTFILE*, **--outfile** *OUTFILE*
-   Name of the file to save the settings to (print to standard output by default).
-
-Subcommand *'restore'*
-======================
-
-Restore C-state settings from a file previously created with the 'pepc cstates save' command.
-
-**-f** *INFILE*, **--from** *INFILE*
-   Name of the file from which to restore the settings from, use "-" to read from the standard
-   output.
-
-----------------------------------------------------------------------------------------------------
-
-==========
-Properties
-==========
-
-pkg_cstate_limit
-================
-
-pkg_cstate_limit - Package C-state limit
-
-Synopsis
---------
-
-| pepc cstates *info* **--pkg-cstate-limit**
-| pepc cstates *config* **--pkg-cstate-limit**\ =<on|off>
-
-Description
------------
-
-The deepest package C-state the platform is allowed to enter. MSR_PKG_CST_CONFIG_CONTROL (0xE2)
-register can be locked, in which case the package C-state limit can only be read, but cannot be
-modified (please, refer to '**pkg_cstate_limit_lock**' for more information).
-
-Mechanism
----------
-
-**msr**
-MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0, depending on CPU model.
-
-Scope
------
-
-This option has core scope. Exceptions: module scope on Silvermonts and Airmonts, package scope on
-Xeon Phi processors.
-
-----------------------------------------------------------------------------------------------------
-
-pkg_cstate_limits
-=================
-
-pkg_cstate_limits - Available package C-state limits
-
-Synopsis
---------
-
-pepc cstates *info* **--pkg-cstate-limits**
-
-Description
------------
-
-All available package C-state limits.
-
-Mechanism
----------
-
-**doc**
-Intel SDM (Software Developer Manual) and Intel EDS (External Design Specification).
-
-Scope
------
-
-This option has global scope.
-
-----------------------------------------------------------------------------------------------------
-
-pkg_cstate_limit_lock
-=====================
-
-pkg_cstate_limit_lock - Package C-state limit lock
-
-Synopsis
---------
-
-pepc cstates *info* **--pkg-cstate-limit-lock**
-
-Description
------------
-
-Whether the package C-state limit can be modified. When 'True', '**pkg_cstate_limit**' is
-read-only.
-
-Mechanism
----------
-
-**msr**
-MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 15.
-
-Scope
------
-
-This option has package scope.
-
-----------------------------------------------------------------------------------------------------
-
-
-pkg_cstate_limit_aliases
-========================
-
-pkg_cstate_limit_aliases - Package C-state limit aliases
-
-Synopsis
---------
-
-pepc cstates *info* **--pkg-cstate-limit-aliases**
-
-Description
------------
-
-Package C-state limit aliases. For example on Ice Lake Xeon, 'PC6' is an alias for 'PC6R'.
-
-Mechanism
----------
-
-**doc**
-Intel SDM (Software Developer Manual) or Intel EDS (External Design Specification).
-
-Scope
------
-
-This option has global scope.
-
-----------------------------------------------------------------------------------------------------
-
-c1_demotion
-===========
-
-c1_demotion - C1 demotion
-
-Synopsis
---------
-
-| pepc cstates *info* **--c1-demotion**
-| pepc cstates *config* **--c1-demotion**\ =<on|off>
-
-Description
------------
-
-Allow or disallow the CPU to demote 'C6' or 'C7' C-state requests to 'C1'.
-
-Mechanism
----------
-
-MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 26.
-
-Scope
------
-
-This option has core scope. Exceptions: module scope on Silvermonts and Airmonts, package scope on
-Xeon Phis.
-
-----------------------------------------------------------------------------------------------------
-
-c1_undemotion
-=============
-
-c1_demotion - C1 undemotion
-
-Synopsis
---------
-
-| pepc cstates *info* **--c1-undemotion**
-| pepc cstates *config* **--c1-undemotion**\ =<on|off>
-
-Description
------------
-
-Allow or disallow the CPU to un-demote previously demoted requests back from 'C1' C-state to
-'C6' or 'C7l.
-
-Mechanism
----------
-
-**msr**
-MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 28.
-
-Scope
------
-
-This option has core scope. Exceptions: module scope on Silvermonts and Airmonts, package scope on
-Xeon Phis.
-
-----------------------------------------------------------------------------------------------------
-
-c1e_autopromote
-===============
-
-c1e_autopromote - C1E autopromote
-
-Synopsis
---------
-
-| pepc cstates *info* **--c1e-autopromote**
-| pepc cstates *config* **--c1e-autopromote**\ =<on|off>
-
-Description
------------
-
-When enabled, the CPU automatically converts all 'C1' C-state requests to 'C1E' requests.
-
-Mechanism
----------
-
-**msr**
-MSR_POWER_CTL (0x1FC), bit 1.
-
-Scope
------
-
-This option has package scope.
-
-----------------------------------------------------------------------------------------------------
-
-cstate_prewake
-==============
-
-cstate_prewake - C-state prewake
-
-Synopsis
---------
-
-| pepc cstates *info* **--cstate-prewake**
-| pepc cstates *config* **--cstate-prewake**\ =<on|off>
-
-Description
------------
-
-When enabled, the CPU will start exiting the 'C6' C-state in advance, prior to the next local
-APIC timer event.
-
-Mechanism
----------
-
-**msr**
-MSR_POWER_CTL (0x1FC), bit 30.
-
-Scope
------
-
-This option has package scope.
-
-----------------------------------------------------------------------------------------------------
-
-idle_driver
-===========
-
-idle_driver - Idle driver
-
-Synopsis
---------
-
-pepc cstates *info* **--idle-driver**
-
-Description
------------
-
-Idle driver is responsible for enumerating and requesting the C-states available on the platform.
-
-Mechanism
----------
-
-**sysfs***
-"/sys/devices/system/cpu/cpuidle/current_governor"
-
-Scope
------
-
-This option has global scope.
-
-----------------------------------------------------------------------------------------------------
-
-governor
-========
-
-governor - Idle governor
-
-Synopsis
---------
-
-| pepc cstates *info* **--governor**
-| pepc cstates *config* **--governor**\ =<name>
-
-Description
------------
-
-Idle governor decides which C-state to request on an idle CPU.
-
-Mechanism
----------
-
-**sysfs**
-"/sys/devices/system/cpu/cpuidle/scaling_governor"
-
-Scope
------
-
-This option has global scope.
-
-----------------------------------------------------------------------------------------------------
-
-governors
-=========
-
-governors - Available idle governors
-
-Synopsis
---------
-
-pepc cstates *info* **--governors**
-
-Description
------------
-
-Idle governors decide which C-state to request on an idle CPU. Different governors implement
-different selection policy.
-
-Mechanism
----------
-
-**sysfs**
-"/sys/devices/system/cpu/cpuidle/available_governors"
-
-Scope
------
-
-This property has global scope.
+   Configure the idle governor, which decides the C-state to request for an idle CPU. Updates
+   '/sys/devices/system/cpu/cpuidle/scaling_governor'.
