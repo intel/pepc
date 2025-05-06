@@ -119,8 +119,8 @@ Hardware C-states, however, have scope. Here are some of the hardware C-state sc
   memory controllers, I/O controllers, and interconnects. Package-wide power actions, such as
   clock-gating the interconnect or lowering L3 voltage, occur when all cores/modules in the package
   enter a required hardware C-state. These actions are platform- and vendor-specific, often
-  configurable via BIOS. For example, on Intel Granite Rapids, PC6 is triggered when OS requests C6P
-  on all cores, all cores enter CC6, and no interconnect traffic exists (e.g., a PCIe NIC is not
+  configurable via BIOS. For example, on Intel Granite Rapids, PC6 may be triggered when OS requests
+  C6P on all cores, all cores enter CC6, and no interconnect traffic exists (e.g., a PCIe NIC is not
   transferring data to main memory via DMA).
 
 # ACPI C-states
