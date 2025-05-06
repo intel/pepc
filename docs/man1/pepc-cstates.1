@@ -17,50 +17,65 @@ Print debugging information.
 Print version and exit.
 .TP
 \f[B]\-H\f[R] \f[I]HOSTNAME\f[R], \f[B]\-\-host\f[R] \f[I]HOSTNAME\f[R]
-User name for SSH login to the remote host. Defaults to 'root.
+User name for SSH login to the remote host.
+Defaults to \[aq]root.
 .TP
 \f[B]\-U\f[R] \f[I]USERNAME\f[R], \f[B]\-\-username\f[R] \f[I]USERNAME\f[R]
 Name of the user to use for logging into the remote host over SSH.
 The default user name is \[aq]root\[aq].
 .TP
 \f[B]\-K\f[R] \f[I]PRIVKEY\f[R], \f[B]\-\-priv\-key\f[R] \f[I]PRIVKEY\f[R]
-Path to the private SSH key that should be used for logging into the
-remote host.
-By default the key is automatically found from standard paths like
-\[aq]$HOME/.ssh\[aq].
+Path to the private SSH key for logging into the remote host.
+Defaults to keys in standard paths like \[aq]$HOME/.ssh\[aq].
 .TP
 \f[B]\-T\f[R] \f[I]TIMEOUT\f[R], \f[B]\-\-timeout\f[R] \f[I]TIMEOUT\f[R]
-Timeout for establishing an SSH connection in seconds. Defaults to 8.
+Timeout for establishing an SSH connection in seconds.
+Defaults to 8.
 .TP
 \f[B]\-D\f[R] \f[I]DATASET\f[R], \f[B]\-\-dataset\f[R] \f[I]DATASET\f[R]
-This option is for debugging and testing purposes only, it defines the
-dataset that will be used to emulate a host for running the command on.
-This option is typically used when running \[aq]pepc\[aq] from the
-source code directory, which includes datasets for many different
-systems.
+This option is for debugging and testing.
+It specifies the dataset to emulate a host for running the command.
+Typically used when running \[aq]pepc\[aq] from the source directory,
+which includes datasets for various systems.
 .RS
 .PP
-The argument can be the dataset path, \[aq]all\[aq] to specify all
-available dataset or name in which case the following locations will be
-searched for.
+The argument can be a dataset path or name.
+If specified by name, the following locations are searched for the
+dataset.
 .IP "1." 3
-\[aq]./tests/data\[aq], in the directory of the running program
+\[aq]./tests/data\[aq] in the program\[aq]s directory
 .IP "2." 3
 \[aq]$PEPC_DATA_PATH/tests/data\[aq]
 .IP "3." 3
 \[aq]$HOME/.local/share/pepc/tests/data\[aq]
 .IP "4." 3
-\[aq]/usr/local/share/pepc/tests/data\[aq]
+\[aq]$VIRTUAL_ENV/share/tests/data\[aq]
 .IP "5." 3
+\[aq]/usr/local/share/pepc/tests/data\[aq]
+.IP "6." 3
 \[aq]/usr/share/pepc/tests/data\[aq]
 .RE
 .TP
 \f[B]\-\-force\-color\f[R]
-Force coloring of the text output.
+Force colorized output even if the output stream is not a terminal (adds
+ANSI escape codes).
+.TP
+\f[B]\-\-override\-cpu\-model\f[R] \f[I]VFM\f[R]
+This option is for debugging and testing purposes only.
+Override the target host CPU model and force {TOOLNAME} treat the host
+as a specific CPU model.
+The format is \[aq][<Vendor>:][<Family>:]<Model>\[aq], where
+\[aq]<Vendor>\[aq] is the CPU vendor (e.g., \[aq]GenuineIntel\[aq] or
+\[aq]AuthenticAMD\[aq]), \[aq]<Family>\[aq] is the CPU family (e.g., 6),
+and \[aq]<Model>\[aq] is the CPU model (e.g., 0x8F).
+Example: \[aq]GenuineIntel:6:0x8F\[aq] will force the tool treating the
+target host CPU as a Sapphire Rapids Xeon.
+The vendor and family are optional and if not specified, the tool will
+use the vendor and family of the target host CPU.
+The family and model can be specified in decimal or hexadecimal format.
 .SS Target CPU specification options
-All sub\-commans (\f[I]\[aq]info\[aq]\f[R], \f[I]\[aq]config\[aq]\f[R],
-\f[I]\[aq]save\[aq]\f[R]) support the following target CPU specification
-options.
+All sub\-commans (\f[I]\[aq]info\[aq]\f[R], \f[I]\[aq]config\[aq]\f[R])
+support the following target CPU specification options.
 .TP
 \f[B]\-\-cpus\f[R] \f[I]CPUS\f[R]
 The list can include individual CPU numbers and CPU number ranges.
@@ -119,337 +134,158 @@ does not provide topology information for offline CPUs.
 In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index
 \[aq]1\[aq] would mean CPU 5.
 .SS Subcommand \f[I]\[aq]info\[aq]\f[R]
-Get information about C\-states on specified CPUs.
-By default, print all information about all CPUs.
-.PP
-Use target CPU specification options to specify the subset of CPUs,
-cores, dies, or packages.
+Retrieve C\-state information for specified CPUs.
+By default, display all details for all CPUs.
+Use target CPU specification options to limit the scope to specific
+CPUs, cores, dies, or packages.
 .TP
 \f[B]\-\-yaml\f[R]
 Print information in YAML format.
 .TP
-\f[B]\-\-override\-cpu\-model\f[R] \f[I]MODEL\f[R]
-This option is for debugging and testing purposes only.
-Provide the CPU model number which the tool treats the target system CPU
-as.
-For example, use 0x8F to treat the target system as Sapphire Rapids
-Xeon.
-.TP
 \f[B]\-m\f[R] \f[I]MECHANISMS\f[R], \f[B]\-\-mechanisms\f[R] \f[I]MECHANISMS\f[R]
-Comma\-separated list of mechanisms that are allowed to be used for
-configuring C\-states.
-Use \[aq]\-\-list\-mechanisms\[aq] to get the list of available
-mechanisms.
-Note, many options support only one mechanism (e.g., \[aq]sysfs\[aq]),
-some may support multiple (e.g., \[aq]sysfs\[aq] and \[aq]msr\[aq]).
-The mechanisms are tried in the specified order.
-By default, all mechanisms are allowed and the most preferred mechanisms
-will be tried first.
+Comma\-separated list of mechanisms to use for retrieving C\-states
+information.
+Use \[aq]\-\-list\-mechanisms\[aq] to view available mechanisms.
+Many options support only one mechanism (e.g., \[aq]sysfs\[aq]), while
+some support multiple (e.g., \[aq]sysfs\[aq] and \[aq]msr\[aq]).
+Mechanisms are tried in the specified order.
+By default, all mechanisms are allowed, with the most preferred tried
+first.
 .TP
 \f[B]\-\-list\-mechanisms\f[R]
-List mechanisms available for reading C\-states information.
+List available mechanisms for retrieving C\-states information.
 .TP
 \f[B]\-\-cstates\f[R] \f[I][CSTATES]\f[R]
-Comma\-separated list of C\-states to get information about.
-C\-states should be specified by name (e.g., \[aq]C1\[aq]).
-Use \[aq]all\[aq] to specify all the available Linux C\-states (this is
-the default).
-Note, there is a difference between Linux C\-states (e.g., \[aq]C6\[aq])
-and hardware C\-states (e.g., Core C6 or Package C6 on many Intel
-platforms).
-The former is what Linux can request, and on Intel hardware this is
-usually about various \[aq]mwait\[aq] instruction hints.
-The latter are platform\-specific hardware state, entered upon a Linux
-request.
+Comma\-separated list of C\-states to retrieve information about,
+specified by name (e.g., C1).
+Use \[aq]all\[aq] to include all available Linux C\-states (default).
+Remember, Linux C\-states (e.g., C6) are requests Linux can make, while
+hardware C\-states (e.g., Core C6 or Package C6 on Intel platforms) are
+platform\-specific states entered upon such requests.
+See the \[aq]\c
+.UR
+https://github.com/intel/pepc/blob/main/docs/misc-cstate-namespaces.md
+.UE \c
+\[aq] document for details.
 .TP
 \f[B]\-\-pkg\-cstate\-limit\f[R]
-Get package C\-state limit (details in \[aq]pkg_cstate_limit\[aq]),
-available package C\-state limits (details in
-\[aq]pkg_cstate_limits\[aq]), package C\-state limit lock (details in
-\[aq]pkg_cstate_limit_lock\[aq]), and package C\-state limit aliases
-(details in \[aq]pkg_cstate_limit_aliases\[aq]).
+Retrieve the current package C\-state limit, available limits, and lock
+status.
+The package C\-state limit defines the deepest hardware package C\-state
+the platform can enter.
+It is read from MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0,
+depending on the CPU model.
+The lock bit (bit 15) in the same MSR determines if the OS can modify
+the limit.
 .TP
 \f[B]\-\-c1\-demotion\f[R]
-Check if C1 demotion is enabled or disabled (details in
-\[aq]c1_demotion\[aq]).
+Check if C1 demotion is enabled or disabled.
+On Intel platforms, this feature monitors CPU wake\-up rates.
+If the rate exceeds a threshold, deep C\-state requests are demoted to
+C1 to improve performance, potentially increasing power consumption.
+Read from MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 26.
 .TP
 \f[B]\-\-c1\-undemotion\f[R]
-Check if C1 undemotion is enabled or disabled (details in
-\[aq]c1_undemotion\[aq]).
+Check if C1 undemotion is enabled or disabled.
+When enabled, the CPU can reverse previously demoted requests from C1
+back to deeper C\-states (e.g., C6) if frequent wake\-ups have stopped.
+Read from MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 28.
 .TP
 \f[B]\-\-c1e\-autopromote\f[R]
-Check if C1E autopromote is enabled or disabled (details in
-\[aq]c1e_autopromote\[aq]).
+Check if C1E autopromotion is enabled.
+When enabled, the CPU converts all C1 C\-state requests to C1E requests.
+Read from MSR_POWER_CTL (0x1FC), bit 1.
 .TP
 \f[B]\-\-cstate\-prewake\f[R]
-Check if C\-state prewake is enabled or disabled (details in
-\[aq]cstate_prewake\[aq]).
+Check if C\-state prewake is enabled.
+When enabled, the CPU considers idle timers and starts exiting deep
+C\-states early, before the next local APIC timer event.
+This ensures the CPU is nearly awake by the tim the timer fires.
+Read from MSR_POWER_CTL (0x1FC), bit 30.
 .TP
 \f[B]\-\-idle\-driver\f[R]
-Get idle driver (details in \[aq]idle_driver\[aq]).
+Retrieve the idle driver name.
+The idle driver enumerates available C\-states and issues C\-state
+requests.
+Read from \[aq]/sys/devices/system/cpu/cpuidle/current_governor\[aq].
 .TP
 \f[B]\-\-governor\f[R]
-Get idle governor (details in \[aq]governor\[aq]).
+Retrieve the idle governor name, which determines the C\-state to
+request for an idle CPU.
+Read from \[aq]/sys/devices/system/cpu/cpuidle/scaling_governor\[aq].
 .TP
 \f[B]\-\-governors\f[R]
-Get list of available idle governors (details in \[aq]governors\[aq]).
+Retrieve the list of available idle governors, which determine the
+C\-state to request for an idle CPU.
+Different governors implement various selection policies.
+Read from \[aq]/sys/devices/system/cpu/cpuidle/available_governors\[aq].
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
-Configure C\-states on specified CPUs.
-All options can be used without a parameter, in which case the currently
-configured value(s) will be printed.
-.PP
-Use target CPU specification options to specify the subset of CPUs,
-cores, dies, or packages.
+Configure C\-states for specified CPUs.
+If no parameter is provided, the current configuration will be
+displayed.
+Use target CPU specification options to limit the scope to specific
+CPUs, cores, dies, or packages.
 .TP
-\f[B]\-\-override\-cpu\-model\f[R] \f[I]MODEL\f[R]
-This option is for debugging and testing purposes only.
-Provide the CPU model number which the tool treats the target system CPU
-as.
-For example, use 0x8F to treat the target system as Sapphire Rapids
-Xeon.
+\f[B]\-m\f[R] \f[I]MECHANISMS\f[R], \f[B]\-\-mechanisms\f[R] \f[I]MECHANISMS\f[R]
+Comma\-separated list of mechanisms to use for configuring C\-states.
+Use \[aq]\-\-list\-mechanisms\[aq] to view available mechanisms.
+Many options support only one mechanism (e.g., \[aq]sysfs\[aq]), while
+some support multiple (e.g., \[aq]sysfs\[aq] and \[aq]msr\[aq]).
+Mechanisms are tried in the specified order.
+By default, all mechanisms are allowed, with the most preferred tried
+first.
 .TP
 \f[B]\-\-list\-mechanisms\f[R]
-List mechanisms available for configuring C\-states.
+List available mechanisms for configuring C\-states.
 .TP
 \f[B]\-\-enable\f[R] \f[I]CSTATES\f[R]
-Comma\-separated list of C\-states to enable.
-C\-states should be specified by name (e.g., \[aq]C1\[aq]).
-Use \[aq]all\[aq] to specify all the available Linux C\-states (this is
-the default).
-Note, there is a difference between Linux C\-states (e.g., \[aq]C6\[aq])
-and hardware C\-states (e.g., Core C6 or Package C6 on many Intel
-platforms).
-The former is what Linux can request, and on Intel hardware this is
-usually about various \[aq]mwait\[aq] instruction hints.
-The latter are platform\-specific hardware state, entered upon a Linux
-request.
+Comma\-separated list of C\-state names to enable.
+Use \[aq]all\[aq] to include all available Linux C\-states (default).
+Remember, Linux C\-states (e.g., C6) are requests Linux can make, while
+hardware C\-states (e.g., Core C6 or Package C6 on Intel platforms) are
+platform\-specific states entered upon such requests.
+See the \[aq]\c
+.UR
+https://github.com/intel/pepc/blob/main/docs/misc-cstate-namespaces.md
+.UE \c
+\[aq] document for details.
 .TP
 \f[B]\-\-disable\f[R] \f[I]CSTATES\f[R]
-Similar to \[aq]\-\-enable\[aq], but specifies the list of C\-states to
-disable.
+Similar to \[aq]\-\-enable\[aq], but specifies the C\-states to disable.
 .TP
 \f[B]\-\-pkg\-cstate\-limit\f[R] \f[I]PKG_CSTATE_LIMIT\f[R]
-Set package C\-state limit (details in \[aq]pkg_cstate_limit\[aq]).
+Set the package C\-state limit, defining the deepest hardware package
+C\-state the platform can enter.
+Writes to MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0, depending
+on the CPU model.
+Writing is refused if the lock bit (bit 15) in the same MSR is set.
 .TP
 \f[B]\-\-c1\-demotion\f[R] \f[I]on|off\f[R]
-Enable or disable C1 demotion (details in \[aq]c1_demotion\[aq]).
+Enable or disable C1 demotion.
+On Intel platforms, this feature monitors CPU wake\-up rates.
+If the rate exceeds a threshold, deep C\-state requests are demoted to
+C1 to improve performance at the cost of higher power consumption.
+Writes to MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 26.
 .TP
 \f[B]\-\-c1\-undemotion\f[R] \f[I]on|off\f[R]
-Enable or disable C1 undemotion (details in \[aq]c1_undemotion\[aq]).
+Enable or disable C1 undemotion.
+When enabled, the CPU can reverse previously demoted C1 requests back to
+deeper C\-states (e.g., C6) if frequent wake\-ups have stopped.
+Writes to MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 28.
 .TP
 \f[B]\-\-c1e\-autopromote\f[R] \f[I]on|off\f[R]
-Enable or disable C1E autopromote (details in
-\[aq]c1e_autopromote\[aq]).
+Enable or disable C1E autopromotion.
+When enabled, all C1 C\-state requests are converted to C1E.
+Writes to MSR_POWER_CTL (0x1FC), bit 1.
 .TP
 \f[B]\-\-cstate\-prewake\f[R] \f[I]on|off\f[R]
-Enable or disable C\-state prewake (details in
-\[aq]cstate_prewake\[aq]).
+Enable or disable C\-state prewake.
+When enabled, the CPU considers idle timers and starts exiting deep
+C\-states early, before the next local APIC timer event.
+This ensures the CPU is nearly awake by the tim the timer fires.
+Writes to MSR_POWER_CTL (0x1FC), bit 30.
 .TP
 \f[B]\-\-governor\f[R] \f[I]NAME\f[R]
-Set idle governor (details in \[aq]governor\[aq]).
-.SS Subcommand \f[I]\[aq]save\[aq]\f[R]
-Save all the modifiable C\-state settings into a file.
-This file can later be used for restoring C\-state settings with the
-\[aq]pepc cstates restore\[aq] command.
-.PP
-Use target CPU specification options to specify the subset of CPUs,
-cores, dies, or packages.
-.TP
-\f[B]\-o\f[R] \f[I]OUTFILE\f[R], \f[B]\-\-outfile\f[R] \f[I]OUTFILE\f[R]
-Name of the file to save the settings to (print to standard output by
-default).
-.SS Subcommand \f[I]\[aq]restore\[aq]\f[R]
-Restore C\-state settings from a file previously created with the
-\[aq]pepc cstates save\[aq] command.
-.TP
-\f[B]\-f\f[R] \f[I]INFILE\f[R], \f[B]\-\-from\f[R] \f[I]INFILE\f[R]
-Name of the file from which to restore the settings from, use
-\[dq]\-\[dq] to read from the standard output.
-.PP
-   *   *   *   *   *
-.SH Properties
-.SS pkg_cstate_limit
-pkg_cstate_limit \- Package C\-state limit
-.SS Synopsis
-.PP
-pepc cstates \f[I]info\f[R] \f[B]\-\-pkg\-cstate\-limit\f[R]
-.PD 0
-.P
-.PD
-pepc cstates \f[I]config\f[R] \f[B]\-\-pkg\-cstate\-limit\f[R]=<on|off>
-.SS Description
-The deepest package C\-state the platform is allowed to enter.
-MSR_PKG_CST_CONFIG_CONTROL (0xE2) register can be locked, in which case
-the package C\-state limit can only be read, but cannot be modified
-(please, refer to \[aq]\f[B]pkg_cstate_limit_lock\f[R]\[aq] for more
-information).
-.SS Mechanism
-\f[B]msr\f[R] MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0,
-depending on CPU model.
-.SS Scope
-This option has core scope.
-Exceptions: module scope on Silvermonts and Airmonts, package scope on
-Xeon Phi processors.
-.PP
-   *   *   *   *   *
-.SS pkg_cstate_limits
-pkg_cstate_limits \- Available package C\-state limits
-.SS Synopsis
-pepc cstates \f[I]info\f[R] \f[B]\-\-pkg\-cstate\-limits\f[R]
-.SS Description
-All available package C\-state limits.
-.SS Mechanism
-\f[B]doc\f[R] Intel SDM (Software Developer Manual) and Intel EDS
-(External Design Specification).
-.SS Scope
-This option has global scope.
-.PP
-   *   *   *   *   *
-.SS pkg_cstate_limit_lock
-pkg_cstate_limit_lock \- Package C\-state limit lock
-.SS Synopsis
-pepc cstates \f[I]info\f[R] \f[B]\-\-pkg\-cstate\-limit\-lock\f[R]
-.SS Description
-Whether the package C\-state limit can be modified.
-When \[aq]True\[aq], \[aq]\f[B]pkg_cstate_limit\f[R]\[aq] is read\-only.
-.SS Mechanism
-\f[B]msr\f[R] MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 15.
-.SS Scope
-This option has package scope.
-.PP
-   *   *   *   *   *
-.SS pkg_cstate_limit_aliases
-pkg_cstate_limit_aliases \- Package C\-state limit aliases
-.SS Synopsis
-pepc cstates \f[I]info\f[R] \f[B]\-\-pkg\-cstate\-limit\-aliases\f[R]
-.SS Description
-Package C\-state limit aliases.
-For example on Ice Lake Xeon, \[aq]PC6\[aq] is an alias for
-\[aq]PC6R\[aq].
-.SS Mechanism
-\f[B]doc\f[R] Intel SDM (Software Developer Manual) or Intel EDS
-(External Design Specification).
-.SS Scope
-This option has global scope.
-.PP
-   *   *   *   *   *
-.SS c1_demotion
-c1_demotion \- C1 demotion
-.SS Synopsis
-.PP
-pepc cstates \f[I]info\f[R] \f[B]\-\-c1\-demotion\f[R]
-.PD 0
-.P
-.PD
-pepc cstates \f[I]config\f[R] \f[B]\-\-c1\-demotion\f[R]=<on|off>
-.SS Description
-Allow or disallow the CPU to demote \[aq]C6\[aq] or \[aq]C7\[aq]
-C\-state requests to \[aq]C1\[aq].
-.SS Mechanism
-MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 26.
-.SS Scope
-This option has core scope.
-Exceptions: module scope on Silvermonts and Airmonts, package scope on
-Xeon Phis.
-.PP
-   *   *   *   *   *
-.SS c1_undemotion
-c1_demotion \- C1 undemotion
-.SS Synopsis
-.PP
-pepc cstates \f[I]info\f[R] \f[B]\-\-c1\-undemotion\f[R]
-.PD 0
-.P
-.PD
-pepc cstates \f[I]config\f[R] \f[B]\-\-c1\-undemotion\f[R]=<on|off>
-.SS Description
-Allow or disallow the CPU to un\-demote previously demoted requests back
-from \[aq]C1\[aq] C\-state to \[aq]C6\[aq] or \[aq]C7l.
-.SS Mechanism
-\f[B]msr\f[R] MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 28.
-.SS Scope
-This option has core scope.
-Exceptions: module scope on Silvermonts and Airmonts, package scope on
-Xeon Phis.
-.PP
-   *   *   *   *   *
-.SS c1e_autopromote
-c1e_autopromote \- C1E autopromote
-.SS Synopsis
-.PP
-pepc cstates \f[I]info\f[R] \f[B]\-\-c1e\-autopromote\f[R]
-.PD 0
-.P
-.PD
-pepc cstates \f[I]config\f[R] \f[B]\-\-c1e\-autopromote\f[R]=<on|off>
-.SS Description
-When enabled, the CPU automatically converts all \[aq]C1\[aq] C\-state
-requests to \[aq]C1E\[aq] requests.
-.SS Mechanism
-\f[B]msr\f[R] MSR_POWER_CTL (0x1FC), bit 1.
-.SS Scope
-This option has package scope.
-.PP
-   *   *   *   *   *
-.SS cstate_prewake
-cstate_prewake \- C\-state prewake
-.SS Synopsis
-.PP
-pepc cstates \f[I]info\f[R] \f[B]\-\-cstate\-prewake\f[R]
-.PD 0
-.P
-.PD
-pepc cstates \f[I]config\f[R] \f[B]\-\-cstate\-prewake\f[R]=<on|off>
-.SS Description
-When enabled, the CPU will start exiting the \[aq]C6\[aq] C\-state in
-advance, prior to the next local APIC timer event.
-.SS Mechanism
-\f[B]msr\f[R] MSR_POWER_CTL (0x1FC), bit 30.
-.SS Scope
-This option has package scope.
-.PP
-   *   *   *   *   *
-.SS idle_driver
-idle_driver \- Idle driver
-.SS Synopsis
-pepc cstates \f[I]info\f[R] \f[B]\-\-idle\-driver\f[R]
-.SS Description
-Idle driver is responsible for enumerating and requesting the C\-states
-available on the platform.
-.SS Mechanism
-\f[B]sysfs\f[R]*
-\[dq]/sys/devices/system/cpu/cpuidle/current_governor\[dq]
-.SS Scope
-This option has global scope.
-.PP
-   *   *   *   *   *
-.SS governor
-governor \- Idle governor
-.SS Synopsis
-.PP
-pepc cstates \f[I]info\f[R] \f[B]\-\-governor\f[R]
-.PD 0
-.P
-.PD
-pepc cstates \f[I]config\f[R] \f[B]\-\-governor\f[R]=<name>
-.SS Description
-Idle governor decides which C\-state to request on an idle CPU.
-.SS Mechanism
-\f[B]sysfs\f[R]
-\[dq]/sys/devices/system/cpu/cpuidle/scaling_governor\[dq]
-.SS Scope
-This option has global scope.
-.PP
-   *   *   *   *   *
-.SS governors
-governors \- Available idle governors
-.SS Synopsis
-pepc cstates \f[I]info\f[R] \f[B]\-\-governors\f[R]
-.SS Description
-Idle governors decide which C\-state to request on an idle CPU.
-Different governors implement different selection policy.
-.SS Mechanism
-\f[B]sysfs\f[R]
-\[dq]/sys/devices/system/cpu/cpuidle/available_governors\[dq]
-.SS Scope
-This property has global scope.
+Configure the idle governor, which decides the C\-state to request for
+an idle CPU.
+Updates \[aq]/sys/devices/system/cpu/cpuidle/scaling_governor\[aq].
