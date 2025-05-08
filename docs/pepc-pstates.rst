@@ -135,21 +135,21 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
 
 **--min-freq**
    Retrieve the minimum CPU frequency using 'sysfs' (preferred) or 'msr'. The 'sysfs' mechanism reads
-   '/sys/devices/system/cpu/policy<NUMBER>/scaling_min_freq', while 'msr' reads the MSR_HWP_REQUEST
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq', while 'msr' reads the MSR_HWP_REQUEST
    (0x774) register, bits 7:0.
 
 **--max-freq**
    Retrieve the maximum CPU frequency using 'sysfs' (preferred) or 'msr'. The 'sysfs' mechanism reads
-   '/sys/devices/system/cpu/policy<NUMBER>/scaling_max_freq', while 'msr' reads the MSR_HWP_REQUEST
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_max_freq', while 'msr' reads the MSR_HWP_REQUEST
    (0x774) register, bits 15:8.
 
 **--min-freq-limit**
    Retrieve the minimum CPU frequency supported by the Linux kernel from
-   "/sys/devices/system/cpu/policy<NUMBER>/cpuinfo_min_freq".
+   "/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_min_freq".
 
 **--max-freq-limit**
    Retrieve the maximum CPU frequency supported by the Linux kernel from
-   "/sys/devices/system/cpu/policy<NUMBER>/cpuinfo_max_freq".
+   "/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_max_freq".
 
 **--frequencies**
    List CPU frequencies supported by the Linux kernel for '--min-freq' and '--max-freq' options.
@@ -161,7 +161,7 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
 **--base-freq**
    Retrieve the base CPU frequency, also known as the "guaranteed frequency," HFM (High Frequency
    Mode), or P1. Preferred mechanism is 'sysfs', which reads
-   '/sys/devices/system/cpu/policy<NUMBER>/base_frequency'. If unavailable, it falls back to
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/base_frequency'. If unavailable, it falls back to
    '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit'. The 'msr' mechanism reads it from
    MSR_PLATFORM_INFO (0xCE), bits 15:8.
 
@@ -276,7 +276,7 @@ packages.
 **--min-freq** *MIN_FREQ*
    Set the minimum CPU frequency. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be
    used (for example "900MHz"). Preferred mechanism is 'sysfs', which uses
-   '/sys/devices/system/cpu/policy<NUMBER>/scaling_min_freq'. The 'msr' mechanism uses the
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq'. The 'msr' mechanism uses the
    MSR_HWP_REQUEST (0x774) register, bits 7:0.
 
    The following special values can also be used:

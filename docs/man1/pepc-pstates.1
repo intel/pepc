@@ -158,23 +158,23 @@ Display available mechanisms for retrieving P\-states information.
 Retrieve the minimum CPU frequency using \[aq]sysfs\[aq] (preferred) or
 \[aq]msr\[aq].
 The \[aq]sysfs\[aq] mechanism reads
-\[aq]/sys/devices/system/cpu/policy<NUMBER>/scaling_min_freq\[aq], while
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq\[aq], while
 \[aq]msr\[aq] reads the MSR_HWP_REQUEST (0x774) register, bits 7:0.
 .TP
 \f[B]\-\-max\-freq\f[R]
 Retrieve the maximum CPU frequency using \[aq]sysfs\[aq] (preferred) or
 \[aq]msr\[aq].
 The \[aq]sysfs\[aq] mechanism reads
-\[aq]/sys/devices/system/cpu/policy<NUMBER>/scaling_max_freq\[aq], while
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_max_freq\[aq], while
 \[aq]msr\[aq] reads the MSR_HWP_REQUEST (0x774) register, bits 15:8.
 .TP
 \f[B]\-\-min\-freq\-limit\f[R]
 Retrieve the minimum CPU frequency supported by the Linux kernel from
-\[dq]/sys/devices/system/cpu/policy<NUMBER>/cpuinfo_min_freq\[dq].
+\[dq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_min_freq\[dq].
 .TP
 \f[B]\-\-max\-freq\-limit\f[R]
 Retrieve the maximum CPU frequency supported by the Linux kernel from
-\[dq]/sys/devices/system/cpu/policy<NUMBER>/cpuinfo_max_freq\[dq].
+\[dq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_max_freq\[dq].
 .TP
 \f[B]\-\-frequencies\f[R]
 List CPU frequencies supported by the Linux kernel for
@@ -189,7 +189,7 @@ available with a step equal to \[aq]\-\-bus\-clock\[aq].
 Retrieve the base CPU frequency, also known as the \[dq]guaranteed
 frequency,\[dq] HFM (High Frequency Mode), or P1.
 Preferred mechanism is \[aq]sysfs\[aq], which reads
-\[aq]/sys/devices/system/cpu/policy<NUMBER>/base_frequency\[aq].
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/base_frequency\[aq].
 If unavailable, it falls back to
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit\[aq].
 The \[aq]msr\[aq] mechanism reads it from MSR_PLATFORM_INFO (0xCE), bits
@@ -340,7 +340,7 @@ Set the minimum CPU frequency.
 The default unit is \[aq]Hz\[aq], but \[aq]kHz\[aq], \[aq]MHz\[aq], and
 \[aq]GHz\[aq] can also be used (for example \[dq]900MHz\[dq]).
 Preferred mechanism is \[aq]sysfs\[aq], which uses
-\[aq]/sys/devices/system/cpu/policy<NUMBER>/scaling_min_freq\[aq].
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq\[aq].
 The \[aq]msr\[aq] mechanism uses the MSR_HWP_REQUEST (0x774) register,
 bits 7:0.
 .RS
