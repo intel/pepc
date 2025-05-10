@@ -37,12 +37,12 @@ Naming conventions:
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
-from typing import TypedDict, Literal, get_args
+from typing import Any, TypedDict, Literal, get_args
 from pepclibs.CPUInfo import CPUInfo
 from pepclibs.CPUInfo import LevelNameType as ScopeNameType
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
-from pepclibs.msr.MSR import MSR
-from pepclibs._SysfsIO import SysfsIO
+from pepclibs.msr import MSR
+from pepclibs import _SysfsIO
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
@@ -214,8 +214,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def __init__(self,
                  pman: ProcessManagerType | None = None,
                  cpuinfo: CPUInfo | None = None,
-                 msr: MSR | None = None,
-                 sysfs_io: SysfsIO | None = None,
+                 msr: MSR.MSR | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None,
                  enable_cache: bool = True):
         """
         Initialize a class instance.
@@ -715,30 +715,41 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return {"package": package, "pname": pname, "val": val, "mname": mname}
 
-    def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
+    def _get_msr(self) -> MSR.MSR:
+        """Return an instance of 'MSR.MSR'."""
 
         if not self._msr:
-            from pepclibs.msr import MSR # pylint: disable=import-outside-toplevel
-
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
 
         return self._msr
 
-    def _get_sysfs_io(self):
-        """Returns a '_SysfsIO.SysfsIO()' object."""
+    def _get_sysfs_io(self) -> _SysfsIO.SysfsIO:
+        """Return an instance of '_SysfsIO.SysfsIO'."""
 
         if not self._sysfs_io:
-            from pepclibs import _SysfsIO # pylint: disable=import-outside-toplevel
-
             self._sysfs_io = _SysfsIO.SysfsIO(self._pman, enable_cache=self._enable_cache)
 
         return self._sysfs_io
 
-    def _do_prop_not_supported(self, pname, nums_str, mnames, action, exceptions=None):
+    def _do_prop_not_supported(self,
+                               pname: str,
+                               nums_str: str,
+                               mnames: list[MechanismNameType],
+                               action: str,
+                               exceptions: list[Any] | None = None):
         """
-        Rase 'ErrorNotSupported' or print a debug message if a property "get" or "set" method
-        failed.
+        Handle an unsupported property access by raising an error or logging a debug message.
+
+        Args:
+            pname: Property name.
+            nums_str: String describing the target CPU, packages, etc.
+            mnames: List of attempted mechanism names.
+            action: The action: "get" or "set".
+            exceptions: List of exception objects encountered during the operation.
+
+        Raises:
+            ErrorNotSupported: The unsupported property exception with details (if 'exceptions' is
+                               not None).
         """
 
         if len(mnames) > 2:
@@ -750,21 +761,36 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             mnames_str = f"using the '{mnames[0]}' method"
 
         if exceptions:
-            errmsgs = Trivial.list_dedup([str(err) for err in exceptions])
-            errmsgs = "\n" + "\n".join([Error(errmsg).indent(2) for errmsg in errmsgs])
+            emsgs = Trivial.list_dedup([str(err) for err in exceptions])
+            errmsgs = "\n" + "\n".join([Error(errmsg).indent(2) for errmsg in emsgs])
         else:
             errmsgs = ""
 
         what = Human.uncapitalize(self._props[pname]["name"])
-        msg = f"cannot {action} {what} {mnames_str} for {nums_str}{errmsgs}"
+        msg = f"Cannot {action} {what} {mnames_str} for {nums_str}{errmsgs}"
         if exceptions:
             raise ErrorNotSupported(msg)
         _LOG.debug(msg)
 
-    def _prop_not_supported_cpus(self, pname, cpus, mnames, action, exceptions=None):
+    def _prop_not_supported_cpus(self,
+                                 pname: str,
+                                 cpus: list[int],
+                                 mnames: list[MechanismNameType],
+                                 action: str,
+                                 exceptions: list[Any] | None = None):
         """
-        Rase 'ErrorNotSupported' or print a debug message if property "get" or "set" method failed
-        to get or set a property for CPUs in 'cpus' using mechanisms in 'mnames'.
+        Handle an unsupported property access by raising an error or logging a debug message.
+
+        Args:
+            pname: Property name.
+            cpus: List of CPU numbers.
+            mnames: List of attempted mechanism names.
+            action: The action: "get" or "set".
+            exceptions: List of exception objects encountered during the operation.
+
+        Raises:
+            ErrorNotSupported: The unsupported property exception with details (if 'exceptions' is
+                               not None).
         """
 
         if len(cpus) > 1:
@@ -774,19 +800,49 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         self._do_prop_not_supported(pname, cpus_str, mnames, action, exceptions=exceptions)
 
-    def _prop_not_supported_dies(self, pname, dies, mnames, action, exceptions=None):
+    def _prop_not_supported_dies(self,
+                                 pname: str,
+                                 dies: list[int],
+                                 mnames: list[MechanismNameType],
+                                 action: str,
+                                 exceptions: list[Any] | None = None):
         """
-        Rase 'ErrorNotSupported' or print a debug message if property "get" or "set" method failed
-        to get or set a property for dies in 'dies' using mechanisms in 'mnames'.
+        Handle an unsupported property access by raising an error or logging a debug message.
+
+        Args:
+            pname: Property name.
+            dies: List of die numbers.
+            mnames: List of attempted mechanism names.
+            action: The action: "get" or "set".
+            exceptions: List of exception objects encountered during the operation.
+
+        Raises:
+            ErrorNotSupported: The unsupported property exception with details (if 'exceptions' is
+                               not None).
         """
 
         dies_str = self._cpuinfo.dies_to_str(dies)
         self._do_prop_not_supported(pname, dies_str, mnames, action, exceptions=exceptions)
 
-    def _prop_not_supported_packages(self, pname, packages, mnames, action, exceptions=None):
+    def _prop_not_supported_packages(self,
+                                     pname: str,
+                                     packages : list[int],
+                                     mnames: list[MechanismNameType],
+                                     action: str,
+                                     exceptions: list[Any] | None = None):
         """
-        Rase 'ErrorNotSupported' or print a debug message if property "get" or "set" method failed
-        to get or set a property for packages in 'packages' using mechanisms in 'mnames'.
+        Handle an unsupported property access by raising an error or logging a debug message.
+
+        Args:
+            pname: Property name.
+            packages: List of package numbers.
+            mnames: List of attempted mechanism names.
+            action: The action: "get" or "set".
+            exceptions: List of exception objects encountered during the operation.
+
+        Raises:
+            ErrorNotSupported: The unsupported property exception with details (if 'exceptions' is
+                               not None).
         """
 
         if len(packages) > 1:
