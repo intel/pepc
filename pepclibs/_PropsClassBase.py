@@ -39,7 +39,6 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import copy
 from typing import Any, TypedDict, Literal, get_args
 from pepclibs.CPUInfo import CPUInfo
-from pepclibs.CPUInfo import LevelNameType as ScopeNameType
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
 from pepclibs.msr import MSR
 from pepclibs import _SysfsIO
@@ -62,6 +61,7 @@ class MechanismsTypedDict(TypedDict):
     long: str
     writable: bool
 
+ScopeNameType = Literal["CPU", "core", "package", "die", "global"]
 MechanismNameType = Literal["sysfs", "cdev", "msr", "cppc", "doc"]
 
 MECHANISMS: dict[str, MechanismsTypedDict] = {
