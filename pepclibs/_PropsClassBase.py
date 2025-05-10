@@ -9,29 +9,30 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module provides the base class for classes implementing properties, such as 'PState' and
-'CState' classes.
+Provide the base class for implementing property classes, such as 'PStates' and 'CStates'.
 
-Terminology.
- * sub-property - a property related to another (main) property so that the sub-property exists or
-                  makes sense only when the main property is supported by the platform.
-                  Sub-properties have to be read-only.
+Terminology:
+ * Sub-property: A property that is related to a main property and only exists or is meaningful when
+                 the main property is supported by the platform. Sub-properties must be read-only.
 
-Naming conventions.
- * props - dictionary describing the properties. As an example, check 'PROPS' in 'PStates' and
-           'CStates'.
- * pvinfo - the property value dictionary, returned by 'get_prop_cpus()' and 'get_cpu_prop()'.
-            Includes property value and CPU number. Refer to 'PropsClassBase.get_prop_cpus()' for
-            more information.
- * pname - name of a property.
- * sname - functional scope name of the property, i.e., whether the property is per-CPU (affects a
-           single CPU), per-core, per-package, etc. Scope names have the same values in
-           'CPUInfo.LEVELS': CPU, core, package, etc.
- * core siblings - all CPUs sharing the same core. For example, "CPU6 core siblings" are all CPUs
-                   sharing the same core as CPU 6.
- * module siblings - all CPUs sharing the same module.
- * die siblings - all CPUs sharing the same die.
- * package siblings - all CPUs sharing the same package.
+Naming conventions:
+ * props: A dictionary describing the properties. For example, see 'PROPS' in 'PStates' and
+         'CStates'.
+ * pvinfo: The property value dictionary returned by 'get_prop_cpus()' and 'get_cpu_prop()'.
+           It includes the property value and CPU number. See 'PropsClassBase.get_prop_cpus()' for
+           details.
+ * pname: The name of a property.
+ * sname: The functional scope name of the property, indicating whether the property is per-CPU,
+          per-core, per-package, etc. Scope names correspond to those in 'CPUInfo.LEVELS': CPU,
+          core, package, etc.
+ * iosname: The I/O scope name of the property. Typically the same as 'sname', but may differ in
+            for some MSR-backed properties. More information:
+            https://github.com/intel/pepc/blob/main/docs/misc-msr-scope.md
+ * core siblings: All CPUs sharing the same core. For example, "CPU6 core siblings" are all CPUs
+                  sharing the same core as CPU 6.
+ * module siblings: All CPUs sharing the same module.
+ * die siblings: All CPUs sharing the same die.
+ * package siblings: All CPUs sharing the same package.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
