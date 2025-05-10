@@ -11,7 +11,11 @@
 Provide the base class for the 'CPUInfo.CPUInfo' class.
 """
 
+# TODO: modernize this module
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import re
+from typing import Literal
 import contextlib
 from pathlib import Path
 from pepclibs import _UncoreFreq, CPUModels
@@ -21,8 +25,10 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFou
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
+LevelNameType = Literal["CPU", "core", "module", "die", "node", "package"]
+
 # The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
-LEVELS = ("CPU", "core", "module", "die", "node", "package")
+LEVELS: tuple[LevelNameType, ...] = ("CPU", "core", "module", "die", "node", "package")
 
 # 'NA' is used for the CPU/core/module number for I/O dies, which do not include CPUs, cores, or
 # modules. Use a very large number to make sure the the 'NA' numbers go last when sorting.

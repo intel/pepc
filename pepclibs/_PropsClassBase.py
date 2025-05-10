@@ -39,8 +39,8 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 from typing import TypedDict, Literal
-
-from pepclibs import CPUInfo
+from pepclibs.CPUInfo import CPUInfo
+from pepclibs.CPUInfo import LevelNameType as ScopeNameType
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
 from pepclibs.msr.MSR import MSR
 from pepclibs._SysfsIO import SysfsIO
@@ -93,6 +93,8 @@ MECHANISMS: dict[str, MechanismsTypedDict] = {
     }
 }
 
+PropertyTypeType = Literal["int", "float", "bool", "str"]
+
 class PropetiesTypedDict(TypedDict):
     """
     Type for the property description dictionary.
@@ -110,8 +112,8 @@ class PropetiesTypedDict(TypedDict):
 
     name: str
     unit: str | None
-    type: str
-    sname: str | None
+    type: PropertyTypeType
+    sname: ScopeNameType | None
     mnames: tuple[MechanismNameType, ...]
     writable: bool
     special_vals: set[str] | None
@@ -172,7 +174,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def __init__(self,
                  pman: ProcessManagerType | None = None,
-                 cpuinfo: CPUInfo.CPUInfo | None = None,
+                 cpuinfo: CPUInfo | None = None,
                  msr: MSR | None = None,
                  sysfs_io: SysfsIO | None = None,
                  enable_cache: bool = True):
@@ -221,7 +223,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if cpuinfo:
             self._cpuinfo = cpuinfo
         else:
-            self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+            self._cpuinfo = CPUInfo(pman=self._pman)
 
     def close(self):
         """Uninitialize the class object."""
@@ -410,7 +412,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pnames_str = ", ".join(set(self._props))
             raise Error(f"Unknown property name '{pname}', known properties are: {pnames_str}")
 
-    def _validate_cpus_vs_scope(self, pname, cpus):
+    def _validate_cpus_vs_scope(self, pname: str, cpus: list[int]):
         """Make sure that CPUs in 'cpus' match the scope of a property 'pname'."""
 
         sname = self._props[pname]["sname"]

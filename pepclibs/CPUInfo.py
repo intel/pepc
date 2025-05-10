@@ -16,7 +16,7 @@ import json
 from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs._CPUInfoBase import LEVELS, NA
+from pepclibs._CPUInfoBase import LEVELS, NA, LevelNameType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
