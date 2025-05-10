@@ -1103,7 +1103,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Tuples of (package, die, value), where 'value' is the property value or None.
 
         Raises:
-            ErrorNotSupported: If none of the dies and mechanisms support the property.
+            ErrorNotSupported: If none of the dies support the property.
         """
 
         for package, pkg_dies in dies.items():
@@ -1120,7 +1120,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                                                              None, None]:
         """
         Retrieve and yield property value dictionaries for the specified dies using the specified
-        mechanism.
+        mechanisms.
 
         If a mechanism fails for some dies but succeeds for others, raise an error. If all
         mechanisms fail, either raise an exception or yield 'pvinfo' with value 'None', depending on
@@ -1180,13 +1180,25 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             for die in pkg_dies:
                 yield self._construct_die_pvinfo(pname, package, die, mnames[-1], None)
 
-    def _get_prop_dies_mnames(self, pname: str, dies, mnames=None):
+    def _get_prop_dies_mnames(self,
+                              pname: str,
+                              dies: dict[int, NumsType],
+                              mnames: MechanismNamesType | None = None) -> \
+                                          Generator[tuple[int, int, PropertyValueType], None, None]:
         """
-        For every die in 'dies', yield '(package, die, val)' tuples, where 'val' is the 'pname'
-        property value for die 'die' in package 'package'. Try mechanisms in 'mnames'.
+        Retrieve and yield property values for the specified dies using the specified mechanisms.
 
-        This method is similar to the API 'get_prop_cpus()' method, but it does not validate input
-        arguments.
+        Args:
+            pname: Name of the property to retrieve.
+            dies: Mapping of package numbers to die numbers (one package -> many dies).
+            mnames: Mechanisms to use for retrieving the property. If None, use default mechanisms.
+
+        Yields:
+            Tuples of (package, die, value) for each die.
+
+        Raises:
+            ErrorNotSupported: If none of the dies and mechanisms support the property and
+                               'raise_not_supported' is True.
         """
 
         for pvinfo in self._get_prop_pvinfo_dies(pname, dies, mnames):
