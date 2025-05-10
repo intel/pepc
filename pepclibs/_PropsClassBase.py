@@ -18,9 +18,8 @@ Terminology:
 Naming conventions:
  * props: A dictionary describing the properties. For example, see 'PROPS' in 'PStates' and
          'CStates'.
- * pvinfo: The property value dictionary returned by 'get_prop_cpus()' and 'get_cpu_prop()'.
-           It includes the property value and CPU number. See 'PropsClassBase.get_prop_cpus()' for
-           details.
+ * pvinfo: The property value information dictionary returned by 'get_prop_cpus()' and
+   'get_cpu_prop()'. It has the 'PVInfoTypedDict' type.
  * pname: The name of a property.
  * sname: The functional scope name of the property, indicating whether the property is per-CPU,
           per-core, per-package, etc. Scope names correspond to those in 'CPUInfo.LEVELS': CPU,
@@ -95,7 +94,7 @@ MECHANISMS: dict[str, MechanismsTypedDict] = {
 
 PropertyTypeType = Literal["int", "float", "bool", "str"]
 
-class PropetiesTypedDict(TypedDict):
+class PropetiesTypedDict(TypedDict, total=False):
     """
     Type for the property description dictionary.
 
@@ -104,6 +103,7 @@ class PropetiesTypedDict(TypedDict):
         unit: The unit of the property value (e.g., "Hz", "W").
         type: The type of the property value (e.g., "int", "float", "bool").
         sname: The scope name of the property (e.g., "CPU", "core", "package").
+        iosname: The I/O scope name of the property.
         mnames: A tuple of mechanism names supported by the property.
         writable: Whether the property is writable.
         special_vals: A set of special values for the property.
@@ -111,13 +111,30 @@ class PropetiesTypedDict(TypedDict):
     """
 
     name: str
-    unit: str | None
+    unit: str
     type: PropertyTypeType
     sname: ScopeNameType | None
+    iosname: ScopeNameType | None
     mnames: tuple[MechanismNameType, ...]
     writable: bool
-    special_vals: set[str] | None
-    subprops: tuple[str, ...] | None
+    special_vals: set[str]
+    subprops: tuple[str, ...]
+
+class PVInfoTypedDict(TypedDict):
+    """
+    Type for the property value information dictionary (pvinfo).
+
+    Attributes:
+        cpu: The CPU number.
+        pname: The name of the property.
+        val: The value of the property.
+        mname: The name of the mechanism used to retrieve the property.
+    """
+
+    cpu: int
+    pname: str
+    val: int | float | bool | str | None
+    mname: MechanismNameType
 
 class ErrorUsePerCPU(Error):
     """
@@ -501,10 +518,13 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         raise Error(errmsg)
 
-    def _validate_prop_vs_scope(self, pname, sname):
+    def _validate_prop_vs_scope(self, pname: str, sname: ScopeNameType):
         """
-        Validate that 'pname' is suitable for accessing on per-die or per-package bases (the scope
-        is defined by 'sname').
+        Validate that the property 'pname' can be accessed at the specified scope 'sname'.
+
+        Args:
+            pname: Name of the property to validate.
+            sname: Scope name to validate against.
         """
 
         if sname == "die":
@@ -512,44 +532,53 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         elif sname == "package":
             ok_scopes = set(("package", "global"))
         else:
-            raise Error(f"BUG: support for scope {sname} is not implemented")
+            raise Error(f"BUG: Support for scope {sname} is not implemented")
 
         prop = self._props[pname]
 
         if prop["sname"] not in ok_scopes:
             name = Human.uncapitalize(prop["name"])
             snames = ", ".join(ok_scopes)
-            raise Error(f"cannot access {name} on per-{sname} basis, because it has "
+            raise Error(f"Cannot access {name} on per-{sname} basis, because it has "
                         f"{prop['sname']} scope{self._pman.hostmsg}.\nPer-{sname} access is only "
                         f"allowed for properties with the following scopes: {snames}")
 
-    def _validate_prop_vs_ioscope(self, pname, cpus, mnames=None, **kwargs):
+    def _validate_prop_vs_ioscope(self,
+                                  pname: str,
+                                  cpus: list[int],
+                                  mnames: MechanismNameType | None = None,
+                                  package: int | None = None,
+                                  die: int | None = None):
         """
-        Verify the property 'pname' has the same value on all CPUs in 'cpus'.
+        Validate that a property has the same value across specified CPUs, considering differences
+        between property functional scope and I/O scope.
 
-        This method should only be used for properties that have different scope and I/O scope.
-        Please, refer to 'FeatruedMSR' module docstring for information about "scope" vs "I/O
-        scope".
+        The intention is to check properties where the functional scope differs from the I/O scope
+        and detects inconsistencies that may arise when a property is expected to be uniform within
+        a scope, but it is not, due to I/O scope.
 
-        Example of a situation this method helps catching.
+        For example, a property with package scope may be backed by an MSR with core I/O scope,
+        potentially leading to conflicting values across cores within the same package.
 
-        This "Package C-state Limit" property has package scope, but the corresponding MSR has core
-        scope on many Intel platforms. This means, that the MSR may have different value on
-        different cores, and it is impossible to tell what is the actual package C-state limit
-        value.
+        Args:
+            pname: Name of the property to validate.
+            cpus: List of CPUs to check.
+            mnames: Optional mechanism names to use for property retrieval.
+            package: Optional package identifier for scoping.
+            die: Optional die identifier for scoping.
+
+        Raises:
+            ErrorUsePerCPU: If the property value differs across CPUs within the same scope.
         """
 
-        same = True
-        prev_cpu = None
-        disagreed_pvinfos = None
-        pvinfos = {}
+        prev_cpu: int | None = None
+        disagreed_pvinfos: tuple[PVInfoTypedDict, PVInfoTypedDict] | None = None
+        pvinfos: dict[int, PVInfoTypedDict] = {}
 
         for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames=mnames,
                                                  raise_not_supported=False):
             cpu = pvinfo["cpu"]
             pvinfos[cpu] = pvinfo
-            if not same:
-                continue
 
             if prev_cpu is None:
                 prev_cpu = cpu
@@ -557,17 +586,17 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
             if pvinfo["val"] != pvinfos[prev_cpu]["val"]:
                 disagreed_pvinfos = (pvinfos[prev_cpu], pvinfo)
-                same = False
+                break
 
-        if same:
+        if disagreed_pvinfos is None:
             return
 
-        if "die" in kwargs:
+        if die is not None:
             op_sname = "die"
-            for_what = f" for package {kwargs['package']}, die {kwargs['die']}"
-        elif "package" in kwargs:
+            for_what = f" for package {package}, die {die}"
+        elif package is not None:
             op_sname = "package"
-            for_what = f" for package {kwargs['package']}"
+            for_what = f" for package {package}"
         else:
             raise Error("BUG: unsupported scope")
 
