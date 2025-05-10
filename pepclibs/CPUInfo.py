@@ -11,6 +11,9 @@
 Provide information about CPU topology and other CPU details.
 """
 
+# TODO: modernize this module
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import copy
 import json
 from pepclibs import _CPUInfoBase
@@ -861,7 +864,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return (pkgs, rem_cpus)
 
-    def normalize_cpus(self, cpus, offline_ok=False):
+    def normalize_cpus(self, cpus, offline_ok=False) -> list[int]:
         """
         Validate CPU numbers in 'cpus' and return a normalized list. The arguments are as follows.
           * cpus - collection of integer CPU numbers to normalize. Special value 'all' means
