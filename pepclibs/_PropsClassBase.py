@@ -182,9 +182,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Args:
             pman: The process manager object for the target system. If not provided, a local process
                   manager is created.
-            cpuinfo: The CPU information object ('CPUInfo.CPUInfo()'). If not provided, one is created.
+            cpuinfo: The CPU information object ('CPUInfo.CPUInfo()'). If not provided, one is
+                     created.
             msr: The MSR access object ('MSR.MSR()'). If not provided, one is created.
-            sysfs_io: The sysfs access object ('_SysfsIO.SysfsIO()'). If not provided, one is created.
+            sysfs_io: The sysfs access object ('_SysfsIO.SysfsIO()'). If not provided, one is
+                      created.
             enable_cache: Enable property caching if True, do not use caching if False.
         """
 
@@ -207,7 +209,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._props: dict[str, PropetiesTypedDict]
 
         # Dictionary describing all supported mechanisms. Same as 'MECHANISMS', but includes only
-        # the mechanisms that at least one property supports. Has to be initialized by the sub-class.
+        # the mechanisms that at least one property supports. Has to be initialized by the
+        # sub-class.
         self.mechanisms: dict[MechanismNameType, MechanismsTypedDict]
 
         if pman:
@@ -335,14 +338,20 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         raise ErrorNotSupported("PropsClassBase._set_sname")
 
-    def get_sname(self, pname):
+    def get_sname(self, pname: str) -> str | None:
         """
-        Return scope name for the 'pname' property. May return 'None' if the property is not
-        supported, but this is not guaranteed.
+        Return the scope name for the given property name.
 
-        If the property is not supported by the platform, this method does not guarantee that 'None'
-        is returned. Depending on the property and platform, this method may return a valid scope
-        name even if the property is not actually supported.
+        If the property is not supported, return None, but this is not guaranteed. In some cases,
+        a valid scope name may be returned even if the property is unsupported on the current
+        platform. Therefore, the caller should check if the property is supported before or after
+        calling this method.
+
+        Args:
+            pname: Name of the property.
+
+        Returns:
+            The scope name for the property, or None if unavailable.
         """
 
         try:
@@ -354,7 +363,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
             return self._props[pname]["sname"]
         except KeyError as err:
-            raise Error(f"property '{pname}' does not exist") from err
+            raise Error(f"Property '{pname}' does not exist") from err
 
     def _normalize_bool_type_value(self, pname, val):
         """
