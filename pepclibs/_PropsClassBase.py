@@ -94,7 +94,7 @@ MECHANISMS: dict[str, MechanismsTypedDict] = {
 
 PropertyTypeType = Literal["int", "float", "bool", "str"]
 
-class PropetiesTypedDict(TypedDict, total=False):
+class PropertyTypedDict(TypedDict, total=False):
     """
     Type for the property description dictionary.
 
@@ -238,7 +238,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._enable_cache = enable_cache
 
         # The properties dictionary, has to be initialized by the sub-class.
-        self.props: dict[str, PropetiesTypedDict]
+        self.props: dict[str, PropertyTypedDict]
         # Internal version of 'self.props'. Contains some data which we don't want to expose to the
         # user. Has to be initialized by the sub-class.
         self._props: dict[str, IntPropertyTypedDict]
