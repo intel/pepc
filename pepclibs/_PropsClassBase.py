@@ -113,6 +113,22 @@ class PropetiesTypedDict(TypedDict, total=False):
     name: str
     unit: str
     type: PropertyTypeType
+    sname: ScopeNameType
+    iosname: ScopeNameType
+    mnames: tuple[MechanismNameType, ...]
+    writable: bool
+    special_vals: set[str]
+    subprops: tuple[str, ...]
+
+class IntPropertyTypedDict(TypedDict, total=False):
+    """
+    Type for the internal property description dictionary. It is similar to 'PropertyTypedDict', but
+    some attributes may not be initialized, and there are some additional internal attributes.
+    """
+
+    name: str
+    unit: str
+    type: PropertyTypeType
     sname: ScopeNameType | None
     iosname: ScopeNameType | None
     mnames: tuple[MechanismNameType, ...]
@@ -225,7 +241,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self.props: dict[str, PropetiesTypedDict]
         # Internal version of 'self.props'. Contains some data which we don't want to expose to the
         # user. Has to be initialized by the sub-class.
-        self._props: dict[str, PropetiesTypedDict]
+        self._props: dict[str, IntPropertyTypedDict]
 
         # Dictionary describing all supported mechanisms. Same as 'MECHANISMS', but includes only
         # the mechanisms that at least one property supports. Has to be initialized by the
