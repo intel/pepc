@@ -38,7 +38,7 @@ Naming conventions:
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
-from typing import TypedDict, Literal
+from typing import TypedDict, Literal, get_args
 from pepclibs.CPUInfo import CPUInfo
 from pepclibs.CPUInfo import LevelNameType as ScopeNameType
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
@@ -340,7 +340,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         raise ErrorNotSupported("PropsClassBase._set_sname")
 
-    def get_sname(self, pname: str) -> str | None:
+    def get_sname(self, pname: str) -> ScopeNameType | None:
         """
         Return the scope name for the given property name.
 
@@ -413,12 +413,22 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise Error(f"Unknown property name '{pname}', known properties are: {pnames_str}")
 
     def _validate_cpus_vs_scope(self, pname: str, cpus: list[int]):
-        """Make sure that CPUs in 'cpus' match the scope of a property 'pname'."""
+        """
+        Validate that the provided list of CPUs matches the scope of the specified property.
+
+        Args:
+            pname: Name of the property whose scope is being validated.
+            cpus: List of CPU numbers to validate.
+
+        Ensure that the CPUs provided align with the property's scope (e.g., global, package, core,
+        die). E.g., if the scope is 'global', all CPUs must be included. For other scopes, verify
+        that the CPUs form complete groups according to the scope.
+        """
 
         sname = self._props[pname]["sname"]
 
-        if sname not in {"global", "package", "die", "core", "CPU"}:
-            raise Error(f"BUG: unsupported scope name \"{sname}\"")
+        if sname not in get_args(ScopeNameType):
+            raise Error(f"BUG: Unknown scope name '{sname}'")
 
         if sname == "CPU":
             return
