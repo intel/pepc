@@ -136,20 +136,26 @@ class IntPropertyTypedDict(TypedDict, total=False):
     special_vals: set[str]
     subprops: tuple[str, ...]
 
-class PVInfoTypedDict(TypedDict):
+PropertyValueType = int | float | bool | str | None
+
+class PVInfoTypedDict(TypedDict, total=False):
     """
     Type for the property value information dictionary (pvinfo).
 
     Attributes:
         cpu: The CPU number.
+        die: The die number.
+        package: The package number.
         pname: The name of the property.
         val: The value of the property.
         mname: The name of the mechanism used to retrieve the property.
     """
 
     cpu: int
+    die: int
+    package: int
     pname: str
-    val: int | float | bool | str | None
+    val: PropertyValueType
     mname: MechanismNameType
 
 class ErrorUsePerCPU(Error):
@@ -580,8 +586,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to validate.
             cpus: List of CPUs to check.
             mnames: Optional mechanism names to use for property retrieval.
-            package: Optional package identifier for scoping.
-            die: Optional die identifier for scoping.
+            package: Optional package number for scoping.
+            die: Optional die number for scoping.
 
         Raises:
             ErrorUsePerCPU: If the property value differs across CPUs within the same scope.
@@ -633,27 +639,80 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                              f"scope, but '{iosname}' I/O scope.", pvinfos=pvinfos)
 
     @staticmethod
-    def _construct_cpu_pvinfo(pname, cpu, mname, val):
-        """Construct and return the property value dictionary for CPU 'cpu'."""
+    def _construct_cpu_pvinfo(pname: str,
+                              cpu: int,
+                              mname: MechanismNameType,
+                              val: PropertyValueType) -> PVInfoTypedDict:
+        """
+        Construct and return a property value information dictionary.
+
+        If the value is a boolean, convert it to "on" or "off" string.
+
+        Args:
+            pname: Name of the property.
+            cpu: CPU number.
+            mname: Name of the mechanism.
+            val: Property value.
+
+        Returns:
+            The constructed property value information dictionary.
+        """
 
         if isinstance(val, bool):
             val = "on" if val is True else "off"
+
         return {"cpu": cpu, "pname": pname, "val": val, "mname": mname}
 
     @staticmethod
-    def _construct_die_pvinfo(pname, package, die, mname, val):
-        """Construct and return the property value dictionary for die 'die' of package 'package'."""
+    def _construct_die_pvinfo(pname: str,
+                              package: int,
+                              die: int,
+                              mname: MechanismNameType,
+                              val: PropertyValueType) -> PVInfoTypedDict:
+        """
+        Construct and return a property value information dictionary for a die.
+
+        Convert boolean values to "on"/"off" strings.
+
+        Args:
+            pname: Property name.
+            package: Package number.
+            die: Die number.
+            mname: Module name.
+            val: Property value.
+
+        Returns:
+            The constructed property value information dictionary.
+        """
 
         if isinstance(val, bool):
             val = "on" if val is True else "off"
+
         return {"package": package, "die" : die, "pname": pname, "val": val, "mname": mname}
 
     @staticmethod
-    def _construct_package_pvinfo(pname, package, mname, val):
-        """Construct and return the property value dictionary for package 'package'."""
+    def _construct_package_pvinfo(pname: str,
+                                  package: int,
+                                  mname: MechanismNameType,
+                                  val: PropertyValueType) -> PVInfoTypedDict:
+        """
+        Construct and return a property value information dictionary for a package.
+
+        Convert boolean values to "on"/"off" strings.
+
+        Args:
+            pname: Property name.
+            package: Package number.
+            mname: Module name.
+            val: Property value.
+
+        Returns:
+            The constructed property value information dictionary.
+        """
 
         if isinstance(val, bool):
             val = "on" if val is True else "off"
+
         return {"package": package, "pname": pname, "val": val, "mname": mname}
 
     def _get_msr(self):
