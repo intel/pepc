@@ -37,7 +37,7 @@ Naming conventions.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
-from typing import TypedDict, Any
+from typing import TypedDict, Literal
 
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
@@ -50,7 +50,7 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class MechanismsTypedDict(TypedDict):
     """
-    Dictionary describing a mechanism for getting or setting a property.
+    Type for the mechanism description dictionary.
 
     Attributes:
         short: A short name or identifier for the mechanism.
@@ -61,6 +61,8 @@ class MechanismsTypedDict(TypedDict):
     short: str
     long: str
     writable: bool
+
+MechanismNameType = Literal["sysfs", "cdev", "msr", "cppc", "doc"]
 
 MECHANISMS: dict[str, MechanismsTypedDict] = {
     "sysfs" : {
@@ -90,10 +92,34 @@ MECHANISMS: dict[str, MechanismsTypedDict] = {
     }
 }
 
+class PropetiesTypedDict(TypedDict):
+    """
+    Type for the property description dictionary.
+
+    Attributes:
+        name: The name of the property.
+        unit: The unit of the property value (e.g., "Hz", "W").
+        type: The type of the property value (e.g., "int", "float", "bool").
+        sname: The scope name of the property (e.g., "CPU", "core", "package").
+        mnames: A tuple of mechanism names supported by the property.
+        writable: Whether the property is writable.
+        special_vals: A set of special values for the property.
+        subprops: A tuple of sub-properties related to this property.
+    """
+
+    name: str
+    unit: str | None
+    type: str
+    sname: str | None
+    mnames: tuple[MechanismNameType, ...]
+    writable: bool
+    special_vals: set[str] | None
+    subprops: tuple[str, ...] | None
+
 class ErrorUsePerCPU(Error):
     """
-    Raise when a per-die or per-package property "get" method cannot provide a reliable result due to
-    sibling CPUs having different property values.
+    Raise when a per-die or per-package property "get" method cannot provide a reliable result due
+    to sibling CPUs having different property values.
 
     Use the per-CPU 'get_prop_cpus()' method instead. This situation can occur when a property's
     scope differs from its I/O scope, resulting in inconsistent values among sibling CPUs.
@@ -173,16 +199,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # are not cached, because they implement their own caching.
         self._enable_cache = enable_cache
 
-        # TODO: introduce a TypedDict for self.props and self._props.
         # The properties dictionary, has to be initialized by the sub-class.
-        self.props: dict[str, Any]
+        self.props: dict[str, PropetiesTypedDict]
         # Internal version of 'self.props'. Contains some data which we don't want to expose to the
         # user. Has to be initialized by the sub-class.
-        self._props: dict[str, Any]
+        self._props: dict[str, PropetiesTypedDict]
 
         # Dictionary describing all supported mechanisms. Same as 'MECHANISMS', but includes only
         # the mechanisms that at least one property supports. Has to be initialized by the sub-class.
-        self.mechanisms: dict[str, MechanismsTypedDict]
+        self.mechanisms: dict[MechanismNameType, MechanismsTypedDict]
 
         if pman:
             self._pman = pman
@@ -200,7 +225,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         close_attrs = ("_sysfs_io", "_msr", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
-    def get_mechanism_descr(self, mname: str) -> str:
+    def get_mechanism_descr(self, mname: MechanismNameType) -> str:
         """
         Return a 1-line description string for the specified mechanism name.
 
@@ -221,13 +246,17 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         except KeyError:
             raise Error(f"BUG: missing mechanism description for '{mname}'") from None
 
-    def _validate_mname(self, mname: str, pname: str | None = None, allow_readonly: bool = True):
+    def _validate_mname(self,
+                        mname: MechanismNameType,
+                        pname: str | None = None,
+                        allow_readonly: bool = True):
         """
         Validate that the specified mechanism name is supported and meets the required access model.
 
         Args:
             mname: Name of the mechanism to validate.
-            pname: Optional property name; if provided, ensure 'mname' is supported by this property.
+            pname: Optional property name; if provided, ensure 'mname' is supported by this
+                   property.
             allow_readonly: If True, allow both read-only and read-write mechanisms access models,
                             otherwise, allow only read-write read-write access model.
 
@@ -235,6 +264,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the mechanism is not supported for the property or overall.
         """
 
+        all_mnames: dict[MechanismNameType, MechanismsTypedDict] | tuple[MechanismNameType, ...]
         if pname:
             all_mnames = self._props[pname]["mnames"]
         else:
