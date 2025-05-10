@@ -221,13 +221,18 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         except KeyError:
             raise Error(f"BUG: missing mechanism description for '{mname}'") from None
 
-    def _validate_mname(self, mname, pname=None, allow_readonly=True):
+    def _validate_mname(self, mname: str, pname: str | None = None, allow_readonly: bool = True):
         """
-        Validate if mechanism 'mname'. The arguments are as follows.
-          * mname - name of the mechanism to validate.
-          * pname - if provided, ensure that 'mname' is supported by property 'pname'.
-          * allow_readonly - if 'True', allow both read-only and read-write mechanisms, otherwise
-                             allow only read-write mechanisms.
+        Validate that the specified mechanism name is supported and meets the required access model.
+
+        Args:
+            mname: Name of the mechanism to validate.
+            pname: Optional property name; if provided, ensure 'mname' is supported by this property.
+            allow_readonly: If True, allow both read-only and read-write mechanisms access models,
+                            otherwise, allow only read-write read-write access model.
+
+        Raises:
+            ErrorNotSupported: If the mechanism is not supported for the property or overall.
         """
 
         if pname:
@@ -242,14 +247,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 raise ErrorNotSupported(f"{name} is not available via the '{mname}' mechanism"
                                         f"{self._pman.hostmsg}.\nUse one the following "
                                         f"mechanism(s) instead: {mnames}.", mname=mname)
-            raise ErrorNotSupported(f"unsupported mechanism '{mname}', supported mechanisms are: "
+            raise ErrorNotSupported(f"Unsupported mechanism '{mname}', supported mechanisms are: "
                                     f"{mnames}.", mname=mname)
 
         if not allow_readonly and not self.mechanisms[mname]["writable"]:
             if pname:
                 name = Human.uncapitalize(self._props[pname]["name"])
-                raise Error(f"can't use read-only mechanism '{mname}' for modifying {name}\n")
-            raise Error(f"can't use read-only mechanism '{mname}'")
+                raise Error(f"Can't use read-only mechanism '{mname}' for modifying {name}\n")
+            raise Error(f"Can't use read-only mechanism '{mname}'")
 
     def _normalize_mnames(self, mnames, pname=None, allow_readonly=True):
         """Validate and normalize mechanism names in 'mnames'."""
