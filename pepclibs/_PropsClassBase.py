@@ -286,15 +286,29 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 raise Error(f"Can't use read-only mechanism '{mname}' for modifying {name}\n")
             raise Error(f"Can't use read-only mechanism '{mname}'")
 
-    def _normalize_mnames(self, mnames, pname=None, allow_readonly=True):
-        """Validate and normalize mechanism names in 'mnames'."""
+    def _normalize_mnames(self,
+                          mnames: list[MechanismNameType] | None,
+                          pname: str | None = None,
+                          allow_readonly: bool = True) -> list[MechanismNameType]:
+        """
+        Validate and deduplicate a list of mechanism names.
+
+        If 'mnames' is None, normalize mechanisms of property 'pname' if provided, otherwise return
+        all available mechanisms.
+
+        Args:
+            mnames: List of mechanism names to validate and normalize, or None to use defaults.
+            pname: Optional property name to retrieve mechanism names from if 'mnames' is None.
+            allow_readonly: Whether to allow read-only mechanisms during validation.
+
+        Returns:
+            List of validated and deduplicated mechanism names.
+        """
 
         if mnames is None:
             if pname:
-                mnames = self._props[pname]["mnames"]
-            else:
-                mnames = self.mechanisms
-            return list(mnames)
+                return list(self._props[pname]["mnames"])
+            return list(self.mechanisms)
 
         for mname in mnames:
             self._validate_mname(mname, pname=pname, allow_readonly=allow_readonly)
