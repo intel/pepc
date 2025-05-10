@@ -37,7 +37,8 @@ Naming conventions:
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
-from typing import Any, TypedDict, Literal, get_args
+from re import M
+from typing import Any, TypedDict, Literal, get_args, Generator
 from pepclibs.CPUInfo import CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
 from pepclibs.msr import MSR
@@ -63,6 +64,9 @@ class MechanismsTypedDict(TypedDict):
 
 ScopeNameType = Literal["CPU", "core", "package", "die", "global"]
 MechanismNameType = Literal["sysfs", "cdev", "msr", "cppc", "doc"]
+
+# A handy alias for a collection of mechanism names
+MechanismNamesType = list[MechanismNameType] | tuple[MechanismNameType, ...]
 
 MECHANISMS: dict[str, MechanismsTypedDict] = {
     "sysfs" : {
@@ -332,7 +336,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise Error(f"Can't use read-only mechanism '{mname}'")
 
     def _normalize_mnames(self,
-                          mnames: list[MechanismNameType] | None,
+                          mnames: MechanismNamesType | None,
                           pname: str | None = None,
                           allow_readonly: bool = True) -> list[MechanismNameType]:
         """
@@ -342,7 +346,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         all available mechanisms.
 
         Args:
-            mnames: List of mechanism names to validate and normalize, or None to use defaults.
+            mnames: Mechanism names to validate and normalize, or None to use defaults.
             pname: Optional property name to retrieve mechanism names from if 'mnames' is None.
             allow_readonly: Whether to allow read-only mechanisms during validation.
 
@@ -568,7 +572,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _validate_prop_vs_ioscope(self,
                                   pname: str,
                                   cpus: list[int],
-                                  mnames: MechanismNameType | None = None,
+                                  mnames: MechanismNamesType | None = None,
                                   package: int | None = None,
                                   die: int | None = None):
         """
@@ -585,9 +589,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Args:
             pname: Name of the property to validate.
             cpus: List of CPUs to check.
-            mnames: Optional mechanism names to use for property retrieval.
-            package: Optional package number for scoping.
-            die: Optional die number for scoping.
+            mnames: Mechanism names to use for property retrieval.
+            package: Package number to validate for.
+            die: Die number to validate for.
 
         Raises:
             ErrorUsePerCPU: If the property value differs across CPUs within the same scope.
@@ -734,7 +738,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _do_prop_not_supported(self,
                                pname: str,
                                nums_str: str,
-                               mnames: list[MechanismNameType],
+                               mnames: MechanismNamesType,
                                action: str,
                                exceptions: list[Any] | None = None):
         """
@@ -743,7 +747,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Args:
             pname: Property name.
             nums_str: String describing the target CPU, packages, etc.
-            mnames: List of attempted mechanism names.
+            mnames: The attempted mechanism names.
             action: The action: "get" or "set".
             exceptions: List of exception objects encountered during the operation.
 
@@ -775,7 +779,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _prop_not_supported_cpus(self,
                                  pname: str,
                                  cpus: list[int],
-                                 mnames: list[MechanismNameType],
+                                 mnames: MechanismNamesType,
                                  action: str,
                                  exceptions: list[Any] | None = None):
         """
@@ -784,7 +788,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Args:
             pname: Property name.
             cpus: List of CPU numbers.
-            mnames: List of attempted mechanism names.
+            mnames: Attempted mechanism names.
             action: The action: "get" or "set".
             exceptions: List of exception objects encountered during the operation.
 
@@ -803,7 +807,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _prop_not_supported_dies(self,
                                  pname: str,
                                  dies: list[int],
-                                 mnames: list[MechanismNameType],
+                                 mnames: MechanismNamesType,
                                  action: str,
                                  exceptions: list[Any] | None = None):
         """
@@ -812,7 +816,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Args:
             pname: Property name.
             dies: List of die numbers.
-            mnames: List of attempted mechanism names.
+            mnames: Attempted mechanism names.
             action: The action: "get" or "set".
             exceptions: List of exception objects encountered during the operation.
 
@@ -827,7 +831,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _prop_not_supported_packages(self,
                                      pname: str,
                                      packages : list[int],
-                                     mnames: list[MechanismNameType],
+                                     mnames: MechanismNamesType,
                                      action: str,
                                      exceptions: list[Any] | None = None):
         """
@@ -836,7 +840,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Args:
             pname: Property name.
             packages: List of package numbers.
-            mnames: List of attempted mechanism names.
+            mnames: Attempted mechanism names.
             action: The action: "get" or "set".
             exceptions: List of exception objects encountered during the operation.
 
@@ -852,21 +856,53 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         self._do_prop_not_supported(pname, packages_str, mnames, action, exceptions=exceptions)
 
-    def _get_prop_cpus(self, pname, cpus, mname):
+    def _get_prop_cpus(self,
+                       pname: str,
+                       cpus: list[int],
+                       mname: MechanismNameType) -> Generator[tuple[int, PropertyValueType],
+                                                              None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, 'val' is property 'pname' value for CPU
-        'cpu'. Use mechanism 'mname'. If the property is not supported for a CPU, yield 'None' for
-        'val'. If the property is not supported for any CPU, raise 'ErrorNotSupported'.
+        Retrieve and yield property values for the specified CPUs using the specified mechanism.
 
-        This method should be implemented by the sub-class.
+        Has to be implemented by the sub-class.
+
+        Args:
+            pname: Name of the property to retrieve.
+            cpus: List of CPUs to retrieve the property for.
+            mname: Name of the mechanism to use.
+
+        Yields:
+            (cpu, value) tuples for each CPU in 'cpus'. Yield (cpu, None) if the property is not
+            supported for a CPU.
         """
 
         raise ErrorNotSupported("PropsClassBase._get_cpu_prop")
 
-    def _get_prop_pvinfo_cpus(self, pname, cpus, mnames=None, raise_not_supported=True):
+    def _get_prop_pvinfo_cpus(self,
+                              pname: str,
+                              cpus: list[int],
+                              mnames: MechanismNamesType | None = None,
+                              raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
+                                                                             None, None]:
         """
-        For every CPU in 'cpus', yield the property value dictionary ('pvinfo') of property 'pname'.
-        Use mechanisms in 'mnames'.
+        Retrieve and yield property value information dictionaries ('pvinfo') for the specified CPUs
+        using the specified mechanisms.
+
+        If a mechanism fails for some CPUs after succeeding for others, raise an error. If all
+        mechanisms fail, either raise an exception or yield 'pvinfo' with value 'None' for each CPU,
+        depending on 'raise_not_supported'.
+
+        Args:
+            pname: Name of the property to retrieve.
+            cpus: List of CPUs to retrieve the property for.
+            mnames: Mechanism names to use. Use the default mechanisms if not specified.
+            raise_not_supported: Whether to raise an exception if the property is not supported.
+
+        Yields:
+            Dictionary containing property value information ('pvinfo') for each CPU.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported and 'raise_not_supported' is True.
         """
 
         prop = self._props[pname]
@@ -891,7 +927,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 # next mechanism.
                 if cpu is not None:
                     name = self._props[pname]["name"]
-                    raise Error(f"failed to get {name} using the '{mname}' mechanism:\n"
+                    raise Error(f"Failed to get {name} using the '{mname}' mechanism:\n"
                                 f"{err.indent(2)}\nSucceeded getting it for for some CPUs"
                                 f"(e.g., CPU {cpu}), but not for all the requested "
                                 f"CPUs") from err
@@ -906,22 +942,50 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for cpu in cpus:
             yield self._construct_cpu_pvinfo(pname, cpu, mnames[-1], None)
 
-    def _get_prop_cpus_mnames(self, pname, cpus, mnames=None):
+    def _get_prop_cpus_mnames(self,
+                              pname: str,
+                              cpus: list[int],
+                              mnames: MechanismNamesType | None = None) -> \
+                                            Generator[tuple[int, PropertyValueType], None, None]:
         """
-        For every CPU in 'cpus', yield '(cpu, val)' tuples, where 'val' is the 'pname' property
-        value for CPU 'cpu'. Try mechanisms in 'mnames'.
+        Yield (cpu, value) tuples for the specified property and CPUs, using provided mechanisms.
 
-        This method is similar to the API 'get_prop_cpus()' method, but it does not validate input
-        arguments.
+        Args:
+            pname: Name of the property to retrieve.
+            cpus: List of CPUs to process.
+            mnames: Mechanisms to use for retrieving the property value.
+
+        Yields:
+            Tuple of (cpu, value) for each CPU in 'cpus'.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported or if the mechanism is not
+                               supported for the property.
         """
 
         for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames):
             yield (pvinfo["cpu"], pvinfo["val"])
 
-    def _get_cpu_prop_mnames(self, pname, cpu, mnames=None):
+    def _get_cpu_prop_mnames(self,
+                             pname: str,
+                             cpu: int,
+                             mnames: MechanismNamesType | None = None) -> PropertyValueType:
         """
-        Read property 'pname' and return the value, try mechanisms in 'mnames'. This method is
-        similar to the API method 'get_cpu_prop()', but it does not verify input arguments.
+        Retrieve the value of a CPU property using specified mechanisms.
+
+        Unlike 'get_cpu_prop()', this method does not validate input arguments.
+
+        Args:
+            pname: Name of the property to retrieve.
+            cpu: CPU identifier for which to retrieve the property.
+            mnames: Optional list of mechanism names to try for retrieving the property.
+
+        Returns:
+            The value of the requested property for the specified CPU.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported or if the mechanism is not
+                               supported for the property.
         """
 
         pvinfo = next(self._get_prop_pvinfo_cpus(pname, (cpu,), mnames))

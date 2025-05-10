@@ -302,7 +302,7 @@ def is_iterable(value: str | list | tuple | set | dict) -> bool:
         return False
     return not isinstance(value, str)
 
-def list_dedup(elts: list) -> list:
+def list_dedup(elts: list | tuple) -> list:
     """
     Return a list of unique elements in 'elts'.
 
