@@ -395,12 +395,20 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         raise Error(f"Bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
                     f"disable")
 
-    def _validate_pname(self, pname):
-        """Raise an exception if property 'pname' is unknown."""
+    def _validate_pname(self, pname: str):
+        """
+        Validate that the provided property name exists in the known properties.
+
+        Args:
+            pname: Property name to validate.
+
+        Raise:
+            Error: If the property name is not recognized.
+        """
 
         if pname not in self._props:
             pnames_str = ", ".join(set(self._props))
-            raise Error(f"unknown property name '{pname}', known properties are: {pnames_str}")
+            raise Error(f"Unknown property name '{pname}', known properties are: {pnames_str}")
 
     def _validate_cpus_vs_scope(self, pname, cpus):
         """Make sure that CPUs in 'cpus' match the scope of a property 'pname'."""
