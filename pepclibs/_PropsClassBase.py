@@ -315,10 +315,18 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return Trivial.list_dedup(mnames)
 
-    def _set_sname(self, pname):
+    def _set_sname(self, pname: str):
         """
-        Set scope name for property 'pname'. Some properties have platform-dependent scope, and this
-        method exists for assigning scope name depending on the platform.
+        Assign a scope name to the specified property if not already set.
+
+        Some properties have platform-dependent scope names. Assign the appropriate scope name for
+        the given property name based on the platform. If the scope name is already set, return
+        immediately.
+
+        Expected to be overridden by the sub-class.
+
+        Args:
+            pname: Name of the property to assign a scope name to.
         """
 
         if self._props[pname]["sname"]:
