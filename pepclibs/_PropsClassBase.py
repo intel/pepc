@@ -34,14 +34,32 @@ Naming conventions.
  * package siblings - all CPUs sharing the same package.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import copy
+from typing import TypedDict
+
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-MECHANISMS = {
+class MechanismsTypedDict(TypedDict):
+    """
+    Dictionary describing a mechanism for getting or setting a property.
+
+    Attributes:
+        short: A short name or identifier for the mechanism.
+        long: A more descriptive name for the mechanism (but still a one-liner).
+        writable: Whether the mechanism property is writable.
+    """
+
+    short: str
+    long: str
+    writable: bool
+
+MECHANISMS: dict[str, MechanismsTypedDict] = {
     "sysfs" : {
         "short": "sysfs",
         "long":  "Linux sysfs file-system",
@@ -71,24 +89,20 @@ MECHANISMS = {
 
 class ErrorUsePerCPU(Error):
     """
-    The per-die or per-package property "get" method cannot provide a reliable result because
-    sibling CPUs have different property values. Use the per-CPU 'get_prop_cpus()' method instead.
+    Raise when a per-die or per-package property "get" method cannot provide a reliable result due to
+    sibling CPUs having different property values.
 
-    For example, even though a property has package scope, different CPUs in the same package have
-    different value. This is possible when property scope is not the same as its I/O scope. Please,
-    refer to '_FeaturedMSR' module docstring for more information.
+    Use the per-CPU 'get_prop_cpus()' method instead. This situation can occur when a property's
+    scope differs from its I/O scope, resulting in inconsistent values among sibling CPUs.
     """
 
 class ErrorTryAnotherMechanism(Error):
     """
-    The property is not supported by the specified mechanism, but may be supported by another
-    mechanism.
+    Raise when a property is unsupported by the current mechanism but may be available via others.
+
+    This exception indicates that the requested property cannot be retrieved using the specified
+    mechanism. However, alternative mechanisms may support this property.
     """
-
-def _bug_method_not_defined(method_name):
-    """Raise an error if the child class did not define the 'method_name' mandatory method."""
-
-    raise Error(f"BUG: '{method_name}()' was not defined by the child class")
 
 class PropsClassBase(ClassHelpers.SimpleCloseContext):
     """
@@ -184,7 +198,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if self._props[pname]["sname"]:
             return
 
-        _bug_method_not_defined("PropsClassBase._set_sname")
+        raise ErrorNotSupported("PropsClassBase._set_sname")
 
     def get_sname(self, pname):
         """
@@ -513,8 +527,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         This method should be implemented by the sub-class.
         """
 
-        # pylint: disable=unused-argument
-        return _bug_method_not_defined("PropsClassBase._get_cpu_prop")
+        raise ErrorNotSupported("PropsClassBase._get_cpu_prop")
 
     def _get_prop_pvinfo_cpus(self, pname, cpus, mnames=None, raise_not_supported=True):
         """
@@ -1010,8 +1023,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         should be implemented by the sub-class.
         """
 
-        # pylint: disable=unused-argument
-        return _bug_method_not_defined("PropsClassBase.set_prop_cpus")
+        raise ErrorNotSupported("PropsClassBase.set_prop_cpus")
 
     def _set_prop_cpus_mnames(self, pname, val, cpus, mnames):
         """Implement 'set_prop_cpus()'."""
