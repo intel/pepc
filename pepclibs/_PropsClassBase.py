@@ -365,13 +365,23 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         except KeyError as err:
             raise Error(f"Property '{pname}' does not exist") from err
 
-    def _normalize_bool_type_value(self, pname, val):
+    def _normalize_bool_type_value(self, pname: str, val: bool | str) -> bool:
         """
-        Normalize and validate value 'val' of a boolean-type property 'pname'. Returns the boolean
-        value corresponding to 'val'.
+        Normalize and validate a boolean-type property value.
+
+        Convert the input value for a boolean property to its canonical boolean form. Accept boolean
+        values, as well as string representations: "on", "enable" (True), and "off", "disable"
+        (False).
+
+        Args:
+            pname: Property name.
+            val: Value to normalize.
+
+        Returns:
+            Normalized boolean value.
         """
 
-        if val in (True, False):
+        if val is True or val is False:
             return val
 
         val = val.lower()
@@ -382,7 +392,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             return False
 
         name = Human.uncapitalize(self._props[pname]["name"])
-        raise Error(f"bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
+        raise Error(f"Bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
                     f"disable")
 
     def _validate_pname(self, pname):
