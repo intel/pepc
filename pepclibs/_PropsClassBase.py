@@ -38,12 +38,15 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 from typing import Any, TypedDict, Literal, get_args, Generator, cast
-from pepclibs.CPUInfo import CPUInfo
+
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+
 from pepclibs.msr import MSR
 from pepclibs import _SysfsIO
+from pepclibs.CPUInfo import CPUInfo
+
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
