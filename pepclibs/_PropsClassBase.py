@@ -1558,24 +1558,41 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         yield from self._get_prop_pvinfo_packages(pname, normalizes_packages, mnames=mnames,
                                                   raise_not_supported=False)
 
-    def get_package_prop(self, pname, package, mnames=None):
+    def get_package_prop(self,
+                         pname: str,
+                         package: int,
+                         mnames: MechanismNamesType | None = None) -> PVInfoTypedDict:
         """
-        Similar to 'get_prop_packages()', but for a single package and a single property. The
-        arguments are as follows:
-          * pname - name of the property to get.
-          * package - package number to get the property for.
-          * mnames - same as in 'get_prop_packages()'.
+        Retrieve the value of a property for a package.
+
+        Args:
+            pname: Name of the property to retrieve.
+            package: Package number to retrieve the property for.
+            mnames: Mechanism names to use.
+
+        Returns:
+            PVInfoTypedDict: Dictionary containing the property value for the specified package.
+
+        Raises:
+            ErrorNotSupported: If none of the mechanisms support the property.
         """
 
         for pvinfo in self.get_prop_packages(pname, packages=(package,), mnames=mnames):
             return pvinfo
 
-    def prop_is_supported_package(self, pname, package):
+        raise Error(f"BUG: failed to get property '{pname}' for package {package}")
+
+    def prop_is_supported_package(self, pname: str, package: int) -> bool:
         """
-        Return 'True' if property 'pname' is supported by package 'package, otherwise return
-        'False'. The arguments are as follows:
-          * pname - property name to check.
-          * package - package number to check the property for.
+        Check if a property is supported by a specific package on a given package.
+
+        Args:
+            pname: Name of the property to check.
+            package: Package number to check the property for.
+            package: Package number containing the package.
+
+        Returns:
+            True if the property is supported by the specified package and package, False otherwise.
         """
 
         return self.get_package_prop(pname, package)["val"] is not None
