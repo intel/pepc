@@ -878,6 +878,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Yields:
             (cpu, value) tuples for each CPU in 'cpus'. Yield (cpu, None) if the property is not
             supported for a CPU.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified CPUs and
+                               mechanism.
         """
 
         raise NotImplementedError("PropsClassBase._get_cpu_prop")
@@ -889,12 +893,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
                                                                              None, None]:
         """
-        Retrieve and yield property value dictionaries ('pvinfo') for the specified CPUs using the
-        specified mechanisms.
+        Retrieve and yield property value dictionaries for the specified CPUs using the specified
+        mechanisms.
 
         If a mechanism fails for some CPUs after succeeding for others, raise an error. If all
-        mechanisms fail, either raise an exception or yield 'pvinfo' with value 'None' for each CPU,
-        depending on 'raise_not_supported'.
+        mechanisms fail for all CPUs, either raise an exception or yield property value dictionary
+        with value 'None' for each CPU, depending on 'raise_not_supported'.
 
         Args:
             pname: Name of the property to retrieve.
@@ -903,10 +907,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise_not_supported: Whether to raise an exception if the property is not supported.
 
         Yields:
-            Dictionary containing property value dictionary ('pvinfo') for each CPU.
+            PVInfoTypedDict: A property value dictionary for each CPU in 'cpus'.
 
         Raises:
-            ErrorNotSupported: If none of the CPUs an mechanisms support the property and
+            ErrorNotSupported: If none of the CPUs and mechanisms support the property and
                                'raise_not_supported' is True.
         """
 
@@ -953,11 +957,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               mnames: MechanismNamesType | None = None) -> \
                                             Generator[tuple[int, PropertyValueType], None, None]:
         """
-        Yield (cpu, value) tuples for the specified property and CPUs, using provided mechanisms.
+        Yield (cpu, value) tuples for the specified property and CPUs, using specified mechanisms.
 
         Args:
             pname: Name of the property to retrieve.
-            cpus: CPU numbers to process.
+            cpus: CPU numbers to retrieve the property for.
             mnames: Mechanisms to use for retrieving the property value.
 
         Yields:
@@ -1090,8 +1094,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
         Retrieve and yield property values for the specified dies using the specified mechanism.
 
-        If the property is not supported for a die, yield None for 'value'. Raise
-        'ErrorNotSupported' if the property is not supported for any die in 'dies'.
+        If the property is not supported for a die, yield None the value. Raise 'ErrorNotSupported'
+        if the property is not supported for any die in 'dies'.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1102,7 +1106,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Tuples of (package, die, value), where 'value' is the property value or None.
 
         Raises:
-            ErrorNotSupported: If none of the dies support the property.
+            ErrorNotSupported: If the property is not supported for the specified dies and
+                               mechanism.
         """
 
         for package, pkg_dies in dies.items():
@@ -1122,8 +1127,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         mechanisms.
 
         If a mechanism fails for some dies but succeeds for others, raise an error. If all
-        mechanisms fail, either raise an exception or yield 'pvinfo' with value 'None', depending on
-        'raise_not_supported'.
+        mechanisms fail for all dies, either raise an exception or yield property value dictionaries
+        with value 'None', depending on 'raise_not_supported'.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1132,7 +1137,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise_not_supported: Whether to raise an exception if the property is not supported.
 
         Yields:
-            Dictionary containing property value information for each die.
+            PVInfoTypedDict: A property value dictionary for each die in 'dies'.
 
         Raises:
             ErrorNotSupported: If none of the dies and mechanisms support the property and
@@ -1331,15 +1336,27 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self.get_die_prop(pname, die, package)["val"] is not None
 
-    def _get_prop_packages(self, pname, packages, mname):
+    def _get_prop_packages(self,
+                           pname: str,
+                           packages: NumsType,
+                           mname: MechanismNameType) -> Generator[tuple[int, PropertyValueType],
+                                                                  None, None]:
         """
-        For every package in 'packages', yield a '(package, val)' tuple, where 'val' is property
-        'pname' value for package 'package'. Use mechanisms in 'mnames'. If the
-        property is not supported for a package, yield 'None' for 'val'. If the property is not
-        supported for any package, raise 'ErrorNotSupported'.
+        Retrieve and yield property values for the specified packages using the specified mechanism.
 
-        This is the default implementation of the method, which is based on per-CPU access.
-        Subclasses may choose to override this default implementation.
+        If the property is not supported for a package, yield None as the value. Raise
+        'ErrorNotSupported' if the property is not supported for any package.
+
+        Args:
+            pname: Name of the property to retrieve.
+            packages: Package numbers.
+            mname: Mechanism name to use for property retrieval.
+
+        Yields:
+            Tuple of (package, value), where value is the property value or None.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for any package.
         """
 
         for package in packages:
@@ -1347,10 +1364,32 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             val = self._get_cpu_prop_mnames(pname, cpus[0], mnames=(mname,))
             yield package, val
 
-    def _get_prop_pvinfo_packages(self, pname, packages, mnames=None, raise_not_supported=True):
+    def _get_prop_pvinfo_packages(self,
+                                  pname: str,
+                                  packages: NumsType,
+                                  mnames: MechanismNamesType | None = None,
+                                  raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
+                                                                                 None, None]:
         """
-        For every package in 'packages', yield the property value dictionary ('pvinfo') of property
-        'pname'.  Use mechanisms in 'mnames'.
+        Retrieve and yield property value dictionaries for the specified packages using the
+        specified mechanisms.
+
+        If a mechanism fails for some packages after succeeding for others, raise an error. If all
+        mechanisms fail for all plackages, either raise an exception or yield package value
+        dictionaries with value 'None' for each package, depending on 'raise_not_supported'.
+
+        Args:
+            pname: Name of the property to retrieve.
+            packages: Package numbers to retrieve the property for.
+            mnames: Mechanism names to use. Use the default mechanisms if not specified.
+            raise_not_supported: Whether to raise an exception if the property is not supported.
+
+        Yields:
+            PVInfoTypedDict: Property value dictionary for each package in 'packages'.
+
+        Raises:
+            ErrorNotSupported: If none of the packages and mechanisms support the property and
+                               'raise_not_supported' is True.
         """
 
         prop = self._props[pname]
@@ -1375,7 +1414,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 # next mechanism.
                 if package is not None:
                     name = self._props[pname]["name"]
-                    raise Error(f"failed to get {name} using the '{mname}' mechanism:\n"
+                    raise Error(f"Failed to get {name} using the '{mname}' mechanism:\n"
                                 f"{err.indent(2)}\nSucceeded getting it for for some packages "
                                 f"(e.g., package {package}), but not for all the requested "
                                 f"packages") from err
@@ -1390,13 +1429,26 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for package in packages:
             yield self._construct_package_pvinfo(pname, package, mnames[-1], None)
 
-    def _get_prop_packages_mnames(self, pname, packages, mnames=None):
+    def _get_prop_packages_mnames(self,
+                                  pname: str,
+                                  packages: NumsType,
+                                  mnames: MechanismNamesType | None = None) -> \
+                                            Generator[tuple[int, PropertyValueType], None, None]:
         """
-        For every package in 'packages', yield '(package, val)' tuples, where 'val' is the 'pname'
-        property value for package 'package'. Try mechanisms in 'mnames'.
+        Yield (package, value) tuples for the specified property and packages, using specified
+        mechanisms.
 
-        This method is similar to the API 'get_prop_packages()' method, but it does not validate
-        input arguments.
+        Args:
+            pname: Name of the property to retrieve.
+            packages: package numbers to retrieve the property for.
+            mnames: Mechanisms to use for retrieving the property value.
+
+        Yields:
+            Tuple of (package, value) for each package in 'packages'. If the property is not
+            supported for a package, yield (package, None).
+
+        Raises:
+            ErrorNotSupported: If none of the packages and mechanisms support the property.
         """
 
         for pvinfo in self._get_prop_pvinfo_packages(pname, packages, mnames):
