@@ -64,7 +64,7 @@ class MechanismsTypedDict(TypedDict):
 ScopeNameType = Literal["CPU", "core", "package", "die", "global"]
 MechanismNameType = Literal["sysfs", "cdev", "msr", "cppc", "doc"]
 
-# A handy alias for a collection of mechanism names
+# A handy alias for a collection of mechanism names.
 MechanismNamesType = list[MechanismNameType] | tuple[MechanismNameType, ...]
 
 MECHANISMS: dict[str, MechanismsTypedDict] = {
@@ -161,11 +161,10 @@ class PVInfoTypedDict(TypedDict, total=False):
     val: PropertyValueType
     mname: MechanismNameType
 
-# A type for CPU, package, die, etc numbers.
+# A type for CPU and package numbers.
 NumsType = list[int] | tuple[int, ...]
-# A type for CPU, package, die, etc numbers plus the "all" literal to specify all CPUs, packages,
-# dies, etc.
-NumsOrAllType = list[int] | tuple[int, ...] | Literal["all"]
+# A type for die numbers.
+DieNumsType = dict[int, list[int]] | dict[int, tuple[int, ...]]
 
 class ErrorUsePerCPU(Error):
     """
@@ -811,7 +810,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def _prop_not_supported_dies(self,
                                  pname: str,
-                                 dies: dict[int, NumsType],
+                                 dies: DieNumsType,
                                  mnames: MechanismNamesType,
                                  action: str,
                                  exceptions: list[Any] | None = None):
@@ -820,7 +819,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         Args:
             pname: Property name.
-            dies: Mapping of package numbers to die numbers (one package -> many dies).
+            dies: Dictionary mapping package numbers to collections of die numbers.
             mnames: Attempted mechanism names.
             action: The action: "get" or "set".
             exceptions: List of exception objects encountered during the operation.
@@ -998,7 +997,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def get_prop_cpus(self,
                       pname: str,
-                      cpus: NumsOrAllType = "all",
+                      cpus: NumsType | Literal["all"] = "all",
                       mnames: MechanismNamesType | None = None) -> Generator[PVInfoTypedDict,
                                                                              None, None]:
         """
@@ -1085,7 +1084,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def _get_prop_dies(self,
                        pname: str,
-                       dies: dict[int, NumsType],
+                       dies: DieNumsType,
                        mname: MechanismNameType) -> Generator[tuple[int, int, PropertyValueType],
                                                               None, None]:
         """
@@ -1096,7 +1095,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         Args:
             pname: Name of the property to retrieve.
-            dies: Mapping of package numbers to die numbers (one package -> many dies).
+            dies: Dictionary mapping package numbers to collections of die numbers.
             mname: Mechanism name to use.
 
         Yields:
@@ -1114,7 +1113,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def _get_prop_pvinfo_dies(self,
                               pname: str,
-                              dies: dict[int, NumsType],
+                              dies: DieNumsType,
                               mnames: MechanismNamesType | None = None,
                               raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
                                                                              None, None]:
@@ -1128,7 +1127,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         Args:
             pname: Name of the property to retrieve.
-            dies: Mapping of package numbers to die numbers (one package -> many dies).
+            dies: Dictionary mapping package numbers to collections of die numbers.
             mnames: Mechanisms to use for retrieving the property. If None, use default mechanisms.
             raise_not_supported: Whether to raise an exception if the property is not supported.
 
@@ -1182,7 +1181,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def _get_prop_dies_mnames(self,
                               pname: str,
-                              dies: dict[int, NumsType],
+                              dies: DieNumsType,
                               mnames: MechanismNamesType | None = None) -> \
                                           Generator[tuple[int, int, PropertyValueType], None, None]:
         """
@@ -1190,74 +1189,83 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         Args:
             pname: Name of the property to retrieve.
-            dies: Mapping of package numbers to die numbers (one package -> many dies).
+            dies: Dictionary mapping package numbers to collections of die numbers.
             mnames: Mechanisms to use for retrieving the property. If None, use default mechanisms.
 
         Yields:
             Tuples of (package, die, value) for each die.
 
         Raises:
-            ErrorNotSupported: If none of the dies and mechanisms support the property and
-                               'raise_not_supported' is True.
+            ErrorNotSupported: If none of the dies and mechanisms support the property.
         """
 
         for pvinfo in self._get_prop_pvinfo_dies(pname, dies, mnames):
             yield (pvinfo["package"], pvinfo["die"], pvinfo["val"])
 
-    def _get_die_prop_mnames(self, pname, package, die, mnames=None):
+    def _get_die_prop_mnames(self,
+                             pname: str,
+                             package: int,
+                             die: int,
+                             mnames: MechanismNamesType | None = None) -> PropertyValueType:
         """
-        Read property 'pname' and return the value, try mechanisms in 'mnames'. This method is
-        similar to the API method 'get_die_prop()', but it does not verify input arguments.
+        Retrieve the value of a property for a specific die using specified mechanisms.
+
+        Args:
+            pname: Name of the property to retrieve.
+            package: Package number.
+            die: Die number within the package.
+            mnames: Mechanisms to use for retrieving the property. If None, use default mechanisms.
+
+        Returns:
+            The value of the requested property for the specified die.
+
+        Rises:
+            ErrorNotSupported: If none of the mechanisms support the property.
         """
 
         pvinfo = next(self._get_prop_pvinfo_dies(pname, {package: [die]}, mnames))
         return pvinfo["val"]
 
-    def get_prop_dies(self, pname, dies="all", mnames=None):
+    def get_prop_dies(self,
+                      pname: str,
+                      dies: DieNumsType | Literal["all"] = "all",
+                      mnames: MechanismNamesType | None = None) -> Generator[PVInfoTypedDict,
+                                                                             None, None]:
         """
-        Read property 'pname' for dies in 'dies'. For every die, yield the property value
-        dictionary. This is similar to 'get_prop_cpus()', but works on per-die basis.
+        Retrieve and yield property values for specified dies.
 
-        The arguments are as follows.
-          * pname - name of the property to read and yield the values for. The property will be read
-                    for every die in 'dies'.
-          * dies - a dictionary with keys being integer package numbers and values being a
-                   collection of integer die numbers in the package. Special value 'all' means "all
-                   dies in all packages".
-          * mnames - list of mechanisms to use for getting the property (see
-                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
-                     specified in 'mnames'. By default, all mechanisms supported by the 'pname'
-                     property will be tried.
+        Retrieve property 'pname' for each die in 'dies' and yield a dictionary with the property value.
+        This method is similar to 'get_prop_cpus()', but operates on a per-die basis. Depending on
+        the kernel version, die numbers may be absolute or relative to package numbers.
 
-        Unlike CPU numbers, die numbers are may be relative to package numbers (depending on the
-        system and kernel version - on some systems they are globally unique). For example, on a two
-        socket system there may be die 0 in both packages 0 and 1. Therefore, the 'dies' argument is
-        a dictionary, not just a list of integer die numbers.
+        Args:
+            pname: Name of the property to read for each die.
+            dies: Dictionary mapping package numbers to collections of die numbers, or 'all' for all
+                  dies in all packages.
+            mnames: Mechanisms to use for retrieving the property, in order of preference.
 
-        The property value dictionary has the following format:
-            { "die": die number within the package,
-              "package": package number,
-              "val": value of property 'pname' for the given package and die,
-              "mname" : name of the mechanism that was used for getting the property }
+        Yields:
+            PVInfoTypedDict: A property value dictionary for each die in 'dies'.
 
-        Otherwise the same as 'get_prop_cpus()'.
+        Raises:
+            ErrorNotSupported: If the property is not supported by any mechanism.
         """
 
         self._validate_pname(pname)
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
-        normalized_dies = {}
+        normalized_dies: dict[int, list[int]] = {}
         for package in self._cpuinfo.normalize_packages(dies):
             normalized_dies[package] = []
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
                 normalized_dies[package].append(die)
 
         # Get rid of empty die lists.
-        for package, pkg_dies in dies.copy().items():
+        for package, pkg_dies in normalized_dies.copy().items():
             if len(pkg_dies) == 0:
-                del dies[package]
+                del normalized_dies[package]
 
-        if len(dies) == 0:
+        if len(normalized_dies) == 0:
             return
 
         try:
