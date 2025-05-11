@@ -175,7 +175,7 @@ class ErrorUsePerCPU(Error):
     scope differs from its I/O scope, resulting in inconsistent values among sibling CPUs.
     """
 
-class ErrorTryAnotherMechanism(Error):
+class ErrorTryAnotherMechanism(ErrorNotSupported):
     """
     Raise when a property is unsupported by the current mechanism but may be available via others.
 
@@ -1653,16 +1653,60 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return val
 
-    def _set_prop_cpus(self, pname, val, cpus, mname):
+    def _set_prop_cpus(self,
+                       pname: str,
+                       val: PropertyValueType,
+                       cpus: NumsType,
+                       mname: MechanismNameType):
         """
-        Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'. This method
-        should be implemented by the sub-class.
+        Set a property to a specified value for a specified CPUs using a specified mechanism.
+
+        Has to be implemented by the sub-class.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            cpus: CPU numbers to set the property for.
+            mname: Name of the mechanism to use for setting the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified CPUs and
+                               mechanism.
+            ErrorTryAnotherMechanism: If the property is not supported for the specified CPUs by the
+                                      specified mechanism, but may be supported by another
+                                      mechanism.
         """
 
         raise NotImplementedError("PropsClassBase.set_prop_cpus")
 
-    def _set_prop_cpus_mnames(self, pname, val, cpus, mnames):
-        """Implement 'set_prop_cpus()'."""
+    def _set_prop_cpus_mnames(self,
+                              pname: str,
+                              val: PropertyValueType,
+                              cpus: NumsType,
+                              mnames: MechanismNamesType | None = None) -> str:
+        """
+        Set a property value for specified CPUs using specified mechanisms.
+
+        For boolean properties, use True/"on"/"enable" to enable and False/"off"/"disable" to
+        disable.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            cpus: CPU numbers to set the property for.
+            mnames: Mechanisms names to use for setting the property, in order of preference.
+                    Defaults to all allowed mechanisms.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified CPUs and
+                               mechanisms.
+            ErrorTryAnotherMechanism: If the property is not supported for the specified CPUs by the
+                                      specified mechanisms, but may be supported by another
+                                      mechanism.
+        """
 
         if not mnames:
             mnames = self._props[pname]["mnames"]
@@ -1679,22 +1723,35 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             return mname
 
         self._prop_not_supported_cpus(pname, cpus, mnames, "set", exceptions=exceptions)
+        raise Error("BUG: Reached code that should be unreachable")
 
-    def set_prop_cpus(self, pname, val, cpus, mnames=None):
+    def set_prop_cpus(self,
+                      pname: str,
+                      val: PropertyValueType,
+                      cpus: NumsType,
+                      mnames: MechanismNamesType | None = None) -> str:
         """
-        Set property 'pname' to value 'val' for CPUs in 'cpus'. The arguments are as follows.
-          * pname - name of the property to set.
-          * val - value to set the property to.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * mnames - list of mechanisms to use for setting the property (see
-                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
-                     specified in 'mnames'. Any mechanism is allowed by default.
+        Set a property value for specified CPUs using specified mechanisms.
 
-        Properties of "bool" type have the following values:
-           * True, "on", "enable" for enabling the feature.
-           * False, "off", "disable" for disabling the feature.
+        For boolean properties, use True/"on"/"enable" to enable and False/"off"/"disable" to
+        disable.
 
-        Returns name of the mechanism that was used for setting the property.
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            cpus: CPU numbers to set the property for.
+            mnames: Mechanisms names to use for setting the property, in order of preference.
+                    Defaults to all allowed mechanisms.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified CPUs and
+                               mechanisms.
+            ErrorTryAnotherMechanism: If the property is not supported for the specified CPUs by the
+                                      specified mechanisms, but may be supported by another
+                                      mechanism.
         """
 
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
@@ -1702,7 +1759,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
         if len(cpus) == 0:
-            raise Error(f"BUG: no CPU numbers provided for setting {self._props[pname]['name']}"
+            raise Error(f"BUG: No CPU numbers provided for setting {self._props[pname]['name']}"
                         f"{self._pman.hostmsg}")
 
         self._set_sname(pname)
