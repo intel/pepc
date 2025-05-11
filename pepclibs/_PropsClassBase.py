@@ -47,7 +47,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-class MechanismsTypedDict(TypedDict):
+class MechanismTypedDict(TypedDict):
     """
     Type for the mechanism description dictionary.
 
@@ -67,7 +67,7 @@ MechanismNameType = Literal["sysfs", "cdev", "msr", "cppc", "doc"]
 # A handy alias for a collection of mechanism names.
 MechanismNamesType = list[MechanismNameType] | tuple[MechanismNameType, ...]
 
-MECHANISMS: dict[str, MechanismsTypedDict] = {
+MECHANISMS: dict[MechanismNameType, MechanismTypedDict] = {
     "sysfs" : {
         "short": "sysfs",
         "long":  "Linux sysfs file-system",
@@ -260,7 +260,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # Dictionary describing all supported mechanisms. Same as 'MECHANISMS', but includes only
         # the mechanisms that at least one property supports. Has to be initialized by the
         # sub-class.
-        self.mechanisms: dict[MechanismNameType, MechanismsTypedDict]
+        self.mechanisms: dict[MechanismNameType, MechanismTypedDict]
 
         if pman:
             self._pman = pman
@@ -317,7 +317,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the mechanism is not supported for the property or overall.
         """
 
-        all_mnames: dict[MechanismNameType, MechanismsTypedDict] | tuple[MechanismNameType, ...]
+        all_mnames: dict[MechanismNameType, MechanismTypedDict] | tuple[MechanismNameType, ...]
         if pname:
             all_mnames = self._props[pname]["mnames"]
         else:
@@ -941,8 +941,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             mnames: Mechanisms to use for retrieving the property value.
 
         Yields:
-            Tuple of (cpu, value) for each CPU in 'cpus'. If the property is not supported for a CPU,
-            yield (cpu, None).
+            Tuple of (cpu, value) for each CPU in 'cpus'. If the property is not supported for a
+            CPU, yield (cpu, None).
 
         Raises:
             ErrorNotSupported: If none of the CPUs and mechanisms support the property.
@@ -1659,7 +1659,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                        cpus: NumsType,
                        mname: MechanismNameType):
         """
-        Set a property to a specified value for a specified CPUs using a specified mechanism.
+        Set a property to a specified value for specified CPUs using a specified mechanism.
 
         Has to be implemented by the sub-class.
 
@@ -1832,7 +1832,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                        dies: DieNumsType,
                        mname: MechanismNameType) -> str:
         """
-        Set a property to a specified value for a specified dies using a specified mechanism.
+        Set a property to a specified value for specified dies using a specified mechanism.
 
         Has to be implemented by the sub-class.
 
@@ -1852,7 +1852,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                       specified mechanism, but may be supported by other mechanisms.
         """
 
-
         cpus = []
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
@@ -1865,7 +1864,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         cpus = self._reduce_cpus_ioscope(cpus, iosname)
         return self._set_prop_cpus_mnames(pname, val, cpus, mnames=(mname,))
 
-    def _set_prop_dies_mnames(self, pname, val, dies, mnames):
+    def _set_prop_dies_mnames(self,
+                              pname: str,
+                              val: PropertyValueType,
+                              dies: DieNumsType,
+                              mnames: MechanismNamesType | None = None) -> str:
         """
         Set a property for specified CPUs using specified mechanisms.
 
@@ -1905,6 +1908,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             return mname
 
         self._prop_not_supported_dies(pname, dies, mnames, "set", exceptions=exceptions)
+        raise Error("BUG: Reached code that should be unreachable")
 
     def set_prop_dies(self,
                       pname: str,
@@ -1987,21 +1991,72 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         dies: dict[int, tuple[int, ...]] = {package: (die,)}
         return self.set_prop_dies(pname, val, dies, mnames=mnames)
 
-    def _set_prop_packages(self, pname, val, packages, mname):
+    def _set_prop_packages(self,
+                           pname: str,
+                           val: PropertyValueType,
+                           packages: NumsType,
+                           mname: MechanismNameType):
         """
-        The default implementation of 'set_prop_packages()' using the per-CPU method. Subclasses may
-        choose to override this default implementation.
+        Set a property to a specified value for a specified package using a specified mechanism.
+
+        Has to be implemented by the sub-class.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            package: Package numbers to set the property for.
+            mname: Name of the mechanism to use for setting the property.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified packages and
+                               mechanism.
+            ErrorTryAnotherMechanism: If the property is not supported for the specified packages by
+                                      the specified mechanism, but may be supported by other
+                                      mechanisms.
         """
 
         cpus = []
         for package in packages:
             cpus += self._cpuinfo.packages_to_cpus(packages=(package,))
 
-        cpus = self._reduce_cpus_ioscope(cpus, self._props[pname]["iosname"])
+        iosname = self._props[pname]["iosname"]
+        if iosname is None:
+            raise Error(f"BUG: I/O scope was not set for property '{pname}'")
+
+        cpus = self._reduce_cpus_ioscope(cpus, iosname)
         return self._set_prop_cpus_mnames(pname, val, cpus, mnames=(mname,))
 
-    def _set_prop_packages_mnames(self, pname, val, packages, mnames):
-        """Implement 'set_prop_packages()'."""
+    def _set_prop_packages_mnames(self,
+                                  pname: str,
+                                  val: PropertyValueType,
+                                  packages: NumsType,
+                                  mnames: MechanismNamesType | None = None) -> str:
+        """
+        Set a property for specified packages using specified mechanisms.
+
+        For boolean properties, use True/"on"/"enable" to enable and False/"off"/"disable" to
+        disable.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            packages: package numbers to set the property for.
+            mnames: Mechanisms names to use for setting the property, in order of preference.
+                    Defaults to all allowed mechanisms.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified packages and
+                               mechanisms.
+            ErrorTryAnotherMechanism: If the property is not supported for the specified packages by
+                                      the specified mechanisms, but may be supported by other
+                                      mechanisms.
+        """
 
         if not mnames:
             mnames = self._props[pname]["mnames"]
@@ -2018,19 +2073,35 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             return mname
 
         self._prop_not_supported_packages(pname, packages, mnames, "set", exceptions=exceptions)
+        raise Error("BUG: Reached code that should be unreachable")
 
-    def set_prop_packages(self, pname, val, packages, mnames=None):
+    def set_prop_packages(self,
+                          pname: str,
+                          val: PropertyValueType,
+                          packages: NumsType,
+                          mnames: MechanismNamesType | None = None) -> str:
         """
-        Set property 'pname' to value 'val' for packages in 'packages'. The arguments are as
-        follows.
-          * pname - name of the property to set.
-          * val - value to set the property to.
-          * packages - collection of integer package numbers. Special value 'all' means "all CPUs".
-          * mnames - list of mechanisms to use for setting the property (see
-                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
-                     specified in 'mnames'. Any mechanism is allowed by default.
+        Set a property for specified packages using specified mechanisms.
 
-        Otherwise the same as 'set_prop_cpus()'.
+        For boolean properties, use True/"on"/"enable" to enable and False/"off"/"disable" to
+        disable.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            packages: Package numbers to set the property for.
+            mnames: Mechanisms names to use for setting the property, in order of preference.
+                    Defaults to all allowed mechanisms.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified packages and
+                               mechanisms.
+            ErrorTryAnotherMechanism: If the property is not supported for the specified packages by
+                                      the specified mechanisms, but may be supported by other
+                                      mechanisms.
         """
 
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
@@ -2038,7 +2109,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         normalized_packages = self._cpuinfo.normalize_packages(packages)
         if len(packages) == 0:
-            raise Error(f"BUG: no package numbers provided for setting "
+            raise Error(f"BUG: No package numbers provided for setting "
                         f"{self._props[pname]['name']}{self._pman.hostmsg}")
 
         self._set_sname(pname)
@@ -2046,22 +2117,36 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self._set_prop_packages_mnames(pname, val, normalized_packages, mnames)
 
-    def set_package_prop(self, pname, val, package, mnames=None):
+    def set_package_prop(self,
+                         pname: str,
+                         val: PropertyValueType,
+                         package: int,
+                         mnames: MechanismNamesType | None = None) -> str:
         """
-        Similar to 'set_prop_packages()', but for a single package and a single property. The
-        arguments are as follows:
-          * pname - name of the property to set.
-          * val - the value to set the property to.
-          * package - package number to set the property for.
-          * mnames - same as in 'set_prop_packages()'.
+        Set a property for a specified package using the specified mechanisms.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            package: Package number to set the property for.
+            mnames: Mechanisms names to use for setting the property, in order of preference.
+                    Defaults to all allowed mechanisms.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported the package and mechanisms.
+            ErrorTryAnotherMechanism: If the property is not supported for package by the specified
+                                      mechanisms, but may be supported by other mechanisms.
         """
 
         return self.set_prop_packages(pname, val, (package,), mnames=mnames)
 
-    def _init_props_dict(self, props):
+    def _init_props_dict(self, props: dict[str, PropertyTypedDict]):
         """Initialize the 'props' and 'mechanisms' dictionaries."""
 
-        self._props = copy.deepcopy(props)
+        self._props = copy.deepcopy(cast(dict[str, IntPropertyTypedDict], props))
         self.props = props
 
         # Initialize the 'ioscope' to the same value as 'scope'. I/O scope may be different to the
@@ -2072,7 +2157,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         # Initialize the 'mechanisms' dictionary, which includes the mechanisms supported by the
         # subclass.
-        seen = set()
+        seen: set[MechanismNameType] = set()
         for prop in self._props.values():
             seen.update(prop["mnames"])
 
