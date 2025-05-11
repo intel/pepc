@@ -868,6 +868,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
         Retrieve and yield property values for the specified CPUs using the specified mechanism.
 
+        If the property is not supported for a CPU, yield (cpu, None). If the property is not
+        supported for the specified CPUs and mechanism, raise 'ErrorNotSupported'.
+
         Has to be implemented by the sub-class.
 
         Args:
@@ -896,9 +899,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Retrieve and yield property value dictionaries for the specified CPUs using the specified
         mechanisms.
 
-        If a mechanism fails for some CPUs after succeeding for others, raise an error. If all
-        mechanisms fail for all CPUs, either raise an exception or yield property value dictionary
-        with value 'None' for each CPU, depending on 'raise_not_supported'.
+        If the property is not supported for a CPU, yield a dictionary with 'None' value. If the
+        property is not supported for the specified CPUs and mechanisms, raise 'ErrorNotSupported'
+        or yield a property value dictionary with 'None' values, depending on the
+        'raise_not_supported' argument.
 
         Args:
             pname: Name of the property to retrieve.
@@ -959,6 +963,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
         Yield (cpu, value) tuples for the specified property and CPUs, using specified mechanisms.
 
+        If the property is not supported for a CPU, yield (cpu, None). If the property is not
+        supported for the specified CPUs and mechanisms, raise 'ErrorNotSupported'.
+
         Args:
             pname: Name of the property to retrieve.
             cpus: CPU numbers to retrieve the property for.
@@ -981,8 +988,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                              mnames: MechanismNamesType | None = None) -> PropertyValueType:
         """
         Retrieve the value of a CPU property using specified mechanisms.
-
-        Unlike 'get_cpu_prop()', this method does not validate input arguments.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1008,6 +1013,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Read property 'pname' for CPUs in 'cpus', and for every CPU yield the property value
         dictionary.
 
+        If the property is not supported for a CPU, yield a dictionary with 'None' value. If the
+        property is not supported for the specified CPUs and mechanisms, raise an
+        'ErrorNotSupported'.
+
         Args:
             pname: Name of the property to read and yield the values for. The property will be read
                    for every CPU in 'cpus'.
@@ -1023,10 +1032,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If none of the CPUs and mechanisms support the property.
 
         Notes:
-            If a property is not supported, the 'val' and 'mname' keys will contain 'None'. Except
-            if none of the mechanisms supported the property, in which case 'ErrorNotSupported' is
-            raised.
-
             Properties of "bool" type use the following values:
                * "on" if the feature is enabled.
                * "off" if the feature is disabled.
@@ -1126,9 +1131,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Retrieve and yield property value dictionaries for the specified dies using the specified
         mechanisms.
 
-        If a mechanism fails for some dies but succeeds for others, raise an error. If all
-        mechanisms fail for all dies, either raise an exception or yield property value dictionaries
-        with value 'None', depending on 'raise_not_supported'.
+        If a property is not supported for a die, yield a dictionary with 'None' value. If the
+        property is not supported for the specified dies and mechanisms, raise 'ErrorNotSupported'
+        or yield a property value dictionary with 'None' values, depending on the
+        'raise_not_supported' argument.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1192,6 +1198,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
         Retrieve and yield property values for the specified dies using the specified mechanisms.
 
+        If the property is not supported for a die, yield None the value. Raise 'ErrorNotSupported'
+        if the property is not supported for any die in 'dies' and any mechanism.
+
         Args:
             pname: Name of the property to retrieve.
             dies: Dictionary mapping package numbers to collections of die numbers.
@@ -1237,23 +1246,32 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                       mnames: MechanismNamesType | None = None) -> Generator[PVInfoTypedDict,
                                                                              None, None]:
         """
-        Retrieve and yield property values for specified dies.
+        Read property 'pname' for dies in 'dies', and for every die yield the property value
+        dictionary.
 
-        Retrieve property 'pname' for each die in 'dies' and yield a dictionary with the property value.
-        This method is similar to 'get_prop_cpus()', but operates on a per-die basis. Depending on
-        the kernel version, die numbers may be absolute or relative to package numbers.
+        If the property is not supported for a die, yield a dictionary with 'None' value. If the
+        property is not supported for the specified dies and mechanisms, raise an
+        'ErrorNotSupported'.
 
         Args:
-            pname: Name of the property to read for each die.
+            pname: Name of the property to read and yield the values for. The property will be read
+                   for every die in 'dies'.
             dies: Dictionary mapping package numbers to collections of die numbers, or 'all' for all
                   dies in all packages.
-            mnames: Mechanisms to use for retrieving the property, in order of preference.
+            mnames: Mechanisms to use for getting the property. The mechanisms will be tried in the
+                    order specified in 'mnames'. By default, all mechanisms supported by the 'pname'
+                    property will be tried.
 
         Yields:
-            PVInfoTypedDict: A property value dictionary for each die in 'dies'.
+            PVInfoTypedDict: A property value dictionary for every die in 'dies'.
 
         Raises:
-            ErrorNotSupported: If the property is not supported by any mechanism.
+            ErrorNotSupported: If none of the dies and mechanisms support the property.
+
+        Notes:
+            Properties of "bool" type use the following values:
+               * "on" if the feature is enabled.
+               * "off" if the feature is disabled.
         """
 
         self._validate_pname(pname)
@@ -1374,9 +1392,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Retrieve and yield property value dictionaries for the specified packages using the
         specified mechanisms.
 
-        If a mechanism fails for some packages after succeeding for others, raise an error. If all
-        mechanisms fail for all plackages, either raise an exception or yield package value
-        dictionaries with value 'None' for each package, depending on 'raise_not_supported'.
+        If a property is not supported for a package, yield a dictionary with 'None' value. If the
+        property is not supported for the specified packages and mechanisms, raise
+        'ErrorNotSupported' or yield a property value dictionary with 'None' values, depending on
+        the 'raise_not_supported' argument.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1438,6 +1457,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Yield (package, value) tuples for the specified property and packages, using specified
         mechanisms.
 
+        If the property is not supported for a package, yield (package, None). If the property is
+        not supported for the specified packages and mechanisms, raise 'ErrorNotSupported'.
+
         Args:
             pname: Name of the property to retrieve.
             packages: package numbers to retrieve the property for.
@@ -1454,60 +1476,86 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for pvinfo in self._get_prop_pvinfo_packages(pname, packages, mnames):
             yield (pvinfo["package"], pvinfo["val"])
 
-    def _get_package_prop_mnames(self, pname, package, mnames=None):
+    def _get_package_prop_mnames(self,
+                                 pname: str,
+                                 package: int,
+                                 mnames: MechanismNamesType | None = None) -> PropertyValueType:
         """
-        Read property 'pname' and return the value, try mechanisms in 'mnames'. This method is
-        similar to the API method 'get_package_prop()', but it does not verify input arguments.
+        Retrieve the value of a property for a specific package using specified mechanisms.
+
+        Args:
+            pname: Name of the property to retrieve.
+            package: Package number.
+            package: Die number within the package.
+            mnames: Mechanisms to use for retrieving the property. If None, use default mechanisms.
+
+        Returns:
+            The value of the requested property for the specified package.
+
+        Rises:
+            ErrorNotSupported: If none of the mechanisms support the property.
         """
 
         pvinfo = next(self._get_prop_pvinfo_packages(pname, (package,), mnames))
         return pvinfo["val"]
 
-    def get_prop_packages(self, pname, packages="all", mnames=None):
+    def get_prop_packages(self,
+                          pname: str,
+                          packages: NumsType | Literal["all"] = "all",
+                          mnames: MechanismNamesType | None = None ) -> Generator[PVInfoTypedDict,
+                                                                                  None, None]:
         """
         Read property 'pname' for packages in 'packages', and for every package yield the property
-        value dictionary. This is similar to 'get_prop_cpus()', but works on per-package basis. The
-        arguments are as follows.
-          * pname - name of the property to read and yield the values for. The property will be read
-                    for every package in 'packages'.
-          * packages - collection of integer package numbers. Special value 'all' means "all
-                       packages".
-          * mnames - list of mechanisms to use for getting the property (see
-                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
-                     specified in 'mnames'. By default, all mechanisms supported by the 'pname'
-                     property will be tried.
+        value dictionary.
 
-        The property value dictionary has the following format:
-            { "package": package number,
-              "val": value of property 'pname' for the given package,
-              "mname" : name of the mechanism that was used for getting the property }
+        If the property is not supported for a package, yield a dictionary with 'None' value. If the
+        property is not supported for the specified packages and mechanisms, raise an
+        'ErrorNotSupported'.
 
-        Otherwise the same as 'get_prop_cpus()'.
+        Args:
+            pname: Name of the property to read and yield the values for. The property will be read
+                   for every package in 'packages'.
+            packages: Collection of integer package numbers. Special value 'all' means "all
+                      packages".
+            mnames: Mechanisms to use for getting the property. The mechanisms will be tried in the
+                    order specified in 'mnames'. By default, all mechanisms supported by the 'pname'
+                    property will be tried.
+
+        Yields:
+            PVInfoTypedDict: A property value dictionary for every package in 'packages'.
+
+        Raises:
+            ErrorNotSupported: If none of the packages and mechanisms support the property.
+
+        Notes:
+            Properties of "bool" type use the following values:
+               * "on" if the feature is enabled.
+               * "off" if the feature is disabled.
         """
 
         self._validate_pname(pname)
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
-        packages = self._cpuinfo.normalize_packages(packages)
-        if len(packages) == 0:
+        normalizes_packages = self._cpuinfo.normalize_packages(packages)
+        if len(normalizes_packages) == 0:
             return
 
         try:
             self._set_sname(pname)
         except ErrorNotSupported:
-            for package in packages:
+            for package in normalizes_packages:
                 yield self._construct_package_pvinfo(pname, package, mnames[-1], None)
             return
 
         self._validate_prop_vs_scope(pname, "package")
 
-        for package in packages:
+        for package in normalizes_packages:
             if self._props[pname]["sname"] == self._props[pname]["iosname"]:
                 continue
             cpus = self._cpuinfo.package_to_cpus(package)
             self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package)
 
-        yield from self._get_prop_pvinfo_packages(pname, packages, mnames=mnames,
+        yield from self._get_prop_pvinfo_packages(pname, normalizes_packages, mnames=mnames,
                                                   raise_not_supported=False)
 
     def get_package_prop(self, pname, package, mnames=None):
