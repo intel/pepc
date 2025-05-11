@@ -1288,18 +1288,33 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         yield from self._get_prop_pvinfo_dies(pname, normalized_dies, mnames=mnames,
                                               raise_not_supported=False)
 
-    def get_die_prop(self, pname, die, package, mnames=None):
+    def get_die_prop(self,
+                     pname: str,
+                     die: int,
+                     package: int,
+                     mnames: MechanismNamesType | None = None) -> PVInfoTypedDict:
         """
-        Similar to 'get_prop_dies()', but for a single die and a single property. The arguments are
-        as follows:
-          * pname - name of the property to get.
-          * die - die number to get the property for.
-          * package - package number for die 'die'.
-          * mnames - same as in 'get_prop_dies()'.
+        Retrieve a single property value for a specific die and package. Similar to
+        `get_prop_dies()`, but operates on a single die and property.
+
+        Args:
+            pname: Name of the property to retrieve.
+            die: Die number.
+            package: Package number containing the die.
+            mnames: Method names to use.
+
+        Returns:
+            The property value dictionary for the specified die and property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported by any mechanism.
         """
 
-        for pvinfo in self.get_prop_dies(pname, dies={package: (die,)}, mnames=mnames):
+        dies: dict[int, tuple[int, ...]] = {package: (die,)}
+        for pvinfo in self.get_prop_dies(pname, dies=dies, mnames=mnames):
             return pvinfo
+
+        raise Error(f"BUG: failed to get property '{pname}' for package {package}, die {die}")
 
     def prop_is_supported_die(self, pname, die, package):
         """
