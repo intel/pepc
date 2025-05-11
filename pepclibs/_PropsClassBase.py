@@ -37,7 +37,7 @@ Naming conventions:
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
-from typing import Any, TypedDict, Literal, get_args, Generator
+from typing import Any, TypedDict, Literal, get_args, Generator, cast
 from pepclibs.CPUInfo import CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
 from pepclibs.msr import MSR
@@ -95,7 +95,7 @@ MECHANISMS: dict[str, MechanismsTypedDict] = {
     }
 }
 
-PropertyTypeType = Literal["int", "float", "bool", "str"]
+PropertyTypeType = Literal["int", "float", "bool", "str", "list[str]", "dict[str,str]"]
 
 class PropertyTypedDict(TypedDict, total=False):
     """
@@ -139,7 +139,7 @@ class IntPropertyTypedDict(TypedDict, total=False):
     special_vals: set[str]
     subprops: tuple[str, ...]
 
-PropertyValueType = int | float | bool | str | None
+PropertyValueType = int | float | bool | str | list[str] | dict[str,str] | None
 
 class PVInfoTypedDict(TypedDict, total=False):
     """
@@ -326,7 +326,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if mname not in all_mnames:
             mnames = ", ".join(all_mnames)
             if pname:
-                name = Human.uncapitalize(self._props[pname]["name"])
+                name = self._props[pname]["name"]
                 raise ErrorNotSupported(f"{name} is not available via the '{mname}' mechanism"
                                         f"{self._pman.hostmsg}.\nUse one the following "
                                         f"mechanism(s) instead: {mnames}.", mname=mname)
@@ -414,36 +414,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         except KeyError as err:
             raise Error(f"Property '{pname}' does not exist") from err
 
-    def _normalize_bool_type_value(self, pname: str, val: bool | str) -> bool:
-        """
-        Normalize and validate a boolean-type property value.
-
-        Convert the input value for a boolean property to its canonical boolean form. Accept boolean
-        values, as well as string representations: "on", "enable" (True), and "off", "disable"
-        (False).
-
-        Args:
-            pname: Property name.
-            val: Value to normalize.
-
-        Returns:
-            Normalized boolean value.
-        """
-
-        if val is True or val is False:
-            return val
-
-        val = val.lower()
-        if val in ("on", "enable"):
-            return True
-
-        if val in ("off", "disable"):
-            return False
-
-        name = Human.uncapitalize(self._props[pname]["name"])
-        raise Error(f"Bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
-                    f"disable")
-
     def _validate_pname(self, pname: str):
         """
         Validate that the provided property name exists in the known properties.
@@ -487,7 +457,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 return
 
             missing_cpus = all_cpus - set(cpus)
-            name = Human.uncapitalize(self._props[pname]["name"])
+            name = self._props[pname]["name"]
             raise Error(f"{name} has {sname} scope, so the list of CPUs must include all CPUs.\n"
                         f"However, the following CPUs are missing from the list: {missing_cpus}")
 
@@ -540,12 +510,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         else:
             mapping_name = "relation between CPUs and packages"
 
-        name = Human.uncapitalize(self._props[pname]["name"])
+        name = self._props[pname]["name"]
         errmsg = f"{name} ({pname}) has {sname} scope, so the list of CPUs must include all CPUs " \
                  f"in one or multiple {sname}s.\n" \
                  f"However, the following CPUs do not comprise full {sname}(s): {rem_cpus_str}\n" \
                  f"Here is the {mapping_name}{self._pman.hostmsg}:{mapping}"
-
         raise Error(errmsg)
 
     def _validate_prop_vs_scope(self, pname: str, sname: ScopeNameType):
@@ -640,7 +609,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         iosname = prop["iosname"]
         name = Human.uncapitalize(prop["name"])
 
-        raise ErrorUsePerCPU(f"cannot determine {name} {for_what}{self._pman.hostmsg}:\n"
+        raise ErrorUsePerCPU(f"Cannot determine {name} {for_what}{self._pman.hostmsg}:\n"
                              f"  CPU {cpu1} has value '{val1}', but CPU {cpu2} has value '{val2}', "
                              f"even though they are in the same {op_sname}.\n"
                              f"  This situation is possible because {name} has '{sname}' "
@@ -1597,41 +1566,90 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self.get_package_prop(pname, package)["val"] is not None
 
-    def _normalize_inprop(self, pname, val):
-        """Normalize and return the input property value."""
+    def _normalize_bool_type_value(self, pname: str, val: PropertyValueType) -> bool:
+        """
+        Normalize and validate a boolean-type property value.
+
+        Convert the input value for a boolean property to its canonical boolean form. Accept boolean
+        values, as well as string representations: "on", "enable" (True), and "off", "disable"
+        (False).
+
+        Args:
+            pname: Property name.
+            val: Value to normalize.
+
+        Returns:
+            Normalized boolean value.
+        """
+
+        if val is True or val is False:
+            return val
+
+        if not isinstance(val, str):
+            name = Human.uncapitalize(self._props[pname]["name"])
+            raise Error(f"Bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
+                        f"disable")
+
+        val = val.lower()
+        if val in ("on", "enable"):
+            return True
+
+        if val in ("off", "disable"):
+            return False
+
+        name = Human.uncapitalize(self._props[pname]["name"])
+        raise Error(f"Bad value '{val}' for {name}, use one of: True, False, on, off, enable, "
+                    f"disable")
+
+    def _normalize_inprop(self, pname: str, val: PropertyValueType) -> PropertyValueType:
+        """
+        Normalize and validate an input property value.
+
+        Args:
+            pname: Property name to normalize.
+            val: Input value to normalize.
+
+        Returns:
+            Normalized property value.
+        """
 
         self._validate_pname(pname)
 
         prop = self._props[pname]
 
+        if not prop["writable"]:
+            raise Error(f"{prop['name']} is read-only and can not be modified{self._pman.hostmsg}")
+
         if val is None:
             name = Human.uncapitalize(prop["name"])
-            raise Error(f"bad value 'None' for {name}")
+            raise Error(f"Bad value 'None' for {name}")
 
-        if not prop["writable"]:
+        if not isinstance(val, PropertyValueType):
             name = Human.uncapitalize(prop["name"])
-            raise Error(f"{name} is read-only and can not be modified{self._pman.hostmsg}")
+            raise Error(f"Bad type {type(val)} for {name}: expected {prop['type']}")
 
         if prop.get("type") == "bool":
             val = self._normalize_bool_type_value(pname, val)
+
+        if isinstance(val, (list, dict)):
+            # At this point properties of this type are all read-only.
+            raise Error(f"Bad type {type(val)} for {prop['name']}: expected a single value")
 
         if "unit" not in prop:
             return val
 
         if Trivial.is_num(val):
             if prop["type"] == "int":
-                val = Trivial.str_to_int(val)
+                val = Trivial.str_to_int(cast(str, val))
             else:
-                val = float(val)
-        else:
-            special_vals = prop.get("special_vals", {})
-            if val not in special_vals:
-                # This property has a unit, and the value is not a number, nor it is one of the
-                # special values. Presumably this is a value with a unit, such as "100MHz" or
-                # something like that.
-                is_integer = prop["type"] == "int"
-                name = Human.uncapitalize(prop["name"])
-                val = Human.parse_human(val, unit=prop["unit"], integer=is_integer, what=name)
+                val = Trivial.str_to_float(cast(str, val))
+        elif "special_vals" not in prop or val not in prop["special_vals"]:
+            # This property has a unit, and the value is not a number, nor it is one of the
+            # special values. Presumably this is a value with a unit, such as "100MHz" or
+            # something like that.
+            is_integer = prop["type"] == "int"
+            name = Human.uncapitalize(prop["name"])
+            val = Human.parse_human(val, unit=prop["unit"], integer=is_integer, what=name)
 
         return val
 
