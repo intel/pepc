@@ -14,6 +14,7 @@ Provide a capability of retrieving and setting P-state related properties.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+from typing import Generator
 import contextlib
 import statistics
 
@@ -28,7 +29,7 @@ from pepclibs import _SysfsIO, EPP, EPB, _CPUFreq, _UncoreFreq
 from pepclibs.CPUInfo import CPUInfo
 
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs._PropsClassBase import PropertyTypedDict
+from pepclibs._PropsClassBase import PropertyTypedDict, NumsType, MechanismNameType
 
 # Make the exception class be available for users.
 from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-import
@@ -270,7 +271,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         self._cpufreq_cppc_obj: _CPUFreq.CPUFreqCPPC | None = None
         self._cpufreq_msr_obj: _CPUFreq.CPUFreqMSR | None= None
 
-        self._uncfreq_sysfs_obj: _UncoreFreq.UncoreFreqSysfs = None
+        self._uncfreq_sysfs_obj: _UncoreFreq.UncoreFreqSysfs | None = None
         self._uncfreq_sysfs_err: str | None = None
 
         super()._init_props_dict(PROPS)
@@ -412,9 +413,23 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         return self._uncfreq_sysfs_obj
 
-    def _get_epp(self, cpus, mname):
+    def _get_epp(self,
+                 cpus: NumsType,
+                 mname: MechanismNameType) -> Generator[tuple[int, str], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is EPP value for CPU 'cpu'.
+        Retrieve and yield EPP values for the specified CPUs using the specified mechanism.
+
+        Args:
+            cpus: CPU numbers to retrieve EPP values for.
+            mname: Mechanism name to use for retrieving EPP values.
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is th CPU number and 'val' is its EPP value.
+
+        Notes:
+            - The reason why the yield EPP values are strings is because the corresponding sysfs
+              file may contain a policy name, which is a string, or a numeric value, which is also
+              yielded as a string for simplicity.
         """
 
         for cpu, val, _ in self._get_eppobj().get_vals(cpus=cpus, mnames=(mname,)):
