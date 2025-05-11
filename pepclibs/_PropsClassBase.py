@@ -1685,7 +1685,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               cpus: NumsType,
                               mnames: MechanismNamesType | None = None) -> str:
         """
-        Set a property value for specified CPUs using specified mechanisms.
+        Set a property for specified CPUs using specified mechanisms.
 
         For boolean properties, use True/"on"/"enable" to enable and False/"off"/"disable" to
         disable.
@@ -1704,8 +1704,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the property is not supported for the specified CPUs and
                                mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for the specified CPUs by the
-                                      specified mechanisms, but may be supported by another
-                                      mechanism.
+                                      specified mechanisms, but may be supported by other
+                                      mechanisms.
         """
 
         if not mnames:
@@ -1731,7 +1731,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                       cpus: NumsType,
                       mnames: MechanismNamesType | None = None) -> str:
         """
-        Set a property value for specified CPUs using specified mechanisms.
+        Set a property for specified CPUs using specified mechanisms.
 
         For boolean properties, use True/"on"/"enable" to enable and False/"off"/"disable" to
         disable.
@@ -1750,8 +1750,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the property is not supported for the specified CPUs and
                                mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for the specified CPUs by the
-                                      specified mechanisms, but may be supported by another
-                                      mechanism.
+                                      specified mechanisms, but may be supported by other
+                                      mechanisms.
         """
 
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
@@ -1767,26 +1767,42 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self._set_prop_cpus_mnames(pname, val, cpus, mnames)
 
-    def set_cpu_prop(self, pname, val, cpu, mnames=None):
+    def set_cpu_prop(self,
+                     pname: str,
+                     val: PropertyValueType,
+                     cpu: int,
+                     mnames: MechanismNamesType | None = None) -> str:
         """
-        Similar to 'set_prop_cpus()', but for a single CPU and a single property. The arguments are
-        as follows:
-          * pname - name of the property to set.
-          * val - the value to set the property to.
-          * cpu - CPU number to set the property for.
-          * mnames - same as in 'set_prop_cpus()'.
+        Set a property for a specified CPU using the specified mechanisms.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            cpu: CPU number to set the property for.
+            mnames: Mechanisms names to use for setting the property, in order of preference.
+                    Defaults to all allowed mechanisms.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported the CPU and mechanisms.
+            ErrorTryAnotherMechanism: If the property is not supported for CPU by the specified
+                                      mechanisms, but may be supported by other mechanisms.
         """
 
         return self.set_prop_cpus(pname, val, (cpu,), mnames=mnames)
 
-    def _reduce_cpus_ioscope(self, cpus, iosname):
+    def _reduce_cpus_ioscope(self, cpus: list[int], iosname: ScopeNameType) -> list[int]:
         """
-        Reduce the list of CPUs in 'cpus' to only one CPU in the scope 'iosname'. The arguments are
-        as follows.
-          * cpus - list of integer CPU numbers to reduce.
-          * iosname - I/O scope name to reduce the 'cpus' list to.
+        Reduce a list of CPUs to a single representative CPU per I/O scope.
 
-        Return the reduced list of CPU numbers.
+        Args:
+            cpus: List of CPU numbers to reduce.
+            iosname: I/O scope name to group CPUs by.
+
+        Returns:
+            List of reduced CPU numbers, containing one CPU per I/O scope group.
         """
 
         if iosname == "CPU":
@@ -1810,22 +1826,69 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return result
 
-    def _set_prop_dies(self, pname, val, dies, mname):
+    def _set_prop_dies(self,
+                       pname: str,
+                       val: PropertyValueType,
+                       dies: DieNumsType,
+                       mname: MechanismNameType) -> str:
         """
-        The default implementation of 'set_prop_dies()' using the per-CPU method. Subclasses may
-        choose to override this default implementation.
+        Set a property to a specified value for a specified dies using a specified mechanism.
+
+        Has to be implemented by the sub-class.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            die: Die numbers to set the property for.
+            mname: Name of the mechanism to use for setting the property.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified dies and
+                               mechanism.
+            ErrorTryAnotherMechanism: If the property is not supported for the specified dies by the
+                                      specified mechanism, but may be supported by other mechanisms.
         """
+
 
         cpus = []
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
                 cpus += self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
 
-        cpus = self._reduce_cpus_ioscope(cpus, self._props[pname]["iosname"])
+        iosname = self._props[pname]["iosname"]
+        if iosname is None:
+            raise Error(f"BUG: I/O scope was not set for property '{pname}'")
+
+        cpus = self._reduce_cpus_ioscope(cpus, iosname)
         return self._set_prop_cpus_mnames(pname, val, cpus, mnames=(mname,))
 
     def _set_prop_dies_mnames(self, pname, val, dies, mnames):
-        """Implement 'set_prop_dies()'."""
+        """
+        Set a property for specified CPUs using specified mechanisms.
+
+        For boolean properties, use True/"on"/"enable" to enable and False/"off"/"disable" to
+        disable.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            cpus: CPU numbers to set the property for.
+            mnames: Mechanisms names to use for setting the property, in order of preference.
+                    Defaults to all allowed mechanisms.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified CPUs and
+                               mechanisms.
+            ErrorTryAnotherMechanism: If the property is not supported for the specified CPUs by the
+                                      specified mechanisms, but may be supported by other
+                                      mechanisms.
+        """
 
         if not mnames:
             mnames = self._props[pname]["mnames"]
@@ -1843,25 +1906,39 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         self._prop_not_supported_dies(pname, dies, mnames, "set", exceptions=exceptions)
 
-    def set_prop_dies(self, pname, val, dies, mnames=None):
+    def set_prop_dies(self,
+                      pname: str,
+                      val: PropertyValueType,
+                      dies: DieNumsType,
+                      mnames: MechanismNamesType | None = None) -> str:
         """
-        Set property 'pname' to value 'val' for dies in 'dies'. The arguments are as follows.
-          * pname - name of the property to set.
-          * val - value to set the property to.
-          * dies - a dictionary with keys being integer package numbers and values being a
-                   collection of integer die numbers in the package. Special value 'all' means "all
-                   dies in all packages".
-          * mnames - list of mechanisms to use for setting the property (see
-                     '_PropsClassBase.MECHANISMS'). The mechanisms will be tried in the order
-                     specified in 'mnames'. Any mechanism is allowed by default.
+        Set a property for specified dies using specified mechanisms.
 
-        Otherwise the same as 'set_prop_cpus()'.
+        For boolean properties, use True/"on"/"enable" to enable and False/"off"/"disable" to
+        disable.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            dies: Die numbers to set the property for.
+            mnames: Mechanisms names to use for setting the property, in order of preference.
+                    Defaults to all allowed mechanisms.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified dies and
+                               mechanisms.
+            ErrorTryAnotherMechanism: If the property is not supported for the specified dies by the
+                                      specified mechanisms, but may be supported by other
+                                      mechanisms.
         """
 
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
         val = self._normalize_inprop(pname, val)
 
-        normalized_dies = {}
+        normalized_dies: dict[int, list[int]] = {}
         for package in self._cpuinfo.normalize_packages(dies):
             normalized_dies[package] = []
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
@@ -1870,10 +1947,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # Make sure there are some die numbers.
         for package, pkg_dies in dies.copy().items():
             if len(pkg_dies) == 0:
-                raise Error(f"BUG: no package {package} die numbers provided for setting "
+                raise Error(f"BUG: No package {package} die numbers provided for setting "
                             f"{self._props[pname]['name']}{self._pman.hostmsg}")
         if len(dies) == 0:
-            raise Error(f"BUG: no package and die numbers provided for setting "
+            raise Error(f"BUG: No package and die numbers provided for setting "
                         f"{self._props[pname]['name']}{self._pman.hostmsg}")
 
         self._set_sname(pname)
@@ -1881,18 +1958,34 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self._set_prop_dies_mnames(pname, val, normalized_dies, mnames)
 
-    def set_die_prop(self, pname, val, die, package, mnames=None):
+    def set_die_prop(self,
+                     pname: str,
+                     val: PropertyValueType,
+                     die: int,
+                     package: int,
+                     mnames: MechanismNamesType | None = None) -> str:
         """
-        Similar to 'set_prop_dies()', but for a single die and a single property. The arguments are
-        as follows:
-          * pname - name of the property to set.
-          * val - the value to set the property to.
-          * die - die number to set the property for.
-          * package - package number for die 'die'.
-          * mnames - same as in 'set_prop_dies()'.
+        Set a property for a specified die using the specified mechanisms.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            die: Die number to set the property for.
+            package: Package number containing the die.
+            mnames: Mechanisms names to use for setting the property, in order of preference.
+                    Defaults to all allowed mechanisms.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported the die and mechanisms.
+            ErrorTryAnotherMechanism: If the property is not supported for die by the specified
+                                      mechanisms, but may be supported by other mechanisms.
         """
 
-        return self.set_prop_dies(pname, val, {package: (die,)}, mnames=mnames)
+        dies: dict[int, tuple[int, ...]] = {package: (die,)}
+        return self.set_prop_dies(pname, val, dies, mnames=mnames)
 
     def _set_prop_packages(self, pname, val, packages, mname):
         """
