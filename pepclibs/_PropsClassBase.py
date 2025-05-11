@@ -95,7 +95,7 @@ MECHANISMS: dict[MechanismNameType, MechanismTypedDict] = {
     }
 }
 
-PropertyTypeType = Literal["int", "float", "bool", "str", "list[str]", "dict[str,str]"]
+PropertyTypeType = Literal["int", "float", "bool", "str", "list[str]", "list[int]", "dict[str,str]"]
 
 class PropertyTypedDict(TypedDict, total=False):
     """
@@ -116,30 +116,20 @@ class PropertyTypedDict(TypedDict, total=False):
     name: str
     unit: str
     type: PropertyTypeType
-    sname: ScopeNameType
-    iosname: ScopeNameType
-    mnames: tuple[MechanismNameType, ...]
-    writable: bool
-    special_vals: set[str]
-    subprops: tuple[str, ...]
-
-class IntPropertyTypedDict(TypedDict, total=False):
-    """
-    Type for the internal property description dictionary. It is similar to 'PropertyTypedDict', but
-    some attributes may not be initialized, and there are some additional internal attributes.
-    """
-
-    name: str
-    unit: str
-    type: PropertyTypeType
     sname: ScopeNameType | None
-    iosname: ScopeNameType | None
     mnames: tuple[MechanismNameType, ...]
     writable: bool
     special_vals: set[str]
     subprops: tuple[str, ...]
 
-PropertyValueType = int | float | bool | str | list[str] | dict[str,str] | None
+class IntPropertyTypedDict(PropertyTypedDict):
+    """
+    Type for the internal property description dictionary.
+    """
+
+    iosname: ScopeNameType | None
+
+PropertyValueType = int | float | bool | str | list[str] | list[int] | dict[str,str] | None
 
 class PVInfoTypedDict(TypedDict, total=False):
     """

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -9,8 +9,10 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module provides P-state management API.
+Provide a capability of retrieving and setting P-state related properties.
 """
+
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 import statistics
@@ -20,20 +22,22 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
+from pepclibs._PropsClassBase import PropertyTypedDict
+
 # Make the exception class be available for users.
 from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-import
 
 class ErrorFreqOrder(Error):
     """
-    An exception indicating that min. or max. frequency modification failed for the ordering
-    reasons.
+    Raise when modification of minimum or maximum frequency fails due to ordering constraints.
     """
 
 class ErrorFreqRange(ErrorTryAnotherMechanism):
     """
-    An exception indicating that min. or max. frequency values are out of the allowed range. Since
-    different mechanisms may have different ranges, sub-class '_ErrorTryAnotherMechanism' to
-    indicate that another mechanism may succeed.
+    Raise when minimum or maximum frequency values are outside the permitted range.
+
+    This exception suggests that the current mechanism cannot handle the requested frequency,
+    but another mechanism may succeed.
     """
 
 # Special values for writable CPU frequency properties.
@@ -41,15 +45,14 @@ _SPECIAL_FREQ_VALS = {"min", "max", "base", "hfm", "P1", "eff", "lfm", "Pn", "Pm
 # Special values for writable uncore frequency properties.
 _SPECIAL_UNCORE_FREQ_VALS = {"min", "max", "mdl"}
 
-# This dictionary describes the CPU properties this module supports.
+# This properties dictionary defines the CPU properties supported by this module.
 #
-# While this dictionary is user-visible and can be used, it is not recommended, because it is not
-# complete. This dictionary is extended by 'PStates' objects. Use the full dictionary via
-# 'PStates.props'.
+# Although this dictionary is user-visible and may be accessed directly, it is not recommended
+# because it is incomplete. Prefer using 'PStates.props' instead.
 #
-# Some properties have scope name set to 'None' because the scope may be different for different
-# systems. In such cases, the scope can be obtained via 'PStates.get_sname()'.
-PROPS = {
+# Some properties have their scope name set to 'None' because the scope may vary depending on the
+# platform. In such cases, the scope can be determined using 'PStates.get_sname()'.
+PROPS: dict[str, PropertyTypedDict] = {
     "turbo": {
         "name": "Turbo",
         "type": "bool",
