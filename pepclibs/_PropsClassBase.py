@@ -1316,13 +1316,17 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         raise Error(f"BUG: failed to get property '{pname}' for package {package}, die {die}")
 
-    def prop_is_supported_die(self, pname, die, package):
+    def prop_is_supported_die(self, pname: str, die: int, package: int) -> bool:
         """
-        Return 'True' if property 'pname' is supported by die 'die' on package 'package', otherwise
-        return 'False'. The arguments are as follows:
-          * pname - property name to check.
-          * die - die number to check the property for.
-          * package - package number for die 'die'.
+        Check if a property is supported by a specific die on a given package.
+
+        Args:
+            pname: Name of the property to check.
+            die: Die number to check the property for.
+            package: Package number containing the die.
+
+        Returns:
+            True if the property is supported by the specified die and package, False otherwise.
         """
 
         return self.get_die_prop(pname, die, package)["val"] is not None
