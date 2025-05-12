@@ -14,7 +14,9 @@ Provide a capability of retrieving and setting P-state related properties.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 from typing import Generator
+
 import contextlib
 import statistics
 
@@ -23,16 +25,16 @@ from pepclibs.helperlibs import Trivial, Human, ClassHelpers
 
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
-
-from pepclibs.msr import MSR, FSBFreq
-from pepclibs import _SysfsIO, EPP, EPB, _CPUFreq, _UncoreFreq
-from pepclibs.CPUInfo import CPUInfo
-
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs._PropsClassBase import PropertyTypedDict, NumsType, MechanismNameType
-
 # Make the exception class be available for users.
-from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-import
+# pylint: disable-next=unused-import
+from pepclibs._PropsClassBase import ErrorUsePerCPU
+
+if typing.TYPE_CHECKING:
+    from pepclibs.msr import MSR, FSBFreq
+    from pepclibs import _SysfsIO, EPP, EPB, _CPUFreq, _UncoreFreq
+    from pepclibs.CPUInfo import CPUInfo
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs._PropsClassBase import PropertyTypedDict, NumsType, MechanismNameType
 
 class ErrorFreqOrder(Error):
     """
@@ -308,6 +310,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if not self._fsbfreq:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import FSBFreq
+
             msr = self._get_msr()
             self._fsbfreq = FSBFreq.FSBFreq(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
@@ -322,6 +327,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if not self._eppobj:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import EPP
+
             msr = self._get_msr()
             self._eppobj = EPP.EPP(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr,
                                    enable_cache=self._enable_cache)
@@ -337,6 +345,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if not self._epbobj:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import EPB
+
             msr = self._get_msr()
             self._epbobj = EPB.EPB(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr,
                                    enable_cache=self._enable_cache)
@@ -352,6 +363,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if not self._cpufreq_sysfs_obj:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import _CPUFreq
+
             msr = self._get_msr()
             sysfs_io = self._get_sysfs_io()
             self._cpufreq_sysfs_obj = _CPUFreq.CPUFreqSysfs(cpuinfo=self._cpuinfo, pman=self._pman,
@@ -368,6 +382,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if not self._cpufreq_cppc_obj:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import _CPUFreq
 
             sysfs_io = self._get_sysfs_io()
             self._cpufreq_cppc_obj = _CPUFreq.CPUFreqCPPC(cpuinfo=self._cpuinfo, pman=self._pman,
@@ -384,6 +400,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if not self._cpufreq_msr_obj:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import _CPUFreq
+
             msr = self._get_msr()
             self._cpufreq_msr_obj = _CPUFreq.CPUFreqMSR(cpuinfo=self._cpuinfo, pman=self._pman,
                                                         msr=msr, enable_cache=self._enable_cache)
@@ -401,6 +420,8 @@ class PStates(_PropsClassBase.PropsClassBase):
             raise ErrorNotSupported(self._uncfreq_sysfs_err)
 
         if not self._uncfreq_sysfs_obj:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import _UncoreFreq
 
             sysfs_io = self._get_sysfs_io()
             try:
@@ -435,36 +456,62 @@ class PStates(_PropsClassBase.PropsClassBase):
         for cpu, val, _ in self._get_eppobj().get_vals(cpus=cpus, mnames=(mname,)):
             yield cpu, val
 
-    def _get_epb(self, cpus, mname):
+    def _get_epb(self,
+                 cpus: NumsType,
+                 mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is EPB value for CPU 'cpu'.
+        Retrieve and yield EPB values for the specified CPUs using the specified mechanism.
+
+        Args:
+            cpus: CPU numbers to retrieve EPB values for.
+            mname: Mechanism name to use for retrieving EPB values.
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its EPB value.
         """
 
         for cpu, val, _ in self._get_epbobj().get_vals(cpus=cpus, mnames=(mname,)):
             yield cpu, val
 
-    def _get_max_eff_freq(self, cpus):
+    def _get_max_eff_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' the maximum efficiency
-        frequency in Hz for CPU 'cpu'.
+        Retrieve and yield the maximum efficiency frequency for the specified CPUs.
+
+        Args:
+            cpus: CPU numbers to retrieve maximum efficiency frequency for.
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its maximum efficiency
+            frequency.
         """
 
         cpufreq_obj = self._get_cpufreq_msr_obj()
         yield from cpufreq_obj.get_max_eff_freq(cpus=cpus)
 
-    def _get_hwp(self, cpus):
+    def _get_hwp(self, cpus: NumsType) -> Generator[tuple[int, bool], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' the hardware power
-        management on/off status for CPU 'cpu'.
+        Retrieve and yield the hardware power management (HWP) status for the specified CPUs.
+
+        Args:
+            cpus: CPU numbers to retrieve HWP status for.
+
+        Yields:
+            Tuple of (cpu, status), where 'cpu' is the CPU number and 'status' is its HWP status.
         """
 
         cpufreq_obj = self._get_cpufreq_msr_obj()
         yield from cpufreq_obj.get_hwp(cpus=cpus)
 
-    def _get_cppc_freq(self, pname, cpus):
+    def _get_cppc_freq(self, pname: str, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' the value of property
-        'pname' for CPU 'cpu', read from an ACPI CPPC sysfs file.
+        Retrieve and yield frequency values for the specified CPUs using the CPPC mechanism.
+
+        Args:
+            pname: Property name to retrieve (e.g., "base_freq").
+            cpus: CPU numbers to retrieve frequency values for.
+
+        Yields:
+            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the frequency in Hz.
         """
 
         cpufreq_obj = self._get_cpufreq_cppc_obj()
@@ -479,7 +526,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             elif pname == "min_oper_freq":
                 yield from cpufreq_obj.get_min_freq_limit(cpus)
             else:
-                raise Error(f"BUG: unexpected property {pname}")
+                raise Error(f"BUG: Unexpected property {pname}")
             return
 
         # Sometimes the frequency CPPC sysfs files are not readable, but the "performance" files
@@ -497,10 +544,20 @@ class PStates(_PropsClassBase.PropsClassBase):
         for (cpu, base_freq), (_, nominal_perf), (_, perf) in iterator:
             yield cpu, (base_freq * perf) // nominal_perf
 
-    def _get_min_oper_freq(self, cpus, mname):
+    def _get_min_oper_freq(self,
+                           cpus: NumsType,
+                           mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is  the minimum operating
-        frequency for CPU 'cpu'. Use method 'mname'.
+        Retrieve and yield the minimum operating frequency for the specified CPUs using the given
+        mechanism.
+
+        Args:
+            cpus: CPU numbers to retrieve minimum operating frequency for.
+            mname: Name of the mechanism to use ('msr' or 'cppc').
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its minimum operating
+            frequency.
         """
 
         if mname == "msr":
@@ -512,12 +569,22 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_cppc_freq("min_oper_freq", cpus)
             return
 
-        raise Error(f"BUG: unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_max_turbo_freq(self, cpus, mname):
+    def _get_max_turbo_freq(self,
+                            cpus: NumsType,
+                            mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is  the maximum 1-core
-        turbo frequency for CPU 'cpu'. Use method 'mname'.
+        Retrieve and yield the maximum turbo frequency for the specified CPUs using the given
+        mechanism.
+
+        Args:
+            cpus: CPU numbers to retrieve maximum turbo frequency for.
+            mname: Name of the mechanism to use ('msr' or 'cppc').
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its maximum turbo
+            frequency.
         """
 
         if mname == "msr":
@@ -529,29 +596,38 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_cppc_freq("max_turbo_freq", cpus)
             return
 
-        raise Error(f"BUG: unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_base_freq(self, cpus, mname):
+    def _get_base_freq(self,
+                       cpus: NumsType,
+                       mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is base frequency of CPU
-        'cpu'. Use method 'mname'.
+        Retrieve and yield the base frequency for the specified CPUs using the given mechanism.
+
+        Args:
+            cpus: CPU numbers to retrieve base frequency for.
+            mname: Name of the mechanism to use for retrieving the base frequency: are 'sysfs',
+                   'msr', and 'cppc'.
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its base frequency.
         """
 
         if mname == "sysfs":
-            cpufreq_obj = self._get_cpufreq_sysfs_obj()
-            yield from cpufreq_obj.get_base_freq(cpus)
+            sysfs_cpufreq_obj = self._get_cpufreq_sysfs_obj()
+            yield from sysfs_cpufreq_obj.get_base_freq(cpus)
             return
 
         if mname == "msr":
-            cpufreq_obj = self._get_cpufreq_msr_obj()
-            yield from cpufreq_obj.get_base_freq(cpus)
+            msr_cpufreq_obj = self._get_cpufreq_msr_obj()
+            yield from msr_cpufreq_obj.get_base_freq(cpus)
             return
 
         if mname == "cppc":
             yield from self._get_cppc_freq("base_freq", cpus)
             return
 
-        raise Error(f"BUG: unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
     def _get_freq_sysfs(self, pname, cpus):
         """YIeld the minimum or maximum CPU frequency read from Linux "cpufreq" sysfs files."""

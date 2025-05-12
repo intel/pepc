@@ -37,16 +37,17 @@ Naming conventions:
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
-from typing import Any, TypedDict, Literal, get_args, Generator, cast
+import typing
+from typing import Any, TypedDict, Literal, Generator
 
-from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, LocalProcessManager
+from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-from pepclibs.msr import MSR
-from pepclibs import _SysfsIO
-from pepclibs.CPUInfo import CPUInfo
-
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+if typing.TYPE_CHECKING:
+    from pepclibs.msr import MSR
+    from pepclibs import _SysfsIO
+    from pepclibs.CPUInfo import CPUInfo
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -258,6 +259,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if pman:
             self._pman = pman
         else:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.helperlibs import LocalProcessManager
+
             self._pman = LocalProcessManager.LocalProcessManager()
 
         if cpuinfo:
@@ -437,7 +441,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         sname = self._props[pname]["sname"]
 
-        if sname not in get_args(ScopeNameType):
+        if sname not in typing.get_args(ScopeNameType):
             raise Error(f"BUG: Unknown scope name '{sname}'")
 
         if sname == "CPU":
@@ -484,7 +488,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                     clist.append(f"{core}:{cpus_str}")
 
                 # The core/die->CPU mapping may be very long, wrap it to 100 symbols.
-                import textwrap # pylint: disable=import-outside-toplevel
+                # pylint: disable-next=import-outside-toplevel
+                import textwrap
 
                 prefix = f"               {sname}s to CPUs: "
                 indent = " " * len(prefix)
@@ -689,6 +694,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """Return an instance of 'MSR.MSR'."""
 
         if not self._msr:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import MSR
+
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
 
         return self._msr
@@ -697,6 +705,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """Return an instance of '_SysfsIO.SysfsIO'."""
 
         if not self._sysfs_io:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import _SysfsIO
+
             self._sysfs_io = _SysfsIO.SysfsIO(self._pman, enable_cache=self._enable_cache)
 
         return self._sysfs_io
@@ -1633,9 +1644,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         if Trivial.is_num(val):
             if prop["type"] == "int":
-                val = Trivial.str_to_int(cast(str, val))
+                val = Trivial.str_to_int(typing.cast(str, val))
             else:
-                val = Trivial.str_to_float(cast(str, val))
+                val = Trivial.str_to_float(typing.cast(str, val))
         elif "special_vals" not in prop or val not in prop["special_vals"]:
             # This property has a unit, and the value is not a number, nor it is one of the
             # special values. Presumably this is a value with a unit, such as "100MHz" or
@@ -2139,7 +2150,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _init_props_dict(self, props: dict[str, PropertyTypedDict]):
         """Initialize the 'props' and 'mechanisms' dictionaries."""
 
-        self._props = copy.deepcopy(cast(dict[str, IntPropertyTypedDict], props))
+        self._props = copy.deepcopy(typing.cast(dict[str, IntPropertyTypedDict], props))
         self.props = props
 
         # Initialize the 'ioscope' to the same value as 'scope'. I/O scope may be different to the
