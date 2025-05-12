@@ -629,8 +629,21 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_freq_sysfs(self, pname, cpus):
-        """YIeld the minimum or maximum CPU frequency read from Linux "cpufreq" sysfs files."""
+    def _get_freq_sysfs(self, pname: str, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield CPU frequency values for the specified CPUs using the sysfs mechanism.
+
+        Depending on the 'pname' argument, yield either the minimum, maximum, minimum limit, or maximum
+        limit CPU frequency for the given CPUs.
+
+        Args:
+            pname: Name of the property to retrieve. Supported values are "min_freq", "max_freq",
+                   "min_freq_limit", and "max_freq_limit".
+            cpus: CPU numbers to retrieve frequency values for.
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency in Hz.
+        """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
 
@@ -645,8 +658,18 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
-    def _get_freq_msr(self, pname, cpus):
-        """Yield the minimum or maximum CPU frequency read from 'MSR_HWP_REQUEST'."""
+    def _get_freq_msr(self, pname: str, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the minimum or maximum CPU frequency for the specified CPUs using the MSR
+        mechanism.
+
+        Args:
+            pname: The property to retrieve. Must be either "min_freq" or "max_freq".
+            cpus: CPU numbers to retrieve frequency values for.
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency in Hz.
+        """
 
         cpufreq_obj = self._get_cpufreq_msr_obj()
 
@@ -655,12 +678,21 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "max_freq":
             yield from cpufreq_obj.get_max_freq(cpus)
         else:
-            raise Error(f"BUG: unexpected CPU frequency property {pname}")
+            raise Error(f"BUG: Unexpected CPU frequency property {pname}")
 
     def _get_freq(self, pname, cpus, mname):
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the frequency of CPU
-        'cpu'. Use method 'mname'.
+        Retrieve and yield the minimum or maximum CPU frequency for the specified CPUs using the
+        specified mechanism.
+
+        Args:
+            pname: Name of the property to retrieve. Supported values are "min_freq", "max_freq",
+                   "min_freq_limit", and "max_freq_limit".
+            cpus: CPU numbers to retrieve frequency values for.
+            mname: Name of the mechanism to use for retrieving the frequency (e.g., "sysfs").
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency in Hz.
         """
 
         if mname == "sysfs":
@@ -671,7 +703,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_freq_msr(pname, cpus)
             return
 
-        raise Error(f"BUG: unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
     def _get_freq_limit(self, pname, cpus):
         """
