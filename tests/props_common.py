@@ -40,10 +40,7 @@ def get_good_cpu_opts(params, sname="package"):
         pkg_modules_range = Trivial.rangify(params["modules"][pkg])
         pkg_dies_range = Trivial.rangify(params["dies"][pkg])
         opts = [f"--packages {pkg} --cpus all",
-                f"--packages {pkg} --modules all",
                 f"--modules {pkg_modules_range}",
-                f"--packages {pkg} --dies all",
-                f"--packages {pkg} --cores all",
                 f"--packages {pkg} --cores {pkg_cores_range}",
                 f"--packages {pkg} --dies {pkg_dies_range}",
                 f"--packages {pkg}-{params['packages'][-1]}"]
@@ -99,20 +96,7 @@ def get_good_cpu_opts(params, sname="package"):
 
     if sname == "global":
         opts = ["",
-                "--cpus all",
-                "--cores all",
-                "--modules all",
-                "--dies all",
-                "--cores all --cpus all",
-                "--modules all --cores all",
-                "--dies all --modules all",
-                "--dies all --cores all",
                 "--dies all --modules all --cores all --cpus all",
-                "--packages all",
-                "--packages all --cpus all",
-                "--packages all --cores all",
-                "--packages all --modules all",
-                "--packages all --dies all",
                 "--packages all --dies all --cores all",
                 f"--cpus  0-{params['cpus'][-1]}"]
         return opts
@@ -194,7 +178,6 @@ def get_mechanism_opts(params, allow_readonly=True):
     for mname in mnames:
         opts.append(f"--mechanism {mname}")
 
-    opts += ["--mechanism msr,sysfs", "--mechanism sysfs,msr"]
     return opts
 
 def _verify_after_set_per_cpu(pobj, pname, val, cpus):
