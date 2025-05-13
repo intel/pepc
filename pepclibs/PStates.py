@@ -942,51 +942,96 @@ class PStates(_PropsClassBase.PropsClassBase):
                         f"{self._pman.hostmsg}")
         return int(val)
 
-    def _get_turbo(self, cpus):
+    def _get_turbo(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
         """
-        For every CPU in 'cpus', yield the turbo on/off status for CPU 'cpu'. Use method 'sysfs'.
+        Retrieve and yield the turbo status (on/off) for the specified CPUs.
+
+        Args:
+            cpus: CPU numbers to retrieve turbo status for.
+
+        Yields:
+            Tuples of (cpu, status), where 'cpu' is the CPU number and 'status' is its turbo status
+            ("on" or "off").
         """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_turbo(cpus)
 
-    def _get_driver(self, cpus):
+    def _get_driver(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
         """
-        For every CPU in 'cpus', yield the Linux CPU frequency driver name. Use method 'sysfs'.
+        Retrieve and yield the Linux CPU frequency driver name for the specified CPUs.
+
+        Args:
+            cpus: CPU numbers to retrieve driver names for.
+
+        Yields:
+            Tuples of (cpu, driver), where 'cpu' is the CPU number and 'driver' is its driver name.
+            The driver name is obtained from the sysfs interface.
         """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_driver(cpus)
 
-    def _get_intel_pstate_mode(self, cpus):
+    def _get_intel_pstate_mode(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
         """
-        For every CPU in 'cpus', yield the 'intel_pstate' mode name. Use method 'sysfs'.
+        Retrieve and yield the 'intel_pstate' mode name for the specified CPUs.
+
+        Args:
+            cpus: CPU numbers to retrieve 'intel_pstate' mode names for.
+
+        Yields:
+            Tuples of (cpu, mode), where 'cpu' is the CPU number and 'mode' is its 'intel_pstate'
+            mode name. The mode name is obtained from the sysfs interface.
         """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_intel_pstate_mode(cpus)
 
-    def _get_governor(self, cpus):
+    def _get_governor(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
         """
-        For every CPU in 'cpus', yield the Linux CPU frequency governor name. Use method 'sysfs'.
+        Retrieve and yield the current CPU frequency governor for the specified CPUs.
+
+        Args:
+            cpus: CPU numbers to retrieve governor names for.
+
+        Yields:
+            Tuples of (cpu, governor), where 'cpu' is the CPU number and 'governor' is its current
+            CPU frequency governor. The governor name is obtained from the sysfs interface.
         """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_governor(cpus)
 
-    def _get_governors(self, cpus):
+    def _get_governors(self, cpus: NumsType) -> Generator[tuple[int, list[str]], None, None]:
         """
-        For every CPU in 'cpus', yield the list of available Linux CPU frequency governors. Use
-        method 'sysfs'.
+        Retrieve and yield available CPU frequency governors for the specified CPUs.
+
+        Args:
+            cpus: CPU numbers to retrieve available governors for.
+
+        Yields:
+            Tuples of (cpu, governors), where 'cpu' is the CPU number and 'governors' is a list of
+            available governor names (strings).
         """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_available_governors(cpus)
 
-    def _get_prop_cpus(self, pname, cpus, mname):
+    def _get_prop_cpus(self,
+                       pname: str,
+                       cpus: NumsType,
+                       mname: MechanismNameType) -> Generator[tuple[int, typing.Any], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, 'val' is property 'pname' value for CPU
-        'cpu'. Use mechanism 'mname'.
+        Retrieve and yield property values for the specified CPUs using the given mechanism.
+
+        Args:
+            pname: Name of the property to retrieve (e.g., "epp", "epb", "max_eff_freq").
+            cpus: CPU numbers to retrieve property values for.
+            mname: Name of the mechanism to use for property retrieval.
+
+        Yields:
+            Tuples of (cpu, value), where 'cpu' is the CPU identifier and 'value' is the property value
+            for that CPU.
         """
 
         if pname == "epp":
@@ -1024,7 +1069,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "governors":
             yield from self._get_governors(cpus)
         else:
-            raise Error(f"BUG: unknown property '{pname}'")
+            raise Error(f"BUG: Unknown property '{pname}'")
 
     def _get_uncore_freq_dies(self, pname, dies):
         """
