@@ -38,38 +38,30 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 import typing
-from typing import Any, TypedDict, Literal, Generator
+from typing import Any, Literal, Generator, cast, get_args
 
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+
+from pepclibs._PropsClassBaseTypes import PropertyTypedDict, ScopeNameType
 
 if typing.TYPE_CHECKING:
     from pepclibs.msr import MSR
     from pepclibs import _SysfsIO
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs._PropsClassBaseTypes import MechanismTypedDict, MechanismNameType
+    from pepclibs._PropsClassBaseTypes import MechanismNamesType, PVInfoTypedDict
+    from pepclibs._PropsClassBaseTypes import NumsType, DieNumsType
+
+class IntPropertyTypedDict(PropertyTypedDict):
+    """
+    Type for the internal property description dictionary.
+    """
+
+    iosname: ScopeNameType | None
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-
-class MechanismTypedDict(TypedDict):
-    """
-    Type for the mechanism description dictionary.
-
-    Attributes:
-        short: A short name or identifier for the mechanism.
-        long: A more descriptive name for the mechanism (but still a one-liner).
-        writable: Whether the mechanism property is writable.
-    """
-
-    short: str
-    long: str
-    writable: bool
-
-ScopeNameType = Literal["CPU", "core", "package", "die", "global"]
-MechanismNameType = Literal["sysfs", "cdev", "msr", "cppc", "doc"]
-
-# A handy alias for a collection of mechanism names.
-MechanismNamesType = list[MechanismNameType] | tuple[MechanismNameType, ...]
 
 MECHANISMS: dict[MechanismNameType, MechanismTypedDict] = {
     "sysfs" : {
@@ -98,67 +90,7 @@ MECHANISMS: dict[MechanismNameType, MechanismTypedDict] = {
         "writable": False,
     }
 }
-
-PropertyTypeType = Literal["int", "float", "bool", "str", "list[str]", "list[int]", "dict[str,str]"]
-
-class PropertyTypedDict(TypedDict, total=False):
-    """
-    Type for the property description dictionary.
-
-    Attributes:
-        name: The name of the property.
-        unit: The unit of the property value (e.g., "Hz", "W").
-        type: The type of the property value (e.g., "int", "float", "bool").
-        sname: The scope name of the property (e.g., "CPU", "core", "package").
-        iosname: The I/O scope name of the property.
-        mnames: A tuple of mechanism names supported by the property.
-        writable: Whether the property is writable.
-        special_vals: A set of special values for the property.
-        subprops: A tuple of sub-properties related to this property.
-    """
-
-    name: str
-    unit: str
-    type: PropertyTypeType
-    sname: ScopeNameType | None
-    mnames: tuple[MechanismNameType, ...]
-    writable: bool
-    special_vals: set[str]
-    subprops: tuple[str, ...]
-
-class IntPropertyTypedDict(PropertyTypedDict):
-    """
-    Type for the internal property description dictionary.
-    """
-
-    iosname: ScopeNameType | None
-
 PropertyValueType = int | float | bool | str | list[str] | list[int] | dict[str,str] | None
-
-class PVInfoTypedDict(TypedDict, total=False):
-    """
-    Type for the property value dictionary (pvinfo).
-
-    Attributes:
-        cpu: The CPU number.
-        die: The die number.
-        package: The package number.
-        pname: The name of the property.
-        val: The value of the property.
-        mname: The name of the mechanism used to retrieve the property.
-    """
-
-    cpu: int
-    die: int
-    package: int
-    pname: str
-    val: PropertyValueType
-    mname: MechanismNameType
-
-# A type for CPU and package numbers.
-NumsType = list[int] | tuple[int, ...]
-# A type for die numbers.
-DieNumsType = dict[int, list[int]] | dict[int, tuple[int, ...]]
 
 class ErrorUsePerCPU(Error):
     """
@@ -441,7 +373,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         sname = self._props[pname]["sname"]
 
-        if sname not in typing.get_args(ScopeNameType):
+        if sname not in get_args(ScopeNameType):
             raise Error(f"BUG: Unknown scope name '{sname}'")
 
         if sname == "CPU":
@@ -1644,9 +1576,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         if Trivial.is_num(val):
             if prop["type"] == "int":
-                val = Trivial.str_to_int(typing.cast(str, val))
+                val = Trivial.str_to_int(cast(str, val))
             else:
-                val = Trivial.str_to_float(typing.cast(str, val))
+                val = Trivial.str_to_float(cast(str, val))
         elif "special_vals" not in prop or val not in prop["special_vals"]:
             # This property has a unit, and the value is not a number, nor it is one of the
             # special values. Presumably this is a value with a unit, such as "100MHz" or
@@ -1687,7 +1619,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               pname: str,
                               val: PropertyValueType,
                               cpus: NumsType,
-                              mnames: MechanismNamesType | None = None) -> str:
+                              mnames: MechanismNamesType | None = None) -> MechanismNameType:
         """
         Set a property for specified CPUs using specified mechanisms.
 
@@ -1834,7 +1766,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                        pname: str,
                        val: PropertyValueType,
                        dies: DieNumsType,
-                       mname: MechanismNameType) -> str:
+                       mname: MechanismNameType) -> MechanismNameType:
         """
         Set a property to a specified value for specified dies using a specified mechanism.
 
@@ -2150,7 +2082,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _init_props_dict(self, props: dict[str, PropertyTypedDict]):
         """Initialize the 'props' and 'mechanisms' dictionaries."""
 
-        self._props = copy.deepcopy(typing.cast(dict[str, IntPropertyTypedDict], props))
+        self._props = copy.deepcopy(cast(dict[str, IntPropertyTypedDict], props))
         self.props = props
 
         # Initialize the 'ioscope' to the same value as 'scope'. I/O scope may be different to the

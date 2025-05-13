@@ -12,9 +12,16 @@
 This is the base class for 'EPP' and 'EPB' modules which includes common functionality.
 """
 
+# TODO: Finish annotating and modernizing this module.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
 from pepclibs import CPUInfo, _PropsCache
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+
+if typing.TYPE_CHECKING:
+    from pepclibs._PropsClassBaseTypes import ScopeNameType
 
 # Supported mechanism names.
 _MNAMES = ("sysfs", "msr")
@@ -251,7 +258,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         self._enable_cache = enable_cache
 
         # EPP/EPB scope name.
-        self.sname = "CPU"
+        self.sname: ScopeNameType = "CPU"
 
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None

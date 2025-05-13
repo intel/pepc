@@ -15,6 +15,9 @@ This module provides a capability of reading and changing EPB (Energy Performanc
 CPUs.
 """
 
+# TODO: Finish annotating and modernizing this module.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import contextlib
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs.helperlibs import Trivial, ClassHelpers

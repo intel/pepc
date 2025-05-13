@@ -35,8 +35,8 @@ if typing.TYPE_CHECKING:
     from pepclibs import _SysfsIO, EPP, EPB, _CPUFreq, _UncoreFreq
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._PropsClassBase import NumsType, DieNumsType, MechanismNameType
-    from pepclibs._PropsClassBase import PropertyTypedDict, PropertyValueType
+    from pepclibs._PropsClassBaseTypes import NumsType, DieNumsType, MechanismNameType
+    from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
 
 class ErrorFreqOrder(Error):
     """
@@ -635,8 +635,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
         Retrieve and yield CPU frequency values for the specified CPUs using the sysfs mechanism.
 
-        Depending on the 'pname' argument, yield either the minimum, maximum, minimum limit, or maximum
-        limit CPU frequency for the given CPUs.
+        Depending on the 'pname' argument, yield either the minimum, maximum, minimum limit, or
+        maximum limit CPU frequency for the given CPUs.
 
         Args:
             pname: Name of the property to retrieve. Supported values are "min_freq", "max_freq",
@@ -1031,8 +1031,8 @@ class PStates(_PropsClassBase.PropsClassBase):
             mname: Name of the mechanism to use for property retrieval.
 
         Yields:
-            Tuples of (cpu, value), where 'cpu' is the CPU identifier and 'value' is the property value
-            for that CPU.
+            Tuples of (cpu, value), where 'cpu' is the CPU identifier and 'value' is the property
+            value for that CPU.
         """
 
         if pname == "epp":
@@ -1309,10 +1309,12 @@ class PStates(_PropsClassBase.PropsClassBase):
             new_freq: The new frequency value being requested.
             cur_freq: The current frequency value configured.
             is_min: If True, indicates the minimum frequency is being set; otherwise, the maximum.
-            what: Description of the target (e.g., CPU or uncore) for which the frequency is being set.
+            what: Description of the target (e.g., CPU or uncore) for which the frequency is being
+                  set.
 
         Raises:
-            ErrorFreqOrder: always raised, indicating that the new frequency violates ordering constraints.
+            ErrorFreqOrder: always raised, indicating that the new frequency violates ordering
+                            constraints.
         """
 
         name = Human.uncapitalize(self._props[pname]["name"])
@@ -1400,7 +1402,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         min_limit_iter = self._get_prop_cpus_mnames("min_freq_limit", cpus, mnames=(mname,))
         max_limit_iter = self._get_prop_cpus_mnames("max_freq_limit", cpus, mnames=(mname,))
         cur_freq_limit_pname = "max_freq" if is_min else "min_freq"
-        cur_freq_limit_iter = self._get_prop_cpus_mnames(cur_freq_limit_pname, cpus, mnames=(mname,))
+        cur_freq_limit_iter = self._get_prop_cpus_mnames(cur_freq_limit_pname, cpus,
+                                                         mnames=(mname,))
 
         iter_zip = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit_iter)
         iterator = cast(Generator[tuple[tuple[int, int], tuple[int, int], tuple[int, int],
@@ -1431,7 +1434,10 @@ class PStates(_PropsClassBase.PropsClassBase):
         for new_freq, freq_cpus in freq2cpus.items():
             set_freq_method(pname, new_freq, freq_cpus)
 
-    def _handle_epp_set_exception(self, val: str, mname: MechanismNameType, err: Error) -> str | None:
+    def _handle_epp_set_exception(self,
+                                  val: str,
+                                  mname: MechanismNameType,
+                                  err: Error) -> str | None:
         """
         Handle a situation where setting the Energy Performance Preference (EPP) fails. The goal is
         to improve the error message to help the user understand the reason for the failure.
@@ -1594,7 +1600,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         min_limit_iter = self._get_prop_dies_mnames("min_uncore_freq_limit", dies, mnames=(mname,))
         max_limit_iter = self._get_prop_dies_mnames("max_uncore_freq_limit", dies, mnames=(mname,))
         cur_freq_limit_pname = "max_uncore_freq" if is_min else "min_uncore_freq"
-        cur_freq_limit_iter = self._get_prop_dies_mnames(cur_freq_limit_pname, dies, mnames=(mname,))
+        cur_freq_limit_iter = self._get_prop_dies_mnames(cur_freq_limit_pname, dies,
+                                                         mnames=(mname,))
 
         iter_zip = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit_iter)
         iterator = cast(Generator[tuple[tuple[int, int, int], tuple[int, int, int],
