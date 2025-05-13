@@ -15,6 +15,7 @@ Provide a capability of retrieving and setting P-state related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+from pathlib import Path
 from typing import Generator
 
 import contextlib
@@ -924,12 +925,20 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _read_int(self, path):
-        """Read an integer from file 'path' via the process manager."""
+    def _read_int(self, path: Path) -> int:
+        """
+        Read an integer value from the specified file path.
+
+        Args:
+            path: The file system path to read the integer value from.
+
+        Returns:
+            The integer value read from the file.
+        """
 
         val = self._pman.read(path).strip()
         if not Trivial.is_int(val):
-            raise Error(f"read an unexpected non-integer value from '{path}'"
+            raise Error(f"Read an unexpected non-integer value from '{path}'"
                         f"{self._pman.hostmsg}")
         return int(val)
 
