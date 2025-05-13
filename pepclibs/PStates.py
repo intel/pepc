@@ -34,7 +34,7 @@ if typing.TYPE_CHECKING:
     from pepclibs import _SysfsIO, EPP, EPB, _CPUFreq, _UncoreFreq
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._PropsClassBase import PropertyTypedDict, NumsType, MechanismNameType
+    from pepclibs._PropsClassBase import PropertyTypedDict, NumsType, DieNumsType, MechanismNameType
 
 class ErrorFreqOrder(Error):
     """
@@ -778,10 +778,16 @@ class PStates(_PropsClassBase.PropsClassBase):
                 # Convert MHz to Hz.
                 yield cpu, int(bclk * 1000000)
 
-    def _get_bclks_dies(self, dies):
+    def _get_bclks_dies(self, dies: DieNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
-        For every die in 'dies', yield a '(package, die, val)' tuple, where 'val' is the bus clock
-        speed in Hz for die 'die' in package 'package'.
+        Retrieve and yield bus clock speed for the specified dies using the MSR mechanism.
+
+        Args:
+            dies: Dictionary mapping package numbers to collections of die numbers.
+
+        Yields:
+            Tuples of (package, die, val), where 'package' is the package number, 'die' is the die
+            number, and 'val' is the bus clock speed in Hz for the specified die.
         """
 
         try:
@@ -796,32 +802,54 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             # Only legacy platforms support 'MSR_FSB_FREQ', and they do not have uncore frequency
             # control, so this code should never be executed.
-            raise Error("BUG: not implemented, contact project maintainers")
+            raise Error("BUG: Not implemented, contact project maintainers")
 
-    def _get_bclk(self, cpu):
-        """Return bus clock speed in Hz."""
+    def _get_bclk(self, cpu: int) -> int:
+        """
+        Return the bus clock speed in Hz for the specified CPU.
+
+        Args:
+            cpu: CPU number.
+
+        Returns:
+            Bus clock speed in Hz.
+        """
 
         _, val = next(self._get_bclks_cpus((cpu,)))
         return val
 
-    def _get_frequencies_intel(self, cpus):
+    def _get_frequencies_intel(self,
+                               cpus: NumsType) -> Generator[tuple[int, list[int]], None, None]:
         """
-        For every CPU in 'cpus', yield the list of CPU frequencies for CPU 'cpu' on an Intel
-        platform.
+        Retrieve and yield available CPU frequencies for the specified CPUs using the 'intel_pstate'
+        driver.
+
+        Args:
+            cpus: CPU numbers to retrieve frequencies for.
+
+        Yields:
+            Tuple of (cpu, freqs), where 'cpu' is the CPU number and 'freqs' is a list of available
+            frequencies in Hz for that CPU.
+
+        Raises:
+            ErrorNotSupported: If the CPU frequency driver is not 'intel_pstate'.
         """
 
         driver_iter = self._get_prop_cpus_mnames("driver", cpus)
         min_freq_iter = self._get_prop_cpus_mnames("min_freq", cpus)
         max_freq_iter = self._get_prop_cpus_mnames("max_freq", cpus)
         bclks_iter = self._get_bclks_cpus(cpus)
-        iterator = zip(driver_iter, min_freq_iter, max_freq_iter, bclks_iter)
+
+        iter_zip = zip(driver_iter, min_freq_iter, max_freq_iter, bclks_iter)
+        iterator = typing.cast(Generator[tuple[tuple[int, str], tuple[int, int], tuple[int, int],
+                                         tuple[int, int]], None, None], iter_zip)
 
         for (cpu, driver), (_, min_freq), (_, max_freq), (_, bclk) in iterator:
             if driver != "intel_pstate":
-                raise ErrorNotSupported("only 'intel_pstate' was verified to accept any frequency "
+                raise ErrorNotSupported("Only 'intel_pstate' was verified to accept any frequency "
                                         "value that is multiple of bus clock")
 
-            freqs = []
+            freqs: list[int] = []
             freq = min_freq
             while freq <= max_freq:
                 freqs.append(freq)
@@ -829,10 +857,20 @@ class PStates(_PropsClassBase.PropsClassBase):
 
             yield cpu, freqs
 
-    def _get_frequencies(self, cpus, mname):
+    def _get_frequencies(self,
+                         cpus: NumsType,
+                         mname: MechanismNameType) -> Generator[tuple[int, list[int]], None, None]:
         """
-        For every CPU in 'cpus', yield the list of CPU frequencies available for CPU 'cpu'. Use
-        method 'mname'.
+        Retrieve and yield available CPU frequencies for the specified CPUs using the given
+        mechanism.
+
+        Args:
+            cpus: CPU numbers to retrieve frequencies for.
+            mname: Mechanism to use for retrieving frequencies.
+
+        Yields:
+            Tuples of (cpu, freqs), where 'cpu' is the CPU number and 'freqs' is a list of available
+            frequencies in Hz for that CPU.
         """
 
         if mname == "sysfs":
@@ -844,11 +882,26 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_frequencies_intel(cpus)
             return
 
-        raise Error(f"BUG: unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_bus_clock(self, cpus, mname):
+    def _get_bus_clock(self,
+                       cpus: NumsType,
+                       mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield the the bus clock speed for CPU 'cpu'. Use method 'mname'.
+        Retrieve and yield the bus clock speed for the specified CPUs using the given mechanism.
+
+        Args:
+            cpus: CPU numbers to retrieve bus clock speed for.
+            mname: Name of the mechanism to use for retrieving the bus clock speed.
+
+        Yields:
+            Tuples of (cpu, bus_clock_speed), where 'cpu' is the CPU identifier and
+            'bus_clock_speed' is the bus clock speed in Hz.
+
+        Raises:
+            ErrorNotSupported: If the mechanism is not supported for the CPU model or vendor.
+            ErrorTryAnotherMechanism: If the 'doc' mechanism is not available and 'msr' should be
+                                      used.
         """
 
         if mname == "msr":
@@ -861,7 +914,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 self._get_fsbfreq()
             except ErrorNotSupported:
                 if self._cpuinfo.info["vendor"] != "GenuineIntel":
-                    raise ErrorNotSupported(f"unsupported CPU model '{self._cpuinfo.cpudescr}"
+                    raise ErrorNotSupported(f"Unsupported CPU model '{self._cpuinfo.cpudescr}"
                                             f"{self._pman.hostmsg}") from None
                 for cpu in cpus:
                     # Modern Intel platforms use 100MHz bus clock.
@@ -869,7 +922,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 return
             raise ErrorTryAnotherMechanism(f"use 'msr' method for {self._cpuinfo.cpudescr}")
 
-        raise Error(f"BUG: unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
     def _read_int(self, path):
         """Read an integer from file 'path' via the process manager."""
