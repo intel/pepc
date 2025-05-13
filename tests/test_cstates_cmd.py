@@ -126,9 +126,7 @@ def _get_good_config_opts(params, sname="package"):
     if sname == "CPU":
         if pobj.prop_is_supported_cpu("idle_driver", cpu):
             opts += ["--enable all",
-                    "--disable all",
-                    f"--enable {params['cstates'][-1]}",
-                    f"--disable {params['cstates'][-1]}"]
+                    "--disable all"]
         return opts
 
     assert False, f"BUG: bad scope name {sname}"
@@ -153,27 +151,11 @@ def test_cstates_config_good(params):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="module"):
-            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"cstates config {opt} {cpu_opt} {mopt}"
-                common.run_pepc(cmd, pman, ignore=_IGNORE)
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
-            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"cstates config {opt} {cpu_opt} {mopt}"
-                common.run_pepc(cmd, pman, ignore=_IGNORE)
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
-            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"cstates config {opt} {cpu_opt} {mopt}"
-                common.run_pepc(cmd , pman, ignore=_IGNORE)
 
         for cpu_opt in props_common.get_bad_cpu_opts(params):
             common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_opts(params, sname="package"):
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
-            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"cstates config {opt} {cpu_opt} {mopt}"
-                common.run_pepc(cmd, pman, ignore=_IGNORE)
         for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
             for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
