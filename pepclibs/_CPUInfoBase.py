@@ -15,6 +15,7 @@ Provide the base class for the 'CPUInfo.CPUInfo' class.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
+from tkinter import E
 from typing import Literal
 import contextlib
 from pathlib import Path
@@ -97,7 +98,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             return Trivial.str_to_int(line.partition(":")[2], what=start)
 
         info = {}
-        for data in self._pman.read("/proc/cpuinfo").strip().split("\n\n"):
+        for data in self._pman.read_file("/proc/cpuinfo").strip().split("\n\n"):
             lines = data.split("\n")
             cpu = _get_number("processor", lines, 0)
             info[cpu] = lines
@@ -124,7 +125,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
             base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
             try:
-                data = self._pman.read(base / "cache/index2/id")
+                data = self._pman.read_file(base / "cache/index2/id")
             except ErrorNotFound as err:
                 if not no_cache_info:
                     _LOG.debug("no CPU cache topology info found%s:\n%s.",
@@ -164,7 +165,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     continue
 
                 base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
-                data = self._pman.read(base / "topology/die_id")
+                data = self._pman.read_file(base / "topology/die_id")
                 die = Trivial.str_to_int(data, what="die number")
                 siblings = self._read_range(base / "topology/die_cpus_list")
                 for _ in siblings:
@@ -318,13 +319,14 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._topology[order]
 
-    def _read_range(self, path, must_exist=True):
+    def _read_range(self, path):
         """
         Read a file that is expected to contain a comma separated list of integer numbers or
         integer number rangees. Parse the contents of the file and return it as a list of integers.
         """
 
-        str_of_ranges = self._pman.read(path, must_exist=must_exist)
+        str_of_ranges = self._pman.read_file(path)
+
         what = f"contents of file at '{path}'{self._pman.hostmsg}"
         return Trivial.split_csv_line_int(str_of_ranges.strip(), what=what)
 

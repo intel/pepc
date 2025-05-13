@@ -411,20 +411,14 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to create named pipe '{path}':\n{msg}") from None
 
-    def lsdir(self,
-              path: str | Path,
-              must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self, path: str | Path) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
         path = Path(path)
-        if not must_exist and not path.exists():
-            return
 
         try:
             entries = [entry for entry in os.listdir(path)]
         except FileNotFoundError:
-            if not must_exist:
-                return
             raise ErrorNotFound(f"Directory '{path}' does not exist") from None
         except OSError as err:
             msg = Error(str(err)).indent(2)
@@ -550,7 +544,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 raise Error(f"Failed to remove {path}:\n{msg}") from err
             break
 
-    def abspath(self, path: str | Path, must_exist: bool = True) -> Path:
+    def abspath(self, path: str | Path) -> Path:
         """Refer to 'ProcessManagerBase.abspath()'."""
 
         try:
@@ -559,7 +553,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to get real path for '{path}':\n{msg}") from None
 
-        if must_exist and not rpath.exists():
+        if not rpath.exists():
             raise ErrorNotFound(f"Path '{rpath}' does not exist")
 
         return rpath

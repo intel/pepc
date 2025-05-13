@@ -1044,30 +1044,25 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.open()")
 
-    def read(self, path: Path, must_exist: bool = True):
+    def read_file(self, path: Path) -> str:
         """
         Read a file.
 
         Args:
             path: The path to the file to read.
-            must_exist: If True, raise an 'ErrorNotFound' exception if the file does not exist.
-                        If False, return None when the file does not exist.
 
         Returns:
-            The contents of the file as a string, or None if the file does not exist and
-            must_exist is False.
+            The contents of the file as a string
 
         Raises:
-            ErrorNotFound: If the file does not exist and must_exist is True.
+            ErrorNotFound: If the file does not exist.
         """
 
         try:
             with self.open(path, "r") as fobj:
                 val = fobj.read()
         except ErrorNotFound as err:
-            if must_exist:
-                raise ErrorNotFound(f"File '{path}' does not exist{self.hostmsg}") from err
-            return None
+            raise ErrorNotFound(f"File '{path}' does not exist{self.hostmsg}") from err
 
         return val
 
@@ -1150,9 +1145,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.mkfifo()")
 
-    def lsdir(self,
-              path: str | Path,
-              must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self, path: str | Path) -> Generator[LsdirTypedDict, None, None]:
         """
         Yield directory entries in the specified path as 'LsdirTypedDict' dictionaries.
 
@@ -1160,8 +1153,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         Args:
             path: The directory path to list entries from.
-            must_exist: If True, raise an exception if the path does not exist. If False, return
-                        without yielding anything when the path does not exist.
+
+        Raises:
+            ErrorNotFound: If the specified path does not exist or is not a directory.
         """
 
         raise NotImplementedError("ProcessManagerBase.lsdir()")
@@ -1278,14 +1272,15 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.rmtree()")
 
-    def abspath(self, path: str | Path, must_exist: bool = True) -> Path:
+    def abspath(self, path: str | Path) -> Path:
         """
         Resolve the given path to an absolute real path.
 
         Args:
             path: The path to resolve into an absolute real path.
-            must_exist: If True, raise an exception if the path does not exist. If False, return the
-                        given path even if it does not exist.
+
+        Raises:
+            ErrorNotFound: If the path does not exist or is not a file or directory.
         """
 
         raise NotImplementedError("ProcessManagerBase.abspath()")

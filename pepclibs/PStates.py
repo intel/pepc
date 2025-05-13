@@ -936,7 +936,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             The integer value read from the file.
         """
 
-        val = self._pman.read(path).strip()
+        val = self._pman.read_file(path).strip()
         if not Trivial.is_int(val):
             raise Error(f"Read an unexpected non-integer value from '{path}'"
                         f"{self._pman.hostmsg}")

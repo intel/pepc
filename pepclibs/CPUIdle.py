@@ -356,7 +356,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
         path = self._sysfs_base / "cpuidle" / "current_driver"
         try:
-            idle_driver = self._pman.read(path).strip()
+            idle_driver = self._pman.read_file(path).strip()
         except ErrorNotFound as err:
             msg = f"failed to detect current Linux idle driver name:\n{err.indent(2)}"
             for opt in self._get_cmdline().split():
@@ -386,7 +386,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
         path = self._sysfs_base / "cpuidle" / "current_governor"
         try:
-            governor = self._pman.read(path).strip()
+            governor = self._pman.read_file(path).strip()
         except ErrorNotFound as err:
             raise ErrorNotSupported(f"failed to detect idle governor:\n{err.indent(2)}") from err
 
@@ -407,7 +407,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
         path = self._sysfs_base / "cpuidle" / "available_governors"
         try:
-            avail_governors = self._pman.read(path).strip().split()
+            avail_governors = self._pman.read_file(path).strip().split()
         except ErrorNotFound as err:
             raise ErrorNotSupported(f"failed to detect idle governors:\n{err.indent(2)}") from err
 

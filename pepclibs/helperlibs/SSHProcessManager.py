@@ -1316,15 +1316,10 @@ except OSError as err:
         cmd = f"mkfifo -- '{path}'"
         self.run_verify(cmd)
 
-    def lsdir(self,
-              path: str | Path,
-              must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self, path: str | Path) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
         path = Path(path)
-
-        if not must_exist and not self.exists(path):
-            return
 
         # A small python program to get the list of directories with some metadata.
         python_path = self.get_python_path()
@@ -1349,9 +1344,7 @@ for ent in entries:
         stdout, stderr, exitcode = self.run(cmd)
 
         if exitcode == 2:
-            if must_exist:
-                raise ErrorNotFound(f"Directory '{path}' does not exists{self.hostmsg}") from None
-            return
+            raise ErrorNotFound(f"Directory '{path}' does not exists{self.hostmsg}") from None
         elif exitcode != 0:
             raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
 
@@ -1427,7 +1420,7 @@ for ent in entries:
 
         self.run_verify(f"rm -rf -- '{path}'")
 
-    def abspath(self, path: str | Path, must_exist: bool = True) -> Path:
+    def abspath(self, path: str | Path) -> Path:
         """Refer to 'ProcessManagerBase.abspath()'."""
 
         python_path = self.get_python_path()
@@ -1436,7 +1429,7 @@ for ent in entries:
 
         rpath = cast(str, stdout).strip()
 
-        if must_exist and not self.exists(rpath):
+        if not self.exists(rpath):
             raise ErrorNotFound(f"Path '{rpath}' does not exist")
 
         return Path(rpath)

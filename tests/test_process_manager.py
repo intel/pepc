@@ -14,13 +14,15 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import stat
 from pathlib import Path
+import typing
 from typing import Generator, cast
 import pytest
 import common
-from common import CommonTestParamsTypedDict
 from pepclibs.helperlibs import Trivial, LocalProcessManager
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorExists, ErrorNotFound
+if typing.TYPE_CHECKING:
+    from common import CommonTestParamsTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None]:
@@ -693,14 +695,12 @@ def test_read(params: CommonTestParamsTypedDict):
         fobj.write("Hello, world!")
 
     # Test reading the file.
-    assert pman.read(test_file) == "Hello, world!"
+    assert pman.read_file(test_file) == "Hello, world!"
 
-    # Test the 'must_exist' argument.
+    # Test the 'ErrorNonFound' exception.
     bogus_path = tmpdir / "bogus.txt"
     with pytest.raises(ErrorNotFound):
-        pman.read(bogus_path, must_exist=True)
-
-    assert pman.read(bogus_path, must_exist=False) is None
+        pman.read_file(bogus_path)
 
     # Cleanup step.
     pman.rmtree(tmpdir)
@@ -731,18 +731,11 @@ def test_lsdir(params: CommonTestParamsTypedDict):
         assert info["path"] == test_dir / info["name"]
         assert isinstance(info["ctime"], float)
 
-    # Test the 'must_exist' argument.
+    # Test the 'ErrorNotFound' exception.
     bogus_dir = test_dir / "bogus"
     with pytest.raises(ErrorNotFound):
-        for info in pman.lsdir(bogus_dir, must_exist=True):
+        for info in pman.lsdir(bogus_dir):
             pass
-
-    unique = object()
-    lsdir_info: object | LsdirTypedDict = unique
-    for lsdir_info in pman.lsdir(bogus_dir, must_exist=False):
-        pass
-    # Nothing should be yielded.
-    assert lsdir_info is unique
 
     # Cleanup step.
     pman.rmtree(tmpdir)
@@ -788,9 +781,7 @@ def test_abspath(params: CommonTestParamsTypedDict):
     assert pman.abspath(test_dir / ".." / "test_dir") == test_dir
     assert pman.abspath(test_dir / "..") == tmpdir
 
-    # Test the 'must_exist' argument.
+    # Test the 'ErrorNotFound' exception.
     bogus_path = tmpdir / "bogus"
     with pytest.raises(ErrorNotFound):
-        pman.abspath(bogus_path, must_exist=True)
-
-    assert pman.abspath(bogus_path, must_exist=False) == bogus_path
+        pman.abspath(bogus_path)

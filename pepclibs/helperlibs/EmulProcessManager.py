@@ -372,15 +372,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         dirpath = self._get_basepath() / str(dirpath).lstrip("/")
         super().mkdir(dirpath, parents=parents, exist_ok=exist_ok)
 
-    def lsdir(self,
-              path: str | Path,
-              must_exist: bool = True) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self, path: str | Path) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
         basepath = self._get_basepath()
         emul_path = Path(basepath / str(path).lstrip("/"))
 
-        for entry in super().lsdir(emul_path, must_exist=must_exist):
+        for entry in super().lsdir(emul_path):
             entry["path"] = entry["path"].relative_to(basepath)
             yield entry
 
