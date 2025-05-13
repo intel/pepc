@@ -16,7 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from pathlib import Path
-from typing import Generator
+from typing import Generator, NoReturn, cast
 
 import contextlib
 import statistics
@@ -843,8 +843,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         bclks_iter = self._get_bclks_cpus(cpus)
 
         iter_zip = zip(driver_iter, min_freq_iter, max_freq_iter, bclks_iter)
-        iterator = typing.cast(Generator[tuple[tuple[int, str], tuple[int, int], tuple[int, int],
-                                         tuple[int, int]], None, None], iter_zip)
+        iterator = cast(Generator[tuple[tuple[int, str], tuple[int, int], tuple[int, int],
+                                  tuple[int, int]], None, None], iter_zip)
 
         for (cpu, driver), (_, min_freq), (_, max_freq), (_, bclk) in iterator:
             if driver != "intel_pstate":
@@ -1178,7 +1178,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj.set_governor(governor, cpus=cpus)
         return "sysfs"
 
-    def _set_freq_prop_cpus_msr(self, pname: str, freq: int, cpus: NumsType) -> None:
+    def _set_freq_prop_cpus_msr(self, pname: str, freq: int, cpus: NumsType):
         """
         Set the 'min_freq' or 'max_freq' CPU frequency property to the specified value for the given
         CPUs.
@@ -1198,7 +1198,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected CPU frequency property {pname}")
 
-    def _handle_write_and_read_freq_mismatch(self, err: ErrorVerifyFailed) -> None:
+    def _handle_write_and_read_freq_mismatch(self, err: ErrorVerifyFailed) -> NoReturn:
         """
         Handle mismatches between written and read CPU frequency values in sysfs.
 
@@ -1211,11 +1211,11 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         if err.expected is None:
             raise Error("BUG: Frequency is not set in the 'ErrorVerifyFailed' object")
-        freq = typing.cast(int, err.expected)
+        freq = cast(int, err.expected)
 
         if err.actual is None:
             raise Error("BUG: Read frequency is not set in the 'ErrorVerifyFailed' object")
-        read_freq = typing.cast(int, err.actual)
+        read_freq = cast(int, err.actual)
 
         if err.cpu is None:
             raise Error("BUG: CPU number is not set in the 'ErrorVerifyFailed' object")
@@ -1224,7 +1224,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         msg = str(err)
 
         with contextlib.suppress(Error):
-            frequencies = typing.cast(list[int], self._get_cpu_prop_mnames("frequencies", cpu))
+            frequencies = cast(list[int], self._get_cpu_prop_mnames("frequencies", cpu))
             frequencies_set = set(frequencies)
             if freq not in frequencies_set and read_freq in frequencies_set:
                 fvals = ", ".join([Human.num2si(v, unit="Hz", decp=4) for v in frequencies])
@@ -1234,7 +1234,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         with contextlib.suppress(Error):
             if self._get_cpu_prop_mnames("turbo", cpu) == "off":
-                base_freq = typing.cast(int, self._get_cpu_prop_mnames("base_freq", cpu))
+                base_freq = cast(int, self._get_cpu_prop_mnames("base_freq", cpu))
                 if base_freq and freq > base_freq:
                     base_freq_str = Human.num2si(base_freq, unit="Hz", decp=4)
                     msg += f".\n  Hint: turbo is disabled, base frequency is {base_freq_str}, " \
@@ -1243,7 +1243,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         err.msg = msg
         raise err
 
-    def _set_freq_prop_cpus_sysfs(self, pname: str, freq: int, cpus: NumsType) -> None:
+    def _set_freq_prop_cpus_sysfs(self, pname: str, freq: int, cpus: NumsType):
         """
         Set the minimum or maximum CPU frequency property for the specified CPUs.
 
@@ -1265,48 +1265,96 @@ class PStates(_PropsClassBase.PropsClassBase):
         except ErrorVerifyFailed as err:
             self._handle_write_and_read_freq_mismatch(err)
 
-    def _raise_freq_out_of_range(self, pname, val, min_limit, max_limit, what):
-        """Raise an exception if CPU or uncore frequency is out of range."""
+    def _raise_freq_out_of_range(self,
+                                 pname: str,
+                                 val: int,
+                                 min_limit: int,
+                                 max_limit: int,
+                                 what: str) -> NoReturn:
+        """
+        Raise an 'ErrorFreqRange' exception if the provided frequency value is out of the allowed
+        range.
+
+        Args:
+            pname: The property name whose frequency is out of range.
+            val: The out of range frequency value.
+            min_limit: The minimum allowed frequency.
+            max_limit: The maximum allowed frequency.
+            what: A description of what the frequency value refers to (e.g., CPU or uncore).
+
+        Raises:
+            ErrorFreqRange: If the frequency value is outside the specified range.
+        """
 
         name = Human.uncapitalize(self._props[pname]["name"])
-        val = Human.num2si(val, unit="Hz", decp=4)
-        min_limit = Human.num2si(min_limit, unit="Hz", decp=4)
-        max_limit = Human.num2si(max_limit, unit="Hz", decp=4)
-        raise ErrorFreqRange(f"{name} value of '{val}' for {what} is out of range"
-                             f"{self._pman.hostmsg}, must be within [{min_limit}, {max_limit}]")
+        val_str = Human.num2si(val, unit="Hz", decp=4)
+        min_limit_str = Human.num2si(min_limit, unit="Hz", decp=4)
+        max_limit_str = Human.num2si(max_limit, unit="Hz", decp=4)
+        raise ErrorFreqRange(f"{name} value of '{val_str}' for {what} is out of range"
+                             f"{self._pman.hostmsg}, must be within [{min_limit_str}, "
+                             f"{max_limit_str}]")
 
-    def _raise_wrong_freq_order(self, pname, new_freq, cur_freq, is_min, what):
+    def _raise_wrong_freq_order(self,
+                                pname: str,
+                                new_freq: int,
+                                cur_freq: int,
+                                is_min: bool,
+                                what: str) -> NoReturn:
         """
-        Raise and exception in case of failure to set CPU or uncore frequency due to ordering
-        constraints.
+        Raise an 'ErrorFreqOrder' exception when attempting to set a CPU or uncore frequency that
+        violates ordering constraints.
+
+        Args:
+            pname: Property name for the frequency being set.
+            new_freq: The new frequency value being requested.
+            cur_freq: The current frequency value configured.
+            is_min: If True, indicates the minimum frequency is being set; otherwise, the maximum.
+            what: Description of the target (e.g., CPU or uncore) for which the frequency is being set.
+
+        Raises:
+            ErrorFreqOrder: always raised, indicating that the new frequency violates ordering constraints.
         """
 
         name = Human.uncapitalize(self._props[pname]["name"])
-        new_freq = Human.num2si(new_freq, unit="Hz", decp=4)
-        cur_freq = Human.num2si(cur_freq, unit="Hz", decp=4)
+        new_freq_str = Human.num2si(new_freq, unit="Hz", decp=4)
+        cur_freq_str = Human.num2si(cur_freq, unit="Hz", decp=4)
         if is_min:
-            msg = f"larger than currently configured max. frequency of {cur_freq}"
+            msg = f"larger than currently configured max. frequency of {cur_freq_str}"
         else:
-            msg = f"lower than currently configured min. frequency of {cur_freq}"
-        raise ErrorFreqOrder(f"can't set {name} of {what} to {new_freq} - it is {msg}")
+            msg = f"lower than currently configured min. frequency of {cur_freq_str}"
+        raise ErrorFreqOrder(f"Can't set {name} of {what} to {new_freq_str} - it is {msg}")
 
-    def _get_numeric_cpu_freq(self, freq, cpus):
+    def _get_numeric_cpu_freq(self,
+                              freq: str | int,
+                              cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is a numeric version of the
-        user-provided frequency value 'freq' in Hz. E.g., if 'val' is "max", yield the maximum
-        supported CPU frequency.
+        Convert the user-provided frequency value to a numeric frequency in Hz. If the user-provided
+        value is a special string (e.g., "max", "min", "base"), resolve it to the corresponding
+        numeric frequency.
+
+        Args:
+            freq: Frequency value or special string (e.g., "max", "min", "base").
+            cpus: CPU numbers to resolve the frequency for.
+
+        Yields:
+            Tuple (cpu, val), where 'cpu' is the CPU number and 'val' is the resolved frequency in
+            Hz.
         """
 
         if freq == "min":
-            yield from self._get_prop_cpus_mnames("min_freq_limit", cpus)
+            yield from cast(Generator[tuple[int, int], None, None],
+                            self._get_prop_cpus_mnames("min_freq_limit", cpus))
         elif freq == "max":
-            yield from self._get_prop_cpus_mnames("max_freq_limit", cpus)
+            yield from cast(Generator[tuple[int, int], None, None],
+                            self._get_prop_cpus_mnames("max_freq_limit", cpus))
         elif freq in {"base", "hfm", "P1"}:
-            yield from self._get_prop_cpus_mnames("base_freq", cpus)
+            yield from cast(Generator[tuple[int, int], None, None],
+                            self._get_prop_cpus_mnames("base_freq", cpus))
         elif freq in {"eff", "lfm", "Pn"}:
             idx = 0
             try:
-                iterator = enumerate(self._get_prop_cpus_mnames("max_eff_freq", cpus))
+                iterator = enumerate(cast(Generator[tuple[int, int], None, None],
+                                          self._get_prop_cpus_mnames("max_eff_freq", cpus)))
                 for idx, (cpu, max_eff_freq) in iterator:
                     yield cpu, max_eff_freq
             except ErrorNotSupported:
@@ -1315,16 +1363,29 @@ class PStates(_PropsClassBase.PropsClassBase):
                     raise
                 # Max. efficiency frequency may not be supported by the platform. Fall back to the
                 # minimum frequency in this case.
-                yield from self._get_prop_cpus_mnames("min_freq_limit", cpus)
+                yield from cast(Generator[tuple[int, int], None, None],
+                                self._get_prop_cpus_mnames("min_freq_limit", cpus))
         elif freq == "Pm":
-            yield from self._get_prop_cpus_mnames("min_oper_freq", cpus)
+            yield from cast(Generator[tuple[int, int], None, None],
+                            self._get_prop_cpus_mnames("min_oper_freq", cpus))
         else:
             for cpu in cpus:
-                yield cpu, freq
+                yield cpu, cast(int, freq)
 
-    def _set_cpu_freq(self, pname, val, cpus, mname):
+    def _set_cpu_freq(self,
+                      pname: str,
+                      val: str | int,
+                      cpus: NumsType,
+                      mname: MechanismNameType):
         """
-        Set CPU frequency property 'pname' to value 'val' for CPUs in 'cpus' using method 'mname'.
+        Set a CPU frequency property for specified CPUs using the given mechanism.
+
+        Args:
+            pname: Name of the frequency property to set (e.g., "min_freq" or "max_freq").
+            val: The target frequency value to set. Can be a numeric value or a special string
+                 (e.g., "max", "min", "base").
+            cpus: CPU numbers to apply the frequency setting to.
+            mname: Mechanism to use for setting the frequency (e.g., "sysfs" or "msr").
         """
 
         is_min = "min" in pname
@@ -1332,16 +1393,21 @@ class PStates(_PropsClassBase.PropsClassBase):
             set_freq_method = self._set_freq_prop_cpus_sysfs
         elif mname == "msr":
             set_freq_method = self._set_freq_prop_cpus_msr
+        else:
+            raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
         new_freq_iter = self._get_numeric_cpu_freq(val, cpus)
         min_limit_iter = self._get_prop_cpus_mnames("min_freq_limit", cpus, mnames=(mname,))
         max_limit_iter = self._get_prop_cpus_mnames("max_freq_limit", cpus, mnames=(mname,))
         cur_freq_limit_pname = "max_freq" if is_min else "min_freq"
-        cur_freq_limit = self._get_prop_cpus_mnames(cur_freq_limit_pname, cpus, mnames=(mname,))
+        cur_freq_limit_iter = self._get_prop_cpus_mnames(cur_freq_limit_pname, cpus, mnames=(mname,))
 
-        iterator = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit)
+        iter_zip = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit_iter)
+        iterator = cast(Generator[tuple[tuple[int, int], tuple[int, int], tuple[int, int],
+                                        tuple[int, int]], None, None], iter_zip)
 
-        freq2cpus = {}
+        freq2cpus: dict[int, list[int]] = {}
+
         for (cpu, new_freq), (_, min_limit), (_, max_limit), (_, cur_freq_limit) in iterator:
             if new_freq < min_limit or new_freq > max_limit:
                 what = f"CPU {cpu}"
@@ -1365,8 +1431,19 @@ class PStates(_PropsClassBase.PropsClassBase):
         for new_freq, freq_cpus in freq2cpus.items():
             set_freq_method(pname, new_freq, freq_cpus)
 
-    def _handle_epp_set_exception(self, val, mname, err):
-        """Check for the conditions when EPP cannot be changed."""
+    def _handle_epp_set_exception(self, val: str, mname: MechanismNameType, err: Error) -> str | None:
+        """
+        Handle a situation where setting the Energy Performance Preference (EPP) fails. The goal is
+        to improve the error message to help the user understand the reason for the failure.
+
+        Args:
+            val: The attempted EPP value.
+            mname: The method or interface name used for setting EPP.
+            err: The exception object raised during the EPP set attempt.
+
+        Returns:
+            A string with a detailed error message, None if the error message was not improved.
+        """
 
         # Newer Linux kernels with intel_pstate driver in active mode forbid changing EPP to
         # anything but 0 or "performance". Provide a helpful error message for this special case.
@@ -1392,8 +1469,24 @@ class PStates(_PropsClassBase.PropsClassBase):
         return f"{err}\nThe 'performance' governor of the 'intel_pstate' driver sets EPP to 0 " \
                f"(performance) and does not allow for changing it."
 
-    def _set_prop_cpus(self, pname, val, cpus, mname):
-        """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
+    def _set_prop_cpus(self,
+                       pname: str,
+                       val: typing.Any,
+                       cpus: "NumsType",
+                       mname: "MechanismNameType") -> MechanismNameType:
+        """
+        Set the specified property to a given value for for specified CPUs using a specified
+        mechanism.
+
+        Args:
+            pname: Name of the property to set (e.g., 'epp', 'epb', 'turbo', etc.).
+            val: The value to assign to the property.
+            cpus: CPU numbers to apply the property setting to.
+            mname: Name of the mechanism to use for setting the property.
+
+        Returns:
+            The name of the mechanism used to set the property (e.g., 'sysfs', 'msr', etc.).
+        """
 
         if pname == "epp":
             try:
@@ -1415,10 +1508,17 @@ class PStates(_PropsClassBase.PropsClassBase):
         if pname in ("min_freq", "max_freq"):
             return self._set_cpu_freq(pname, val, cpus, mname)
 
-        raise Error("BUG: unsupported property '{pname}'")
+        raise Error("BUG: Unsupported property '{pname}'")
 
-    def _set_uncore_freq_prop_dies(self, pname, freq, dies):
-        """Set min. or max. uncore frequency to 'freq' for the dies in 'dies'."""
+    def _set_uncore_freq_prop_dies(self, pname: str, freq: int, dies: DieNumsType):
+        """
+        Set the minimum or maximum uncore frequency for specified dies.
+
+        Args:
+            pname: The property name, either "min_uncore_freq" or "max_uncore_freq".
+            freq: The frequency value to set.
+            dies: Dictionary mapping package numbers to collections of die numbers.
+        """
 
         uncfreq_obj = self._get_uncfreq_sysfs_obj()
 
@@ -1427,35 +1527,65 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "max_uncore_freq":
             uncfreq_obj.set_max_freq_dies(freq, dies)
         else:
-            raise Error(f"BUG: unexpected uncore frequency property {pname}")
+            raise Error(f"BUG: Unexpected uncore frequency property {pname}")
 
-    def _get_numeric_uncore_freq(self, freq, dies):
+    def _get_numeric_uncore_freq(self,
+                                 freq: str | int,
+                                 dies: DieNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
-        For every die in 'dies', yield a '(package, die, val)' tuple, where 'val' is a numeric
-        version of the user-provided frequency value 'freq' in Hz. E.g., if 'val' is "max", yield
-        the maximum supported CPU frequency.
+        Convert a user-provided uncore frequency value to its numeric representation in Hz for each
+        die.
+
+        Args:
+            freq: The frequency value to convert. Can be a numeric value or a special string
+                  ("min", "max", "mdl").
+            dies: A dictionary mapping package numbers to collections of die numbers.
+
+        Yields:
+            Tuples of (package, die, val), where 'package' is the package number, 'die' is the die
+            number, and 'val' is the resolved frequency in Hz.
         """
 
         if freq == "min":
-            yield from self._get_prop_dies_mnames("min_uncore_freq_limit", dies)
+            yield from cast(Generator[tuple[int, int, int], None, None],
+                            self._get_prop_dies_mnames("min_uncore_freq_limit", dies))
         elif freq == "max":
-            yield from self._get_prop_dies_mnames("max_uncore_freq_limit", dies)
+            yield from cast(Generator[tuple[int, int, int], None, None],
+                            self._get_prop_dies_mnames("max_uncore_freq_limit", dies))
         elif freq == "mdl":
             bclks_iter = self._get_bclks_dies(dies)
             min_limit_iter = self._get_prop_dies_mnames("min_uncore_freq_limit", dies)
             max_limit_iter = self._get_prop_dies_mnames("max_uncore_freq_limit", dies)
-            iterator = zip(bclks_iter, min_limit_iter, max_limit_iter)
+            iter_zip = zip(bclks_iter, min_limit_iter, max_limit_iter)
+            iterator = cast(Generator[tuple[tuple[int, int, int], tuple[int, int, int],
+                                            tuple[int, int, int]], None, None], iter_zip)
             for (package, die, bclk), (_, _, min_limit), (_, _, max_limit) in iterator:
                 yield package, die, bclk * round(statistics.mean([min_limit, max_limit]) / bclk)
-        else:
+        elif isinstance(freq, int):
             for package, pkg_dies in dies.items():
                 for die in pkg_dies:
                     yield package, die, freq
+        else:
+            raise Error(f"BUG: Unexpected non-integer uncore frequency value '{freq}'")
 
-    def _set_uncore_freq(self, pname, val, dies, mname):
+    def _set_uncore_freq(self,
+                         pname: str,
+                         val: str | int,
+                         dies: DieNumsType,
+                         mname: MechanismNameType) -> MechanismNameType:
         """
-        Set uncore frequency property 'pname' to value 'val' for dies in 'dies' using method
-        'mname'.
+        Set the uncore frequency property for specified dies using a given method.
+
+        Args:
+            pname: Name of the uncore frequency property to set (e.g., 'min_uncore_freq',
+                   'max_uncore_freq').
+            val: The value to set for the property. Can be a numeric value or a special string
+                 (e.g., 'min', 'max', 'mdl').
+            dies: Mapping of package numbers to collections of die numbers.
+            mname: Name of the method to use for setting the property.
+
+        Returns:
+            The name of the mechanism used to set the property (e.g., 'sysfs').
         """
 
         is_min = "min" in pname
@@ -1464,11 +1594,14 @@ class PStates(_PropsClassBase.PropsClassBase):
         min_limit_iter = self._get_prop_dies_mnames("min_uncore_freq_limit", dies, mnames=(mname,))
         max_limit_iter = self._get_prop_dies_mnames("max_uncore_freq_limit", dies, mnames=(mname,))
         cur_freq_limit_pname = "max_uncore_freq" if is_min else "min_uncore_freq"
-        cur_freq_limit = self._get_prop_dies_mnames(cur_freq_limit_pname, dies, mnames=(mname,))
+        cur_freq_limit_iter = self._get_prop_dies_mnames(cur_freq_limit_pname, dies, mnames=(mname,))
 
-        iterator = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit)
+        iter_zip = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit_iter)
+        iterator = cast(Generator[tuple[tuple[int, int, int], tuple[int, int, int],
+                                        tuple[int, int, int], tuple[int, int, int]], None, None],
+                        iter_zip)
 
-        freq2dies = {}
+        freq2dies: dict[int, dict[int, list[int]]] = {}
         for (package, die, new_freq), (_, _, min_limit), (_, _, max_limit), (_, _, cur_freq_limit) \
             in iterator:
             if new_freq < min_limit or new_freq > max_limit:
@@ -1495,8 +1628,26 @@ class PStates(_PropsClassBase.PropsClassBase):
         for new_freq, freq_dies in freq2dies.items():
             self._set_uncore_freq_prop_dies(pname, new_freq, freq_dies)
 
-    def _set_prop_dies(self, pname, val, dies, mname):
-        """Set property 'pname' to value 'val' for dies in 'dies'. Use mechanism 'mname'."""
+        return "sysfs"
+
+    def _set_prop_dies(self,
+                       pname: str,
+                       val: typing.Any,
+                       dies: DieNumsType,
+                       mname: MechanismNameType) -> MechanismNameType:
+        """
+        Set the specified property to a given value for the provided dies using the specified
+        mechanism.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to assign to the property.
+            dies: Mapping of package numbers to collections of die numbers.
+            mname: Name of the mechanism to use for setting the property.
+
+        Returns:
+            Name of the mechanism used to set the property (e.g., 'sysfs', 'msr').
+        """
 
         if pname not in ("min_uncore_freq", "max_uncore_freq"):
             return super()._set_prop_dies(pname, val, dies, mname)
@@ -1504,7 +1655,12 @@ class PStates(_PropsClassBase.PropsClassBase):
         return self._set_uncore_freq(pname, val, dies, mname)
 
     def _set_sname(self, pname):
-        """Set scope name for property 'pname'."""
+        """
+        Set the scope name ('sname') for the specified property.
+
+        Args:
+            pname: The name of the property for which to set the scope name.
+        """
 
         prop = self._props[pname]
         if prop["sname"]:
