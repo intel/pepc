@@ -35,7 +35,8 @@ if typing.TYPE_CHECKING:
     from pepclibs import _SysfsIO, EPP, EPB, _CPUFreq, _UncoreFreq
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._PropsClassBase import PropertyTypedDict, NumsType, DieNumsType, MechanismNameType
+    from pepclibs._PropsClassBase import NumsType, DieNumsType, MechanismNameType
+    from pepclibs._PropsClassBase import PropertyTypedDict, PropertyValueType
 
 class ErrorFreqOrder(Error):
     """
@@ -1071,11 +1072,19 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unknown property '{pname}'")
 
-    def _get_uncore_freq_dies(self, pname, dies):
+    def _get_uncore_freq_dies(self,
+                              pname: str,
+                              dies: DieNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
-        For every die in 'dies', yield a '(package, die, val)' tuple, where 'val' is uncore
-        frequency or uncore frequency limit for die 'die' in package 'package'. Use the "sysfs"
-        method.
+        Retrieve and yield uncore frequency values for the specified dies using the sysfs mechanism.
+
+        Args:
+            pname: Name of the uncore frequency property to retrieve (e.g., "min_uncore_freq").
+            dies: Dictionary mapping package numbers to collections of die numbers.
+
+        Yields:
+            Tuples of (package, die, val), where 'package' is the package number, 'die' is the die
+            number, and 'val' is the uncore frequency or limit.
         """
 
         uncfreq_obj = self._get_uncfreq_sysfs_obj()
@@ -1095,10 +1104,22 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
-    def _get_prop_dies(self, pname, dies, mname):
+    def _get_prop_dies(self,
+                       pname: str,
+                       dies: DieNumsType,
+                       mname: MechanismNameType) -> Generator[tuple[int, int, PropertyValueType],
+                                                              None, None]:
         """
-        For every die in 'dies', yield a '(package, die, val)' tuple, where 'val' is property
-        'pname' value for die 'die' of package 'package'.
+        Retrieve and yield property values for the specified dies using the given mechanism.
+
+        Args:
+            pname: Name of the property to retrieve.
+            dies: Mapping of package numbers to collections of die numbers.
+            mname: Name of the mechanism to use for property retrieval.
+
+        Yields:
+            Tuples of (package, die, value), where 'package' is the package number, 'die' is the
+            die number, and 'value' is the property value for that die.
         """
 
         if not self._is_uncore_prop(pname):
@@ -1109,34 +1130,63 @@ class PStates(_PropsClassBase.PropsClassBase):
             # per-die access.
             yield from self._get_uncore_freq_dies(pname, dies)
 
-    def _set_turbo(self, enable, cpus):
-        """Enable or disable turbo for CPUs in 'cpus'. Use method 'sysfs'."""
+    def _set_turbo(self, enable: bool, cpus: NumsType) -> MechanismNameType:
+        """
+        Enable or disable turbo mode for the specified CPUs.
+
+        Args:
+            enable: Whether to enable (True) or disable (False) turbo mode.
+            cpus: CPU numbers to set turbo mode for.
+
+        Returns:
+            Name of the mechanism used to set turbo mode (e.g., "sysfs").
+        """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_turbo(enable, cpus=cpus)
         return "sysfs"
 
-    def _set_intel_pstate_mode(self, mode, cpus):
-        """Set 'intel_pstate' driver mode to 'mode' for CPUs in 'cpus'. Use method 'sysfs'."""
+    def _set_intel_pstate_mode(self, mode: str, cpus: NumsType) -> MechanismNameType:
+        """
+        Set the 'intel_pstate' driver mode for the specified CPUs.
+
+        Args:
+            mode: Name of the mode to set (e.g., "powersave", "performance").
+            cpus: CPU numbers to set the mode for.
+
+        Returns:
+            The name of the mechanism used to set the mode (e.g., 'sysfs').
+        """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_intel_pstate_mode(mode, cpus=cpus)
         return "sysfs"
 
-    def _set_governor(self, governor, cpus):
+    def _set_governor(self, governor: str, cpus: NumsType) -> MechanismNameType:
         """
-        Set 'intel_pstate' Linux CPU frequency governor to 'governor' for CPUs in 'cpus'. Use method
-        'sysfs'.
+        Set the CPU frequency governor for the specified CPUs.
+
+        Args:
+            governor: Name of the governor to set (e.g., "performance", "powersave").
+            cpus: CPUs to apply the governor setting to.
+
+        Returns:
+            The name of the mechanism used to set the governor (e.g., "sysfs").
         """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_governor(governor, cpus=cpus)
         return "sysfs"
 
-    def _set_freq_prop_cpus_msr(self, pname, freq, cpus):
+    def _set_freq_prop_cpus_msr(self, pname: str, freq: int, cpus: NumsType) -> None:
         """
-        Set 'intel_pstate' Linux CPU frequency governor to 'governor' for CPUs in 'cpus'. Use method
-        'msr'.
+        Set the 'min_freq' or 'max_freq' CPU frequency property to the specified value for the given
+        CPUs.
+
+        Args:
+            pname: Name of the property to set ('min_freq' or 'max_freq').
+            freq: Frequency value to set, in Hz.
+            cpus: CPU numbers to apply the frequency setting to.
         """
 
         cpufreq_obj = self._get_cpufreq_msr_obj()
@@ -1146,21 +1196,35 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "max_freq":
             cpufreq_obj.set_max_freq(freq, cpus)
         else:
-            raise Error(f"BUG: unexpected CPU frequency property {pname}")
+            raise Error(f"BUG: Unexpected CPU frequency property {pname}")
 
-    def _handle_write_and_read_freq_mismatch(self, err):
+    def _handle_write_and_read_freq_mismatch(self, err: ErrorVerifyFailed) -> None:
         """
-        This is a helper function fo '_write_cpu_freq_prop_sysfs()' and it is called when there
-        is a mismatch between what was written to a CPU frequency sysfs file and what was read back.
+        Handle mismatches between written and read CPU frequency values in sysfs.
+
+        Args:
+            err: The exception object containing the error details.
+
+        Raises:
+            ErrorVerifyFailed: always raised to indicate the mismatch, includes a detailed message.
         """
 
-        freq = err.expected
-        read_freq = err.actual
+        if err.expected is None:
+            raise Error("BUG: Frequency is not set in the 'ErrorVerifyFailed' object")
+        freq = typing.cast(int, err.expected)
+
+        if err.actual is None:
+            raise Error("BUG: Read frequency is not set in the 'ErrorVerifyFailed' object")
+        read_freq = typing.cast(int, err.actual)
+
+        if err.cpu is None:
+            raise Error("BUG: CPU number is not set in the 'ErrorVerifyFailed' object")
         cpu = err.cpu
+
         msg = str(err)
 
         with contextlib.suppress(Error):
-            frequencies = self._get_cpu_prop_mnames("frequencies", cpu)
+            frequencies = typing.cast(list[int], self._get_cpu_prop_mnames("frequencies", cpu))
             frequencies_set = set(frequencies)
             if freq not in frequencies_set and read_freq in frequencies_set:
                 fvals = ", ".join([Human.num2si(v, unit="Hz", decp=4) for v in frequencies])
@@ -1170,16 +1234,24 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         with contextlib.suppress(Error):
             if self._get_cpu_prop_mnames("turbo", cpu) == "off":
-                base_freq = self._get_cpu_prop_mnames("base_freq", cpu)
+                base_freq = typing.cast(int, self._get_cpu_prop_mnames("base_freq", cpu))
                 if base_freq and freq > base_freq:
-                    base_freq = Human.num2si(base_freq, unit="Hz", decp=4)
-                    msg += f".\n  Hint: turbo is disabled, base frequency is {base_freq}, and " \
-                           f"this may be the limiting factor."
+                    base_freq_str = Human.num2si(base_freq, unit="Hz", decp=4)
+                    msg += f".\n  Hint: turbo is disabled, base frequency is {base_freq_str}, " \
+                           f"and this may be the limiting factor."
 
-        raise ErrorVerifyFailed(msg) from err
+        err.msg = msg
+        raise err
 
-    def _set_freq_prop_cpus_sysfs(self, pname, freq, cpus):
-        """Set min. or max. CPU frequency to 'freq' for CPUs in 'cpus', use mechanism 'sysfs'."""
+    def _set_freq_prop_cpus_sysfs(self, pname: str, freq: int, cpus: NumsType) -> None:
+        """
+        Set the minimum or maximum CPU frequency property for the specified CPUs.
+
+        Args:
+            pname: Name of the property to set ('min_freq' or 'max_freq').
+            freq: Frequency value to set, in Hz.
+            cpus: CPU numbers to apply the frequency setting to.
+        """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
 
@@ -1189,7 +1261,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             elif pname == "max_freq":
                 cpufreq_obj.set_max_freq(freq, cpus)
             else:
-                raise Error(f"BUG: unexpected CPU frequency property {pname}")
+                raise Error(f"BUG: Unexpected CPU frequency property {pname}")
         except ErrorVerifyFailed as err:
             self._handle_write_and_read_freq_mismatch(err)
 

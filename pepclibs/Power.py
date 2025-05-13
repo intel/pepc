@@ -204,7 +204,8 @@ class Power(_PropsClassBase.PropsClassBase):
                 state = "enab" if val else "disab"
                 errmsg = f"failed to {state}le {name}. Keep in mind some platforms " \
                          f"forbid {state}ling {name}."
-                raise ErrorVerifyFailed(errmsg) from err
+                err.msg = errmsg
+                raise err
             raise
 
     def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
