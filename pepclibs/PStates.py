@@ -686,8 +686,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         specified mechanism.
 
         Args:
-            pname: Name of the property to retrieve. Supported values are "min_freq", "max_freq",
-                   "min_freq_limit", and "max_freq_limit".
+            pname: Name of the property to retrieve. Supported values are "min_freq", "max_freq".
             cpus: CPU numbers to retrieve frequency values for.
             mname: Name of the mechanism to use for retrieving the frequency (e.g., "sysfs").
 
@@ -705,19 +704,36 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_freq_limit(self, pname, cpus):
+    def _get_freq_limit(self, pname: str, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the frequency limit for
-        CPU 'cpu'. Use the 'sysfs' method.
+        Retrieve and yield CPU frequency limits for the specified CPUs using the sysfs mechanism.
+
+        Args:
+            pname: Property name to retrieve ("min_freq_limit" or "max_freq_limit").
+            cpus: CPU numbers to retrieve frequency values for.
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency limit in
+            Hz.
         """
 
         yield from self._get_freq_sysfs(pname, cpus)
 
-    def _get_uncore_freq_cpus(self, pname, cpus):
+    def _get_uncore_freq_cpus(self,
+                              pname: str,
+                              cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is uncore frequency or
-        uncore frequency limit for the die (uncore frequency domain) corresponding to CPU 'cpu'. Use
-        the "sysfs" method.
+        Retrieve and yield uncore frequency values for the specified CPUs using the sysfs mechanism.
+
+        Args:
+            pname: Name of the uncore frequency property to retrieve. Supported values are
+                   "min_uncore_freq", "max_uncore_freq", "min_uncore_freq_limit", and
+                   "max_uncore_freq_limit".
+            cpus: CPU numbers to retrieve uncore frequency values for.
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its uncore frequency in
+            Hz.
         """
 
         uncfreq_obj = self._get_uncfreq_sysfs_obj()
@@ -735,12 +751,18 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from uncfreq_obj.get_max_freq_limit_cpus(cpus)
             return
 
-        raise Error(f"BUG: unexpected uncore frequency property {pname}")
+        raise Error(f"BUG: Unexpected uncore frequency property {pname}")
 
-    def _get_bclks_cpus(self, cpus):
+    def _get_bclks_cpus(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the bus clock speed for
-        CPU 'cpu' in Hz.
+        Retrieve and yield bus clock speed for the specified CPUs using the MSR mechanism.
+
+        Args:
+            cpus: CPU numbers to retrieve bus clock speed for.
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is the bus clock speed in
+            Hz.
         """
 
         try:
