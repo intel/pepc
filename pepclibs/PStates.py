@@ -150,7 +150,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "list[int]",
         "sname": "CPU",
-        "mnames": ("sysfs", "doc"),
+        "mnames": ("sysfs",),
         "writable": False,
     },
     "min_uncore_freq": {
@@ -859,32 +859,34 @@ class PStates(_PropsClassBase.PropsClassBase):
 
             yield cpu, freqs
 
-    def _get_frequencies(self,
-                         cpus: NumsType,
-                         mname: MechanismNameType) -> Generator[tuple[int, list[int]], None, None]:
+    def _get_frequencies(self, cpus: NumsType) -> Generator[tuple[int, list[int]], None, None]:
         """
         Retrieve and yield available CPU frequencies for the specified CPUs using the given
         mechanism.
 
         Args:
             cpus: CPU numbers to retrieve frequencies for.
-            mname: Mechanism to use for retrieving frequencies.
 
         Yields:
             Tuples of (cpu, freqs), where 'cpu' is the CPU number and 'freqs' is a list of available
             frequencies in Hz for that CPU.
         """
 
-        if mname == "sysfs":
-            cpufreq_obj = self._get_cpufreq_sysfs_obj()
-            yield from cpufreq_obj.get_available_frequencies(cpus)
+        cpufreq_obj = self._get_cpufreq_sysfs_obj()
+
+        yielded = False
+
+        try:
+            for cpu, freq in cpufreq_obj.get_available_frequencies(cpus):
+                yielded = True
+                yield cpu, freq
+        except ErrorNotSupported:
+            if yielded:
+                raise
+        else:
             return
 
-        if mname == "doc":
-            yield from self._get_frequencies_intel(cpus)
-            return
-
-        raise Error(f"BUG: Unsupported mechanism '{mname}'")
+        yield from self._get_frequencies_intel(cpus)
 
     def _get_bus_clock(self,
                        cpus: NumsType,
@@ -1056,7 +1058,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif self._is_uncore_prop(pname):
             yield from self._get_uncore_freq_cpus(pname, cpus)
         elif pname == "frequencies":
-            yield from self._get_frequencies(cpus, mname)
+            yield from self._get_frequencies(cpus)
         elif pname == "bus_clock":
             yield from self._get_bus_clock(cpus, mname)
         elif pname == "turbo":

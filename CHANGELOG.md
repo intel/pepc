@@ -7,6 +7,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
 ### Added
 ### Removed
+ - Changed '--frequencies' mechanism from docs to sysfs.
 ### Changed
 
 ## [1.5.33] - 2025-05-06

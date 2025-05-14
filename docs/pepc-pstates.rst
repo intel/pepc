@@ -153,10 +153,10 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
 
 **--frequencies**
    List CPU frequencies supported by the Linux kernel for '--min-freq' and '--max-freq' options.
-   The 'sysfs' mechanism reads
-   '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_available_frequencies'. The 'doc'
-   mechanism assumes all frequencies from '--min-freq-limit' to '--max-freq-limit' are available
-   with a step equal to '--bus-clock'.
+   If '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_available_frequencies' is available
+   (usually the case with the 'acpi_cpufreq' driver), retrieve the data from there. Otherwise,
+   in case of an Intel platform, assume that all frequencies from '--min-freq-limit' to
+   '--max-freq-limit' are available with a step equal to '--bus-clock'.
 
 **--base-freq**
    Retrieve the base CPU frequency, also known as the "guaranteed frequency," HFM (High Frequency
