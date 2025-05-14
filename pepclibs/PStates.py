@@ -1661,7 +1661,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         return self._set_uncore_freq(pname, val, dies, mname)
 
-    def _set_sname(self, pname):
+    def _set_sname(self, pname: str):
         """
         Set the scope name ('sname') for the specified property.
 
