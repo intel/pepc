@@ -13,7 +13,7 @@ Exception types used in this project.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from pathlib import Path
-from typing import Any, Match
+from typing import Any, Match, Union
 import re
 
 class Error(Exception):
@@ -153,6 +153,6 @@ class ErrorConnect(Error):
 
         super().__init__(msg, *args, **kwargs)
 
-ExceptionType = type[Error] | type[ErrorTimeOut] | type[ErrorExists] | type[ErrorNotFound] | \
-    type[ErrorNotSupported] | type[ErrorPermissionDenied] | type[ErrorBadFormat] | \
-    type[ErrorVerifyFailed] | type[ErrorConnect]
+ExceptionType = Union[type[Error], type[ErrorTimeOut], type[ErrorExists], type[ErrorNotFound],
+                      type[ErrorNotSupported], type[ErrorPermissionDenied], type[ErrorBadFormat],
+                      type[ErrorVerifyFailed], type[ErrorConnect]]

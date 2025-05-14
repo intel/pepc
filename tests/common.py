@@ -14,11 +14,13 @@
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 from pathlib import Path
+import typing
 from typing import TypedDict, Mapping
 from pepclibs.helperlibs import ProcessManager, EmulProcessManager, TestRunner
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.helperlibs.Exceptions import Error, ExceptionType
 from pepctool import _Pepc
+if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 class CommonTestParamsTypedDict(TypedDict):
     """
