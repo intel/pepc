@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -9,8 +9,10 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module provides a capability of reading and changing CPU frequency.
+Provide a capability for reading and modifying CPU frequency settings.
 """
+
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 from pathlib import Path
@@ -25,39 +27,39 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     """
-    This class provides a capability of reading and changing CPU frequency via Linux "cpufreq"
-    subsystem sysfs interfaces.
+    Provide functionality for reading and modifying CPU frequency settings via the Linux "cpufreq"
+    subsystem sysfs interface.
 
-    Public methods overview.
+    Overview of public methods:
 
-    1. Get/set CPU frequency via Linux "cpufreq" sysfs interfaces.
+    1. Get or set CPU frequency using Linux "cpufreq" sysfs interfaces:
        * 'get_min_freq()'
        * 'get_max_freq()'
        * 'set_min_freq()'
        * 'set_max_freq()'
        * 'get_cur_freq()'
-    2. Get CPU frequency limits via Linux "cpufreq" sysfs interfaces.
+    2. Retrieve CPU frequency limits via sysfs:
        * 'get_min_freq_limit()'
        * 'get_max_freq_limit()'
-    3. Get available CPU frequencies list.
+    3. Retrieve the list of available CPU frequencies:
        * 'get_available_frequencies()'
-    4. Get CPU base frequency.
+    4. Retrieve the CPU base frequency:
        * 'get_base_freq()'
-    5. Get CPU frequency driver name.
+    5. Retrieve the CPU frequency driver name:
        * 'get_driver()'
-    6. Get/set 'intel_pstate' driver mode.
+    6. Get or set the 'intel_pstate' driver mode:
        * 'get_intel_pstate_mode()'
        * 'set_intel_pstate_mode()'
-    7. Get/set turbo on/off status.
+    7. Get or set turbo mode status:
        * 'get_turbo()'
        * 'set_turbo()'
-    8. Get/set Linux CPU frequency governor.
+    8. Get or set the Linux CPU frequency governor:
        * 'get_governor()'
        * 'get_available_governors()'
        * 'set_governor()'
 
-    Note, class methods do not validate the 'cpus' arguments. The caller is assumed to have done the
-    validation. The input CPU numbers should exist and should be online.
+    Note: Methods of this class do not validate the 'cpus' argument. The caller is responsible for
+    ensuring that the provided CPU numbers are valid and online.
     """
 
     def _warn_no_ecores_bug(self):
