@@ -12,12 +12,14 @@
 Provide a capability for reading and modifying CPU frequency settings.
 """
 
+# TODO: finish annotating this module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, CPUModels, _SysfsIO
+from pepclibs._PropsClassBaseTypes import NumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
 from pepclibs.msr import TurboRatioLimit, HWPCapabilities
@@ -96,7 +98,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._sysfs_io: _SysfsIO.SysfsIO
         self._enable_cache = enable_cache
         self._verify = verify
-        self._path_cache: dict[str, dict[int, dict[str, Path]]] = {}
+        self._path_cache: dict[str, dict[int, dict[bool, Path]]] = {}
 
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
@@ -135,13 +137,13 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def _warn_no_ecores_bug(self):
         """
-        Kernels prior to v6.5 had a bug that affected hybrid systems with disabled E-cores. This
-        issue was fixed by the following Linux kernel commit:
+        Warn about a known kernel bug affecting hybrid systems with disabled E-cores.
 
-        0fcfc9e51990 cpufreq: intel_pstate: Fix scaling for hybrid-capable systems with disabled
-        E-cores
-
-        Detect if the target system is affected and print a warning.
+        Prior to Linux kernel version 6.5, a bug existed that caused incorrect CPU frequency
+        reporting on hybrid-capable systems (e.g., Intel Alder Lake) when all E-cores were
+        disabled. This method checks if the current system is affected by this bug and, if so,
+        prints a warning message. The bug was fixed in kernel commit
+        '0fcfc9e51990246a9813475716746ff5eb98c6aa'.
         """
 
         if not self._check_no_ecores_bug:
@@ -157,7 +159,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             try:
                 self._kver = KernelVersion.get_kver(pman=self._pman)
             except Error as err:
-                _LOG.warning("failed to detect kernel version%s:\n%s",
+                _LOG.warning("Failed to detect kernel version%s:\n%s",
                              self._pman.hostmsg, err.indent(2))
                 self._check_no_ecores_bug = False
                 return
@@ -172,22 +174,22 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             return
 
         self._check_no_ecores_bug = False
-        _LOG.warning("kernel version%s is %s, and the processor is hybrid with no E-cores or all "
+        _LOG.warning("Kernel version%s is %s, and the processor is hybrid with no E-cores or all "
                      "E-cores disabled.\nKernel versions prior to 6.5 have a bug: sysfs CPU "
                      "frequency files have incorrect numbers on systems like this.\nThe fix is in "
                      "Linux kernel commit '0fcfc9e51990246a9813475716746ff5eb98c6aa'.",
                      {self._pman.hostmsg}, {self._kver})
 
-    def _get_msr(self):
-        """Return an 'MSR.MSR()' object."""
+    def _get_msr(self) -> MSR.MSR:
+        """Return an instance of 'MSR.MSR'."""
 
         if not self._msr:
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
 
         return self._msr
 
-    def _get_cpufreq_msr_obj(self):
-        """Return a '_CPUFreqMSR' object."""
+    def _get_cpufreq_msr_obj(self) -> CPUFreqMSR:
+        """Return an instance of 'CPUFreqMSR' class."""
 
         if not self._cpufreq_msr_obj:
             msr = self._get_msr()
@@ -195,22 +197,41 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                                enable_cache=self._enable_cache)
         return self._cpufreq_msr_obj
 
-    def _get_policy_sysfs_path(self, cpu, fname):
-        """Construct and return a Linux "cpufreq" policy sysfs path for file 'fname'."""
+    def _get_policy_sysfs_path(self, cpu: int, fname: str) -> Path:
+        """
+        Construct and return the sysfs path for a specific cpufreq policy file.
+
+        Args:
+            cpu: CPU number for which to construct the policy path.
+            fname: Name of the file within the policy directory.
+
+        Returns:
+            Full path to the specified cpufreq policy file.
+        """
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / fname
 
-    def _get_cpu_freq_sysfs_path(self, key, cpu, limit=False):
-        """Get the sysfs file path for a CPU frequency read of write operation."""
+    def _get_cpu_freq_sysfs_path(self, key: str, cpu: int, limit: bool = False) -> Path:
+        """
+        Return the sysfs file path for a CPU frequency read or write operation. Use paths cache to
+        avoid recomputing the paths.
+
+        Args:
+            key: The frequency key (e.g., "min", "max").
+            cpu: CPU number for which to get the path.
+            limit: Whether to use the "limit" file or the "scaling" file.
+
+        Returns:
+            The sysfs file path for the specified CPU and other parameters.
+        """
 
         if key not in self._path_cache:
             self._path_cache[key] = {}
         if cpu not in self._path_cache[key]:
             self._path_cache[key][cpu] = {}
 
-        path = self._path_cache[key][cpu].get(limit)
-        if path:
-            return path
+        if limit in self._path_cache[key][cpu]:
+            return self._path_cache[key][cpu][limit]
 
         fname = "scaling_" + key + "_freq"
         prefix = "cpuinfo_" if limit else "scaling_"
@@ -220,8 +241,23 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._path_cache[key][cpu][limit] = path
         return path
 
-    def _get_freq_sysfs(self, key, cpus, limit=False):
-        """Yield CPU frequency from the Linux "cpufreq" sysfs file."""
+    def _get_freq_sysfs(self,
+                        key: str,
+                        cpus: NumsType,
+                        limit: bool = False) -> typing.Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield CPU frequencies from the Linux "cpufreq" sysfs files for the specified CPU.
+
+        Args:
+            key: The frequency key (e.g., "min", "max").
+            cpus: CPU numbers to get the frequency for.
+            limit: Whether to use the "limit" file or the "scaling" sysfs file for reading the
+                   frequency.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the
+            frequency in Hz.
+        """
 
         self._warn_no_ecores_bug()
 
@@ -231,59 +267,87 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def get_min_freq(self, cpus):
+    def get_min_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum CPU
-        frequency via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the minimum frequency for.
+        Retrieve and yield the minimum CPU frequency for the specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the minimum frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the minimum
+            frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_sysfs("min", cpus)
 
-    def get_max_freq(self, cpus):
+    def get_max_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum CPU
-        frequency via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the maximum frequency for.
+        Retrieve and yield the maximum CPU frequency for the specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the maximum frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
+            frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_sysfs("max", cpus)
 
-    def get_cur_freq(self, cpus):
+    def get_cur_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the current CPU
-        frequency read via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the current frequency for.
+        Retrieve and yield the current CPU frequency for the specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the current frequency for.
+
+        Yields:
+            Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the current
+            frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_sysfs("cur", cpus)
 
-    def get_min_freq_limit(self, cpus):
+    def get_min_freq_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum CPU
-        frequency limit for CPU 'cpu', read via Linux "cpufreq" sysfs interfaces. The arguments are
-        as follows.
-          * cpus - a collection of integer CPU numbers to get the frequency limit for.
+        Retrieve and yield the minimum CPU frequency limit for the specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the minimum frequency limit for.
+
+        Yields:
+            Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the minimum
+            frequency limit in Hz.
+
+        Raises:
+            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_sysfs("min", cpus, limit=True)
 
-    def get_max_freq_limit(self, cpus):
+    def get_max_freq_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum CPU
-        frequency limit for CPU 'cpu', read via Linux "cpufreq" sysfs interfaces. The arguments are
-        as follows.
-          * cpus - a collection of integer CPU numbers to get the frequency limit for.
+        Retrieve and yield the maximum CPU frequency limit for the specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the maximum frequency limit for.
+
+        Yields:
+            Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
+            frequency limit in Hz.
+
+        Raises:
+            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_sysfs("max", cpus, limit=True)
