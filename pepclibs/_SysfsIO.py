@@ -12,6 +12,9 @@
 Provide a capability of reading and writing sysfs files. Implement caching.
 """
 
+# TODO: finish annotating this module.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import time
 import contextlib
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
@@ -231,7 +234,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         self._in_transaction = False
         _LOG.debug("transaction in SysfsIO has been committed")
 
-    def read(self, path, what=None):
+    def read(self, path, what=None) -> str:
         """
         Read a sysfs file at 'path'. The arguments are as follows.
           * path - path of the sysfs file to read.
@@ -336,7 +339,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         self.cache_add(path, val)
 
-    def write_verify_int(self, path, val, what=None, retries=0, sleep=0):
+    def write_verify_int(self, path, val, what=None, retries: int = 0, sleep: float = 0.0):
         """
         Same as 'write_verify()', but write an integer value 'val'. The arguments are as follows.
           * path - path of the sysfs file to write to.

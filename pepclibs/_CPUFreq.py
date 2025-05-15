@@ -352,14 +352,21 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("max", cpus, limit=True)
 
-    def _set_freq_sysfs(self, freq, key, cpus):
+    def _set_freq_sysfs(self, freq: int, key: str, cpus: NumsType) -> None:
         """
-        For every CPU in 'cpus', set CPU frequency by writing to the Linux "cpufreq" sysfs file.
+        Set the CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs interface.
+
+        Args:
+            freq: Target CPU frequency in Hz.
+            key: The frequency key (e.g., "min", "max").
+            cpus: CPU numbers to set the frequency for.
         """
 
         self._warn_no_ecores_bug()
 
         what = f"{key}. CPU frequency"
+        retries = 0
+        sleep = 0.0
 
         for cpu in cpus:
             if self._verify:
@@ -369,8 +376,6 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     # immediately. Retry few times.
                     retries = 2
                     sleep = 0.1
-                else:
-                    retries = sleep = 0
 
             path = self._get_cpu_freq_sysfs_path(key, cpu)
 
@@ -384,47 +389,73 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                 setattr(err, "cpu", cpu)
                 raise err
 
-    def set_min_freq(self, freq, cpus):
+    def set_min_freq(self, freq: int, cpus: NumsType) -> None:
         """
-        For every CPU in 'cpus', set minimum CPU frequency via Linux "cpufreq" sysfs interfaces. The
-        arguments are as follows.
-          * freq - the minimum frequency value to set, hertz.
-          * cpus - a collection of CPU numbers to set the frequency for.
+        Set the minimum CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs
+        interfaces.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            cpus: CPU numbers to set the frequency for.
+
+        Raises:
+            ErrorVerifyFailed: If the frequency could not be set or verified after retries. The
+                               exception object will have an additional 'cpu' attribute indicating
+                               the CPU number that failed, the 'expected' attribute will contain the
+                               expected value, and the 'actual' attribute will contain the actual
+                               value read from sysfs.
         """
 
         self._set_freq_sysfs(freq, "min", cpus)
 
     def set_max_freq(self, freq, cpus):
         """
-        For every CPU in 'cpus', set maximum CPU frequency via Linux "cpufreq" sysfs interfaces. The
-        arguments are as follows.
-          * freq - the maximum frequency value to set, hertz.
-          * cpus - a collection of CPU numbers to set the frequency for.
+        Set the maximum CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs
+        interfaces.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            cpus: CPU numbers to set the frequency for.
+
+        Raises:
+            ErrorVerifyFailed: If the frequency could not be set or verified after retries. The
+                               exception object will have an additional 'cpu' attribute indicating
+                               the CPU number that failed, the 'expected' attribute will contain the
+                               expected value, and the 'actual' attribute will contain the actual
+                               value read from sysfs.
         """
 
         self._set_freq_sysfs(freq, "max", cpus)
 
-    def get_available_frequencies(self, cpus):
+    def get_available_frequencies(self, cpus: NumsType) -> \
+                                            typing.Generator[tuple[int, list[int]], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the list of available
-        CPU frequencies in Hz for CPU 'cpu'. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the list of available frequencies for.
+        Yield available CPU frequencies for each specified CPU. Frequencies are read from the
+        'scaling_available_frequencies' sysfs file, which is typically provided by the
+        'acpi-cpufreq' driver.
 
-        Raise 'ErrorNotSupported' if the frequencies sysfs file does not exist. The sysfs file
-        is provided by the 'acpi-cpufreq' driver, but not by the 'intel_idle' driver.
+        Args:
+            cpus: CPU numbers to get the list of available frequencies for.
+
+        Yields:
+            Tuple of (cpu, frequencies), where 'cpu' is the CPU number and 'frequencies' is a sorted
+            list of available frequencies in Hz.
+
+        Raises:
+            ErrorNotSupported: If the frequencies sysfs file is not present.
         """
 
         for cpu in cpus:
             path = self._get_policy_sysfs_path(cpu, "scaling_available_frequencies")
             val = self._sysfs_io.read(path, what="available CPU frequencies")
 
-            freqs = []
-            for freq in val.split():
+            freqs: list[int] = []
+            for freq_str in val.split():
                 try:
-                    freq = Trivial.str_to_int(freq, what="CPU frequency value")
+                    freq = Trivial.str_to_int(freq_str, what="CPU frequency value")
                     freqs.append(freq * 1000)
                 except Error as err:
-                    raise Error(f"bad contents of file '{path}'{self._pman.hostmsg}\n"
+                    raise Error(f"Bad contents of file '{path}'{self._pman.hostmsg}\n"
                                 f"{err.indent(2)}") from err
 
             yield cpu, sorted(freqs)
