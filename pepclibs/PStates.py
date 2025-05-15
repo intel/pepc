@@ -542,7 +542,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             perf_iter = cpufreq_obj.get_min_perf_limit(cpus)
 
-        iterator = zip(base_freq_iter, nominal_perf_iter, perf_iter)
+        iter_zip = zip(base_freq_iter, nominal_perf_iter, perf_iter)
+        iterator = cast(Generator[tuple[tuple[int, int], tuple[int, int], tuple[int, int]],
+                                  None, None], iter_zip)
         for (cpu, base_freq), (_, nominal_perf), (_, perf) in iterator:
             yield cpu, (base_freq * perf) // nominal_perf
 

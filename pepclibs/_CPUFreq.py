@@ -12,61 +12,53 @@
 Provide a capability for reading and modifying CPU frequency settings.
 """
 
-# TODO: finish annotating this module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+from typing import Generator
 import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, CPUModels, _SysfsIO
 from pepclibs._PropsClassBaseTypes import NumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
-from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
-from pepclibs.msr import TurboRatioLimit, HWPCapabilities
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 if typing.TYPE_CHECKING:
+    from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
+    from pepclibs.msr import TurboRatioLimit, HWPCapabilities
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     """
-    Provide functionality for reading and modifying CPU frequency settings via the Linux "cpufreq"
-    subsystem sysfs interface.
+    Provide a capability to read and modify CPU frequency settings via the Linux "cpufreq" sysfs
+    interface.
 
-    Overview of public methods:
+    Public Methods:
+        - get_min_freq: Retrieve the minimum CPU frequency for specified CPUs.
+        - get_max_freq: Retrieve the maximum CPU frequency for specified CPUs.
+        - set_min_freq: Set the minimum CPU frequency for specified CPUs.
+        - set_max_freq: Set the maximum CPU frequency for specified CPUs.
+        - get_cur_freq: Retrieve the current CPU frequency for specified CPUs.
+        - get_min_freq_limit: Retrieve the minimum CPU frequency limit for specified CPUs.
+        - get_max_freq_limit: Retrieve the maximum CPU frequency limit for specified CPUs.
+        - get_available_frequencies: Retrieve the list of available CPU frequencies for specified
+                                     CPUs.
+        - get_base_freq: Retrieve the base frequency for specified CPUs.
+        - get_driver: Retrieve the CPU frequency driver name for specified CPUs.
+        - get_intel_pstate_mode: Retrieve the 'intel_pstate' driver mode for specified CPUs.
+        - set_intel_pstate_mode: Set the 'intel_pstate' driver mode for specified CPUs.
+        - get_turbo: Retrieve the turbo mode status for specified CPUs.
+        - set_turbo: Enable or disable turbo mode for specified CPUs.
+        - get_governor: Retrieve the CPU frequency governor for specified CPUs.
+        - get_available_governors: Retrieve the list of available governors for specified CPUs.
+        - set_governor: Set the CPU frequency governor for specified CPUs.
 
-    1. Get or set CPU frequency using Linux "cpufreq" sysfs interfaces:
-       * 'get_min_freq()'
-       * 'get_max_freq()'
-       * 'set_min_freq()'
-       * 'set_max_freq()'
-       * 'get_cur_freq()'
-    2. Retrieve CPU frequency limits via sysfs:
-       * 'get_min_freq_limit()'
-       * 'get_max_freq_limit()'
-    3. Retrieve the list of available CPU frequencies:
-       * 'get_available_frequencies()'
-    4. Retrieve the CPU base frequency:
-       * 'get_base_freq()'
-    5. Retrieve the CPU frequency driver name:
-       * 'get_driver()'
-    6. Get or set the 'intel_pstate' driver mode:
-       * 'get_intel_pstate_mode()'
-       * 'set_intel_pstate_mode()'
-    7. Get or set turbo mode status:
-       * 'get_turbo()'
-       * 'set_turbo()'
-    8. Get or set the Linux CPU frequency governor:
-       * 'get_governor()'
-       * 'get_available_governors()'
-       * 'set_governor()'
-
-    Note: Methods of this class do not validate the 'cpus' argument. The caller is responsible for
-    ensuring that the provided CPU numbers are valid and online.
+    Notes:
+        Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
+        online.
     """
 
     def __init__(self,
@@ -130,7 +122,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             self._sysfs_io = sysfs_io
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         close_attrs = ("_sysfs_io", "_msr", "_cpufreq_msr_obj", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
@@ -184,6 +176,9 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         """Return an instance of 'MSR.MSR'."""
 
         if not self._msr:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import MSR
+
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
 
         return self._msr
@@ -244,7 +239,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     def _get_freq_sysfs(self,
                         key: str,
                         cpus: NumsType,
-                        limit: bool = False) -> typing.Generator[tuple[int, int], None, None]:
+                        limit: bool = False) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequencies from the Linux "cpufreq" sysfs files for specified CPUs.
 
@@ -267,7 +262,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def get_min_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_min_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum CPU frequency for specified CPUs.
 
@@ -284,7 +279,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("min", cpus)
 
-    def get_max_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_max_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum CPU frequency for specified CPUs.
 
@@ -301,7 +296,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("max", cpus)
 
-    def get_cur_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_cur_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the current CPU frequency for specified CPUs.
 
@@ -318,7 +313,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("cur", cpus)
 
-    def get_min_freq_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_min_freq_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum CPU frequency limit for specified CPUs.
 
@@ -335,7 +330,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("min", cpus, limit=True)
 
-    def get_max_freq_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_max_freq_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum CPU frequency limit for specified CPUs.
 
@@ -428,7 +423,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._set_freq_sysfs(freq, "max", cpus)
 
     def get_available_frequencies(self, cpus: NumsType) -> \
-                                            typing.Generator[tuple[int, list[int]], None, None]:
+                                            Generator[tuple[int, list[int]], None, None]:
         """
         Yield available CPU frequencies specified CPUs. Frequencies are read from the
         'scaling_available_frequencies' sysfs file, which is typically provided by the
@@ -460,8 +455,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
             yield cpu, sorted(freqs)
 
-    def _get_base_freq_intel_pstate(self, cpus: NumsType) -> \
-                                                    typing.Generator[tuple[int, int], None, None]:
+    def _get_base_freq_intel_pstate(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs using the 'intel_pstate' driver.
 
@@ -479,8 +473,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def _get_base_freq_bios_limit(self, cpus: NumsType) -> \
-                                                    typing.Generator[tuple[int, int], None, None]:
+    def _get_base_freq_bios_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs using the 'bios_limit' sysfs file.
 
@@ -498,7 +491,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def get_base_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_base_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs.
 
@@ -528,7 +521,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             except ErrorNotSupported as err2:
                 raise ErrorNotSupported(f"{err1}\n{err2}") from err2
 
-    def get_driver(self, cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
+    def get_driver(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the Linux CPU frequency driver name for specified CPUs.
 
@@ -566,7 +559,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             yield cpu, name
 
     def get_intel_pstate_mode(self,
-                              cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
+                              cpus: NumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the 'intel_pstate' driver mode for specified CPUs.
 
@@ -649,7 +642,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                             f"{err.indent(2)}") from err
                 raise
 
-    def get_turbo(self, cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
+    def get_turbo(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the turbo on/off status for specified CPUs.
 
@@ -740,7 +733,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                         f"{self._pman.hostmsg}: Unsupported CPU frequency driver "
                                         f"'{driver}'")
 
-    def get_governor(self, cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
+    def get_governor(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the Linux CPU frequency governor name for specified CPUs.
 
@@ -763,7 +756,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             yield cpu, name
 
     def get_available_governors(self, cpus: NumsType) -> \
-                                            typing.Generator[tuple[int, list[str]], None, None]:
+                                            Generator[tuple[int, list[str]], None, None]:
         """
         Retrieve and yield available Linux CPU frequency governor names for specified CPUs.
 
@@ -807,10 +800,10 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
 class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
     """
-    Provide methods to read CPU frequency and performance information from ACPI CPPC via Linux
+    Provide a capability to read CPU frequency and performance information from ACPI CPPC via Linux
     sysfs.
 
-    Overview of public methods:
+    Public Methods:
         - get_min_freq_limit: Yield minimum frequency limits for CPUs from ACPI CPPC.
         - get_max_freq_limit: Yield maximum frequency limits for CPUs from ACPI CPPC.
         - get_min_perf_limit: Yield minimum performance limits for CPUs from ACPI CPPC.
@@ -818,7 +811,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
         - get_base_freq: Yield base frequency for CPUs from ACPI CPPC.
         - get_base_perf: Yield base performance for CPUs from ACPI CPPC.
 
-    Note:
+    Notes:
         Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
         online.
     """
@@ -866,7 +859,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             self._sysfs_io = sysfs_io
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         close_attrs = ("_sysfs_io", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
@@ -925,7 +918,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
 
         return self._sysfs_io.cache_add(path, val)
 
-    def get_min_freq_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_min_freq_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum frequency limit for specified CPUs.
 
@@ -945,7 +938,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             # CPPC sysfs files use MHz.
             yield cpu, val * 1000 * 1000
 
-    def get_max_freq_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_max_freq_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum frequency limit for specified CPUs.
 
@@ -965,7 +958,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             # CPPC sysfs files use MHz.
             yield cpu, val * 1000 * 1000
 
-    def get_min_perf_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_min_perf_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the the minimum performance level limit for specified CPUs.
 
@@ -985,7 +978,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             val = self._read_cppc_sysfs_file(cpu, "lowest_perf", what)
             yield cpu, val
 
-    def get_max_perf_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_max_perf_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the the maximum performance level limit for specified CPUs.
 
@@ -1005,7 +998,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             val = self._read_cppc_sysfs_file(cpu, "highest_perf", what)
             yield cpu, val
 
-    def get_base_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_base_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs.
 
@@ -1025,7 +1018,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             # CPPC sysfs files use MHz.
             yield cpu, val * 1000 * 1000
 
-    def get_base_perf(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
+    def get_base_perf(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base performance level value for specified CPUs.
 
@@ -1046,65 +1039,74 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
 
 class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
     """
-    This class provides a capability of reading and changing CPU frequency for Intel platforms
-    supporting the 'MSR_HWP_REQUEST' model-specific register (MSR).
+    Provide a capability to read and modify CPU frequency settings on Intel platforms supporting the
+    'MSR_HWP_REQUEST' model-specific register (MSR).
 
-    Public methods overview.
+    Public Methods:
+        - get_min_freq(cpus): Yield (cpu, value) pairs for the minimum CPU frequency.
+        - get_max_freq(cpus): Yield (cpu, value) pairs for the maximum CPU frequency.
+        - set_min_freq(freq, cpus): Set the minimum frequency for specified CPUs.
+        - set_max_freq(freq, cpus): Set the maximum frequency for specified CPUs.
+        - get_base_freq(cpus): Yield (cpu, value) pairs for the base frequency.
+        - get_min_oper_freq(cpus): Yield (cpu, value) pairs for the minimum operating frequency.
+        - get_max_eff_freq(cpus): Yield (cpu, value) pairs for the maximum efficiency frequency.
+        - get_max_turbo_freq(cpus): Yield (cpu, value) pairs for the maximum turbo frequency.
+        - get_hwp(cpus): Yield (cpu, value) pairs indicating HWP on/off status.
 
-    1. Get/set CPU frequency via an MSR (Intel CPUs only).
-       * 'get_min_freq()'
-       * 'get_max_freq()'
-       * 'set_min_freq()'
-       * 'set_max_freq()'
-    3. Get base frequency via an MSR (Intel CPUs only).
-       * 'get_base_freq()'
-    4. Get the minimum CPU operating frequency via an MSR (Intel CPUs only).
-       * 'get_min_oper_freq()'
-    5. Get the maximum CPU efficiency frequency via an MSR (Intel CPUs only).
-       * 'get_max_eff_freq()'
-    6. Get the maximum CPU turbo frequency via an MSR (Intel CPUs only).
-       * 'get_max_turbo_freq()'
-    7. Get hardware power management (HWP) on/off status.
-       * 'get_hwp()'
-
-    Note, class methods do not validate the 'cpus' arguments. The caller is assumed to have done the
-    validation. The input CPU numbers should exist and should be online.
+    Notes:
+        Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
+        online.
     """
 
-    def __init__(self, pman=None, cpuinfo=None, msr=None, enable_cache=True):
+    def __init__(self,
+                 pman: ProcessManagerType | None = None,
+                 cpuinfo: CPUInfo.CPUInfo | None = None,
+                 msr: MSR.MSR | None = None,
+                 enable_cache: bool = True):
         """
-        The class constructor. The argument are as follows.
-          * pman - the process manager object that defines the host to control CPU frequency on.
-          * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
-          * msr - an 'MSR.MSR()' object which should be used for accessing MSR registers.
-          * enable_cache - this argument can be used to disable caching.
+        Initialize a class instance.
+
+        Args:
+            pman: Process manager for the target host. The local host will be used if not provided.
+            cpuinfo: The CPU information object for the target system. Will be created if not
+                     provided.
+            msr: An 'MSR.MSR' object for MSR access. Will be created if not provided.
+            sysfs_io: A '_SysfsIO.SysfsIO' object for sysfs access. Will be created if not provided.
+            enable_cache: Enable or disable caching for sysfs access, used only when 'sysfs_io' is
+                          not provided. If 'sysfs_io' is provided, this argument is ignored.
         """
 
-        self._pman = pman
-        self._cpuinfo = cpuinfo
+        self._pman: ProcessManagerType
+        self._cpuinfo: CPUInfo.CPUInfo
+
         self._msr = msr
         self._enable_cache = enable_cache
 
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
 
-        self._fsbfreq = None
-        self._pmenable = None
-        self._hwpreq = None
-        self._hwpreq_pkg = None
-        self._hwpcap = None
-        self._platinfo = None
-        self._trl = None
+        self._fsbfreq: FSBFreq.FSBFreq | None = None
+        self._pmenable: PMEnable.PMEnable | None = None
+        self._hwpreq: HWPRequest.HWPRequest | None = None
+        self._hwpreq_pkg: HWPRequestPkg.HWPRequestPkg | None = None
+        self._hwpcap: HWPCapabilities.HWPCapabilities | None = None
+        self._platinfo: PlatformInfo.PlatformInfo | None = None
+        self._trl: TurboRatioLimit.TurboRatioLimit | None = None
 
-        self._pcore_cpus = set()
+        self._pcore_cpus: set[int] = set()
+
         # Performance to frequency factor.
-        self._perf_to_freq_factor = None
+        self._perf_to_freq_factor: int = 0
 
-        if not self._pman:
+        if not pman:
             self._pman = LocalProcessManager.LocalProcessManager()
+        else:
+            self._pman = pman
 
-        if not self._cpuinfo:
+        if not cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+        else:
+            self._cpuinfo = cpuinfo
 
         if self._cpuinfo.info["hybrid"]:
             self._init_scaling_factor()
@@ -1112,41 +1114,75 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             self._pcore_cpus = set(pcore_cpus)
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         close_attrs = ("_trl", "_platinfo", "_fsbfreq", "_pmenable", "_hwpreq", "_hwpreq_pkg",
                        "_hwpcap", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
-    def _get_msr(self):
-        """Return an 'MSR.MSR()' object."""
+
+    def _get_msr(self) -> MSR.MSR:
+        """
+        Return an instance of the 'MSR.MSR' class.
+
+        Returns:
+            An initialized 'MSR.MSR' object.
+        """
 
         if not self._msr:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import MSR
+
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
 
         return self._msr
 
-    def _get_fsbfreq(self):
-        """Discover bus clock speed."""
+    def _get_fsbfreq(self) -> FSBFreq.FSBFreq:
+        """
+        Return an instance of the 'FSBFreq.FSBFreq' class.
+
+        Returns:
+            The an initialized 'FSBFreq.FSBFreq' object.
+        """
 
         if not self._fsbfreq:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import FSBFreq
+
             msr = self._get_msr()
             self._fsbfreq = FSBFreq.FSBFreq(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
         return self._fsbfreq
 
-    def _get_pmenable(self):
-        """Return a 'PMEnable.PMEnable()' object."""
+    def _get_pmenable(self) -> PMEnable.PMEnable:
+        """
+        Return an instance of the 'PMEnable.PMEnable' class.
+
+        Returns:
+            The an initialized 'PMEnable.PMEnable' object.
+        """
 
         if not self._pmenable:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import PMEnable
+
             msr = self._get_msr()
             self._pmenable = PMEnable.PMEnable(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
         return self._pmenable
 
-    def _get_bclks(self, cpus):
+    def _get_bclks(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the bus clock speed for
-        CPU 'cpu' in Hz.
+        Retrieve and yield the bus clock speed for specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the bus clock speed for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the bus
+            clock speed in Hz.
+
+        Raises:
+            ErrorNotSupported: If the CPU vendor is not Intel.
         """
 
         try:
@@ -1163,37 +1199,73 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                 yield cpu, int(bclk * 1000000)
 
     def _get_bclk(self, cpu):
-        """Return bus clock speed in Hz."""
+        """
+        Retrieve the bus clock speed for the specified CPU.
+
+        Args:
+            cpu: CPU number to get the bus clock speed for.
+
+        Returns:
+            The bus clock speed in Hz for the given CPU.
+
+        Raises:
+            ErrorNotSupported: If the CPU vendor is not Intel.
+        """
 
         _, val = next(self._get_bclks((cpu,)))
         return val
 
-    def _get_hwpreq(self):
-        """Return an 'HWPRequest.HWPRequest()' object."""
+    def _get_hwpreq(self) -> HWPRequest.HWPRequest:
+        """
+        Return an instance of the 'HWPRequest.HWPRequest' class.
+
+        Returns:
+            The an initialized 'HWPRequest.HWPRequest' object.
+        """
 
         if not self._hwpreq:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import HWPRequest
+
             msr = self._get_msr()
             self._hwpreq = HWPRequest.HWPRequest(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
         return self._hwpreq
 
-    def _get_hwpreq_pkg(self):
-        """Return an 'HWPRequest.HWPRequest()' object."""
+    def _get_hwpreq_pkg(self) -> HWPRequestPkg.HWPRequestPkg:
+        """
+        Return an instance of the 'HWPRequestPkg.HWPRequestPkg' class.
+
+        Returns:
+            The an initialized 'HWPRequestPkg.HWPRequestPkg' object.
+        """
 
         if not self._hwpreq_pkg:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import HWPRequestPkg
+
             msr = self._get_msr()
             self._hwpreq_pkg = HWPRequestPkg.HWPRequestPkg(pman=self._pman, cpuinfo=self._cpuinfo,
                                                            msr=msr)
+
         return self._hwpreq_pkg
 
-    def _perf_to_freq(self, cpu, perf, bclk):
+    def _perf_to_freq(self, cpu: int, perf: int, bclk: int) -> int:
         """
-        On many Intel platforms, the MSR registers such as 'MSR_HWP_REQUEST  use frequency ratio
-        units - CPU frequency in Hz divided by 100MHz (bus clock). But on hybrid Intel platform
-        (e.g., Alder Lake), the MSR works in  terms of platform-dependent abstract performance units
-        on P-cores.
+        Convert performance level units to CPU frequency in Hz.
 
-        Convert the performance units to CPU frequency in Hz.
+        On non-hybrid Intel platforms, MSR registers such as 'MSR_HWP_REQUEST' use frequency ratio
+        units (CPU frequency in Hz divided by 100 MHz bus clock). On hybrid Intel platforms (e.g.,
+        Alder Lake), the MSRs operate with abstract performance level units on P-cores. This
+        function handles both cases and returns the corresponding CPU frequency.
+
+        Args:
+            cpu: The CPU number.
+            perf: The performance level value to convert to frequency.
+            bclk: Bus clock frequency in Hz.
+
+        Returns:
+            CPU frequency in Hz.
         """
 
         if self._cpuinfo.info["hybrid"] and cpu in self._pcore_cpus:
@@ -1214,8 +1286,18 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
     def _get_freq_msr(self, key, cpus):
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the min. or max. CPU
-        frequency.
+        Retrieve and yield the minimum or maximum CPU frequency for specified CPUs.
+
+        Args:
+            key: The frequency key (e.g., "min", "max").
+            cpus: CPU numbers to get the frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the
+            corresponding minimum or maximum frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the 'MSR_HWP_REQUEST' model specific register is not supported.
         """
 
         # The corresponding 'MSR_HWP_REQUEST' feature name.
@@ -1258,30 +1340,53 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                 val = perf
             yield cpu1, self._perf_to_freq(cpu1, val, bclk)
 
-    def get_min_freq(self, cpus):
+    def get_min_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum CPU
-        frequency via the 'MSR_HWP_REQUEST' model specific register. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get min. frequency for.
+        Retrieve and yield the minimum CPU frequency for specified CPUs.
 
-        Raise 'ErrorNotSupported' if 'MSR_HWP_REQUEST' is not supported.
+        Args:
+            cpus: CPU numbers to get the frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the
+            corresponding minimum frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the 'MSR_HWP_REQUEST' model specific register is not supported.
         """
 
         yield from self._get_freq_msr("min", cpus)
 
-    def get_max_freq(self, cpus):
+    def get_max_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum CPU
-        frequency via the 'MSR_HWP_REQUEST' model specific register. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get max. frequency for.
+        Retrieve and yield the maximum CPU frequency for specified CPUs.
 
-        Raise 'ErrorNotSupported' if 'MSR_HWP_REQUEST' is not supported.
+        Args:
+            cpus: CPU numbers to get the frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the
+            corresponding maximum frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the 'MSR_HWP_REQUEST' model specific register is not supported.
         """
 
         yield from self._get_freq_msr("max", cpus)
 
-    def _set_freq_msr(self, freq, key, cpus):
-        """For every CPU in 'cpus', set CPU frequency by writing to 'MSR_HWP_REQUEST'."""
+    def _set_freq_msr(self, freq: int, key: str, cpus: NumsType):
+        """
+        Set the CPU frequency for specified CPUs using the 'MSR_HWP_REQUEST' model specific
+        register.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            key: The frequency key (e.g., "min", "max").
+            cpus: CPU numbers to set the frequency for.
+
+        Raises:
+            ErrorNotSupported: If disabling package control via 'MSR_HWP_REQUEST' is not supported.
+        """
 
         # The corresponding 'MSR_HWP_REQUEST' feature name.
         feature_name = f"{key}_perf"
@@ -1298,7 +1403,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         # Prepare the values dictionary, which maps each value to the list of CPUs to write this
         # value to.
-        vals = {}
+        vals: dict[int, list[int]] = {}
         for cpu, bclk in self._get_bclks(cpus):
             if cpu in self._pcore_cpus:
                 perf = int((freq + self._perf_to_freq_factor - 1) / self._perf_to_freq_factor)
@@ -1311,58 +1416,100 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         for val, val_cpus in vals.items():
             hwpreq.write_feature(feature_name, val, cpus=val_cpus)
 
-    def set_min_freq(self, freq, cpus="all"):
+    def set_min_freq(self, freq: int, cpus: NumsType):
         """
         Set minimum frequency for CPUs in 'cpus' via the 'MSR_HWP_REQUEST' model specific register.
-        The arguments are as follows.
-          * freq - the minimum frequency value to set, hertz.
-          * cpus - a collection CPU numbers to set minimum frequency for.
+
+        Args:
+            freq: The minimum frequency value to set, in Hz.
+            cpus: CPU numbers to set minimum frequency for.
+
+        Raises:
+            ErrorNotSupported: If setting the frequency via 'MSR_HWP_REQUEST' is not supported.
         """
 
         self._set_freq_msr(freq, "min", cpus)
 
-    def set_max_freq(self, freq, cpus):
+    def set_max_freq(self, freq: int, cpus: NumsType):
         """
         Set maximum frequency for CPUs in 'cpus' via the 'MSR_HWP_REQUEST' model specific register.
-        The arguments are as follows.
-          * freq - the maximum frequency value to set, hertz.
-          * cpus - a collection CPU numbers to set maximum frequency for.
+
+        Args:
+            freq: The maximum frequency value to set, in Hz.
+            cpus: CPU numbers to set maximum frequency for.
+
+        Raises:
+            ErrorNotSupported: If setting the frequency via 'MSR_HWP_REQUEST' is not supported.
         """
 
         self._set_freq_msr(freq, "max", cpus)
 
-    def _get_hwpcap(self):
-        """Return an 'HWPCapabilities.HWPCapabilities()' object."""
+    def _get_hwpcap(self) -> HWPCapabilities.HWPCapabilities:
+        """
+        Return an instance of the 'HWPCapabilities.HWPCapabilities' class.
+
+        Returns:
+            The an initialized 'HWPCapabilities.HWPCapabilities' object.
+        """
 
         if not self._hwpcap:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import HWPCapabilities
+
             msr = self._get_msr()
             self._hwpcap = HWPCapabilities.HWPCapabilities(pman=self._pman, cpuinfo=self._cpuinfo,
                                                            msr=msr)
 
         return self._hwpcap
 
-    def _get_platinfo(self):
-        """Return a 'PlatformInfo.PlatformInfo()' object."""
+    def _get_platinfo(self) -> PlatformInfo.PlatformInfo:
+        """
+        Return an instance of the 'PlatformInfo.PlatformInfo' class.
+
+        Returns:
+            The an initialized 'PlatformInfo.PlatformInfo' object.
+        """
 
         if not self._platinfo:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import PlatformInfo
+
             msr = self._get_msr()
             self._platinfo = PlatformInfo.PlatformInfo(pman=self._pman, cpuinfo=self._cpuinfo,
                                                        msr=msr)
         return self._platinfo
 
-    def _get_trl(self):
-        """Return a 'TurboRatioLimit.TurboRatioLimit()' object."""
+    def _get_trl(self) -> TurboRatioLimit.TurboRatioLimit:
+        """
+        Return an instance of the 'TurboRatioLimit.TurboRatioLimit' class.
+
+        Returns:
+            The an initialized 'TurboRatioLimit.TurboRatioLimit' object.
+        """
 
         if not self._trl:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import TurboRatioLimit
+
             msr = self._get_msr()
             self._trl = TurboRatioLimit.TurboRatioLimit(pman=self._pman, cpuinfo=self._cpuinfo,
                                                         msr=msr)
         return self._trl
 
-    def _get_patinfo_freq(self, fname, cpus):
+    def _get_patinfo_freq(self,
+                          fname: str,
+                          cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        Yield '(cpu, frequency)' pairs for all CPUs in 'cpus', where frequency is read from feature
-        'fname' of 'MSR_PLATFORM_INFO'.
+        Retrieve and yield CPU frequency for the specified CPUs using the 'MSR_PLATFORM_INFO' model
+        specific register.
+
+        Args:
+            fname: Name of the feature to read from 'MSR_PLATFORM_INFO'.
+            cpus: CPU numbers to get the frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the
+            corresponding frequency in Hz.
         """
 
         if not cpus:
@@ -1376,10 +1523,20 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             assert cpu1 == cpu2
             yield cpu1, ratio * bclk
 
-    def _get_hwpcap_freq(self, fname, cpus):
+    def _get_hwpcap_freq(self,
+                         fname: str,
+                         cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        Yield '(cpu, frequency)' pairs for all CPUs in 'cpus', where frequency is read from feature
-        'fname' of 'MSR_HWP_CAPABILITIES'.
+        Retrieve and yield CPU frequency for the specified CPUs using the 'MSR_HPW_CAPABILITIES'
+        model specific register.
+
+        Args:
+            fname: Name of the feature to read from 'MSR_HWP_CAPABILITIES'.
+            cpus: CPU numbers to get the frequency for.
+
+        Yields:
+            Tuples of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the
+            corresponding frequency in Hz.
         """
 
         if not cpus:
@@ -1393,9 +1550,25 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             assert cpu1 == cpu2
             yield cpu1, self._perf_to_freq(cpu1, perf, bclk)
 
-    def _get_from_2_iterators(self, cpus, iter1, iter2):
+    def _get_from_2_iterators(self,
+                              cpus: NumsType,
+                              iter1: Generator[tuple[int, int], None, None],
+                              iter2: Generator[tuple[int, int], None, None]) -> \
+                                                            Generator[tuple[int, int], None, None]:
         """
-        Yield '(cpu, frequency)' paris for all CPUs in 'cpus'. Get them from 'iter1' or 'iter2'.
+        Yield (cpu, frequency) pairs for all CPUs in 'cpus', retrieving data from two iterators,
+        each covering a sub-set of CPUs.
+
+        Args:
+            cpus: CPU numbers to get the frequency for.
+            iter1: Iterator yielding (cpu, frequency) pairs.
+            iter2: Iterator yielding (cpu, frequency) pairs.
+
+        Yields:
+            Tuples of (cpu, frequency) for each CPU in 'cpus'.
+
+        Raises:
+            Error: If a CPU is present in both iter1 and iter2.
         """
 
         result = {}
@@ -1409,8 +1582,18 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         for cpu in cpus:
             yield cpu, result[cpu]
 
-    def _split_cpus(self, cpus):
-        """Split CPUs list 'cpus' in two: CPUs not supporting HWP and CPUs supporting HPW."""
+    def _split_cpus(self, cpus: NumsType) -> tuple[list[int], list[int]]:
+        """
+        Split a list of CPUs into those supporting HWP and those that do not.
+
+        Args:
+            cpus: CPU numbers to split.
+
+        Returns:
+            A tuple containing:
+                - List of CPUs not supporting HWP.
+                - List of CPUs supporting HWP.
+        """
 
         leg_cpus = []
         hwp_cpus = []
@@ -1423,15 +1606,24 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         return leg_cpus, hwp_cpus
 
-    def get_base_freq(self, cpus):
+    def get_base_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the base frequency for
-        CPU 'cpu' The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the turbo frequency for.
+        Retrieve and yield the base frequency for specified CPUs.
 
-        For CPU that do not support HWP, read from the 'MSR_PLATFORM_INFO' model-specific register.
-        Otherwise read from the 'MSR_HWP_CAPABILITIES' register. Raise 'ErrorNotSupported' if MSRs
-        are not supported.
+        Retrieve the base frequency as follows:
+        - For CPUs without Hardware P-states (HWP) support, read the value from the
+          'MSR_PLATFORM_INFO' model-specific register.
+        - For CPUs with HWP support, read the value from the 'MSR_HWP_CAPABILITIES' register.
+
+        Args:
+            cpus: CPU numbers to get the base frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
+            frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If MSRs are not supported.
         """
 
         leg_cpus, hwp_cpus = self._split_cpus(cpus)
@@ -1440,15 +1632,24 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_from_2_iterators(cpus, iter1, iter2)
 
-    def get_min_oper_freq(self, cpus):
+    def get_min_oper_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum operating
-        frequency for CPU 'cpu'. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the minimum operating frequency for.
+        Retrieve and yield the minimum operating frequency for specified CPUs.
 
-        For CPU that do not support HWP, read from the 'MSR_PLATFORM_INFO' model-specific register.
-        Otherwise read from the 'MSR_HWP_CAPABILITIES' register. Raise 'ErrorNotSupported' if MSRs
-        are not supported.
+        Retrieve the minimum operating frequency as follows:
+        - For CPUs without Hardware P-states (HWP) support, read the value from the
+          'MSR_PLATFORM_INFO' model-specific register.
+        - For CPUs with HWP support, read the value from the 'MSR_HWP_CAPABILITIES' register.
+
+        Args:
+            cpus: CPU numbers to get the minimum operating frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the minimum
+            operating frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If MSRs are not supported.
         """
 
         leg_cpus, hwp_cpus = self._split_cpus(cpus)
@@ -1457,15 +1658,24 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_from_2_iterators(cpus, iter1, iter2)
 
-    def get_max_eff_freq(self, cpus):
+    def get_max_eff_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum efficiency
-        frequency for CPU 'cpu'. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the maximum efficiency frequency for.
+        Retrieve and yield the maximum efficiency frequency for specified CPUs.
 
-        For CPU that do not support HWP, read from the 'MSR_PLATFORM_INFO' model-specific register.
-        Otherwise read from the 'MSR_HWP_CAPABILITIES' register. Raise 'ErrorNotSupported' if MSRs
-        are not supported.
+        Retrieve the maximum efficiency frequency as follows:
+        - For CPUs without Hardware P-states (HWP) support, read the value from the
+          'MSR_PLATFORM_INFO' model-specific register.
+        - For CPUs with HWP support, read the value from the 'MSR_HWP_CAPABILITIES' register.
+
+        Args:
+            cpus: CPU numbers to get the maximum efficiency frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
+            efficiency frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If MSRs are not supported.
         """
 
         leg_cpus, hwp_cpus = self._split_cpus(cpus)
@@ -1474,10 +1684,24 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_from_2_iterators(cpus, iter1, iter2)
 
-    def _get_max_turbo_freq_trl(self, cpus):
+    def _get_max_turbo_freq_trl(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        Yield '(cpu, frequency)' tuples by reading from 'MSR_TURBO_RATIO_LIMIT'. Raise
-        'ErrorNotSupported' if 'MSR_TURBO_RATIO_LIMIT' is not supported.
+        Yield (cpu, frequency) tuples by reading the maximum turbo frequency from the
+        'MSR_TURBO_RATIO_LIMIT' register for the specified CPUs.
+
+        Retrieve and yield the maximum turbo frequency for specified CPUs as follows:
+          - Attempt to read the 'max_1c_turbo_ratio' feature for each CPU.
+          - If not supported, fall back to reading the 'max_g0_turbo_ratio' feature.
+
+        Args:
+            cpus: CPU numbers to get the maximum turbo frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
+            turbo frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If 'MSR_TURBO_RATIO_LIMIT' is not supported.
         """
 
         if not cpus:
@@ -1502,21 +1726,28 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                     assert cpu1 == cpu2
                     yield cpu1, ratio * bclk
             except ErrorNotSupported as err2:
-                _LOG.warn_once("module 'TurboRatioLimit' doesn't support "
+                _LOG.warn_once("Module 'TurboRatioLimit' doesn't support "
                                "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
                                "maintainers.", self._cpuinfo.cpudescr, self._pman.hostmsg)
                 raise ErrorNotSupported(f"{err1}\n{err2}") from err2
 
-    def get_max_turbo_freq(self, cpus):
+    def get_max_turbo_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum 1-core turbo
-        frequency for CPU 'cpu' The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the maximum 1-core turbo frequency
-                   for.
+        Retrieve and yield the maximum 1-core turbo frequency for specified CPUs.
 
-        For CPU that do not support HWP, read from the 'MSR_TURBO_RATIO_LIMIT' model-specific
-        register. Otherwise read from the 'MSR_HWP_CAPABILITIES' register. Raise 'ErrorNotSupported'
-        if MSRs are not supported.
+        For CPUs without Hardware P-states (HWP) support, read the value from the
+        'MSR_TURBO_RATIO_LIMIT' model-specific register. For CPUs with HWP support, read the value
+        from the 'MSR_HWP_CAPABILITIES' register.
+
+        Args:
+            cpus: CPU numbers to get the maximum 1-core turbo frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
+            1-core turbo frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the MSRs are not supported.
         """
 
         leg_cpus, hwp_cpus = self._split_cpus(cpus)
@@ -1525,10 +1756,19 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_from_2_iterators(cpus, iter1, iter2)
 
-    def get_hwp(self, cpus):
+    def get_hwp(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' the hardware power
-        management on/off status for CPU 'cpu'.
+        Yield the hardware power management (HWP) status for specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the HWP status for.
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is the HWP status
+            ("on" or "off").
+
+        Raises:
+            ErrorNotSupported: If the platform does not support HWP.
         """
 
         pmenable = self._get_pmenable()
