@@ -352,7 +352,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("max", cpus, limit=True)
 
-    def _set_freq_sysfs(self, freq: int, key: str, cpus: NumsType) -> None:
+    def _set_freq_sysfs(self, freq: int, key: str, cpus: NumsType):
         """
         Set the CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs interface.
 
@@ -389,7 +389,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                 setattr(err, "cpu", cpu)
                 raise err
 
-    def set_min_freq(self, freq: int, cpus: NumsType) -> None:
+    def set_min_freq(self, freq: int, cpus: NumsType):
         """
         Set the minimum CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs
         interfaces.
@@ -460,8 +460,19 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
             yield cpu, sorted(freqs)
 
-    def _get_base_freq_intel_pstate(self, cpus):
-        """Yield base frequency from 'intel_pstate' driver's sysfs file."""
+    def _get_base_freq_intel_pstate(self, cpus: NumsType) -> \
+                                                    typing.Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the base frequency for each specified CPU using the 'intel_pstate'
+        driver.
+
+        Args:
+            cpus: CPU numbers to get the base frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
+            frequency in Hz.
+        """
 
         for cpu in cpus:
             path = self._get_policy_sysfs_path(cpu, "base_frequency")
@@ -469,8 +480,19 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def _get_base_freq_bios_limit(self, cpus):
-        """Yield base frequency from the 'bios_limit' sysfs file."""
+    def _get_base_freq_bios_limit(self, cpus: NumsType) -> \
+                                                    typing.Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the base frequency for each specified CPU using the 'bios_limit' sysfs
+        file.
+
+        Args:
+            cpus: CPU numbers to get the base frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
+            frequency in Hz.
+        """
 
         for cpu in cpus:
             path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
@@ -478,13 +500,19 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def get_base_freq(self, cpus):
+    def get_base_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is base frequency of CPU
-        'cpu', read via Linux "cpufreq" sysfs interfaces. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get base frequency for.
+        Retrieve and yield the base frequency for each specified CPU.
 
-        Raise 'ErrorNotSupported' if the base frequency sysfs files do not exist.
+        Args:
+            cpus: CPU numbers to get the base frequency for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
+            frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the base frequency sysfs files do not exist.
         """
 
         yielded_cpus = set()
@@ -502,11 +530,19 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             except ErrorNotSupported as err2:
                 raise ErrorNotSupported(f"{err1}\n{err2}") from err2
 
-    def get_driver(self, cpus):
+    def get_driver(self, cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the Linux CPU frequency
-        driver name for CPU 'cpu'. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get driver name for.
+        Retrieve and yield the Linux CPU frequency driver name for each specified CPU.
+
+        Args:
+            cpus: CPU numbers to get the driver name for.
+
+        Yields:
+            Tuple of (cpu, driver_name) where 'cpu' is the CPU number and 'driver_name' is the Linux
+            CPU frequency driver name for that CPU.
+
+        Raises:
+            ErrorNotSupported: If the driver information cannot be determined.
         """
 
         what = "CPU frequency driver name"
@@ -531,11 +567,20 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
             yield cpu, name
 
-    def get_intel_pstate_mode(self, cpus):
+    def get_intel_pstate_mode(self,
+                              cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the 'intel_pstate' CPU
-        frequency driver mode for CPU 'cpu'. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get driver mode for.
+        Retrieve and yield the 'intel_pstate' driver mode for each specified CPU.
+
+        Args:
+            cpus: CPU numbers to get the 'intel_pstate' driver mode for.
+
+        Yields:
+            Tuple (cpu, mode), where 'cpu' is the CPU number and 'mode' is the current
+            'intel_pstate' driver mode for that CPU.
+
+        Raises:
+            ErrorNotSupported: If the driver is not 'intel_pstate' for a CPU.
         """
 
         what = "'intel_pstate' driver mode"
@@ -543,23 +588,30 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         for cpu, driver in self.get_driver(cpus):
             if driver != "intel_pstate":
-                raise ErrorNotSupported(f"failed to get 'intel_pstate' driver mode for CPU "
+                raise ErrorNotSupported(f"Failed to get 'intel_pstate' driver mode for CPU "
                                         f"{cpu}{self._pman.hostmsg}: current driver is '{driver}'")
             mode = self._sysfs_io.read(path, what=what)
             yield cpu, mode
 
-    def set_intel_pstate_mode(self, mode, cpus):
+    def set_intel_pstate_mode(self, mode: str, cpus: NumsType):
         """
-        For every CPU in 'cpus', set 'intel_pstate' driver mode to 'mode'. The arguments are as
-        follows.
-          * mode - 'intel_pstate' driver mode.
-          * cpus - a collection of integer CPU numbers to set driver mode for.
+        Set the operational mode of the 'intel_pstate' driver to one of the supported modes:
+        "active", "passive", or "off".
+
+        Args:
+            mode: The desired 'intel_pstate' driver mode ("active", "passive", or "off").
+            cpus: CPU numbers to set the 'intel_pstate' driver mode for.
+
+        Raises:
+            ErrorNotSupported: If the current driver is not 'intel_pstate', or it does not support
+                               changing to the specified mode (e.g., if attempting to set the mode
+                               to "off" when HWP is enabled).
         """
 
         modes = ("active", "passive", "off")
         if mode not in modes:
-            modes = ", ".join(modes)
-            raise Error(f"bad 'intel_pstate' mode '{mode}', use one of: {modes}")
+            modes_str = ", ".join(modes)
+            raise Error(f"bad 'intel_pstate' mode '{mode}', use one of: {modes_str}")
 
         what = "'intel_pstate' driver mode"
         path = self._sysfs_base / "intel_pstate" / "status"
@@ -569,7 +621,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         for (cpu, driver), (_, curmode) in zip(driver_iter, mode_iter):
             if driver != "intel_pstate":
-                raise ErrorNotSupported(f"failed to set 'intel_pstate' driver mode to '{mode}' for "
+                raise ErrorNotSupported(f"Failed to set 'intel_pstate' driver mode to '{mode}' for "
                                         f"CPU {cpu}{self._pman.hostmsg}: current driver is "
                                         f"'{driver}'")
 
@@ -591,7 +643,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     _, hwp = next(cpufreq_obj.get_hwp((cpu,)))
                 except Error as exc:
                     # Failed to provide additional help, just raise the original exception.
-                    raise type(err)(err) from exc
+                    raise type(err)(str(err)) from exc
 
                 if hwp == "on":
                     raise ErrorNotSupported(f"'intel_pstate' driver does not support \"off\" mode "
