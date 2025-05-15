@@ -651,11 +651,19 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                             f"{err.indent(2)}") from err
                 raise
 
-    def get_turbo(self, cpus):
+    def get_turbo(self, cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the turbo on/of status
-        for CPU 'cpu'. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get turbo status for.
+        Retrieve and yield the turbo on/off status for each specified CPU.
+
+        Args:
+            cpus: CPU numbers to get the turbo status for.
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is either "on" or "off"
+            indicating the turbo status.
+
+        Raises:
+            ErrorNotSupported: If turbo status cannot be determined for a CPU.
         """
 
         what = "turbo on/off status"
@@ -672,29 +680,35 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     try:
                         _, mode = next(self.get_intel_pstate_mode((cpu,)))
                     except (StopIteration, Error) as exc:
-                        raise Error(err) from exc
+                        raise Error(str(err)) from exc
 
                     if mode != "off":
                         raise
 
-                    raise ErrorNotSupported(f"turbo is not supported when the 'intel_pstate' "
+                    raise ErrorNotSupported(f"Turbo is not supported when the 'intel_pstate' "
                                             f"driver is in 'off' mode:\n{err.indent(2)}") from err
                 val = "off" if disabled else "on"
             elif driver == "acpi-cpufreq":
                 enabled = self._sysfs_io.read_int(path_acpi_cpufreq, what=what)
                 val = "on" if enabled else "off"
             else:
-                raise ErrorNotSupported(f"can't check if turbo is enabled for CPU {cpu}"
+                raise ErrorNotSupported(f"Can't check if turbo is enabled for CPU {cpu}"
                                         f"{self._pman.hostmsg}: unsupported CPU frequency driver "
                                         f"'{driver}'")
 
             yield cpu, val
 
-    def set_turbo(self, enable, cpus):
+    def set_turbo(self, enable: bool, cpus: NumsType):
         """
-        Enable or disable turbo for CPUs in 'cpus'. The arguments are as follows.
-          * enable - enable turbo if 'True', disable otherwise.
-          * cpus - a collection of integer CPU numbers to set turbo for.
+        Enable or disable turbo mode for the specified CPUs.
+
+        Args:
+            enable: if True, enable turbo mode; if False, disable it.
+            cpus: CPU numbers to set the turbo mode for.
+
+        Raises:
+            ErrorNotSupported: If the CPU frequency driver does not support turbo control or if
+                               turbo is not supported in the current driver mode.
         """
 
         what = "turbo on/off status"
@@ -712,27 +726,35 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     try:
                         _, mode = next(self.get_intel_pstate_mode((cpu,)))
                     except (StopIteration, Error) as exc:
-                        raise Error(err) from exc
+                        raise Error(str(err)) from exc
 
                     if mode != "off":
                         raise
 
-                    raise ErrorNotSupported(f"turbo is not supported when the 'intel_pstate' "
+                    raise ErrorNotSupported(f"Turbo is not supported when the 'intel_pstate' "
                                             f"driver is in 'off' mode:\n{err.indent(2)}") from err
             elif driver == "acpi-cpufreq":
                 sysfs_val = str(int(enable))
                 self._sysfs_io.write(path_acpi_cpufreq, sysfs_val, what=what)
             else:
                 status = "on" if enable else "off"
-                raise ErrorNotSupported(f"failed to switch turbo {status} for CPU {cpu}"
-                                        f"{self._pman.hostmsg}: unsupported CPU frequency driver "
+                raise ErrorNotSupported(f"Failed to switch turbo {status} for CPU {cpu}"
+                                        f"{self._pman.hostmsg}: Unsupported CPU frequency driver "
                                         f"'{driver}'")
 
-    def get_governor(self, cpus):
+    def get_governor(self, cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the Linux CPU frequency
-        governor name for CPU 'cpu'. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get governor name for.
+        Retrieve and yield the Linux CPU frequency governor name for specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the governor name for.
+
+        Yields:
+            Tuple (cpu, governor), where 'cpu' is the CPU number and 'governor' is the current
+            governor name for that CPU.
+
+        Raises:
+            ErrorNotSupported: If the governor information cannot be determined.
         """
 
         what = "CPU frequency governor"
@@ -742,11 +764,20 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             name = self._sysfs_io.read(path, what=what)
             yield cpu, name
 
-    def get_available_governors(self, cpus):
+    def get_available_governors(self, cpus: NumsType) -> \
+                                            typing.Generator[tuple[int, list[str]], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the list of available
-        Linux CPU frequency governor names for CPU 'cpu'. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get available governor names for.
+        Retrieve and yield available Linux CPU frequency governor names for specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the list of available governors for.
+
+        Yields:
+            Tuple (cpu, governors), where 'cpu' is the CPU number and 'governors' is a list of
+            available governor names for that CPU.
+
+        Raises:
+            ErrorNotSupported: If the governors sysfs file is not present.
         """
 
         what = "available CPU frequency governors"
@@ -756,7 +787,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             names = self._sysfs_io.read(path, what=what)
             yield cpu, Trivial.split_csv_line(names, sep=" ")
 
-    def set_governor(self, governor, cpus):
+    def set_governor(self, governor: str, cpus: NumsType):
         """
         For the Linux CPU frequency governor to 'governor' for CPUs 'cpus'. The arguments are as
         follows.
@@ -768,9 +799,9 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         for cpu, governors in self.get_available_governors(cpus):
             if governor not in governors:
-                governors = ", ".join(governors)
-                raise Error(f"bad governor name '{governor}' for CPU {cpu}{self._pman.hostmsg}, "
-                            f"use one of: {governors}")
+                governors_str = ", ".join(governors)
+                raise Error(f"Bad governor name '{governor}' for CPU {cpu}{self._pman.hostmsg}, "
+                            f"use one of: {governors_str}")
 
             path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_governor"
             self._sysfs_io.write(path, governor, what=what)
