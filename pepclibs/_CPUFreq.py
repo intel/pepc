@@ -23,7 +23,7 @@ from pepclibs._PropsClassBaseTypes import NumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
 from pepclibs.msr import TurboRatioLimit, HWPCapabilities
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
 
 if typing.TYPE_CHECKING:
@@ -246,7 +246,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                         cpus: NumsType,
                         limit: bool = False) -> typing.Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield CPU frequencies from the Linux "cpufreq" sysfs files for the specified CPU.
+        Retrieve and yield CPU frequencies from the Linux "cpufreq" sysfs files for specified CPUs.
 
         Args:
             key: The frequency key (e.g., "min", "max").
@@ -269,7 +269,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def get_min_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the minimum CPU frequency for the specified CPUs.
+        Retrieve and yield the minimum CPU frequency for specified CPUs.
 
         Args:
             cpus: CPU numbers to get the minimum frequency for.
@@ -286,7 +286,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def get_max_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the maximum CPU frequency for the specified CPUs.
+        Retrieve and yield the maximum CPU frequency for specified CPUs.
 
         Args:
             cpus: CPU numbers to get the maximum frequency for.
@@ -303,7 +303,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def get_cur_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the current CPU frequency for the specified CPUs.
+        Retrieve and yield the current CPU frequency for specified CPUs.
 
         Args:
             cpus: CPU numbers to get the current frequency for.
@@ -320,7 +320,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def get_min_freq_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the minimum CPU frequency limit for the specified CPUs.
+        Retrieve and yield the minimum CPU frequency limit for specified CPUs.
 
         Args:
             cpus: CPU numbers to get the minimum frequency limit for.
@@ -337,7 +337,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def get_max_freq_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the maximum CPU frequency limit for the specified CPUs.
+        Retrieve and yield the maximum CPU frequency limit for specified CPUs.
 
         Args:
             cpus: CPU numbers to get the maximum frequency limit for.
@@ -430,7 +430,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     def get_available_frequencies(self, cpus: NumsType) -> \
                                             typing.Generator[tuple[int, list[int]], None, None]:
         """
-        Yield available CPU frequencies for each specified CPU. Frequencies are read from the
+        Yield available CPU frequencies specified CPUs. Frequencies are read from the
         'scaling_available_frequencies' sysfs file, which is typically provided by the
         'acpi-cpufreq' driver.
 
@@ -463,8 +463,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     def _get_base_freq_intel_pstate(self, cpus: NumsType) -> \
                                                     typing.Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the base frequency for each specified CPU using the 'intel_pstate'
-        driver.
+        Retrieve and yield the base frequency for specified CPUs using the 'intel_pstate' driver.
 
         Args:
             cpus: CPU numbers to get the base frequency for.
@@ -483,8 +482,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     def _get_base_freq_bios_limit(self, cpus: NumsType) -> \
                                                     typing.Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the base frequency for each specified CPU using the 'bios_limit' sysfs
-        file.
+        Retrieve and yield the base frequency for specified CPUs using the 'bios_limit' sysfs file.
 
         Args:
             cpus: CPU numbers to get the base frequency for.
@@ -502,7 +500,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def get_base_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the base frequency for each specified CPU.
+        Retrieve and yield the base frequency for specified CPUs.
 
         Args:
             cpus: CPU numbers to get the base frequency for.
@@ -532,7 +530,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def get_driver(self, cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
         """
-        Retrieve and yield the Linux CPU frequency driver name for each specified CPU.
+        Retrieve and yield the Linux CPU frequency driver name for specified CPUs.
 
         Args:
             cpus: CPU numbers to get the driver name for.
@@ -570,7 +568,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     def get_intel_pstate_mode(self,
                               cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
         """
-        Retrieve and yield the 'intel_pstate' driver mode for each specified CPU.
+        Retrieve and yield the 'intel_pstate' driver mode for specified CPUs.
 
         Args:
             cpus: CPU numbers to get the 'intel_pstate' driver mode for.
@@ -653,7 +651,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def get_turbo(self, cpus: NumsType) -> typing.Generator[tuple[int, str], None, None]:
         """
-        Retrieve and yield the turbo on/off status for each specified CPU.
+        Retrieve and yield the turbo on/off status for specified CPUs.
 
         Args:
             cpus: CPU numbers to get the turbo status for.
@@ -700,7 +698,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def set_turbo(self, enable: bool, cpus: NumsType):
         """
-        Enable or disable turbo mode for the specified CPUs.
+        Enable or disable turbo mode for specified CPUs.
 
         Args:
             enable: if True, enable turbo mode; if False, disable it.
@@ -789,10 +787,11 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def set_governor(self, governor: str, cpus: NumsType):
         """
-        For the Linux CPU frequency governor to 'governor' for CPUs 'cpus'. The arguments are as
-        follows.
-          * governor - name of the governor to set.
-          * cpus - a collection of integer CPU numbers to set the governor for.
+        Set the CPU frequency governor for the specified CPUs.
+
+        Args:
+            governor: Name of the governor to set.
+            cpus: CPU numbers to set the governor for.
         """
 
         what = "CPU frequency governor"
@@ -808,38 +807,42 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
 class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
     """
-    This class provides a capability of reading CPU frequency information from ACPI CPPC via Linux
-    sysfs interfaces.
+    Provide methods to read CPU frequency and performance information from ACPI CPPC via Linux
+    sysfs.
 
-    Public methods overview.
+    Overview of public methods:
+        - get_min_freq_limit: Yield minimum frequency limits for CPUs from ACPI CPPC.
+        - get_max_freq_limit: Yield maximum frequency limits for CPUs from ACPI CPPC.
+        - get_min_perf_limit: Yield minimum performance limits for CPUs from ACPI CPPC.
+        - get_max_perf_limit: Yield maximum performance limits for CPUs from ACPI CPPC.
+        - get_base_freq: Yield base frequency for CPUs from ACPI CPPC.
+        - get_base_perf: Yield base performance for CPUs from ACPI CPPC.
 
-    1. Get CPU frequency limits from ACPI CPPC.
-       * 'get_min_freq_limit()'
-       * 'get_max_freq_limit()'
-    2. Get CPU performance limits from ACPI CPPC.
-       * 'get_min_perf_limit()'
-       * 'get_max_perf_limit()'
-    3. Get CPU base frequency and performance from ACPI CPPC.
-       * 'get_base_freq()'
-       * 'get_base_perf()'
-
-    Note, class methods do not validate the 'cpus' arguments. The caller is assumed to have done the
-    validation. The input CPU numbers should exist and should be online.
+    Note:
+        Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
+        online.
     """
 
-    def __init__(self, pman=None, cpuinfo=None, sysfs_io=None, enable_cache=True):
+    def __init__(self,
+                 pman: ProcessManagerType | None = None,
+                 cpuinfo: CPUInfo.CPUInfo | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None,
+                 enable_cache: bool = True):
         """
-        The class constructor. The argument are as follows.
-          * pman - the process manager object that defines the host to get/set CPU frequency on.
-          * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
-          * sysfs_io - an '_SysfsIO.SysfsIO()' object which should be used for accessing sysfs
-                       files.
-          * enable_cache - this argument can be used to disable caching.
+        Initialize a class instance.
+
+        Args:
+            pman: Process manager for the target host. The local host will be used if not provided.
+            cpuinfo: The CPU information object for the target system. Will be created if not
+                     provided.
+            sysfs_io: A '_SysfsIO.SysfsIO' object for sysfs access. Will be created if not provided.
+            enable_cache: Enable or disable caching for sysfs access, used only when 'sysfs_io' is
+                          not provided. If 'sysfs_io' is provided, this argument is ignored.
         """
 
-        self._pman = pman
-        self._cpuinfo = cpuinfo
-        self._sysfs_io = sysfs_io
+        self._pman: ProcessManagerType
+        self._cpuinfo: CPUInfo.CPUInfo
+        self._sysfs_io: _SysfsIO.SysfsIO
 
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
@@ -847,12 +850,20 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
 
-        if not self._pman:
+        if not pman:
             self._pman = LocalProcessManager.LocalProcessManager()
-        if not self._cpuinfo:
+        else:
+            self._pman = pman
+
+        if not cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
-        if not self._sysfs_io:
+        else:
+            self._cpuinfo = cpuinfo
+
+        if not sysfs_io:
             self._sysfs_io = _SysfsIO.SysfsIO(pman=self._pman, enable_cache=enable_cache)
+        else:
+            self._sysfs_io = sysfs_io
 
     def close(self):
         """Uninitialize the class object."""
@@ -860,13 +871,37 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
         close_attrs = ("_sysfs_io", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
-    def _get_sysfs_path(self, cpu, fname):
-        """Construct and return CPPC sysfs file path."""
+    def _get_sysfs_path(self, cpu: int, fname: str) -> Path:
+        """
+        Construct and return full sysfs path for a given CPU and file name under the 'acpi_cppc'
+        sysfs sub-directory.
+
+        Args:
+            cpu: CPU number for which to construct the path.
+            fname: Name of the sysfs file under the 'acpi_cppc' sysfs sub-directory.
+
+        Returns:
+            The full path to the requested sysfs file.
+        """
 
         return self._sysfs_base / f"cpu{cpu}/acpi_cppc" / fname
 
-    def _read_cppc_sysfs_file(self, cpu, fname, what):
-        """Read ACPI CPPC sysfs file 'fname' for CPU 'cpu'."""
+    def _read_cppc_sysfs_file(self, cpu: int, fname: str, what: str) -> int:
+        """
+        Read the specified ACPI CPPC sysfs file for a given CPU and gracefully handle errors. Cache
+        the value read from the sysfs file to avoid repeated reads.
+
+        Args:
+            cpu: CPU number for which to read the sysfs file.
+            fname: Name of the sysfs file under the 'acpi_cppc' sysfs sub-directory to read.
+            what: Description of the value being read, used for logging and error messages.
+
+        Returns:
+            The value read from the sysfs file, after adding it to the cache.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
+        """
 
         path = self._get_sysfs_path(cpu, fname)
 
@@ -874,26 +909,35 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
 
         try:
             val = self._sysfs_io.read_int(path, what=what)
+        except ErrorBadFormat:
+            raise
+        except ErrorNotSupported:
+            raise
         except Error as err:
             # On some platforms reading CPPC sysfs files always fails. So treat these errors as if
             # the sysfs file was not even available and raise 'ErrorNotSupported'.
             _LOG.debug("ACPI CPPC sysfs file '%s' is not readable%s", path, self._pman.hostmsg)
-            raise ErrorNotSupported(err) from err
+            raise ErrorNotSupported(str(err)) from err
 
         if val == 0:
             _LOG.debug("ACPI CPPC sysfs file '%s' contains 0%s", path, self._pman.hostmsg)
-            raise ErrorNotSupported(f"read '0' for {what} from '{path}'")
+            raise ErrorNotSupported(f"Read '0' for {what} from '{path}'")
 
         return self._sysfs_io.cache_add(path, val)
 
-    def get_min_freq_limit(self, cpus):
+    def get_min_freq_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum frequency
-        limit for CPU 'cpu', read from ACPI CPPC via Linux sysfs interfaces. The arguments are as
-        follows.
-          * cpus - a collection of integer CPU numbers to get the minimum frequency limit for.
+        Retrieve and yield the minimum frequency limit for specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the minimum frequency limit for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the minimum
+            frequency limit in Hz.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
         """
 
         for cpu in cpus:
@@ -901,14 +945,19 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             # CPPC sysfs files use MHz.
             yield cpu, val * 1000 * 1000
 
-    def get_max_freq_limit(self, cpus):
+    def get_max_freq_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum frequency
-        limit for CPU 'cpu', read from ACPI CPPC via Linux sysfs interfaces. The arguments are as
-        follows.
-          * cpus - a collection of integer CPU numbers to get the maximum frequency limit for.
+        Retrieve and yield the maximum frequency limit for specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the maximum frequency limit for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
+            frequency limit in Hz.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
         """
 
         for cpu in cpus:
@@ -916,14 +965,19 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             # CPPC sysfs files use MHz.
             yield cpu, val * 1000 * 1000
 
-    def get_min_perf_limit(self, cpus):
+    def get_min_perf_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum performance
-        limit for CPU 'cpu', read from ACPI CPPC via Linux sysfs interfaces. The arguments are as
-        follows.
-          * cpus - a collection of integer CPU numbers to get the minimum performance limit for.
+        Retrieve and yield the the minimum performance level limit for specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the minimum performance level limit for.
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its minimum performance
+            level limit.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
         """
 
         for cpu in cpus:
@@ -931,14 +985,19 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             val = self._read_cppc_sysfs_file(cpu, "lowest_perf", what)
             yield cpu, val
 
-    def get_max_perf_limit(self, cpus):
+    def get_max_perf_limit(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum performance
-        limit for CPU 'cpu', read from ACPI CPPC via Linux sysfs interfaces. The arguments are as
-        follows.
-          * cpus - a collection of integer CPU numbers to get the maximum performance limit for.
+        Retrieve and yield the the maximum performance level limit for specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the maximum performance level limit for.
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its maximum performance
+            level limit.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
         """
 
         for cpu in cpus:
@@ -946,13 +1005,19 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             val = self._read_cppc_sysfs_file(cpu, "highest_perf", what)
             yield cpu, val
 
-    def get_base_freq(self, cpus):
+    def get_base_freq(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the base frequency of
-        CPU 'cpu', read from ACPI CPPC via Linux sysfs interfaces. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the base frequency for.
+        Retrieve and yield the base frequency for specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU frequency sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the base frequency for.
+
+        Yields:
+            Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
+            frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
         """
 
         for cpu in cpus:
@@ -960,13 +1025,19 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             # CPPC sysfs files use MHz.
             yield cpu, val * 1000 * 1000
 
-    def get_base_perf(self, cpus):
+    def get_base_perf(self, cpus: NumsType) -> typing.Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the base performance of
-        CPU 'cpu', read from ACPI CPPC via Linux sysfs interfaces. The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the maximum performance limit for.
+        Retrieve and yield the base performance level value for specified CPUs.
 
-        Raise 'ErrorNotSupported' if the CPU performance sysfs file does not exist.
+        Args:
+            cpus: CPU numbers to get the base performance level value for.
+
+        Yields:
+            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the base performance
+            level.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
         """
 
         for cpu in cpus:

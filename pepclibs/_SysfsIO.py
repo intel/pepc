@@ -18,7 +18,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import time
 import contextlib
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorBadFormat
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorVerifyFailed
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -282,7 +282,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             return Trivial.str_to_int(val, what=what)
         except Error as err:
             what = "" if what is None else f" {what}"
-            raise Error(f"bad contents of{what} sysfs file '{path}'{self._pman.hostmsg}\n"
+            raise ErrorBadFormat(f"Bad contents of{what} sysfs file '{path}'{self._pman.hostmsg}\n"
                         f"{err.indent(2)}") from err
 
     def write(self, path, val, what=None):
