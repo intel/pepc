@@ -163,7 +163,8 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
    Mode), or P1. Preferred mechanism is 'sysfs', which reads
    '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/base_frequency'. If unavailable, it falls back to
    '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit'. The 'msr' mechanism reads it from
-   MSR_PLATFORM_INFO (0xCE), bits 15:8.
+   MSR_HWP_CAPABILITIES (0x771), bits 15:8 if CPU hardware power management is enabled, otherwise
+   from MSR_PLATFORM_INFO (0xCE), bits 15:8.
 
 **--bus-clock**
    Retrieve the bus clock frequency, one of the CPU's reference clocks. The 'msr' mechanism reads
@@ -178,7 +179,8 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
 
 **--max-eff-freq**
    Retrieve the maximum CPU efficiency frequency, also known as LFM (Low Frequency Mode) or Pn.
-   Mechanism: 'msr', reads MSR_PLATFORM_INFO (0xCE), bits 47:40.
+   Mechanism: 'msr', reads MSR_HWP_CAPABILITIES (0x771), bits 23:16 on if CPU hardware power
+   management is enabled, otherwise reads MSR_PLATFORM_INFO (0xCE), bits 47:40.
 
 **--turbo**
    Check if turbo is enabled or disabled. When enabled, CPUs can run at frequencies above the base
@@ -188,7 +190,8 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
 
 **--max-turbo-freq**
    Retrieve the maximum turbo frequency, the highest frequency a single CPU can achieve. Also known
-   as max 1-core turbo or P01. Mechanism: MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
+   as max 1-core turbo or P01. Mechanism: 'msr', reads MSR_HWP_CAPABILITIES (0x771), bits 7:0 if
+   hardware power management is enabled, otherwise reads MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
 
 **--min-uncore-freq**
    Retrieve the minimum uncore frequency. In case of the 'intel_uncore_frequency_tpmi' driver, read
