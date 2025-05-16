@@ -1548,7 +1548,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         for (cpu1, bclk), (cpu2, perf) in zip(bclks_iter, hwpcap_iter):
             assert cpu1 == cpu2
-            print(cpu1, perf)
             yield cpu1, self._perf_to_freq(cpu1, perf, bclk)
 
     def get_base_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
