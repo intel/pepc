@@ -1,4 +1,6 @@
 /sys/devices/system/cpu/cpu0/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu1/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu10/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu100/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu101/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu102/power/energy_perf_bias:6
@@ -9,7 +11,7 @@
 /sys/devices/system/cpu/cpu107/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu108/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu109/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu10/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu11/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu110/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu111/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu112/power/energy_perf_bias:6
@@ -20,7 +22,7 @@
 /sys/devices/system/cpu/cpu117/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu118/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu119/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu11/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu12/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu120/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu121/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu122/power/energy_perf_bias:6
@@ -31,7 +33,7 @@
 /sys/devices/system/cpu/cpu127/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu128/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu129/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu12/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu13/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu130/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu131/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu132/power/energy_perf_bias:6
@@ -42,7 +44,7 @@
 /sys/devices/system/cpu/cpu137/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu138/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu139/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu13/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu14/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu140/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu141/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu142/power/energy_perf_bias:6
@@ -53,7 +55,7 @@
 /sys/devices/system/cpu/cpu147/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu148/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu149/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu14/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu15/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu150/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu151/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu152/power/energy_perf_bias:6
@@ -64,7 +66,7 @@
 /sys/devices/system/cpu/cpu157/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu158/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu159/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu15/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu16/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu160/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu161/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu162/power/energy_perf_bias:6
@@ -75,7 +77,7 @@
 /sys/devices/system/cpu/cpu167/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu168/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu169/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu16/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu17/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu170/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu171/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu172/power/energy_perf_bias:6
@@ -86,7 +88,7 @@
 /sys/devices/system/cpu/cpu177/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu178/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu179/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu17/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu18/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu180/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu181/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu182/power/energy_perf_bias:6
@@ -97,7 +99,7 @@
 /sys/devices/system/cpu/cpu187/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu188/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu189/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu18/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu19/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu190/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu191/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu192/power/energy_perf_bias:6
@@ -108,8 +110,8 @@
 /sys/devices/system/cpu/cpu197/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu198/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu199/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu19/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu1/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu2/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu20/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu200/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu201/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu202/power/energy_perf_bias:6
@@ -120,7 +122,7 @@
 /sys/devices/system/cpu/cpu207/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu208/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu209/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu20/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu21/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu210/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu211/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu212/power/energy_perf_bias:6
@@ -131,12 +133,11 @@
 /sys/devices/system/cpu/cpu217/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu218/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu219/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu21/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu22/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu220/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu221/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu222/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu223/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu22/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu23/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu24/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu25/power/energy_perf_bias:6
@@ -144,7 +145,7 @@
 /sys/devices/system/cpu/cpu27/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu28/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu29/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu2/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu3/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu30/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu31/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu32/power/energy_perf_bias:6
@@ -155,7 +156,7 @@
 /sys/devices/system/cpu/cpu37/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu38/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu39/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu3/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu4/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu40/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu41/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu42/power/energy_perf_bias:6
@@ -166,7 +167,7 @@
 /sys/devices/system/cpu/cpu47/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu48/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu49/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu4/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu5/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu50/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu51/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu52/power/energy_perf_bias:6
@@ -177,7 +178,7 @@
 /sys/devices/system/cpu/cpu57/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu58/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu59/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu5/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu6/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu60/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu61/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu62/power/energy_perf_bias:6
@@ -188,7 +189,7 @@
 /sys/devices/system/cpu/cpu67/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu68/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu69/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu6/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu7/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu70/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu71/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu72/power/energy_perf_bias:6
@@ -199,7 +200,7 @@
 /sys/devices/system/cpu/cpu77/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu78/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu79/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu7/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu8/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu80/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu81/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu82/power/energy_perf_bias:6
@@ -210,7 +211,7 @@
 /sys/devices/system/cpu/cpu87/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu88/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu89/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu8/power/energy_perf_bias:6
+/sys/devices/system/cpu/cpu9/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu90/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu91/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu92/power/energy_perf_bias:6
@@ -221,4 +222,3 @@
 /sys/devices/system/cpu/cpu97/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu98/power/energy_perf_bias:6
 /sys/devices/system/cpu/cpu99/power/energy_perf_bias:6
-/sys/devices/system/cpu/cpu9/power/energy_perf_bias:6

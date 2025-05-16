@@ -1,4 +1,6 @@
 /sys/devices/system/cpu/cpu0/topology/die_id:0
+/sys/devices/system/cpu/cpu1/topology/die_id:0
+/sys/devices/system/cpu/cpu10/topology/die_id:0
 /sys/devices/system/cpu/cpu100/topology/die_id:1
 /sys/devices/system/cpu/cpu101/topology/die_id:1
 /sys/devices/system/cpu/cpu102/topology/die_id:1
@@ -9,7 +11,7 @@
 /sys/devices/system/cpu/cpu107/topology/die_id:1
 /sys/devices/system/cpu/cpu108/topology/die_id:1
 /sys/devices/system/cpu/cpu109/topology/die_id:1
-/sys/devices/system/cpu/cpu10/topology/die_id:0
+/sys/devices/system/cpu/cpu11/topology/die_id:0
 /sys/devices/system/cpu/cpu110/topology/die_id:1
 /sys/devices/system/cpu/cpu111/topology/die_id:1
 /sys/devices/system/cpu/cpu112/topology/die_id:0
@@ -20,7 +22,7 @@
 /sys/devices/system/cpu/cpu117/topology/die_id:0
 /sys/devices/system/cpu/cpu118/topology/die_id:0
 /sys/devices/system/cpu/cpu119/topology/die_id:0
-/sys/devices/system/cpu/cpu11/topology/die_id:0
+/sys/devices/system/cpu/cpu12/topology/die_id:0
 /sys/devices/system/cpu/cpu120/topology/die_id:0
 /sys/devices/system/cpu/cpu121/topology/die_id:0
 /sys/devices/system/cpu/cpu122/topology/die_id:0
@@ -31,7 +33,7 @@
 /sys/devices/system/cpu/cpu127/topology/die_id:0
 /sys/devices/system/cpu/cpu128/topology/die_id:0
 /sys/devices/system/cpu/cpu129/topology/die_id:0
-/sys/devices/system/cpu/cpu12/topology/die_id:0
+/sys/devices/system/cpu/cpu13/topology/die_id:0
 /sys/devices/system/cpu/cpu130/topology/die_id:0
 /sys/devices/system/cpu/cpu131/topology/die_id:0
 /sys/devices/system/cpu/cpu132/topology/die_id:0
@@ -42,7 +44,7 @@
 /sys/devices/system/cpu/cpu137/topology/die_id:0
 /sys/devices/system/cpu/cpu138/topology/die_id:0
 /sys/devices/system/cpu/cpu139/topology/die_id:0
-/sys/devices/system/cpu/cpu13/topology/die_id:0
+/sys/devices/system/cpu/cpu14/topology/die_id:0
 /sys/devices/system/cpu/cpu140/topology/die_id:0
 /sys/devices/system/cpu/cpu141/topology/die_id:0
 /sys/devices/system/cpu/cpu142/topology/die_id:0
@@ -53,7 +55,7 @@
 /sys/devices/system/cpu/cpu147/topology/die_id:0
 /sys/devices/system/cpu/cpu148/topology/die_id:0
 /sys/devices/system/cpu/cpu149/topology/die_id:0
-/sys/devices/system/cpu/cpu14/topology/die_id:0
+/sys/devices/system/cpu/cpu15/topology/die_id:0
 /sys/devices/system/cpu/cpu150/topology/die_id:0
 /sys/devices/system/cpu/cpu151/topology/die_id:0
 /sys/devices/system/cpu/cpu152/topology/die_id:0
@@ -64,7 +66,7 @@
 /sys/devices/system/cpu/cpu157/topology/die_id:0
 /sys/devices/system/cpu/cpu158/topology/die_id:0
 /sys/devices/system/cpu/cpu159/topology/die_id:0
-/sys/devices/system/cpu/cpu15/topology/die_id:0
+/sys/devices/system/cpu/cpu16/topology/die_id:0
 /sys/devices/system/cpu/cpu160/topology/die_id:0
 /sys/devices/system/cpu/cpu161/topology/die_id:0
 /sys/devices/system/cpu/cpu162/topology/die_id:0
@@ -75,7 +77,7 @@
 /sys/devices/system/cpu/cpu167/topology/die_id:0
 /sys/devices/system/cpu/cpu168/topology/die_id:1
 /sys/devices/system/cpu/cpu169/topology/die_id:1
-/sys/devices/system/cpu/cpu16/topology/die_id:0
+/sys/devices/system/cpu/cpu17/topology/die_id:0
 /sys/devices/system/cpu/cpu170/topology/die_id:1
 /sys/devices/system/cpu/cpu171/topology/die_id:1
 /sys/devices/system/cpu/cpu172/topology/die_id:1
@@ -86,7 +88,7 @@
 /sys/devices/system/cpu/cpu177/topology/die_id:1
 /sys/devices/system/cpu/cpu178/topology/die_id:1
 /sys/devices/system/cpu/cpu179/topology/die_id:1
-/sys/devices/system/cpu/cpu17/topology/die_id:0
+/sys/devices/system/cpu/cpu18/topology/die_id:0
 /sys/devices/system/cpu/cpu180/topology/die_id:1
 /sys/devices/system/cpu/cpu181/topology/die_id:1
 /sys/devices/system/cpu/cpu182/topology/die_id:1
@@ -97,7 +99,7 @@
 /sys/devices/system/cpu/cpu187/topology/die_id:1
 /sys/devices/system/cpu/cpu188/topology/die_id:1
 /sys/devices/system/cpu/cpu189/topology/die_id:1
-/sys/devices/system/cpu/cpu18/topology/die_id:0
+/sys/devices/system/cpu/cpu19/topology/die_id:0
 /sys/devices/system/cpu/cpu190/topology/die_id:1
 /sys/devices/system/cpu/cpu191/topology/die_id:1
 /sys/devices/system/cpu/cpu192/topology/die_id:1
@@ -108,8 +110,8 @@
 /sys/devices/system/cpu/cpu197/topology/die_id:1
 /sys/devices/system/cpu/cpu198/topology/die_id:1
 /sys/devices/system/cpu/cpu199/topology/die_id:1
-/sys/devices/system/cpu/cpu19/topology/die_id:0
-/sys/devices/system/cpu/cpu1/topology/die_id:0
+/sys/devices/system/cpu/cpu2/topology/die_id:0
+/sys/devices/system/cpu/cpu20/topology/die_id:0
 /sys/devices/system/cpu/cpu200/topology/die_id:1
 /sys/devices/system/cpu/cpu201/topology/die_id:1
 /sys/devices/system/cpu/cpu202/topology/die_id:1
@@ -120,7 +122,7 @@
 /sys/devices/system/cpu/cpu207/topology/die_id:1
 /sys/devices/system/cpu/cpu208/topology/die_id:1
 /sys/devices/system/cpu/cpu209/topology/die_id:1
-/sys/devices/system/cpu/cpu20/topology/die_id:0
+/sys/devices/system/cpu/cpu21/topology/die_id:0
 /sys/devices/system/cpu/cpu210/topology/die_id:1
 /sys/devices/system/cpu/cpu211/topology/die_id:1
 /sys/devices/system/cpu/cpu212/topology/die_id:1
@@ -131,12 +133,11 @@
 /sys/devices/system/cpu/cpu217/topology/die_id:1
 /sys/devices/system/cpu/cpu218/topology/die_id:1
 /sys/devices/system/cpu/cpu219/topology/die_id:1
-/sys/devices/system/cpu/cpu21/topology/die_id:0
+/sys/devices/system/cpu/cpu22/topology/die_id:0
 /sys/devices/system/cpu/cpu220/topology/die_id:1
 /sys/devices/system/cpu/cpu221/topology/die_id:1
 /sys/devices/system/cpu/cpu222/topology/die_id:1
 /sys/devices/system/cpu/cpu223/topology/die_id:1
-/sys/devices/system/cpu/cpu22/topology/die_id:0
 /sys/devices/system/cpu/cpu23/topology/die_id:0
 /sys/devices/system/cpu/cpu24/topology/die_id:0
 /sys/devices/system/cpu/cpu25/topology/die_id:0
@@ -144,7 +145,7 @@
 /sys/devices/system/cpu/cpu27/topology/die_id:0
 /sys/devices/system/cpu/cpu28/topology/die_id:0
 /sys/devices/system/cpu/cpu29/topology/die_id:0
-/sys/devices/system/cpu/cpu2/topology/die_id:0
+/sys/devices/system/cpu/cpu3/topology/die_id:0
 /sys/devices/system/cpu/cpu30/topology/die_id:0
 /sys/devices/system/cpu/cpu31/topology/die_id:0
 /sys/devices/system/cpu/cpu32/topology/die_id:0
@@ -155,7 +156,7 @@
 /sys/devices/system/cpu/cpu37/topology/die_id:0
 /sys/devices/system/cpu/cpu38/topology/die_id:0
 /sys/devices/system/cpu/cpu39/topology/die_id:0
-/sys/devices/system/cpu/cpu3/topology/die_id:0
+/sys/devices/system/cpu/cpu4/topology/die_id:0
 /sys/devices/system/cpu/cpu40/topology/die_id:0
 /sys/devices/system/cpu/cpu41/topology/die_id:0
 /sys/devices/system/cpu/cpu42/topology/die_id:0
@@ -166,7 +167,7 @@
 /sys/devices/system/cpu/cpu47/topology/die_id:0
 /sys/devices/system/cpu/cpu48/topology/die_id:0
 /sys/devices/system/cpu/cpu49/topology/die_id:0
-/sys/devices/system/cpu/cpu4/topology/die_id:0
+/sys/devices/system/cpu/cpu5/topology/die_id:0
 /sys/devices/system/cpu/cpu50/topology/die_id:0
 /sys/devices/system/cpu/cpu51/topology/die_id:0
 /sys/devices/system/cpu/cpu52/topology/die_id:0
@@ -177,7 +178,7 @@
 /sys/devices/system/cpu/cpu57/topology/die_id:1
 /sys/devices/system/cpu/cpu58/topology/die_id:1
 /sys/devices/system/cpu/cpu59/topology/die_id:1
-/sys/devices/system/cpu/cpu5/topology/die_id:0
+/sys/devices/system/cpu/cpu6/topology/die_id:0
 /sys/devices/system/cpu/cpu60/topology/die_id:1
 /sys/devices/system/cpu/cpu61/topology/die_id:1
 /sys/devices/system/cpu/cpu62/topology/die_id:1
@@ -188,7 +189,7 @@
 /sys/devices/system/cpu/cpu67/topology/die_id:1
 /sys/devices/system/cpu/cpu68/topology/die_id:1
 /sys/devices/system/cpu/cpu69/topology/die_id:1
-/sys/devices/system/cpu/cpu6/topology/die_id:0
+/sys/devices/system/cpu/cpu7/topology/die_id:0
 /sys/devices/system/cpu/cpu70/topology/die_id:1
 /sys/devices/system/cpu/cpu71/topology/die_id:1
 /sys/devices/system/cpu/cpu72/topology/die_id:1
@@ -199,7 +200,7 @@
 /sys/devices/system/cpu/cpu77/topology/die_id:1
 /sys/devices/system/cpu/cpu78/topology/die_id:1
 /sys/devices/system/cpu/cpu79/topology/die_id:1
-/sys/devices/system/cpu/cpu7/topology/die_id:0
+/sys/devices/system/cpu/cpu8/topology/die_id:0
 /sys/devices/system/cpu/cpu80/topology/die_id:1
 /sys/devices/system/cpu/cpu81/topology/die_id:1
 /sys/devices/system/cpu/cpu82/topology/die_id:1
@@ -210,7 +211,7 @@
 /sys/devices/system/cpu/cpu87/topology/die_id:1
 /sys/devices/system/cpu/cpu88/topology/die_id:1
 /sys/devices/system/cpu/cpu89/topology/die_id:1
-/sys/devices/system/cpu/cpu8/topology/die_id:0
+/sys/devices/system/cpu/cpu9/topology/die_id:0
 /sys/devices/system/cpu/cpu90/topology/die_id:1
 /sys/devices/system/cpu/cpu91/topology/die_id:1
 /sys/devices/system/cpu/cpu92/topology/die_id:1
@@ -221,8 +222,9 @@
 /sys/devices/system/cpu/cpu97/topology/die_id:1
 /sys/devices/system/cpu/cpu98/topology/die_id:1
 /sys/devices/system/cpu/cpu99/topology/die_id:1
-/sys/devices/system/cpu/cpu9/topology/die_id:0
 /sys/devices/system/cpu/cpu0/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu1/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu10/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu100/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu101/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu102/topology/die_cpus_list:56-111,168-223
@@ -233,7 +235,7 @@
 /sys/devices/system/cpu/cpu107/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu108/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu109/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu10/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu11/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu110/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu111/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu112/topology/die_cpus_list:0-55,112-167
@@ -244,7 +246,7 @@
 /sys/devices/system/cpu/cpu117/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu118/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu119/topology/die_cpus_list:0-55,112-167
-/sys/devices/system/cpu/cpu11/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu12/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu120/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu121/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu122/topology/die_cpus_list:0-55,112-167
@@ -255,7 +257,7 @@
 /sys/devices/system/cpu/cpu127/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu128/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu129/topology/die_cpus_list:0-55,112-167
-/sys/devices/system/cpu/cpu12/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu13/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu130/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu131/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu132/topology/die_cpus_list:0-55,112-167
@@ -266,7 +268,7 @@
 /sys/devices/system/cpu/cpu137/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu138/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu139/topology/die_cpus_list:0-55,112-167
-/sys/devices/system/cpu/cpu13/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu14/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu140/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu141/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu142/topology/die_cpus_list:0-55,112-167
@@ -277,7 +279,7 @@
 /sys/devices/system/cpu/cpu147/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu148/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu149/topology/die_cpus_list:0-55,112-167
-/sys/devices/system/cpu/cpu14/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu15/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu150/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu151/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu152/topology/die_cpus_list:0-55,112-167
@@ -288,7 +290,7 @@
 /sys/devices/system/cpu/cpu157/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu158/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu159/topology/die_cpus_list:0-55,112-167
-/sys/devices/system/cpu/cpu15/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu16/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu160/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu161/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu162/topology/die_cpus_list:0-55,112-167
@@ -299,7 +301,7 @@
 /sys/devices/system/cpu/cpu167/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu168/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu169/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu16/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu17/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu170/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu171/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu172/topology/die_cpus_list:56-111,168-223
@@ -310,7 +312,7 @@
 /sys/devices/system/cpu/cpu177/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu178/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu179/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu17/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu18/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu180/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu181/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu182/topology/die_cpus_list:56-111,168-223
@@ -321,7 +323,7 @@
 /sys/devices/system/cpu/cpu187/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu188/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu189/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu18/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu19/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu190/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu191/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu192/topology/die_cpus_list:56-111,168-223
@@ -332,8 +334,8 @@
 /sys/devices/system/cpu/cpu197/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu198/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu199/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu19/topology/die_cpus_list:0-55,112-167
-/sys/devices/system/cpu/cpu1/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu2/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu20/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu200/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu201/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu202/topology/die_cpus_list:56-111,168-223
@@ -344,7 +346,7 @@
 /sys/devices/system/cpu/cpu207/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu208/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu209/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu20/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu21/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu210/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu211/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu212/topology/die_cpus_list:56-111,168-223
@@ -355,12 +357,11 @@
 /sys/devices/system/cpu/cpu217/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu218/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu219/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu21/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu22/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu220/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu221/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu222/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu223/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu22/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu23/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu24/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu25/topology/die_cpus_list:0-55,112-167
@@ -368,7 +369,7 @@
 /sys/devices/system/cpu/cpu27/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu28/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu29/topology/die_cpus_list:0-55,112-167
-/sys/devices/system/cpu/cpu2/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu3/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu30/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu31/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu32/topology/die_cpus_list:0-55,112-167
@@ -379,7 +380,7 @@
 /sys/devices/system/cpu/cpu37/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu38/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu39/topology/die_cpus_list:0-55,112-167
-/sys/devices/system/cpu/cpu3/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu4/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu40/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu41/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu42/topology/die_cpus_list:0-55,112-167
@@ -390,7 +391,7 @@
 /sys/devices/system/cpu/cpu47/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu48/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu49/topology/die_cpus_list:0-55,112-167
-/sys/devices/system/cpu/cpu4/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu5/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu50/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu51/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu52/topology/die_cpus_list:0-55,112-167
@@ -401,7 +402,7 @@
 /sys/devices/system/cpu/cpu57/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu58/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu59/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu5/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu6/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu60/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu61/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu62/topology/die_cpus_list:56-111,168-223
@@ -412,7 +413,7 @@
 /sys/devices/system/cpu/cpu67/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu68/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu69/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu6/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu7/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu70/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu71/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu72/topology/die_cpus_list:56-111,168-223
@@ -423,7 +424,7 @@
 /sys/devices/system/cpu/cpu77/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu78/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu79/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu7/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu8/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu80/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu81/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu82/topology/die_cpus_list:56-111,168-223
@@ -434,7 +435,7 @@
 /sys/devices/system/cpu/cpu87/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu88/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu89/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu8/topology/die_cpus_list:0-55,112-167
+/sys/devices/system/cpu/cpu9/topology/die_cpus_list:0-55,112-167
 /sys/devices/system/cpu/cpu90/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu91/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu92/topology/die_cpus_list:56-111,168-223
@@ -445,4 +446,3 @@
 /sys/devices/system/cpu/cpu97/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu98/topology/die_cpus_list:56-111,168-223
 /sys/devices/system/cpu/cpu99/topology/die_cpus_list:56-111,168-223
-/sys/devices/system/cpu/cpu9/topology/die_cpus_list:0-55,112-167
