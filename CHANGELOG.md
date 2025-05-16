@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Remove forgotted debug print.
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.35] - 2025-05-16
+### Fixed
+ - Remove forgotted debug print.
 
 ## [1.5.34] - 2025-05-16
 ### Fixed
