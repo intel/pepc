@@ -292,7 +292,7 @@ def build_arguments_parser():
     # Create parser for the 'cpu-hotplug info' command.
     #
     text = "Display the list of online and offline CPUs."
-    text = "Display the list of online and offline CPUs. " + man_msg
+    descr = "Display the list of online and offline CPUs. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cpu_hotplug_info_command)
 
