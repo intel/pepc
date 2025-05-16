@@ -1,3 +1,10 @@
+pepc (1.5.34) unstable; urgency=low
+
+  * Fix 'pepc cstates info --min-oper-freq' reporting incorrect numbers.
+  * Changed '--frequencies' mechanism from docs to sysfs.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 16 May 2025 00:00:00 +0200
+
 pepc (1.5.33) unstable; urgency=low
 
   * Improve man pages, documentation, add a couple of new documents about

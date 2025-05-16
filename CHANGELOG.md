@@ -5,11 +5,15 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix 'pepc cstates info --min-oper-freq' reporting incorrect numbers.
 ### Added
 ### Removed
- - Changed '--frequencies' mechanism from docs to sysfs.
 ### Changed
+
+## [1.5.34] - 2025-05-16
+### Fixed
+ - Fix 'pepc cstates info --min-oper-freq' reporting incorrect numbers.
+### Removed
+ - Changed '--frequencies' mechanism from docs to sysfs.
 
 ## [1.5.33] - 2025-05-06
 ### Changed
