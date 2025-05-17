@@ -187,8 +187,10 @@ class ArgsParser(argparse.ArgumentParser):
         self.add_argument("-h", dest="help", action="help", help=text)
         text = "Be quiet."
         self.add_argument("-q", dest="quiet", action="store_true", help=text)
-        text = "Print debugging information."
-        self.add_argument("-d", dest="debug", action="store_true", help=text)
+        text = """Print debugging information. Optionally, is possible to specify the module names
+        for which debug messages need to be enabled."""
+        self.add_argument("-d", dest="debug", action="store", nargs='?', const="all",
+                          metavar="MODNAME[,MODNAME1,...]", help=text)
         if version:
             text = "Print version and exit."
             self.add_argument("--version", action="version", help=text, version=version)

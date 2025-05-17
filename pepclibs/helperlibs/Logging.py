@@ -25,6 +25,11 @@ except ImportError:
     colorama_imported = False
 from pepclibs.helperlibs.Exceptions import Error
 
+# Filter for debug log messages based on module name.
+#   * all: A special value meaning not to filter any messages.
+#   * <module-name>: The name of the module from which the message was made.
+DEBUG_MODULE_NAMES: set[str] = set()
+
 # Log levels.
 #   * INFO: No prefixes, just the message.
 #   * NOTICE: An INFO message, but with a prefix.
@@ -188,6 +193,12 @@ class _MyFilter(logging.Filter):
             bool: True if the log level of the record is in the allowed levels, False otherwise.
         """
 
+        if DEBUG_MODULE_NAMES and record.levelno == DEBUG:
+            for modname in ["all", record.name.rsplit(".", 1)[-1]]:
+                if modname in DEBUG_MODULE_NAMES:
+                    break
+            else:
+                return False
         if record.levelno in self._let_go:
             return True
         return False

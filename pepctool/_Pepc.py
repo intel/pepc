@@ -935,6 +935,9 @@ def main():
     try:
         args = parse_arguments()
 
+        if args.debug:
+            Logging.DEBUG_MODULE_NAMES = {e for e in args.debug.split(",") if e}
+
         if not getattr(args, "func", None):
             _LOG.error("please, run '%s -h' for help", TOOLNAME)
             return -1
