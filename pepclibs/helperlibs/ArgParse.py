@@ -25,7 +25,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete_imported = False
 
-from pepclibs.helperlibs import DamerauLevenshtein
+from pepclibs.helperlibs import DamerauLevenshtein, Trivial, Logging
 from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
 
 # The class type returned by the 'add_subparsers()' method of the arguments classes. Even though the
@@ -187,22 +187,37 @@ class ArgsParser(argparse.ArgumentParser):
         self.add_argument("-h", dest="help", action="help", help=text)
         text = "Be quiet."
         self.add_argument("-q", dest="quiet", action="store_true", help=text)
-        text = """Print debugging information. Optionally, is possible to specify the module names
-        for which debug messages need to be enabled."""
-        self.add_argument("-d", dest="debug", action="store", nargs='?', const="all",
+        text = "Print debugging information."
+        self.add_argument("-d", dest="debug", action="store", nargs="?", const="all",
                           metavar="MODNAME[,MODNAME1,...]", help=text)
         if version:
             text = "Print version and exit."
             self.add_argument("--version", action="version", help=text, version=version)
 
-    def parse_args(self, *args, **kwargs): # pylint: disable=signature-differs
-        """Verify that '-d' and '-q' are not used at the same time."""
-
-        args = super().parse_args(*args, **kwargs)
+    def _check_arguments(self, args):
+        """
+        Check validity of common arguments.
+        """
 
         if args.quiet and args.debug:
             raise Error("-q and -d cannot be used together")
 
+    def _configure_debug_logging(self, args):
+        """
+        Handle the '-d' argument, which can include a comma-separated list of module names to allow
+        debugging messages from.
+        """
+
+        if args.debug and args.debug != "all":
+            modnames = Trivial.split_csv_line(args.debug)
+            Logging.DEBUG_MODULE_NAMES = set(modnames)
+
+    def parse_args(self, *args, **kwargs): # pylint: disable=signature-differs
+        """Verify that '-d' and '-q' are not used at the same time."""
+
+        args = super().parse_args(*args, **kwargs)
+        self._check_arguments(args)
+        self._configure_debug_logging(args)
         return args
 
     def add_subparsers(self, *args, **kwargs):

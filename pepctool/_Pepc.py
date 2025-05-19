@@ -130,6 +130,10 @@ class PepcArgsParser(ArgParse.ArgsParser):
         """Parse unknown arguments from ArgParse class."""
 
         args, uargs = super().parse_known_args(*args, **kwargs)
+
+        self._check_arguments(args)
+        self._configure_debug_logging(args)
+
         if not uargs:
             return args
 
@@ -934,9 +938,6 @@ def main():
 
     try:
         args = parse_arguments()
-
-        if args.debug:
-            Logging.DEBUG_MODULE_NAMES = {e for e in args.debug.split(",") if e}
 
         if not getattr(args, "func", None):
             _LOG.error("please, run '%s -h' for help", TOOLNAME)

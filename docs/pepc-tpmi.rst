@@ -48,8 +48,9 @@ General options
    Be quiet.
 
 **-d** *[MODNAME[,MODNAME1,...]]*
-   Print debugging information. Optionally, is possible to specify the list of comma-separated
-   module names for which debug messages need to be enabled.
+   Print debugging information. By default, all debug messages are shown. If a comma-separated list
+   of module names is provided, only debug messages from those modules will be displayed.
+
 
 **--version**
    Print version and exit.
