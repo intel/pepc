@@ -636,7 +636,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     # Failed to provide additional help, just raise the original exception.
                     raise type(err)(str(err)) from exc
 
-                if hwp == "on":
+                if hwp:
                     raise ErrorNotSupported(f"'intel_pstate' driver does not support \"off\" mode "
                                             f"when hardware power management (HWP) is enabled:\n"
                                             f"{err.indent(2)}") from err
@@ -1702,7 +1702,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_max_turbo_freq_trl(cpus)
 
-    def get_hwp(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
+    def get_hwp(self, cpus: NumsType) -> Generator[tuple[int, bool], None, None]:
         """
         Yield the hardware power management (HWP) status for specified CPUs.
 
@@ -1710,8 +1710,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to get the HWP status for.
 
         Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is the HWP status
-            ("on" or "off").
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is the HWP status (True if
+            HWP is enabled, False otherwise).
 
         Raises:
             ErrorNotSupported: If the platform does not support HWP.
