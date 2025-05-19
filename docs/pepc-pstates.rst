@@ -20,8 +20,9 @@ General options
 **-q**
    Be quiet.
 
-**-d**
-   Print debugging information.
+**-d** *[MODNAME[,MODNAME1,...]]*
+   Print debugging information. Optionally, is possible to specify the list of comma-separated
+   module names for which debug messages need to be enabled.
 
 **--version**
    Print version and exit.
