@@ -27,11 +27,13 @@ General options
    While the '-d' option enables all debug messages, this option limits them to the specified
    modules. For example, '-d --debug-modules MSR' will only show debug messages from the 'MSR'
    module.
+
 **--version**
    Print the version number and exit.
 
 **-H** *HOSTNAME*, **--host** *HOSTNAME*
-   User name for SSH login to the remote host. Defaults to 'root.
+   Host name or IP address of the target system. The pepc command will be executed on this system
+   using SSH, instead of running it locally. If not specified, the command will be run locally.
 
 **-U** *USERNAME*, **--username** *USERNAME*
    Username for SSH login to the remote host. Defaults to 'root'.

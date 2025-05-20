@@ -33,7 +33,8 @@ General options
    Print the version number and exit.
 
 **-H** *HOSTNAME*, **--host** *HOSTNAME*
-   User name for SSH login to the remote host. Defaults to 'root.
+   Host name or IP address of the target system. The pepc command will be executed on this system
+   using SSH, instead of running it locally. If not specified, the command will be run locally.
 
 **-U** *USERNAME*, **--username** *USERNAME*
    Name of the user to use for logging into the remote host over SSH. The default user name is
