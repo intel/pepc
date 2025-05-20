@@ -273,16 +273,18 @@ class SSHOptsAwareArgsParser(ArgsParser):
     makes it possible.
     """
 
-    def parse_args(self, args=None, **kwargs): # pylint: disable=signature-differs, arguments-differ
+    def parse_args(self, *args, **kwargs):
         """
         Re-structure the input arguments ('args') so that SSH options always go after the
         subcommand.
         """
 
+        args_orig: list[str]
+
         if args is None:
-            args = sys.argv[1:]
+            args_orig = sys.argv[1:]
         else:
-            args = list(args)
+            args_orig = list(*args)
 
         ssh_opts = set()
         for opt in SSH_OPTIONS:
@@ -295,7 +297,7 @@ class SSHOptsAwareArgsParser(ArgsParser):
         ssh_args = []
         non_ssh_args = []
         # Find SSH and non-SSH arguments before sub-command and save them in separate lists.
-        for idx, arg in enumerate(args):
+        for idx, arg in enumerate(args_orig):
             if arg in ssh_opts:
                 ssh_arg_idx = idx + 1
                 ssh_args.append(arg)
@@ -308,4 +310,4 @@ class SSHOptsAwareArgsParser(ArgsParser):
             non_ssh_args.append(arg)
 
         args_new = non_ssh_args + ssh_args
-        return super().parse_args(args=args_new, **kwargs)
+        return super().parse_args(*args_new, **kwargs)
