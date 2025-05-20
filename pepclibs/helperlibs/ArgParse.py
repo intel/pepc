@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module contains helpers related to parsing command-line arguments.
+Helpful classes extending 'argparse.ArgumentParser' class functionality.
 """
 
 # TODO: finish adding type hints to this module.
@@ -35,7 +35,7 @@ SubParsersType = argparse._SubParsersAction # pylint: disable=protected-access
 class SSHOptionsKwargsDictType(TypedDict, total=False):
     """
     The dictionary type representing the "kwargs" sub-dictionary of the SSH options definitions
-    dictionary ()'SSH_OPTIONS').
+    dictionary ('SSH_OPTIONS').
 
     Attributes:
         dest: The 'argparse' attribute name where the command line argument will be stored.
