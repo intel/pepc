@@ -13,7 +13,6 @@ Helpful classes extending 'argparse.ArgumentParser' class functionality.
 # TODO: finish adding type hints to this module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-import sys
 import types
 from typing import TypedDict
 import argparse
@@ -280,51 +279,3 @@ class ArgsParser(argparse.ArgumentParser):
                           f"similar argument is\n        {suggestion}"
 
         super().error(message)
-
-class SSHOptsAwareArgsParser(ArgsParser):
-    """
-    This class defines a parser that improves SSH options (see 'SSH_OPTIONS') handling by allowing
-    them to be used before and after sub-commands. Here is the usage scenario. A command has
-    sub-commands, and some of them support SSH options. For example, "toolname info -H my_host". But
-    it is convenient that the following works as well: "toolname -H my_host info". This class makes
-    makes it possible.
-    """
-
-    def parse_args(self, *args, **kwargs):
-        """
-        Re-structure the input arguments ('args') so that SSH options always go after the
-        subcommand.
-        """
-
-        args_orig: list[str]
-
-        if args is None:
-            args_orig = sys.argv[1:]
-        else:
-            args_orig = list(*args)
-
-        ssh_opts = set()
-        for opt in SSH_OPTIONS:
-            if "short" in opt:
-                ssh_opts.add(opt["short"])
-            if "long" in opt:
-                ssh_opts.add(opt["long"])
-
-        ssh_arg_idx = -1
-        ssh_args = []
-        non_ssh_args = []
-        # Find SSH and non-SSH arguments before sub-command and save them in separate lists.
-        for idx, arg in enumerate(args_orig):
-            if arg in ssh_opts:
-                ssh_arg_idx = idx + 1
-                ssh_args.append(arg)
-                continue
-            # We assume that every SSH option has an argument.
-            if ssh_arg_idx == idx:
-                ssh_args.append(arg)
-                continue
-
-            non_ssh_args.append(arg)
-
-        args_new = non_ssh_args + ssh_args
-        return super().parse_args(*args_new, **kwargs)

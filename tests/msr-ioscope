@@ -349,7 +349,7 @@ def _build_arguments_parser():
 
     text = f"""{TOOLNAME} - find out the I/O scope of writable MSRs. I/O scope is defined by the
                observability MSR value changes, not by the functional impact of the MSR."""
-    parser = ArgParse.SSHOptsAwareArgsParser(description=text, prog=TOOLNAME, ver=VERSION)
+    parser = ArgParse.ArgsParser(description=text, prog=TOOLNAME, ver=VERSION)
     ArgParse.add_ssh_options(parser)
 
     text = """MSR address or "all" to run tests for all writable MSRs supported by the 'pepc'

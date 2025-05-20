@@ -243,8 +243,7 @@ def build_arguments_parser():
     """A helper function which parses the input arguments."""
 
     text = f"{TOOLNAME} - Test data generator, for collecting and creating test data."
-    parser = ArgParse.SSHOptsAwareArgsParser(description=text, prog=TOOLNAME, ver=VERSION)
-
+    parser = ArgParse.ArgsParser(description=text, prog=TOOLNAME, ver=VERSION)
     ArgParse.add_ssh_options(parser)
 
     text = """Path to the directory to store the output of the commands at. Default value is the
