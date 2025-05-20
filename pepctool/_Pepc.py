@@ -27,6 +27,8 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, PStates, PMQoS, Power, CPUInfo
 from pepclibs._PropsClassBase import MECHANISMS
 
+from pepclibs.helperlibs.ArgParse import ArgTypedDict
+
 if sys.version_info < (3, 7):
     raise SystemExit("this tool requires python version 3.7 or higher")
 
@@ -35,7 +37,7 @@ TOOLNAME = "pepc"
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=TOOLNAME)
 
-_DATASET_OPTION = {
+_DATASET_OPTION: ArgTypedDict = {
     "short": "-D",
     "long":  "--dataset",
     "argcomplete": None,
@@ -46,7 +48,7 @@ _DATASET_OPTION = {
     },
 }
 
-_OVERRIDE_CPU_OPTION = {
+_OVERRIDE_CPU_OPTION: ArgTypedDict = {
     "short": None,
     "long":  "--override-cpu-model",
     "argcomplete": None,
@@ -59,94 +61,29 @@ _OVERRIDE_CPU_OPTION = {
     },
 }
 
-_LIST_MECHANISMS_OPTION = {
-    "short": None,
-    "long":  "--list-mechanisms",
-    "argcomplete": None,
-    "kwargs": {
-        "dest": "list_mechanisms",
-        "action": "store_true",
-        "help": """List all supported mechanisms and exit.""",
+_MECHANISMS_OPTIONS: list[ArgTypedDict] = [
+    {
+        "short": None,
+        "long":  "--list-mechanisms",
+        "argcomplete": None,
+        "kwargs": {
+            "dest": "list_mechanisms",
+            "action": "store_true",
+            "help": """List all supported mechanisms and exit.""",
+        },
     },
-}
-
-_CONFIG_MECHANISMS_OPTION = {
-    "short": "-m",
-    "long":  "--mechanisms",
-    "argcomplete": None,
-    "kwargs": {
-        "dest": "mechanisms",
-        "help": """Comma-separated list of allowed mechanisms names (e.g., 'sysfs' or 'msr'). Use
-                   '--list-mechanisms' to get all names. By default, use the best available
-                   mechanism is used.""",
+    {
+        "short": "-m",
+        "long":  "--mechanisms",
+        "argcomplete": None,
+        "kwargs": {
+            "dest": "mechanisms",
+            "help": """Comma-separated list of allowed mechanisms names (e.g., 'sysfs' or 'msr'). Use
+                    '--list-mechanisms' to get all names. By default, use the best available
+                    mechanism is used.""",
+        },
     },
-}
-
-class PepcArgsParser(ArgParse.ArgsParser):
-    """
-    The default argument parser does not allow defining "global" options, so that they are present
-    in every subcommand. For example, we want the SSH options to be available everywhere.
-    """
-
-    def add_option_from_dict(self, opt_info):
-        """
-        Add add a command-line option described by 'opt_info'. The arguments are as follows.
-          * opt_info - a dictionary describing the option to add.
-        """
-
-        args = []
-        if opt_info["short"]:
-            args.append(opt_info["short"])
-        if opt_info["long"]:
-            args.append(opt_info["long"])
-
-        arg = self.add_argument(*args, **opt_info["kwargs"])
-        if opt_info["argcomplete"] and argcomplete:
-            setattr(arg, "completer", getattr(argcomplete.completers, opt_info["argcomplete"]))
-
-    def _check_unknown_args(self, args, uargs, gargs):
-        """
-        Check unknown arguments 'uargs' for global arguments 'gargs' and add them to 'args'. This is
-        a workaround for implementing global arguments.
-        """
-
-        for opt in gargs:
-            if opt["short"] in uargs:
-                optname = opt["short"]
-            elif opt["long"] in uargs:
-                optname = opt["long"]
-            else:
-                continue
-
-            val_idx = uargs.index(optname) + 1
-            if len(uargs) <= val_idx or uargs[val_idx].startswith("-"):
-                raise Error(f"value required for argument '{optname}'")
-
-            setattr(args, opt["kwargs"]["dest"], uargs[val_idx])
-            uargs.remove(uargs[val_idx])
-            uargs.remove(optname)
-
-    def parse_args(self, *args, **kwargs): # pylint: disable=no-member
-        """Parse unknown arguments from ArgParse class."""
-
-        args, uargs = super().parse_known_args(*args, **kwargs)
-
-        self._check_arguments(args)
-        self._configure_debug_logging(args)
-
-        if not uargs:
-            return args
-
-        self._check_unknown_args(args, uargs, ArgParse.SSH_OPTIONS)
-        self._check_unknown_args(args, uargs, (_DATASET_OPTION,))
-
-        if uargs:
-            raise Error(f"unrecognized option(s): {' '.join(uargs)}")
-
-        if args.dataset and args.hostname != "localhost":
-            raise Error("can't use dataset on remote host")
-
-        return args
+]
 
 def _add_target_cpus_arguments(subpars, fmt, exclude=None):
     """
@@ -271,10 +208,10 @@ def build_arguments_parser():
     """Build and return the the command-line arguments parser object."""
 
     text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
-    parser = PepcArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
+    parser = ArgParse.ArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
 
     ArgParse.add_ssh_options(parser)
-    parser.add_option_from_dict(_DATASET_OPTION)
+    ArgParse.add_custom_options(parser, [_DATASET_OPTION])
 
     text = """Force colorized output even if the output stream is not a terminal (adds ANSI escape
               codes)."""
@@ -343,9 +280,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cstates_info_command)
 
-    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
-    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
-    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
+    ArgParse.add_ssh_options(subpars2)
+    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
@@ -368,9 +304,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cstates_config_command)
 
-    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
-    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
-    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
+    ArgParse.add_ssh_options(subpars2)
+    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure.")
 
@@ -403,9 +338,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_pstates_info_command)
 
-    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
-    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
-    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
+    ArgParse.add_ssh_options(subpars2)
+    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
@@ -423,9 +357,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_pstates_config_command)
 
-    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
-    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
-    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
+    ArgParse.add_ssh_options(subpars2)
+    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
 
@@ -491,9 +424,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_power_info_command)
 
-    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
-    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
-    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
+    ArgParse.add_ssh_options(subpars2)
+    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.",
                                exclude=power_exclude)
@@ -513,9 +445,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_power_config_command)
 
-    subpars2.add_option_from_dict(_OVERRIDE_CPU_OPTION)
-    subpars2.add_option_from_dict(_CONFIG_MECHANISMS_OPTION)
-    subpars2.add_option_from_dict(_LIST_MECHANISMS_OPTION)
+    ArgParse.add_ssh_options(subpars2)
+    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure power settings on.",
                                exclude=power_exclude)

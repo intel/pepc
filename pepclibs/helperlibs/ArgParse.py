@@ -32,24 +32,29 @@ from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
 # class is private, it is documented and will unlikely to change.
 SubParsersType = argparse._SubParsersAction # pylint: disable=protected-access
 
-class SSHOptionsKwargsDictType(TypedDict, total=False):
+class ArgKwargsTypedDict(TypedDict, total=False):
     """
-    The dictionary type representing the "kwargs" sub-dictionary of the SSH options definitions
-    dictionary ('SSH_OPTIONS').
+    The type of the "kwargs" sub-dictionary of the 'ArgDictType' dictionary type. It defines the
+    supported keyword arguments that are ultimately passed to the 'argparse.add_argument()' method.
 
     Attributes:
         dest: The 'argparse' attribute name where the command line argument will be stored.
         default: The default value for the argument.
+        metavar: The name of the argument in the help text.
+        action: The 'argparse' action to use for the argument. For example, 'store_true' or
+                'store_const'.
         help: A brief description of the argument.
     """
 
     dest: str
     default: str | int
+    metavar: str
+    action: str
     help: str
 
-class SSHOptionsDictType(TypedDict, total=False):
+class ArgTypedDict(TypedDict, total=False):
     """
-    A dictionary type the SSH options definitions dictionary ('SSH_OPTIONS').
+    A dictionary type the options definitions dictionary.
 
     Attributes:
         short: The short option name.
@@ -58,12 +63,12 @@ class SSHOptionsDictType(TypedDict, total=False):
         kwargs: Additional keyword arguments for 'argparse.add_argument()'.
     """
 
-    short: str
+    short: str | None
     long: str
     argcomplete: str | None
-    kwargs: SSHOptionsKwargsDictType
+    kwargs: ArgKwargsTypedDict
 
-SSH_OPTIONS: list[SSHOptionsDictType] = [
+SSH_OPTIONS: list[ArgTypedDict] = [
     {
         "short" : "-H",
         "long" : "--host",
@@ -107,18 +112,30 @@ SSH_OPTIONS: list[SSHOptionsDictType] = [
     },
 ]
 
-def add_ssh_options(parser, ssh_options=None):
+def add_custom_options(parser: argparse.ArgumentParser | ArgsParser, options: list[ArgTypedDict]):
     """
     Add the '--host', '--timeout' and other SSH-related options to argument parser object 'parser'.
     """
 
-    if not ssh_options:
-        ssh_options = SSH_OPTIONS
+    for opt in options:
+        args: tuple[str, ...]
 
-    for opt in ssh_options:
-        arg = parser.add_argument(opt["short"], opt["long"], **opt["kwargs"])
+        if opt["short"] is None:
+            args = (opt["long"], )
+        else:
+            args = (opt["short"], opt["long"])
+
+        arg = parser.add_argument(*args, **opt["kwargs"])
         if opt["argcomplete"] and argcomplete_imported:
             setattr(arg, "completer", getattr(argcomplete.completers, opt["argcomplete"]))
+
+def add_ssh_options(parser: argparse.ArgumentParser | ArgsParser):
+    """
+    Add the '--host', '--timeout' and other SSH-related options to argument parser object 'parser'.
+    """
+
+    # Add the SSH options to the parser.
+    add_custom_options(parser, SSH_OPTIONS)
 
 class OrderedArg(argparse.Action):
     """
