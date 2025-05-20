@@ -105,7 +105,7 @@ def get_pman(hostname: str,
 
     return pman
 
-def pman_or_local(pman: ProcessManagerType) -> ProcessManagerType:
+def pman_or_local(pman: ProcessManagerType | None) -> ProcessManagerType:
     """
     Return the provided process manager or a new 'LocalProcessManager' instance.
 
