@@ -75,7 +75,8 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         "kwargs" : {
             "dest" : "hostname",
             "default" : "localhost",
-            "help" : "User name for SSH login to the remote host. Defaults to 'root."
+            "help" : "Host name or IP address of the remote host to connect to over SSH and run "
+                     "the command on. Run the command on the local host if not specified."
         },
     },
     {
