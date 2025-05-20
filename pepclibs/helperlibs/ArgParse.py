@@ -10,11 +10,11 @@
 Helpful classes extending 'argparse.ArgumentParser' class functionality.
 """
 
-# TODO: finish adding type hints to this module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import types
-from typing import TypedDict, Iterable
+from typing import TypedDict, Iterable, Any, Sequence, cast
+from dataclasses import dataclass
 import argparse
 
 try:
@@ -25,7 +25,7 @@ except ImportError:
     argcomplete_imported = False
 
 from pepclibs.helperlibs import DamerauLevenshtein, Trivial, Logging
-from pepclibs.helperlibs.Exceptions import Error # pylint: disable=unused-import
+from pepclibs.helperlibs.Exceptions import Error
 
 # The class type returned by the 'add_subparsers()' method of the arguments classes. Even though the
 # class is private, it is documented and will unlikely to change.
@@ -112,6 +112,22 @@ SSH_OPTIONS: list[ArgTypedDict] = [
     },
 ]
 
+@dataclass
+class CommonArgumentsType:
+    """
+    The common command-line arguments.
+
+    Attributes:
+        quiet: Suppress non-essential output (-q option).
+        debug: Enable debugging output (-d option).
+        debug_modules: Comma-separated list modules for which to enable debugging output, or None
+                       to enable debugging for all modules (--debug-modules option).
+    """
+
+    quiet: bool
+    debug: bool
+    debug_modules: str | None
+
 def add_options(parser: argparse.ArgumentParser | ArgsParser, options: Iterable[ArgTypedDict]):
     """
     Add command line options to the given parser.
@@ -145,53 +161,79 @@ def add_ssh_options(parser: argparse.ArgumentParser | ArgsParser):
 
 class OrderedArg(argparse.Action):
     """
-    This action implements ordered arguments support. Sometimes the command line arguments order
-    matter, and this action can be used to preserve the order. It simply stores all the ordered
-    arguments in the 'oargs' attribute, which is a dictionary with keys being option names and
-    values being the option values.
+    Implement an argparse action to preserve the order of command-line arguments.
+
+    This action stores arguments and their values in the 'oargs' attribute of the namespace,
+    maintaining the order in which arguments are parsed. Use this when the order of arguments
+    matters.
+
+    Example:
+        parser.add_argument("--foo", action=OrderedArg)
+        parser.add_argument("--bar", action=OrderedArg)
+        args = parser.parse_args()
+        print(args.oargs)  # {'foo': 'foo_value', 'bar': 'bar_value'}
     """
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self,
+                 parser: argparse.ArgumentParser,
+                 namespace: argparse.Namespace,
+                 values: str | Sequence[Any] | None,
+                 option_string: str | None = None):
         """Append the ordered argument to the 'oargs' attribute."""
 
-        if not getattr(namespace, "oargs", None):
-            setattr(namespace, "oargs", {})
+        oargs: dict[str, Any]
+        if not hasattr(namespace, "oargs"):
+            oargs = {}
+            setattr(namespace, "oargs", oargs)
+        else:
+            oargs = getattr(namespace, "oargs")
+
+        oargs[self.dest] = values
 
         # Also add the standard attribute for compatibility.
         setattr(namespace, self.dest, values)
 
-        namespace.oargs[self.dest] = values
-
-def _add_parser(subparsers, *args, **kwargs):
+def _add_parser(subparsers: SubParsersType, *args: Any, **kwargs: Any) -> argparse.ArgumentParser:
     """
-    This function overrides the 'add_parser()' method of the 'subparsers' object. The 'subparsers'
-    object the action object returned by 'add_subparsers()'. The goal of this function is to remove
-    all newlines and extra white-spaces from the "description" keyword argument. Here is an example.
+    Override the 'add_parser()' method of a subparsers object to mangle the 'description' argument.
 
-    descr = "Long description\n   With newlines and white-spaces and possibly tabs."
-    subpars = subparsers.add_parser("subcommand", help="help", description=descr)
+    This function removes all newlines and extra whitespace from the 'description' keyword argument
+    before calling the original 'add_parser()' method. Unfortunately, a monkey-patch is has to be
+    used to override the 'add_parser()' method of the 'subparsers' object.
 
-    By default 'argparse' removes those newlines when the help is displayed. However, for some
-    reason when we generate man pages out of help text using the 'argparse-manpage' tool, the
-    newlines are not removed and the man page looks untidy.
+    Example:
+        subparsers = parser.add_subparsers()
+        descr = "Long description\n   With newlines and white-spaces and possibly tabs."
+        subparsers.add_parser("subcommand", help="help", description=descr)
 
-    So basically this is a workaround for that problem. We just override the 'add_parser()' method,
-    remove newlines and extra spaces from the description, and call the original 'add_parser()'
-    method.
+        Without this function, the 'description' would be displayed with newlines and extra spaces.
+        This function ensures that the 'description' is formatted correctly for display in help
+        text.
+
+    Args:
+        subparsers: The subparsers action object returned by 'add_subparsers()'.
+        *args: Positional arguments to pass to the original 'add_parser()' method.
+        **kwargs: Keyword arguments to pass to the original 'add_parser()' method.
+
+    Returns:
+        The 'ArgumentParser' instance created by the original 'add_parser()' method.
     """
 
     if "description" in kwargs:
         kwargs["description"] = " ".join(kwargs["description"].split())
-    return subparsers.__orig_add_parser(*args, **kwargs) # pylint: disable=protected-access
+
+    orig_add_parser = getattr(subparsers, "__orig_add_parser")
+    return orig_add_parser(*args, **kwargs)
 
 class ArgsParser(argparse.ArgumentParser):
     """
-    This class re-defines the 'error()' method of the 'argparse.ArgumentParser' class in order to
-    make it always print a hint about the '-h' option. It also overrides the 'add_argument()' method
-    to include the standard options like '-q' and '-d'.
+    Enhance 'argparse.ArgumentParser' with standard options and improved usability.
+      - Add and validate standard options, such  as '-h' and '-q'.
+      - Remove extra whitespace and newlines from 'description' in 'add_parser()'.
+      - Override 'error()' to always suggest using '-h' for help and provide typo suggestions.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         """
         We assume all tools using this module support the '-q' and '-d' options. This helper adds
         them to the 'parser' argument parser object.
@@ -223,9 +265,15 @@ class ArgsParser(argparse.ArgumentParser):
             text = "Print the version number and exit."
             self.add_argument("--version", action="version", help=text, version=version)
 
-    def _check_arguments(self, args):
+    def _check_arguments(self, args: CommonArgumentsType):
         """
-        Check validity of common arguments.
+        Validate the common command-line arguments.
+
+        Args:
+            args: The parsed command-line arguments.
+
+        Raises:
+            Error: If an invalid argument combination is detected.
         """
 
         if args.quiet and args.debug:
@@ -235,30 +283,41 @@ class ArgsParser(argparse.ArgumentParser):
             raise Error("-q and --debug_modules cannot be used together")
 
         if args.debug_modules and not args.debug:
-            raise Error("--debug_modules requires -d to be used")
+            raise Error("--debug-modules requires -d to be used")
 
-    def _configure_debug_logging(self, args):
+    def _configure_debug_logging(self, args: CommonArgumentsType):
         """
-        Handle the '--debug-modules' argument, which includes a comma-separated list of module names
-        to allow debugging messages from.
+        Parse the '--debug-modules' argument and enable debug logging for the specified modules.
+
+        Args:
+            args: The parsed command-line arguments.
         """
 
         if args.debug_modules:
             modnames = Trivial.split_csv_line(args.debug_modules)
             Logging.DEBUG_MODULE_NAMES = set(modnames)
 
-    def parse_args(self, *args, **kwargs): # pylint: disable=signature-differs
+    def parse_args(self, *args: Any, **kwargs: Any) -> argparse.Namespace: # type: ignore[override]
         """Verify that '-d' and '-q' are not used at the same time."""
 
-        args = super().parse_args(*args, **kwargs)
-        self._check_arguments(args)
-        self._configure_debug_logging(args)
-        return args
+        arguments = super().parse_args(*args, **kwargs)
 
-    def add_subparsers(self, *args, **kwargs):
+        args_dc = cast(CommonArgumentsType, arguments)
+        self._check_arguments(args_dc)
+        self._configure_debug_logging(args_dc)
+
+        return arguments
+
+    def add_subparsers(self, *args: Any, **kwargs: Any) -> SubParsersType:
         """
-        Create and return the subparsers action object with a customized 'add_parser()' method.
-        Refer to '_add_parser()' for details.
+        Create subparsers with a customized 'add_parser()' method.
+
+        Args:
+            *args: Positional arguments for 'add_subparsers'.
+            **kwargs: Keyword arguments for 'add_subparsers'.
+
+        Returns:
+            The subparsers action object.
         """
 
         subparsers = super().add_subparsers(*args, **kwargs)
@@ -267,22 +326,23 @@ class ArgsParser(argparse.ArgumentParser):
 
         return subparsers
 
-    def error(self, message):
+    def error(self, message: str):
         """
-        Print the error message and exit. The arguments are as follows.
-          * message - the error message to print.
+        Improve error messages from 'argparse.ArgumentParser'.
+
+        Args:
+            message: The original error message.
         """
 
-        # Check if the user only made a minor typo, and improve the message if they did.
         if "invalid choice: " not in message:
             message += "\nUse -h for help."
         else:
             offending, opts = message.split(" (choose from ")
             offending = offending.split("invalid choice: ")[1].strip("'")
-            opts = [opt.strip(")'") for opt in opts.split(", ")]
-            suggestion = DamerauLevenshtein.closest_match(offending, opts)
+            options = [opt.strip(")'") for opt in opts.split(", ")]
+            suggestion = DamerauLevenshtein.closest_match(offending, options)
             if suggestion:
                 message = f"bad argument '{offending}', use '{self.prog} -h'.\n\nThe most " \
-                          f"similar argument is\n        {suggestion}"
+                          f"similar argument is\n  {suggestion}"
 
         super().error(message)
