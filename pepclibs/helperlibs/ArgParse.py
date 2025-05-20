@@ -111,7 +111,7 @@ SSH_OPTIONS: list[ArgTypedDict] = [
     },
 ]
 
-def add_custom_options(parser: argparse.ArgumentParser | ArgsParser, options: list[ArgTypedDict]):
+def add_options(parser: argparse.ArgumentParser | ArgsParser, options: list[ArgTypedDict]):
     """
     Add the '--host', '--timeout' and other SSH-related options to argument parser object 'parser'.
     """
@@ -134,7 +134,7 @@ def add_ssh_options(parser: argparse.ArgumentParser | ArgsParser):
     """
 
     # Add the SSH options to the parser.
-    add_custom_options(parser, SSH_OPTIONS)
+    add_options(parser, SSH_OPTIONS)
 
 class OrderedArg(argparse.Action):
     """

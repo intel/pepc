@@ -211,7 +211,7 @@ def build_arguments_parser():
     parser = ArgParse.ArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
 
     ArgParse.add_ssh_options(parser)
-    ArgParse.add_custom_options(parser, [_DATASET_OPTION])
+    ArgParse.add_options(parser, [_DATASET_OPTION])
 
     text = """Force colorized output even if the output stream is not a terminal (adds ANSI escape
               codes)."""
@@ -281,7 +281,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=_cstates_info_command)
 
     ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
@@ -305,7 +305,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=_cstates_config_command)
 
     ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure.")
 
@@ -339,7 +339,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=_pstates_info_command)
 
     ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
@@ -358,7 +358,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=_pstates_config_command)
 
     ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
 
@@ -425,7 +425,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=_power_info_command)
 
     ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.",
                                exclude=power_exclude)
@@ -446,7 +446,7 @@ def build_arguments_parser():
     subpars2.set_defaults(func=_power_config_command)
 
     ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_custom_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure power settings on.",
                                exclude=power_exclude)
