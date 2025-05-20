@@ -19,15 +19,18 @@ General options
    Show a short help message and exit.
 
 **-q**
-   Be quiet.
+   Be quiet (print only improtant messages like warnings).
 
-**-d** *[MODNAME[,MODNAME1,...]]*
-   Print debugging information. By default, all debug messages are shown. If a comma-separated list
-   of module names is provided, only debug messages from those modules will be displayed.
+**-d**
+   Print debugging information.
 
+**--debug-modules** *MODNAME[,MODNAME1,...]*
+   While the '-d' option enables all debug messages, this option limits them to the specified
+   modules. For example, '-d --debug-modules MSR' will only show debug messages from the 'MSR'
+   module.
 
 **--version**
-   Print version and exit.
+   Print the version number and exit.
 
 **-H** *HOSTNAME*, **--host** *HOSTNAME*
    User name for SSH login to the remote host. Defaults to 'root.

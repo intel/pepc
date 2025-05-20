@@ -185,13 +185,19 @@ class ArgsParser(argparse.ArgumentParser):
 
         text = "Show this help message and exit."
         self.add_argument("-h", dest="help", action="help", help=text)
-        text = "Be quiet."
+
+        text = "Be quiet (print only improtant messages like warnings)."
         self.add_argument("-q", dest="quiet", action="store_true", help=text)
+
         text = "Print debugging information."
-        self.add_argument("-d", dest="debug", action="store", nargs="?", const="all",
-                          metavar="MODNAME[,MODNAME1,...]", help=text)
+        self.add_argument("-d", dest="debug", action="store_true", help=text)
+
+        text = "Print debugging information only from the specified modules."
+        self.add_argument("--debug-modules", action="store", metavar="MODNAME[,MODNAME1,...]",
+                          help=text)
+
         if version:
-            text = "Print version and exit."
+            text = "Print the version number and exit."
             self.add_argument("--version", action="version", help=text, version=version)
 
     def _check_arguments(self, args):
@@ -202,14 +208,20 @@ class ArgsParser(argparse.ArgumentParser):
         if args.quiet and args.debug:
             raise Error("-q and -d cannot be used together")
 
+        if args.quiet and args.debug_modules:
+            raise Error("-q and --debug_modules cannot be used together")
+
+        if args.debug_modules and not args.debug:
+            raise Error("--debug_modules requires -d to be used")
+
     def _configure_debug_logging(self, args):
         """
-        Handle the '-d' argument, which can include a comma-separated list of module names to allow
-        debugging messages from.
+        Handle the '--debug-modules' argument, which includes a comma-separated list of module names
+        to allow debugging messages from.
         """
 
-        if args.debug and args.debug != "all":
-            modnames = Trivial.split_csv_line(args.debug)
+        if args.debug_modules:
+            modnames = Trivial.split_csv_line(args.debug_modules)
             Logging.DEBUG_MODULE_NAMES = set(modnames)
 
     def parse_args(self, *args, **kwargs): # pylint: disable=signature-differs
