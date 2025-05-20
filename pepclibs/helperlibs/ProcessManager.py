@@ -128,7 +128,8 @@ def pman_or_local(pman: ProcessManagerType | None) -> ProcessManagerType:
 
     Returns:
         ProcessManagerType: The provided process manager object if it is not 'None', otherwise a
-        new instance of 'LocalProcessManager', wrapped into a "nullcontext" context manager.
+                            new instance of 'LocalProcessManager', wrapped into a "nullcontext"
+                            context manager.
     """
 
     if pman:
