@@ -14,7 +14,7 @@ Helpful classes extending 'argparse.ArgumentParser' class functionality.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import types
-from typing import TypedDict
+from typing import TypedDict, Iterable
 import argparse
 
 try:
@@ -112,9 +112,13 @@ SSH_OPTIONS: list[ArgTypedDict] = [
     },
 ]
 
-def add_options(parser: argparse.ArgumentParser | ArgsParser, options: list[ArgTypedDict]):
+def add_options(parser: argparse.ArgumentParser | ArgsParser, options: Iterable[ArgTypedDict]):
     """
-    Add the '--host', '--timeout' and other SSH-related options to argument parser object 'parser'.
+    Add command line options to the given parser.
+
+    Args:
+        parser: The argument parser object to which options will be added.
+        options: An iterable collection of option definition dictionaries.
     """
 
     for opt in options:
@@ -131,10 +135,12 @@ def add_options(parser: argparse.ArgumentParser | ArgsParser, options: list[ArgT
 
 def add_ssh_options(parser: argparse.ArgumentParser | ArgsParser):
     """
-    Add the '--host', '--timeout' and other SSH-related options to argument parser object 'parser'.
+    Add SSH-related command-line options to the given argument parser.
+
+    Args:
+        parser: The argument parser object to which SSH options will be added.
     """
 
-    # Add the SSH options to the parser.
     add_options(parser, SSH_OPTIONS)
 
 class OrderedArg(argparse.Action):
