@@ -57,7 +57,7 @@ class _MyFormatter(logging.Formatter):
     def __init__(self,
                  prefix: str | None = None,
                  prefix_debug: str | None = None,
-                 colors: dict[int, int] | None = None):
+                 colors: dict[int, str] | None = None):
         """
         Initialize the custom logging formatter.
 
@@ -229,7 +229,7 @@ class Logger(logging.Logger):
         self.info_stream = sys.stdout
         self.error_stream = sys.stderr
 
-        self._colors: dict[int, int] = {}
+        self._colors: dict[int, str] = {}
         self._seen_msgs: set = set()
         self._formatters: list[_MyFormatter] = []
 
