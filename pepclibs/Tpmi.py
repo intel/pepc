@@ -129,9 +129,10 @@ def _find_spec_dirs():
     path = os.getenv(_SPECS_PATH_ENVVAR)
     if path:
         path = Path(path)
-        if not path.exists():
+        if not path.is_dir():
             _LOG.warning("TPMI spec files path '%s' specified in the '%s' environment "
-                         "variable does not exist, ignoring it", path, _SPECS_PATH_ENVVAR)
+                         "variable does not exist or it is not a directory, ignoring it",
+                         path, _SPECS_PATH_ENVVAR)
         else:
             specdirs.append(path)
 
