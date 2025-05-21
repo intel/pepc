@@ -18,6 +18,9 @@ VERSION_REGEX='\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)'
 PEPC_FILE="$BASEDIR/pepctool/_Pepc.py"
 SPEC_FILE="$BASEDIR/rpm/pepc.spec"
 
+# The python packaging file.
+PYPROJECT_TOML="$BASEDIR/pyproject.toml"
+
 # The CHANGELOG.md file path.
 CHANGELOG_FILE="$BASEDIR/CHANGELOG.md"
 
@@ -106,9 +109,10 @@ ask_question "Did you update 'CHANGELOG.md'"
 "$CHANGELOG_MD_TO_DEBIAN" -o "$BASEDIR/debian/changelog" -p "pepc" -n "Artem Bityutskiy" \
                           -e "artem.bityutskiy@intel.com" "$CHANGELOG_FILE"
 
-# Change the tool version.
+# Update the tool version.
 sed -i -e "s/^_VERSION = \"$VERSION_REGEX\"$/_VERSION = \"$new_ver\"/" "$PEPC_FILE"
-# Change RPM package version.
+sed -i -e "s/^version = \"$VERSION_REGEX\"$/version = \"$new_ver\"/" "$PYPROJECT_TOML"
+# Update RPM package version.
 sed -i -e "s/^Version:\(\s\+\)$VERSION_REGEX$/Version:\1$new_ver/" "$SPEC_FILE"
 
 # Update the man pages.
