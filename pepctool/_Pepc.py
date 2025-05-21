@@ -210,14 +210,17 @@ def build_arguments_parser():
     text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
     parser = ArgParse.ArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
 
-    ArgParse.add_ssh_options(parser)
-    ArgParse.add_options(parser, [_DATASET_OPTION])
+    ArgParse.add_options(parser, ArgParse.SSH_OPTIONS + [_DATASET_OPTION])
 
     text = """Force colorized output even if the output stream is not a terminal (adds ANSI escape
               codes)."""
     parser.add_argument("--force-color", action="store_true", help=text)
     subparsers = parser.add_subparsers(title="commands", dest="a command")
     subparsers.required = True
+
+    ssh_options = ArgParse.SSH_OPTIONS + [_DATASET_OPTION]
+    ssh_mechanisms_options = ssh_options + _MECHANISMS_OPTIONS
+    all_options = ssh_mechanisms_options + [_OVERRIDE_CPU_OPTION]
 
     #
     # Create parser for the 'cpu-hotplug' command.
@@ -237,6 +240,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cpu_hotplug_info_command)
 
+    ArgParse.add_options(subpars2, ssh_options)
+
     #
     # Create parser for the 'cpu-hotplug online' command.
     #
@@ -244,6 +249,8 @@ def build_arguments_parser():
     descr = "Bring specified CPUs online. " + man_msg
     subpars2 = subparsers2.add_parser("online", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cpu_hotplug_online_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
 
     text = """List of CPUs to bring online. Specify individual CPU numbers or ranges, e.g.,
               '1-4,7,8,10-12' for CPUs 1 to 4, 7, 8, and 10 to 12. Use 'all' to specify all CPUs."""
@@ -256,6 +263,8 @@ def build_arguments_parser():
     descr = "Bring specified CPUs offline. " + man_msg
     subpars2 = subparsers2.add_parser("offline", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cpu_hotplug_offline_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to bring offline.")
 
@@ -280,8 +289,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cstates_info_command)
 
-    ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, all_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
@@ -304,8 +312,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_cstates_config_command)
 
-    ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, all_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure.")
 
@@ -338,8 +345,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_pstates_info_command)
 
-    ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, all_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
@@ -357,8 +363,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_pstates_config_command)
 
-    ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, all_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
 
@@ -383,6 +388,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_pmqos_info_command)
 
+    ArgParse.add_options(subpars2, ssh_mechanisms_options)
+
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
     text = """Print information in YAML format."""
@@ -398,6 +405,8 @@ def build_arguments_parser():
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_pmqos_config_command)
+
+    ArgParse.add_options(subpars2, ssh_mechanisms_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
 
@@ -424,8 +433,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_power_info_command)
 
-    ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, all_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.",
                                exclude=power_exclude)
@@ -445,8 +453,7 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_power_config_command)
 
-    ArgParse.add_ssh_options(subpars2)
-    ArgParse.add_options(subpars2, [_OVERRIDE_CPU_OPTION] + _MECHANISMS_OPTIONS)
+    ArgParse.add_options(subpars2, all_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure power settings on.",
                                exclude=power_exclude)
@@ -463,10 +470,15 @@ def build_arguments_parser():
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
     subparsers2.required = True
 
+    #
+    # Create parser for the 'aspm info' command.
+    #
     text = "Get PCI ASPM information."
     descr = "Get information about current PCI ASPM configuration. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_aspm_info_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
 
     text = """Display the current global PCI ASPM policy. The "default" policy indicates the
               system's default."""
@@ -481,10 +493,15 @@ def build_arguments_parser():
     text = "Retrieve the L1 ASPM status (on/off) for the PCI device specified by '--device'."
     subpars2.add_argument("--l1-aspm", action=ArgParse.OrderedArg, nargs=0, help=text)
 
+    #
+    # Create parser for the 'aspm config' command.
+    #
     text = "Change PCI ASPM configuration."
     descr = "Change PCI ASPM configuration. " + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_aspm_config_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
 
     text = """Set the global PCI ASPM policy. Use "default" to reset the policy to the system's
               default setting."""
@@ -508,12 +525,17 @@ def build_arguments_parser():
     subparsers2 = subpars.add_subparsers(title="further sub-commands")
     subparsers2.required = True
 
+    #
+    # Create parser for the 'topology info' command.
+    #
     text = "Print CPU topology."
     descr = """Print CPU topology information. Note, the topology information for some offline CPUs
                may be unavailable, in these cases the number will be substituted with "?". Refer to
                'pepc-topology' manual page for more information."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_topology_info_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to print topology information for.")
 
@@ -551,6 +573,8 @@ def build_arguments_parser():
     subpars2 = subparsers2.add_parser("ls", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_ls_command)
 
+    ArgParse.add_options(subpars2, ssh_options)
+
     text = """Include information about packages, TPMI addresses, and instances."""
     subpars2.add_argument("-l", "--long", action="store_true", help=text)
 
@@ -564,6 +588,8 @@ def build_arguments_parser():
     descr = """Read TPMI registers. """ + man_msg
     subpars2 = subparsers2.add_parser("read", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_read_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
 
     text = """Comma-separated list of TPMI feature names to read the register(s) for (all features
               by default)."""
@@ -598,6 +624,8 @@ def build_arguments_parser():
     descr = """Write to a TPMI register. """ + man_msg
     subpars2 = subparsers2.add_parser("write", help=text, description=descr, epilog=man_msg)
     subpars2.set_defaults(func=_tpmi_write_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
 
     text = "Name of the TPMI feature the register belongs to."
     subpars2.add_argument("-F", "--feature", metavar="FEATURE", dest="fname", help=text,
