@@ -17,11 +17,14 @@ import contextlib
 import importlib.resources
 from typing import Generator, Sequence
 from pathlib import Path
-from pepclibs.helperlibs import ProcessManager
-from pepclibs.helperlibs.Exceptions import ErrorNotFound
+
+from pepclibs.helperlibs import ProcessManager, Logging
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 def get_project_data_envar(prjname: str) -> str:
     """
@@ -51,6 +54,36 @@ def get_project_helpers_envar(prjname: str) -> str:
 
     name = prjname.replace("-", "_").upper()
     return f"{name}_HELPERSPATH"
+
+def get_python_data_package_path(prjname: str) -> Path | None:
+    """
+    Return the path to the package directory of the given project. The path is in the standard
+    python "site-packages" directory of the running program.
+
+    Args:
+        prjname: Project name.
+
+    Returns:
+        Path to the package directory.
+    """
+
+    pkgname = prjname + "data"
+    pkgpath: Path | None = None
+    try:
+        with contextlib.suppress(ModuleNotFoundError):
+            # I could not find a simpler way of turning the 'MultiplexedPath' object returned by
+            # 'improtlib.resources.files()' into a 'Path' object. Just using 'str()' does not work.
+            # However, with 'joinpath()' it is possible to get a string, and then we can convert it
+            # to a 'Path' object.
+            multiplexed_path = importlib.resources.files(pkgname)
+            pkgpath = Path(str(multiplexed_path.joinpath(f"../{pkgname}")))
+        if pkgpath:
+            return pkgpath.resolve()
+    except OSError as err:
+        msg = Error(str(err)).indent(2)
+        raise Error(f"Failed to find the python package directory for '{pkgname}':{msg}") from err
+
+    return None
 
 def search_project_data(subpath: str,
                         datadir: str,
@@ -103,6 +136,7 @@ def search_project_data(subpath: str,
             candidate = Path(sys.argv[0]).parent.resolve().absolute() / datadir
             candidates.append(candidate)
             if wpman.is_dir(candidate):
+                _LOG.debug(f"Found '{datadir}' in the program directory: {candidate}")
                 yield_count += 1
                 yield candidate
 
@@ -118,19 +152,19 @@ def search_project_data(subpath: str,
                 candidate = Path(path) / datadir
                 candidates.append(candidate)
                 if wpman.is_dir(candidate):
+                    _LOG.debug(f"Found '{datadir}' in the '{envar}' environment variable: "
+                               f"{candidate}")
                     yield_count += 1
                     yield candidate
 
         if not wpman.is_remote:
             # Check the standard python "site-packages" directory of the running program.
-            pkgname = subpath + "data"
-            pkgdir: Path | None = None
-            with contextlib.suppress(ModuleNotFoundError):
-                pkgdir = Path(str(importlib.resources.files(pkgname)))
-            if pkgdir:
-                candidate = Path(pkgdir) / datadir
+            pkgpath = get_python_data_package_path(subpath)
+            if pkgpath:
+                candidate = pkgpath / datadir
                 candidates.append(candidate)
                 if wpman.is_dir(candidate):
+                    _LOG.debug(f"Found '{datadir}' in the python package directory: {candidate}")
                     yield_count += 1
                     yield candidate
 
@@ -140,6 +174,7 @@ def search_project_data(subpath: str,
             candidate = Path(venvdir) / f"share/{subpath}/{datadir}"
             candidates.append(candidate)
             if wpman.is_dir(candidate):
+                _LOG.debug(f"Found '{datadir}' in the virtual environment directory: {candidate}")
                 yield_count += 1
                 yield candidate
 
@@ -149,12 +184,14 @@ def search_project_data(subpath: str,
             candidate = Path(homedir) / f".local/share/{subpath}/{datadir}"
             candidates.append(candidate)
             if wpman.is_dir(candidate):
+                _LOG.debug(f"Found '{datadir}' in the home directory: {candidate}")
                 yield_count += 1
                 yield candidate
 
             candidate = Path(homedir) / f"share/{subpath}/{datadir}"
             candidates.append(candidate)
             if wpman.is_dir(candidate):
+                _LOG.debug(f"Found '{datadir}' in the home directory: {candidate}")
                 yield_count += 1
                 yield candidate
 
@@ -162,6 +199,7 @@ def search_project_data(subpath: str,
         candidate = Path(f"/usr/local/share/{subpath}/{datadir}")
         candidates.append(candidate)
         if wpman.is_dir(candidate):
+            _LOG.debug(f"Found '{datadir}' in the system directory: {candidate}")
             yield_count += 1
             yield candidate
 
@@ -169,6 +207,7 @@ def search_project_data(subpath: str,
         candidate = Path(f"/usr/share/{subpath}/{datadir}")
         candidates.append(candidate)
         if wpman.is_dir(candidate):
+            _LOG.debug(f"Found '{datadir}' in the system directory: {candidate}")
             yield_count += 1
             yield candidate
 
@@ -244,12 +283,17 @@ def get_project_data_search_descr(prjname: str, datadir: str) -> str:
 
     envar = get_project_data_envar(prjname)
 
-    paths = (f"{Path(sys.argv[0]).parent}/{datadir}",
-             f"${envar}/{datadir}",
-             f"$VIRTUAL_ENV/share/{prjname}/{datadir}",
-             f"$HOME/.local/share/{prjname}/{datadir}",
-             f"/usr/local/share/{prjname}/{datadir}",
-             f"/usr/share/{prjname}/{datadir}")
+    paths = [f"{Path(sys.argv[0]).parent}/{datadir} (local host only)",
+             f"${envar}/{datadir}"]
+
+    pkgpath = get_python_data_package_path(prjname)
+    if pkgpath:
+        paths.append(f"{pkgpath}/{datadir} (local host only)")
+
+    paths += [f"$VIRTUAL_ENV/share/{prjname}/{datadir}",
+              f"$HOME/.local/share/{prjname}/{datadir}",
+              f"/usr/local/share/{prjname}/{datadir}",
+              f"/usr/share/{prjname}/{datadir}"]
 
     return ", ".join(paths)
 
