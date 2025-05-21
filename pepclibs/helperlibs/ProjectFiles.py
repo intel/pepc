@@ -13,6 +13,8 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import os
 import sys
 import typing
+import contextlib
+import importlib.resources
 from typing import Generator, Sequence
 from pathlib import Path
 from pepclibs.helperlibs import ProcessManager
@@ -65,11 +67,15 @@ def search_project_data(subpath: str,
         2. Directories specified by environment variables in 'envars' (e.g., if an environment
            variable from 'envars' is set to '/foo/bar/', check '/foo/bar/<datadir>', and if it
            exists, yield the path).
-        3. '$VIRTUAL_ENV/share/<subpath>/<datadir>', if 'VIRTUAL_ENV' is set.
-        4. '$HOME/.local/share/<subpath>/<datadir>', if 'HOME' is set.
-        5. '$HOME/share/<subpath>/<datadir>', if 'HOME' is set.
-        6. '/usr/local/share/<subpath>/<datadir>'.
-        7. '/usr/share/<subpath>/<datadir>'.
+        3. Local host only: the standard python "site-packages" directory of the running program.
+           Search for python package '<subpath>data'. For example, if the program site-packages
+           directory is '/base_dir/lib/python3.12/site-packages', and 'subpath' is 'xyz', check
+           '/base_dir/lib/python3.12/<subpath>xyz', and if it exists, yield the path.
+        4. '$VIRTUAL_ENV/share/<subpath>/<datadir>', if 'VIRTUAL_ENV' is set.
+        5. '$HOME/.local/share/<subpath>/<datadir>', if 'HOME' is set.
+        6. '$HOME/share/<subpath>/<datadir>', if 'HOME' is set.
+        7. '/usr/local/share/<subpath>/<datadir>'.
+        8. '/usr/share/<subpath>/<datadir>'.
 
     Args:
         subpath: Sub-path to append to the searched paths (used only for some of the predefined
@@ -110,6 +116,19 @@ def search_project_data(subpath: str,
                     continue
 
                 candidate = Path(path) / datadir
+                candidates.append(candidate)
+                if wpman.is_dir(candidate):
+                    yield_count += 1
+                    yield candidate
+
+        if not wpman.is_remote:
+            # Check the standard python "site-packages" directory of the running program.
+            pkgname = subpath + "data"
+            pkgdir: Path | None = None
+            with contextlib.suppress(ModuleNotFoundError):
+                pkgdir = Path(str(importlib.resources.files(pkgname)))
+            if pkgdir:
+                candidate = Path(pkgdir) / datadir
                 candidates.append(candidate)
                 if wpman.is_dir(candidate):
                     yield_count += 1
@@ -188,6 +207,10 @@ def find_project_data(prjname: str,
         2. The directory specified by the '<prjname>_DATA_PATH' environment variable. (e.g., if the
            environment variable from is set to '/foo/bar/', check '/foo/bar/<datadir>', and if it
            exists, return the path).
+        3. Local host only: the standard python "site-packages" directory of the running program,
+           search for python package '<prjname>data'. For example, if the program site-packages
+           directory is '/base_dir/lib/python3.12/site-packages', and project name is 'foo', check
+           '/base_dir/lib/python3.12/foodata', and if it exists, yield the path.
         3. '$VIRTUAL_ENV/share/<subpath>/<datadir>', if 'VIRTUAL_ENV' is set.
         4. '$HOME/.local/share/<prjname>/'.
         5. '$HOME/share/<prjname>/'.
