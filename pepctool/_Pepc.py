@@ -11,6 +11,9 @@
 pepc - Power, Energy, and Performance Configuration tool for Linux.
 """
 
+# TODO: annotate and modernize this file
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import os
 import sys
 import argparse
@@ -22,15 +25,13 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
+from typing import Sequence, Any
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, PStates, PMQoS, Power, CPUInfo
 from pepclibs._PropsClassBase import MECHANISMS
 
 from pepclibs.helperlibs.ArgParse import ArgTypedDict
-
-if sys.version_info < (3, 7):
-    raise SystemExit("this tool requires python version 3.7 or higher")
 
 _VERSION = "1.5.35"
 TOOLNAME = "pepc"
@@ -204,6 +205,22 @@ def _add_config_subcommand_options(props, subpars):
         option = f"--{name.replace('_', '-')}"
         subpars.add_argument(option, **kwargs)
 
+class _PrintManPathAction(argparse.Action):
+    """
+    Custom argparse action to print the path to the manual pages directory and exit.
+    """
+
+    def __call__(self,
+                 parser: argparse.ArgumentParser,
+                 namespace: argparse.Namespace,
+                 values: str | Sequence[Any] | None,
+                 option_string: str | None = None):
+        """Print the path to the manual pages directory and exit."""
+
+        manpath = ProjectFiles.find_project_data(TOOLNAME, "man")
+        _LOG.info("%s", manpath)
+        parser.exit()
+
 def build_arguments_parser():
     """Build and return the the command-line arguments parser object."""
 
@@ -215,6 +232,12 @@ def build_arguments_parser():
     text = """Force colorized output even if the output stream is not a terminal (adds ANSI escape
               codes)."""
     parser.add_argument("--force-color", action="store_true", help=text)
+
+    text = f"""Print path to {TOOLNAME} manual pages directory and exit. This path can be added to
+               the 'MANPATH' environment variable to make the manual pages available to the 'man'
+               tool."""
+    parser.add_argument("--print-man-path", action=_PrintManPathAction, nargs=0, help=text)
+
     subparsers = parser.add_subparsers(title="commands", dest="a command")
     subparsers.required = True
 

@@ -64,6 +64,10 @@ General options
 **--force-color**
    Force colorized output even if the output stream is not a terminal (adds ANSI escape codes).
 
+**--print-man-path**
+  Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
+  environment variable to make the manual pages available to the 'man' tool.
+
 Subcommand *'info'*
 ===================
 
