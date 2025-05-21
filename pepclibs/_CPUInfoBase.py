@@ -15,7 +15,6 @@ Provide the base class for the 'CPUInfo.CPUInfo' class.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
-from tkinter import E
 from typing import Literal
 import contextlib
 from pathlib import Path
