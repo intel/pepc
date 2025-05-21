@@ -22,7 +22,7 @@ SPEC_FILE="$BASEDIR/rpm/pepc.spec"
 CHANGELOG_FILE="$BASEDIR/CHANGELOG.md"
 
 # Documentation directory and files.
-PEPC_MAN_DIR="$BASEDIR/docs/man1"
+PEPC_MAN_DIR="$BASEDIR/pepcdata/man/man1"
 PEPC_RST_FILES="$BASEDIR/docs/pepc-pstates.rst
                 $BASEDIR/docs/pepc-cstates.rst
                 $BASEDIR/docs/pepc-aspm.rst
