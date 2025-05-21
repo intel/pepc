@@ -1,106 +1,168 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""This module is a collection of miscellaneous functions that interact with project paths."""
+"""Provide API for fining project files."""
+
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
 import sys
+import typing
+from typing import Generator, Sequence
 from pathlib import Path
 from pepclibs.helperlibs import ProcessManager
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
-def get_project_data_envar(prjname):
+if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+def get_project_data_envar(prjname: str) -> str:
     """
-    Return the name of the environment variable that points to the data location of project
-    'prjname'.
+    Return the default environment variable name for the data directory of the given project.
+
+    Args:
+        prjname: Project name.
+
+    Returns:
+        Environment variable name for the project data directory.
     """
 
     name = prjname.replace("-", "_").upper()
     return f"{name}_DATA_PATH"
 
-def get_project_helpers_envar(prjname):
+def get_project_helpers_envar(prjname: str) -> str:
     """
-    Return the name of the environment variable that points to the helper programs location of
-    project 'prjname'.
+    Return the default environment variable name for the helper programs directory of the given
+    project.
+
+    Args:
+        prjname: Project name.
+
+    Returns:
+        Environment variable name for the project helper programs directory.
     """
 
     name = prjname.replace("-", "_").upper()
     return f"{name}_HELPERSPATH"
 
-def search_project_data(subpath, datadir, pman=None, what=None, envars=None):
+def search_project_data(subpath: str,
+                        datadir: str,
+                        pman: ProcessManagerType | None,
+                        what: str | None = None,
+                        envars: Sequence[str] | None = None) -> Generator[Path, None, None]:
     """
-    Search for project data directory (or sub-path) 'datadir' and yield the the results. The
-    arguments are as follows.
-      * subpath - a sub-path which will be appended to the searched paths (not all for them, though,
-                  see the search list description).
-      * datadir - name of the sub-directory containing the project data. This method basically
-                  searches for 'datadir' in a set of pre-defined paths (see below).
-      * pman - the process manager object for the host to find the data on (local host by
-               default).
-      * what - human-readable description of what is searched for, will be used in the error message
-               if an error occurs.
-      * envars - a collection of environment variable names defining the paths to search the
-                  project data in.
+    Search for a project data directory ('datadir') in a predefined set of locations and yield found
+    paths.
 
-    Check for 'datadir' in all of the following paths (and in the following order), and if it
-    exists, yield the path to it.
-      * in the directory the of the running program.
-      * in the directories specified by environment variables in 'envars'.
-      * in '$HOME/.local/share/<subpath>/', if it exists.
-      * in '$HOME/share/<subpath>/', if it exists.
-      * in '$VIRTUAL_ENV/share/<subpath>/', if the environment variable is defined and the directory
-            exists.
-      * in '/usr/local/share/<subpath>/', if it exists.
-      * in '/usr/share/<subpath>/', if it exists.
+    The search order is as follows:
+        1. Local host only: the directory of the running program (e.g., if the program is
+           '/bar/baz/foo', check '/bar/baz/<datadir>', if it exists, yield the path).
+        2. Directories specified by environment variables in 'envars' (e.g., if an environment
+           variable from 'envars' is set to '/foo/bar/', check '/foo/bar/<datadir>', and if it
+           exists, yield the path).
+        3. '$VIRTUAL_ENV/share/<subpath>/<datadir>', if 'VIRTUAL_ENV' is set.
+        4. '$HOME/.local/share/<subpath>/<datadir>', if 'HOME' is set.
+        5. '$HOME/share/<subpath>/<datadir>', if 'HOME' is set.
+        6. '/usr/local/share/<subpath>/<datadir>'.
+        7. '/usr/share/<subpath>/<datadir>'.
+
+    Args:
+        subpath: Sub-path to append to the searched paths (used only for some of the predefined
+                 locations).
+        datadir: Name of the sub-directory containing the project data, this sub-directory is
+                 searched for in the predefined locations.
+        pman: Process manager object for the host to search on (defaults to local host).
+        what: Human-readable description of what is being searched for, used in error messages.
+        envars: Collection of environment variable names that may define custom search paths.
+
+    Yields:
+        Path objects pointing to found directories matching the search criteria.
+
+    Raises:
+        ErrorNotFound: If the directory cannot be found in any of the searched locations.
     """
 
     searched = []
-    paths = []
-    num_found = 0
-
-    paths.append(Path(sys.argv[0]).parent.resolve().absolute())
+    yield_count = 0
+    candidates = []
 
     with ProcessManager.pman_or_local(pman) as wpman:
+        # Check the directory of the running program first.
+        if not wpman.is_remote:
+            candidate = Path(sys.argv[0]).parent.resolve().absolute() / datadir
+            candidates.append(candidate)
+            if wpman.is_dir(candidate):
+                yield_count += 1
+                yield candidate
+
         if envars:
+            # Check the directories specified by the environment variables.
             for envar in envars:
                 path = wpman.get_envar(envar)
                 if not path:
                     path = os.environ.get(envar)
-                if path:
-                    paths.append(Path(path))
+                if not path:
+                    continue
+
+                candidate = Path(path) / datadir
+                candidates.append(candidate)
+                if wpman.is_dir(candidate):
+                    yield_count += 1
+                    yield candidate
+
+        venvdir = wpman.get_envar("VIRTUAL_ENV")
+        if venvdir:
+            # Check the virtual environment directory.
+            candidate = Path(venvdir) / f"share/{subpath}/{datadir}"
+            candidates.append(candidate)
+            if wpman.is_dir(candidate):
+                yield_count += 1
+                yield candidate
 
         homedir = wpman.get_envar("HOME")
         if homedir:
-            paths.append(homedir / Path(f".local/share/{subpath}"))
-            paths.append(homedir / Path(f"share/{subpath}"))
-        venvdir = wpman.get_envar("VIRTUAL_ENV")
-        if venvdir:
-            paths.append(Path(venvdir) / Path(f"share/{subpath}"))
-        paths.append(Path(f"/usr/local/share/{subpath}"))
-        paths.append(Path(f"/usr/share/{subpath}"))
+            # Check the home directory.
+            candidate = Path(homedir) / f".local/share/{subpath}/{datadir}"
+            candidates.append(candidate)
+            if wpman.is_dir(candidate):
+                yield_count += 1
+                yield candidate
 
-        for path in paths:
-            path /= datadir
-            if wpman.exists(path):
-                num_found += 1
-                yield path
-            searched.append(path)
+            candidate = Path(homedir) / f"share/{subpath}/{datadir}"
+            candidates.append(candidate)
+            if wpman.is_dir(candidate):
+                yield_count += 1
+                yield candidate
+
+        # Check the system directories.
+        candidate = Path(f"/usr/local/share/{subpath}/{datadir}")
+        candidates.append(candidate)
+        if wpman.is_dir(candidate):
+            yield_count += 1
+            yield candidate
+
+        # Check the system directories.
+        candidate = Path(f"/usr/share/{subpath}/{datadir}")
+        candidates.append(candidate)
+        if wpman.is_dir(candidate):
+            yield_count += 1
+            yield candidate
+
+        if yield_count > 0:
+            return
 
         if not what:
             what = f"'{subpath}/{datadir}'"
-        searched = [str(s) for s in searched]
+        searched = [str(path) for path in candidates]
         dirs = " * " + "\n * ".join(searched)
 
-        if num_found > 0:
-            return
-
         if envars:
-            envar_msg = f"\nYou can specify custom location for {what} using "
+            envar_msg = f"\nIt is possible to specify a custom location for {what} using "
             if len(envars) == 1:
                 envar_msg += f"the '{envars[0]}' environment variable"
             else:
@@ -109,128 +171,176 @@ def search_project_data(subpath, datadir, pman=None, what=None, envars=None):
         else:
             envar_msg = ""
 
-        raise ErrorNotFound(f"cannot find {what}{wpman.hostmsg}, searched in the following "
+        raise ErrorNotFound(f"Cannot find {what}{wpman.hostmsg}, searched in the following "
                             f"locations:\n{dirs}.{envar_msg}")
 
-def find_project_data(prjname, datadir, pman=None, what=None):
+def find_project_data(prjname: str,
+                      datadir: str,
+                      pman: ProcessManagerType | None = None,
+                      what: str | None = None) -> Path:
     """
-    Find and return path to the 'datadir' data directory of project 'prjname'. The arguments are as
-    follows.
-      * prjname - name of the project the data belongs to.
-      * datadir - name of the sub-directory containing the project data. This method basically
-                  searches for 'datadir' in a set of pre-defined paths (see below).
-      * pman - the process manager object for the host to find the data on (local host by
-               default).
-      * what - human-readable description of what is searched for, will be used in the error message
-               if an error occurs.
+    Search for a project data directory ('datadir') in a predefined set of locations and return the
+    first found path.
 
-    Check for 'datadir' in all of the following paths (and in the following order), and if it
-    exists, stop searching and return the path.
-      * in the directory the of the running program.
-      * in the directory specified by the '<prjname>_DATA_PATH' environment variable.
-      * in '$HOME/.local/share/<prjname>/', if it exists.
-      * in '$HOME/share/<prjname>/', if it exists.
-      * in '/usr/local/share/<prjname>/', if it exists.
-      * in '/usr/share/<prjname>/', if it exists.
+    The search order is as follows:
+        1. Local host only: the directory of the running program (e.g., if the program is
+           '/bar/baz/foo', check '/bar/baz/<datadir>', if it exists, return the path).
+        2. The directory specified by the '<prjname>_DATA_PATH' environment variable. (e.g., if the
+           environment variable from is set to '/foo/bar/', check '/foo/bar/<datadir>', and if it
+           exists, return the path).
+        3. '$VIRTUAL_ENV/share/<subpath>/<datadir>', if 'VIRTUAL_ENV' is set.
+        4. '$HOME/.local/share/<prjname>/'.
+        5. '$HOME/share/<prjname>/'.
+        6. '/usr/local/share/<prjname>/'.
+        7. '/usr/share/<prjname>/'.
+
+    Args:
+        prjname: Name of the project whose data directory is being searched.
+        datadir: Name of the sub-directory containing the project data.
+        pman: Process manager object for the host to search on (defaults to local host).
+        what: Human-readable description of what is being searched for, used in error messages.
+
+    Returns:
+        Path to the found data directory.
     """
 
     return next(search_project_data(prjname, datadir, pman, what,
                                     envars=(get_project_data_envar(prjname),)))
 
-def get_project_data_search_descr(prjname, datadir):
+def get_project_data_search_descr(prjname: str, datadir: str) -> str:
     """
-    Return a human-readable string describing the locations the 'find_project_data()' function looks
-    for the data at. The arguments are as follows.
-      * prjname - name of the project the data belongs to.
-      * datadir - name of the sub-directory containing the project data.
+    Generate a human-readable description of the search locations for project data.
+
+    Args:
+        prjname: The name of the project whose data is being searched for.
+        datadir: The sub-directory name containing the project data.
+
+    Returns:
+        A string describing all possible data search locations (a comma-separated list of paths).
     """
 
     envar = get_project_data_envar(prjname)
+
     paths = (f"{Path(sys.argv[0]).parent}/{datadir}",
              f"${envar}/{datadir}",
+             f"$VIRTUAL_ENV/share/{prjname}/{datadir}",
              f"$HOME/.local/share/{prjname}/{datadir}",
              f"/usr/local/share/{prjname}/{datadir}",
              f"/usr/share/{prjname}/{datadir}")
 
     return ", ".join(paths)
 
-def find_project_helper(prjname, helper, pman=None):
+def find_project_helper(prjname: str, helper: str, pman: ProcessManagerType | None = None) -> Path:
     """
-    Search for a helper program 'helper' belonging to the 'prjname' project. The arguments are as
-    follows:
-      * prjname - name of the project the helper program belongs to.
-      * helper - the helper program to find.
-      * pman - the process manager object for the host to find the helper on (local host by
-               default).
+    Search for a helper program 'helper' belonging to a specified project in a predefined set of
+    locations and return the first found path.
 
-    The helper program is searched for in the following locations (and in the following order).
-      * in the directory of the running program (only when searching on the local host).
-      * in the directory specified by the '<prjname>_HELPERSPATH' environment variable.
-      * in the paths defined by the 'PATH' environment variable.
-      * in '$HOME/.local/bin/', if it exists.
-      * in '$HOME/bin/', if it exists.
-      * in '$VIRTUAL_ENV/bin/', if the environment variable is defined and the directory exists.
-      * in '/usr/local/bin/', if it exists.
-      * in '/usr/bin', if it exists.
+    The search order is as follows:
+        1. Local host only: the directory of the running program (e.g., if the program is
+           '/bar/baz/foo', check '/bar/baz/<helper>', if it exists and executable, return the path).
+        2. The directory specified by the '<prjname>_DATA_PATH' environment variable. (e.g., if the
+           environment variable from is set to '/foo/bar/', check '/foo/bar/<helper>', and if it
+           exists and is executable, return the path).
+        3. '$VIRTUAL_ENV/bin/', if the environment variable is set.
+        4. Directories listed in the 'PATH' environment variable.
+        4. '$HOME/.local/bin/'.
+        5. '$HOME/bin/'.
+        7. '/usr/local/bin/'.
+        8. '/usr/bin'.
+
+    Args:
+        prjname: Name of the project the helper program belongs to.
+        helper: Name of the helper program to find.
+        pman: Process manager object for the host to search on (defaults to local host).
+
+    Returns:
+        Path to the found helper program executable.
+
+    Raises:
+        ErrorNotFound: If the helper program cannot be found in any of the searched locations.
     """
 
-    paths = []
+    candidates = []
     with ProcessManager.pman_or_local(pman) as wpman:
         if not wpman.is_remote:
-            paths.append(Path(sys.argv[0]).parent)
+            candidate = Path(sys.argv[0]).parent / helper
+            candidates.append(candidate)
+            if wpman.is_exe(candidate):
+                return candidate
 
-        path = None
+        # Check the directory specified by the environment variable.
         envar = get_project_helpers_envar(prjname)
-        # First check to see if the environment variable is specified on 'wpman' before also
-        # checking localhost.
         path = wpman.get_envar(envar)
-        if path:
-            paths.append(Path(path))
-        else:
+        if not path:
             path = os.environ.get(envar)
+        if path:
+            candidate = Path(path) / helper
+            candidates.append(candidate)
+            if wpman.is_exe(candidate):
+                return candidate
 
-        # Check if the helper is on the PATH.
+        venvdir = wpman.get_envar("VIRTUAL_ENV")
+        if venvdir:
+            # Check the virtual environment directory.
+            candidate = Path(venvdir) / f"bin/{helper}"
+            candidates.append(candidate)
+            if wpman.is_exe(candidate):
+                return candidate
+
         path = wpman.which(helper, must_find=False)
         if path:
-            paths.append(Path(path))
-        searched = ["$PATH"]
+            # Check the directories listed in the 'PATH' environment variable.
+            candidate = Path(path)
+            candidates.append(candidate)
+            if wpman.is_exe(candidate):
+                return candidate
 
         homedir = wpman.get_envar("HOME")
         if homedir:
-            paths.append(homedir / Path(".local/bin"))
-            paths.append(homedir / Path("bin"))
-        venvdir = wpman.get_envar("VIRTUAL_ENV")
-        if venvdir:
-            paths.append(Path(venvdir) / Path("bin"))
-        paths.append(Path("/usr/local/bin"))
-        paths.append(Path("/usr/bin"))
+            # Check the home directory.
+            candidate = Path(homedir) / f".local/bin/{helper}"
+            candidates.append(candidate)
+            if wpman.is_exe(candidate):
+                return candidate
 
-        for path in paths:
-            if wpman.is_dir(path):
-                exe_path = path / helper
-            else:
-                exe_path = path
-            if wpman.is_exe(exe_path):
-                return exe_path
-            searched.append(str(path))
+            candidate = Path(homedir) / f"bin/{helper}"
+            candidates.append(candidate)
+            if wpman.is_exe(candidate):
+                return candidate
 
-        dirs = " * " + "\n * ".join(searched)
-        raise ErrorNotFound(f"cannot find the '{helper}' program{wpman.hostmsg}, searched in the "
-                            f"following locations:\n{dirs}")
+        # Check the system directories.
+        candidate = Path(f"/usr/local/bin/{helper}")
+        candidates.append(candidate)
+        if wpman.is_exe(candidate):
+            return candidate
 
-def get_project_helpers_search_descr(prjname):
+        candidate = Path(f"/usr/bin/{helper}")
+        candidates.append(candidate)
+        if wpman.is_exe(candidate):
+            return candidate
+
+        searched = " * " + "\n * ".join([str(path) for path in candidates])
+        raise ErrorNotFound(f"Cannot find the '{helper}' program{wpman.hostmsg}, searched in the "
+                            f"following locations:\n{searched}")
+
+def get_project_helpers_search_descr(prjname: str) -> str:
     """
-    This method returns a human-readable string describing the locations the 'find_project_helper()'
-    function looks for the helper at. The argument is the same as in 'find_project_helper()'.
+    Return a human-readable description of the search locations for project helpers.
+
+    Args:
+        prjname: The project name, whose helper is being searched for.
+
+    Returns:
+        A comma-separated string describing the search locations for project helpers.
     """
 
     envar = get_project_helpers_envar(prjname)
     paths = (f"{Path(sys.argv[0]).parent}",
              f"${envar}",
+             "$VIRTUAL_ENV/bin",
              "All paths in $PATH",
              "$HOME/.local/bin",
              "$HOME/bin",
-             "$VIRTUAL_ENV/bin",
              "/usr/local/bin",
              "/usr/bin")
 
