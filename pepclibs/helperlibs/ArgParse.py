@@ -113,7 +113,7 @@ SSH_OPTIONS: list[ArgTypedDict] = [
 ]
 
 @dataclass
-class CommonArgumentsType:
+class _CommonArgumentsType:
     """
     The common command-line arguments.
 
@@ -265,7 +265,7 @@ class ArgsParser(argparse.ArgumentParser):
             text = "Print the version number and exit."
             self.add_argument("--version", action="version", help=text, version=version)
 
-    def _check_arguments(self, args: CommonArgumentsType):
+    def _check_arguments(self, args: _CommonArgumentsType):
         """
         Validate the common command-line arguments.
 
@@ -285,7 +285,7 @@ class ArgsParser(argparse.ArgumentParser):
         if args.debug_modules and not args.debug:
             raise Error("--debug-modules requires -d to be used")
 
-    def _configure_debug_logging(self, args: CommonArgumentsType):
+    def _configure_debug_logging(self, args: _CommonArgumentsType):
         """
         Parse the '--debug-modules' argument and enable debug logging for the specified modules.
 
@@ -302,7 +302,7 @@ class ArgsParser(argparse.ArgumentParser):
 
         arguments = super().parse_args(*args, **kwargs)
 
-        args_dc = cast(CommonArgumentsType, arguments)
+        args_dc = cast(_CommonArgumentsType, arguments)
         self._check_arguments(args_dc)
         self._configure_debug_logging(args_dc)
 
