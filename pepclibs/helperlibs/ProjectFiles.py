@@ -14,13 +14,13 @@ import os
 import sys
 import typing
 import contextlib
+from typing import Generator, Sequence
+from pathlib import Path
+
 # TODO: remove the 'importlib_resources' import and use 'importlib.resources' instead when
 #       witchint to Python 3.10+. This hack is needed only to support Python 3.9.
 #import importlib.resources
 import importlib_resources
-from typing import Generator, Sequence
-from pathlib import Path
-
 from pepclibs.helperlibs import ProcessManager, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
