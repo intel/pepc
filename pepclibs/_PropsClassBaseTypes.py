@@ -14,7 +14,7 @@ Provide types for the property classes.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import TypedDict, Literal
+from typing import TypedDict, Literal, Union
 
 class MechanismTypedDict(TypedDict):
     """
@@ -33,7 +33,7 @@ class MechanismTypedDict(TypedDict):
 MechanismNameType = Literal["sysfs", "cdev", "msr", "cppc", "doc"]
 
 # A handy alias for a collection of mechanism names.
-MechanismNamesType = list[MechanismNameType] | tuple[MechanismNameType, ...]
+MechanismNamesType = Union[list[MechanismNameType], tuple[MechanismNameType, ...]]
 
 ScopeNameType = Literal["CPU", "core", "package", "die", "global"]
 
@@ -64,7 +64,7 @@ class PropertyTypedDict(TypedDict, total=False):
     special_vals: set[str]
     subprops: tuple[str, ...]
 
-PropertyValueType = int | float | bool | str | list[str] | list[int] | dict[str,str] | None
+PropertyValueType = Union[int, float, bool, str, list[str], list[int], dict[str,str], None]
 
 class PVInfoTypedDict(TypedDict, total=False):
     """
@@ -87,6 +87,6 @@ class PVInfoTypedDict(TypedDict, total=False):
     mname: MechanismNameType
 
 # A type for CPU and package numbers.
-NumsType = list[int] | tuple[int, ...]
+NumsType = Union[list[int], tuple[int, ...]]
 # A type for die numbers.
-DieNumsType = dict[int, list[int]] | dict[int, tuple[int, ...]]
+DieNumsType = Union[dict[int, list[int]], dict[int, tuple[int, ...]]]
