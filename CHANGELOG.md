@@ -5,13 +5,18 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.5.36] - 2025-05-22
+### Fixed
  - Fix versioning bug that made anything newer than 1.5.32 install incorrectly
    in some scenarios.
  - Fix failures with python 3.9.
 ### Added
  - New '--debug-modules' option to limit debug prints to certain modules list.
  - New '--print-man-path' to print the path to man pages.
-### Removed
 ### Changed
  - Rework packaging: switch from setup.py to pyproject.toml.
  - Install pepc data (man pages, TPMI files) to "../site-packages/pepcdata".

@@ -8,17 +8,25 @@
 Show a short help message and exit.
 .TP
 \f[B]\-q\f[R]
-Be quiet.
+Be quiet (print only improtant messages like warnings).
 .TP
 \f[B]\-d\f[R]
 Print debugging information.
 .TP
+\f[B]\-\-debug\-modules\f[R] \f[I]MODNAME[,MODNAME1,...]\f[R]
+While the \[aq]\-d\[aq] option enables all debug messages, this option
+limits them to the specified modules.
+For example, \[aq]\-d \-\-debug\-modules MSR\[aq] will only show debug
+messages from the \[aq]MSR\[aq] module.
+.TP
 \f[B]\-\-version\f[R]
-Print version and exit.
+Print the version number and exit.
 .TP
 \f[B]\-H\f[R] \f[I]HOSTNAME\f[R], \f[B]\-\-host\f[R] \f[I]HOSTNAME\f[R]
-User name for SSH login to the remote host.
-Defaults to \[aq]root.
+Host name or IP address of the target system.
+The pepc command will be executed on this system using SSH, instead of
+running it locally.
+If not specified, the command will be run locally.
 .TP
 \f[B]\-U\f[R] \f[I]USERNAME\f[R], \f[B]\-\-username\f[R] \f[I]USERNAME\f[R]
 Name of the user to use for logging into the remote host over SSH.
@@ -59,6 +67,11 @@ dataset.
 \f[B]\-\-force\-color\f[R]
 Force colorized output even if the output stream is not a terminal (adds
 ANSI escape codes).
+.TP
+\f[B]\-\-print\-man\-path\f[R]
+Print path to pepc manual pages directory and exit.
+This path can be added to the \[aq]MANPATH\[aq] environment variable to
+make the manual pages available to the \[aq]man\[aq] tool.
 .SS Subcommand \f[I]\[aq]info\[aq]\f[R]
 Display CPU topology details.
 .PP

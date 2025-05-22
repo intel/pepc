@@ -1,6 +1,6 @@
 [project]
 name = "pepc"
-version = "1.5.35"
+version = "1.5.36"
 description = "A tool configuring various power and performance aspects of a Linux system."
 authors = [
     { name = "Artem Bityutskiy", email = "dedekind@gmail.com" }
