@@ -20,6 +20,7 @@ Document author: Artem Bityutskiy <dedekind1@gmail.com>
   - [CentOS 9 Stream](#centos-9-stream)
   - [Standalone version](#standalone-version)
   - [Tab completions](#tab-completions)
+  - [Man pages](#man-pages)
 
 # Introduction
 
@@ -193,3 +194,31 @@ eval "$(register-python-argcomplete pepc)"
 ```
 
 Add this line to '$HOME/.bashrc' file to enable tab completion by default.
+
+## Man pages
+
+Pepc provides man pages. If you install pepc using 'pip' or 'uv', the man pages are placed in
+Python's "site-packages" directory, which is not searched by the "man" tool by default. To make
+them available, add the pepc man page path to your 'MANPATH' environment variable.
+
+Find the man page location with:
+
+```
+pepc --print-man-path
+```
+
+This prints a path like '..../lib/pythonX.Y/site-packages/pepcdata/man'. Add it to 'MANPATH' with:
+
+```
+export MANPATH="$MANPATH:$(pepc --print-man-path)"
+```
+
+Add this line to your '$HOME/.bashrc' to make it persistent.
+
+Verify that man pages are available:
+
+```
+man pepc-cstates
+```
+
+Note: Pepc provides man pages for each subcommand.
