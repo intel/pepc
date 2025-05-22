@@ -52,7 +52,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import MechanismTypedDict, MechanismNameType
     from pepclibs._PropsClassBaseTypes import MechanismNamesType, PVInfoTypedDict
-    from pepclibs._PropsClassBaseTypes import NumsType, DieNumsType
+    from pepclibs._PropsClassBaseTypes import PropertyValueType, NumsType, DieNumsType
 
 class IntPropertyTypedDict(PropertyTypedDict):
     """
@@ -90,7 +90,6 @@ MECHANISMS: dict[MechanismNameType, MechanismTypedDict] = {
         "writable": False,
     }
 }
-PropertyValueType = int | float | bool | str | list[str] | list[int] | dict[str,str] | None
 
 class ErrorUsePerCPU(Error):
     """
