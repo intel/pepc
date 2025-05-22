@@ -95,7 +95,7 @@ You can now run `pepc` directly. For example:
 
 ```
 pepc pstates info
-[sudo] password for user: 
+[sudo] password for user:
 Source: Linux sysfs file-system
  - Turbo: on
  - Min. CPU frequency: 800.00MHz for all CPUs
@@ -111,7 +111,7 @@ Also install git. For example, in Fedora, run
 dnf install python-pip git
 ```
 
-Install pepc into a python virtual enviroment using the following commands.
+Install pepc into a python virtual environment using the following commands.
 
 ```
 python3 -m venv ~/.pmtools
