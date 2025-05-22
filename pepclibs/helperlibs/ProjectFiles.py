@@ -14,7 +14,10 @@ import os
 import sys
 import typing
 import contextlib
-import importlib.resources
+# TODO: remove the 'importlib_resources' import and use 'importlib.resources' instead when
+#       witchint to Python 3.10+. This hack is needed only to support Python 3.9.
+#import importlib.resources
+import importlib_resources
 from typing import Generator, Sequence
 from pathlib import Path
 
@@ -75,7 +78,7 @@ def get_python_data_package_path(prjname: str) -> Path | None:
             # 'improtlib.resources.files()' into a 'Path' object. Just using 'str()' does not work.
             # However, with 'joinpath()' it is possible to get a string, and then we can convert it
             # to a 'Path' object.
-            multiplexed_path = importlib.resources.files(pkgname)
+            multiplexed_path = importlib_resources.files(pkgname)
             pkgpath = Path(str(multiplexed_path.joinpath(f"../{pkgname}")))
         if pkgpath:
             return pkgpath.resolve()

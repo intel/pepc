@@ -17,9 +17,12 @@ classifiers = [
     "Topic :: System :: Operating System Kernels :: Linux",
     "Programming Language :: Python :: 3 :: Only",
 ]
+# TODO: remove 'importlib-resources' dependency when switching to Python 3.10+.
+# It is there only because of Python 3.9.
 dependencies = [
     "argcomplete",
     "colorama",
+    "importlib-resources",
     "paramiko",
     "pyyaml",
 ]
