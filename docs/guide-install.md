@@ -21,6 +21,7 @@ Document author: Artem Bityutskiy <dedekind1@gmail.com>
   - [Standalone version](#standalone-version)
   - [Tab completions](#tab-completions)
   - [Man pages](#man-pages)
+  - [Example of .bashrc](#example-of-bashrc)
 
 # Introduction
 
@@ -186,11 +187,12 @@ This creates the 'pepc.standalone' file, which you can rename and copy anywhere 
 
 ## Tab completions
 
-Pepc supports tab completions, but it requires specific environment variables to be set. Use the
-following:
+Pepc supports tab completions, but it requires specific environment variables to be set. Make sure
+'pepc' is in your '$PATH', and  use the following:
 
 ```
-eval "$(register-python-argcomplete pepc)"
+# Assuming pepc was installed to '$HOME/.pmtools'.
+eval "$($HOME/.pmtools/bin/register-python-argcomplete pepc)"
 ```
 
 Add this line to '$HOME/.bashrc' file to enable tab completion by default.
@@ -222,3 +224,25 @@ man pepc-cstates
 ```
 
 Note: Pepc provides man pages for each subcommand.
+
+## Example of .bashrc
+
+Here is an example of a `$HOME/.bashrc` file that includes the necessary settings for using pepc:
+
+```
+# Change the path if you installed pepc to a different location.
+VENV="$HOME/.pmtools"
+VENV_BIN="$VENV/bin"
+
+# Ensure the virtual environment's bin directory is in the PATH.
+export PATH="$PATH:$VENV_BIN"
+
+# Convenience alias for running pepc with sudo.
+alias pepc="sudo PATH=$PATH VIRTUAL_ENV=$VENV $VENV_BIN/pepc"
+
+# Enable tab completion for pepc.
+eval "$($VENV_BIN/register-python-argcomplete pepc)"
+
+# Enable man pages.
+export MANPATH="$MANPATH:$($VENV_BIN/pepc --print-man-path)"
+```
