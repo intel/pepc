@@ -43,7 +43,7 @@ from typing import Any, Literal, Generator, cast, get_args
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-from pepclibs._PropsClassBaseTypes import PropertyTypedDict, ScopeNameType
+from pepclibs._PropsClassBaseTypes import PropertyTypedDict, ScopeNameType, PropertyValueType
 
 if typing.TYPE_CHECKING:
     from pepclibs.msr import MSR
@@ -52,7 +52,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import MechanismTypedDict, MechanismNameType
     from pepclibs._PropsClassBaseTypes import MechanismNamesType, PVInfoTypedDict
-    from pepclibs._PropsClassBaseTypes import PropertyValueType, NumsType, DieNumsType
+    from pepclibs._PropsClassBaseTypes import NumsType, DieNumsType
 
 class IntPropertyTypedDict(PropertyTypedDict):
     """
