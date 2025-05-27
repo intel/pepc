@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix crash because of unimported 'PropertyTypedDict' symbol.
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.37] - 2025-05-27
+### Fixed
+ - Fix crash because of unimported 'PropertyTypedDict' symbol.
 
 ## [1.5.36] - 2025-05-22
 ### Fixed

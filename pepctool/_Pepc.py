@@ -33,7 +33,7 @@ from pepclibs._PropsClassBase import MECHANISMS
 
 from pepclibs.helperlibs.ArgParse import ArgTypedDict
 
-_VERSION = "1.5.36"
+_VERSION = "1.5.37"
 TOOLNAME = "pepc"
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=TOOLNAME)
