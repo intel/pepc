@@ -45,7 +45,6 @@ _EFREQ_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
 # CPUs supporting the "minimum operating ratio" feature.
 _MIN_OPER_RATIO_VFMS = CPUModels.CPU_GROUPS["GNR"] +              \
                        CPUModels.CPU_GROUPS["EMR"] +              \
-                       CPUModels.CPU_GROUPS["METEORLAKE"] +       \
                        CPUModels.CPU_GROUPS["SPR"] +              \
                        CPUModels.CPU_GROUPS["RAPTORLAKE"] +       \
                        CPUModels.CPU_GROUPS["ALDERLAKE"] +        \
