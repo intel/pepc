@@ -94,6 +94,9 @@ _PKG_CST_LIMITS = {
     CPUModels.MODELS["ATOM_GOLDMONT_D"]["vfm"]:  _DNV_PKG_CST_LIMITS,
     # Clients.
     # Deepest: PC10.
+    CPUModels.MODELS["ARROWLAKE"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["ARROWLAKE_H"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
+    CPUModels.MODELS["ARROWLAKE_U"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
     CPUModels.MODELS["METEORLAKE"]["vfm"]:       _CLIENT_PC10_CST_LIMITS,
     CPUModels.MODELS["METEORLAKE_L"]["vfm"]:     _CLIENT_PC10_CST_LIMITS,
     CPUModels.MODELS["RAPTORLAKE"]["vfm"]:       _CLIENT_PC10_CST_LIMITS,
