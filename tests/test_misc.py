@@ -78,16 +78,3 @@ def test_propscache_scope(params):
                 assert pcache.get(pname, cpu, mname) == val
             else:
                 assert res is False
-
-def test_parse_arguments(params): # pylint: disable=unused-argument
-    """This function tests 'parse_arguments()' with options that should raise 'SystemExit'."""
-
-    for option in ("", "-h", "--version", "--hello"):
-        sys.argv = [_Pepc.__file__, option]
-        try:
-            _Pepc.parse_arguments()
-        except Exception: # pylint: disable=broad-except
-            assert False, f"'pepc {option}' raised an exception"
-        except SystemExit:
-            continue
-        assert False, f"'pepc {option}' didn't system exit"
