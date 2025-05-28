@@ -89,44 +89,44 @@ def get_python_data_package_path(prjname: str) -> Path | None:
     return None
 
 def search_project_data(subpath: str,
-                        datadir: str,
+                        tpath: str,
                         pman: ProcessManagerType | None,
                         what: str | None = None,
                         envars: Sequence[str] | None = None) -> Generator[Path, None, None]:
     """
-    Search for a project data directory ('datadir') in a predefined set of locations and yield found
-    paths.
+    Search for project data in a predefined set of locations and yield found paths. The data to
+    search are defined by the 'tpath' argument, which is the sub-path to append to the
+    predefined search locations.
 
     The search order is as follows:
         1. Local host only: the directory of the running program (e.g., if the program is
-           '/bar/baz/foo', check '/bar/baz/<datadir>', if it exists, yield the path).
+           '/bar/baz/foo', check '/bar/baz/<tpath>', if it exists, yield the path).
         2. Directories specified by environment variables in 'envars' (e.g., if an environment
-           variable from 'envars' is set to '/foo/bar/', check '/foo/bar/<datadir>', and if it
+           variable from 'envars' is set to '/foo/bar/', check '/foo/bar/<tpath>', and if it
            exists, yield the path).
         3. Local host only: the standard python "site-packages" directory of the running program.
            Search for python package '<subpath>data'. For example, if the program site-packages
            directory is '/base_dir/lib/python3.12/site-packages', and 'subpath' is 'xyz', check
            '/base_dir/lib/python3.12/<subpath>xyz', and if it exists, yield the path.
-        4. '$VIRTUAL_ENV/share/<subpath>/<datadir>', if 'VIRTUAL_ENV' is set.
-        5. '$HOME/.local/share/<subpath>/<datadir>', if 'HOME' is set.
-        6. '$HOME/share/<subpath>/<datadir>', if 'HOME' is set.
-        7. '/usr/local/share/<subpath>/<datadir>'.
-        8. '/usr/share/<subpath>/<datadir>'.
+        4. '$VIRTUAL_ENV/share/<subpath>/<tpath>', if 'VIRTUAL_ENV' is set.
+        5. '$HOME/.local/share/<subpath>/<tpath>', if 'HOME' is set.
+        6. '$HOME/share/<subpath>/<tpath>', if 'HOME' is set.
+        7. '/usr/local/share/<subpath>/<tpath>'.
+        8. '/usr/share/<subpath>/<tpath>'.
 
     Args:
         subpath: Sub-path to append to the searched paths (used only for some of the predefined
                  locations).
-        datadir: Name of the sub-directory containing the project data, this sub-directory is
-                 searched for in the predefined locations.
+        tpath: The sub-path (last part of the full path) to the project data to search for.
         pman: Process manager object for the host to search on (defaults to local host).
         what: Human-readable description of what is being searched for, used in error messages.
         envars: Collection of environment variable names that may define custom search paths.
 
     Yields:
-        Path objects pointing to found directories matching the search criteria.
+        Path objects pointing to found project data paths matching the search criteria.
 
     Raises:
-        ErrorNotFound: If the directory cannot be found in any of the searched locations.
+        ErrorNotFound: If project data cannot be found in any of the searched locations.
     """
 
     searched = []
@@ -136,10 +136,10 @@ def search_project_data(subpath: str,
     with ProcessManager.pman_or_local(pman) as wpman:
         # Check the directory of the running program first.
         if not wpman.is_remote:
-            candidate = Path(sys.argv[0]).parent.resolve().absolute() / datadir
+            candidate = Path(sys.argv[0]).parent.resolve().absolute() / tpath
             candidates.append(candidate)
-            if wpman.is_dir(candidate):
-                _LOG.debug(f"Found '{datadir}' in the program directory: {candidate}")
+            if wpman.exists(candidate):
+                _LOG.debug(f"Found '{tpath}' in the program directory: {candidate}")
                 yield_count += 1
                 yield candidate
 
@@ -152,10 +152,10 @@ def search_project_data(subpath: str,
                 if not path:
                     continue
 
-                candidate = Path(path) / datadir
+                candidate = Path(path) / tpath
                 candidates.append(candidate)
-                if wpman.is_dir(candidate):
-                    _LOG.debug(f"Found '{datadir}' in the '{envar}' environment variable: "
+                if wpman.exists(candidate):
+                    _LOG.debug(f"Found '{tpath}' in the '{envar}' environment variable: "
                                f"{candidate}")
                     yield_count += 1
                     yield candidate
@@ -164,53 +164,53 @@ def search_project_data(subpath: str,
             # Check the standard python "site-packages" directory of the running program.
             pkgpath = get_python_data_package_path(subpath)
             if pkgpath:
-                candidate = pkgpath / datadir
+                candidate = pkgpath / tpath
                 candidates.append(candidate)
-                if wpman.is_dir(candidate):
-                    _LOG.debug(f"Found '{datadir}' in the python package directory: {candidate}")
+                if wpman.exists(candidate):
+                    _LOG.debug(f"Found '{tpath}' in the python package directory: {candidate}")
                     yield_count += 1
                     yield candidate
 
         venvdir = wpman.get_envar("VIRTUAL_ENV")
         if venvdir:
             # Check the virtual environment directory.
-            candidate = Path(venvdir) / f"share/{subpath}/{datadir}"
+            candidate = Path(venvdir) / f"share/{subpath}/{tpath}"
             candidates.append(candidate)
-            if wpman.is_dir(candidate):
-                _LOG.debug(f"Found '{datadir}' in the virtual environment directory: {candidate}")
+            if wpman.exists(candidate):
+                _LOG.debug(f"Found '{tpath}' in the virtual environment directory: {candidate}")
                 yield_count += 1
                 yield candidate
 
         homedir = wpman.get_envar("HOME")
         if homedir:
             # Check the home directory.
-            candidate = Path(homedir) / f".local/share/{subpath}/{datadir}"
+            candidate = Path(homedir) / f".local/share/{subpath}/{tpath}"
             candidates.append(candidate)
-            if wpman.is_dir(candidate):
-                _LOG.debug(f"Found '{datadir}' in the home directory: {candidate}")
+            if wpman.exists(candidate):
+                _LOG.debug(f"Found '{tpath}' in the home directory: {candidate}")
                 yield_count += 1
                 yield candidate
 
-            candidate = Path(homedir) / f"share/{subpath}/{datadir}"
+            candidate = Path(homedir) / f"share/{subpath}/{tpath}"
             candidates.append(candidate)
-            if wpman.is_dir(candidate):
-                _LOG.debug(f"Found '{datadir}' in the home directory: {candidate}")
+            if wpman.exists(candidate):
+                _LOG.debug(f"Found '{tpath}' in the home directory: {candidate}")
                 yield_count += 1
                 yield candidate
 
         # Check the system directories.
-        candidate = Path(f"/usr/local/share/{subpath}/{datadir}")
+        candidate = Path(f"/usr/local/share/{subpath}/{tpath}")
         candidates.append(candidate)
-        if wpman.is_dir(candidate):
-            _LOG.debug(f"Found '{datadir}' in the system directory: {candidate}")
+        if wpman.exists(candidate):
+            _LOG.debug(f"Found '{tpath}' in the system directory: {candidate}")
             yield_count += 1
             yield candidate
 
         # Check the system directories.
-        candidate = Path(f"/usr/share/{subpath}/{datadir}")
+        candidate = Path(f"/usr/share/{subpath}/{tpath}")
         candidates.append(candidate)
-        if wpman.is_dir(candidate):
-            _LOG.debug(f"Found '{datadir}' in the system directory: {candidate}")
+        if wpman.exists(candidate):
+            _LOG.debug(f"Found '{tpath}' in the system directory: {candidate}")
             yield_count += 1
             yield candidate
 
@@ -218,7 +218,7 @@ def search_project_data(subpath: str,
             return
 
         if not what:
-            what = f"'{subpath}/{datadir}'"
+            what = f"'{subpath}/{tpath}'"
         searched = [str(path) for path in candidates]
         dirs = " * " + "\n * ".join(searched)
 
@@ -236,24 +236,25 @@ def search_project_data(subpath: str,
                             f"locations:\n{dirs}.{envar_msg}")
 
 def find_project_data(prjname: str,
-                      datadir: str,
+                      tpath: str,
                       pman: ProcessManagerType | None = None,
                       what: str | None = None) -> Path:
     """
-    Search for a project data directory ('datadir') in a predefined set of locations and return the
-    first found path.
+    Search for project data in a predefined set of locations and return the first found path. The
+    data to search are defined by the 'tpath' argument, which is the sub-path to append to the
+    predefined search locations.
 
     The search order is as follows:
         1. Local host only: the directory of the running program (e.g., if the program is
-           '/bar/baz/foo', check '/bar/baz/<datadir>', if it exists, return the path).
+           '/bar/baz/foo', check '/bar/baz/<tpath>', if it exists, return the path).
         2. The directory specified by the '<prjname>_DATA_PATH' environment variable. (e.g., if the
-           environment variable from is set to '/foo/bar/', check '/foo/bar/<datadir>', and if it
+           environment variable from is set to '/foo/bar/', check '/foo/bar/<tpath>', and if it
            exists, return the path).
         3. Local host only: the standard python "site-packages" directory of the running program,
            search for python package '<prjname>data'. For example, if the program site-packages
            directory is '/base_dir/lib/python3.12/site-packages', and project name is 'foo', check
            '/base_dir/lib/python3.12/foodata', and if it exists, yield the path.
-        3. '$VIRTUAL_ENV/share/<subpath>/<datadir>', if 'VIRTUAL_ENV' is set.
+        3. '$VIRTUAL_ENV/share/<subpath>/<tpath>', if 'VIRTUAL_ENV' is set.
         4. '$HOME/.local/share/<prjname>/'.
         5. '$HOME/share/<prjname>/'.
         6. '/usr/local/share/<prjname>/'.
@@ -261,24 +262,28 @@ def find_project_data(prjname: str,
 
     Args:
         prjname: Name of the project whose data directory is being searched.
-        datadir: Name of the sub-directory containing the project data.
+        tpath: The sub-path (last part of the full path) to the project data to search for.
         pman: Process manager object for the host to search on (defaults to local host).
         what: Human-readable description of what is being searched for, used in error messages.
 
     Returns:
-        Path to the found data directory.
+        The found project data path.
+
+    Raises:
+        ErrorNotFound: If project data cannot be found in any of the searched locations.
     """
 
-    return next(search_project_data(prjname, datadir, pman, what,
+    return next(search_project_data(prjname, tpath, pman, what,
                                     envars=(get_project_data_envar(prjname),)))
 
-def get_project_data_search_descr(prjname: str, datadir: str) -> str:
+def get_project_data_search_descr(prjname: str, tpath: str) -> str:
     """
     Generate a human-readable description of the search locations for project data.
 
     Args:
         prjname: The name of the project whose data is being searched for.
-        datadir: The sub-directory name containing the project data.
+        tpath: The sub-path (last part of the full path) to the project data that is being searched
+               for.
 
     Returns:
         A string describing all possible data search locations (a comma-separated list of paths).
@@ -286,17 +291,17 @@ def get_project_data_search_descr(prjname: str, datadir: str) -> str:
 
     envar = get_project_data_envar(prjname)
 
-    paths = [f"{Path(sys.argv[0]).parent}/{datadir} (local host only)",
-             f"${envar}/{datadir}"]
+    paths = [f"{Path(sys.argv[0]).parent}/{tpath} (local host only)",
+             f"${envar}/{tpath}"]
 
     pkgpath = get_python_data_package_path(prjname)
     if pkgpath:
-        paths.append(f"{pkgpath}/{datadir} (local host only)")
+        paths.append(f"{pkgpath}/{tpath} (local host only)")
 
-    paths += [f"$VIRTUAL_ENV/share/{prjname}/{datadir}",
-              f"$HOME/.local/share/{prjname}/{datadir}",
-              f"/usr/local/share/{prjname}/{datadir}",
-              f"/usr/share/{prjname}/{datadir}"]
+    paths += [f"$VIRTUAL_ENV/share/{prjname}/{tpath}",
+              f"$HOME/.local/share/{prjname}/{tpath}",
+              f"/usr/local/share/{prjname}/{tpath}",
+              f"/usr/share/{prjname}/{tpath}"]
 
     return ", ".join(paths)
 
