@@ -18,7 +18,7 @@ from pepclibs.msr import MSR
 from pepclibs import CPUInfo
 
 _MSR_MODULES = (
-    "PMEnable", "MiscFeatureControl", "HWPRequest", "EnergyPerfBias", "FSBFreq", "HWPRequestPkg",
+    "PMEnable", "HWPRequest", "EnergyPerfBias", "FSBFreq", "HWPRequestPkg",
     "PCStateConfigCtl", "PlatformInfo", "PowerCtl", "TurboRatioLimit1", "TurboRatioLimit",
     "PackagePowerLimit", "PackagePowerInfo")
 

@@ -197,7 +197,7 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
 
     # pylint: disable=import-outside-toplevel
     from pepclibs.msr import EnergyPerfBias, HWPRequest, HWPRequestPkg, PowerCtl, PCStateConfigCtl
-    from pepclibs.msr import PackagePowerLimit, MiscFeatureControl, PMEnable, UncoreRatioLimit
+    from pepclibs.msr import PackagePowerLimit, PMEnable, UncoreRatioLimit
     from pepclibs.msr import SwLTROvrd
 
     cpu = cpuinfo.normalize_cpu(args.cpu)
@@ -290,18 +290,6 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
             _find_feature_ioscope(cpuinfo, fmsr, "limit2", (limit - 1, limit + 1), cpu)
             _find_feature_ioscope(cpuinfo, fmsr, "limit2_enable", ("off", "on"), cpu)
             _find_feature_ioscope(cpuinfo, fmsr, "limit2_clamp", ("off", "on"), cpu)
-    finally:
-        fmsr.close()
-
-    try:
-        fmsr = MiscFeatureControl.MiscFeatureControl(pman=pman, cpuinfo=cpuinfo, msr=msr)
-    except ErrorNotSupported as err:
-        _LOG.notice(err)
-    else:
-        _find_feature_ioscope(cpuinfo, fmsr, "l2_hw_prefetcher", ("off", "on"), cpu)
-        _find_feature_ioscope(cpuinfo, fmsr, "l2_adj_prefetcher", ("off", "on"), cpu)
-        _find_feature_ioscope(cpuinfo, fmsr, "dcu_hw_prefetcher", ("off", "on"), cpu)
-        _find_feature_ioscope(cpuinfo, fmsr, "dcu_ip_prefetcher", ("off", "on"), cpu)
     finally:
         fmsr.close()
 

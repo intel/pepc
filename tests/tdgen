@@ -15,7 +15,7 @@ import re
 import stat
 import sys
 from pathlib import Path
-from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg, MiscFeatureControl
+from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg
 from pepclibs.msr import PlatformInfo, PowerCtl, PCStateConfigCtl, PMEnable, TurboRatioLimit
 from pepclibs.msr import TurboRatioLimit1, PackagePowerLimit, PackagePowerInfo, RaplPowerUnit
 from pepclibs.msr import SwLTROvrd, PMLogicalId, HWPCapabilities
@@ -84,7 +84,6 @@ CPUInfoData = {
             HWPRequest.MSR_HWP_REQUEST,
             HWPRequestPkg.MSR_HWP_REQUEST_PKG,
             HWPCapabilities.MSR_HWP_CAPABILITIES,
-            MiscFeatureControl.MSR_MISC_FEATURE_CONTROL,
             PlatformInfo.MSR_PLATFORM_INFO,
             PowerCtl.MSR_POWER_CTL,
             PCStateConfigCtl.MSR_PKG_CST_CONFIG_CONTROL,
