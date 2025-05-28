@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.5.38] - 2025-05-28
+### Fixed
+ - Fix searching for data files. This fixes a wult regression.
+
 ## [1.5.37] - 2025-05-27
 ### Fixed
  - Fix crash because of unimported 'PropertyTypedDict' symbol.

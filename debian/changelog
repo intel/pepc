@@ -1,3 +1,9 @@
+pepc (1.5.38) unstable; urgency=low
+
+  * Fix searching for data files. This fixes a wult regression.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 28 May 2025 00:00:00 +0200
+
 pepc (1.5.37) unstable; urgency=low
 
   * Fix crash because of unimported 'PropertyTypedDict' symbol.
