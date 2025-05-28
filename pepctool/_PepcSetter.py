@@ -209,9 +209,6 @@ class PStatesSetter(_PropsSetter):
 class PMQoSSetter(_PropsSetter):
     """Provides API for changing PM QoS properties."""
 
-class PowerSetter(_PropsSetter):
-    """Provide API for changing power properties."""
-
 class CStatesSetter(_PropsSetter):
     """Provide API for changing C-states properties."""
 

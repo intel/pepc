@@ -66,7 +66,6 @@ Pepc supports discovering and configuring the following features.
 * C-states: [documentation](docs/pepc-cstates.rst)
 * P-states: [documentation](docs/pepc-pstates.rst)
 * PM QoS: [documentation](docs/pepc-pmqos.rst)
-* Power: [documentation](docs/pepc-power.rst)
 * CPU onlining and offlining: [documentation](docs/pepc-cpu-hotplug.rst)
 * ASPM: [documentation](docs/pepc-aspm.rst)
 * CPU topology: [documentation](docs/pepc-topology.rst)

@@ -197,7 +197,7 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
 
     # pylint: disable=import-outside-toplevel
     from pepclibs.msr import EnergyPerfBias, HWPRequest, HWPRequestPkg, PowerCtl, PCStateConfigCtl
-    from pepclibs.msr import PackagePowerLimit, PMEnable, UncoreRatioLimit
+    from pepclibs.msr import PMEnable, UncoreRatioLimit
     from pepclibs.msr import SwLTROvrd
 
     cpu = cpuinfo.normalize_cpu(args.cpu)
@@ -271,25 +271,6 @@ def _test_all_msrs(pman, cpuinfo, msr, args):
         if fmsr.read_cpu_feature("pkg_cstate_limit_lock", cpu) == "off":
             limits = fmsr.read_cpu_feature("pkg_cstate_limit", cpu)["pkg_cstate_limits"]
             _find_feature_ioscope(cpuinfo, fmsr, "pkg_cstate_limit", limits[:2], cpu)
-    finally:
-        fmsr.close()
-
-    try:
-        fmsr = PackagePowerLimit.PackagePowerLimit(pman=pman, cpuinfo=cpuinfo, msr=msr)
-    except ErrorNotSupported as err:
-        _LOG.notice(err)
-    else:
-        with contextlib.suppress(Error):
-            limit = fmsr.read_cpu_feature("limit1", cpu)
-            _find_feature_ioscope(cpuinfo, fmsr, "limit1", (limit - 1, limit + 1), cpu)
-            _find_feature_ioscope(cpuinfo, fmsr, "limit1_enable", ("off", "on"), cpu)
-            _find_feature_ioscope(cpuinfo, fmsr, "limit1_clamp", ("off", "on"), cpu)
-
-        with contextlib.suppress(Error):
-            limit = fmsr.read_cpu_feature("limit2", cpu)
-            _find_feature_ioscope(cpuinfo, fmsr, "limit2", (limit - 1, limit + 1), cpu)
-            _find_feature_ioscope(cpuinfo, fmsr, "limit2_enable", ("off", "on"), cpu)
-            _find_feature_ioscope(cpuinfo, fmsr, "limit2_clamp", ("off", "on"), cpu)
     finally:
         fmsr.close()
 

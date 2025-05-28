@@ -7,6 +7,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
 ### Added
 ### Removed
+ - Remove 'pepc power' command.
 ### Changed
 
 ## [1.5.38] - 2025-05-28

@@ -14,7 +14,6 @@ Document author: Artem Bityutskiy <dedekind1@gmail.com>
   - [P-states](#p-states)
   - [C-states](#c-states)
   - [PM QoS](#pm-qos)
-  - [Power](#power)
   - [ASPM](#aspm)
   - [CPU hotplug](#cpu-hotplug)
   - [CPU topology](#cpu-topology)
@@ -276,24 +275,6 @@ Source: Linux sysfs file-system
  - Linux per-CPU PM QoS latency limit: 0 (no limit) for CPUs 1-55,112-167
 Source: Linux character device node
  - Linux global PM QoS latency limit: 2000s
-```
-
-## Power
-
-### Get all the generally interesting power information
-
-```
-$ pepc power info
-Source: Model Specific Register (MSR)
- - TDP: 83W for all CPUs
- - RAPL PPL1: 83W for all CPUs
- - RAPL PPL1: 'on' for all CPUs
- - RAPL PPL1 clamping: 'on' for all CPUs
- - RAPL PPL1 time window: 1s for all CPUs
- - RAPL PPL2: 99.625W for all CPUs
- - RAPL PPL2: 'on' for all CPUs
- - RAPL PPL2 clamping: 'on' for all CPUs
- - RAPL PPL2 time window: 1s for all CPUs
 ```
 
 ## ASPM

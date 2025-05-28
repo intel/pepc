@@ -550,9 +550,6 @@ class PMQoSPrinter(_PropsPrinter):
 
         return super()._format_value_human(pname, prop, val)
 
-class PowerPrinter(_PropsPrinter):
-    """This class provides API for printing power information."""
-
 class CStatesPrinter(_PropsPrinter):
     """This class provides API for printing C-states information."""
 

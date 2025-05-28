@@ -16,7 +16,6 @@ import msr_common
 from msr_common import get_params # pylint: disable=unused-import
 from pepclibs.msr.TurboRatioLimit import MSR_TURBO_RATIO_LIMIT
 from pepclibs.msr.TurboRatioLimit1 import MSR_TURBO_RATIO_LIMIT1
-from pepclibs.msr.PackagePowerLimit import MSR_PKG_POWER_LIMIT
 from pepclibs.helperlibs.Exceptions import Error
 
 def _get_msr_test_params(params, include_ro=True, include_rw=True):
@@ -38,11 +37,7 @@ def _get_msr_test_params(params, include_ro=True, include_rw=True):
             elif not include_ro:
                 continue
 
-            if not common.is_emulated(params["pman"]) and addr == MSR_PKG_POWER_LIMIT and \
-               include_rw:
-                # On many platforms writes to 'MSR_PKG_POWER_LIMIT' do not get "accepted", meaning
-                # reading it back gives a value different to what was written. Therefore, treat this
-                # MSR as R/O.
+            if not common.is_emulated(params["pman"]) and include_rw:
                 continue
 
             if not finfo["bits"]:

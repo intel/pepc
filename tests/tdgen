@@ -17,8 +17,7 @@ import sys
 from pathlib import Path
 from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg
 from pepclibs.msr import PlatformInfo, PowerCtl, PCStateConfigCtl, PMEnable, TurboRatioLimit
-from pepclibs.msr import TurboRatioLimit1, PackagePowerLimit, PackagePowerInfo, RaplPowerUnit
-from pepclibs.msr import SwLTROvrd, PMLogicalId, HWPCapabilities
+from pepclibs.msr import TurboRatioLimit1, SwLTROvrd, PMLogicalId, HWPCapabilities
 from pepclibs.helperlibs import Logging, ArgParse, ProcessManager, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -92,9 +91,6 @@ CPUInfoData = {
             TurboRatioLimit1.MSR_TURBO_RATIO_LIMIT1,
             TurboRatioLimit1.MSR_TURBO_GROUP_CORECNT,
             TurboRatioLimit1.MSR_TURBO_RATIO_LIMIT_CORES,
-            PackagePowerLimit.MSR_PKG_POWER_LIMIT,
-            PackagePowerInfo.MSR_PKG_POWER_INFO,
-            RaplPowerUnit.RAPL_POWER_UNIT,
             SwLTROvrd.MSR_SW_LTR_OVRD,
             PMLogicalId.MSR_PM_LOGICAL_ID],
          "separator1": ":",
@@ -217,9 +213,6 @@ SystemctlData = {
          "ignore_exitcode": True}],
 }
 
-PowerData = {
-}
-
 TpmiData = {
     "recursive_copy" : [
         {"path": "/sys/kernel/debug/tpmi-.*"}],
@@ -234,7 +227,6 @@ MODULE_TESTDATA = {
     "PStates" : PStatesData,
     "PMQoS" : PMQoSData,
     "Systemctl" : SystemctlData,
-    "Power" : PowerData,
     "TPMI" : TpmiData,
     }
 

@@ -28,7 +28,7 @@ except ImportError:
 from typing import Sequence, Any
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CStates, PStates, PMQoS, Power, CPUInfo
+from pepclibs import CStates, PStates, PMQoS, CPUInfo
 from pepclibs._PropsClassBase import MECHANISMS
 
 from pepclibs.helperlibs.ArgParse import ArgTypedDict
@@ -436,54 +436,6 @@ def build_arguments_parser():
     _add_config_subcommand_options(PMQoS.PROPS, subpars2)
 
     #
-    # Create parser for the 'power' command.
-    #
-    text = "Power commands."
-    man_msg = "Refer to 'pepc-power' manual page for more information."
-    descr = "Various commands related to power configuration. " + man_msg
-    subpars = subparsers.add_parser("power", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands")
-    subparsers2.required = True
-
-    power_exclude = set(["--core-siblings"])
-
-    #
-    # Create parser for the 'power info' command.
-    #
-    text = "Get power information."
-    descr = """Get power information for specified CPUs. By default, print all information for
-               all CPUs. """ + man_msg
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_power_info_command)
-
-    ArgParse.add_options(subpars2, all_options)
-
-    _add_target_cpus_arguments(subpars2, "List of %s to get information about.",
-                               exclude=power_exclude)
-
-    text = """Print information in YAML format."""
-    subpars2.add_argument("--yaml", action="store_true", help=text)
-
-    _add_info_subcommand_options(Power.PROPS, subpars2)
-
-    #
-    # Create parser for the 'power config' command.
-    #
-    text = """Configure power settings."""
-    descr = """Configure power settings on specified CPUs. All options can be used without
-               a parameter, in which case the currently configured value(s) will be
-               printed. """ + man_msg
-    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2.set_defaults(func=_power_config_command)
-
-    ArgParse.add_options(subpars2, all_options)
-
-    _add_target_cpus_arguments(subpars2, "List of %s to configure power settings on.",
-                               exclude=power_exclude)
-
-    _add_config_subcommand_options(Power.PROPS, subpars2)
-
-    #
     # Create parser for the 'aspm' command.
     #
     text = "PCI ASPM commands."
@@ -793,20 +745,6 @@ def _pmqos_config_command(args, pman):
 
     _PepcPMQoS.pmqos_config_command(args, pman)
 
-def _power_info_command(args, pman):
-    """Implement the 'power info' command."""
-
-    from pepctool import _PepcPower
-
-    _PepcPower.power_info_command(args, pman)
-
-def _power_config_command(args, pman):
-    """Implement the 'power config' command."""
-
-    from pepctool import _PepcPower
-
-    _PepcPower.power_config_command(args, pman)
-
 def _aspm_info_command(args, pman):
     """Implement the 'aspm info'. command"""
 
@@ -864,7 +802,6 @@ def _get_emul_pman(args, commonpath, path):
         "cstates": ["CPUInfo", "CStates", "Systemctl"],
         "pstates": ["CPUInfo", "PStates", "Systemctl"],
         "pmqos": ["CPUInfo", "PMQoS"],
-        "power": ["CPUInfo", "Power"],
         "topology": ["CPUInfo"],
         "cpu_hotplug": ["CPUInfo", "CPUOnline", "Systemctl"],
         "tpmi": ["TPMI"],
@@ -896,8 +833,6 @@ def _list_mechanisms(args):
         props = PStates.PROPS
     elif fname.startswith("_cstates_"):
         props = CStates.PROPS
-    elif fname.startswith("_power_"):
-        props = Power.PROPS
     else:
         raise Error(f"BUG: unknown function '{fname}' for '--list-mechanisms'")
 
