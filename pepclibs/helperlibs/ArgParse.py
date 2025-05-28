@@ -345,4 +345,6 @@ class ArgsParser(argparse.ArgumentParser):
                 message = f"bad argument '{offending}', use '{self.prog} -h'.\n\nThe most " \
                           f"similar argument is\n  {suggestion}"
 
-        super().error(message)
+        # Raise an error instead of calling the superclass method, because it exits the program.
+        # super().error(message)
+        raise Error(message)
