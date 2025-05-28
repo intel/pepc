@@ -1725,7 +1725,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         Initialize the performance-to-frequency scaling factor for hybrid platforms.
         """
 
-        if self._cpuinfo.info["vfm"] in CPUModels.CPU_GROUPS["METEORLAKE"]:
+        if self._cpuinfo.info["vfm"] in CPUModels.CPU_GROUPS["METEORLAKE"] or \
+           self._cpuinfo.info["vfm"] in CPUModels.CPU_GROUPS["ARROWLAKE"]:
             self._perf_to_freq_factor = 80000000
         elif self._cpuinfo.info["vfm"] in CPUModels.CPU_GROUPS["LUNARLAKE"]:
             self._perf_to_freq_factor = 86957000
