@@ -21,7 +21,8 @@ MSR_TURBO_RATIO_LIMIT = 0x1AD
 # CPUs that include core turbo ratios in the MSR (as apposed to group turbo ratio). "CT" in
 # the names stands for "Core Turbo".
 #
-_CT_VFMS = CPUModels.CPU_GROUPS["METEORLAKE"] +  \
+_CT_VFMS = CPUModels.CPU_GROUPS["ARROWLAKE"] +  \
+           CPUModels.CPU_GROUPS["METEORLAKE"] +  \
            CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
            CPUModels.CPU_GROUPS["ALDERLAKE"] +   \
            CPUModels.CPU_GROUPS["ROCKETLAKE"] +  \
