@@ -20,6 +20,7 @@ MSR_PLATFORM_INFO = 0xCE
 # CPUs supporting the "maximum efficiency ratio" feature.
 _EFREQ_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
               CPUModels.CPU_GROUPS["EMR"] +         \
+              CPUModels.CPU_GROUPS["ARROWLAKE"] +  \
               CPUModels.CPU_GROUPS["METEORLAKE"] +  \
               CPUModels.CPU_GROUPS["SPR"] +         \
               CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
