@@ -16,47 +16,19 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 import typing
-from typing import TypedDict, Literal
 import contextlib
 from pathlib import Path
 from pepclibs import _UncoreFreq, CPUModels
 from pepclibs.msr import MSR, PMLogicalId
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
+
+from pepclibs._CPUInfoBaseTypes import CPUInfoTypeDict
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs._CPUInfoBaseTypes import CPUInfoKeyType, ScopeNameType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-
-ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package"]
-
-class CPUInfoTypeDict(TypedDict, total=False):
-    """
-    Type for the CPU information dictionary ('CPUInfo.info').
-
-    Attributes:
-        arch: The CPU architecture (e.g., "x86_64").
-        vendor: The CPU vendor (e.g., "GenuineIntel").
-        packages: The number of CPU packages.
-        family: The CPU family number.
-        model: The CPU model number.
-        modelname: The full name of the CPU model.
-        flags: A dictionary mapping CPU numbers to their flags.
-        hybrid: Whether the CPU is a hybrid architecture (e.g., Intel's P-core/E-core).
-        vfm: The vendor-family-model identifier for the CPU.
-    """
-
-    arch: str
-    vendor: str
-    family: int
-    model: int
-    modelname: str
-    flags: dict[int, set[str]]
-    hybrid: bool
-    vfm: int
-
-_CPUInfoKeysType = Literal["arch", "vendor", "family", "model", "modelname", "flags", "hybrid",
-                           "vfm"]
 
 SCOPE_NAMES: tuple[ScopeNameType, ...] = ("CPU", "core", "module", "die", "node", "package")
 
@@ -446,7 +418,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         lscpu, _ = self._pman.run_verify("lscpu", join=False)
 
         # Parse misc. information about the CPU.
-        patterns: tuple[tuple[str, _CPUInfoKeysType], ...] = \
+        patterns: tuple[tuple[str, CPUInfoKeyType], ...] = \
                     ((r"^Architecture:\s*(.*)$", "arch"),
                      (r"^Vendor ID:\s*(.*)$", "vendor"),
                      (r"^CPU family:\s*(.*)$", "family"),
