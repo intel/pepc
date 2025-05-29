@@ -19,7 +19,7 @@ import json
 from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs._CPUInfoBase import LEVELS, NA
+from pepclibs._CPUInfoBase import SCOPE_NAMES, NA
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -87,7 +87,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """Validate that 'lvl' is a valid level name."""
 
         if lvl not in self._lvl2idx:
-            levels = ", ".join(LEVELS)
+            levels = ", ".join(SCOPE_NAMES)
             raise Error(f"bad {name} name '{lvl}', use: {levels}")
 
     def get_topology(self, levels=None, order="CPU"):
@@ -185,7 +185,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         if not levels:
-            levels = LEVELS
+            levels = SCOPE_NAMES
         else:
             for lvl in levels:
                 self._validate_level(lvl, name="topology level")
@@ -392,7 +392,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         cpu = Trivial.str_to_int(cpu, what="CPU number")
         if not levels:
-            levels = LEVELS
+            levels = SCOPE_NAMES
 
         tline = None
         for tline in self._get_topology(levels=levels):
@@ -1136,7 +1136,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         super().__init__(pman=pman)
 
         # Level name to its index number.
-        self._lvl2idx = {lvl: idx for idx, lvl in enumerate(LEVELS)}
+        self._lvl2idx = {lvl: idx for idx, lvl in enumerate(SCOPE_NAMES)}
 
         # CPU cache information dictionary.
         self._cacheinfo = None

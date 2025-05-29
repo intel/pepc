@@ -19,12 +19,12 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 def _get_default_colnames(cpuinfo):
     """
-    Return 'CPUInfo.LEVELS' with the following exceptions:
+    Return 'CPUInfo.SCOPE_NAMES' with the following exceptions:
      * If there is one die per package, exclude "die".
      * If there is one core per module, exclude "module".
     """
 
-    colnames = list(CPUInfo.LEVELS)
+    colnames = list(CPUInfo.SCOPE_NAMES)
 
     module = None
     for tline in cpuinfo.get_topology(levels=("core", "module", "package"), order="module"):
@@ -115,7 +115,7 @@ def topology_info_command(args, pman):
         else:
             colnames = []
             for colname in Trivial.split_csv_line(args.columns):
-                for key in CPUInfo.LEVELS:
+                for key in CPUInfo.SCOPE_NAMES:
                     if colname.lower() == key.lower():
                         colnames.append(key)
                         break
@@ -123,19 +123,19 @@ def topology_info_command(args, pman):
                     if colname == "hybrid":
                         show_hybrid = True
                     else:
-                        columns = list(CPUInfo.LEVELS) + ["hybrid"]
+                        columns = list(CPUInfo.SCOPE_NAMES) + ["hybrid"]
                         columns = ", ".join(columns)
                         raise Error(f"invalid column name '{colname}', use one of: {columns}")
 
         if show_hybrid and not cpuinfo.info["hybrid"]:
             raise Error(f"no hybrid CPU found{pman.hostmsg}, found {cpuinfo.cpudescr}")
         order = args.order
-        for lvl in CPUInfo.LEVELS:
+        for lvl in CPUInfo.SCOPE_NAMES:
             if order.lower() == lvl.lower():
                 order = lvl
                 break
         else:
-            raise Error(f"invalid order '{order}', use one of: {', '.join(CPUInfo.LEVELS)}")
+            raise Error(f"invalid order '{order}', use one of: {', '.join(CPUInfo.SCOPE_NAMES)}")
 
         offline_ok = not args.online_only
 

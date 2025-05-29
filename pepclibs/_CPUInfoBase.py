@@ -25,20 +25,81 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFou
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-LevelNameType = Literal["CPU", "core", "module", "die", "node", "package"]
+ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package"]
 
-# The levels names have to be the same as 'sname' names in 'PStates', 'CStates', etc.
-LEVELS: tuple[LevelNameType, ...] = ("CPU", "core", "module", "die", "node", "package")
+SCOPE_NAMES: tuple[ScopeNameType, ...] = ("CPU", "core", "module", "die", "node", "package")
 
-# 'NA' is used for the CPU/core/module number for I/O dies, which do not include CPUs, cores, or
-# modules. Use a very large number to make sure the the 'NA' numbers go last when sorting.
+# 'NA' is used as the CPU/core/module number for I/O dies, which lack CPUs, cores, or modules.
 NA = 0xFFFFFFFF
 
 class CPUInfoBase(ClassHelpers.SimpleCloseContext):
     """
-    Base class for the 'CPUInfo.CPUInfo' class. Implements low-level "plumbing", while the 'CPUInfo'
-    class implements the API methods.
+    Base class for 'CPUInfo.CPUInfo'. Provides low-level functionality, while 'CPUInfo' implements
+    the public API.
     """
+
+    def __init__(self, pman=None):
+        """
+        The class constructor. The arguments are as follows.
+          * pman - the process manager object that defines the target host.
+        """
+
+        # A dictionary including the general CPU information.
+        self.info = None
+        # A short CPU description string.
+        self.cpudescr = None
+
+        self._pman = pman
+        self._close_pman = pman is None
+
+        self._msr = None
+        self._pliobj = None
+        self._uncfreq_obj = None
+
+        # 'True' if 'MSR_PM_LOGICAL_ID' is supported by the target host, otherwise 'False'. When
+        # this MSR is supported, it provides the die IDs enumeration.
+        self._pli_msr_supported = True
+        # 'True' if the target host supports uncore frequency scaling.
+        self._uncfreq_supported = True
+
+        # Online CPU numbers.
+        self._cpus = set()
+        # Set of online and offline CPUs.
+        self._all_cpus = None
+        # Dictionary of P-core/E-core CPUs.
+        self._hybrid_cpus = None
+
+        # Per-package compute die numbers (dies which have CPUs) and I/O die numbers (dies which do
+        # not have CPUs). Dictionaries with package numbers as key and set of die numbers as values.
+        self._compute_dies = {}
+        self._io_dies = {}
+
+        # The topology dictionary. See 'get_topology()' for more information.
+        self._topology = {}
+        # Some CPUs have been brought online or offline, the topology data structures should be
+        # updated.
+        self._must_update_topology = False
+        # Stores all initialized topology levels.
+        self._initialized_levels = set()
+
+        # We are going to sort topology by level, this map specifies how each is sorted. Note, core
+        # and die numbers are per-package, therefore we always sort them by package first.
+        self._sorting_map = {"CPU":     ("CPU",),
+                             "core":    ("package", "core", "CPU"),
+                             "module":  ("module", "CPU"),
+                             "die":     ("package", "die", "CPU"),
+                             "node":    ("node", "CPU"),
+                             "package": ("package", "CPU")}
+
+        if not self._pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
+
+        self.info = self._get_cpu_info()
+        self.cpudescr = self._get_cpu_description()
+
+    def close(self):
+        """Uninitialize the class object."""
+        ClassHelpers.close(self, close_attrs=("_uncfreq_obj", "_pliobj", "_msr", "_pman"))
 
     def _get_msr(self):
         """Returns an 'MSR.MSR()' object."""
@@ -202,7 +263,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     continue
 
                 tline = {}
-                for key in LEVELS:
+                for key in SCOPE_NAMES:
                     # At this point the topology table lines may not even include some levels (e.g.,
                     # "numa" may not be there). But they may be added later. Add them for the I/O
                     # die topology table lines now, so that later the lines would not need # to be
@@ -221,7 +282,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         for package, pkg_dies in self._io_dies.items():
             for die in pkg_dies:
                 tline = {}
-                for key in LEVELS:
+                for key in SCOPE_NAMES:
                     # At this point the topology table lines may not even include some levels (e.g.,
                     # "numa" may not be there). But they may be added later. Add them for the I/O
                     # die topology table lines now, so that later the lines would not need # to be
@@ -429,66 +490,3 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._hybrid_cpus = None
         if self._topology:
             self._must_update_topology = True
-
-    def __init__(self, pman=None):
-        """
-        The class constructor. The arguments are as follows.
-          * pman - the process manager object that defines the target host.
-        """
-
-        # A dictionary including the general CPU information.
-        self.info = None
-        # A short CPU description string.
-        self.cpudescr = None
-
-        self._pman = pman
-        self._close_pman = pman is None
-
-        self._msr = None
-        self._pliobj = None
-        self._uncfreq_obj = None
-
-        # 'True' if 'MSR_PM_LOGICAL_ID' is supported by the target host, otherwise 'False'. When
-        # this MSR is supported, it provides the die IDs enumeration.
-        self._pli_msr_supported = True
-        # 'True' if the target host supports uncore frequency scaling.
-        self._uncfreq_supported = True
-
-        # Online CPU numbers.
-        self._cpus = set()
-        # Set of online and offline CPUs.
-        self._all_cpus = None
-        # Dictionary of P-core/E-core CPUs.
-        self._hybrid_cpus = None
-
-        # Per-package compute die numbers (dies which have CPUs) and I/O die numbers (dies which do
-        # not have CPUs). Dictionaries with package numbers as key and set of die numbers as values.
-        self._compute_dies = {}
-        self._io_dies = {}
-
-        # The topology dictionary. See 'get_topology()' for more information.
-        self._topology = {}
-        # Some CPUs have been brought online or offline, the topology data structures should be
-        # updated.
-        self._must_update_topology = False
-        # Stores all initialized topology levels.
-        self._initialized_levels = set()
-
-        # We are going to sort topology by level, this map specifies how each is sorted. Note, core
-        # and die numbers are per-package, therefore we always sort them by package first.
-        self._sorting_map = {"CPU":     ("CPU",),
-                             "core":    ("package", "core", "CPU"),
-                             "module":  ("module", "CPU"),
-                             "die":     ("package", "die", "CPU"),
-                             "node":    ("node", "CPU"),
-                             "package": ("package", "CPU")}
-
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-
-        self.info = self._get_cpu_info()
-        self.cpudescr = self._get_cpu_description()
-
-    def close(self):
-        """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_uncfreq_obj", "_pliobj", "_msr", "_pman"))

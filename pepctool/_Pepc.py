@@ -514,7 +514,7 @@ def build_arguments_parser():
 
     _add_target_cpus_arguments(subpars2, "List of %s to print topology information for.")
 
-    orders = ", ".join([lvl.lower() for lvl in CPUInfo.LEVELS])
+    orders = ", ".join([lvl.lower() for lvl in CPUInfo.SCOPE_NAMES])
     text = f"""By default, the topology table is printed in CPU number order. Use this option to
                print it in a different order (e.g., core or package number order). Here are the
                supported order names: {orders}."""
@@ -523,7 +523,7 @@ def build_arguments_parser():
     text = """Include only online CPUs. By default offline and online CPUs are included."""
     subpars2.add_argument("--online-only", action="store_true", help=text)
 
-    columns = ", ".join(list(CPUInfo.LEVELS) + ["hybrid"])
+    columns = ", ".join(list(CPUInfo.SCOPE_NAMES) + ["hybrid"])
     text = f"""Comma-separated list of the topology columns to print. Available columns are:
             {columns}. Example: --columns Package,Core,CPU."""
     subpars2.add_argument("--columns", help=text)

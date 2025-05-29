@@ -61,7 +61,7 @@ def test_propscache_scope(params):
     test_cpu = random.choice(cpuinfo.get_cpus())
     pcache = _PropsCache.PropsCache(cpuinfo=cpuinfo, pman=pman)
 
-    for sname in CPUInfo.LEVELS:
+    for sname in CPUInfo.SCOPE_NAMES:
         # Value of 'val' and 'pname' do not matter, as long as they are unique.
         val = object()
         pname = object()

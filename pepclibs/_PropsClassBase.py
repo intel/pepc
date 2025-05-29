@@ -22,8 +22,7 @@ Naming conventions:
            the 'PVInfoTypedDict' type.
  * pname: The name of a property.
  * sname: The functional scope name of the property, indicating whether the property is per-CPU,
-          per-core, per-package, etc. Scope names correspond to those in 'CPUInfo.LEVELS': CPU,
-          core, package, etc.
+          per-core, per-package, etc.
  * iosname: The I/O scope name of the property. Typically the same as 'sname', but may differ in
             for some MSR-backed properties. More information:
             https://github.com/intel/pepc/blob/main/docs/misc-msr-scope.md

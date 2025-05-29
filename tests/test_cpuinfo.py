@@ -32,7 +32,7 @@ def get_params(hostspec):
 def _get_levels():
     """Yield 'CPUInfo.LEVEL' values as a lowercase strings."""
 
-    for lvl in CPUInfo.LEVELS:
+    for lvl in CPUInfo.SCOPE_NAMES:
         yield lvl.lower()
 
 def _get_level_nums(lvl, cpuinfo, order=None):
@@ -69,7 +69,7 @@ def _get_levels_and_nums(cpuinfo):
     'get_<lvl>()' result.
     """
 
-    for lvl in CPUInfo.LEVELS:
+    for lvl in CPUInfo.SCOPE_NAMES:
         lvl = lvl.lower()
         if not getattr(cpuinfo, f"get_{lvl}s", None):
             continue
@@ -219,7 +219,7 @@ def test_cpuinfo_get_count(params):
       * 'get_cpus_count()'
       * 'get_offline_cpus_count()'
     """
-
+ 
     for cpuinfo in _get_cpuinfos(params):
         for lvl, nums in _get_levels_and_nums(cpuinfo):
             kwargs = {}
@@ -236,9 +236,9 @@ def _test_convert_good(cpuinfo):
 
     for from_lvl, from_nums in _get_levels_and_nums(cpuinfo):
         # We have two types of conversion methods to convert values between different "levels"
-        # defined in 'CPUInfo.LEVELS'. We have methods for converting single value to other level,
-        # e.g. 'package_to_cpus()'. And we have methods for converting multiple values to other
-        # level, e.g. 'packages_to_cpus()'.
+        # defined in 'CPUInfo.SCOPE_NAMES'. We have methods for converting single value to other
+        # level, e.g. 'package_to_cpus()'. And we have methods for converting multiple values to
+        # other level, e.g. 'packages_to_cpus()'.
         # Methods to convert single value accept single integer in different forms, and methods
         # converting multiple values accept also integers in lists.
 
