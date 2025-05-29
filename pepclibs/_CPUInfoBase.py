@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -15,17 +15,48 @@ Provide the base class for the 'CPUInfo.CPUInfo' class.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
-from typing import Literal
+import typing
+from typing import TypedDict, Literal
 import contextlib
 from pathlib import Path
 from pepclibs import _UncoreFreq, CPUModels
 from pepclibs.msr import MSR, PMLogicalId
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
+if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package"]
+
+class CPUInfoTypeDict(TypedDict, total=False):
+    """
+    Type for the CPU information dictionary ('CPUInfo.info').
+
+    Attributes:
+        arch: The CPU architecture (e.g., "x86_64").
+        vendor: The CPU vendor (e.g., "GenuineIntel").
+        packages: The number of CPU packages.
+        family: The CPU family number.
+        model: The CPU model number.
+        modelname: The full name of the CPU model.
+        flags: A dictionary mapping CPU numbers to their flags.
+        hybrid: Whether the CPU is a hybrid architecture (e.g., Intel's P-core/E-core).
+        vfm: The vendor-family-model identifier for the CPU.
+    """
+
+    arch: str
+    vendor: str
+    family: int
+    model: int
+    modelname: str
+    flags: dict[int, set[str]]
+    hybrid: bool
+    vfm: int
+
+_CPUInfoKeysType = Literal["arch", "vendor", "family", "model", "modelname", "flags", "hybrid",
+                           "vfm"]
 
 SCOPE_NAMES: tuple[ScopeNameType, ...] = ("CPU", "core", "module", "die", "node", "package")
 
@@ -38,34 +69,33 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
     the public API.
     """
 
-    def __init__(self, pman=None):
+    def __init__(self, pman: ProcessManagerType | None = None):
         """
-        The class constructor. The arguments are as follows.
-          * pman - the process manager object that defines the target host.
+        Initialize a class instance.
+
+        Args:
+            pman: The process manager object that defines the target host. If not provided, a local
+                  process manager is created.
         """
 
-        # A dictionary including the general CPU information.
-        self.info = None
         # A short CPU description string.
         self.cpudescr = None
 
-        self._pman = pman
         self._close_pman = pman is None
 
-        self._msr = None
-        self._pliobj = None
-        self._uncfreq_obj = None
+        self._msr: MSR.MSR | None = None
+        self._pliobj: PMLogicalId.PMLogicalId | None = None
+        self._uncfreq_obj: _UncoreFreq.UncoreFreqSysfs | None = None
 
-        # 'True' if 'MSR_PM_LOGICAL_ID' is supported by the target host, otherwise 'False'. When
-        # this MSR is supported, it provides the die IDs enumeration.
+        # 'True' if the target supports 'MSR_PM_LOGICAL_ID', which provides die ID enumeration.
         self._pli_msr_supported = True
-        # 'True' if the target host supports uncore frequency scaling.
+        # 'True' if the target supports uncore frequency scaling.
         self._uncfreq_supported = True
 
         # Online CPU numbers.
-        self._cpus = set()
+        self._cpus: set[int] = set()
         # Set of online and offline CPUs.
-        self._all_cpus = None
+        self._all_cpus: set[int] | None = None
         # Dictionary of P-core/E-core CPUs.
         self._hybrid_cpus = None
 
@@ -91,7 +121,11 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                              "node":    ("node", "CPU"),
                              "package": ("package", "CPU")}
 
-        if not self._pman:
+        self._hybrid_sysfs_base = Path("/sys/devices/cpu_atom/cpus")
+
+        if pman:
+            self._pman = pman
+        else:
             self._pman = LocalProcessManager.LocalProcessManager()
 
         self.info = self._get_cpu_info()
@@ -404,24 +438,23 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
         return self._all_cpus
 
-    def _get_cpu_info(self):
+    def _get_cpu_info(self) -> CPUInfoTypeDict:
         """Get general CPU information (model, architecture, etc)."""
 
-        self.info = cpuinfo = {}
+        cpuinfo: CPUInfoTypeDict = {}
+
         lscpu, _ = self._pman.run_verify("lscpu", join=False)
 
         # Parse misc. information about the CPU.
-        patterns = ((r"^Architecture:\s*(.*)$", "arch"),
-                    (r"^Byte Order:\s*(.*)$", "byteorder"),
-                    (r"^Vendor ID:\s*(.*)$", "vendor"),
-                    (r"^Socket\(s\):\s*(.*)$", "packages"),
-                    (r"^CPU family:\s*(.*)$", "family"),
-                    (r"^Model:\s*(.*)$", "model"),
-                    (r"^Model name:\s*(.*)$", "modelname"),
-                    (r"^Model name:.*@\s*(.*)GHz$", "basefreq"),
-                    (r"^Stepping:\s*(.*)$", "stepping"),
-                    (r"^Flags:\s*(.*)$", "flags"))
+        patterns: tuple[tuple[str, _CPUInfoKeysType], ...] = \
+                    ((r"^Architecture:\s*(.*)$", "arch"),
+                     (r"^Vendor ID:\s*(.*)$", "vendor"),
+                     (r"^CPU family:\s*(.*)$", "family"),
+                     (r"^Model:\s*(.*)$", "model"),
+                     (r"^Model name:\s*(.*)$", "modelname"),
+                     (r"^Flags:\s*(.*)$", "flags"))
 
+        key_types = typing.get_type_hints(CPUInfoTypeDict)
         for line in lscpu:
             for pattern, key in patterns:
                 match = re.match(pattern, line.strip())
@@ -429,27 +462,31 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     continue
 
                 val = match.group(1)
-                if Trivial.is_int(val):
-                    cpuinfo[key] = int(val)
-                else:
+                if key_types[key] is int:
+                    what=f"'{key}' value from 'lscpu' output"
+                    cpuinfo[key] = Trivial.str_to_int(val, what=what)
+                elif key_types[key] is str:
                     cpuinfo[key] = val
+                elif key == "flags":
+                    cpuflags = set(val.split())
+                    cpuinfo["flags"] = {}
+                    # Assume that all CPUs share the same flags, this is the case for current CPUs.
+                    # But generally, the flags could be different for different CPUs, in which case
+                    # they would be read from '/proc/cpuinfo'.
+                    for cpu in self._get_online_cpus_set():
+                        cpuinfo["flags"][cpu] = cpuflags
+                else:
+                    raise Error(f"Unexpected type for '{key}', expected "
+                                f"{key_types[key]}, got {type(val)}")
 
-        if cpuinfo.get("flags"):
-            cpuflags = set(cpuinfo["flags"].split())
-            cpuinfo["flags"] = {}
-            # In current implementation we assume all CPUs have the same flags. But ideally, we
-            # should read the flags for each CPU from '/proc/cpuinfo', instead of using 'lscpu'.
-            for cpu in self._get_online_cpus_set():
-                cpuinfo["flags"][cpu] = cpuflags
-
-        if self._pman.exists("/sys/devices/cpu_atom/cpus"):
+        if self._pman.exists(self._hybrid_sysfs_base):
             cpuinfo["hybrid"] = True
         else:
             cpuinfo["hybrid"] = False
             with contextlib.suppress(Error):
                 kver = KernelVersion.get_kver(pman=self._pman)
                 if KernelVersion.kver_lt(kver, "5.13"):
-                    _LOG.warn_once("kernel v%s does not support hybrid CPU topology. The minimum "
+                    _LOG.warn_once("Kernel v%s does not support hybrid CPU topology. The minimum "
                                    "required kernel version is v5.13.", kver)
 
         cpuinfo["vfm"] = CPUModels.make_vfm(cpuinfo["vendor"], cpuinfo["family"], cpuinfo["model"])
